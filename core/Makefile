@@ -1,8 +1,10 @@
 CXX = g++
-CSSFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD \
+CXXFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD \
+		   -Inn \
 		   -Iutils
 LIBS = -pthread
-SOURCES = $(wildcard utils/*.cpp)
+SOURCES = $(wildcard nn/*.cpp) \
+		  $(wildcard utils/*.cpp)
 HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
