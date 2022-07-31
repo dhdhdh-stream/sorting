@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD \
+CXXFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD -lboost_system \
 		   -Inn \
 		   -Isolver \
 		   -Iutils \
@@ -22,4 +22,4 @@ main: ${OBJECTS} main.o
 
 clean:
 	rm -f ${DEPENDS} ${DEPENDS:.d=.o} \
-	main.o main
+	main.d main.o main

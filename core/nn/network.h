@@ -16,10 +16,7 @@ public:
 	Network(int input_size,
 			int layer_size,
 			int output_size);
-	Network(int input_size,
-			int layer_size,
-			int output_size,
-			std::ifstream& input_file);
+	Network(std::ifstream& input_file);
 	~Network();
 
 	void activate(std::vector<double>& vals);

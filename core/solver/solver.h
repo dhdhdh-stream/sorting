@@ -5,11 +5,12 @@
 
 #include "action.h"
 #include "problem.h"
-#include "solution_tree_node.h"
+#include "solution_node.h"
 
 class Solver {
 public:
-	SolutionTreeNode* root;
+	std::vector<SolutionNode*> nodes;
+	int current_node_index;
 
 	std::default_random_engine generator;
 

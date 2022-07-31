@@ -34,4 +34,6 @@ public:
 	}
 };
 
+const Action HALT(0.0, -1);
+
 #endif /* ACTION_H */

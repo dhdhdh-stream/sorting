@@ -35,10 +35,19 @@ Network::Network(int input_size,
 	construct(input_size, layer_size, output_size);
 }
 
-Network::Network(int input_size,
-				 int layer_size,
-				 int output_size,
-				 ifstream& input_file) {
+Network::Network(ifstream& input_file) {
+	string input_size_line;
+	getline(input_file, input_size_line);
+	int input_size = stoi(input_size_line);
+
+	string layer_size_line;
+	getline(input_file, layer_size_line);
+	int layer_size = stoi(layer_size_line);
+
+	string output_size_line;
+	getline(input_file, output_size_line);
+	int output_size = stoi(output_size_line);
+
 	construct(input_size, layer_size, output_size);
 
 	this->val_1st.copy_weights_from(input_file);
@@ -98,6 +107,9 @@ void Network::update_weights(double factor,
 }
 
 void Network::save_weights(ofstream& output_file) {
+	output_file << this->input.acti_vals.size() << endl;
+	output_file << this->val_1st.acti_vals.size() << endl;
+	output_file << this->val_val.acti_vals.size() << endl;
 	this->val_1st.save_weights(output_file);
 	this->val_val.save_weights(output_file);
 }
