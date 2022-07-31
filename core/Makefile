@@ -1,10 +1,14 @@
 CXX = g++
 CXXFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD \
 		   -Inn \
-		   -Iutils
+		   -Isolver \
+		   -Iutils \
+		   -Iworld
 LIBS = -pthread
 SOURCES = $(wildcard nn/*.cpp) \
-		  $(wildcard utils/*.cpp)
+		  $(wildcard solver/*.cpp) \
+		  $(wildcard utils/*.cpp) \
+		  $(wildcard world/*.cpp)
 HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
