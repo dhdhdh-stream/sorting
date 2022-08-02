@@ -1,6 +1,8 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
+#include <mutex>
+
 #include "action.h"
 #include "problem.h"
 #include "solution_node.h"
@@ -11,6 +13,8 @@ public:
 	std::vector<SolutionNode*> nodes;
 	int current_node_index;
 
+	std::mutex mtx;
+
 	Solver();
 	~Solver();
 
@@ -18,6 +22,8 @@ public:
 				   std::vector<Action> candidate);
 
 	void single_pass(bool save_for_display);
+
+	void save();
 };
 
 #endif /* SOLVER_H */

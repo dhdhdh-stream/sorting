@@ -13,6 +13,8 @@ SolutionNode::SolutionNode(Solver* solver,
 	this->path_length = path_length;
 
 	this->score_network = new Network(this->path_length, 100, 1);
+	this->score_network_name = "../saves/nns/sns_" + \
+		to_string(this->node_index) + to_string(time(NULL)) + ".txt";
 	this->average_score = 0.5;
 
 	this->explore_state = EXPLORE_STATE_EXPLORE;
@@ -116,7 +118,7 @@ void SolutionNode::process(vector<double> observations,
 						   int& explore_status,
 						   int& explore_id,
 						   int& explore_candidate_iter) {
-	if (this->score_network->epoch < 20000) {
+	if (this->score_network->epoch < 10000) {
 		// shouldn't have multiple children yet
 		chosen_path = 0;
 		explore_status = -1;
@@ -159,7 +161,7 @@ void SolutionNode::process(vector<double> observations,
 		int new_index = -1;
 		for (int c_index = 0; c_index < num_children; c_index++) {
 			Network* child_score_network = this->children_score_networks[c_index];
-			if (child_score_network->epoch < 20000) {
+			if (child_score_network->epoch < 10000) {
 				new_index = c_index;
 				break;
 			}
@@ -271,7 +273,7 @@ void SolutionNode::update_explore(vector<double> observations,
 			errors.push_back(score - this->learn_scores_network->val_val.acti_vals[0]);
 			this->learn_scores_network->backprop(errors);
 
-			if (this->learn_scores_network->epoch == 20000) {
+			if (this->learn_scores_network->epoch == 10000) {
 				this->explore_state = EXPLORE_STATE_MEASURE_INFORMATION;
 				this->measure_information_p_index = 0;
 				this->measure_information_think_good_and_good = 0.0;
