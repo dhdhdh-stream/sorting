@@ -1,5 +1,7 @@
 #include "network.h"
 
+#include <iostream>
+
 using namespace std;
 
 void Network::construct(int input_size,
@@ -33,6 +35,9 @@ Network::Network(int input_size,
 				 int layer_size,
 				 int output_size) {
 	construct(input_size, layer_size, output_size);
+
+	this->epoch = 0;
+	this->iter = 0;
 }
 
 Network::Network(ifstream& input_file) {
@@ -52,6 +57,11 @@ Network::Network(ifstream& input_file) {
 
 	this->val_1st.copy_weights_from(input_file);
 	this->val_val.copy_weights_from(input_file);
+
+	string epoch_line;
+	getline(input_file, epoch_line);
+	this->epoch = stoi(epoch_line);
+	this->iter = 0;
 }
 
 Network::~Network() {
@@ -82,6 +92,25 @@ void Network::backprop(vector<double>& errors) {
 
 	this->val_val.backprop();
 	this->val_1st.backprop();
+
+	if (this->iter == 100) {
+		double max_update = 0.0;
+		this->calc_max_update(max_update,
+							  0.001,
+							  0.2);
+		double factor = 1.0;
+		if (max_update > 0.01) {
+			factor = 0.01/max_update;
+		}
+		this->update_weights(factor,
+							 0.001,
+							 0.2);
+
+		this->epoch++;
+		this->iter = 0;
+	} else {
+		this->iter++;
+	}
 }
 
 void Network::calc_max_update(double& max_update,
@@ -106,12 +135,13 @@ void Network::update_weights(double factor,
 								 momentum);
 }
 
-void Network::save_weights(ofstream& output_file) {
+void Network::save(ofstream& output_file) {
 	output_file << this->input.acti_vals.size() << endl;
 	output_file << this->val_1st.acti_vals.size() << endl;
 	output_file << this->val_val.acti_vals.size() << endl;
 	this->val_1st.save_weights(output_file);
 	this->val_val.save_weights(output_file);
+	output_file << this->epoch << endl;
 }
 
 NetworkHistory::NetworkHistory(Network* network) {

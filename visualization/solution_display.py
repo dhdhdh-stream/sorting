@@ -22,15 +22,15 @@ while True:
 	graph = pydot.Dot(graph_type='digraph', strict=True)
 
 	nodes = []
-	with open('../solution_display.txt') as file:
+	with open('../display.txt') as file:
 		num_nodes = int(file.readline())
 		for n_index in range(num_nodes):
-			count = int(file.readline())
-			information = float(file.readline())
-			
+			is_explore_starting_point = False
+			is_on_path = False
 			num_children = int(file.readline())
 			children_indexes = []
 			children_actions = []
+			paths_explored = []
 			for c_index in range(num_children):
 				child_index = int(file.readline())
 				children_indexes.append(child_index)
@@ -39,15 +39,54 @@ while True:
 				move = int(file.readline())
 				children_actions.append([write, move])
 
-				network_name = file.readline()
+				paths_explored.append(False)
 
-			nodes.append([count, information, children_indexes, children_actions])
+			explore_state = file.readline().strip()
+
+			nodes.append([is_explore_starting_point,
+						  is_on_path,
+						  children_indexes,
+						  children_actions,
+						  paths_explored,
+						  explore_state])
+
+		underlying_world_size = int(file.readline())
+		underlying_world = []
+		for _ in range(underlying_world_size):
+			underlying_world.append(float(file.readline()))
+
+		chosen_paths_size = int(file.readline())
+		for _ in range(chosen_paths_size):
+			chosen_path = file.readline().strip().split(',')
+			start = int(chosen_path[0])
+			end = int(chosen_path[1])
+			nodes[start][1] = True
+			nodes[end][1] = True
+			nodes[start][4][end] = True
+
+		explore_status = file.readline().strip()
+
+		candidate = []
+		if explore_status != 'no_explore':
+			explore_node = int(file.readline())
+			nodes[explore_node][0] = True
+
+			candidate_size = int(file.readline())
+			for _ in range(candidate_size):
+				write = float(file.readline())
+				move = int(file.readline())
+				candidate.append([write, move])
 
 	halt_node = pydot.Node(0, label='HALT')
 	graph.add_node(halt_node)
 	for n_index in range(1, len(nodes)):
-		label = str(nodes[n_index][0]) + '\n' + str(nodes[n_index][1])
-		node = pydot.Node(n_index, label=label)
+		label = str(nodes[n_index][5])
+		color = 'black'
+		if nodes[n_index][0]:
+			color = 'red'
+		elif nodes[n_index][1]:
+			color = 'blue'
+		node = pydot.Node(n_index, label=label, color=color)
 		graph.add_node(node)
 
 	for n_index in range(1, len(nodes)):
@@ -65,6 +104,11 @@ while True:
 	img = mpimg.imread('solution.png')
 	plt.imshow(img)
 	plt.axis('off')
+
+	plt.text(0, 0, explore_status)
+	if explore_status != 'no_explore':
+		plt.text(0, 10, str(candidate))
+
 	plt.show()
 	plt.pause(2.0)
 	plt.clf()

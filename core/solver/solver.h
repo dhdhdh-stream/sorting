@@ -1,26 +1,23 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include <random>
-
 #include "action.h"
 #include "problem.h"
 #include "solution_node.h"
 
+class SolutionNode;
 class Solver {
 public:
 	std::vector<SolutionNode*> nodes;
 	int current_node_index;
 
-	std::default_random_engine generator;
-
 	Solver();
 	~Solver();
 
-	void run();
+	void add_nodes(SolutionNode* starting_point,
+				   std::vector<Action> candidate);
 
-private:
-	void simple_pass();
+	void single_pass(bool save_for_display);
 };
 
 #endif /* SOLVER_H */

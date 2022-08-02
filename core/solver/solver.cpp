@@ -5,32 +5,28 @@
 #include <limits>
 
 #include "definitions.h"
-#include "explore.h"
-#include "measure_information.h"
 #include "network.h"
-#include "setup_decision_making.h"
 
 using namespace std;
 
 Solver::Solver() {
-	// SolutionNode* halt_node = new SolutionNode(0);
-	// this->nodes.push_back(halt_node);
-	// SolutionNode* root_node = new SolutionNode(1);
-	// this->nodes.push_back(root_node);
-	// this->current_node_index = 2;
+	SolutionNode* halt_node = new SolutionNode(this, 0, -1);
+	this->nodes.push_back(halt_node);
+	SolutionNode* root_node = new SolutionNode(this, 1, 1);
+	this->nodes.push_back(root_node);
+	root_node->add_child(0, HALT);
+	this->current_node_index = 2;
 
-	ifstream save_file;
-	save_file.open("../saves/1659307210.txt");
-	string num_nodes_line;
-	getline(save_file, num_nodes_line);
-	int num_nodes = stoi(num_nodes_line);
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		SolutionNode* node = new SolutionNode(n_index, save_file);
-		this->nodes.push_back(node);
-	}
-	this->current_node_index = num_nodes;
-
-	this->generator.seed(SEED);
+	// ifstream save_file;
+	// save_file.open("../saves/1659307210.txt");
+	// string num_nodes_line;
+	// getline(save_file, num_nodes_line);
+	// int num_nodes = stoi(num_nodes_line);
+	// for (int n_index = 0; n_index < num_nodes; n_index++) {
+	// 	SolutionNode* node = new SolutionNode(n_index, save_file);
+	// 	this->nodes.push_back(node);
+	// }
+	// this->current_node_index = num_nodes;
 }
 
 Solver::~Solver() {
@@ -39,104 +35,233 @@ Solver::~Solver() {
 	}
 }
 
-void Solver::simple_pass() {
-	// try random path for now
-	SolutionNode* curr_node = this->nodes[1];
-	vector<int> pre_sequence;
-	while (true) {
-		if (curr_node->children_indexes.size() == 0) {
-			break;
-		}
-
-		int next_index = rand()%(int)curr_node->children_indexes.size();
-
-		if (curr_node->children_indexes[next_index] == 0) {
-			// this is all a hack, but next node is HALT node, so break early
-			break;
-		} else {
-			pre_sequence.push_back(next_index);
-			curr_node = this->nodes[curr_node->children_indexes[next_index]];
-		}
-	}
-
-	// explore
-	double best_information = numeric_limits<double>::min();
-	vector<Action> best_candidate;
-	for (int c_index = 0; c_index < 50; c_index++) {
-		vector<Action> candidate = explore(pre_sequence,
-										   this->nodes[1],
-										   this->nodes,
-										   this->generator);
-		double information = measure_information(pre_sequence,
-												 this->nodes[1],
-												 this->nodes,
-												 candidate);
-		
-		SolutionNode* curr_node_for_print = this->nodes[1];
-		for (int s_index = 0; s_index < (int)pre_sequence.size(); s_index++) {
-			cout << curr_node_for_print->children_actions[pre_sequence[s_index]].to_string() << endl;
-			curr_node_for_print = this->nodes[curr_node_for_print->children_indexes[pre_sequence[s_index]]];
-		}
-		for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
-			cout << candidate[a_index].to_string() << endl;
-		}
-		cout << "information: " << information << endl;
-		cout << endl;
-
-		if (information > best_information) {
-			best_information = information;
-			best_candidate = candidate;
-		}
-	}
-	
-	SolutionNode* branch_node = curr_node;
-
-	// add nodes
-	for (int a_index = 0; a_index < (int)best_candidate.size(); a_index++) {
-		SolutionNode* new_node = new SolutionNode(this->current_node_index);
+void Solver::add_nodes(SolutionNode* starting_point,
+					   vector<Action> candidate) {
+	SolutionNode* curr_node = starting_point;
+	for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
+		SolutionNode* new_node = new SolutionNode(
+			this,
+			this->current_node_index,
+			starting_point->path_length+1);
 		this->nodes.push_back(new_node);
 		this->current_node_index++;
-		
-		curr_node->children_indexes.push_back(new_node->node_index);
-		curr_node->children_actions.push_back(best_candidate[a_index]);
-		curr_node->children_networks.push_back(NULL);
-		curr_node->children_network_names.push_back("");
-		
-		curr_node = new_node;
-	}
-	curr_node->count = 1;
-	curr_node->information = best_information;
-	curr_node->children_indexes.push_back(0);
-	curr_node->children_actions.push_back(HALT);
-	curr_node->children_networks.push_back(NULL);
-	curr_node->children_network_names.push_back("");
 
-	setup_decision_making(branch_node,
-						  pre_sequence,
-						  this->nodes[1],
-						  this->nodes);
-
-	ofstream save_file;
-	string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
-	save_file.open(save_file_name);
-	save_file << this->nodes.size() << endl;
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		this->nodes[n_index]->save(save_file);
+		curr_node->add_child(new_node->node_index, candidate[a_index]);
 	}
-	save_file.close();
 
-	ofstream solution_display_file;
-	string solution_display_file_name = "../solution_display.txt";
-	solution_display_file.open(solution_display_file_name);
-	solution_display_file << this->nodes.size() << endl;
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		this->nodes[n_index]->save(solution_display_file);
-	}
-	solution_display_file.close();
+	curr_node->add_child(0, HALT);
 }
 
-void Solver::run() {
-	simple_pass();
-	simple_pass();
-	simple_pass();
+void Solver::single_pass(bool save_for_display) {
+	Problem p;
+
+	SolutionNode* curr_node = this->nodes[1];
+	vector<double> observations;
+
+	vector<SolutionNode*> visited_nodes;
+	vector<int> chosen_paths;
+
+	int explore_status;
+	int explore_id;
+	int explore_candidate_iter;
+
+	while (true) {
+		observations.push_back(p.get_observation());
+
+		int chosen_path;
+		curr_node->process(observations,
+						   chosen_path,
+						   explore_status,
+						   explore_id,
+						   explore_candidate_iter);
+
+		visited_nodes.push_back(curr_node);
+		chosen_paths.push_back(chosen_path);
+
+		if (chosen_path == -1) {
+			break;
+		} else {
+			if (curr_node->children_indexes[chosen_path] == 0) {
+				break;
+			}
+
+			p.perform_action(curr_node->children_actions[chosen_path]);
+			curr_node = nodes[curr_node->children_indexes[chosen_path]];
+		}
+	}
+
+	if (explore_status == -1) {
+		double score = p.score_result();
+
+		for (int n_index = 0; n_index < (int)visited_nodes.size(); n_index++) {
+			vector<double> partial_observations(observations.begin(), \
+				observations.begin()+1+n_index);
+
+			visited_nodes[n_index]->update(partial_observations,
+										   chosen_paths[n_index],
+										   score,
+										   false);
+		}
+
+		if (save_for_display) {
+			ofstream display_file;
+			string display_file_name = "../display.txt";
+			display_file.open(display_file_name);
+			display_file << this->nodes.size() << endl;
+			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+				this->nodes[n_index]->save_for_display(display_file);
+			}
+			
+			display_file << p.initial_world.size() << endl;
+			for (int i = 0; i < (int)p.initial_world.size(); i++) {
+				display_file << p.initial_world[i] << endl;
+			}
+
+			display_file << chosen_paths.size()-1 << endl;
+			SolutionNode* curr_node = this->nodes[1];
+			for (int i = 0; i < (int)chosen_paths.size()-1; i++) {
+				display_file << curr_node->node_index << "," << curr_node->children_indexes[chosen_paths[i]] << endl;
+
+				curr_node = this->nodes[curr_node->children_indexes[chosen_paths[i]]];
+			}
+
+			display_file << "no_explore" << endl;
+
+			display_file.close();
+		}
+	} else {
+		if (explore_status == EXPLORE_STATE_EXPLORE) {
+			vector<Action> candidate;
+			geometric_distribution<int> seq_length_dist(0.2);
+			int add_seq_length = 1+seq_length_dist(generator);
+
+			normal_distribution<double> write_val_dist(0.0, 2.0);
+			for (int i = 0; i < add_seq_length; i++) {
+				Action a(write_val_dist(generator), rand()%3);
+				candidate.push_back(a);
+			}
+
+			for (int i = 0; i < (int)candidate.size(); i++) {
+				p.perform_action(candidate[i]);
+			}
+
+			double score = p.score_result();
+
+			for (int n_index = 0; n_index < (int)visited_nodes.size()-1; n_index++) {
+				vector<double> partial_observations(observations.begin(), \
+					observations.begin()+1+n_index);
+
+				visited_nodes[n_index]->update(partial_observations,
+											   chosen_paths[n_index],
+											   score,
+											   true);
+			}
+
+			visited_nodes[visited_nodes.size()-1]->update_explore_candidate(
+				observations,
+				explore_status,
+				explore_id,
+				explore_candidate_iter,
+				score,
+				candidate);
+
+			if (save_for_display) {
+				ofstream display_file;
+				string display_file_name = "../display.txt";
+				display_file.open(display_file_name);
+				display_file << this->nodes.size() << endl;
+				for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+					this->nodes[n_index]->save_for_display(display_file);
+				}
+				
+				display_file << p.initial_world.size() << endl;
+				for (int i = 0; i < (int)p.initial_world.size(); i++) {
+					display_file << p.initial_world[i] << endl;
+				}
+
+				display_file << chosen_paths.size()-1 << endl;
+				SolutionNode* curr_node = this->nodes[1];
+				for (int i = 0; i < (int)chosen_paths.size()-1; i++) {
+					display_file << curr_node->node_index << "," << curr_node->children_indexes[chosen_paths[i]] << endl;
+
+					curr_node = this->nodes[curr_node->children_indexes[chosen_paths[i]]];
+				}
+
+				display_file << "explore_" << explore_status << endl;
+
+				display_file << visited_nodes[visited_nodes.size()-1]->node_index << endl;
+
+				display_file << candidate.size() << endl;
+				for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
+					display_file << candidate[a_index].write << endl;
+					display_file << candidate[a_index].move << endl;
+				}
+
+				display_file.close();
+			}
+		} else {
+			vector<Action> candidate = visited_nodes[visited_nodes.size()-1]->current_candidate;
+			for (int i = 0; i < (int)candidate.size(); i++) {
+				p.perform_action(candidate[i]);
+				observations.push_back(p.get_observation());
+			}
+
+			double score = p.score_result();
+
+			for (int n_index = 0; n_index < (int)visited_nodes.size()-1; n_index++) {
+				vector<double> partial_observations(observations.begin(), \
+					observations.begin()+1+n_index);
+
+				visited_nodes[n_index]->update(partial_observations,
+											   chosen_paths[n_index],
+											   score,
+											   true);
+			}
+
+			vector<double> partial_observations(observations.begin(), \
+					observations.begin()+1+visited_nodes.size());
+			visited_nodes[visited_nodes.size()-1]->update_explore(
+				partial_observations,
+				observations,
+				explore_status,
+				explore_id,
+				explore_candidate_iter,
+				score);
+
+			if (save_for_display) {
+				ofstream display_file;
+				string display_file_name = "../display.txt";
+				display_file.open(display_file_name);
+				display_file << this->nodes.size() << endl;
+				for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+					this->nodes[n_index]->save_for_display(display_file);
+				}
+				
+				display_file << p.initial_world.size() << endl;
+				for (int i = 0; i < (int)p.initial_world.size(); i++) {
+					display_file << p.initial_world[i] << endl;
+				}
+
+				display_file << chosen_paths.size()-1 << endl;
+				SolutionNode* curr_node = this->nodes[1];
+				for (int i = 0; i < (int)chosen_paths.size()-1; i++) {
+					display_file << curr_node->node_index << "," << curr_node->children_indexes[chosen_paths[i]] << endl;
+
+					curr_node = this->nodes[curr_node->children_indexes[chosen_paths[i]]];
+				}
+
+				display_file << "explore_" << explore_status << endl;
+
+				display_file << visited_nodes[visited_nodes.size()-1]->node_index << endl;
+
+				display_file << candidate.size() << endl;
+				for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
+					display_file << candidate[a_index].write << endl;
+					display_file << candidate[a_index].move << endl;
+				}
+
+				display_file.close();
+			}
+		}
+	}
 }

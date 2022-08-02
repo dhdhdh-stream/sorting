@@ -21,5 +21,5 @@ main: ${OBJECTS} main.o
 -include ${DEPENDS} main.d
 
 clean:
-	rm -f ${DEPENDS} ${DEPENDS:.d=.o} \
-	main.d main.o main
+	rm -f ${OBJECTS} ${DEPENDS} \
+	main.o main.d main

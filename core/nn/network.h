@@ -2,6 +2,7 @@
 #define NETWORK_H
 
 #include <fstream>
+#include <mutex>
 #include <vector>
 
 #include "layer.h"
@@ -12,6 +13,11 @@ public:
 	Layer input;
 	Layer val_1st;
 	Layer val_val;
+
+	std::mutex mtx;
+
+	int epoch;
+	int iter;
 
 	Network(int input_size,
 			int layer_size,
@@ -30,7 +36,7 @@ public:
 						double learning_rate,
 						double momentum);
 
-	void save_weights(std::ofstream& output_file);
+	void save(std::ofstream& output_file);
 
 private:
 	void construct(int input_size,
