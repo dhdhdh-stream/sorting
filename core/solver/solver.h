@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "action.h"
+#include "action_dictionary.h"
 #include "problem.h"
 #include "solution_node.h"
 
@@ -12,6 +13,8 @@ class Solver {
 public:
 	std::vector<SolutionNode*> nodes;
 	int current_node_index;
+
+	ActionDictionary* action_dictionary;
 
 	std::mutex mtx;
 

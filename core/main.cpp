@@ -49,9 +49,9 @@ int main(int argc, char* argv[]) {
 	counter = 1;
 	// start = chrono::steady_clock::now();
 
-	std::thread threads[1];
+	std::thread threads[10];
 
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 10; i++) {
 		threads[i] = thread(run_solver);
 	}
 

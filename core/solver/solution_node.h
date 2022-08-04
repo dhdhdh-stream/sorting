@@ -29,9 +29,12 @@ public:
 	std::vector<std::string> children_information_network_names;
 	std::vector<int> children_counts;
 
+	int count;
+	double average_score;
 	Network* score_network;
 	std::string score_network_name;
-	double average_score;
+	Network* certainty_network;
+	std::string certainty_network_name;
 
 	int explore_state;
 	int current_explore_id;
@@ -68,33 +71,31 @@ public:
 
 	void process(std::vector<double> observations,
 				 int& chosen_path,
+				 std::vector<double>& guesses,
 				 int& explore_status,
 				 int& explore_id,
 				 int& explore_candidate_iter);
 	void update(std::vector<double> observations,
 				int chosen_path,
 				double score,
-				bool did_explore);
+				double misguess);
 	void update_explore(std::vector<double> observations,
 						std::vector<double> full_observations,
 						int explore_status,
 						int explore_id,
 						int explore_candidate_iter,
 						double score);
-	void update_explore_candidate(std::vector<double> observations,
-								  int explore_status,
+	void update_explore_candidate(int explore_status,
 								  int explore_id,
 								  int explore_candidate_iter,
-								  double score,
 								  std::vector<Action> candidate);
 
 	void save(std::ofstream& save_file);
 	void save_for_display(std::ofstream& save_file);
 
 private:
-	void update_score_network(std::vector<double> observations,
-							  double score,
-							  bool did_explore);
+	void update_self(std::vector<double> observations,
+					 double score);
 };
 
 #endif /* SOLUTION_NODE_H */

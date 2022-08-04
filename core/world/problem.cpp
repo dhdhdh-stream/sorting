@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Problem::Problem() {
+Problem::Problem(vector<double>& observations) {
 	int random_length = 2+rand()%9;
 	for (int i = 0; i < random_length; i++) {
 		this->initial_world.push_back(rand()%11);
@@ -13,6 +13,8 @@ Problem::Problem() {
 
 	this->current_pointer = 0;
 	this->current_world = this->initial_world;
+
+	observations.push_back(get_observation());
 }
 
 Problem::~Problem() {
@@ -27,18 +29,38 @@ double Problem::get_observation() {
 	}
 }
 
-void Problem::perform_action(Action action) {
-	if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
-		this->current_world[this->current_pointer] += action.write;
-	}
-
-	if (action.move == LEFT) {
-		if (this->current_pointer >= 0) {
-			this->current_pointer--;
+void Problem::perform_action(Action action,
+							 vector<double>& observations,
+							 ActionDictionary* action_dictionary) {
+	if (action.move != COMPOUND) {
+		if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
+			this->current_world[this->current_pointer] += action.write;
 		}
-	} else if (action.move == RIGHT) {
-		if (this->current_pointer < (int)this->current_world.size()) {
-			this->current_pointer++;
+
+		if (action.move == LEFT) {
+			if (this->current_pointer >= 0) {
+				this->current_pointer--;
+			}
+		} else if (action.move == RIGHT) {
+			if (this->current_pointer < (int)this->current_world.size()) {
+				this->current_pointer++;
+			}
+		}
+
+		observations.push_back(observation);
+	} else {
+		CompoundAction* compound_action = action_dictionary->actions[action.compound_index];
+
+		CompoundActionNode* curr_node = compound_action->nodes[1];
+		while (true) {
+			if (curr_node->children_indexes[0] == 0) {
+				break;
+			}
+
+			Action a = curr_node->children_actions[0];
+			perform_action(a, observations, action_dictionary);
+
+			curr_node = compound_action->nodes[curr_node->children_indexes[0]];
 		}
 	}
 }
