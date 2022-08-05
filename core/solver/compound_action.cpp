@@ -1,5 +1,7 @@
 #include "compound_action.h"
 
+#include <iostream>
+
 using namespace std;
 
 CompoundActionNode::CompoundActionNode(int next_child_index,
@@ -96,5 +98,4 @@ void CompoundAction::save(ofstream& save_file) {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		this->nodes[n_index]->save(save_file);
 	}
-	save_file.close();
 }

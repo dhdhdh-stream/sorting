@@ -16,7 +16,8 @@ public:
 
 	ActionDictionary* action_dictionary;
 
-	std::mutex mtx;
+	std::mutex nodes_mtx;
+	std::mutex display_mtx;
 
 	Solver();
 	~Solver();

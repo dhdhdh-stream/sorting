@@ -10,22 +10,30 @@ import time
 LEFT = 0
 STAY = 1
 RIGHT = 2
+COMPOUND = 3
 
-def pretty_print_label(action):
+NODE_STATE_NONE = 0
+NODE_STATE_NEW = 1
+NODE_STATE_NEW_CHILD = 2
+NODE_STATE_ON_PATH = 3
+NODE_STATE_RANDOM = 4
+NODE_STATE_GOOD_EXPLORE = 5
+NODE_STATE_RANDOM_EXPLORE = 6
+NODE_STATE_FORCED_EXPLORE = 7
+
+CHILD_PATH_STATE_NONE = 0
+CHILD_PATH_STATE_NEW = 1
+CHILD_PATH_STATE_PROCESSED = 2
+CHILD_PATH_STATE_SELECTED = 3
+CHILD_PATH_STATE_RANDOM = 4
+
+def pretty_print_action(action):
 	if action[1] == -1:
 		return ''
 
-	result = "{:.2f}".format(action[0])
-	result += "\n"
-	if action[1] == 0:
-		result += 'LEFT'
-	elif action[1] == 1:
-		result += 'STAY'
-	else:
-		result += 'RIGHT'
-	return result
+	if action[1] == COMPOUND:
+		return 'C ' + str(action[0])
 
-def pretty_print_action(action):
 	result = '('
 	result += "{:.2f}".format(action[0])
 	result += ', '
@@ -50,53 +58,94 @@ while True:
 	with open('../display.txt') as file:
 		num_nodes = int(file.readline())
 		for n_index in range(num_nodes):
-			is_explore_starting_point = -1
-			is_on_path = False
-			num_children = int(file.readline())
+			state = NODE_STATE_NONE
 			children_indexes = []
 			children_actions = []
-			paths_explored = []
+			process_information = []
+
+			num_children = int(file.readline())
 			for c_index in range(num_children):
 				child_index = int(file.readline())
 				children_indexes.append(child_index)
 				
-				write = float(file.readline())
 				move = int(file.readline())
-				children_actions.append([write, move])
+				if move == COMPOUND:
+					compound_index = int(file.readline())
+					children_actions.append([compound_index, move])
+				else:
+					write = float(file.readline())
+					children_actions.append([write, move])
 
-				paths_explored.append(False)
+				child_path_state = CHILD_PATH_STATE_NONE
+				predicted_score = 0.0
+				predicted_misguess = 0.0
+				process_information.append(
+					[child_path_state,
+					 predicted_score,
+					 predicted_misguess])
 
-			explore_state = file.readline().strip()
+			average_score = file.readline().strip()
 
-			nodes.append([is_explore_starting_point,
-						  is_on_path,
+			think = 0.0
+			uncertainty = 0.0
+
+			nodes.append([state,
 						  children_indexes,
 						  children_actions,
-						  paths_explored,
-						  explore_state])
+						  process_information,
+						  average_score,
+						  think,
+						  uncertainty])
 
-		underlying_world_size = int(file.readline())
-		underlying_world = []
-		for _ in range(underlying_world_size):
-			underlying_world.append(float(file.readline()))
+		while True:
+			curr_node_index = int(file.readline())
+			if curr_node_index == 0:
+				break
+			elif curr_node_index == -1:
+				break
 
-		last_node_index = 1;
-		chosen_paths_size = int(file.readline())
-		for _ in range(chosen_paths_size):
-			chosen_path = file.readline().strip().split(',')
-			start = int(chosen_path[0])
-			child_index = int(chosen_path[1])
-			nodes[start][1] = True
-			nodes[start][4][child_index] = True
-			last_node_index = nodes[start][2][child_index]
-		nodes[last_node_index][1] = True
+			next_line = file.readline().strip()
+			if next_line == 'new_node':
+				nodes[curr_node_index][0] = NODE_STATE_NEW
+				nodes[curr_node_index][3][0][0] = CHILD_PATH_STATE_NEW
+				continue
+			elif next_line == 'new_child':
+				child_index = int(file.readline())
 
-		explore_status = file.readline().strip()
+				nodes[curr_node_index][0] = NODE_STATE_NEW_CHILD
+				nodes[curr_node_index][3][child_index][0] = CHILD_PATH_STATE_NEW
+				continue
+			elif next_line == 'random':
+				child_index = int(file.readline())
 
-		if explore_status == 'no_explore':
-			nodes[last_node_index][4][0] = True
-		else:
-			nodes[last_node_index][0] = int(explore_status.split('_')[1])
+				nodes[curr_node_index][0] = NODE_STATE_RANDOM
+				nodes[curr_node_index][3][child_index][0] = CHILD_PATH_STATE_RANDOM
+				continue
+			
+			think = float(next_line)
+			nodes[curr_node_index][5] = think
+			uncertainty = float(file.readline())
+			nodes[curr_node_index][6] = uncertainty
+
+			next_line = file.readline().strip()
+			if next_line == 'good_explore':
+				nodes[curr_node_index][0] = NODE_STATE_GOOD_EXPLORE
+			elif next_line == 'random_explore':
+				nodes[curr_node_index][0] = NODE_STATE_RANDOM_EXPLORE
+			elif next_line == 'forced_explore':
+				nodes[curr_node_index][0] = NODE_STATE_FORCED_EXPLORE
+			else:
+				nodes[curr_node_index][0] = NODE_STATE_ON_PATH
+				for c_index in range(len(nodes[curr_node_index][1])):
+					predicted_score = float(file.readline())
+					predicted_misguess = float(file.readline())
+					nodes[curr_node_index][3][c_index] = [
+						CHILD_PATH_STATE_PROCESSED,
+						predicted_score,
+						predicted_misguess]
+
+				selected_index = int(file.readline())
+				nodes[curr_node_index][3][selected_index][0] = CHILD_PATH_STATE_SELECTED
 
 		action_sequence = []
 		action_sequence_size = int(file.readline())
@@ -105,35 +154,69 @@ while True:
 			move = int(file.readline())
 			action_sequence.append([write, move])
 
+		underlying_world_size = int(file.readline())
+		underlying_world = []
+		for _ in range(underlying_world_size):
+			underlying_world.append(float(file.readline()))
+
 	target_result = underlying_world.copy()
 	target_result.sort()
 
-	if explore_status == 'no_explore':
-		halt_node = pydot.Node(0, label='HALT', color='green')
-	else:
-		halt_node = pydot.Node(0, label='HALT')
+	halt_node = pydot.Node(0, label='HALT')
 	graph.add_node(halt_node)
 	
 	for n_index in range(1, len(nodes)):
-		label = str(nodes[n_index][5])
-		color = 'black'
-		if nodes[n_index][0] == 0:
-			color = 'red'
-		elif nodes[n_index][0] != -1:
-			color = 'blue'
-		elif nodes[n_index][1]:
+		if nodes[n_index][0] == NODE_STATE_NONE:
+			label = ''
+			color = 'black'
+		elif nodes[n_index][0] == NODE_STATE_NEW:
+			label = 'new'
 			color = 'green'
-		# node = pydot.Node(n_index, label=label, color=color)
-		node = pydot.Node(n_index, label='', color=color)
+		elif nodes[n_index][0] == NODE_STATE_NEW_CHILD:
+			label = 'A: ' + str(nodes[n_index][4])
+			color = 'green'
+		elif nodes[n_index][0] == NODE_STATE_RANDOM:
+			label = 'A: ' + str(nodes[n_index][4])
+			color = 'orange'
+		elif nodes[n_index][0] == NODE_STATE_ON_PATH:
+			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			color = 'green'
+		elif nodes[n_index][0] == NODE_STATE_GOOD_EXPLORE:
+			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			color = 'blue'
+		elif nodes[n_index][0] == NODE_STATE_RANDOM_EXPLORE:
+			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			color = 'purple'
+		elif nodes[n_index][0] == NODE_STATE_FORCED_EXPLORE:
+			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			color = 'grey'
+
+		node = pydot.Node(n_index, label=label, color=color)
 		graph.add_node(node)
 
 	for n_index in range(1, len(nodes)):
-		for c_index in range(len(nodes[n_index][2])):
-			label = pretty_print_label(nodes[n_index][3][c_index])
-			if (nodes[n_index][4][c_index] == True):
-				edge = pydot.Edge(n_index, nodes[n_index][2][c_index], label=label, color='green')
+		for c_index in range(len(nodes[n_index][1])):
+			if nodes[n_index][3][c_index][0] == CHILD_PATH_STATE_NONE:
+				label = pretty_print_action(nodes[n_index][2][c_index])
+				color = 'black'
+			elif nodes[n_index][3][c_index][0] == CHILD_PATH_STATE_NEW:
+				label = pretty_print_action(nodes[n_index][2][c_index])
+				color = 'green'
+			elif nodes[n_index][3][c_index][0] == CHILD_PATH_STATE_RANDOM:
+				label = pretty_print_action(nodes[n_index][2][c_index])
+				color = 'orange'
+			elif nodes[n_index][3][c_index][0] == CHILD_PATH_STATE_PROCESSED:
+				label = pretty_print_action(nodes[n_index][2][c_index])
+				label = label + '\n' + 'S: ' + str(nodes[n_index][3][c_index][1]) \
+					+ '\n' + 'M: ' + str(nodes[n_index][3][c_index][2])
+				color = 'black'
 			else:
-				edge = pydot.Edge(n_index, nodes[n_index][2][c_index], label=label)
+				label = pretty_print_action(nodes[n_index][2][c_index])
+				label = label + '\n' + 'S: ' + str(nodes[n_index][3][c_index][1]) \
+					+ '\n' + 'M: ' + str(nodes[n_index][3][c_index][2])
+				color = 'green'
+
+			edge = pydot.Edge(n_index, nodes[n_index][1][c_index], label=label, color=color)
 			graph.add_edge(edge)
 
 	graph.write_png('solution.png')
@@ -237,7 +320,7 @@ while True:
 		plt.gca().set_aspect('equal')
 		fig.canvas.draw()
 		fig.canvas.flush_events()
-		time.sleep(1.5)
+		time.sleep(2)
 
 		last_pointer = pointer
 		if pointer >= 0 and pointer < len(underlying_world):
@@ -313,4 +396,4 @@ while True:
 	plt.gca().set_aspect('equal')
 	fig.canvas.draw()
 	fig.canvas.flush_events()
-	time.sleep(3.0)
+	time.sleep(8.0)

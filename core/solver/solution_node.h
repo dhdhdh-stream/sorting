@@ -27,9 +27,7 @@ public:
 	std::vector<std::string> children_score_network_names;
 	std::vector<Network*> children_information_networks;
 	std::vector<std::string> children_information_network_names;
-	std::vector<int> children_counts;
 
-	int count;
 	double average_score;
 	Network* score_network;
 	std::string score_network_name;
@@ -74,7 +72,10 @@ public:
 				 std::vector<double>& guesses,
 				 int& explore_status,
 				 int& explore_id,
-				 int& explore_candidate_iter);
+				 int& explore_candidate_iter,
+				 bool& force_eval,
+				 bool save_for_display,
+				 std::ofstream& display_file);
 	void update(std::vector<double> observations,
 				int chosen_path,
 				double score,

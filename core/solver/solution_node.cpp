@@ -13,12 +13,12 @@ SolutionNode::SolutionNode(Solver* solver,
 	this->node_index = node_index;
 	this->path_length = path_length;
 
-	this->count = 0;
 	this->average_score = 0.5;
-	this->score_network = new Network(this->path_length, 100, 1);
+	int network_size = 2*this->path_length*(3+this->path_length);
+	this->score_network = new Network(this->path_length, network_size, 1);
 	this->score_network_name = "../saves/nns/sns_" + \
 		to_string(this->node_index) + to_string(time(NULL)) + ".txt";
-	this->certainty_network = new Network(this->path_length, 100, 1);
+	this->certainty_network = new Network(this->path_length, network_size, 1);
 	this->certainty_network_name = "../saves/nns/snc_" + \
 		to_string(this->node_index) + to_string(time(NULL)) + ".txt";
 
@@ -87,15 +87,7 @@ SolutionNode::SolutionNode(Solver* solver,
 		Network* child_information_network = new Network(child_information_network_save_file);
 		child_information_network_save_file.close();
 		this->children_information_networks.push_back(child_information_network);
-
-		string count_line;
-		getline(save_file, count_line);
-		this->children_counts.push_back(stoi(count_line));
 	}
-
-	string count_line;
-	getline(save_file, count_line);
-	this->count = stoi(count_line);
 
 	string average_score_line;
 	getline(save_file, average_score_line);
@@ -150,19 +142,19 @@ void SolutionNode::add_child(int child_index,
 	this->children_indexes.push_back(child_index);
 	this->children_actions.push_back(child_action);
 	
-	Network* child_score_network = new Network(this->path_length, 100, 1);
+	int network_size = 2*this->path_length*(3+this->path_length);
+
+	Network* child_score_network = new Network(this->path_length, network_size, 1);
 	this->children_score_networks.push_back(child_score_network);
 	string child_score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
 		+ "_" + to_string(this->children_indexes.size()-1) + "_" + to_string(time(NULL)) + ".txt";
 	this->children_score_network_names.push_back(child_score_network_name);
 
-	Network* child_information_network = new Network(this->path_length, 100, 1);
+	Network* child_information_network = new Network(this->path_length, network_size, 1);
 	this->children_information_networks.push_back(child_information_network);
 	string child_information_network_name = "../saves/nns/info_" + to_string(this->node_index) \
 		+ "_" + to_string(this->children_indexes.size()-1) + "_" + to_string(time(NULL)) + ".txt";
 	this->children_information_network_names.push_back(child_information_network_name);
-
-	this->children_counts.push_back(0);
 
 	this->children_mtx.unlock();
 }
@@ -172,7 +164,14 @@ void SolutionNode::process(vector<double> observations,
 						   vector<double>& guesses,
 						   int& explore_status,
 						   int& explore_id,
-						   int& explore_candidate_iter) {
+						   int& explore_candidate_iter,
+						   bool& force_eval,
+						   bool save_for_display,
+						   ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
+
 	this->score_network->mtx.lock();
 	this->score_network->activate(observations);
 	double think = this->score_network->val_val.acti_vals[0];
@@ -181,6 +180,12 @@ void SolutionNode::process(vector<double> observations,
 	guesses.push_back(think);
 
 	if (this->score_network->epoch < 10000) {
+		if (save_for_display) {
+			display_file << "new_node" << endl;
+		}
+
+		force_eval = true;
+
 		// shouldn't have multiple children yet
 		chosen_path = 0;
 		explore_status = -1;
@@ -189,47 +194,27 @@ void SolutionNode::process(vector<double> observations,
 		return;
 	}
 
-	this->certainty_network->mtx.lock();
-	this->certainty_network->activate(observations);
-	double uncertainty = this->certainty_network->val_val.acti_vals[0];
-	this->certainty_network->mtx.unlock();
-
-	if (think+uncertainty < this->average_score) {
-		if (rand()%2 == 0) {
-			this->explore_mtx.lock();
-			chosen_path = -1;
-			explore_status = this->explore_state;
-			explore_id = this->current_explore_id;
-			explore_candidate_iter = this->candidate_iter;
-			this->explore_mtx.unlock();
-			return;
-		}
-	} else {
-		if (rand()%10 == 0) {
-			this->explore_mtx.lock();
-			chosen_path = -1;
-			explore_status = this->explore_state;
-			explore_id = this->current_explore_id;
-			explore_candidate_iter = this->candidate_iter;
-			this->explore_mtx.unlock();
-			return;
-		}
-	}
-
 	this->children_mtx.lock();
 	int num_children = (int)this->children_indexes.size();
 	this->children_mtx.unlock();
-	
+
 	// look for new child
 	int new_index = -1;
 	for (int c_index = 0; c_index < num_children; c_index++) {
 		Network* child_score_network = this->children_score_networks[c_index];
-		if (child_score_network->epoch < 10000) {
+		if (child_score_network->epoch < 20000) {
 			new_index = c_index;
 			break;
 		}
 	}
 	if (new_index != -1) {
+		if (save_for_display) {
+			display_file << "new_child" << endl;
+			display_file << new_index << endl;
+		}
+
+		force_eval = true;
+
 		chosen_path = new_index;
 		explore_status = -1;
 		explore_id = -1;
@@ -237,9 +222,67 @@ void SolutionNode::process(vector<double> observations,
 		return;
 	}
 
-	// look for best information
-	double best_uct = numeric_limits<double>::lowest();
+	if (rand()%20 == 0) {
+		chosen_path = rand()%(int)num_children;
+		explore_status = -1;
+		explore_id = -1;
+		explore_candidate_iter = -1;
+
+		if (save_for_display) {
+			display_file << "random" << endl;
+			display_file << chosen_path << endl;
+		}
+
+		return;
+	}
+
+	this->certainty_network->mtx.lock();
+	this->certainty_network->activate(observations);
+	double uncertainty = 1.0 - this->certainty_network->val_val.acti_vals[0];
+	this->certainty_network->mtx.unlock();
+
+	if (save_for_display) {
+		display_file << think << endl;
+		display_file << uncertainty << endl;
+	}
+
+	if (!force_eval) {
+		if (think+uncertainty < this->average_score) {
+			// TODO: should compare if a child has even more certainty
+			if (rand()%2 == 0) {
+				if (save_for_display) {
+					display_file << "good_explore" << endl;
+				}
+
+				this->explore_mtx.lock();
+				chosen_path = -1;
+				explore_status = this->explore_state;
+				explore_id = this->current_explore_id;
+				explore_candidate_iter = this->candidate_iter;
+				this->explore_mtx.unlock();
+				return;
+			}
+		} else {
+			if (rand()%10 == 0) {
+				if (save_for_display) {
+					display_file << "random_explore" << endl;
+				}
+
+				this->explore_mtx.lock();
+				chosen_path = -1;
+				explore_status = this->explore_state;
+				explore_id = this->current_explore_id;
+				explore_candidate_iter = this->candidate_iter;
+				this->explore_mtx.unlock();
+				return;
+			}
+		}
+	}
+
+	double best_information = numeric_limits<double>::lowest();
 	int best_index = -1;
+	vector<double> predicted_scores;
+	vector<double> predicted_misguesses;
 	for (int c_index = 0; c_index < num_children; c_index++) {
 		Network* child_score_network = this->children_score_networks[c_index];
 		child_score_network->mtx.lock();
@@ -250,17 +293,44 @@ void SolutionNode::process(vector<double> observations,
 		Network* child_information_network = this->children_information_networks[c_index];
 		child_information_network->mtx.lock();
 		child_information_network->activate(observations);
-		double predicted_misguess = child_information_network->val_val.acti_vals[0];
+		double predicted_misguess = 1.0 - child_information_network->val_val.acti_vals[0];
 		child_information_network->mtx.unlock();
 
 		double predicted_information = predicted_score - predicted_misguess;
 
-		double uct = predicted_information + 1.414*sqrt(log(this->count+1)/(this->children_counts[c_index]+1));
+		if (save_for_display) {
+			predicted_scores.push_back(predicted_score);
+			predicted_misguesses.push_back(predicted_misguess);
+		}
 
-		if (uct > best_uct) {
-			best_uct = uct;
+		if (predicted_information > best_information) {
+			best_information = predicted_information;
 			best_index = c_index;
 		}
+	}
+
+	// explore if will simply hit halt again
+	if (!force_eval && this->children_indexes[best_index] == 0) {
+		if (save_for_display) {
+			display_file << "forced_explore" << endl;
+		}
+
+		this->explore_mtx.lock();
+		chosen_path = -1;
+		explore_status = this->explore_state;
+		explore_id = this->current_explore_id;
+		explore_candidate_iter = this->candidate_iter;
+		this->explore_mtx.unlock();
+		return;
+	}
+
+	if (save_for_display) {
+		display_file << "process" << endl;
+		for (int c_index = 0; c_index < num_children; c_index++) {
+			display_file << predicted_scores[c_index] << endl;
+			display_file << predicted_misguesses[c_index] << endl;
+		}
+		display_file << best_index << endl;
 	}
 
 	chosen_path = best_index;
@@ -287,7 +357,8 @@ void SolutionNode::update_self(vector<double> observations,
 	this->certainty_network->mtx.lock();
 	this->certainty_network->activate(observations);
 	vector<double> certainty_errors;
-	certainty_errors.push_back(abs(score_error) - this->certainty_network->val_val.acti_vals[0]);
+	double certainty_target = 1.0 - abs(score_error);
+	certainty_errors.push_back(certainty_target - this->certainty_network->val_val.acti_vals[0]);
 	this->certainty_network->backprop(certainty_errors);
 	this->certainty_network->mtx.unlock();
 }
@@ -305,18 +376,14 @@ void SolutionNode::update(vector<double> observations,
 	vector<double> score_errors;
 	score_errors.push_back(score - child_score_network->val_val.acti_vals[0]);
 	child_score_network->backprop(score_errors);
-	
-	// share lock
-	this->count++;
-	this->children_counts[chosen_path]++;
-
 	child_score_network->mtx.unlock();
 
 	Network* child_information_network = this->children_information_networks[chosen_path];
 	child_information_network->mtx.lock();
 	child_information_network->activate(observations);
 	vector<double> information_errors;
-	information_errors.push_back(misguess - child_information_network->val_val.acti_vals[0]);
+	double information_target = 1.0 - misguess;
+	information_errors.push_back(information_target - child_information_network->val_val.acti_vals[0]);
 	child_information_network->backprop(information_errors);
 	child_information_network->mtx.unlock();
 }
@@ -344,10 +411,9 @@ void SolutionNode::update_explore(vector<double> observations,
 				this->explore_state = EXPLORE_STATE_LEARN_SCORES;
 				this->measure_average_average_score /= 100000;
 
-				this->learn_scores_network = new Network(
-					this->path_length+(int)this->current_candidate.size(),
-					100,
-					1);
+				int input_size = this->path_length+(int)this->current_candidate.size();
+				int network_size = 2*input_size*(3+input_size);
+				this->learn_scores_network = new Network(input_size, network_size, 1);
 			}
 		} else if (this->explore_state == EXPLORE_STATE_LEARN_SCORES) {
 			this->learn_scores_network->activate(full_observations);
@@ -389,6 +455,7 @@ void SolutionNode::update_explore(vector<double> observations,
 					this->best_candidate = this->current_candidate;
 				}
 
+				cout << this->node_index << endl;
 				for (int a_index = 0; a_index < (int)this->current_candidate.size(); a_index++) {
 					cout << this->current_candidate[a_index].to_string() << endl;
 				}
@@ -463,11 +530,8 @@ void SolutionNode::save(ofstream& save_file) {
 		child_information_network_save_file.open(this->children_information_network_names[c_index]);
 		this->children_information_networks[c_index]->save(child_information_network_save_file);
 		child_information_network_save_file.close();
-
-		save_file << this->children_counts[c_index] << endl;
 	}
 
-	save_file << this->count << endl;
 	save_file << this->average_score << endl;
 
 	save_file << this->score_network_name << endl;
@@ -498,5 +562,5 @@ void SolutionNode::save_for_display(ofstream& save_file) {
 			save_file << this->children_actions[c_index].write << endl;
 		}
 	}
-	save_file << this->explore_state << endl;
+	save_file << this->average_score << endl;
 }

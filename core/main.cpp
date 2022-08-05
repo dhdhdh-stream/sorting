@@ -49,15 +49,17 @@ int main(int argc, char* argv[]) {
 	counter = 1;
 	// start = chrono::steady_clock::now();
 
-	std::thread threads[10];
+	run_solver();
 
-	for (int i = 0; i < 10; i++) {
-		threads[i] = thread(run_solver);
-	}
+	// std::thread threads[10];
 
-	for (auto& th : threads) {
-		th.join();
-	}
+	// for (int i = 0; i < 10; i++) {
+	// 	threads[i] = thread(run_solver);
+	// }
+
+	// for (auto& th : threads) {
+	// 	th.join();
+	// }
 
 	delete solver;
 

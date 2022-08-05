@@ -1,6 +1,7 @@
 #ifndef COMPOUND_ACTION_H
 #define COMPOUND_ACTION_H
 
+#include <fstream>
 #include <vector>
 
 #include "action.h"

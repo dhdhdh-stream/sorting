@@ -47,7 +47,7 @@ void Problem::perform_action(Action action,
 			}
 		}
 
-		observations.push_back(observation);
+		observations.push_back(get_observation());
 	} else {
 		CompoundAction* compound_action = action_dictionary->actions[action.compound_index];
 

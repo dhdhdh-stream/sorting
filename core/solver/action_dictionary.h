@@ -1,6 +1,7 @@
 #ifndef ACTION_DICTIONARY_H
 #define ACTION_DICTIONARY_H
 
+#include <fstream>
 #include <mutex>
 #include <vector>
 
@@ -26,6 +27,8 @@ public:
 	void add_action(std::vector<Action> action_sequence);
 
 	int calculate_action_path_length(Action a);
+	void convert_to_raw_actions(Action a,
+								std::vector<Action>& raw_actions);
 
 	void save(std::ofstream& save_file);
 };
