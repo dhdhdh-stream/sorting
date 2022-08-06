@@ -411,7 +411,11 @@ void SolutionNode::update_explore(vector<double> observations,
 				this->explore_state = EXPLORE_STATE_LEARN_SCORES;
 				this->measure_average_average_score /= 100000;
 
-				int input_size = this->path_length+(int)this->current_candidate.size();
+				int input_size = this->path_length;
+				for (int a_index = 0; a_index < (int)this->current_candidate.size(); a_index++) {
+					input_size += this->solver->action_dictionary->calculate_action_path_length(
+						this->current_candidate[a_index]);
+				}
 				int network_size = 2*input_size*(3+input_size);
 				this->learn_scores_network = new Network(input_size, network_size, 1);
 			}

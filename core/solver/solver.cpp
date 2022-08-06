@@ -20,7 +20,7 @@ Solver::Solver() {
 	// this->action_dictionary = new ActionDictionary();
 
 	ifstream save_file;
-	save_file.open("../saves/1659649612.txt");
+	save_file.open("../saves/1659680758.txt");
 	string num_nodes_line;
 	
 	getline(save_file, num_nodes_line);
