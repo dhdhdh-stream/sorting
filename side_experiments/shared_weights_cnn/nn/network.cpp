@@ -22,9 +22,6 @@ Network::Network(int input_size,
 				 int layer_size,
 				 int output_size) {
 	construct(input_size, layer_size, output_size);
-
-	this->epoch = 0;
-	this->iter = 0;
 }
 
 Network::Network(ifstream& input_file) {
@@ -44,11 +41,6 @@ Network::Network(ifstream& input_file) {
 
 	this->val_1st->load_weights_from(input_file);
 	this->val_val->load_weights_from(input_file);
-
-	string epoch_line;
-	getline(input_file, epoch_line);
-	this->epoch = stoi(epoch_line);
-	this->iter = 0;
 }
 
 Network::~Network() {
@@ -83,27 +75,6 @@ void Network::backprop(vector<double>& errors) {
 	this->val_1st->backprop();
 }
 
-void Network::increment() {
-	if (this->iter == 100) {
-		double max_update = 0.0;
-		calc_max_update(max_update,
-						0.001,
-						0.2);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
-		}
-		update_weights(factor,
-					   0.001,
-					   0.2);
-
-		this->epoch++;
-		this->iter = 0;
-	} else {
-		this->iter++;
-	}
-}
-
 void Network::calc_max_update(double& max_update,
 							  double learning_rate,
 							  double momentum) {
@@ -132,7 +103,6 @@ void Network::save(ofstream& output_file) {
 	output_file << this->val_val->acti_vals.size() << endl;
 	this->val_1st->save_weights(output_file);
 	this->val_val->save_weights(output_file);
-	output_file << this->epoch << endl;
 }
 
 NetworkHistory::NetworkHistory(Network* network) {

@@ -11,17 +11,21 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main eval_sort
+all: learn_sort learn_to_halt test_limits
 
-main: ${OBJECTS} main.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
+learn_sort: ${OBJECTS} learn_sort.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} learn_sort.o -o learn_sort ${LIBS}
 
-eval_sort: ${OBJECTS} eval_sort.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} eval_sort.o -o eval_sort ${LIBS}
+learn_to_halt: ${OBJECTS} learn_to_halt.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} learn_to_halt.o -o learn_to_halt ${LIBS}
 
--include ${DEPENDS} main.d eval_sort.d
+test_limits: ${OBJECTS} test_limits.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} test_limits.o -o test_limits ${LIBS}
+
+-include ${DEPENDS} learn_sort.d learn_to_halt.d test_limits.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main \
-	eval_sort.o eval_sort.d eval_sort
+	learn_sort.o learn_sort.d learn_sort \
+	learn_to_halt.o learn_to_halt.d learn_to_halt \
+	test_limits.o test_limits.d test_limits

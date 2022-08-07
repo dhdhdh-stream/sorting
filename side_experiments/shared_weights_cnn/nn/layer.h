@@ -28,22 +28,33 @@ public:
 	~Layer();
 	
 	void setup_weights_full();
+
+	void copy_weights_from(Layer* original);
+	void load_weights_from(std::ifstream& input_file);
+
+	void activate();
+	void backprop();
+	void calc_max_update(double& max_update_size,
+						 double learning_rate,
+						 double momentum);
+	void update_weights(double factor,
+						double learning_rate,
+						double momentum);
+
+	void save_weights(std::ofstream& output_file);
+
 	void collapse_input(int input_index,
 						Layer* new_collapse_layer);
 	void fold_input(Layer* new_fold_layer);	// always folds layer[0] and layer[1]
 
-	void copy_weights_from(Layer* original);
-
-	void activate();
-	void backprop();
-	void calc_max_update(int layer_index,
-						 double& max_update_size,
-						 double learning_rate,
-						 double momentum);
-	void update_weights(int layer_index,
-						double factor,
-						double learning_rate,
-						double momentum);
+	void collapse_calc_max_update(int layer_index,
+								  double& max_update_size,
+								  double learning_rate,
+								  double momentum);
+	void collapse_update_weights(int layer_index,
+								 double factor,
+								 double learning_rate,
+								 double momentum);
 };
 
 #endif /* LAYER_H */

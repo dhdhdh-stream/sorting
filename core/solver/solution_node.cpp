@@ -174,7 +174,7 @@ void SolutionNode::process(vector<double> observations,
 
 	this->score_network->mtx.lock();
 	this->score_network->activate(observations);
-	double think = this->score_network->val_val.acti_vals[0];
+	double think = this->score_network->val_val->acti_vals[0];
 	this->score_network->mtx.unlock();
 
 	guesses.push_back(think);
@@ -238,7 +238,7 @@ void SolutionNode::process(vector<double> observations,
 
 	this->certainty_network->mtx.lock();
 	this->certainty_network->activate(observations);
-	double uncertainty = 1.0 - this->certainty_network->val_val.acti_vals[0];
+	double uncertainty = 1.0 - this->certainty_network->val_val->acti_vals[0];
 	this->certainty_network->mtx.unlock();
 
 	if (save_for_display) {
@@ -287,13 +287,13 @@ void SolutionNode::process(vector<double> observations,
 		Network* child_score_network = this->children_score_networks[c_index];
 		child_score_network->mtx.lock();
 		child_score_network->activate(observations);
-		double predicted_score = child_score_network->val_val.acti_vals[0];
+		double predicted_score = child_score_network->val_val->acti_vals[0];
 		child_score_network->mtx.unlock();
 		
 		Network* child_information_network = this->children_information_networks[c_index];
 		child_information_network->mtx.lock();
 		child_information_network->activate(observations);
-		double predicted_misguess = 1.0 - child_information_network->val_val.acti_vals[0];
+		double predicted_misguess = 1.0 - child_information_network->val_val->acti_vals[0];
 		child_information_network->mtx.unlock();
 
 		double predicted_information = predicted_score - predicted_misguess;
@@ -345,9 +345,10 @@ void SolutionNode::update_self(vector<double> observations,
 	this->score_network->mtx.lock();
 	this->score_network->activate(observations);
 	vector<double> score_errors;
-	double score_error = score - this->score_network->val_val.acti_vals[0];
+	double score_error = score - this->score_network->val_val->acti_vals[0];
 	score_errors.push_back(score_error);
 	this->score_network->backprop(score_errors);
+	this->score_network->increment();
 
 	// share lock
 	this->average_score = 0.99999*this->average_score + 0.00001*score;
@@ -358,8 +359,9 @@ void SolutionNode::update_self(vector<double> observations,
 	this->certainty_network->activate(observations);
 	vector<double> certainty_errors;
 	double certainty_target = 1.0 - abs(score_error);
-	certainty_errors.push_back(certainty_target - this->certainty_network->val_val.acti_vals[0]);
+	certainty_errors.push_back(certainty_target - this->certainty_network->val_val->acti_vals[0]);
 	this->certainty_network->backprop(certainty_errors);
+	this->certainty_network->increment();
 	this->certainty_network->mtx.unlock();
 }
 
@@ -374,8 +376,9 @@ void SolutionNode::update(vector<double> observations,
 	child_score_network->mtx.lock();
 	child_score_network->activate(observations);
 	vector<double> score_errors;
-	score_errors.push_back(score - child_score_network->val_val.acti_vals[0]);
+	score_errors.push_back(score - child_score_network->val_val->acti_vals[0]);
 	child_score_network->backprop(score_errors);
+	child_score_network->increment();
 	child_score_network->mtx.unlock();
 
 	Network* child_information_network = this->children_information_networks[chosen_path];
@@ -383,8 +386,9 @@ void SolutionNode::update(vector<double> observations,
 	child_information_network->activate(observations);
 	vector<double> information_errors;
 	double information_target = 1.0 - misguess;
-	information_errors.push_back(information_target - child_information_network->val_val.acti_vals[0]);
+	information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
 	child_information_network->backprop(information_errors);
+	child_information_network->increment();
 	child_information_network->mtx.unlock();
 }
 
@@ -422,8 +426,9 @@ void SolutionNode::update_explore(vector<double> observations,
 		} else if (this->explore_state == EXPLORE_STATE_LEARN_SCORES) {
 			this->learn_scores_network->activate(full_observations);
 			vector<double> errors;
-			errors.push_back(score - this->learn_scores_network->val_val.acti_vals[0]);
+			errors.push_back(score - this->learn_scores_network->val_val->acti_vals[0]);
 			this->learn_scores_network->backprop(errors);
+			this->learn_scores_network->increment();
 
 			if (this->learn_scores_network->epoch == 10000) {
 				this->explore_state = EXPLORE_STATE_MEASURE_INFORMATION;
@@ -433,7 +438,7 @@ void SolutionNode::update_explore(vector<double> observations,
 			}
 		} else if (this->explore_state == EXPLORE_STATE_MEASURE_INFORMATION) {
 			this->learn_scores_network->activate(full_observations);
-			double think = this->learn_scores_network->val_val.acti_vals[0];
+			double think = this->learn_scores_network->val_val->acti_vals[0];
 
 			if (score > this->measure_average_average_score) {
 				if (think > this->measure_average_average_score) {

@@ -6,7 +6,8 @@
 using namespace std;
 
 Problem::Problem() {
-	int random_length = 2+rand()%9;
+	// int random_length = 2+rand()%9;
+	int random_length = 2+rand()%5;
 	for (int i = 0; i < random_length; i++) {
 		this->initial_world.push_back(rand()%11);
 	}
