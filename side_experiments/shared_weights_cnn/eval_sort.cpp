@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <thread>
 #include <random>
 
@@ -29,20 +30,13 @@ void one_pass(CollapseNetwork& network,
 
 		for (int iter_index = 0; iter_index < 100; iter_index++) {
 			Problem p;
+			int iterations = (int)p.initial_world.size();
+
 			if (epoch_index%1000 == 0 && iter_index == 0) {
 				p.print();
 			}
 
 			vector<double> global_vals;
-			global_vals.push_back(p.get_observation());
-			p.perform_action(a);
-			global_vals.push_back(p.get_observation());
-			p.perform_action(a);
-
-			int iterations = 1+rand()%4;
-			if (epoch_index%1000 == 0 && iter_index == 0) {
-				cout << "iterations: " << iterations << endl;
-			}
 
 			vector<vector<double>> time_vals;
 			for (int iter_index = 0; iter_index < iterations; iter_index++) {
@@ -55,11 +49,13 @@ void one_pass(CollapseNetwork& network,
 				time_val.push_back(randnorm());
 				time_val.push_back(randnorm());
 				time_vals.push_back(time_val);
-				
+
 				p.perform_action(a);
 			}
 
-			network.activate(time_vals, global_vals);
+			network.activate(iterations,
+							 time_vals,
+							 global_vals);
 
 			double result = network.output->acti_vals[0];
 			if (epoch_index%1000 == 0 && iter_index == 0) {
@@ -108,38 +104,48 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	vector<int> time_sizes;
-	time_sizes.push_back(5);
-	time_sizes.push_back(5);
-	time_sizes.push_back(5);
-	time_sizes.push_back(5);
-	CollapseNetwork network(time_sizes, 2);
+	CollapseNetwork network(5, 6, 0);
 
-	one_pass(network, "flat", 100000);
-	network.next_step(1);
+	network.collapse_state_size = 1;
+	network.fold_state_size = 2;
 
-	one_pass(network, "collapse #0", 20000);
-	network.next_step(1);
+	one_pass(network, "flat", 20000);
+	network.next_step();
 
-	one_pass(network, "collapse #1", 20000);
-	network.next_step(1);
+	one_pass(network, "collapse #0", 10000);
+	network.next_step();
 
-	one_pass(network, "collapse #2", 20000);
-	network.next_step(1);
+	one_pass(network, "collapse #1", 10000);
+	network.next_step();
 
-	one_pass(network, "collapse #3", 20000);
+	one_pass(network, "collapse #2", 10000);
+	network.next_step();
+
+	one_pass(network, "collapse #3", 10000);
+	network.next_step();
+
+	one_pass(network, "collapse #4", 10000);
+	network.next_step();
+
+	one_pass(network, "collapse #5", 10000);
+	network.next_step();
 	
-	CollapseNetwork network_copy_1(&network);
-	network_copy_1.next_step(1);
-	one_pass(network_copy_1, "fold #0 w/ 1", 40000);
+	one_pass(network, "fold #0", 20000);
+	network.next_step();
 
-	CollapseNetwork network_copy_2(&network);
-	network_copy_2.next_step(2);
-	one_pass(network_copy_2, "fold #0 w/ 2", 40000);
+	one_pass(network, "fold #1", 20000);
+	network.next_step();
 
-	CollapseNetwork network_copy_3(&network);
-	network_copy_3.next_step(3);
-	one_pass(network_copy_3, "fold #0 w/ 3", 40000);
+	one_pass(network, "fold #2", 20000);
+	network.next_step();
+
+	one_pass(network, "fold #3", 20000);
+	network.next_step();
+
+	one_pass(network, "fold #4", 20000);
+	network.next_step();
+
+	one_pass(network, "fold #5", 20000);
 
 	cout << "Done" << endl;
 }
