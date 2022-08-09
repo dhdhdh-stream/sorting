@@ -53,6 +53,10 @@ public:
 	double measure_information_think_good_and_good;
 	double measure_information_think_good_but_bad;
 
+
+	// Loop* loop_candidate;
+
+
 	std::mutex children_mtx;
 	std::mutex explore_mtx;
 

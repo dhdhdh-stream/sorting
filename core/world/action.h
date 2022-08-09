@@ -8,6 +8,7 @@ const int STAY = 1;
 const int RIGHT = 2;
 
 const int COMPOUND = 3;
+const int LOOP = 4;
 
 class Action {
 public:

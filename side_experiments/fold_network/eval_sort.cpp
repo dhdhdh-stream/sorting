@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 	one_pass(network, "fold #5", 20000);
 	network.next_step();
 
-	one_pass(network, "clean", 10000);
+	one_pass(network, "clean", 20000);
 
 	cout << "Done" << endl;
 }

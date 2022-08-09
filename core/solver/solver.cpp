@@ -10,32 +10,32 @@
 using namespace std;
 
 Solver::Solver() {
-	// SolutionNode* halt_node = new SolutionNode(this, 0, -1);
-	// this->nodes.push_back(halt_node);
-	// SolutionNode* root_node = new SolutionNode(this, 1, 1);
-	// this->nodes.push_back(root_node);
-	// root_node->add_child(0, HALT);
-	// this->current_node_index = 2;
+	SolutionNode* halt_node = new SolutionNode(this, 0, -1);
+	this->nodes.push_back(halt_node);
+	SolutionNode* root_node = new SolutionNode(this, 1, 1);
+	this->nodes.push_back(root_node);
+	root_node->add_child(0, HALT);
+	this->current_node_index = 2;
 
-	// this->action_dictionary = new ActionDictionary();
+	this->action_dictionary = new ActionDictionary();
 
-	ifstream save_file;
-	save_file.open("../saves/1659805791.txt");
-	string num_nodes_line;
+	// ifstream save_file;
+	// save_file.open("../saves/1659805791.txt");
+	// string num_nodes_line;
 	
-	getline(save_file, num_nodes_line);
-	int num_nodes = stoi(num_nodes_line);
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		SolutionNode* node = new SolutionNode(this,
-											  n_index,
-											  save_file);
-		this->nodes.push_back(node);
-	}
-	this->current_node_index = num_nodes;
+	// getline(save_file, num_nodes_line);
+	// int num_nodes = stoi(num_nodes_line);
+	// for (int n_index = 0; n_index < num_nodes; n_index++) {
+	// 	SolutionNode* node = new SolutionNode(this,
+	// 										  n_index,
+	// 										  save_file);
+	// 	this->nodes.push_back(node);
+	// }
+	// this->current_node_index = num_nodes;
 
-	this->action_dictionary = new ActionDictionary(save_file);
+	// this->action_dictionary = new ActionDictionary(save_file);
 
-	save_file.close();
+	// save_file.close();
 }
 
 Solver::~Solver() {
