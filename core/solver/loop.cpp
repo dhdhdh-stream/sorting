@@ -4,11 +4,11 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "definitions.h"
+#include "utilities.h"
 
 using namespace std;
 
-Loop::Loop(int path_length,
-		   vector<Action> front,
+Loop::Loop(vector<Action> front,
 		   vector<Action> loop,
 		   vector<Action> back) {
 	loop_dictionary->counter_mtx.lock();
@@ -20,13 +20,13 @@ Loop::Loop(int path_length,
 	this->loop = loop;
 	this->back = back;
 
-	int front_size = path_length;
+	int front_size = 0;
 	for (int f_index = 0; f_index < (int)this->front.size(); f_index++) {
-		front_size += action_dictionary->calculate_action_path_length(this->front[f_index]);
+		front_size += calculate_action_path_length(this->front[f_index]);
 	}
 	this->time_size = 0;
 	for (int t_index = 0; t_index < (int)this->loop.size(); t_index++) {
-		this->time_size += action_dictionary->calculate_action_path_length(this->loop[t_index]);
+		this->time_size += calculate_action_path_length(this->loop[t_index]);
 	}
 
 	geometric_distribution<int> score_state_size_dist(0.3);
@@ -140,18 +140,17 @@ Loop::~Loop() {
 	delete this->halt_network;
 }
 
-void Loop::train(Problem& p,
-				 std::vector<double>& observations,
+void Loop::train(Problem* p,
 				 double& score,
 				 bool save_for_display,
 				 vector<Action>* raw_actions) {
+	vector<double> front_vals;
 	for (int f_index = 0; f_index < (int)this->front.size(); f_index++) {
-		p.perform_action(this->front[f_index],
-						 observations,
-						 save_for_display,
-						 raw_actions);
+		p->perform_action(this->front[f_index],
+						  &front_vals,
+						  save_for_display,
+						  raw_actions);
 	}
-	vector<double> front_vals(observations);
 
 	int iterations = rand()%6;
 
@@ -171,12 +170,12 @@ void Loop::train(Problem& p,
 			double predicted_score = this->score_network->val_val->acti_vals[this->score_state_size];
 
 			for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
-				p.perform_action(this->back[b_index],
-								 observations,
-								 save_for_display,
-								 raw_actions);
+				p->perform_action(this->back[b_index],
+								  NULL,
+								  save_for_display,
+								  raw_actions);
 			}
-			double score = p.score_result();
+			score = p->score_result();
 
 			vector<double> score_errors;
 			for (int s_index = 0; s_index < this->score_state_size; s_index++) {
@@ -208,10 +207,10 @@ void Loop::train(Problem& p,
 			for (int iter_index = 0; iter_index < iterations; iter_index++) {
 				vector<double> time_val;
 				for (int l_index = 0; l_index < (int)this->loop.size(); l_index++) {
-					p.perform_action(this->loop[l_index],
-									 time_val,
-									 save_for_display,
-									 raw_actions);
+					p->perform_action(this->loop[l_index],
+									  &time_val,
+									  save_for_display,
+									  raw_actions);
 				}
 
 				vector<double> score_inputs;
@@ -227,17 +226,15 @@ void Loop::train(Problem& p,
 				}
 				predicted_score = this->score_network->val_val->acti_vals[this->score_state_size];
 				this->score_network->mtx.unlock();
-
-				observations.insert(observations.begin(), time_val.begin(), time_val.end());
 			}
 
 			for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
-				p.perform_action(this->back[b_index],
-								 observations,
-								 save_for_display,
-								 raw_actions);
+				p->perform_action(this->back[b_index],
+								  NULL,
+								  save_for_display,
+								  raw_actions);
 			}
-			double score = p.score_result();
+			score = p->score_result();
 
 			this->score_network->mtx.lock();
 			double score_state_errors[this->score_state_size] = {};
@@ -318,12 +315,12 @@ void Loop::train(Problem& p,
 			double predicted_uncertainty = this->certainty_network->val_val->acti_vals[this->certainty_state_size];
 
 			for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
-				p.perform_action(this->back[b_index],
-								 observations,
-								 save_for_display,
-								 raw_actions);
+				p->perform_action(this->back[b_index],
+								  NULL,
+								  save_for_display,
+								  raw_actions);
 			}
-			double score = p.score_result();
+			score = p->score_result();
 
 			vector<double> score_errors;
 			for (int s_index = 0; s_index < this->score_state_size; s_index++) {
@@ -376,10 +373,10 @@ void Loop::train(Problem& p,
 			for (int iter_index = 0; iter_index < iterations; iter_index++) {
 				vector<double> time_val;
 				for (int l_index = 0; l_index < (int)this->loop.size(); l_index++) {
-					p.perform_action(this->loop[l_index],
-									 time_val,
-									 save_for_display,
-									 raw_actions);
+					p->perform_action(this->loop[l_index],
+									  &time_val,
+									  save_for_display,
+									  raw_actions);
 				}
 
 				vector<double> score_inputs;
@@ -412,17 +409,15 @@ void Loop::train(Problem& p,
 				}
 				predicted_uncertaintys_1_start.push_back(this->certainty_network->val_val->acti_vals[this->certainty_state_size]);
 				this->certainty_network->mtx.unlock();
-
-				observations.insert(observations.begin(), time_val.begin(), time_val.end());
 			}
 
 			for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
-				p.perform_action(this->back[b_index],
-								 observations,
-								 save_for_display,
-								 raw_actions);
+				p->perform_action(this->back[b_index],
+								  NULL,
+								  save_for_display,
+								  raw_actions);
 			}
-			double score = p.score_result();
+			score = p->score_result();
 
 			this->score_network->mtx.lock();
 			double score_state_errors[this->score_state_size] = {};
@@ -580,10 +575,10 @@ void Loop::train(Problem& p,
 			for (int iter_index = 0; iter_index < iterations; iter_index++) {
 				vector<double> time_val;
 				for (int l_index = 0; l_index < (int)this->loop.size(); l_index++) {
-					p.perform_action(this->loop[l_index],
-									 time_val,
-									 save_for_display,
-									 raw_actions);
+					p->perform_action(this->loop[l_index],
+									  &time_val,
+									  save_for_display,
+									  raw_actions);
 				}
 
 				vector<double> score_inputs;
@@ -636,17 +631,15 @@ void Loop::train(Problem& p,
 				}
 				predicted_gains_0_start.push_back(this->halt_network->val_val->acti_vals[this->halt_state_size]);
 				this->halt_network->mtx.unlock();
-
-				observations.insert(observations.begin(), time_val.begin(), time_val.end());
 			}
 
 			for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
-				p.perform_action(this->back[b_index],
-								 observations,
-								 save_for_display,
-								 raw_actions);
+				p->perform_action(this->back[b_index],
+								  NULL,
+								  save_for_display,
+								  raw_actions);
 			}
-			double score = p.score_result();
+			score = p->score_result();
 
 			this->score_network->mtx.lock();
 			double score_state_errors[this->score_state_size] = {};
@@ -780,6 +773,170 @@ void Loop::train(Problem& p,
 			this->halt_network->mtx.unlock();
 		}
 	}
+}
+
+void Loop::pass_through(Problem* p,
+						vector<double>* observations,
+						bool save_for_display,
+						vector<Action>* raw_actions) {
+	vector<double> front_vals;
+	for (int f_index = 0; f_index < (int)this->front.size(); f_index++) {
+		p->perform_action(this->front[f_index],
+						  &front_vals,
+						  save_for_display,
+						  raw_actions);
+	}
+
+	// 0th iteration
+	vector<double> halt_inputs;
+	for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+		halt_inputs.push_back(0.0);
+	}
+	halt_inputs.insert(halt_inputs.end(), front_vals.begin(), front_vals.end());
+	for (int t_index = 0; t_index < this->time_size; t_index++) {
+		halt_inputs.push_back(0.0);
+	}
+	for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+		halt_inputs.push_back(0.0);
+	}
+	for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+		halt_inputs.push_back(0.0);
+	}
+	this->halt_network->mtx.lock();
+	this->halt_network->activate(halt_inputs);
+	double halt = this->halt_network->val_val->acti_vals[this->halt_state_size];
+	this->halt_network->mtx.unlock();
+
+	if (halt < 0.0) {
+		observations->insert(observations->end(), front_vals.begin(), front_vals.end());
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			observations->push_back(0.0);
+		}
+		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+			observations->push_back(0.0);
+		}
+		for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+			observations->push_back(0.0);
+		}
+		observations->push_back(0);
+		for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
+			p->perform_action(this->back[b_index],
+							  observations,
+							  save_for_display,
+							  raw_actions);
+		}
+		return;
+	}
+
+	double score_state[this->score_state_size] = {};
+	double certainty_state[this->certainty_state_size] = {};
+	double halt_state[this->halt_state_size] = {};
+
+	int iter_index = 0;	
+	while (true) {
+		iter_index++;
+		// don't loop more than 20 iterations for now
+		if (iter_index > 20) {
+			break;
+		}
+
+		vector<double> time_val;
+		for (int l_index = 0; l_index < (int)this->loop.size(); l_index++) {
+			p->perform_action(this->loop[l_index],
+							  &time_val,
+							  save_for_display,
+							  raw_actions);
+		}
+
+		vector<double> score_inputs;
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			score_inputs.push_back(score_state[s_index]);
+		}
+		score_inputs.insert(score_inputs.end(), front_vals.begin(), front_vals.end());
+		score_inputs.insert(score_inputs.end(), time_val.begin(), time_val.end());
+		this->score_network->mtx.lock();
+		this->score_network->activate(score_inputs);
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			score_state[s_index] = this->score_network->val_val->acti_vals[s_index];
+		}
+		this->score_network->mtx.unlock();
+
+		vector<double> certainty_inputs;
+		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+			certainty_inputs.push_back(certainty_state[s_index]);
+		}
+		certainty_inputs.insert(certainty_inputs.end(), front_vals.begin(), front_vals.end());
+		certainty_inputs.insert(certainty_inputs.end(), time_val.begin(), time_val.end());
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			certainty_inputs.push_back(score_state[s_index]);
+		}
+		this->certainty_network->mtx.lock();
+		this->certainty_network->activate(certainty_inputs);
+		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+			certainty_state[s_index] = this->certainty_network->val_val->acti_vals[s_index];
+		}
+		this->certainty_network->mtx.unlock();
+
+		vector<double> halt_inputs;
+		for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+			halt_inputs.push_back(halt_state[s_index]);
+		}
+		halt_inputs.insert(halt_inputs.end(), front_vals.begin(), front_vals.end());
+		halt_inputs.insert(halt_inputs.end(), time_val.begin(), time_val.end());
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			halt_inputs.push_back(score_state[s_index]);
+		}
+		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+			halt_inputs.push_back(certainty_state[s_index]);
+		}
+		this->halt_network->mtx.lock();
+		this->halt_network->activate(halt_inputs);
+		for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+			halt_state[s_index] = this->halt_network->val_val->acti_vals[s_index];
+		}
+		double halt = this->halt_network->val_val->acti_vals[this->halt_state_size];
+		this->halt_network->mtx.unlock();
+
+		if (halt < 0.0) {
+			break;
+		}
+	}
+
+	observations->insert(observations->begin(), front_vals.begin(), front_vals.end());
+	for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+		observations->push_back(score_state[s_index]);
+	}
+	for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+		observations->push_back(certainty_state[s_index]);
+	}
+	for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+		observations->push_back(halt_state[s_index]);
+	}
+	observations->push_back(iter_index);
+	for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
+		p->perform_action(this->back[b_index],
+						  observations,
+						  save_for_display,
+						  raw_actions);
+	}
+	return;
+}
+
+int Loop::path_length() {
+	int sum_length = 0;
+	for (int f_index = 0; f_index < (int)this->front.size(); f_index++) {
+		sum_length += calculate_action_path_length(this->front[f_index]);
+	}
+	sum_length += this->score_state_size;
+	sum_length += this->certainty_state_size;
+	sum_length += this->halt_state_size;
+	for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
+		sum_length += calculate_action_path_length(this->back[b_index]);
+	}
+
+	sum_length += 1;	// number of iterations
+
+	return sum_length;
 }
 
 void Loop::save(ofstream& save_file) {

@@ -21,6 +21,8 @@ SolutionNode::SolutionNode(Solver* solver,
 	this->certainty_network = new Network(this->path_length, network_size, 1);
 	this->certainty_network_name = "../saves/nns/snc_" + \
 		to_string(this->node_index) + to_string(time(NULL)) + ".txt";
+
+	this->explore = new Explore(this);
 }
 
 SolutionNode::SolutionNode(Solver* solver,
@@ -100,6 +102,8 @@ SolutionNode::~SolutionNode() {
 
 	delete this->score_network;
 	delete this->certainty_network;
+
+	delete this->explore;
 }
 
 void SolutionNode::add_child(int child_index,
@@ -140,6 +144,8 @@ void SolutionNode::process(vector<double> observations,
 	this->score_network->activate(observations);
 	double think = this->score_network->val_val->acti_vals[0];
 	this->score_network->mtx.unlock();
+
+	think = max(min(think, 1.0), 0.0);
 
 	guesses.push_back(think);
 
@@ -196,6 +202,8 @@ void SolutionNode::process(vector<double> observations,
 	double uncertainty = 1.0 - this->certainty_network->val_val->acti_vals[0];
 	this->certainty_network->mtx.unlock();
 
+	uncertainty = max(uncertainty, 0.0);
+
 	if (save_for_display) {
 		display_file << think << endl;
 		display_file << uncertainty << endl;
@@ -212,6 +220,8 @@ void SolutionNode::process(vector<double> observations,
 				chosen_path = -1;
 				return;
 			}
+		} else if (think == 1.0 && uncertainty == 0.0) {
+			// problem solved, don't explore
 		} else {
 			if (rand()%10 == 0) {
 				if (save_for_display) {
@@ -235,11 +245,15 @@ void SolutionNode::process(vector<double> observations,
 		double predicted_score = child_score_network->val_val->acti_vals[0];
 		child_score_network->mtx.unlock();
 		
+		predicted_score = max(min(predicted_score, 1.0), 0.0);
+
 		Network* child_information_network = this->children_information_networks[c_index];
 		child_information_network->mtx.lock();
 		child_information_network->activate(observations);
 		double predicted_misguess = 1.0 - child_information_network->val_val->acti_vals[0];
 		child_information_network->mtx.unlock();
+
+		predicted_misguess = max(predicted_misguess, 0.0);
 
 		double predicted_information = predicted_score - predicted_misguess;
 
@@ -255,13 +269,15 @@ void SolutionNode::process(vector<double> observations,
 	}
 
 	// explore if will simply hit halt again
-	if (!force_eval && this->children_indexes[best_index] == 0) {
-		if (save_for_display) {
-			display_file << "forced_explore" << endl;
-		}
+	if (think != 1.0 || uncertainty != 0.0) {
+		if (!force_eval && this->children_indexes[best_index] == 0) {
+			if (save_for_display) {
+				display_file << "forced_explore" << endl;
+			}
 
-		chosen_path = -1;
-		return;
+			chosen_path = -1;
+			return;
+		}
 	}
 
 	if (save_for_display) {
@@ -284,7 +300,20 @@ void SolutionNode::update(vector<double> observations,
 	this->score_network->mtx.lock();
 	this->score_network->activate(observations);
 	vector<double> score_errors;
-	double score_error = score - this->score_network->val_val->acti_vals[0];
+	double score_error;
+	if (score == 1.0) {
+		if (this->score_network->val_val->acti_vals[0] < 1.0) {
+			score_error = 1.0 - this->score_network->val_val->acti_vals[0];
+		} else {
+			score_error = 0.0;
+		}
+	} else {
+		if (this->score_network->val_val->acti_vals[0] > 0.0) {
+			score_error = 0.0 - this->score_network->val_val->acti_vals[0];
+		} else {
+			score_error = 0.0;
+		}
+	}
 	score_errors.push_back(score_error);
 	this->score_network->backprop(score_errors);
 	this->score_network->increment();
@@ -297,8 +326,12 @@ void SolutionNode::update(vector<double> observations,
 	this->certainty_network->mtx.lock();
 	this->certainty_network->activate(observations);
 	vector<double> certainty_errors;
-	double certainty_target = 1.0 - abs(score_error);
-	certainty_errors.push_back(certainty_target - this->certainty_network->val_val->acti_vals[0]);
+	if (score_error == 0.0 && this->certainty_network->val_val->acti_vals[0] > 1.0) {
+		certainty_errors.push_back(0.0);
+	} else {
+		double certainty_target = 1.0 - abs(score_error);
+		certainty_errors.push_back(certainty_target - this->certainty_network->val_val->acti_vals[0]);
+	}
 	this->certainty_network->backprop(certainty_errors);
 	this->certainty_network->increment();
 	this->certainty_network->mtx.unlock();
@@ -307,9 +340,21 @@ void SolutionNode::update(vector<double> observations,
 		Network* child_score_network = this->children_score_networks[chosen_path];
 		child_score_network->mtx.lock();
 		child_score_network->activate(observations);
-		vector<double> score_errors;
-		score_errors.push_back(score - child_score_network->val_val->acti_vals[0]);
-		child_score_network->backprop(score_errors);
+		vector<double> child_score_errors;
+		if (score == 1.0) {
+			if (child_score_network->val_val->acti_vals[0] < 1.0) {
+				child_score_errors.push_back(1.0 - child_score_network->val_val->acti_vals[0]);
+			} else {
+				child_score_errors.push_back(0.0);
+			}
+		} else {
+			if (child_score_network->val_val->acti_vals[0] > 0.0) {
+				child_score_errors.push_back(0.0 - child_score_network->val_val->acti_vals[0]);
+			} else {
+				child_score_errors.push_back(0.0);
+			}
+		}
+		child_score_network->backprop(child_score_errors);
 		child_score_network->increment();
 		child_score_network->mtx.unlock();
 
@@ -317,8 +362,12 @@ void SolutionNode::update(vector<double> observations,
 		child_information_network->mtx.lock();
 		child_information_network->activate(observations);
 		vector<double> information_errors;
-		double information_target = 1.0 - misguess;
-		information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
+		if (misguess == 0.0 && child_information_network->val_val->acti_vals[0] > 1.0) {
+			information_errors.push_back(0.0);
+		} else {
+			double information_target = 1.0 - misguess;
+			information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
+		}
 		child_information_network->backprop(information_errors);
 		child_information_network->increment();
 		child_information_network->mtx.unlock();

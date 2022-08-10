@@ -12,11 +12,11 @@ public:
 	int current_pointer;
 	std::vector<double> current_world;
 
-	Problem(std::vector<double>& observations);
+	Problem(std::vector<double>* observations);
 	~Problem();
 
 	void perform_action(Action action,
-						std::vector<double>& observations,
+						std::vector<double>* observations,
 						bool save_for_display,
 						std::vector<Action>* raw_actions);
 	double score_result();

@@ -41,6 +41,8 @@ void Action::save(ofstream& save_file) {
 string Action::to_string() {
 	if (this->move == COMPOUND) {
 		return "C " + std::to_string(this->index);
+	} else if (this->move == LOOP) {
+		return "L " + std::to_string(this->index);
 	} else {
 		std::string move_s;
 		if (this->move == LEFT) {

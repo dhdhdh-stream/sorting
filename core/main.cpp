@@ -26,7 +26,7 @@ void run_solver() {
 		counter++;
 		counter_mtx.unlock();
 
-		if (current_counter%500000 == 0) {
+		if (current_counter%1000000 == 0) {
 			solver->single_pass(true);
 
 			// chrono::time_point<chrono::steady_clock> end = chrono::steady_clock::now();
@@ -36,7 +36,7 @@ void run_solver() {
 			solver->single_pass(false);
 		}
 
-		if (current_counter%20000000 == 0) {
+		if (current_counter%50000000 == 0) {
 			solver->save();
 		}
 	}
@@ -54,15 +54,17 @@ int main(int argc, char* argv[]) {
 	counter = 1;
 	// start = chrono::steady_clock::now();
 
-	std::thread threads[10];
+	run_solver();
 
-	for (int i = 0; i < 10; i++) {
-		threads[i] = thread(run_solver);
-	}
+	// std::thread threads[10];
 
-	for (auto& th : threads) {
-		th.join();
-	}
+	// for (int i = 0; i < 10; i++) {
+	// 	threads[i] = thread(run_solver);
+	// }
+
+	// for (auto& th : threads) {
+	// 	th.join();
+	// }
 
 	delete solver;
 

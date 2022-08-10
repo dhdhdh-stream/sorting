@@ -27,23 +27,23 @@ public:
 	Network* halt_network;
 	std::string halt_network_name;
 
-	Loop(int path_length,	// assume fixed path_length (i.e., no branch merge) for now
-		 std::vector<Action> front,
+	Loop(std::vector<Action> front,
 		 std::vector<Action> loop,
 		 std::vector<Action> back);
 	Loop(std::ifstream& save_file);
 	~Loop();
 
-	void train(Problem& p,
-			   std::vector<double>& observations,
+	void train(Problem* p,
 			   double& score,
 			   bool save_for_display,
 			   std::vector<Action>* raw_actions);
 
-	void pass_through(std::vector<double>& observations,
-					  Problem& p,
+	void pass_through(Problem* p,
+					  std::vector<double>* observations,
 					  bool save_for_display,
 					  std::vector<Action>* raw_actions);
+
+	int path_length();
 
 	void save(std::ofstream& save_file);
 };

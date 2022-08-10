@@ -3,10 +3,13 @@
 #include <cmath>
 #include <iostream>
 
+#include "definitions.h"
+#include "loop.h"
+
 using namespace std;
 
 ActionDictionary::ActionDictionary() {
-	// do nothing
+	this->total_count = 0;
 }
 
 ActionDictionary::ActionDictionary(std::ifstream& save_file) {
@@ -69,53 +72,6 @@ void ActionDictionary::add_action(vector<Action> action_sequence) {
 	this->num_success.push_back(0);
 	this->count.push_back(0);
 	this->mtx.unlock();
-}
-
-int ActionDictionary::calculate_action_path_length(Action a) {
-	if (a.move != COMPOUND) {
-		return 1;
-	}
-
-	int sum_length = 0;
-
-	CompoundAction* compound_action = this->actions[a.index];
-
-	CompoundActionNode* curr_node = compound_action->nodes[1];
-	while (true) {
-		if (curr_node->children_indexes[0] == 0) {
-			break;
-		}
-
-		Action a = curr_node->children_actions[0];
-		int a_length = calculate_action_path_length(a);
-		sum_length += a_length;
-
-		curr_node = compound_action->nodes[curr_node->children_indexes[0]];
-	}
-
-	return sum_length;
-}
-
-void ActionDictionary::convert_to_raw_actions(Action a,
-											  vector<Action>& raw_actions) {
-	if (a.move != COMPOUND) {
-		raw_actions.push_back(a);
-		return;
-	}
-
-	CompoundAction* compound_action = this->actions[a.index];
-
-	CompoundActionNode* curr_node = compound_action->nodes[1];
-	while (true) {
-		if (curr_node->children_indexes[0] == 0) {
-			break;
-		}
-
-		Action a = curr_node->children_actions[0];
-		convert_to_raw_actions(a, raw_actions);
-
-		curr_node = compound_action->nodes[curr_node->children_indexes[0]];
-	}
 }
 
 void ActionDictionary::save(ofstream& save_file) {

@@ -6,6 +6,7 @@
 
 #include "definitions.h"
 #include "network.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void Solver::add_nodes(SolutionNode* starting_point,
 	int sum_path_length = 0;
 	vector<SolutionNode*> new_nodes;
 	for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
-		int new_path_length = action_dictionary->calculate_action_path_length(candidate[a_index]);
+		int new_path_length = calculate_action_path_length(candidate[a_index]);
 		sum_path_length += new_path_length;
 
 		SolutionNode* new_node = new SolutionNode(
@@ -102,7 +103,7 @@ void Solver::single_pass(bool save_for_display) {
 	}
 
 	vector<double> observations;
-	Problem p(observations);
+	Problem p(&observations);
 
 	vector<Action> raw_actions;
 
@@ -147,7 +148,7 @@ void Solver::single_pass(bool save_for_display) {
 			}
 
 			p.perform_action(curr_node->children_actions[chosen_path],
-							 observations,
+							 &observations,
 							 save_for_display,
 							 &raw_actions);
 			curr_node = nodes[curr_node->children_indexes[chosen_path]];
@@ -158,10 +159,10 @@ void Solver::single_pass(bool save_for_display) {
 	if (chosen_paths[chosen_paths.size()-1] != -1) {
 		score = p.score_result();
 	} else {
-		// TODO: consider not updating scores for pure explore
+		// TODO: consider not updating scores for random explore
 		visited_nodes[visited_nodes.size()-1]->explore->process(
-			p,
-			observations,
+			&p,
+			&observations,
 			score,
 			save_for_display,
 			&raw_actions);
@@ -169,7 +170,7 @@ void Solver::single_pass(bool save_for_display) {
 
 	double sum_misguess = 0.0;
 	for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
-		vector<double> partial_observations(observations.begin(), \
+		vector<double> partial_observations(observations.begin(),
 			observations.begin()+path_lengths[n_index]);
 
 		sum_misguess += abs(score - guesses[n_index]);

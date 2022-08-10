@@ -39,6 +39,7 @@ public:
 	int iter_index;
 
 	double average_score;
+	Network* learn_scores_network;
 	double think_good_and_good;
 	double think_good_but_bad;
 
@@ -47,12 +48,12 @@ public:
 
 	std::vector<Action> current_new_path;
 
-	// NEW_PATH_STATE_LEARN_SCORES
-	Network* new_path_learn_scores_network;
-
 	// LOOP
 	Loop* best_loop;
 
+	std::vector<Action> current_front_actions;
+	std::vector<Action> current_loop_actions;
+	std::vector<Action> current_back_actions;
 	Loop* current_loop;
 
 	// LOOP_STATE_CHECK_DIFFERENT_ITERS
@@ -63,8 +64,8 @@ public:
 	Explore(SolutionNode* parent);
 	~Explore();
 
-	void process(Problem& p,
-				 std::vector<double>& observations,
+	void process(Problem* p,
+				 std::vector<double>* observations,
 				 double& score,
 				 bool save_for_display,
 				 std::vector<Action>* raw_actions);
