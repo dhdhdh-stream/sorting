@@ -19,23 +19,8 @@ CompoundActionNode::CompoundActionNode(ifstream& save_file) {
 		getline(save_file, child_index_line);
 		this->children_indexes.push_back(stoi(child_index_line));
 
-		string move_line;
-		getline(save_file, move_line);
-		int move_val = stoi(move_line);
-
-		if (move_val == COMPOUND) {
-			string compound_index_line;
-			getline(save_file, compound_index_line);
-			int compound_index = stoi(compound_index_line);
-			Action a(compound_index);
-			this->children_actions.push_back(a);
-		} else {
-			string write_line;
-			getline(save_file, write_line);
-			double write_val = stof(write_line);
-			Action a(write_val, move_val);
-			this->children_actions.push_back(a);
-		}
+		Action a(save_file);
+		this->children_actions.push_back(a);
 	}
 }
 
@@ -47,12 +32,7 @@ void CompoundActionNode::save(ofstream& save_file) {
 	save_file << this->children_indexes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->children_indexes.size(); c_index++) {
 		save_file << this->children_indexes[c_index] << endl;
-		save_file << this->children_actions[c_index].move << endl;
-		if (this->children_actions[c_index].move == COMPOUND) {
-			save_file << this->children_actions[c_index].compound_index << endl;
-		} else {
-			save_file << this->children_actions[c_index].write << endl;
-		}
+		this->children_actions[c_index].save(save_file);
 	}
 }
 

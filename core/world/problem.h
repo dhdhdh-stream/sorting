@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "action.h"
-#include "action_dictionary.h"
 
 class Problem {
 public:
@@ -18,7 +17,8 @@ public:
 
 	void perform_action(Action action,
 						std::vector<double>& observations,
-						ActionDictionary* action_dictionary);
+						bool save_for_display,
+						std::vector<Action>* raw_actions);
 	double score_result();
 
 	void print();

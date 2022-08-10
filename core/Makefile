@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++14 -Wall -Werror -Wconversion -MMD -lboost_system \
+CXXFLAGS = -g -std=c++17 -Wall -Werror -Wconversion -MMD -lboost_system \
 		   -Inn \
 		   -Isolver \
 		   -Iutils \

@@ -6,14 +6,11 @@
 #include <vector>
 
 #include "action.h"
+#include "explore.h"
 #include "network.h"
 #include "solver.h"
 
-const int EXPLORE_STATE_EXPLORE = 0;
-const int EXPLORE_STATE_MEASURE_AVERAGE = 1;
-const int EXPLORE_STATE_LEARN_SCORES = 2;
-const int EXPLORE_STATE_MEASURE_INFORMATION = 3;
-
+class Explore;
 class Solver;
 class SolutionNode {
 public:
@@ -34,31 +31,9 @@ public:
 	Network* certainty_network;
 	std::string certainty_network_name;
 
-	int explore_state;
-	int current_explore_id;
-	int candidate_iter;
-	double best_information;
-	std::vector<Action> best_candidate;
-	std::vector<Action> current_candidate;
-
-	// EXPLORE_STATE_MEASURE_AVERAGE
-	int measure_average_p_index;
-	double measure_average_average_score;
-
-	// EXPLORE_STATE_LEARN_SCORES
-	Network* learn_scores_network;
-
-	// EXPLORE_STATE_MEASURE_INFORMATION
-	int measure_information_p_index;
-	double measure_information_think_good_and_good;
-	double measure_information_think_good_but_bad;
-
-
-	// Loop* loop_candidate;
-
+	Explore* explore;
 
 	std::mutex children_mtx;
-	std::mutex explore_mtx;
 
 	SolutionNode(Solver* solver,
 				 int node_index,
@@ -74,9 +49,6 @@ public:
 	void process(std::vector<double> observations,
 				 int& chosen_path,
 				 std::vector<double>& guesses,
-				 int& explore_status,
-				 int& explore_id,
-				 int& explore_candidate_iter,
 				 bool& force_eval,
 				 bool save_for_display,
 				 std::ofstream& display_file);
@@ -84,23 +56,9 @@ public:
 				int chosen_path,
 				double score,
 				double misguess);
-	void update_explore(std::vector<double> observations,
-						std::vector<double> full_observations,
-						int explore_status,
-						int explore_id,
-						int explore_candidate_iter,
-						double score);
-	void update_explore_candidate(int explore_status,
-								  int explore_id,
-								  int explore_candidate_iter,
-								  std::vector<Action> candidate);
 
 	void save(std::ofstream& save_file);
 	void save_for_display(std::ofstream& save_file);
-
-private:
-	void update_self(std::vector<double> observations,
-					 double score);
 };
 
 #endif /* SOLUTION_NODE_H */

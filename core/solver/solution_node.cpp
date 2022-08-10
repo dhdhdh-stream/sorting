@@ -21,13 +21,6 @@ SolutionNode::SolutionNode(Solver* solver,
 	this->certainty_network = new Network(this->path_length, network_size, 1);
 	this->certainty_network_name = "../saves/nns/snc_" + \
 		to_string(this->node_index) + to_string(time(NULL)) + ".txt";
-
-	this->explore_state = EXPLORE_STATE_EXPLORE;
-	this->current_explore_id = (unsigned)time(NULL);
-	this->candidate_iter = 0;
-	this->best_information = numeric_limits<double>::lowest();
-
-	this->learn_scores_network = NULL;
 }
 
 SolutionNode::SolutionNode(Solver* solver,
@@ -48,23 +41,8 @@ SolutionNode::SolutionNode(Solver* solver,
 		getline(save_file, child_index_line);
 		this->children_indexes.push_back(stoi(child_index_line));
 
-		string move_line;
-		getline(save_file, move_line);
-		int move_val = stoi(move_line);
-
-		if (move_val == COMPOUND) {
-			string compound_index_line;
-			getline(save_file, compound_index_line);
-			int compound_index = stoi(compound_index_line);
-			Action a(compound_index);
-			this->children_actions.push_back(a);
-		} else {
-			string write_line;
-			getline(save_file, write_line);
-			double write_val = stof(write_line);
-			Action a(write_val, move_val);
-			this->children_actions.push_back(a);
-		}
+		Action a(save_file);
+		this->children_actions.push_back(a);
 
 		string score_network_name_line;
 		getline(save_file, score_network_name_line);
@@ -112,13 +90,6 @@ SolutionNode::SolutionNode(Solver* solver,
 	certainty_network_save_file.open(this->certainty_network_name);
 	this->certainty_network = new Network(certainty_network_save_file);
 	certainty_network_save_file.close();
-
-	this->explore_state = EXPLORE_STATE_EXPLORE;
-	this->current_explore_id = (unsigned)time(NULL);
-	this->candidate_iter = 0;
-	this->best_information = numeric_limits<double>::lowest();
-
-	this->learn_scores_network = NULL;
 }
 
 SolutionNode::~SolutionNode() {
@@ -129,10 +100,6 @@ SolutionNode::~SolutionNode() {
 
 	delete this->score_network;
 	delete this->certainty_network;
-
-	if (this->learn_scores_network != NULL) {
-		delete this->learn_scores_network;
-	}
 }
 
 void SolutionNode::add_child(int child_index,
@@ -162,9 +129,6 @@ void SolutionNode::add_child(int child_index,
 void SolutionNode::process(vector<double> observations,
 						   int& chosen_path,
 						   vector<double>& guesses,
-						   int& explore_status,
-						   int& explore_id,
-						   int& explore_candidate_iter,
 						   bool& force_eval,
 						   bool save_for_display,
 						   ofstream& display_file) {
@@ -188,9 +152,6 @@ void SolutionNode::process(vector<double> observations,
 
 		// shouldn't have multiple children yet
 		chosen_path = 0;
-		explore_status = -1;
-		explore_id = -1;
-		explore_candidate_iter = -1;
 		return;
 	}
 
@@ -216,17 +177,11 @@ void SolutionNode::process(vector<double> observations,
 		force_eval = true;
 
 		chosen_path = new_index;
-		explore_status = -1;
-		explore_id = -1;
-		explore_candidate_iter = -1;
 		return;
 	}
 
 	if (rand()%20 == 0) {
 		chosen_path = rand()%(int)num_children;
-		explore_status = -1;
-		explore_id = -1;
-		explore_candidate_iter = -1;
 
 		if (save_for_display) {
 			display_file << "random" << endl;
@@ -254,12 +209,7 @@ void SolutionNode::process(vector<double> observations,
 					display_file << "good_explore" << endl;
 				}
 
-				this->explore_mtx.lock();
 				chosen_path = -1;
-				explore_status = this->explore_state;
-				explore_id = this->current_explore_id;
-				explore_candidate_iter = this->candidate_iter;
-				this->explore_mtx.unlock();
 				return;
 			}
 		} else {
@@ -268,12 +218,7 @@ void SolutionNode::process(vector<double> observations,
 					display_file << "random_explore" << endl;
 				}
 
-				this->explore_mtx.lock();
 				chosen_path = -1;
-				explore_status = this->explore_state;
-				explore_id = this->current_explore_id;
-				explore_candidate_iter = this->candidate_iter;
-				this->explore_mtx.unlock();
 				return;
 			}
 		}
@@ -315,12 +260,7 @@ void SolutionNode::process(vector<double> observations,
 			display_file << "forced_explore" << endl;
 		}
 
-		this->explore_mtx.lock();
 		chosen_path = -1;
-		explore_status = this->explore_state;
-		explore_id = this->current_explore_id;
-		explore_candidate_iter = this->candidate_iter;
-		this->explore_mtx.unlock();
 		return;
 	}
 
@@ -334,14 +274,13 @@ void SolutionNode::process(vector<double> observations,
 	}
 
 	chosen_path = best_index;
-	explore_status = -1;
-	explore_id = -1;
-	explore_candidate_iter = -1;
 	return;
 }
 
-void SolutionNode::update_self(vector<double> observations,
-							   double score) {
+void SolutionNode::update(vector<double> observations,
+						  int chosen_path,
+						  double score,
+						  double misguess) {
 	this->score_network->mtx.lock();
 	this->score_network->activate(observations);
 	vector<double> score_errors;
@@ -363,152 +302,27 @@ void SolutionNode::update_self(vector<double> observations,
 	this->certainty_network->backprop(certainty_errors);
 	this->certainty_network->increment();
 	this->certainty_network->mtx.unlock();
-}
 
-void SolutionNode::update(vector<double> observations,
-						  int chosen_path,
-						  double score,
-						  double misguess) {
-	update_self(observations,
-				score);
+	if (chosen_path != -1) {
+		Network* child_score_network = this->children_score_networks[chosen_path];
+		child_score_network->mtx.lock();
+		child_score_network->activate(observations);
+		vector<double> score_errors;
+		score_errors.push_back(score - child_score_network->val_val->acti_vals[0]);
+		child_score_network->backprop(score_errors);
+		child_score_network->increment();
+		child_score_network->mtx.unlock();
 
-	Network* child_score_network = this->children_score_networks[chosen_path];
-	child_score_network->mtx.lock();
-	child_score_network->activate(observations);
-	vector<double> score_errors;
-	score_errors.push_back(score - child_score_network->val_val->acti_vals[0]);
-	child_score_network->backprop(score_errors);
-	child_score_network->increment();
-	child_score_network->mtx.unlock();
-
-	Network* child_information_network = this->children_information_networks[chosen_path];
-	child_information_network->mtx.lock();
-	child_information_network->activate(observations);
-	vector<double> information_errors;
-	double information_target = 1.0 - misguess;
-	information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
-	child_information_network->backprop(information_errors);
-	child_information_network->increment();
-	child_information_network->mtx.unlock();
-}
-
-void SolutionNode::update_explore(vector<double> observations,
-								  vector<double> full_observations,
-								  int explore_status,
-								  int explore_id,
-								  int explore_candidate_iter,
-								  double score) {
-	update_self(observations,
-				score);
-
-	this->explore_mtx.lock();
-	if (explore_status == this->explore_state &&
-			explore_id == this->current_explore_id &&
-			explore_candidate_iter == this->candidate_iter) {
-		if (this->explore_state == EXPLORE_STATE_EXPLORE) {
-			// should not occur
-		} else if (this->explore_state == EXPLORE_STATE_MEASURE_AVERAGE) {
-			this->measure_average_p_index++;
-			this->measure_average_average_score += score;
-
-			if (this->measure_average_p_index == 100000) {
-				this->explore_state = EXPLORE_STATE_LEARN_SCORES;
-				this->measure_average_average_score /= 100000;
-
-				int input_size = this->path_length;
-				for (int a_index = 0; a_index < (int)this->current_candidate.size(); a_index++) {
-					input_size += this->solver->action_dictionary->calculate_action_path_length(
-						this->current_candidate[a_index]);
-				}
-				int network_size = 2*input_size*(3+input_size);
-				this->learn_scores_network = new Network(input_size, network_size, 1);
-			}
-		} else if (this->explore_state == EXPLORE_STATE_LEARN_SCORES) {
-			this->learn_scores_network->activate(full_observations);
-			vector<double> errors;
-			errors.push_back(score - this->learn_scores_network->val_val->acti_vals[0]);
-			this->learn_scores_network->backprop(errors);
-			this->learn_scores_network->increment();
-
-			if (this->learn_scores_network->epoch == 10000) {
-				this->explore_state = EXPLORE_STATE_MEASURE_INFORMATION;
-				this->measure_information_p_index = 0;
-				this->measure_information_think_good_and_good = 0.0;
-				this->measure_information_think_good_but_bad = 0.0;
-			}
-		} else if (this->explore_state == EXPLORE_STATE_MEASURE_INFORMATION) {
-			this->learn_scores_network->activate(full_observations);
-			double think = this->learn_scores_network->val_val->acti_vals[0];
-
-			if (score > this->measure_average_average_score) {
-				if (think > this->measure_average_average_score) {
-					this->measure_information_think_good_and_good += \
-						(score - this->measure_average_average_score) \
-						* (think - this->measure_average_average_score);
-				}
-			} else {
-				if (think > this->measure_average_average_score) {
-					this->measure_information_think_good_but_bad += \
-						(this->measure_average_average_score - score) \
-						* (think - this->measure_average_average_score);
-				}
-			}
-
-			this->measure_information_p_index++;
-
-			if (this->measure_information_p_index == 100000) {
-				double information = this->measure_information_think_good_and_good \
-					- this->measure_information_think_good_but_bad;
-				if (information > this->best_information) {
-					this->best_information = information;
-					this->best_candidate = this->current_candidate;
-				}
-
-				cout << this->node_index << endl;
-				for (int a_index = 0; a_index < (int)this->current_candidate.size(); a_index++) {
-					cout << this->current_candidate[a_index].to_string() << endl;
-				}
-				cout << "information: " << information << endl;
-				cout << endl;
-
-				this->current_candidate.clear();
-				delete this->learn_scores_network;
-				this->learn_scores_network = NULL;
-
-				this->explore_state = EXPLORE_STATE_EXPLORE;
-				this->candidate_iter++;
-
-				if (this->candidate_iter == 20) {
-					this->solver->add_nodes(this, this->best_candidate);
-
-					this->current_explore_id = (unsigned)time(NULL);
-					this->candidate_iter = 0;
-					this->best_information = numeric_limits<double>::lowest();
-					this->best_candidate.clear();
-				}
-			}
-		}
+		Network* child_information_network = this->children_information_networks[chosen_path];
+		child_information_network->mtx.lock();
+		child_information_network->activate(observations);
+		vector<double> information_errors;
+		double information_target = 1.0 - misguess;
+		information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
+		child_information_network->backprop(information_errors);
+		child_information_network->increment();
+		child_information_network->mtx.unlock();
 	}
-	this->explore_mtx.unlock();
-}
-
-void SolutionNode::update_explore_candidate(int explore_status,
-											int explore_id,
-											int explore_candidate_iter,
-											vector<Action> candidate) {
-	this->explore_mtx.lock();
-	if (explore_status == this->explore_state &&
-			explore_id == this->current_explore_id &&
-			explore_candidate_iter == this->candidate_iter) {
-		if (this->explore_state == EXPLORE_STATE_EXPLORE) {
-			this->current_candidate = candidate;
-
-			this->explore_state = EXPLORE_STATE_MEASURE_AVERAGE;
-			this->measure_average_p_index = 0;
-			this->measure_average_average_score = 0.0;
-		}
-	}
-	this->explore_mtx.unlock();
 }
 
 void SolutionNode::save(ofstream& save_file) {
@@ -521,12 +335,7 @@ void SolutionNode::save(ofstream& save_file) {
 	save_file << num_children << endl;
 	for (int c_index = 0; c_index < num_children; c_index++) {
 		save_file << this->children_indexes[c_index] << endl;
-		save_file << this->children_actions[c_index].move << endl;
-		if (this->children_actions[c_index].move == COMPOUND) {
-			save_file << this->children_actions[c_index].compound_index << endl;
-		} else {
-			save_file << this->children_actions[c_index].write << endl;
-		}
+		this->children_actions[c_index].save(save_file);
 
 		save_file << this->children_score_network_names[c_index] << endl;
 		ofstream child_score_network_save_file;
@@ -564,12 +373,7 @@ void SolutionNode::save_for_display(ofstream& save_file) {
 	save_file << num_children << endl;
 	for (int c_index = 0; c_index < num_children; c_index++) {
 		save_file << this->children_indexes[c_index] << endl;
-		save_file << this->children_actions[c_index].move << endl;
-		if (this->children_actions[c_index].move == COMPOUND) {
-			save_file << this->children_actions[c_index].compound_index << endl;
-		} else {
-			save_file << this->children_actions[c_index].write << endl;
-		}
+		this->children_actions[c_index].save(save_file);
 	}
 	save_file << this->average_score << endl;
 }

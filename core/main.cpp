@@ -3,11 +3,16 @@
 #include <thread>
 #include <random>
 
+#include "action_dictionary.h"
+#include "loop_dictionary.h"
 #include "solver.h"
 
 using namespace std;
 
 default_random_engine generator;
+
+ActionDictionary* action_dictionary;
+LoopDictionary* loop_dictionary;
 
 Solver* solver;
 int counter;

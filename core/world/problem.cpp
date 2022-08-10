@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "definitions.h"
+
 using namespace std;
 
 Problem::Problem(vector<double>& observations) {
@@ -31,7 +33,8 @@ double Problem::get_observation() {
 
 void Problem::perform_action(Action action,
 							 vector<double>& observations,
-							 ActionDictionary* action_dictionary) {
+							 bool save_for_display,
+							 vector<Action>* raw_actions) {
 	if (action.move != COMPOUND) {
 		if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
 			this->current_world[this->current_pointer] += action.write;
@@ -48,8 +51,11 @@ void Problem::perform_action(Action action,
 		}
 
 		observations.push_back(get_observation());
+		if (save_for_display) {
+			raw_actions->push_back(action);
+		}
 	} else {
-		CompoundAction* compound_action = action_dictionary->actions[action.compound_index];
+		CompoundAction* compound_action = action_dictionary->actions[action.index];
 
 		CompoundActionNode* curr_node = compound_action->nodes[1];
 		while (true) {
@@ -58,7 +64,10 @@ void Problem::perform_action(Action action,
 			}
 
 			Action a = curr_node->children_actions[0];
-			perform_action(a, observations, action_dictionary);
+			perform_action(a,
+						   observations,
+						   save_for_display,
+						   raw_actions);
 
 			curr_node = compound_action->nodes[curr_node->children_indexes[0]];
 		}

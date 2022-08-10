@@ -14,8 +14,6 @@ public:
 	std::vector<SolutionNode*> nodes;
 	int current_node_index;
 
-	ActionDictionary* action_dictionary;
-
 	std::mutex nodes_mtx;
 	std::mutex display_mtx;
 

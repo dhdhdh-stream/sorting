@@ -1,6 +1,7 @@
 #ifndef ACTION_H
 #define ACTION_H
 
+#include <fstream>
 #include <string>
 
 const int LEFT = 0;
@@ -15,38 +16,16 @@ public:
 	double write;
 	int move;
 
-	int compound_index;
+	int index;
 
-	Action(double write, int move) {
-		this->write = write;
-		this->move = move;
-		this->compound_index = -1;
-	}
-	Action(int compound_index) {
-		this->write = 0.0;
-		this->move = COMPOUND;
-		this->compound_index = compound_index;
-	}
-	~Action() {
-		// do nothing
-	}
+	Action(double write, int move);
+	Action(int move, int index);
+	Action(std::ifstream& save_file);
+	~Action();
 
-	std::string to_string() {
-		if (this->move == COMPOUND) {
-			return "C " + std::to_string(this->compound_index);
-		} else {
-			std::string move_s;
-			if (this->move == LEFT) {
-				move_s = "LEFT";
-			} else if (this->move == STAY) {
-				move_s = "STAY";
-			} else {
-				move_s = "RIGHT";
-			}
-			
-			return "(" + std::to_string(this->write) + "," + move_s + ")";
-		}
-	}
+	void save(std::ofstream& save_file);
+
+	std::string to_string();
 };
 
 const Action HALT(0.0, -1);

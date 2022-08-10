@@ -11,7 +11,6 @@
 class Loop {
 public:
 	std::vector<Action> front;
-	int front_size;
 	std::vector<Action> loop;
 	int time_size;
 	std::vector<Action> back;
@@ -31,21 +30,20 @@ public:
 	Loop(int path_length,	// assume fixed path_length (i.e., no branch merge) for now
 		 std::vector<Action> front,
 		 std::vector<Action> loop,
-		 std::vector<Action> back,
-		 int loop_counter,
-		 ActionDictionary* action_dictionary);
+		 std::vector<Action> back);
 	Loop(std::ifstream& save_file);
 	~Loop();
 
-	void train(std::vector<double>& observations,
-			   Problem& p,
-			   ActionDictionary* action_dictionary,
-			   double& score);
+	void train(Problem& p,
+			   std::vector<double>& observations,
+			   double& score,
+			   bool save_for_display,
+			   std::vector<Action>* raw_actions);
 
 	void pass_through(std::vector<double>& observations,
 					  Problem& p,
-					  ActionDictionary* action_dictionary);
-	void pass_through_update(double score);
+					  bool save_for_display,
+					  std::vector<Action>* raw_actions);
 
 	void save(std::ofstream& save_file);
 };

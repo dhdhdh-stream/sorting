@@ -78,7 +78,7 @@ int ActionDictionary::calculate_action_path_length(Action a) {
 
 	int sum_length = 0;
 
-	CompoundAction* compound_action = this->actions[a.compound_index];
+	CompoundAction* compound_action = this->actions[a.index];
 
 	CompoundActionNode* curr_node = compound_action->nodes[1];
 	while (true) {
@@ -103,7 +103,7 @@ void ActionDictionary::convert_to_raw_actions(Action a,
 		return;
 	}
 
-	CompoundAction* compound_action = this->actions[a.compound_index];
+	CompoundAction* compound_action = this->actions[a.index];
 
 	CompoundActionNode* curr_node = compound_action->nodes[1];
 	while (true) {
