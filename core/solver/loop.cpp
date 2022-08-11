@@ -808,17 +808,19 @@ void Loop::pass_through(Problem* p,
 	this->halt_network->mtx.unlock();
 
 	if (halt < 0.0) {
-		observations->insert(observations->end(), front_vals.begin(), front_vals.end());
-		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
-			observations->push_back(0.0);
+		if (observations != NULL) {
+			observations->insert(observations->end(), front_vals.begin(), front_vals.end());
+			for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+				observations->push_back(0.0);
+			}
+			for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+				observations->push_back(0.0);
+			}
+			for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+				observations->push_back(0.0);
+			}
+			observations->push_back(0);
 		}
-		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
-			observations->push_back(0.0);
-		}
-		for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
-			observations->push_back(0.0);
-		}
-		observations->push_back(0);
 		for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
 			p->perform_action(this->back[b_index],
 							  observations,
@@ -902,17 +904,19 @@ void Loop::pass_through(Problem* p,
 		}
 	}
 
-	observations->insert(observations->begin(), front_vals.begin(), front_vals.end());
-	for (int s_index = 0; s_index < this->score_state_size; s_index++) {
-		observations->push_back(score_state[s_index]);
+	if (observations != NULL) {
+		observations->insert(observations->begin(), front_vals.begin(), front_vals.end());
+		for (int s_index = 0; s_index < this->score_state_size; s_index++) {
+			observations->push_back(score_state[s_index]);
+		}
+		for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
+			observations->push_back(certainty_state[s_index]);
+		}
+		for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
+			observations->push_back(halt_state[s_index]);
+		}
+		observations->push_back(iter_index);
 	}
-	for (int s_index = 0; s_index < this->certainty_state_size; s_index++) {
-		observations->push_back(certainty_state[s_index]);
-	}
-	for (int s_index = 0; s_index < this->halt_state_size; s_index++) {
-		observations->push_back(halt_state[s_index]);
-	}
-	observations->push_back(iter_index);
 	for (int b_index = 0; b_index < (int)this->back.size(); b_index++) {
 		p->perform_action(this->back[b_index],
 						  observations,

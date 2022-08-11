@@ -26,10 +26,6 @@ public:
 	std::vector<std::string> children_information_network_names;
 
 	double average_score;
-	Network* score_network;
-	std::string score_network_name;
-	Network* certainty_network;
-	std::string certainty_network_name;
 
 	Explore* explore;
 
@@ -52,10 +48,14 @@ public:
 				 bool& force_eval,
 				 bool save_for_display,
 				 std::ofstream& display_file);
-	void update(std::vector<double> observations,
-				int chosen_path,
-				double score,
-				double misguess);
+	
+	void update_average(double score);
+	void update_score_network(std::vector<double> observations,
+							  int chosen_path,
+							  double score);
+	void update_information_network(std::vector<double> observations,
+									int chosen_path,
+									double misguess);
 
 	void save(std::ofstream& save_file);
 	void save_for_display(std::ofstream& save_file);

@@ -11,6 +11,7 @@ LEFT = 0
 STAY = 1
 RIGHT = 2
 COMPOUND = 3
+LOOP = 4
 
 NODE_STATE_NONE = 0
 NODE_STATE_NEW = 1
@@ -32,7 +33,10 @@ def pretty_print_action(action):
 		return ''
 
 	if action[1] == COMPOUND:
-		return 'C ' + str(action[0])
+		return 'C ' + str(action[2])
+
+	if action[1] == LOOP:
+		return 'L ' + str(action[2])
 
 	result = '('
 	result += "{:.2f}".format(action[0])
@@ -68,13 +72,10 @@ while True:
 				child_index = int(file.readline())
 				children_indexes.append(child_index)
 				
+				write = float(file.readline())
 				move = int(file.readline())
-				if move == COMPOUND:
-					compound_index = int(file.readline())
-					children_actions.append([compound_index, move])
-				else:
-					write = float(file.readline())
-					children_actions.append([write, move])
+				index = int(file.readline())
+				children_actions.append([write, move, index])
 
 				child_path_state = CHILD_PATH_STATE_NONE
 				predicted_score = 0.0
@@ -86,16 +87,11 @@ while True:
 
 			average_score = file.readline().strip()
 
-			think = 0.0
-			uncertainty = 0.0
-
 			nodes.append([state,
 						  children_indexes,
 						  children_actions,
 						  process_information,
-						  average_score,
-						  think,
-						  uncertainty])
+						  average_score])
 
 		while True:
 			curr_node_index = int(file.readline())
@@ -108,27 +104,17 @@ while True:
 			if next_line == 'new_node':
 				nodes[curr_node_index][0] = NODE_STATE_NEW
 				nodes[curr_node_index][3][0][0] = CHILD_PATH_STATE_NEW
-				continue
 			elif next_line == 'new_child':
 				child_index = int(file.readline())
 
 				nodes[curr_node_index][0] = NODE_STATE_NEW_CHILD
 				nodes[curr_node_index][3][child_index][0] = CHILD_PATH_STATE_NEW
-				continue
 			elif next_line == 'random':
 				child_index = int(file.readline())
 
 				nodes[curr_node_index][0] = NODE_STATE_RANDOM
 				nodes[curr_node_index][3][child_index][0] = CHILD_PATH_STATE_RANDOM
-				continue
-			
-			think = float(next_line)
-			nodes[curr_node_index][5] = think
-			uncertainty = float(file.readline())
-			nodes[curr_node_index][6] = uncertainty
-
-			next_line = file.readline().strip()
-			if next_line == 'good_explore':
+			elif next_line == 'good_explore':
 				nodes[curr_node_index][0] = NODE_STATE_GOOD_EXPLORE
 			elif next_line == 'random_explore':
 				nodes[curr_node_index][0] = NODE_STATE_RANDOM_EXPLORE
@@ -179,16 +165,16 @@ while True:
 			label = 'A: ' + str(nodes[n_index][4])
 			color = 'orange'
 		elif nodes[n_index][0] == NODE_STATE_ON_PATH:
-			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			label = 'A: ' + str(nodes[n_index][4])
 			color = 'green'
 		elif nodes[n_index][0] == NODE_STATE_GOOD_EXPLORE:
-			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			label = 'A: ' + str(nodes[n_index][4])
 			color = 'blue'
 		elif nodes[n_index][0] == NODE_STATE_RANDOM_EXPLORE:
-			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			label = 'A: ' + str(nodes[n_index][4])
 			color = 'purple'
 		elif nodes[n_index][0] == NODE_STATE_FORCED_EXPLORE:
-			label = 'A: ' + str(nodes[n_index][4]) + '\n' + 'T: ' + str(nodes[n_index][5]) + '\n' + 'U: ' + str(nodes[n_index][6])
+			label = 'A: ' + str(nodes[n_index][4])
 			color = 'grey'
 
 		node = pydot.Node(n_index, label=label, color=color)

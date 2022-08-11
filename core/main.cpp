@@ -26,7 +26,7 @@ void run_solver() {
 		counter++;
 		counter_mtx.unlock();
 
-		if (current_counter%1000000 == 0) {
+		if (current_counter%100000 == 0) {
 			solver->single_pass(true);
 
 			// chrono::time_point<chrono::steady_clock> end = chrono::steady_clock::now();
@@ -36,7 +36,7 @@ void run_solver() {
 			solver->single_pass(false);
 		}
 
-		if (current_counter%50000000 == 0) {
+		if (current_counter%10000000 == 0) {
 			solver->save();
 		}
 	}

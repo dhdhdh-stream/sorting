@@ -22,7 +22,7 @@ Solver::Solver() {
 	loop_dictionary = new LoopDictionary();
 
 	// ifstream save_file;
-	// save_file.open("../saves/1659805791.txt");
+	// save_file.open("../saves/1660228742.txt");
 	// string num_nodes_line;
 	
 	// getline(save_file, num_nodes_line);
@@ -158,28 +158,49 @@ void Solver::single_pass(bool save_for_display) {
 	double score;
 	if (chosen_paths[chosen_paths.size()-1] != -1) {
 		score = p.score_result();
+	
+		if (force_eval) {
+			if (guesses.size() < visited_nodes.size()) {
+				// new node still learning its scores
+				for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
+					visited_nodes[n_index]->update_average(score);
+
+					vector<double> partial_observations(observations.begin(),
+						observations.begin()+path_lengths[n_index]);
+
+					visited_nodes[n_index]->update_score_network(partial_observations,
+												   chosen_paths[n_index],
+												   score);
+				}
+			} else {
+				double sum_misguess = 0.0;
+				for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
+					visited_nodes[n_index]->update_average(score);
+
+					vector<double> partial_observations(observations.begin(),
+						observations.begin()+path_lengths[n_index]);
+
+					visited_nodes[n_index]->update_score_network(partial_observations,
+												   chosen_paths[n_index],
+												   score);
+
+					sum_misguess += abs(score - guesses[n_index]);
+					double curr_misguess = sum_misguess/((int)visited_nodes.size()-n_index);
+
+					visited_nodes[n_index]->update_information_network(
+						partial_observations,
+						chosen_paths[n_index],
+						curr_misguess);
+				}
+			}
+		}
 	} else {
-		// TODO: consider not updating scores for random explore
 		visited_nodes[visited_nodes.size()-1]->explore->process(
 			&p,
 			&observations,
 			score,
 			save_for_display,
 			&raw_actions);
-	}
-
-	double sum_misguess = 0.0;
-	for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
-		vector<double> partial_observations(observations.begin(),
-			observations.begin()+path_lengths[n_index]);
-
-		sum_misguess += abs(score - guesses[n_index]);
-		double curr_misguess = sum_misguess/((int)visited_nodes.size()-n_index);
-
-		visited_nodes[n_index]->update(partial_observations,
-									   chosen_paths[n_index],
-									   score,
-									   curr_misguess);
 	}
 
 	if (save_for_display) {
