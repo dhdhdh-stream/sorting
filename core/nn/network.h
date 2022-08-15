@@ -37,6 +37,8 @@ public:
 						double learning_rate,
 						double momentum);
 
+	void extend_with_new_layer();
+
 	void save(std::ofstream& output_file);
 
 private:

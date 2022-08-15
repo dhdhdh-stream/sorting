@@ -12,7 +12,9 @@ class SolutionNode;
 class Solver {
 public:
 	std::vector<SolutionNode*> nodes;
-	int current_node_index;
+
+	int current_node_counter;
+	int current_state_counter;
 
 	std::mutex nodes_mtx;
 	std::mutex display_mtx;

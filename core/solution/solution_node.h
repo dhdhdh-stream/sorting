@@ -6,30 +6,38 @@
 #include <vector>
 
 #include "action.h"
-#include "explore.h"
 #include "network.h"
-#include "solver.h"
 
-class Explore;
-class Solver;
+const int NODE_TYPE_NORMAL = 0;
+const int NODE_TYPE_IF_START = 1;
+const int NODE_TYPE_IF_END = 2;
+const int NODE_TYPE_LOOP_START = 3;
+const int NODE_TYPE_LOOP_END = 4;
+const int NODE_TYPE_GOTO_START = 5;
+const int NODE_TYPE_GOTO_END = 6;
+
+const int CANDIDATE_STATE_EXPLORE = 0;
+const int CANDIDATE_STATE_MEASURE_AVERAGE = 1;
+const int CANDIDATE_STATE_LEARN_SCORES = 2;
+const int CANDIDATE_STATE_MEASURE_INFORMATION = 3;
+// assume no loops for now
+
 class SolutionNode {
 public:
-	Solver* solver;
 	int node_index;
-	int path_length;	// assume fixed path_length (i.e., no branch merge) for now
+	int node_type;
 
-	std::vector<int> children_indexes;
-	std::vector<Action> children_actions;
-	std::vector<Network*> children_score_networks;
-	std::vector<std::string> children_score_network_names;
-	std::vector<Network*> children_information_networks;
-	std::vector<std::string> children_information_network_names;
+	std::vector<int> goto_node_indexes;
+	std::vector<int> goto_score_networks_inputs_state_indexes;
+	std::vector<Network*> goto_score_networks;
+	std::vector<std::string> goto_score_network_names;
 
-	double average_score;
+	std::vector<bool> goto_on;
 
-	Explore* explore;
+	double average;
+	double misguess;
 
-	std::mutex children_mtx;
+	Candidate* candidate;
 
 	SolutionNode(Solver* solver,
 				 int node_index,
