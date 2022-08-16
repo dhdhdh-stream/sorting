@@ -598,6 +598,7 @@ void Explore::generate_tree() {
 	while (true) {
 		curr_node->process();
 
+		// TODO: revisit nodes occasionally
 		if (curr_node->children.size() == 0) {
 			break;
 		}
@@ -614,6 +615,8 @@ void Explore::generate_tree() {
 			}
 		}
 	}
+
+	this->iter_index = 0;
 }
 
 void Explore::iteration() {

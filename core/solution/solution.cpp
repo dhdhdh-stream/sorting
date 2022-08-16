@@ -219,6 +219,47 @@ void Solver::single_pass(bool save_for_display) {
 	}
 }
 
+void Solution::tune() {
+	Problem problem;
+	
+	double state_vals[this->current_state_counter] = {};
+	bool states_on[this->current_state_counter] = {};
+
+	vector<SolutionNode*> nodes_visited;
+	set<SolutionNode*> unique_nodes_visited;
+	vector<NetworkHistory*> network_historys;
+
+	SolutionNode* curr_node = this->nodes[0];
+	nodes_visited.push_back(curr_node);
+	unique_nodes_visited.insert(curr_node);
+	while (true) {
+		if (curr_node->node_index == 1) {
+			break;
+		}
+
+		curr_node = curr_node->tune(problem,
+									state_vals,
+									states_on,
+									network_historys);
+		nodes_visited.push_back(curr_node);
+		unique_nodes_visited.insert(curr_node);
+	}
+
+	double score = problem.score_result();
+
+	double state_errors[this->current_state_counter] = {};
+	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
+		nodes_visited[v_index]->tune_update(score,
+											state_errors,
+											states_on,
+											network_historys);
+	}
+
+	for (auto node : unique_nodes_visited) {
+		node->increment();
+	}
+}
+
 void Solver::save() {
 	ofstream save_file;
 	string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";

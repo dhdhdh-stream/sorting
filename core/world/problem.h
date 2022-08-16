@@ -15,16 +15,11 @@ public:
 	Problem(std::vector<double>* observations);
 	~Problem();
 
-	void perform_action(Action action,
-						std::vector<double>* observations,
-						bool save_for_display,
-						std::vector<Action>* raw_actions);
+	double get_observation();
+	void perform_action(Action action);
 	double score_result();
 
 	void print();
-
-private:
-	double get_observation();
 };
 
 #endif /* PROBLEM_H */

@@ -11,6 +11,9 @@ public:
 	std::string halt_network_name;
 
 	int start_index;
+
+	std::vector<int> score_network_inputs_state_indexes;
+	Network* score_network;
 };
 
 #endif /* SOLUTION_NODE_LOOP_END_H */

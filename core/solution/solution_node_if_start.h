@@ -12,7 +12,10 @@ public:
 
 	int end_index;
 
-	std::vector<int> states_on;
+	std::vector<int> scope_states_on;
+
+	int scope_potential_state_index;
+	int state_explore_type;
 
 	SolutionNode* previous;
 };

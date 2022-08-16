@@ -23,6 +23,8 @@ public:
 	std::vector<std::vector<std::vector<double>>> prev_weight_updates;
 	std::vector<double> prev_constant_updates;
 
+	bool is_on;
+
 	Layer(int type, int num_nodes);
 	Layer(Layer* original);
 	~Layer();
@@ -42,6 +44,15 @@ public:
 						double momentum);
 
 	void save_weights(std::ofstream& output_file);
+
+	void add_potential_input_layer(Layer* potential);
+	void input_extend_with_potential(int potential_size);
+	void hidden_extend_with_potential(int potential_index,
+									  Layer* potential_hidden);
+	void output_extend_with_potential(int potential_index);
+	void reset_potential_input_layer(int potential_index);
+	void reset_weights();
+	void remove_potential_input_layers();
 
 	void collapse_input(int input_index,
 						Layer* new_collapse_layer);

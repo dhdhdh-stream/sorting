@@ -9,9 +9,9 @@
 #include "network.h"
 #include "solution_node.h"
 
-const int EXPLORE_STATE_TUNE = 0;
-const int EXPLORE_STATE_MEASURE = 1;
-const int EXPLORE_STATE_EXPLORE = 2;
+// const int EXPLORE_STATE_TUNE = 0;
+// const int EXPLORE_STATE_MEASURE = 1;
+// const int EXPLORE_STATE_EXPLORE = 2;
 
 class Explore {
 public:

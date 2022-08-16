@@ -254,54 +254,6 @@ void SolutionNode::process(vector<double> observations,
 	return;
 }
 
-void SolutionNode::update_average(double score) {
-	// don't bother locking (just loses 1 update?)
-	this->average_score = 0.99999*this->average_score + 0.00001*score;
-}
-
-void SolutionNode::update_score_network(vector<double> observations,
-										int chosen_path,
-										double score) {
-	Network* child_score_network = this->children_score_networks[chosen_path];
-	child_score_network->mtx.lock();
-	child_score_network->activate(observations);
-	vector<double> child_score_errors;
-	if (score == 1.0) {
-		if (child_score_network->val_val->acti_vals[0] < 1.0) {
-			child_score_errors.push_back(1.0 - child_score_network->val_val->acti_vals[0]);
-		} else {
-			child_score_errors.push_back(0.0);
-		}
-	} else {
-		if (child_score_network->val_val->acti_vals[0] > 0.0) {
-			child_score_errors.push_back(0.0 - child_score_network->val_val->acti_vals[0]);
-		} else {
-			child_score_errors.push_back(0.0);
-		}
-	}
-	child_score_network->backprop(child_score_errors);
-	child_score_network->increment();
-	child_score_network->mtx.unlock();
-}
-
-void SolutionNode::update_information_network(vector<double> observations,
-											  int chosen_path,
-											  double misguess) {
-	Network* child_information_network = this->children_information_networks[chosen_path];
-	child_information_network->mtx.lock();
-	child_information_network->activate(observations);
-	vector<double> information_errors;
-	if (misguess == 0.0 && child_information_network->val_val->acti_vals[0] > 1.0) {
-		information_errors.push_back(0.0);
-	} else {
-		double information_target = 1.0 - misguess;
-		information_errors.push_back(information_target - child_information_network->val_val->acti_vals[0]);
-	}
-	child_information_network->backprop(information_errors);
-	child_information_network->increment();
-	child_information_network->mtx.unlock();
-}
-
 void SolutionNode::save(ofstream& save_file) {
 	save_file << this->path_length << endl;
 	
@@ -342,4 +294,68 @@ void SolutionNode::save_for_display(ofstream& save_file) {
 	}
 
 	save_file << this->average_score << endl;
+}
+
+void SolutionNode::tune_score_network(Problem& problem,
+									  double* state_vals,
+									  bool* states_on,
+									  std::vector<NetworkHistory*>& network_historys) {
+	vector<double> score_network_inputs;
+	double curr_observations = problem.get_observation();
+	score_network_inputs.push_back(curr_observations);
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+			score_network_inputs.push_back(state_vals[this->score_network_inputs_state_indexes[i_index]]);
+		} else {
+			score_network_inputs.push_back(0.0);
+		}
+	}
+	this->score_network->mtx.lock();
+	this->score_network->activate(score_network_inputs, network_historys);
+	this->score_network->mtx.unlock();
+}
+
+void SolutionNode::tune_update_score_network(double score,
+											 double* state_errors,
+											 bool* states_on,
+											 std::vector<NetworkHistory*>& network_historys) {
+	this->score_network->mtx.lock();
+
+	NetworkHistory* network_history = network_historys[network_historys.size()-1];
+	network_history->reset_weights();
+
+	vector<double> score_network_errors;
+	if (score == 1.0) {
+		if (this->score_network->val_val->acti_vals[0] < 1.0) {
+			score_network_errors.push_back(1.0 - this->score_network->val_val->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	} else {
+		if (this->score_network->val_val->acti_vals[0] > 0.0) {
+			score_network_errors.push_back(0.0 - this->score_network->val_val->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	}
+	this->score_network->backprop(score_network_errors);
+
+	// for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+	// 	if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+	// 		state_errors[this->score_network_inputs_state_indexes[i_index]] += \
+	// 			this->score_network->input->errors[1+i_index];
+	// 	}
+	// 	this->score_network->input->errors[1+i_index] = 0.0;
+	// }
+
+	this->score_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
+}
+
+void SolutionNode::increment_score_network() {
+	this->score_network->mtx.lock();
+	this->score_network->increment();
+	this->score_network->mtx.unlock();
 }

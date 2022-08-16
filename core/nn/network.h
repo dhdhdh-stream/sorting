@@ -11,8 +11,11 @@ class NetworkHistory;
 class Network {
 public:
 	Layer* input;
-	Layer* val_1st;
-	Layer* val_val;
+	Layer* hidden;
+	Layer* output;
+
+	std::vector<Layer*> potential_inputs;
+	std::vector<Layer*> potential_hiddens;
 
 	int epoch;
 	int iter;
@@ -20,7 +23,7 @@ public:
 	std::mutex mtx;
 
 	Network(int input_size,
-			int layer_size,
+			int hidden_size,
 			int output_size);
 	Network(std::ifstream& input_file);
 	~Network();
@@ -37,13 +40,22 @@ public:
 						double learning_rate,
 						double momentum);
 
-	void extend_with_new_layer();
+	void add_potential();
+	void activate(std::vector<double>& vals,
+				  int potential_index,
+				  std::vector<double>& potential_vals,
+				  std::vector<NetworkHistory*>& network_historys);
+	void backprop(int potential_index,
+				  std::vector<double>& errors);
+	void extend_with_potential(int potential_index);
+	void reset_potential(int potential_index);
+	void remove_potentials();
 
 	void save(std::ofstream& output_file);
 
 private:
 	void construct(int input_size,
-				   int layer_size,
+				   int hidden_size,
 				   int output_size);
 };
 
@@ -52,10 +64,15 @@ public:
 	Network* network;
 
 	std::vector<double> input_history;
-	std::vector<double> val_1st_history;
-	std::vector<double> val_val_history;
+	std::vector<double> hidden_history;
+	std::vector<double> output_history;
+
+	int potential_index;
+	std::vector<double> potential_input_history;
+	std::vector<double> potential_hidden_history;
 
 	NetworkHistory(Network* network);
+	NetworkHistory(Network* network, int potential_index);
 	~NetworkHistory();
 	void reset_weights();
 };

@@ -3,7 +3,9 @@
 using namespace std;
 
 void ExploreNodeRoot::process(Solution* solution) override {
-	// TODO: clear everything
+	for (int n_index = 0; n_index < (int)solution->nodes.size(); n_index++) {
+		solution->nodes[n_index]->reset();
+	}
 
 	SolutionNodeLoopStart* overall_start_node = (SolutionNodeLoopStart*)solution->nodes[0];
 	SolutionNodeLoopEnd* overall_end_node = (SolutionNodeLoopEnd*)solution->nodes[1];

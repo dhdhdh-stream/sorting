@@ -3,13 +3,9 @@
 
 #include <cstdlib>
 
-#include "action.h"
-
-inline double randnorm() {
+inline double randuni() {
 	double value = (double)rand()/(double)RAND_MAX;
 	return value;
 }
-
-int calculate_action_path_length(Action action);
 
 #endif /* UTILITIES_H */
