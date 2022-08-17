@@ -127,9 +127,9 @@ void Network::update_weights(double factor,
 }
 
 void Network::add_potential() {
-	Layer* new_potential_input = new Layer(LINEAR_LAYER, 5);
+	Layer* new_potential_input = new Layer(LINEAR_LAYER, 1);
 	new_potential_input.is_on = false;
-	Layer* new_potential_hidden = new Layer(RELU_LAYER, 10);
+	Layer* new_potential_hidden = new Layer(RELU_LAYER, 4);
 	new_potential_hidden.is_on = false;
 	new_potential_hidden->input_layers.push_back(this->input);
 	new_potential_hidden->input_layers.push_back(new_potential_input);
@@ -142,52 +142,62 @@ void Network::add_potential() {
 }
 
 void Network::activate(vector<double>& vals,
-					   int potential_index,
+					   vector<int>& potentials_on,
 					   vector<double>& potential_vals,
 					   vector<NetworkHistory*>& network_historys) {
 	for (int i = 0; i < (int)vals.size(); i++) {
 		this->input->acti_vals[i] = vals[i];
 	}
 
-	this->potential_inputs[potential_index]->is_on = true;
-	this->potential_hiddens[potential_index]->is_on = true;
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_inputs[potentials_on[p_index]]->is_on = true;
+		this->potential_hiddens[potentials_on[p_index]]->is_on = true;
 
-	for (int i = 0; i < (int)potential_vals.size(); i++) {
-		this->potential_inputs[potential_index]->acti_vals[i] = potential_vals[i];
+		this->potential_inputs[potentials_on[p_index]]->acti_vals[0] = potential_vals[p_index];
 	}
 
 	this->hidden->activate();
-	this->potential_hiddens[potential_index]->activate();
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_hiddens[potentials_on[p_index]]->activate();
+	}
 
 	this->output->activate();
 
-	NetworkHistory* network_history = new NetworkHistory(this, potential_index);
+	NetworkHistory* network_history = new NetworkHistory(this, potentials_on);
 	network_historys.push_back(network_history);
 
-	this->potential_inputs[potential_index]->is_on = false;
-	this->potential_hiddens[potential_index]->is_on = false;
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_inputs[potentials_on[p_index]]->is_on = false;
+		this->potential_hiddens[potentials_on[p_index]]->is_on = false;
+	}
 }
 
-void Network::backprop(int potential_index,
-					   vector<double>& errors) {
+void Network::backprop(vector<double>& errors,
+					   vector<int>& potentials_on) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
-	this->potential_inputs[potential_index]->is_on = true;
-	this->potential_hiddens[potential_index]->is_on = true;
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_inputs[potentials_on[p_index]]->is_on = true;
+		this->potential_hiddens[potentials_on[p_index]]->is_on = true;
+	}
 
 	this->output->backprop();
 
-	this->potential_hiddens[potential_index]->backprop();
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_hiddens[potentials_on[p_index]]->backprop();
+	}
 	this->hidden->backprop();
 
-	this->potential_inputs[potential_index]->is_on = false;
-	this->potential_hiddens[potential_index]->is_on = false;
+	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
+		this->potential_inputs[potentials_on[p_index]]->is_on = false;
+		this->potential_hiddens[potentials_on[p_index]]->is_on = false;
+	}
 }
 
 void Network::extend_with_potential(int potential_index) {
-	this->input->input_extend_with_potential(5);
+	this->input->input_extend_with_potential();
 	this->hidden->hidden_extend_with_potential(potential_index,
 											   this->potential_hiddens[potential_index]);
 	this->output->output_extend_with_potential(potential_index);
@@ -233,12 +243,10 @@ NetworkHistory::NetworkHistory(Network* network) {
 	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
 		this->output_history.push_back(network->output->acti_vals[n_index]);
 	}
-
-	this->potential_index = -1;
 }
 
 NetworkHistory::NetworkHistory(Network* network,
-							   int potential_index) {
+							   vector<int> potentials_on) {
 	this->network = network;
 
 	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
@@ -251,12 +259,15 @@ NetworkHistory::NetworkHistory(Network* network,
 		this->output_history.push_back(network->output->acti_vals[n_index]);
 	}
 
-	this->potential_index = potential_index;
-	for (int n_index = 0; n_index < (int)network->potential_inputs[potential_index]->acti_vals.size(); n_index++) {
-		this->potential_input_history.push_back(network->potential_inputs[potential_index]->acti_vals[n_index]);
-	}
-	for (int n_index = 0; n_index < (int)network->potential_hiddens[potential_index]->acti_vals.size(); n_index++) {
-		this->potential_hidden_history.push_back(network->potential_hiddens[potential_index]->acti_vals[n_index]);
+	this->potentials_on = potentials_on;
+	for (int p_index = 0; p_index < (int)this->potentials_on.size(); p_index++) {
+		this->potential_inputs_historys.push_back(network->potential_inputs[this->potentials_on[p_index]]->acti_vals[0]);
+		
+		vector<double> hidden_history;
+		for (int n_index = 0; n_index < (int)network->potential_hiddens[this->potentials_on[p_index]]->acti_vals.size(); n_index++) {
+			hidden_history.push_back(network->potential_hiddens[this->potentials_on[p_index]]->acti_vals[n_index]);
+		}
+		this->potential_hiddens_historys.push_back(hidden_history);
 	}
 }
 
@@ -275,12 +286,13 @@ void NetworkHistory::reset_weights() {
 		this->network->output->acti_vals[n_index] = this->output_history[n_index];
 	}
 
-	if (this->potential_index != -1) {
-		for (int n_index = 0; n_index < (int)this->network->potential_inputs[potential_index]->acti_vals.size(); n_index++) {
-			this->network->potential_inputs[potential_index]->acti_vals[n_index] = this->potential_input_history[n_index];
-		}
-		for (int n_index = 0; n_index < (int)this->network->potential_hiddens[potential_index]->acti_vals.size(); n_index++) {
-			this->network->potential_hiddens[potential_index]->acti_vals[n_index] = this->potential_hidden_history[n_index];
+	for (int p_index = 0; p_index < (int)this->potentials_on.size(); p_index++) {
+		this->network->potential_inputs[this->potentials_on[p_index]]->acti_vals[0] = \
+			this->potential_inputs_historys[p_index];
+
+		for (int n_index = 0; n_index < (int)this->network->potential_hiddens[this->potentials_on[p_index]]->acti_vals.size(); n_index++) {
+			this->network->potential_hiddens[this->potentials_on[p_index]]->acti_vals[n_index] = \
+				this->potential_hiddens_historys[p_index][n_index];
 		}
 	}
 }

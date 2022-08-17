@@ -10,6 +10,7 @@ public:
 
 	int jump_start_node_index;
 
+	// assuming simple path
 	std::vector<int> new_path_node_indexes;
 
 	// IF_START_JUMP_ENDING_TYPE_END
@@ -21,7 +22,7 @@ public:
 	int jump_end_node_index;
 	int new_end_node_index;
 
-	void process(Solution* solution) override;
+	void process() override;
 };
 
 #endif /* EXPLORE_NODE_IF_START_JUMP_H */

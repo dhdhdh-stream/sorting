@@ -10,24 +10,34 @@ public:
 	SolutionNode* previous;
 	SolutionNode* loop_in;
 
-	std::vector<int> current_explore_states;
+	SolutionNodeLoopEnd* end;
 
-	std::vector<SolutionNode*> nodes_directly_in_scope;
+	// std::vector<int> current_explore_states;
+
+	// std::vector<SolutionNode*> nodes_directly_in_scope;
 
 	void reset() override;
 
-	SolutionNode* tune(Problem& problem,
-					   double* state_vals,
-					   bool* states_on,
-					   std::vector<NetworkHistory*>& network_historys) override;
-	void tune_update(double score,
-					 double* state_errors,
-					 bool* states_on,
-					 std::vector<NetworkHistory*>& network_historys) override;
+	SolutionNode* activate(Problem& problem,
+						   double* state_vals,
+						   bool* states_on,
+						   int visited_count,
+						   SolutionNode* explore_node,
+						   int& explore_type,
+						   double* potential_state_vals,
+						   bool* potential_states_on,
+						   std::vector<NetworkHistory*>& network_historys) override;
+	void backprop(double score,
+				  SolutionNode* explore_node,
+				  int& explore_type,
+				  double* potential_state_errors,
+				  bool* potential_states_on,
+				  std::vector<NetworkHistory*>& network_historys) override;
+	void increment(SolutionNode* explore_node,
+				   int& explore_type,
+				   bool* potential_states_on) override;
 
-	void increment() override;
-
-	void explore_setup_network_to_test_new_state();
+	// void explore_setup_network_to_test_new_state();
 };
 
 #endif /* SOLUTION_NODE_LOOP_START_H */

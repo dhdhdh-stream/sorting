@@ -3,7 +3,7 @@
 
 class ExploreNodeRoot : public ExploreNode {
 public:
-	void process(Solution* solution) override;
+	void process() override;
 };
 
 #endif /* EXPLORE_NODE_ROOT_H */

@@ -3,30 +3,27 @@
 
 #include <mutex>
 
-#include "action.h"
-#include "problem.h"
 #include "solution_node.h"
 
 class SolutionNode;
 class Solver {
 public:
-	std::vector<SolutionNode*> nodes;
+	Explore* explore;
 
-	int current_node_counter;
+	std::vector<SolutionNode*> nodes;
+	std::mutex nodes_mtx;
+	
 	int current_state_counter;
+	std::mutex state_mtx;
 
 	int current_potential_state_counter;
 
-	std::mutex nodes_mtx;
 	std::mutex display_mtx;
 
-	Solver();
+	Solver(Explore* explore);
 	~Solver();
 
-	void add_nodes(SolutionNode* starting_point,
-				   std::vector<Action> candidate);
-
-	void tune();
+	void iteration();
 
 	void save();
 };

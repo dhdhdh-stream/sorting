@@ -3,10 +3,10 @@
 
 class ExploreNodeState : public ExploreNode {
 public:
-	SolutionNode* scope;
+	int scope_index;
 	int new_state_index;
 
-	void process(Solution* solution) override;
+	void process() override;
 };
 
 #endif /* EXPLORE_NODE_STATE_H */

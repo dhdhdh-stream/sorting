@@ -10,253 +10,91 @@
 
 using namespace std;
 
-Solver::Solver() {
-	SolutionNode* halt_node = new SolutionNode(this, 0, -1);
-	this->nodes.push_back(halt_node);
-	SolutionNode* root_node = new SolutionNode(this, 1, 1);
+Solver::Solver(Explore* explore) {
+	this->explore = explore;
+
+	SolutionNode* root_node = new SolutionNodeLoopStart(this, 0);
 	this->nodes.push_back(root_node);
-	root_node->add_child(0, HALT);
-	this->current_node_index = 2;
+	SolutionNode* halt_node = new SolutionNodeLoopEnd(this, 1);
+	this->nodes.push_back(halt_node);
 
-	action_dictionary = new ActionDictionary();
-	loop_dictionary = new LoopDictionary();
+	this->current_state_counter = 0;
 
-	// ifstream save_file;
-	// save_file.open("../saves/1660228742.txt");
-	// string num_nodes_line;
-	
-	// getline(save_file, num_nodes_line);
-	// int num_nodes = stoi(num_nodes_line);
-	// for (int n_index = 0; n_index < num_nodes; n_index++) {
-	// 	SolutionNode* node = new SolutionNode(this,
-	// 										  n_index,
-	// 										  save_file);
-	// 	this->nodes.push_back(node);
-	// }
-	// this->current_node_index = num_nodes;
-
-	// action_dictionary = new ActionDictionary(save_file);
-	// loop_dictionary = new LoopDictionary(save_file);
-
-	// save_file.close();
+	// current_potential_state_counter reset to 0 every cycle
 }
 
 Solver::~Solver() {
 	for (int i = 0; i < (int)this->nodes.size(); i++) {
 		delete this->nodes[i];
 	}
-
-	delete action_dictionary;
-	delete loop_dictionary;
 }
 
-void Solver::add_nodes(SolutionNode* starting_point,
-					   vector<Action> candidate) {
-	this->nodes_mtx.lock();
-	int sum_path_length = 0;
-	vector<SolutionNode*> new_nodes;
-	for (int a_index = 0; a_index < (int)candidate.size(); a_index++) {
-		int new_path_length = calculate_action_path_length(candidate[a_index]);
-		sum_path_length += new_path_length;
-
-		SolutionNode* new_node = new SolutionNode(
-			this,
-			this->current_node_index,
-			starting_point->path_length+sum_path_length);
-		this->nodes.push_back(new_node);
-		this->current_node_index++;
-
-		new_nodes.push_back(new_node);
-	}
-	this->nodes_mtx.unlock();
-
-	new_nodes[(int)new_nodes.size()-1]->add_child(0, HALT);
-	for (int n_index = (int)new_nodes.size()-2; n_index >= 0; n_index--) {
-		new_nodes[n_index]->add_child(new_nodes[n_index+1]->node_index, candidate[n_index+1]);
-	}
-	starting_point->add_child(new_nodes[0]->node_index, candidate[0]);
-
-	// simple heuristic to add compound actions for now
-	int starting_index = rand()%(int)candidate.size();
-	int ending_index = starting_index+1+rand()%((int)candidate.size()-starting_index);
-	vector<Action> new_compound_action(candidate.begin()+starting_index, \
-		candidate.begin()+ending_index);
-	action_dictionary->add_action(new_compound_action);
-}
-
-void Solver::single_pass(bool save_for_display) {
-	ofstream display_file;
-	if (save_for_display) {
-		this->display_mtx.lock();
-
-		string display_file_name = "../display.txt";
-		display_file.open(display_file_name);
-
-		this->nodes_mtx.lock();
-		int num_nodes = (int)this->nodes.size();
-		this->nodes_mtx.unlock();
-		
-		display_file << num_nodes << endl;
-		for (int n_index = 0; n_index < num_nodes; n_index++) {
-			this->nodes[n_index]->save_for_display(display_file);
-		}
-	}
-
-	vector<double> observations;
-	Problem p(&observations);
-
-	vector<Action> raw_actions;
-
-	SolutionNode* curr_node = this->nodes[1];
-	bool force_eval = false;
-	if (rand()%20 == 0) {
-		force_eval = true;
-	}
-
-	vector<double> guesses;
-
-	vector<SolutionNode*> visited_nodes;
-	vector<int> chosen_paths;
-	vector<int> path_lengths;
-
-	while (true) {
-		int chosen_path;
-		curr_node->process(observations,
-						   chosen_path,
-						   guesses,
-						   force_eval,
-						   save_for_display,
-						   display_file);
-
-		visited_nodes.push_back(curr_node);
-		chosen_paths.push_back(chosen_path);
-		path_lengths.push_back((int)observations.size());
-
-		if (chosen_path == -1) {
-			if (save_for_display) {
-				display_file << -1 << endl;
-			}
-
-			break;
-		} else {
-			if (curr_node->children_indexes[chosen_path] == 0) {
-				if (save_for_display) {
-					display_file << 0 << endl;
-				}
-
-				break;
-			}
-
-			p.perform_action(curr_node->children_actions[chosen_path],
-							 &observations,
-							 save_for_display,
-							 &raw_actions);
-			curr_node = nodes[curr_node->children_indexes[chosen_path]];
-		}
-	}
-
-	double score;
-	if (chosen_paths[chosen_paths.size()-1] != -1) {
-		score = p.score_result();
-	
-		if (force_eval) {
-			if (guesses.size() < visited_nodes.size()) {
-				// new node still learning its scores
-				for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
-					visited_nodes[n_index]->update_average(score);
-
-					vector<double> partial_observations(observations.begin(),
-						observations.begin()+path_lengths[n_index]);
-
-					visited_nodes[n_index]->update_score_network(partial_observations,
-												   chosen_paths[n_index],
-												   score);
-				}
-			} else {
-				double sum_misguess = 0.0;
-				for (int n_index = (int)visited_nodes.size()-1; n_index >= 0; n_index--) {
-					visited_nodes[n_index]->update_average(score);
-
-					vector<double> partial_observations(observations.begin(),
-						observations.begin()+path_lengths[n_index]);
-
-					visited_nodes[n_index]->update_score_network(partial_observations,
-												   chosen_paths[n_index],
-												   score);
-
-					sum_misguess += abs(score - guesses[n_index]);
-					double curr_misguess = sum_misguess/((int)visited_nodes.size()-n_index);
-
-					visited_nodes[n_index]->update_information_network(
-						partial_observations,
-						chosen_paths[n_index],
-						curr_misguess);
-				}
-			}
-		}
-	} else {
-		visited_nodes[visited_nodes.size()-1]->explore->process(
-			&p,
-			&observations,
-			score,
-			save_for_display,
-			&raw_actions);
-	}
-
-	if (save_for_display) {
-		display_file << raw_actions.size() << endl;
-		for (int i = 0; i < (int)raw_actions.size(); i++) {
-			display_file << raw_actions[i].write << endl;
-			display_file << raw_actions[i].move << endl;
-		}
-
-		display_file << p.initial_world.size() << endl;
-		for (int i = 0; i < (int)p.initial_world.size(); i++) {
-			display_file << p.initial_world[i] << endl;
-		}
-
-		this->display_mtx.unlock();
-	}
-}
-
-void Solution::tune() {
+void Solution::iteration() {
 	Problem problem;
 	
 	double state_vals[this->current_state_counter] = {};
 	bool states_on[this->current_state_counter] = {};
 
+	double potential_state_vals[this->current_potential_state_counter] = {};
+	bool potential_states_on[this->current_potential_state_counter] = {};
+
 	vector<SolutionNode*> nodes_visited;
-	set<SolutionNode*> unique_nodes_visited;
+	map<SolutionNode*, int> node_visited_counts;
 	vector<NetworkHistory*> network_historys;
 
+	SolutionNode* explore_node = NULL;
+	int explore_type = EXPLORE_TYPE_NONE;
+
 	SolutionNode* curr_node = this->nodes[0];
-	nodes_visited.push_back(curr_node);
-	unique_nodes_visited.insert(curr_node);
 	while (true) {
+		int visited_count;
+		map<SolutionNode*,int>::iterator it = node_visited_counts.find(curr_node);
+		if (it == node_visited_counts.end()) {
+			visited_count = 0;
+		} else {
+			visited_count = it->second;
+		}
+
+		SolutionNode* next_node = curr_node->activate(problem,
+													  state_vals,
+													  states_on,
+													  visited_count,
+													  explore_node,
+													  explore_type,
+													  potential_state_vals,
+													  potential_states_on,
+													  network_historys);
+		nodes_visited.push_back(curr_node);
+		if (it == node_visited_counts.end()) {
+			node_visited_counts[curr_node] = 1;
+		} else {
+			it->second++;
+		}
+
 		if (curr_node->node_index == 1) {
 			break;
 		}
 
-		curr_node = curr_node->tune(problem,
-									state_vals,
-									states_on,
-									network_historys);
-		nodes_visited.push_back(curr_node);
-		unique_nodes_visited.insert(curr_node);
+		curr_node = next_node;
 	}
 
 	double score = problem.score_result();
 
-	double state_errors[this->current_state_counter] = {};
+	double potential_state_errors[this->current_potential_state_counter] = {};
 	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
-		nodes_visited[v_index]->tune_update(score,
-											state_errors,
-											states_on,
-											network_historys);
+		nodes_visited[v_index]->backprop(score,
+										 explore_node,
+										 explore_type,
+										 potential_state_errors,
+										 potential_states_on,
+										 network_historys);
 	}
 
-	for (auto node : unique_nodes_visited) {
-		node->increment();
+	for (map<SolutionNode*,int>::iterator it = node_visited_counts.begin();
+			it != node_visited_counts.end(); it++) {
+		it->first->increment(explore_node,
+							 explore_type,
+							 potential_states_on);
 	}
 }
 
@@ -271,11 +109,9 @@ void Solver::save() {
 
 	save_file << num_nodes << endl;
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
+		// TODO: save node type first
 		this->nodes[n_index]->save(save_file);
 	}
-
-	action_dictionary->save(save_file);
-	loop_dictionary->save(save_file);
 
 	save_file.close();
 }

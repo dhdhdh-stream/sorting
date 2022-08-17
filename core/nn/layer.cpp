@@ -264,11 +264,9 @@ void Layer::add_potential_input_layer(Layer* potential) {
 	}
 }
 
-void Layer::input_extend_with_potential(int potential_size) {
-	for (int p_index = 0; p_index < potential_size; p_index++) {
-		this->acti_vals.push_back(0.0);
-		this->errors.push_back(0.0);
-	}
+void Layer::input_extend_with_potential() {
+	this->acti_vals.push_back(0.0);
+	this->errors.push_back(0.0);
 }
 
 void Layer::hidden_extend_with_potential(int potential_index,

@@ -13,10 +13,7 @@ public:
 	double write;
 	int move;
 
-	int index;
-
 	Action(double write, int move);
-	Action(int move, int index);
 	Action(std::ifstream& save_file);
 	~Action();
 
@@ -24,8 +21,5 @@ public:
 
 	std::string to_string();
 };
-
-const Action HALT(0.0, -1);
-const Action EMPTY_ACTION(0.0, -1);
 
 #endif /* ACTION_H */

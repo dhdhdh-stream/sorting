@@ -14,8 +14,8 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	std::vector<Layer*> potential_inputs;
-	std::vector<Layer*> potential_hiddens;
+	std::vector<Layer*> potential_inputs;	// each size 1
+	std::vector<Layer*> potential_hiddens;	// each size 4
 
 	int epoch;
 	int iter;
@@ -42,11 +42,11 @@ public:
 
 	void add_potential();
 	void activate(std::vector<double>& vals,
-				  int potential_index,
+				  std::vector<int>& potentials_on,
 				  std::vector<double>& potential_vals,
 				  std::vector<NetworkHistory*>& network_historys);
-	void backprop(int potential_index,
-				  std::vector<double>& errors);
+	void backprop(std::vector<double>& errors,
+				  std::vector<int>& potentials_on);
 	void extend_with_potential(int potential_index);
 	void reset_potential(int potential_index);
 	void remove_potentials();
@@ -67,12 +67,12 @@ public:
 	std::vector<double> hidden_history;
 	std::vector<double> output_history;
 
-	int potential_index;
-	std::vector<double> potential_input_history;
-	std::vector<double> potential_hidden_history;
+	std::vector<int> potentials_on;
+	std::vector<double> potential_inputs_historys;
+	std::vector<std::vector<double>> potential_hiddens_historys;
 
 	NetworkHistory(Network* network);
-	NetworkHistory(Network* network, int potential_index);
+	NetworkHistory(Network* network, std::vector<int> potentials_on);
 	~NetworkHistory();
 	void reset_weights();
 };

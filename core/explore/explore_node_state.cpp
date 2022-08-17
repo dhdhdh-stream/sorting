@@ -2,15 +2,14 @@
 
 using namespace std;
 
-void ExploreNodeState::process(Solution* solution) override {
-	if (this->scope->type == NODE_TYPE_GOTO_START) {
-		SolutionNodeGotoStart* scope_goto_start = (SolutionNodeGotoStart*)this->scope;
-		scope_goto_start->scope_states_on->push_back(this->new_state_index);
-	} else if (this->scope->type == NODE_TYPE_IF_START) {
-		SolutionNodeIfStart* scope_if_start = (SolutionNodeIfStart*)this->scope;
+void ExploreNodeState::process() override {
+	SolutionNode* scope = this->explore->solution->nodes[this->scope_index];
+
+	if (scope->type == NODE_TYPE_IF_START) {
+		SolutionNodeIfStart* scope_if_start = (SolutionNodeIfStart*)scope;
 		scope_if_start->scope_states_on->push_back(this->new_state_index);
-	} else if (this->scope->type == NODE_TYPE_LOOP_START) {
-		SolutionNodeLoopStart* scope_loop_start = (SolutionNodeLoopStart*)this->scope;
+	} else if (scope->type == NODE_TYPE_LOOP_START) {
+		SolutionNodeLoopStart* scope_loop_start = (SolutionNodeLoopStart*)scope;
 		scope_loop_start->scope_states_on->push_back(this->new_state_index);
 	}
 }
