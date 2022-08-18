@@ -12,6 +12,7 @@ public:
 
 	Solution* solution;
 
+	ExploreNode* current_node;
 	int iter_index;
 
 	// 5x 5->1 path candidates, 5x 5->1 state candidates?

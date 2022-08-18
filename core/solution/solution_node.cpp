@@ -60,15 +60,21 @@ double SolutionNode::activate_score_network(Problem& problem,
 	}
 
 	double score;
+
+	vector<int> potentials_on;
+	vector<double> potential_vals;
 	if (explore_type == EXPLORE_TYPE_STATE) {
-		vector<int> potentials_on;
-		vector<double> potential_vals;
 		for (int p_index = 0; p_index < (int)this->score_network_inputs_potential_state_indexes.size(); p_index++) {
 			if (potential_states_on[this->score_network_inputs_potential_state_indexes[p_index]]) {
 				potentials_on.push_back(p_index);
 				potential_vals.push_back(potential_state_vals[this->score_network_inputs_potential_state_indexes[p_index]]);
 			}
 		}
+	}
+
+	if (this->explore_type == EXPLORE_TYPE_RE_EVAL
+			|| this->explore_node_state == EXPLORE_NODE_STATE_LEARN
+			|| potentials_on.size() > 0) {
 		this->score_network->mtx.lock();
 		this->score_network->activate(score_network_inputs,
 									  potentials_on,
@@ -78,7 +84,7 @@ double SolutionNode::activate_score_network(Problem& problem,
 		this->score_network->mtx.unlock();
 	} else {
 		this->score_network->mtx.lock();
-		this->score_network->activate(score_network_inputs, network_historys);
+		this->score_network->activate(score_network_inputs);
 		score = this->score_network->output->acti_vals[0];
 		this->score_network->mtx.unlock();
 	}
@@ -89,44 +95,41 @@ double SolutionNode::activate_score_network(Problem& problem,
 void SolutionNode::backprop_score_network(double score,
 										  double* potential_state_errors,
 										  std::vector<NetworkHistory*>& network_historys) {
-	this->score_network->mtx.lock();
-
 	NetworkHistory* network_history = network_historys.back();
-	network_history->reset_weights();
 
-	vector<int> potentials_on = network_history->potentials_on;
+	if (network_history->network == this->score_network) {
+		this->score_network->mtx.lock();
 
-	vector<double> score_network_errors;
-	if (score == 1.0) {
-		if (this->score_network->output->acti_vals[0] < 1.0) {
-			score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
+		network_history->reset_weights();
+
+		vector<int> potentials_on = network_history->potentials_on;
+
+		vector<double> score_network_errors;
+		if (score == 1.0) {
+			if (this->score_network->output->acti_vals[0] < 1.0) {
+				score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
+			} else {
+				score_network_errors.push_back(0.0);
+			}
 		} else {
-			score_network_errors.push_back(0.0);
+			if (this->score_network->output->acti_vals[0] > 0.0) {
+				score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
+			} else {
+				score_network_errors.push_back(0.0);
+			}
 		}
-	} else {
-		if (this->score_network->output->acti_vals[0] > 0.0) {
-			score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
-		} else {
-			score_network_errors.push_back(0.0);
+		this->score_network->backprop(score_network_errors,
+									  potentials_on);
+
+		for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
+			potential_state_errors[this->score_network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
+				this->score_network->potential_inputs[potentials_on[o_index]]->errors[0];
+			this->score_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
 		}
+
+		this->score_network->mtx.unlock();
+
+		delete network_history;
+		network_historys.pop_back();
 	}
-	this->score_network->backprop(score_network_errors,
-								  potentials_on);
-
-	for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
-		potential_state_errors[this->score_network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
-			this->score_network->potential_inputs[potentials_on[o_index]]->errors[0];
-		this->score_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
-	}
-
-	this->score_network->mtx.unlock();
-
-	delete network_history;
-	network_historys.pop_back();
-}
-
-void SolutionNode::increment_score_network() {
-	this->score_network->mtx.lock();
-	this->score_network->increment();
-	this->score_network->mtx.unlock();
 }

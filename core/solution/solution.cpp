@@ -35,15 +35,21 @@ void Solution::iteration() {
 	double state_vals[this->current_state_counter] = {};
 	bool states_on[this->current_state_counter] = {};
 
+	vector<SolutionNode*> loop_scopes;
+	vector<int> loop_scope_counts;
+
 	double potential_state_vals[this->current_potential_state_counter] = {};
 	bool potential_states_on[this->current_potential_state_counter] = {};
 
 	vector<SolutionNode*> nodes_visited;
-	map<SolutionNode*, int> node_visited_counts;
+	map<SolutionNode*,int> node_visited_counts;
 	vector<NetworkHistory*> network_historys;
 
 	SolutionNode* explore_node = NULL;
 	int explore_type = EXPLORE_TYPE_NONE;
+	if (rand()%10 == 0) {
+		explore_type = EXPLORE_TYPE_RE_EVAL;
+	}
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
@@ -58,6 +64,8 @@ void Solution::iteration() {
 		SolutionNode* next_node = curr_node->activate(problem,
 													  state_vals,
 													  states_on,
+													  loop_scopes,
+													  loop_scope_counts,
 													  visited_count,
 													  explore_node,
 													  explore_type,
@@ -90,11 +98,8 @@ void Solution::iteration() {
 										 network_historys);
 	}
 
-	for (map<SolutionNode*,int>::iterator it = node_visited_counts.begin();
-			it != node_visited_counts.end(); it++) {
-		it->first->increment(explore_node,
-							 explore_type,
-							 potential_states_on);
+	if (explore_node != NULL) {
+		explore_node->explore_increment(score);
 	}
 }
 

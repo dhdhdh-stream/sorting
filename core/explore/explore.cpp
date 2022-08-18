@@ -49,5 +49,6 @@ void Explore::setup_cycle() {
 }
 
 void Explore::iteration() {
+	// TODO: spend first cycles tuning
 	this->solution->iteration();
 }

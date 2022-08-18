@@ -14,15 +14,18 @@ const int NODE_TYPE_IF_END = 2;
 const int NODE_TYPE_LOOP_START = 3;
 const int NODE_TYPE_LOOP_END = 4;
 
-const int CANDIDATE_STATE_EXPLORE = 0;
-const int CANDIDATE_STATE_MEASURE_AVERAGE = 1;
-const int CANDIDATE_STATE_LEARN_SCORES = 2;
-const int CANDIDATE_STATE_MEASURE_INFORMATION = 3;
-// assume no loops for now
+const int EXPLORE_STATE_EXPLORE = 0;
+const int EXPLORE_STATE_LEARN = 1;
+const int EXPLORE_STATE_MEASURE = 2;
 
+const int EXPLORE_TYPE_RE_EVAL = -1;
 const int EXPLORE_TYPE_NONE = 0;
 const int EXPLORE_TYPE_PATH = 1;
 const int EXPLORE_TYPE_STATE = 2;
+
+const int EXPLORE_NODE_STATE_NOT = -1;
+const int EXPLORE_NODE_STATE_LEARN = 0;
+const int EXPLORE_NODE_STATE_MEASURE = 1;
 
 // const int STATE_EXPLORE_TYPE_GREEDY = 0;
 // const int STATE_EXPLORE_TYPE_FOLD = 1;
@@ -47,7 +50,11 @@ public:
 	double average;
 	double misguess;
 
-	bool is_explore_node;
+	int explore_state;
+	int explore_iter_index;
+	std::vector<Action> try_path;
+
+	int explore_node_state;
 
 	// SolutionNode(Solution* solution,
 	// 			 int node_index);
@@ -63,6 +70,8 @@ public:
 	virtual SolutionNode* activate(Problem& problem,
 								   double* state_vals,
 								   bool* states_on,
+								   std::vector<SolutionNode*>& loop_scopes,
+								   std::vector<int>& loop_scope_counts,
 								   int visited_count,
 								   SolutionNode* explore_node,
 								   int& explore_type,
@@ -75,9 +84,8 @@ public:
 						  double* potential_state_errors,
 						  bool* potential_states_on,
 						  std::vector<NetworkHistory*>& network_historys) = 0;
-	virtual void increment(SolutionNode* explore_node,
-						   int& explore_type,
-						   bool* potential_states_on) = 0;
+
+	virtual void explore_increment(double score) = 0;
 
 	// void extend_with_potential();
 
@@ -92,12 +100,10 @@ protected:
 								  double* potential_state_vals,
 								  bool* potential_states_on,
 								  std::vector<NetworkHistory*>& network_historys);
-	// TODO: think about conditions in which to update
 	void backprop_score_network(double score,
 								double* potential_state_errors,
 								std::vector<NetworkHistory*>& network_historys);
 	// don't need potential_states_on because information in network_history
-	void increment_score_network();
 };
 
 #endif /* SOLUTION_NODE_H */

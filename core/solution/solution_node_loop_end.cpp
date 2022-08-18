@@ -9,6 +9,8 @@ void SolutionNodeLoopEnd::reset() override {
 SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											double* state_vals,
 											bool* states_on,
+											vector<SolutionNode*>& loop_scopes,
+											vector<int>& loop_scope_counts,
 											int visited_count,
 											SolutionNode* explore_node,
 											int& explore_type,
@@ -77,22 +79,48 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		}
 	}
 
-	// if is_explore_node, force 0-4 iterations
+	// if is_explore_node, force 0-5 iterations (but not exploring loops in path yet)
 
 	SolutionNode* next;
-	if (visited_count < 20 && (no_halt > halt || rand()%10 == 0)) {
-		next = no_halt;
+	if (loop_scopes.back() == this) {
+		if (loop_scope_counts.back() < 20 && (no_halt > halt || rand()%10 == 0)) {
+			next = no_halt;
 
-		network_historys.push_back(no_halt_history[0]);
-		delete halt_history[0];
+			network_historys.push_back(no_halt_history[0]);
+			delete halt_history[0];
+
+			loop_scope_counts.back()++;
+		} else {
+			next = halt;
+
+			network_historys.push_back(halt_history[0]);
+			delete no_halt_history[0];
+
+			loop_scopes.pop_back();
+			loop_scope_counts.pop_back();
+
+			for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+				states_on[this->start->scope_states_on[o_index]] = false;
+			}
+		}
 	} else {
-		next = halt;
+		if ((no_halt > halt || rand()%10 == 0)) {
+			next = no_halt;
 
-		network_historys.push_back(halt_history[0]);
-		delete no_halt_history[0];
+			network_historys.push_back(no_halt_history[0]);
+			delete halt_history[0];
 
-		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
-			states_on[this->start->scope_states_on[o_index]] = false;
+			loop_scopes.push_back(this);
+			loop_scope_counts.push_back(1);
+		} else {
+			next = halt;
+
+			network_historys.push_back(halt_history[0]);
+			delete no_halt_history[0];
+
+			for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+				states_on[this->start->scope_states_on[o_index]] = false;
+			}
 		}
 	}
 
@@ -173,16 +201,4 @@ void SolutionNodeLoopEnd::backprop(double score,
 
 	delete network_history;
 	network_historys.pop_back();
-}
-
-void SolutionNodeLoopEnd::increment(SolutionNode* explore_node,
-									int& explore_type,
-									bool* potential_states_on) override {
-	this->halt_network->mtx.lock();
-	this->halt_network->increment();
-	this->halt_network->mtx.unlock();
-
-	this->no_halt_network->mtx.lock();
-	this->no_halt_network->increment();
-	this->no_halt_network->mtx.unlock();
 }

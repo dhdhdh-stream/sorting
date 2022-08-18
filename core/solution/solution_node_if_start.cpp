@@ -11,6 +11,8 @@ void SolutionNodeIfStart::reset() override {
 SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 											double* state_vals,
 											bool* states_on,
+											vector<SolutionNode*>& loop_scopes,
+											vector<int>& loop_scope_counts,
 											int visited_count,
 											SolutionNode* explore_node,
 											int& explore_type,
@@ -163,15 +165,4 @@ void SolutionNodeIfStart::backprop(double score,
 	}
 
 	this->children_score_networks[child_index]->mtx.unlock();
-}
-
-void SolutionNodeIfStart::increment(SolutionNode* explore_node,
-									int& explore_type,
-									bool* potential_states_on) override {
-	// TODO: consider a more targeted increment strategy
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		this->children_score_networks[c_index]->mtx.lock();
-		this->children_score_networks[c_index]->increment();
-		this->children_score_networks[c_index]->mtx.unlock();
-	}
 }

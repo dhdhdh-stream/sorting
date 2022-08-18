@@ -11,43 +11,30 @@ void ExploreNodeLoop::process() override {
 	new_start_node->end = new_end_node;
 	new_end_node->start = new_start_node;
 
-	SolutionNode* loop_start = this->explore->solution->nodes[this->loop_start_node_index];
-	SolutionNode* start_previous_previous;
-	if (loop_start->type == NODE_TYPE_NORMAL) {
-		SolutionNodeNormal* loop_start_normal = (SolutionNodeNormal*)loop_start;
-		start_previous_previous = loop_start_normal->previous;
-		loop_start_normal->previous = new_start_node;
-	} else if (loop_start->type == NODE_TYPE_IF_START) {
-		SolutionNodeIfStart* loop_start_if_start = (SolutionNodeIfStart*)loop_start;
-		start_previous_previous = loop_start_if_start->previous;
-		loop_start_if_start->previous = new_start_node;
-	} else if (loop_start->type == NODE_TYPE_LOOP_START) {
-		SolutionNodeLoopStart* loop_start_loop_start = (SolutionNodeLoopStart*)loop_start;
-		start_previous_previous = loop_start_loop_start->previous;
-		loop_start_loop_start->previous = new_start_node;
-	}
-	new_start_node->next = loop_start;
-	set_next(start_previous_previous, loop_start, new_start_node);
-	new_start_node->previous = start_previous_previous;
+	SolutionNode* loop_start_non_inclusive = this->explore->solution->nodes[this->loop_start_non_inclusive_index];
+	new_start_node->previous = loop_start_non_inclusive;
+	SolutionNode* loop_end_non_inclusive = this->explore->solution->nodes[this->loop_end_non_inclusive_index];
+	new_end_node->halt = loop_end_non_inclusive;
+	set_previous_if_needed(loop_end_non_inclusive,
+						   new_end_node);
 
-	SolutionNode* loop_end = this->explore->solution->nodes[this->loop_end_node_index];
-	// can be equal to loop_start
-	SolutionNode* end_previous_next;
-	if (loop_end->type == NODE_TYPE_NORMAL) {
-		SolutionNodeNormal* loop_end_normal = (SolutionNodeNormal*)loop_end;
-		end_previous_next = loop_end_normal->next;
-		loop_end_normal->next = new_end_node;
-	} else if (loop_end->type == NODE_TYPE_IF_END) {
-		SolutionNodeIfEnd* loop_end_if_end = (SolutionNodeIfEnd*)loop_end;
-		end_previous_next = loop_end_if_end->next;
-		loop_end_if_end->next = new_end_node;
-	} else if (loop_end->type == NODE_TYPE_LOOP_END) {
-		SolutionNodeLoopEnd* loop_end_loop_end = (SolutionNodeLoopEnd*)loop_end;
-		end_previous_next = loop_end_loop_end->next;
-		loop_end_loop_end->next = new_end_node;
+	if (loop_start_inclusive_index == -1) {	// && loop_end_inclusive_index == -1
+		set_next(loop_start_non_inclusive,
+				 loop_end_non_inclusive,
+				 new_start_node);
+		new_start_node->next = new_end_node;
+	} else {
+		SolutionNode* loop_start_inclusive = this->explore->solution->nodes[this->loop_start_inclusive_index];
+		SolutionNode* loop_end_inclusive = this->explore->solution->nodes[this->loop_end_inclusive_index];
+
+		set_next(loop_start_non_inclusive,
+				 loop_start_inclusive,
+				 new_start_node);
+		new_start_node->next = loop_start_inclusive;
+		set_next(loop_end_inclusive,
+				 loop_end_non_inclusive,
+				 new_end_node);
 	}
-	new_end_node->halt = end_previous_next;
-	set_previous_if_needed(end_previous_next, new_end_node);
 
 	if (this->new_path_node_indexes.size() == 0) {
 		new_end_node->no_halt = new_start_node;

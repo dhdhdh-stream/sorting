@@ -1,6 +1,8 @@
 #ifndef SOLUTION_NODE_IF_START_H
 #define SOLUTION_NODE_IF_START_H
 
+// special case if start loop
+
 class SolutionNodeIfStart : public SolutionNode {
 public:
 	std::vector<SolutionNode*> children_nodes;
@@ -24,6 +26,8 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
+						   std::vector<SolutionNode*>& loop_scopes,
+						   std::vector<int>& loop_scope_counts,
 						   int visited_count,
 						   SolutionNode* explore_node,
 						   int& explore_type,
@@ -36,9 +40,6 @@ public:
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys) override;
-	void increment(SolutionNode* explore_node,
-				   int& explore_type,
-				   bool* potential_states_on) override;
 };
 
 #endif /* SOLUTION_NODE_IF_START_H */

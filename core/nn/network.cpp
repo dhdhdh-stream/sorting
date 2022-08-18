@@ -81,9 +81,7 @@ void Network::backprop(vector<double>& errors) {
 
 	this->output->backprop();
 	this->hidden->backprop();
-}
 
-void Network::increment() {
 	if (this->iter == 100) {
 		double max_update = 0.0;
 		calc_max_update(max_update,
@@ -193,6 +191,25 @@ void Network::backprop(vector<double>& errors,
 	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
 		this->potential_inputs[potentials_on[p_index]]->is_on = false;
 		this->potential_hiddens[potentials_on[p_index]]->is_on = false;
+	}
+
+	if (this->iter == 100) {
+		double max_update = 0.0;
+		calc_max_update(max_update,
+						0.001,
+						0.2);
+		double factor = 1.0;
+		if (max_update > 0.01) {
+			factor = 0.01/max_update;
+		}
+		update_weights(factor,
+					   0.001,
+					   0.2);
+
+		this->epoch++;
+		this->iter = 0;
+	} else {
+		this->iter++;
 	}
 }
 

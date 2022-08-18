@@ -9,6 +9,8 @@ void SolutionNodeLoopStart::reset() override {
 SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  double* state_vals,
 											  bool* states_on,
+											  vector<SolutionNode*>& loop_scopes,
+											  vector<int>& loop_scope_counts,
 											  int visited_count,
 											  SolutionNode* explore_node,
 											  int& explore_type,
@@ -65,10 +67,4 @@ void SolutionNodeLoopStart::backprop(double score,
 						   network_historys);
 
 	// update average, misguess, etc.
-}
-
-void SolutionNodeLoopStart::increment(SolutionNode* explore_node,
-									  int& explore_type,
-									  bool* potential_states_on) override {
-	increment_score_network();
 }

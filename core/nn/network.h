@@ -32,7 +32,6 @@ public:
 	void activate(std::vector<double>& vals,
 				  std::vector<NetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors);
-	void increment();
 	void calc_max_update(double& max_update,
 						 double learning_rate,
 						 double momentum);
