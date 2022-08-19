@@ -43,11 +43,135 @@ SolutionNode::~SolutionNode() {
 
 double SolutionNode::activate_score_network(Problem& problem,
 											double* state_vals,
-											bool* states_on,
-											int& explore_type,
-											double* potential_state_vals,
-											bool* potential_states_on,
-											std::vector<NetworkHistory*>& network_historys) {
+											bool* states_on,) {
+	vector<double> score_network_inputs;
+	double curr_observations = problem.get_observation();
+	score_network_inputs.push_back(curr_observations);
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+			score_network_inputs.push_back(state_vals[this->score_network_inputs_state_indexes[i_index]]);
+		} else {
+			score_network_inputs.push_back(0.0);
+		}
+	}
+
+	this->score_network->mtx.lock();
+	this->score_network->activate(score_network_inputs);
+	double score = this->score_network->output->acti_vals[0];
+	this->score_network->mtx.unlock();
+
+	return score;
+}
+
+double SolutionNode::activate_score_network_eval(Problem& problem,
+												 double* state_vals,
+												 bool* states_on,
+												 vector<NetworkHistory*>& network_historys) {
+	vector<double> score_network_inputs;
+	double curr_observations = problem.get_observation();
+	score_network_inputs.push_back(curr_observations);
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+			score_network_inputs.push_back(state_vals[this->score_network_inputs_state_indexes[i_index]]);
+		} else {
+			score_network_inputs.push_back(0.0);
+		}
+	}
+
+	this->score_network->mtx.lock();
+	this->score_network->activate(score_network_inputs, network_historys);
+	double score = this->score_network->output->acti_vals[0];
+	this->score_network->mtx.unlock();
+
+	return score;
+}
+
+void SolutionNode::backprop_score_network_eval(double score,
+											   double* state_errors,
+											   bool* states_on,
+											   vector<NetworkHistory*>& network_historys) {
+	NetworkHistory* network_history = network_historys.back();
+
+	this->score_network->mtx.lock();
+
+	network_history->reset_weights();
+
+	vector<double> score_network_errors;
+	if (score == 1.0) {
+		if (this->score_network->output->acti_vals[0] < 1.0) {
+			score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	} else {
+		if (this->score_network->output->acti_vals[0] > 0.0) {
+			score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	}
+	this->score_network->backprop(score_network_errors);
+
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+			state_errors[this->score_network_inputs_state_indexes[i_index]] += \
+				this->score_network->input->errors[1+i_index];
+		}
+		this->score_network->input->errors[1+i_index] = 0.0;
+	}
+
+	this->score_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
+}
+
+void SolutionNode::backprop_score_network_path(double score,
+											   double* state_errors,
+											   bool* states_on,
+											   vector<NetworkHistory*>& network_historys) {
+	NetworkHistory* network_history = network_historys.back();
+
+	this->score_network->mtx.lock();
+
+	network_history->reset_weights();
+
+	vector<double> score_network_errors;
+	if (score == 1.0) {
+		if (this->score_network->output->acti_vals[0] < 1.0) {
+			score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	} else {
+		if (this->score_network->output->acti_vals[0] > 0.0) {
+			score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
+		}
+	}
+	this->score_network->backprop_errors_with_no_weight_change(score_network_errors);
+
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->score_network_inputs_state_indexes[i_index]]) {
+			state_errors[this->score_network_inputs_state_indexes[i_index]] += \
+				this->score_network->input->errors[1+i_index];
+		}
+		this->score_network->input->errors[1+i_index] = 0.0;
+	}
+
+	this->score_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
+}
+
+double SolutionNode::activate_score_network_state(Problem& problem,
+												  double* state_vals,
+												  bool* states_on,
+												  double* potential_state_vals,
+												  bool* potential_states_on,
+												  vector<NetworkHistory*>& network_historys) {
 	vector<double> score_network_inputs;
 	double curr_observations = problem.get_observation();
 	score_network_inputs.push_back(curr_observations);
@@ -63,18 +187,14 @@ double SolutionNode::activate_score_network(Problem& problem,
 
 	vector<int> potentials_on;
 	vector<double> potential_vals;
-	if (explore_type == EXPLORE_TYPE_STATE) {
-		for (int p_index = 0; p_index < (int)this->score_network_inputs_potential_state_indexes.size(); p_index++) {
-			if (potential_states_on[this->score_network_inputs_potential_state_indexes[p_index]]) {
-				potentials_on.push_back(p_index);
-				potential_vals.push_back(potential_state_vals[this->score_network_inputs_potential_state_indexes[p_index]]);
-			}
+	for (int p_index = 0; p_index < (int)this->score_network_inputs_potential_state_indexes.size(); p_index++) {
+		if (potential_states_on[this->score_network_inputs_potential_state_indexes[p_index]]) {
+			potentials_on.push_back(p_index);
+			potential_vals.push_back(potential_state_vals[this->score_network_inputs_potential_state_indexes[p_index]]);
 		}
 	}
 
-	if (this->explore_type == EXPLORE_TYPE_RE_EVAL
-			|| this->explore_node_state == EXPLORE_NODE_STATE_LEARN
-			|| potentials_on.size() > 0) {
+	if (potentials_on.size() > 0) {
 		this->score_network->mtx.lock();
 		this->score_network->activate(score_network_inputs,
 									  potentials_on,
@@ -92,44 +212,46 @@ double SolutionNode::activate_score_network(Problem& problem,
 	return score;
 }
 
-void SolutionNode::backprop_score_network(double score,
-										  double* potential_state_errors,
-										  std::vector<NetworkHistory*>& network_historys) {
+void SolutionNode::backprop_score_network_state(double score,
+												double* potential_state_errors,
+												vector<NetworkHistory*>& network_historys) {
 	NetworkHistory* network_history = network_historys.back();
 
-	if (network_history->network == this->score_network) {
-		this->score_network->mtx.lock();
+	this->score_network->mtx.lock();
 
-		network_history->reset_weights();
+	network_history->reset_weights();
 
-		vector<int> potentials_on = network_history->potentials_on;
+	vector<int> potentials_on = network_history->potentials_on;
 
-		vector<double> score_network_errors;
-		if (score == 1.0) {
-			if (this->score_network->output->acti_vals[0] < 1.0) {
-				score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
-			} else {
-				score_network_errors.push_back(0.0);
-			}
+	vector<double> score_network_errors;
+	if (score == 1.0) {
+		if (this->score_network->output->acti_vals[0] < 1.0) {
+			score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
 		} else {
-			if (this->score_network->output->acti_vals[0] > 0.0) {
-				score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
-			} else {
-				score_network_errors.push_back(0.0);
-			}
+			score_network_errors.push_back(0.0);
 		}
-		this->score_network->backprop(score_network_errors,
-									  potentials_on);
-
-		for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
-			potential_state_errors[this->score_network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
-				this->score_network->potential_inputs[potentials_on[o_index]]->errors[0];
-			this->score_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
+	} else {
+		if (this->score_network->output->acti_vals[0] > 0.0) {
+			score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
+		} else {
+			score_network_errors.push_back(0.0);
 		}
-
-		this->score_network->mtx.unlock();
-
-		delete network_history;
-		network_historys.pop_back();
 	}
+	this->score_network->backprop(score_network_errors,
+								  potentials_on);
+
+	for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
+		potential_state_errors[this->score_network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
+			this->score_network->potential_inputs[potentials_on[o_index]]->errors[0];
+		this->score_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
+	}
+
+	this->score_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
+}
+
+void SolutionNode::increment_unique_future_nodes(int num_future_nodes) {
+	this->average_unique_future_nodes = 0.9999*this->average_unique_future_nodes + 0.0001*num_future_nodes;
 }

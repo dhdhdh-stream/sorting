@@ -41,24 +41,30 @@ void Solution::iteration() {
 	double potential_state_vals[this->current_potential_state_counter] = {};
 	bool potential_states_on[this->current_potential_state_counter] = {};
 
-	vector<SolutionNode*> nodes_visited;
-	map<SolutionNode*,int> node_visited_counts;
+	// nodes_visited and network_historys should tie 1-to-1 (except for state_networks)
 	vector<NetworkHistory*> network_historys;
+	vector<SolutionNode*> nodes_visited;
+	vector<double> guesses;
 
-	SolutionNode* explore_node = NULL;
-	int explore_type = EXPLORE_TYPE_NONE;
+	// only update on EXPLORE_TYPE_RE_EVAL
+	set<SolutionNode*> unique_nodes_visited;
+	vector<SolutionNode*> unique_nodes_visited_list;
+
+	int iter_explore_type = EXPLORE_TYPE_NONE;
 	if (rand()%10 == 0) {
-		explore_type = EXPLORE_TYPE_RE_EVAL;
+		iter_explore_type = EXPLORE_TYPE_RE_EVAL;
 	}
+	SolutionNode* iter_explore_node = NULL;
+
+	vector<int> explore_decisions;
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
-		int visited_count;
-		map<SolutionNode*,int>::iterator it = node_visited_counts.find(curr_node);
-		if (it == node_visited_counts.end()) {
-			visited_count = 0;
+		bool is_first_time;
+		if (unique_nodes_visited.find(curr_node) != unique_nodes_visited.end()) {
+			is_first_time = false;
 		} else {
-			visited_count = it->second;
+			is_first_time = true;
 		}
 
 		SolutionNode* next_node = curr_node->activate(problem,
@@ -66,36 +72,52 @@ void Solution::iteration() {
 													  states_on,
 													  loop_scopes,
 													  loop_scope_counts,
-													  visited_count,
-													  explore_node,
-													  explore_type,
+													  is_first_time,
+													  iter_explore_type,
+													  iter_explore_node,
 													  potential_state_vals,
 													  potential_states_on,
-													  network_historys);
-		nodes_visited.push_back(curr_node);
-		if (it == node_visited_counts.end()) {
-			node_visited_counts[curr_node] = 1;
-		} else {
-			it->second++;
+													  network_historys,
+													  guesses,
+													  explore_decisions);
+
+		if (is_first_time) {
+			unique_nodes_visited.insert(curr_node);
+			unique_nodes_visited_list.push_back(curr_node);
 		}
 
 		if (curr_node->node_index == 1) {
 			break;
 		}
 
+		nodes_visited.push_back(curr_node);
 		curr_node = next_node;
 	}
 
 	double score = problem.score_result();
 
+	double sum_misguess = 0.0;
+	double state_errors[this->current_state_counter] = {};
 	double potential_state_errors[this->current_potential_state_counter] = {};
 	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
+		sum_misguess += abs(score - guesses[v_index]);
+		double misguess = sum_misguess/(nodes_visited.size() - v_index);
+
 		nodes_visited[v_index]->backprop(score,
-										 explore_node,
-										 explore_type,
+										 misguess,
+										 state_errors,
+										 states_on,
+										 iter_explore_type,
+										 iter_explore_node,
 										 potential_state_errors,
 										 potential_states_on,
-										 network_historys);
+										 network_historys,
+										 explore_decisions);
+	}
+
+	for (int u_index = 0; u_index < (int)unique_nodes_visited_list.size(); u_index++) {
+		unique_nodes_visited_list[u_index]->increment_unique_future_nodes(
+			(int)unique_nodes_visited_list.size() - u_index);
 	}
 
 	if (explore_node != NULL) {

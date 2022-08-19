@@ -45,6 +45,8 @@ public:
 
 	void save_weights(std::ofstream& output_file);
 
+	void backprop_errors_with_no_weight_change();
+
 	void add_potential_input_layer(Layer* potential);
 	void input_extend_with_potential();
 	void hidden_extend_with_potential(int potential_index,

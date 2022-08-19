@@ -30,6 +30,8 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 		}
 	}
 
+	// always include 5% chance of selecting random
+
 	int best_index = -1;
 	double best_score = numeric_limits<double>::lowest();
 	vector<NetworkHistory*> best_history;

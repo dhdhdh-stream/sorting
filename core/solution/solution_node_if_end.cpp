@@ -50,4 +50,6 @@ void SolutionNodeIfEnd::backprop(double score,
 	backprop_score_network(score,
 						   potential_state_errors,
 						   network_historys);
+
+	// clear state errors
 }

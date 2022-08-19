@@ -124,6 +124,15 @@ void Network::update_weights(double factor,
 								 momentum);
 }
 
+void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->backprop_errors_with_no_weight_change();
+}
+
 void Network::add_potential() {
 	Layer* new_potential_input = new Layer(LINEAR_LAYER, 1);
 	new_potential_input.is_on = false;

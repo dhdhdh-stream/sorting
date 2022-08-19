@@ -79,11 +79,9 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		}
 	}
 
-	// if is_explore_node, force 0-5 iterations (but not exploring loops in path yet)
-
 	SolutionNode* next;
 	if (loop_scopes.back() == this) {
-		if (loop_scope_counts.back() < 20 && (no_halt > halt || rand()%10 == 0)) {
+		if (loop_scope_counts.back() < 20 && (no_halt > halt || rand()%20 == 0)) {
 			next = no_halt;
 
 			network_historys.push_back(no_halt_history[0]);
@@ -104,7 +102,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			}
 		}
 	} else {
-		if ((no_halt > halt || rand()%10 == 0)) {
+		if ((no_halt > halt || rand()%20 == 0)) {
 			next = no_halt;
 
 			network_historys.push_back(no_halt_history[0]);
@@ -201,4 +199,6 @@ void SolutionNodeLoopEnd::backprop(double score,
 
 	delete network_history;
 	network_historys.pop_back();
+
+	// clear state errors
 }

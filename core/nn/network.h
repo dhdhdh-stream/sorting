@@ -39,6 +39,8 @@ public:
 						double learning_rate,
 						double momentum);
 
+	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
+
 	void add_potential();
 	void activate(std::vector<double>& vals,
 				  std::vector<int>& potentials_on,
