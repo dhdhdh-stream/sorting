@@ -44,12 +44,16 @@ public:
 	void add_potential();
 	void activate(std::vector<double>& vals,
 				  std::vector<int>& potentials_on,
+				  std::vector<double>& potential_vals);
+	void activate(std::vector<double>& vals,
+				  std::vector<int>& potentials_on,
 				  std::vector<double>& potential_vals,
 				  std::vector<NetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors,
 				  std::vector<int>& potentials_on);
 	void extend_with_potential(int potential_index);
 	void reset_potential(int potential_index);
+	void reset();
 	void remove_potentials();
 
 	void save(std::ofstream& output_file);

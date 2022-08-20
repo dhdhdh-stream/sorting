@@ -8,9 +8,6 @@ public:
 	SolutionNode* halt;
 	SolutionNode* no_halt;
 
-	std::vector<int> network_inputs_state_indexes;
-	std::vector<int> network_inputs_potential_state_indexes;
-
 	Network* halt_network;
 	std::string halt_network_name;
 
@@ -20,6 +17,14 @@ public:
 	SolutionNodeLoopStart* start;
 
 	void reset() override;
+
+	void add_potential_state(std::vector<int> potential_state_indexes,
+							 SolutionNode* scope) override;
+	void extend_with_potential_state(std::vector<int> potential_state_indexes,
+									 std::vector<int> new_state_indexes,
+									 SolutionNode* scope) override;
+	void reset_potential_state(std::vector<int> potential_state_indexes,
+							   SolutionNode* scope) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
@@ -38,6 +43,11 @@ public:
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys) override;
+
+	void explore_increment(double score) override;
+
+	void clear_potential_state() override;
+	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_LOOP_END_H */

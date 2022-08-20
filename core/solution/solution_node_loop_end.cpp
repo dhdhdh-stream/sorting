@@ -6,6 +6,107 @@ void SolutionNodeLoopEnd::reset() override {
 	// do nothing
 }
 
+void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexes,
+											  SolutionNode* scope) override {
+	this->no_halt->add_potential_state(potential_state_indexes, scope);
+
+	if (this->start == scope) {
+		return;
+	}
+
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		this->network_inputs_potential_state_indexes.push_back(
+			potential_state_indexes[ps_index]);
+
+		this->halt_network->add_potential();
+		this->no_halt_network->add_potential();
+	}
+
+	if (this->halt->type == NODE_TYPE_IF_END) {
+		return;
+	} else if (this->halt->type == NODE_TYPE_LOOP_START) {
+		SolutionNodeLoopStart* halt_loop_start = (SolutionNodeLoopStart*)this->halt;
+		if (halt_loop_start->loop_in == this) {
+			return;
+		}
+	}
+	this->halt->add_potential_state(potential_state_indexes, scope);
+}
+
+void SolutionNodeLoopEnd::extend_with_potential_state(vector<int> potential_state_indexes,
+													  vector<int> new_state_indexes,
+													  SolutionNode* scope) override {
+	this->no_halt->extend_with_potential_state(potential_state_indexes,
+											   new_state_indexes,
+											   scope);
+
+	if (this->start == scope) {
+		return;
+	}
+
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
+			if (this->network_inputs_potential_state_indexes[pi_index]
+					== potential_state_indexes[ps_index]) {
+				this->network_inputs_state_indexes.push_back(new_state_indexes[ps_index]);
+				
+				this->halt_network->extend_with_potential(pi_index);
+				this->no_halt_network->extend_with_potential(pi_index);
+
+				break;
+			}
+		}
+	}
+
+	if (this->halt->type == NODE_TYPE_IF_END) {
+		return;
+	} else if (this->halt->type == NODE_TYPE_LOOP_START) {
+		SolutionNodeLoopStart* halt_loop_start = (SolutionNodeLoopStart*)this->halt;
+		if (halt_loop_start->loop_in == this) {
+			return;
+		}
+	}
+	this->halt->extend_with_potential_state(potential_state_indexes,
+											new_state_indexes,
+											scope);
+}
+
+void SolutionNodeLoopEnd::reset_potential_state(vector<int> potential_state_indexes,
+												SolutionNode* scope) override {
+	this->no_halt->reset_potential_state(potential_state_indexes, scope);
+
+	if (this->start == scope) {
+		return;
+	}
+
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
+			if (this->network_inputs_potential_state_indexes[pi_index]
+					== potential_state_indexes[ps_index]) {
+				this->halt_network->reset_potential(pi_index);
+				this->no_halt_network->reset_potential(pi_index);
+			}
+		}
+	}
+
+	if (this->halt->type == NODE_TYPE_IF_END) {
+		return;
+	} else if (this->halt->type == NODE_TYPE_LOOP_START) {
+		SolutionNodeLoopStart* halt_loop_start = (SolutionNodeLoopStart*)this->halt;
+		if (halt_loop_start->loop_in == this) {
+			return;
+		}
+	}
+	this->halt->reset_potential_state(potential_state_indexes, scope);
+}
+
+void SolutionNodeLoopEnd::clear_potential_state_for_score_network() {
+	this->network_inputs_potential_state_indexes.clear();
+
+	this->halt_network->remove_potentials();
+	this->no_halt_network->remove_potentials();
+}
+
 SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											double* state_vals,
 											bool* states_on,
@@ -16,7 +117,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											int& explore_type,
 											double* potential_state_vals,
 											bool* potential_states_on,
-											std::vector<NetworkHistory*>& network_historys) override {
+											vector<NetworkHistory*>& network_historys) override {
 	vector<double> inputs;
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
@@ -130,7 +231,7 @@ void SolutionNodeLoopEnd::backprop(double score,
 								   int& explore_type,
 								   double* potential_state_errors,
 								   bool* potential_states_on,
-								   std::vector<NetworkHistory*>& network_historys) override {
+								   vector<NetworkHistory*>& network_historys) override {
 	NetworkHistory* network_history = network_historys.back();
 
 	if (network_history->network == this->halt_network) {

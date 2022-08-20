@@ -7,9 +7,11 @@ void ExploreNodeState::process() override {
 
 	if (scope->type == NODE_TYPE_IF_START) {
 		SolutionNodeIfStart* scope_if_start = (SolutionNodeIfStart*)scope;
-		scope_if_start->scope_states_on->push_back(this->new_state_index);
+		scope_if_start->scope_states_on.insert(scope_if_start->scope_states_on.end(),
+			this->new_state_indexes.begin(), this->new_state_indexes.end());
 	} else if (scope->type == NODE_TYPE_LOOP_START) {
 		SolutionNodeLoopStart* scope_loop_start = (SolutionNodeLoopStart*)scope;
-		scope_loop_start->scope_states_on->push_back(this->new_state_index);
+		scope_loop_start->scope_states_on.insert(scope_loop_start->scope_states_on.end(),
+			this->new_state_indexes.begin(), this->new_state_indexes.end());
 	}
 }

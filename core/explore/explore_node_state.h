@@ -4,7 +4,7 @@
 class ExploreNodeState : public ExploreNode {
 public:
 	int scope_index;
-	int new_state_index;
+	vector<int> new_state_indexes;
 
 	void process() override;
 };

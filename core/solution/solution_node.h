@@ -14,30 +14,34 @@ const int NODE_TYPE_IF_END = 2;
 const int NODE_TYPE_LOOP_START = 3;
 const int NODE_TYPE_LOOP_END = 4;
 
-const int EXPLORE_STATE_EXPLORE = 0;
-const int EXPLORE_STATE_LEARN = 1;
-const int EXPLORE_STATE_MEASURE = 2;
-// TODO: Add EXPLORE_STATE_COMPARE_MISGUESS
-
-const int EXPLORE_TARGET_TYPE_GOOD = 0;
-const int EXPLORE_TARGET_TYPE_BAD = 1;
-
 const int EXPLORE_TYPE_RE_EVAL = -1;
 const int EXPLORE_TYPE_NONE = 0;
 const int EXPLORE_TYPE_EXPLORE = 1;
 const int EXPLORE_TYPE_LEARN_PATH = 2;
 const int EXPLORE_TYPE_LEARN_STATE = 3;
-const int EXPLORE_TYPE_MEASURE = 4;
+const int EXPLORE_TYPE_MEASURE_PATH = 4;
+const int EXPLORE_TYPE_MEASURE_STATE = 5;
 
-const int EXPLORE_NODE_STATE_NOT = -1;
-const int EXPLORE_NODE_STATE_LEARN = 0;
-const int EXPLORE_NODE_STATE_MEASURE = 1;
+const int EXPLORE_PATH_STATE_EXPLORE = 0;
+const int EXPLORE_PATH_STATE_LEARN = 1;
+const int EXPLORE_PATH_STATE_MEASURE = 2;
 
-const int EXPLORE_DECISION_TYPE_JUMP = 0;
-const int EXPLORE_DECISION_TYPE_NO_JUMP = 1;
+const int EXPLORE_STATE_STATE_LEARN = 0;
+const int EXPLORE_STATE_STATE_MEASURE = 1;
 
-const int EXPLORE_DECISION_TYPE_HALT = 0;
-const int EXPLORE_DECISION_TYPE_NO_HALT = 1;
+const int PATH_EXPLORE_TYPE_JUMP = 0;
+const int PATH_EXPLORE_TYPE_LOOP = 1;
+
+const int PATH_TARGET_TYPE_GOOD = 0;
+const int PATH_TARGET_TYPE_BAD = 1;
+
+const int EXPLORE_DECISION_TYPE_N_A = 0;
+const int EXPLORE_DECISION_TYPE_EXPLORE = 1;
+const int EXPLORE_DECISION_TYPE_NO_EXPLORE = 2;
+
+const int TEMP_NODE_STATE_NOT = -1;
+const int TEMP_NODE_STATE_LEARN = 0;
+const int TEMP_NODE_STATE_MEASURE = 1;
 
 // TODO: Add folds
 
@@ -48,22 +52,50 @@ public:
 	int node_index;
 	int node_type;
 
-	std::vector<int> score_network_inputs_state_indexes;
-	std::vector<int> score_network_inputs_potential_state_indexes;
+	std::vector<int> network_inputs_state_indexes;
+	std::vector<int> network_inputs_potential_state_indexes;
+	
 	Network* score_network;
-	std::vector<int> score_network_backprop_indexes;
+
 	// TODO: add certainty networks
 
 	double average_unique_future_nodes;
 	double average_score;
+	double average_misguess;
 
-	int explore_state;
-	int explore_iter_index;
-	
+	int explore_path_state;
+	int explore_path_iter_index;
+	int explore_state_state;
+	int explore_state_iter_index;
+
+	int path_explore_type;
+	int path_target_type;
 	std::vector<Action> try_path;
-	int explore_target_type;
+	std::vector<SolutionNode*> explore_path;
+	
+	SolutionNode* explore_start_non_inclusive;
+	SolutionNode* explore_start_inclusive;
+	SolutionNode* explore_end_inclusive;
+	SolutionNode* explore_end_non_inclusive;
+	
+	Network* explore_if_network;
+	Network* explore_halt_network;
+	Network* explore_no_halt_network;
+	
+	int explore_path_measure_count;
+	double explore_explore_is_good;
+	double explore_explore_is_bad;
+	double explore_no_explore_is_good;
+	double explore_no_explore_is_bad;
+	// TODO: compare misguess
 
-	int explore_node_state;
+	std::vector<int> try_states;
+
+	int explore_state_measure_count;
+	std::vector<double> explore_state_scores;
+	std::vector<double> explore_state_misguesses;
+
+	int temp_node_state;
 
 	// SolutionNode(Solution* solution,
 	// 			 int node_index);
@@ -72,9 +104,15 @@ public:
 	// 			 std::ifstream& save_file);
 	virtual ~SolutionNode();
 
-	// virtual void add_potential_state(int potential_state_index);
-
 	virtual void reset() = 0;
+
+	virtual void add_potential_state(std::vector<int> potential_state_indexes,
+									 SolutionNode* scope);
+	virtual void extend_with_potential_state(std::vector<int> potential_state_indexes,
+											 std::vector<int> new_state_indexes,
+											 SolutionNode* scope);
+	virtual void reset_potential_state(std::vector<int> potential_state_indexes,
+									   SolutionNode* scope);
 
 	virtual SolutionNode* activate(Problem& problem,
 								   double* state_vals,
@@ -88,7 +126,8 @@ public:
 								   bool* potential_states_on
 								   std::vector<NetworkHistory*>& network_historys,
 								   std::vector<double>& guesses,
-								   std::vector<int>& explore_decisions) = 0;
+								   std::vector<int>& explore_decisions,
+								   std::vector<double>& explore_diffs) = 0;
 	virtual void backprop(double score,
 						  double misguess,
 						  double* state_errors,
@@ -98,45 +137,85 @@ public:
 						  double* potential_state_errors,
 						  bool* potential_states_on,
 						  std::vector<NetworkHistory*>& network_historys,
-						  std::vector<int>& explore_decisions) = 0;
+						  std::vector<int>& explore_decisions
+						  std::vector<double>& explore_diffs) = 0;
 
-	virtual void explore_increment(double score) = 0;
+	virtual void explore_increment(double score,
+								   int iter_explore_type) = 0;
+
+	virtual void clear_potential_state();
+	virtual void clear_explore();
 
 	void increment_unique_future_nodes(int num_future_nodes);
-
-	// void extend_with_potential();
 
 	void save(std::ofstream& save_file);
 	void save_for_display(std::ofstream& save_file);
 
 protected:
+	void add_potential_state_for_score_network(std::vector<int> potential_state_indexes);
+	void extend_state_for_score_network(std::vector<int> potential_state_indexes,
+										std::vector<int> new_state_indexes);
+	void reset_potential_state_for_score_network(std::vector<int> potential_state_indexes);
+	void clear_potential_state_for_score_network();
+
 	double activate_score_network(Problem& problem,
 								  double* state_vals,
-								  bool* states_on);
-	double activate_score_network_eval(Problem& problem,
+								  bool* states_on,
+								  bool backprop,
+								  std::vector<NetworkHistory*>& network_historys);
+	double activate_score_network_with_potential(
+		Problem& problem,
+		double* state_vals,
+		bool* states_on,
+		double* potential_state_vals,
+		bool* potential_states_on,
+		bool backprop,
+		std::vector<NetworkHistory*>& network_historys);
+	
+	void backprop_score_network(double score,
+								double* state_errors,
+								bool* states_on,
+								std::vector<NetworkHistory*>& network_historys);
+	void backprop_score_network_errors_with_no_weight_change(
+		double score,
+		double* state_errors,
+		bool* states_on,
+		std::vector<NetworkHistory*>& network_historys);
+	void backprop_score_network_state_with_potential(
+		double score,
+		double* potential_state_errors,
+		vector<NetworkHistory*>& network_historys);
+	// don't need potential_states_on because information in network_history
+
+	double activate_explore_if_network(Problem& problem,
 									   double* state_vals,
 									   bool* states_on,
+									   bool backprop,
 									   std::vector<NetworkHistory*>& network_historys);
-	// activate_score_network_path identical to activate_score_network_eval
-	double activate_score_network_state(Problem& problem,
-										double* state_vals,
-										bool* states_on,
-										double* potential_state_vals,
-										bool* potential_states_on,
-										std::vector<NetworkHistory*>& network_historys);
-	
-	void backprop_score_network_eval(double score,
+	void backprop_explore_if_network(double score,
 									 double* state_errors,
 									 bool* states_on,
 									 std::vector<NetworkHistory*>& network_historys);
-	void backprop_score_network_path(double score,
-									 double* state_errors,
-									 bool* states_on,
-									 std::vector<NetworkHistory*>& network_historys);
-	void backprop_score_network_state(double score,
-									  double* potential_state_errors,
-									  vector<NetworkHistory*>& network_historys);
-	// don't need potential_states_on because information in network_history
+
+	double activate_explore_halt_network(Problem& problem,
+										 double* state_vals,
+										 bool* states_on,
+										 bool backprop,
+										 std::vector<NetworkHistory*>& network_historys);
+	void backprop_explore_halt_network(double score,
+									   double* state_errors,
+									   bool* states_on,
+									   std::vector<NetworkHistory*>& network_historys);
+
+	double activate_explore_no_halt_network(Problem& problem,
+											double* state_vals,
+											bool* states_on,
+											bool backprop,
+											std::vector<NetworkHistory*>& network_historys);
+	void backprop_explore_no_halt_network(double score,
+										  double* states_errors,
+										  bool* states_on,
+										  std::vector<NetworkHistory*>& network_historys);
 };
 
 #endif /* SOLUTION_NODE_H */

@@ -1,6 +1,7 @@
 #ifndef EXPLORE_H
 #define EXPLORE_H
 
+#include <mutex>
 #include <vector>
 
 #include "explore_node.h"
@@ -16,6 +17,8 @@ public:
 	int iter_index;
 
 	// 5x 5->1 path candidates, 5x 5->1 state candidates?
+
+	std::mutex mtx;
 
 	Explore(SolutionNode* parent);
 	~Explore();

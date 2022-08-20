@@ -150,8 +150,7 @@ void Network::add_potential() {
 
 void Network::activate(vector<double>& vals,
 					   vector<int>& potentials_on,
-					   vector<double>& potential_vals,
-					   vector<NetworkHistory*>& network_historys) {
+					   vector<double>& potential_vals) {
 	for (int i = 0; i < (int)vals.size(); i++) {
 		this->input->acti_vals[i] = vals[i];
 	}
@@ -170,13 +169,22 @@ void Network::activate(vector<double>& vals,
 
 	this->output->activate();
 
-	NetworkHistory* network_history = new NetworkHistory(this, potentials_on);
-	network_historys.push_back(network_history);
-
 	for (int p_index = 0; p_index < (int)potentials_on.size(); p_index++) {
 		this->potential_inputs[potentials_on[p_index]]->is_on = false;
 		this->potential_hiddens[potentials_on[p_index]]->is_on = false;
 	}
+}
+
+void Network::activate(vector<double>& vals,
+					   vector<int>& potentials_on,
+					   vector<double>& potential_vals,
+					   vector<NetworkHistory*>& network_historys) {
+	activate(vals,
+			 potentials_on,
+			 potential_vals);
+
+	NetworkHistory* network_history = new NetworkHistory(this, potentials_on);
+	network_historys.push_back(network_history);
 }
 
 void Network::backprop(vector<double>& errors,
@@ -234,6 +242,11 @@ void Network::reset_potential(int potential_index) {
 	this->output->reset_potential_input_layer(potential_index);
 
 	this->potential_hiddens[potential_index]->reset_weights();
+}
+
+void Network::reset() {
+	this->hidden->reset_weights();
+	this->output->reset_weights();
 }
 
 void Network::remove_potentials() {

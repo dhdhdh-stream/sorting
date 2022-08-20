@@ -6,8 +6,6 @@
 class SolutionNodeIfStart : public SolutionNode {
 public:
 	std::vector<SolutionNode*> children_nodes;
-	std::vector<int> network_inputs_state_indexes;
-	std::vector<int> network_inputs_potential_state_indexes;
 	std::vector<Network*> children_score_networks;
 	std::vector<std::string> children_score_network_names;
 
@@ -19,9 +17,19 @@ public:
 
 	// potential_scope_states
 
+	// without folds, explore states once?
+
 	SolutionNode* previous;
 
 	void reset() override;
+
+	void add_potential_state(std::vector<int> potential_state_indexes,
+							 SolutionNode* scope) override;
+	void extend_with_potential_state(std::vector<int> potential_state_indexes,
+									 std::vector<int> new_state_indexes,
+									 SolutionNode* scope) override;
+	void reset_potential_state(std::vector<int> potential_state_indexes,
+							   SolutionNode* scope) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
@@ -40,6 +48,11 @@ public:
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys) override;
+
+	void explore_increment(double score) override;
+
+	void clear_potential_state() override;
+	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_IF_START_H */

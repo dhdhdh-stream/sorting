@@ -45,10 +45,11 @@ void Explore::setup_cycle() {
 		}
 	}
 
+	// TODO: for each scope, initialize potential state
+
 	this->iter_index = 0;
 }
 
 void Explore::iteration() {
-	// TODO: spend first cycles tuning
 	this->solution->iteration();
 }

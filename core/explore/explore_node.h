@@ -17,6 +17,8 @@ public:
 
 	std::vector<ExploreNode*> children;
 
+	// TODO: Consider impact from exploration
+
 	int count;
 	double average_score;
 	double average_misguess;

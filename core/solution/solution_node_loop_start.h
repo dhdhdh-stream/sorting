@@ -14,31 +14,50 @@ public:
 
 	SolutionNodeLoopEnd* end;
 
-	// std::vector<int> current_explore_states;
-
-	// std::vector<SolutionNode*> nodes_directly_in_scope;
+	std::vector<int> scope_potential_states;
+	bool has_explored_state; // without folds, explore states once
 
 	void reset() override;
+
+	void add_potential_state(std::vector<int> potential_state_indexes,
+							 SolutionNode* scope) override;
+	void extend_with_potential_state(std::vector<int> potential_state_indexes,
+									 std::vector<int> new_state_indexes,
+									 SolutionNode* scope) override;
+	void reset_potential_state(std::vector<int> potential_state_indexes,
+							   SolutionNode* scope) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes,
+						   std::vector<SolutionNode*>& loop_scopes;
 						   std::vector<int>& loop_scope_counts,
-						   int visited_count,
-						   SolutionNode* explore_node,
-						   int& explore_type,
+						   bool is_first_time,
+						   int& iter_explore_type,
+						   SolutionNode* iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
-						   std::vector<NetworkHistory*>& network_historys) override;
+						   std::vector<NetworkHistory*>& network_historys,
+						   std::vector<double>& guesses,
+						   std::vector<int>& explore_decisions,
+						   std::vector<double>& explore_diffs) override;
 	void backprop(double score,
-				  SolutionNode* explore_node,
-				  int& explore_type,
+				  double misguess,
+				  double* states_on,
+				  bool* states_on,
+				  int& iter_explore_type,
+				  SolutionNode* iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
-				  std::vector<NetworkHistory*>& network_historys) override;
+				  std::vector<NetworkHistory*>& network_historys,
+				  std::vector<int>& explore_decisions,
+				  std::vector<double>& explore_diffs) override;
 
-	// void explore_setup_network_to_test_new_state();
+	void explore_increment(double score,
+						   int iter_explore_type) override;
+
+	void clear_potential_state() override;
+	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_LOOP_START_H */

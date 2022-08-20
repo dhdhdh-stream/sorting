@@ -9,6 +9,14 @@ public:
 
 	void reset() override;
 
+	void add_potential_state(std::vector<int> potential_state_indexes,
+							 SolutionNode* scope) override;
+	void extend_with_potential_state(std::vector<int> potential_state_indexes,
+									 std::vector<int> new_state_indexes,
+									 SolutionNode* scope) override;
+	void reset_potential_state(std::vector<int> potential_state_indexes,
+							   SolutionNode* scope) override;
+
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
@@ -26,6 +34,11 @@ public:
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys) override;
+
+	void explore_increment(double score) override;
+
+	void clear_potential_state() override;
+	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_IF_END_H */

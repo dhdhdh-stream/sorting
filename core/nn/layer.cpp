@@ -406,6 +406,8 @@ void Layer::remove_potential_input_layers() {
 		this->prev_weight_updates[n_index].erase(this->prev_weight_updates[n_index].begin()+1,
 			this->prev_weight_updates[n_index].end());
 	}
+
+	this->input_layers.erase(this->input_layers.begin()+1, this->input_layers.end());
 }
 
 void Layer::collapse_input(int input_index,

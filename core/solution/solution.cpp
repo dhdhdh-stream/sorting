@@ -44,7 +44,7 @@ void Solution::iteration() {
 	// nodes_visited and network_historys should tie 1-to-1 (except for state_networks)
 	vector<NetworkHistory*> network_historys;
 	vector<SolutionNode*> nodes_visited;
-	vector<double> guesses;
+	vector<double> guesses;	// also used to save explore diffs
 
 	// only update on EXPLORE_TYPE_RE_EVAL
 	set<SolutionNode*> unique_nodes_visited;
@@ -57,6 +57,7 @@ void Solution::iteration() {
 	SolutionNode* iter_explore_node = NULL;
 
 	vector<int> explore_decisions;
+	vector<double> explore_diffs;
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
@@ -79,7 +80,12 @@ void Solution::iteration() {
 													  potential_states_on,
 													  network_historys,
 													  guesses,
-													  explore_decisions);
+													  explore_decisions,
+													  explore_diffs);
+
+		if (iter_explore_type != EXPLORE_TYPE_NONE) {
+			nodes_visited.push_back(curr_node);
+		}
 
 		if (is_first_time) {
 			unique_nodes_visited.insert(curr_node);
@@ -89,8 +95,6 @@ void Solution::iteration() {
 		if (curr_node->node_index == 1) {
 			break;
 		}
-
-		nodes_visited.push_back(curr_node);
 		curr_node = next_node;
 	}
 
@@ -103,16 +107,17 @@ void Solution::iteration() {
 		sum_misguess += abs(score - guesses[v_index]);
 		double misguess = sum_misguess/(nodes_visited.size() - v_index);
 
-		nodes_visited[v_index]->backprop(score,
-										 misguess,
-										 state_errors,
-										 states_on,
-										 iter_explore_type,
-										 iter_explore_node,
-										 potential_state_errors,
-										 potential_states_on,
-										 network_historys,
-										 explore_decisions);
+		backprop_nodes[v_index]->backprop(score,
+										  misguess,
+										  state_errors,
+										  states_on,
+										  iter_explore_type,
+										  iter_explore_node,
+										  potential_state_errors,
+										  potential_states_on,
+										  network_historys,
+										  explore_decisions,
+										  explore_diffs);
 	}
 
 	for (int u_index = 0; u_index < (int)unique_nodes_visited_list.size(); u_index++) {
@@ -121,7 +126,8 @@ void Solution::iteration() {
 	}
 
 	if (explore_node != NULL) {
-		explore_node->explore_increment(score);
+		explore_node->explore_increment(score,
+										iter_explore_type);
 	}
 }
 
