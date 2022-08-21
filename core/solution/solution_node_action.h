@@ -1,7 +1,7 @@
-#ifndef SOLUTION_NODE_NORMAL_H
-#define SOLUTION_NODE_NORMAL_H
+#ifndef SOLUTION_NODE_ACTION_H
+#define SOLUTION_NODE_ACTION_H
 
-class SolutionNodeNormal : public SolutionNode {
+class SolutionNodeAction : public SolutionNode {
 public:
 	Action action;
 
@@ -42,10 +42,11 @@ public:
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<double>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<double>& explore_diffs) override;
+						   std::vector<double>& explore_diffs,
+						   std::vector<bool>& explore_loop_decisions) override;
 	void backprop(double score,
 				  double misguess,
-				  double* states_on,
+				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
 				  SolutionNode* iter_explore_node,
@@ -53,15 +54,12 @@ public:
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
-				  std::vector<double>& explore_diffs) override;
-
-	void explore_increment(double score,
-						   int iter_explore_type) override;
+				  std::vector<double>& explore_diffs,
+				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
-	void clear_explore() override;
 
-protected:
+private:
 	void activate_state_networks_eval(Problem& problem,
 									  double* state_vals,
 									  bool* states_on,
@@ -87,4 +85,4 @@ protected:
 												std::vector<NetworkHistory*>& network_historys);
 };
 
-#endif /* SOLUTION_NODE_NORMAL_H */
+#endif /* SOLUTION_NODE_ACTION_H */

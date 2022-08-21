@@ -14,7 +14,6 @@ void ExploreNodeRoot::process() override {
 	overall_start_node->previous = NULL;
 	overall_start_node->end = overall_end_node;
 
-	overall_end_node->halt = NULL;
-	overall_end_node->no_halt = NULL;
+	overall_end_node->next = NULL;
 	overall_end_node->start = overall_start_node;
 }

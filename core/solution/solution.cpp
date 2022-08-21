@@ -41,12 +41,10 @@ void Solution::iteration() {
 	double potential_state_vals[this->current_potential_state_counter] = {};
 	bool potential_states_on[this->current_potential_state_counter] = {};
 
-	// nodes_visited and network_historys should tie 1-to-1 (except for state_networks)
 	vector<NetworkHistory*> network_historys;
 	vector<SolutionNode*> nodes_visited;
-	vector<double> guesses;	// also used to save explore diffs
+	vector<double> guesses;
 
-	// only update on EXPLORE_TYPE_RE_EVAL
 	set<SolutionNode*> unique_nodes_visited;
 	vector<SolutionNode*> unique_nodes_visited_list;
 
@@ -58,6 +56,7 @@ void Solution::iteration() {
 
 	vector<int> explore_decisions;
 	vector<double> explore_diffs;
+	vector<bool> explore_loop_decisions;
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
@@ -81,7 +80,8 @@ void Solution::iteration() {
 													  network_historys,
 													  guesses,
 													  explore_decisions,
-													  explore_diffs);
+													  explore_diffs,
+													  explore_loop_decisions);
 
 		if (iter_explore_type != EXPLORE_TYPE_NONE) {
 			nodes_visited.push_back(curr_node);
@@ -107,17 +107,18 @@ void Solution::iteration() {
 		sum_misguess += abs(score - guesses[v_index]);
 		double misguess = sum_misguess/(nodes_visited.size() - v_index);
 
-		backprop_nodes[v_index]->backprop(score,
-										  misguess,
-										  state_errors,
-										  states_on,
-										  iter_explore_type,
-										  iter_explore_node,
-										  potential_state_errors,
-										  potential_states_on,
-										  network_historys,
-										  explore_decisions,
-										  explore_diffs);
+		nodes_visited[v_index]->backprop(score,
+										 misguess,
+										 state_errors,
+										 states_on,
+										 iter_explore_type,
+										 iter_explore_node,
+										 potential_state_errors,
+										 potential_states_on,
+										 network_historys,
+										 explore_decisions,
+										 explore_diffs,
+										 explore_loop_decisions);
 	}
 
 	for (int u_index = 0; u_index < (int)unique_nodes_visited_list.size(); u_index++) {

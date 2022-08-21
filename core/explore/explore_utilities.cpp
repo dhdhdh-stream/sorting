@@ -10,8 +10,8 @@ void set_previous_if_needed(SolutionNode* node,
 	} else if (node->type == NODE_TYPE_LOOP_START) {
 		SolutionNodeLoopStart* node_loop_start = (SolutionNodeLoopStart*)node;
 		node_loop_start->previous = new_previous;
-	} else if (node->type == NODE_TYPE_NORMAL) {
-		SolutionNodeNormal* node_normal = (SolutionNodeNormal*)node;
+	} else if (node->type == NODE_TYPE_ACTION) {
+		SolutionNodeAction* node_normal = (SolutionNodeAction*)node;
 		node_normal->previous = new_previous;
 	}
 }
@@ -32,16 +32,12 @@ void set_next(SolutionNode* node,
 		}
 	} else if (node->type == NODE_TYPE_LOOP_END) {
 		SolutionNodeLoopEnd* node_loop_end = (SolutionNodeLoopEnd*)node;
-		if (node_loop_end->no_halt == prev_next) {
-			node_loop_end->no_halt = new_next;
-		} else {
-			node_loop_end->halt = new_next;
-		}
+		node_loop_end->next = new_next;
 	} else if (node->type == NODE_TYPE_LOOP_START) {
 		SolutionNodeLoopStart* node_loop_start = (SolutionNodeLoopStart*)node;
 		node_loop_start->next = new_next;
-	} else if (node->type == NODE_TYPE_NORMAL) {
-		SolutionNodeNormal* node_normal = (SolutionNodeNormal*)node;
+	} else if (node->type == NODE_TYPE_ACTION) {
+		SolutionNodeAction* node_normal = (SolutionNodeAction*)node;
 		node_normal->next = new_next;
 	}
 }

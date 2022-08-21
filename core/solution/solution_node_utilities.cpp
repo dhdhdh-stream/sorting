@@ -8,15 +8,15 @@ void find_scope_end(SolutionNode* inclusive_start,
 	SolutionNode* curr_node = inclusive_start;
 	while (true) {
 		SolutionNode* next_node;
-		if (curr_node->type == NODE_TYPE_NORMAL) {
-			SolutionNodeNormal* curr_node_normal = (SolutionNodeNormal*)curr_node;
+		if (curr_node->type == NODE_TYPE_ACTION) {
+			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
 			next_node = curr_node_normal->next;
 		} else if (curr_node->type == NODE_TYPE_IF_END) {
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
 			next_node = curr_node_if_end->next;
 		} else if (curr_node->type == NODE_TYPE_LOOP_END) {
 			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
-			next_node = curr_node_loop_end->halt;
+			next_node = curr_node_loop_end->next;
 		}
 
 		if (next_node->type == NODE_TYPE_IF_END) {
@@ -29,16 +29,8 @@ void find_scope_end(SolutionNode* inclusive_start,
 			non_inclusive_end = next_node;
 			return;
 		}
-		if (next_node->type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* next_node_loop_start = (SolutionNodeLoopStart*)next_node;
-			if (next_node_loop_start->loop_in == curr_node) {
-				inclusive_end = curr_node;
-				non_inclusive_end = next_node;
-				return;
-			}
-		}
 
-		if (next_node->type == NODE_TYPE_NORMAL) {
+		if (next_node->type == NODE_TYPE_ACTION) {
 			curr_node = next_node;
 		} else if (next_node->type == NODE_TYPE_IF_START) {
 			SolutionNodeIfStart* next_node_if_start = (SolutionNodeIfStart*)next_node;
@@ -56,15 +48,15 @@ void find_potential_jumps(SolutionNode* inclusive_start,
 	SolutionNode* curr_node = inclusive_start;
 	while (true) {
 		SolutionNode* next_node;
-		if (curr_node->type == NODE_TYPE_NORMAL) {
-			SolutionNodeNormal* curr_node_normal = (SolutionNodeNormal*)curr_node;
+		if (curr_node->type == NODE_TYPE_ACTION) {
+			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
 			next_node = curr_node_normal->next;
 		} else if (curr_node->type == NODE_TYPE_IF_END) {
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
 			next_node = curr_node_if_end->next;
 		} else if (curr_node->type == NODE_TYPE_LOOP_END) {
 			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
-			next_node = curr_node_loop_end->halt;
+			next_node = curr_node_loop_end->next;
 		}
 
 		potential_inclusive_jump_ends.push_back(curr_node);
@@ -76,14 +68,8 @@ void find_potential_jumps(SolutionNode* inclusive_start,
 		if (next_node->type == NODE_TYPE_LOOP_END) {
 			return;
 		}
-		if (next_node->type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* next_node_loop_start = (SolutionNodeLoopStart*)next_node;
-			if (next_node_loop_start->loop_in == curr_node) {
-				return;
-			}
-		}
 
-		if (next_node->type == NODE_TYPE_NORMAL) {
+		if (next_node->type == NODE_TYPE_ACTION) {
 			curr_node = next_node;
 		} else if (next_node->type == NODE_TYPE_IF_START) {
 			SolutionNodeIfStart* next_node_if_start = (SolutionNodeIfStart*)next_node;
@@ -101,8 +87,8 @@ void find_potential_loops(SolutionNode* inclusive_end,
 	SolutionNode* curr_node = inclusive_end;
 	while (true) {
 		SolutionNode* previous_node;
-		if (curr_node->type == NODE_TYPE_NORMAL) {
-			SolutionNodeNormal* curr_node_normal = (SolutionNodeNormal*)curr_node;
+		if (curr_node->type == NODE_TYPE_ACTION) {
+			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
 			previous_node = curr_node_normal->previous;
 		} else if (curr_node->type == NODE_TYPE_IF_END) {
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;

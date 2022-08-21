@@ -1,8 +1,6 @@
 #ifndef SOLUTION_NODE_IF_START_H
 #define SOLUTION_NODE_IF_START_H
 
-// special case if start loop
-
 class SolutionNodeIfStart : public SolutionNode {
 public:
 	std::vector<SolutionNode*> children_nodes;
@@ -14,10 +12,6 @@ public:
 	SolutionNodeIfEnd* end;
 
 	std::vector<int> scope_states_on;
-
-	// potential_scope_states
-
-	// without folds, explore states once?
 
 	SolutionNode* previous;
 
@@ -34,25 +28,41 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes,
+						   std::vector<SolutionNode*>& loop_scopes;
 						   std::vector<int>& loop_scope_counts,
-						   int visited_count,
-						   SolutionNode* explore_node,
-						   int& explore_type,
+						   bool is_first_time,
+						   int& iter_explore_type,
+						   SolutionNode* iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
-						   std::vector<NetworkHistory*>& network_historys) override;
+						   std::vector<NetworkHistory*>& network_historys,
+						   std::vector<double>& guesses,
+						   std::vector<int>& explore_decisions,
+						   std::vector<double>& explore_diffs,
+						   std::vector<bool>& explore_loop_decisions) override;
 	void backprop(double score,
-				  SolutionNode* explore_node,
-				  int& explore_type,
+				  double misguess,
+				  double* state_errors,
+				  bool* states_on,
+				  int& iter_explore_type,
+				  SolutionNode* iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
-				  std::vector<NetworkHistory*>& network_historys) override;
-
-	void explore_increment(double score) override;
+				  std::vector<NetworkHistory*>& network_historys,
+				  std::vector<int>& explore_decisions,
+				  std::vector<double>& explore_diffs,
+				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
-	void clear_explore() override;
+
+private:
+	void activate_children_networks(Problem& problem,
+									double* state_vals,
+									bool* states_on,
+									bool backprop,
+									std::vector<NetworkHistory*>& network_historys,
+									double& best_score,
+									int& best_index);
 };
 
 #endif /* SOLUTION_NODE_IF_START_H */

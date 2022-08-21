@@ -11,8 +11,6 @@ public:
 	int new_start_node_index;
 	int new_end_node_index;
 
-	std::vector<int> new_path_node_indexes;
-
 	void process() override;
 };
 

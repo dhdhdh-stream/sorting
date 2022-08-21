@@ -10,13 +10,15 @@ void SolutionNodeIfStart::reset() override {
 
 void SolutionNodeIfStart::add_potential_state(vector<int> potential_state_indexes,
 											  SolutionNode* scope) override {
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		this->network_inputs_potential_state_indexes.push_back(
-			potential_state_indexes[ps_index]);
+	if (scope != this) {
+		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+			this->network_inputs_potential_state_indexes.push_back(
+				potential_state_indexes[ps_index]);
 
-		for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-			// specific children will end up not supporting specific states, but that's OK
-			this->children_score_networks[c_index]->add_potential();
+			for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+				// specific children will end up not supporting specific states, but that's OK
+				this->children_score_networks[c_index]->add_potential();
+			}
 		}
 	}
 
@@ -32,17 +34,19 @@ void SolutionNodeIfStart::add_potential_state(vector<int> potential_state_indexe
 void SolutionNodeIfStart::extend_with_potential_state(vector<int> potential_state_indexes,
 													  vector<int> new_state_indexes,
 													  SolutionNode* scope) override {
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
-			if (this->network_inputs_potential_state_indexes[pi_index]
-					== potential_state_indexes[ps_index]) {
-				this->network_inputs_state_indexes.push_back(new_state_indexes[ps_index]);
+	if (scope != this) {
+		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
+				if (this->network_inputs_potential_state_indexes[pi_index]
+						== potential_state_indexes[ps_index]) {
+					this->network_inputs_state_indexes.push_back(new_state_indexes[ps_index]);
 
-				for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-					this->children_score_networks[c_index]->extend_with_potential(pi_index);
+					for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+						this->children_score_networks[c_index]->extend_with_potential(pi_index);
+					}
+
+					break;
 				}
-
-				break;
 			}
 		}
 	}
@@ -58,12 +62,14 @@ void SolutionNodeIfStart::extend_with_potential_state(vector<int> potential_stat
 
 void SolutionNodeIfStart::reset_potential_state(vector<int> potential_state_indexes,
 												SolutionNode* scope) override {
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
-			if (this->network_inputs_potential_state_indexes[pi_index]
-					== potential_state_indexes[ps_index]) {
-				for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-					this->children_score_networks[c_index]->reset_potential(pi_index);
+	if (scope != this) {
+		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
+				if (this->network_inputs_potential_state_indexes[pi_index]
+						== potential_state_indexes[ps_index]) {
+					for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+						this->children_score_networks[c_index]->reset_potential(pi_index);
+					}
 				}
 			}
 		}
@@ -78,7 +84,7 @@ void SolutionNodeIfStart::reset_potential_state(vector<int> potential_state_inde
 	this->end->reset_potential_state(potential_state_indexes, scope);
 }
 
-void SolutionNodeIfStart::clear_potential_state() {
+void SolutionNodeIfStart::clear_potential_state() override {
 	this->network_inputs_potential_state_indexes.clear();
 
 	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {

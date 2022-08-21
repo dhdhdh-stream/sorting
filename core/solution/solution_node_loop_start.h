@@ -1,8 +1,6 @@
 #ifndef SOLUTION_NODE_LOOP_START_H
 #define SOLUTION_NODE_LOOP_START_H
 
-// special case loop start loop
-
 class SolutionNodeLoopStart : public SolutionNode {
 public:
 	std::vector<int> scope_states_on;
@@ -10,12 +8,8 @@ public:
 	SolutionNode* next;
 
 	SolutionNode* previous;
-	SolutionNode* loop_in;
 
 	SolutionNodeLoopEnd* end;
-
-	std::vector<int> scope_potential_states;
-	bool has_explored_state; // without folds, explore states once
 
 	void reset() override;
 
@@ -40,10 +34,11 @@ public:
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<double>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<double>& explore_diffs) override;
+						   std::vector<double>& explore_diffs,
+						   std::vector<bool>& explore_loop_decisions) override;
 	void backprop(double score,
 				  double misguess,
-				  double* states_on,
+				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
 				  SolutionNode* iter_explore_node,
@@ -51,13 +46,10 @@ public:
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
-				  std::vector<double>& explore_diffs) override;
-
-	void explore_increment(double score,
-						   int iter_explore_type) override;
+				  std::vector<double>& explore_diffs,
+				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
-	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_LOOP_START_H */

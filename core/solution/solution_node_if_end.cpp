@@ -16,11 +16,6 @@ void SolutionNodeIfEnd::add_potential_state(vector<int> potential_state_indexes,
 
 	if (this->next->type == NODE_TYPE_IF_END) {
 		return;
-	} else if (this->next->type == NODE_TYPE_LOOP_START) {
-		SolutionNodeLoopStart* next_loop_start = (SolutionNodeLoopStart*)this->next;
-		if (next_loop_start->loop_in == this) {
-			return;
-		}
 	}
 	this->next->add_potential_state(potential_state_indexes, scope);
 }
@@ -36,11 +31,6 @@ void SolutionNodeIfEnd::extend_with_potential_state(vector<int> potential_state_
 
 	if (this->next->type == NODE_TYPE_IF_END) {
 		return;
-	} else if (this->next->type == NODE_TYPE_LOOP_START) {
-		SolutionNodeLoopStart* next_loop_start = (SolutionNodeLoopStart*)this->next;
-		if (next_loop_start->loop_in == this) {
-			return;
-		}
 	}
 	this->next->extend_with_potential_state(potential_state_indexes,
 											new_state_indexes,
@@ -57,16 +47,11 @@ void SolutionNodeIfEnd::reset_potential_state(vector<int> potential_state_indexe
 
 	if (this->next->type == NODE_TYPE_IF_END) {
 		return;
-	} else if (this->next->type == NODE_TYPE_LOOP_START) {
-		SolutionNodeLoopStart* next_loop_start = (SolutionNodeLoopStart*)this->next;
-		if (next_loop_start->loop_in == this) {
-			return;
-		}
 	}
 	this->next->reset_potential_state(potential_state_indexes, scope);
 }
 
-void SolutionNodeIfEnd::clear_potential_state() {
+void SolutionNodeIfEnd::clear_potential_state() override {
 	clear_potential_state_for_score_network();
 }
 
