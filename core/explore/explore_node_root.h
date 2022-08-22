@@ -3,6 +3,9 @@
 
 class ExploreNodeRoot : public ExploreNode {
 public:
+	ExploreNodeRoot(Explore* explore);
+	~ExploreNodeRoot();
+
 	void process() override;
 };
 

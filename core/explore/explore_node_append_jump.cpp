@@ -2,6 +2,27 @@
 
 using namespace std;
 
+ExploreNodeAppendJump::ExploreNodeAppendJump(Explore* explore,
+											 int jump_start_node_index,
+											 int new_child_index,
+											 vector<int> new_path_node_indexes) {
+	this->explore = explore;
+
+	this->type = EXPLORE_APPEND_JUMP;
+
+	this->jump_start_node_index = jump_start_node_index;
+	this->new_child_index = new_child_index;
+	this->new_path_node_indexes = new_path_node_indexes;
+
+	this->count = 0;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+}
+
+ExploreNodeAppendJump::~ExploreNodeAppendJump() {
+	// do nothing
+}
+
 void ExploreNodeAppendJump::process() override {
 	SolutionNodeIfStart* start_node = (SolutionNodeIfStart*)this->explore->solution->nodes[this->jump_start_node_index];
 	SolutionNodeIfEnd* end_node = start_node->end;

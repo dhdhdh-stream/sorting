@@ -4,6 +4,34 @@
 
 using namespace std;
 
+ExploreNodeLoop::ExploreNodeLoop(Explore* explore,
+								 int loop_start_non_inclusive_index,
+								 int loop_start_inclusive_index,
+								 int loop_end_inclusive_index,
+								 int loop_end_non_inclusive_index,
+								 int new_start_node_index,
+								 int new_end_node_index) {
+	this->explore = explore;
+
+	this->type = EXPLORE_LOOP;
+
+	this->loop_start_non_inclusive_index = loop_start_non_inclusive_index;
+	this->loop_start_inclusive_index = loop_start_inclusive_index;
+	this->loop_end_inclusive_index = loop_end_inclusive_index;
+	this->loop_end_non_inclusive_index = loop_end_non_inclusive_index;
+
+	this->new_start_node_index = new_start_node_index;
+	this->new_end_node_index = new_end_node_index;
+
+	this->count = 0;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+}
+
+ExploreNodeLoop::~ExploreNodeLoop() {
+	// do nothing
+}
+
 void ExploreNodeLoop::process() override {
 	SolutionNodeLoopStart* new_start_node = (SolutionNodeLoopStart*)this->explore->solution->nodes[this->new_start_node_index];
 	SolutionNodeLoopEnd* new_end_node = (SolutionNodeLoopEnd*)this->explore->solution->nodes[this->new_end_node_index];

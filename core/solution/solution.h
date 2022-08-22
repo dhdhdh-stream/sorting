@@ -6,7 +6,7 @@
 #include "solution_node.h"
 
 class SolutionNode;
-class Solver {
+class Solution {
 public:
 	Explore* explore;
 
@@ -23,9 +23,9 @@ public:
 	Solver(Explore* explore);
 	~Solver();
 
-	void iteration();
+	void iteration(bool tune);
 
-	void save();
+	// void save();
 };
 
 #endif /* SOLVER_H */

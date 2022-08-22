@@ -7,6 +7,10 @@ public:
 
 	SolutionNodeIfStart* start;
 
+	SolutionNodeIfEnd(SolutionNode* parent,
+					  int node_index);
+	~SolutionNodeIfEnd();
+
 	void reset() override;
 
 	void add_potential_state(std::vector<int> potential_state_indexes,
@@ -20,25 +24,32 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes,
+						   std::vector<SolutionNode*>& loop_scopes;
 						   std::vector<int>& loop_scope_counts,
-						   int visited_count,
-						   SolutionNode* explore_node,
-						   int& explore_type,
+						   bool is_first_time,
+						   int& iter_explore_type,
+						   SolutionNode* iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
-						   std::vector<NetworkHistory*>& network_historys) override;
+						   std::vector<NetworkHistory*>& network_historys,
+						   std::vector<double>& guesses,
+						   std::vector<int>& explore_decisions,
+						   std::vector<double>& explore_diffs,
+						   std::vector<bool>& explore_loop_decisions) override;
 	void backprop(double score,
-				  SolutionNode* explore_node,
-				  int& explore_type,
+				  double misguess,
+				  double* state_errors,
+				  bool* states_on,
+				  int& iter_explore_type,
+				  SolutionNode* iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
-				  std::vector<NetworkHistory*>& network_historys) override;
-
-	void explore_increment(double score) override;
+				  std::vector<NetworkHistory*>& network_historys,
+				  std::vector<int>& explore_decisions,
+				  std::vector<double>& explore_diffs,
+				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
-	void clear_explore() override;
 };
 
 #endif /* SOLUTION_NODE_IF_END_H */

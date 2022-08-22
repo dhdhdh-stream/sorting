@@ -16,6 +16,11 @@ public:
 
 	SolutionNodeLoopStart* start;
 
+	SolutionNodeLoopEnd(Solution* solution);
+	SolutionNodeLoopEnd(SolutionNode* parent,
+						int node_index);
+	~SolutionNodeLoopEnd();
+
 	void reset() override;
 
 	void add_potential_state(std::vector<int> potential_state_indexes,
@@ -85,7 +90,7 @@ private:
 		std::vector<NetworkHistory*>& network_historys);
 	void backprop_networks_with_potential(double score,
 										  double* potential_state_errors,
-										  vector<NetworkHistory*>& network_historys);
+										  std::vector<NetworkHistory*>& network_historys);
 	// don't need potential_states_on because information in network_history
 };
 

@@ -25,6 +25,7 @@ public:
 	Network(int input_size,
 			int hidden_size,
 			int output_size);
+	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
 

@@ -14,17 +14,13 @@ public:
 	Solution* solution;
 
 	ExploreNode* current_node;
-	int iter_index;
-
-	// 5x 5->1 path candidates, 5x 5->1 state candidates?
 
 	std::mutex mtx;
 
-	Explore(SolutionNode* parent);
+	Explore();
 	~Explore();
 
 	void setup_cycle();
-	void iteration();
 };
 
 #endif /* EXPLORE_H */

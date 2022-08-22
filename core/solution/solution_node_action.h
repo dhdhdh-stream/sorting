@@ -19,6 +19,11 @@ public:
 
 	SolutionNode* previous;
 
+	SolutionNodeAction(SolutionNode* parent,
+					   int node_index,
+					   Action action);
+	~SolutionNodeAction();
+
 	void reset() override;
 
 	void add_potential_state(std::vector<int> potential_state_indexes,

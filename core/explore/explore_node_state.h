@@ -4,7 +4,12 @@
 class ExploreNodeState : public ExploreNode {
 public:
 	int scope_index;
-	vector<int> new_state_indexes;
+	std::vector<int> new_state_indexes;
+
+	ExploreNodeState(Explore* explore,
+					 int scope_index,
+					 std::vector<int> new_state_indexes);
+	~ExploreNodeState();
 
 	void process() override;
 };

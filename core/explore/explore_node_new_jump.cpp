@@ -4,6 +4,35 @@
 
 using namespace std;
 
+ExploreNodeNewJump::ExploreNodeNewJump(Explore* explore,
+									   int jump_start_non_inclusive_index,
+									   int jump_start_inclusive_index,
+									   int jump_end_inclusive_index,
+									   int jump_end_non_inclusive_index,
+									   int new_start_node_index,
+									   int new_end_node_index,
+									   vector<int> new_path_node_indexes) {
+	this->explore = explore;
+
+	this->type = EXPLORE_NEW_JUMP;
+
+	this->jump_start_non_inclusive_index = jump_start_non_inclusive_index;
+	this->jump_start_inclusive_index = jump_start_inclusive_index;
+	this->jump_end_inclusive_index = jump_end_inclusive_index;
+	this->jump_end_non_inclusive_index = jump_end_non_inclusive_index;
+
+	this->new_start_node_index = new_start_node_index;
+	this->new_end_node_index = new_end_node_index;
+
+	this->count = 0;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+}
+
+ExploreNodeNewJump::~ExploreNodeNewJump() {
+	// do nothing
+}
+
 void ExploreNodeNewJump::process() override {
 	SolutionNodeIfStart* new_start_node = (SolutionNodeIfStart*)this->explore->solution->nodes[this->new_start_node_index];
 	SolutionNodeIfEnd* new_end_node = (SolutionNodeIfEnd*)this->explore->solution->nodes[this->new_end_node_index];

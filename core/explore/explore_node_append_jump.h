@@ -9,6 +9,12 @@ public:
 
 	std::vector<int> new_path_node_indexes;
 
+	ExploreNodeAppendJump(Explore* explore,
+						  int jump_start_node_index,
+						  int new_child_index,
+						  std::vector<int> new_path_node_indexes);
+	~ExploreNodeAppendJump();
+
 	void process() override;
 };
 

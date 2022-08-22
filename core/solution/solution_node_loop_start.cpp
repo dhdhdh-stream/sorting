@@ -2,8 +2,54 @@
 
 using namespace std;
 
+SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution) {
+	this->solution = solution;
+
+	this->node_index = 0;
+	this->node_type = NODE_TYPE_LOOP_START;
+
+	this->score_network = new Network(1, 4, 1);
+
+	this->average_unique_future_nodes = 1;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+}
+
+SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
+											 int node_index) {
+	this->solution = parent->solution;
+
+	this->node_index = node_index;
+	this->node_type = NODE_TYPE_LOOP_START;
+
+	this->network_inputs_state_indexes = parent->network_inputs_state_indexes;
+
+	int input_size = 1 + this->network_inputs_state_indexes.size();
+	this->score_network = new Network(input_size,
+									  4*input_size,
+									  1);
+
+	this->average_unique_future_nodes = 1;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	for (int i = 0; i < 6; i++) {
+		this->explore_state_scores.push_back(0.0);
+		this->explore_state_misguesses.push_back(0.0);
+	}
+}
+
+SolutionNodeLoopStart::~SolutionNodeLoopStart() {
+	delete this->score_network;
+}
+
 void SolutionNodeLoopStart::reset() override {
-	this->states_on->clear();
+	this->scope_states_on.clear();
+	this->scope_potential_states.clear();
 }
 
 void SolutionNodeLoopStart::add_potential_state(vector<int> potential_state_indexes,
@@ -52,7 +98,7 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  vector<int>& explore_decisions,
 											  vector<bool>& explore_loop_decisions) override {
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
-		if (randuni() < (2.0/this->average_future_nodes)) {
+		if (randuni() < (2.0/this->average_unique_future_nodes)) {
 			if (rand()%2 == 0) {
 				if (!this->has_explored_state) {
 					if (this->explore_state_state == EXPLORE_STATE_STATE_LEARN) {
@@ -80,6 +126,8 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 
 					vector<SolutionNode*> potential_inclusive_jump_ends;
 					vector<SolutionNode*> potential_non_inclusive_jump_ends;
+					potential_inclusive_jump_ends.push_back(this);
+					potential_non_inclusive_jump_ends.push_back(this->next);
 					find_potential_jumps(this->next,
 										 potential_inclusive_jump_ends,
 										 potential_non_inclusive_jump_ends);
@@ -149,6 +197,15 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 			states_on[this->scope_states_on[o_index]] = true;
 		}
 
+		if (iter_explore_node == this) {
+			if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE
+					|| iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
+				for (int s_index = 0; s_index < (int)this->scope_potential_states.size(); s_index++) {
+					potential_state_vals[this->scope_potential_states[s_index]] = 0.0;
+				}
+			}
+		}
+
 		loop_scopes.push_back(this);
 		loop_scope_counts.push_back(1);
 	}
@@ -199,4 +256,26 @@ void SolutionNodeLoopStart::backprop(double score,
 											  potential_states_on,
 											  network_historys,
 											  explore_decisions);
+
+	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
+		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+			states_on[this->start->scope_states_on[o_index]] = false;
+		}
+	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
+		// should not happen
+	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
+		// should not happen
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
+		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+			states_on[this->start->scope_states_on[o_index]] = false;
+		}
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
+		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+			states_on[this->start->scope_states_on[o_index]] = false;
+		}
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
+		// do nothing
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
+		// do nothing
+	}
 }

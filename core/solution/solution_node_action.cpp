@@ -4,6 +4,50 @@
 
 using namespace std;
 
+SolutionNodeAction::SolutionNodeAction(SolutionNode* parent,
+									   int node_index,
+									   Action action) {
+	this->solution = parent->solution;
+
+	this->node_index = node_index;
+	this->node_type = NODE_TYPE_ACTION;
+
+	this->network_inputs_state_indexes = parent->network_inputs_state_indexes;
+
+	int input_size = 1 + this->network_inputs_state_indexes.size();
+	this->score_network = new Network(input_size,
+									  4*input_size,
+									  1);
+
+	this->average_unique_future_nodes = 1;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	this->action = action;
+
+	for (int s_index = 0; s_index < (int)this->network_inputs_state_indexes.size(); s_index++) {
+		this->state_network_inputs_state_indexes.push_back(this->network_inputs_state_indexes);
+		Network* new_state_network = new Network(input_size,
+												 4*input_size,
+												 1);
+		this->state_networks.push_back(new_state_network);
+		this->state_networks_target_states.push_back(this->network_inputs_state_indexes[s_index]);
+		string new_state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
+			+ "_" + to_string(this->state_networks.size()-1) + "_" + to_string(time(NULL)) + ".txt";
+		this->state_network_names.push_back(new_state_network_name);
+	}
+}
+
+SolutionNodeAction::~SolutionNodeAction() {
+	delete this->score_network;
+
+	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
+		delete this->state_networks[s_index];
+	}
+}
+
 void SolutionNodeAction::reset() override {
 	// do nothing
 }
@@ -59,7 +103,7 @@ void SolutionNodeAction::extend_with_potential_state(vector<int> potential_state
 				this->state_networks.push_back(this->potential_state_networks[t_index]);
 				this->state_networks_target_states.push_back(new_state_indexes[ps_index]);
 				string new_state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
-					+ "_" + to_string(new_state_indexes[ps_index]) + "_" + to_string(time(NULL)) + ".txt";
+					+ "_" + to_string(this->state_networks.size()-1) + "_" + to_string(time(NULL)) + ".txt";
 				this->state_network_names.push_back(new_state_network_name);
 
 				break;
@@ -120,7 +164,7 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 										   vector<int>& explore_decisions,
 										   vector<bool>& explore_loop_decisions) override {
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
-		if (randuni() < (1.0/this->average_future_nodes)) {
+		if (randuni() < (1.0/this->average_unique_future_nodes)) {
 			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
 				int rand_index = rand()%3;
 				if (rand_index == 0) {

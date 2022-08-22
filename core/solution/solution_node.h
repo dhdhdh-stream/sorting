@@ -63,6 +63,8 @@ public:
 	double average_score;
 	double average_misguess;
 
+	std::vector<int> scope_potential_states;
+
 	int explore_path_state;
 	int explore_path_iter_index;
 	int explore_state_state;
@@ -89,8 +91,6 @@ public:
 	double explore_no_explore_is_bad;
 	// TODO: compare misguess
 
-	std::vector<int> scope_potential_states;
-
 	int explore_state_measure_count;
 	std::vector<double> explore_state_scores;
 	std::vector<double> explore_state_misguesses;
@@ -99,12 +99,7 @@ public:
 
 	int temp_node_state;
 
-	// SolutionNode(Solution* solution,
-	// 			 int node_index);
-	// SolutionNode(Solution* solution,
-	// 			 int node_index,
-	// 			 std::ifstream& save_file);
-	virtual ~SolutionNode();
+	virtual ~SolutionNode() {};
 
 	virtual void reset() = 0;
 
@@ -186,8 +181,8 @@ public:
 
 	void increment_unique_future_nodes(int num_future_nodes);
 
-	void save(std::ofstream& save_file);
-	void save_for_display(std::ofstream& save_file);
+	// virtual void save(std::ofstream& save_file) = 0;
+	// virtual void save_for_display(std::ofstream& save_file) = 0;
 
 protected:
 	void add_potential_state_for_score_network(std::vector<int> potential_state_indexes);

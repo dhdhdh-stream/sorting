@@ -3,6 +3,8 @@
 
 class SolutionNodeIfStart : public SolutionNode {
 public:
+	std::vector<int> scope_states_on;
+
 	std::vector<SolutionNode*> children_nodes;
 	std::vector<Network*> children_score_networks;
 	std::vector<std::string> children_score_network_names;
@@ -11,9 +13,14 @@ public:
 
 	SolutionNodeIfEnd* end;
 
-	std::vector<int> scope_states_on;
-
 	SolutionNode* previous;
+
+	int explore_child_index;
+
+	SolutionNodeIfStart(SolutionNode* parent,
+						int node_index,
+						Network* original_path_score_network);
+	~SolutionNodeIfStart();
 
 	void reset() override;
 
@@ -63,6 +70,30 @@ private:
 									std::vector<NetworkHistory*>& network_historys,
 									double& best_score,
 									int& best_index);
+	void activate_children_networks_with_potential(
+		Problem& problem,
+		double* state_vals,
+		bool* states_on,
+		double* potential_state_vals,
+		bool* potential_states_on,
+		bool backprop,
+		std::vector<NetworkHistory*>& network_historys,
+		double& best_score,
+		int& best_index);
+
+	void backprop_children_networks(double score,
+									double* state_errors,
+									bool* states_on,
+									std::vector<NetworkHistory*>& network_historys);
+	void backprop_children_networks_errors_with_no_weight_change(
+		double score,
+		double* state_errors,
+		bool* states_on,
+		std::vector<NetworkHistory*>& network_historys);
+	void backprop_children_networks_with_potential(double score,
+												   double* potential_state_errors,
+												   std::vector<NetworkHistory*>& network_historys);
+	// don't need potential_states_on because information in network_history
 };
 
 #endif /* SOLUTION_NODE_IF_START_H */

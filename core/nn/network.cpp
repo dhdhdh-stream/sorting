@@ -27,6 +27,17 @@ Network::Network(int input_size,
 	this->iter = 0;
 }
 
+Network::Network(Network* original) {
+	construct(
+		original->input->acti_vals.size(),
+		original->hidden->acti_vals.size(),
+		original->output->acti_vals.size());
+
+	// this network doesn't have potentials added
+	this->hidden->copy_weights_from(original->hidden);
+	this->output->copy_weights_from(original->output);
+}
+
 Network::Network(ifstream& input_file) {
 	string input_size_line;
 	getline(input_file, input_size_line);

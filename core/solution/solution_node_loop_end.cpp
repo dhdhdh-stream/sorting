@@ -2,6 +2,69 @@
 
 using namespace std;
 
+SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution) {
+	this->solution = solution;
+
+	this->node_index = 1;
+	this->node_type = NODE_TYPE_LOOP_END;
+
+	this->score_network = NULL;
+
+	this->average_unique_future_nodes = 1;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	this->halt_network = NULL;
+	this->no_halt_network = NULL;
+}
+
+SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
+										 int node_index) {
+	this->solution = parent->solution;
+
+	this->node_index = node_index;
+	this->node_type = NODE_TYPE_LOOP_END;
+
+	this->network_inputs_state_indexes = parent->network_inputs_state_indexes;
+
+	int input_size = 1 + this->network_inputs_state_indexes.size();
+	this->score_network = new Network(input_size,
+									  4*input_size,
+									  1);
+
+	this->average_unique_future_nodes = 1;
+	this->average_score = 0.0;
+	this->average_misguess = 1.0;
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	this->halt_networks_inputs_state_indexes = parent->network_inputs_state_indexes;
+
+	this->halt_network = this->parent->explore_halt_network;
+	this->parent->explore_halt_network = NULL;
+	this->halt_network_name = "../saves/nns/halt_" + to_string(this->node_index) \
+		+ "_" + to_string(time(NULL)) + ".txt";
+
+	this->no_halt_network = this->parent->explore_no_halt_network;
+	this->parent->explore_no_halt_network = NULL;
+	this->no_halt_network_name = "../saves/nns/no_halt_" + to_string(this->node_index) \
+		+ "_" + to_string(time(NULL)) + ".txt";
+}
+
+SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
+	if (this->score_network != NULL) {
+		delete this->score_network;
+	}
+	if (this->halt_network != NULL) {
+		delete this->halt_network;
+	}
+	if (this->no_halt_network != NULL) {
+		delete this->no_halt_network;
+	}
+}
+
 void SolutionNodeLoopEnd::reset() override {
 	// do nothing
 }
@@ -107,8 +170,20 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											vector<int>& explore_decisions,
 											vector<double>& explore_diffs,
 											vector<bool>& explore_loop_decisions) override {
+	if (this->node_index == 1) {
+		loop_scopes.pop_back();
+		loop_scope_counts.pop_back();
+
+		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
+			states_on[this->start->scope_states_on[o_index]] = false;
+		}
+		// let scope start handle potentials differently for now
+
+		return NULL;
+	}
+
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
-		if (randuni() < (1.0/this->average_future_nodes)) {
+		if (randuni() < (1.0/this->average_unique_future_nodes)) {
 			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
 				int rand_index = rand()%3;
 				if (rand_index == 0) {
@@ -124,12 +199,12 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 						this->explore_start_non_inclusive = this;
 						this->explore_start_inclusive = NULL;
 						this->explore_end_inclusive = NULL;
-						this->explore_end_non_inclusive = this->halt;
+						this->explore_end_non_inclusive = this->next;
 					} else {
 						seq_length = seq_length_dist(generator);
 
 						this->explore_start_non_inclusive = this;
-						this->explore_start_inclusive = this->halt;
+						this->explore_start_inclusive = this->next;
 						this->explore_end_inclusive = inclusive_end;
 						this->explore_end_non_inclusive = non_inclusive_end;
 					}
@@ -159,12 +234,12 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 						this->explore_start_non_inclusive = this;
 						this->explore_start_inclusive = NULL;
 						this->explore_end_inclusive = NULL;
-						this->explore_end_non_inclusive = this->halt;
+						this->explore_end_non_inclusive = this->next;
 					} else {
 						seq_length = seq_length_dist(generator);
 
 						this->explore_start_non_inclusive = this;
-						this->explore_start_inclusive = this->halt;
+						this->explore_start_inclusive = this->next;
 						this->explore_end_inclusive = potential_inclusive_jump_ends[random_index];
 						this->explore_end_non_inclusive = potential_non_inclusive_jump_ends[random_index];
 					}
@@ -189,7 +264,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 					this->explore_start_non_inclusive = potential_non_inclusive_loop_starts[random_index];
 					this->explore_start_inclusive = potential_inclusive_loop_starts[random_index];
 					this->explore_end_inclusive = this;
-					this->explore_end_non_inclusive = this->halt;
+					this->explore_end_non_inclusive = this->next;
 					
 					this->path_explore_type = PATH_EXPLORE_TYPE_LOOP;
 				}
@@ -202,6 +277,12 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_EXPLORE;
+			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN) {
+				iter_explore_node = this;
+				iter_explore_type = EXPLORE_TYPE_LEARN_PATH;
+			} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE) {
+				iter_explore_node = this;
+				iter_explore_type = EXPLORE_TYPE_MEASURE_PATH;
 			}
 		}
 	}
@@ -289,7 +370,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
 			states_on[this->start->scope_states_on[o_index]] = false;
 		}
-		// let loop_start handle potentials differently for now
+		// let scope start handle potentials differently for now
 
 		SolutionNode* explore_node = NULL;
 		if (iter_explore_node == this) {
@@ -359,6 +440,9 @@ void SolutionNodeLoopEnd::backprop(double score,
 	explore_loop_decisions.pop_back();
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
+		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
+			states_on[this->start->scope_states_on[s_index]] = true;
+		}
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;
@@ -374,6 +458,9 @@ void SolutionNodeLoopEnd::backprop(double score,
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		// should not happen
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
+		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
+			states_on[this->start->scope_states_on[s_index]] = true;
+		}
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;
@@ -386,6 +473,9 @@ void SolutionNodeLoopEnd::backprop(double score,
 			states_on,
 			network_historys);
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
+		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
+			states_on[this->start->scope_states_on[s_index]] = true;
+		}
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;

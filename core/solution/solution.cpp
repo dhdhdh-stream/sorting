@@ -10,26 +10,24 @@
 
 using namespace std;
 
-Solver::Solver(Explore* explore) {
+Solution::Solution(Explore* explore) {
 	this->explore = explore;
 
-	SolutionNode* root_node = new SolutionNodeLoopStart(this, 0);
+	SolutionNode* root_node = new SolutionNodeLoopStart(this);
 	this->nodes.push_back(root_node);
-	SolutionNode* halt_node = new SolutionNodeLoopEnd(this, 1);
+	SolutionNode* halt_node = new SolutionNodeLoopEnd(this);
 	this->nodes.push_back(halt_node);
 
 	this->current_state_counter = 0;
-
-	// current_potential_state_counter reset to 0 every cycle
 }
 
-Solver::~Solver() {
+Solution::~Solution() {
 	for (int i = 0; i < (int)this->nodes.size(); i++) {
 		delete this->nodes[i];
 	}
 }
 
-void Solution::iteration() {
+void Solution::iteration(bool tune) {
 	Problem problem;
 	
 	double state_vals[this->current_state_counter] = {};
@@ -49,14 +47,14 @@ void Solution::iteration() {
 	vector<SolutionNode*> unique_nodes_visited_list;
 
 	int iter_explore_type = EXPLORE_TYPE_NONE;
-	if (rand()%10 == 0) {
+	if (tune) {
 		iter_explore_type = EXPLORE_TYPE_RE_EVAL;
 	}
 	SolutionNode* iter_explore_node = NULL;
 
 	vector<int> explore_decisions;
 	vector<double> explore_diffs;
-	vector<bool> explore_loop_decisions;
+	vector<bool> explore_loop_end_decisions;
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
@@ -103,7 +101,8 @@ void Solution::iteration() {
 	double sum_misguess = 0.0;
 	double state_errors[this->current_state_counter] = {};
 	double potential_state_errors[this->current_potential_state_counter] = {};
-	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
+	// ignore last halt node
+	for (int v_index = (int)nodes_visited.size()-2; v_index >= 0; v_index--) {
 		sum_misguess += abs(score - guesses[v_index]);
 		double misguess = sum_misguess/(nodes_visited.size() - v_index);
 
@@ -132,20 +131,20 @@ void Solution::iteration() {
 	}
 }
 
-void Solver::save() {
-	ofstream save_file;
-	string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
-	save_file.open(save_file_name);
+// void Solution::save() {
+// 	ofstream save_file;
+// 	string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
+// 	save_file.open(save_file_name);
 
-	this->nodes_mtx.lock();
-	int num_nodes = (int)this->nodes.size();
-	this->nodes_mtx.unlock();
+// 	this->nodes_mtx.lock();
+// 	int num_nodes = (int)this->nodes.size();
+// 	this->nodes_mtx.unlock();
 
-	save_file << num_nodes << endl;
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		// TODO: save node type first
-		this->nodes[n_index]->save(save_file);
-	}
+// 	save_file << num_nodes << endl;
+// 	for (int n_index = 0; n_index < num_nodes; n_index++) {
+// 		// TODO: save node type first
+// 		this->nodes[n_index]->save(save_file);
+// 	}
 
-	save_file.close();
-}
+// 	save_file.close();
+// }

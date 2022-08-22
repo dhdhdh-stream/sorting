@@ -11,6 +11,11 @@ public:
 
 	SolutionNodeLoopEnd* end;
 
+	SolutionNodeLoopStart(Solution* solution);
+	SolutionNodeLoopStart(SolutionNode* parent,
+						  int node_index);
+	~SolutionNodeLoopStart();
+
 	void reset() override;
 
 	void add_potential_state(std::vector<int> potential_state_indexes,
