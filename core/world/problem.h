@@ -12,7 +12,7 @@ public:
 	int current_pointer;
 	std::vector<double> current_world;
 
-	Problem(std::vector<double>* observations);
+	Problem();
 	~Problem();
 
 	double get_observation();

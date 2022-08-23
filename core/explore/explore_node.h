@@ -1,12 +1,15 @@
 #ifndef EXPLORE_NODE_H
 #define EXPLORE_NODE_H
 
+#include "explore.h"
+
 const int EXPLORE_ROOT = 0;
 const int EXPLORE_NEW_JUMP = 1;
 const int EXPLORE_APPEND_JUMP = 2;
 const int EXPLORE_LOOP = 3;
 const int EXPLORE_STATE = 4;
 
+class Explore;
 class ExploreNode {
 public:
 	Explore* explore;
@@ -28,6 +31,8 @@ public:
 	};
 
 	virtual void process() = 0;
+
+	virtual void save(std::ofstream& save_file) = 0;
 };
 
 #endif /* EXPLORE_NODE_H */

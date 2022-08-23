@@ -2,6 +2,11 @@
 
 using namespace std;
 
+Action::Action() {
+	this->write = 0.0;
+	this->move = -1;
+}
+
 Action::Action(double write, int move) {
 	this->write = write;
 	this->move = move;

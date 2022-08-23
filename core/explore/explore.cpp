@@ -4,14 +4,23 @@
 #include <random>
 
 #include "definitions.h"
+#include "explore_node_root.h"
+#include "explore_node_new_jump.h"
+#include "explore_node_loop.h"
 #include "utilities.h"
 
 using namespace std;
 
 Explore::Explore() {
-	this->root = new ExploreRootNode(this);
+	this->root = new ExploreNodeRoot(this);
 
-	this->solution = new Solution();
+	this->solution = new Solution(this);
+}
+
+Explore::Explore(ifstream& save_file) {
+	this->root = new ExploreNodeRoot(this, save_file);
+
+	this->solution = new Solution(this, save_file);
 }
 
 Explore::~Explore() {
@@ -59,6 +68,8 @@ void Explore::setup_cycle() {
 				best_index = c_index;
 			}
 		}
+
+		curr_node = curr_node->children[best_index];
 	}
 
 	this->solution->current_potential_state_counter = 0;
@@ -68,7 +79,20 @@ void Explore::setup_cycle() {
 			potential_state_indexes.push_back(this->solution->current_potential_state_counter);
 			this->solution->current_potential_state_counter++;
 		}
+		scopes[s_index]->scope_potential_states = potential_state_indexes;
 		scopes[s_index]->add_potential_state(potential_state_indexes,
 											 scopes[s_index]);
 	}
+}
+
+void Explore::save() {
+	ofstream save_file;
+	string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
+	save_file.open(save_file_name);
+
+	this->root->save(save_file);
+
+	this->solution->save(save_file);
+
+	save_file.close();
 }

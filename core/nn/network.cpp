@@ -29,9 +29,9 @@ Network::Network(int input_size,
 
 Network::Network(Network* original) {
 	construct(
-		original->input->acti_vals.size(),
-		original->hidden->acti_vals.size(),
-		original->output->acti_vals.size());
+		(int)original->input->acti_vals.size(),
+		(int)original->hidden->acti_vals.size(),
+		(int)original->output->acti_vals.size());
 
 	// this network doesn't have potentials added
 	this->hidden->copy_weights_from(original->hidden);
@@ -146,14 +146,14 @@ void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors)
 
 void Network::add_potential() {
 	Layer* new_potential_input = new Layer(LINEAR_LAYER, 1);
-	new_potential_input.is_on = false;
+	new_potential_input->is_on = false;
 	Layer* new_potential_hidden = new Layer(RELU_LAYER, 4);
-	new_potential_hidden.is_on = false;
+	new_potential_hidden->is_on = false;
 	new_potential_hidden->input_layers.push_back(this->input);
 	new_potential_hidden->input_layers.push_back(new_potential_input);
 	new_potential_hidden->setup_weights_full();
 	this->potential_inputs.push_back(new_potential_input);
-	this->potential_hidden.push_back(new_potential_hiddens);
+	this->potential_hiddens.push_back(new_potential_hidden);
 
 	this->hidden->add_potential_input_layer(new_potential_input);
 	this->output->add_potential_input_layer(new_potential_hidden);
@@ -264,12 +264,12 @@ void Network::remove_potentials() {
 	this->hidden->remove_potential_input_layers();
 	this->output->remove_potential_input_layers();
 
-	for (int p_index = 0; p_index < (int)this->potential_hidden.size(); p_index++) {
+	for (int p_index = 0; p_index < (int)this->potential_hiddens.size(); p_index++) {
 		delete this->potential_inputs[p_index];
-		delete this->potential_hidden[p_index];
+		delete this->potential_hiddens[p_index];
 	}
 	this->potential_inputs.clear();
-	this->potential_hidden.clear();
+	this->potential_hiddens.clear();
 }
 
 void Network::save(ofstream& output_file) {

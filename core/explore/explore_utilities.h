@@ -1,6 +1,8 @@
 #ifndef EXPLORE_UTILITIES_H
 #define EXPLORE_UTILITIES_H
 
+#include "solution_node.h"
+
 void set_previous_if_needed(SolutionNode* node,
 							SolutionNode* new_previous);
 

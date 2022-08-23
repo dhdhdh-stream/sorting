@@ -1,6 +1,10 @@
 #ifndef SOLUTION_NODE_LOOP_END_H
 #define SOLUTION_NODE_LOOP_END_H
 
+#include "solution_node.h"
+#include "solution_node_loop_start.h"
+
+class SolutionNodeLoopStart;
 class SolutionNodeLoopEnd : public SolutionNode {
 public:
 	SolutionNode* next;
@@ -19,6 +23,9 @@ public:
 	SolutionNodeLoopEnd(Solution* solution);
 	SolutionNodeLoopEnd(SolutionNode* parent,
 						int node_index);
+	SolutionNodeLoopEnd(Solution* solution,
+						int node_index,
+						std::ifstream& save_file);
 	~SolutionNodeLoopEnd();
 
 	void reset() override;
@@ -34,11 +41,11 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes;
+						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
 						   bool is_first_time,
 						   int& iter_explore_type,
-						   SolutionNode* iter_explore_node,
+						   SolutionNode*& iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
@@ -51,7 +58,7 @@ public:
 				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
-				  SolutionNode* iter_explore_node,
+				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
@@ -61,10 +68,13 @@ public:
 
 	void clear_potential_state() override;
 
-private:
+	void save(std::ofstream& save_file) override;
+
 	void activate_networks(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
+						   std::vector<SolutionNode*>& loop_scopes,
+						   std::vector<int>& loop_scope_counts,
 						   bool backprop,
 						   std::vector<NetworkHistory*>& network_historys,
 						   double& score,
@@ -72,6 +82,8 @@ private:
 	void activate_networks_with_potential(Problem& problem,
 										  double* state_vals,
 										  bool* states_on,
+										  std::vector<SolutionNode*>& loop_scopes,
+										  std::vector<int>& loop_scope_counts,
 										  double* potential_state_vals,
 										  bool* potential_states_on,
 										  bool backprop,

@@ -1,6 +1,10 @@
 #ifndef SOLUTION_NODE_IF_START_H
 #define SOLUTION_NODE_IF_START_H
 
+#include "solution_node.h"
+#include "solution_node_if_end.h"
+
+class SolutionNodeIfEnd;
 class SolutionNodeIfStart : public SolutionNode {
 public:
 	std::vector<int> scope_states_on;
@@ -20,6 +24,9 @@ public:
 	SolutionNodeIfStart(SolutionNode* parent,
 						int node_index,
 						Network* original_path_score_network);
+	SolutionNodeIfStart(Solution* solution,
+						int node_index,
+						std::ifstream& save_file);
 	~SolutionNodeIfStart();
 
 	void reset() override;
@@ -35,11 +42,11 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes;
+						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
 						   bool is_first_time,
 						   int& iter_explore_type,
-						   SolutionNode* iter_explore_node,
+						   SolutionNode*& iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
@@ -52,7 +59,7 @@ public:
 				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
-				  SolutionNode* iter_explore_node,
+				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
@@ -62,7 +69,8 @@ public:
 
 	void clear_potential_state() override;
 
-private:
+	void save(std::ofstream& save_file) override;
+
 	void activate_children_networks(Problem& problem,
 									double* state_vals,
 									bool* states_on,

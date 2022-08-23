@@ -7,6 +7,8 @@
 
 #include "action.h"
 #include "network.h"
+#include "problem.h"
+#include "solution.h"
 
 const int NODE_TYPE_ACTION = 0;
 const int NODE_TYPE_IF_START = 1;
@@ -45,6 +47,7 @@ const int TEMP_NODE_STATE_MEASURE = 1;
 
 // TODO: Add folds
 
+class Solution;
 class SolutionNode {
 public:
 	Solution* solution;
@@ -56,6 +59,7 @@ public:
 	std::vector<int> network_inputs_potential_state_indexes;
 	
 	Network* score_network;
+	std::string score_network_name;
 
 	// TODO: add certainty networks
 
@@ -73,6 +77,7 @@ public:
 	int path_explore_type;
 	int path_target_type;
 	std::vector<Action> try_path;
+	bool explore_path_used;
 	std::vector<SolutionNode*> explore_path;
 	
 	SolutionNode* explore_start_non_inclusive;
@@ -99,17 +104,17 @@ public:
 
 	int temp_node_state;
 
-	virtual ~SolutionNode() {};
+	virtual ~SolutionNode();
 
 	virtual void reset() = 0;
 
 	virtual void add_potential_state(std::vector<int> potential_state_indexes,
-									 SolutionNode* scope);
+									 SolutionNode* scope) = 0;
 	virtual void extend_with_potential_state(std::vector<int> potential_state_indexes,
 											 std::vector<int> new_state_indexes,
-											 SolutionNode* scope);
+											 SolutionNode* scope) = 0;
 	virtual void reset_potential_state(std::vector<int> potential_state_indexes,
-									   SolutionNode* scope);
+									   SolutionNode* scope) = 0;
 
 	virtual SolutionNode* activate(Problem& problem,
 								   double* state_vals,
@@ -118,9 +123,9 @@ public:
 								   std::vector<int>& loop_scope_counts,
 								   bool is_first_time,
 								   int& iter_explore_type,
-								   SolutionNode* iter_explore_node,
+								   SolutionNode*& iter_explore_node,
 								   double* potential_state_vals,
-								   bool* potential_states_on
+								   bool* potential_states_on,
 								   std::vector<NetworkHistory*>& network_historys,
 								   std::vector<double>& guesses,
 								   std::vector<int>& explore_decisions,
@@ -131,57 +136,60 @@ public:
 						  double* state_errors,
 						  bool* states_on,
 						  int& iter_explore_type,
-						  SolutionNode* iter_explore_node,
+						  SolutionNode*& iter_explore_node,
 						  double* potential_state_errors,
 						  bool* potential_states_on,
 						  std::vector<NetworkHistory*>& network_historys,
-						  std::vector<int>& explore_decisions
+						  std::vector<int>& explore_decisions,
 						  std::vector<double>& explore_diffs,
 						  std::vector<bool>& explore_loop_decisions) = 0;
 
-	virtual void clear_potential_state();
+	virtual void clear_potential_state() = 0;
 
-	void activate_score_network_helper(Problem& problem,
-									   double* state_vals,
-									   bool* states_on,
-									   int& iter_explore_type,
-									   SolutionNode* iter_explore_node,
-									   double* potential_state_errors,
-									   bool* potential_states_on,
-									   std::vector<NetworkHistory*>& network_historys,
-									   std::vector<double>& guesses);
-	void explore(double score,
-				 Problem& problem,
-				 double* state_vals,
-				 bool* states_on,
-				 std::vector<SolutionNode*>& loop_scopes,
-				 std::vector<int>& loop_scope_counts,
-				 int& iter_explore_type,
-				 SolutionNode* iter_explore_node,
-				 double* potential_state_errors,
-				 bool* potential_states_on,
-				 std::vector<NetworkHistory*>& network_historys,
-				 std::vector<double>& guesses,
-				 std::vector<int>& explore_decisions,
-				 std::vector<double>& explore_diffs);
+	double activate_score_network_helper(Problem& problem,
+										 double* state_vals,
+										 bool* states_on,
+										 std::vector<SolutionNode*>& loop_scopes,
+										 std::vector<int>& loop_scope_counts,
+										 int& iter_explore_type,
+										 SolutionNode*& iter_explore_node,
+										 double* potential_state_vals,
+										 bool* potential_states_on,
+										 std::vector<NetworkHistory*>& network_historys,
+										 std::vector<double>& guesses);
+	SolutionNode* explore(double score,
+						  Problem& problem,
+						  double* state_vals,
+						  bool* states_on,
+						  std::vector<SolutionNode*>& loop_scopes,
+						  std::vector<int>& loop_scope_counts,
+						  int& iter_explore_type,
+						  SolutionNode*& iter_explore_node,
+						  double* potential_state_errors,
+						  bool* potential_states_on,
+						  std::vector<NetworkHistory*>& network_historys,
+						  std::vector<double>& guesses,
+						  std::vector<int>& explore_decisions,
+						  std::vector<double>& explore_diffs);
 	void backprop_explore_and_score_network_helper(
 		double score,
 		double misguess,
 		double* state_errors,
 		bool* states_on,
 		int& iter_explore_type,
-		SolutionNode* iter_explore_node,
+		SolutionNode*& iter_explore_node,
 		double* potential_state_errors,
 		bool* potential_states_on,
 		std::vector<NetworkHistory*>& network_historys,
-		std::vector<int>& explore_decisions);
+		std::vector<int>& explore_decisions,
+		std::vector<double>& explore_diffs);
 	void explore_increment(double score,
 						   int iter_explore_type);
 	void clear_explore();
 
 	void increment_unique_future_nodes(int num_future_nodes);
 
-	// virtual void save(std::ofstream& save_file) = 0;
+	virtual void save(std::ofstream& save_file) = 0;
 	// virtual void save_for_display(std::ofstream& save_file) = 0;
 
 protected:
@@ -217,7 +225,7 @@ protected:
 	void backprop_score_network_with_potential(
 		double score,
 		double* potential_state_errors,
-		vector<NetworkHistory*>& network_historys);
+		std::vector<NetworkHistory*>& network_historys);
 	// don't need potential_states_on because information in network_history
 
 	double activate_explore_if_network(Problem& problem,
@@ -246,7 +254,7 @@ protected:
 											bool backprop,
 											std::vector<NetworkHistory*>& network_historys);
 	void backprop_explore_no_halt_network(double score,
-										  double* states_errors,
+										  double* state_errors,
 										  bool* states_on,
 										  std::vector<NetworkHistory*>& network_historys);
 };

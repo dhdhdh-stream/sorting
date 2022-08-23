@@ -317,14 +317,14 @@ void Layer::hidden_extend_with_potential(int potential_index,
 		}
 	}
 
-	for (int pn_index = 0; pn_index < (int)potential->acti_vals.size(); pn_index++) {
+	for (int pn_index = 0; pn_index < (int)potential_hidden->acti_vals.size(); pn_index++) {
 		vector<vector<double>> new_node_weights;
 		vector<vector<double>> new_node_weight_updates;
 		vector<vector<double>> new_node_prev_weight_updates;
 
-		vector<double> potential_node_weights = potential->weights[pn_index][0];
+		vector<double> potential_node_weights = potential_hidden->weights[pn_index][0];
 
-		vector<double> potential_input_weights = potential->weights[pn_index][1];
+		vector<double> potential_input_weights = potential_hidden->weights[pn_index][1];
 		potential_node_weights.insert(potential_node_weights.end(),
 			potential_input_weights.begin(), potential_input_weights.end());
 
@@ -351,7 +351,7 @@ void Layer::hidden_extend_with_potential(int potential_index,
 		}
 
 		this->weights.push_back(new_node_weights);
-		this->constants.push_back(potential->constants[pn_index]);
+		this->constants.push_back(potential_hidden->constants[pn_index]);
 		this->weight_updates.push_back(new_node_weight_updates);
 		this->constant_updates.push_back(0.0);
 		this->prev_weight_updates.push_back(new_node_prev_weight_updates);

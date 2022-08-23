@@ -7,6 +7,8 @@
 #include "explore_node.h"
 #include "solution.h"
 
+class ExploreNode;
+class Solution;
 class Explore {
 public:
 	ExploreNode* root;
@@ -18,9 +20,12 @@ public:
 	std::mutex mtx;
 
 	Explore();
+	Explore(std::ifstream& save_file);
 	~Explore();
 
 	void setup_cycle();
+
+	void save();
 };
 
 #endif /* EXPLORE_H */

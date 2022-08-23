@@ -1,5 +1,12 @@
 #include "solution_node_loop_end.h"
 
+#include <random>
+#include <boost/algorithm/string/trim.hpp>
+
+#include "definitions.h"
+#include "solution_node_utilities.h"
+#include "utilities.h"
+
 using namespace std;
 
 SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution) {
@@ -29,10 +36,12 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
 
 	this->network_inputs_state_indexes = parent->network_inputs_state_indexes;
 
-	int input_size = 1 + this->network_inputs_state_indexes.size();
+	int input_size = 1 + (int)this->network_inputs_state_indexes.size();
 	this->score_network = new Network(input_size,
 									  4*input_size,
 									  1);
+	this->score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->average_unique_future_nodes = 1;
 	this->average_score = 0.0;
@@ -42,15 +51,97 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
 
 	this->halt_networks_inputs_state_indexes = parent->network_inputs_state_indexes;
 
-	this->halt_network = this->parent->explore_halt_network;
-	this->parent->explore_halt_network = NULL;
+	this->halt_network = parent->explore_halt_network;
+	parent->explore_halt_network = NULL;
 	this->halt_network_name = "../saves/nns/halt_" + to_string(this->node_index) \
 		+ "_" + to_string(time(NULL)) + ".txt";
 
-	this->no_halt_network = this->parent->explore_no_halt_network;
-	this->parent->explore_no_halt_network = NULL;
+	this->no_halt_network = parent->explore_no_halt_network;
+	parent->explore_no_halt_network = NULL;
 	this->no_halt_network_name = "../saves/nns/no_halt_" + to_string(this->node_index) \
 		+ "_" + to_string(time(NULL)) + ".txt";
+}
+
+SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
+										 int node_index,
+										 ifstream& save_file) {
+	this->solution = solution;
+
+	this->node_index = node_index;
+	this->node_type = NODE_TYPE_LOOP_END;
+
+	if (node_index == 1) {
+		this->score_network = NULL;
+
+		this->average_unique_future_nodes = 1;
+		this->average_score = 0.0;
+		this->average_misguess = 1.0;
+
+		this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+		this->halt_network = NULL;
+		this->no_halt_network = NULL;
+	} else {
+		string network_inputs_state_indexes_size_line;
+		getline(save_file, network_inputs_state_indexes_size_line);
+		int network_inputs_state_indexes_size = stoi(network_inputs_state_indexes_size_line);
+		for (int s_index = 0; s_index < network_inputs_state_indexes_size; s_index++) {
+			string state_index_line;
+			getline(save_file, state_index_line);
+			this->network_inputs_state_indexes.push_back(stoi(state_index_line));
+		}
+
+		string score_network_name_line;
+		getline(save_file, score_network_name_line);
+		boost::algorithm::trim(score_network_name_line);
+		this->score_network_name = score_network_name_line;
+
+		ifstream score_network_save_file;
+		score_network_save_file.open(this->score_network_name);
+		this->score_network = new Network(score_network_save_file);
+		score_network_save_file.close();
+
+		string average_unique_future_nodes_line;
+		getline(save_file, average_unique_future_nodes_line);
+		this->average_unique_future_nodes = stof(average_unique_future_nodes_line);
+
+		string average_score_line;
+		getline(save_file, average_score_line);
+		this->average_score = stof(average_score_line);
+
+		string average_misguess_line;
+		getline(save_file, average_misguess_line);
+		this->average_misguess = stof(average_misguess_line);
+
+		string halt_networks_inputs_state_indexes_size_line;
+		getline(save_file, halt_networks_inputs_state_indexes_size_line);
+		int halt_networks_inputs_state_indexes_size = stoi(halt_networks_inputs_state_indexes_size_line);
+		for (int i_index = 0; i_index < halt_networks_inputs_state_indexes_size; i_index++) {
+			string state_index_line;
+			getline(save_file, state_index_line);
+			this->halt_networks_inputs_state_indexes.push_back(stoi(state_index_line));
+		}
+
+		string halt_network_name_line;
+		getline(save_file, halt_network_name_line);
+		boost::algorithm::trim(halt_network_name_line);
+		this->halt_network_name = halt_network_name_line;
+
+		ifstream halt_network_save_file;
+		halt_network_save_file.open(halt_network_name_line);
+		this->halt_network = new Network(halt_network_save_file);
+		halt_network_save_file.close();
+
+		string no_halt_network_name_line;
+		getline(save_file, no_halt_network_name_line);
+		boost::algorithm::trim(no_halt_network_name_line);
+		this->no_halt_network_name = no_halt_network_name_line;
+
+		ifstream no_halt_network_save_file;
+		no_halt_network_save_file.open(no_halt_network_name_line);
+		this->no_halt_network = new Network(no_halt_network_save_file);
+		no_halt_network_save_file.close();
+	}
 }
 
 SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
@@ -65,12 +156,16 @@ SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
 	}
 }
 
-void SolutionNodeLoopEnd::reset() override {
+void SolutionNodeLoopEnd::reset() {
 	// do nothing
 }
 
 void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexes,
-											  SolutionNode* scope) override {
+											  SolutionNode* scope) {
+	if (this->node_index == 1) {
+		return;
+	}
+
 	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 		this->halt_networks_potential_inputs_state_indexes.push_back(
 			potential_state_indexes[ps_index]);
@@ -85,7 +180,7 @@ void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexe
 
 	add_potential_state_for_score_network(potential_state_indexes);
 
-	if (this->next->type == NODE_TYPE_IF_END) {
+	if (this->next->node_type == NODE_TYPE_IF_END) {
 		return;
 	}
 	this->next->add_potential_state(potential_state_indexes, scope);
@@ -93,7 +188,11 @@ void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexe
 
 void SolutionNodeLoopEnd::extend_with_potential_state(vector<int> potential_state_indexes,
 													  vector<int> new_state_indexes,
-													  SolutionNode* scope) override {
+													  SolutionNode* scope) {
+	if (this->node_index == 1) {
+		return;
+	}
+
 	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 		for (int pi_index = 0; pi_index < (int)this->halt_networks_potential_inputs_state_indexes.size(); pi_index++) {
 			if (this->halt_networks_potential_inputs_state_indexes[pi_index]
@@ -112,9 +211,10 @@ void SolutionNodeLoopEnd::extend_with_potential_state(vector<int> potential_stat
 		return;
 	}
 
-	extend_state_for_score_network(potential_state_indexes);
+	extend_state_for_score_network(potential_state_indexes,
+								   new_state_indexes);
 
-	if (this->next->type == NODE_TYPE_IF_END) {
+	if (this->next->node_type == NODE_TYPE_IF_END) {
 		return;
 	}
 	this->next->extend_with_potential_state(potential_state_indexes,
@@ -123,7 +223,11 @@ void SolutionNodeLoopEnd::extend_with_potential_state(vector<int> potential_stat
 }
 
 void SolutionNodeLoopEnd::reset_potential_state(vector<int> potential_state_indexes,
-												SolutionNode* scope) override {
+												SolutionNode* scope) {
+	if (this->node_index == 1) {
+		return;
+	}
+
 	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 		for (int pi_index = 0; pi_index < (int)this->halt_networks_potential_inputs_state_indexes.size(); pi_index++) {
 			if (this->halt_networks_potential_inputs_state_indexes[pi_index]
@@ -140,36 +244,38 @@ void SolutionNodeLoopEnd::reset_potential_state(vector<int> potential_state_inde
 
 	reset_potential_state_for_score_network(potential_state_indexes);
 
-	if (this->next->type == NODE_TYPE_IF_END) {
+	if (this->next->node_type == NODE_TYPE_IF_END) {
 		return;
 	}
 	this->next->reset_potential_state(potential_state_indexes, scope);
 }
 
-void SolutionNodeLoopEnd::clear_potential_state() override {
-	this->halt_networks_potential_inputs_state_indexes.clear();
+void SolutionNodeLoopEnd::clear_potential_state() {
+	if (this->node_index != 1) {
+		this->halt_networks_potential_inputs_state_indexes.clear();
 
-	this->halt_network->remove_potentials();
-	this->no_halt_network->remove_potentials();
+		this->halt_network->remove_potentials();
+		this->no_halt_network->remove_potentials();
 
-	clear_potential_state_for_score_network();
+		clear_potential_state_for_score_network();
+	}
 }
 
 SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											double* state_vals,
 											bool* states_on,
-											vector<SolutionNode*>& loop_scopes;
+											vector<SolutionNode*>& loop_scopes,
 											vector<int>& loop_scope_counts,
 											bool is_first_time,
 											int& iter_explore_type,
-											SolutionNode* iter_explore_node,
+											SolutionNode*& iter_explore_node,
 											double* potential_state_vals,
 											bool* potential_states_on,
 											vector<NetworkHistory*>& network_historys,
 											vector<double>& guesses,
 											vector<int>& explore_decisions,
 											vector<double>& explore_diffs,
-											vector<bool>& explore_loop_decisions) override {
+											vector<bool>& explore_loop_decisions) {
 	if (this->node_index == 1) {
 		loop_scopes.pop_back();
 		loop_scope_counts.pop_back();
@@ -191,7 +297,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 					SolutionNode* non_inclusive_end;
 					find_scope_end(this, inclusive_end, non_inclusive_end);
 					
-					geometric_distribution<int> seq_length_dist(0.0, 0.2);
+					geometric_distribution<int> seq_length_dist(0.2);
 					int seq_length;
 					if (this == inclusive_end) {
 						seq_length = 1 + seq_length_dist(generator);
@@ -224,9 +330,9 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 					find_potential_jumps(this,
 										 potential_inclusive_jump_ends,
 										 potential_non_inclusive_jump_ends);
-					int random_index = rand()%potential_inclusive_jump_ends.size();
+					int random_index = rand()%(int)potential_inclusive_jump_ends.size();
 
-					geometric_distribution<int> seq_length_dist(0.0, 0.2);
+					geometric_distribution<int> seq_length_dist(0.2);
 					int seq_length;
 					if (this == potential_inclusive_jump_ends[random_index]) {
 						seq_length = 1 + seq_length_dist(generator);
@@ -259,7 +365,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 					find_potential_loops(this,
 										 potential_non_inclusive_loop_starts,
 										 potential_inclusive_loop_starts);
-					int random_index = rand()%potential_non_inclusive_loop_starts.size();
+					int random_index = rand()%(int)potential_non_inclusive_loop_starts.size();
 
 					this->explore_start_non_inclusive = potential_non_inclusive_loop_starts[random_index];
 					this->explore_start_inclusive = potential_inclusive_loop_starts[random_index];
@@ -277,6 +383,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_EXPLORE;
+				this->explore_path_used = false;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN) {
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_LEARN_PATH;
@@ -293,6 +400,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  true,
 						  network_historys,
 						  score,
@@ -302,6 +411,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  false,
 						  network_historys,
 						  score,
@@ -310,6 +421,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  false,
 						  network_historys,
 						  score,
@@ -318,6 +431,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  true,
 						  network_historys,
 						  score,
@@ -327,6 +442,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			problem,
 			state_vals,
 			states_on,
+			loop_scopes,
+			loop_scope_counts,
 			potential_state_vals,
 			potential_states_on,
 			true,
@@ -337,6 +454,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  false,
 						  network_historys,
 						  score,
@@ -346,6 +465,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			problem,
 			state_vals,
 			states_on,
+			loop_scopes,
+			loop_scope_counts,
 			potential_state_vals,
 			potential_states_on,
 			false,
@@ -377,9 +498,11 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			double score = activate_score_network_helper(problem,
 														 state_vals,
 														 states_on,
+														 loop_scopes,
+														 loop_scope_counts,
 														 iter_explore_type,
 														 iter_explore_node,
-														 potential_state_errors,
+														 potential_state_vals,
 														 potential_states_on,
 														 network_historys,
 														 guesses);
@@ -392,7 +515,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 								   loop_scope_counts,
 								   iter_explore_type,
 								   iter_explore_node,
-								   potential_state_errors,
+								   potential_state_vals,
 								   potential_states_on,
 								   network_historys,
 								   guesses,
@@ -407,7 +530,11 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			}
 		}
 
-		return this->next;
+		if (explore_node != NULL) {
+			return explore_node;
+		} else {
+			return this->next;
+		}
 	} else {
 		return this->start;
 	}
@@ -418,13 +545,13 @@ void SolutionNodeLoopEnd::backprop(double score,
 								   double* state_errors,
 								   bool* states_on,
 								   int& iter_explore_type,
-								   SolutionNode* iter_explore_node,
+								   SolutionNode*& iter_explore_node,
 								   double* potential_state_errors,
 								   bool* potential_states_on,
 								   vector<NetworkHistory*>& network_historys,
 								   vector<int>& explore_decisions,
 								   vector<double>& explore_diffs,
-								   vector<bool>& explore_loop_decisions) override {
+								   vector<bool>& explore_loop_decisions) {
 	if (explore_loop_decisions.back() == true) {
 		backprop_explore_and_score_network_helper(score,
 												  misguess,
@@ -435,7 +562,8 @@ void SolutionNodeLoopEnd::backprop(double score,
 												  potential_state_errors,
 												  potential_states_on,
 												  network_historys,
-												  explore_decisions);
+												  explore_decisions,
+												  explore_diffs);
 	}
 	explore_loop_decisions.pop_back();
 
@@ -443,6 +571,7 @@ void SolutionNodeLoopEnd::backprop(double score,
 		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 			states_on[this->start->scope_states_on[s_index]] = true;
 		}
+		NetworkHistory* network_history = network_historys.back();
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;
@@ -461,6 +590,7 @@ void SolutionNodeLoopEnd::backprop(double score,
 		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 			states_on[this->start->scope_states_on[s_index]] = true;
 		}
+		NetworkHistory* network_history = network_historys.back();
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;
@@ -476,6 +606,7 @@ void SolutionNodeLoopEnd::backprop(double score,
 		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 			states_on[this->start->scope_states_on[s_index]] = true;
 		}
+		NetworkHistory* network_history = network_historys.back();
 		if (network_history->network == this->halt_network) {
 			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 				state_errors[this->start->scope_states_on[s_index]] = 0.0;
@@ -498,9 +629,49 @@ void SolutionNodeLoopEnd::backprop(double score,
 	}
 }
 
+void SolutionNodeLoopEnd::save(ofstream& save_file) {
+	if (this->node_index == 1) {
+		return;
+	}
+
+	save_file << this->network_inputs_state_indexes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
+		save_file << this->network_inputs_state_indexes[i_index] << endl;
+	}
+
+	save_file << this->score_network_name << endl;
+	ofstream score_network_save_file;
+	score_network_save_file.open(this->score_network_name);
+	this->score_network->save(score_network_save_file);
+	score_network_save_file.close();
+
+	save_file << this->average_unique_future_nodes << endl;
+	save_file << this->average_score << endl;
+	save_file << this->average_misguess << endl;
+
+	save_file << this->halt_networks_inputs_state_indexes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->halt_networks_inputs_state_indexes.size(); i_index++) {
+		save_file << this->halt_networks_inputs_state_indexes[i_index] << endl;
+	}
+
+	save_file << this->halt_network_name << endl;
+	ofstream halt_network_save_file;
+	halt_network_save_file.open(this->halt_network_name);
+	this->halt_network->save(halt_network_save_file);
+	halt_network_save_file.close();
+
+	save_file << this->no_halt_network_name << endl;
+	ofstream no_halt_network_save_file;
+	no_halt_network_save_file.open(this->no_halt_network_name);
+	this->no_halt_network->save(no_halt_network_save_file);
+	no_halt_network_save_file.close();
+}
+
 void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 											double* state_vals,
 											bool* states_on,
+											vector<SolutionNode*>& loop_scopes,
+											vector<int>& loop_scope_counts,
 											bool backprop,
 											vector<NetworkHistory*>& network_historys,
 											double& score,
@@ -547,7 +718,7 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 		double no_halt_score = this->no_halt_network->output->acti_vals[0];
 		this->no_halt_network->mtx.unlock();
 
-		if (no_halt > halt || rand()%20 == 0) {
+		if (no_halt_score > halt_score || rand()%20 == 0) {
 			network_historys.push_back(no_halt_history[0]);
 			delete halt_history[0];
 
@@ -573,7 +744,7 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 		double no_halt_score = this->no_halt_network->output->acti_vals[0];
 		this->no_halt_network->mtx.unlock();
 
-		if (no_halt > halt || rand()%20 == 0) {
+		if (no_halt_score > halt_score || rand()%20 == 0) {
 			score = no_halt_score;
 			should_halt = false;
 			return;
@@ -740,10 +911,12 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 		Problem& problem,
 		double* state_vals,
 		bool* states_on,
+		vector<SolutionNode*>& loop_scopes,
+		vector<int>& loop_scope_counts,
 		double* potential_state_vals,
 		bool* potential_states_on,
 		bool backprop,
-		std::vector<NetworkHistory*>& network_historys,
+		vector<NetworkHistory*>& network_historys,
 		double& score,
 		bool& should_halt) {
 	vector<int> potentials_on;
@@ -759,6 +932,8 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 		activate_networks(problem,
 						  state_vals,
 						  states_on,
+						  loop_scopes,
+						  loop_scope_counts,
 						  false,
 						  network_historys,
 						  score,

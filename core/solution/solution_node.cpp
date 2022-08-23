@@ -4,23 +4,39 @@
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
 
+#include "explore_node_new_jump.h"
+#include "explore_node_append_jump.h"
+#include "explore_node_loop.h"
+#include "explore_node_state.h"
+#include "solution_node_action.h"
+#include "solution_node_if_start.h"
+#include "solution_node_if_end.h"
+#include "solution_node_loop_start.h"
+#include "solution_node_loop_end.h"
+
 using namespace std;
+
+SolutionNode::~SolutionNode() {
+	// do nothing
+}
 
 double SolutionNode::activate_score_network_helper(Problem& problem,
 												   double* state_vals,
 												   bool* states_on,
+												   std::vector<SolutionNode*>& loop_scopes,
+												   std::vector<int>& loop_scope_counts,
 												   int& iter_explore_type,
-												   SolutionNode* iter_explore_node,
-												   double* potential_state_errors,
+												   SolutionNode*& iter_explore_node,
+												   double* potential_state_vals,
 												   bool* potential_states_on,
 												   vector<NetworkHistory*>& network_historys,
 												   vector<double>& guesses) {
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
-		score = activate_score_network(problem,
-									   state_vals,
-									   states_on,
-									   true,
-									   network_historys);
+		double score = activate_score_network(problem,
+											  state_vals,
+											  states_on,
+											  true,
+											  network_historys);
 		guesses.push_back(score);
 		return score;
 	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
@@ -28,11 +44,11 @@ double SolutionNode::activate_score_network_helper(Problem& problem,
 		return 0.0; 
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		if (iter_explore_node == this) {
-			score = activate_score_network(problem,
-										   state_vals,
-										   states_on,
-										   false,
-										   network_historys);
+			double score = activate_score_network(problem,
+												  state_vals,
+												  states_on,
+												  false,
+												  network_historys);
 			return score;
 		} else {
 			// do nothing
@@ -41,27 +57,27 @@ double SolutionNode::activate_score_network_helper(Problem& problem,
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
 		if (iter_explore_node == this
 				&& this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
-			if (loop_scopes.back() == NULL) {
+			if (loop_scopes.size() > 0 && loop_scopes.back() == NULL) {
 				// do nothing
 				return 0.0;
 			} else {
-				score = activate_score_network(problem,
-											   state_vals,
-											   states_on,
-											   false,
-											   network_historys);
+				double score = activate_score_network(problem,
+													  state_vals,
+													  states_on,
+													  false,
+													  network_historys);
 				return score;
 			}
 		} else {
-			score = activate_score_network(problem,
-										   state_vals,
-										   states_on,
-										   true,
-										   network_historys);
+			double score = activate_score_network(problem,
+												  state_vals,
+												  states_on,
+												  true,
+												  network_historys);
 			return score;
 		} 
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-		score = activate_score_network_with_potential(
+		double score = activate_score_network_with_potential(
 			problem,
 			state_vals,
 			states_on,
@@ -71,22 +87,23 @@ double SolutionNode::activate_score_network_helper(Problem& problem,
 			network_historys);
 		return score;
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
-		score = activate_score_network(problem,
-									   state_vals,
-									   states_on,
-									   false,
-									   network_historys);
+		double score = activate_score_network(problem,
+											  state_vals,
+											  states_on,
+											  false,
+											  network_historys);
 		if (iter_explore_node != this) {
 			guesses.push_back(score);
 		}
 		return score;
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
-		score = activate_score_network_with_potential(
+	} else {
+		// iter_explore_type == EXPLORE_TYPE_MEASURE_STATE
+		double score = activate_score_network_with_potential(
 			problem,
 			state_vals,
 			states_on,
 			potential_state_vals,
-			potential_states_on
+			potential_states_on,
 			false,
 			network_historys);
 		guesses.push_back(score);
@@ -101,7 +118,7 @@ SolutionNode* SolutionNode::explore(double score,
 									vector<SolutionNode*>& loop_scopes,
 									vector<int>& loop_scope_counts,
 									int& iter_explore_type,
-									SolutionNode* iter_explore_node,
+									SolutionNode*& iter_explore_node,
 									double* potential_state_errors,
 									bool* potential_states_on,
 									vector<NetworkHistory*>& network_historys,
@@ -118,11 +135,11 @@ SolutionNode* SolutionNode::explore(double score,
 		if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
 			bool do_explore = false;
 			if (this->path_target_type == PATH_TARGET_TYPE_GOOD) {
-				if (score > this->average) {
+				if (score > this->average_score) {
 					do_explore = true;
 				}
 			} else {
-				if (score < this->average) {
+				if (score < this->average_score) {
 					do_explore = true;
 				}
 			}
@@ -131,16 +148,18 @@ SolutionNode* SolutionNode::explore(double score,
 				for (int a_index = 0; a_index < (int)this->try_path.size(); a_index++) {
 					problem.perform_action(try_path[a_index]);
 				}
+				this->explore_path_used = true;
 
 				return this->explore_end_non_inclusive;
 			} else {
 				return NULL;
 			}
-		} else if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
-			if (loop_scopes.back() == NULL) {
+		} else {
+			// this->path_explore_type == PATH_EXPLORE_TYPE_LOOP
+			if (loop_scopes.size() > 0 && loop_scopes.back() == NULL) {
 				if ((loop_scope_counts.back() == 3 && rand()%3 == 0)
-						(loop_scope_counts.back() == 4 && rand()%2 == 0)
-						loop_scope_counts.back() == 5) {
+						|| (loop_scope_counts.back() == 4 && rand()%2 == 0)
+						|| loop_scope_counts.back() == 5) {
 					loop_scopes.pop_back();
 					loop_scope_counts.pop_back();
 
@@ -153,11 +172,11 @@ SolutionNode* SolutionNode::explore(double score,
 			} else {
 				bool do_explore = false;
 				if (this->path_target_type == PATH_TARGET_TYPE_GOOD) {
-					if (score > this->average) {
+					if (score > this->average_score) {
 						do_explore = true;
 					}
 				} else {
-					if (score < this->average) {
+					if (score < this->average_score) {
 						do_explore = true;
 					}
 				}
@@ -165,6 +184,7 @@ SolutionNode* SolutionNode::explore(double score,
 				if (do_explore) {
 					loop_scopes.push_back(NULL);
 					loop_scope_counts.push_back(1);
+					this->explore_path_used = true;
 
 					return this->explore_start_inclusive;
 				} else {
@@ -176,11 +196,11 @@ SolutionNode* SolutionNode::explore(double score,
 		if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
 			bool do_explore = false;
 			if (this->path_target_type == PATH_TARGET_TYPE_GOOD) {
-				if (score > this->average) {
+				if (score > this->average_score) {
 					do_explore = true;
 				}
 			} else {
-				if (score < this->average) {
+				if (score < this->average_score) {
 					do_explore = true;
 				}
 			}
@@ -200,8 +220,9 @@ SolutionNode* SolutionNode::explore(double score,
 			} else {
 				return NULL;
 			}
-		} else if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
-			if (loop_scopes.back() == NULL) {
+		} else {
+			// this->path_explore_type == PATH_EXPLORE_TYPE_LOOP
+			if (loop_scopes.size() > 0 && loop_scopes.back() == NULL) {
 				// score_network not run
 
 				int current_count = loop_scope_counts.back();
@@ -230,11 +251,11 @@ SolutionNode* SolutionNode::explore(double score,
 			} else {
 				bool do_explore = false;
 				if (this->path_target_type == PATH_TARGET_TYPE_GOOD) {
-					if (score > this->average) {
+					if (score > this->average_score) {
 						do_explore = true;
 					}
 				} else {
-					if (score < this->average) {
+					if (score < this->average_score) {
 						do_explore = true;
 					}
 				}
@@ -258,14 +279,15 @@ SolutionNode* SolutionNode::explore(double score,
 					activate_explore_no_halt_network(problem,
 													 state_vals,
 													 states_on,
-													 true
+													 true,
 													 network_historys);
 
 					return NULL;
 				}
 			}
 		}
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
+	} else {
+		// iter_explore_type == EXPLORE_TYPE_MEASURE_PATH
 		if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
 			double explore_score = activate_explore_if_network(
 				problem,
@@ -290,8 +312,9 @@ SolutionNode* SolutionNode::explore(double score,
 				explore_decisions.push_back(EXPLORE_DECISION_TYPE_N_A);
 				return NULL;
 			}
-		} else if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
-			if (loop_scopes.back() == NULL) {
+		} else {
+			// this->path_explore_type == PATH_EXPLORE_TYPE_LOOP
+			if (loop_scopes.size() > 0 && loop_scopes.back() == NULL) {
 				explore_diffs.push_back(0.0);
 				explore_decisions.push_back(EXPLORE_DECISION_TYPE_N_A);
 
@@ -380,11 +403,12 @@ void SolutionNode::backprop_explore_and_score_network_helper(
 		double* state_errors,
 		bool* states_on,
 		int& iter_explore_type,
-		SolutionNode* iter_explore_node,
+		SolutionNode*& iter_explore_node,
 		double* potential_state_errors,
 		bool* potential_states_on,
 		vector<NetworkHistory*>& network_historys,
-		vector<int>& explore_decisions) {
+		vector<int>& explore_decisions,
+		vector<double>& explore_diffs) {
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
 		if (this->node_type == NODE_TYPE_IF_START) {
 			SolutionNodeIfStart* this_if_start = (SolutionNodeIfStart*)this;
@@ -576,6 +600,7 @@ void SolutionNode::explore_increment(double score,
 			this->solution->explore->mtx.lock();
 			this->solution->explore->current_node->children.push_back(new_explore_node);
 			this->solution->explore->mtx.unlock();
+			cout << "new ExploreNodeState" << endl;
 		}
 
 		reset_potential_state(this->scope_potential_states, this);
@@ -584,11 +609,16 @@ void SolutionNode::explore_increment(double score,
 		this->explore_state_iter_index = 0;
 		this->has_explored_state = true;
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
-		if (score == 1.0) {
+		if (score == 1.0 && this->explore_path_used) {
 			if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP
 					|| this->try_path.size() == 0) {
 				// do nothing
 			} else {
+				for (int a_index = 0; a_index < (int)this->try_path.size(); a_index++) {
+					cout << this->try_path[a_index].to_string() << endl;
+				}
+				cout << endl;
+
 				SolutionNodeAction* curr_node = new SolutionNodeAction(this, -1, this->try_path[0]);
 				curr_node->temp_node_state = TEMP_NODE_STATE_LEARN;
 				this->explore_path.push_back(curr_node);
@@ -603,7 +633,7 @@ void SolutionNode::explore_increment(double score,
 				curr_node->next = this->explore_end_non_inclusive;
 			}
 
-			int input_size = 1 + (int)this->network_inputs_state_indexes;
+			int input_size = 1 + (int)this->network_inputs_state_indexes.size();
 			if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
 				this->explore_if_network = new Network(input_size, 4*input_size, 1);
 			} else if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
@@ -660,20 +690,21 @@ void SolutionNode::explore_increment(double score,
 
 							this_if_start->children_nodes.push_back(NULL);
 							this_if_start->children_score_networks.push_back(this->explore_if_network);
-							this->explore_if_network = NULL:
-							String new_network_name = "../saves/nns/child_" + to_string(this->node_index) \
+							this->explore_if_network = NULL;
+							string new_network_name = "../saves/nns/child_" + to_string(this->node_index) \
 								+ "_" + to_string(this_if_start->children_nodes.size()-1) + "_" + to_string(time(NULL)) + ".txt";
-							this_if_start->children_score_network_names(new_network_name);
+							this_if_start->children_score_network_names.push_back(new_network_name);
 							this_if_start->children_on.push_back(false);
 
 							ExploreNodeAppendJump* new_explore_node = new ExploreNodeAppendJump(
 								this->solution->explore,
 								this->node_index,
-								this_if_start->children_nodes.size()-1,
+								(int)this_if_start->children_nodes.size()-1,
 								new_path_node_indexes);
 							this->solution->explore->mtx.lock();
 							this->solution->explore->current_node->children.push_back(new_explore_node);
 							this->solution->explore->mtx.unlock();
+							cout << "new ExploreNodeAppendJump" << endl;
 						} else {
 							this->solution->nodes_mtx.lock();
 						
@@ -681,7 +712,7 @@ void SolutionNode::explore_increment(double score,
 							SolutionNodeIfStart* new_start_node = new SolutionNodeIfStart(
 								this,
 								new_start_node_index,
-								this->children_score_networks[this_if_start->explore_child_index]);
+								this_if_start->children_score_networks[this_if_start->explore_child_index]);
 							// takes and clears explore networks
 							this->solution->nodes.push_back(new_start_node);
 
@@ -696,7 +727,7 @@ void SolutionNode::explore_increment(double score,
 							this->explore_path.clear();
 
 							int new_end_node_index = (int)this->solution->nodes.size();
-							SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(new_end_node_index);
+							SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this, new_end_node_index);
 							this->solution->nodes.push_back(new_end_node);
 
 							this->solution->nodes_mtx.unlock();
@@ -726,6 +757,7 @@ void SolutionNode::explore_increment(double score,
 							this->solution->explore->mtx.lock();
 							this->solution->explore->current_node->children.push_back(new_explore_node);
 							this->solution->explore->mtx.unlock();
+							cout << "new ExploreNodeNewJump" << endl;
 						}
 					} else {
 						this->solution->nodes_mtx.lock();
@@ -749,7 +781,7 @@ void SolutionNode::explore_increment(double score,
 						this->explore_path.clear();
 
 						int new_end_node_index = (int)this->solution->nodes.size();
-						SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(new_end_node_index);
+						SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this, new_end_node_index);
 						this->solution->nodes.push_back(new_end_node);
 
 						this->solution->nodes_mtx.unlock();
@@ -779,6 +811,7 @@ void SolutionNode::explore_increment(double score,
 						this->solution->explore->mtx.lock();
 						this->solution->explore->current_node->children.push_back(new_explore_node);
 						this->solution->explore->mtx.unlock();
+						cout << "new ExploreNodeNewJump" << endl;
 					}
 				} else if (this->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
 					this->solution->nodes_mtx.lock();
@@ -806,6 +839,7 @@ void SolutionNode::explore_increment(double score,
 					this->solution->explore->mtx.lock();
 					this->solution->explore->current_node->children.push_back(new_explore_node);
 					this->solution->explore->mtx.unlock();
+					cout << "new ExploreNodeLoop" << endl;
 				}
 			} else {
 				if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
@@ -1121,9 +1155,9 @@ double SolutionNode::activate_explore_if_network(Problem& problem,
 	explore_network_inputs.push_back(curr_observations);
 	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
 		if (states_on[this->network_inputs_state_indexes[i_index]]) {
-			score_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
+			explore_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
 		} else {
-			score_network_inputs.push_back(0.0);
+			explore_network_inputs.push_back(0.0);
 		}
 	}
 
@@ -1193,12 +1227,13 @@ double SolutionNode::activate_explore_halt_network(Problem& problem,
 	explore_network_inputs.push_back(curr_observations);
 	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
 		if (states_on[this->network_inputs_state_indexes[i_index]]) {
-			score_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
+			explore_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
 		} else {
-			score_network_inputs.push_back(0.0);
+			explore_network_inputs.push_back(0.0);
 		}
 	}
 
+	double score;
 	if (backprop) {
 		this->explore_halt_network->mtx.lock();
 		this->explore_halt_network->activate(explore_network_inputs, network_historys);
@@ -1264,9 +1299,9 @@ double SolutionNode::activate_explore_no_halt_network(Problem& problem,
 	explore_network_inputs.push_back(curr_observations);
 	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
 		if (states_on[this->network_inputs_state_indexes[i_index]]) {
-			score_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
+			explore_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
 		} else {
-			score_network_inputs.push_back(0.0);
+			explore_network_inputs.push_back(0.0);
 		}
 	}
 	
@@ -1287,9 +1322,11 @@ double SolutionNode::activate_explore_no_halt_network(Problem& problem,
 }
 
 void SolutionNode::backprop_explore_no_halt_network(double score,
-													double* states_errors,
+													double* state_errors,
 													bool* states_on,
 													std::vector<NetworkHistory*>& network_historys) {
+	NetworkHistory* network_history = network_historys.back();
+
 	this->explore_no_halt_network->mtx.lock();
 
 	network_history->reset_weights();

@@ -1,6 +1,11 @@
 #ifndef SOLUTION_NODE_ACTION_H
 #define SOLUTION_NODE_ACTION_H
 
+#include <vector>
+
+#include "action.h"
+#include "solution_node.h"
+
 class SolutionNodeAction : public SolutionNode {
 public:
 	Action action;
@@ -22,6 +27,9 @@ public:
 	SolutionNodeAction(SolutionNode* parent,
 					   int node_index,
 					   Action action);
+	SolutionNodeAction(Solution* solution,
+					   int node_index,
+					   std::ifstream& save_file);
 	~SolutionNodeAction();
 
 	void reset() override;
@@ -37,11 +45,11 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes;
+						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
 						   bool is_first_time,
 						   int& iter_explore_type,
-						   SolutionNode* iter_explore_node,
+						   SolutionNode*& iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
@@ -54,7 +62,7 @@ public:
 				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
-				  SolutionNode* iter_explore_node,
+				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
@@ -64,12 +72,13 @@ public:
 
 	void clear_potential_state() override;
 
-private:
-	void activate_state_networks_eval(Problem& problem,
-									  double* state_vals,
-									  bool* states_on,
-									  bool backprop,
-									  std::vector<NetworkHistory*>& network_historys);
+	void save(std::ofstream& save_file) override;
+
+	void activate_state_networks(Problem& problem,
+								 double* state_vals,
+								 bool* states_on,
+								 bool backprop,
+								 std::vector<NetworkHistory*>& network_historys);
 	void activate_state_networks_with_potential(Problem& problem,
 												double* state_vals,
 												bool* states_on,

@@ -1,5 +1,12 @@
 #include "solution_node_if_start.h"
 
+#include <random>
+#include <boost/algorithm/string/trim.hpp>
+
+#include "definitions.h"
+#include "solution_node_utilities.h"
+#include "utilities.h"
+
 using namespace std;
 
 SolutionNodeIfStart::SolutionNodeIfStart(SolutionNode* parent,
@@ -42,13 +49,59 @@ SolutionNodeIfStart::SolutionNodeIfStart(SolutionNode* parent,
 	}
 }
 
+SolutionNodeIfStart::SolutionNodeIfStart(Solution* solution,
+										 int node_index,
+										 ifstream& save_file) {
+	this->solution = solution;
+
+	this->node_index = node_index;
+	this->node_type = NODE_TYPE_IF_START;
+
+	string network_inputs_state_indexes_size_line;
+	getline(save_file, network_inputs_state_indexes_size_line);
+	int network_inputs_state_indexes_size = stoi(network_inputs_state_indexes_size_line);
+	for (int s_index = 0; s_index < network_inputs_state_indexes_size; s_index++) {
+		string state_index_line;
+		getline(save_file, state_index_line);
+		this->network_inputs_state_indexes.push_back(stoi(state_index_line));
+	}
+
+	string num_children_line;
+	getline(save_file, num_children_line);
+	int num_children = stoi(num_children_line);
+	for (int c_index = 0; c_index < num_children; c_index++) {
+		string child_score_network_name_line;
+		getline(save_file, child_score_network_name_line);
+		boost::algorithm::trim(child_score_network_name_line);
+		this->children_score_network_names.push_back(child_score_network_name_line);
+
+		ifstream child_score_network_save_file;
+		child_score_network_save_file.open(child_score_network_name_line);
+		Network* child_score_network = new Network(child_score_network_save_file);
+		this->children_score_networks.push_back(child_score_network);
+		child_score_network_save_file.close();
+	}
+
+	string average_unique_future_nodes_line;
+	getline(save_file, average_unique_future_nodes_line);
+	this->average_unique_future_nodes = stof(average_unique_future_nodes_line);
+
+	string average_score_line;
+	getline(save_file, average_score_line);
+	this->average_score = stof(average_score_line);
+
+	string average_misguess_line;
+	getline(save_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
+}
+
 SolutionNodeIfStart::~SolutionNodeIfStart() {
 	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
 		delete this->children_score_networks[c_index];
 	}
 }
 
-void SolutionNodeIfStart::reset() override {
+void SolutionNodeIfStart::reset() {
 	this->scope_states_on.clear();
 	this->scope_potential_states.clear();
 
@@ -58,7 +111,7 @@ void SolutionNodeIfStart::reset() override {
 }
 
 void SolutionNodeIfStart::add_potential_state(vector<int> potential_state_indexes,
-											  SolutionNode* scope) override {
+											  SolutionNode* scope) {
 	if (scope != this) {
 		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 			this->network_inputs_potential_state_indexes.push_back(
@@ -82,7 +135,7 @@ void SolutionNodeIfStart::add_potential_state(vector<int> potential_state_indexe
 
 void SolutionNodeIfStart::extend_with_potential_state(vector<int> potential_state_indexes,
 													  vector<int> new_state_indexes,
-													  SolutionNode* scope) override {
+													  SolutionNode* scope) {
 	if (scope != this) {
 		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
@@ -103,14 +156,17 @@ void SolutionNodeIfStart::extend_with_potential_state(vector<int> potential_stat
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
 		if (this->children_on[c_index]) {
 			this->children_nodes[c_index]->extend_with_potential_state(potential_state_indexes,
+																	   new_state_indexes,
 																	   scope);
 		}
 	}
-	this->end->extend_with_potential_state(potential_state_indexes, scope);
+	this->end->extend_with_potential_state(potential_state_indexes,
+										   new_state_indexes,
+										   scope);
 }
 
 void SolutionNodeIfStart::reset_potential_state(vector<int> potential_state_indexes,
-												SolutionNode* scope) override {
+												SolutionNode* scope) {
 	if (scope != this) {
 		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
@@ -133,7 +189,7 @@ void SolutionNodeIfStart::reset_potential_state(vector<int> potential_state_inde
 	this->end->reset_potential_state(potential_state_indexes, scope);
 }
 
-void SolutionNodeIfStart::clear_potential_state() override {
+void SolutionNodeIfStart::clear_potential_state() {
 	this->network_inputs_potential_state_indexes.clear();
 
 	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
@@ -148,13 +204,14 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 											vector<int>& loop_scope_counts,
 											bool is_first_time,
 											int& iter_explore_type,
-											SolutionNode* iter_explore_node,
+											SolutionNode*& iter_explore_node,
 											double* potential_state_vals,
 											bool* potential_states_on,
 											vector<NetworkHistory*>& network_historys,
 											vector<double>& guesses,
 											vector<int>& explore_decisions,
-											vector<bool>& explore_loop_decisions) override {
+											vector<double>& explore_diffs,
+											vector<bool>& explore_loop_decisions) {
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
 		if (randuni() < (2.0/this->average_unique_future_nodes)) {
 			if (rand()%2 == 0) {
@@ -179,7 +236,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 				}
 			} else {
 				if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
-					geometric_distribution<int> seq_length_dist(0.0, 0.2);
+					geometric_distribution<int> seq_length_dist(0.2);
 					int seq_length;
 
 					vector<int> selectable_children;
@@ -190,7 +247,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 					}
 
 					int random_index = -1 + rand()%((int)selectable_children.size()+1);
-					if (rand_index == -1) {
+					if (random_index == -1) {
 						this->explore_child_index = -1;
 					} else {
 						this->explore_child_index = selectable_children[random_index];
@@ -211,7 +268,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 											 potential_inclusive_jump_ends,
 											 potential_non_inclusive_jump_ends);
 
-						int random_index = rand()%potential_inclusive_jump_ends.size();
+						int random_index = rand()%(int)potential_inclusive_jump_ends.size();
 
 						if (this == potential_inclusive_jump_ends[random_index]) {
 							seq_length = 1 + seq_length_dist(generator);
@@ -248,6 +305,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 
 					iter_explore_node = this;
 					iter_explore_type = EXPLORE_TYPE_EXPLORE;
+					this->explore_path_used = false;
 				} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN) {
 					iter_explore_node = this;
 					iter_explore_type = EXPLORE_TYPE_LEARN_PATH;
@@ -337,7 +395,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 
 	SolutionNode* explore_node = NULL;
 	if (iter_explore_node == this) {
-		explore_node = explore(score,
+		explore_node = explore(best_score,
 							   problem,
 							   state_vals,
 							   states_on,
@@ -345,7 +403,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 							   loop_scope_counts,
 							   iter_explore_type,
 							   iter_explore_node,
-							   potential_state_errors,
+							   potential_state_vals,
 							   potential_states_on,
 							   network_historys,
 							   guesses,
@@ -365,12 +423,13 @@ void SolutionNodeIfStart::backprop(double score,
 								   double* state_errors,
 								   bool* states_on,
 								   int& iter_explore_type,
-								   SolutionNode* iter_explore_node,
+								   SolutionNode*& iter_explore_node,
 								   double* potential_state_errors,
 								   bool* potential_states_on,
 								   vector<NetworkHistory*>& network_historys,
 								   vector<int>& explore_decisions,
-								   vector<bool>& explore_loop_decisions) override {
+								   vector<double>& explore_diffs,
+								   vector<bool>& explore_loop_decisions) {
 	backprop_explore_and_score_network_helper(score,
 											  misguess,
 											  state_errors,
@@ -380,29 +439,50 @@ void SolutionNodeIfStart::backprop(double score,
 											  potential_state_errors,
 											  potential_states_on,
 											  network_historys,
-											  explore_decisions);
+											  explore_decisions,
+											  explore_diffs);
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
-		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
-			states_on[this->start->scope_states_on[o_index]] = false;
+		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
+			states_on[this->scope_states_on[o_index]] = false;
 		}
 	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
 		// should not happen
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		// should not happen
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
-		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
-			states_on[this->start->scope_states_on[o_index]] = false;
+		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
+			states_on[this->scope_states_on[o_index]] = false;
 		}
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-		for (int o_index = 0; o_index < (int)this->start->scope_states_on.size(); o_index++) {
-			states_on[this->start->scope_states_on[o_index]] = false;
+		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
+			states_on[this->scope_states_on[o_index]] = false;
 		}
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
 		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
 		// do nothing
 	}
+}
+
+void SolutionNodeIfStart::save(ofstream& save_file) {
+	save_file << this->network_inputs_state_indexes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
+		save_file << this->network_inputs_state_indexes[i_index] << endl;
+	}
+
+	save_file << this->children_nodes.size() << endl;
+	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+		save_file << this->children_score_network_names[c_index] << endl;
+		ofstream child_network_save_file;
+		child_network_save_file.open(this->children_score_network_names[c_index]);
+		this->children_score_networks[c_index]->save(child_network_save_file);
+		child_network_save_file.close();
+	}
+
+	save_file << this->average_unique_future_nodes << endl;
+	save_file << this->average_score << endl;
+	save_file << this->average_misguess << endl;
 }
 
 void SolutionNodeIfStart::activate_children_networks(Problem& problem,
@@ -431,7 +511,7 @@ void SolutionNodeIfStart::activate_children_networks(Problem& problem,
 			}
 		}
 
-		best_index = selectable_children[rand()%this->selectable_children.size()];
+		best_index = selectable_children[rand()%selectable_children.size()];
 		if (backprop) {
 			this->children_score_networks[best_index]->mtx.lock();
 			this->children_score_networks[best_index]->activate(inputs, network_historys);
@@ -604,7 +684,7 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 	for (int p_index = 0; p_index < (int)this->network_inputs_potential_state_indexes.size(); p_index++) {
 		if (potential_states_on[this->network_inputs_potential_state_indexes[p_index]]) {
 			potentials_on.push_back(p_index);
-			potential_vals.push_back(potential_state_vals[this->>network_inputs_potential_state_indexes[p_index]]);
+			potential_vals.push_back(potential_state_vals[this->network_inputs_potential_state_indexes[p_index]]);
 		}
 	}
 
@@ -622,9 +702,9 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 	vector<double> inputs;
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
-	for (int i_index = 0; i_index < (int)this->halt_networks_inputs_state_indexes.size(); i_index++) {
-		if (states_on[this->halt_networks_inputs_state_indexes[i_index]]) {
-			inputs.push_back(state_vals[this->halt_networks_inputs_state_indexes[i_index]]);
+	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->network_inputs_state_indexes[i_index]]) {
+			inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
 		} else {
 			inputs.push_back(0.0);
 		}
@@ -638,13 +718,13 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 			}
 		}
 
-		best_index = selectable_children[rand()%this->selectable_children.size()];
+		best_index = selectable_children[rand()%selectable_children.size()];
 		if (backprop) {
 			this->children_score_networks[best_index]->mtx.lock();
 			this->children_score_networks[best_index]->activate(
 				inputs,
 				potentials_on,
-				potential_states_on,
+				potential_vals,
 				network_historys);
 			best_score = this->children_score_networks[best_index]->output->acti_vals[0];
 			this->children_score_networks[best_index]->mtx.unlock();
@@ -653,7 +733,7 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 			this->children_score_networks[best_index]->activate(
 				inputs,
 				potentials_on,
-				potential_states_on);
+				potential_vals);
 			best_score = this->children_score_networks[best_index]->output->acti_vals[0];
 			this->children_score_networks[best_index]->mtx.unlock();
 		}
@@ -671,7 +751,7 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 				this->children_score_networks[c_index]->activate(
 					inputs,
 					potentials_on,
-					potential_states_on,
+					potential_vals,
 					network_historys);
 				double child_score = this->children_score_networks[c_index]->output->acti_vals[0];
 				this->children_score_networks[c_index]->mtx.unlock();
@@ -697,7 +777,7 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 				this->children_score_networks[c_index]->activate(
 					inputs,
 					potentials_on,
-					potential_states_on);
+					potential_vals);
 				double child_score = this->children_score_networks[c_index]->output->acti_vals[0];
 				this->children_score_networks[c_index]->mtx.unlock();
 

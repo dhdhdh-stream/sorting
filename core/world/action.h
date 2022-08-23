@@ -13,6 +13,7 @@ public:
 	double write;
 	int move;
 
+	Action();	// empty constructor for convenience
 	Action(double write, int move);
 	Action(std::ifstream& save_file);
 	~Action();

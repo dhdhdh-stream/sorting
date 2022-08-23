@@ -1,6 +1,10 @@
 #ifndef SOLUTION_NODE_LOOP_START_H
 #define SOLUTION_NODE_LOOP_START_H
 
+#include "solution_node.h"
+#include "solution_node_loop_end.h"
+
+class SolutionNodeLoopEnd;
 class SolutionNodeLoopStart : public SolutionNode {
 public:
 	std::vector<int> scope_states_on;
@@ -14,6 +18,9 @@ public:
 	SolutionNodeLoopStart(Solution* solution);
 	SolutionNodeLoopStart(SolutionNode* parent,
 						  int node_index);
+	SolutionNodeLoopStart(Solution* solution,
+						  int node_index,
+						  std::ifstream& save_file);
 	~SolutionNodeLoopStart();
 
 	void reset() override;
@@ -29,11 +36,11 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes;
+						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
 						   bool is_first_time,
 						   int& iter_explore_type,
-						   SolutionNode* iter_explore_node,
+						   SolutionNode*& iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
@@ -46,7 +53,7 @@ public:
 				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
-				  SolutionNode* iter_explore_node,
+				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
@@ -55,6 +62,8 @@ public:
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
+
+	void save(std::ofstream& save_file) override;
 };
 
 #endif /* SOLUTION_NODE_LOOP_START_H */

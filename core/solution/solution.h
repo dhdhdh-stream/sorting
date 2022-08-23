@@ -1,10 +1,12 @@
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef SOLUTION_H
+#define SOLUTION_H
 
 #include <mutex>
 
+#include "explore.h"
 #include "solution_node.h"
 
+class Explore;
 class SolutionNode;
 class Solution {
 public:
@@ -20,12 +22,15 @@ public:
 
 	std::mutex display_mtx;
 
-	Solver(Explore* explore);
-	~Solver();
+	Solution(Explore* explore);
+	Solution(Explore* explore,
+			 std::ifstream& save_file);
+	~Solution();
 
-	void iteration(bool tune);
+	void iteration(bool tune,
+				   bool save_for_display);
 
-	// void save();
+	void save(std::ofstream& save_file);
 };
 
-#endif /* SOLVER_H */
+#endif /* SOLUTION_H */

@@ -1,6 +1,10 @@
 #ifndef SOLUTION_NODE_IF_END_H
 #define SOLUTION_NODE_IF_END_H
 
+#include "solution_node.h"
+#include "solution_node_if_start.h"
+
+class SolutionNodeIfStart;
 class SolutionNodeIfEnd : public SolutionNode {
 public:
 	SolutionNode* next;
@@ -9,6 +13,9 @@ public:
 
 	SolutionNodeIfEnd(SolutionNode* parent,
 					  int node_index);
+	SolutionNodeIfEnd(Solution* solution,
+					  int node_index,
+					  std::ifstream& save_file);
 	~SolutionNodeIfEnd();
 
 	void reset() override;
@@ -24,11 +31,11 @@ public:
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
-						   std::vector<SolutionNode*>& loop_scopes;
+						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
 						   bool is_first_time,
 						   int& iter_explore_type,
-						   SolutionNode* iter_explore_node,
+						   SolutionNode*& iter_explore_node,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
@@ -41,7 +48,7 @@ public:
 				  double* state_errors,
 				  bool* states_on,
 				  int& iter_explore_type,
-				  SolutionNode* iter_explore_node,
+				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
 				  bool* potential_states_on,
 				  std::vector<NetworkHistory*>& network_historys,
@@ -50,6 +57,8 @@ public:
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void clear_potential_state() override;
+
+	void save(std::ofstream& save_file) override;
 };
 
 #endif /* SOLUTION_NODE_IF_END_H */
