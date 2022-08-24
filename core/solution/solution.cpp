@@ -18,6 +18,8 @@ using namespace std;
 Solution::Solution(Explore* explore) {
 	this->explore = explore;
 
+	this->id = time(NULL);
+
 	SolutionNode* root_node = new SolutionNodeLoopStart(this);
 	this->nodes.push_back(root_node);
 	SolutionNode* halt_node = new SolutionNodeLoopEnd(this);
@@ -28,6 +30,10 @@ Solution::Solution(Explore* explore) {
 
 Solution::Solution(Explore* explore,
 				   ifstream& save_file) {
+	string id_line;
+	getline(save_file, id_line);
+	this->id = stoi(id_line);
+
 	string num_nodes_line;
 	getline(save_file, num_nodes_line);
 	int num_nodes = stoi(num_nodes_line);
@@ -60,6 +66,10 @@ Solution::Solution(Explore* explore,
 		}
 		this->nodes.push_back(node);
 	}
+
+	string current_state_counter_line;
+	getline(save_file, current_state_counter_line);
+	this->current_state_counter = stoi(current_state_counter_line);
 }
 
 Solution::~Solution() {
@@ -178,9 +188,21 @@ void Solution::iteration(bool tune,
 		iter_explore_node->explore_increment(score,
 											 iter_explore_type);
 	}
+
+	if (save_for_display) {
+		ofstream display_file;
+		display_file.open("../display.txt");
+		display_file << this->nodes.size() << endl;
+		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+			this->nodes[n_index]->save_for_display(display_file);
+		}
+		display_file.close();
+	}
 }
 
 void Solution::save(ofstream& save_file) {
+	save_file << this->id << endl;
+
 	this->nodes_mtx.lock();
 	int num_nodes = (int)this->nodes.size();
 	this->nodes_mtx.unlock();
@@ -190,4 +212,6 @@ void Solution::save(ofstream& save_file) {
 		save_file << this->nodes[n_index]->node_type << endl;
 		this->nodes[n_index]->save(save_file);
 	}
+
+	save_file << this->current_state_counter << endl;
 }

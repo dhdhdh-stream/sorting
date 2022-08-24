@@ -25,6 +25,8 @@ public:
 
 	void setup_cycle();
 
+	void cleanup_cycle();
+
 	void save();
 };
 

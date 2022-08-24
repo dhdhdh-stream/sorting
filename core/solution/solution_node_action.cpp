@@ -1,5 +1,6 @@
 #include "solution_node_action.h"
 
+#include <iostream>
 #include <random>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -23,8 +24,6 @@ SolutionNodeAction::SolutionNodeAction(SolutionNode* parent,
 	this->score_network = new Network(input_size,
 									  4*input_size,
 									  1);
-	this->score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->average_unique_future_nodes = 1;
 	this->average_score = 0.0;
@@ -41,10 +40,20 @@ SolutionNodeAction::SolutionNodeAction(SolutionNode* parent,
 												 1);
 		this->state_networks.push_back(new_state_network);
 		this->state_networks_target_states.push_back(this->network_inputs_state_indexes[s_index]);
-		string new_state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
-			+ "_" + to_string(this->state_networks.size()-1) + "_" + to_string(time(NULL)) + ".txt";
-		this->state_network_names.push_back(new_state_network_name);
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeAction::SolutionNodeAction(Solution* solution,
@@ -64,13 +73,10 @@ SolutionNodeAction::SolutionNodeAction(Solution* solution,
 		this->network_inputs_state_indexes.push_back(stoi(state_index_line));
 	}
 
-	string score_network_name_line;
-	getline(save_file, score_network_name_line);
-	boost::algorithm::trim(score_network_name_line);
-	this->score_network_name = score_network_name_line;
-
+	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ifstream score_network_save_file;
-	score_network_save_file.open(this->score_network_name);
+	score_network_save_file.open(score_network_name);
 	this->score_network = new Network(score_network_save_file);
 	score_network_save_file.close();
 
@@ -85,6 +91,8 @@ SolutionNodeAction::SolutionNodeAction(Solution* solution,
 	string average_misguess_line;
 	getline(save_file, average_misguess_line);
 	this->average_misguess = stof(average_misguess_line);
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
 
 	Action action(save_file);
 	this->action = action;
@@ -110,17 +118,27 @@ SolutionNodeAction::SolutionNodeAction(Solution* solution,
 		int target_state = stoi(target_state_line);
 		this->state_networks_target_states.push_back(target_state);
 
-		string state_network_name_line;
-		getline(save_file, state_network_name_line);
-		boost::algorithm::trim(state_network_name_line);
-		this->state_network_names.push_back(state_network_name_line);
-
+		string state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
+			+ "_" + to_string(s_index) + "_" + to_string(this->solution->id) + ".txt";
 		ifstream state_network_save_file;
-		state_network_save_file.open(state_network_name_line);
+		state_network_save_file.open(state_network_name);
 		Network* state_network = new Network(state_network_save_file);
 		state_network_save_file.close();
 		this->state_networks.push_back(state_network);
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeAction::~SolutionNodeAction() {
@@ -132,7 +150,7 @@ SolutionNodeAction::~SolutionNodeAction() {
 }
 
 void SolutionNodeAction::reset() {
-	// do nothing
+	this->node_is_on = false;
 }
 
 void SolutionNodeAction::add_potential_state(vector<int> potential_state_indexes,
@@ -186,9 +204,6 @@ void SolutionNodeAction::extend_with_potential_state(vector<int> potential_state
 				this->state_network_inputs_state_indexes.push_back(new_state_network_inputs_state_indexes);
 				this->state_networks.push_back(this->potential_state_networks[t_index]);
 				this->state_networks_target_states.push_back(new_state_indexes[ps_index]);
-				string new_state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
-					+ "_" + to_string(this->state_networks.size()-1) + "_" + to_string(time(NULL)) + ".txt";
-				this->state_network_names.push_back(new_state_network_name);
 
 				break;
 			}
@@ -476,8 +491,8 @@ void SolutionNodeAction::backprop(double score,
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
 		if (this->temp_node_state == TEMP_NODE_STATE_LEARN) {
 			backprop_state_networks(state_errors,
-								states_on,
-								network_historys);
+									states_on,
+									network_historys);
 		} else {
 			backprop_state_networks_errors_with_no_weight_change(
 				state_errors,
@@ -485,8 +500,8 @@ void SolutionNodeAction::backprop(double score,
 				network_historys);
 		}
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-		backprop_state_networks_with_potential(state_errors,
-											   states_on,
+		backprop_state_networks_with_potential(potential_state_errors,
+											   potential_states_on,
 											   network_historys);
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
 		// do nothing
@@ -501,9 +516,10 @@ void SolutionNodeAction::save(ofstream& save_file) {
 		save_file << this->network_inputs_state_indexes[i_index] << endl;
 	}
 
-	save_file << this->score_network_name << endl;
+	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ofstream score_network_save_file;
-	score_network_save_file.open(this->score_network_name);
+	score_network_save_file.open(score_network_name);
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
 
@@ -520,12 +536,22 @@ void SolutionNodeAction::save(ofstream& save_file) {
 			save_file << this->state_network_inputs_state_indexes[s_index][si_index] << endl;
 		}
 		save_file << this->state_networks_target_states[s_index] << endl;
-		save_file << this->state_network_names[s_index] << endl;
-
+	
+		string state_network_name = "../saves/nns/state_" + to_string(this->node_index) \
+			+ "_" + to_string(s_index) + "_" + to_string(this->solution->id) + ".txt";
 		ofstream state_network_save_file;
-		state_network_save_file.open(this->state_network_names[s_index]);
+		state_network_save_file.open(state_network_name);
 		this->state_networks[s_index]->save(state_network_save_file);
 		state_network_save_file.close();
+	}
+}
+
+void SolutionNodeAction::save_for_display(ofstream& save_file) {
+	save_file << this->node_is_on << endl;
+	if (this->node_is_on) {
+		save_file << this->node_type << endl;
+		this->action.save(save_file);
+		save_file << this->next->node_index << endl;
 	}
 }
 
@@ -674,11 +700,19 @@ void SolutionNodeAction::activate_state_networks_with_potential(
 					state_network_inputs.push_back(0.0);
 				}
 			}
-			this->potential_state_networks[p_index]->mtx.lock();
-			this->potential_state_networks[p_index]->activate(state_network_inputs, network_historys);
-			potential_state_vals[this->potential_state_networks_target_states[p_index]] = \
-				this->potential_state_networks[p_index]->output->acti_vals[0];
-			this->potential_state_networks[p_index]->mtx.unlock();
+			if (backprop) {
+				this->potential_state_networks[p_index]->mtx.lock();
+				this->potential_state_networks[p_index]->activate(state_network_inputs, network_historys);
+				potential_state_vals[this->potential_state_networks_target_states[p_index]] = \
+					this->potential_state_networks[p_index]->output->acti_vals[0];
+				this->potential_state_networks[p_index]->mtx.unlock();
+			} else {
+				this->potential_state_networks[p_index]->mtx.lock();
+				this->potential_state_networks[p_index]->activate(state_network_inputs);
+				potential_state_vals[this->potential_state_networks_target_states[p_index]] = \
+					this->potential_state_networks[p_index]->output->acti_vals[0];
+				this->potential_state_networks[p_index]->mtx.unlock();
+			}
 		}
 	}
 }

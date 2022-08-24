@@ -32,6 +32,7 @@ Explore::~Explore() {
 void Explore::setup_cycle() {
 	for (int n_index = 0; n_index < (int)this->solution->nodes.size(); n_index++) {
 		this->solution->nodes[n_index]->reset();
+		this->solution->nodes[n_index]->clear_explore();
 	}
 
 	vector<SolutionNode*> scopes;
@@ -82,6 +83,13 @@ void Explore::setup_cycle() {
 		scopes[s_index]->scope_potential_states = potential_state_indexes;
 		scopes[s_index]->add_potential_state(potential_state_indexes,
 											 scopes[s_index]);
+	}
+}
+
+void Explore::cleanup_cycle() {
+	for (int n_index = 0; n_index < (int)this->solution->nodes.size(); n_index++) {
+		this->solution->nodes[n_index]->clear_potential_state();
+		this->solution->nodes[n_index]->clear_explore();
 	}
 }
 

@@ -120,7 +120,9 @@ ExploreNodeNewJump::~ExploreNodeNewJump() {
 
 void ExploreNodeNewJump::process() {
 	SolutionNodeIfStart* new_start_node = (SolutionNodeIfStart*)this->explore->solution->nodes[this->new_start_node_index];
+	new_start_node->node_is_on = true;
 	SolutionNodeIfEnd* new_end_node = (SolutionNodeIfEnd*)this->explore->solution->nodes[this->new_end_node_index];
+	new_end_node->node_is_on = true;
 
 	new_start_node->end = new_end_node;
 	new_end_node->start = new_start_node;
@@ -155,10 +157,12 @@ void ExploreNodeNewJump::process() {
 		new_start_node->children_nodes[1] = new_end_node;
 	} else {
 		SolutionNodeAction* curr_node = (SolutionNodeAction*)this->explore->solution->nodes[this->new_path_node_indexes[0]];
+		curr_node->node_is_on = true;
 		new_start_node->children_nodes[1] = curr_node;
 		curr_node->previous = new_start_node;
 		for (int p_index = 1; p_index < (int)this->new_path_node_indexes.size(); p_index++) {
 			SolutionNodeAction* next_node = (SolutionNodeAction*)this->explore->solution->nodes[this->new_path_node_indexes[p_index]];
+			next_node->node_is_on = true;
 			curr_node->next = next_node;
 			next_node->previous = curr_node;
 			curr_node = next_node;

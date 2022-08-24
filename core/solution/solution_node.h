@@ -59,13 +59,14 @@ public:
 	std::vector<int> network_inputs_potential_state_indexes;
 	
 	Network* score_network;
-	std::string score_network_name;
 
 	// TODO: add certainty networks
 
 	double average_unique_future_nodes;
 	double average_score;
 	double average_misguess;
+
+	bool node_is_on;
 
 	std::vector<int> scope_potential_states;
 
@@ -190,7 +191,7 @@ public:
 	void increment_unique_future_nodes(int num_future_nodes);
 
 	virtual void save(std::ofstream& save_file) = 0;
-	// virtual void save_for_display(std::ofstream& save_file) = 0;
+	virtual void save_for_display(std::ofstream& save_file) = 0;
 
 protected:
 	void add_potential_state_for_score_network(std::vector<int> potential_state_indexes);

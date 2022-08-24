@@ -107,7 +107,9 @@ ExploreNodeLoop::~ExploreNodeLoop() {
 
 void ExploreNodeLoop::process() {
 	SolutionNodeLoopStart* new_start_node = (SolutionNodeLoopStart*)this->explore->solution->nodes[this->new_start_node_index];
+	new_start_node->node_is_on = true;
 	SolutionNodeLoopEnd* new_end_node = (SolutionNodeLoopEnd*)this->explore->solution->nodes[this->new_end_node_index];
+	new_end_node->node_is_on = true;
 
 	new_start_node->end = new_end_node;
 	new_end_node->start = new_start_node;

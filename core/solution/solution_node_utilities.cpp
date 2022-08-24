@@ -17,9 +17,17 @@ void find_scope_end(SolutionNode* inclusive_start,
 		if (curr_node->node_type == NODE_TYPE_ACTION) {
 			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
 			next_node = curr_node_normal->next;
+		} else if (curr_node->node_type == NODE_TYPE_IF_START) {
+			SolutionNodeIfStart* curr_node_if_start = (SolutionNodeIfStart*)curr_node;
+			next_node = curr_node_if_start->end->next;
+			curr_node = curr_node_if_start->end;
 		} else if (curr_node->node_type == NODE_TYPE_IF_END) {
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
 			next_node = curr_node_if_end->next;
+		} else if (curr_node->node_type == NODE_TYPE_LOOP_START) {
+			SolutionNodeLoopStart* curr_node_loop_start = (SolutionNodeLoopStart*)curr_node;
+			next_node = curr_node_loop_start->end->next;
+			curr_node = curr_node_loop_start->end;
 		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
 			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
 			next_node = curr_node_loop_end->next;
@@ -36,15 +44,7 @@ void find_scope_end(SolutionNode* inclusive_start,
 			return;
 		}
 
-		if (next_node->node_type == NODE_TYPE_ACTION) {
-			curr_node = next_node;
-		} else if (next_node->node_type == NODE_TYPE_IF_START) {
-			SolutionNodeIfStart* next_node_if_start = (SolutionNodeIfStart*)next_node;
-			curr_node = next_node_if_start->end;
-		} else if (next_node->node_type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* next_node_loop_start = (SolutionNodeLoopStart*)next_node;
-			curr_node = next_node_loop_start->end;
-		}
+		curr_node = next_node;
 	}
 }
 
@@ -57,9 +57,17 @@ void find_potential_jumps(SolutionNode* inclusive_start,
 		if (curr_node->node_type == NODE_TYPE_ACTION) {
 			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
 			next_node = curr_node_normal->next;
+		} else if (curr_node->node_type == NODE_TYPE_IF_START) {
+			SolutionNodeIfStart* curr_node_if_start = (SolutionNodeIfStart*)curr_node;
+			next_node = curr_node_if_start->end->next;
+			curr_node = curr_node_if_start->end;
 		} else if (curr_node->node_type == NODE_TYPE_IF_END) {
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
 			next_node = curr_node_if_end->next;
+		} else if (curr_node->node_type == NODE_TYPE_LOOP_START) {
+			SolutionNodeLoopStart* curr_node_loop_start = (SolutionNodeLoopStart*)curr_node;
+			next_node = curr_node_loop_start->end->next;
+			curr_node = curr_node_loop_start->end;
 		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
 			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
 			next_node = curr_node_loop_end->next;
@@ -75,15 +83,7 @@ void find_potential_jumps(SolutionNode* inclusive_start,
 			return;
 		}
 
-		if (next_node->node_type == NODE_TYPE_ACTION) {
-			curr_node = next_node;
-		} else if (next_node->node_type == NODE_TYPE_IF_START) {
-			SolutionNodeIfStart* next_node_if_start = (SolutionNodeIfStart*)next_node;
-			curr_node = next_node_if_start->end;
-		} else if (next_node->node_type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* next_node_loop_start = (SolutionNodeLoopStart*)next_node;
-			curr_node = next_node_loop_start->end;
-		}
+		curr_node = next_node;
 	}
 }
 

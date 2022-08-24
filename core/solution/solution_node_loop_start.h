@@ -64,6 +64,7 @@ public:
 	void clear_potential_state() override;
 
 	void save(std::ofstream& save_file) override;
+	void save_for_display(std::ofstream& save_file) override;
 };
 
 #endif /* SOLUTION_NODE_LOOP_START_H */

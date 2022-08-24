@@ -13,10 +13,8 @@ public:
 	std::vector<int> halt_networks_potential_inputs_state_indexes;
 
 	Network* halt_network;
-	std::string halt_network_name;
 
 	Network* no_halt_network;
-	std::string no_halt_network_name;
 
 	SolutionNodeLoopStart* start;
 
@@ -69,6 +67,7 @@ public:
 	void clear_potential_state() override;
 
 	void save(std::ofstream& save_file) override;
+	void save_for_display(std::ofstream& save_file) override;
 
 	void activate_networks(Problem& problem,
 						   double* state_vals,

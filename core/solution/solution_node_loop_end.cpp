@@ -25,6 +25,19 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution) {
 
 	this->halt_network = NULL;
 	this->no_halt_network = NULL;
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
@@ -40,8 +53,6 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
 	this->score_network = new Network(input_size,
 									  4*input_size,
 									  1);
-	this->score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->average_unique_future_nodes = 1;
 	this->average_score = 0.0;
@@ -53,13 +64,22 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
 
 	this->halt_network = parent->explore_halt_network;
 	parent->explore_halt_network = NULL;
-	this->halt_network_name = "../saves/nns/halt_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->no_halt_network = parent->explore_no_halt_network;
 	parent->explore_no_halt_network = NULL;
-	this->no_halt_network_name = "../saves/nns/no_halt_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
@@ -91,13 +111,10 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
 			this->network_inputs_state_indexes.push_back(stoi(state_index_line));
 		}
 
-		string score_network_name_line;
-		getline(save_file, score_network_name_line);
-		boost::algorithm::trim(score_network_name_line);
-		this->score_network_name = score_network_name_line;
-
+		string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+			+ "_" + to_string(this->solution->id) + ".txt";
 		ifstream score_network_save_file;
-		score_network_save_file.open(this->score_network_name);
+		score_network_save_file.open(score_network_name);
 		this->score_network = new Network(score_network_save_file);
 		score_network_save_file.close();
 
@@ -113,6 +130,8 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
 		getline(save_file, average_misguess_line);
 		this->average_misguess = stof(average_misguess_line);
 
+		this->temp_node_state = TEMP_NODE_STATE_NOT;
+
 		string halt_networks_inputs_state_indexes_size_line;
 		getline(save_file, halt_networks_inputs_state_indexes_size_line);
 		int halt_networks_inputs_state_indexes_size = stoi(halt_networks_inputs_state_indexes_size_line);
@@ -122,26 +141,33 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
 			this->halt_networks_inputs_state_indexes.push_back(stoi(state_index_line));
 		}
 
-		string halt_network_name_line;
-		getline(save_file, halt_network_name_line);
-		boost::algorithm::trim(halt_network_name_line);
-		this->halt_network_name = halt_network_name_line;
-
+		string halt_network_name = "../saves/nns/halt_" + to_string(this->node_index) \
+			+ "_" + to_string(this->solution->id) + ".txt";
 		ifstream halt_network_save_file;
-		halt_network_save_file.open(halt_network_name_line);
+		halt_network_save_file.open(halt_network_name);
 		this->halt_network = new Network(halt_network_save_file);
 		halt_network_save_file.close();
 
-		string no_halt_network_name_line;
-		getline(save_file, no_halt_network_name_line);
-		boost::algorithm::trim(no_halt_network_name_line);
-		this->no_halt_network_name = no_halt_network_name_line;
-
+		string no_halt_network_name = "../saves/nns/no_halt_" + to_string(this->node_index) \
+			+ "_" + to_string(this->solution->id) + ".txt";
 		ifstream no_halt_network_save_file;
-		no_halt_network_save_file.open(no_halt_network_name_line);
+		no_halt_network_save_file.open(no_halt_network_name);
 		this->no_halt_network = new Network(no_halt_network_save_file);
 		no_halt_network_save_file.close();
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
@@ -157,7 +183,7 @@ SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
 }
 
 void SolutionNodeLoopEnd::reset() {
-	// do nothing
+	this->node_is_on = false;
 }
 
 void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexes,
@@ -639,9 +665,10 @@ void SolutionNodeLoopEnd::save(ofstream& save_file) {
 		save_file << this->network_inputs_state_indexes[i_index] << endl;
 	}
 
-	save_file << this->score_network_name << endl;
+	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ofstream score_network_save_file;
-	score_network_save_file.open(this->score_network_name);
+	score_network_save_file.open(score_network_name);
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
 
@@ -654,17 +681,28 @@ void SolutionNodeLoopEnd::save(ofstream& save_file) {
 		save_file << this->halt_networks_inputs_state_indexes[i_index] << endl;
 	}
 
-	save_file << this->halt_network_name << endl;
+	string halt_network_name = "../saves/nns/halt_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ofstream halt_network_save_file;
-	halt_network_save_file.open(this->halt_network_name);
+	halt_network_save_file.open(halt_network_name);
 	this->halt_network->save(halt_network_save_file);
 	halt_network_save_file.close();
 
-	save_file << this->no_halt_network_name << endl;
+	string no_halt_network_name = "../saves/nns/no_halt_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ofstream no_halt_network_save_file;
-	no_halt_network_save_file.open(this->no_halt_network_name);
+	no_halt_network_save_file.open(no_halt_network_name);
 	this->no_halt_network->save(no_halt_network_save_file);
 	no_halt_network_save_file.close();
+}
+
+void SolutionNodeLoopEnd::save_for_display(ofstream& save_file) {
+	save_file << this->node_is_on << endl;
+	if (this->node_is_on && this->node_index != 1) {
+		save_file << this->node_type << endl;
+		save_file << this->start->node_index << endl;
+		save_file << this->next->node_index << endl;
+	}
 }
 
 void SolutionNodeLoopEnd::activate_networks(Problem& problem,
@@ -1017,73 +1055,75 @@ void SolutionNodeLoopEnd::backprop_networks_with_potential(
 		double score,
 		double* potential_state_errors,
 		vector<NetworkHistory*>& network_historys) {
-	NetworkHistory* network_history = network_historys.back();
+	if (network_historys.size() > 0) {
+		NetworkHistory* network_history = network_historys.back();
 
-	if (network_history->network == this->halt_network) {
-		this->halt_network->mtx.lock();
+		if (network_history->network == this->halt_network) {
+			this->halt_network->mtx.lock();
 
-		network_history->reset_weights();
+			network_history->reset_weights();
 
-		vector<int> potentials_on = network_history->potentials_on;
+			vector<int> potentials_on = network_history->potentials_on;
 
-		vector<double> errors;
-		if (score == 1.0) {
-			if (this->halt_network->output->acti_vals[0] < 1.0) {
-				errors.push_back(1.0 - this->halt_network->output->acti_vals[0]);
+			vector<double> errors;
+			if (score == 1.0) {
+				if (this->halt_network->output->acti_vals[0] < 1.0) {
+					errors.push_back(1.0 - this->halt_network->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
 			} else {
-				errors.push_back(0.0);
+				if (this->halt_network->output->acti_vals[0] > 0.0) {
+					errors.push_back(0.0 - this->halt_network->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
 			}
-		} else {
-			if (this->halt_network->output->acti_vals[0] > 0.0) {
-				errors.push_back(0.0 - this->halt_network->output->acti_vals[0]);
+			this->halt_network->backprop(errors, potentials_on);
+
+			for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
+				potential_state_errors[this->halt_networks_potential_inputs_state_indexes[potentials_on[o_index]]] += \
+					this->halt_network->potential_inputs[potentials_on[o_index]]->errors[0];
+				this->halt_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
+			}
+
+			this->halt_network->mtx.unlock();
+
+			delete network_history;
+			network_historys.pop_back();
+		} else if (network_history->network == this->no_halt_network) {
+			this->no_halt_network->mtx.lock();
+
+			network_history->reset_weights();
+
+			vector<int> potentials_on = network_history->potentials_on;
+
+			vector<double> errors;
+			if (score == 1.0) {
+				if (this->no_halt_network->output->acti_vals[0] < 1.0) {
+					errors.push_back(1.0 - this->no_halt_network->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
 			} else {
-				errors.push_back(0.0);
+				if (this->no_halt_network->output->acti_vals[0] > 0.0) {
+					errors.push_back(0.0 - this->no_halt_network->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
 			}
-		}
-		this->halt_network->backprop(errors, potentials_on);
+			this->no_halt_network->backprop(errors, potentials_on);
 
-		for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
-			potential_state_errors[this->halt_networks_potential_inputs_state_indexes[potentials_on[o_index]]] += \
-				this->halt_network->potential_inputs[potentials_on[o_index]]->errors[0];
-			this->halt_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
-		}
-
-		this->halt_network->mtx.unlock();
-
-		delete network_history;
-		network_historys.pop_back();
-	} else if (network_history->network == this->no_halt_network) {
-		this->no_halt_network->mtx.lock();
-
-		network_history->reset_weights();
-
-		vector<int> potentials_on = network_history->potentials_on;
-
-		vector<double> errors;
-		if (score == 1.0) {
-			if (this->no_halt_network->output->acti_vals[0] < 1.0) {
-				errors.push_back(1.0 - this->no_halt_network->output->acti_vals[0]);
-			} else {
-				errors.push_back(0.0);
+			for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
+				potential_state_errors[this->halt_networks_potential_inputs_state_indexes[potentials_on[o_index]]] += \
+					this->no_halt_network->potential_inputs[potentials_on[o_index]]->errors[0];
+				this->no_halt_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
 			}
-		} else {
-			if (this->no_halt_network->output->acti_vals[0] > 0.0) {
-				errors.push_back(0.0 - this->no_halt_network->output->acti_vals[0]);
-			} else {
-				errors.push_back(0.0);
-			}
+
+			this->no_halt_network->mtx.unlock();
+
+			delete network_history;
+			network_historys.pop_back();
 		}
-		this->no_halt_network->backprop(errors, potentials_on);
-
-		for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
-			potential_state_errors[this->halt_networks_potential_inputs_state_indexes[potentials_on[o_index]]] += \
-				this->no_halt_network->potential_inputs[potentials_on[o_index]]->errors[0];
-			this->no_halt_network->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
-		}
-
-		this->no_halt_network->mtx.unlock();
-
-		delete network_history;
-		network_historys.pop_back();
 	}
 }

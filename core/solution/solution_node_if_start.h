@@ -11,7 +11,6 @@ public:
 
 	std::vector<SolutionNode*> children_nodes;
 	std::vector<Network*> children_score_networks;
-	std::vector<std::string> children_score_network_names;
 
 	std::vector<bool> children_on;
 
@@ -70,6 +69,7 @@ public:
 	void clear_potential_state() override;
 
 	void save(std::ofstream& save_file) override;
+	void save_for_display(std::ofstream& save_file) override;
 
 	void activate_children_networks(Problem& problem,
 									double* state_vals,

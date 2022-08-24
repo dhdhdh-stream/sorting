@@ -99,10 +99,12 @@ void ExploreNodeAppendJump::process() {
 		start_node->children_nodes[this->new_child_index] = end_node;
 	} else {
 		SolutionNodeAction* curr_node = (SolutionNodeAction*)this->explore->solution->nodes[this->new_path_node_indexes[0]];
+		curr_node->node_is_on = true;
 		start_node->children_nodes[this->new_child_index] = curr_node;
 		curr_node->previous = start_node;
 		for (int p_index = 1; p_index < (int)this->new_path_node_indexes.size(); p_index++) {
 			SolutionNodeAction* next_node = (SolutionNodeAction*)this->explore->solution->nodes[this->new_path_node_indexes[p_index]];
+			next_node->node_is_on = true;
 			curr_node->next = next_node;
 			next_node->previous = curr_node;
 			curr_node = next_node;

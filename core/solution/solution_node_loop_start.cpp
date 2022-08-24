@@ -17,8 +17,6 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution) {
 	this->node_type = NODE_TYPE_LOOP_START;
 
 	this->score_network = new Network(1, 4, 1);
-	this->score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->average_unique_future_nodes = 1;
 	this->average_score = 0.0;
@@ -30,6 +28,19 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution) {
 		this->explore_state_scores.push_back(0.0);
 		this->explore_state_misguesses.push_back(0.0);
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
@@ -45,8 +56,6 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
 	this->score_network = new Network(input_size,
 									  4*input_size,
 									  1);
-	this->score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(time(NULL)) + ".txt";
 
 	this->average_unique_future_nodes = 1;
 	this->average_score = 0.0;
@@ -58,6 +67,19 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
 		this->explore_state_scores.push_back(0.0);
 		this->explore_state_misguesses.push_back(0.0);
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
@@ -77,13 +99,10 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 		this->network_inputs_state_indexes.push_back(stoi(state_index_line));
 	}
 
-	string score_network_name_line;
-	getline(save_file, score_network_name_line);
-	boost::algorithm::trim(score_network_name_line);
-	this->score_network_name = score_network_name_line;
-
+	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ifstream score_network_save_file;
-	score_network_save_file.open(this->score_network_name);
+	score_network_save_file.open(score_network_name);
 	this->score_network = new Network(score_network_save_file);
 	score_network_save_file.close();
 
@@ -98,6 +117,26 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 	string average_misguess_line;
 	getline(save_file, average_misguess_line);
 	this->average_misguess = stof(average_misguess_line);
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	for (int i = 0; i < 6; i++) {
+		this->explore_state_scores.push_back(0.0);
+		this->explore_state_misguesses.push_back(0.0);
+	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeLoopStart::~SolutionNodeLoopStart() {
@@ -105,6 +144,8 @@ SolutionNodeLoopStart::~SolutionNodeLoopStart() {
 }
 
 void SolutionNodeLoopStart::reset() {
+	this->node_is_on = false;
+
 	this->scope_states_on.clear();
 	this->scope_potential_states.clear();
 }
@@ -352,13 +393,22 @@ void SolutionNodeLoopStart::save(ofstream& save_file) {
 		save_file << this->network_inputs_state_indexes[i_index] << endl;
 	}
 
-	save_file << this->score_network_name << endl;
+	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
+		+ "_" + to_string(this->solution->id) + ".txt";
 	ofstream score_network_save_file;
-	score_network_save_file.open(this->score_network_name);
+	score_network_save_file.open(score_network_name);
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
 
 	save_file << this->average_unique_future_nodes << endl;
 	save_file << this->average_score << endl;
 	save_file << this->average_misguess << endl;
+}
+
+void SolutionNodeLoopStart::save_for_display(ofstream& save_file) {
+	save_file << this->node_is_on << endl;
+	if (this->node_is_on) {
+		save_file << this->node_type << endl;
+		save_file << this->next->node_index << endl;
+	}
 }

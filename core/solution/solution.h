@@ -12,6 +12,8 @@ class Solution {
 public:
 	Explore* explore;
 
+	long int id;
+
 	std::vector<SolutionNode*> nodes;
 	std::mutex nodes_mtx;
 	

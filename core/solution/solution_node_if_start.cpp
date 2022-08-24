@@ -1,5 +1,6 @@
 #include "solution_node_if_start.h"
 
+#include <iostream>
 #include <random>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -33,13 +34,6 @@ SolutionNodeIfStart::SolutionNodeIfStart(SolutionNode* parent,
 	this->children_score_networks.push_back(parent->explore_if_network);
 	parent->explore_if_network = NULL;
 
-	string original_path_network_name = "../saves/nns/child_" + to_string(this->node_index) \
-		+ "_0_" + to_string(time(NULL)) + ".txt";
-	this->children_score_network_names.push_back(original_path_network_name);
-	string new_path_network_name = "../saves/nns/child_" + to_string(this->node_index) \
-		+ "_1_" + to_string(time(NULL)) + ".txt";
-	this->children_score_network_names.push_back(new_path_network_name);
-
 	this->children_on.push_back(false);
 	this->children_on.push_back(false);
 
@@ -47,6 +41,19 @@ SolutionNodeIfStart::SolutionNodeIfStart(SolutionNode* parent,
 		this->explore_state_scores.push_back(0.0);
 		this->explore_state_misguesses.push_back(0.0);
 	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeIfStart::SolutionNodeIfStart(Solution* solution,
@@ -70,16 +77,17 @@ SolutionNodeIfStart::SolutionNodeIfStart(Solution* solution,
 	getline(save_file, num_children_line);
 	int num_children = stoi(num_children_line);
 	for (int c_index = 0; c_index < num_children; c_index++) {
-		string child_score_network_name_line;
-		getline(save_file, child_score_network_name_line);
-		boost::algorithm::trim(child_score_network_name_line);
-		this->children_score_network_names.push_back(child_score_network_name_line);
+		this->children_nodes.push_back(NULL);
 
+		string child_score_network_name = "../saves/nns/child_" + to_string(this->node_index) \
+			+ "_" + to_string(c_index) + "_" + to_string(this->solution->id) + ".txt";
 		ifstream child_score_network_save_file;
-		child_score_network_save_file.open(child_score_network_name_line);
+		child_score_network_save_file.open(child_score_network_name);
 		Network* child_score_network = new Network(child_score_network_save_file);
 		this->children_score_networks.push_back(child_score_network);
 		child_score_network_save_file.close();
+
+		this->children_on.push_back(false);
 	}
 
 	string average_unique_future_nodes_line;
@@ -93,6 +101,26 @@ SolutionNodeIfStart::SolutionNodeIfStart(Solution* solution,
 	string average_misguess_line;
 	getline(save_file, average_misguess_line);
 	this->average_misguess = stof(average_misguess_line);
+
+	this->temp_node_state = TEMP_NODE_STATE_NOT;
+
+	for (int i = 0; i < 6; i++) {
+		this->explore_state_scores.push_back(0.0);
+		this->explore_state_misguesses.push_back(0.0);
+	}
+
+	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
+	this->explore_path_iter_index = 0;
+	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
+	this->explore_state_iter_index = 0;
+
+	this->explore_if_network = NULL;
+	this->explore_halt_network = NULL;
+	this->explore_no_halt_network = NULL;
+
+	this->has_explored_state = false;
+
+	this->node_is_on = false;
 }
 
 SolutionNodeIfStart::~SolutionNodeIfStart() {
@@ -102,6 +130,8 @@ SolutionNodeIfStart::~SolutionNodeIfStart() {
 }
 
 void SolutionNodeIfStart::reset() {
+	this->node_is_on = false;
+
 	this->scope_states_on.clear();
 	this->scope_potential_states.clear();
 
@@ -430,18 +460,6 @@ void SolutionNodeIfStart::backprop(double score,
 								   vector<int>& explore_decisions,
 								   vector<double>& explore_diffs,
 								   vector<bool>& explore_loop_decisions) {
-	backprop_explore_and_score_network_helper(score,
-											  misguess,
-											  state_errors,
-											  states_on,
-											  iter_explore_type,
-											  iter_explore_node,
-											  potential_state_errors,
-											  potential_states_on,
-											  network_historys,
-											  explore_decisions,
-											  explore_diffs);
-
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
 		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
 			states_on[this->scope_states_on[o_index]] = false;
@@ -463,6 +481,18 @@ void SolutionNodeIfStart::backprop(double score,
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
 		// do nothing
 	}
+
+	backprop_explore_and_score_network_helper(score,
+											  misguess,
+											  state_errors,
+											  states_on,
+											  iter_explore_type,
+											  iter_explore_node,
+											  potential_state_errors,
+											  potential_states_on,
+											  network_historys,
+											  explore_decisions,
+											  explore_diffs);
 }
 
 void SolutionNodeIfStart::save(ofstream& save_file) {
@@ -473,9 +503,10 @@ void SolutionNodeIfStart::save(ofstream& save_file) {
 
 	save_file << this->children_nodes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		save_file << this->children_score_network_names[c_index] << endl;
+		string child_score_network_name = "../saves/nns/child_" + to_string(this->node_index) \
+			+ "_" + to_string(c_index) + "_" + to_string(this->solution->id) + ".txt";
 		ofstream child_network_save_file;
-		child_network_save_file.open(this->children_score_network_names[c_index]);
+		child_network_save_file.open(child_score_network_name);
 		this->children_score_networks[c_index]->save(child_network_save_file);
 		child_network_save_file.close();
 	}
@@ -483,6 +514,20 @@ void SolutionNodeIfStart::save(ofstream& save_file) {
 	save_file << this->average_unique_future_nodes << endl;
 	save_file << this->average_score << endl;
 	save_file << this->average_misguess << endl;
+}
+
+void SolutionNodeIfStart::save_for_display(ofstream& save_file) {
+	save_file << this->node_is_on << endl;
+	if (this->node_is_on) {
+		save_file << this->node_type << endl;
+		save_file << this->children_nodes.size() << endl;
+		for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+			save_file << this->children_on[c_index] << endl;
+			if (this->children_on[c_index]) {
+				save_file << this->children_nodes[c_index]->node_index << endl;
+			}
+		}
+	}
 }
 
 void SolutionNodeIfStart::activate_children_networks(Problem& problem,
@@ -737,6 +782,8 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 			best_score = this->children_score_networks[best_index]->output->acti_vals[0];
 			this->children_score_networks[best_index]->mtx.unlock();
 		}
+
+		return;
 	}
 
 	best_index = -1;
@@ -752,7 +799,7 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 					inputs,
 					potentials_on,
 					potential_vals,
-					network_historys);
+					temp_history);
 				double child_score = this->children_score_networks[c_index]->output->acti_vals[0];
 				this->children_score_networks[c_index]->mtx.unlock();
 
@@ -796,46 +843,50 @@ void SolutionNodeIfStart::backprop_children_networks_with_potential(
 		double score,
 		double* potential_state_errors,
 		vector<NetworkHistory*>& network_historys) {
-	NetworkHistory* network_history = network_historys.back();
+	if (network_historys.size() > 0) {
+		NetworkHistory* network_history = network_historys.back();
 
-	int child_index;
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		if (network_history->network == this->children_score_networks[c_index]) {
-			child_index = c_index;
-			break;
+		int child_index = -1;
+		for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+			if (network_history->network == this->children_score_networks[c_index]) {
+				child_index = c_index;
+				break;
+			}
+		}
+
+		if (child_index != -1) {
+			this->children_score_networks[child_index]->mtx.lock();
+
+			network_history->reset_weights();
+
+			vector<int> potentials_on = network_history->potentials_on;
+
+			vector<double> errors;
+			if (score == 1.0) {
+				if (this->children_score_networks[child_index]->output->acti_vals[0] < 1.0) {
+					errors.push_back(1.0 - this->children_score_networks[child_index]->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
+			} else {
+				if (this->children_score_networks[child_index]->output->acti_vals[0] > 0.0) {
+					errors.push_back(0.0 - this->children_score_networks[child_index]->output->acti_vals[0]);
+				} else {
+					errors.push_back(0.0);
+				}
+			}
+			this->children_score_networks[child_index]->backprop(errors, potentials_on);
+
+			for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
+				potential_state_errors[this->network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
+					this->children_score_networks[child_index]->potential_inputs[potentials_on[o_index]]->errors[0];
+				this->children_score_networks[child_index]->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
+			}
+
+			this->children_score_networks[child_index]->mtx.unlock();
+
+			delete network_history;
+			network_historys.pop_back();
 		}
 	}
-
-	this->children_score_networks[child_index]->mtx.lock();
-
-	network_history->reset_weights();
-
-	vector<int> potentials_on = network_history->potentials_on;
-
-	vector<double> errors;
-	if (score == 1.0) {
-		if (this->children_score_networks[child_index]->output->acti_vals[0] < 1.0) {
-			errors.push_back(1.0 - this->children_score_networks[child_index]->output->acti_vals[0]);
-		} else {
-			errors.push_back(0.0);
-		}
-	} else {
-		if (this->children_score_networks[child_index]->output->acti_vals[0] > 0.0) {
-			errors.push_back(0.0 - this->children_score_networks[child_index]->output->acti_vals[0]);
-		} else {
-			errors.push_back(0.0);
-		}
-	}
-	this->children_score_networks[child_index]->backprop(errors, potentials_on);
-
-	for (int o_index = 0; o_index < (int)potentials_on.size(); o_index++) {
-		potential_state_errors[this->network_inputs_potential_state_indexes[potentials_on[o_index]]] += \
-			this->children_score_networks[child_index]->potential_inputs[potentials_on[o_index]]->errors[0];
-		this->children_score_networks[child_index]->potential_inputs[potentials_on[o_index]]->errors[0] = 0.0;
-	}
-
-	this->children_score_networks[child_index]->mtx.unlock();
-
-	delete network_history;
-	network_historys.pop_back();
 }

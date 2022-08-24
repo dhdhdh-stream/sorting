@@ -68,7 +68,9 @@ ExploreNodeRoot::~ExploreNodeRoot() {
 
 void ExploreNodeRoot::process() {
 	SolutionNodeLoopStart* overall_start_node = (SolutionNodeLoopStart*)this->explore->solution->nodes[0];
+	overall_start_node->node_is_on = true;
 	SolutionNodeLoopEnd* overall_end_node = (SolutionNodeLoopEnd*)this->explore->solution->nodes[1];
+	overall_end_node->node_is_on = true;
 
 	overall_start_node->next = overall_end_node;
 	overall_start_node->previous = NULL;
