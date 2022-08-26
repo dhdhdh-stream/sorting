@@ -55,7 +55,9 @@ public:
 						   std::vector<double>& guesses,
 						   std::vector<int>& explore_decisions,
 						   std::vector<double>& explore_diffs,
-						   std::vector<bool>& explore_loop_decisions) override;
+						   std::vector<bool>& explore_loop_decisions,
+						   bool save_for_display,
+						   std::ofstream& display_file) override;
 	void backprop(double score,
 				  double misguess,
 				  double* state_errors,

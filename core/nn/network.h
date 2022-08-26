@@ -56,6 +56,7 @@ public:
 	void reset_potential(int potential_index);
 	void reset();
 	void remove_potentials();
+	void increment_input_size();	// used by potential state networks
 
 	void save(std::ofstream& output_file);
 

@@ -88,8 +88,10 @@ void Explore::setup_cycle() {
 
 void Explore::cleanup_cycle() {
 	for (int n_index = 0; n_index < (int)this->solution->nodes.size(); n_index++) {
-		this->solution->nodes[n_index]->clear_potential_state();
-		this->solution->nodes[n_index]->clear_explore();
+		if (this->solution->nodes[n_index]->node_is_on) {
+			this->solution->nodes[n_index]->clear_potential_state();
+			this->solution->nodes[n_index]->clear_explore();
+		}
 	}
 }
 

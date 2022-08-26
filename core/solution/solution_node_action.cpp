@@ -183,15 +183,12 @@ void SolutionNodeAction::add_potential_state(vector<int> potential_state_indexes
 void SolutionNodeAction::extend_with_potential_state(vector<int> potential_state_indexes,
 													 vector<int> new_state_indexes,
 													 SolutionNode* scope) {
-	extend_state_for_score_network(potential_state_indexes,
-								   new_state_indexes);
-
 	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 		for (int t_index = 0; t_index < (int)this->potential_state_networks_target_states.size(); t_index++) {
 			if (this->potential_state_networks_target_states[t_index]
 					== potential_state_indexes[ps_index]) {
 				vector<int> new_state_network_inputs_state_indexes(
-					this->network_inputs_state_indexes);
+					this->network_inputs_state_indexes);	// note that extend_state_for_score_network modifies this
 				for (int i_index = 0; i_index < (int)this->potential_potential_inputs_state_indexes[t_index].size(); i_index++) {
 					for (int ns_index = 0; ns_index < (int)potential_state_indexes.size(); ns_index++) {
 						if (potential_state_indexes[ns_index]
@@ -202,13 +199,20 @@ void SolutionNodeAction::extend_with_potential_state(vector<int> potential_state
 					}
 				}
 				this->state_network_inputs_state_indexes.push_back(new_state_network_inputs_state_indexes);
-				this->state_networks.push_back(this->potential_state_networks[t_index]);
+				this->state_networks.push_back(new Network(this->potential_state_networks[t_index]));
 				this->state_networks_target_states.push_back(new_state_indexes[ps_index]);
 
 				break;
 			}
 		}
+
+		for (int p_index = 0; p_index < (int)this->potential_state_networks.size(); p_index++) {
+			this->potential_state_networks[p_index]->increment_input_size();
+		}
 	}
+
+	extend_state_for_score_network(potential_state_indexes,
+								   new_state_indexes);
 
 	if (this->next->node_type == NODE_TYPE_IF_END) {
 		return;
@@ -262,7 +266,14 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 										   vector<double>& guesses,
 										   vector<int>& explore_decisions,
 										   vector<double>& explore_diffs,
-										   vector<bool>& explore_loop_decisions) {
+										   vector<bool>& explore_loop_decisions,
+										   bool save_for_display,
+										   std::ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+		this->action.save(display_file);
+	}
+
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
 		if (randuni() < (1.0/this->average_unique_future_nodes)) {
 			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
@@ -415,6 +426,10 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 											   potential_states_on,
 											   false,
 											   network_historys);
+	}
+
+	if (save_for_display) {
+		
 	}
 
 	problem.perform_action(this->action);
@@ -593,11 +608,24 @@ void SolutionNodeAction::activate_state_networks(Problem& problem,
 void SolutionNodeAction::backprop_state_networks(double* state_errors,
 												 bool* states_on,
 												 vector<NetworkHistory*>& network_historys) {
-	for (int sn_index = 0; sn_index < (int)this->state_networks_target_states.size(); sn_index++) {
+	for (int sn_index = (int)this->state_networks_target_states.size() - 1; sn_index >= 0; sn_index--) {
 		if (states_on[this->state_networks_target_states[sn_index]]) {
 			NetworkHistory* network_history = network_historys.back();
 
 			this->state_networks[sn_index]->mtx.lock();
+
+			if (network_history->network != this->state_networks[sn_index]) {
+				cout << "ERROR: state_network backprop mismatch" << endl;
+
+				// ofstream error_display_file;
+				// error_display_file.open("../error.txt");
+				// error_display_file << this->solution->nodes.size() << endl;
+				// for (int n_index = 0; n_index < (int)this->solution->nodes.size(); n_index++) {
+				// 	this->solution->nodes[n_index]->save_for_display(error_display_file);
+				// }
+				// error_display_file.close();
+				// exit(1);
+			}
 
 			network_history->reset_weights();
 
@@ -632,11 +660,15 @@ void SolutionNodeAction::backprop_state_networks_errors_with_no_weight_change(
 		double* state_errors,
 		bool* states_on,
 		vector<NetworkHistory*>& network_historys) {
-	for (int sn_index = 0; sn_index < (int)this->state_networks_target_states.size(); sn_index++) {
+	for (int sn_index = (int)this->state_networks_target_states.size() - 1; sn_index >= 0; sn_index--) {
 		if (states_on[this->state_networks_target_states[sn_index]]) {
 			NetworkHistory* network_history = network_historys.back();
 
 			this->state_networks[sn_index]->mtx.lock();
+
+			if (network_history->network != this->state_networks[sn_index]) {
+				cout << "ERROR: state_network backprop mismatch" << endl;
+			}
 
 			network_history->reset_weights();
 
@@ -726,6 +758,10 @@ void SolutionNodeAction::backprop_state_networks_with_potential(
 			NetworkHistory* network_history = network_historys.back();
 
 			this->potential_state_networks[p_index]->mtx.lock();
+
+			if (network_history->network != this->potential_state_networks[p_index]) {
+				cout << "ERROR: potential_state_network backprop mismatch" << endl;
+			}
 
 			network_history->reset_weights();
 

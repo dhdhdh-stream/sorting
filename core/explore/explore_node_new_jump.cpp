@@ -1,5 +1,7 @@
 #include "explore_node_new_jump.h"
 
+#include <iostream>
+
 #include "explore_node_new_jump.h"
 #include "explore_node_append_jump.h"
 #include "explore_node_loop.h"
@@ -147,6 +149,8 @@ void ExploreNodeNewJump::process() {
 				 jump_start_inclusive,
 				 new_start_node);
 		new_start_node->children_nodes[0] = jump_start_inclusive;
+		set_previous_if_needed(jump_start_inclusive,
+							   new_start_node);
 		set_next(jump_end_inclusive,
 				 jump_end_non_inclusive,
 				 new_end_node);

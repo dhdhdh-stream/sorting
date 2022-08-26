@@ -55,6 +55,7 @@ public:
 	void reset_potential_input_layer(int potential_index);
 	void reset_weights();
 	void remove_potential_input_layers();
+	void hidden_increment_input();	// used by potential state networks
 
 	void collapse_input(int input_index,
 						Layer* new_collapse_layer);

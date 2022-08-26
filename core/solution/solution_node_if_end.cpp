@@ -1,5 +1,6 @@
 #include "solution_node_if_end.h"
 
+#include <iostream>
 #include <random>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -167,7 +168,13 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 										  vector<double>& guesses,
 										  vector<int>& explore_decisions,
 										  vector<double>& explore_diffs,
-										  vector<bool>& explore_loop_decisions) {
+										  vector<bool>& explore_loop_decisions,
+										  bool save_for_display,
+										  std::ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
+
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
 		if (randuni() < (1.0/this->average_unique_future_nodes)) {
 			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {

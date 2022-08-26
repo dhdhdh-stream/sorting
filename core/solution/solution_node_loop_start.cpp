@@ -196,7 +196,13 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  vector<double>& guesses,
 											  vector<int>& explore_decisions,
 											  vector<double>& explore_diffs,
-											  vector<bool>& explore_loop_decisions) {
+											  vector<bool>& explore_loop_decisions,
+											  bool save_for_display,
+											  std::ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
+
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
 		if (randuni() < (2.0/this->average_unique_future_nodes)) {
 			if (rand()%2 == 0) {
@@ -410,5 +416,9 @@ void SolutionNodeLoopStart::save_for_display(ofstream& save_file) {
 	if (this->node_is_on) {
 		save_file << this->node_type << endl;
 		save_file << this->next->node_index << endl;
+		save_file << this->scope_states_on.size() << endl;
+		for (int s_index = 0; s_index < (int)this->scope_states_on.size(); s_index++) {
+			save_file << this->scope_states_on[s_index] << endl;
+		}
 	}
 }

@@ -1,5 +1,6 @@
 #include "solution_node_loop_end.h"
 
+#include <iostream>
 #include <random>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -301,7 +302,13 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											vector<double>& guesses,
 											vector<int>& explore_decisions,
 											vector<double>& explore_diffs,
-											vector<bool>& explore_loop_decisions) {
+											vector<bool>& explore_loop_decisions,
+											bool save_for_display,
+											std::ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
+
 	if (this->node_index == 1) {
 		loop_scopes.pop_back();
 		loop_scope_counts.pop_back();
@@ -486,6 +493,7 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 						  network_historys,
 						  score,
 						  should_halt);
+		guesses.push_back(score);
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
 		activate_networks_with_potential(
 			problem,
@@ -578,20 +586,22 @@ void SolutionNodeLoopEnd::backprop(double score,
 								   vector<int>& explore_decisions,
 								   vector<double>& explore_diffs,
 								   vector<bool>& explore_loop_decisions) {
-	if (explore_loop_decisions.back() == true) {
-		backprop_explore_and_score_network_helper(score,
-												  misguess,
-												  state_errors,
-												  states_on,
-												  iter_explore_type,
-												  iter_explore_node,
-												  potential_state_errors,
-												  potential_states_on,
-												  network_historys,
-												  explore_decisions,
-												  explore_diffs);
+	if (iter_explore_node == this) {
+		if (explore_loop_decisions.size() > 0 && explore_loop_decisions.back() == true) {
+			backprop_explore_and_score_network_helper(score,
+													  misguess,
+													  state_errors,
+													  states_on,
+													  iter_explore_type,
+													  iter_explore_node,
+													  potential_state_errors,
+													  potential_states_on,
+													  network_historys,
+													  explore_decisions,
+													  explore_diffs);
+		}
+		explore_loop_decisions.pop_back();
 	}
-	explore_loop_decisions.pop_back();
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
 		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
@@ -632,15 +642,17 @@ void SolutionNodeLoopEnd::backprop(double score,
 		for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
 			states_on[this->start->scope_states_on[s_index]] = true;
 		}
-		NetworkHistory* network_history = network_historys.back();
-		if (network_history->network == this->halt_network) {
-			for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
-				state_errors[this->start->scope_states_on[s_index]] = 0.0;
-			}
+		if (network_historys.size() > 0) {
+			NetworkHistory* network_history = network_historys.back();
+			if (network_history->network == this->halt_network) {
+				for (int s_index = 0; s_index < (int)this->start->scope_states_on.size(); s_index++) {
+					state_errors[this->start->scope_states_on[s_index]] = 0.0;
+				}
 
-			if (iter_explore_node == this->start) {
-				for (int ps_index = 0; ps_index < (int)this->start->scope_potential_states.size(); ps_index++) {
-					potential_state_errors[this->start->scope_potential_states[ps_index]] = 0.0;
+				if (iter_explore_node == this->start) {
+					for (int ps_index = 0; ps_index < (int)this->start->scope_potential_states.size(); ps_index++) {
+						potential_state_errors[this->start->scope_potential_states[ps_index]] = 0.0;
+					}
 				}
 			}
 		}
@@ -718,6 +730,10 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
 	for (int i_index = 0; i_index < (int)this->halt_networks_inputs_state_indexes.size(); i_index++) {
+		if (this->halt_networks_inputs_state_indexes[i_index] >= this->solution->current_state_counter) {
+			cout << "here" << endl;
+		}
+
 		if (states_on[this->halt_networks_inputs_state_indexes[i_index]]) {
 			inputs.push_back(state_vals[this->halt_networks_inputs_state_indexes[i_index]]);
 		} else {
@@ -988,6 +1004,29 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 		} else {
 			inputs.push_back(0.0);
 		}
+	}
+
+	// loop_scopes.back() == this
+	if (loop_scope_counts.back() >= 20) {
+		if (backprop) {
+			this->halt_network->mtx.lock();
+			this->halt_network->activate(inputs,
+										 potentials_on,
+										 potential_vals,
+										 network_historys);
+			score = this->halt_network->output->acti_vals[0];
+			this->halt_network->mtx.unlock();
+		} else {
+			this->halt_network->mtx.lock();
+			this->halt_network->activate(inputs,
+										 potentials_on,
+										 potential_vals);
+			score = this->halt_network->output->acti_vals[0];
+			this->halt_network->mtx.unlock();
+		}
+
+		should_halt = true;
+		return;
 	}
 
 	if (backprop) {

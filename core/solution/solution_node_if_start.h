@@ -52,7 +52,9 @@ public:
 						   std::vector<double>& guesses,
 						   std::vector<int>& explore_decisions,
 						   std::vector<double>& explore_diffs,
-						   std::vector<bool>& explore_loop_decisions) override;
+						   std::vector<bool>& explore_loop_decisions,
+						   bool save_for_display,
+						   std::ofstream& display_file) override;
 	void backprop(double score,
 				  double misguess,
 				  double* state_errors,
@@ -77,7 +79,9 @@ public:
 									bool backprop,
 									std::vector<NetworkHistory*>& network_historys,
 									double& best_score,
-									int& best_index);
+									int& best_index,
+									bool save_for_display,
+									std::ofstream& display_file);
 	void activate_children_networks_with_potential(
 		Problem& problem,
 		double* state_vals,
@@ -87,7 +91,9 @@ public:
 		bool backprop,
 		std::vector<NetworkHistory*>& network_historys,
 		double& best_score,
-		int& best_index);
+		int& best_index,
+		bool save_for_display,
+		std::ofstream& display_file);
 
 	void backprop_children_networks(double score,
 									double* state_errors,

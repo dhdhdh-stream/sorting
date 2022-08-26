@@ -241,7 +241,13 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 											vector<double>& guesses,
 											vector<int>& explore_decisions,
 											vector<double>& explore_diffs,
-											vector<bool>& explore_loop_decisions) {
+											vector<bool>& explore_loop_decisions,
+											bool save_for_display,
+											std::ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
+
 	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
 		if (randuni() < (2.0/this->average_unique_future_nodes)) {
 			if (rand()%2 == 0) {
@@ -356,7 +362,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   true,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 		guesses.push_back(best_score);
 	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
 		activate_children_networks(problem,
@@ -365,7 +373,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   false,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		activate_children_networks(problem,
 								   state_vals,
@@ -373,7 +383,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   false,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
 		activate_children_networks(problem,
 								   state_vals,
@@ -381,7 +393,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   true,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
 		activate_children_networks_with_potential(
 			problem,
@@ -392,7 +406,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 			true,
 			network_historys,
 			best_score,
-			best_index);
+			best_index,
+			save_for_display,
+			display_file);
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
 		activate_children_networks(problem,
 								   state_vals,
@@ -400,7 +416,9 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   false,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 		if (iter_explore_node != this) {
 			guesses.push_back(best_score);
 		}
@@ -414,13 +432,15 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 			false,
 			network_historys,
 			best_score,
-			best_index);
+			best_index,
+			save_for_display,
+			display_file);
 		guesses.push_back(best_score);
 	}
 
 	for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
-		state_vals[this->scope_states_on[o_index]] = 0.0;
 		states_on[this->scope_states_on[o_index]] = true;
+		state_vals[this->scope_states_on[o_index]] = 0.0;
 	}
 
 	SolutionNode* explore_node = NULL;
@@ -527,6 +547,10 @@ void SolutionNodeIfStart::save_for_display(ofstream& save_file) {
 				save_file << this->children_nodes[c_index]->node_index << endl;
 			}
 		}
+		save_file << this->scope_states_on.size() << endl;
+		for (int s_index = 0; s_index < (int)this->scope_states_on.size(); s_index++) {
+			save_file << this->scope_states_on[s_index] << endl;
+		}
 	}
 }
 
@@ -536,7 +560,9 @@ void SolutionNodeIfStart::activate_children_networks(Problem& problem,
 													 bool backprop,
 													 vector<NetworkHistory*>& network_historys,
 													 double& best_score,
-													 int& best_index) {
+													 int& best_index,
+													 bool save_for_display,
+													 ofstream& display_file) {
 	vector<double> inputs;
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
@@ -568,12 +594,23 @@ void SolutionNodeIfStart::activate_children_networks(Problem& problem,
 			best_score = this->children_score_networks[best_index]->output->acti_vals[0];
 			this->children_score_networks[best_index]->mtx.unlock();
 		}
+
+		if (save_for_display) {
+			display_file << -1 << endl;
+			display_file << best_index << endl;
+			display_file << best_score << endl;
+		}
+
 		return;
 	}
 
 	best_index = -1;
 	best_score = numeric_limits<double>::lowest();
-	
+
+	if (save_for_display) {
+		display_file << this->children_nodes.size() << endl;
+	}
+
 	if (backprop) {
 		vector<NetworkHistory*> best_history;
 		for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
@@ -595,6 +632,15 @@ void SolutionNodeIfStart::activate_children_networks(Problem& problem,
 				} else {
 					delete temp_history[0];
 				}
+
+				if (save_for_display) {
+					display_file << "on" << endl;
+					display_file << child_score << endl;
+				}
+			} else {
+				if (save_for_display) {
+					display_file << "off" << endl;
+				}
 			}
 		}
 		network_historys.push_back(best_history[0]);
@@ -610,8 +656,21 @@ void SolutionNodeIfStart::activate_children_networks(Problem& problem,
 					best_index = c_index;
 					best_score = child_score;
 				}
+
+				if (save_for_display) {
+					display_file << "on" << endl;
+					display_file << child_score << endl;
+				}
+			} else {
+				if (save_for_display) {
+					display_file << "off" << endl;
+				}
 			}
 		}
+	}
+
+	if (save_for_display) {
+		display_file << best_index << endl;
 	}
 
 	return;
@@ -634,6 +693,10 @@ void SolutionNodeIfStart::backprop_children_networks(double score,
 	this->children_score_networks[child_index]->mtx.lock();
 
 	network_history->reset_weights();
+
+	if (network_history->network != this->children_score_networks[child_index]) {
+		cout << "ERROR: children_score_network backprop mismatch" << endl;
+	}
 
 	vector<double> errors;
 	if (score == 1.0) {
@@ -684,6 +747,10 @@ void SolutionNodeIfStart::backprop_children_networks_errors_with_no_weight_chang
 
 	network_history->reset_weights();
 
+	if (network_history->network != this->children_score_networks[child_index]) {
+		cout << "ERROR: children_score_network backprop mismatch" << endl;
+	}
+
 	vector<double> errors;
 	if (score == 1.0) {
 		if (this->children_score_networks[child_index]->output->acti_vals[0] < 1.0) {
@@ -723,7 +790,9 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 		bool backprop,
 		vector<NetworkHistory*>& network_historys,
 		double& best_score,
-		int& best_index) {
+		int& best_index,
+		bool save_for_display,
+		ofstream& display_file) {
 	vector<int> potentials_on;
 	vector<double> potential_vals;
 	for (int p_index = 0; p_index < (int)this->network_inputs_potential_state_indexes.size(); p_index++) {
@@ -740,7 +809,9 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 								   false,
 								   network_historys,
 								   best_score,
-								   best_index);
+								   best_index,
+								   save_for_display,
+								   display_file);
 		return;
 	}
 
@@ -783,11 +854,21 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 			this->children_score_networks[best_index]->mtx.unlock();
 		}
 
+		if (save_for_display) {
+			display_file << -1 << endl;
+			display_file << best_index << endl;
+			display_file << best_score << endl;
+		}
+
 		return;
 	}
 
 	best_index = -1;
 	best_score = numeric_limits<double>::lowest();
+
+	if (save_for_display) {
+		display_file << this->children_nodes.size() << endl;
+	}
 
 	if (backprop) {
 		vector<NetworkHistory*> best_history;
@@ -814,6 +895,15 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 				} else {
 					delete temp_history[0];
 				}
+
+				if (save_for_display) {
+					display_file << "on" << endl;
+					display_file << child_score << endl;
+				}
+			} else {
+				if (save_for_display) {
+					display_file << "off" << endl;
+				}
 			}
 		}
 		network_historys.push_back(best_history[0]);
@@ -832,8 +922,21 @@ void SolutionNodeIfStart::activate_children_networks_with_potential(
 					best_index = c_index;
 					best_score = child_score;
 				}
+
+				if (save_for_display) {
+					display_file << "on" << endl;
+					display_file << child_score << endl;
+				}
+			} else {
+				if (save_for_display) {
+					display_file << "off" << endl;
+				}
 			}
 		}
+	}
+
+	if (save_for_display) {
+		display_file << best_index << endl;
 	}
 
 	return;
@@ -858,6 +961,10 @@ void SolutionNodeIfStart::backprop_children_networks_with_potential(
 			this->children_score_networks[child_index]->mtx.lock();
 
 			network_history->reset_weights();
+
+			if (network_history->network != this->children_score_networks[child_index]) {
+				cout << "ERROR: children_score_network backprop mismatch" << endl;
+			}
 
 			vector<int> potentials_on = network_history->potentials_on;
 

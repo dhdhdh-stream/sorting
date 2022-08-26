@@ -410,6 +410,14 @@ void Layer::remove_potential_input_layers() {
 	this->input_layers.erase(this->input_layers.begin()+1, this->input_layers.end());
 }
 
+void Layer::hidden_increment_input() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][0].push_back((randuni()-0.5)*0.02);
+		this->weight_updates[n_index][0].push_back(0.0);
+		this->prev_weight_updates[n_index][0].push_back(0.0);
+	}
+}
+
 void Layer::collapse_input(int input_index,
 						   Layer* new_collapse_layer) {
 	this->input_layers[input_index] = new_collapse_layer;

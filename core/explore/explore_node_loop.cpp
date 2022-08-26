@@ -1,5 +1,7 @@
 #include "explore_node_loop.h"
 
+#include <iostream>
+
 #include "explore_node_new_jump.h"
 #include "explore_node_append_jump.h"
 #include "explore_node_loop.h"
@@ -128,6 +130,8 @@ void ExploreNodeLoop::process() {
 			 loop_start_inclusive,
 			 new_start_node);
 	new_start_node->next = loop_start_inclusive;
+	set_previous_if_needed(loop_start_inclusive,
+						   new_start_node);
 	set_next(loop_end_inclusive,
 			 loop_end_non_inclusive,
 			 new_end_node);

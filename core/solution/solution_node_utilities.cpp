@@ -100,10 +100,12 @@ void find_potential_loops(SolutionNode* inclusive_end,
 			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
 			SolutionNodeIfStart* scope_start = curr_node_if_end->start;
 			previous_node = scope_start->previous;
+			curr_node = scope_start;
 		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
 			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
 			SolutionNodeLoopStart* scope_start = curr_node_loop_end->start;
 			previous_node = scope_start->previous;
+			curr_node = scope_start;
 		}
 
 		potential_non_inclusive_loop_starts.push_back(previous_node);

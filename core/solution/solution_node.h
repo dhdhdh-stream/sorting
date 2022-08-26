@@ -131,7 +131,9 @@ public:
 								   std::vector<double>& guesses,
 								   std::vector<int>& explore_decisions,
 								   std::vector<double>& explore_diffs,
-								   std::vector<bool>& explore_loop_decisions) = 0;
+								   std::vector<bool>& explore_loop_decisions,
+								   bool save_for_display,
+								   std::ofstream& display_file) = 0;
 	virtual void backprop(double score,
 						  double misguess,
 						  double* state_errors,

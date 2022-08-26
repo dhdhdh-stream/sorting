@@ -565,7 +565,8 @@ void SolutionNode::explore_increment(double score,
 	if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
 		this->explore_state_iter_index++;
 
-		if (this->explore_state_iter_index > 2000000) {
+		// if (this->explore_state_iter_index > 2000000) {
+		if (this->explore_state_iter_index > 5) {
 			this->explore_state_state = EXPLORE_STATE_STATE_MEASURE;
 			this->explore_state_iter_index = 0;
 
@@ -608,6 +609,7 @@ void SolutionNode::explore_increment(double score,
 			this->solution->explore->mtx.lock();
 			this->solution->explore->current_node->children.push_back(new_explore_node);
 			this->solution->explore->mtx.unlock();
+			cout << "new ExploreNodeState" << endl;
 		}
 
 		reset_potential_state(this->scope_potential_states, this);
@@ -654,7 +656,8 @@ void SolutionNode::explore_increment(double score,
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
 		this->explore_path_iter_index++;
 
-		if (this->explore_path_iter_index > 2000000) {
+		// if (this->explore_path_iter_index > 2000000) {
+		if (this->explore_path_iter_index > 10) {
 			if (this->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
 				for (int e_index = 0; e_index < (int)this->explore_path.size(); e_index++) {
 					this->explore_path[e_index]->temp_node_state = TEMP_NODE_STATE_MEASURE;
@@ -673,7 +676,8 @@ void SolutionNode::explore_increment(double score,
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
 		this->explore_path_iter_index++;
 
-		if (this->explore_path_iter_index > 100000) {
+		// if (this->explore_path_iter_index > 100000) {
+		if (this->explore_path_iter_index > 5) {
 			double improvement = explore_explore_is_good - explore_no_explore_is_good;
 
 			if (improvement > 0.0) {
@@ -837,6 +841,8 @@ void SolutionNode::explore_increment(double score,
 					// takes and clears explore networks
 					this->solution->nodes.push_back(new_end_node);
 
+					this->solution->nodes_mtx.unlock();
+
 					ExploreNodeLoop* new_explore_node;
 					new_explore_node = new ExploreNodeLoop(
 						this->solution->explore,
@@ -924,6 +930,16 @@ void SolutionNode::extend_state_for_score_network(vector<int> potential_state_in
 				break;
 			}
 		}
+
+		if (this->explore_if_network != NULL) {
+			this->explore_if_network->increment_input_size();
+		}
+		if (this->explore_halt_network != NULL) {
+			this->explore_halt_network->increment_input_size();
+		}
+		if (this->explore_no_halt_network != NULL) {
+			this->explore_no_halt_network->increment_input_size();
+		}
 	}
 }
 
@@ -983,6 +999,10 @@ void SolutionNode::backprop_score_network(double score,
 
 	this->score_network->mtx.lock();
 
+	if (network_history->network != this->score_network) {
+		cout << "ERROR: score_network backprop mismatch" << endl;
+	}
+
 	network_history->reset_weights();
 
 	vector<double> score_network_errors;
@@ -1023,6 +1043,10 @@ void SolutionNode::backprop_score_network_errors_with_no_weight_change(
 	NetworkHistory* network_history = network_historys.back();
 
 	this->score_network->mtx.lock();
+
+	if (network_history->network != this->score_network) {
+		cout << "ERROR: score_network backprop mismatch" << endl;
+	}
 
 	network_history->reset_weights();
 
@@ -1196,6 +1220,10 @@ void SolutionNode::backprop_explore_if_network(double score,
 
 	this->explore_if_network->mtx.lock();
 
+	if (network_history->network != this->explore_if_network) {
+		cout << "ERROR: explore_if_network backprop mismatch" << endl;
+	}
+
 	network_history->reset_weights();
 
 	vector<double> explore_network_errors;
@@ -1268,6 +1296,10 @@ void SolutionNode::backprop_explore_halt_network(double score,
 
 	this->explore_halt_network->mtx.lock();
 
+	if (network_history->network != this->explore_halt_network) {
+		cout << "ERROR: halt_network backprop mismatch" << endl;
+	}
+
 	network_history->reset_weights();
 
 	vector<double> explore_network_errors;
@@ -1339,6 +1371,10 @@ void SolutionNode::backprop_explore_no_halt_network(double score,
 	NetworkHistory* network_history = network_historys.back();
 
 	this->explore_no_halt_network->mtx.lock();
+
+	if (network_history->network != this->explore_no_halt_network) {
+		cout << "ERROR: explore_no_halt_network backprop mismatch" << endl;
+	}
 
 	network_history->reset_weights();
 

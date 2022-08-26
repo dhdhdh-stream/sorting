@@ -36,6 +36,9 @@ Network::Network(Network* original) {
 	// this network doesn't have potentials added
 	this->hidden->copy_weights_from(original->hidden);
 	this->output->copy_weights_from(original->output);
+
+	this->epoch = 0;
+	this->iter = 0;
 }
 
 Network::Network(ifstream& input_file) {
@@ -246,6 +249,10 @@ void Network::extend_with_potential(int potential_index) {
 	this->hidden->hidden_extend_with_potential(potential_index,
 											   this->potential_hiddens[potential_index]);
 	this->output->output_extend_with_potential(potential_index);
+
+	for (int p_index = 0; p_index < (int)this->potential_hiddens.size(); p_index++) {
+		this->potential_hiddens[p_index]->hidden_increment_input();
+	}
 }
 
 void Network::reset_potential(int potential_index) {
@@ -270,6 +277,11 @@ void Network::remove_potentials() {
 	}
 	this->potential_inputs.clear();
 	this->potential_hiddens.clear();
+}
+
+void Network::increment_input_size() {
+	this->input->input_extend_with_potential();	// reuse to increment input
+	this->hidden->hidden_increment_input();
 }
 
 void Network::save(ofstream& output_file) {
