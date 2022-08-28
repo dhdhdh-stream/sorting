@@ -26,6 +26,8 @@ Solution::Solution(Explore* explore) {
 	this->nodes.push_back(halt_node);
 
 	this->current_state_counter = 0;
+
+	this->average_score = 0.5;
 }
 
 Solution::Solution(Explore* explore,
@@ -72,6 +74,10 @@ Solution::Solution(Explore* explore,
 	string current_state_counter_line;
 	getline(save_file, current_state_counter_line);
 	this->current_state_counter = stoi(current_state_counter_line);
+
+	string average_score_line;
+	getline(save_file, average_score_line);
+	this->average_score = stof(average_score_line);
 }
 
 Solution::~Solution() {
@@ -99,15 +105,17 @@ void Solution::iteration(bool tune,
 	vector<SolutionNode*> loop_scopes;
 	vector<int> loop_scope_counts;
 
-	double potential_state_vals[this->current_potential_state_counter] = {};
-	bool potential_states_on[this->current_potential_state_counter] = {};
+	double previous_score = this->average_score;
+
+	double potential_state_vals[5] = {};
 
 	vector<NetworkHistory*> network_historys;
 	vector<SolutionNode*> nodes_visited;
-	vector<double> guesses;
-
-	set<SolutionNode*> unique_nodes_visited;
-	vector<SolutionNode*> unique_nodes_visited_list;
+	
+	vector<vector<double>> guesses;
+	vector<double> guess_segment;
+	guess_segment.push_back(this->average_score);
+	guesses.push_back(guess_segment);
 
 	int iter_explore_type = EXPLORE_TYPE_NONE;
 	if (tune) {
@@ -123,23 +131,16 @@ void Solution::iteration(bool tune,
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
-		bool is_first_time;
-		if (unique_nodes_visited.find(curr_node) != unique_nodes_visited.end()) {
-			is_first_time = false;
-		} else {
-			is_first_time = true;
-		}
-
 		SolutionNode* next_node = curr_node->activate(problem,
 													  state_vals,
 													  states_on,
 													  loop_scopes,
 													  loop_scope_counts,
-													  is_first_time,
 													  iter_explore_type,
 													  iter_explore_node,
+													  NULL,
+													  previous_score,
 													  potential_state_vals,
-													  potential_states_on,
 													  network_historys,
 													  guesses,
 													  explore_decisions,
@@ -147,6 +148,7 @@ void Solution::iteration(bool tune,
 													  explore_loop_decisions,
 													  save_for_display,
 													  display_file);
+		nodes_visited.push_back(curr_node);
 
 		if (save_for_display) {
 			if (curr_node->node_type == NODE_TYPE_ACTION) {
@@ -158,15 +160,6 @@ void Solution::iteration(bool tune,
 			}
 		}
 
-		if (iter_explore_type != EXPLORE_TYPE_NONE) {
-			nodes_visited.push_back(curr_node);
-		}
-
-		if (is_first_time) {
-			unique_nodes_visited.insert(curr_node);
-			unique_nodes_visited_list.push_back(curr_node);
-		}
-
 		if (curr_node->node_index == 1) {
 			break;
 		}
@@ -174,28 +167,62 @@ void Solution::iteration(bool tune,
 	}
 
 	double score = problem.score_result();
+	this->average_score = 0.9999*this->average_score + 0.0001*score;
 
-	double sum_misguess = 0.0;
+	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
+		double sum_segments = 0.0;
+		for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
+			double initial_guess = min(max(guesses[s_index][0], 0.0), 1.0);
+			double initial_misguess = abs(score - initial_guess);
+			double final_guess = min(max(guesses[s_index][guesses[s_index].size()-1], 0.0), 1.0);
+			double final_misguess = abs(score - final_guess);
+			sum_segments += initial_misguess - final_misguess;
+		}
+
+		int guess_segment_index = 0;
+		int guess_index = 1;
+		double previous_misguess = abs(score - guesses[0][0]);
+		for (int v_index = 0; v_index < (int)nodes_visited.size(); v_index++) {
+			if (nodes_visited[v_index]->node_type == NODE_TYPE_ACTION) {
+				double guess = min(max(guesses[guess_segment_index][guess_index], 0.0), 1.0);
+				double current_misguess = abs(score - guess);
+
+				double information_gain = previous_misguess - current_misguess;
+
+				nodes_visited[v_index]->update_node_weight(information_gain/sum_segments);
+
+				previous_misguess = current_misguess;
+
+				guesses_index++;
+			} else if (nodes_visited[v_index]->node_type == NODE_TYPE_IF_START) {
+				guess_segment_index++;
+				guess_index = 1;
+
+				double guess = min(max(guesses[guess_segment_index][0], 0.0), 1.0);
+				previous_misguess = abs(score - guess);
+			}
+		}
+	}
+
+	double sum_misguess = abs(score - guesses[0][0]);
+	int misguess_count = 1;
+	for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
+		for (int g_index = 1; g_index < (int)guesses[s_index].size(); g_index++) {
+			double guess = min(max(guesses[s_index][g_index], 0.0), 1.0);
+			sum_misguess += abs(score - guess);
+		}
+	}
+	double misguess = sum_misguess/(double)misguess_count;
+
 	double state_errors[this->current_state_counter] = {};
 	double potential_state_errors[this->current_potential_state_counter] = {};
 	// ignore last halt node, but set state_errors
 	SolutionNodeLoopStart* start_node = (SolutionNodeLoopStart*)nodes[0];
-	for (int s_index = 0; s_index < (int)start_node->scope_states_on.size(); s_index++) {
-		states_on[start_node->scope_states_on[s_index]] = true;
-		state_errors[start_node->scope_states_on[s_index]] = 0.0;
+	for (int s_index = 0; s_index < (int)start_node->loop_states.size(); s_index++) {
+		states_on[start_node->loop_states[s_index]] = true;
+		state_errors[start_node->loop_states[s_index]] = 0.0;
 	}
 	for (int v_index = (int)nodes_visited.size()-2; v_index >= 0; v_index--) {
-		double misguess;
-		if (iter_explore_type == EXPLORE_TYPE_EXPLORE
-				|| iter_explore_type == EXPLORE_TYPE_LEARN_PATH
-				|| iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-			misguess = 0.0;
-		} else {
-			double pinned_guess = min(max(guesses[v_index], 0.0), 1.0);
-			sum_misguess += abs(score - pinned_guess);
-			misguess = sum_misguess/((double)nodes_visited.size() - v_index);
-		}
-
 		nodes_visited[v_index]->backprop(score,
 										 misguess,
 										 state_errors,
@@ -203,16 +230,10 @@ void Solution::iteration(bool tune,
 										 iter_explore_type,
 										 iter_explore_node,
 										 potential_state_errors,
-										 potential_states_on,
 										 network_historys,
 										 explore_decisions,
 										 explore_diffs,
 										 explore_loop_decisions);
-	}
-
-	for (int u_index = 0; u_index < (int)unique_nodes_visited_list.size(); u_index++) {
-		unique_nodes_visited_list[u_index]->increment_unique_future_nodes(
-			(int)unique_nodes_visited_list.size() - u_index);
 	}
 
 	if (save_for_display) {
@@ -253,7 +274,7 @@ void Solution::iteration(bool tune,
 
 	if (iter_explore_node != NULL) {
 		iter_explore_node->explore_increment(score,
-											 iter_explore_type);
+											 iter_explore);
 	}
 
 	if (network_historys.size() > 0) {
@@ -275,4 +296,6 @@ void Solution::save(ofstream& save_file) {
 	}
 
 	save_file << this->current_state_counter << endl;
+
+	save_file << this->average_score << endl;
 }

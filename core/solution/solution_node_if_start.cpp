@@ -132,99 +132,93 @@ SolutionNodeIfStart::~SolutionNodeIfStart() {
 void SolutionNodeIfStart::reset() {
 	this->node_is_on = false;
 
-	this->scope_states_on.clear();
-	this->scope_potential_states.clear();
-
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
 		this->children_on[c_index] = false;
 	}
 }
 
 void SolutionNodeIfStart::add_potential_state(vector<int> potential_state_indexes,
-											  SolutionNode* scope) {
-	if (scope != this) {
-		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-			this->network_inputs_potential_state_indexes.push_back(
-				potential_state_indexes[ps_index]);
+											  SolutionNode* explore_node) {
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		this->children_networks_inputs_potential_state_indexes.push_back(
+			potential_state_indexes[ps_index]);
 
-			for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-				// specific children will end up not supporting specific states, but that's OK
-				this->children_score_networks[c_index]->add_potential();
-			}
+		for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+			// specific children will end up not supporting specific states, but that's OK
+			this->children_score_networks[c_index]->add_potential();
 		}
 	}
 
+	// this can't be explore node
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
 		if (this->children_on[c_index]) {
 			this->children_nodes[c_index]->add_potential_state(potential_state_indexes,
-															   scope);
+															   explore_node);
 		}
 	}
-	this->end->add_potential_state(potential_state_indexes, scope);
+	this->end->add_potential_state(potential_state_indexes, explore_node);
 }
 
 void SolutionNodeIfStart::extend_with_potential_state(vector<int> potential_state_indexes,
 													  vector<int> new_state_indexes,
-													  SolutionNode* scope) {
-	if (scope != this) {
-		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
-				if (this->network_inputs_potential_state_indexes[pi_index]
-						== potential_state_indexes[ps_index]) {
-					this->network_inputs_state_indexes.push_back(new_state_indexes[ps_index]);
+													  SolutionNode* explore_node) {
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		for (int pi_index = 0; pi_index < (int)this->children_networks_inputs_potential_state_indexes.size(); pi_index++) {
+			if (this->children_networks_inputs_potential_state_indexes[pi_index]
+					== potential_state_indexes[ps_index]) {
+				this->children_networks_inputs_state_indexes.push_back(new_state_indexes[ps_index]);
 
-					for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-						this->children_score_networks[c_index]->extend_with_potential(pi_index);
-					}
-
-					break;
+				for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+					this->children_score_networks[c_index]->extend_with_potential(pi_index);
 				}
+
+				this->children_networks_inputs_potential_state_indexes.erase(
+					this->children_networks_inputs_potential_state_indexes.begin() + pi_index);
+
+				break;
 			}
 		}
 	}
 
+	// this can't be explore node
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
 		if (this->children_on[c_index]) {
 			this->children_nodes[c_index]->extend_with_potential_state(potential_state_indexes,
 																	   new_state_indexes,
-																	   scope);
+																	   explore_node);
 		}
 	}
 	this->end->extend_with_potential_state(potential_state_indexes,
 										   new_state_indexes,
-										   scope);
+										   explore_node);
 }
 
-void SolutionNodeIfStart::reset_potential_state(vector<int> potential_state_indexes,
-												SolutionNode* scope) {
-	if (scope != this) {
-		for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-			for (int pi_index = 0; pi_index < (int)this->network_inputs_potential_state_indexes.size(); pi_index++) {
-				if (this->network_inputs_potential_state_indexes[pi_index]
-						== potential_state_indexes[ps_index]) {
-					for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-						this->children_score_networks[c_index]->reset_potential(pi_index);
-					}
+void SolutionNodeIfStart::delete_potential_state(vector<int> potential_state_indexes,
+												 SolutionNode* explore_node) {
+	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
+		for (int pi_index = 0; pi_index < (int)this->children_networks_inputs_potential_state_indexes.size(); pi_index++) {
+			if (this->children_network_inputs_potential_state_indexes[pi_index]
+					== potential_state_indexes[ps_index]) {
+				for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
+					this->children_score_networks[c_index]->delete_potential(pi_index);
 				}
+
+				this->children_networks_inputs_potential_state_indexes.erase(
+					this->children_networks_inputs_potential_state_indexes.begin() + pi_index);
+
+				break;
 			}
 		}
 	}
 
+	// this can't be explore node
 	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
 		if (this->children_on[c_index]) {
-			this->children_nodes[c_index]->reset_potential_state(potential_state_indexes,
-																 scope);
+			this->children_nodes[c_index]->delete_potential_state(potential_state_indexes,
+																  explore_node);
 		}
 	}
-	this->end->reset_potential_state(potential_state_indexes, scope);
-}
-
-void SolutionNodeIfStart::clear_potential_state() {
-	this->network_inputs_potential_state_indexes.clear();
-
-	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-		this->children_score_networks[c_index]->remove_potentials();
-	}
+	this->end->delete_potential_state(potential_state_indexes, explore_node);
 }
 
 SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
@@ -232,13 +226,14 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 											bool* states_on,
 											vector<SolutionNode*>& loop_scopes,
 											vector<int>& loop_scope_counts,
-											bool is_first_time,
 											int& iter_explore_type,
 											SolutionNode*& iter_explore_node,
+											IterExplore*& iter_explore,
+											double& previous_score,
 											double* potential_state_vals,
 											bool* potential_states_on,
 											vector<NetworkHistory*>& network_historys,
-											vector<double>& guesses,
+											vector<vector<double>>& guesses,
 											vector<int>& explore_decisions,
 											vector<double>& explore_diffs,
 											vector<bool>& explore_loop_decisions,
@@ -248,107 +243,103 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 		display_file << this->node_index << endl;
 	}
 
-	if (iter_explore_type == EXPLORE_TYPE_NONE && is_first_time) {
-		if (randuni() < (2.0/this->average_unique_future_nodes)) {
-			if (rand()%2 == 0) {
-				if (!this->has_explored_state) {
-					if (this->explore_state_state == EXPLORE_STATE_STATE_LEARN) {
-						int rand_states = 1 + rand()%5;
-						for (int s_index = 0; s_index < rand_states; s_index++) {
-							potential_states_on[this->scope_potential_states[s_index]] = true;
-						}
-
-						iter_explore_node = this;
-						iter_explore_type = EXPLORE_TYPE_LEARN_STATE;
-					} else if (this->explore_state_state == EXPLORE_STATE_STATE_MEASURE) {
-						int rand_states = rand()%6;
-						for (int s_index = 0; s_index < rand_states; s_index++) {
-							potential_states_on[this->scope_potential_states[s_index]] = true;
-						}
-
-						iter_explore_node = this;
-						iter_explore_type = EXPLORE_TYPE_MEASURE_STATE;
+	if (iter_explore_type == EXPLORE_TYPE_NONE) {
+		if (randuni() < this->node_weight) {
+			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
+				vector<int> available_state;
+				for (int s_index = 0; s_index < this->solution->current_state_counter; s_index++) {
+					if (states_on[s_index]) {
+						available_state.push_back(s_index);
 					}
 				}
-			} else {
-				if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
-					geometric_distribution<int> seq_length_dist(0.2);
-					int seq_length;
 
-					vector<int> selectable_children;
-					for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-						if (this->children_on[c_index]) {
-							selectable_children.push_back(c_index);
-						}
+				vector<int> selectable_children;
+				for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+					if (this->children_on[c_index]) {
+						selectable_children.push_back(c_index);
 					}
+				}
+				int iter_child_index;
+				int random_index = -1 + rand()%((int)selectable_children.size()+1);
+				if (random_index == -1) {
+					iter_child_index = -1;
+				} else {
+					iter_child_index = selectable_children[random_index];
+				}
 
-					int random_index = -1 + rand()%((int)selectable_children.size()+1);
-					if (random_index == -1) {
-						this->explore_child_index = -1;
-					} else {
-						this->explore_child_index = selectable_children[random_index];
-					}
-					if (this->explore_child_index == -1) {
-						seq_length = seq_length_dist(generator);
-
-						this->explore_start_non_inclusive = this;
-						this->explore_start_inclusive = NULL;
-						this->explore_end_inclusive = NULL;
-						this->explore_end_non_inclusive = this->end;
-					} else {
-						vector<SolutionNode*> potential_inclusive_jump_ends;
-						vector<SolutionNode*> potential_non_inclusive_jump_ends;
-						potential_inclusive_jump_ends.push_back(this);
-						potential_non_inclusive_jump_ends.push_back(this->children_nodes[this->explore_child_index]);
-						find_potential_jumps(this->children_nodes[this->explore_child_index],
-											 potential_inclusive_jump_ends,
-											 potential_non_inclusive_jump_ends);
-
-						int random_index = rand()%(int)potential_inclusive_jump_ends.size();
-
-						if (this == potential_inclusive_jump_ends[random_index]) {
-							seq_length = 1 + seq_length_dist(generator);
-
-							this->explore_start_non_inclusive = this;
-							this->explore_start_inclusive = NULL;
-							this->explore_end_inclusive = NULL;
-							this->explore_end_non_inclusive = this->children_nodes[this->explore_child_index];
-						} else {
-							seq_length = seq_length_dist(generator);
-
-							this->explore_start_non_inclusive = this;
-							this->explore_start_inclusive = this->children_nodes[this->explore_child_index];
-							this->explore_end_inclusive = potential_inclusive_jump_ends[random_index];
-							this->explore_end_non_inclusive = potential_non_inclusive_jump_ends[random_index];
-						}
-					}
-
-					this->path_explore_type = PATH_EXPLORE_TYPE_JUMP;
-
-					try_path.clear();
-
-					normal_distribution<double> write_val_dist(0.0, 2.0);
+				geometric_distribution<int> seq_length_dist(0.2);
+				normal_distribution<double> write_val_dist(0.0, 2.0);
+				vector<Action> try_path;
+				if (iter_child_index == -1) {
+					int seq_length = seq_length_dist(generator);
 					for (int i = 0; i < seq_length; i++) {
 						Action a(write_val_dist(generator), rand()%3);
 						try_path.push_back(a);
 					}
 
-					if (rand()%2 == 0) {
-						this->path_target_type = PATH_TARGET_TYPE_GOOD;
-					} else {
-						this->path_target_type = PATH_TARGET_TYPE_BAD;
-					}
+					iter_explore = new IterExplore(
+						ITER_EXPLORE_TYPE_JUMP,
+						try_path,
+						this,
+						NULL,
+						NULL,
+						this->end,
+						available_state,
+						-1);
+				} else {
+					vector<SolutionNode*> potential_inclusive_jump_ends;
+					vector<SolutionNode*> potential_non_inclusive_jump_ends;
+					potential_inclusive_jump_ends.push_back(this);
+					potential_non_inclusive_jump_ends.push_back(this->children_nodes[iter_child_index]);
+					find_potential_jumps(this->children_nodes[iter_child_index],
+										 potential_inclusive_jump_ends,
+										 potential_non_inclusive_jump_ends);
 
-					iter_explore_node = this;
-					iter_explore_type = EXPLORE_TYPE_EXPLORE;
-					this->explore_path_used = false;
-				} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN) {
-					iter_explore_node = this;
-					iter_explore_type = EXPLORE_TYPE_LEARN_PATH;
-				} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE) {
-					iter_explore_node = this;
-					iter_explore_type = EXPLORE_TYPE_MEASURE_PATH;
+					int random_index = rand()%(int)potential_inclusive_jump_ends.size();
+
+					if (this == potential_inclusive_jump_ends[random_index]) {
+						int seq_length = 1 + seq_length_dist(generator);
+						for (int i = 0; i < seq_length; i++) {
+							Action a(write_val_dist(generator), rand()%3);
+							try_path.push_back(a);
+						}
+
+						iter_explore = new IterExplore(
+							ITER_EXPLORE_TYPE_JUMP,
+							try_path,
+							this,
+							NULL,
+							NULL,
+							this->children_nodes[iter_child_index],
+							available_state
+							iter_child_index);
+					} else {
+						int seq_length = seq_length_dist(generator);
+						for (int i = 0; i < seq_length; i++) {
+							Action a(write_val_dist(generator), rand()%3);
+							try_path.push_back(a);
+						}
+
+						iter_explore = new IterExplore(
+							ITER_EXPLORE_TYPE_JUMP,
+							try_path,
+							this,
+							this->children_nodes[iter_child_index],
+							potential_inclusive_jump_ends[random_index],
+							potential_non_inclusive_jump_ends[random_index],
+							available_state,
+							iter_child_index);
+					}
 				}
+
+				iter_explore_node = this;
+				iter_explore_type = EXPLORE_TYPE_EXPLORE;
+			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_JUMP) {
+				iter_explore_node = this;
+				iter_explore_type = EXPLORE_TYPE_LEARN_JUMP;
+			} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
+				iter_explore_node = this;
+				iter_explore_type = EXPLORE_TYPE_MEASURE_JUMP;
 			}
 		}
 	}
@@ -365,7 +356,6 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   best_index,
 								   save_for_display,
 								   display_file);
-		guesses.push_back(best_score);
 	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
 		activate_children_networks(problem,
 								   state_vals,
@@ -386,7 +376,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   best_index,
 								   save_for_display,
 								   display_file);
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_JUMP) {
 		activate_children_networks(problem,
 								   state_vals,
 								   states_on,
@@ -396,7 +386,17 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 								   best_index,
 								   save_for_display,
 								   display_file);
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
+		activate_children_networks(problem,
+								   state_vals,
+								   states_on,
+								   false,
+								   network_historys,
+								   best_score,
+								   best_index,
+								   save_for_display,
+								   display_file);
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP) {
 		activate_children_networks_with_potential(
 			problem,
 			state_vals,
@@ -409,20 +409,7 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 			best_index,
 			save_for_display,
 			display_file);
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
-		activate_children_networks(problem,
-								   state_vals,
-								   states_on,
-								   false,
-								   network_historys,
-								   best_score,
-								   best_index,
-								   save_for_display,
-								   display_file);
-		if (iter_explore_node != this) {
-			guesses.push_back(best_score);
-		}
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP) {
 		activate_children_networks_with_potential(
 			problem,
 			state_vals,
@@ -435,30 +422,27 @@ SolutionNode* SolutionNodeIfStart::activate(Problem& problem,
 			best_index,
 			save_for_display,
 			display_file);
-		guesses.push_back(best_score);
 	}
-
-	for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
-		states_on[this->scope_states_on[o_index]] = true;
-		state_vals[this->scope_states_on[o_index]] = 0.0;
-	}
+	vector<double> new_guess_segment;
+	new_guess_segment.push_back(best_score);
+	guesses.push_back(new_guess_segment);
 
 	SolutionNode* explore_node = NULL;
 	if (iter_explore_node == this) {
-		explore_node = explore(best_score,
-							   problem,
-							   state_vals,
-							   states_on,
-							   loop_scopes,
-							   loop_scope_counts,
-							   iter_explore_type,
-							   iter_explore_node,
-							   potential_state_vals,
-							   potential_states_on,
-							   network_historys,
-							   guesses,
-							   explore_decisions,
-							   explore_diffs);
+		explore_node = explore_activate(problem,
+										state_vals,
+										states_on,
+										loop_scopes,
+										loop_scope_counts,
+										iter_explore_type,
+										iter_explore_node,
+										iter_explore,
+										previous_predicted_score,
+										potential_state_vals,
+										potential_states_on,
+										network_historys,
+										explore_decisions,
+										explore_diffs);
 	}
 
 	if (explore_node != NULL) {
@@ -480,39 +464,42 @@ void SolutionNodeIfStart::backprop(double score,
 								   vector<int>& explore_decisions,
 								   vector<double>& explore_diffs,
 								   vector<bool>& explore_loop_decisions) {
+	explore_backprop(score,
+					 misguess,
+					 state_errors,
+					 states_on,
+					 iter_explore_node,
+					 potential_state_errors,
+					 potential_states_on,
+					 network_historys,
+					 explore_decisions,
+					 explore_diffs);
+
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
-		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
-			states_on[this->scope_states_on[o_index]] = false;
-		}
+		backprop_children_networks(score,
+								   state_errors,
+								   states_on,
+								   network_historys);
 	} else if (iter_explore_type == EXPLORE_TYPE_NONE) {
 		// should not happen
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		// should not happen
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
-		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
-			states_on[this->scope_states_on[o_index]] = false;
-		}
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-		for (int o_index = 0; o_index < (int)this->scope_states_on.size(); o_index++) {
-			states_on[this->scope_states_on[o_index]] = false;
-		}
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_JUMP) {
+		backprop_children_networks_errors_with_no_weight_change(
+			score,
+			state_errors,
+			states_on,
+			network_historys);
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
 		// do nothing
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP) {
+		backprop_children_networks_with_potential(
+			score,
+			potential_state_errors,
+			network_historys);
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP) {
 		// do nothing
 	}
-
-	backprop_explore_and_score_network_helper(score,
-											  misguess,
-											  state_errors,
-											  states_on,
-											  iter_explore_type,
-											  iter_explore_node,
-											  potential_state_errors,
-											  potential_states_on,
-											  network_historys,
-											  explore_decisions,
-											  explore_diffs);
 }
 
 void SolutionNodeIfStart::save(ofstream& save_file) {
@@ -546,10 +533,6 @@ void SolutionNodeIfStart::save_for_display(ofstream& save_file) {
 			if (this->children_on[c_index]) {
 				save_file << this->children_nodes[c_index]->node_index << endl;
 			}
-		}
-		save_file << this->scope_states_on.size() << endl;
-		for (int s_index = 0; s_index < (int)this->scope_states_on.size(); s_index++) {
-			save_file << this->scope_states_on[s_index] << endl;
 		}
 	}
 }

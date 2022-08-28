@@ -370,51 +370,17 @@ void Layer::output_extend_with_potential(int potential_index) {
 	}
 }
 
-void Layer::reset_potential_input_layer(int potential_index) {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		int layer_size = (int)this->input_layers[1+potential_index]->acti_vals.size();
-		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			this->weights[n_index][1+potential_index][ln_index] = (randuni()-0.5)*0.02;
-			this->weight_updates[n_index][1+potential_index][ln_index] = 0.0;
-			this->prev_weight_updates[n_index][1+potential_index][ln_index] = 0.0;
-		}
-	}
-}
+void Layer::delete_potential_input_layer(int potential_index) {
+	this->input_layers.erase(
+		this->input_layers.begin() + 1 + potential_index);
 
-void Layer::reset_weights() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				this->weights[n_index][l_index][ln_index] = (randuni()-0.5)*0.02;
-				this->weight_updates[n_index][l_index][ln_index] = 0.0;
-				this->prev_weight_updates[n_index][l_index][ln_index] = 0.0;
-			}
-		}
-		this->constants[n_index] = (randuni()-0.5)*0.02;
-		this->constant_updates[n_index] = 0.0;
-		this->prev_constant_updates[n_index] = 0.0;
-	}
-}
-
-void Layer::remove_potential_input_layers() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].erase(this->weights[n_index].begin()+1,
-			this->weights[n_index].end());
-		this->weight_updates[n_index].erase(this->weight_updates[n_index].begin()+1,
-			this->weight_updates[n_index].end());
-		this->prev_weight_updates[n_index].erase(this->prev_weight_updates[n_index].begin()+1,
-			this->prev_weight_updates[n_index].end());
-	}
-
-	this->input_layers.erase(this->input_layers.begin()+1, this->input_layers.end());
-}
-
-void Layer::hidden_increment_input() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][0].push_back((randuni()-0.5)*0.02);
-		this->weight_updates[n_index][0].push_back(0.0);
-		this->prev_weight_updates[n_index][0].push_back(0.0);
+		this->weights[n_index].erase(
+			this->weights[n_index].begin() + 1 + potential_index);
+		this->weight_updates[n_index].erase(
+			this->weight_updates[n_index].begin() + 1 + potential_index);
+		this->prev_weight_updates[n_index].erase(
+			this->prev_weight_updates[n_index].begin() + 1 + potential_index);
 	}
 }
 

@@ -7,7 +7,6 @@ const int EXPLORE_ROOT = 0;
 const int EXPLORE_NEW_JUMP = 1;
 const int EXPLORE_APPEND_JUMP = 2;
 const int EXPLORE_LOOP = 3;
-const int EXPLORE_STATE = 4;
 
 class Explore;
 class ExploreNode {

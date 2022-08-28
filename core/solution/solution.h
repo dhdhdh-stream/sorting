@@ -21,6 +21,9 @@ public:
 	std::mutex state_mtx;
 
 	int current_potential_state_counter;
+	std::mutex potential_state_mtx;
+
+	double average_score;
 
 	std::mutex display_mtx;
 

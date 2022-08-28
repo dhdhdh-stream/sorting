@@ -7,10 +7,11 @@
 class SolutionNodeIfEnd;
 class SolutionNodeIfStart : public SolutionNode {
 public:
-	std::vector<int> scope_states_on;
-
+	std::vector<int> children_networks_inputs_state_indexes;
+	std::vector<int> children_networks_inputs_potential_state_indexes;
 	std::vector<SolutionNode*> children_nodes;
 	std::vector<Network*> children_score_networks;
+	std::vector<Network*> children_certainty_networks;
 
 	std::vector<bool> children_on;
 
@@ -31,25 +32,26 @@ public:
 	void reset() override;
 
 	void add_potential_state(std::vector<int> potential_state_indexes,
-							 SolutionNode* scope) override;
+							 SolutionNode* explore_node) override;
 	void extend_with_potential_state(std::vector<int> potential_state_indexes,
 									 std::vector<int> new_state_indexes,
-									 SolutionNode* scope) override;
-	void reset_potential_state(std::vector<int> potential_state_indexes,
-							   SolutionNode* scope) override;
+									 SolutionNode* explore_node) override;
+	void delete_potential_state(std::vector<int> potential_state_indexes,
+								SolutionNode* explore_node) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
 						   std::vector<SolutionNode*>& loop_scopes,
 						   std::vector<int>& loop_scope_counts,
-						   bool is_first_time,
 						   int& iter_explore_type,
 						   SolutionNode*& iter_explore_node,
+						   IterExplore*& iter_explore,
+						   double& previous_predicted_score,
 						   double* potential_state_vals,
 						   bool* potential_states_on,
 						   std::vector<NetworkHistory*>& network_historys,
-						   std::vector<double>& guesses,
+						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
 						   std::vector<double>& explore_diffs,
 						   std::vector<bool>& explore_loop_decisions,
@@ -67,8 +69,6 @@ public:
 				  std::vector<int>& explore_decisions,
 				  std::vector<double>& explore_diffs,
 				  std::vector<bool>& explore_loop_decisions) override;
-
-	void clear_potential_state() override;
 
 	void save(std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
