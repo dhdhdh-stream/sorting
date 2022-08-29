@@ -1,27 +1,13 @@
-#ifndef SOLUTION_NODE_LOOP_START_H
-#define SOLUTION_NODE_LOOP_START_H
+#ifndef SOLUTION_NODE_END_H
+#define SOLUTION_NODE_END_H
 
-#include "solution_node.h"
-#include "solution_node_loop_end.h"
-
-class SolutionNodeLoopEnd;
-class SolutionNodeLoopStart : public SolutionNode {
+class SolutionNodeEnd : public SolutionNode {
 public:
-	std::vector<int> loop_states;
-
-	SolutionNode* next;
-
-	SolutionNode* previous;
-
-	SolutionNodeLoopEnd* end;
-
-	SolutionNodeLoopStart(Solution* solution);
-	SolutionNodeLoopStart(SolutionNode* parent,
-						  int node_index);
-	SolutionNodeLoopStart(Solution* solution,
-						  int node_index,
-						  std::ifstream& save_file);
-	~SolutionNodeLoopStart();
+	SolutionNodeEnd(Solution* solution);
+	SolutionNodeEnd(Solution* solution,
+					int node_index,
+					std::ifstream& save_file);
+	~SolutionNodeEnd();
 
 	void reset() override;
 
@@ -42,7 +28,7 @@ public:
 						   SolutionNode*& iter_explore_node,
 						   IterExplore*& iter_explore,
 						   double* potential_state_vals,
-						   bool* potential_states_on,
+						   std::vector<int>& potential_state_indexes,
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
@@ -56,7 +42,7 @@ public:
 				  int& iter_explore_type,
 				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
-				  bool* potential_states_on,
+				  std::vector<int>& potential_state_indexes,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
 				  std::vector<bool>& explore_loop_decisions) override;
@@ -65,4 +51,4 @@ public:
 	void save_for_display(std::ofstream& save_file) override;
 };
 
-#endif /* SOLUTION_NODE_LOOP_START_H */
+#endif /* SOLUTION_NODE_END_H */

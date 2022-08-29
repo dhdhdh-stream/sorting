@@ -11,7 +11,7 @@ public:
 
 	SolutionNodeIfStart* start;
 
-	SolutionNodeIfEnd(SolutionNode* parent,
+	SolutionNodeIfEnd(Solution* solution,
 					  int node_index);
 	SolutionNodeIfEnd(Solution* solution,
 					  int node_index,
@@ -36,13 +36,11 @@ public:
 						   int& iter_explore_type,
 						   SolutionNode*& iter_explore_node,
 						   IterExplore*& iter_explore,
-						   double& previous_predicted_score,
 						   double* potential_state_vals,
-						   bool* potential_states_on,
+						   std::vector<int>& potential_state_indexes,
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<double>& explore_diffs,
 						   std::vector<bool>& explore_loop_decisions,
 						   bool save_for_display,
 						   std::ofstream& display_file) override;
@@ -53,10 +51,9 @@ public:
 				  int& iter_explore_type,
 				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
-				  bool* potential_states_on,
+				  std::vector<int>& potential_state_indexes,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
-				  std::vector<double>& explore_diffs,
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void save(std::ofstream& save_file) override;

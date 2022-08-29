@@ -22,8 +22,7 @@ public:
 	int explore_child_index;
 
 	SolutionNodeIfStart(SolutionNode* parent,
-						int node_index,
-						Network* original_path_score_network);
+						int node_index);
 	SolutionNodeIfStart(Solution* solution,
 						int node_index,
 						std::ifstream& save_file);
@@ -47,13 +46,11 @@ public:
 						   int& iter_explore_type,
 						   SolutionNode*& iter_explore_node,
 						   IterExplore*& iter_explore,
-						   double& previous_predicted_score,
 						   double* potential_state_vals,
-						   bool* potential_states_on,
+						   std::vector<int>& potential_state_indexes,
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<double>& explore_diffs,
 						   std::vector<bool>& explore_loop_decisions,
 						   bool save_for_display,
 						   std::ofstream& display_file) override;
@@ -64,10 +61,9 @@ public:
 				  int& iter_explore_type,
 				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
-				  bool* potential_states_on,
+				  std::vector<int>& potential_state_indexes,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
-				  std::vector<double>& explore_diffs,
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void save(std::ofstream& save_file) override;
@@ -87,7 +83,7 @@ public:
 		double* state_vals,
 		bool* states_on,
 		double* potential_state_vals,
-		bool* potential_states_on,
+		std::vector<int>& potential_state_indexes,
 		bool backprop,
 		std::vector<NetworkHistory*>& network_historys,
 		double& best_score,
@@ -96,18 +92,21 @@ public:
 		std::ofstream& display_file);
 
 	void backprop_children_networks(double score,
+									double misguess,
 									double* state_errors,
 									bool* states_on,
 									std::vector<NetworkHistory*>& network_historys);
 	void backprop_children_networks_errors_with_no_weight_change(
 		double score,
+		double misguess,
 		double* state_errors,
 		bool* states_on,
 		std::vector<NetworkHistory*>& network_historys);
 	void backprop_children_networks_with_potential(double score,
+												   double misguess,
 												   double* potential_state_errors,
 												   std::vector<NetworkHistory*>& network_historys);
-	// don't need potential_states_on because information in network_history
+	// don't need potential_states_indexes because information in network_history
 };
 
 #endif /* SOLUTION_NODE_IF_START_H */

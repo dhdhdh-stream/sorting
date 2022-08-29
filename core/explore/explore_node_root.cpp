@@ -67,17 +67,12 @@ ExploreNodeRoot::~ExploreNodeRoot() {
 }
 
 void ExploreNodeRoot::process() {
-	SolutionNodeLoopStart* overall_start_node = (SolutionNodeLoopStart*)this->explore->solution->nodes[0];
-	overall_start_node->node_is_on = true;
-	SolutionNodeLoopEnd* overall_end_node = (SolutionNodeLoopEnd*)this->explore->solution->nodes[1];
-	overall_end_node->node_is_on = true;
+	SolutionNodeStart* start_node = (SolutionNodeStart*)this->explore->solution->nodes[0];
+	start_node->node_is_on = true;
+	SolutionNodeEnd* end_node = (SolutionNodeEnd*)this->explore->solution->nodes[1];
+	end_node->node_is_on = true;
 
-	overall_start_node->next = overall_end_node;
-	overall_start_node->previous = NULL;
-	overall_start_node->end = overall_end_node;
-
-	overall_end_node->next = NULL;
-	overall_end_node->start = overall_start_node;
+	start_node->next = end_node;
 }
 
 void ExploreNodeRoot::save(ofstream& save_file) {

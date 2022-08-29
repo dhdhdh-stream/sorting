@@ -30,13 +30,11 @@ SolutionNode* SolutionNode::explore_activate(
 		SolutionNode*& iter_explore_node,
 		IterExplore*& iter_explore,
 		bool is_first_explore,
-		double& previous_predicted_score,
 		double* potential_state_vals,
 		vector<int>& potential_state_indexes,
 		vector<NetworkHistory*>& network_historys,
 		vector<double>& guesses,
-		vector<int>& explore_decisions,
-		vector<double>& explore_diffs) {
+		vector<int>& explore_decisions) {
 	if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
 		if (iter_explore->iter_explore_type == ITER_EXPLORE_TYPE_JUMP) {
 			if (is_first_explore || rand()%20 == 0) {
@@ -75,12 +73,13 @@ SolutionNode* SolutionNode::explore_activate(
 			}
 		}
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_JUMP) {
-		if (is_first_explore || rand()%20 == 0) {
-			activate_explore_if_network(problem,
-										state_vals,
-										states_on,
-										true,
-										network_historys);
+		if ((is_first_explore && rand()%20 != 0)
+				|| rand()%20 == 0) {
+			activate_explore_jump_network(problem,
+										  state_vals,
+										  states_on,
+										  true,
+										  network_historys);
 
 			if (this->explore_path.size() > 0) {
 				return this->explore_path[0];
@@ -88,17 +87,28 @@ SolutionNode* SolutionNode::explore_activate(
 				return this->explore_end_non_inclusive;
 			}
 		} else {
+			activate_explore_no_jump_network(problem,
+											 state_vals,
+											 states_on,
+											 true,
+											 network_historys);
+
 			return NULL;
 		}
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
-		double explore_score = activate_explore_if_network(
+		double explore_score = activate_explore_jump_network(
 			problem,
 			state_vals,
 			states_on,
 			false,
 			network_historys);
-		if (explore_score > previous_predicted_score) {
-			explore_diffs.push_back(explore_score - previous_predicted_score);
+		double no_explore_score = activate_explore_no_jump_network(
+			problem,
+			state_vals,
+			states_on,
+			false,
+			network_historys);
+		if (explore_score > no_explore_score) {
 			if (rand()%2 == 0) {
 				explore_decisions.push_back(EXPLORE_DECISION_TYPE_EXPLORE);
 				if (this->explore_path.size() > 0) {
@@ -111,7 +121,6 @@ SolutionNode* SolutionNode::explore_activate(
 				return NULL;
 			}
 		} else {
-			explore_diffs.push_back(0.0);
 			explore_decisions.push_back(EXPLORE_DECISION_TYPE_N_A);
 			return NULL;
 		}
@@ -151,7 +160,7 @@ SolutionNode* SolutionNode::explore_activate(
 												 true,
 												 network_historys);
 
-				for (int ps_index = 0; ps_index < 5; ps_index++) {
+				for (int ps_index = 0; ps_index < 2; ps_index++) {
 					potential_state_vals[ps_index] = 0.0;
 				}
 				potential_state_indexes = this->explore_loop_states;
@@ -174,7 +183,6 @@ SolutionNode* SolutionNode::explore_activate(
 	} else {
 		// this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_LOOP
 		if (loop_scopes.back() == NULL) {
-			explore_diffs.push_back(0.0);
 			explore_decisions.push_back(EXPLORE_DECISION_TYPE_N_A);
 
 			if (loop_scope_counts.back() >= 20) {
@@ -232,15 +240,13 @@ SolutionNode* SolutionNode::explore_activate(
 				false,
 				network_historys);
 
-			if (halt_score > no_halt_score || previous_predicted_score > no_halt_score) {
-				explore_diffs.push_back(0.0);
+			if (halt_score > no_halt_score) {
 				explore_decisions.push_back(EXPLORE_DECISION_TYPE_N_A);
 
 				return NULL;
 			} else {
-				explore_diffs.push_back(no_halt_score - previous_predicted_score);
 				if (rand()%2 == 0) {
-					for (int ps_index = 0; ps_index < 5; ps_index++) {
+					for (int ps_index = 0; ps_index < 2; ps_index++) {
 						potential_state_vals[ps_index] = 0.0;
 					}
 					potential_state_indexes = this->explore_loop_states;
@@ -266,40 +272,43 @@ void SolutionNode::explore_backprop(double score,
 									SolutionNode*& iter_explore_node,
 									double* potential_state_errors,
 									vector<NetworkHistory*>& network_historys,
-									vector<int>& explore_decisions,
-									vector<double>& explore_diffs) {
+									vector<int>& explore_decisions) {
 	if (iter_explore_node == this) {
 		if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
 			// do nothing
 		} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_JUMP) {
 			NetworkHistory* network_history = network_historys.back();
-			if (network_history->network == this->explore_if_network) {
-				backprop_explore_if_network(score,
-											state_errors,
-											states_on,
-											network_historys);
+			if (network_history->network == this->explore_jump_network) {
+				backprop_explore_jump_network(score,
+											  state_errors,
+											  states_on,
+											  network_historys);
+			} else {
+				backprop_explore_no_jump_network(score,
+												 state_errors,
+												 states_on,
+												 network_historys);
 			}
 		} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
 			if (explore_decisions.back() == EXPLORE_DECISION_TYPE_EXPLORE) {
 				this->explore_path_measure_count++;
 				if (score == 1.0) {
-					this->explore_explore_is_good += explore_diffs.back();
+					this->explore_explore_is_good += 1;
 				} else {
-					this->explore_explore_is_bad += explore_diffs.back();
+					this->explore_explore_is_bad += 1;
 				}
 				this->explore_explore_misguess += misguess;
 			} else if (explore_decisions.back() == EXPLORE_DECISION_TYPE_NO_EXPLORE) {
 				this->explore_path_measure_count++;
 				if (score == 1.0) {
-					this->explore_no_explore_is_good += explore_diffs.back();
+					this->explore_no_explore_is_good += 1;
 				} else {
-					this->explore_no_explore_is_bad += explore_diffs.back();
+					this->explore_no_explore_is_bad += 1;
 				}
 				this->explore_no_explore_misguess += misguess;
 			}
 
 			explore_decisions.pop_back();
-			explore_diffs.pop_back();
 		} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_LOOP) {
 			NetworkHistory* network_history = network_historys.back();
 			if (network_history->network == this->explore_halt_network) {
@@ -326,23 +335,22 @@ void SolutionNode::explore_backprop(double score,
 			if (explore_decisions.back() == EXPLORE_DECISION_TYPE_EXPLORE) {
 				this->explore_path_measure_count++;
 				if (score == 1.0) {
-					this->explore_explore_is_good += explore_diffs.back();
+					this->explore_explore_is_good += 1;
 				} else {
-					this->explore_explore_is_bad += explore_diffs.back();
+					this->explore_explore_is_bad += 1;
 				}
 				this->explore_explore_misguess += misguess;
 			} else if (explore_decisions.back() == EXPLORE_DECISION_TYPE_NO_EXPLORE) {
 				this->explore_path_measure_count++;
 				if (score == 1.0) {
-					this->explore_no_explore_is_good += explore_diffs.back();
+					this->explore_no_explore_is_good += 1;
 				} else {
-					this->explore_no_explore_is_bad += explore_diffs.back();
+					this->explore_no_explore_is_bad += 1;
 				}
 				this->explore_no_explore_misguess += misguess;
 			}
 
 			explore_decisions.pop_back();
-			explore_diffs.pop_back();
 		}
 	}
 }
@@ -359,6 +367,7 @@ void SolutionNode::explore_increment(double score,
 					cout << endl;
 
 					SolutionNodeAction* curr_node = new SolutionNodeAction(
+						this->solution,
 						-1,
 						iter_explore->try_path[0],
 						iter_explore->available_state);
@@ -366,6 +375,7 @@ void SolutionNode::explore_increment(double score,
 					this->explore_path.push_back(curr_node);
 					for (int a_index = 1; a_index < (int)iter_explore->try_path.size(); a_index++) {
 						SolutionNodeAction* next_node = new SolutionNodeAction(
+							this->solution,
 							-1,
 							iter_explore->try_path[a_index],
 							iter_explore->available_state);
@@ -392,9 +402,12 @@ void SolutionNode::explore_increment(double score,
 
 				this->explore_network_inputs_state_indexes = iter_explore->available_state;
 				int input_size = 1 + (int)iter_explore->available_state.size();
-				this->explore_if_network = new Network(input_size,
-													   4*input_size,
-													   1);
+				this->explore_jump_network = new Network(input_size,
+														 4*input_size,
+														 1);
+				this->explore_no_jump_network = new Network(input_size,
+															4*input_size,
+															1);
 
 				this->explore_path_state = EXPLORE_PATH_STATE_LEARN_JUMP;
 				this->explore_path_iter_index = 0;
@@ -407,8 +420,7 @@ void SolutionNode::explore_increment(double score,
 				this->explore_end_non_inclusive = iter_explore->iter_end_non_inclusive;
 
 				this->solution->potential_state_mtx.lock();
-				// TODO: clear explore_loop_states
-				for (int i = 0; i < 5; i++) {
+				for (int i = 0; i < 2; i++) {
 					this->explore_loop_states.push_back(this->solution->current_potential_state_counter);
 					this->solution->current_potential_state_counter++;
 				}
@@ -417,7 +429,7 @@ void SolutionNode::explore_increment(double score,
 				this->explore_start_inclusive->add_potential_state(this->explore_loop_states, this);
 
 				this->explore_network_inputs_state_indexes = iter_explore->available_state;
-				int input_size = 1 + (int)iter_explore->available_state.size() + 5;
+				int input_size = 1 + (int)iter_explore->available_state.size() + 2;
 				this->explore_halt_network = new Network(input_size,
 														 4*input_size,
 														 1);
@@ -475,8 +487,11 @@ void SolutionNode::explore_increment(double score,
 						this->solution->nodes_mtx.unlock();
 
 						this_if_start->children_nodes.push_back(NULL);
-						this_if_start->children_score_networks.push_back(this->explore_if_network);
-						this->explore_if_network = NULL;
+						// TODO: add certainty network and pad explore networks
+						this_if_start->children_score_networks.push_back(this->explore_jump_network);
+						this->explore_jump_network = NULL;
+						delete this->explore_no_jump_network;
+						this->explore_no_jump_network = NULL;
 						this_if_start->children_on.push_back(false);
 
 						ExploreNodeAppendJump* new_explore_node = new ExploreNodeAppendJump(
@@ -494,8 +509,7 @@ void SolutionNode::explore_increment(double score,
 						int new_start_node_index = (int)this->solution->nodes.size();
 						SolutionNodeIfStart* new_start_node = new SolutionNodeIfStart(
 							this,
-							new_start_node_index,
-							this_if_start->children_score_networks[this_if_start->explore_child_index]);
+							new_start_node_index);
 						// takes and clears explore networks
 						this->solution->nodes.push_back(new_start_node);
 
@@ -512,7 +526,7 @@ void SolutionNode::explore_increment(double score,
 						this->explore_path.clear();
 
 						int new_end_node_index = (int)this->solution->nodes.size();
-						SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this, new_end_node_index);
+						SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this->solution, new_end_node_index);
 						this->solution->nodes.push_back(new_end_node);
 
 						this->solution->nodes_mtx.unlock();
@@ -550,8 +564,7 @@ void SolutionNode::explore_increment(double score,
 					int new_start_node_index = (int)this->solution->nodes.size();
 					SolutionNodeIfStart* new_start_node = new SolutionNodeIfStart(
 						this,
-						new_start_node_index,
-						this->score_network);
+						new_start_node_index);
 					// takes and clears explore networks
 					this->solution->nodes.push_back(new_start_node);
 
@@ -568,7 +581,7 @@ void SolutionNode::explore_increment(double score,
 					this->explore_path.clear();
 
 					int new_end_node_index = (int)this->solution->nodes.size();
-					SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this, new_end_node_index);
+					SolutionNodeIfEnd* new_end_node = new SolutionNodeIfEnd(this->solution, new_end_node_index);
 					this->solution->nodes.push_back(new_end_node);
 
 					this->solution->nodes_mtx.unlock();
@@ -601,8 +614,10 @@ void SolutionNode::explore_increment(double score,
 					cout << "new ExploreNodeNewJump" << endl;
 				}
 			} else {
-				delete this->explore_if_network;
-				this->explore_if_network = NULL;
+				delete this->explore_jump_network;
+				this->explore_jump_network = NULL;
+				delete this->explore_no_jump_network;
+				this->explore_no_jump_network = NULL;
 
 				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
 					delete this->explore_path[n_index];
@@ -705,9 +720,13 @@ void SolutionNode::clear_explore() {
 	}
 	this->explore_path.clear();
 
-	if (this->explore_if_network != NULL) {
-		delete this->explore_if_network;
-		this->explore_if_network = NULL;
+	if (this->explore_jump_network != NULL) {
+		delete this->explore_jump_network;
+		this->explore_jump_network = NULL;
+	}
+	if (this->explore_no_jump_network != NULL) {
+		delete this->explore_no_jump_network;
+		this->explore_no_jump_network = NULL;
 	}
 	if (this->explore_halt_network != NULL) {
 		delete this->explore_halt_network;
@@ -723,11 +742,11 @@ void SolutionNode::update_node_weight(double new_node_weight) {
 	this->node_weight = 0.9999*this->node_weight + 0.0001*new_node_weight;
 }
 
-double SolutionNode::activate_explore_if_network(Problem& problem,
-												 double* state_vals,
-												 bool* states_on,
-												 bool backprop,
-												 vector<NetworkHistory*>& network_historys) {
+double SolutionNode::activate_explore_jump_network(Problem& problem,
+												   double* state_vals,
+												   bool* states_on,
+												   bool backprop,
+												   vector<NetworkHistory*>& network_historys) {
 	vector<double> explore_network_inputs;
 	double curr_observations = problem.get_observation();
 	explore_network_inputs.push_back(curr_observations);
@@ -741,59 +760,135 @@ double SolutionNode::activate_explore_if_network(Problem& problem,
 
 	double score;
 	if (backprop) {
-		this->explore_if_network->mtx.lock();
-		this->explore_if_network->activate(explore_network_inputs, network_historys);
-		score = this->explore_if_network->output->acti_vals[0];
-		this->explore_if_network->mtx.unlock();
+		this->explore_jump_network->mtx.lock();
+		this->explore_jump_network->activate(explore_network_inputs, network_historys);
+		score = this->explore_jump_network->output->acti_vals[0];
+		this->explore_jump_network->mtx.unlock();
 	} else {
-		this->explore_if_network->mtx.lock();
-		this->explore_if_network->activate(explore_network_inputs);
-		score = this->explore_if_network->output->acti_vals[0];
-		this->explore_if_network->mtx.unlock();
+		this->explore_jump_network->mtx.lock();
+		this->explore_jump_network->activate(explore_network_inputs);
+		score = this->explore_jump_network->output->acti_vals[0];
+		this->explore_jump_network->mtx.unlock();
 	}
 
 	return score;
 }
 
-void SolutionNode::backprop_explore_if_network(double score,
-											   double* state_errors,
-											   bool* states_on,
-											   vector<NetworkHistory*>& network_historys) {
+void SolutionNode::backprop_explore_jump_network(double score,
+												 double* state_errors,
+												 bool* states_on,
+												 vector<NetworkHistory*>& network_historys) {
 	NetworkHistory* network_history = network_historys.back();
 
-	this->explore_if_network->mtx.lock();
+	this->explore_jump_network->mtx.lock();
 
-	if (network_history->network != this->explore_if_network) {
-		cout << "ERROR: explore_if_network backprop mismatch" << endl;
+	if (network_history->network != this->explore_jump_network) {
+		cout << "ERROR: explore_jump_network backprop mismatch" << endl;
 	}
 
 	network_history->reset_weights();
 
 	vector<double> explore_network_errors;
 	if (score == 1.0) {
-		if (this->explore_if_network->output->acti_vals[0] < 1.0) {
-			explore_network_errors.push_back(1.0 - this->explore_if_network->output->acti_vals[0]);
+		if (this->explore_jump_network->output->acti_vals[0] < 1.0) {
+			explore_network_errors.push_back(1.0 - this->explore_jump_network->output->acti_vals[0]);
 		} else {
 			explore_network_errors.push_back(0.0);
 		}
 	} else {
-		if (this->explore_if_network->output->acti_vals[0] > 0.0) {
-			explore_network_errors.push_back(0.0 - this->explore_if_network->output->acti_vals[0]);
+		if (this->explore_jump_network->output->acti_vals[0] > 0.0) {
+			explore_network_errors.push_back(0.0 - this->explore_jump_network->output->acti_vals[0]);
 		} else {
 			explore_network_errors.push_back(0.0);
 		}
 	}
-	this->explore_if_network->backprop(explore_network_errors);
+	this->explore_jump_network->backprop(explore_network_errors);
 
 	for (int i_index = 0; i_index < (int)this->explore_network_inputs_state_indexes.size(); i_index++) {
 		if (states_on[this->explore_network_inputs_state_indexes[i_index]]) {
 			state_errors[this->explore_network_inputs_state_indexes[i_index]] += \
-				this->explore_if_network->input->errors[1+i_index];
+				this->explore_jump_network->input->errors[1+i_index];
 		}
-		this->explore_if_network->input->errors[1+i_index] = 0.0;
+		this->explore_jump_network->input->errors[1+i_index] = 0.0;
 	}
 
-	this->explore_if_network->mtx.unlock();
+	this->explore_jump_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
+}
+
+double SolutionNode::activate_explore_no_jump_network(Problem& problem,
+													  double* state_vals,
+													  bool* states_on,
+													  bool backprop,
+													  vector<NetworkHistory*>& network_historys) {
+	vector<double> explore_network_inputs;
+	double curr_observations = problem.get_observation();
+	explore_network_inputs.push_back(curr_observations);
+	for (int i_index = 0; i_index < (int)this->explore_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->explore_network_inputs_state_indexes[i_index]]) {
+			explore_network_inputs.push_back(state_vals[this->explore_network_inputs_state_indexes[i_index]]);
+		} else {
+			explore_network_inputs.push_back(0.0);
+		}
+	}
+
+	double score;
+	if (backprop) {
+		this->explore_no_jump_network->mtx.lock();
+		this->explore_no_jump_network->activate(explore_network_inputs, network_historys);
+		score = this->explore_no_jump_network->output->acti_vals[0];
+		this->explore_no_jump_network->mtx.unlock();
+	} else {
+		this->explore_no_jump_network->mtx.lock();
+		this->explore_no_jump_network->activate(explore_network_inputs);
+		score = this->explore_no_jump_network->output->acti_vals[0];
+		this->explore_no_jump_network->mtx.unlock();
+	}
+
+	return score;
+}
+
+void SolutionNode::backprop_explore_no_jump_network(double score,
+													double* state_errors,
+													bool* states_on,
+													vector<NetworkHistory*>& network_historys) {
+	NetworkHistory* network_history = network_historys.back();
+
+	this->explore_no_jump_network->mtx.lock();
+
+	if (network_history->network != this->explore_no_jump_network) {
+		cout << "ERROR: explore_no_jump_network backprop mismatch" << endl;
+	}
+
+	network_history->reset_weights();
+
+	vector<double> explore_network_errors;
+	if (score == 1.0) {
+		if (this->explore_no_jump_network->output->acti_vals[0] < 1.0) {
+			explore_network_errors.push_back(1.0 - this->explore_no_jump_network->output->acti_vals[0]);
+		} else {
+			explore_network_errors.push_back(0.0);
+		}
+	} else {
+		if (this->explore_no_jump_network->output->acti_vals[0] > 0.0) {
+			explore_network_errors.push_back(0.0 - this->explore_no_jump_network->output->acti_vals[0]);
+		} else {
+			explore_network_errors.push_back(0.0);
+		}
+	}
+	this->explore_no_jump_network->backprop(explore_network_errors);
+
+	for (int i_index = 0; i_index < (int)this->explore_network_inputs_state_indexes.size(); i_index++) {
+		if (states_on[this->explore_network_inputs_state_indexes[i_index]]) {
+			state_errors[this->explore_network_inputs_state_indexes[i_index]] += \
+				this->explore_no_jump_network->input->errors[1+i_index];
+		}
+		this->explore_no_jump_network->input->errors[1+i_index] = 0.0;
+	}
+
+	this->explore_no_jump_network->mtx.unlock();
 
 	delete network_history;
 	network_historys.pop_back();
@@ -815,7 +910,7 @@ double SolutionNode::activate_explore_halt_network(Problem& problem,
 			explore_network_inputs.push_back(0.0);
 		}
 	}
-	for (int ps_index = 0; ps_index < 5; ps_index++) {
+	for (int ps_index = 0; ps_index < 2; ps_index++) {
 		explore_network_inputs.push_back([potential_state_vals[ps_index]]);
 	}
 
@@ -864,7 +959,7 @@ void SolutionNode::backprop_explore_halt_network(double score,
 	}
 	this->explore_halt_network->backprop(explore_network_errors);
 
-	for (int ps_index = 0; ps_index < 5; ps_index++) {
+	for (int ps_index = 0; ps_index < 2; ps_index++) {
 		potential_state_errors[ps_index] += this->explore_halt_network->input->errors[
 			1 + (int)this->explore_network_inputs.size() + ps_index];
 		this->explore_halt_network->input->errors[
@@ -893,7 +988,7 @@ double SolutionNode::activate_explore_no_halt_network(Problem& problem,
 			explore_network_inputs.push_back(0.0);
 		}
 	}
-	for (int ps_index = 0; ps_index < 5; ps_index++) {
+	for (int ps_index = 0; ps_index < 2; ps_index++) {
 		explore_network_inputs.push_back([potential_state_vals[ps_index]]);
 	}
 
@@ -942,7 +1037,7 @@ void SolutionNode::backprop_explore_no_halt_network(double score,
 	}
 	this->explore_no_halt_network->backprop(explore_network_errors);
 
-	for (int ps_index = 0; ps_index < 5; ps_index++) {
+	for (int ps_index = 0; ps_index < 2; ps_index++) {
 		potential_state_errors[ps_index] += this->explore_no_halt_network->input->errors[
 			1 + (int)this->explore_network_inputs.size() + ps_index];
 		this->explore_no_halt_network->input->errors[

@@ -32,25 +32,11 @@ Explore::~Explore() {
 void Explore::setup_cycle() {
 	for (int n_index = 0; n_index < (int)this->solution->nodes.size(); n_index++) {
 		this->solution->nodes[n_index]->reset();
-		this->solution->nodes[n_index]->clear_explore();
 	}
 
-	vector<SolutionNode*> scopes;
-
 	ExploreNode* curr_node = this->root;
-	scopes.push_back(this->solution->nodes[0]);
 	while (true) {
 		curr_node->process();
-
-		if (curr_node->type == EXPLORE_NEW_JUMP) {
-			ExploreNodeNewJump* curr_node_new_jump = (ExploreNodeNewJump*)curr_node;
-			int scope_index = curr_node_new_jump->new_start_node_index;
-			scopes.push_back(this->solution->nodes[scope_index]);
-		} else if (curr_node->type == EXPLORE_LOOP) {
-			ExploreNodeLoop* curr_node_loop = (ExploreNodeLoop*)curr_node;
-			int scope_index = curr_node_loop->new_start_node_index;
-			scopes.push_back(this->solution->nodes[scope_index]);
-		}
 
 		// TODO: revisit nodes occasionally
 		if (curr_node->children.size() == 0) {
@@ -71,18 +57,6 @@ void Explore::setup_cycle() {
 		}
 
 		curr_node = curr_node->children[best_index];
-	}
-
-	this->solution->current_potential_state_counter = 0;
-	for (int s_index = 0; s_index < (int)scopes.size(); s_index++) {
-		vector<int> potential_state_indexes;
-		for (int i = 0; i < 5; i++) {
-			potential_state_indexes.push_back(this->solution->current_potential_state_counter);
-			this->solution->current_potential_state_counter++;
-		}
-		scopes[s_index]->scope_potential_states = potential_state_indexes;
-		scopes[s_index]->add_potential_state(potential_state_indexes,
-											 scopes[s_index]);
 	}
 }
 

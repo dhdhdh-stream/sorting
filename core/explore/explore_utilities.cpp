@@ -45,5 +45,8 @@ void set_next(SolutionNode* node,
 	} else if (node->node_type == NODE_TYPE_ACTION) {
 		SolutionNodeAction* node_normal = (SolutionNodeAction*)node;
 		node_normal->next = new_next;
+	} else if (node->node_type == NODE_TYPE_START) {
+		SolutionNodeStart* node_start = (SolutionNodeStart*)node;
+		node_start->next = new_next;
 	}
 }

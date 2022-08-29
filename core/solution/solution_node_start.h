@@ -1,27 +1,17 @@
-#ifndef SOLUTION_NODE_LOOP_START_H
-#define SOLUTION_NODE_LOOP_START_H
+#ifndef SOLUTION_NODE_START_H
+#define SOLUTION_NODE_START_H
 
-#include "solution_node.h"
-#include "solution_node_loop_end.h"
-
-class SolutionNodeLoopEnd;
-class SolutionNodeLoopStart : public SolutionNode {
+class SolutionNodeStart : public SolutionNode {
 public:
-	std::vector<int> loop_states;
+	std::vector<int> score_network_inputs_state_indexes;
+	Network* score_network;
+
+	std::vector<int> start_states;
 
 	SolutionNode* next;
 
-	SolutionNode* previous;
-
-	SolutionNodeLoopEnd* end;
-
-	SolutionNodeLoopStart(Solution* solution);
-	SolutionNodeLoopStart(SolutionNode* parent,
-						  int node_index);
-	SolutionNodeLoopStart(Solution* solution,
-						  int node_index,
-						  std::ifstream& save_file);
-	~SolutionNodeLoopStart();
+	SolutionNodeStart();
+	~SolutionNodeStart();
 
 	void reset() override;
 
@@ -42,7 +32,7 @@ public:
 						   SolutionNode*& iter_explore_node,
 						   IterExplore*& iter_explore,
 						   double* potential_state_vals,
-						   bool* potential_states_on,
+						   std::vector<int>& potential_state_indexes,
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
@@ -56,13 +46,19 @@ public:
 				  int& iter_explore_type,
 				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
-				  bool* potential_states_on,
+				  std::vector<int>& potential_state_indexes,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void save(std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
-};
 
-#endif /* SOLUTION_NODE_LOOP_START_H */
+	double activate_score_network(Problem& problem,
+								  bool backprop,
+								  std::vector<NetworkHistory*>& network_historys);
+	void backprop_score_network(double score,
+								std::vector<NetworkHistory*>& network_historys);
+}
+
+#endif /* SOLUTION_NODE_START_H */

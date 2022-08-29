@@ -43,6 +43,11 @@ void find_scope_end(SolutionNode* inclusive_start,
 			non_inclusive_end = next_node;
 			return;
 		}
+		if (next_node->node_type == NODE_TYPE_END) {
+			inclusive_end = curr_node;
+			non_inclusive_end = next_node;
+			return;
+		}
 
 		curr_node = next_node;
 	}
@@ -82,6 +87,9 @@ void find_potential_jumps(SolutionNode* inclusive_start,
 		if (next_node->node_type == NODE_TYPE_LOOP_END) {
 			return;
 		}
+		if (next_node->node_type == NODE_TYPE_END) {
+			return;
+		}
 
 		curr_node = next_node;
 	}
@@ -115,6 +123,9 @@ void find_potential_loops(SolutionNode* inclusive_end,
 			return;
 		}
 		if (previous_node->node_type == NODE_TYPE_LOOP_START) {
+			return;
+		}
+		if (previous_node->node_type == NODE_TYPE_START) {
 			return;
 		}
 

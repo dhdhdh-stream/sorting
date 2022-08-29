@@ -20,10 +20,10 @@ Solution::Solution(Explore* explore) {
 
 	this->id = time(NULL);
 
-	SolutionNode* root_node = new SolutionNodeLoopStart(this);
-	this->nodes.push_back(root_node);
-	SolutionNode* halt_node = new SolutionNodeLoopEnd(this);
-	this->nodes.push_back(halt_node);
+	SolutionNode* start_node = new SolutionNodeStart(this);
+	this->nodes.push_back(start_node);
+	SolutionNode* end_node = new SolutionNodeEnd(this);
+	this->nodes.push_back(end_node);
 
 	this->current_state_counter = 0;
 
@@ -47,7 +47,15 @@ Solution::Solution(Explore* explore,
 		int node_type = stoi(node_type_line);
 
 		SolutionNode* node;
-		if (node_type == NODE_TYPE_ACTION) {
+		if (node_type == NODE_TYPE_START) {
+			node = new SolutionNodeStart(this,
+										 n_index,
+										 save_file);
+		} else if (node_type == NODE_TYPE_END) {
+			node = new SolutionNodeEnd(this,
+									   n_index,
+									   save_file);
+		} else if (node_type == NODE_TYPE_ACTION) {
 			node = new SolutionNodeAction(this,
 										  n_index,
 										  save_file);
@@ -105,9 +113,8 @@ void Solution::iteration(bool tune,
 	vector<SolutionNode*> loop_scopes;
 	vector<int> loop_scope_counts;
 
-	double previous_score = this->average_score;
-
-	double potential_state_vals[5] = {};
+	double potential_state_vals[2] = {};
+	vector<int> potential_state_indexes;
 
 	vector<NetworkHistory*> network_historys;
 	vector<SolutionNode*> nodes_visited;
@@ -124,7 +131,6 @@ void Solution::iteration(bool tune,
 	SolutionNode* iter_explore_node = NULL;
 
 	vector<int> explore_decisions;
-	vector<double> explore_diffs;
 	vector<bool> explore_loop_decisions;
 
 	vector<vector<double>> display_state_history;
@@ -139,16 +145,14 @@ void Solution::iteration(bool tune,
 													  iter_explore_type,
 													  iter_explore_node,
 													  NULL,
-													  previous_score,
 													  potential_state_vals,
+													  potential_state_indexes,
 													  network_historys,
 													  guesses,
 													  explore_decisions,
-													  explore_diffs,
 													  explore_loop_decisions,
 													  save_for_display,
 													  display_file);
-		nodes_visited.push_back(curr_node);
 
 		if (save_for_display) {
 			if (curr_node->node_type == NODE_TYPE_ACTION) {
@@ -163,6 +167,7 @@ void Solution::iteration(bool tune,
 		if (curr_node->node_index == 1) {
 			break;
 		}
+		nodes_visited.push_back(curr_node);
 		curr_node = next_node;
 	}
 
@@ -179,27 +184,46 @@ void Solution::iteration(bool tune,
 			sum_segments += initial_misguess - final_misguess;
 		}
 
+		vector<double> information_gains;
+		vector<int> information_gains_divides;
+
 		int guess_segment_index = 0;
 		int guess_index = 1;
 		double previous_misguess = abs(score - guesses[0][0]);
 		for (int v_index = 0; v_index < (int)nodes_visited.size(); v_index++) {
-			if (nodes_visited[v_index]->node_type == NODE_TYPE_ACTION) {
+			if (nodes_visited[v_index]->node_type == NODE_TYPE_START
+					|| nodes_visited[v_index]->node_type == NODE_TYPE_ACTION) {
 				double guess = min(max(guesses[guess_segment_index][guess_index], 0.0), 1.0);
 				double current_misguess = abs(score - guess);
 
 				double information_gain = previous_misguess - current_misguess;
 
-				nodes_visited[v_index]->update_node_weight(information_gain/sum_segments);
+				information_gains.push_back(information_gain);
 
 				previous_misguess = current_misguess;
 
 				guesses_index++;
+
+				information_gains_divides.push_back(1);
 			} else if (nodes_visited[v_index]->node_type == NODE_TYPE_IF_START) {
 				guess_segment_index++;
 				guess_index = 1;
 
 				double guess = min(max(guesses[guess_segment_index][0], 0.0), 1.0);
 				previous_misguess = abs(score - guess);
+
+				information_gains_divides.back()++;
+			} else {
+				information_gains_divides.back()++;
+			}
+		}
+
+		int v_index = 0;
+		for (int g_index = 0; g_index < (int)information_gains.size(); g_index++) {
+			for (int d_index = 0; d_index < information_gains_divides[g_index]; d_index++) {
+				nodes_visited[v_index]->update_node_weight(
+					(information_gains[g_index]/information_gains_divides[g_index])/sum_segments);
+				v_index++;
 			}
 		}
 	}
@@ -216,13 +240,7 @@ void Solution::iteration(bool tune,
 
 	double state_errors[this->current_state_counter] = {};
 	double potential_state_errors[this->current_potential_state_counter] = {};
-	// ignore last halt node, but set state_errors
-	SolutionNodeLoopStart* start_node = (SolutionNodeLoopStart*)nodes[0];
-	for (int s_index = 0; s_index < (int)start_node->loop_states.size(); s_index++) {
-		states_on[start_node->loop_states[s_index]] = true;
-		state_errors[start_node->loop_states[s_index]] = 0.0;
-	}
-	for (int v_index = (int)nodes_visited.size()-2; v_index >= 0; v_index--) {
+	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
 		nodes_visited[v_index]->backprop(score,
 										 misguess,
 										 state_errors,
@@ -230,9 +248,9 @@ void Solution::iteration(bool tune,
 										 iter_explore_type,
 										 iter_explore_node,
 										 potential_state_errors,
+										 potential_state_indexes,
 										 network_historys,
 										 explore_decisions,
-										 explore_diffs,
 										 explore_loop_decisions);
 	}
 

@@ -46,13 +46,11 @@ public:
 						   int& iter_explore_type,
 						   SolutionNode*& iter_explore_node,
 						   IterExplore*& iter_explore,
-						   double& previous_predicted_score,
 						   double* potential_state_vals,
-						   bool* potential_states_on,
+						   std::vector<int>& potential_state_indexes,
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<double>& explore_diffs,
 						   std::vector<bool>& explore_loop_decisions,
 						   bool save_for_display,
 						   std::ofstream& display_file) override;
@@ -63,10 +61,9 @@ public:
 				  int& iter_explore_type,
 				  SolutionNode*& iter_explore_node,
 				  double* potential_state_errors,
-				  bool* potential_states_on,
+				  std::vector<int>& potential_state_indexes,
 				  std::vector<NetworkHistory*>& network_historys,
 				  std::vector<int>& explore_decisions,
-				  std::vector<double>& explore_diffs,
 				  std::vector<bool>& explore_loop_decisions) override;
 
 	void save(std::ofstream& save_file) override;
@@ -79,7 +76,6 @@ public:
 						   std::vector<int>& loop_scope_counts,
 						   bool backprop,
 						   std::vector<NetworkHistory*>& network_historys,
-						   double& score,
 						   bool& should_halt);
 	void activate_networks_with_potential(Problem& problem,
 										  double* state_vals,
@@ -87,25 +83,27 @@ public:
 										  std::vector<SolutionNode*>& loop_scopes,
 										  std::vector<int>& loop_scope_counts,
 										  double* potential_state_vals,
-										  bool* potential_states_on,
+										  std::vector<int>& potential_state_indexes,
 										  bool backprop,
 										  std::vector<NetworkHistory*>& network_historys,
-										  double& score,
 										  bool& should_halt);
 
 	void backprop_networks(double score,
+						   double misguess,
 						   double* state_errors,
 						   bool* states_on,
 						   std::vector<NetworkHistory*>& network_historys);
 	void backprop_networks_errors_with_no_weight_change(
 		double score,
+		double misguess,
 		double* state_errors,
 		bool* states_on,
 		std::vector<NetworkHistory*>& network_historys);
 	void backprop_networks_with_potential(double score,
+										  double misguess,
 										  double* potential_state_errors,
 										  std::vector<NetworkHistory*>& network_historys);
-	// don't need potential_states_on because information in network_history
+	// don't need potential_states_indexes because information in network_history
 };
 
 #endif /* SOLUTION_NODE_LOOP_END_H */
