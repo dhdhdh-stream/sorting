@@ -6,6 +6,10 @@
 #include "action.h"
 #include "solution_node.h"
 
+const int TEMP_NODE_STATE_NOT = -1;
+const int TEMP_NODE_STATE_LEARN = 0;
+const int TEMP_NODE_STATE_MEASURE = 1;
+
 class SolutionNodeAction : public SolutionNode {
 public:
 	std::vector<int> score_network_inputs_state_indexes;
@@ -27,7 +31,10 @@ public:
 
 	SolutionNode* previous;
 
-	SolutionNodeAction(int node_index,
+	int temp_node_state;
+
+	SolutionNodeAction(Solution* solution,
+					   int node_index,
 					   Action action,
 					   std::vector<int> available_state);
 	SolutionNodeAction(Solution* solution,
@@ -44,7 +51,24 @@ public:
 									 SolutionNode* explore_node) override;
 	void delete_potential_state(std::vector<int> potential_state_indexes,
 								SolutionNode* explore_node) override;
+	void clear_potential_state() override;
 
+	// SolutionNode* activate(Problem& problem,
+	// 					   double* state_vals,
+	// 					   bool* states_on,
+	// 					   std::vector<SolutionNode*>& loop_scopes,
+	// 					   std::vector<int>& loop_scope_counts,
+	// 					   int& iter_explore_type,
+	// 					   SolutionNode*& iter_explore_node,
+	// 					   IterExplore*& iter_explore,
+	// 					   double* potential_state_vals,
+	// 					   std::vector<int>& potential_state_indexes,
+	// 					   std::vector<NetworkHistory*>& network_historys,
+	// 					   std::vector<std::vector<double>>& guesses,
+	// 					   std::vector<int>& explore_decisions,
+	// 					   std::vector<bool>& explore_loop_decisions,
+	// 					   bool save_for_display,
+	// 					   std::ofstream& display_file) override;
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
 						   bool* states_on,
@@ -58,9 +82,7 @@ public:
 						   std::vector<NetworkHistory*>& network_historys,
 						   std::vector<std::vector<double>>& guesses,
 						   std::vector<int>& explore_decisions,
-						   std::vector<bool>& explore_loop_decisions,
-						   bool save_for_display,
-						   std::ofstream& display_file) override;
+						   std::vector<bool>& explore_loop_decisions) override;
 	void backprop(double score,
 				  double misguess,
 				  double* state_errors,

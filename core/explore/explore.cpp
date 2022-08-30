@@ -58,6 +58,8 @@ void Explore::setup_cycle() {
 
 		curr_node = curr_node->children[best_index];
 	}
+
+	this->solution->current_potential_state_counter = 0;
 }
 
 void Explore::cleanup_cycle() {

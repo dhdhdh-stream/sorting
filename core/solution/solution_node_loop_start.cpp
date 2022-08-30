@@ -10,74 +10,25 @@
 
 using namespace std;
 
-SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution) {
+SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
+											 int node_index,
+											 vector<int> loop_states) {
 	this->solution = solution;
-
-	this->node_index = 0;
-	this->node_type = NODE_TYPE_LOOP_START;
-
-	this->score_network = new Network(1, 4, 1);
-
-	this->average_unique_future_nodes = 1;
-	this->average_score = 0.0;
-	this->average_misguess = 1.0;
-
-	this->temp_node_state = TEMP_NODE_STATE_NOT;
-
-	for (int i = 0; i < 6; i++) {
-		this->explore_state_scores.push_back(0.0);
-		this->explore_state_misguesses.push_back(0.0);
-	}
-
-	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
-	this->explore_path_iter_index = 0;
-	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
-	this->explore_state_iter_index = 0;
-
-	this->explore_if_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
-
-	this->has_explored_state = false;
-
-	this->node_is_on = false;
-}
-
-SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
-											 int node_index) {
-	this->solution = parent->solution;
 
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_START;
 
-	this->network_inputs_state_indexes = parent->network_inputs_state_indexes;
+	this->node_weight = 1.0;
 
-	int input_size = 1 + (int)this->network_inputs_state_indexes.size();
-	this->score_network = new Network(input_size,
-									  4*input_size,
-									  1);
-
-	this->average_unique_future_nodes = 1;
-	this->average_score = 0.0;
-	this->average_misguess = 1.0;
-
-	this->temp_node_state = TEMP_NODE_STATE_NOT;
-
-	for (int i = 0; i < 6; i++) {
-		this->explore_state_scores.push_back(0.0);
-		this->explore_state_misguesses.push_back(0.0);
-	}
+	this->loop_states = loop_states;
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
-	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
-	this->explore_state_iter_index = 0;
 
-	this->explore_if_network = NULL;
+	this->explore_jump_network = NULL;
+	this->explore_no_jump_network = NULL;
 	this->explore_halt_network = NULL;
 	this->explore_no_halt_network = NULL;
-
-	this->has_explored_state = false;
 
 	this->node_is_on = false;
 }
@@ -90,57 +41,32 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_START;
 
-	string network_inputs_state_indexes_size_line;
-	getline(save_file, network_inputs_state_indexes_size_line);
-	int network_inputs_state_indexes_size = stoi(network_inputs_state_indexes_size_line);
-	for (int s_index = 0; s_index < network_inputs_state_indexes_size; s_index++) {
+	string node_weight_line;
+	getline(save_file, node_weight_line);
+	this->node_weight = stof(node_weight_line);
+
+	string loop_states_size_line;
+	getline(save_file, loop_states_size_line);
+	int loop_states_size = stoi(loop_states_size_line);
+	for (int s_index = 0; s_index < loop_states_size; s_index++) {
 		string state_index_line;
 		getline(save_file, state_index_line);
-		this->network_inputs_state_indexes.push_back(stoi(state_index_line));
-	}
-
-	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(this->solution->id) + ".txt";
-	ifstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network = new Network(score_network_save_file);
-	score_network_save_file.close();
-
-	string average_unique_future_nodes_line;
-	getline(save_file, average_unique_future_nodes_line);
-	this->average_unique_future_nodes = stof(average_unique_future_nodes_line);
-
-	string average_score_line;
-	getline(save_file, average_score_line);
-	this->average_score = stof(average_score_line);
-
-	string average_misguess_line;
-	getline(save_file, average_misguess_line);
-	this->average_misguess = stof(average_misguess_line);
-
-	this->temp_node_state = TEMP_NODE_STATE_NOT;
-
-	for (int i = 0; i < 6; i++) {
-		this->explore_state_scores.push_back(0.0);
-		this->explore_state_misguesses.push_back(0.0);
+		this->loop_states.push_back(stoi(state_index_line));
 	}
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
-	this->explore_state_state = EXPLORE_STATE_STATE_LEARN;
-	this->explore_state_iter_index = 0;
 
-	this->explore_if_network = NULL;
+	this->explore_jump_network = NULL;
+	this->explore_no_jump_network = NULL;
 	this->explore_halt_network = NULL;
 	this->explore_no_halt_network = NULL;
-
-	this->has_explored_state = false;
 
 	this->node_is_on = false;
 }
 
 SolutionNodeLoopStart::~SolutionNodeLoopStart() {
-	delete this->score_network;
+	// do nothing
 }
 
 void SolutionNodeLoopStart::reset() {
@@ -162,12 +88,32 @@ void SolutionNodeLoopStart::extend_with_potential_state(vector<int> potential_st
 											explore_node);
 }
 
-void SolutionNodeLoopStart::reset_potential_state(vector<int> potential_state_indexes,
-												  SolutionNode* explore_node) {
+void SolutionNodeLoopStart::delete_potential_state(vector<int> potential_state_indexes,
+												   SolutionNode* explore_node) {
 	// this can't be explore node
-	this->next->reset_potential_state(potential_state_indexes, explore_node);
+	this->next->delete_potential_state(potential_state_indexes, explore_node);
 }
 
+void SolutionNodeLoopStart::clear_potential_state() {
+	// do nothing
+}
+
+// SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
+// 											  double* state_vals,
+// 											  bool* states_on,
+// 											  vector<SolutionNode*>& loop_scopes,
+// 											  vector<int>& loop_scope_counts,
+// 											  int& iter_explore_type,
+// 											  SolutionNode*& iter_explore_node,
+// 											  IterExplore*& iter_explore,
+// 											  double* potential_state_vals,
+// 											  vector<int>& potential_state_indexes,
+// 											  vector<NetworkHistory*>& network_historys,
+// 											  vector<vector<double>>& guesses,
+// 											  vector<int>& explore_decisions,
+// 											  vector<bool>& explore_loop_decisions,
+// 											  bool save_for_display,
+// 											  ofstream& display_file) {
 SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  double* state_vals,
 											  bool* states_on,
@@ -181,12 +127,10 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  vector<NetworkHistory*>& network_historys,
 											  vector<vector<double>>& guesses,
 											  vector<int>& explore_decisions,
-											  vector<bool>& explore_loop_decisions,
-											  bool save_for_display,
-											  ofstream& display_file) {
-	if (save_for_display) {
-		display_file << this->node_index << endl;
-	}
+											  vector<bool>& explore_loop_decisions) {
+	// if (save_for_display) {
+	// 	display_file << this->node_index << endl;
+	// }
 
 	if (loop_scopes.back() == this) {
 		loop_scope_counts.back()++;
@@ -324,37 +268,28 @@ void SolutionNodeLoopStart::backprop(double score,
 		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		// do nothing
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_PATH) {
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP) {
 		for (int o_index = 0; o_index < (int)this->loop_states.size(); o_index++) {
 			states_on[this->loop_states[o_index]] = false;
 		}
-	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_STATE) {
-		for (int o_index = 0; o_index < (int)this->loop_states.size(); o_index++) {
-			states_on[this->loop_states[o_index]] = false;
-		}
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP) {
 		// do nothing
-	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_STATE) {
+	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_JUMP) {
+		for (int o_index = 0; o_index < (int)this->loop_states.size(); o_index++) {
+			states_on[this->loop_states[o_index]] = false;
+		}
+	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
 		// do nothing
 	}
 }
 
 void SolutionNodeLoopStart::save(ofstream& save_file) {
-	save_file << this->network_inputs_state_indexes.size() << endl;
-	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
-		save_file << this->network_inputs_state_indexes[i_index] << endl;
+	save_file << this->node_weight << endl;
+
+	save_file << this->loop_states.size() << endl;
+	for (int s_index = 0; s_index < (int)this->loop_states.size(); s_index++) {
+		save_file << this->loop_states[s_index] << endl;
 	}
-
-	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
-		+ "_" + to_string(this->solution->id) + ".txt";
-	ofstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network->save(score_network_save_file);
-	score_network_save_file.close();
-
-	save_file << this->average_unique_future_nodes << endl;
-	save_file << this->average_score << endl;
-	save_file << this->average_misguess << endl;
 }
 
 void SolutionNodeLoopStart::save_for_display(ofstream& save_file) {
@@ -362,9 +297,5 @@ void SolutionNodeLoopStart::save_for_display(ofstream& save_file) {
 	if (this->node_is_on) {
 		save_file << this->node_type << endl;
 		save_file << this->next->node_index << endl;
-		save_file << this->loop_states.size() << endl;
-		for (int s_index = 0; s_index < (int)this->loop_states.size(); s_index++) {
-			save_file << this->loop_states[s_index] << endl;
-		}
 	}
 }

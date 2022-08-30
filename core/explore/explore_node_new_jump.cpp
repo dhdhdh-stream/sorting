@@ -5,7 +5,6 @@
 #include "explore_node_new_jump.h"
 #include "explore_node_append_jump.h"
 #include "explore_node_loop.h"
-#include "explore_node_state.h"
 #include "explore_utilities.h"
 #include "solution_node_action.h"
 #include "solution_node_if_start.h"
@@ -96,9 +95,6 @@ ExploreNodeNewJump::ExploreNodeNewJump(Explore* explore,
 		} else if (node_type == EXPLORE_LOOP) {
 			child_node = new ExploreNodeLoop(this->explore,
 											 save_file);
-		} else if (node_type == EXPLORE_STATE) {
-			child_node = new ExploreNodeState(this->explore,
-											  save_file);
 		}
 		this->children.push_back(child_node);
 	}

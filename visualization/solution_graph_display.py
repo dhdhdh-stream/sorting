@@ -4,11 +4,13 @@ LEFT = 0
 STAY = 1
 RIGHT = 2
 
-NODE_TYPE_ACTION = 0;
-NODE_TYPE_IF_START = 1;
-NODE_TYPE_IF_END = 2;
-NODE_TYPE_LOOP_START = 3;
-NODE_TYPE_LOOP_END = 4;
+NODE_TYPE_START = 0;
+NODE_TYPE_END = 1;
+NODE_TYPE_ACTION = 2;
+NODE_TYPE_IF_START = 3;
+NODE_TYPE_IF_END = 4;
+NODE_TYPE_LOOP_START = 5;
+NODE_TYPE_LOOP_END = 6;
 
 def pretty_print_action(action):
 	result = '('
@@ -31,12 +33,13 @@ with open('../error.txt') as file:
 	for n_index in range(num_nodes):
 		node_is_on = int(file.readline())
 		if node_is_on == 1:
-			if n_index == 1:
-				nodes.append([True, NODE_TYPE_LOOP_END, -1, -1])
-				continue
-
 			node_type = int(file.readline())
-			if node_type == NODE_TYPE_ACTION:
+			if node_type == NODE_TYPE_START:
+				next_index = int(file.readline())
+				nodes.append([True, node_type, next_index])
+			elif node_type == NODE_TYPE_END:
+				nodes.append([True, node_type])
+			elif node_type == NODE_TYPE_ACTION:
 				write = float(file.readline())
 				move = int(file.readline())
 				next_index = int(file.readline())
@@ -50,21 +53,13 @@ with open('../error.txt') as file:
 						children_indexes.append([True, int(file.readline())])
 					else:
 						children_indexes.append([False])
-				num_states = int(file.readline())
-				states = []
-				for s_index in range(num_states):
-					states.append(int(file.readline()))
-				nodes.append([True, node_type, children_indexes, states])
+				nodes.append([True, node_type, children_indexes])
 			elif node_type == NODE_TYPE_IF_END:
 				next_index = int(file.readline())
 				nodes.append([True, node_type, next_index])
 			elif node_type == NODE_TYPE_LOOP_START:
 				next_index = int(file.readline())
-				num_states = int(file.readline())
-				states = []
-				for s_index in range(num_states):
-					states.append(int(file.readline()))
-				nodes.append([True, node_type, next_index, states])
+				nodes.append([True, node_type, next_index])
 			elif node_type == NODE_TYPE_LOOP_END:
 				start_index = int(file.readline())
 				next_index = int(file.readline())
@@ -74,9 +69,9 @@ with open('../error.txt') as file:
 
 for n_index in range(0, len(nodes)):
 	if nodes[n_index][0]:
-		if n_index == 0:
+		if nodes[n_index][1] == NODE_TYPE_START:
 			label = 'start'
-		elif n_index == 1:
+		elif nodes[n_index][1] == NODE_TYPE_END:
 			label = 'halt'
 		elif nodes[n_index][1] == NODE_TYPE_ACTION:
 			label = str(n_index) + ' ' + pretty_print_action(nodes[n_index][2])
@@ -94,7 +89,10 @@ for n_index in range(0, len(nodes)):
 
 for n_index in range(0, len(nodes)):
 	if nodes[n_index][0]:
-		if n_index == 1:
+		if nodes[n_index][1] == NODE_TYPE_START:
+			edge = pydot.Edge(n_index, nodes[n_index][2])
+			graph.add_edge(edge)
+		elif nodes[n_index][1] == NODE_TYPE_END:
 			pass
 		elif nodes[n_index][1] == NODE_TYPE_ACTION:
 			edge = pydot.Edge(n_index, nodes[n_index][3])

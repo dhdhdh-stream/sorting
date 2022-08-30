@@ -48,11 +48,13 @@ public:
 	void backprop_errors_with_no_weight_change();
 
 	void add_potential_input_layer(Layer* potential);
-	void input_extend_with_potential();
+	void input_extend();
 	void hidden_extend_with_potential(int potential_index,
 									  Layer* potential_hidden);
 	void output_extend_with_potential(int potential_index);
 	void delete_potential_input_layer(int potential_index);
+	void hidden_input_extend();
+	void remove_potential_input_layers();
 
 	void collapse_input(int input_index,
 						Layer* new_collapse_layer);

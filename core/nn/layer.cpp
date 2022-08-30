@@ -299,7 +299,7 @@ void Layer::add_potential_input_layer(Layer* potential) {
 	}
 }
 
-void Layer::input_extend_with_potential() {
+void Layer::input_extend() {
 	this->acti_vals.push_back(0.0);
 	this->errors.push_back(0.0);
 }
@@ -357,6 +357,9 @@ void Layer::hidden_extend_with_potential(int potential_index,
 		this->prev_weight_updates.push_back(new_node_prev_weight_updates);
 		this->prev_constant_updates.push_back(0.0);
 	}
+
+	this->input_layers.erase(
+		this->input_layers.begin() + 1 + potential_index);
 }
 
 void Layer::output_extend_with_potential(int potential_index) {
@@ -368,6 +371,9 @@ void Layer::output_extend_with_potential(int potential_index) {
 		this->weight_updates[0][0].push_back(0.0);
 		this->prev_weight_updates[0][0].push_back(0.0);
 	}
+
+	this->input_layers.erase(
+		this->input_layers.begin() + 1 + potential_index);
 }
 
 void Layer::delete_potential_input_layer(int potential_index) {
@@ -382,6 +388,27 @@ void Layer::delete_potential_input_layer(int potential_index) {
 		this->prev_weight_updates[n_index].erase(
 			this->prev_weight_updates[n_index].begin() + 1 + potential_index);
 	}
+}
+
+void Layer::hidden_input_extend() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][0].push_back((randuni()-0.5)*0.02);
+		this->weight_updates[n_index][0].push_back(0.0);
+		this->prev_weight_updates[n_index][0].push_back(0.0);
+	}
+}
+
+void Layer::remove_potential_input_layers() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index].erase(this->weights[n_index].begin()+1,
+			this->weights[n_index].end());
+		this->weight_updates[n_index].erase(this->weight_updates[n_index].begin()+1,
+			this->weight_updates[n_index].end());
+		this->prev_weight_updates[n_index].erase(this->prev_weight_updates[n_index].begin()+1,
+			this->prev_weight_updates[n_index].end());
+	}
+
+	this->input_layers.erase(this->input_layers.begin()+1, this->input_layers.end());
 }
 
 void Layer::collapse_input(int input_index,

@@ -7,10 +7,12 @@
 
 #include "definitions.h"
 #include "solution_node_action.h"
+#include "solution_node_end.h"
 #include "solution_node_if_start.h"
 #include "solution_node_if_end.h"
 #include "solution_node_loop_start.h"
 #include "solution_node_loop_end.h"
+#include "solution_node_start.h"
 #include "utilities.h"
 
 using namespace std;
@@ -25,7 +27,7 @@ Solution::Solution(Explore* explore) {
 	SolutionNode* end_node = new SolutionNodeEnd(this);
 	this->nodes.push_back(end_node);
 
-	this->current_state_counter = 0;
+	this->current_state_counter = 2;	// start_node starts with 2
 
 	this->average_score = 0.5;
 }
@@ -96,24 +98,28 @@ Solution::~Solution() {
 
 void Solution::iteration(bool tune,
 						 bool save_for_display) {
-	ofstream display_file;
-	if (save_for_display) {
-		display_file.open("../display.txt");
-		display_file << this->nodes.size() << endl;
-		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-			this->nodes[n_index]->save_for_display(display_file);
-		}
-	}
+	// ofstream display_file;
+	// if (save_for_display) {
+	// 	cout << "save_for_display" << endl;
+	// 	display_file.open("../display.txt");
+	// 	display_file << this->nodes.size() << endl;
+	// 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+	// 		this->nodes[n_index]->save_for_display(display_file);
+	// 	}
+	// }
 
 	Problem problem;
 	
-	double state_vals[this->current_state_counter] = {};
-	bool states_on[this->current_state_counter] = {};
+	// double state_vals[this->current_state_counter] = {};
+	// bool states_on[this->current_state_counter] = {};
+	this->state_vals = new double[this->current_state_counter]{};
+	this->states_on = new bool[this->current_state_counter]{};
 
 	vector<SolutionNode*> loop_scopes;
 	vector<int> loop_scope_counts;
 
-	double potential_state_vals[2] = {};
+	// double potential_state_vals[2] = {};
+	this->potential_state_vals = new double[2]{};
 	vector<int> potential_state_indexes;
 
 	vector<NetworkHistory*> network_historys;
@@ -129,6 +135,7 @@ void Solution::iteration(bool tune,
 		iter_explore_type = EXPLORE_TYPE_RE_EVAL;
 	}
 	SolutionNode* iter_explore_node = NULL;
+	IterExplore* iter_explore = NULL;
 
 	vector<int> explore_decisions;
 	vector<bool> explore_loop_decisions;
@@ -137,6 +144,22 @@ void Solution::iteration(bool tune,
 
 	SolutionNode* curr_node = this->nodes[0];
 	while (true) {
+		// SolutionNode* next_node = curr_node->activate(problem,
+		// 											  state_vals,
+		// 											  states_on,
+		// 											  loop_scopes,
+		// 											  loop_scope_counts,
+		// 											  iter_explore_type,
+		// 											  iter_explore_node,
+		// 											  iter_explore,
+		// 											  potential_state_vals,
+		// 											  potential_state_indexes,
+		// 											  network_historys,
+		// 											  guesses,
+		// 											  explore_decisions,
+		// 											  explore_loop_decisions,
+		// 											  save_for_display,
+		// 											  display_file);
 		SolutionNode* next_node = curr_node->activate(problem,
 													  state_vals,
 													  states_on,
@@ -144,30 +167,30 @@ void Solution::iteration(bool tune,
 													  loop_scope_counts,
 													  iter_explore_type,
 													  iter_explore_node,
-													  NULL,
+													  iter_explore,
 													  potential_state_vals,
 													  potential_state_indexes,
 													  network_historys,
 													  guesses,
 													  explore_decisions,
-													  explore_loop_decisions,
-													  save_for_display,
-													  display_file);
+													  explore_loop_decisions);
 
-		if (save_for_display) {
-			if (curr_node->node_type == NODE_TYPE_ACTION) {
-				vector<double> state_snapshot;
-				for (int s_index = 0; s_index < this->current_state_counter; s_index++) {
-					state_snapshot.push_back(state_vals[s_index]);
-				}
-				display_state_history.push_back(state_snapshot);
-			}
-		}
+		// if (save_for_display) {
+		// 	if (curr_node->node_type == NODE_TYPE_ACTION) {
+		// 		vector<double> state_snapshot;
+		// 		for (int s_index = 0; s_index < this->current_state_counter; s_index++) {
+		// 			state_snapshot.push_back(state_vals[s_index]);
+		// 		}
+		// 		display_state_history.push_back(state_snapshot);
+		// 	}
+		// }
 
-		if (curr_node->node_index == 1) {
+		if (curr_node->node_type == NODE_TYPE_END) {
 			break;
 		}
-		nodes_visited.push_back(curr_node);
+		if (iter_explore_type != EXPLORE_TYPE_NONE) {
+			nodes_visited.push_back(curr_node);
+		}
 		curr_node = next_node;
 	}
 
@@ -202,7 +225,7 @@ void Solution::iteration(bool tune,
 
 				previous_misguess = current_misguess;
 
-				guesses_index++;
+				guess_index++;
 
 				information_gains_divides.push_back(1);
 			} else if (nodes_visited[v_index]->node_type == NODE_TYPE_IF_START) {
@@ -254,50 +277,66 @@ void Solution::iteration(bool tune,
 										 explore_loop_decisions);
 	}
 
-	if (save_for_display) {
-		display_file << this->current_state_counter << endl;
-		display_file << display_state_history.size() << endl;
-		for (int h_index = 0; h_index < (int)display_state_history.size(); h_index++) {
-			for (int s_index = 0; s_index < this->current_state_counter; s_index++) {
-				display_file << display_state_history[h_index][s_index] << endl;
-			}
-		}
+	// if (save_for_display) {
+	// 	display_file << this->current_state_counter << endl;
+	// 	display_file << display_state_history.size() << endl;
+	// 	for (int h_index = 0; h_index < (int)display_state_history.size(); h_index++) {
+	// 		for (int s_index = 0; s_index < this->current_state_counter; s_index++) {
+	// 			display_file << display_state_history[h_index][s_index] << endl;
+	// 		}
+	// 	}
 
-		display_file << problem.initial_world.size() << endl;
-		for (int i = 0; i < (int)problem.initial_world.size(); i++) {
-			display_file << problem.initial_world[i] << endl;
-		}
+	// 	display_file << problem.initial_world.size() << endl;
+	// 	for (int i = 0; i < (int)problem.initial_world.size(); i++) {
+	// 		display_file << problem.initial_world[i] << endl;
+	// 	}
 
-		if (iter_explore_node != NULL) {
-			display_file << "explore" << endl;
-			display_file << iter_explore_node->node_index << endl;
-			if (iter_explore_type == EXPLORE_TYPE_EXPLORE
-					|| iter_explore_type == EXPLORE_TYPE_LEARN_PATH
-					|| iter_explore_type == EXPLORE_TYPE_MEASURE_PATH) {
-				display_file << "path" << endl;
-				if (iter_explore_node->path_explore_type == PATH_EXPLORE_TYPE_JUMP) {
-					display_file << iter_explore_node->explore_end_non_inclusive->node_index << endl;
-				} else if (iter_explore_node->path_explore_type == PATH_EXPLORE_TYPE_LOOP) {
-					display_file << iter_explore_node->explore_start_inclusive->node_index << endl;
-				}
-			} else {
-				display_file << "state" << endl;
-			}
-		} else {
-			display_file << "no_explore" << endl;
-		}
+	// 	// if (iter_explore_node != NULL) {
+	// 	// 	display_file << "explore" << endl;
+	// 	// 	display_file << iter_explore_node->node_index << endl;
+	// 	// 	if (iter_explore->iter_explore_type == ITER_EXPLORE_TYPE_JUMP) {
+	// 	// 		display_file << iter_explore_node->explore_end_non_inclusive->node_index << endl;
+	// 	// 	} else if (iter_explore->iter_explore_type == ITER_EXPLORE_TYPE_LOOP) {
+	// 	// 		display_file << iter_explore_node->explore_start_inclusive->node_index << endl;
+	// 	// 	}
+	// 	// } else {
+	// 	// 	display_file << "no_explore" << endl;
+	// 	// }
 
-		display_file.close();
-	}
+	// 	display_file.close();
+	// }
 
 	if (iter_explore_node != NULL) {
 		iter_explore_node->explore_increment(score,
 											 iter_explore);
 	}
 
-	if (network_historys.size() > 0) {
-		cout << "ERROR: network_historys not cleared" << endl;
+	if (iter_explore != NULL) {
+		delete iter_explore;
 	}
+
+	if (network_historys.size() > 0) {
+		cout << "iter_explore_type: " << iter_explore_type << endl;
+		if (iter_explore_node != NULL) {
+			cout << "iter_explore_node: " << iter_explore_node->node_index << endl;
+			cout << "node_type: " << iter_explore_node->node_type << endl;
+		}
+
+		ofstream error_display_file;
+		error_display_file.open("../error.txt");
+		error_display_file << this->nodes.size() << endl;
+		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+			this->nodes[n_index]->save_for_display(error_display_file);
+		}
+		error_display_file.close();
+
+		cout << "ERROR: network_historys not cleared" << endl;
+		exit(1);
+	}
+
+	delete[] this->state_vals;
+	delete[] this->states_on;
+	delete[] this->potential_state_vals;
 }
 
 void Solution::save(ofstream& save_file) {

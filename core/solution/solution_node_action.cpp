@@ -32,13 +32,13 @@ SolutionNodeAction::SolutionNodeAction(Solution* solution,
 
 	this->action = action;
 
-	for (int s_index = 0; s_index < available_state; s_index++) {
+	for (int s_index = 0; s_index < (int)available_state.size(); s_index++) {
 		this->state_network_inputs_state_indexes.push_back(available_state);
 		Network* new_state_network = new Network(input_size,
 												 4*input_size,
 												 1);
 		this->state_networks.push_back(new_state_network);
-		this->state_networks_target_states.push_back(this->network_inputs_state_indexes[s_index]);
+		this->state_networks_target_states.push_back(available_state[s_index]);
 	}
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
@@ -146,13 +146,17 @@ void SolutionNodeAction::add_potential_state(vector<int> potential_state_indexes
 		this->score_network->add_potential();
 	}
 
+	if (potential_state_indexes.size() > 2) {
+		cout << "PRE ERROR" << endl;
+		exit(1);
+	}
 	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
 		vector<int> potential_inputs_state_indexes;
 		for (int i_index = 0; i_index < ps_index+1; i_index++) {
 			potential_inputs_state_indexes.push_back(potential_state_indexes[i_index]);
 		}
 
-		int input_size = 1 + (int)this->network_inputs_state_indexes.size() + ps_index + 1;
+		int input_size = 1 + (int)this->score_network_inputs_state_indexes.size() + ps_index + 1;
 		Network* new_potential_state_network = new Network(input_size,
 														   input_size*4,
 														   1);
@@ -279,6 +283,35 @@ void SolutionNodeAction::delete_potential_state(vector<int> potential_state_inde
 	this->next->delete_potential_state(potential_state_indexes, explore_node);
 }
 
+void SolutionNodeAction::clear_potential_state() {
+	this->score_network_inputs_potential_state_indexes.clear();
+	this->score_network->remove_potentials();
+
+	this->potential_inputs_state_indexes.clear();
+	this->potential_potential_inputs_state_indexes.clear();
+	for (int sn_index = 0; sn_index < (int)this->potential_state_networks.size(); sn_index++) {
+		delete this->potential_state_networks[sn_index];
+	}
+	this->potential_state_networks.clear();
+	this->potential_state_networks_target_states.clear();
+}
+
+// SolutionNode* SolutionNodeAction::activate(Problem& problem,
+// 										   double* state_vals,
+// 										   bool* states_on,
+// 										   vector<SolutionNode*>& loop_scopes,
+// 										   vector<int>& loop_scope_counts,
+// 										   int& iter_explore_type,
+// 										   SolutionNode*& iter_explore_node,
+// 										   IterExplore*& iter_explore,
+// 										   double* potential_state_vals,
+// 										   vector<int>& potential_state_indexes,
+// 										   vector<NetworkHistory*>& network_historys,
+// 										   vector<vector<double>>& guesses,
+// 										   vector<int>& explore_decisions,
+// 										   vector<bool>& explore_loop_decisions,
+// 										   bool save_for_display,
+// 										   ofstream& display_file) {
 SolutionNode* SolutionNodeAction::activate(Problem& problem,
 										   double* state_vals,
 										   bool* states_on,
@@ -292,13 +325,11 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 										   vector<NetworkHistory*>& network_historys,
 										   vector<vector<double>>& guesses,
 										   vector<int>& explore_decisions,
-										   vector<bool>& explore_loop_decisions,
-										   bool save_for_display,
-										   ofstream& display_file) {
-	if (save_for_display) {
-		display_file << this->node_index << endl;
-		this->action.save(display_file);
-	}
+										   vector<bool>& explore_loop_decisions) {
+	// if (save_for_display) {
+	// 	display_file << this->node_index << endl;
+	// 	this->action.save(display_file);
+	// }
 
 	bool is_first_explore = false;
 	if (iter_explore_type == EXPLORE_TYPE_NONE) {
@@ -385,8 +416,8 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 							try_path,
 							this,
 							this->next,
-							inclusive_end,
-							non_inclusive_end,
+							potential_inclusive_jump_ends[random_index],
+							potential_non_inclusive_jump_ends[random_index],
 							this->score_network_inputs_state_indexes,
 							-1);
 					}
@@ -414,14 +445,16 @@ SolutionNode* SolutionNodeAction::activate(Problem& problem,
 				iter_explore_type = EXPLORE_TYPE_EXPLORE;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_JUMP) {
 				iter_explore_node = this;
-				iter_explore_type = EXPLORE_TYPE_LEARN_PATH;
+				iter_explore_type = EXPLORE_TYPE_LEARN_JUMP;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
 				iter_explore_node = this;
-				iter_explore_type = EXPLORE_TYPE_MEASURE_PATH;
+				iter_explore_type = EXPLORE_TYPE_MEASURE_JUMP;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_LOOP) {
+				potential_state_indexes = this->explore_loop_states;
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_LEARN_LOOP;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_LOOP) {
+				potential_state_indexes = this->explore_loop_states;
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_MEASURE_LOOP;
 			}
@@ -632,6 +665,7 @@ void SolutionNodeAction::backprop(double score,
 		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP) {
 		backprop_state_networks_with_potential(potential_state_errors,
+											   potential_state_indexes,
 											   network_historys);
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP) {
 		// do nothing
@@ -639,9 +673,9 @@ void SolutionNodeAction::backprop(double score,
 }
 
 void SolutionNodeAction::save(ofstream& save_file) {
-	save_file << this->network_inputs_state_indexes.size() << endl;
-	for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
-		save_file << this->network_inputs_state_indexes[i_index] << endl;
+	save_file << this->score_network_inputs_state_indexes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->score_network_inputs_state_indexes.size(); i_index++) {
+		save_file << this->score_network_inputs_state_indexes[i_index] << endl;
 	}
 
 	string score_network_name = "../saves/nns/score_" + to_string(this->node_index) \
@@ -821,9 +855,9 @@ void SolutionNodeAction::activate_state_networks_with_potential(
 				vector<double> state_network_inputs;
 				double curr_observations = problem.get_observation();
 				state_network_inputs.push_back(curr_observations);
-				for (int i_index = 0; i_index < (int)this->network_inputs_state_indexes.size(); i_index++) {
-					if (states_on[this->network_inputs_state_indexes[i_index]]) {
-						state_network_inputs.push_back(state_vals[this->network_inputs_state_indexes[i_index]]);
+				for (int i_index = 0; i_index < (int)this->potential_inputs_state_indexes[p_index].size(); i_index++) {
+					if (states_on[this->potential_inputs_state_indexes[p_index][i_index]]) {
+						state_network_inputs.push_back(state_vals[this->potential_inputs_state_indexes[p_index][i_index]]);
 					} else {
 						state_network_inputs.push_back(0.0);
 					}
@@ -835,14 +869,12 @@ void SolutionNodeAction::activate_state_networks_with_potential(
 				if (backprop) {
 					this->potential_state_networks[p_index]->mtx.lock();
 					this->potential_state_networks[p_index]->activate(state_network_inputs, network_historys);
-					potential_state_vals[this->potential_state_networks_target_states[p_index]] = \
-						this->potential_state_networks[p_index]->output->acti_vals[0];
+					potential_state_vals[i_index] = this->potential_state_networks[p_index]->output->acti_vals[0];
 					this->potential_state_networks[p_index]->mtx.unlock();
 				} else {
 					this->potential_state_networks[p_index]->mtx.lock();
 					this->potential_state_networks[p_index]->activate(state_network_inputs);
-					potential_state_vals[this->potential_state_networks_target_states[p_index]] = \
-						this->potential_state_networks[p_index]->output->acti_vals[0];
+					potential_state_vals[i_index] = this->potential_state_networks[p_index]->output->acti_vals[0];
 					this->potential_state_networks[p_index]->mtx.unlock();
 				}
 			}

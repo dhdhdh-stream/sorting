@@ -12,14 +12,12 @@ using namespace std;
 
 SolutionNodeIfEnd::SolutionNodeIfEnd(Solution* solution,
 									 int node_index) {
-	this->solution = parent->solution;
+	this->solution = solution;
 
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_IF_END;
 
 	this->node_weight = 0.0;
-
-	this->temp_node_state = TEMP_NODE_STATE_NOT;
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
@@ -43,8 +41,6 @@ SolutionNodeIfEnd::SolutionNodeIfEnd(Solution* solution,
 	string node_weight_line;
 	getline(save_file, node_weight_line);
 	this->node_weight = stof(node_weight_line);
-
-	this->temp_node_state = TEMP_NODE_STATE_NOT;
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
@@ -101,6 +97,26 @@ void SolutionNodeIfEnd::delete_potential_state(vector<int> potential_state_index
 	this->next->delete_potential_state(potential_state_indexes, explore_node);
 }
 
+void SolutionNodeIfEnd::clear_potential_state() {
+	// do nothing
+}
+
+// SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
+// 										  double* state_vals,
+// 										  bool* states_on,
+// 										  vector<SolutionNode*>& loop_scopes,
+// 										  vector<int>& loop_scope_counts,
+// 										  int& iter_explore_type,
+// 										  SolutionNode*& iter_explore_node,
+// 										  IterExplore*& iter_explore,
+// 										  double* potential_state_vals,
+// 										  vector<int>& potential_state_indexes,
+// 										  vector<NetworkHistory*>& network_historys,
+// 										  vector<vector<double>>& guesses,
+// 										  vector<int>& explore_decisions,
+// 										  vector<bool>& explore_loop_decisions,
+// 										  bool save_for_display,
+// 										  ofstream& display_file) {
 SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 										  double* state_vals,
 										  bool* states_on,
@@ -114,12 +130,10 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 										  vector<NetworkHistory*>& network_historys,
 										  vector<vector<double>>& guesses,
 										  vector<int>& explore_decisions,
-										  vector<bool>& explore_loop_decisions,
-										  bool save_for_display,
-										  ofstream& display_file) {
-	if (save_for_display) {
-		display_file << this->node_index << endl;
-	}
+										  vector<bool>& explore_loop_decisions) {
+	// if (save_for_display) {
+	// 	display_file << this->node_index << endl;
+	// }
 
 	bool is_first_explore = false;
 	if (iter_explore_type == EXPLORE_TYPE_NONE) {
@@ -155,7 +169,8 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 							NULL,
 							NULL,
 							this->next,
-							available_state);
+							available_state,
+							-1);
 					} else {
 						int seq_length = seq_length_dist(generator);
 						for (int i = 0; i < seq_length; i++) {
@@ -170,7 +185,8 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 							this->next,
 							inclusive_end,
 							non_inclusive_end,
-							available_state);
+							available_state,
+							-1);
 					}
 				} else if (rand_index == 1) {
 					vector<SolutionNode*> potential_inclusive_jump_ends;
@@ -197,7 +213,8 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 							NULL,
 							NULL,
 							this->next,
-							available_state);
+							available_state,
+							-1);
 					} else {
 						int seq_length = seq_length_dist(generator);
 						for (int i = 0; i < seq_length; i++) {
@@ -212,7 +229,8 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 							this->next,
 							potential_inclusive_jump_ends[random_index],
 							potential_non_inclusive_jump_ends[random_index],
-							available_state);
+							available_state,
+							-1);
 					}
 				} else {
 					vector<SolutionNode*> potential_non_inclusive_loop_starts;
@@ -230,7 +248,8 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 						potential_inclusive_loop_starts[random_index],
 						this,
 						this->next,
-						available_state);
+						available_state,
+						-1);
 				}
 
 				iter_explore_node = this;
@@ -242,9 +261,11 @@ SolutionNode* SolutionNodeIfEnd::activate(Problem& problem,
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_MEASURE_JUMP;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_LOOP) {
+				potential_state_indexes = this->explore_loop_states;
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_LEARN_LOOP;
 			} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_LOOP) {
+				potential_state_indexes = this->explore_loop_states;
 				iter_explore_node = this;
 				iter_explore_type = EXPLORE_TYPE_MEASURE_LOOP;
 			}

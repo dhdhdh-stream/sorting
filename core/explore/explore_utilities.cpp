@@ -1,10 +1,12 @@
 #include "explore_utilities.h"
 
 #include "solution_node_action.h"
+#include "solution_node_end.h"
 #include "solution_node_if_start.h"
 #include "solution_node_if_end.h"
 #include "solution_node_loop_start.h"
 #include "solution_node_loop_end.h"
+#include "solution_node_start.h"
 
 using namespace std;
 

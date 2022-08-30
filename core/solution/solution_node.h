@@ -29,19 +29,16 @@ const int EXPLORE_TYPE_MEASURE_LOOP = 5;
 const int EXPLORE_PATH_STATE_EXPLORE = 0;
 const int EXPLORE_PATH_STATE_LEARN_JUMP = 1;
 const int EXPLORE_PATH_STATE_MEASURE_JUMP = 2;
-const int EXPLORE_PATH_STATE_LEARN_LOOP = 3
+const int EXPLORE_PATH_STATE_LEARN_LOOP = 3;
 const int EXPLORE_PATH_STATE_MEASURE_LOOP = 4;
 
 const int EXPLORE_DECISION_TYPE_N_A = 0;
 const int EXPLORE_DECISION_TYPE_EXPLORE = 1;
 const int EXPLORE_DECISION_TYPE_NO_EXPLORE = 2;
 
-const int TEMP_NODE_STATE_NOT = -1;
-const int TEMP_NODE_STATE_LEARN = 0;
-const int TEMP_NODE_STATE_MEASURE = 1;
-
 // TODO: Add folds
 
+class IterExplore;
 class Solution;
 class SolutionNode {
 public:
@@ -79,8 +76,6 @@ public:
 	double explore_no_explore_misguess;
 	// TODO: compare misguess
 
-	int temp_node_state;
-
 	bool node_is_on;
 
 	virtual ~SolutionNode();
@@ -94,7 +89,24 @@ public:
 											 SolutionNode* explore_node) = 0;
 	virtual void delete_potential_state(std::vector<int> potential_state_indexes,
 										SolutionNode* explore_node) = 0;
+	virtual void clear_potential_state() = 0;
 
+	// virtual SolutionNode* activate(Problem& problem,
+	// 							   double* state_vals,
+	// 							   bool* states_on,
+	// 							   std::vector<SolutionNode*>& loop_scopes,
+	// 							   std::vector<int>& loop_scope_counts,
+	// 							   int& iter_explore_type,
+	// 							   SolutionNode*& iter_explore_node,
+	// 							   IterExplore*& iter_explore,
+	// 							   double* potential_state_vals,
+	// 							   std::vector<int>& potential_state_indexes,
+	// 							   std::vector<NetworkHistory*>& network_historys,
+	// 							   std::vector<std::vector<double>>& guesses,
+	// 							   std::vector<int>& explore_decisions,
+	// 							   std::vector<bool>& explore_loop_decisions,
+	// 							   bool save_for_display,
+	// 							   std::ofstream& display_file) = 0;
 	virtual SolutionNode* activate(Problem& problem,
 								   double* state_vals,
 								   bool* states_on,
@@ -104,14 +116,11 @@ public:
 								   SolutionNode*& iter_explore_node,
 								   IterExplore*& iter_explore,
 								   double* potential_state_vals,
-								   bool* potential_states_on,
 								   std::vector<int>& potential_state_indexes,
 								   std::vector<NetworkHistory*>& network_historys,
 								   std::vector<std::vector<double>>& guesses,
 								   std::vector<int>& explore_decisions,
-								   std::vector<bool>& explore_loop_decisions,
-								   bool save_for_display,
-								   std::ofstream& display_file) = 0;
+								   std::vector<bool>& explore_loop_decisions) = 0;
 	virtual void backprop(double score,
 						  double misguess,
 						  double* state_errors,
@@ -119,7 +128,6 @@ public:
 						  int& iter_explore_type,
 						  SolutionNode*& iter_explore_node,
 						  double* potential_state_errors,
-						  bool* potential_states_on,
 						  std::vector<int>& potential_state_indexes,
 						  std::vector<NetworkHistory*>& network_historys,
 						  std::vector<int>& explore_decisions,
@@ -144,8 +152,8 @@ public:
 						  bool* states_on,
 						  SolutionNode*& iter_explore_node,
 						  double* potential_state_errors,
-						  vector<NetworkHistory*>& network_historys,
-						  vector<int>& explore_decisions);
+						  std::vector<NetworkHistory*>& network_historys,
+						  std::vector<int>& explore_decisions);
 	void explore_increment(double score,
 						   IterExplore* iter_explore);
 	void clear_explore();
@@ -222,7 +230,16 @@ public:
 				SolutionNode* iter_end_inclusive,
 				SolutionNode* iter_end_non_inclusive,
 				std::vector<int> available_state,
-				int iter_child_index);
+				int iter_child_index) {
+		this->iter_explore_type = iter_explore_type;
+		this->try_path = try_path;
+		this->iter_start_non_inclusive = iter_start_non_inclusive;
+		this->iter_start_inclusive = iter_start_inclusive;
+		this->iter_end_inclusive = iter_end_inclusive;
+		this->iter_end_non_inclusive = iter_end_non_inclusive;
+		this->available_state = available_state;
+		this->iter_child_index = iter_child_index;
+	};
 	~IterExplore() {
 		// do nothing
 	}

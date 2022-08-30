@@ -245,25 +245,50 @@ void Network::backprop(vector<double>& errors,
 }
 
 void Network::extend_with_potential(int potential_index) {
-	this->input->input_extend_with_potential();
+	this->input->input_extend();
 	this->hidden->hidden_extend_with_potential(potential_index,
 											   this->potential_hiddens[potential_index]);
 	this->output->output_extend_with_potential(potential_index);
 
+	delete this->potential_inputs[potential_index];
 	this->potential_inputs.erase(
 		this->potential_inputs.begin() + potential_index);
+	delete this->potential_hiddens[potential_index];
 	this->potential_hiddens.erase(
 		this->potential_hiddens.begin() + potential_index);
+
+	for (int p_index = 0; p_index < (int)this->potential_hiddens.size(); p_index++) {
+		this->potential_hiddens[p_index]->hidden_input_extend();
+	}
 }
 
 void Network::delete_potential(int potential_index) {
 	this->hidden->delete_potential_input_layer(potential_index);
 	this->output->delete_potential_input_layer(potential_index);
 
+	delete this->potential_inputs[potential_index];
 	this->potential_inputs.erase(
 		this->potential_inputs.begin() + potential_index);
+	delete this->potential_hiddens[potential_index];
 	this->potential_hiddens.erase(
 		this->potential_hiddens.begin() + potential_index);
+}
+
+void Network::pad_input() {
+	this->input->input_extend();
+	this->hidden->hidden_input_extend();
+}
+
+void Network::remove_potentials() {
+	this->hidden->remove_potential_input_layers();
+	this->output->remove_potential_input_layers();
+
+	for (int p_index = 0; p_index < (int)this->potential_hiddens.size(); p_index++) {
+		delete this->potential_inputs[p_index];
+		delete this->potential_hiddens[p_index];
+	}
+	this->potential_inputs.clear();
+	this->potential_hiddens.clear();
 }
 
 void Network::save(ofstream& output_file) {
