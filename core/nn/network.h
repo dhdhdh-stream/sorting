@@ -54,6 +54,7 @@ public:
 				  std::vector<int>& potentials_on);
 	void extend_with_potential(int potential_index);
 	void delete_potential(int potential_index);
+	void trim_input(int index);
 	void pad_input();
 	void remove_potentials();
 

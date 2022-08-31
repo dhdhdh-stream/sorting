@@ -1,5 +1,6 @@
 #include "solution_node_start.h"
 
+#include <iostream>
 #include <random>
 
 #include "definitions.h"
@@ -14,22 +15,28 @@ SolutionNodeStart::SolutionNodeStart(Solution* solution) {
 	this->node_index = 0;
 	this->node_type = NODE_TYPE_START;
 
-	this->score_network = new Network(1, 4, 1);
+	this->network_inputs_state_indexes.push_back(0);
+	this->network_inputs_state_indexes.push_back(1);
+
+	this->score_network = new Network(3, 12, 1);
+	this->certainty_network = new Network(3, 12, 1);
+
+	this->node_weight = 0.0;
 
 	this->start_states.push_back(0);
 	this->start_states.push_back(1);
 
-	this->node_weight = 0.0;
-
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
-	this->node_is_on = false;
+	this->node_is_on = true;
 }
 
 SolutionNodeStart::SolutionNodeStart(Solution* solution,
@@ -40,29 +47,27 @@ SolutionNodeStart::SolutionNodeStart(Solution* solution,
 	this->node_index = 0;
 	this->node_type = NODE_TYPE_START;
 
-	string score_network_name = "../saves/nns/start_score_" + to_string(this->solution->id) + ".txt";
-	ifstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network = new Network(score_network_save_file);
-	score_network_save_file.close();
+	load_score_network(save_file);
 
-	string node_weight_line;
-	getline(save_file, node_weight_line);
-	this->node_weight = stof(node_weight_line);
+	this->start_states.push_back(0);
+	this->start_states.push_back(1);
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
-	this->node_is_on = false;
+	this->node_is_on = true;
 }
 
 SolutionNodeStart::~SolutionNodeStart() {
 	delete this->score_network;
+	delete this->certainty_network;
 }
 
 void SolutionNodeStart::reset() {
@@ -89,27 +94,12 @@ void SolutionNodeStart::clear_potential_state() {
 	// do nothing
 }
 
-// SolutionNode* SolutionNodeStart::activate(Problem& problem,
-// 										  double* state_vals,
-// 										  bool* states_on,
-// 										  vector<SolutionNode*>& loop_scopes,
-// 										  vector<int>& loop_scope_counts,
-// 										  int& iter_explore_type,
-// 										  SolutionNode*& iter_explore_node,
-// 										  IterExplore*& iter_explore,
-// 										  double* potential_state_vals,
-// 										  vector<int>& potential_state_indexes,
-// 										  vector<NetworkHistory*>& network_historys,
-// 										  vector<vector<double>>& guesses,
-// 										  vector<int>& explore_decisions,
-// 										  vector<bool>& explore_loop_decisions,
-// 										  bool save_for_display,
-// 										  ofstream& display_file) {
 SolutionNode* SolutionNodeStart::activate(Problem& problem,
 										  double* state_vals,
 										  bool* states_on,
 										  vector<SolutionNode*>& loop_scopes,
 										  vector<int>& loop_scope_counts,
+										  vector<bool>& loop_decisions,
 										  int& iter_explore_type,
 										  SolutionNode*& iter_explore_node,
 										  IterExplore*& iter_explore,
@@ -118,10 +108,11 @@ SolutionNode* SolutionNodeStart::activate(Problem& problem,
 										  vector<NetworkHistory*>& network_historys,
 										  vector<vector<double>>& guesses,
 										  vector<int>& explore_decisions,
-										  vector<bool>& explore_loop_decisions) {
-	// if (save_for_display) {
-	// 	display_file << this->node_index << endl;
-	// }
+										  bool save_for_display,
+										  ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
 
 	for (int s_index = 0; s_index < (int)this->start_states.size(); s_index++) {
 		state_vals[this->start_states[s_index]] = 0.0;
@@ -205,17 +196,15 @@ SolutionNode* SolutionNodeStart::activate(Problem& problem,
 		}
 	}
 
-	double score;
-	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
-		score = activate_score_network(problem,
-									   true,
-									   network_historys);
-	} else {
-		score = activate_score_network(problem,
-									   false,
-									   network_historys);
-	}
-	guesses.back().push_back(score);
+	activate_helper(problem,
+					state_vals,
+					states_on,
+					iter_explore_type,
+					iter_explore_node,
+					potential_state_vals,
+					potential_state_indexes,
+					network_historys,
+					guesses);
 
 	SolutionNode* explore_node = NULL;
 	if (iter_explore_node == this) {
@@ -231,6 +220,7 @@ SolutionNode* SolutionNodeStart::activate(Problem& problem,
 										potential_state_vals,
 										potential_state_indexes,
 										network_historys,
+										guesses,
 										explore_decisions);
 	}
 
@@ -245,13 +235,13 @@ void SolutionNodeStart::backprop(double score,
 								 double misguess,
 								 double* state_errors,
 								 bool* states_on,
+								 vector<bool>& loop_decisions,
 								 int& iter_explore_type,
 								 SolutionNode*& iter_explore_node,
 								 double* potential_state_errors,
 								 vector<int>& potential_state_indexes,
 								 vector<NetworkHistory*>& network_historys,
-								 vector<int>& explore_decisions,
-								 vector<bool>& explore_loop_decisions) {
+								 vector<int>& explore_decisions) {
 	explore_backprop(score,
 					 misguess,
 					 state_errors,
@@ -261,22 +251,18 @@ void SolutionNodeStart::backprop(double score,
 					 network_historys,
 					 explore_decisions);
 
-	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
-		backprop_score_network(score,
-							   network_historys);
-	} else {
-		// do nothing
-	}
+	backprop_helper(score,
+					misguess,
+					state_errors,
+					states_on,
+					iter_explore_type,
+					iter_explore_node,
+					potential_state_errors,
+					network_historys);
 }
 
 void SolutionNodeStart::save(ofstream& save_file) {
-	string score_network_name = "../saves/nns/start_score_" + to_string(this->solution->id) + ".txt";
-	ofstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network->save(score_network_save_file);
-	score_network_save_file.close();
-
-	save_file << this->node_weight << endl;
+	save_score_network(save_file);
 }
 
 void SolutionNodeStart::save_for_display(ofstream& save_file) {
@@ -285,57 +271,4 @@ void SolutionNodeStart::save_for_display(ofstream& save_file) {
 		save_file << this->node_type << endl;
 		save_file << this->next->node_index << endl;
 	}
-}
-
-double SolutionNodeStart::activate_score_network(Problem& problem,
-												 bool backprop,
-												 vector<NetworkHistory*>& network_historys) {
-	vector<double> score_network_inputs;
-	double curr_observations = problem.get_observation();
-	score_network_inputs.push_back(curr_observations);
-
-	double score;
-	if (backprop) {
-		this->score_network->mtx.lock();
-		this->score_network->activate(score_network_inputs, network_historys);
-		score = this->score_network->output->acti_vals[0];
-		this->score_network->mtx.unlock();
-	} else {
-		this->score_network->mtx.lock();
-		this->score_network->activate(score_network_inputs);
-		score = this->score_network->output->acti_vals[0];
-		this->score_network->mtx.unlock();
-	}
-
-	return score;
-}
-
-void SolutionNodeStart::backprop_score_network(double score,
-											   vector<NetworkHistory*>& network_historys) {
-	NetworkHistory* network_history = network_historys.back();
-
-	this->score_network->mtx.lock();
-
-	network_history->reset_weights();
-
-	vector<double> score_network_errors;
-	if (score == 1.0) {
-		if (this->score_network->output->acti_vals[0] < 1.0) {
-			score_network_errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
-		} else {
-			score_network_errors.push_back(0.0);
-		}
-	} else {
-		if (this->score_network->output->acti_vals[0] > 0.0) {
-			score_network_errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
-		} else {
-			score_network_errors.push_back(0.0);
-		}
-	}
-	this->score_network->backprop(score_network_errors);
-
-	this->score_network->mtx.unlock();
-
-	delete network_history;
-	network_historys.pop_back();
 }

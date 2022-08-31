@@ -54,6 +54,8 @@ public:
 	void output_extend_with_potential(int potential_index);
 	void delete_potential_input_layer(int potential_index);
 	void hidden_input_extend();
+	void input_trim();
+	void hidden_trim(int index);
 	void remove_potential_input_layers();
 
 	void collapse_input(int input_index,

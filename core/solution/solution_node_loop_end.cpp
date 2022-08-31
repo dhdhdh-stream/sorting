@@ -11,36 +11,48 @@
 using namespace std;
 
 SolutionNodeLoopEnd::SolutionNodeLoopEnd(SolutionNode* parent,
-										 int node_index) {
+										 int node_index,
+										 vector<int> loop_states) {
 	this->solution = parent->solution;
 
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_END;
 
+	this->network_inputs_state_indexes = parent->explore_network_inputs_state_indexes;
+
+	int input_size = 1 + (int)this->network_inputs_state_indexes.size();
+	this->score_network = new Network(input_size,
+									  4*input_size,
+									  1);
+	this->certainty_network = new Network(input_size,
+										  4*input_size,
+										  1);
+
 	this->node_weight = 0.0;
 
 	this->halt_networks_inputs_state_indexes = parent->explore_network_inputs_state_indexes;
+	this->halt_networks_inputs_state_indexes.insert(this->halt_networks_inputs_state_indexes.begin(),
+		loop_states.begin(), loop_states.end());
 
-	this->halt_score_network = parent->explore_halt_network;
-	parent->explore_halt_network = NULL;
-	this->no_halt_score_network = parent->explore_no_halt_network;
-	parent->explore_no_halt_network = NULL;
+	this->halt_score_network = parent->explore_halt_score_network;
+	parent->explore_halt_score_network = NULL;
+	this->halt_certainty_network = parent->explore_halt_certainty_network;
+	parent->explore_halt_certainty_network = NULL;
 
-	int input_size = 1 + (int)this->halt_networks_inputs_state_indexes.size();
-	this->halt_certainty_network = new Network(input_size,
-											   4*input_size,
-											   1);
-	this->no_halt_certainty_network = new Network(input_size,
-												  4*input_size,
-												  1);
+	this->no_halt_score_network = parent->explore_no_halt_score_network;
+	parent->explore_no_halt_score_network = NULL;
+	this->no_halt_certainty_network = parent->explore_no_halt_certainty_network;
+	parent->explore_no_halt_certainty_network = NULL;
 
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
 	this->node_is_on = false;
 }
@@ -53,9 +65,7 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_END;
 
-	string node_weight_line;
-	getline(save_file, node_weight_line);
-	this->node_weight = stof(node_weight_line);
+	load_score_network(save_file);
 
 	string halt_networks_inputs_state_indexes_size_line;
 	getline(save_file, halt_networks_inputs_state_indexes_size_line);
@@ -97,15 +107,20 @@ SolutionNodeLoopEnd::SolutionNodeLoopEnd(Solution* solution,
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
 	this->node_is_on = false;
 }
 
 SolutionNodeLoopEnd::~SolutionNodeLoopEnd() {
+	delete this->score_network;
+	delete this->certainty_network;
+
 	delete this->halt_score_network;
 	delete this->halt_certainty_network;
 
@@ -129,9 +144,13 @@ void SolutionNodeLoopEnd::add_potential_state(vector<int> potential_state_indexe
 		this->no_halt_certainty_network->add_potential();
 	}
 
+	// TODO: break when adding state to scope
+
+	score_network_add_potential_state(potential_state_indexes);
+
 	if (this == explore_node) {
 		return;
-	}
+	}	
 	if (this->next->node_type == NODE_TYPE_IF_END) {
 		return;
 	}
@@ -159,6 +178,11 @@ void SolutionNodeLoopEnd::extend_with_potential_state(vector<int> potential_stat
 			}
 		}
 	}
+
+	// TODO: break when adding state to scope
+
+	score_network_extend_with_potential_state(potential_state_indexes,
+											  new_state_indexes);
 
 	if (this == explore_node) {
 		return;
@@ -190,6 +214,10 @@ void SolutionNodeLoopEnd::delete_potential_state(vector<int> potential_state_ind
 		}
 	}
 
+	// TODO: break when adding state to scope
+
+	score_network_delete_potential_state(potential_state_indexes);
+
 	if (this == explore_node) {
 		return;
 	}
@@ -206,29 +234,16 @@ void SolutionNodeLoopEnd::clear_potential_state() {
 	this->halt_certainty_network->remove_potentials();
 	this->no_halt_score_network->remove_potentials();
 	this->no_halt_certainty_network->remove_potentials();
+
+	score_network_clear_potential_state();
 }
 
-// SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
-// 											double* state_vals,
-// 											bool* states_on,
-// 											vector<SolutionNode*>& loop_scopes,
-// 											vector<int>& loop_scope_counts,
-// 											int& iter_explore_type,
-// 											SolutionNode*& iter_explore_node,
-// 											IterExplore*& iter_explore,
-// 											double* potential_state_vals,
-// 											vector<int>& potential_state_indexes,
-// 											vector<NetworkHistory*>& network_historys,
-// 											vector<vector<double>>& guesses,
-// 											vector<int>& explore_decisions,
-// 											vector<bool>& explore_loop_decisions,
-// 											bool save_for_display,
-// 											ofstream& display_file) {
 SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											double* state_vals,
 											bool* states_on,
 											vector<SolutionNode*>& loop_scopes,
 											vector<int>& loop_scope_counts,
+											vector<bool>& loop_decisions,
 											int& iter_explore_type,
 											SolutionNode*& iter_explore_node,
 											IterExplore*& iter_explore,
@@ -237,15 +252,20 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											vector<NetworkHistory*>& network_historys,
 											vector<vector<double>>& guesses,
 											vector<int>& explore_decisions,
-											vector<bool>& explore_loop_decisions) {
-	// if (save_for_display) {
-	// 	display_file << this->node_index << endl;
-	// }
+											bool save_for_display,
+											ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
 
 	bool is_first_explore = false;
 	if (iter_explore_type == EXPLORE_TYPE_NONE) {
 		if (randuni() < this->node_weight) {
 			if (this->explore_path_state == EXPLORE_PATH_STATE_EXPLORE) {
+				// clear state early/twice to set correct available_state
+				for (int o_index = 0; o_index < (int)this->start->loop_states.size(); o_index++) {
+					states_on[this->start->loop_states[o_index]] = false;
+				}
 				vector<int> available_state;
 				for (int s_index = 0; s_index < this->solution->current_state_counter; s_index++) {
 					if (states_on[s_index]) {
@@ -460,14 +480,6 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			should_halt);
 	}
 
-	if (iter_explore_node == this) {
-		if (should_halt) {
-			explore_loop_decisions.push_back(true);
-		} else {
-			explore_loop_decisions.push_back(false);
-		}
-	}
-
 	if (should_halt) {
 		for (int o_index = 0; o_index < (int)this->start->loop_states.size(); o_index++) {
 			states_on[this->start->loop_states[o_index]] = false;
@@ -475,6 +487,16 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 
 		loop_scopes.pop_back();
 		loop_scope_counts.pop_back();
+
+		activate_helper(problem,
+						state_vals,
+						states_on,
+						iter_explore_type,
+						iter_explore_node,
+						potential_state_vals,
+						potential_state_indexes,
+						network_historys,
+						guesses);
 
 		SolutionNode* explore_node = NULL;
 		if (iter_explore_node == this) {
@@ -490,8 +512,11 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 											potential_state_vals,
 											potential_state_indexes,
 											network_historys,
+											guesses,
 											explore_decisions);
 		}
+
+		loop_decisions.push_back(true);
 
 		if (explore_node != NULL) {
 			return explore_node;
@@ -499,6 +524,8 @@ SolutionNode* SolutionNodeLoopEnd::activate(Problem& problem,
 			return this->next;
 		}
 	} else {
+		loop_decisions.push_back(false);
+
 		return this->start;
 	}
 }
@@ -507,26 +534,33 @@ void SolutionNodeLoopEnd::backprop(double score,
 								   double misguess,
 								   double* state_errors,
 								   bool* states_on,
+								   vector<bool>& loop_decisions,
 								   int& iter_explore_type,
 								   SolutionNode*& iter_explore_node,
 								   double* potential_state_errors,
 								   vector<int>& potential_state_indexes,
 								   vector<NetworkHistory*>& network_historys,
-								   vector<int>& explore_decisions,
-								   vector<bool>& explore_loop_decisions) {
-	if (iter_explore_node == this) {
-		if (explore_loop_decisions.size() > 0 && explore_loop_decisions.back() == true) {
-			explore_backprop(score,
-							 misguess,
-							 state_errors,
-							 states_on,
-							 iter_explore_node,
-							 potential_state_errors,
-							 network_historys,
-							 explore_decisions);
-		}
-		explore_loop_decisions.pop_back();
+								   vector<int>& explore_decisions) {
+	if (loop_decisions.back() == true) {
+		explore_backprop(score,
+						 misguess,
+						 state_errors,
+						 states_on,
+						 iter_explore_node,
+						 potential_state_errors,
+						 network_historys,
+						 explore_decisions);
+
+		backprop_helper(score,
+						misguess,
+						state_errors,
+						states_on,
+						iter_explore_type,
+						iter_explore_node,
+						potential_state_errors,
+						network_historys);
 	}
+	loop_decisions.pop_back();
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
 		for (int s_index = 0; s_index < (int)this->start->loop_states.size(); s_index++) {
@@ -590,7 +624,7 @@ void SolutionNodeLoopEnd::backprop(double score,
 }
 
 void SolutionNodeLoopEnd::save(ofstream& save_file) {
-	save_file << this->node_weight << endl;
+	save_score_network(save_file);
 
 	save_file << this->halt_networks_inputs_state_indexes.size() << endl;
 	for (int i_index = 0; i_index < (int)this->halt_networks_inputs_state_indexes.size(); i_index++) {
@@ -681,12 +715,11 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 		vector<NetworkHistory*> halt_certainty_history;
 		this->halt_certainty_network->mtx.lock();
 		this->halt_certainty_network->activate(inputs, halt_certainty_history);
-		double halt_certainty = this->halt_certainty_network->output->acti_vals[0];
+		double halt_misguess = this->halt_certainty_network->output->acti_vals[0];
 		this->halt_certainty_network->mtx.unlock();
 
 		double pinned_halt_score = max(min(halt_score, 1.0), 0.0);
-		double pinned_halt_certainty = max(halt_certainty, 0.0);
-		double halt_curr_combined = pinned_halt_score - pinned_halt_certainty;
+		double halt_curr_combined = pinned_halt_score - halt_misguess;
 
 		vector<NetworkHistory*> no_halt_score_history;
 		this->no_halt_score_network->mtx.lock();
@@ -697,12 +730,11 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 		vector<NetworkHistory*> no_halt_certainty_history;
 		this->no_halt_certainty_network->mtx.lock();
 		this->no_halt_certainty_network->activate(inputs, no_halt_certainty_history);
-		double no_halt_certainty = this->no_halt_certainty_network->output->acti_vals[0];
+		double no_halt_misguess = this->no_halt_certainty_network->output->acti_vals[0];
 		this->no_halt_certainty_network->mtx.unlock();
 
 		double pinned_no_halt_score = max(min(no_halt_score, 1.0), 0.0);
-		double pinned_no_halt_certainty = max(no_halt_certainty, 0.0);
-		double no_halt_curr_combined = pinned_no_halt_score - pinned_no_halt_certainty;
+		double no_halt_curr_combined = pinned_no_halt_score - no_halt_misguess;
 
 		if (no_halt_curr_combined > halt_curr_combined || rand()%20 == 0) {
 			network_historys.push_back(no_halt_score_history[0]);
@@ -729,12 +761,11 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 
 		this->halt_certainty_network->mtx.lock();
 		this->halt_certainty_network->activate(inputs);
-		double halt_certainty = this->halt_certainty_network->output->acti_vals[0];
+		double halt_misguess = this->halt_certainty_network->output->acti_vals[0];
 		this->halt_certainty_network->mtx.unlock();
 
 		double pinned_halt_score = max(min(halt_score, 1.0), 0.0);
-		double pinned_halt_certainty = max(halt_certainty, 0.0);
-		double halt_curr_combined = pinned_halt_score - pinned_halt_certainty;
+		double halt_curr_combined = pinned_halt_score - halt_misguess;
 
 		this->no_halt_score_network->mtx.lock();
 		this->no_halt_score_network->activate(inputs);
@@ -743,12 +774,11 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 
 		this->no_halt_certainty_network->mtx.lock();
 		this->no_halt_certainty_network->activate(inputs);
-		double no_halt_certainty = this->no_halt_certainty_network->output->acti_vals[0];
+		double no_halt_misguess = this->no_halt_certainty_network->output->acti_vals[0];
 		this->no_halt_certainty_network->mtx.unlock();
 
 		double pinned_no_halt_score = max(min(no_halt_score, 1.0), 0.0);
-		double pinned_no_halt_certainty = max(no_halt_certainty, 0.0);
-		double no_halt_curr_combined = pinned_no_halt_score - pinned_no_halt_certainty;
+		double no_halt_curr_combined = pinned_no_halt_score - no_halt_misguess;
 
 		if (no_halt_curr_combined > halt_curr_combined || rand()%20 == 0) {
 			should_halt = false;
@@ -1091,12 +1121,11 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 											   potentials_on,
 											   potential_vals,
 											   halt_certainty_history);
-		double halt_certainty = this->halt_certainty_network->output->acti_vals[0];
+		double halt_misguess = this->halt_certainty_network->output->acti_vals[0];
 		this->halt_certainty_network->mtx.unlock();
 
 		double pinned_halt_score = max(min(halt_score, 1.0), 0.0);
-		double pinned_halt_certainty = max(halt_certainty, 0.0);
-		double halt_curr_combined = pinned_halt_score - pinned_halt_certainty;
+		double halt_curr_combined = pinned_halt_score - halt_misguess;
 
 		vector<NetworkHistory*> no_halt_score_history;
 		this->no_halt_score_network->mtx.lock();
@@ -1113,12 +1142,11 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 												  potentials_on,
 												  potential_vals,
 												  no_halt_certainty_history);
-		double no_halt_certainty = this->no_halt_certainty_network->output->acti_vals[0];
+		double no_halt_misguess = this->no_halt_certainty_network->output->acti_vals[0];
 		this->no_halt_certainty_network->mtx.unlock();
 
 		double pinned_no_halt_score = max(min(no_halt_score, 1.0), 0.0);
-		double pinned_no_halt_certainty = max(no_halt_certainty, 0.0);
-		double no_halt_curr_combined = pinned_no_halt_score - pinned_no_halt_certainty;
+		double no_halt_curr_combined = pinned_no_halt_score - no_halt_misguess;
 
 		if (no_halt_curr_combined > halt_curr_combined || rand()%20 == 0) {
 			network_historys.push_back(no_halt_score_history[0]);
@@ -1149,12 +1177,11 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 		this->halt_certainty_network->activate(inputs,
 											   potentials_on,
 											   potential_vals);
-		double halt_certainty = this->halt_certainty_network->output->acti_vals[0];
+		double halt_misguess = this->halt_certainty_network->output->acti_vals[0];
 		this->halt_certainty_network->mtx.unlock();
 
 		double pinned_halt_score = max(min(halt_score, 1.0), 0.0);
-		double pinned_halt_certainty = max(halt_certainty, 0.0);
-		double halt_curr_combined = pinned_halt_score - pinned_halt_certainty;
+		double halt_curr_combined = pinned_halt_score - halt_misguess;
 
 		this->no_halt_score_network->mtx.lock();
 		this->no_halt_score_network->activate(inputs,
@@ -1167,12 +1194,11 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 		this->no_halt_certainty_network->activate(inputs,
 												  potentials_on,
 												  potential_vals);
-		double no_halt_certainty = this->no_halt_certainty_network->output->acti_vals[0];
+		double no_halt_misguess = this->no_halt_certainty_network->output->acti_vals[0];
 		this->no_halt_certainty_network->mtx.unlock();
 
 		double pinned_no_halt_score = max(min(no_halt_score, 1.0), 0.0);
-		double pinned_no_halt_certainty = max(no_halt_certainty, 0.0);
-		double no_halt_curr_combined = pinned_no_halt_score - pinned_no_halt_certainty;
+		double no_halt_curr_combined = pinned_no_halt_score - no_halt_misguess;
 
 		if (no_halt_curr_combined > halt_curr_combined || rand()%20 == 0) {
 			should_halt = false;

@@ -274,6 +274,11 @@ void Network::delete_potential(int potential_index) {
 		this->potential_hiddens.begin() + potential_index);
 }
 
+void Network::trim_input(int index) {
+	this->input->input_trim();
+	this->hidden->hidden_trim(index);
+}
+
 void Network::pad_input() {
 	this->input->input_extend();
 	this->hidden->hidden_input_extend();

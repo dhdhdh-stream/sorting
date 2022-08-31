@@ -10,13 +10,25 @@
 
 using namespace std;
 
-SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
+SolutionNodeLoopStart::SolutionNodeLoopStart(SolutionNode* parent,
 											 int node_index,
 											 vector<int> loop_states) {
-	this->solution = solution;
+	this->solution = parent->solution;
 
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_START;
+
+	this->network_inputs_state_indexes = parent->explore_network_inputs_state_indexes;
+	this->network_inputs_state_indexes.insert(this->network_inputs_state_indexes.begin(),
+		loop_states.begin(), loop_states.end());
+
+	int input_size = 1 + (int)this->network_inputs_state_indexes.size();
+	this->score_network = new Network(input_size,
+									  4*input_size,
+									  1);
+	this->certainty_network = new Network(input_size,
+										  4*input_size,
+										  1);
 
 	this->node_weight = 1.0;
 
@@ -25,10 +37,12 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
 	this->node_is_on = false;
 }
@@ -41,9 +55,7 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 	this->node_index = node_index;
 	this->node_type = NODE_TYPE_LOOP_START;
 
-	string node_weight_line;
-	getline(save_file, node_weight_line);
-	this->node_weight = stof(node_weight_line);
+	load_score_network(save_file);
 
 	string loop_states_size_line;
 	getline(save_file, loop_states_size_line);
@@ -57,16 +69,19 @@ SolutionNodeLoopStart::SolutionNodeLoopStart(Solution* solution,
 	this->explore_path_state = EXPLORE_PATH_STATE_EXPLORE;
 	this->explore_path_iter_index = 0;
 
-	this->explore_jump_network = NULL;
-	this->explore_no_jump_network = NULL;
-	this->explore_halt_network = NULL;
-	this->explore_no_halt_network = NULL;
+	this->explore_jump_score_network = NULL;
+	this->explore_jump_certainty_network = NULL;
+	this->explore_halt_score_network = NULL;
+	this->explore_halt_certainty_network = NULL;
+	this->explore_no_halt_score_network = NULL;
+	this->explore_no_halt_certainty_network = NULL;
 
 	this->node_is_on = false;
 }
 
 SolutionNodeLoopStart::~SolutionNodeLoopStart() {
-	// do nothing
+	delete this->score_network;
+	delete this->certainty_network;
 }
 
 void SolutionNodeLoopStart::reset() {
@@ -75,6 +90,8 @@ void SolutionNodeLoopStart::reset() {
 
 void SolutionNodeLoopStart::add_potential_state(vector<int> potential_state_indexes,
 												SolutionNode* explore_node) {
+	score_network_add_potential_state(potential_state_indexes);
+
 	// this can't be explore node
 	this->next->add_potential_state(potential_state_indexes, explore_node);
 }
@@ -82,6 +99,9 @@ void SolutionNodeLoopStart::add_potential_state(vector<int> potential_state_inde
 void SolutionNodeLoopStart::extend_with_potential_state(vector<int> potential_state_indexes,
 														vector<int> new_state_indexes,
 														SolutionNode* explore_node) {
+	score_network_extend_with_potential_state(potential_state_indexes,
+											  new_state_indexes);
+
 	// this can't be explore node
 	this->next->extend_with_potential_state(potential_state_indexes,
 											new_state_indexes,
@@ -90,35 +110,22 @@ void SolutionNodeLoopStart::extend_with_potential_state(vector<int> potential_st
 
 void SolutionNodeLoopStart::delete_potential_state(vector<int> potential_state_indexes,
 												   SolutionNode* explore_node) {
+	score_network_delete_potential_state(potential_state_indexes);
+
 	// this can't be explore node
 	this->next->delete_potential_state(potential_state_indexes, explore_node);
 }
 
 void SolutionNodeLoopStart::clear_potential_state() {
-	// do nothing
+	score_network_clear_potential_state();
 }
 
-// SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
-// 											  double* state_vals,
-// 											  bool* states_on,
-// 											  vector<SolutionNode*>& loop_scopes,
-// 											  vector<int>& loop_scope_counts,
-// 											  int& iter_explore_type,
-// 											  SolutionNode*& iter_explore_node,
-// 											  IterExplore*& iter_explore,
-// 											  double* potential_state_vals,
-// 											  vector<int>& potential_state_indexes,
-// 											  vector<NetworkHistory*>& network_historys,
-// 											  vector<vector<double>>& guesses,
-// 											  vector<int>& explore_decisions,
-// 											  vector<bool>& explore_loop_decisions,
-// 											  bool save_for_display,
-// 											  ofstream& display_file) {
 SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  double* state_vals,
 											  bool* states_on,
 											  vector<SolutionNode*>& loop_scopes,
 											  vector<int>& loop_scope_counts,
+											  vector<bool>& loop_decisions,
 											  int& iter_explore_type,
 											  SolutionNode*& iter_explore_node,
 											  IterExplore*& iter_explore,
@@ -127,10 +134,11 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 											  vector<NetworkHistory*>& network_historys,
 											  vector<vector<double>>& guesses,
 											  vector<int>& explore_decisions,
-											  vector<bool>& explore_loop_decisions) {
-	// if (save_for_display) {
-	// 	display_file << this->node_index << endl;
-	// }
+											  bool save_for_display,
+											  ofstream& display_file) {
+	if (save_for_display) {
+		display_file << this->node_index << endl;
+	}
 
 	if (loop_scopes.back() == this) {
 		loop_scope_counts.back()++;
@@ -216,6 +224,16 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 		}
 	}
 
+	activate_helper(problem,
+					state_vals,
+					states_on,
+					iter_explore_type,
+					iter_explore_node,
+					potential_state_vals,
+					potential_state_indexes,
+					network_historys,
+					guesses);
+
 	SolutionNode* explore_node = NULL;
 	if (iter_explore_node == this) {
 		explore_node = explore_activate(problem,
@@ -230,6 +248,7 @@ SolutionNode* SolutionNodeLoopStart::activate(Problem& problem,
 										potential_state_vals,
 										potential_state_indexes,
 										network_historys,
+										guesses,
 										explore_decisions);
 	}
 
@@ -244,13 +263,13 @@ void SolutionNodeLoopStart::backprop(double score,
 									 double misguess,
 									 double* state_errors,
 									 bool* states_on,
+									 vector<bool>& loop_decisions,
 									 int& iter_explore_type,
 									 SolutionNode*& iter_explore_node,
 									 double* potential_state_errors,
 									 vector<int>& potential_state_indexes,
 									 vector<NetworkHistory*>& network_historys,
-									 vector<int>& explore_decisions,
-									 vector<bool>& explore_loop_decisions) {
+									 vector<int>& explore_decisions) {
 	explore_backprop(score,
 					 misguess,
 					 state_errors,
@@ -259,6 +278,15 @@ void SolutionNodeLoopStart::backprop(double score,
 					 potential_state_errors,
 					 network_historys,
 					 explore_decisions);
+
+	backprop_helper(score,
+					misguess,
+					state_errors,
+					states_on,
+					iter_explore_type,
+					iter_explore_node,
+					potential_state_errors,
+					network_historys);
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
 		for (int o_index = 0; o_index < (int)this->loop_states.size(); o_index++) {
@@ -284,7 +312,7 @@ void SolutionNodeLoopStart::backprop(double score,
 }
 
 void SolutionNodeLoopStart::save(ofstream& save_file) {
-	save_file << this->node_weight << endl;
+	save_score_network(save_file);
 
 	save_file << this->loop_states.size() << endl;
 	for (int s_index = 0; s_index < (int)this->loop_states.size(); s_index++) {

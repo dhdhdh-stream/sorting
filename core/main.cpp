@@ -12,28 +12,21 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1661923976;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ifstream explore_save_file;
-	explore_save_file.open("../saves/1661830538.txt");
-	Explore explore(explore_save_file);
-	explore_save_file.close();
+	// ifstream explore_save_file;
+	// explore_save_file.open("../saves/1661830538.txt");
+	// Explore explore(explore_save_file);
+	// explore_save_file.close();
 
-	// Explore explore;
+	Explore explore;
 
 	for (int cycle_index = 0; cycle_index < 100; cycle_index++) {
 		explore.setup_cycle();
-
-		// ofstream error_display_file;
-		// error_display_file.open("../error.txt");
-		// error_display_file << explore.solution->nodes.size() << endl;
-		// for (int n_index = 0; n_index < (int)explore.solution->nodes.size(); n_index++) {
-		// 	explore.solution->nodes[n_index]->save_for_display(error_display_file);
-		// }
-		// error_display_file.close();
 
 		// for (int i = 1; i < 5000000; i++) {
 		for (int i = 1; i < 500; i++) {
@@ -46,8 +39,7 @@ int main(int argc, char* argv[]) {
 		}
 		// for (int i = 1; i < 50000000; i++) {
 		for (int i = 1; i < 5000; i++) {
-			// if (i%1000000 == 0) {
-			if (i%1000 == 0) {
+			if (i%1000000 == 0) {
 				cout << "explore " << i << endl;
 				explore.solution->iteration(false, true);
 			} else {
@@ -60,8 +52,6 @@ int main(int argc, char* argv[]) {
 
 		// explore.save();
 	}
-
-	explore.save();
 
 	cout << "Done" << endl;
 }

@@ -398,6 +398,19 @@ void Layer::hidden_input_extend() {
 	}
 }
 
+void Layer::input_trim() {
+	this->acti_vals.pop_back();
+	this->errors.pop_back();
+}
+
+void Layer::hidden_trim(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][0].erase(this->weights[n_index][0].begin() + index);
+		this->weight_updates[n_index][0].erase(this->weight_updates[n_index][0].begin() + index);
+		this->prev_weight_updates[n_index][0].erase(this->prev_weight_updates[n_index][0].begin() + index);
+	}
+}
+
 void Layer::remove_potential_input_layers() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index].erase(this->weights[n_index].begin()+1,

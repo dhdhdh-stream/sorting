@@ -27,10 +27,6 @@ public:
 
 	std::mutex display_mtx;
 
-	double* state_vals;
-	bool* states_on;
-	double* potential_state_vals;
-
 	Solution(Explore* explore);
 	Solution(Explore* explore,
 			 std::ifstream& save_file);
