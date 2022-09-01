@@ -17,6 +17,8 @@ public:
 
 	std::vector<ExploreNode*> children;
 
+	// TODO: add state nodes to always apply?
+
 	// TODO: Consider impact from exploration
 
 	int count;
