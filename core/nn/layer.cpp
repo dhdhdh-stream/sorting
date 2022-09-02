@@ -424,83 +424,56 @@ void Layer::remove_potential_input_layers() {
 	this->input_layers.erase(this->input_layers.begin()+1, this->input_layers.end());
 }
 
-void Layer::collapse_input(int input_index,
-						   Layer* new_collapse_layer) {
-	this->input_layers[input_index] = new_collapse_layer;
-
+void Layer::backprop_fold_state() {
+	// this->type == RELU_LAYER
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][input_index].clear();
-		this->weight_updates[n_index][input_index].clear();
-		this->prev_weight_updates[n_index][input_index].clear();
-
-		int layer_size = (int)new_collapse_layer->acti_vals.size();
-		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			this->weights[n_index][input_index].push_back((randuni()-0.5)*0.02);
-			this->weight_updates[n_index][input_index].push_back(0.0);
-			this->prev_weight_updates[n_index][input_index].push_back(0.0);
-		}
-	}
-}
-
-void Layer::fold_input(Layer* new_fold_layer) {
-	this->input_layers.erase(this->input_layers.begin());
-	this->input_layers[0] = new_fold_layer;
-
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].erase(this->weights[n_index].begin());
-		this->weights[n_index][0].clear();
-		this->weight_updates[n_index].erase(this->weight_updates[n_index].begin());
-		this->weight_updates[n_index][0].clear();
-		this->prev_weight_updates[n_index].erase(this->prev_weight_updates[n_index].begin());
-		this->prev_weight_updates[n_index][0].clear();
-
-		int layer_size = (int)new_fold_layer->acti_vals.size();
-		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			this->weights[n_index][0].push_back((randuni()-0.5)*0.02);
-			this->weight_updates[n_index][0].push_back(0.0);
-			this->prev_weight_updates[n_index][0].push_back(0.0);
-		}
-	}
-}
-
-void Layer::collapse_calc_max_update(int input_index,
-									 double& max_update_size,
-									 double learning_rate,
-									 double momentum) {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < input_index+1; l_index++) {
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+		if (this->acti_vals[n_index] > 0.0) {
+			int layer_size = (int)this->input_layers[2]->acti_vals.size();
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				double update = this->weight_updates[n_index][l_index][ln_index]
-								*learning_rate
-								+this->prev_weight_updates[n_index][l_index][ln_index]
-								*momentum;
-				double update_size = abs(update);
-				if (update_size > max_update_size) {
-					max_update_size = update_size;
-				}
+				this->input_layers[2]->errors[ln_index] +=
+					this->errors[n_index]*this->weights[n_index][2][ln_index];
+				// multiply by this->errors[n_index] for MSE weight updates
+				this->weight_updates[n_index][2][ln_index] +=
+					this->errors[n_index]*this->input_layers[2]->acti_vals[ln_index];
+			}
+		}
+
+		this->errors[n_index] = 0.0;
+	}
+}
+
+void Layer::calc_max_update_fold_state(double& max_update_size,
+									   double learning_rate,
+									   double momentum) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		int layer_size = (int)this->input_layers[2]->acti_vals.size();
+		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+			double update = this->weight_updates[n_index][2][ln_index]
+							*learning_rate
+							+this->prev_weight_updates[n_index][2][ln_index]
+							*momentum;
+			double update_size = abs(update);
+			if (update_size > max_update_size) {
+				max_update_size = update_size;
 			}
 		}
 	}
 }
 
-void Layer::collapse_update_weights(int input_index,
-									double factor,
-									double learning_rate,
-									double momentum) {
+void Layer::update_weights_fold_state(double factor,
+									  double learning_rate,
+									  double momentum) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < input_index+1; l_index++) {
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				double update = this->weight_updates[n_index][l_index][ln_index]
-								*learning_rate
-								+this->prev_weight_updates[n_index][l_index][ln_index]
-								*momentum;
-				update *= factor;
-				this->weight_updates[n_index][l_index][ln_index] = 0.0;
-				this->weights[n_index][l_index][ln_index] += update;
-				this->prev_weight_updates[n_index][l_index][ln_index] = update;
-			}
+		int layer_size = (int)this->input_layers[2]->acti_vals.size();
+		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+			double update = this->weight_updates[n_index][2][ln_index]
+							*learning_rate
+							+this->prev_weight_updates[n_index][2][ln_index]
+							*momentum;
+			update *= factor;
+			this->weight_updates[n_index][2][ln_index] = 0.0;
+			this->weights[n_index][2][ln_index] += update;
+			this->prev_weight_updates[n_index][2][ln_index] = update;
 		}
 	}
 }

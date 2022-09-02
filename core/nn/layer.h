@@ -58,18 +58,13 @@ public:
 	void hidden_trim(int index);
 	void remove_potential_input_layers();
 
-	void collapse_input(int input_index,
-						Layer* new_collapse_layer);
-	void fold_input(Layer* new_fold_layer);	// always folds layer[0] and layer[1]
-
-	void collapse_calc_max_update(int layer_index,
-								  double& max_update_size,
-								  double learning_rate,
-								  double momentum);
-	void collapse_update_weights(int layer_index,
-								 double factor,
-								 double learning_rate,
-								 double momentum);
+	void backprop_fold_state();
+	void calc_max_update_fold_state(double& max_update_size,
+									double learning_rate,
+									double momentum);
+	void update_weights_fold_state(double factor,
+								   double learning_rate,
+								   double momentum);
 };
 
 #endif /* LAYER_H */

@@ -47,80 +47,13 @@ void SolutionNode::activate_helper(Problem& problem,
 	} else if (iter_explore_type == EXPLORE_TYPE_EXPLORE) {
 		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_JUMP) {
-		if (iter_explore_node != this) {
-			double predicted_score;
-			double predicted_misguess;
-			activate_score_network(problem,
-								   state_vals,
-								   states_on,
-								   true,
-								   network_historys,
-								   predicted_score,
-								   predicted_misguess);
-			guesses.back().push_back(predicted_score);
-			if (this->node_type == NODE_TYPE_ACTION
-					|| this->node_type == NODE_TYPE_START) {
-				guesses.back().push_back(predicted_score);
-			}
-		}
+		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
-		if (iter_explore_node != this) {
-			double predicted_score;
-			double predicted_misguess;
-			activate_score_network(problem,
-								   state_vals,
-								   states_on,
-								   false,
-								   network_historys,
-								   predicted_score,
-								   predicted_misguess);
-			guesses.back().push_back(predicted_score);
-			if (this->node_type == NODE_TYPE_ACTION
-					|| this->node_type == NODE_TYPE_START) {
-				guesses.back().push_back(predicted_score);
-			}
-		}
+		// do nothing
 	} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP) {
-		if (iter_explore_node != this) {
-			double predicted_score;
-			double predicted_misguess;
-			activate_score_network_with_potential(
-				problem,
-				state_vals,
-				states_on,
-				potential_state_vals,
-				potential_state_indexes,
-				true,
-				network_historys,
-				predicted_score,
-				predicted_misguess);
-			guesses.back().push_back(predicted_score);
-			if (this->node_type == NODE_TYPE_ACTION
-					|| this->node_type == NODE_TYPE_START) {
-				guesses.back().push_back(predicted_score);
-			}
-		}
+		// do nothing
 	} else {
-		// iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP
-		if (iter_explore_node != this) {
-			double predicted_score;
-			double predicted_misguess;
-			activate_score_network_with_potential(
-				problem,
-				state_vals,
-				states_on,
-				potential_state_vals,
-				potential_state_indexes,
-				false,
-				network_historys,
-				predicted_score,
-				predicted_misguess);
-			guesses.back().push_back(predicted_score);
-			if (this->node_type == NODE_TYPE_ACTION
-					|| this->node_type == NODE_TYPE_START) {
-				guesses.back().push_back(predicted_score);
-			}
-		}
+		// do nothing
 	}
 }
 
@@ -226,6 +159,14 @@ SolutionNode* SolutionNode::explore_activate(
 			}
 		}
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_JUMP) {
+		// fetch initial observation
+
+		vector<double> additional_observations;
+		for (int a_index = 0; a_index < (int)iter_explore->try_path.size(); a_index++) {
+			problem.perform_action(iter_explore->try_path[a_index]);
+			additional_observations.push_back(problem.get_observation());
+		}
+
 		if (is_first_explore || rand()%20 == 0) {
 			double predicted_score;
 			double predicted_misguess;
@@ -317,6 +258,31 @@ SolutionNode* SolutionNode::explore_activate(
 			return NULL;
 		}
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_LOOP) {
+		// if loop_scopes.back() == NULL, scale by number of loops
+		int input_start_index;
+		for (int n_index = (int)nodes_visited.size()-1; n_index >= 0; n_index--) {
+			if (nodes_visited[n_index] == this->explore_start_inclusive) {
+				input_start_index = n_index;
+				break;
+			}
+		}
+
+		double flat_inputs[this->explore_flat_size] = {};
+		bool activated[this->explore_flat_size] = {};
+
+		vector<int> fold_loop_scope_counts;
+		fold_loop_scope_counts.push_back(1);
+		for (int n_index = input_start_index; input_start_index < (int)nodes_visited.size(); n_index++) {
+			nodes_visited[n_index]->fold_helpers[this]->process(
+				flat_inputs,
+				activated,
+				fold_loop_scope_counts);
+		}
+
+		// call potential state networks of nodes if needed
+
+		
+
 		if (loop_scopes.back() == NULL) {
 			int current_count = loop_scope_counts.back();
 			if (rand()%(6-current_count) == 0) {
@@ -552,7 +518,7 @@ void SolutionNode::explore_backprop(double score,
 			}
 		} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
 			if (explore_decisions.back() == EXPLORE_DECISION_TYPE_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_explore_is_good += 1;
 				} else {
@@ -560,7 +526,7 @@ void SolutionNode::explore_backprop(double score,
 				}
 				this->explore_explore_misguess += misguess;
 			} else if (explore_decisions.back() == EXPLORE_DECISION_TYPE_NO_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_no_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_no_explore_is_good += 1;
 				} else {
@@ -590,7 +556,7 @@ void SolutionNode::explore_backprop(double score,
 		} else {
 			// this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_LOOP
 			if (explore_decisions.back() == EXPLORE_DECISION_TYPE_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_explore_is_good += 1;
 				} else {
@@ -598,7 +564,7 @@ void SolutionNode::explore_backprop(double score,
 				}
 				this->explore_explore_misguess += misguess;
 			} else if (explore_decisions.back() == EXPLORE_DECISION_TYPE_NO_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_no_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_no_explore_is_good += 1;
 				} else {
@@ -702,14 +668,15 @@ void SolutionNode::explore_increment(double score,
 		this->explore_path_iter_index++;
 
 		// if (this->explore_path_iter_index > 2000000) {
-		if (this->explore_path_iter_index > 10) {
+		if (this->explore_path_iter_index > 10000000) {
 			this->explore_path_state = EXPLORE_PATH_STATE_MEASURE_JUMP;
 			this->explore_path_iter_index = 0;
 
-			this->explore_path_measure_count = 0;
+			this->explore_explore_measure_count = 0;
 			this->explore_explore_is_good = 0.0;
 			this->explore_explore_is_bad = 0.0;
 			this->explore_explore_misguess = 0.0;
+			this->explore_no_explore_measure_count = 0;
 			this->explore_no_explore_is_good = 0.0;
 			this->explore_no_explore_is_bad = 0.0;
 			this->explore_no_explore_misguess = 0.0;
@@ -717,14 +684,13 @@ void SolutionNode::explore_increment(double score,
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
 		this->explore_path_iter_index++;
 
-		// if (this->explore_path_iter_index > 100000) {
-		if (this->explore_path_iter_index > 5) {
-			// cout << "explore_explore_is_good: " << this->explore_explore_is_good << endl;
-			// cout << "explore_explore_is_bad: " << this->explore_explore_is_bad << endl;
-			// cout << "explore_explore_misguess: " << this->explore_explore_misguess << endl;
-			// cout << "explore_no_explore_is_good: " << this->explore_no_explore_is_good << endl;
-			// cout << "explore_no_explore_is_bad: " << this->explore_no_explore_is_bad << endl;
-			// cout << "explore_no_explore_misguess: " << this->explore_no_explore_misguess << endl;
+		if (this->explore_path_iter_index > 100000) {
+			// double average_explore_is_good = (double)this->explore_explore_is_good/this->explore_explore_measure_count;
+			// double average_explore_is_bad = (double)this->explore_explore_is_bad/this->explore_explore_measure_count;
+			// double average_explore_misguess = this->explore_explore_misguess/this->explore_explore_measure_count;
+			// double average_no_explore_is_good = (double)this->explore_no_explore_is_good/this->explore_no_explore_measure_count;
+			// double average_no_explore_is_bad = (double)this->explore_no_explore_is_bad/this->explore_no_explore_measure_count;
+			// double average_no_explore_misguess = this->explore_no_explore_misguess/this->explore_no_explore_measure_count;
 
 			double improvement = explore_explore_is_good - explore_no_explore_is_good;
 			// TODO: add misguess
@@ -841,15 +807,15 @@ void SolutionNode::explore_increment(double score,
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_LEARN_LOOP) {
 		this->explore_path_iter_index++;
 
-		// if (this->explore_path_iter_index > 2000000) {
-		if (this->explore_path_iter_index > 10) {
+		if (this->explore_path_iter_index > 2000000) {
 			this->explore_path_state = EXPLORE_PATH_STATE_MEASURE_LOOP;
 			this->explore_path_iter_index = 0;
 
-			this->explore_path_measure_count = 0;
+			this->explore_explore_measure_count = 0;
 			this->explore_explore_is_good = 0.0;
 			this->explore_explore_is_bad = 0.0;
 			this->explore_explore_misguess = 0.0;
+			this->explore_no_explore_measure_count = 0;
 			this->explore_no_explore_is_good = 0.0;
 			this->explore_no_explore_is_bad = 0.0;
 			this->explore_no_explore_misguess = 0.0;
@@ -857,8 +823,7 @@ void SolutionNode::explore_increment(double score,
 	} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_LOOP) {
 		this->explore_path_iter_index++;
 
-		// if (this->explore_path_iter_index > 100000) {
-		if (this->explore_path_iter_index > 5) {
+		if (this->explore_path_iter_index > 100000) {
 			double improvement = explore_explore_is_good - explore_no_explore_is_good;
 			// TODO: add misguess
 			if (improvement > 0.0) {

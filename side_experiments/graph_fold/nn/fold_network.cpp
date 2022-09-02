@@ -7,11 +7,16 @@ FoldNetwork::FoldNetwork(vector<Node*> input_mappings,
 	this->input_mappings = input_mappings;
 	this->state_size = state_size;
 
+	for (int i_index = 0; i_index < (int)this->input_mappings.size(); i_index++) {
+		this->input_on.push_back(true);
+	}
+
 	this->flat_input = new Layer(LINEAR_LAYER, (int)this->input_mappings.size());
 	this->activated_input = new Layer(LINEAR_LAYER, (int)this->input_mappings.size());
 	this->state_input = new Layer(LINEAR_LAYER, this->state_size);
 
-	this->hidden = new Layer(RELU_LAYER, 1000);
+	// this->hidden = new Layer(RELU_LAYER, 1000);
+	this->hidden = new Layer(RELU_LAYER, 100);
 	this->hidden->input_layers.push_back(this->flat_input);
 	this->hidden->input_layers.push_back(this->activated_input);
 	this->hidden->input_layers.push_back(this->state_input);
@@ -30,6 +35,10 @@ FoldNetwork::FoldNetwork(std::vector<Node*> input_mappings,
 						 ifstream& input_file) {
 	this->input_mappings = input_mappings;
 	this->state_size = state_size;
+
+	for (int i_index = 0; i_index < (int)this->input_mappings.size(); i_index++) {
+		this->input_on.push_back(true);
+	}
 
 	this->flat_input = new Layer(LINEAR_LAYER, (int)this->input_mappings.size());
 	this->activated_input = new Layer(LINEAR_LAYER, (int)this->input_mappings.size());
@@ -65,10 +74,10 @@ void FoldNetwork::activate(vector<double>& inputs,
 						   vector<bool>& activated,
 						   double* state_vals) {
 	for (int i_index = 0; i_index < (int)this->input_mappings.size(); i_index++) {
-		if (this->input_mappings[i_index]->network_on) {
-			this->flat_input->acti_vals[i_index] = 0.0;
-		} else {
+		if (this->input_on[i_index]) {
 			this->flat_input->acti_vals[i_index] = inputs[i_index];
+		} else {
+			this->flat_input->acti_vals[i_index] = 0.0;
 		}
 
 		if (activated[i_index]) {
@@ -144,7 +153,7 @@ void FoldNetwork::state_backprop(std::vector<double>& errors,
 								 double* state_errors) {
 	this->output->errors[0] = errors[0];
 
-	this->output->backprop_errors_with_no_weight_change();
+	this->output->backprop();
 	this->hidden->backprop_fold_state();
 
 	for (int s_index = 0; s_index < this->state_size; s_index++) {
@@ -178,9 +187,9 @@ void FoldNetwork::state_calc_max_update(double& max_update,
 	this->hidden->calc_max_update_fold_state(max_update,
 											 learning_rate,
 											 momentum);
-	this->output->calc_max_update_fold_state(max_update,
-											 learning_rate,
-											 momentum);
+	this->output->calc_max_update(max_update,
+								  learning_rate,
+								  momentum);
 }
 
 void FoldNetwork::state_update_weights(double factor,
@@ -189,9 +198,9 @@ void FoldNetwork::state_update_weights(double factor,
 	this->hidden->update_weights_fold_state(factor,
 											learning_rate,
 											momentum);
-	this->output->update_weights_fold_state(factor,
-											learning_rate,
-											momentum);
+	this->output->update_weights(factor,
+								 learning_rate,
+								 momentum);
 }
 
 void FoldNetwork::save(ofstream& output_file) {

@@ -8,7 +8,7 @@
 #include "layer.h"
 
 class NetworkHistory;
-class Network {
+class Network : public AbstractNetwork {
 public:
 	Layer* input;
 	Layer* hidden;
@@ -66,22 +66,15 @@ private:
 				   int output_size);
 };
 
-class NetworkHistory {
+class NetworkHistory : public AbstractNetworkHistory {
 public:
-	Network* network;
-
 	std::vector<double> input_history;
 	std::vector<double> hidden_history;
 	std::vector<double> output_history;
 
-	std::vector<int> potentials_on;
-	std::vector<double> potential_inputs_historys;
-	std::vector<std::vector<double>> potential_hiddens_historys;
-
 	NetworkHistory(Network* network);
-	NetworkHistory(Network* network, std::vector<int> potentials_on);
 	~NetworkHistory();
-	void reset_weights();
+	void reset_weights() override;
 };
 
 #endif /* NETWORK_H */

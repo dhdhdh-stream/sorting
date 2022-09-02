@@ -253,6 +253,41 @@ void SolutionNodeAction::clear_potential_state() {
 	this->potential_state_networks_target_states.clear();
 }
 
+void SolutionNodeAction::construct_fold_inputs(vector<int>& loop_scope_counts,
+											   int& curr_index,
+											   SolutionNode* explore_node) {
+	FoldHelper* fold_helper;
+
+	map<SolutionNode*, FoldHelper*>::iterator it = this->fold_helpers.find(explore_node);
+	if (it == this->fold_helpers.end()) {
+		fold_helper = new FoldHelper(loop_scope_counts.size());
+		this->fold_helpers[explore_node] = fold_helper;
+	} else {
+		fold_helper = it->second;
+	}
+
+	fold_helper.set_index(loop_scope_counts,
+						  curr_index);
+
+	curr_index++;
+
+	if (this == explore_node) {
+		if (loop_scope_counts.back() == 6) {
+			return;
+		} else {
+			loop_scope_counts.back()++;
+			this->explore_start_inclusive->construct_fold_inputs(
+				loop_scope_counts,
+				curr_index,
+				explore_node);
+		}
+	} else {
+		this->next->construct_fold_inputs(loop_scope_counts,
+										  curr_index,
+										  explore_node);
+	}
+}
+
 SolutionNode* SolutionNodeAction::activate(Problem& problem,
 										   double* state_vals,
 										   bool* states_on,

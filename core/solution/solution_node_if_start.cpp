@@ -655,7 +655,7 @@ void SolutionNodeIfStart::backprop(double score,
 			}
 		} else if (this->explore_path_state == EXPLORE_PATH_STATE_MEASURE_JUMP) {
 			if (explore_decisions.back() == EXPLORE_DECISION_TYPE_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_explore_is_good += 1;
 				} else {
@@ -663,7 +663,7 @@ void SolutionNodeIfStart::backprop(double score,
 				}
 				this->explore_explore_misguess += misguess;
 			} else if (explore_decisions.back() == EXPLORE_DECISION_TYPE_NO_EXPLORE) {
-				this->explore_path_measure_count++;
+				this->explore_no_explore_measure_count++;
 				if (score == 1.0) {
 					this->explore_no_explore_is_good += 1;
 				} else {

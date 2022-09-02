@@ -690,7 +690,7 @@ void SolutionNodeLoopEnd::activate_networks(Problem& problem,
 	}
 
 	// loop_scopes.back() == this
-	if (is_first_explore || loop_scope_counts.back() >= 20) {
+	if (is_first_explore || loop_scope_counts.back() >= 6) {
 		if (backprop) {
 			this->halt_score_network->mtx.lock();
 			this->halt_score_network->activate(inputs, network_historys);
@@ -1084,7 +1084,7 @@ void SolutionNodeLoopEnd::activate_networks_with_potential(
 	}
 
 	// loop_scopes.back() == this
-	if (is_first_explore || loop_scope_counts.back() >= 20) {
+	if (is_first_explore || loop_scope_counts.back() >= 6) {
 		if (backprop) {
 			this->halt_score_network->mtx.lock();
 			this->halt_score_network->activate(inputs,

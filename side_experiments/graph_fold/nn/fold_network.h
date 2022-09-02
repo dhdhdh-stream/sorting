@@ -12,6 +12,7 @@
 class FoldNetwork {
 public:
 	std::vector<Node*> input_mappings;
+	std::vector<bool> input_on;
 
 	int state_size;
 

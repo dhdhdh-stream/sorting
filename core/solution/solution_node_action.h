@@ -10,14 +10,17 @@ class SolutionNodeAction : public SolutionNode {
 public:
 	Action action;
 
+	// divide between greedy state and fold state
+	// greedy should take as much as it can, and constantly change
+	// fold never changes after initial trainingb
+
+	// relearn greedy each cycle?
+
 	std::vector<std::vector<int>> state_network_inputs_state_indexes;
 	std::vector<Network*> state_networks;
 	std::vector<int> state_networks_target_states;
 
-	std::vector<std::vector<int>> potential_inputs_state_indexes;
-	std::vector<std::vector<int>> potential_potential_inputs_state_indexes;
-	std::vector<Network*> potential_state_networks;
-	std::vector<int> potential_state_networks_target_states;
+	std::map<SolutionNode*, Network*> potential_state_networks;
 
 	SolutionNode* next;
 
@@ -42,6 +45,10 @@ public:
 	void delete_potential_state(std::vector<int> potential_state_indexes,
 								SolutionNode* explore_node) override;
 	void clear_potential_state() override;
+
+	void construct_fold_inputs(std::vector<int>& loop_scope_counts,
+							   int& curr_index,
+							   SolutionNode* explore_node) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,

@@ -23,14 +23,20 @@ const int EXPLORE_TYPE_NONE = 0;
 const int EXPLORE_TYPE_EXPLORE = 1;
 const int EXPLORE_TYPE_LEARN_JUMP = 2;
 const int EXPLORE_TYPE_MEASURE_JUMP = 3;
-const int EXPLORE_TYPE_LEARN_LOOP = 4;
-const int EXPLORE_TYPE_MEASURE_LOOP = 5;
+const int EXPLORE_TYPE_PRE_EVAL_LOOP = 4;
+const int EXPLORE_TYPE_LEARN_LOOP_FLAT = 5;
+const int EXPLORE_TYPE_MEASURE_LOOP_FLAT = 6;
+const int EXPLORE_TYPE_LEARN_LOOP_FOLD = 7;
+const int EXPLORE_TYPE_MEASURE_LOOP_FOLD = 8;
 
 const int EXPLORE_PATH_STATE_EXPLORE = 0;
 const int EXPLORE_PATH_STATE_LEARN_JUMP = 1;
 const int EXPLORE_PATH_STATE_MEASURE_JUMP = 2;
-const int EXPLORE_PATH_STATE_LEARN_LOOP = 3;
-const int EXPLORE_PATH_STATE_MEASURE_LOOP = 4;
+const int EXPLORE_PATH_STATE_PRE_EVAL_LOOP = 3;
+const int EXPLORE_PATH_STATE_LEARN_LOOP_FLAT = 4;
+const int EXPLORE_PATH_STATE_MEASURE_LOOP_FLAT = 5;
+const int EXPLORE_PATH_STATE_LEARN_LOOP_FOLD = 6;
+const int EXPLORE_PATH_STATE_MEASURE_LOOP_FOLD = 7;
 
 const int EXPLORE_DECISION_TYPE_N_A = 0;
 const int EXPLORE_DECISION_TYPE_EXPLORE = 1;
@@ -50,37 +56,41 @@ public:
 	double node_weight;
 
 	std::vector<int> network_inputs_state_indexes;
-	std::vector<int> network_inputs_potential_state_indexes;
 	Network* score_network;
 	Network* certainty_network;
+
+	std::vector<int> future_network_inputs_state_indexes;
 
 	int explore_path_state;
 	int explore_path_iter_index;
 
 	int explore_loop_iter;
-	std::vector<SolutionNode*> explore_path;
+	std::vector<Action> explore_path;
 
 	SolutionNode* explore_start_non_inclusive;
 	SolutionNode* explore_start_inclusive;
 	SolutionNode* explore_end_inclusive;
 	SolutionNode* explore_end_non_inclusive;
 
-	std::vector<int> explore_network_inputs_state_indexes;
 	Network* explore_jump_score_network;
 	Network* explore_jump_certainty_network;
-	std::vector<int> explore_loop_states;
-	Network* explore_halt_score_network;
-	Network* explore_halt_certainty_network;
-	Network* explore_no_halt_score_network;
-	Network* explore_no_halt_certainty_network;
+	Network* explore_jump_full_score_network;
+	int explore_flat_size;
+	FlatNetwork* explore_halt_score_network;
+	FlatNetwork* explore_halt_certainty_network;
+	FlatNetwork* explore_no_halt_score_network;
+	FlatNetwork* explore_no_halt_certainty_network;
 
-	int explore_path_measure_count;
+	int explore_explore_measure_count;
 	int explore_explore_is_good;
 	int explore_explore_is_bad;
 	double explore_explore_misguess;
+	int explore_no_explore_measure_count;
 	int explore_no_explore_is_good;
 	int explore_no_explore_is_bad;
 	double explore_no_explore_misguess;
+
+	std::map<SolutionNode*, FoldHelper*> fold_helpers;
 
 	bool node_is_on;
 
@@ -97,6 +107,10 @@ public:
 										SolutionNode* explore_node) = 0;
 	virtual void clear_potential_state() = 0;
 
+	virtual void construct_fold_inputs(std::vector<int>& loop_scope_counts,
+									   int& curr_index,
+									   SolutionNode* explore_node) = 0;
+
 	virtual SolutionNode* activate(Problem& problem,
 								   double* state_vals,
 								   bool* states_on,
@@ -106,11 +120,12 @@ public:
 								   int& iter_explore_type,
 								   SolutionNode*& iter_explore_node,
 								   IterExplore*& iter_explore,
-								   double* potential_state_vals,
-								   std::vector<int>& potential_state_indexes,
 								   std::vector<NetworkHistory*>& network_historys,
 								   std::vector<std::vector<double>>& guesses,
 								   std::vector<int>& explore_decisions,
+								   std::vector<SolutionNode*>& nodes_visited,
+								   std::vector<double>& observations,
+								   bool& cancel_run,
 								   bool save_for_display,
 								   std::ofstream& display_file) = 0;
 	virtual void backprop(double score,

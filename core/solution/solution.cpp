@@ -43,7 +43,7 @@ Solution::Solution(Explore* explore,
 	string num_nodes_line;
 	getline(save_file, num_nodes_line);
 	int num_nodes = stoi(num_nodes_line);
-	for (int n_index =0; n_index < num_nodes; n_index++) {
+	for (int n_index = 0; n_index < num_nodes; n_index++) {
 		string node_type_line;
 		getline(save_file, node_type_line);
 		int node_type = stoi(node_type_line);
@@ -121,6 +121,7 @@ void Solution::iteration(bool tune,
 
 	vector<NetworkHistory*> network_historys;
 	vector<SolutionNode*> nodes_visited;
+	vector<double> observations;
 	
 	vector<vector<double>> guesses;
 	vector<double> guess_segment;
@@ -154,6 +155,7 @@ void Solution::iteration(bool tune,
 													  network_historys,
 													  guesses,
 													  explore_decisions,
+													  observations,
 													  save_for_display,
 													  display_file);
 
@@ -170,16 +172,15 @@ void Solution::iteration(bool tune,
 		if (curr_node->node_type == NODE_TYPE_END) {
 			break;
 		}
-		if (iter_explore_type != EXPLORE_TYPE_NONE) {
-			nodes_visited.push_back(curr_node);
-		}
+		nodes_visited.push_back(curr_node);
 		curr_node = next_node;
 	}
 
 	double score = problem.score_result();
-	this->average_score = 0.9999*this->average_score + 0.0001*score;
 
 	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
+		this->average_score = 0.9999*this->average_score + 0.0001*score;
+
 		double sum_segments = 0.0;
 		for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
 			double initial_guess = min(max(guesses[s_index][0], 0.0), 1.0);
@@ -233,8 +234,8 @@ void Solution::iteration(bool tune,
 		}
 	}
 
-	double sum_misguess = abs(score - guesses[0][0]);
-	int misguess_count = 1;
+	double sum_misguess = 0.0;
+	int misguess_count = 0;
 	for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
 		for (int g_index = 1; g_index < (int)guesses[s_index].size(); g_index++) {
 			double guess = min(max(guesses[s_index][g_index], 0.0), 1.0);
@@ -291,6 +292,11 @@ void Solution::iteration(bool tune,
 
 	if (iter_explore != NULL) {
 		delete iter_explore;
+	}
+
+	if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
+		problem.print();
+		cout << endl;
 	}
 }
 

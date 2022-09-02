@@ -5,36 +5,26 @@
 #include <mutex>
 #include <vector>
 
+#include "fold_helper.h"
 #include "layer.h"
+#include "node.h"
 
-const int FLAT = 0;
-const int FOLD = 1;
-const int CLEAN = 2;
-
-class FoldNetwork {
+class FoldNetwork : public AbstractNetwork {
 public:
-	int time_size;
-	int max_iters;
-	int global_size;
+	int existing_state_size;
+	int flat_size;
+	int new_state_size;
+	int obs_size;
 
-	int fold_state_size;
+	std::vector<bool> input_on;
 
-	int state;
-	int index;
+	Layer* existing_state_input;
+	Layer* flat_input;
+	Layer* activated_input;
+	Layer* new_state_input;
+	Layer* obs_input;
 
-	Layer* global_input;
-
-	Layer* fold_input;
-	std::vector<std::vector<double>> fold_input_historys;
-	Layer* fold_state_input;
-	std::vector<std::vector<double>> fold_state_input_historys;
-	Layer* fold_layer;
-	std::vector<std::vector<double>> fold_layer_historys;
-	Layer* fold_output;
-	// don't need fold_output_historys for now
-
-	std::vector<Layer*> process_inputs;
-	Layer* process;
+	Layer* hidden;
 	Layer* output;
 
 	int epoch;
@@ -42,39 +32,50 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(int time_size,
-				int max_iters,
-				int global_size,
-				int fold_state_size);
-	FoldNetwork(FoldNetwork* original);
-	FoldNetwork(std::ifstream& input_file);
+	FoldNetwork(int existing_state_size,
+				int flat_size,
+				int new_state_size);
 	~FoldNetwork();
 
-	void train(int num_iterations,
-			   std::vector<std::vector<double>>& time_vals,
-			   std::vector<double>& global_vals);
-	void backprop(std::vector<double>& errors);
-	void increment();
-	void calc_max_update(double& max_update,
-						 double learning_rate,
-						 double momentum);
-	void update_weights(double factor,
-						double learning_rate,
-						double momentum);
+	void activate(std::vector<double>& existing_state_inputs,
+				  double* flat_inputs,
+				  bool* activated,
+				  double* new_state_vals,
+				  std::vector<double>& obs);
 
-	void next_step();
+	void full_backprop(std::vector<double>& errors,
+					   double* new_state_errors);
+	void full_calc_max_update(double& max_update,
+							  double learning_rate,
+							  double momentum);
+	void full_update_weights(double factor,
+							 double learning_rate,
+							 double momentum);
 
-	std::vector<double> fan(int num_iterations,
-							std::vector<std::vector<double>>& time_vals,
-							std::vector<double>& global_vals);
+	void state_backprop(std::vector<double>& errors,
+						double* new_state_errors);
+	void state_calc_max_update(double& max_update,
+							   double learning_rate,
+							   double momentum);
+	void state_update_weights(double factor,
+							  double learning_rate,
+							  double momentum);
+};
 
-	void save(std::ofstream& output_file);
+class FoldNetworkHistory : public AbstractNetworkHistory {
+public:
+	std::vector<double> existing_state_input_history;
+	std::vector<double> flat_input_history;
+	std::vector<double> activated_input_history;
+	std::vector<double> new_state_input_history;
+	std::vector<double> obs_input_history;
 
-private:
-	void setup_layers();
+	std::vector<double> hidden_history;
+	std::vector<double> output_history;
 
-	void push_fold_history();
-	void pop_fold_history();
+	FoldNetworkHistory(FoldNetwork* network);
+	~FoldNetworkHistory();
+	void reset_weights() override;
 };
 
 #endif /* FOLD_NETWORK_H */

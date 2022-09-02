@@ -149,11 +149,14 @@ SolutionNode* SolutionNodeStart::activate(Problem& problem,
 				normal_distribution<double> write_val_dist(0.0, 2.0);
 				vector<Action> try_path;
 				if (this == potential_inclusive_jump_ends[random_index]) {
-					int seq_length = 1 + seq_length_dist(generator);
-					for (int i = 0; i < seq_length; i++) {
-						Action a(write_val_dist(generator), rand()%3);
-						try_path.push_back(a);
-					}
+					// int seq_length = 1 + seq_length_dist(generator);
+					// for (int i = 0; i < seq_length; i++) {
+					// 	Action a(write_val_dist(generator), rand()%3);
+					// 	try_path.push_back(a);
+					// }
+					Action a(0.0, RIGHT);
+					try_path.push_back(a);
+					try_path.push_back(a);
 
 					iter_explore = new IterExplore(
 						ITER_EXPLORE_TYPE_JUMP,
