@@ -6,25 +6,14 @@
 #include "action.h"
 #include "solution_node.h"
 
-class SolutionNodeAction : public SolutionNode {
+class SolutionNodeAction : public SolutionNode, public Scope {
 public:
 	Action action;
 
-	// divide between greedy state and fold state
-	// greedy should take as much as it can, and constantly change
-	// fold never changes after initial trainingb
+	std::vector<int> local_scope_indexes;	// stack of scopes all the way to the root
 
-	// relearn greedy each cycle?
-
-	std::vector<std::vector<int>> state_network_inputs_state_indexes;
+	std::vector<int> state_network_local_index;
 	std::vector<Network*> state_networks;
-	std::vector<int> state_networks_target_states;
-
-	std::map<SolutionNode*, Network*> potential_state_networks;
-
-	SolutionNode* next;
-
-	SolutionNode* previous;
 
 	SolutionNodeAction(Solution* solution,
 					   int node_index,

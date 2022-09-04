@@ -27,8 +27,6 @@ Solution::Solution(Explore* explore) {
 	SolutionNode* end_node = new SolutionNodeEnd(this);
 	this->nodes.push_back(end_node);
 
-	this->current_state_counter = 2;	// start_node starts with 2
-
 	this->average_score = 0.5;
 }
 
@@ -125,7 +123,9 @@ void Solution::iteration(bool tune,
 	
 	vector<vector<double>> guesses;
 	vector<double> guess_segment;
-	guess_segment.push_back(this->average_score);
+	guess_segment.push_back(this->average_score);	// incorrect?
+	// TODO: switch to squared errors
+	// or, this is fine/correct, and things will average out
 	guesses.push_back(guess_segment);
 
 	int iter_explore_type = EXPLORE_TYPE_NONE;
@@ -172,6 +172,7 @@ void Solution::iteration(bool tune,
 		if (curr_node->node_type == NODE_TYPE_END) {
 			break;
 		}
+		// actually, can still go EXPLORE_TYPE_NONE into backprop
 		nodes_visited.push_back(curr_node);
 		curr_node = next_node;
 	}

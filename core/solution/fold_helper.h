@@ -3,19 +3,30 @@
 
 class FoldHelper {
 public:
+	SolutionNode* parent;
+
 	int layer;
 
 	NDVector* input_indexes;
 
-	FoldHelper(int layer);
+	Network* potential_state_network;
+
+	FoldHelper(int layer,
+			   int new_state_size);
+	FoldHelper(int layer,
+			   Network* existing_state_network);
 	~FoldHelper();
 
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);
-	void process(double* flat_inputs,
+	void process(std::vector<int>& loop_scope_counts,
+				 double observations,
+				 int input_index_on,
+				 double* flat_inputs,
 				 bool* activated,
-				 std::vector<int>& loop_scope_counts);
-};
+				 std::vector<double>& new_state_vals,
+				 std::vector<SolutionNode*>& backprop_nodes,
+				 std::vector<AbstractNetworkHistory*>& network_historys);
 
 class NDVector {
 public:

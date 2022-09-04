@@ -11,14 +11,12 @@
 
 class FoldNetwork : public AbstractNetwork {
 public:
-	int existing_state_size;
 	int flat_size;
 	int new_state_size;
 	int obs_size;
 
 	std::vector<bool> input_on;
 
-	Layer* existing_state_input;
 	Layer* flat_input;
 	Layer* activated_input;
 	Layer* new_state_input;
@@ -32,16 +30,19 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(int existing_state_size,
-				int flat_size,
+	FoldNetwork(int flat_size,
 				int new_state_size);
 	~FoldNetwork();
 
-	void activate(std::vector<double>& existing_state_inputs,
-				  double* flat_inputs,
+	void activate(double* flat_inputs,
 				  bool* activated,
-				  double* new_state_vals,
+				  std::vector<double>& new_state_vals,
 				  std::vector<double>& obs);
+	void activate(double* flat_inputs,
+				  bool* activated,
+				  std::vector<double>& new_state_vals,
+				  std::vector<double>& obs,
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 
 	void full_backprop(std::vector<double>& errors,
 					   double* new_state_errors);
