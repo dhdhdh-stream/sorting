@@ -3,11 +3,9 @@
 
 class StartScope : public SolutionNode {
 public:
-	SolutionNode* start;
+	std::vector<SolutionNode*> path;
 
 	// score_network ran at start
-
-	SolutionNode* explore_node;
 };
 
 #endif /* START_SCOPE_H */

@@ -5,4 +5,7 @@
 
 extern std::default_random_engine generator;
 
+extern Solution* solution;
+extern ActionDictionary* action_dictionary;
+
 #endif /* DEFINITIONS_H */

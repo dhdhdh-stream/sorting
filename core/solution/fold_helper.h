@@ -19,14 +19,15 @@ public:
 
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);
-	void process(std::vector<int>& loop_scope_counts,
-				 double observations,
-				 int input_index_on,
-				 double* flat_inputs,
-				 bool* activated,
-				 std::vector<double>& new_state_vals,
-				 std::vector<SolutionNode*>& backprop_nodes,
-				 std::vector<AbstractNetworkHistory*>& network_historys);
+	void process_and_rerun_target_state(
+		std::vector<int>& loop_scope_counts,
+		double observations,
+		int input_index_on,
+		double* flat_inputs,
+		bool* activated,
+		std::vector<double>& new_state_vals,
+		std::vector<SolutionNode*>& backprop_nodes,
+		std::vector<AbstractNetworkHistory*>& network_historys);
 
 class NDVector {
 public:

@@ -1,12 +1,8 @@
 #ifndef JUMP_SCOPE_H
 #define JUMP_SCOPE_H
 
-const int JUMP_SCOPE_EXPLORE_TYPE_TOP = 0;
-const int JUMP_SCOPE_EXPLORE_TYPE_NEW_BRANCH = 1;
-const int JUMP_SCOPE_EXPLORE_TYPE_EXISTING_BRANCH = 2;
-const int JUMP_SCOPE_EXPLORE_TYPE_OUT = 3;
-
-// to know status of jump, push back scope 0 initially, switch to 1 after jump
+const int JUMP_SCOPE_IF_EXPLORE_TYPE_APPEND = 0;
+const int JUMP_SCOPE_IF_EXPLORE_TYPE_BRANCH_START = 1;
 
 class JumpScope : public SolutionNode {
 public:
@@ -15,7 +11,16 @@ public:
 	std::vector<SolutionNode*> top_path;
 
 	double if_explore_weight;
+	int if_explore_type;
+	int if_explore_state;
+	std::vector<SolutionNode*> if_explore_potential_nodes;
+	Network* if_explore_score_network;	// train greedily
+	Network* if_explore_full_score_network;
+	std::vector<FlatNetwork*> if_explore_state_networks;
+
 	double end_explore_weight;
+	int end_explore_state;
+
 
 	std::vector<std::vector<SolutionNode*>> children_nodes;
 	std::vector<Network*> children_score_networks;
@@ -23,10 +28,6 @@ public:
 	// update at end of jump_scope using prediction from last node
 	// so will bias towards new branches probably, but that's OK?
 	std::vector<double> children_misguess;
-
-	int explore_type;
-
-	SolutionNode* top_explore_node;
 
 	std::vector<Action> explore_branch_flat;
 	std::vector<SolutionNodeAction*> explore_branch_fold;

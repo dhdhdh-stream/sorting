@@ -6,8 +6,8 @@ public:
 	int num_states;
 
 	std::vector<SolutionNode*> top;
-	std::vector<SolutionNode*> forward;
-	std::vector<SolutionNode*> back;
+	std::vector<SolutionNode*> forward;	// forward cannot be empty
+	std::vector<SolutionNode*> back;	// back can be empty
 
 	Network* halt_score_network;
 	Network* halt_certainty_network;

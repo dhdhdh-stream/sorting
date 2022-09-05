@@ -14,9 +14,6 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	std::vector<Layer*> potential_inputs;	// each size 1
-	std::vector<Layer*> potential_hiddens;	// each size 4
-
 	int epoch;
 	int iter;
 
@@ -42,21 +39,8 @@ public:
 
 	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
 
-	void add_potential();
-	void activate(std::vector<double>& vals,
-				  std::vector<int>& potentials_on,
-				  std::vector<double>& potential_vals);
-	void activate(std::vector<double>& vals,
-				  std::vector<int>& potentials_on,
-				  std::vector<double>& potential_vals,
-				  std::vector<NetworkHistory*>& network_historys);
-	void backprop(std::vector<double>& errors,
-				  std::vector<int>& potentials_on);
-	void extend_with_potential(int potential_index);
-	void delete_potential(int potential_index);
 	void trim_input(int index);
 	void pad_input();
-	void remove_potentials();
 
 	void save(std::ofstream& output_file);
 

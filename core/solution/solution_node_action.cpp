@@ -120,139 +120,6 @@ SolutionNodeAction::~SolutionNodeAction() {
 	}
 }
 
-void SolutionNodeAction::reset() {
-	this->node_is_on = false;
-}
-
-void SolutionNodeAction::add_potential_state(vector<int> potential_state_indexes,
-											 SolutionNode* explore_node) {
-	score_network_add_potential_state(potential_state_indexes);
-
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		vector<int> potential_inputs_state_indexes;
-		for (int i_index = 0; i_index < ps_index+1; i_index++) {
-			potential_inputs_state_indexes.push_back(potential_state_indexes[i_index]);
-		}
-
-		int input_size = 1 + (int)this->network_inputs_state_indexes.size() + ps_index + 1;
-		Network* new_potential_state_network = new Network(input_size,
-														   input_size*4,
-														   1);
-
-		this->potential_inputs_state_indexes.push_back(
-			this->network_inputs_state_indexes);
-		this->potential_potential_inputs_state_indexes.push_back(
-			potential_inputs_state_indexes);
-		this->potential_state_networks.push_back(new_potential_state_network);
-		this->potential_state_networks_target_states.push_back(potential_state_indexes[ps_index]);
-	}
-
-	if (this == explore_node) {
-		return;
-	}
-	if (this->next->node_type == NODE_TYPE_IF_END) {
-		return;
-	}
-	this->next->add_potential_state(potential_state_indexes, explore_node);
-}
-
-void SolutionNodeAction::extend_with_potential_state(vector<int> potential_state_indexes,
-													 vector<int> new_state_indexes,
-													 SolutionNode* explore_node) {
-	score_network_extend_with_potential_state(potential_state_indexes,
-											  new_state_indexes);
-
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		for (int t_index = 0; t_index < (int)this->potential_state_networks_target_states.size(); t_index++) {
-			if (this->potential_state_networks_target_states[t_index]
-					== potential_state_indexes[ps_index]) {
-				vector<int> new_state_network_inputs_state_indexes(
-					this->potential_inputs_state_indexes[t_index]);
-				for (int i_index = 0; i_index < (int)this->potential_potential_inputs_state_indexes[t_index].size(); i_index++) {
-					for (int ns_index = 0; ns_index < (int)potential_state_indexes.size(); ns_index++) {
-						if (potential_state_indexes[ns_index]
-								== this->potential_potential_inputs_state_indexes[t_index][i_index]) {
-							new_state_network_inputs_state_indexes.push_back(new_state_indexes[ns_index]);
-							break;
-						}
-					}
-				}
-				this->state_network_inputs_state_indexes.push_back(new_state_network_inputs_state_indexes);
-				this->potential_inputs_state_indexes.erase(
-					this->potential_inputs_state_indexes.begin() + t_index);
-				this->potential_potential_inputs_state_indexes.erase(
-					this->potential_potential_inputs_state_indexes.begin() + t_index);
-				
-				this->state_networks.push_back(this->potential_state_networks[t_index]);
-				this->potential_state_networks.erase(
-					this->potential_state_networks.begin() + t_index);
-				
-				this->state_networks_target_states.push_back(new_state_indexes[ps_index]);
-				this->potential_state_networks_target_states.erase(
-					this->potential_state_networks_target_states.begin() + t_index);
-
-				break;
-			}
-		}
-	}
-
-	if (this == explore_node) {
-		return;
-	}
-	if (this->next->node_type == NODE_TYPE_IF_END) {
-		return;
-	}
-	this->next->extend_with_potential_state(potential_state_indexes,
-											new_state_indexes,
-											explore_node);
-}
-
-void SolutionNodeAction::delete_potential_state(vector<int> potential_state_indexes,
-												SolutionNode* explore_node) {
-	score_network_delete_potential_state(potential_state_indexes);
-
-	for (int ps_index = 0; ps_index < (int)potential_state_indexes.size(); ps_index++) {
-		for (int t_index = 0; t_index < (int)this->potential_state_networks_target_states.size(); t_index++) {
-			if (this->potential_state_networks_target_states[t_index]
-					== potential_state_indexes[ps_index]) {
-				this->potential_inputs_state_indexes.erase(
-					this->potential_inputs_state_indexes.begin() + t_index);
-				this->potential_potential_inputs_state_indexes.erase(
-					this->potential_potential_inputs_state_indexes.begin() + t_index);
-
-				delete this->potential_state_networks[t_index];
-				this->potential_state_networks.erase(
-					this->potential_state_networks.begin() + t_index);
-
-				this->potential_state_networks_target_states.erase(
-					this->potential_state_networks_target_states.begin() + t_index);
-
-				break;
-			}
-		}
-	}
-
-	if (this == explore_node) {
-		return;
-	}
-	if (this->next->node_type == NODE_TYPE_IF_END) {
-		return;
-	}
-	this->next->delete_potential_state(potential_state_indexes, explore_node);
-}
-
-void SolutionNodeAction::clear_potential_state() {
-	score_network_clear_potential_state();
-
-	this->potential_inputs_state_indexes.clear();
-	this->potential_potential_inputs_state_indexes.clear();
-	for (int sn_index = 0; sn_index < (int)this->potential_state_networks.size(); sn_index++) {
-		delete this->potential_state_networks[sn_index];
-	}
-	this->potential_state_networks.clear();
-	this->potential_state_networks_target_states.clear();
-}
-
 void SolutionNodeAction::construct_fold_inputs(vector<int>& loop_scope_counts,
 											   int& curr_index,
 											   SolutionNode* explore_node) {
@@ -285,6 +152,271 @@ void SolutionNodeAction::construct_fold_inputs(vector<int>& loop_scope_counts,
 		this->next->construct_fold_inputs(loop_scope_counts,
 										  curr_index,
 										  explore_node);
+	}
+}
+
+SolutionNode* SolutionNodeAction::explore(Problem& problem,
+										  vector<vector<double>>& state_vals,
+										  vector<SolutionNode*>& scopes,
+										  vector<int>& scope_states,
+										  vector<int>& scope_locations,
+										  IterExplore& iter_explore,
+										  vector<StepHistory>& instance_history,
+										  vector<AbstractNetworkHistory*>& network_historys) {
+	if (iter_explore->explore_node == this
+			&& scope_stacks.back() == NULL) {
+		// back from explore
+		scope_stacks.pop_back();
+		scope_stack_counts.pop_back();
+		// no loops for now, so always pop_back
+
+		if (this->explore_state = EXPLORE_STATE_EXPLORE) {
+			// do nothing
+		} else if (this->explore_state = EXPLORE_STATE_LEARN_JUMP_FLAT) {
+			int input_start_non_inclusive_index;
+			for (int n_index = (int)instance_history.size()-1; n_index >= 0; n_index--) {
+				if (instance_history[n_index]->node_visited == this) {
+					input_start_non_inclusive_index = n_index;
+					break;
+				}
+			}
+
+			double flat_inputs[this->explore_new_path_flat_size] = {};
+			bool activated[this->explore_new_path_flat_size] = {};
+
+			vector<int> fold_loop_scope_counts;
+			fold_loop_scope_counts.push_back(1);
+			for (int n_index = input_start_non_inclusive_index+1; input_start_index < (int)instance_history.size(); n_index++) {
+				if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_EMPTY) {
+					// run state network during LEARN_JUMP_FOLD but do nothing here
+				} else if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_ACTION) {
+					// n_index can't be explore_node, so action_performed always true
+					SolutionNodeAction* node_action = (SolutionNodeAction*)instance_history[n_index]->node_visited;
+					int input_index = instance_history[n_index]->node_visited->fold_helpers[this] \
+						->get_input_index(fold_loop_scope_counts);
+					flat_inputs[input_index] = instance_history[n_index]->previous_observations;
+					activated[input_index] = true;
+				}
+			}
+
+			vector<double> obs;
+			obs.push_back(problem.get_observation());
+
+			for (int l_index = 0; l_index < (int)this->local_state.size(); l_index++) {
+				this->explore_state_networks[s_index]->mtx.lock();
+				this->explore_state_networks->activate(flat_inputs,
+													   activated,
+													   state_vals[l_index],
+													   obs,
+													   network_historys);
+				for (int s_index = 0; s_index < this->local_state[l_index]; s_index++) {
+					state_vals[l_index][s_index] = this->explore_state_networks->output->acti_vals[s_index];
+				}
+				this->explore_state_networks[s_index]->mtx.unlock();
+			}
+		} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FLAT) {
+			int input_start_non_inclusive_index;
+			for (int n_index = (int)instance_history.size()-1; n_index >= 0; n_index--) {
+				if (instance_history[n_index]->node_visited == this) {
+					input_start_non_inclusive_index = n_index;
+					break;
+				}
+			}
+
+			double flat_inputs[this->explore_new_path_flat_size] = {};
+			bool activated[this->explore_new_path_flat_size] = {};
+
+			vector<int> fold_loop_scope_counts;
+			fold_loop_scope_counts.push_back(1);
+			for (int n_index = input_start_non_inclusive_index+1; input_start_index < (int)instance_history.size(); n_index++) {
+				if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_EMPTY) {
+					// run state network during LEARN_JUMP_FOLD but do nothing here
+				} else if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_ACTION) {
+					// n_index can't be explore_node, so action_performed always true
+					SolutionNodeAction* node_action = (SolutionNodeAction*)instance_history[n_index]->node_visited;
+					int input_index = instance_history[n_index]->node_visited->fold_helpers[this] \
+						->get_input_index(fold_loop_scope_counts);
+					flat_inputs[input_index] = instance_history[n_index]->previous_observations;
+					activated[input_index] = true;
+				}
+			}
+
+			vector<double> obs;
+			obs.push_back(problem.get_observation());
+
+			for (int l_index = 0; l_index < (int)this->local_state.size(); l_index++) {
+				this->explore_state_networks[s_index]->mtx.lock();
+				this->explore_state_networks->activate(flat_inputs,
+													   activated,
+													   state_vals[l_index],
+													   obs);
+				for (int s_index = 0; s_index < this->local_state[l_index]; s_index++) {
+					state_vals[l_index][s_index] = this->explore_state_networks->output->acti_vals[s_index];
+				}
+				this->explore_state_networks[s_index]->mtx.unlock();
+			}
+		} else if (this->explore_state == EXPLORE_STATE_LEARN_JUMP_FOLD) {
+			int input_start_non_inclusive_index;
+			for (int n_index = (int)instance_history.size()-1; n_index >= 0; n_index--) {
+				if (instance_history[n_index]->node_visited == this) {
+					input_start_non_inclusive_index = n_index;
+					break;
+				}
+			}
+
+			double flat_inputs[this->explore_new_path_flat_size] = {};
+			bool activated[this->explore_new_path_flat_size] = {};
+
+			vector<int> fold_loop_scope_counts;
+			fold_loop_scope_counts.push_back(1);
+			for (int n_index = input_start_non_inclusive_index+1; input_start_index < (int)instance_history.size(); n_index++) {
+				if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_EMPTY) {
+					SolutionNodeEmpty* node_empty = (SolutionNodeEmpty*)instance_history[n_index]->node_visited;
+					// also assign SolutionNodeEmpty* fold_indexes, but don't increment
+					instance_history[n_index]->node_visited->fold_helpers[this]->new_path_process(
+						fold_loop_scope_counts,
+						this->explore_new_path_fold_input_index_on,
+						state_vals,
+						network_historys);
+				} else if (instance_history[n_index]->node_visited->node_type == NODE_TYPE_ACTION) {
+					// n_index can't be explore_node, so action_performed always true
+					SolutionNodeAction* node_action = (SolutionNodeAction*)instance_history[n_index]->node_visited;
+					instance_history[n_index]->node_visited->fold_helpers[this]->new_path_process(
+						fold_loop_scope_counts,
+						this->explore_new_path_fold_input_index_on,
+						instance_history[n_index]->previous_observations,
+						flat_inputs,
+						activated,
+						state_vals,
+						network_historys);
+				}
+			}
+
+			vector<double> obs;
+			obs.push_back(problem.get_observation());
+
+			for (int l_index = 0; l_index < (int)this->local_state.size(); l_index++) {
+				this->explore_state_networks[s_index]->mtx.lock();
+				this->explore_state_networks->activate(flat_inputs,
+													   activated,
+													   state_vals[l_index],
+													   obs,
+													   network_historys);
+				for (int s_index = 0; s_index < this->local_state[l_index]; s_index++) {
+					state_vals[l_index][s_index] = this->explore_state_networks->output->acti_vals[s_index];
+				}
+				this->explore_state_networks[s_index]->mtx.unlock();
+			}
+		} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FOLD) {
+			// do nothing
+		}
+
+		instance_history.push_back(StepHistory(this,
+											   false,
+											   0.0,
+											   -1,
+											   true));
+		return get_jump_end(this);
+	}
+
+	bool is_first_explore = false;
+	if (iter_explore == NULL) {
+		if (randuni() < this->if_explore_weight) {
+			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
+				int parent_jump_scope_start_non_inclusive_index;
+				int parent_jump_end_non_inclusive_index;
+				new_random_scope(this,
+								 parent_jump_scope_start_non_inclusive_index,
+								 parent_jump_end_non_inclusive_index);
+
+				vector<SolutionNode*> explore_path;
+				if (parent_jump_end_non_inclusive_index
+						== this->scope_node_index + 1) {
+					new_random_path(explore_path,
+									false);
+				} else {
+					new_random_path(explore_path,
+									true);
+				}
+				explore_path[explore_path.size()-1]->next = this;
+
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_EXPLORE);
+				iter_explore->explore_path = explore_path;
+				iter_explore->parent_jump_scope_start_non_inclusive_index = parent_jump_scope_start_non_inclusive_index;
+				iter_explore->parent_jump_end_non_inclusive_index = parent_jump_end_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_JUMP_FLAT) {
+				// go back and rerun local state historys
+
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_LEARN_FLAT);
+				iter_explore->scopes = scopes;
+				iter_explore->scope_states = scope_states;
+				iter_explore->scope_locations = scope_locations;
+				iter_explore->parent_jump_scope_start_non_inclusive_index = this->parent_jump_scope_start_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FLAT) {
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_MEASURE_FLAT);
+				iter_explore->scopes = scopes;
+				iter_explore->scope_states = scope_states;
+				iter_explore->scope_locations = scope_locations;
+				iter_explore->parent_jump_scope_start_non_inclusive_index = this->parent_jump_scope_start_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_JUMP_FOLD) {
+				// go back and rerun local state historys
+
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_LEARN_FOLD);
+				iter_explore->scopes = scopes;
+				iter_explore->scope_states = scope_states;
+				iter_explore->scope_locations = scope_locations;
+				iter_explore->parent_jump_scope_start_non_inclusive_index = this->parent_jump_scope_start_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FOLD) {
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_MEASURE_FOLD);
+				iter_explore->scopes = scopes;
+				iter_explore->scope_states = scope_states;
+				iter_explore->scope_locations = scope_locations;
+				iter_explore->parent_jump_scope_start_non_inclusive_index = this->parent_jump_scope_start_non_inclusive_index;
+			}
+
+			is_first_explore = true;
+		}
+	}
+
+	if (iter_explore == NULL) {
+		activate_state_networks(problem,
+								state_vals,
+								false,
+								network_historys);
+	} else if (iter_explore->type == ITER_EXPLORE_TYPE_EXPLORE) {
+		activate_state_networks(problem,
+								state_vals,
+								false,
+								network_historys);
+	} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_FLAT) {
+		for (int l_index = 0; l_index < (int)this->local_state.size(); l_index++) {
+			bool should_backprop = false;
+			if (s_index < iter_explore->scopes.size()) {
+				if (iter_explore->scopes[s_index] == scopes[s_index]) {
+					// no loops for now, so always check equality
+					if (iter_explore->scope_states[s_index] == scopes[s_index]) {
+						if (s_index == iter_explore->scopes.size()) {
+							if (iter_explore->parent_jump_scope_start_non_inclusive_index
+									< scope_locations[s_index]) {
+								should_backprop = true;
+							}
+						} else {
+							if (iter_explore->scope_location[s_index] < scope_locations[s_index]) {
+								should_backprop = true;
+							}
+						}
+					}
+				}
+			}
+			// TODO: reexamine
+
+
+		}
 	}
 }
 

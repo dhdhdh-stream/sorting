@@ -6,11 +6,9 @@
 #include "action.h"
 #include "solution_node.h"
 
-class SolutionNodeAction : public SolutionNode, public Scope {
+class SolutionNodeAction : public SolutionNode {
 public:
 	Action action;
-
-	std::vector<int> local_scope_indexes;	// stack of scopes all the way to the root
 
 	std::vector<int> state_network_local_index;
 	std::vector<Network*> state_networks;

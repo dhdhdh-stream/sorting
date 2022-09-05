@@ -1,5 +1,5 @@
-#ifndef RAW_ACTION_H
-#define RAW_ACTION_H
+#ifndef ACTION_H
+#define ACTION_H
 
 #include <fstream>
 #include <string>
@@ -8,7 +8,7 @@ const int LEFT = 0;
 const int STAY = 1;
 const int RIGHT = 2;
 
-class RawAction {
+class Action {
 public:
 	double write;
 	int move;
@@ -23,4 +23,4 @@ public:
 	std::string to_string();
 };
 
-#endif /* RAW_ACTION_H */
+#endif /* ACTION_H */

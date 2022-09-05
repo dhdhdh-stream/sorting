@@ -8,127 +8,102 @@
 
 using namespace std;
 
-void find_scope_end(SolutionNode* inclusive_start,
-					SolutionNode*& inclusive_end,
-					SolutionNode*& non_inclusive_end) {
-	SolutionNode* curr_node = inclusive_start;
-	while (true) {
-		SolutionNode* next_node;
-		if (curr_node->node_type == NODE_TYPE_ACTION) {
-			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
-			next_node = curr_node_normal->next;
-		} else if (curr_node->node_type == NODE_TYPE_IF_START) {
-			SolutionNodeIfStart* curr_node_if_start = (SolutionNodeIfStart*)curr_node;
-			next_node = curr_node_if_start->end->next;
-			curr_node = curr_node_if_start->end;
-		} else if (curr_node->node_type == NODE_TYPE_IF_END) {
-			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
-			next_node = curr_node_if_end->next;
-		} else if (curr_node->node_type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* curr_node_loop_start = (SolutionNodeLoopStart*)curr_node;
-			next_node = curr_node_loop_start->end->next;
-			curr_node = curr_node_loop_start->end;
-		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
-			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
-			next_node = curr_node_loop_end->next;
+void new_random_scope(SolutionNode* explore_node,
+					  int& parent_jump_scope_start_non_inclusive_index,
+					  int& parent_jump_end_non_inclusive_index) {
+	parent_jump_scope_start_non_inclusive_index = \
+		-1 + rand()%(explore_node->scope_node_index+1);
+	if (explore_node->parent_scope->node_type == NODE_TYPE_START_SCOPE) {
+		parent_jump_end_non_inclusive_index = \
+			explore_node->scope_node_index + 1 \
+			+ rand()%(explore_node->parent_scope->path.size() - explore_node->scope_node_index);
+	} else {
+		// explore_node->parent_scope->node_type == NODE_TYPE_JUMP_SCOPE
+		if (explore_node->scope_location == SCOPE_LOCATION_TOP) {
+			parent_jump_end_non_inclusive_index = \
+				explore_node->scope_node_index + 1 \
+				+ rand()%(explore_node->parent_scope->top_path.size() - explore_node->scope_node_index);
+		} else {
+			parent_jump_end_non_inclusive_index = \
+				explore_node->scope_node_index + 1 \
+				+ rand()%(explore_node->parent_scope->children_nodes[
+					explore_node->scope_child_index].size() - explore_node->scope_node_index);
 		}
-
-		if (next_node->node_type == NODE_TYPE_IF_END) {
-			inclusive_end = curr_node;
-			non_inclusive_end = next_node;
-			return;
-		}
-		if (next_node->node_type == NODE_TYPE_LOOP_END) {
-			inclusive_end = curr_node;
-			non_inclusive_end = next_node;
-			return;
-		}
-		if (next_node->node_type == NODE_TYPE_END) {
-			inclusive_end = curr_node;
-			non_inclusive_end = next_node;
-			return;
-		}
-
-		curr_node = next_node;
 	}
 }
 
-void find_potential_jumps(SolutionNode* inclusive_start,
-						  vector<SolutionNode*>& potential_inclusive_jump_ends,
-						  vector<SolutionNode*>& potential_non_inclusive_jump_ends) {
-	SolutionNode* curr_node = inclusive_start;
-	while (true) {
-		SolutionNode* next_node;
-		if (curr_node->node_type == NODE_TYPE_ACTION) {
-			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
-			next_node = curr_node_normal->next;
-		} else if (curr_node->node_type == NODE_TYPE_IF_START) {
-			SolutionNodeIfStart* curr_node_if_start = (SolutionNodeIfStart*)curr_node;
-			next_node = curr_node_if_start->end->next;
-			curr_node = curr_node_if_start->end;
-		} else if (curr_node->node_type == NODE_TYPE_IF_END) {
-			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
-			next_node = curr_node_if_end->next;
-		} else if (curr_node->node_type == NODE_TYPE_LOOP_START) {
-			SolutionNodeLoopStart* curr_node_loop_start = (SolutionNodeLoopStart*)curr_node;
-			next_node = curr_node_loop_start->end->next;
-			curr_node = curr_node_loop_start->end;
-		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
-			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
-			next_node = curr_node_loop_end->next;
+void new_random_path(vector<SolutionNode*>& explore_path,
+					 bool can_be_empty) {
+	geometric_distribution<int> seq_length_dist(0.2);
+	int seq_length;
+	if (can_be_empty) {
+		seq_length = seq_length_dist(generator);
+	} {
+		seq_length = 1 + seq_length_dist(generator);
+	}
+
+	if (seq_length == 0) {
+		SolutionNodeEmpty* new_node = new SolutionNodeEmpty();
+		explore_path.push_back(new_node);
+	} else {
+		for (int a_index = 0; a_index < seq_length; a_index++) {
+			if (rand()%2 == 0 && action_dictionary->actions.size() > 0) {
+				int random_dictionary_index = rand()%(int)action_dictionary->actions.size();
+				vector<SolutionNode*> existing_action = action_dictionary->actions[random_dictionary_index];
+
+				int subset_inclusive_start = rand()%(int)existing_action.size();
+				int subset_non_inclusive_end = subset_start + 1 + rand()%((int)existing_action.size() - subset_start);
+				for (int s_index = subset_inclusive_start; s_index < subset_non_inclusive_end; s_index++) {
+					// SolutionNodeEmpty cannot be on top layer in action_dictionary
+					if (existing_action[s_index]->node_type == SOLUTION_NODE_ACTION) {
+						SolutionNodeAction* node_action = (SolutionNodeAction*)existing_action[s_index];
+						SolutionNode* new_node = new SolutionNodeAction(node_action->action);
+						explore_path.push_back(new_node);
+					} else {
+						explore_path.push_back(existing_action[s_index]);
+					}
+				}
+			} else {
+				normal_distribution<double> write_val_dist(0.0, 2.0);
+				Action random_raw_action(write_val_dist(generator), rand()%3);
+				SolutionNode* new_node = new SolutionNodeAction(random_raw_action);
+				explore_path.push_back(new_node);
+			}
 		}
 
-		potential_inclusive_jump_ends.push_back(curr_node);
-		potential_non_inclusive_jump_ends.push_back(next_node);
-
-		if (next_node->node_type == NODE_TYPE_IF_END) {
-			return;
+		for (int a_index = 0; a_index < seq_length-1; a_index++) {
+			explore_path[a_index]->next = explore_path[a_index+1];
 		}
-		if (next_node->node_type == NODE_TYPE_LOOP_END) {
-			return;
-		}
-		if (next_node->node_type == NODE_TYPE_END) {
-			return;
-		}
-
-		curr_node = next_node;
 	}
 }
 
-void find_potential_loops(SolutionNode* inclusive_end,
-						  vector<SolutionNode*>& potential_non_inclusive_loop_starts,
-						  vector<SolutionNode*>& potential_inclusive_loop_starts) {
-	SolutionNode* curr_node = inclusive_end;
-	while (true) {
-		SolutionNode* previous_node;
-		if (curr_node->node_type == NODE_TYPE_ACTION) {
-			SolutionNodeAction* curr_node_normal = (SolutionNodeAction*)curr_node;
-			previous_node = curr_node_normal->previous;
-		} else if (curr_node->node_type == NODE_TYPE_IF_END) {
-			SolutionNodeIfEnd* curr_node_if_end = (SolutionNodeIfEnd*)curr_node;
-			SolutionNodeIfStart* scope_start = curr_node_if_end->start;
-			previous_node = scope_start->previous;
-			curr_node = scope_start;
-		} else if (curr_node->node_type == NODE_TYPE_LOOP_END) {
-			SolutionNodeLoopEnd* curr_node_loop_end = (SolutionNodeLoopEnd*)curr_node;
-			SolutionNodeLoopStart* scope_start = curr_node_loop_end->start;
-			previous_node = scope_start->previous;
-			curr_node = scope_start;
+SolutionNode* get_jump_end(SolutionNode* explore_node) {
+	if (explore_node->parent_scope->node_type == NODE_TYPE_START_SCOPE) {
+		if (explore_node->parent_jump_end_non_inclusive_index \
+				>= explore_node->parent_scope->path.size()) {
+			return explore_node->parent_scope;
+		} else {
+			return explore_node->parent_scope[explore_node->parent_jump_end_non_inclusive_index];
 		}
-
-		potential_non_inclusive_loop_starts.push_back(previous_node);
-		potential_inclusive_loop_starts.push_back(curr_node);
-
-		if (previous_node->node_type == NODE_TYPE_IF_START) {
-			return;
+	} else {
+		// explore_node->parent_scope->node_type == NODE_TYPE_JUMP_SCOPE
+		if (explore_node->scope_location == SCOPE_LOCATION_TOP) {
+			if (explore_node->parent_jump_end_non_inclusive_index \
+					>= explore_node->parent_scope->top_path.size()) {
+				return explore_node->parent_scope;
+			} else {
+				return explore_node->parent_scope->top_path[
+					explore_node->parent_jump_end_non_inclusive_index];
+			}
+		} else {
+			// explore_node->scope_location == SCOPE_LOCATION_BOTTOM
+			if (explore_node->parent_jump_end_non_inclusive_index \
+					>= explore_node->parent_scope->children_nodes[explore_node->scope_child_index].size()) {
+				return explore_node->parent_scope;
+			} else {
+				return explore_node->parent_scope->children_nodes[
+					explore_node->scope_child_index][explore_node->parent_jump_end_non_inclusive_index];
+			}
 		}
-		if (previous_node->node_type == NODE_TYPE_LOOP_START) {
-			return;
-		}
-		if (previous_node->node_type == NODE_TYPE_START) {
-			return;
-		}
-
-		curr_node = previous_node;
 	}
 }

@@ -11,39 +11,41 @@
 #include "solution.h"
 
 const int NODE_TYPE_ACTION = 0;
-const int NODE_TYPE_EMPTY = 1;	// only appear by themselves, and can only set state
+const int NODE_TYPE_EMPTY = 1;
 const int NODE_TYPE_START_SCOPE = 2;
 const int NODE_TYPE_JUMP_SCOPE = 3;
-// const int NODE_TYPE_LOOP_SCOPE = 3;
+// const int NODE_TYPE_LOOP_SCOPE = 4;
 
 const int EXPLORE_STATE_EXPLORE = 0;
 const int EXPLORE_STATE_LEARN_JUMP_FLAT = 1;
 const int EXPLORE_STATE_MEASURE_JUMP_FLAT = 2;
-const int EXPLORE_STATE_LEARN_JUMP_FOLD = 1;
-const int EXPLORE_STATE_MEASURE_JUMP_FOLD = 2;
-// const int EXPLORE_STATE_PRE_EVAL_LOOP = 3;
-// const int EXPLORE_STATE_LEARN_LOOP_FLAT = 4;
-// const int EXPLORE_STATE_MEASURE_LOOP_FLAT = 5;
-// const int EXPLORE_STATE_LEARN_LOOP_FOLD = 6;
-// const int EXPLORE_STATE_MEASURE_LOOP_FOLD = 7;
-// don't include loops for now
+const int EXPLORE_STATE_LEARN_JUMP_FOLD = 3;
+const int EXPLORE_STATE_MEASURE_JUMP_FOLD = 4;
+// const int EXPLORE_STATE_PRE_EVAL_LOOP = 5;
+// const int EXPLORE_STATE_LEARN_LOOP_FLAT = 6;
+// const int EXPLORE_STATE_MEASURE_LOOP_FLAT = 7;
+// const int EXPLORE_STATE_LEARN_LOOP_FOLD = 8;
+// const int EXPLORE_STATE_MEASURE_LOOP_FOLD = 9;
 
 const int EXPLORE_DECISION_TYPE_N_A = 0;
 const int EXPLORE_DECISION_TYPE_EXPLORE = 1;
 const int EXPLORE_DECISION_TYPE_NO_EXPLORE = 2;
 
+const int SCOPE_LOCATION_TOP;
+const int SCOPE_LOCATION_BRANCH;
+
 class IterExplore;
 class Solution;
 class SolutionNode {
 public:
-	Solution* solution;
-
-	SolutionNode* parent_scope;
-
-	int node_index;
 	int node_type;
 
-	SolutionNode* previous;
+	SolutionNode* parent_scope;
+	int scope_location;
+	int scope_child_index;
+	int scope_node_index;
+	std::vector<int> local_state;
+
 	SolutionNode* next;
 
 	double explore_weight;
@@ -57,6 +59,9 @@ public:
 	int explore_state;
 	int explore_iter_index;
 
+	int parent_jump_scope_start_non_inclusive_index;
+	int parent_jump_end_non_inclusive_index;
+
 	SolutionNode* explore_scope_start_non_inclusive;
 	SolutionNode* explore_scope_start_inclusive;
 	SolutionNode* explore_branch_start_non_inclusive;
@@ -64,21 +69,20 @@ public:
 	SolutionNode* explore_scope_end_inclusive;
 	SolutionNode* explore_scope_end_non_inclusive;
 
-	int explore_flat_size;
-	int explore_fold_input_index_on;
+	int explore_existing_path_flat_size;
+	int explore_existing_path_fold_input_index_on;
+	int explore_new_path_flat_size;
+	int explore_new_path_fold_input_index_on;
 
-	// may be compound actions
 	std::vector<SolutionNode*> explore_jump_potential_nodes;
-	FlatNetwork* explore_jump_score_network;
-	FlatNetwork* explore_no_jump_score_network;
-	Network* explore_jump_full_score_network;
-	Network* explore_no_jump_full_score_network;
+	FoldNetwork* explore_jump_score_network;
+	FoldNetwork* explore_no_jump_score_network;
 	int explore_path_flat_size;
-	std::vector<FlatNetwork*> explore_state_networks;
-	
-	FlatNetwork* explore_score_improvement_network;
-	FlatNetwork* explore_score_prediction_if_exit_network;
-	FlatNetwork* explore_prediction_improvement_network;
+	std::vector<FoldNetwork*> explore_state_networks;
+
+	FoldNetwork* explore_score_improvement_network;
+	FoldNetwork* explore_score_prediction_if_exit_network;
+	FoldNetwork* explore_prediction_improvement_network;
 	// for loops, for outer state, just try to optimize greedily?
 
 	int explore_flat_misguess;	// used to compare the fold against to see if more state needs to be added
@@ -100,9 +104,14 @@ public:
 
 	std::map<SolutionNode*, FoldHelper*> fold_helpers;
 
-	bool node_is_on;
+	bool is_temp_node;
 
 	virtual ~SolutionNode();
+
+	virtual SolutionNode* deep_copy(int start_layer) = 0;
+	virtual void initialize_local_scope(std::vector<std::vector<double>>& local_state_vals) = 0;
+	// also initializes networks
+	virtual void insert_scope(int layer) = 0;
 
 	virtual void setup_fold(std::vector<int>& loop_scope_counts,
 						   int& curr_index,
@@ -270,53 +279,6 @@ public:
 										  double misguess,
 										  double* potential_state_errors,
 										  std::vector<NetworkHistory*>& network_historys);
-};
-
-// const int ITER_EXPLORE_TYPE_JUMP = 0;
-// const int ITER_EXPLORE_TYPE_LOOP = 1;
-
-const int ITER_EXPLORE_TYPE_JUMP = 0;
-const int ITER_EXPLORE_TYPE_APPEND = 1;
-const int ITER_EXPLORE_TYPE_BRANCH_START = 2;
-
-class IterExplore {
-public:
-	std::vector<SolutionNode*> explore_node;
-	int iter_explore_type;
-	
-	std::vector<Action> try_path;
-
-	SolutionNode* iter_start_non_inclusive;
-	SolutionNode* iter_start_inclusive;
-	SolutionNode* iter_end_inclusive;
-	SolutionNode* iter_end_non_inclusive;
-
-	std::vector<int> available_state;
-
-	int iter_child_index;
-
-	std::vector<double> full_guesses;
-
-	IterExplore(int iter_explore_type,
-				std::vector<Action> try_path,
-				SolutionNode* iter_start_non_inclusive,
-				SolutionNode* iter_start_inclusive,
-				SolutionNode* iter_end_inclusive,
-				SolutionNode* iter_end_non_inclusive,
-				std::vector<int> available_state,
-				int iter_child_index) {
-		this->iter_explore_type = iter_explore_type;
-		this->try_path = try_path;
-		this->iter_start_non_inclusive = iter_start_non_inclusive;
-		this->iter_start_inclusive = iter_start_inclusive;
-		this->iter_end_inclusive = iter_end_inclusive;
-		this->iter_end_non_inclusive = iter_end_non_inclusive;
-		this->available_state = available_state;
-		this->iter_child_index = iter_child_index;
-	};
-	~IterExplore() {
-		// do nothing
-	}
 };
 
 #endif /* SOLUTION_NODE_H */

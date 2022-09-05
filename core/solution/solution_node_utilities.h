@@ -5,16 +5,13 @@
 
 #include "solution_node.h"
 
-void find_scope_end(SolutionNode* inclusive_start,
-					SolutionNode*& inclusive_end,
-					SolutionNode*& non_inclusive_end);
+void new_random_scope(SolutionNode* explore_node,
+					  int& parent_jump_scope_start_non_inclusive_index,
+					  int& parent_jump_end_non_inclusive_index);
 
-void find_potential_jumps(SolutionNode* inclusive_start,
-						  std::vector<SolutionNode*>& potential_inclusive_jump_ends,
-						  std::vector<SolutionNode*>& potential_non_inclusive_jump_ends);
+void new_random_path(std::vector<SolutionNode*>& explore_path,
+					 bool can_be_empty);
 
-void find_potential_loops(SolutionNode* inclusive_end,
-						  std::vector<SolutionNode*>& potential_non_inclusive_loop_starts,
-						  std::vector<SolutionNode*>& potential_inclusive_loop_starts);
+SolutionNode* get_jump_end(SolutionNode* explore_node);
 
 #endif /* SOLUTION_NODE_UTILITIES_H */
