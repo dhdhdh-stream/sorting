@@ -13,6 +13,8 @@ public:
 	std::vector<int> state_network_local_index;
 	std::vector<Network*> state_networks;
 
+	std::map<SolutionNode*,FoldHelper*> fold_helpers;
+
 	SolutionNodeAction(Solution* solution,
 					   int node_index,
 					   Action action,

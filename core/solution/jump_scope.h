@@ -6,7 +6,7 @@ const int JUMP_SCOPE_IF_EXPLORE_TYPE_BRANCH_START = 1;
 
 class JumpScope : public SolutionNode {
 public:
-	int num_states;
+	int num_states; // TODO: try 0
 
 	std::vector<SolutionNode*> top_path;
 

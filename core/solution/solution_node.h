@@ -17,19 +17,20 @@ const int NODE_TYPE_JUMP_SCOPE = 3;
 // const int NODE_TYPE_LOOP_SCOPE = 4;
 
 const int EXPLORE_STATE_EXPLORE = 0;
-const int EXPLORE_STATE_LEARN_JUMP_FLAT = 1;
-const int EXPLORE_STATE_MEASURE_JUMP_FLAT = 2;
-const int EXPLORE_STATE_LEARN_JUMP_FOLD = 3;
-const int EXPLORE_STATE_MEASURE_JUMP_FOLD = 4;
-// const int EXPLORE_STATE_PRE_EVAL_LOOP = 5;
-// const int EXPLORE_STATE_LEARN_LOOP_FLAT = 6;
-// const int EXPLORE_STATE_MEASURE_LOOP_FLAT = 7;
-// const int EXPLORE_STATE_LEARN_LOOP_FOLD = 8;
-// const int EXPLORE_STATE_MEASURE_LOOP_FOLD = 9;
+const int EXPLORE_STATE_LEARN_FLAT = 1;
+const int EXPLORE_STATE_MEASURE_FLAT = 2;
+const int EXPLORE_STATE_LEARN_FOLD_BRANCH = 3;
+const int EXPLORE_STATE_LEARN_SMALL_BRANCH = 4;
+const int EXPLORE_STATE_MEASURE_FOLD_BRANCH = 5;
+const int EXPLORE_STATE_LEARN_FOLD_REPLACE = 6;
+const int EXPLORE_STATE_MEASURE_FOLD_REPLACE = 7;
 
-const int EXPLORE_DECISION_TYPE_N_A = 0;
-const int EXPLORE_DECISION_TYPE_EXPLORE = 1;
-const int EXPLORE_DECISION_TYPE_NO_EXPLORE = 2;
+const int EXPLORE_DECISION_TYPE_FLAT_N_A = 0;
+const int EXPLORE_DECISION_TYPE_FLAT_EXPLORE = 1;
+const int EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE = 2;
+
+const int EXPLORE_DECISION_TYPE_FOLD_EXPLORE = 0;
+const int EXPLORE_DECISION_TYPE_FOLD_NO_EXPLORE = 1;
 
 const int SCOPE_LOCATION_TOP;
 const int SCOPE_LOCATION_BRANCH;
@@ -40,21 +41,19 @@ class SolutionNode {
 public:
 	int node_type;
 
+	SolutionNode* next;
+
 	SolutionNode* parent_scope;
 	int scope_location;
 	int scope_child_index;
 	int scope_node_index;
 	std::vector<int> local_state;
 
-	SolutionNode* next;
-
-	double explore_weight;
-
-	// only used for node weights (no longer part of any decision making)
-	// uses all state available
-	// not accurate
-	// train greedily
 	Network* score_network;
+	// mainly used by solution_node_action, but also by empty to compare
+	// if all else the same, shorter path goes
+	double explore_weight;
+	double average_misguess;
 
 	int explore_state;
 	int explore_iter_index;
@@ -62,60 +61,55 @@ public:
 	int parent_jump_scope_start_non_inclusive_index;
 	int parent_jump_end_non_inclusive_index;
 
-	SolutionNode* explore_scope_start_non_inclusive;
-	SolutionNode* explore_scope_start_inclusive;
-	SolutionNode* explore_branch_start_non_inclusive;
-	SolutionNode* explore_branch_start_inclusive;
-	SolutionNode* explore_scope_end_inclusive;
-	SolutionNode* explore_scope_end_non_inclusive;
+	std::vector<SolutionNode*> explore_path;
 
 	int explore_existing_path_flat_size;
-	int explore_existing_path_fold_input_index_on;
 	int explore_new_path_flat_size;
-	int explore_new_path_fold_input_index_on;
 
-	std::vector<SolutionNode*> explore_jump_potential_nodes;
-	FoldNetwork* explore_jump_score_network;
-	FoldNetwork* explore_no_jump_score_network;
-	int explore_path_flat_size;
 	std::vector<FoldNetwork*> explore_state_networks;
 
-	FoldNetwork* explore_score_improvement_network;
-	FoldNetwork* explore_score_prediction_if_exit_network;
-	FoldNetwork* explore_prediction_improvement_network;
-	// for loops, for outer state, just try to optimize greedily?
+	FoldNetwork* explore_jump_score_network;
+	FoldNetwork* explore_no_jump_score_network;	
 
-	int explore_flat_misguess;	// used to compare the fold against to see if more state needs to be added
-	// try 1-5? after 5, if it still sucks, but better than existing branch, then take
+	// FoldNetwork* explore_score_improvement_network;
+	// FoldNetwork* explore_score_prediction_if_exit_network;
+	// FoldNetwork* explore_prediction_improvement_network;
+
+	int explore_new_state_size;	// TODO: try different sizes, try 0
+	int explore_existing_path_fold_input_index_on_inclusive;
+	int explore_new_path_fold_input_index_on_inclusive;
+
+	Network* explore_small_jump_score_network;
+	Network* explore_small_no_jump_score_network;
 
 	int explore_explore_measure_count;
-	int explore_explore_is_good;
-	int explore_explore_is_bad;
-	double explore_explore_misguess;
+	double explore_explore_score;
 	int explore_no_explore_measure_count;
-	int explore_no_explore_is_good;
-	int explore_no_explore_is_bad;
-	double explore_no_explore_misguess;
-	// TODO: for jumps, need for each branch
-	// only declare victory on clearly good results
-	// or keep list of results, and choose best after a while
-	// if keep list of results, then don't even need nested weights anymore
-	// yeah, no nested weights, just free-for-all
+	double explore_no_explore_score;
+	int explore_n_a_measure_count;
+	double explore_n_a_score;
+	// TODO: need to compare diffs of predicted scores
 
-	std::map<SolutionNode*, FoldHelper*> fold_helpers;
+	int explore_fold_explore_count;
+	double explore_fold_explore_score;
+	int explore_fold_no_explore_count;
+	double explore_fold_no_explore_score;
 
 	bool is_temp_node;
 
 	virtual ~SolutionNode();
 
-	virtual SolutionNode* deep_copy(int start_layer) = 0;
-	virtual void initialize_local_scope(std::vector<std::vector<double>>& local_state_vals) = 0;
+	// all recursive
+	virtual SolutionNode* deep_copy(int inclusive_start_layer) = 0;
+	virtual void initialize_local_scope(std::vector<int>& local_state) = 0;
 	// also initializes networks
+	virtual void setup_flat(std::vector<int>& loop_scope_counts,
+							int& curr_index,
+							SolutionNode* explore_node) = 0;
+	virtual void setup_new_state(SolutionNode* explore_node,
+								 int new_state_size);
+	// virtual void reset_state(SolutionNode* explore_node);
 	virtual void insert_scope(int layer) = 0;
-
-	virtual void setup_fold(std::vector<int>& loop_scope_counts,
-						   int& curr_index,
-						   SolutionNode* explore_node) = 0;
 
 	virtual SolutionNode* re_eval();
 	virtual SolutionNode* explore(Problem& problem,

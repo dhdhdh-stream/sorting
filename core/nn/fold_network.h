@@ -12,8 +12,8 @@
 class FoldNetwork : public AbstractNetwork {
 public:
 	int flat_size;
+
 	int state_size;
-	int obs_size;
 
 	std::vector<bool> input_on;
 
@@ -30,9 +30,16 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(int flat_size,
-				int state_size);
+	FoldNetwork(int flat_size);
 	~FoldNetwork();
+
+	void activate(double* flat_inputs,
+				  bool* activated,
+				  std::vector<double>& obs);
+	void activate(double* flat_inputs,
+				  bool* activated,
+				  std::vector<double>& obs,
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 
 	void activate(double* flat_inputs,
 				  bool* activated,
@@ -52,6 +59,9 @@ public:
 	void full_update_weights(double factor,
 							 double learning_rate,
 							 double momentum);
+
+	void set_state_size(int state_size);
+	// void reset_state();
 
 	void state_backprop(std::vector<double>& errors,
 						double* new_state_errors);
