@@ -16,6 +16,9 @@ const int NODE_TYPE_START_SCOPE = 2;
 const int NODE_TYPE_JUMP_SCOPE = 3;
 // const int NODE_TYPE_LOOP_SCOPE = 4;
 
+const int SCOPE_LOCATION_TOP;
+const int SCOPE_LOCATION_BRANCH;
+
 const int EXPLORE_STATE_EXPLORE = 0;
 const int EXPLORE_STATE_LEARN_FLAT = 1;
 const int EXPLORE_STATE_MEASURE_FLAT = 2;
@@ -23,17 +26,20 @@ const int EXPLORE_STATE_LEARN_FOLD_BRANCH = 3;
 const int EXPLORE_STATE_LEARN_SMALL_BRANCH = 4;
 const int EXPLORE_STATE_MEASURE_FOLD_BRANCH = 5;
 const int EXPLORE_STATE_LEARN_FOLD_REPLACE = 6;
-const int EXPLORE_STATE_MEASURE_FOLD_REPLACE = 7;
+const int EXPLORE_STATE_LEARN_SMALL_REPLACE = 7;
+const int EXPLORE_STATE_MEASURE_FOLD_REPLACE = 8;
 
-const int EXPLORE_DECISION_TYPE_FLAT_N_A = 0;
-const int EXPLORE_DECISION_TYPE_FLAT_EXPLORE = 1;
-const int EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE = 2;
+const int EXPLORE_DECISION_TYPE_FLAT_EXPLORE_EXPLORE = 0;
+const int EXPLORE_DECISION_TYPE_FLAT_EXPLORE_NO_EXPLORE = 1;
+const int EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_EXPLORE = 2;
+const int EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_NO_EXPLORE = 3;
 
-const int EXPLORE_DECISION_TYPE_FOLD_EXPLORE = 0;
-const int EXPLORE_DECISION_TYPE_FOLD_NO_EXPLORE = 1;
+const int EXPLORE_DECISION_TYPE_FOLD_N_A = 0;
+const int EXPLORE_DECISION_TYPE_FOLD_EXPLORE = 1;
+const int EXPLORE_DECISION_TYPE_FOLD_NO_EXPLORE = 2;
 
-const int SCOPE_LOCATION_TOP;
-const int SCOPE_LOCATION_BRANCH;
+const int EXPLORE_REPLACE_TYPE_SCORE = 0;
+const int EXPLORE_REPLACE_TYPE_INFO = 1;
 
 class IterExplore;
 class Solution;
@@ -48,6 +54,9 @@ public:
 	int scope_child_index;
 	int scope_node_index;
 	std::vector<int> local_state;
+
+	// percentage of instances that this node takes part in
+	double node_weight;
 
 	Network* score_network;
 	// mainly used by solution_node_action, but also by empty to compare
@@ -75,6 +84,18 @@ public:
 	// FoldNetwork* explore_score_prediction_if_exit_network;
 	// FoldNetwork* explore_prediction_improvement_network;
 
+	int explore_explore_explore_count;
+	double explore_explore_explore_score;
+	int explore_explore_no_explore_count;
+	double explore_explore_no_explore_score;
+	int explore_no_explore_explore_count;
+	double explore_no_explore_explore_score;
+	int explore_no_explore_no_explore_count;
+	double explore_no_explore_no_explore_score;
+
+	int explore_replace_type;
+	double explore_replace_info_gain;
+
 	int explore_new_state_size;	// TODO: try different sizes, try 0
 	int explore_existing_path_fold_input_index_on_inclusive;
 	int explore_new_path_fold_input_index_on_inclusive;
@@ -82,22 +103,16 @@ public:
 	Network* explore_small_jump_score_network;
 	Network* explore_small_no_jump_score_network;
 
-	int explore_explore_measure_count;
-	double explore_explore_score;
-	int explore_no_explore_measure_count;
-	double explore_no_explore_score;
-	int explore_n_a_measure_count;
-	double explore_n_a_score;
-	// TODO: need to compare diffs of predicted scores
-
 	int explore_fold_explore_count;
 	double explore_fold_explore_score;
 	int explore_fold_no_explore_count;
 	double explore_fold_no_explore_score;
 
+	double explore_fold_replace_score;
+
 	bool is_temp_node;
 
-	virtual ~SolutionNode();
+	virtual ~SolutionNode();	// needs to be recursive
 
 	// all recursive
 	virtual SolutionNode* deep_copy(int inclusive_start_layer) = 0;
@@ -110,6 +125,12 @@ public:
 								 int new_state_size);
 	// virtual void reset_state(SolutionNode* explore_node);
 	virtual void insert_scope(int layer) = 0;
+	virtual void get_min_misguess();
+	virtual void cleanup_explore(SolutionNode* explore_node);
+	virtual void collect_new_state_networks(SolutionNode* explore_node,
+											std::vector<SolutionNode*>& existing_nodes,
+											std::vector<Network*>& new_state_networks);
+	// also cleans up explores
 
 	virtual SolutionNode* re_eval();
 	virtual SolutionNode* explore(Problem& problem,

@@ -15,7 +15,7 @@ public:
 			   int new_state_size);
 	FoldHelper(int layer,
 			   Network* existing_state_network);
-	~FoldHelper();
+	~FoldHelper();	// delete potential_state_network if not null
 
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);

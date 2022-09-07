@@ -101,6 +101,29 @@ inline void get_existing_path(SolutionNode* explore_node,
 	}
 }
 
+inline void get_replacement_path(SolutionNode* explore_node,
+								 vector<SolutionNode*>& replacement_path) {
+	if (explore_node->parent_scope->node_type == NODE_TYPE_START_SCOPE) {
+		StartScope* parent_start = (StartScope*)explore_node->parent_scope;
+		for (int n_index = explore_node->scope_node_index+1; n_index < explore_node->parent_jump_end_non_inclusive_index; n_index++) {
+			replacement_path.push_back(parent_start->path[n_index]);
+		}
+	} else {
+		// explore_node->parent_scope->node_type == NODE_TYPE_JUMP_SCOPE
+		JumpScope* parent_jump = (JumpScope*)explore_node->parent_scope;
+		if (explore_node->scope_location == SCOPE_LOCATION_TOP) {
+			for (int n_index = explore_node->scope_node_index+1; n_index < explore_node->parent_jump_end_non_inclusive_index; n_index++) {
+				replacement_path.push_back(parent_jump->top_path[n_index]);
+			}
+		} else {
+			// explore_node->scope_location == SCOPE_LOCATION_BOTTOM
+			for (int n_index = explore_node->scope_node_index+1; n_index < explore_node->parent_jump_end_non_inclusive_index; n_index++) {
+				replacement_path.push_back(parent_jump->children_nodes[explore_node->scope_child_index][n_index]);
+			}
+		}
+	}
+}
+
 inline bool is_after_explore(vector<SolutionNode*>& current_scope,
 					  vector<int>& current_scope_states,
 					  vector<int>& current_scope_locations,

@@ -1,7 +1,7 @@
-#ifndef STEP_HISTORY_H
-#define STEP_HISTORY_H
+#ifndef EXPLORE_STEP_HISTORY_H
+#define EXPLORE_STEP_HISTORY_H
 
-class StepHistory {
+class ExploreStepHistory {
 public:
 	SolutionNode* node_visited;
 	
@@ -14,12 +14,12 @@ public:
 
 	bool is_explore_callback;
 
-	StepHistory(SolutionNode* node_visited,
-				bool action_performed,
-				double previous_observations,
-				int scope_end_state,
-				int explore_decision,
-				bool is_explore_callback) {
+	ExploreStepHistory(SolutionNode* node_visited,
+					   bool action_performed,
+					   double previous_observations,
+					   int scope_end_state,
+					   int explore_decision,
+					   bool is_explore_callback) {
 		this->node_visited = node_visited;
 		this->action_performed = action_performed;
 		this->previous_observations = previous_observations;
@@ -27,7 +27,7 @@ public:
 		this->explore_decision = explore_decision;
 		this->is_explore_callback = is_explore_callback;
 	};
-	// no user-declared destructor for implicit move constructor
+	// no user-declared destructor for implicit move constructor(?)
 };
 
-#endif /* STEP_HISTORY_H */
+#endif /* EXPLORE_STEP_HISTORY_H */

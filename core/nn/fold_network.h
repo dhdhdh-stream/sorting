@@ -30,7 +30,9 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(int flat_size);
+	FoldNetwork(int flat_size, int output_size);
+	FoldNetwork(int flat_size,
+				int state_size, int output_size);
 	~FoldNetwork();
 
 	void activate(double* flat_inputs,

@@ -14,6 +14,8 @@ void new_random_path(std::vector<SolutionNode*>& explore_path,
 
 void get_existing_path(SolutionNode* explore_node,
 					   std::vector<SolutionNode*>& existing_path);
+void get_replacement_path(SolutionNode* explore_node,
+						  std::vector<SolutionNode*>& replacement_path);
 
 bool is_after_explore(std::vector<SolutionNode*>& current_scope,
 					  std::vector<int>& current_scope_states,

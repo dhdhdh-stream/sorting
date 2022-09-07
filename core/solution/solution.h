@@ -6,24 +6,16 @@
 #include "explore.h"
 #include "solution_node.h"
 
-class Explore;
 class SolutionNode;
 class Solution {
 public:
-	Explore* explore;
-
 	long int id;
 
-	std::vector<SolutionNode*> nodes;
-	std::mutex nodes_mtx;
+	StartScope* start_scope;
 	
-	int current_state_counter;
-	std::mutex state_mtx;
-
-	int current_potential_state_counter;
-	std::mutex potential_state_mtx;
-
 	double average_score;
+
+	std::vector<Candidate*> candidate;
 
 	std::mutex display_mtx;
 
