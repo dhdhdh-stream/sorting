@@ -7,95 +7,27 @@
 
 #include "definitions.h"
 #include "solution_node_action.h"
-#include "solution_node_end.h"
-#include "solution_node_if_start.h"
-#include "solution_node_if_end.h"
-#include "solution_node_loop_start.h"
-#include "solution_node_loop_end.h"
-#include "solution_node_start.h"
 #include "utilities.h"
 
 using namespace std;
 
-Solution::Solution(Explore* explore) {
-	this->explore = explore;
-
+Solution::Solution() {
 	this->id = time(NULL);
 
-	SolutionNode* start_node = new SolutionNodeStart(this);
-	this->nodes.push_back(start_node);
-	SolutionNode* end_node = new SolutionNodeEnd(this);
-	this->nodes.push_back(end_node);
+
 
 	this->average_score = 0.5;
 }
 
-Solution::Solution(Explore* explore,
-				   ifstream& save_file) {
-	this->explore = explore;
+Solution::Solution(ifstream& save_file) {
 
-	string id_line;
-	getline(save_file, id_line);
-	this->id = stoi(id_line);
-
-	string num_nodes_line;
-	getline(save_file, num_nodes_line);
-	int num_nodes = stoi(num_nodes_line);
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		string node_type_line;
-		getline(save_file, node_type_line);
-		int node_type = stoi(node_type_line);
-
-		SolutionNode* node;
-		if (node_type == NODE_TYPE_START) {
-			node = new SolutionNodeStart(this,
-										 n_index,
-										 save_file);
-		} else if (node_type == NODE_TYPE_END) {
-			node = new SolutionNodeEnd(this,
-									   n_index,
-									   save_file);
-		} else if (node_type == NODE_TYPE_ACTION) {
-			node = new SolutionNodeAction(this,
-										  n_index,
-										  save_file);
-		} else if (node_type == NODE_TYPE_IF_START) {
-			node = new SolutionNodeIfStart(this,
-										   n_index,
-										   save_file);
-		} else if (node_type == NODE_TYPE_IF_END) {
-			node = new SolutionNodeIfEnd(this,
-										 n_index,
-										 save_file);
-		} else if (node_type == NODE_TYPE_LOOP_START) {
-			node = new SolutionNodeLoopStart(this,
-											 n_index,
-											 save_file);
-		} else if (node_type == NODE_TYPE_LOOP_END) {
-			node = new SolutionNodeLoopEnd(this,
-										   n_index,
-										   save_file);
-		}
-		this->nodes.push_back(node);
-	}
-
-	string current_state_counter_line;
-	getline(save_file, current_state_counter_line);
-	this->current_state_counter = stoi(current_state_counter_line);
-
-	string average_score_line;
-	getline(save_file, average_score_line);
-	this->average_score = stof(average_score_line);
 }
 
 Solution::~Solution() {
-	for (int i = 0; i < (int)this->nodes.size(); i++) {
-		delete this->nodes[i];
-	}
+
 }
 
-void Solution::iteration(bool tune,
-						 bool save_for_display) {
+void Solution::iteration(bool save_for_display) {
 	Problem problem;
 	
 	if (rand()%10 == 0) {
@@ -106,6 +38,8 @@ void Solution::iteration(bool tune,
 		vector<ReEvalStepHistory> instance_history;
 		vector<AbstractNetworkHistory*> network_historys;
 
+		set<SolutionNode*> unique_nodes_visited;
+
 		SolutionNode* curr_node = this->start_scope;
 		while (true) {
 			SolutionNode* next_node = curr_node->re_eval(problem,
@@ -115,6 +49,10 @@ void Solution::iteration(bool tune,
 														 instance_history,
 														 network_historys);
 
+			if (unique_nodes_visited.find(curr_node) == unique_nodes_visited.end()) {
+				unique_nodes_visited.insert(curr_node);
+			}
+
 			if (next_node == NULL) {
 				break;
 			}
@@ -123,6 +61,12 @@ void Solution::iteration(bool tune,
 
 		double score = problem.score_result();
 		this->average_score = 0.9999*this->average_score + 0.0001*score;
+
+		this->start_scope->re_eval_increment();
+		for (set<SolutionNode*>::iterator it = unique_nodes_visited.begin(); it != unique_nodes_visited.end(); it++) {
+			SolutionNode* node = *it;
+			node->node_weight += 0.0001;
+		}
 
 		double initial_misguess = abs(score - this->average_score);
 		double best_misguess = initial_misguess;
@@ -139,8 +83,8 @@ void Solution::iteration(bool tune,
 
 		double info_gain = best_misguess - initial_misguess;
 		if (info_gain > 0.0) {
-			vector<double> information_gains;
-			vector<int> information_gains_divides;
+			vector<double> weights;
+			vector<int> weight_divides;
 			double curr_best_misguess = initial_misguess;
 			for (int h_index = 0; h_index < (int)instance_history.size(); h_index++) {
 				if (instance_history[h_index]->node_visited->node_type == NODE_TYPE_ACTION
@@ -148,32 +92,37 @@ void Solution::iteration(bool tune,
 						&& instance_history[h_index]->scope_state == START_SCOPE_STATE_ENTER)) {
 					double misguess = abs(score - instance_history[h_index]->guess);
 					if (misguess > curr_best_misguess) {
-						information_gains.push_back(misguess - curr_best_misguess);
+						weights.push_back((misguess - curr_best_misguess)/info_gain);
 						curr_best_misguess = misguess;
 					} else {
-						information_gains.push_back(0.0);
+						weights.push_back(0.0);
 					}
-					information_gains_divides.push_back(1);
+					weight_divides.push_back(1);
 				} else if (instance_history[h_index]->node_visited->node_type == NODE_TYPE_JUMP_SCOPE) {
 					if (instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_IF
 							|| instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_EXIT) {
-						information_gains_divides.back()++;
+						weight_divides.back()++;
 					}
 				}
 				// SolutionNodeEmpty cannot explore
 			}
 
-			int gains_index = -1;
+			int weights_index = -1;
 			for (int h_index = 0; h_index < (int)instance_history.size(); h_index++) {
 				if (instance_history[h_index]->node_visited->node_type == NODE_TYPE_ACTION
 						|| (instance_history[h_index]->node_visited->node_type == NODE_TYPE_START_SCOPE
 						&& instance_history[h_index]->scope_state == START_SCOPE_STATE_ENTER)) {
-					gains_index++;
-					// update with information_gains[gains_index]/information_gains_divides[gains_index]
+					weights_index++;
+					double weight_update = weights[weights_index]/weight_divides[weights_index];
+					instance_history[h_index]->explore_weight = 0.9999*instance_history[h_index]->explore_weight
+						+ 0.0001*weight_update;
 				} else if (instance_history[h_index]->node_visited->node_type == NODE_TYPE_JUMP_SCOPE) {
-					if (instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_IF
-							|| instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_EXIT) {
-						// update with information_gains[gains_index]/information_gains_divides[gains_index]
+					if (instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_IF) {
+						// TODO: add if explore
+					} else if (instance_history[h_index]->scope_state == JUMP_SCOPE_STATE_EXIT) {
+						double weight_update = weights[weights_index]/weight_divides[weights_index];
+						instance_history[h_index]->explore_weight = 0.9999*instance_history[h_index]->explore_weight
+							+ 0.0001*weight_update;
 					}
 				}
 				// SolutionNodeEmpty cannot explore
@@ -238,25 +187,49 @@ void Solution::iteration(bool tune,
 		}
 
 		if (this->candidates.size() > 20) {
+			int best_index = -1;
+			double best_score_increase = 0.0;
+			double best_info_gain = 0.0;
+			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+				if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
+					CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
+					double effective_score_increase = candidate_branch->explore_node->node_weight
+													  *candidate_branch->branch_percent
+													  *candidate_branch->score_increase;
+					if (effective_score_increase > best_score_increase) {
+						best_score_increase = effective_score_increase;
+						best_index = c_index;
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
+					CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
+					if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+						double effective_score_increase = candidate_replace->explore_node->node_weight
+														  *candidate_replace->score_increase;
+						if (effective_score_increase > best_score_increase) {
+							best_score_increase = effective_score_increase;
+							best_index = c_index;
+						}
+					} else {
+						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+						if (best_score_increase == 0.0) {
+							if (candidate_replace->info_gain > best_info_gain) {
+								best_info_gain = candidate_replace->info_gain;
+								best_index = c_index;
+							}
+						}
+					}
+				}
+			}
 
+			this->start_scope->reset_explore();
+
+			this->candidates[best_index]->apply();
+
+			// delete candidates
 		}
 	}
 }
 
 void Solution::save(ofstream& save_file) {
-	save_file << this->id << endl;
 
-	this->nodes_mtx.lock();
-	int num_nodes = (int)this->nodes.size();
-	this->nodes_mtx.unlock();
-
-	save_file << num_nodes << endl;
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		save_file << this->nodes[n_index]->node_type << endl;
-		this->nodes[n_index]->save(save_file);
-	}
-
-	save_file << this->current_state_counter << endl;
-
-	save_file << this->average_score << endl;
 }

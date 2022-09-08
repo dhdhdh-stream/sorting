@@ -9,16 +9,16 @@ public:
 
 	NDVector* input_indexes;
 
-	Network* potential_state_network;
+	int new_state_size;
+	Network* new_state_network;
 
-	FoldHelper(int layer,
-			   int new_state_size);
-	FoldHelper(int layer,
-			   Network* existing_state_network);
-	~FoldHelper();	// delete potential_state_network if not null
+	FoldHelper(SolutionNode* parent,
+			   int layer);
+	~FoldHelper();
 
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);
+	void initialize_new_state_network(int new_state_size);
 	void process_and_rerun_target_state(
 		std::vector<int>& loop_scope_counts,
 		double observations,

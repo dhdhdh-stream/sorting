@@ -6,6 +6,9 @@ const int START_SCOPE_STATE_EXIT = 1;
 
 class StartScope : public SolutionNode {
 public:
+	// StartScope has empty num_states?
+	// int num_states;
+
 	std::vector<SolutionNode*> path;
 
 	// score_network ran at start

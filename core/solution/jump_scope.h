@@ -14,23 +14,16 @@ public:
 
 	std::vector<SolutionNode*> top_path;
 
-	double if_explore_weight;
-	int if_explore_type;
-	int if_explore_state;
-	std::vector<SolutionNode*> if_explore_potential_nodes;
-	Network* if_explore_score_network;	// train greedily
-	Network* if_explore_full_score_network;
-	std::vector<FlatNetwork*> if_explore_state_networks;
-
-	double end_explore_weight;
-	int end_explore_state;
+	// double if_explore_weight;
+	// int if_explore_type;
+	// int if_explore_state;
+	// std::vector<SolutionNode*> if_explore_potential_nodes;
+	// Network* if_explore_score_network;	// train greedily
+	// Network* if_explore_full_score_network;
+	// std::vector<FlatNetwork*> if_explore_state_networks;
 
 	std::vector<std::vector<SolutionNode*>> children_nodes;
 	std::vector<Network*> children_score_networks;
-
-	std::vector<Action> explore_branch_flat;
-	std::vector<SolutionNodeAction*> explore_branch_fold;
-	std::vector<AbstractAction*> branch_explore_nodes;
 
 };
 

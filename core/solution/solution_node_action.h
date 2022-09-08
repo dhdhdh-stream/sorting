@@ -10,34 +10,13 @@ class SolutionNodeAction : public SolutionNode {
 public:
 	Action action;
 
-	std::vector<int> state_network_local_index;
 	std::vector<Network*> state_networks;
 
 	std::map<SolutionNode*,FoldHelper*> fold_helpers;
 
-	SolutionNodeAction(Solution* solution,
-					   int node_index,
-					   Action action,
-					   std::vector<int> available_state);
-	SolutionNodeAction(Solution* solution,
-					   int node_index,
-					   std::ifstream& save_file);
+	SolutionNodeAction(Action action);
+	SolutionNodeAction(std::ifstream& save_file);
 	~SolutionNodeAction();
-
-	void reset() override;
-
-	void add_potential_state(std::vector<int> potential_state_indexes,
-							 SolutionNode* explore_node) override;
-	void extend_with_potential_state(std::vector<int> potential_state_indexes,
-									 std::vector<int> new_state_indexes,
-									 SolutionNode* explore_node) override;
-	void delete_potential_state(std::vector<int> potential_state_indexes,
-								SolutionNode* explore_node) override;
-	void clear_potential_state() override;
-
-	void construct_fold_inputs(std::vector<int>& loop_scope_counts,
-							   int& curr_index,
-							   SolutionNode* explore_node) override;
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,

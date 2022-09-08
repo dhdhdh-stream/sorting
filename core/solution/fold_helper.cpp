@@ -2,13 +2,19 @@
 
 using namespace std;
 
-FoldHelper::FoldHelper(int layer) {
+FoldHelper::FoldHelper(SolutionNode* parent,
+					   int layer) {
+	this->parent = parent;
 	this->layer = layer;
 	this->input_indexes = new NDVector(layer);
+	this->potential_state_network = NULL;
 }
 
 FoldHelper::~FoldHelper() {
 	delete this->input_indexes;
+	if (this->potential_state_network != NULL) {
+		delete this->potential_state_network;
+	}
 }
 
 void FoldHelper::set_index(vector<int>& loop_scope_counts,

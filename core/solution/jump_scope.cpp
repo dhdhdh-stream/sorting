@@ -16,6 +16,7 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 								 vector<int>& scope_states,
 								 vector<ReEvalStepHistory>& instance_history,
 								 vector<AbstractNetworkHistory*>& network_historys) {
+	// TODO: handle case where top_path is empty
 	if (scope_states.back() != this) {
 		// entering scope
 		vector<double> scope_states;
@@ -31,7 +32,7 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 													 0.0,
 													 JUMP_SCOPE_STATE_ENTER));
 
-		return this->start;
+		return this->top_path[0];
 	} else if (scope_stack_counts.back() == -1) {
 		// if condition
 		int best_index;
@@ -41,6 +42,7 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 								   best_index,
 								   network_historys);
 
+		// TODO: handle case where child path is empty
 
 	} else {
 		// exiting scope
@@ -56,6 +58,7 @@ SolutionNode* JumpScope::explore(Problem& problem,
 								 vector<ExploreStepHistory>& instance_history,
 								 vector<AbstractNetworkHistory*>& network_historys,
 								 bool& abandon_instance) {	// TODO: in jump, if has score >1.0, abandon explore
+	// TODO: handle case where top_path is empty
 	if (iter_explore->explore_node == this
 			&& scope_stacks.back() == NULL) {
 		// back from explore
@@ -79,7 +82,7 @@ SolutionNode* JumpScope::explore(Problem& problem,
 											   -1,
 											   false));
 
-		return this->start;
+		return this->top_path[0];
 	} else if (scope_stack_counts.back() == -1) {
 		// if condition
 		bool state_affected = false;
@@ -94,11 +97,13 @@ SolutionNode* JumpScope::explore(Problem& problem,
 			}
 		}
 
+		// TODO: handle case where child path is empty
 		int best_index;
 		activate_children_networks(problem,
 								   state_vals.back(),
 								   best_index);
 
+		// set state_vals.back to 0
 
 	} else {
 		// exiting scope

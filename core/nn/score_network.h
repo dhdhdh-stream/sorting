@@ -12,8 +12,11 @@ public:
 
 	std::mutex mtx;
 
-	Network(std::vector<int> local_state);
+	Network(std::vector<int> local_state_sizes);
 	~Network();
+
+	void insert_scope(int layer,
+					  int new_state_size);
 
 	void activate(std::vector<std::vector<double>>& state_vals);
 };
