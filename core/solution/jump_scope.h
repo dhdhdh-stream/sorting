@@ -10,9 +10,12 @@ const int JUMP_SCOPE_IF_EXPLORE_TYPE_BRANCH_START = 1;
 
 class JumpScope : public SolutionNode {
 public:
-	int num_states; // TODO: try 0
+	int num_states;
 
 	std::vector<SolutionNode*> top_path;
+
+	std::vector<std::vector<SolutionNode*>> children_nodes;
+	std::vector<Network*> children_score_networks;
 
 	// double if_explore_weight;
 	// int if_explore_type;
@@ -22,9 +25,8 @@ public:
 	// Network* if_explore_full_score_network;
 	// std::vector<FlatNetwork*> if_explore_state_networks;
 
-	std::vector<std::vector<SolutionNode*>> children_nodes;
-	std::vector<Network*> children_score_networks;
-
+	JumpScope(std::vector<int> local_state_sizes,
+			  int num_states);
 };
 
 #endif /* JUMP_SCOPE_H */

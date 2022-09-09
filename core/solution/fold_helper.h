@@ -5,8 +5,6 @@ class FoldHelper {
 public:
 	SolutionNode* parent;
 
-	int layer;
-
 	NDVector* input_indexes;
 
 	int new_state_size;
@@ -19,15 +17,35 @@ public:
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);
 	void initialize_new_state_network(int new_state_size);
-	void process_and_rerun_target_state(
-		std::vector<int>& loop_scope_counts,
-		double observations,
-		int input_index_on,
-		double* flat_inputs,
-		bool* activated,
-		std::vector<double>& new_state_vals,
-		std::vector<SolutionNode*>& backprop_nodes,
-		std::vector<AbstractNetworkHistory*>& network_historys);
+	
+	int get_index(std::vector<int>& loop_scope_counts);
+	void new_path_process(std::vector<int>& loop_scope_counts,
+						  int input_index_on,
+						  double observations,
+						  std::vector<std::vector<double>>& state_vals,
+						  std::vector<AbstractNetworkHistory*>& network_historys);
+	void new_path_process(std::vector<int>& loop_scope_counts,
+						  int input_index_on,
+						  double observations,
+						  double* flat_inputs,
+						  bool* activated,
+						  std::vector<std::vector<double>>& state_vals,
+						  std::vector<AbstractNetworkHistory*>& network_historys);
+	void existing_path_process(std::vector<int>& loop_scope_counts,
+							   int input_index_on,
+							   std::vector<double>& new_state_vals,
+							   std::vector<AbstractNetworkHistory*>& network_historys);
+	void existing_path_process(std::vector<int>& loop_scope_counts,
+							   int input_index_on,
+							   double observations,
+							   double* flat_inputs,
+							   bool* activated,
+							   std::vector<double>& new_state_vals,
+							   std::vector<AbstractNetworkHistory*>& network_historys);
+	void activate_new_state_network(std::vector<double>& new_state_vals);
+	void existing_path_backprop_new_state(std::vector<double>& new_state_errors,
+										  std::vector<AbstractNetworkHistory*>& network_historys);
+};
 
 class NDVector {
 public:

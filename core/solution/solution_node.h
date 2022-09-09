@@ -8,7 +8,6 @@
 #include "action.h"
 #include "network.h"
 #include "problem.h"
-#include "solution.h"
 
 const int NODE_TYPE_EMPTY = 0;
 const int NODE_TYPE_ACTION = 1;
@@ -41,8 +40,6 @@ const int EXPLORE_DECISION_TYPE_FOLD_NO_EXPLORE = 2;
 const int EXPLORE_REPLACE_TYPE_SCORE = 0;
 const int EXPLORE_REPLACE_TYPE_INFO = 1;
 
-class IterExplore;
-class Solution;
 class SolutionNode {
 public:
 	int node_type;
@@ -112,30 +109,14 @@ public:
 
 	virtual ~SolutionNode();	// needs to be recursive
 
-	virtual void re_eval_increment() = 0;	// average 0 into node weight
-
-	virtual SolutionNode* deep_copy(int inclusive_start_layer) = 0;
-	virtual void set_is_temp_node(bool is_temp_node) = 0;
-	virtual void initialize_local_state(std::vector<int>& explore_node_local_state_sizes) = 0;
-	virtual void setup_flat(std::vector<int>& loop_scope_counts,
-							int& curr_index,
-							SolutionNode* explore_node) = 0;
-	virtual void setup_new_state(SolutionNode* explore_node,
-								 int new_state_size) = 0;
-	// virtual void reset_state(SolutionNode* explore_node);
-	virtual void get_min_misguess(double& min_misguess) = 0;
-	virtual void cleanup_explore(SolutionNode* explore_node) = 0;
-	virtual void collect_new_state_networks(SolutionNode* explore_node,
-											std::vector<SolutionNode*>& existing_nodes,
-											std::vector<Network*>& new_state_networks) = 0;
-	virtual void insert_scope(int layer,
-							  int new_state_size) = 0;
-	virtual void reset_explore() = 0;
-
 	virtual SolutionNode* re_eval(Problem& problem,
 								  std::vector<std::vector<double>>& state_vals,
 								  std::vector<SolutionNode*>& scopes,
 								  std::vector<int>& scope_states,
+								  std::vector<ReEvalStepHistory>& instance_history,
+								  std::vector<AbstractNetworkHistory*>& network_historys) = 0;
+	virtual void re_eval_backprop(double score,
+								  std::vector<std::vector<double>>& state_errors,
 								  std::vector<ReEvalStepHistory>& instance_history,
 								  std::vector<AbstractNetworkHistory*>& network_historys) = 0;
 	virtual SolutionNode* explore(Problem& problem,
@@ -145,20 +126,91 @@ public:
 								  std::vector<int>& scope_locations,
 								  IterExplore*& iter_explore,
 								  std::vector<StepHistory>& instance_history,
-								  std::vector<NetworkHistory*>& network_historys,
+								  std::vector<AbstractNetworkHistory*>& network_historys,
 								  bool& abandon_instance) = 0;
 	virtual void explore_backprop(double score,
 								  std::vector<std::vector<double>>& state_errors,
 								  IterExplore*& iter_explore,
 								  std::vector<StepHistory>& instance_history,
-								  std::vector<NetworkHistory*>& network_historys) = 0;
+								  std::vector<AbstractNetworkHistory*>& network_historys) = 0;
 	virtual void explore_increment(double score,
 								   IterExplore* iter_explore);
 
 	virtual void save(std::ofstream& save_file) = 0;
 	virtual void save_for_display(std::ofstream& save_file) = 0;
 
+	virtual void re_eval_increment() = 0;
 	
+	virtual SolutionNode* deep_copy(int inclusive_start_layer) = 0;
+	virtual void set_is_temp_node(bool is_temp_node) = 0;
+	virtual void initialize_local_state(std::vector<int>& explore_node_local_state_sizes) = 0;
+	virtual void setup_flat(std::vector<int>& loop_scope_counts,
+							int& curr_index,
+							SolutionNode* explore_node) = 0;
+	virtual void setup_new_state(SolutionNode* explore_node,
+								 int new_state_size) = 0;
+	// virtual void reset_state(SolutionNode* explore_node);
+	virtual void get_min_misguess(double& min_misguess) = 0;	// need to include SolutionNodeEmpty
+	virtual void cleanup_explore(SolutionNode* explore_node) = 0;
+	virtual void collect_new_state_networks(SolutionNode* explore_node,
+											std::vector<SolutionNode*>& existing_nodes,
+											std::vector<Network*>& new_state_networks) = 0;
+	virtual void insert_scope(int layer,
+							  int new_state_size) = 0;
+	virtual void reset_explore() = 0;
+
+	void explore_callback_helper(Problem& problem,
+								 std::vector<std::vector<double>>& state_vals,
+								 std::vector<SolutionNode*>& scopes,
+								 std::vector<int>& scope_states,
+								 std::vector<int>& scope_locations,
+								 std::vector<AbstractNetworkHistory*>& network_historys);
+	void is_explore_helper(std::vector<SolutionNode*>& scopes,
+						   std::vector<int>& scope_states,
+						   std::vector<int>& scope_locations,
+						   IterExplore*& iter_explore,
+						   bool& is_first_explore);
+	SolutionNode* explore_helper(Problem& problem,
+								 std::vector<SolutionNode*>& scopes,
+								 std::vector<int>& scope_states,
+								 std::vector<int>& scope_locations,
+								 IterExplore*& iter_explore,
+								 std::vector<StepHistory>& instance_history,
+								 std::vector<AbstractNetworkHistory*>& network_historys);
+	void explore_callback_backprop_helper(std::vector<std::vector<double>>& state_errors,
+										  std::vector<StepHistory>& instance_history,
+										  std::vector<AbstractNetworkHistory*>& network_historys);
+	void explore_backprop_helper(double score,
+								 std::vector<StepHistory>& instance_history,
+								 std::vector<AbstractNetworkHistory*>& network_historys);
+	void explore_increment_helper(double score,
+								  IterExplore*& iter_explore);
+
+	void explore_abandon_helper();
+
+	void backprop_explore_jump_score_network(double score,
+											 std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_explore_no_jump_score_network(double score,
+												std::vector<AbstractNetworkHistory*>& network_historys);
+
+	void state_backprop_explore_jump_score_network(double score,
+												   std::vector<double>& new_state_errors,
+												   std::vector<AbstractNetworkHistory*>& network_historys);
+	void state_backprop_explore_no_jump_score_network(double score,
+													  std::vector<double>& new_state_errors,
+													  std::vector<AbstractNetworkHistory*>& network_historys);
+
+	void full_backprop_explore_jump_score_network(double score,
+												  std::vector<double>& new_state_errors,
+												  std::vector<AbstractNetworkHistory*>& network_historys);
+	void full_backprop_explore_no_jump_score_network(double score,
+													 std::vector<double>& new_state_errors,
+													 std::vector<AbstractNetworkHistory*>& network_historys);
+
+	void backprop_explore_small_jump_score_network(double score,
+												   std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_explore_small_no_jump_score_network(double score,
+													  std::vector<AbstractNetworkHistory*>& network_historys);
 };
 
 #endif /* SOLUTION_NODE_H */

@@ -14,9 +14,16 @@ public:
 
 	std::map<SolutionNode*,FoldHelper*> fold_helpers;
 
-	SolutionNodeAction(Action action);
+	SolutionNodeAction(Action action,
+					   std::vector<int> local_state_sizes);
 	SolutionNodeAction(std::ifstream& save_file);
 	~SolutionNodeAction();
+
+	void new_path_activate_state_networks(double observations,
+										  std::vector<std::vector<double>>& state_vals,
+										  std::vector<AbstractNetworkHistory*>& network_historys);
+	void new_path_backprop_state_networks(std::vector<std::vector<double>>& state_errors,
+										  std::vector<AbstractNetworkHistory*>& network_historys);
 
 	SolutionNode* activate(Problem& problem,
 						   double* state_vals,
