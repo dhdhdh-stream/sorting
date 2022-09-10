@@ -1,0 +1,588 @@
+#include "start_scope.h"
+
+using namespace std;
+
+StartScope::StartScope() {
+
+}
+
+StartScope::~StartScope() {
+
+}
+
+SolutionNode* StartScope::re_eval(Problem& problem,
+								  vector<vector<double>>& state_vals,
+								  vector<SolutionNode*>& scopes,
+								  vector<int>& scope_states,
+								  vector<ReEvalStepHistory>& instance_history,
+								  vector<AbstractNetworkHistory*>& network_historys) {
+	if (scopes.back() != this) {
+		// entering scope
+		vector<double> obs;
+		obs.push_back(problem.get_observation());
+
+		this->score_network->mtx.lock();
+		this->score_network->activate(state_vals,
+									  obs,
+									  network_historys);
+		double score = this->score_network->output->acti_vals[0];
+		this->score_network->mtx.unlock();
+
+		vector<double> empty_scope_states;
+		state_vals.push_back(empty_scope_states);
+
+		scopes.push_back(this);
+		scope_states.push_back(-1);
+
+		instance_history.push_back(ReEvalStepHistory(this,
+													 score,
+													 START_SCOPE_STATE_ENTER));
+
+		if (this->path.size() > 0) {
+			return this->path[0];
+		}
+	}
+
+	// exiting scope
+	state_vals.pop_back();
+
+	scopes.pop_back();
+	scope_states.pop_back();
+
+	instance_history.push_back(ReEvalStepHistory(this,
+												 0.0,
+												 START_SCOPE_STATE_EXIT));
+
+	return NULL;
+}
+
+void StartScope::re_eval_backprop(double score,
+								  vector<vector<double>>& state_errors,
+								  vector<ReEvalStepHistory>& instance_history,
+								  vector<AbstractNetworkHistory*>& network_historys) {
+	if (instance_history.back->scope_state == START_SCOPE_STATE_EXIT) {
+		vector<double> empty_local_state_errors;
+		state_errors.push_back(empty_local_state_errors);
+	} else {
+		// instance_history.back->scope_state == START_SCOPE_STATE_ENTER
+		AbstractNetworkHistory* network_history = network_historys.back();
+
+		this->score_network->mtx.lock();
+
+		network_history->reset_weights();
+
+		double misguess;
+		vector<double> errors;
+		if (score == 1.0) {
+			if (this->score_network->output->acti_vals[0] < 1.0) {
+				errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
+				misguess = abs(1.0 - this->score_network->output->acti_vals[0]);
+			} else {
+				errors.push_back(0.0);
+				misguess = 0.0;
+			}
+		} else {
+			if (this->score_network->output->acti_vals[0] > 0.0) {
+				errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
+				misguess = abs(0.0 - this->score_network->output->acti_vals[0]);
+			} else {
+				errors.push_back(0.0);
+				misguess = 0.0;
+			}
+		}
+		this->score_network->backprop(errors);
+
+		this->score_network->mtx.unlock();
+
+		this->average_misguess = 0.9999*this->average_misguess + 0.0001*misguess;
+
+		state_errors.pop_back();
+	}
+
+	instance_history.pop_back();
+	return;
+}
+
+SolutionNode* StartScope::explore(Problem& problem,
+								  vector<vector<double>>& state_vals,
+								  vector<SolutionNode*>& scopes,
+								  vector<int>& scope_states,
+								  vector<int>& scope_locations,
+								  IterExplore*& iter_explore,
+								  vector<ExploreStepHistory>& instance_history,
+								  vector<AbstractNetworkHistory*>& network_historys,
+								  bool& abandon_instance) {
+	if (iter_explore->explore_node == this
+			&& scopes.back() == NULL) {
+		scopes.pop_back();
+		scope_states.pop_back();
+		scope_locations.pop_back();
+		// can't be loop
+
+		// top layer, no state networks to be learned
+
+		scope_locations.back() = this->jump_end_non_inclusive_index;
+
+		instance_history.push_back(ExploreStepHistory(this,
+													  false,
+													  0.0,
+													  -1,
+													  -1,
+													  true));
+
+		if (this->jump_end_non_inclusive_index < this->path.size()) {
+			return this->path[this->jump_end_non_inclusive_index];
+		}
+	}
+
+	if (scopes.back() != this) {
+		// entering scope
+		if (randuni() < this->explore_weight) {
+			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
+				int jump_end_non_inclusive_index = rand()%(this->path.size()+1);
+
+				vector<SolutionNode*> explore_path;
+				if (jump_end_non_inclusive_index == 0) {
+					new_random_path(explore_path,
+									false);
+				} else {
+					new_random_path(explore_path,
+									true);
+				}
+				explore_path[explore_path.size()-1]->next = this;
+
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_EXPLORE);
+				iter_explore->explore_path = explore_path;
+				iter_explore->jump_end_non_inclusive_index = jump_end_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_LEARN_FLAT);
+				iter_explore->jump_end_non_inclusive_index = this->jump_end_non_inclusive_index;
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
+				iter_explore = new IterExplore(this,
+											   ITER_EXPLORE_TYPE_MEASURE_FLAT);
+				iter_explore->jump_end_non_inclusive_index = this->jump_end_non_inclusive_index;
+			}
+		}
+
+		vector<double> empty_scope_states;
+		state_vals.push_back(empty_scope_states);
+
+		scopes.push_back(this);
+		scope_states.push_back(-1);
+		scope_locations.push_back(0);
+
+		instance_history.push_back(ExploreStepHistory(this,
+													  false,
+													  0.0,
+													  START_SCOPE_STATE_ENTER,
+													  -1,
+													  false));
+
+		if (iter_explore != NULL) {
+			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
+				scopes.push_back(NULL);
+				scope_state.push_back(-1);
+				scope_locations.push_back(-1);
+				return iter_explore->explore_path[0];
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
+				vector<double> obs;
+				obs.push_back(problem.get_observation());
+				if (rand()%2 == 0) {
+					this->explore_small_jump_score_network->mtx.lock();
+					this->explore_small_jump_score_network->activate(obs, network_historys);
+					this->explore_small_jump_score_network->mtx.unlock();
+
+					scopes.push_back(NULL);
+					scope_state.push_back(-1);
+					scope_locations.push_back(-1);
+					return this->explore_path[0];
+				} else {
+					this->explore_small_no_jump_score_network->mtx.lock();
+					this->explore_small_no_jump_score_network->activate(obs, network_historys);
+					this->explore_small_no_jump_score_network->mtx.unlock();
+
+					if (this->path.size() > 0) {
+						return this->path[0];
+					}
+				}
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
+				vector<double> obs;
+				obs.push_back(problem.get_observation());
+
+				this->explore_small_jump_score_network->mtx.lock();
+				this->explore_small_jump_score_network->activate(obs);
+				double jump_score = this->explore_small_jump_score_network->output->acti_vals[0];
+				this->explore_small_jump_score_network->mtx.unlock();
+
+				this->explore_small_no_jump_score_network->mtx.lock();
+				this->explore_small_no_jump_score_network->activate(obs);
+				double no_jump_score = this->explore_small_no_jump_score_network->output->acti_vals[0];
+				this->explore_small_no_jump_score_network->mtx.unlock();
+
+				if (jump_score > no_jump_score) {
+					if (rand()%2 == 0) {
+						scopes.push_back(NULL);
+						scope_state.push_back(-1);
+						scope_locations.push_back(-1);
+						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_EXPLORE_EXPLORE;
+						return this->explore_path[0];
+					} else {
+						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_EXPLORE_NO_EXPLORE;
+						if (this->path.size() > 0) {
+							return this->path[0];
+						}
+					}
+				} else {
+					if (rand()%2 == 0) {
+						scopes.push_back(NULL);
+						scope_state.push_back(-1);
+						scope_locations.push_back(-1);
+						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_EXPLORE;
+						return this->explore_path[0];
+					} else {
+						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_NO_EXPLORE;
+						if (this->path.size() > 0) {
+							return this->path[0];
+						}
+					}
+				}
+			}
+		}
+
+		if (this->path.size() > 0) {
+			return this->top_path[0];
+		}
+	}
+
+	// exiting scope
+	state_vals.pop_back();
+
+	scopes.pop_back();
+	scope_states.pop_back();
+	scope_locations.pop_back();
+
+	instance_history.push_back(ExploreStepHistory(this,
+												  false,
+												  0.0,
+												  START_SCOPE_STATE_EXIT,
+												  -1,
+												  false));
+
+	return NULL;
+}
+
+void StartScope::explore_backprop(double score,
+								  vector<vector<double>>& state_errors,
+								  IterExplore*& iter_explore,
+								  vector<StepHistory>& instance_history,
+								  vector<NetworkHistory*>& network_historys) {
+	if (instance_history->is_explore_callback) {
+		// iter_explore->explore_node == this
+
+		// do nothing
+
+		instance_history.pop_back();
+		return;
+	}
+
+	if (instance_history.back()->scope_state == START_SCOPE_STATE_EXIT) {
+		vector<double> empty_local_state_errors;
+		state_errors.push_back(empty_local_state_errors);
+	} else {
+		// instance_history.back()->scope_state == START_SCOPE_STATE_ENTER
+		if (iter_explore != NULL
+				&& iter_explore->explore_node == this) {
+			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
+				// do nothing
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_JUMP_FLAT) {
+				if (network_historys.back()->network == this->explore_small_jump_score_network) {
+					backprop_explore_small_jump_score_network(score,
+															  network_historys);
+				} else {
+					backprop_explore_small_no_jump_score_network(score,
+																 network_historys);
+				}
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FLAT) {
+				if (instance_history.back().explore_decision == EXPLORE_DECISION_TYPE_FLAT_EXPLORE_EXPLORE) {
+					this->explore_explore_explore_score += score;
+					this->explore_explore_explore_count++;
+				} else if (instance_history.back().explore_decision == EXPLORE_DECISION_TYPE_FLAT_EXPLORE_NO_EXPLORE) {
+					this->explore_explore_no_explore_score += score;
+					this->explore_explore_no_explore_count++;
+				} else if (instance_history.back().explore_decision == EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_EXPLORE) {
+					this->explore_no_explore_explore_score += score;
+					this->explore_no_explore_explore_count++;
+				} else {
+					// instance_history.back().explore_decision == EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_NO_EXPLORE
+					this->explore_no_explore_no_explore_score += score;
+					this->explore_no_explore_no_explore_count++;
+				}
+			}
+		}
+
+		state_errors.pop_back();
+	}
+
+	instance_history.pop_back();
+	return;
+}
+
+void StartScope::explore_increment(double score,
+								   IterExplore*& iter_explore) {
+	if (this->explore_state == EXPLORE_STATE_EXPLORE) {
+		if (score == 1.0) {
+			this->explore_path = iter_explore->explore_path;
+			for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+				if (this->explore_path[n_index]->node_type != NODE_TYPE_ACTION
+						&& this->explore_path[n_index]->node_type != NODE_TYPE_EMPTY) {
+					SolutionNode* deep_copy = this->explore_path[n_index]->deep_copy(0);
+					this->explore_path[n_index] = deep_copy;
+				}
+
+				vector<int> explore_path_local_state_sizes;
+				explore_path_local_state_sizes.push_back(0);
+				this->explore_path[n_index]->initialize_local_state(explore_node_local_state_sizes);
+			}
+
+			this->jump_end_non_inclusive_index = iter_explore->jump_end_non_inclusive_index;
+
+			this->explore_small_jump_score_network = new Network(1, 4, 1);
+			this->explore_small_no_jump_score_network = new Network(1, 4, 1);
+
+			this->explore_state = EXPLORE_STATE_LEARN_FLAT;
+			this->explore_iter_index = 0;
+		} else {
+			for (int n_index = 0; n_index < (int)iter_explore->explore_path.size(); n_index++) {
+				// non-recursive, only need to check top layer
+				if (this->explore_path[n_index]->node_type == NODE_TYPE_ACTION
+						|| this->explore_path[n_index]->node_type == NODE_TYPE_EMPTY) {
+					delete this->explore_path[n_index];
+				}
+			}
+		}
+	} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
+		this->explore_iter_index++;
+
+		if (this->explore_iter_index > 500000) {
+			this->explore_state = EXPLORE_STATE_MEASURE_FLAT;
+			this->explore_iter_index = 0;
+
+			this->explore_explore_explore_count = 0;
+			this->explore_explore_explore_score = 0.0;
+			this->explore_explore_no_explore_count = 0;
+			this->explore_explore_no_explore_score = 0.0;
+			this->explore_no_explore_explore_count = 0;
+			this->explore_no_explore_explore_score = 0.0;
+			this->explore_no_explore_no_explore_count = 0;
+			this->explore_no_explore_no_explore_score = 0.0;
+		}
+	} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
+		this->explore_iter_index++;
+
+		if (this->explore_iter_index > 100000) {
+			double explore_explore_score = this->explore_explore_explore_score/this->explore_explore_explore_count;
+			double explore_no_explore_score = this->explore_explore_no_explore_score/this->explore_explore_no_explore_count;
+
+			bool branch_better = false;
+			bool branch_not_worse = false;
+			if (explore_explore_score > (explore_no_explore_score + 0.03*(1.0 - solution->average_score))) {
+				branch_better = true;
+				branch_not_worse = true;
+			} else if (explore_explore_score > 0.97*explore_no_explore_score) {
+				branch_not_worse = true;
+			}
+
+			double no_explore_explore_score = this->explore_no_explore_explore_score/this->explore_no_explore_explore_count;
+			double no_explore_no_explore_score = this->explore_no_explore_no_explore_score/this->explore_no_explore_no_explore_count;
+
+			bool can_replace = false;
+			if (no_explore_explore_score > 0.97*no_explore_no_explore_score) {
+				can_replace = true;
+			}
+
+			if (branch_better) {
+				if (can_replace) {
+					// replace
+					double original_score = (this->explore_explore_no_explore_score+this->explore_no_explore_no_explore_score)
+						/(this->explore_explore_no_explore_count+this->explore_no_explore_no_explore_count);
+					double replace_score = (this->explore_explore_explore_score+this->explore_no_explore_explore_score)
+						/(this->explore_explore_explore_count+this->explore_no_explore_explore_count);
+
+					double score_increase = replace_score - original_score;
+
+					CandidateStartReplace* new_candidate = new CandidateStartReplace(
+						this,
+						EXPLORE_REPLACE_TYPE_SCORE,
+						score_increase,
+						0.0,
+						this->jump_end_non_inclusive_index,
+						this->explore_path);
+					solution->candidates.push_back(new_candidate);
+
+					this->explore_path.clear();
+
+					this->explore_small_jump_score_network = NULL;
+					this->explore_small_no_jump_score_network = NULL;
+				} else {
+					// branch
+					double branch_percent = (this->explore_explore_explore_count+this->explore_explore_no_explore_count)/100000;
+					double score_increase = explore_explore_score - explore_no_explore_score;
+
+					CandidateStartBranch* new_candidate = new CandidateStartBranch(
+						this,
+						branch_percent,
+						score_increase,
+						this->jump_end_non_inclusive_index,
+						this->explore_path,
+						this->explore_small_jump_score_network,
+						this->explore_small_no_jump_score_network);
+					solution->candidates.push_back(new_candidate);
+
+					this->explore_path.clear();
+
+					this->explore_small_jump_score_network = NULL;
+					this->explore_small_no_jump_score_network = NULL;
+				}
+			} else if (branch_not_worse && can_replace) {
+				vector<SolutionNode*> replacement_path;
+				replacement_path.push_back(this);	// always include self for something to compare against
+				get_replacement_path(this, replacement_path);
+
+				double min_replacement_path_misguess = numeric_limits<double>::max();
+				for (int n_index = 0; n_index < (int)replacement_path.size(); n_index++) {
+					replacement_path[n_index]->get_min_misguess(min_replacement_path_misguess);
+				}
+
+				double min_new_path_misguess = numeric_limits<double>::max();
+				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+					this->explore_path[n_index]->get_min_misguess(min_new_path_misguess);
+				}
+
+				double min_new_path_misguess = numeric_limits<double>::max();
+				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+					this->explore_path[n_index]->get_min_misguess(min_new_path_misguess);
+				}
+
+				// TODO: add if equal, choose shorter path
+				if (min_new_path_misguess < 0.9*min_replacement_path_misguess) {
+					// replace
+					double info_gain = 1.0 - min_new_path_misguess/min_replacement_path_misguess;
+
+					CandidateStartReplace* new_candidate = new CandidateStartReplace(
+						this,
+						EXPLORE_REPLACE_TYPE_INFO,
+						0.0,
+						info_gain,
+						this->jump_end_non_inclusive_index,
+						this->explore_path);
+					solution->candidates.push_back(new_candidate);
+
+					this->explore_path.clear();
+
+					this->explore_small_jump_score_network = NULL;
+					this->explore_small_no_jump_score_network = NULL;
+				} else {
+					// abandon
+					for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+						delete this->explore_path[n_index];
+					}
+					this->explore_path.clear();
+
+					delete this->explore_small_jump_score_network;
+					this->explore_small_jump_score_network = NULL;
+					delete this->explore_small_no_jump_score_network;
+					this->explore_small_no_jump_score_network = NULL;
+				}
+			} else {
+				// abandon
+				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+					delete this->explore_path[n_index];
+				}
+				this->explore_path.clear();
+
+				delete this->explore_small_jump_score_network;
+				this->explore_small_jump_score_network = NULL;
+				delete this->explore_small_no_jump_score_network;
+				this->explore_small_no_jump_score_network = NULL;
+			}
+
+			this->explore_state = EXPLORE_STATE_EXPLORE;
+		}
+	}
+}
+
+void StartScope::re_eval_increment() {
+	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
+		this->path[n_index]->re_eval_increment();
+	}
+}
+
+SolutionNode* StartScope::deep_copy(int inclusive_start_layer) {
+	// should not happen
+}
+
+void StartScope::set_is_temp_node(bool is_temp_node) {
+	// should not happen
+}
+
+void StartScope::initialize_local_state(vector<int>& explore_node_local_state_sizes) {
+	// should not happen
+}
+
+void StartScope::setup_flat(vector<int>& loop_scope_counts,
+							int& curr_index,
+							SolutionNode* explore_node) {
+	// should not happen
+}
+
+void StartScope::setup_new_state(SolutionNode* explore_node,
+								 int new_state_size) {
+	// should not happen
+}
+
+void StartScope::get_min_misguess(double& min_misguess) {
+	if (this->average_misguess < min_misguess) {
+		min_misguess = this->average_misguess;
+	}
+
+	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
+		this->path[n_index]->get_min_misguess(min_misguess);
+	}
+}
+
+void StartScope::cleanup_explore(SolutionNode* explore_node) {
+	// should not happen
+}
+
+void StartScope::collect_new_state_networks(SolutionNode* explore_node,
+											vector<SolutionNode*>& existing_nodes,
+											vector<Network*>& new_state_networks) {
+	// should not happen
+}
+
+void StartScope::insert_scope(int layer,
+							  int new_state_size) {
+	// should not happen
+}
+
+void StartScope::reset_explore() {
+	this->explore_state = EXPLORE_STATE_EXPLORE;
+
+	for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+		delete this->explore_path[n_index];
+	}
+	this->explore_path.clear();
+
+	if (this->explore_small_jump_score_network != NULL) {
+		delete this->explore_small_jump_score_network;
+	}
+	if (this->explore_small_no_jump_score_network != NULL) {
+		delete this->explore_small_no_jump_score_network;
+	}
+
+	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
+		this->path[n_index]->reset_explore();
+	}
+}

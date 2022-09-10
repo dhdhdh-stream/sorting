@@ -26,10 +26,10 @@ public:
 	int parent_jump_scope_start_non_inclusive_index;
 	int parent_jump_end_non_inclusive_index;
 
+	int jump_end_non_inclusive_index;
+	
 	// int if_type;
-
 	// int child_index;
-	// int jump_end_non_inclusive_index;
 
 	std::vector<SolutionNode*> scopes;
 	std::vector<int> scope_states;

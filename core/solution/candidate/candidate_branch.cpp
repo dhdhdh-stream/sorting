@@ -194,3 +194,16 @@ void CandidateBranch::apply() {
 	scope_action.push_back(new_scope);
 	action_dictionary->actions.push_back(scope_action);
 }
+
+void CandidateBranch::clean() {
+	for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+		delete this->explore_path[n_index];
+	}
+
+	delete this->small_jump_score_network;
+	delete this->small_no_jump_score_network;
+
+	for (int n_index = 0; n_index < (int)this->new_state_networks.size(); n_index++) {
+		delete this->new_state_networks[n_index];
+	}
+}

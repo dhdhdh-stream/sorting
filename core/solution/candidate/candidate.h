@@ -9,6 +9,7 @@ public:
 	int type;
 
 	virtual void apply();
+	virtual void clean();	// if not chosen
 };
 
 #endif /* CANDIDATE_H */

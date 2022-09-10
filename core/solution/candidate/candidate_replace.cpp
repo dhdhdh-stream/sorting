@@ -109,3 +109,9 @@ void CandidateReplace::apply() {
 		}
 	}
 }
+
+void CandidateReplace::clean() {
+	for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+		delete this->explore_path[n_index];
+	}
+}

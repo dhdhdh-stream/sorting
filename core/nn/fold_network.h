@@ -85,7 +85,6 @@ public:
 	std::vector<double> output_history;
 
 	FoldNetworkHistory(FoldNetwork* network);
-	~FoldNetworkHistory();
 	void reset_weights() override;
 };
 

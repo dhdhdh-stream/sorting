@@ -22,6 +22,7 @@ public:
 					 int parent_jump_end_non_inclusive_index,
 					 std::vector<SolutionNode*> explore_path);
 	void apply() override;
+	void clean() override;
 };
 
 #endif /* CANDIDATE_REPLACE_H */

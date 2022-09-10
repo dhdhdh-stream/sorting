@@ -10,7 +10,6 @@ class AbstractNetworkHistory {
 public:
 	AbstractNetwork* network;
 
-	virtual ~AbstractNetworkHistory() {};
 	virtual void reset_weights() = 0;
 };
 

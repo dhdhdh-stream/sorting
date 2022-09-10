@@ -39,9 +39,6 @@ public:
 
 	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
 
-	void trim_input(int index);
-	void pad_input();
-
 	void save(std::ofstream& output_file);
 
 private:
@@ -57,7 +54,6 @@ public:
 	std::vector<double> output_history;
 
 	NetworkHistory(Network* network);
-	~NetworkHistory();
 	void reset_weights() override;
 };
 

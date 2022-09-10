@@ -31,6 +31,7 @@ public:
 					Network* small_jump_score_network,
 					Network* small_no_jump_score_network);
 	void apply() override;
+	void clean() override;
 };
 
 #endif /* CANDIDATE_BRANCH_H */

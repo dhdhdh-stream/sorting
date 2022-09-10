@@ -129,7 +129,14 @@ void Solution::iteration(bool save_for_display) {
 			}
 		}
 
-		// backprop
+		vector<vector<double>> state_errors;
+		while (instance_history.size() > 0) {
+			instance_history.back()->node_visited->re_eval_backprop(
+				score,
+				state_errors,
+				instance_history,
+				network_historys);
+		}
 	} else {
 		// explore
 		vector<vector<double>> state_vals;
@@ -163,7 +170,7 @@ void Solution::iteration(bool save_for_display) {
 		}
 
 		if (abandon_instance) {
-			// cleanup
+			// TODO: cleanup
 		}
 
 		double score = problem.score_result();
@@ -224,8 +231,14 @@ void Solution::iteration(bool save_for_display) {
 			this->start_scope->reset_explore();
 
 			this->candidates[best_index]->apply();
+			delete this->candidates[best_index];
+			this->candidates.erase(this->candidates.begin()+best_index);
 
-			// delete candidates
+			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+				this->candidates[c_index]->clean();
+				delete this->candidates[c_index];
+			}
+			this->candidates.clear();
 		}
 	}
 }
