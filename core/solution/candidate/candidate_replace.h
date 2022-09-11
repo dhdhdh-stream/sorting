@@ -1,9 +1,14 @@
 #ifndef CANDIDATE_REPLACE_H
 #define CANDIDATE_REPLACE_H
 
+#include <vector>
+
+#include "candidate.h"
+#include "solution_node.h"
+
 class CandidateReplace : public Candidate {
 public:
-	ExploreNode* explore_node;
+	SolutionNode* explore_node;
 
 	int replace_type;
 	double score_increase;
@@ -14,7 +19,7 @@ public:
 
 	std::vector<SolutionNode*> explore_path;
 
-	CandidateReplace(ExploreNode* explore_node,
+	CandidateReplace(SolutionNode* explore_node,
 					 int replace_type,
 					 double score_increase,
 					 double info_gain,

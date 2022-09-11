@@ -80,7 +80,7 @@ void Network::activate(vector<double>& vals) {
 }
 
 void Network::activate(vector<double>& vals,
-					   vector<NetworkHistory*>& network_historys) {
+					   vector<AbstractNetworkHistory*>& network_historys) {
 	activate(vals);
 
 	NetworkHistory* network_history = new NetworkHistory(this);
@@ -170,13 +170,14 @@ NetworkHistory::NetworkHistory(Network* network) {
 }
 
 void NetworkHistory::reset_weights() {
-	for (int n_index = 0; n_index < (int)this->network->input->acti_vals.size(); n_index++) {
-		this->network->input->acti_vals[n_index] = this->input_history[n_index];
+	Network* network = (Network*)this->network;
+	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
+		network->input->acti_vals[n_index] = this->input_history[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->network->hidden->acti_vals.size(); n_index++) {
-		this->network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->network->output->acti_vals.size(); n_index++) {
-		this->network->output->acti_vals[n_index] = this->output_history[n_index];
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		network->output->acti_vals[n_index] = this->output_history[n_index];
 	}
 }

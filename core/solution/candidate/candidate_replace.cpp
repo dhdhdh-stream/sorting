@@ -1,8 +1,12 @@
 #include "candidate_replace.h"
 
+#include "definitions.h"
+#include "jump_scope.h"
+#include "start_scope.h"
+
 using namespace std;
 
-CandidateReplace::CandidateReplace(ExploreNode* explore_node,
+CandidateReplace::CandidateReplace(SolutionNode* explore_node,
 								   int replace_type,
 								   double score_increase,
 								   double info_gain,
@@ -25,11 +29,11 @@ void CandidateReplace::apply() {
 		this->explore_path[n_index]->set_is_temp_node(false);
 	}
 
-	if (this->explore_node.size() > 1
-			|| this->explore_node[0]->node_type != NODE_TYPE_EMPTY) {
+	if (this->explore_path.size() > 1
+			|| this->explore_path[0]->node_type != NODE_TYPE_EMPTY) {
 		vector<SolutionNode*> explore_path_deep_copy;
 		for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
-			explore_path_deep_copy.push_back(this->explore_path[n_index]->deep_copy(this->explore_node->local_state_sizes.size()));
+			explore_path_deep_copy.push_back(this->explore_path[n_index]->deep_copy((int)this->explore_node->local_state_sizes.size()));
 		}
 		action_dictionary->actions.push_back(explore_path_deep_copy);
 	}

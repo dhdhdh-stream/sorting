@@ -1,6 +1,13 @@
 #ifndef SCORE_NETWORK_H
 #define SCORE_NETWORK_H
 
+#include <fstream>
+#include <mutex>
+#include <vector>
+
+#include "abstract_network.h"
+#include "layer.h"
+
 class ScoreNetwork : public AbstractNetwork {
 public:
 	std::vector<int> local_state_sizes;
@@ -16,9 +23,9 @@ public:
 
 	std::mutex mtx;
 
-	Network(std::vector<int> local_state_sizes);
-	Network(std::ifstream& input_file);
-	~Network();
+	ScoreNetwork(std::vector<int> local_state_sizes);
+	ScoreNetwork(std::ifstream& input_file);
+	~ScoreNetwork();
 
 	void insert_scope(int layer,
 					  int new_state_size);

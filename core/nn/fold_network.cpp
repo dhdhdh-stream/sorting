@@ -214,9 +214,9 @@ void FoldNetwork::full_update_weights(double factor,
 
 void FoldNetwork::set_state_size(int state_size) {
 	this->state_size = state_size;
-	this->state_network = new Layer(LINEAR_LAYER, state_size);
+	this->state_input = new Layer(LINEAR_LAYER, state_size);
 
-	this->hidden->insert_input_layer(2, this->state_network);
+	this->hidden->insert_input_layer(2, this->state_input);
 }
 
 void FoldNetwork::state_backprop(std::vector<double>& errors) {
@@ -294,23 +294,24 @@ FoldNetworkHistory::FoldNetworkHistory(FoldNetwork* network) {
 }
 
 void FoldNetworkHistory::reset_weights() {
-	for (int n_index = 0; n_index < this->network->flat_size; n_index++) {
-		this->network->flat_input->acti_vals[n_index] = this->flat_input_history[n_index];
+	FoldNetwork* network = (FoldNetwork*)this->network;
+	for (int n_index = 0; n_index < network->flat_size; n_index++) {
+		network->flat_input->acti_vals[n_index] = this->flat_input_history[n_index];
 	}
-	for (int n_index = 0; n_index < this->network->flat_size; n_index++) {
-		this->network->activated_input->acti_vals[n_index] = this->activated_input_history[n_index];
+	for (int n_index = 0; n_index < network->flat_size; n_index++) {
+		network->activated_input->acti_vals[n_index] = this->activated_input_history[n_index];
 	}
-	if (this->network->state_input != NULL) {
-		for (int n_index = 0; n_index < this->network->state_size; n_index++) {
-			this->network->state_input->acti_vals[n_index] = this->state_input_history[n_index];
+	if (network->state_input != NULL) {
+		for (int n_index = 0; n_index < network->state_size; n_index++) {
+			network->state_input->acti_vals[n_index] = this->state_input_history[n_index];
 		}
 	}
-	this->network->obs_input->acti_vals[0] = this->obs_input_history[0];
+	network->obs_input->acti_vals[0] = this->obs_input_history[0];
 
-	for (int n_index = 0; n_index < (int)this->network->hidden->acti_vals.size(); n_index++) {
-		this->network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->network->output->acti_vals.size(); n_index++) {
-		this->network->output->acti_vals[n_index] = this->output_history[n_index];
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		network->output->acti_vals[n_index] = this->output_history[n_index];
 	}
 }

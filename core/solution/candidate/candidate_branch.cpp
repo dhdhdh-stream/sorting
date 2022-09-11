@@ -1,8 +1,14 @@
-#include "candidate_replace.h"
+#include "candidate_branch.h"
+
+#include "definitions.h"
+#include "jump_scope.h"
+#include "solution_node_action.h"
+#include "solution_node_empty.h"
+#include "start_scope.h"
 
 using namespace std;
 
-CandidateBranch::CandidateBranch(ExploreNode* explore_node,
+CandidateBranch::CandidateBranch(SolutionNode* explore_node,
 								 double branch_percent,
 								 double score_increase,
 								 int parent_jump_scope_start_non_inclusive_index,
@@ -29,10 +35,10 @@ void CandidateBranch::apply() {
 		this->explore_path[n_index]->set_is_temp_node(false);
 	}
 
-	if (this->explore_node[0]->node_type != NODE_TYPE_EMPTY) {
+	if (this->explore_path[0]->node_type != NODE_TYPE_EMPTY) {
 		vector<SolutionNode*> explore_path_deep_copy;
 		for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
-			explore_path_deep_copy.push_back(this->explore_path[n_index]->deep_copy(this->explore_node->local_state_sizes.size()));
+			explore_path_deep_copy.push_back(this->explore_path[n_index]->deep_copy((int)this->explore_node->local_state_sizes.size()));
 		}
 		action_dictionary->actions.push_back(explore_path_deep_copy);
 	}
@@ -56,7 +62,7 @@ void CandidateBranch::apply() {
 		if (this->parent_jump_scope_start_non_inclusive_index != -1) {
 			parent_start->path[this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
 		}
-		if (this->parent_jump_end_non_inclusive_index >= parent_start->path.size()) {
+		if (this->parent_jump_end_non_inclusive_index >= (int)parent_start->path.size()) {
 			new_scope->next = parent_start;
 		} else {
 			new_scope->next = parent_start->path[this->parent_jump_end_non_inclusive_index];
@@ -86,7 +92,7 @@ void CandidateBranch::apply() {
 			if (this->parent_jump_scope_start_non_inclusive_index != -1) {
 				parent_jump->top_path[this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
 			}
-			if (this->parent_jump_end_non_inclusive_index >= parent_start->path.size()) {
+			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->top_path.size()) {
 				new_scope->next = parent_jump;
 			} else {
 				new_scope->next = parent_jump->top_path[this->parent_jump_end_non_inclusive_index];
@@ -116,7 +122,7 @@ void CandidateBranch::apply() {
 				parent_jump->children_nodes[explore_node->scope_child_index][
 					this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
 			}
-			if (this->parent_jump_end_non_inclusive_index >= parent_jump->children_nodes[explore_node->scope_child_index].size()) {
+			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
 				new_scope->next = parent_jump;
 			} else {
 				new_scope->next = parent_jump->children_nodes[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
@@ -149,7 +155,7 @@ void CandidateBranch::apply() {
 		new_scope->top_path[new_scope->top_path.size()-1]->next = new_scope;
 	}
 	for (int n_index = 0; n_index < (int)new_scope->top_path.size(); n_index++) {
-		new_scope->top_path[n_index]->insert_scope(new_scope->local_state_sizes.size(),
+		new_scope->top_path[n_index]->insert_scope((int)new_scope->local_state_sizes.size(),
 												   new_scope->num_states);
 	}
 	for (int n_index = 0; n_index < (int)this->existing_nodes.size(); n_index++) {
@@ -173,7 +179,7 @@ void CandidateBranch::apply() {
 		new_scope->children_nodes[0][new_scope->children_nodes[0].size()-1]->next = new_scope;
 	}
 	for (int n_index = 0; n_index < (int)new_scope->children_nodes[0].size(); n_index++) {
-		new_scope->children_nodes[0][n_index]->insert_scope(new_scope->local_state_sizes.size(), 0);
+		new_scope->children_nodes[0][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
 	}
 
 	for (int n_index = 0; n_index < (int)new_scope->children_nodes[1].size(); n_index++) {
@@ -184,7 +190,7 @@ void CandidateBranch::apply() {
 	}
 	new_scope->children_nodes[1][new_scope->children_nodes[1].size()-1]->next = new_scope;
 	for (int n_index = 0; n_index < (int)new_scope->children_nodes[1].size(); n_index++) {
-		new_scope->children_nodes[1][n_index]->insert_scope(new_scope->local_state_sizes.size(), 0);
+		new_scope->children_nodes[1][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
 	}
 
 	new_scope->children_score_networks.push_back(this->small_no_jump_score_network);

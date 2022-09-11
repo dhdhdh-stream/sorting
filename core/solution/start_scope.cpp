@@ -1,13 +1,94 @@
 #include "start_scope.h"
 
+#include <iostream>
+
+#include "candidate_start_branch.h"
+#include "candidate_start_replace.h"
+#include "definitions.h"
+#include "jump_scope.h"
+#include "solution_node_action.h"
+#include "solution_node_empty.h"
+#include "solution_node_utilities.h"
+#include "utilities.h"
+
 using namespace std;
 
 StartScope::StartScope() {
+	this->node_type = NODE_TYPE_START_SCOPE;
 
+	this->score_network = new ScoreNetwork(this->local_state_sizes);	// empty local_state_sizes
+
+	this->average_misguess = 2*solution->average_score*(1.0 - solution->average_score);
+	this->explore_weight = 0.0;
+
+	this->explore_state = EXPLORE_STATE_EXPLORE;
+
+	this->explore_small_jump_score_network = NULL;
+	this->explore_small_no_jump_score_network = NULL;
+}
+
+StartScope::StartScope(std::vector<int>& scope_states,
+					   std::vector<int>& scope_locations,
+					   std::ifstream& save_file) {
+	this->node_type = NODE_TYPE_START_SCOPE;
+
+	string score_network_name = "../saves/nns/start_score_" + to_string(solution->id) + ".txt";
+	ifstream score_network_save_file;
+	score_network_save_file.open(score_network_name);
+	this->score_network = new ScoreNetwork(score_network_save_file);
+	score_network_save_file.close();
+
+	string average_misguess_line;
+	getline(save_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
+
+	string explore_weight_line;
+	getline(save_file, explore_weight_line);
+	this->explore_weight = stof(explore_weight_line);
+
+	string path_size_line;
+	getline(save_file, path_size_line);
+	int path_size = stoi(path_size_line);
+	this->path.reserve(path_size);
+	scope_states.push_back(-1);
+	scope_locations.push_back(0);
+	for (int n_index = 0; n_index < path_size; n_index++) {
+		string node_type_line;
+		getline(save_file, node_type_line);
+		int node_type = stoi(node_type_line);
+		SolutionNode* new_node;
+		if (node_type == NODE_TYPE_EMPTY) {
+			new_node = new SolutionNodeEmpty(scope_states,
+											 scope_locations,
+											 save_file);
+		} else if (node_type == NODE_TYPE_ACTION) {
+			new_node = new SolutionNodeAction(scope_states,
+											  scope_locations,
+											  save_file);
+		} else {
+			// node_type == NODE_TYPE_JUMP_SCOPE
+			new_node = new JumpScope(scope_states,
+									 scope_locations,
+									 save_file);
+		}
+		this->path.push_back(new_node);
+	}
+
+	scope_states.pop_back();
+	scope_locations.pop_back();
+
+	this->explore_state = EXPLORE_STATE_EXPLORE;
+
+	this->explore_small_jump_score_network = NULL;
+	this->explore_small_no_jump_score_network = NULL;
 }
 
 StartScope::~StartScope() {
+	delete this->score_network;
 
+	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
+		delete this->path[n_index];
+	}
 }
 
 SolutionNode* StartScope::re_eval(Problem& problem,
@@ -60,11 +141,11 @@ void StartScope::re_eval_backprop(double score,
 								  vector<vector<double>>& state_errors,
 								  vector<ReEvalStepHistory>& instance_history,
 								  vector<AbstractNetworkHistory*>& network_historys) {
-	if (instance_history.back->scope_state == START_SCOPE_STATE_EXIT) {
+	if (instance_history.back().scope_state == START_SCOPE_STATE_EXIT) {
 		vector<double> empty_local_state_errors;
 		state_errors.push_back(empty_local_state_errors);
 	} else {
-		// instance_history.back->scope_state == START_SCOPE_STATE_ENTER
+		// instance_history.back().scope_state == START_SCOPE_STATE_ENTER
 		AbstractNetworkHistory* network_history = network_historys.back();
 
 		this->score_network->mtx.lock();
@@ -130,7 +211,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 													  -1,
 													  true));
 
-		if (this->jump_end_non_inclusive_index < this->path.size()) {
+		if (this->jump_end_non_inclusive_index < (int)this->path.size()) {
 			return this->path[this->jump_end_non_inclusive_index];
 		}
 	}
@@ -139,7 +220,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 		// entering scope
 		if (randuni() < this->explore_weight) {
 			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
-				int jump_end_non_inclusive_index = rand()%(this->path.size()+1);
+				int jump_end_non_inclusive_index = rand()%((int)this->path.size()+1);
 
 				vector<SolutionNode*> explore_path;
 				if (jump_end_non_inclusive_index == 0) {
@@ -183,7 +264,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 		if (iter_explore != NULL) {
 			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
 				scopes.push_back(NULL);
-				scope_state.push_back(-1);
+				scope_states.push_back(-1);
 				scope_locations.push_back(-1);
 				return iter_explore->explore_path[0];
 			} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
@@ -195,7 +276,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 					this->explore_small_jump_score_network->mtx.unlock();
 
 					scopes.push_back(NULL);
-					scope_state.push_back(-1);
+					scope_states.push_back(-1);
 					scope_locations.push_back(-1);
 					return this->explore_path[0];
 				} else {
@@ -224,7 +305,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 				if (jump_score > no_jump_score) {
 					if (rand()%2 == 0) {
 						scopes.push_back(NULL);
-						scope_state.push_back(-1);
+						scope_states.push_back(-1);
 						scope_locations.push_back(-1);
 						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_EXPLORE_EXPLORE;
 						return this->explore_path[0];
@@ -237,7 +318,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 				} else {
 					if (rand()%2 == 0) {
 						scopes.push_back(NULL);
-						scope_state.push_back(-1);
+						scope_states.push_back(-1);
 						scope_locations.push_back(-1);
 						instance_history.back().explore_decision = EXPLORE_DECISION_TYPE_FLAT_NO_EXPLORE_EXPLORE;
 						return this->explore_path[0];
@@ -252,7 +333,7 @@ SolutionNode* StartScope::explore(Problem& problem,
 		}
 
 		if (this->path.size() > 0) {
-			return this->top_path[0];
+			return this->path[0];
 		}
 	}
 
@@ -276,9 +357,9 @@ SolutionNode* StartScope::explore(Problem& problem,
 void StartScope::explore_backprop(double score,
 								  vector<vector<double>>& state_errors,
 								  IterExplore*& iter_explore,
-								  vector<StepHistory>& instance_history,
-								  vector<NetworkHistory*>& network_historys) {
-	if (instance_history->is_explore_callback) {
+								  vector<ExploreStepHistory>& instance_history,
+								  vector<AbstractNetworkHistory*>& network_historys) {
+	if (instance_history.back().is_explore_callback) {
 		// iter_explore->explore_node == this
 
 		// do nothing
@@ -287,7 +368,7 @@ void StartScope::explore_backprop(double score,
 		return;
 	}
 
-	if (instance_history.back()->scope_state == START_SCOPE_STATE_EXIT) {
+	if (instance_history.back().scope_state == START_SCOPE_STATE_EXIT) {
 		vector<double> empty_local_state_errors;
 		state_errors.push_back(empty_local_state_errors);
 	} else {
@@ -296,7 +377,7 @@ void StartScope::explore_backprop(double score,
 				&& iter_explore->explore_node == this) {
 			if (this->explore_state == EXPLORE_STATE_EXPLORE) {
 				// do nothing
-			} else if (this->explore_state == EXPLORE_STATE_LEARN_JUMP_FLAT) {
+			} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
 				if (network_historys.back()->network == this->explore_small_jump_score_network) {
 					backprop_explore_small_jump_score_network(score,
 															  network_historys);
@@ -304,7 +385,7 @@ void StartScope::explore_backprop(double score,
 					backprop_explore_small_no_jump_score_network(score,
 																 network_historys);
 				}
-			} else if (this->explore_state == EXPLORE_STATE_MEASURE_JUMP_FLAT) {
+			} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
 				if (instance_history.back().explore_decision == EXPLORE_DECISION_TYPE_FLAT_EXPLORE_EXPLORE) {
 					this->explore_explore_explore_score += score;
 					this->explore_explore_explore_count++;
@@ -341,9 +422,9 @@ void StartScope::explore_increment(double score,
 					this->explore_path[n_index] = deep_copy;
 				}
 
-				vector<int> explore_path_local_state_sizes;
-				explore_path_local_state_sizes.push_back(0);
-				this->explore_path[n_index]->initialize_local_state(explore_node_local_state_sizes);
+				vector<int> start_scope_local_state_sizes;
+				start_scope_local_state_sizes.push_back(0);
+				this->explore_path[n_index]->initialize_local_state(start_scope_local_state_sizes);
 			}
 
 			this->jump_end_non_inclusive_index = iter_explore->jump_end_non_inclusive_index;
@@ -460,11 +541,6 @@ void StartScope::explore_increment(double score,
 					this->explore_path[n_index]->get_min_misguess(min_new_path_misguess);
 				}
 
-				double min_new_path_misguess = numeric_limits<double>::max();
-				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
-					this->explore_path[n_index]->get_min_misguess(min_new_path_misguess);
-				}
-
 				// TODO: add if equal, choose shorter path
 				if (min_new_path_misguess < 0.9*min_replacement_path_misguess) {
 					// replace
@@ -521,6 +597,7 @@ void StartScope::re_eval_increment() {
 
 SolutionNode* StartScope::deep_copy(int inclusive_start_layer) {
 	// should not happen
+	return NULL;
 }
 
 void StartScope::set_is_temp_node(bool is_temp_node) {
@@ -585,4 +662,34 @@ void StartScope::reset_explore() {
 	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
 		this->path[n_index]->reset_explore();
 	}
+}
+
+void StartScope::save(std::vector<int>& scope_states,
+					  std::vector<int>& scope_locations,
+					  std::ofstream& save_file) {
+	string score_network_name = "../saves/nns/start_score_" + to_string(solution->id) + ".txt";
+	ofstream score_network_save_file;
+	score_network_save_file.open(score_network_name);
+	this->score_network->save(score_network_save_file);
+	score_network_save_file.close();
+
+	save_file << this->average_misguess << endl;
+	save_file << this->explore_weight << endl;
+
+	cout << this->path.size() << endl;
+	scope_states.push_back(-1);
+	scope_locations.push_back(0);
+	for (int n_index = 0; n_index < (int)this->path.size(); n_index++) {
+		cout << this->path[n_index]->node_type << endl;
+		this->path[n_index]->save(scope_states,
+								  scope_locations,
+								  save_file);
+	}
+
+	scope_states.pop_back();
+	scope_locations.pop_back();
+}
+
+void StartScope::save_for_display(std::ofstream& save_file) {
+
 }

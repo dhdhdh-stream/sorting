@@ -3,6 +3,9 @@
 
 #include <random>
 
+#include "action_dictionary.h"
+#include "solution.h"
+
 extern std::default_random_engine generator;
 
 extern Solution* solution;

@@ -5,9 +5,13 @@
 #include <mutex>
 #include <vector>
 
-#include "action.h"
+#include "explore_step_history.h"
+#include "fold_network.h"
+#include "iter_explore.h"
 #include "network.h"
 #include "problem.h"
+#include "re_eval_step_history.h"
+#include "score_network.h"
 
 const int NODE_TYPE_EMPTY = 0;
 const int NODE_TYPE_ACTION = 1;
@@ -15,8 +19,8 @@ const int NODE_TYPE_START_SCOPE = 2;
 const int NODE_TYPE_JUMP_SCOPE = 3;
 // const int NODE_TYPE_LOOP_SCOPE = 4;
 
-const int SCOPE_LOCATION_TOP;
-const int SCOPE_LOCATION_BRANCH;
+const int SCOPE_LOCATION_TOP = 0;
+const int SCOPE_LOCATION_BRANCH = 1;
 
 const int EXPLORE_STATE_EXPLORE = 0;
 const int EXPLORE_STATE_LEARN_FLAT = 1;
@@ -40,6 +44,8 @@ const int EXPLORE_DECISION_TYPE_FOLD_NO_EXPLORE = 2;
 const int EXPLORE_REPLACE_TYPE_SCORE = 0;
 const int EXPLORE_REPLACE_TYPE_INFO = 1;
 
+class ExploreStepHistory;
+class ReEvalStepHistory;
 class SolutionNode {
 public:
 	int node_type;
@@ -125,19 +131,16 @@ public:
 								  std::vector<int>& scope_states,
 								  std::vector<int>& scope_locations,
 								  IterExplore*& iter_explore,
-								  std::vector<StepHistory>& instance_history,
+								  std::vector<ExploreStepHistory>& instance_history,
 								  std::vector<AbstractNetworkHistory*>& network_historys,
 								  bool& abandon_instance) = 0;
 	virtual void explore_backprop(double score,
 								  std::vector<std::vector<double>>& state_errors,
 								  IterExplore*& iter_explore,
-								  std::vector<StepHistory>& instance_history,
+								  std::vector<ExploreStepHistory>& instance_history,
 								  std::vector<AbstractNetworkHistory*>& network_historys) = 0;
 	virtual void explore_increment(double score,
-								   IterExplore* iter_explore);
-
-	virtual void save(std::ofstream& save_file) = 0;
-	virtual void save_for_display(std::ofstream& save_file) = 0;
+								   IterExplore*& iter_explore) = 0;
 
 	virtual void re_eval_increment() = 0;
 	
@@ -159,29 +162,36 @@ public:
 							  int new_state_size) = 0;
 	virtual void reset_explore() = 0;
 
+	virtual void save(std::vector<int>& scope_states,
+					  std::vector<int>& scope_locations,
+					  std::ofstream& save_file) = 0;
+	virtual void save_for_display(std::ofstream& save_file) = 0;
+
 	void explore_callback_helper(Problem& problem,
 								 std::vector<std::vector<double>>& state_vals,
 								 std::vector<SolutionNode*>& scopes,
 								 std::vector<int>& scope_states,
 								 std::vector<int>& scope_locations,
+								 std::vector<ExploreStepHistory>& instance_history,
 								 std::vector<AbstractNetworkHistory*>& network_historys);
 	void is_explore_helper(std::vector<SolutionNode*>& scopes,
 						   std::vector<int>& scope_states,
 						   std::vector<int>& scope_locations,
 						   IterExplore*& iter_explore,
 						   bool& is_first_explore);
-	SolutionNode* explore_helper(Problem& problem,
+	SolutionNode* explore_helper(bool is_first_explore,
+								 Problem& problem,
 								 std::vector<SolutionNode*>& scopes,
 								 std::vector<int>& scope_states,
 								 std::vector<int>& scope_locations,
 								 IterExplore*& iter_explore,
-								 std::vector<StepHistory>& instance_history,
+								 std::vector<ExploreStepHistory>& instance_history,
 								 std::vector<AbstractNetworkHistory*>& network_historys);
 	void explore_callback_backprop_helper(std::vector<std::vector<double>>& state_errors,
-										  std::vector<StepHistory>& instance_history,
+										  std::vector<ExploreStepHistory>& instance_history,
 										  std::vector<AbstractNetworkHistory*>& network_historys);
 	void explore_backprop_helper(double score,
-								 std::vector<StepHistory>& instance_history,
+								 std::vector<ExploreStepHistory>& instance_history,
 								 std::vector<AbstractNetworkHistory*>& network_historys);
 	void explore_increment_helper(double score,
 								  IterExplore*& iter_explore);

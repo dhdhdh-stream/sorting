@@ -1,6 +1,9 @@
 #ifndef EXPLORE_STEP_HISTORY_H
 #define EXPLORE_STEP_HISTORY_H
 
+#include "solution_node.h"
+
+class SolutionNode;
 class ExploreStepHistory {
 public:
 	SolutionNode* node_visited;

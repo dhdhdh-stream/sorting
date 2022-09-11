@@ -1,9 +1,11 @@
 #ifndef SOLUTION_NODE_ACTION_H
 #define SOLUTION_NODE_ACTION_H
 
+#include <map>
 #include <vector>
 
 #include "action.h"
+#include "fold_helper.h"
 #include "solution_node.h"
 
 class SolutionNodeAction : public SolutionNode {
@@ -16,7 +18,9 @@ public:
 
 	SolutionNodeAction(Action action,
 					   std::vector<int> local_state_sizes);
-	SolutionNodeAction(std::ifstream& save_file);
+	SolutionNodeAction(std::vector<int>& scope_states,
+					   std::vector<int>& scope_locations,
+					   std::ifstream& save_file);
 	~SolutionNodeAction();
 
 	SolutionNode* re_eval(Problem& problem,
@@ -41,8 +45,8 @@ public:
 	void explore_backprop(double score,
 						  std::vector<std::vector<double>>& state_errors,
 						  IterExplore*& iter_explore,
-						  std::vector<StepHistory>& instance_history,
-						  std::vector<NetworkHistory*>& network_historys) override;
+						  std::vector<ExploreStepHistory>& instance_history,
+						  std::vector<AbstractNetworkHistory*>& network_historys) override;
 	void explore_increment(double score,
 						   IterExplore*& iter_explore) override;
 
@@ -65,7 +69,9 @@ public:
 					  int new_state_size) override;
 	void reset_explore() override;
 
-	void save(std::ofstream& save_file) override;
+	void save(std::vector<int>& scope_states,
+			  std::vector<int>& scope_locations,
+			  std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
 
 	void activate_state_networks(Problem& problem,
@@ -84,7 +90,7 @@ public:
 								 std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_state_network_errors_with_no_weight_change(
 		int layer,
-		std::vector<double> layer_state_errors,
+		std::vector<double>& layer_state_errors,
 		std::vector<AbstractNetworkHistory*>& network_historys);
 
 	void new_path_activate_state_networks(double observations,

@@ -1,6 +1,13 @@
 #ifndef CANDIDATE_START_BRANCH_H
 #define CANDIDATE_START_BRANCH_H
 
+#include <vector>
+
+#include "candidate.h"
+#include "network.h"
+#include "solution_node.h"
+#include "start_scope.h"
+
 class CandidateStartBranch : public Candidate {
 public:
 	StartScope* start_scope;

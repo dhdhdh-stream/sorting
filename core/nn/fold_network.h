@@ -5,9 +5,8 @@
 #include <mutex>
 #include <vector>
 
-#include "fold_helper.h"
+#include "abstract_network.h"
 #include "layer.h"
-#include "node.h"
 
 class FoldNetwork : public AbstractNetwork {
 public:

@@ -5,6 +5,7 @@
 #include <mutex>
 #include <vector>
 
+#include "abstract_network.h"
 #include "layer.h"
 
 class NetworkHistory;
@@ -28,7 +29,7 @@ public:
 
 	void activate(std::vector<double>& vals);
 	void activate(std::vector<double>& vals,
-				  std::vector<NetworkHistory*>& network_historys);
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors);
 	void calc_max_update(double& max_update,
 						 double learning_rate,

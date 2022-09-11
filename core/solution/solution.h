@@ -3,10 +3,9 @@
 
 #include <mutex>
 
-#include "explore.h"
-#include "solution_node.h"
+#include "candidate.h"
+#include "start_scope.h"
 
-class SolutionNode;
 class Solution {
 public:
 	long int id;
@@ -15,13 +14,12 @@ public:
 	
 	double average_score;
 
-	std::vector<Candidate*> candidate;
+	std::vector<Candidate*> candidates;
 
 	std::mutex display_mtx;
 
-	Solution(Explore* explore);
-	Solution(Explore* explore,
-			 std::ifstream& save_file);
+	Solution();
+	Solution(std::ifstream& save_file);
 	~Solution();
 
 	void iteration(bool tune,

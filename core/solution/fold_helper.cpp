@@ -1,5 +1,8 @@
 #include "fold_helper.h"
 
+#include "solution_node_action.h"
+#include "solution_node_empty.h"
+
 using namespace std;
 
 FoldHelper::FoldHelper(SolutionNode* parent,
@@ -47,7 +50,8 @@ void FoldHelper::new_path_process(vector<int>& loop_scope_counts,
 	if (index > input_index_on) {
 		// do nothing
 	} else {
-		this->parent->new_path_activate_state_networks(observations,
+		SolutionNodeEmpty* parent_empty = (SolutionNodeEmpty*)this->parent;
+		parent_empty->new_path_activate_state_networks(observations,
 													   state_vals,
 													   network_historys);
 	}
@@ -66,9 +70,10 @@ void FoldHelper::new_path_process(vector<int>& loop_scope_counts,
 		flat_inputs[index] = observations;
 		activated[index] = true;
 	} else {
-		this->parent->new_path_activate_state_networks(observations,
-													   state_vals,
-													   network_historys);
+		SolutionNodeAction* parent_action = (SolutionNodeAction*)this->parent;
+		parent_action->new_path_activate_state_networks(observations,
+														state_vals,
+														network_historys);
 
 		flat_inputs[index] = 0.0;
 		activated[index] = true;
@@ -93,9 +98,9 @@ void FoldHelper::existing_path_process(std::vector<int>& loop_scope_counts,
 		}
 
 		this->new_state_network->mtx.lock();
-		this->new_state_network->mtx.activate(inputs, network_historys);
+		this->new_state_network->activate(inputs, network_historys);
 		for (int s_index = 0; s_index < this->new_state_size; s_index++) {
-			new_state_vals[s_index] = this->new_state_networks->output->acti_vals[s_index];
+			new_state_vals[s_index] = this->new_state_network->output->acti_vals[s_index];
 		}
 		this->new_state_network->mtx.unlock();
 	}
@@ -122,9 +127,9 @@ void FoldHelper::existing_path_process(std::vector<int>& loop_scope_counts,
 		}
 
 		this->new_state_network->mtx.lock();
-		this->new_state_network->mtx.activate(inputs, network_historys);
+		this->new_state_network->activate(inputs, network_historys);
 		for (int s_index = 0; s_index < this->new_state_size; s_index++) {
-			new_state_vals[s_index] = this->new_state_networks->output->acti_vals[s_index];
+			new_state_vals[s_index] = this->new_state_network->output->acti_vals[s_index];
 		}
 		this->new_state_network->mtx.unlock();
 
@@ -143,9 +148,9 @@ void FoldHelper::activate_new_state_network(double observations,
 	}
 
 	this->new_state_network->mtx.lock();
-	this->new_state_network->mtx.activate(inputs);
+	this->new_state_network->activate(inputs);
 	for (int s_index = 0; s_index < this->new_state_size; s_index++) {
-		new_state_vals[s_index] = this->new_state_networks->output->acti_vals[s_index];
+		new_state_vals[s_index] = this->new_state_network->output->acti_vals[s_index];
 	}
 	this->new_state_network->mtx.unlock();
 }
@@ -158,7 +163,7 @@ void FoldHelper::existing_path_backprop_new_state(std::vector<double>& new_state
 		errors.push_back(new_state_errors[s_index]);
 	}
 
-	NetworkHistory* network_history = network_historys.back();
+	AbstractNetworkHistory* network_history = network_historys.back();
 
 	this->new_state_network->mtx.lock();
 

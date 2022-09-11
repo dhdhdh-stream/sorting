@@ -1,6 +1,11 @@
 #ifndef FOLD_HELPER_H
 #define FOLD_HELPER_H
 
+#include <vector>
+
+#include "solution_node.h"
+
+class NDVector;
 class FoldHelper {
 public:
 	SolutionNode* parent;
@@ -33,6 +38,7 @@ public:
 						  std::vector<AbstractNetworkHistory*>& network_historys);
 	void existing_path_process(std::vector<int>& loop_scope_counts,
 							   int input_index_on,
+							   double observations,
 							   std::vector<double>& new_state_vals,
 							   std::vector<AbstractNetworkHistory*>& network_historys);
 	void existing_path_process(std::vector<int>& loop_scope_counts,
@@ -42,7 +48,8 @@ public:
 							   bool* activated,
 							   std::vector<double>& new_state_vals,
 							   std::vector<AbstractNetworkHistory*>& network_historys);
-	void activate_new_state_network(std::vector<double>& new_state_vals);
+	void activate_new_state_network(double observations,
+									std::vector<double>& new_state_vals);
 	void existing_path_backprop_new_state(std::vector<double>& new_state_errors,
 										  std::vector<AbstractNetworkHistory*>& network_historys);
 };
@@ -58,10 +65,11 @@ public:
 	~NDVector();
 
 	void set_value(std::vector<int>& index,
-				   int& curr,
+				   int curr,
 				   int value);
-	double get_value(std::vector<int>& index,
-					 int& curr);
+	void get_value(std::vector<int>& index,
+				   int curr,
+				   int& value);
 };
 
 #endif /* FOLD_HELPER_H */

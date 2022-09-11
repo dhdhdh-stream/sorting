@@ -1,6 +1,12 @@
 #ifndef CANDIDATE_START_REPLACE_H
 #define CANDIDATE_START_REPLACE_H
 
+#include <vector>
+
+#include "candidate.h"
+#include "solution_node.h"
+#include "start_scope.h"
+
 class CandidateStartReplace : public Candidate {
 public:
 	StartScope* start_scope;

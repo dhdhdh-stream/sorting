@@ -267,7 +267,7 @@ void Layer::backprop_errors_with_no_weight_change() {
 
 void Layer::insert_input_layer(int layer_index,
 							   Layer* layer) {
-	this->input_layers.insert(layer_index, layer);
+	this->input_layers.insert(this->input_layers.begin() + layer_index, layer);
 
 	int layer_size = (int)layer->acti_vals.size();
 
@@ -280,9 +280,9 @@ void Layer::insert_input_layer(int layer_index,
 			layer_weight_updates.push_back(0.0);
 			layer_prev_weight_updates.push_back(0.0);
 		}
-		this->weights[n_index].insert(layer_index, layer_weights);
-		this->weight_updates[n_index].insert(layer_index, layer_weight_updates);
-		this->prev_weight_updates[n_index].insert(layer_index, layer_prev_weight_updates);
+		this->weights[n_index].insert(this->weights[n_index].begin() + layer_index, layer_weights);
+		this->weight_updates[n_index].insert(this->weight_updates[n_index].begin() + layer_index, layer_weight_updates);
+		this->prev_weight_updates[n_index].insert(this->prev_weight_updates[n_index].begin() + layer_index, layer_prev_weight_updates);
 	}
 }
 

@@ -1,6 +1,10 @@
 #ifndef JUMP_SCOPE_H
 #define JUMP_SCOPE_H
 
+#include <vector>
+
+#include "solution_node.h"
+
 const int JUMP_SCOPE_STATE_ENTER = 0;
 const int JUMP_SCOPE_STATE_IF = 1;
 const int JUMP_SCOPE_STATE_EXIT = 2;
@@ -27,6 +31,9 @@ public:
 
 	JumpScope(std::vector<int> local_state_sizes,
 			  int num_states);
+	JumpScope(std::vector<int>& scope_states,
+			  std::vector<int>& scope_locations,
+			  std::ifstream& save_file);
 	~JumpScope();
 
 	SolutionNode* re_eval(Problem& problem,
@@ -51,8 +58,8 @@ public:
 	void explore_backprop(double score,
 						  std::vector<std::vector<double>>& state_errors,
 						  IterExplore*& iter_explore,
-						  std::vector<StepHistory>& instance_history,
-						  std::vector<NetworkHistory*>& network_historys) override;
+						  std::vector<ExploreStepHistory>& instance_history,
+						  std::vector<AbstractNetworkHistory*>& network_historys) override;
 	void explore_increment(double score,
 						   IterExplore*& iter_explore) override;
 
@@ -75,7 +82,9 @@ public:
 					  int new_state_size) override;
 	void reset_explore() override;
 
-	void save(std::ofstream& save_file) override;
+	void save(std::vector<int>& scope_states,
+			  std::vector<int>& scope_locations,
+			  std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
 
 	void activate_children_networks(Problem& problem,
