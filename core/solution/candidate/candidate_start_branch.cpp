@@ -90,7 +90,7 @@ void CandidateStartBranch::apply() {
 	new_scope->children_score_networks.push_back(this->small_jump_score_network);
 
 	vector<SolutionNode*> scope_action;
-	scope_action.push_back(new_scope);
+	scope_action.push_back(new_scope->deep_copy(1));
 	action_dictionary->actions.push_back(scope_action);
 }
 

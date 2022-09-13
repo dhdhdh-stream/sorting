@@ -24,6 +24,8 @@ Solution::Solution() {
 	this->average_score = 0.5;
 
 	action_dictionary = new ActionDictionary();
+
+	this->explore_iters = 0;
 }
 
 Solution::Solution(ifstream& save_file) {
@@ -42,6 +44,8 @@ Solution::Solution(ifstream& save_file) {
 	this->average_score = stof(average_score_line);
 
 	action_dictionary->load(save_file);
+
+	this->explore_iters = 0;
 }
 
 Solution::~Solution() {
@@ -54,13 +58,21 @@ void Solution::iteration(bool tune,
 						 bool save_for_display) {
 	Problem problem;
 	
-	if (rand()%10 == 0) {
+	if (tune || rand()%10 == 0) {
 		// re-eval
-		vector<vector<double>> state_vals;
-		vector<SolutionNode*> scopes;
-		vector<int> scope_states;
+		// vector<vector<double>> state_vals;
+		heap_state_vals = new vector<vector<double>>();
+		vector<vector<double>> state_vals = *heap_state_vals;
+		// vector<SolutionNode*> scopes;
+		heap_scopes = new vector<SolutionNode*>();
+		vector<SolutionNode*> scopes = *heap_scopes;
+		// vector<int> scope_states;
+		heap_scope_states = new vector<int>();
+		vector<int> scope_states = *heap_scope_states;
 		vector<ReEvalStepHistory> instance_history;
-		vector<AbstractNetworkHistory*> network_historys;
+		// vector<AbstractNetworkHistory*> network_historys;
+		heap_network_historys = new vector<AbstractNetworkHistory*>();
+		vector<AbstractNetworkHistory*> network_historys = *heap_network_historys;
 
 		set<SolutionNode*> unique_nodes_visited;
 
@@ -105,7 +117,7 @@ void Solution::iteration(bool tune,
 			}
 		}
 
-		double info_gain = best_misguess - initial_misguess;
+		double info_gain = initial_misguess - best_misguess;
 		if (info_gain > 0.0) {
 			vector<double> weights;
 			vector<int> weight_divides;
@@ -115,8 +127,8 @@ void Solution::iteration(bool tune,
 						|| (instance_history[h_index].node_visited->node_type == NODE_TYPE_START_SCOPE
 						&& instance_history[h_index].scope_state == START_SCOPE_STATE_ENTER)) {
 					double misguess = abs(score - instance_history[h_index].guess);
-					if (misguess > curr_best_misguess) {
-						weights.push_back((misguess - curr_best_misguess)/info_gain);
+					if (misguess < curr_best_misguess) {
+						weights.push_back((curr_best_misguess - misguess)/info_gain);
 						curr_best_misguess = misguess;
 					} else {
 						weights.push_back(0.0);
@@ -153,7 +165,9 @@ void Solution::iteration(bool tune,
 			}
 		}
 
-		vector<vector<double>> state_errors;
+		// vector<vector<double>> state_errors;
+		heap_state_errors = new vector<vector<double>>();
+		vector<vector<double>> state_errors = *heap_state_errors;
 		while (instance_history.size() > 0) {
 			instance_history.back().node_visited->re_eval_backprop(
 				score,
@@ -161,15 +175,36 @@ void Solution::iteration(bool tune,
 				instance_history,
 				network_historys);
 		}
+
+		if (network_historys.size() > 0) {
+			cout << "re_eval network_historys.size(): " << network_historys.size() << endl;
+			exit(1);
+		}
+
+		delete heap_state_vals;
+		delete heap_scopes;
+		delete heap_scope_states;
+		delete heap_network_historys;
+		delete heap_state_errors;
 	} else {
 		// explore
-		vector<vector<double>> state_vals;
-		vector<SolutionNode*> scopes;
-		vector<int> scope_states;
-		vector<int> scope_locations;
+		// vector<vector<double>> state_vals;
+		heap_state_vals = new vector<vector<double>>();
+		vector<vector<double>> state_vals = *heap_state_vals;
+		// vector<SolutionNode*> scopes;
+		heap_scopes = new vector<SolutionNode*>();
+		vector<SolutionNode*> scopes = *heap_scopes;
+		// vector<int> scope_states;
+		heap_scope_states = new vector<int>();
+		vector<int> scope_states = *heap_scope_states;
+		// vector<int> scope_locations;
+		heap_scope_locations = new vector<int>();
+		vector<int> scope_locations = *heap_scope_locations;
 		IterExplore* iter_explore = NULL;
 		vector<ExploreStepHistory> instance_history;
-		vector<AbstractNetworkHistory*> network_historys;
+		// vector<AbstractNetworkHistory*> network_historys;
+		heap_network_historys = new vector<AbstractNetworkHistory*>();
+		vector<AbstractNetworkHistory*> network_historys = *heap_network_historys;
 		bool abandon_instance = false;
 
 		SolutionNode* curr_node = this->start_scope;
@@ -199,7 +234,9 @@ void Solution::iteration(bool tune,
 
 		double score = problem.score_result();
 
-		vector<vector<double>> state_errors;
+		// vector<vector<double>> state_errors;
+		heap_state_errors = new vector<vector<double>>();
+		vector<vector<double>> state_errors = *heap_state_errors;
 		while (instance_history.size() > 0) {
 			instance_history.back().node_visited->explore_backprop(score,
 																   state_errors,
@@ -213,69 +250,82 @@ void Solution::iteration(bool tune,
 														  iter_explore);
 		}
 
+		if (network_historys.size() > 0) {
+			if (iter_explore != NULL) {
+				cout << "iter_explore->type: " << iter_explore->type << endl;
+				cout << "explore_node->node_type: " << iter_explore->explore_node->node_type << endl;
+			}
+			cout << "explore network_historys.size(): " << network_historys.size() << endl;
+			exit(1);
+		}
+
 		if (iter_explore != NULL) {
 			delete iter_explore;
 		}
 
-		if (this->candidates.size() > 20) {
-			int best_index = -1;
-			double best_score_increase = 0.0;
-			double best_info_gain = 0.0;
-			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
-				if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
-					CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
-					double effective_score_increase = candidate_branch->explore_node->node_weight
-													  *candidate_branch->branch_percent
-													  *candidate_branch->score_increase;
-					if (effective_score_increase > best_score_increase) {
-						best_score_increase = effective_score_increase;
-						best_index = c_index;
-					}
-				} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
-					CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
-					if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
-						double effective_score_increase = candidate_replace->explore_node->node_weight
-														  *candidate_replace->score_increase;
-						if (effective_score_increase > best_score_increase) {
-							best_score_increase = effective_score_increase;
-							best_index = c_index;
-						}
-					} else {
-						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
-						if (best_score_increase == 0.0) {
-							if (candidate_replace->info_gain > best_info_gain) {
-								best_info_gain = candidate_replace->info_gain;
-								best_index = c_index;
-							}
-						}
-					}
-				} else if (this->candidates[c_index]->type == CANDIDATE_START_BRANCH) {
-					CandidateStartBranch* candidate_start_branch = (CandidateStartBranch*)this->candidates[c_index];
-					double effective_score_increase = candidate_start_branch->branch_percent
-													  *candidate_start_branch->score_increase;
-					if (effective_score_increase > best_score_increase) {
-						best_score_increase = effective_score_increase;
-						best_index = c_index;
-					}
-				} else if (this->candidates[c_index]->type == CANDIDATE_START_REPLACE) {
-					CandidateStartReplace* candidate_start_replace = (CandidateStartReplace*)this->candidates[c_index];
-					if (candidate_start_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
-						double effective_score_increase = candidate_start_replace->score_increase;
-						if (effective_score_increase > best_score_increase) {
-							best_score_increase = effective_score_increase;
-							best_index = c_index;
-						}
-					} else {
-						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
-						if (best_score_increase == 0.0) {
-							if (candidate_start_replace->info_gain > best_info_gain) {
-								best_info_gain = candidate_start_replace->info_gain;
-								best_index = c_index;
-							}
-						}
-					}
-				}
-			}
+		this->explore_iters++;
+		// if (this->candidates.size() >= 20
+		if (this->candidates.size() >= 3
+				|| (this->explore_iters > 1000000000 && this->candidates.size() > 0)) {
+			int best_index = rand()%(int)this->candidates.size();
+			// int best_index = -1;
+			// double best_score_increase = 0.0;
+			// double best_info_gain = 0.0;
+			// for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+			// 	if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
+			// 		CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
+			// 		double effective_score_increase = candidate_branch->explore_node->node_weight
+			// 										  *candidate_branch->branch_percent
+			// 										  *candidate_branch->score_increase;
+			// 		if (effective_score_increase > best_score_increase) {
+			// 			best_score_increase = effective_score_increase;
+			// 			best_index = c_index;
+			// 		}
+			// 	} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
+			// 		CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
+			// 		if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+			// 			double effective_score_increase = candidate_replace->explore_node->node_weight
+			// 											  *candidate_replace->score_increase;
+			// 			if (effective_score_increase > best_score_increase) {
+			// 				best_score_increase = effective_score_increase;
+			// 				best_index = c_index;
+			// 			}
+			// 		} else {
+			// 			// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+			// 			if (best_score_increase == 0.0) {
+			// 				if (candidate_replace->info_gain > best_info_gain) {
+			// 					best_info_gain = candidate_replace->info_gain;
+			// 					best_index = c_index;
+			// 				}
+			// 			}
+			// 		}
+			// 	} else if (this->candidates[c_index]->type == CANDIDATE_START_BRANCH) {
+			// 		CandidateStartBranch* candidate_start_branch = (CandidateStartBranch*)this->candidates[c_index];
+			// 		double effective_score_increase = candidate_start_branch->branch_percent
+			// 										  *candidate_start_branch->score_increase;
+			// 		if (effective_score_increase > best_score_increase) {
+			// 			best_score_increase = effective_score_increase;
+			// 			best_index = c_index;
+			// 		}
+			// 	} else if (this->candidates[c_index]->type == CANDIDATE_START_REPLACE) {
+			// 		CandidateStartReplace* candidate_start_replace = (CandidateStartReplace*)this->candidates[c_index];
+			// 		if (candidate_start_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+			// 			double effective_score_increase = candidate_start_replace->score_increase;
+			// 			if (effective_score_increase > best_score_increase) {
+			// 				best_score_increase = effective_score_increase;
+			// 				best_index = c_index;
+			// 			}
+			// 		} else {
+			// 			// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+			// 			if (best_score_increase == 0.0) {
+			// 				if (candidate_start_replace->info_gain > best_info_gain) {
+			// 					best_info_gain = candidate_start_replace->info_gain;
+			// 					best_index = c_index;
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
 
 			this->start_scope->reset_explore();
 
@@ -288,7 +338,24 @@ void Solution::iteration(bool tune,
 				delete this->candidates[c_index];
 			}
 			this->candidates.clear();
+
+			this->explore_iters = 0;
+
+			// ofstream save_file;
+			// string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
+			// save_file.open(save_file_name);
+			// this->save(save_file);
+			// save_file.close();
+
+			cout << "cycle" << endl;
 		}
+
+		delete heap_state_vals;
+		delete heap_scopes;
+		delete heap_scope_states;
+		delete heap_scope_locations;
+		delete heap_network_historys;
+		delete heap_state_errors;
 	}
 }
 

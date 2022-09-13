@@ -1,5 +1,7 @@
 #include "candidate_branch.h"
 
+#include <iostream>
+
 #include "definitions.h"
 #include "jump_scope.h"
 #include "solution_node_action.h"
@@ -133,8 +135,8 @@ void CandidateBranch::apply() {
 				parent_jump->children_nodes[explore_node->scope_child_index].begin()
 					+ this->parent_jump_end_non_inclusive_index);
 			parent_jump->children_nodes[explore_node->scope_child_index].insert(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin(),
-					+ this->parent_jump_end_non_inclusive_index,
+				parent_jump->children_nodes[explore_node->scope_child_index].begin()
+					+ this->parent_jump_scope_start_non_inclusive_index + 1,
 				new_scope);
 			new_scope->parent_scope = parent_jump;
 			new_scope->scope_location = SCOPE_LOCATION_BRANCH;
@@ -197,7 +199,7 @@ void CandidateBranch::apply() {
 	new_scope->children_score_networks.push_back(this->small_jump_score_network);
 
 	vector<SolutionNode*> scope_action;
-	scope_action.push_back(new_scope);
+	scope_action.push_back(new_scope->deep_copy((int)new_scope->local_state_sizes.size()));
 	action_dictionary->actions.push_back(scope_action);
 }
 

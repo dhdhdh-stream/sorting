@@ -40,20 +40,19 @@ void CandidateReplace::apply() {
 
 	if (this->explore_node->parent_scope->node_type == NODE_TYPE_START_SCOPE) {
 		StartScope* parent_start = (StartScope*)this->explore_node->parent_scope;
-		for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
-			delete parent_start->path[n_index];
-		}
-		parent_start->path.erase(parent_start->path.begin() + this->explore_node->scope_node_index+1,
-			parent_start->path.begin() + this->parent_jump_end_non_inclusive_index);
-
-		parent_start->path.insert(parent_start->path.begin() + this->explore_node->scope_node_index+1,
-			this->explore_path.begin(), this->explore_path.end());
 		this->explore_node->next = this->explore_path[0];
 		if (this->parent_jump_end_non_inclusive_index >= (int)parent_start->path.size()) {
 			this->explore_path[this->explore_path.size()-1]->next = parent_start;
 		} else {
 			this->explore_path[this->explore_path.size()-1]->next = parent_start->path[this->parent_jump_end_non_inclusive_index];
 		}
+		for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
+			delete parent_start->path[n_index];
+		}
+		parent_start->path.erase(parent_start->path.begin() + this->explore_node->scope_node_index+1,
+			parent_start->path.begin() + this->parent_jump_end_non_inclusive_index);
+		parent_start->path.insert(parent_start->path.begin() + this->explore_node->scope_node_index+1,
+			this->explore_path.begin(), this->explore_path.end());
 
 		for (int n_index = 0; n_index < (int)parent_start->path.size(); n_index++) {
 			parent_start->path[n_index]->parent_scope = parent_start;
@@ -64,20 +63,19 @@ void CandidateReplace::apply() {
 	} else if (this->explore_node->parent_scope->node_type == NODE_TYPE_JUMP_SCOPE) {
 		JumpScope* parent_jump = (JumpScope*)this->explore_node->parent_scope;
 		if (this->explore_node->scope_location == SCOPE_LOCATION_TOP) {
-			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
-				delete parent_jump->top_path[n_index];
-			}
-			parent_jump->top_path.erase(parent_jump->top_path.begin() + this->explore_node->scope_node_index+1,
-				parent_jump->top_path.begin() + this->parent_jump_end_non_inclusive_index);
-
-			parent_jump->top_path.insert(parent_jump->top_path.begin() + this->explore_node->scope_node_index+1,
-				this->explore_path.begin(), this->explore_path.end());
 			this->explore_node->next = this->explore_path[0];
 			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->top_path.size()) {
 				this->explore_path[this->explore_path.size()-1]->next = parent_jump;
 			} else {
 				this->explore_path[this->explore_path.size()-1]->next = parent_jump->top_path[this->parent_jump_end_non_inclusive_index];
 			}
+			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
+				delete parent_jump->top_path[n_index];
+			}
+			parent_jump->top_path.erase(parent_jump->top_path.begin() + this->explore_node->scope_node_index+1,
+				parent_jump->top_path.begin() + this->parent_jump_end_non_inclusive_index);
+			parent_jump->top_path.insert(parent_jump->top_path.begin() + this->explore_node->scope_node_index+1,
+				this->explore_path.begin(), this->explore_path.end());
 
 			for (int n_index = 0; n_index < (int)parent_jump->top_path.size(); n_index++) {
 				parent_jump->top_path[n_index]->parent_scope = parent_jump;
@@ -87,22 +85,21 @@ void CandidateReplace::apply() {
 			}
 		} else {
 			// this->explore_node->scope_location == SCOPE_LOCATION_BRANCH
-			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
-				delete parent_jump->children_nodes[explore_node->scope_child_index][n_index];
-			}
-			parent_jump->children_nodes[explore_node->scope_child_index].erase(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->explore_node->scope_node_index+1,
-				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->parent_jump_end_non_inclusive_index);
-
-			parent_jump->children_nodes[explore_node->scope_child_index].insert(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin(),
-				this->explore_path.begin(), this->explore_path.end());
 			this->explore_node->next = this->explore_path[0];
 			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
 				this->explore_path[this->explore_path.size()-1]->next = parent_jump;
 			} else {
 				this->explore_path[this->explore_path.size()-1]->next = parent_jump->children_nodes[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
 			}
+			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
+				delete parent_jump->children_nodes[explore_node->scope_child_index][n_index];
+			}
+			parent_jump->children_nodes[explore_node->scope_child_index].erase(
+				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->explore_node->scope_node_index+1,
+				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->parent_jump_end_non_inclusive_index);
+			parent_jump->children_nodes[explore_node->scope_child_index].insert(
+				parent_jump->children_nodes[explore_node->scope_child_index].begin(),
+				this->explore_path.begin(), this->explore_path.end());
 
 			for (int n_index = 0; n_index < (int)parent_jump->children_nodes[explore_node->scope_child_index].size(); n_index++) {
 				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->parent_scope = parent_jump;

@@ -1,5 +1,6 @@
 #include "solution_node_utilities.h"
 
+#include <iostream>
 #include <random>
 
 #include "definitions.h"
@@ -44,6 +45,7 @@ void new_random_path(vector<SolutionNode*>& explore_path,
 	} {
 		seq_length = 1 + seq_length_dist(generator);
 	}
+	seq_length = 2;
 
 	if (seq_length == 0) {
 		vector<int> empty_local_state_size;
@@ -72,7 +74,8 @@ void new_random_path(vector<SolutionNode*>& explore_path,
 				}
 			} else {
 				normal_distribution<double> write_val_dist(0.0, 2.0);
-				Action random_raw_action(write_val_dist(generator), rand()%3);
+				// Action random_raw_action(write_val_dist(generator), rand()%3);
+				Action random_raw_action(0.0, RIGHT);
 				vector<int> empty_local_state_size;
 				SolutionNode* new_node = new SolutionNodeAction(random_raw_action,
 																empty_local_state_size);
@@ -80,7 +83,7 @@ void new_random_path(vector<SolutionNode*>& explore_path,
 			}
 		}
 
-		for (int a_index = 0; a_index < seq_length-1; a_index++) {
+		for (int a_index = 0; a_index < (int)explore_path.size()-1; a_index++) {
 			explore_path[a_index]->next = explore_path[a_index+1];
 		}
 	}
@@ -206,30 +209,38 @@ SolutionNode* get_jump_scope_start(SolutionNode* explore_node) {
 	}
 }
 
-SolutionNode* get_jump_end(SolutionNode* explore_node) {
+SolutionNode* get_jump_end(IterExplore* iter_explore,
+						   SolutionNode* explore_node) {
+	int parent_jump_end_non_inclusive_index;
+	if (explore_node->explore_state == EXPLORE_STATE_EXPLORE) {
+		parent_jump_end_non_inclusive_index = iter_explore->parent_jump_end_non_inclusive_index;
+	} else {
+		parent_jump_end_non_inclusive_index = explore_node->parent_jump_end_non_inclusive_index;
+	}
+
 	if (explore_node->parent_scope->node_type == NODE_TYPE_START_SCOPE) {
 		StartScope* parent_start = (StartScope*)explore_node->parent_scope;
-		if (explore_node->parent_jump_end_non_inclusive_index >= (int)parent_start->path.size()) {
+		if (parent_jump_end_non_inclusive_index >= (int)parent_start->path.size()) {
 			return parent_start;
 		} else {
-			return parent_start->path[explore_node->parent_jump_end_non_inclusive_index];
+			return parent_start->path[parent_jump_end_non_inclusive_index];
 		}
 	} else {
 		// explore_node->parent_scope->node_type == NODE_TYPE_JUMP_SCOPE
 		JumpScope* parent_jump = (JumpScope*)explore_node->parent_scope;
 		if (explore_node->scope_location == SCOPE_LOCATION_TOP) {
-			if (explore_node->parent_jump_end_non_inclusive_index >= (int)parent_jump->top_path.size()) {
+			if (parent_jump_end_non_inclusive_index >= (int)parent_jump->top_path.size()) {
 				return parent_jump;
 			} else {
-				return parent_jump->top_path[explore_node->parent_jump_end_non_inclusive_index];
+				return parent_jump->top_path[parent_jump_end_non_inclusive_index];
 			}
 		} else {
 			// explore_node->scope_location == SCOPE_LOCATION_BRANCH
-			if (explore_node->parent_jump_end_non_inclusive_index \
+			if (parent_jump_end_non_inclusive_index \
 					>= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
 				return parent_jump;
 			} else {
-				return parent_jump->children_nodes[explore_node->scope_child_index][explore_node->parent_jump_end_non_inclusive_index];
+				return parent_jump->children_nodes[explore_node->scope_child_index][parent_jump_end_non_inclusive_index];
 			}
 		}
 	}

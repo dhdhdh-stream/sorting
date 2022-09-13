@@ -7,6 +7,7 @@
 #include "candidate_branch.h"
 #include "candidate_replace.h"
 #include "definitions.h"
+#include "jump_scope.h"
 #include "solution_node_action.h"
 #include "solution_node_empty.h"
 #include "solution_node_utilities.h"
@@ -232,7 +233,8 @@ void SolutionNode::is_explore_helper(vector<SolutionNode*>& scopes,
 									 vector<int>& scope_locations,
 									 IterExplore*& iter_explore,
 									 bool& is_first_explore) {
-	if (randuni() < this->explore_weight) {
+	// if (randuni() < this->explore_weight) {
+	if (rand()%2 == 0) {
 		if (this->explore_state == EXPLORE_STATE_EXPLORE) {
 			int parent_jump_scope_start_non_inclusive_index;
 			int parent_jump_end_non_inclusive_index;
@@ -337,7 +339,8 @@ SolutionNode* SolutionNode::explore_helper(bool is_first_explore,
 		}
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
 		SolutionNode* jump_scope_start = get_jump_scope_start(this);
-		int input_start_non_inclusive_index;
+		// int input_start_non_inclusive_index;
+		int input_start_non_inclusive_index = -1;
 		for (int n_index = (int)instance_history.size()-1; n_index >= 0; n_index--) {
 			if (instance_history[n_index].node_visited == jump_scope_start) {
 				input_start_non_inclusive_index = n_index;
@@ -654,6 +657,9 @@ void SolutionNode::explore_callback_backprop_helper(vector<vector<double>>& stat
 			}
 
 			this->explore_state_networks[l_index]->mtx.unlock();
+
+			delete network_historys.back();
+			network_historys.pop_back();
 		}
 	} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
 		// do nothing
@@ -671,6 +677,9 @@ void SolutionNode::explore_callback_backprop_helper(vector<vector<double>>& stat
 			}
 
 			this->explore_state_networks[l_index]->mtx.unlock();
+
+			delete network_historys.back();
+			network_historys.pop_back();
 		}
 
 		vector<int> fold_loop_scope_counts;
@@ -716,6 +725,9 @@ void SolutionNode::explore_callback_backprop_helper(vector<vector<double>>& stat
 			}
 
 			this->explore_state_networks[l_index]->mtx.unlock();
+
+			delete network_historys.back();
+			network_historys.pop_back();
 		}
 
 		vector<int> fold_loop_scope_counts;
@@ -859,6 +871,11 @@ void SolutionNode::explore_increment_helper(double score,
 				if (this->explore_path[n_index]->node_type != NODE_TYPE_ACTION
 						&& this->explore_path[n_index]->node_type != NODE_TYPE_EMPTY) {
 					SolutionNode* deep_copy = this->explore_path[n_index]->deep_copy(0);
+					deep_copy->set_is_temp_node(true);
+					if (n_index > 0) {
+						this->explore_path[n_index-1]->next = deep_copy;
+					}
+					deep_copy->next = this->explore_path[n_index]->next;
 					this->explore_path[n_index] = deep_copy;
 				}
 
@@ -905,16 +922,17 @@ void SolutionNode::explore_increment_helper(double score,
 		} else {
 			for (int n_index = 0; n_index < (int)iter_explore->explore_path.size(); n_index++) {
 				// non-recursive, only need to check top layer
-				if (this->explore_path[n_index]->node_type == NODE_TYPE_ACTION
-						|| this->explore_path[n_index]->node_type == NODE_TYPE_EMPTY) {
-					delete this->explore_path[n_index];
+				if (iter_explore->explore_path[n_index]->node_type == NODE_TYPE_ACTION
+						|| iter_explore->explore_path[n_index]->node_type == NODE_TYPE_EMPTY) {
+					delete iter_explore->explore_path[n_index];
 				}
 			}
 		}
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_FLAT) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 2000000) {
+		// if (this->explore_iter_index > 2000000) {
+		if (this->explore_iter_index > 20) {
 			this->explore_state = EXPLORE_STATE_MEASURE_FLAT;
 			this->explore_iter_index = 0;
 
@@ -930,29 +948,44 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_MEASURE_FLAT) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 100000) {
-			double explore_explore_score = this->explore_explore_explore_score/this->explore_explore_explore_count;
-			double explore_no_explore_score = this->explore_explore_no_explore_score/this->explore_explore_no_explore_count;
+		// if (this->explore_iter_index > 100000) {
+		if (this->explore_iter_index > 2) {
+			// bool branch_better = false;
+			// bool branch_not_worse = false;
+			// double explore_explore_score = 0.0;
+			// double explore_no_explore_score = 0.0;
+			// if (this->explore_explore_explore_count > 0
+			// 		&& this->explore_explore_no_explore_count > 0) {
+			// 	explore_explore_score = this->explore_explore_explore_score/this->explore_explore_explore_count;
+			// 	explore_no_explore_score = this->explore_explore_no_explore_score/this->explore_explore_no_explore_count;
+			// 	cout << "explore_explore_score: " << explore_explore_score << endl;
+			// 	cout << "explore_no_explore_score: " << explore_no_explore_score << endl;
+			// 	if (explore_explore_score > (explore_no_explore_score + 0.03*(1.0 - solution->average_score))) {
+			// 		branch_better = true;
+			// 		branch_not_worse = true;
+			// 	} else if (explore_explore_score > 0.97*explore_no_explore_score) {
+			// 		branch_not_worse = true;
+			// 	}
+			// }
 
-			bool branch_better = false;
-			bool branch_not_worse = false;
-			if (explore_explore_score > (explore_no_explore_score + 0.03*(1.0 - solution->average_score))) {
-				branch_better = true;
-				branch_not_worse = true;
-			} else if (explore_explore_score > 0.97*explore_no_explore_score) {
-				branch_not_worse = true;
-			}
+			// bool can_replace = false;
+			// if (this->explore_no_explore_explore_count > 0
+			// 		&& this->explore_no_explore_no_explore_count > 0) {
+			// 	double no_explore_explore_score = this->explore_no_explore_explore_score/this->explore_no_explore_explore_count;
+			// 	double no_explore_no_explore_score = this->explore_no_explore_no_explore_score/this->explore_no_explore_no_explore_count;
+			// 	cout << "no_explore_explore_score: " << no_explore_explore_score << endl;
+			// 	cout << "no_explore_no_explore_score: " << no_explore_no_explore_score << endl;
+			// 	if (no_explore_explore_score > 0.97*no_explore_no_explore_score) {
+			// 		can_replace = true;
+			// 	}
+			// } else {
+			// 	can_replace = true;
+			// }
 
-			double no_explore_explore_score = this->explore_no_explore_explore_score/this->explore_no_explore_explore_count;
-			double no_explore_no_explore_score = this->explore_no_explore_no_explore_score/this->explore_no_explore_no_explore_count;
-
-			bool can_replace = false;
-			if (no_explore_explore_score > 0.97*no_explore_no_explore_score) {
-				can_replace = true;
-			}
-
-			if (branch_better) {
-				if (can_replace) {
+			// if (branch_better) {
+			if (rand()%2 == 0) {
+				// if (can_replace) {
+				if (rand()%2 == 0) {
 					// replace
 					this->explore_replace_type = EXPLORE_REPLACE_TYPE_SCORE;
 					this->explore_replace_info_gain = 0.0;
@@ -979,7 +1012,9 @@ void SolutionNode::explore_increment_helper(double score,
 					this->explore_existing_path_fold_input_index_on_inclusive = 0;
 					this->explore_new_path_fold_input_index_on_inclusive = 0;
 				}
-			} else if (branch_not_worse && can_replace) {
+			// } else if (((this->explore_explore_explore_count == 0 && this->explore_explore_no_explore_count == 0)
+			// 		|| branch_not_worse) && can_replace) {
+			} else if (rand()%2 == 0) {
 				vector<SolutionNode*> replacement_path;
 				replacement_path.push_back(this);	// always include self for something to compare against
 				get_replacement_path(this, replacement_path);
@@ -995,7 +1030,8 @@ void SolutionNode::explore_increment_helper(double score,
 				}
 
 				// TODO: add if equal, choose shorter path
-				if (min_new_path_misguess < 0.9*min_replacement_path_misguess) {
+				// if (min_new_path_misguess < 0.9*min_replacement_path_misguess) {
+				if (rand()%2 == 0) {
 					// replace
 					this->explore_replace_type = EXPLORE_REPLACE_TYPE_INFO;
 					this->explore_replace_info_gain = 1.0 - min_new_path_misguess/min_replacement_path_misguess;
@@ -1020,7 +1056,8 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_FOLD_BRANCH) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 300000) {
+		// if (this->explore_iter_index > 300000) {
+		if (this->explore_iter_index > 3) {
 			if (this->explore_existing_path_fold_input_index_on_inclusive < this->explore_existing_path_flat_size-1
 					|| this->explore_new_path_fold_input_index_on_inclusive < this->explore_new_path_flat_size-1) {
 				this->explore_existing_path_fold_input_index_on_inclusive++;
@@ -1028,11 +1065,11 @@ void SolutionNode::explore_increment_helper(double score,
 				this->explore_iter_index = 0;
 			} else {
 				// TODO: think about abandoning here
-				this->explore_small_jump_score_network = new Network(this->explore_new_state_size,
-																	 4*this->explore_new_state_size,
+				this->explore_small_jump_score_network = new Network(1+this->explore_new_state_size,
+																	 4*(1+this->explore_new_state_size),
 																	 1);
-				this->explore_small_no_jump_score_network = new Network(this->explore_new_state_size,
-																		4*this->explore_new_state_size,
+				this->explore_small_no_jump_score_network = new Network(1+this->explore_new_state_size,
+																		4*(1+this->explore_new_state_size),
 																		1);
 
 				this->explore_state = EXPLORE_STATE_LEARN_SMALL_BRANCH;
@@ -1042,7 +1079,8 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_SMALL_BRANCH) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 400000) {
+		// if (this->explore_iter_index > 400000) {
+		if (this->explore_iter_index > 4) {
 			this->explore_state = EXPLORE_STATE_MEASURE_FOLD_BRANCH;
 			this->explore_iter_index = 0;
 
@@ -1054,16 +1092,18 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_MEASURE_FOLD_BRANCH) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 100000) {
+		// if (this->explore_iter_index > 100000) {
+		if (this->explore_iter_index > 2) {
 			double explore_score = this->explore_fold_explore_score/this->explore_fold_explore_count;
 			double no_explore_score = this->explore_fold_no_explore_score/this->explore_fold_no_explore_count;
 
-			bool branch_better = false;
-			if (explore_score > (no_explore_score + 0.03*(1.0 - solution->average_score))) {
-				branch_better = true;
-			}
+			// bool branch_better = false;
+			// if (explore_score > (no_explore_score + 0.03*(1.0 - solution->average_score))) {
+			// 	branch_better = true;
+			// }
 
-			if (branch_better) {
+			// if (branch_better) {
+			if (rand()%2 == 0) {
 				double branch_percent = (this->explore_fold_explore_count+this->explore_fold_no_explore_count)/100000;
 				double score_increase = explore_score - no_explore_score;
 
@@ -1112,7 +1152,8 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_FOLD_REPLACE) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 300000) {
+		// if (this->explore_iter_index > 300000) {
+		if (this->explore_iter_index > 3) {
 			if (this->explore_new_path_fold_input_index_on_inclusive < this->explore_new_path_flat_size-1) {
 				this->explore_new_path_fold_input_index_on_inclusive++;
 				this->explore_iter_index = 0;
@@ -1125,7 +1166,8 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_LEARN_SMALL_REPLACE) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 400000) {
+		// if (this->explore_iter_index > 400000) {
+		if (this->explore_iter_index > 4) {
 			this->explore_state = EXPLORE_STATE_MEASURE_FOLD_REPLACE;
 			this->explore_iter_index = 0;
 
@@ -1134,24 +1176,26 @@ void SolutionNode::explore_increment_helper(double score,
 	} else if (this->explore_state == EXPLORE_STATE_MEASURE_FOLD_REPLACE) {
 		this->explore_iter_index++;
 
-		if (this->explore_iter_index > 100000) {
+		// if (this->explore_iter_index > 100000) {
+		if (this->explore_iter_index > 2) {
 			double original_score = (this->explore_explore_no_explore_score+this->explore_no_explore_no_explore_score)
 				/(this->explore_explore_no_explore_count+this->explore_no_explore_no_explore_count);
 			double replace_score = this->explore_fold_replace_score/100000;
 
-			bool should_replace = false;
-			if (this->explore_replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
-				if (replace_score > (original_score + 0.03*(1.0 - solution->average_score))) {
-					should_replace = true;
-				}
-			} else {
-				// this->explore_replace_type == EXPLORE_REPLACE_TYPE_INFO
-				if (replace_score > 0.97*original_score) {
-					should_replace = true;
-				}
-			}
+			// bool should_replace = false;
+			// if (this->explore_replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+			// 	if (replace_score > (original_score + 0.03*(1.0 - solution->average_score))) {
+			// 		should_replace = true;
+			// 	}
+			// } else {
+			// 	// this->explore_replace_type == EXPLORE_REPLACE_TYPE_INFO
+			// 	if (replace_score > 0.97*original_score) {
+			// 		should_replace = true;
+			// 	}
+			// }
 
-			if (should_replace) {
+			// if (should_replace) {
+			if (rand()%2 == 0) {
 				double score_increase = replace_score - original_score;
 
 				for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {

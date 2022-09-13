@@ -19,7 +19,7 @@ FoldNetwork::FoldNetwork(int flat_size,
 	this->hidden->input_layers.push_back(this->obs_input);
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, 1);
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
@@ -48,7 +48,7 @@ FoldNetwork::FoldNetwork(int flat_size,
 	this->hidden->input_layers.push_back(this->obs_input);
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, 1);
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 

@@ -8,6 +8,14 @@
 
 using namespace std;
 
+ActionDictionary::~ActionDictionary() {
+	for (int a_index = 0; a_index < (int)this->actions.size(); a_index++) {
+		for (int n_index = 0; n_index < (int)this->actions[a_index].size(); n_index++) {
+			delete this->actions[a_index][n_index];
+		}
+	}
+}
+
 void ActionDictionary::load(ifstream& save_file) {
 	string num_actions_line;
 	getline(save_file, num_actions_line);
@@ -56,7 +64,7 @@ void ActionDictionary::save(ofstream& save_file) {
 		scope_states.push_back(a_index);	// distinct from start_scope, which always starts with -1
 		scope_locations.push_back(0);
 		for (int n_index = 0; n_index < (int)this->actions[a_index].size(); n_index++) {
-			cout << this->actions[a_index][n_index]->node_type << endl;
+			save_file << this->actions[a_index][n_index]->node_type << endl;
 			this->actions[a_index][n_index]->save(scope_states,
 												  scope_locations,
 												  save_file);

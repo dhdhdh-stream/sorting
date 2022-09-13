@@ -96,9 +96,11 @@ public:
 									int& best_index,
 									double& best_score,
 									std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_children_networks(std::vector<double>& layer_state_errors,
+	void backprop_children_networks(double score,
+									std::vector<double>& layer_state_errors,
 									std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_children_networks_errors_with_no_weight_change(
+		double score,
 		std::vector<double>& layer_state_errors,
 		std::vector<AbstractNetworkHistory*>& network_historys);
 };

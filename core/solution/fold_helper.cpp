@@ -1,5 +1,7 @@
 #include "fold_helper.h"
 
+#include <iostream>
+
 #include "solution_node_action.h"
 #include "solution_node_empty.h"
 
@@ -177,6 +179,9 @@ void FoldHelper::existing_path_backprop_new_state(std::vector<double>& new_state
 	}
 
 	this->new_state_network->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
 }
 
 NDVector::NDVector(int height) {
@@ -189,8 +194,10 @@ NDVector::NDVector(int height) {
 }
 
 NDVector::~NDVector() {
-	for (int i = 0; i < 5; i++) {
-		delete this->inner[i];
+	if (this->height > 1) {
+		for (int i = 0; i < 5; i++) {
+			delete this->inner[i];
+		}
 	}
 }
 

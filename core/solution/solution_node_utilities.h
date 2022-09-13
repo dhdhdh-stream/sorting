@@ -26,6 +26,7 @@ bool is_after_explore(std::vector<SolutionNode*>& current_scope,
 					  int explore_parent_jump_end_non_inclusive_index);
 
 SolutionNode* get_jump_scope_start(SolutionNode* explore_node);
-SolutionNode* get_jump_end(SolutionNode* explore_node);
+SolutionNode* get_jump_end(IterExplore* iter_explore,
+						   SolutionNode* explore_node);
 
 #endif /* SOLUTION_NODE_UTILITIES_H */

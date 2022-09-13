@@ -34,19 +34,18 @@ void CandidateStartReplace::apply() {
 		action_dictionary->actions.push_back(explore_path_deep_copy);
 	}
 
-	for (int n_index = 0; n_index < this->jump_end_non_inclusive_index; n_index++) {
-		delete this->start_scope->path[n_index];
-	}
-	this->start_scope->path.erase(this->start_scope->path.begin(),
-		this->start_scope->path.begin() + jump_end_non_inclusive_index);
-
-	this->start_scope->path.insert(this->start_scope->path.begin(),
-		this->explore_path.begin(), this->explore_path.end());
 	if (this->jump_end_non_inclusive_index >= (int)this->start_scope->path.size()) {
 		this->explore_path[this->explore_path.size()-1]->next = this->start_scope;
 	} else {
 		this->explore_path[this->explore_path.size()-1]->next = this->start_scope->path[this->jump_end_non_inclusive_index];
 	}
+	for (int n_index = 0; n_index < this->jump_end_non_inclusive_index; n_index++) {
+		delete this->start_scope->path[n_index];
+	}
+	this->start_scope->path.erase(this->start_scope->path.begin(),
+		this->start_scope->path.begin() + jump_end_non_inclusive_index);
+	this->start_scope->path.insert(this->start_scope->path.begin(),
+		this->explore_path.begin(), this->explore_path.end());
 
 	for (int n_index = 0; n_index < (int)this->start_scope->path.size(); n_index++) {
 		this->start_scope->path[n_index]->parent_scope = this->start_scope;

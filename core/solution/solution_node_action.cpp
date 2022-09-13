@@ -34,6 +34,8 @@ SolutionNodeAction::SolutionNodeAction(Action action,
 
 	this->explore_small_jump_score_network = NULL;
 	this->explore_small_no_jump_score_network = NULL;
+
+	this->is_temp_node = false;
 }
 
 SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
@@ -77,11 +79,14 @@ SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
 	getline(save_file, node_weight_line);
 	this->node_weight = stof(node_weight_line);
 
-	string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
-	ifstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network = new ScoreNetwork(score_network_save_file);
-	score_network_save_file.close();
+	if (scope_states[0] == -1) {
+		// part of solution, not part of action_dictionary
+		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
+		ifstream score_network_save_file;
+		score_network_save_file.open(score_network_name);
+		this->score_network = new ScoreNetwork(score_network_save_file);
+		score_network_save_file.close();
+	}
 
 	string average_misguess_line;
 	getline(save_file, average_misguess_line);
@@ -100,6 +105,8 @@ SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
 
 	this->explore_small_jump_score_network = NULL;
 	this->explore_small_no_jump_score_network = NULL;
+
+	this->is_temp_node = false;
 }
 
 SolutionNodeAction::~SolutionNodeAction() {
@@ -176,6 +183,9 @@ void SolutionNodeAction::re_eval_backprop(double score,
 
 	this->score_network->mtx.unlock();
 
+	delete network_history;
+	network_historys.pop_back();
+
 	this->average_misguess = 0.9999*this->average_misguess + 0.0001*misguess;
 
 	backprop_state_networks(state_errors,
@@ -193,7 +203,8 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 										  vector<ExploreStepHistory>& instance_history,
 										  vector<AbstractNetworkHistory*>& network_historys,
 										  bool& abandon_instance) {
-	if (iter_explore->explore_node == this
+	if (iter_explore != NULL
+			&& iter_explore->explore_node == this
 			&& scopes.back() == NULL) {
 		explore_callback_helper(problem,
 								state_vals,
@@ -209,7 +220,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 													  -1,
 													  -1,
 													  true));
-		return get_jump_end(this);
+		return get_jump_end(iter_explore, this);
 	}
 
 	bool is_first_explore = false;
@@ -253,7 +264,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 											iter_explore->scopes,
 											iter_explore->scope_states,
 											iter_explore->scope_locations,
-											iter_explore->parent_jump_scope_start_non_inclusive_index);
+											iter_explore->parent_jump_end_non_inclusive_index);
 			}
 
 			for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
@@ -289,7 +300,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 											iter_explore->scopes,
 											iter_explore->scope_states,
 											iter_explore->scope_locations,
-											iter_explore->parent_jump_scope_start_non_inclusive_index);
+											iter_explore->parent_jump_end_non_inclusive_index);
 			}
 
 			for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
@@ -322,7 +333,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 											iter_explore->scopes,
 											iter_explore->scope_states,
 											iter_explore->scope_locations,
-											iter_explore->parent_jump_scope_start_non_inclusive_index);
+											iter_explore->parent_jump_end_non_inclusive_index);
 			}
 
 			for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
@@ -358,7 +369,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 											iter_explore->scopes,
 											iter_explore->scope_states,
 											iter_explore->scope_locations,
-											iter_explore->parent_jump_scope_start_non_inclusive_index);
+											iter_explore->parent_jump_end_non_inclusive_index);
 			}
 
 			for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
@@ -391,7 +402,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 											iter_explore->scopes,
 											iter_explore->scope_states,
 											iter_explore->scope_locations,
-											iter_explore->parent_jump_scope_start_non_inclusive_index);
+											iter_explore->parent_jump_end_non_inclusive_index);
 			}
 
 			for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
@@ -514,6 +525,9 @@ void SolutionNodeAction::explore_backprop(double score,
 
 			this->score_network->mtx.unlock();
 
+			delete network_history;
+			network_historys.pop_back();
+
 			this->average_misguess = 0.9999*this->average_misguess + 0.0001*misguess;
 		}
 	}
@@ -537,7 +551,7 @@ void SolutionNodeAction::explore_backprop(double score,
 			// do nothing
 		} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_FLAT) {
 			for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
-				if (network_historys.back()->network == this->state_networks[l_index]) {
+				if (network_historys.size() > 0 && network_historys.back()->network == this->state_networks[l_index]) {
 					backprop_state_network_errors_with_no_weight_change(l_index,
 																		state_errors[l_index],
 																		network_historys);
@@ -547,7 +561,7 @@ void SolutionNodeAction::explore_backprop(double score,
 			// do nothing
 		} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_FOLD_BRANCH) {
 			for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
-				if (network_historys.back()->network == this->state_networks[l_index]) {
+				if (network_historys.size() > 0 && network_historys.back()->network == this->state_networks[l_index]) {
 					backprop_state_network_errors_with_no_weight_change(l_index,
 																		state_errors[l_index],
 																		network_historys);
@@ -555,7 +569,7 @@ void SolutionNodeAction::explore_backprop(double score,
 			}
 		} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_SMALL_BRANCH) {
 			for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
-				if (network_historys.back()->network == this->state_networks[l_index]) {
+				if (network_historys.size() > 0 && network_historys.back()->network == this->state_networks[l_index]) {
 					backprop_state_network_errors_with_no_weight_change(l_index,
 																		state_errors[l_index],
 																		network_historys);
@@ -565,7 +579,7 @@ void SolutionNodeAction::explore_backprop(double score,
 			// do nothing
 		} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_FOLD_REPLACE) {
 			for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
-				if (network_historys.back()->network == this->state_networks[l_index]) {
+				if (network_historys.size() > 0 && network_historys.back()->network == this->state_networks[l_index]) {
 					backprop_state_network_errors_with_no_weight_change(l_index,
 																		state_errors[l_index],
 																		network_historys);
@@ -573,7 +587,7 @@ void SolutionNodeAction::explore_backprop(double score,
 			}
 		} else if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_SMALL_REPLACE) {
 			for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
-				if (network_historys.back()->network == this->state_networks[l_index]) {
+				if (network_historys.size() > 0 && network_historys.back()->network == this->state_networks[l_index]) {
 					backprop_state_network_errors_with_no_weight_change(l_index,
 																		state_errors[l_index],
 																		network_historys);
@@ -625,12 +639,12 @@ void SolutionNodeAction::initialize_local_state(vector<int>& explore_node_local_
 
 	for (int l_index = 0; l_index < (int)explore_node_local_state_sizes.size(); l_index++) {
 		if (explore_node_local_state_sizes[l_index] > 0) {
-			this->state_networks.insert(this->state_networks.begin(),
-				new Network(explore_node_local_state_sizes[l_index],
-							4*explore_node_local_state_sizes[l_index],
+			this->state_networks.insert(this->state_networks.begin()+l_index,
+				new Network(1+explore_node_local_state_sizes[l_index],
+							4*(1+explore_node_local_state_sizes[l_index]),
 							1));
 		} else {
-			this->state_networks.insert(this->state_networks.begin(), NULL);
+			this->state_networks.insert(this->state_networks.begin()+l_index, NULL);
 		}
 	}
 
@@ -671,7 +685,9 @@ void SolutionNodeAction::get_min_misguess(double& min_misguess) {
 }
 
 void SolutionNodeAction::cleanup_explore(SolutionNode* explore_node) {
-	this->fold_helpers.erase(explore_node);
+	map<SolutionNode*, FoldHelper*>::iterator it = this->fold_helpers.find(explore_node);
+	delete it->second;
+	this->fold_helpers.erase(it);
 }
 
 void SolutionNodeAction::collect_new_state_networks(SolutionNode* explore_node,
@@ -681,6 +697,7 @@ void SolutionNodeAction::collect_new_state_networks(SolutionNode* explore_node,
 	existing_nodes.push_back(this);
 	new_state_networks.push_back(it->second->new_state_network);
 	it->second->new_state_network = NULL;
+	delete it->second;
 	this->fold_helpers.erase(it);
 }
 
@@ -703,6 +720,7 @@ void SolutionNodeAction::reset_explore() {
 	this->explore_state = EXPLORE_STATE_EXPLORE;
 
 	for (int n_index = 0; n_index < (int)this->explore_path.size(); n_index++) {
+		this->explore_path[n_index]->cleanup_explore(this);
 		delete this->explore_path[n_index];
 	}
 	this->explore_path.clear();
@@ -716,16 +734,20 @@ void SolutionNodeAction::reset_explore() {
 
 	if (this->explore_jump_score_network != NULL) {
 		delete this->explore_jump_score_network;
+		this->explore_jump_score_network = NULL;
 	}
 	if (this->explore_no_jump_score_network != NULL) {
 		delete this->explore_no_jump_score_network;
+		this->explore_no_jump_score_network = NULL;
 	}
 
 	if (this->explore_small_jump_score_network != NULL) {
 		delete this->explore_small_jump_score_network;
+		this->explore_small_jump_score_network = NULL;
 	}
 	if (this->explore_small_no_jump_score_network != NULL) {
 		delete this->explore_small_no_jump_score_network;
+		this->explore_small_no_jump_score_network = NULL;
 	}
 }
 
@@ -758,11 +780,14 @@ void SolutionNodeAction::save(vector<int>& scope_states,
 
 	save_file << this->node_weight << endl;
 
-	string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
-	ofstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network->save(score_network_save_file);
-	score_network_save_file.close();
+	if (scope_states[0] == -1) {
+		// part of solution, not part of action_dictionary
+		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
+		ofstream score_network_save_file;
+		score_network_save_file.open(score_network_name);
+		this->score_network->save(score_network_save_file);
+		score_network_save_file.close();
+	}
 
 	save_file << this->average_misguess << endl;
 	save_file << this->explore_weight << endl;
@@ -887,25 +912,23 @@ void SolutionNodeAction::backprop_state_network_errors_with_no_weight_change(
 		int layer,
 		vector<double>& layer_state_errors,
 		vector<AbstractNetworkHistory*>& network_historys) {
-	if (this->local_state_sizes[layer] > 0) {
-		AbstractNetworkHistory* network_history = network_historys.back();
+	AbstractNetworkHistory* network_history = network_historys.back();
 
-		this->state_networks[layer]->mtx.lock();
+	this->state_networks[layer]->mtx.lock();
 
-		network_history->reset_weights();
+	network_history->reset_weights();
 
-		this->state_networks[layer]->backprop_errors_with_no_weight_change(layer_state_errors);
+	this->state_networks[layer]->backprop_errors_with_no_weight_change(layer_state_errors);
 
-		for (int s_index = 0; s_index < this->local_state_sizes[layer]; s_index++) {
-			layer_state_errors[s_index] = this->state_networks[layer]->input->errors[1+s_index];
-			this->state_networks[layer]->input->errors[1+s_index] = 0.0;
-		}
-
-		this->state_networks[layer]->mtx.unlock();
-
-		delete network_history;
-		network_historys.pop_back();
+	for (int s_index = 0; s_index < this->local_state_sizes[layer]; s_index++) {
+		layer_state_errors[s_index] = this->state_networks[layer]->input->errors[1+s_index];
+		this->state_networks[layer]->input->errors[1+s_index] = 0.0;
 	}
+
+	this->state_networks[layer]->mtx.unlock();
+
+	delete network_history;
+	network_historys.pop_back();
 }
 
 void SolutionNodeAction::new_path_activate_state_networks(double observations,

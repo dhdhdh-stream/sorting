@@ -10,6 +10,8 @@ class ActionDictionary {
 public:
 	std::vector<std::vector<SolutionNode*>> actions;
 
+	~ActionDictionary();
+
 	void load(std::ifstream& save_file);
 	void save(std::ofstream& save_file);
 };
