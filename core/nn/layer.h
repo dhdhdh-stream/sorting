@@ -23,8 +23,6 @@ public:
 	std::vector<std::vector<std::vector<double>>> prev_weight_updates;
 	std::vector<double> prev_constant_updates;
 
-	bool is_on;
-
 	Layer(int type, int num_nodes);
 	Layer(Layer* original);
 	~Layer();
@@ -47,16 +45,9 @@ public:
 
 	void backprop_errors_with_no_weight_change();
 
-	void add_potential_input_layer(Layer* potential);
-	void input_extend();
-	void hidden_extend_with_potential(int potential_index,
-									  Layer* potential_hidden);
-	void output_extend_with_potential(int potential_index);
-	void delete_potential_input_layer(int potential_index);
-	void hidden_input_extend();
-	void input_trim();
-	void hidden_trim(int index);
-	void remove_potential_input_layers();
+	void insert_input_layer(int layer_index, Layer* layer);
+	void add_nodes(int num_nodes);
+	void output_input_extend(int num_nodes);
 
 	void backprop_fold_state();
 	void calc_max_update_fold_state(double& max_update_size,

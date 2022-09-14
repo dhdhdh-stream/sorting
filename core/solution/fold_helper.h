@@ -1,20 +1,57 @@
 #ifndef FOLD_HELPER_H
 #define FOLD_HELPER_H
 
+#include <vector>
+
+#include "solution_node.h"
+
+class NDVector;
 class FoldHelper {
 public:
-	int layer;
+	SolutionNode* parent;
 
 	NDVector* input_indexes;
 
-	FoldHelper(int layer);
+	int new_state_size;
+	Network* new_state_network;
+
+	FoldHelper(SolutionNode* parent,
+			   int layer);
 	~FoldHelper();
 
 	void set_index(std::vector<int>& loop_scope_counts,
 				   int& curr_index);
-	void process(double* flat_inputs,
-				 bool* activated,
-				 std::vector<int>& loop_scope_counts);
+	void initialize_new_state_network(int new_state_size);
+	
+	int get_index(std::vector<int>& loop_scope_counts);
+	void new_path_process(std::vector<int>& loop_scope_counts,
+						  int input_index_on,
+						  double observations,
+						  std::vector<std::vector<double>>& state_vals,
+						  std::vector<AbstractNetworkHistory*>& network_historys);
+	void new_path_process(std::vector<int>& loop_scope_counts,
+						  int input_index_on,
+						  double observations,
+						  double* flat_inputs,
+						  bool* activated,
+						  std::vector<std::vector<double>>& state_vals,
+						  std::vector<AbstractNetworkHistory*>& network_historys);
+	void existing_path_process(std::vector<int>& loop_scope_counts,
+							   int input_index_on,
+							   double observations,
+							   std::vector<double>& new_state_vals,
+							   std::vector<AbstractNetworkHistory*>& network_historys);
+	void existing_path_process(std::vector<int>& loop_scope_counts,
+							   int input_index_on,
+							   double observations,
+							   double* flat_inputs,
+							   bool* activated,
+							   std::vector<double>& new_state_vals,
+							   std::vector<AbstractNetworkHistory*>& network_historys);
+	void activate_new_state_network(double observations,
+									std::vector<double>& new_state_vals);
+	void existing_path_backprop_new_state(std::vector<double>& new_state_errors,
+										  std::vector<AbstractNetworkHistory*>& network_historys);
 };
 
 class NDVector {
@@ -28,10 +65,11 @@ public:
 	~NDVector();
 
 	void set_value(std::vector<int>& index,
-				   int& curr,
+				   int curr,
 				   int value);
-	double get_value(std::vector<int>& index,
-					 int& curr);
+	void get_value(std::vector<int>& index,
+				   int curr,
+				   int& value);
 };
 
 #endif /* FOLD_HELPER_H */

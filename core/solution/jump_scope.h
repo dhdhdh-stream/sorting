@@ -1,27 +1,40 @@
-#ifndef SOLUTION_NODE_ACTION_H
-#define SOLUTION_NODE_ACTION_H
+#ifndef JUMP_SCOPE_H
+#define JUMP_SCOPE_H
 
-#include <map>
 #include <vector>
 
-#include "action.h"
-#include "fold_helper.h"
 #include "solution_node.h"
 
-class SolutionNodeAction : public SolutionNode {
+const int JUMP_SCOPE_STATE_ENTER = 0;
+const int JUMP_SCOPE_STATE_IF = 1;
+const int JUMP_SCOPE_STATE_EXIT = 2;
+
+const int JUMP_SCOPE_IF_EXPLORE_TYPE_APPEND = 0;
+const int JUMP_SCOPE_IF_EXPLORE_TYPE_BRANCH_START = 1;
+
+class JumpScope : public SolutionNode {
 public:
-	Action action;
+	int num_states;
 
-	std::vector<Network*> state_networks;
+	std::vector<SolutionNode*> top_path;
 
-	std::map<SolutionNode*,FoldHelper*> fold_helpers;
+	std::vector<std::vector<SolutionNode*>> child_paths;
+	std::vector<Network*> child_score_networks;
 
-	SolutionNodeAction(Action action,
-					   std::vector<int> local_state_sizes);
-	SolutionNodeAction(std::vector<int>& scope_states,
-					   std::vector<int>& scope_locations,
-					   std::ifstream& save_file);
-	~SolutionNodeAction();
+	// double if_explore_weight;
+	// int if_explore_type;
+	// int if_explore_state;
+	// std::vector<SolutionNode*> if_explore_potential_nodes;
+	// Network* if_explore_score_network;	// train greedily
+	// Network* if_explore_full_score_network;
+	// std::vector<FlatNetwork*> if_explore_state_networks;
+
+	JumpScope(std::vector<int> local_state_sizes,
+			  int num_states);
+	JumpScope(std::vector<int>& scope_states,
+			  std::vector<int>& scope_locations,
+			  std::ifstream& save_file);
+	~JumpScope();
 
 	SolutionNode* re_eval(Problem& problem,
 						  double& predicted_score,
@@ -76,28 +89,22 @@ public:
 			  std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
 
-	void activate_state_networks(Problem& problem,
-								 std::vector<std::vector<double>>& state_vals);
-	void activate_state_networks(Problem& problem,
-								 std::vector<std::vector<double>>& state_vals,
+	void activate_child_networks(Problem& problem,
+								 std::vector<double>& layer_state_vals,
+								 int& best_index,
+								 double& best_score);
+	void activate_child_networks(Problem& problem,
+								 std::vector<double>& layer_state_vals,
+								 int& best_index,
+								 double& best_score,
 								 std::vector<AbstractNetworkHistory*>& network_historys);
-	void activate_state_network(Problem& problem,
-								int layer,
-								std::vector<double>& layer_state_vals);
-	void activate_state_network(Problem& problem,
-								int layer,
-								std::vector<double>& layer_state_vals,
-								std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_state_networks(std::vector<std::vector<double>>& state_errors,
+	void backprop_child_networks(double score,
+								 std::vector<double>& layer_state_errors,
 								 std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_state_network_errors_with_no_weight_change(
-		int layer,
+	void backprop_child_networks_errors_with_no_weight_change(
+		double score,
 		std::vector<double>& layer_state_errors,
 		std::vector<AbstractNetworkHistory*>& network_historys);
-
-	void new_path_activate_state_networks(double observations,
-										  std::vector<std::vector<double>>& state_vals,
-										  std::vector<AbstractNetworkHistory*>& network_historys);
 };
 
-#endif /* SOLUTION_NODE_ACTION_H */
+#endif /* JUMP_SCOPE_H */

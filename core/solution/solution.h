@@ -3,33 +3,22 @@
 
 #include <mutex>
 
-#include "explore.h"
-#include "solution_node.h"
+#include "candidate.h"
+#include "start_scope.h"
 
-class Explore;
-class SolutionNode;
 class Solution {
 public:
-	Explore* explore;
-
-	long int id;
-
-	std::vector<SolutionNode*> nodes;
-	std::mutex nodes_mtx;
-	
-	int current_state_counter;
-	std::mutex state_mtx;
-
-	int current_potential_state_counter;
-	std::mutex potential_state_mtx;
+	StartScope* start_scope;
 
 	double average_score;
 
+	std::vector<Candidate*> candidates;
+	int explore_iters;
+
 	std::mutex display_mtx;
 
-	Solution(Explore* explore);
-	Solution(Explore* explore,
-			 std::ifstream& save_file);
+	Solution();
+	Solution(std::ifstream& save_file);
 	~Solution();
 
 	void iteration(bool tune,

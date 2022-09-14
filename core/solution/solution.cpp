@@ -5,315 +5,340 @@
 #include <limits>
 #include <set>
 
+#include "candidate_branch.h"
+#include "candidate_replace.h"
+#include "candidate_start_branch.h"
+#include "candidate_start_replace.h"
 #include "definitions.h"
+#include "jump_scope.h"
 #include "solution_node_action.h"
-#include "solution_node_end.h"
-#include "solution_node_if_start.h"
-#include "solution_node_if_end.h"
-#include "solution_node_loop_start.h"
-#include "solution_node_loop_end.h"
-#include "solution_node_start.h"
 #include "utilities.h"
 
 using namespace std;
 
-Solution::Solution(Explore* explore) {
-	this->explore = explore;
+Solution::Solution() {
+	id = time(NULL);
 
-	this->id = time(NULL);
-
-	SolutionNode* start_node = new SolutionNodeStart(this);
-	this->nodes.push_back(start_node);
-	SolutionNode* end_node = new SolutionNodeEnd(this);
-	this->nodes.push_back(end_node);
-
-	this->current_state_counter = 2;	// start_node starts with 2
+	this->start_scope = new StartScope();
 
 	this->average_score = 0.5;
+
+	action_dictionary = new ActionDictionary();
+
+	this->explore_iters = 0;
 }
 
-Solution::Solution(Explore* explore,
-				   ifstream& save_file) {
-	this->explore = explore;
-
+Solution::Solution(ifstream& save_file) {
 	string id_line;
 	getline(save_file, id_line);
-	this->id = stoi(id_line);
+	id = stol(id_line);
 
-	string num_nodes_line;
-	getline(save_file, num_nodes_line);
-	int num_nodes = stoi(num_nodes_line);
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		string node_type_line;
-		getline(save_file, node_type_line);
-		int node_type = stoi(node_type_line);
-
-		SolutionNode* node;
-		if (node_type == NODE_TYPE_START) {
-			node = new SolutionNodeStart(this,
-										 n_index,
-										 save_file);
-		} else if (node_type == NODE_TYPE_END) {
-			node = new SolutionNodeEnd(this,
-									   n_index,
+	vector<int> scope_states;
+	vector<int> scope_locations;
+	this->start_scope = new StartScope(scope_states,
+									   scope_locations,
 									   save_file);
-		} else if (node_type == NODE_TYPE_ACTION) {
-			node = new SolutionNodeAction(this,
-										  n_index,
-										  save_file);
-		} else if (node_type == NODE_TYPE_IF_START) {
-			node = new SolutionNodeIfStart(this,
-										   n_index,
-										   save_file);
-		} else if (node_type == NODE_TYPE_IF_END) {
-			node = new SolutionNodeIfEnd(this,
-										 n_index,
-										 save_file);
-		} else if (node_type == NODE_TYPE_LOOP_START) {
-			node = new SolutionNodeLoopStart(this,
-											 n_index,
-											 save_file);
-		} else if (node_type == NODE_TYPE_LOOP_END) {
-			node = new SolutionNodeLoopEnd(this,
-										   n_index,
-										   save_file);
-		}
-		this->nodes.push_back(node);
-	}
-
-	string current_state_counter_line;
-	getline(save_file, current_state_counter_line);
-	this->current_state_counter = stoi(current_state_counter_line);
 
 	string average_score_line;
 	getline(save_file, average_score_line);
 	this->average_score = stof(average_score_line);
+
+	action_dictionary = new ActionDictionary();
+	action_dictionary->load(save_file);
+
+	this->explore_iters = 0;
 }
 
 Solution::~Solution() {
-	for (int i = 0; i < (int)this->nodes.size(); i++) {
-		delete this->nodes[i];
-	}
+	delete this->start_scope;
+
+	delete action_dictionary;
 }
 
 void Solution::iteration(bool tune,
 						 bool save_for_display) {
-	ofstream display_file;
-	if (save_for_display) {
-		display_file.open("../display.txt");
-		display_file << this->nodes.size() << endl;
-		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-			this->nodes[n_index]->save_for_display(display_file);
-		}
-	}
-
 	Problem problem;
+	double predicted_score = this->average_score;
 	
-	double state_vals[this->current_state_counter] = {};
-	bool states_on[this->current_state_counter] = {};
+	if (tune || rand()%10 == 0) {
+		// re-eval
+		vector<vector<double>> state_vals;
+		vector<SolutionNode*> scopes;
+		vector<int> scope_states;
+		vector<ReEvalStepHistory> instance_history;
+		vector<AbstractNetworkHistory*> network_historys;
 
-	vector<SolutionNode*> loop_scopes;
-	vector<int> loop_scope_counts;
-	vector<bool> loop_decisions;
+		set<SolutionNode*> unique_nodes_visited;
 
-	double potential_state_vals[2] = {};
-	vector<int> potential_state_indexes;
+		SolutionNode* curr_node = this->start_scope;
+		while (true) {
+			SolutionNode* next_node = curr_node->re_eval(problem,
+														 predicted_score,
+														 state_vals,
+														 scopes,
+														 scope_states,
+														 instance_history,
+														 network_historys);
 
-	vector<NetworkHistory*> network_historys;
-	vector<SolutionNode*> nodes_visited;
-	vector<double> observations;
-	
-	vector<vector<double>> guesses;
-	vector<double> guess_segment;
-	guess_segment.push_back(this->average_score);
-	guesses.push_back(guess_segment);
-
-	int iter_explore_type = EXPLORE_TYPE_NONE;
-	if (tune) {
-		iter_explore_type = EXPLORE_TYPE_RE_EVAL;
-	}
-	SolutionNode* iter_explore_node = NULL;
-	IterExplore* iter_explore = NULL;
-
-	vector<int> explore_decisions;
-
-	vector<vector<double>> display_state_history;
-
-	SolutionNode* curr_node = this->nodes[0];
-	while (true) {
-		SolutionNode* next_node = curr_node->activate(problem,
-													  state_vals,
-													  states_on,
-													  loop_scopes,
-													  loop_scope_counts,
-													  loop_decisions,
-													  iter_explore_type,
-													  iter_explore_node,
-													  iter_explore,
-													  potential_state_vals,
-													  potential_state_indexes,
-													  network_historys,
-													  guesses,
-													  explore_decisions,
-													  observations,
-													  save_for_display,
-													  display_file);
-
-		if (save_for_display) {
-			if (curr_node->node_type == NODE_TYPE_ACTION) {
-				vector<double> state_snapshot;
-				for (int s_index = 0; s_index < this->current_state_counter; s_index++) {
-					state_snapshot.push_back(state_vals[s_index]);
-				}
-				display_state_history.push_back(state_snapshot);
+			if (unique_nodes_visited.find(curr_node) == unique_nodes_visited.end()) {
+				unique_nodes_visited.insert(curr_node);
 			}
+
+			if (next_node == NULL) {
+				break;
+			}
+			curr_node = next_node;
 		}
 
-		if (curr_node->node_type == NODE_TYPE_END) {
-			break;
-		}
-		nodes_visited.push_back(curr_node);
-		curr_node = next_node;
-	}
-
-	double score = problem.score_result();
-
-	if (iter_explore_type == EXPLORE_TYPE_RE_EVAL) {
+		double score = problem.score_result();
 		this->average_score = 0.9999*this->average_score + 0.0001*score;
 
-		double sum_segments = 0.0;
-		for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
-			double initial_guess = min(max(guesses[s_index][0], 0.0), 1.0);
-			double initial_misguess = abs(score - initial_guess);
-			double final_guess = min(max(guesses[s_index][guesses[s_index].size()-1], 0.0), 1.0);
-			double final_misguess = abs(score - final_guess);
-			sum_segments += initial_misguess - final_misguess;
+		this->start_scope->re_eval_increment();
+		for (set<SolutionNode*>::iterator it = unique_nodes_visited.begin(); it != unique_nodes_visited.end(); it++) {
+			SolutionNode* node = *it;
+			node->node_weight += 0.0001;
 		}
 
-		vector<double> information_gains;
-		vector<int> information_gains_divides;
-
-		int guess_segment_index = 0;
-		int guess_index = 1;
-		double previous_misguess = abs(score - guesses[0][0]);
-		for (int v_index = 0; v_index < (int)nodes_visited.size(); v_index++) {
-			if (nodes_visited[v_index]->node_type == NODE_TYPE_START
-					|| nodes_visited[v_index]->node_type == NODE_TYPE_ACTION) {
-				double guess = min(max(guesses[guess_segment_index][guess_index], 0.0), 1.0);
-				double current_misguess = abs(score - guess);
-
-				double information_gain = previous_misguess - current_misguess;
-
-				information_gains.push_back(information_gain);
-
-				previous_misguess = current_misguess;
-
-				guess_index++;
-
-				information_gains_divides.push_back(1);
-			} else if (nodes_visited[v_index]->node_type == NODE_TYPE_IF_START) {
-				guess_segment_index++;
-				guess_index = 1;
-
-				double guess = min(max(guesses[guess_segment_index][0], 0.0), 1.0);
-				previous_misguess = abs(score - guess);
-
-				information_gains_divides.back()++;
-			} else {
-				information_gains_divides.back()++;
+		double initial_misguess = abs(score - this->average_score);
+		double best_misguess = initial_misguess;
+		for (int h_index = 0; h_index < (int)instance_history.size(); h_index++) {
+			if (instance_history[h_index].node_visited->node_type == NODE_TYPE_ACTION
+					|| (instance_history[h_index].node_visited->node_type == NODE_TYPE_START_SCOPE
+					&& instance_history[h_index].scope_state == START_SCOPE_STATE_ENTER)) {
+				double misguess = abs(score - instance_history[h_index].guess);
+				if (misguess < best_misguess) {
+					best_misguess = misguess;
+				}
 			}
 		}
 
-		int v_index = 0;
-		for (int g_index = 0; g_index < (int)information_gains.size(); g_index++) {
-			for (int d_index = 0; d_index < information_gains_divides[g_index]; d_index++) {
-				nodes_visited[v_index]->update_node_weight(
-					(information_gains[g_index]/information_gains_divides[g_index])/sum_segments);
-				v_index++;
+		double info_gain = initial_misguess - best_misguess;
+		if (info_gain > 0.0) {
+			vector<double> weights;
+			vector<int> weight_divides;
+			double curr_best_misguess = initial_misguess;
+			for (int h_index = 0; h_index < (int)instance_history.size(); h_index++) {
+				if (instance_history[h_index].node_visited->node_type == NODE_TYPE_ACTION
+						|| (instance_history[h_index].node_visited->node_type == NODE_TYPE_START_SCOPE
+						&& instance_history[h_index].scope_state == START_SCOPE_STATE_ENTER)) {
+					double misguess = abs(score - instance_history[h_index].guess);
+					if (misguess < curr_best_misguess) {
+						weights.push_back((curr_best_misguess - misguess)/info_gain);
+						curr_best_misguess = misguess;
+					} else {
+						weights.push_back(0.0);
+					}
+					weight_divides.push_back(1);
+				} else if (instance_history[h_index].node_visited->node_type == NODE_TYPE_JUMP_SCOPE) {
+					if (instance_history[h_index].scope_state == JUMP_SCOPE_STATE_IF
+							|| instance_history[h_index].scope_state == JUMP_SCOPE_STATE_EXIT) {
+						weight_divides.back()++;
+					}
+				}
+				// SolutionNodeEmpty cannot explore
+			}
+
+			int weights_index = -1;
+			for (int h_index = 0; h_index < (int)instance_history.size(); h_index++) {
+				if (instance_history[h_index].node_visited->node_type == NODE_TYPE_ACTION
+						|| (instance_history[h_index].node_visited->node_type == NODE_TYPE_START_SCOPE
+						&& instance_history[h_index].scope_state == START_SCOPE_STATE_ENTER)) {
+					weights_index++;
+					double weight_update = weights[weights_index]/weight_divides[weights_index];
+					instance_history[h_index].node_visited->explore_weight = 0.9999*instance_history[h_index].node_visited->explore_weight
+						+ 0.0001*weight_update;
+				} else if (instance_history[h_index].node_visited->node_type == NODE_TYPE_JUMP_SCOPE) {
+					if (instance_history[h_index].scope_state == JUMP_SCOPE_STATE_IF) {
+						// TODO: add if explore
+					} else if (instance_history[h_index].scope_state == JUMP_SCOPE_STATE_EXIT) {
+						double weight_update = weights[weights_index]/weight_divides[weights_index];
+						instance_history[h_index].node_visited->explore_weight = 0.9999*instance_history[h_index].node_visited->explore_weight
+							+ 0.0001*weight_update;
+					}
+				}
+				// SolutionNodeEmpty cannot explore
 			}
 		}
-	}
 
-	double sum_misguess = 0.0;
-	int misguess_count = 0;
-	for (int s_index = 0; s_index < (int)guesses.size(); s_index++) {
-		for (int g_index = 1; g_index < (int)guesses[s_index].size(); g_index++) {
-			double guess = min(max(guesses[s_index][g_index], 0.0), 1.0);
-			sum_misguess += abs(score - guess);
-
-			misguess_count++;
-		}
-	}
-	double misguess = sum_misguess/(double)misguess_count;
-
-	double state_errors[this->current_state_counter] = {};
-	double potential_state_errors[this->current_potential_state_counter] = {};
-	for (int v_index = (int)nodes_visited.size()-1; v_index >= 0; v_index--) {
-		nodes_visited[v_index]->backprop(score,
-										 misguess,
-										 state_errors,
-										 states_on,
-										 loop_decisions,
-										 iter_explore_type,
-										 iter_explore_node,
-										 potential_state_errors,
-										 potential_state_indexes,
-										 network_historys,
-										 explore_decisions);
-	}
-
-	if (save_for_display) {
-		display_file << problem.initial_world.size() << endl;
-		for (int i = 0; i < (int)problem.initial_world.size(); i++) {
-			display_file << problem.initial_world[i] << endl;
+		vector<vector<double>> state_errors;
+		while (instance_history.size() > 0) {
+			instance_history.back().node_visited->re_eval_backprop(
+				score,
+				state_errors,
+				instance_history,
+				network_historys);
 		}
 
-		if (iter_explore_type == EXPLORE_TYPE_LEARN_JUMP
-				|| iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
-			display_file << "explore" << endl;
-			display_file << iter_explore_node->node_index << endl;
-			display_file << iter_explore_node->explore_end_non_inclusive->node_index << endl;
-		} else if (iter_explore_type == EXPLORE_TYPE_LEARN_LOOP
-				|| iter_explore_type == EXPLORE_TYPE_MEASURE_LOOP) {
-			display_file << "explore" << endl;
-			display_file << iter_explore_node->node_index << endl;
-			display_file << iter_explore_node->explore_start_inclusive->node_index << endl;
-		} else {
-			display_file << "no_explore" << endl;
+		if (network_historys.size() > 0) {
+			cout << "re_eval network_historys.size(): " << network_historys.size() << endl;
+			exit(1);
+		}
+	} else {
+		// explore
+		vector<vector<double>> state_vals;
+		vector<SolutionNode*> scopes;
+		vector<int> scope_states;
+		vector<int> scope_locations;
+		IterExplore* iter_explore = NULL;
+		vector<ExploreStepHistory> instance_history;
+		vector<AbstractNetworkHistory*> network_historys;
+		bool abandon_instance = false;
+
+		SolutionNode* curr_node = this->start_scope;
+		while (true) {
+			SolutionNode* next_node = curr_node->explore(problem,
+														 predicted_score,
+														 state_vals,
+														 scopes,
+														 scope_states,
+														 scope_locations,
+														 iter_explore,
+														 instance_history,
+														 network_historys,
+														 abandon_instance);
+
+			if (abandon_instance) {
+				break;
+			}
+			if (next_node == NULL) {
+				break;
+			}
+			curr_node = next_node;
 		}
 
-		display_file.close();
-	}
+		if (abandon_instance) {
+			// TODO: cleanup
+		}
 
-	if (iter_explore_node != NULL) {
-		iter_explore_node->explore_increment(score,
-											 iter_explore);
-	}
+		double score = problem.score_result();
 
-	if (iter_explore != NULL) {
-		delete iter_explore;
-	}
+		vector<vector<double>> state_errors;
+		while (instance_history.size() > 0) {
+			instance_history.back().node_visited->explore_backprop(score,
+																   state_errors,
+																   iter_explore,
+																   instance_history,
+																   network_historys);
+		}
 
-	if (iter_explore_type == EXPLORE_TYPE_MEASURE_JUMP) {
-		problem.print();
-		cout << endl;
+		if (iter_explore != NULL) {
+			iter_explore->explore_node->explore_increment(score,
+														  iter_explore);
+		}
+
+		if (network_historys.size() > 0) {
+			cout << "explore network_historys.size(): " << network_historys.size() << endl;
+			exit(1);
+		}
+
+		if (iter_explore != NULL) {
+			delete iter_explore;
+		}
+
+		this->explore_iters++;
+		// if (this->candidates.size() >= 20
+		if (this->candidates.size() >= 5
+				|| (this->explore_iters > 1000000000 && this->candidates.size() > 0)) {
+			int best_index = -1;
+			double best_score_increase = 0.0;
+			double best_info_gain = 0.0;
+			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+				if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
+					CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
+					double effective_score_increase = candidate_branch->explore_node->node_weight
+													  *candidate_branch->branch_percent
+													  *candidate_branch->score_increase;
+					if (effective_score_increase > best_score_increase) {
+						best_score_increase = effective_score_increase;
+						best_index = c_index;
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
+					CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
+					if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+						double effective_score_increase = candidate_replace->explore_node->node_weight
+														  *candidate_replace->score_increase;
+						if (effective_score_increase > best_score_increase) {
+							best_score_increase = effective_score_increase;
+							best_index = c_index;
+						}
+					} else {
+						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+						if (best_score_increase == 0.0) {
+							if (candidate_replace->info_gain > best_info_gain) {
+								best_info_gain = candidate_replace->info_gain;
+								best_index = c_index;
+							}
+						}
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_START_BRANCH) {
+					CandidateStartBranch* candidate_start_branch = (CandidateStartBranch*)this->candidates[c_index];
+					double effective_score_increase = candidate_start_branch->branch_percent
+													  *candidate_start_branch->score_increase;
+					if (effective_score_increase > best_score_increase) {
+						best_score_increase = effective_score_increase;
+						best_index = c_index;
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_START_REPLACE) {
+					CandidateStartReplace* candidate_start_replace = (CandidateStartReplace*)this->candidates[c_index];
+					if (candidate_start_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+						double effective_score_increase = candidate_start_replace->score_increase;
+						if (effective_score_increase > best_score_increase) {
+							best_score_increase = effective_score_increase;
+							best_index = c_index;
+						}
+					} else {
+						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+						if (best_score_increase == 0.0) {
+							if (candidate_start_replace->info_gain > best_info_gain) {
+								best_info_gain = candidate_start_replace->info_gain;
+								best_index = c_index;
+							}
+						}
+					}
+				}
+			}
+
+			this->start_scope->reset_explore();
+
+			this->candidates[best_index]->apply();
+			delete this->candidates[best_index];
+			this->candidates.erase(this->candidates.begin()+best_index);
+
+			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+				this->candidates[c_index]->clean();
+				delete this->candidates[c_index];
+			}
+			this->candidates.clear();
+
+			this->explore_iters = 0;
+
+			ofstream save_file;
+			string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
+			save_file.open(save_file_name);
+			this->save(save_file);
+			save_file.close();
+
+			ofstream display_file;
+			string display_file_name = "../solution.txt";
+			display_file.open(display_file_name);
+			this->start_scope->save_for_display(display_file);
+			display_file.close();
+
+			cout << "cycle" << endl;
+		}
 	}
 }
 
 void Solution::save(ofstream& save_file) {
-	save_file << this->id << endl;
+	save_file << id << endl;
 
-	this->nodes_mtx.lock();
-	int num_nodes = (int)this->nodes.size();
-	this->nodes_mtx.unlock();
-
-	save_file << num_nodes << endl;
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		save_file << this->nodes[n_index]->node_type << endl;
-		this->nodes[n_index]->save(save_file);
-	}
-
-	save_file << this->current_state_counter << endl;
+	vector<int> scope_states;
+	vector<int> scope_locations;
+	this->start_scope->save(scope_states,
+							scope_locations,
+							save_file);
 
 	save_file << this->average_score << endl;
+
+	action_dictionary->save(save_file);
 }

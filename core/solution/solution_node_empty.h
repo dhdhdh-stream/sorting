@@ -1,27 +1,23 @@
-#ifndef SOLUTION_NODE_ACTION_H
-#define SOLUTION_NODE_ACTION_H
+#ifndef SOLUTION_NODE_EMPTY_H
+#define SOLUTION_NODE_EMPTY_H
 
 #include <map>
 #include <vector>
 
-#include "action.h"
 #include "fold_helper.h"
 #include "solution_node.h"
 
-class SolutionNodeAction : public SolutionNode {
+class SolutionNodeEmpty : public SolutionNode {
 public:
-	Action action;
-
 	std::vector<Network*> state_networks;
 
 	std::map<SolutionNode*,FoldHelper*> fold_helpers;
 
-	SolutionNodeAction(Action action,
-					   std::vector<int> local_state_sizes);
-	SolutionNodeAction(std::vector<int>& scope_states,
-					   std::vector<int>& scope_locations,
-					   std::ifstream& save_file);
-	~SolutionNodeAction();
+	SolutionNodeEmpty(std::vector<int> local_state_sizes);
+	SolutionNodeEmpty(std::vector<int>& scope_states,
+					  std::vector<int>& scope_locations,
+					  std::ifstream& save_file);
+	~SolutionNodeEmpty();
 
 	SolutionNode* re_eval(Problem& problem,
 						  double& predicted_score,
@@ -100,4 +96,4 @@ public:
 										  std::vector<AbstractNetworkHistory*>& network_historys);
 };
 
-#endif /* SOLUTION_NODE_ACTION_H */
+#endif /* SOLUTION_NODE_EMPTY_H */

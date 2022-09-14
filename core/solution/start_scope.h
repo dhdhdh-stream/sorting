@@ -1,27 +1,24 @@
-#ifndef SOLUTION_NODE_ACTION_H
-#define SOLUTION_NODE_ACTION_H
+#ifndef START_SCOPE_H
+#define START_SCOPE_H
 
-#include <map>
 #include <vector>
 
-#include "action.h"
-#include "fold_helper.h"
 #include "solution_node.h"
 
-class SolutionNodeAction : public SolutionNode {
+const int START_SCOPE_STATE_ENTER = 0;
+const int START_SCOPE_STATE_EXIT = 1;
+
+class StartScope : public SolutionNode {
 public:
-	Action action;
+	std::vector<SolutionNode*> path;
 
-	std::vector<Network*> state_networks;
+	int jump_end_non_inclusive_index;
 
-	std::map<SolutionNode*,FoldHelper*> fold_helpers;
-
-	SolutionNodeAction(Action action,
-					   std::vector<int> local_state_sizes);
-	SolutionNodeAction(std::vector<int>& scope_states,
-					   std::vector<int>& scope_locations,
-					   std::ifstream& save_file);
-	~SolutionNodeAction();
+	StartScope();
+	StartScope(std::vector<int>& scope_states,
+			   std::vector<int>& scope_locations,
+			   std::ifstream& save_file);
+	~StartScope();
 
 	SolutionNode* re_eval(Problem& problem,
 						  double& predicted_score,
@@ -75,29 +72,6 @@ public:
 			  std::vector<int>& scope_locations,
 			  std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
-
-	void activate_state_networks(Problem& problem,
-								 std::vector<std::vector<double>>& state_vals);
-	void activate_state_networks(Problem& problem,
-								 std::vector<std::vector<double>>& state_vals,
-								 std::vector<AbstractNetworkHistory*>& network_historys);
-	void activate_state_network(Problem& problem,
-								int layer,
-								std::vector<double>& layer_state_vals);
-	void activate_state_network(Problem& problem,
-								int layer,
-								std::vector<double>& layer_state_vals,
-								std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_state_networks(std::vector<std::vector<double>>& state_errors,
-								 std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_state_network_errors_with_no_weight_change(
-		int layer,
-		std::vector<double>& layer_state_errors,
-		std::vector<AbstractNetworkHistory*>& network_historys);
-
-	void new_path_activate_state_networks(double observations,
-										  std::vector<std::vector<double>>& state_vals,
-										  std::vector<AbstractNetworkHistory*>& network_historys);
 };
 
-#endif /* SOLUTION_NODE_ACTION_H */
+#endif /* START_SCOPE_H */
