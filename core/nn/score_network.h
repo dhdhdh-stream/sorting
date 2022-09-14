@@ -14,6 +14,7 @@ public:
 
 	std::vector<Layer*> state_inputs;
 	Layer* obs_input;
+	Layer* previous_predicted_score_input;
 
 	Layer* hidden;
 	Layer* output;
@@ -32,6 +33,10 @@ public:
 
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<double>& obs,
+				  double predicted_score);
+	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<double>& obs,
+				  double predicted_score,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors);
 	void calc_max_update(double& max_update,
@@ -42,12 +47,16 @@ public:
 						double momentum);
 
 	void save(std::ofstream& output_file);
+
+private:
+	void construct();
 };
 
 class ScoreNetworkHistory : public AbstractNetworkHistory {
 public:
 	std::vector<std::vector<double>> state_inputs_history;
 	std::vector<double> obs_input_history;
+	double previous_predicted_score_input_history;
 
 	std::vector<double> hidden_history;
 	std::vector<double> output_history;

@@ -28,12 +28,6 @@ SolutionNodeEmpty::SolutionNodeEmpty(vector<int>& scope_states,
 									 ifstream& save_file) {
 	this->node_type = NODE_TYPE_EMPTY;
 
-	ostringstream node_name_oss;
-	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
-		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
-	}
-	string node_name = node_name_oss.str();
-
 	string num_local_state_sizes_line;
 	getline(save_file, num_local_state_sizes_line);
 	int num_local_state_sizes = stoi(num_local_state_sizes_line);
@@ -43,10 +37,16 @@ SolutionNodeEmpty::SolutionNodeEmpty(vector<int>& scope_states,
 		this->local_state_sizes.push_back(stoi(state_size_line));
 	}
 
+	ostringstream node_name_oss;
+	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
+	}
+	string node_name = node_name_oss.str();
+
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			string state_network_name = "../saves/nns/" + node_name + "state_" \
-				+ to_string(l_index) + "_" + to_string(solution->id) + ".txt";
+				+ to_string(l_index) + "_" + to_string(id) + ".txt";
 			ifstream state_network_save_file;
 			state_network_save_file.open(state_network_name);
 			Network* state_network = new Network(state_network_save_file);
@@ -56,12 +56,6 @@ SolutionNodeEmpty::SolutionNodeEmpty(vector<int>& scope_states,
 			this->state_networks.push_back(NULL);
 		}
 	}
-
-	string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
-	ifstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network = new ScoreNetwork(score_network_save_file);
-	score_network_save_file.close();
 
 	string average_misguess_line;
 	getline(save_file, average_misguess_line);
@@ -85,6 +79,7 @@ SolutionNodeEmpty::~SolutionNodeEmpty() {
 }
 
 SolutionNode* SolutionNodeEmpty::re_eval(Problem& problem,
+										 double& predicted_score,
 										 vector<vector<double>>& state_vals,
 										 vector<SolutionNode*>& scopes,
 										 vector<int>& scope_states,
@@ -94,7 +89,7 @@ SolutionNode* SolutionNodeEmpty::re_eval(Problem& problem,
 							state_vals,
 							network_historys);
 
-	// only train if is_temp_node during explore
+	// only train score_network if is_temp_node during explore
 
 	instance_history.push_back(ReEvalStepHistory(this,
 												 0.0,
@@ -114,6 +109,7 @@ void SolutionNodeEmpty::re_eval_backprop(double score,
 }
 
 SolutionNode* SolutionNodeEmpty::explore(Problem& problem,
+										 double& predicted_score,
 										 vector<vector<double>>& state_vals,
 										 vector<SolutionNode*>& scopes,
 										 vector<int>& scope_states,
@@ -330,6 +326,7 @@ SolutionNode* SolutionNodeEmpty::explore(Problem& problem,
 			this->score_network->mtx.lock();
 			this->score_network->activate(state_vals,
 										  obs,
+										  predicted_score,
 										  network_historys);
 			this->score_network->mtx.unlock();
 		}
@@ -505,7 +502,7 @@ void SolutionNodeEmpty::initialize_local_state(vector<int>& explore_node_local_s
 			this->state_networks.insert(this->state_networks.begin()+l_index,
 				new Network(explore_node_local_state_sizes[l_index],
 							4*explore_node_local_state_sizes[l_index],
-							1));
+							explore_node_local_state_sizes[l_index]));
 		} else {
 			this->state_networks.insert(this->state_networks.begin()+l_index, NULL);
 		}
@@ -593,7 +590,7 @@ void SolutionNodeEmpty::save(vector<int>& scope_states,
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			string state_network_name = "../saves/nns/" + node_name + "state_" \
-				+ to_string(l_index) + "_" + to_string(solution->id) + ".txt";
+				+ to_string(l_index) + "_" + to_string(id) + ".txt";
 			ofstream state_network_save_file;
 			state_network_save_file.open(state_network_name);
 			this->state_networks[l_index]->save(state_network_save_file);
@@ -601,19 +598,13 @@ void SolutionNodeEmpty::save(vector<int>& scope_states,
 		}
 	}
 
-	string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
-	ofstream score_network_save_file;
-	score_network_save_file.open(score_network_name);
-	this->score_network->save(score_network_save_file);
-	score_network_save_file.close();
-
 	save_file << this->average_misguess << endl;
 
 	scope_locations.back()++;
 }
 
 void SolutionNodeEmpty::save_for_display(ofstream& save_file) {
-
+	// do nothing
 }
 
 void SolutionNodeEmpty::activate_state_networks(Problem& problem,
@@ -702,7 +693,8 @@ void SolutionNodeEmpty::activate_state_network(Problem& problem,
 
 void SolutionNodeEmpty::backprop_state_networks(vector<vector<double>>& state_errors,
 												vector<AbstractNetworkHistory*>& network_historys) {
-	for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
+	// state_errors.size() could be < than local_state_sizes if is_temp_node
+	for (int l_index = (int)state_errors.size()-1; l_index >= 0; l_index--) {
 		if (this->local_state_sizes[l_index] > 0) {
 			AbstractNetworkHistory* network_history = network_historys.back();
 
@@ -751,7 +743,8 @@ void SolutionNodeEmpty::backprop_state_network_errors_with_no_weight_change(
 void SolutionNodeEmpty::new_path_activate_state_networks(double observations,
 														 vector<vector<double>>& state_vals,
 														 vector<AbstractNetworkHistory*>& network_historys) {
-	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+	// state_vals.size() could be < than local_state_sizes, since it's tied to the explore node
+	for (int l_index = 0; l_index < (int)state_vals.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			vector<double> inputs;
 			inputs.reserve(1+this->local_state_sizes[l_index]);

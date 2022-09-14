@@ -4,13 +4,10 @@ LEFT = 0
 STAY = 1
 RIGHT = 2
 
-NODE_TYPE_START = 0;
-NODE_TYPE_END = 1;
-NODE_TYPE_ACTION = 2;
-NODE_TYPE_IF_START = 3;
-NODE_TYPE_IF_END = 4;
-NODE_TYPE_LOOP_START = 5;
-NODE_TYPE_LOOP_END = 6;
+NODE_TYPE_EMPTY = 0;
+NODE_TYPE_ACTION = 1;
+NODE_TYPE_START_SCOPE = 2;
+NODE_TYPE_JUMP_SCOPE = 3;
 
 def pretty_print_action(action):
 	result = '('
@@ -27,91 +24,130 @@ def pretty_print_action(action):
 
 graph = pydot.Dot(graph_type='digraph', strict=True)
 
-nodes = []
-with open('../error.txt') as file:
-	num_nodes = int(file.readline())
-	for n_index in range(num_nodes):
-		node_is_on = int(file.readline())
-		if node_is_on == 1:
-			node_type = int(file.readline())
-			if node_type == NODE_TYPE_START:
-				next_index = int(file.readline())
-				nodes.append([True, node_type, next_index])
-			elif node_type == NODE_TYPE_END:
-				nodes.append([True, node_type])
-			elif node_type == NODE_TYPE_ACTION:
-				write = float(file.readline())
-				move = int(file.readline())
-				next_index = int(file.readline())
-				nodes.append([True, node_type, [write, move], next_index])
-			elif node_type == NODE_TYPE_IF_START:
-				num_children = int(file.readline())
-				children_indexes = []
-				for c_index in range(num_children):
-					child_node_is_on = int(file.readline())
-					if child_node_is_on == 1:
-						children_indexes.append([True, int(file.readline())])
-					else:
-						children_indexes.append([False])
-				nodes.append([True, node_type, children_indexes])
-			elif node_type == NODE_TYPE_IF_END:
-				next_index = int(file.readline())
-				nodes.append([True, node_type, next_index])
-			elif node_type == NODE_TYPE_LOOP_START:
-				next_index = int(file.readline())
-				nodes.append([True, node_type, next_index])
-			elif node_type == NODE_TYPE_LOOP_END:
-				start_index = int(file.readline())
-				next_index = int(file.readline())
-				nodes.append([True, node_type, start_index, next_index])
+def parse_node(file, node_type):
+	if node_type == NODE_TYPE_EMPTY:
+		return [NODE_TYPE_EMPTY]
+	elif node_type == NODE_TYPE_ACTION:
+		write = float(file.readline())
+		move = int(file.readline())
+		return [NODE_TYPE_ACTION, [write, move]]
+	else:
+		# node_type == NODE_TYPE_JUMP_SCOPE
+		top_path_size = int(file.readline())
+		top_path = []
+		for n_index in range(top_path_size):
+			path_node_type = int(file.readline())
+			path_node = parse_node(file, path_node_type)
+			top_path.append(path_node)
+		num_child = int(file.readline())
+		child_paths = []
+		for c_index in range(num_child):
+			child_path_size = int(file.readline())
+			child_path = []
+			for n_index in range(child_path_size):
+				path_node_type = int(file.readline())
+				path_node = parse_node(file, path_node_type)
+				child_path.append(path_node)
+			child_paths.append(child_path)
+		return [NODE_TYPE_JUMP_SCOPE, top_path, child_paths]
+
+start_scope_path = []
+with open('../solution.txt') as file:
+	path_size = int(file.readline())
+	for n_index in range(path_size):
+		path_node_type = int(file.readline())
+		path_node = parse_node(file, path_node_type)
+		start_scope_path.append(path_node)
+
+global_node_index = 0
+
+def build_graph(node):
+	global global_node_index
+
+	if node[0] == NODE_TYPE_EMPTY:
+		node_index = global_node_index
+		global_node_index += 1
+		display_node = pydot.Node(node_index, label='E')
+		graph.add_node(display_node)
+		return node_index, node_index
+	elif node[0] == NODE_TYPE_ACTION:
+		node_index = global_node_index
+		global_node_index += 1
+		display_node = pydot.Node(node_index, label=pretty_print_action(node[1]))
+		graph.add_node(display_node)
+		return node_index, node_index
+	else:
+		# node[0] == NODE_TYPE_JUMP_SCOPE
+		start_node_index = global_node_index
+		global_node_index += 1
+		if_node_index = global_node_index
+		global_node_index += 1
+		end_node_index = global_node_index
+		global_node_index += 1
+		start_display_node = pydot.Node(start_node_index, label='S')
+		graph.add_node(start_display_node)
+		if_display_node = pydot.Node(if_node_index, label='I')
+		graph.add_node(if_display_node)
+		end_display_node = pydot.Node(end_node_index, label='E')
+		graph.add_node(end_display_node)
+
+		if len(node[1]) == 0:
+			edge = pydot.Edge(start_node_index, if_node_index)
+			graph.add_edge(edge)
 		else:
-			nodes.append([False])
-
-for n_index in range(0, len(nodes)):
-	if nodes[n_index][0]:
-		if nodes[n_index][1] == NODE_TYPE_START:
-			label = 'start'
-		elif nodes[n_index][1] == NODE_TYPE_END:
-			label = 'halt'
-		elif nodes[n_index][1] == NODE_TYPE_ACTION:
-			label = str(n_index) + ' ' + pretty_print_action(nodes[n_index][2])
-		elif nodes[n_index][1] == NODE_TYPE_IF_START:
-			label = str(n_index)
-		elif nodes[n_index][1] == NODE_TYPE_IF_END:
-			label = str(n_index)
-		elif nodes[n_index][1] == NODE_TYPE_LOOP_START:
-			label = str(n_index)
-		elif nodes[n_index][1] == NODE_TYPE_LOOP_END:
-			label = str(n_index)
-		
-		node = pydot.Node(n_index, label=label, color='black')
-		graph.add_node(node)
-
-for n_index in range(0, len(nodes)):
-	if nodes[n_index][0]:
-		if nodes[n_index][1] == NODE_TYPE_START:
-			edge = pydot.Edge(n_index, nodes[n_index][2])
+			curr_path_node_start_index, curr_path_node_end_index = build_graph(node[1][0])
+			edge = pydot.Edge(start_node_index, curr_path_node_start_index)
 			graph.add_edge(edge)
-		elif nodes[n_index][1] == NODE_TYPE_END:
-			pass
-		elif nodes[n_index][1] == NODE_TYPE_ACTION:
-			edge = pydot.Edge(n_index, nodes[n_index][3])
+			for n_index in range(1, len(node[1])):
+				next_path_node_start_index, next_path_node_end_index = build_graph(node[1][n_index])
+				edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
+				graph.add_edge(edge)
+				curr_path_node_start_index = next_path_node_start_index
+				curr_path_node_end_index = next_path_node_end_index
+			edge = pydot.Edge(curr_path_node_end_index, if_node_index)
 			graph.add_edge(edge)
-		elif nodes[n_index][1] == NODE_TYPE_IF_START:
-			for c_index in range(len(nodes[n_index][2])):
-				if nodes[n_index][2][c_index][0]:
-					edge = pydot.Edge(n_index, nodes[n_index][2][c_index][1], label='', color='black')
+
+		for c_index in range(len(node[2])):
+			if len(node[2][c_index]) == 0:
+				edge = pydot.Edge(if_node_index, end_node_index)
+				graph.add_edge(edge)
+			else:
+				curr_path_node_start_index, curr_path_node_end_index = build_graph(node[2][c_index][0])
+				edge = pydot.Edge(if_node_index, curr_path_node_start_index)
+				graph.add_edge(edge)
+				for n_index in range(1, len(node[2][c_index])):
+					next_path_node_start_index, next_path_node_end_index = build_graph(node[2][c_index][n_index])
+					edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
 					graph.add_edge(edge)
-		elif nodes[n_index][1] == NODE_TYPE_IF_END:
-			edge = pydot.Edge(n_index, nodes[n_index][2])
-			graph.add_edge(edge)
-		elif nodes[n_index][1] == NODE_TYPE_LOOP_START:
-			edge = pydot.Edge(n_index, nodes[n_index][2])
-			graph.add_edge(edge)
-		elif nodes[n_index][1] == NODE_TYPE_LOOP_END:
-			edge = pydot.Edge(n_index, nodes[n_index][2])
-			graph.add_edge(edge)
-			edge = pydot.Edge(n_index, nodes[n_index][3])
-			graph.add_edge(edge)
+					curr_path_node_start_index = next_path_node_start_index
+					curr_path_node_end_index = next_path_node_end_index
+				edge = pydot.Edge(curr_path_node_end_index, end_node_index)
+				graph.add_edge(edge)
 
-graph.write_png('error.png')
+		return start_node_index, end_node_index
+
+overall_start_index = global_node_index
+global_node_index += 1
+overall_end_index = global_node_index
+global_node_index += 1
+overall_start_node = pydot.Node(overall_start_index, label='S')
+graph.add_node(overall_start_node)
+overall_end_node = pydot.Node(overall_end_index, label='E')
+graph.add_node(overall_end_node)
+if len(start_scope_path) == 0:
+	edge = pydot.Edge(overall_start_index, overall_end_index)
+	graph.add_edge(edge)
+else:
+	curr_path_node_start_index, curr_path_node_end_index = build_graph(start_scope_path[0])
+	edge = pydot.Edge(overall_start_index, curr_path_node_start_index)
+	graph.add_edge(edge)
+	for n_index in range(1, len(start_scope_path)):
+		next_path_node_start_index, next_path_node_end_index = build_graph(start_scope_path[n_index])
+		edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
+		graph.add_edge(edge)
+		curr_path_node_start_index = next_path_node_start_index
+		curr_path_node_end_index = next_path_node_end_index
+	edge = pydot.Edge(curr_path_node_end_index, overall_end_index)
+	graph.add_edge(edge)
+
+graph.write_png('solution.png')

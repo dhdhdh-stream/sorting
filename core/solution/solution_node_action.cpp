@@ -43,12 +43,6 @@ SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
 									   ifstream& save_file) {
 	this->node_type = NODE_TYPE_ACTION;
 
-	ostringstream node_name_oss;
-	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
-		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
-	}
-	string node_name = node_name_oss.str();
-
 	Action action(save_file);
 	this->action = action;
 
@@ -61,10 +55,16 @@ SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
 		this->local_state_sizes.push_back(stoi(state_size_line));
 	}
 
+	ostringstream node_name_oss;
+	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
+	}
+	string node_name = node_name_oss.str();
+
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			string state_network_name = "../saves/nns/" + node_name + "state_" \
-				+ to_string(l_index) + "_" + to_string(solution->id) + ".txt";
+				+ to_string(l_index) + "_" + to_string(id) + ".txt";
 			ifstream state_network_save_file;
 			state_network_save_file.open(state_network_name);
 			Network* state_network = new Network(state_network_save_file);
@@ -81,7 +81,7 @@ SolutionNodeAction::SolutionNodeAction(vector<int>& scope_states,
 
 	if (scope_states[0] == -1) {
 		// part of solution, not part of action_dictionary
-		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
+		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(id) + ".txt";
 		ifstream score_network_save_file;
 		score_network_save_file.open(score_network_name);
 		this->score_network = new ScoreNetwork(score_network_save_file);
@@ -122,6 +122,7 @@ SolutionNodeAction::~SolutionNodeAction() {
 }
 
 SolutionNode* SolutionNodeAction::re_eval(Problem& problem,
+										  double& predicted_score,
 										  vector<vector<double>>& state_vals,
 										  vector<SolutionNode*>& scopes,
 										  vector<int>& scope_states,
@@ -139,12 +140,13 @@ SolutionNode* SolutionNodeAction::re_eval(Problem& problem,
 	this->score_network->mtx.lock();
 	this->score_network->activate(state_vals,
 								  obs,
+								  predicted_score,
 								  network_historys);
-	double score = this->score_network->output->acti_vals[0];
+	predicted_score += this->score_network->output->acti_vals[0];
 	this->score_network->mtx.unlock();
 
 	instance_history.push_back(ReEvalStepHistory(this,
-												 score,
+												 predicted_score,
 												 -1));
 
 	return this->next;
@@ -160,20 +162,23 @@ void SolutionNodeAction::re_eval_backprop(double score,
 
 	network_history->reset_weights();
 
+	double predicted_score = this->score_network->previous_predicted_score_input->acti_vals[0]
+		+ this->score_network->output->acti_vals[0];
+
 	double misguess;
 	vector<double> errors;
 	if (score == 1.0) {
-		if (this->score_network->output->acti_vals[0] < 1.0) {
-			errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
-			misguess = abs(1.0 - this->score_network->output->acti_vals[0]);
+		if (predicted_score < 1.0) {
+			errors.push_back(1.0 - predicted_score);
+			misguess = abs(1.0 - predicted_score);
 		} else {
 			errors.push_back(0.0);
 			misguess = 0.0;
 		}
 	} else {
-		if (this->score_network->output->acti_vals[0] > 0.0) {
-			errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
-			misguess = abs(0.0 - this->score_network->output->acti_vals[0]);
+		if (predicted_score > 0.0) {
+			errors.push_back(0.0 - predicted_score);
+			misguess = abs(0.0 - predicted_score);
 		} else {
 			errors.push_back(0.0);
 			misguess = 0.0;
@@ -195,6 +200,7 @@ void SolutionNodeAction::re_eval_backprop(double score,
 }
 
 SolutionNode* SolutionNodeAction::explore(Problem& problem,
+										  double& predicted_score,
 										  vector<vector<double>>& state_vals,
 										  vector<SolutionNode*>& scopes,
 										  vector<int>& scope_states,
@@ -234,6 +240,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 
 	if (this->is_temp_node) {
 		if (iter_explore->type == ITER_EXPLORE_TYPE_LEARN_SMALL_BRANCH) {
+			// in LEARN_FOLD, only backpropped new states, but OK to backprop all here
 			activate_state_networks(problem,
 									state_vals,
 									network_historys);
@@ -241,6 +248,7 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 			activate_state_networks(problem,
 									state_vals);
 		} else if (iter_explore->type == EXPLORE_STATE_LEARN_SMALL_REPLACE) {
+			// in LEARN_FOLD, only backpropped new states, but OK to backprop all here
 			activate_state_networks(problem,
 									state_vals,
 									network_historys);
@@ -443,9 +451,21 @@ SolutionNode* SolutionNodeAction::explore(Problem& problem,
 			this->score_network->mtx.lock();
 			this->score_network->activate(state_vals,
 										  obs,
+										  predicted_score,
 										  network_historys);
+			predicted_score += this->score_network->output->acti_vals[0];
 			this->score_network->mtx.unlock();
 		}
+	} else {
+		vector<double> obs;
+		obs.push_back(problem.get_observation());
+
+		this->score_network->mtx.lock();
+		this->score_network->activate(state_vals,
+									  obs,
+									  predicted_score);
+		predicted_score += this->score_network->output->acti_vals[0];
+		this->score_network->mtx.unlock();
 	}
 
 	// push StepHistory early for new_state check
@@ -502,20 +522,23 @@ void SolutionNodeAction::explore_backprop(double score,
 
 			network_history->reset_weights();
 
+			double predicted_score = this->score_network->previous_predicted_score_input->acti_vals[0]
+				+ this->score_network->output->acti_vals[0];
+
 			double misguess;
 			vector<double> errors;
 			if (score == 1.0) {
-				if (this->score_network->output->acti_vals[0] < 1.0) {
-					errors.push_back(1.0 - this->score_network->output->acti_vals[0]);
-					misguess = abs(1.0 - this->score_network->output->acti_vals[0]);
+				if (predicted_score < 1.0) {
+					errors.push_back(1.0 - predicted_score);
+					misguess = abs(1.0 - predicted_score);
 				} else {
 					errors.push_back(0.0);
 					misguess = 0.0;
 				}
 			} else {
-				if (this->score_network->output->acti_vals[0] > 0.0) {
-					errors.push_back(0.0 - this->score_network->output->acti_vals[0]);
-					misguess = abs(0.0 - this->score_network->output->acti_vals[0]);
+				if (predicted_score > 0.0) {
+					errors.push_back(0.0 - predicted_score);
+					misguess = abs(0.0 - predicted_score);
 				} else {
 					errors.push_back(0.0);
 					misguess = 0.0;
@@ -642,7 +665,7 @@ void SolutionNodeAction::initialize_local_state(vector<int>& explore_node_local_
 			this->state_networks.insert(this->state_networks.begin()+l_index,
 				new Network(1+explore_node_local_state_sizes[l_index],
 							4*(1+explore_node_local_state_sizes[l_index]),
-							1));
+							explore_node_local_state_sizes[l_index]));
 		} else {
 			this->state_networks.insert(this->state_networks.begin()+l_index, NULL);
 		}
@@ -770,7 +793,7 @@ void SolutionNodeAction::save(vector<int>& scope_states,
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			string state_network_name = "../saves/nns/" + node_name + "state_" \
-				+ to_string(l_index) + "_" + to_string(solution->id) + ".txt";
+				+ to_string(l_index) + "_" + to_string(id) + ".txt";
 			ofstream state_network_save_file;
 			state_network_save_file.open(state_network_name);
 			this->state_networks[l_index]->save(state_network_save_file);
@@ -782,7 +805,7 @@ void SolutionNodeAction::save(vector<int>& scope_states,
 
 	if (scope_states[0] == -1) {
 		// part of solution, not part of action_dictionary
-		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(solution->id) + ".txt";
+		string score_network_name = "../saves/nns/" + node_name + "score_" + to_string(id) + ".txt";
 		ofstream score_network_save_file;
 		score_network_save_file.open(score_network_name);
 		this->score_network->save(score_network_save_file);
@@ -796,7 +819,8 @@ void SolutionNodeAction::save(vector<int>& scope_states,
 }
 
 void SolutionNodeAction::save_for_display(ofstream& save_file) {
-
+	this->action.save(save_file);
+	save_file << this->explore_weight << endl;
 }
 
 void SolutionNodeAction::activate_state_networks(Problem& problem,
@@ -885,7 +909,8 @@ void SolutionNodeAction::activate_state_network(Problem& problem,
 
 void SolutionNodeAction::backprop_state_networks(vector<vector<double>>& state_errors,
 												 vector<AbstractNetworkHistory*>& network_historys) {
-	for (int l_index = (int)this->local_state_sizes.size()-1; l_index >= 0; l_index--) {
+	// state_errors.size() could be < than local_state_sizes if is_temp_node
+	for (int l_index = (int)state_errors.size()-1; l_index >= 0; l_index--) {
 		if (this->local_state_sizes[l_index] > 0) {
 			AbstractNetworkHistory* network_history = network_historys.back();
 
@@ -934,7 +959,8 @@ void SolutionNodeAction::backprop_state_network_errors_with_no_weight_change(
 void SolutionNodeAction::new_path_activate_state_networks(double observations,
 														  vector<vector<double>>& state_vals,
 														  vector<AbstractNetworkHistory*>& network_historys) {
-	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+	// state_vals.size() could be < than local_state_sizes, since it's tied to the explore node
+	for (int l_index = 0; l_index < (int)state_vals.size(); l_index++) {
 		if (this->local_state_sizes[l_index] > 0) {
 			vector<double> inputs;
 			inputs.reserve(1+this->local_state_sizes[l_index]);

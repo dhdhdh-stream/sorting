@@ -116,6 +116,7 @@ public:
 	virtual ~SolutionNode();	// needs to be recursive
 
 	virtual SolutionNode* re_eval(Problem& problem,
+								  double& predicted_score,
 								  std::vector<std::vector<double>>& state_vals,
 								  std::vector<SolutionNode*>& scopes,
 								  std::vector<int>& scope_states,
@@ -126,6 +127,7 @@ public:
 								  std::vector<ReEvalStepHistory>& instance_history,
 								  std::vector<AbstractNetworkHistory*>& network_historys) = 0;
 	virtual SolutionNode* explore(Problem& problem,
+								  double& predicted_score,
 								  std::vector<std::vector<double>>& state_vals,
 								  std::vector<SolutionNode*>& scopes,
 								  std::vector<int>& scope_states,

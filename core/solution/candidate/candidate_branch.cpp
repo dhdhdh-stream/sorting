@@ -58,8 +58,8 @@ void CandidateBranch::apply() {
 		for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
 			original_path_child.push_back(parent_start->path[n_index]);
 		}
-		new_scope->children_nodes.push_back(original_path_child);
-		new_scope->children_nodes.push_back(this->explore_path);
+		new_scope->child_paths.push_back(original_path_child);
+		new_scope->child_paths.push_back(this->explore_path);
 
 		if (this->parent_jump_scope_start_non_inclusive_index != -1) {
 			parent_start->path[this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
@@ -88,8 +88,8 @@ void CandidateBranch::apply() {
 			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
 				original_path_child.push_back(parent_jump->top_path[n_index]);
 			}
-			new_scope->children_nodes.push_back(original_path_child);
-			new_scope->children_nodes.push_back(this->explore_path);
+			new_scope->child_paths.push_back(original_path_child);
+			new_scope->child_paths.push_back(this->explore_path);
 
 			if (this->parent_jump_scope_start_non_inclusive_index != -1) {
 				parent_jump->top_path[this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
@@ -111,38 +111,38 @@ void CandidateBranch::apply() {
 		} else {
 			// this->explore_node->scope_location == SCOPE_LOCATION_BRANCH
 			for (int n_index = this->parent_jump_scope_start_non_inclusive_index+1; n_index <= this->explore_node->scope_node_index; n_index++) {
-				new_scope->top_path.push_back(parent_jump->children_nodes[explore_node->scope_child_index][n_index]);
+				new_scope->top_path.push_back(parent_jump->child_paths[explore_node->scope_child_index][n_index]);
 			}
 			vector<SolutionNode*> original_path_child;
 			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
-				original_path_child.push_back(parent_jump->children_nodes[explore_node->scope_child_index][n_index]);
+				original_path_child.push_back(parent_jump->child_paths[explore_node->scope_child_index][n_index]);
 			}
-			new_scope->children_nodes.push_back(original_path_child);
-			new_scope->children_nodes.push_back(this->explore_path);
+			new_scope->child_paths.push_back(original_path_child);
+			new_scope->child_paths.push_back(this->explore_path);
 
 			if (this->parent_jump_scope_start_non_inclusive_index != -1) {
-				parent_jump->children_nodes[explore_node->scope_child_index][
+				parent_jump->child_paths[explore_node->scope_child_index][
 					this->parent_jump_scope_start_non_inclusive_index]->next = new_scope;
 			}
-			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
+			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->child_paths[explore_node->scope_child_index].size()) {
 				new_scope->next = parent_jump;
 			} else {
-				new_scope->next = parent_jump->children_nodes[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
+				new_scope->next = parent_jump->child_paths[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
 			}
-			parent_jump->children_nodes[explore_node->scope_child_index].erase(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin()
+			parent_jump->child_paths[explore_node->scope_child_index].erase(
+				parent_jump->child_paths[explore_node->scope_child_index].begin()
 					+ this->parent_jump_scope_start_non_inclusive_index + 1,
-				parent_jump->children_nodes[explore_node->scope_child_index].begin()
+				parent_jump->child_paths[explore_node->scope_child_index].begin()
 					+ this->parent_jump_end_non_inclusive_index);
-			parent_jump->children_nodes[explore_node->scope_child_index].insert(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin()
+			parent_jump->child_paths[explore_node->scope_child_index].insert(
+				parent_jump->child_paths[explore_node->scope_child_index].begin()
 					+ this->parent_jump_scope_start_non_inclusive_index + 1,
 				new_scope);
 			new_scope->parent_scope = parent_jump;
 			new_scope->scope_location = SCOPE_LOCATION_BRANCH;
 			new_scope->scope_child_index = explore_node->scope_child_index;
-			for (int n_index = 0; n_index < (int)parent_jump->children_nodes[explore_node->scope_child_index].size(); n_index++) {
-				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->scope_node_index = n_index;
+			for (int n_index = 0; n_index < (int)parent_jump->child_paths[explore_node->scope_child_index].size(); n_index++) {
+				parent_jump->child_paths[explore_node->scope_child_index][n_index]->scope_node_index = n_index;
 			}
 		}
 	}
@@ -171,32 +171,32 @@ void CandidateBranch::apply() {
 		}
 	}
 
-	for (int n_index = 0; n_index < (int)new_scope->children_nodes[0].size(); n_index++) {
-		new_scope->children_nodes[0][n_index]->parent_scope = new_scope;
-		new_scope->children_nodes[0][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
-		new_scope->children_nodes[0][n_index]->scope_child_index = 0;
-		new_scope->children_nodes[0][n_index]->scope_node_index = n_index;
+	for (int n_index = 0; n_index < (int)new_scope->child_paths[0].size(); n_index++) {
+		new_scope->child_paths[0][n_index]->parent_scope = new_scope;
+		new_scope->child_paths[0][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
+		new_scope->child_paths[0][n_index]->scope_child_index = 0;
+		new_scope->child_paths[0][n_index]->scope_node_index = n_index;
 	}
-	if (new_scope->children_nodes[0].size() > 0) {
-		new_scope->children_nodes[0][new_scope->children_nodes[0].size()-1]->next = new_scope;
+	if (new_scope->child_paths[0].size() > 0) {
+		new_scope->child_paths[0][new_scope->child_paths[0].size()-1]->next = new_scope;
 	}
-	for (int n_index = 0; n_index < (int)new_scope->children_nodes[0].size(); n_index++) {
-		new_scope->children_nodes[0][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
-	}
-
-	for (int n_index = 0; n_index < (int)new_scope->children_nodes[1].size(); n_index++) {
-		new_scope->children_nodes[1][n_index]->parent_scope = new_scope;
-		new_scope->children_nodes[1][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
-		new_scope->children_nodes[1][n_index]->scope_child_index = 1;
-		new_scope->children_nodes[1][n_index]->scope_node_index = n_index;
-	}
-	new_scope->children_nodes[1][new_scope->children_nodes[1].size()-1]->next = new_scope;
-	for (int n_index = 0; n_index < (int)new_scope->children_nodes[1].size(); n_index++) {
-		new_scope->children_nodes[1][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
+	for (int n_index = 0; n_index < (int)new_scope->child_paths[0].size(); n_index++) {
+		new_scope->child_paths[0][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
 	}
 
-	new_scope->children_score_networks.push_back(this->small_no_jump_score_network);
-	new_scope->children_score_networks.push_back(this->small_jump_score_network);
+	for (int n_index = 0; n_index < (int)new_scope->child_paths[1].size(); n_index++) {
+		new_scope->child_paths[1][n_index]->parent_scope = new_scope;
+		new_scope->child_paths[1][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
+		new_scope->child_paths[1][n_index]->scope_child_index = 1;
+		new_scope->child_paths[1][n_index]->scope_node_index = n_index;
+	}
+	new_scope->child_paths[1][new_scope->child_paths[1].size()-1]->next = new_scope;
+	for (int n_index = 0; n_index < (int)new_scope->child_paths[1].size(); n_index++) {
+		new_scope->child_paths[1][n_index]->insert_scope((int)new_scope->local_state_sizes.size(), 0);
+	}
+
+	new_scope->child_score_networks.push_back(this->small_no_jump_score_network);
+	new_scope->child_score_networks.push_back(this->small_jump_score_network);
 
 	vector<SolutionNode*> scope_action;
 	scope_action.push_back(new_scope->deep_copy((int)new_scope->local_state_sizes.size()));

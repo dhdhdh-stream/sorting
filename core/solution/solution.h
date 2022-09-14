@@ -8,8 +8,6 @@
 
 class Solution {
 public:
-	long int id;
-
 	StartScope* start_scope;
 
 	double average_score;
@@ -18,13 +16,6 @@ public:
 	int explore_iters;
 
 	std::mutex display_mtx;
-
-	std::vector<std::vector<double>>* heap_state_vals;
-	std::vector<SolutionNode*>* heap_scopes;
-	std::vector<int>* heap_scope_states;
-	std::vector<int>* heap_scope_locations;
-	std::vector<AbstractNetworkHistory*>* heap_network_historys;
-	std::vector<std::vector<double>>* heap_state_errors;
 
 	Solution();
 	Solution(std::ifstream& save_file);

@@ -31,7 +31,7 @@ void new_random_scope(SolutionNode* explore_node,
 		} else {
 			parent_jump_end_non_inclusive_index = \
 				explore_node->scope_node_index + 1 \
-				+ rand()%((int)parent_jump->children_nodes[explore_node->scope_child_index].size() - explore_node->scope_node_index);
+				+ rand()%((int)parent_jump->child_paths[explore_node->scope_child_index].size() - explore_node->scope_node_index);
 		}
 	}
 }
@@ -45,7 +45,7 @@ void new_random_path(vector<SolutionNode*>& explore_path,
 	} {
 		seq_length = 1 + seq_length_dist(generator);
 	}
-	seq_length = 2;
+	seq_length = 1;
 
 	if (seq_length == 0) {
 		vector<int> empty_local_state_size;
@@ -113,7 +113,7 @@ void get_existing_path(SolutionNode* explore_node,
 			// explore_node->scope_location == SCOPE_LOCATION_BRANCH
 			for (int n_index = explore_node->parent_jump_scope_start_non_inclusive_index+1;
 					n_index <= explore_node->scope_node_index; n_index++) {
-				existing_path.push_back(parent_jump->children_nodes[explore_node->scope_child_index][n_index]);
+				existing_path.push_back(parent_jump->child_paths[explore_node->scope_child_index][n_index]);
 			}
 		}
 	}
@@ -136,7 +136,7 @@ void get_replacement_path(SolutionNode* explore_node,
 		} else {
 			// explore_node->scope_location == SCOPE_LOCATION_BRANCH
 			for (int n_index = explore_node->scope_node_index+1; n_index < explore_node->parent_jump_end_non_inclusive_index; n_index++) {
-				replacement_path.push_back(parent_jump->children_nodes[explore_node->scope_child_index][n_index]);
+				replacement_path.push_back(parent_jump->child_paths[explore_node->scope_child_index][n_index]);
 			}
 		}
 	}
@@ -204,7 +204,7 @@ SolutionNode* get_jump_scope_start(SolutionNode* explore_node) {
 			return parent_jump->top_path[explore_node->parent_jump_scope_start_non_inclusive_index];
 		} else {
 			// explore_node->scope_location == SCOPE_LOCATION_BRANCH
-			return parent_jump->children_nodes[explore_node->scope_child_index][explore_node->parent_jump_scope_start_non_inclusive_index];
+			return parent_jump->child_paths[explore_node->scope_child_index][explore_node->parent_jump_scope_start_non_inclusive_index];
 		}
 	}
 }
@@ -237,10 +237,10 @@ SolutionNode* get_jump_end(IterExplore* iter_explore,
 		} else {
 			// explore_node->scope_location == SCOPE_LOCATION_BRANCH
 			if (parent_jump_end_non_inclusive_index \
-					>= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
+					>= (int)parent_jump->child_paths[explore_node->scope_child_index].size()) {
 				return parent_jump;
 			} else {
-				return parent_jump->children_nodes[explore_node->scope_child_index][parent_jump_end_non_inclusive_index];
+				return parent_jump->child_paths[explore_node->scope_child_index][parent_jump_end_non_inclusive_index];
 			}
 		}
 	}

@@ -39,12 +39,6 @@ JumpScope::JumpScope(std::vector<int>& scope_states,
 					 std::ifstream& save_file) {
 	this->node_type = NODE_TYPE_JUMP_SCOPE;
 
-	ostringstream node_name_oss;
-	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
-		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
-	}
-	string node_name = node_name_oss.str();
-
 	string num_local_state_sizes_line;
 	getline(save_file, num_local_state_sizes_line);
 	int num_local_state_sizes = stoi(num_local_state_sizes_line);
@@ -54,20 +48,26 @@ JumpScope::JumpScope(std::vector<int>& scope_states,
 		this->local_state_sizes.push_back(stoi(state_size_line));
 	}
 
+	ostringstream node_name_oss;
+	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+		node_name_oss << scope_states[l_index] << "_" << scope_locations[l_index] << "_";
+	}
+	string node_name = node_name_oss.str();
+
 	string num_states_line;
 	getline(save_file, num_states_line);
 	this->num_states = stoi(num_states_line);
 
-	string num_children_line;
-	getline(save_file, num_children_line);
-	int num_children = stoi(num_children_line);
-	for (int c_index = 0; c_index < num_children; c_index++) {
+	string num_child_line;
+	getline(save_file, num_child_line);
+	int num_child = stoi(num_child_line);
+	for (int c_index = 0; c_index < num_child; c_index++) {
 		string child_score_network_name = "../saves/nns/" + node_name + "child_" \
-			+ to_string(c_index) + "_" + to_string(solution->id) + ".txt";
+			+ to_string(c_index) + "_" + to_string(id) + ".txt";
 		ifstream child_score_network_save_file;
 		child_score_network_save_file.open(child_score_network_name);
 		Network* child_score_network = new Network(child_score_network_save_file);
-		this->children_score_networks.push_back(child_score_network);
+		this->child_score_networks.push_back(child_score_network);
 		child_score_network_save_file.close();
 	}
 
@@ -107,15 +107,28 @@ JumpScope::JumpScope(std::vector<int>& scope_states,
 		this->top_path.push_back(new_node);
 	}
 
-	for (int c_index = 0; c_index < num_children; c_index++) {
-		string children_nodes_size_line;
-		getline(save_file, children_nodes_size_line);
-		int children_nodes_size = stoi(children_nodes_size_line);
-		this->children_nodes.push_back(vector<SolutionNode*>());
-		this->children_nodes[c_index].reserve(children_nodes_size);
+	for (int n_index = 0; n_index < (int)this->top_path.size(); n_index++) {
+		this->top_path[n_index]->parent_scope = this;
+		this->top_path[n_index]->scope_location = SCOPE_LOCATION_TOP;
+		this->top_path[n_index]->scope_child_index = -1;
+		this->top_path[n_index]->scope_node_index = n_index;
+	}
+	for (int n_index = 0; n_index < (int)this->top_path.size()-1; n_index++) {
+		this->top_path[n_index]->next = this->top_path[n_index+1];
+	}
+	if (this->top_path.size() > 0) {
+		this->top_path[this->top_path.size()-1]->next = this;
+	}
+
+	for (int c_index = 0; c_index < num_child; c_index++) {
+		string child_paths_size_line;
+		getline(save_file, child_paths_size_line);
+		int child_paths_size = stoi(child_paths_size_line);
+		this->child_paths.push_back(vector<SolutionNode*>());
+		this->child_paths[c_index].reserve(child_paths_size);
 		scope_states.back() = c_index;
 		scope_locations.back() = 0;
-		for (int n_index = 0; n_index < children_nodes_size; n_index++) {
+		for (int n_index = 0; n_index < child_paths_size; n_index++) {
 			string node_type_line;
 			getline(save_file, node_type_line);
 			int node_type = stoi(node_type_line);
@@ -134,7 +147,20 @@ JumpScope::JumpScope(std::vector<int>& scope_states,
 										 scope_locations,
 										 save_file);
 			}
-			this->children_nodes[c_index].push_back(new_node);
+			this->child_paths[c_index].push_back(new_node);
+		}
+
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->parent_scope = this;
+			this->child_paths[c_index][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
+			this->child_paths[c_index][n_index]->scope_child_index = c_index;
+			this->child_paths[c_index][n_index]->scope_node_index = n_index;
+		}
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size()-1; n_index++) {
+			this->child_paths[c_index][n_index]->next = this->child_paths[c_index][n_index+1];
+		}
+		if (this->child_paths[c_index].size() > 0) {
+			this->child_paths[c_index][this->child_paths[c_index].size()-1]->next = this;
 		}
 	}
 
@@ -159,16 +185,17 @@ JumpScope::~JumpScope() {
 		delete this->top_path[n_index];
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			delete this->children_nodes[c_index][n_index];
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			delete this->child_paths[c_index][n_index];
 		}
 
-		delete this->children_score_networks[c_index];
+		delete this->child_score_networks[c_index];
 	}
 }
 
 SolutionNode* JumpScope::re_eval(Problem& problem,
+								 double& predicted_score,
 								 vector<vector<double>>& state_vals,
 								 vector<SolutionNode*>& scopes,
 								 vector<int>& scope_states,
@@ -197,12 +224,12 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 	if (scope_states.back() == -1) {
 		// if condition
 		if (rand()%10 == 0) {
-			int random_index = rand()%(int)this->children_nodes.size();
+			int random_index = rand()%(int)this->child_paths.size();
 			vector<double> inputs = state_vals.back();
 			inputs.push_back(problem.get_observation());
-			this->children_score_networks[random_index]->mtx.lock();
-			this->children_score_networks[random_index]->activate(inputs, network_historys);
-			this->children_score_networks[random_index]->mtx.unlock();
+			this->child_score_networks[random_index]->mtx.lock();
+			this->child_score_networks[random_index]->activate(inputs, network_historys);
+			this->child_score_networks[random_index]->mtx.unlock();
 
 			state_vals.back().clear();
 
@@ -212,17 +239,17 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 														 0.0,
 														 JUMP_SCOPE_STATE_IF));
 
-			if (this->children_nodes[random_index].size() > 0) {
-				return this->children_nodes[random_index][0];
+			if (this->child_paths[random_index].size() > 0) {
+				return this->child_paths[random_index][0];
 			}
 		} else {
 			int best_index;
 			double best_score;
-			activate_children_networks(problem,
-									   state_vals.back(),
-									   best_index,
-									   best_score,
-									   network_historys);
+			activate_child_networks(problem,
+									state_vals.back(),
+									best_index,
+									best_score,
+									network_historys);
 
 			state_vals.back().clear();
 
@@ -232,8 +259,8 @@ SolutionNode* JumpScope::re_eval(Problem& problem,
 														 0.0,
 														 JUMP_SCOPE_STATE_IF));
 
-			if (this->children_nodes[best_index].size() > 0) {
-				return this->children_nodes[best_index][0];
+			if (this->child_paths[best_index].size() > 0) {
+				return this->child_paths[best_index][0];
 			}
 		}
 	}
@@ -264,9 +291,9 @@ void JumpScope::re_eval_backprop(double score,
 			state_errors.back().push_back(0.0);
 		}
 
-		backprop_children_networks(score,
-								   state_errors.back(),
-								   network_historys);
+		backprop_child_networks(score,
+								state_errors.back(),
+								network_historys);
 	} else {
 		// instance_history.back().scope_state == JUMP_SCOPE_STATE_EXIT
 		state_errors.pop_back();
@@ -277,6 +304,7 @@ void JumpScope::re_eval_backprop(double score,
 }
 
 SolutionNode* JumpScope::explore(Problem& problem,
+								 double& predicted_score,
 								 vector<vector<double>>& state_vals,
 								 vector<SolutionNode*>& scopes,
 								 vector<int>& scope_states,
@@ -355,17 +383,17 @@ SolutionNode* JumpScope::explore(Problem& problem,
 
 		if (state_affected) {
 			if (rand()%2 == 0) {
-				int random_index = rand()%(int)this->children_nodes.size();
+				int random_index = rand()%(int)this->child_paths.size();
 				vector<double> inputs = state_vals.back();
 				inputs.push_back(problem.get_observation());
 				if (should_backprop) {
-					this->children_score_networks[random_index]->mtx.lock();
-					this->children_score_networks[random_index]->activate(inputs, network_historys);
-					this->children_score_networks[random_index]->mtx.unlock();
+					this->child_score_networks[random_index]->mtx.lock();
+					this->child_score_networks[random_index]->activate(inputs, network_historys);
+					this->child_score_networks[random_index]->mtx.unlock();
 				} else {
-					this->children_score_networks[random_index]->mtx.lock();
-					this->children_score_networks[random_index]->activate(inputs);
-					this->children_score_networks[random_index]->mtx.unlock();
+					this->child_score_networks[random_index]->mtx.lock();
+					this->child_score_networks[random_index]->activate(inputs);
+					this->child_score_networks[random_index]->mtx.unlock();
 				}
 				// don't abandon even if predicted score > 1.0
 
@@ -381,23 +409,23 @@ SolutionNode* JumpScope::explore(Problem& problem,
 															  -1,
 															  false));
 
-				if (this->children_nodes[random_index].size() > 0) {
-					return this->children_nodes[random_index][0];
+				if (this->child_paths[random_index].size() > 0) {
+					return this->child_paths[random_index][0];
 				}
 			} else {
 				int best_index;
 				double best_score;
 				if (should_backprop) {
-					activate_children_networks(problem,
-											   state_vals.back(),
-											   best_index,
-											   best_score,
-											   network_historys);
+					activate_child_networks(problem,
+											state_vals.back(),
+											best_index,
+											best_score,
+											network_historys);
 				} else {
-					activate_children_networks(problem,
-											   state_vals.back(),
-											   best_index,
-											   best_score);
+					activate_child_networks(problem,
+											state_vals.back(),
+											best_index,
+											best_score);
 				}
 				// don't abandon even if predicted score > 1.0
 
@@ -413,17 +441,17 @@ SolutionNode* JumpScope::explore(Problem& problem,
 															  -1,
 															  false));
 
-				if (this->children_nodes[best_index].size() > 0) {
-					return this->children_nodes[best_index][0];
+				if (this->child_paths[best_index].size() > 0) {
+					return this->child_paths[best_index][0];
 				}
 			}
 		} else {
 			int best_index;
 			double best_score;
-			activate_children_networks(problem,
-									   state_vals.back(),
-									   best_index,
-									   best_score);
+			activate_child_networks(problem,
+									state_vals.back(),
+									best_index,
+									best_score);
 			// TODO: break if predicted score > 1.0
 
 			state_vals.back().clear();
@@ -438,8 +466,8 @@ SolutionNode* JumpScope::explore(Problem& problem,
 														  -1,
 														  false));
 
-			if (this->children_nodes[best_index].size() > 0) {
-				return this->children_nodes[best_index][0];
+			if (this->child_paths[best_index].size() > 0) {
+				return this->child_paths[best_index][0];
 			}
 		}
 	}
@@ -515,9 +543,9 @@ void JumpScope::explore_backprop(double score,
 			state_errors.back().push_back(0.0);
 		}
 
-		backprop_children_networks_errors_with_no_weight_change(score,
-																state_errors.back(),
-																network_historys);
+		backprop_child_networks_errors_with_no_weight_change(score,
+															 state_errors.back(),
+															 network_historys);
 	} else {
 		// instance_history.back()->scope_state == JUMP_SCOPE_STATE_EXIT
 		state_errors.pop_back();
@@ -540,9 +568,9 @@ void JumpScope::re_eval_increment() {
 		this->top_path[n_index]->re_eval_increment();
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->re_eval_increment();
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->re_eval_increment();
 		}
 	}
 }
@@ -569,25 +597,25 @@ SolutionNode* JumpScope::deep_copy(int inclusive_start_layer) {
 		copy->top_path[copy->top_path.size()-1]->next = copy;
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		copy->children_nodes.push_back(vector<SolutionNode*>());
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			copy->children_nodes[c_index].push_back(this->children_nodes[c_index][n_index]->deep_copy(inclusive_start_layer));
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		copy->child_paths.push_back(vector<SolutionNode*>());
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			copy->child_paths[c_index].push_back(this->child_paths[c_index][n_index]->deep_copy(inclusive_start_layer));
 		}
-		for (int n_index = 0; n_index < (int)copy->children_nodes[c_index].size(); n_index++) {
-			copy->children_nodes[c_index][n_index]->parent_scope = copy;
-			copy->children_nodes[c_index][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
-			copy->children_nodes[c_index][n_index]->scope_child_index = c_index;
-			copy->children_nodes[c_index][n_index]->scope_node_index = n_index;
+		for (int n_index = 0; n_index < (int)copy->child_paths[c_index].size(); n_index++) {
+			copy->child_paths[c_index][n_index]->parent_scope = copy;
+			copy->child_paths[c_index][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
+			copy->child_paths[c_index][n_index]->scope_child_index = c_index;
+			copy->child_paths[c_index][n_index]->scope_node_index = n_index;
 		}
-		for (int n_index = 0; n_index < (int)copy->children_nodes[c_index].size()-1; n_index++) {
-			copy->children_nodes[c_index][n_index]->next = copy->children_nodes[c_index][n_index+1];
+		for (int n_index = 0; n_index < (int)copy->child_paths[c_index].size()-1; n_index++) {
+			copy->child_paths[c_index][n_index]->next = copy->child_paths[c_index][n_index+1];
 		}
-		if (copy->children_nodes[c_index].size() > 0) {
-			copy->children_nodes[c_index][copy->children_nodes[c_index].size()-1]->next = copy;
+		if (copy->child_paths[c_index].size() > 0) {
+			copy->child_paths[c_index][copy->child_paths[c_index].size()-1]->next = copy;
 		}
 
-		copy->children_score_networks.push_back(new Network(this->children_score_networks[c_index]));
+		copy->child_score_networks.push_back(new Network(this->child_score_networks[c_index]));
 	}
 
 	return copy;
@@ -600,9 +628,9 @@ void JumpScope::set_is_temp_node(bool is_temp_node) {
 		this->top_path[n_index]->set_is_temp_node(is_temp_node);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->set_is_temp_node(is_temp_node);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->set_is_temp_node(is_temp_node);
 		}
 	}
 }
@@ -615,9 +643,9 @@ void JumpScope::initialize_local_state(vector<int>& explore_node_local_state_siz
 		this->top_path[n_index]->initialize_local_state(explore_node_local_state_sizes);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->initialize_local_state(explore_node_local_state_sizes);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->initialize_local_state(explore_node_local_state_sizes);
 		}
 	}
 }
@@ -631,9 +659,9 @@ void JumpScope::setup_flat(vector<int>& loop_scope_counts,
 											explore_node);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->setup_flat(loop_scope_counts,
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->setup_flat(loop_scope_counts,
 															   curr_index,
 															   explore_node);
 		}
@@ -647,10 +675,10 @@ void JumpScope::setup_new_state(SolutionNode* explore_node,
 												 new_state_size);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->setup_new_state(explore_node,
-																	new_state_size);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->setup_new_state(explore_node,
+																 new_state_size);
 		}
 	}
 }
@@ -660,9 +688,9 @@ void JumpScope::get_min_misguess(double& min_misguess) {
 		this->top_path[n_index]->get_min_misguess(min_misguess);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->get_min_misguess(min_misguess);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->get_min_misguess(min_misguess);
 		}
 	}
 }
@@ -672,9 +700,9 @@ void JumpScope::cleanup_explore(SolutionNode* explore_node) {
 		this->top_path[n_index]->cleanup_explore(explore_node);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->cleanup_explore(explore_node);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->cleanup_explore(explore_node);
 		}
 	}
 }
@@ -688,9 +716,9 @@ void JumpScope::collect_new_state_networks(SolutionNode* explore_node,
 															new_state_networks);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->collect_new_state_networks(explore_node,
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->collect_new_state_networks(explore_node,
 																			   existing_nodes,
 																			   new_state_networks);
 		}
@@ -706,10 +734,10 @@ void JumpScope::insert_scope(int layer,
 											  new_state_size);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->insert_scope(layer,
-																 new_state_size);
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->insert_scope(layer,
+															  new_state_size);
 		}
 	}
 }
@@ -752,9 +780,9 @@ void JumpScope::reset_explore() {
 		this->top_path[n_index]->reset_explore();
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			this->children_nodes[c_index][n_index]->reset_explore();
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			this->child_paths[c_index][n_index]->reset_explore();
 		}
 	}
 }
@@ -774,13 +802,13 @@ void JumpScope::save(std::vector<int>& scope_states,
 	}
 	save_file << this->num_states << endl;
 
-	save_file << this->children_nodes.size() << endl;
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+	save_file << this->child_paths.size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
 		string child_score_network_name = "../saves/nns/" + node_name + "child_" \
-			+ to_string(c_index) + "_" + to_string(solution->id) + ".txt";
+			+ to_string(c_index) + "_" + to_string(id) + ".txt";
 		ofstream child_score_network_save_file;
 		child_score_network_save_file.open(child_score_network_name);
-		this->children_score_networks[c_index]->save(child_score_network_save_file);
+		this->child_score_networks[c_index]->save(child_score_network_save_file);
 		child_score_network_save_file.close();
 	}
 
@@ -798,15 +826,15 @@ void JumpScope::save(std::vector<int>& scope_states,
 									  save_file);
 	}
 
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		save_file << this->children_nodes[c_index].size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		save_file << this->child_paths[c_index].size() << endl;
 		scope_states.back() = c_index;
 		scope_locations.back() = 0;
-		for (int n_index = 0; n_index < (int)this->children_nodes[c_index].size(); n_index++) {
-			save_file << this->children_nodes[c_index][n_index]->node_type << endl;
-			this->children_nodes[c_index][n_index]->save(scope_states,
-														 scope_locations,
-														 save_file);
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			save_file << this->child_paths[c_index][n_index]->node_type << endl;
+			this->child_paths[c_index][n_index]->save(scope_states,
+													  scope_locations,
+													  save_file);
 		}
 	}
 
@@ -817,13 +845,28 @@ void JumpScope::save(std::vector<int>& scope_states,
 }
 
 void JumpScope::save_for_display(std::ofstream& save_file) {
+	save_file << this->explore_weight << endl;
 
+	save_file << this->top_path.size() << endl;
+	for (int n_index = 0; n_index < (int)this->top_path.size(); n_index++) {
+		save_file << this->top_path[n_index]->node_type << endl;
+		this->top_path[n_index]->save_for_display(save_file);
+	}
+
+	save_file << this->child_paths.size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		save_file << this->child_paths[c_index].size() << endl;
+		for (int n_index = 0; n_index < (int)this->child_paths[c_index].size(); n_index++) {
+			save_file << this->child_paths[c_index][n_index]->node_type << endl;
+			this->child_paths[c_index][n_index]->save_for_display(save_file);
+		}
+	}
 }
 
-void JumpScope::activate_children_networks(Problem& problem,
-										   vector<double>& layer_state_vals,
-										   int& best_index,
-										   double& best_score) {
+void JumpScope::activate_child_networks(Problem& problem,
+										vector<double>& layer_state_vals,
+										int& best_index,
+										double& best_score) {
 	vector<double> inputs;
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
@@ -832,11 +875,11 @@ void JumpScope::activate_children_networks(Problem& problem,
 	}
 
 	best_score = numeric_limits<double>::lowest();
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
-		this->children_score_networks[c_index]->mtx.lock();
-		this->children_score_networks[c_index]->activate(inputs);
-		double predicted_score = this->children_score_networks[c_index]->output->acti_vals[0];
-		this->children_score_networks[c_index]->mtx.unlock();
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
+		this->child_score_networks[c_index]->mtx.lock();
+		this->child_score_networks[c_index]->activate(inputs);
+		double predicted_score = this->child_score_networks[c_index]->output->acti_vals[0];
+		this->child_score_networks[c_index]->mtx.unlock();
 
 		if (predicted_score > best_score) {
 			best_index = c_index;
@@ -845,11 +888,11 @@ void JumpScope::activate_children_networks(Problem& problem,
 	}
 }
 
-void JumpScope::activate_children_networks(Problem& problem,
-										   vector<double>& layer_state_vals,
-										   int& best_index,
-										   double& best_score,
-										   vector<AbstractNetworkHistory*>& network_historys) {
+void JumpScope::activate_child_networks(Problem& problem,
+										vector<double>& layer_state_vals,
+										int& best_index,
+										double& best_score,
+										vector<AbstractNetworkHistory*>& network_historys) {
 	vector<double> inputs;
 	double curr_observations = problem.get_observation();
 	inputs.push_back(curr_observations);
@@ -859,12 +902,12 @@ void JumpScope::activate_children_networks(Problem& problem,
 
 	best_score = numeric_limits<double>::lowest();
 	vector<AbstractNetworkHistory*> best_history;
-	for (int c_index = 0; c_index < (int)this->children_nodes.size(); c_index++) {
+	for (int c_index = 0; c_index < (int)this->child_paths.size(); c_index++) {
 		vector<AbstractNetworkHistory*> temp_history;
-		this->children_score_networks[c_index]->mtx.lock();
-		this->children_score_networks[c_index]->activate(inputs, temp_history);
-		double predicted_score = this->children_score_networks[c_index]->output->acti_vals[0];
-		this->children_score_networks[c_index]->mtx.unlock();
+		this->child_score_networks[c_index]->mtx.lock();
+		this->child_score_networks[c_index]->activate(inputs, temp_history);
+		double predicted_score = this->child_score_networks[c_index]->output->acti_vals[0];
+		this->child_score_networks[c_index]->mtx.unlock();
 
 		if (predicted_score > best_score) {
 			best_index = c_index;
@@ -882,51 +925,51 @@ void JumpScope::activate_children_networks(Problem& problem,
 	network_historys.push_back(best_history[0]);
 }
 
-void JumpScope::backprop_children_networks(double score,
-										   vector<double>& layer_state_errors,
-										   vector<AbstractNetworkHistory*>& network_historys) {
+void JumpScope::backprop_child_networks(double score,
+										vector<double>& layer_state_errors,
+										vector<AbstractNetworkHistory*>& network_historys) {
 	AbstractNetworkHistory* network_history = network_historys.back();
 
 	int matching_index;	// has to be matching index
-	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-		if (network_history->network == this->children_score_networks[c_index]) {
+	for (int c_index = 0; c_index < (int)this->child_score_networks.size(); c_index++) {
+		if (network_history->network == this->child_score_networks[c_index]) {
 			matching_index = c_index;
 			break;
 		}
 	}
 
-	this->children_score_networks[matching_index]->mtx.lock();
+	this->child_score_networks[matching_index]->mtx.lock();
 
 	network_history->reset_weights();
 
 	vector<double> errors;
 	if (score == 1.0) {
-		if (this->children_score_networks[matching_index]->output->acti_vals[0] < 1.0) {
-			errors.push_back(1.0 - this->children_score_networks[matching_index]->output->acti_vals[0]);
+		if (this->child_score_networks[matching_index]->output->acti_vals[0] < 1.0) {
+			errors.push_back(1.0 - this->child_score_networks[matching_index]->output->acti_vals[0]);
 		} else {
 			errors.push_back(0.0);
 		}
 	} else {
-		if (this->children_score_networks[matching_index]->output->acti_vals[0] > 0.0) {
-			errors.push_back(0.0 - this->children_score_networks[matching_index]->output->acti_vals[0]);
+		if (this->child_score_networks[matching_index]->output->acti_vals[0] > 0.0) {
+			errors.push_back(0.0 - this->child_score_networks[matching_index]->output->acti_vals[0]);
 		} else {
 			errors.push_back(0.0);
 		}
 	}
-	this->children_score_networks[matching_index]->backprop(errors);
+	this->child_score_networks[matching_index]->backprop(errors);
 
 	for (int s_index = 0; s_index < this->num_states; s_index++) {
-		layer_state_errors[s_index] = this->children_score_networks[matching_index]->input->errors[1+s_index];
-		this->children_score_networks[matching_index]->input->errors[1+s_index] = 0.0;
+		layer_state_errors[s_index] = this->child_score_networks[matching_index]->input->errors[1+s_index];
+		this->child_score_networks[matching_index]->input->errors[1+s_index] = 0.0;
 	}
 
-	this->children_score_networks[matching_index]->mtx.unlock();
+	this->child_score_networks[matching_index]->mtx.unlock();
 
 	delete network_history;
 	network_historys.pop_back();
 }
 
-void JumpScope::backprop_children_networks_errors_with_no_weight_change(
+void JumpScope::backprop_child_networks_errors_with_no_weight_change(
 		double score,
 		vector<double>& layer_state_errors,
 		vector<AbstractNetworkHistory*>& network_historys) {
@@ -937,40 +980,40 @@ void JumpScope::backprop_children_networks_errors_with_no_weight_change(
 	AbstractNetworkHistory* network_history = network_historys.back();
 
 	int matching_index = -1;
-	for (int c_index = 0; c_index < (int)this->children_score_networks.size(); c_index++) {
-		if (network_history->network == this->children_score_networks[c_index]) {
+	for (int c_index = 0; c_index < (int)this->child_score_networks.size(); c_index++) {
+		if (network_history->network == this->child_score_networks[c_index]) {
 			matching_index = c_index;
 			break;
 		}
 	}
 
 	if (matching_index != -1) {
-		this->children_score_networks[matching_index]->mtx.lock();
+		this->child_score_networks[matching_index]->mtx.lock();
 
 		network_history->reset_weights();
 
 		vector<double> errors;
 		if (score == 1.0) {
-			if (this->children_score_networks[matching_index]->output->acti_vals[0] < 1.0) {
-				errors.push_back(1.0 - this->children_score_networks[matching_index]->output->acti_vals[0]);
+			if (this->child_score_networks[matching_index]->output->acti_vals[0] < 1.0) {
+				errors.push_back(1.0 - this->child_score_networks[matching_index]->output->acti_vals[0]);
 			} else {
 				errors.push_back(0.0);
 			}
 		} else {
-			if (this->children_score_networks[matching_index]->output->acti_vals[0] > 0.0) {
-				errors.push_back(0.0 - this->children_score_networks[matching_index]->output->acti_vals[0]);
+			if (this->child_score_networks[matching_index]->output->acti_vals[0] > 0.0) {
+				errors.push_back(0.0 - this->child_score_networks[matching_index]->output->acti_vals[0]);
 			} else {
 				errors.push_back(0.0);
 			}
 		}
-		this->children_score_networks[matching_index]->backprop_errors_with_no_weight_change(errors);
+		this->child_score_networks[matching_index]->backprop_errors_with_no_weight_change(errors);
 
 		for (int s_index = 0; s_index < this->num_states; s_index++) {
-			layer_state_errors[s_index] = this->children_score_networks[matching_index]->input->errors[1+s_index];
-			this->children_score_networks[matching_index]->input->errors[1+s_index] = 0.0;
+			layer_state_errors[s_index] = this->child_score_networks[matching_index]->input->errors[1+s_index];
+			this->child_score_networks[matching_index]->input->errors[1+s_index] = 0.0;
 		}
 
-		this->children_score_networks[matching_index]->mtx.unlock();
+		this->child_score_networks[matching_index]->mtx.unlock();
 
 		delete network_history;
 		network_historys.pop_back();

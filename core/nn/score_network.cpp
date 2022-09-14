@@ -2,16 +2,15 @@
 
 using namespace std;
 
-ScoreNetwork::ScoreNetwork(vector<int> local_state_sizes) {
-	this->local_state_sizes = local_state_sizes;
-
+void ScoreNetwork::construct() {
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->local_state_sizes[l_index]));
 	}
 
 	this->obs_input = new Layer(LINEAR_LAYER, 1);
+	this->previous_predicted_score_input = new Layer(LINEAR_LAYER, 1);
 
-	int num_inputs = 1;
+	int num_inputs = 2;
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		num_inputs += this->local_state_sizes[l_index];
 	}
@@ -21,11 +20,18 @@ ScoreNetwork::ScoreNetwork(vector<int> local_state_sizes) {
 		this->hidden->input_layers.push_back(this->state_inputs[l_index]);
 	}
 	this->hidden->input_layers.push_back(this->obs_input);
+	this->hidden->input_layers.push_back(this->previous_predicted_score_input);
 	this->hidden->setup_weights_full();
 
 	this->output = new Layer(LINEAR_LAYER, 1);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
+}
+
+ScoreNetwork::ScoreNetwork(vector<int> local_state_sizes) {
+	this->local_state_sizes = local_state_sizes;
+
+	construct();
 
 	this->epoch = 0;
 	this->iter = 0;
@@ -41,6 +47,8 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 		this->local_state_sizes.push_back(stoi(state_size_line));
 	}
 
+	construct();
+
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
@@ -55,6 +63,7 @@ ScoreNetwork::~ScoreNetwork() {
 		delete this->state_inputs[l_index];
 	}
 	delete this->obs_input;
+	delete this->previous_predicted_score_input;
 
 	delete this->hidden;
 	delete this->output;
@@ -74,6 +83,23 @@ void ScoreNetwork::insert_scope(int layer,
 
 void ScoreNetwork::activate(vector<vector<double>>& state_vals,
 							vector<double>& obs,
+							double predicted_score) {
+	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
+		for (int s_index = 0; s_index < this->local_state_sizes[l_index]; s_index++) {
+			this->state_inputs[l_index]->acti_vals[s_index] = state_vals[l_index][s_index];
+		}
+	}
+
+	this->obs_input->acti_vals[0] = obs[0];
+	this->previous_predicted_score_input->acti_vals[0] = predicted_score;
+
+	this->hidden->activate();
+	this->output->activate();
+}
+
+void ScoreNetwork::activate(vector<vector<double>>& state_vals,
+							vector<double>& obs,
+							double predicted_score,
 							vector<AbstractNetworkHistory*>& network_historys) {
 	for (int l_index = 0; l_index < (int)this->local_state_sizes.size(); l_index++) {
 		for (int s_index = 0; s_index < this->local_state_sizes[l_index]; s_index++) {
@@ -82,6 +108,7 @@ void ScoreNetwork::activate(vector<vector<double>>& state_vals,
 	}
 
 	this->obs_input->acti_vals[0] = obs[0];
+	this->previous_predicted_score_input->acti_vals[0] = predicted_score;
 
 	this->hidden->activate();
 	this->output->activate();
@@ -160,7 +187,9 @@ ScoreNetworkHistory::ScoreNetworkHistory(ScoreNetwork* network) {
 		this->state_inputs_history.push_back(layer_history);
 	}
 
-	obs_input_history.push_back(network->obs_input->acti_vals[0]);
+	this->obs_input_history.push_back(network->obs_input->acti_vals[0]);
+
+	this->previous_predicted_score_input_history = network->previous_predicted_score_input->acti_vals[0];
 
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
@@ -180,6 +209,8 @@ void ScoreNetworkHistory::reset_weights() {
 	}
 
 	network->obs_input->acti_vals[0] = this->obs_input_history[0];
+
+	network->previous_predicted_score_input->acti_vals[0] = this->previous_predicted_score_input_history;
 
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];

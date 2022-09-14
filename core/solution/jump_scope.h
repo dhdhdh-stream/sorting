@@ -18,8 +18,8 @@ public:
 
 	std::vector<SolutionNode*> top_path;
 
-	std::vector<std::vector<SolutionNode*>> children_nodes;
-	std::vector<Network*> children_score_networks;
+	std::vector<std::vector<SolutionNode*>> child_paths;
+	std::vector<Network*> child_score_networks;
 
 	// double if_explore_weight;
 	// int if_explore_type;
@@ -37,6 +37,7 @@ public:
 	~JumpScope();
 
 	SolutionNode* re_eval(Problem& problem,
+						  double& predicted_score,
 						  std::vector<std::vector<double>>& state_vals,
 						  std::vector<SolutionNode*>& scopes,
 						  std::vector<int>& scope_states,
@@ -47,6 +48,7 @@ public:
 						  std::vector<ReEvalStepHistory>& instance_history,
 						  std::vector<AbstractNetworkHistory*>& network_historys) override;
 	SolutionNode* explore(Problem& problem,
+						  double& predicted_score,
 						  std::vector<std::vector<double>>& state_vals,
 						  std::vector<SolutionNode*>& scopes,
 						  std::vector<int>& scope_states,
@@ -87,19 +89,19 @@ public:
 			  std::ofstream& save_file) override;
 	void save_for_display(std::ofstream& save_file) override;
 
-	void activate_children_networks(Problem& problem,
-									std::vector<double>& layer_state_vals,
-									int& best_index,
-									double& best_score);
-	void activate_children_networks(Problem& problem,
-									std::vector<double>& layer_state_vals,
-									int& best_index,
-									double& best_score,
-									std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_children_networks(double score,
-									std::vector<double>& layer_state_errors,
-									std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop_children_networks_errors_with_no_weight_change(
+	void activate_child_networks(Problem& problem,
+								 std::vector<double>& layer_state_vals,
+								 int& best_index,
+								 double& best_score);
+	void activate_child_networks(Problem& problem,
+								 std::vector<double>& layer_state_vals,
+								 int& best_index,
+								 double& best_score,
+								 std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_child_networks(double score,
+								 std::vector<double>& layer_state_errors,
+								 std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_child_networks_errors_with_no_weight_change(
 		double score,
 		std::vector<double>& layer_state_errors,
 		std::vector<AbstractNetworkHistory*>& network_historys);

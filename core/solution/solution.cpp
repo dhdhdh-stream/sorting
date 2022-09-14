@@ -17,7 +17,7 @@
 using namespace std;
 
 Solution::Solution() {
-	this->id = time(NULL);
+	id = time(NULL);
 
 	this->start_scope = new StartScope();
 
@@ -31,7 +31,7 @@ Solution::Solution() {
 Solution::Solution(ifstream& save_file) {
 	string id_line;
 	getline(save_file, id_line);
-	this->id = stol(id_line);
+	id = stol(id_line);
 
 	vector<int> scope_states;
 	vector<int> scope_locations;
@@ -43,6 +43,7 @@ Solution::Solution(ifstream& save_file) {
 	getline(save_file, average_score_line);
 	this->average_score = stof(average_score_line);
 
+	action_dictionary = new ActionDictionary();
 	action_dictionary->load(save_file);
 
 	this->explore_iters = 0;
@@ -57,28 +58,22 @@ Solution::~Solution() {
 void Solution::iteration(bool tune,
 						 bool save_for_display) {
 	Problem problem;
+	double predicted_score = this->average_score;
 	
 	if (tune || rand()%10 == 0) {
 		// re-eval
-		// vector<vector<double>> state_vals;
-		heap_state_vals = new vector<vector<double>>();
-		vector<vector<double>> state_vals = *heap_state_vals;
-		// vector<SolutionNode*> scopes;
-		heap_scopes = new vector<SolutionNode*>();
-		vector<SolutionNode*> scopes = *heap_scopes;
-		// vector<int> scope_states;
-		heap_scope_states = new vector<int>();
-		vector<int> scope_states = *heap_scope_states;
+		vector<vector<double>> state_vals;
+		vector<SolutionNode*> scopes;
+		vector<int> scope_states;
 		vector<ReEvalStepHistory> instance_history;
-		// vector<AbstractNetworkHistory*> network_historys;
-		heap_network_historys = new vector<AbstractNetworkHistory*>();
-		vector<AbstractNetworkHistory*> network_historys = *heap_network_historys;
+		vector<AbstractNetworkHistory*> network_historys;
 
 		set<SolutionNode*> unique_nodes_visited;
 
 		SolutionNode* curr_node = this->start_scope;
 		while (true) {
 			SolutionNode* next_node = curr_node->re_eval(problem,
+														 predicted_score,
 														 state_vals,
 														 scopes,
 														 scope_states,
@@ -165,9 +160,7 @@ void Solution::iteration(bool tune,
 			}
 		}
 
-		// vector<vector<double>> state_errors;
-		heap_state_errors = new vector<vector<double>>();
-		vector<vector<double>> state_errors = *heap_state_errors;
+		vector<vector<double>> state_errors;
 		while (instance_history.size() > 0) {
 			instance_history.back().node_visited->re_eval_backprop(
 				score,
@@ -180,36 +173,21 @@ void Solution::iteration(bool tune,
 			cout << "re_eval network_historys.size(): " << network_historys.size() << endl;
 			exit(1);
 		}
-
-		delete heap_state_vals;
-		delete heap_scopes;
-		delete heap_scope_states;
-		delete heap_network_historys;
-		delete heap_state_errors;
 	} else {
 		// explore
-		// vector<vector<double>> state_vals;
-		heap_state_vals = new vector<vector<double>>();
-		vector<vector<double>> state_vals = *heap_state_vals;
-		// vector<SolutionNode*> scopes;
-		heap_scopes = new vector<SolutionNode*>();
-		vector<SolutionNode*> scopes = *heap_scopes;
-		// vector<int> scope_states;
-		heap_scope_states = new vector<int>();
-		vector<int> scope_states = *heap_scope_states;
-		// vector<int> scope_locations;
-		heap_scope_locations = new vector<int>();
-		vector<int> scope_locations = *heap_scope_locations;
+		vector<vector<double>> state_vals;
+		vector<SolutionNode*> scopes;
+		vector<int> scope_states;
+		vector<int> scope_locations;
 		IterExplore* iter_explore = NULL;
 		vector<ExploreStepHistory> instance_history;
-		// vector<AbstractNetworkHistory*> network_historys;
-		heap_network_historys = new vector<AbstractNetworkHistory*>();
-		vector<AbstractNetworkHistory*> network_historys = *heap_network_historys;
+		vector<AbstractNetworkHistory*> network_historys;
 		bool abandon_instance = false;
 
 		SolutionNode* curr_node = this->start_scope;
 		while (true) {
 			SolutionNode* next_node = curr_node->explore(problem,
+														 predicted_score,
 														 state_vals,
 														 scopes,
 														 scope_states,
@@ -234,9 +212,7 @@ void Solution::iteration(bool tune,
 
 		double score = problem.score_result();
 
-		// vector<vector<double>> state_errors;
-		heap_state_errors = new vector<vector<double>>();
-		vector<vector<double>> state_errors = *heap_state_errors;
+		vector<vector<double>> state_errors;
 		while (instance_history.size() > 0) {
 			instance_history.back().node_visited->explore_backprop(score,
 																   state_errors,
@@ -251,10 +227,6 @@ void Solution::iteration(bool tune,
 		}
 
 		if (network_historys.size() > 0) {
-			if (iter_explore != NULL) {
-				cout << "iter_explore->type: " << iter_explore->type << endl;
-				cout << "explore_node->node_type: " << iter_explore->explore_node->node_type << endl;
-			}
 			cout << "explore network_historys.size(): " << network_historys.size() << endl;
 			exit(1);
 		}
@@ -265,67 +237,66 @@ void Solution::iteration(bool tune,
 
 		this->explore_iters++;
 		// if (this->candidates.size() >= 20
-		if (this->candidates.size() >= 3
+		if (this->candidates.size() >= 5
 				|| (this->explore_iters > 1000000000 && this->candidates.size() > 0)) {
-			int best_index = rand()%(int)this->candidates.size();
-			// int best_index = -1;
-			// double best_score_increase = 0.0;
-			// double best_info_gain = 0.0;
-			// for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
-			// 	if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
-			// 		CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
-			// 		double effective_score_increase = candidate_branch->explore_node->node_weight
-			// 										  *candidate_branch->branch_percent
-			// 										  *candidate_branch->score_increase;
-			// 		if (effective_score_increase > best_score_increase) {
-			// 			best_score_increase = effective_score_increase;
-			// 			best_index = c_index;
-			// 		}
-			// 	} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
-			// 		CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
-			// 		if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
-			// 			double effective_score_increase = candidate_replace->explore_node->node_weight
-			// 											  *candidate_replace->score_increase;
-			// 			if (effective_score_increase > best_score_increase) {
-			// 				best_score_increase = effective_score_increase;
-			// 				best_index = c_index;
-			// 			}
-			// 		} else {
-			// 			// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
-			// 			if (best_score_increase == 0.0) {
-			// 				if (candidate_replace->info_gain > best_info_gain) {
-			// 					best_info_gain = candidate_replace->info_gain;
-			// 					best_index = c_index;
-			// 				}
-			// 			}
-			// 		}
-			// 	} else if (this->candidates[c_index]->type == CANDIDATE_START_BRANCH) {
-			// 		CandidateStartBranch* candidate_start_branch = (CandidateStartBranch*)this->candidates[c_index];
-			// 		double effective_score_increase = candidate_start_branch->branch_percent
-			// 										  *candidate_start_branch->score_increase;
-			// 		if (effective_score_increase > best_score_increase) {
-			// 			best_score_increase = effective_score_increase;
-			// 			best_index = c_index;
-			// 		}
-			// 	} else if (this->candidates[c_index]->type == CANDIDATE_START_REPLACE) {
-			// 		CandidateStartReplace* candidate_start_replace = (CandidateStartReplace*)this->candidates[c_index];
-			// 		if (candidate_start_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
-			// 			double effective_score_increase = candidate_start_replace->score_increase;
-			// 			if (effective_score_increase > best_score_increase) {
-			// 				best_score_increase = effective_score_increase;
-			// 				best_index = c_index;
-			// 			}
-			// 		} else {
-			// 			// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
-			// 			if (best_score_increase == 0.0) {
-			// 				if (candidate_start_replace->info_gain > best_info_gain) {
-			// 					best_info_gain = candidate_start_replace->info_gain;
-			// 					best_index = c_index;
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+			int best_index = -1;
+			double best_score_increase = 0.0;
+			double best_info_gain = 0.0;
+			for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+				if (this->candidates[c_index]->type == CANDIDATE_BRANCH) {
+					CandidateBranch* candidate_branch = (CandidateBranch*)this->candidates[c_index];
+					double effective_score_increase = candidate_branch->explore_node->node_weight
+													  *candidate_branch->branch_percent
+													  *candidate_branch->score_increase;
+					if (effective_score_increase > best_score_increase) {
+						best_score_increase = effective_score_increase;
+						best_index = c_index;
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_REPLACE) {
+					CandidateReplace* candidate_replace = (CandidateReplace*)this->candidates[c_index];
+					if (candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+						double effective_score_increase = candidate_replace->explore_node->node_weight
+														  *candidate_replace->score_increase;
+						if (effective_score_increase > best_score_increase) {
+							best_score_increase = effective_score_increase;
+							best_index = c_index;
+						}
+					} else {
+						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+						if (best_score_increase == 0.0) {
+							if (candidate_replace->info_gain > best_info_gain) {
+								best_info_gain = candidate_replace->info_gain;
+								best_index = c_index;
+							}
+						}
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_START_BRANCH) {
+					CandidateStartBranch* candidate_start_branch = (CandidateStartBranch*)this->candidates[c_index];
+					double effective_score_increase = candidate_start_branch->branch_percent
+													  *candidate_start_branch->score_increase;
+					if (effective_score_increase > best_score_increase) {
+						best_score_increase = effective_score_increase;
+						best_index = c_index;
+					}
+				} else if (this->candidates[c_index]->type == CANDIDATE_START_REPLACE) {
+					CandidateStartReplace* candidate_start_replace = (CandidateStartReplace*)this->candidates[c_index];
+					if (candidate_start_replace->replace_type == EXPLORE_REPLACE_TYPE_SCORE) {
+						double effective_score_increase = candidate_start_replace->score_increase;
+						if (effective_score_increase > best_score_increase) {
+							best_score_increase = effective_score_increase;
+							best_index = c_index;
+						}
+					} else {
+						// candidate_replace->replace_type == EXPLORE_REPLACE_TYPE_INFO
+						if (best_score_increase == 0.0) {
+							if (candidate_start_replace->info_gain > best_info_gain) {
+								best_info_gain = candidate_start_replace->info_gain;
+								best_index = c_index;
+							}
+						}
+					}
+				}
+			}
 
 			this->start_scope->reset_explore();
 
@@ -341,26 +312,25 @@ void Solution::iteration(bool tune,
 
 			this->explore_iters = 0;
 
-			// ofstream save_file;
-			// string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
-			// save_file.open(save_file_name);
-			// this->save(save_file);
-			// save_file.close();
+			ofstream save_file;
+			string save_file_name = "../saves/" + to_string(time(NULL)) + ".txt";
+			save_file.open(save_file_name);
+			this->save(save_file);
+			save_file.close();
+
+			ofstream display_file;
+			string display_file_name = "../solution.txt";
+			display_file.open(display_file_name);
+			this->start_scope->save_for_display(display_file);
+			display_file.close();
 
 			cout << "cycle" << endl;
 		}
-
-		delete heap_state_vals;
-		delete heap_scopes;
-		delete heap_scope_states;
-		delete heap_scope_locations;
-		delete heap_network_historys;
-		delete heap_state_errors;
 	}
 }
 
 void Solution::save(ofstream& save_file) {
-	save_file << this->id << endl;
+	save_file << id << endl;
 
 	vector<int> scope_states;
 	vector<int> scope_locations;

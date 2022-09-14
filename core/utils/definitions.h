@@ -8,6 +8,7 @@
 
 extern std::default_random_engine generator;
 
+extern long int id;
 extern Solution* solution;
 extern ActionDictionary* action_dictionary;
 

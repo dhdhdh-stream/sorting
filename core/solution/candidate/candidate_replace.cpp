@@ -1,5 +1,7 @@
 #include "candidate_replace.h"
 
+#include <iostream>
+
 #include "definitions.h"
 #include "jump_scope.h"
 #include "start_scope.h"
@@ -86,26 +88,26 @@ void CandidateReplace::apply() {
 		} else {
 			// this->explore_node->scope_location == SCOPE_LOCATION_BRANCH
 			this->explore_node->next = this->explore_path[0];
-			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->children_nodes[explore_node->scope_child_index].size()) {
+			if (this->parent_jump_end_non_inclusive_index >= (int)parent_jump->child_paths[explore_node->scope_child_index].size()) {
 				this->explore_path[this->explore_path.size()-1]->next = parent_jump;
 			} else {
-				this->explore_path[this->explore_path.size()-1]->next = parent_jump->children_nodes[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
+				this->explore_path[this->explore_path.size()-1]->next = parent_jump->child_paths[explore_node->scope_child_index][this->parent_jump_end_non_inclusive_index];
 			}
 			for (int n_index = this->explore_node->scope_node_index+1; n_index < this->parent_jump_end_non_inclusive_index; n_index++) {
-				delete parent_jump->children_nodes[explore_node->scope_child_index][n_index];
+				delete parent_jump->child_paths[explore_node->scope_child_index][n_index];
 			}
-			parent_jump->children_nodes[explore_node->scope_child_index].erase(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->explore_node->scope_node_index+1,
-				parent_jump->children_nodes[explore_node->scope_child_index].begin() + this->parent_jump_end_non_inclusive_index);
-			parent_jump->children_nodes[explore_node->scope_child_index].insert(
-				parent_jump->children_nodes[explore_node->scope_child_index].begin(),
+			parent_jump->child_paths[explore_node->scope_child_index].erase(
+				parent_jump->child_paths[explore_node->scope_child_index].begin() + this->explore_node->scope_node_index+1,
+				parent_jump->child_paths[explore_node->scope_child_index].begin() + this->parent_jump_end_non_inclusive_index);
+			parent_jump->child_paths[explore_node->scope_child_index].insert(
+				parent_jump->child_paths[explore_node->scope_child_index].begin() + this->explore_node->scope_node_index+1,
 				this->explore_path.begin(), this->explore_path.end());
 
-			for (int n_index = 0; n_index < (int)parent_jump->children_nodes[explore_node->scope_child_index].size(); n_index++) {
-				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->parent_scope = parent_jump;
-				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
-				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->scope_child_index = explore_node->scope_child_index;
-				parent_jump->children_nodes[explore_node->scope_child_index][n_index]->scope_node_index = n_index;
+			for (int n_index = 0; n_index < (int)parent_jump->child_paths[explore_node->scope_child_index].size(); n_index++) {
+				parent_jump->child_paths[explore_node->scope_child_index][n_index]->parent_scope = parent_jump;
+				parent_jump->child_paths[explore_node->scope_child_index][n_index]->scope_location = SCOPE_LOCATION_BRANCH;
+				parent_jump->child_paths[explore_node->scope_child_index][n_index]->scope_child_index = explore_node->scope_child_index;
+				parent_jump->child_paths[explore_node->scope_child_index][n_index]->scope_node_index = n_index;
 			}
 		}
 	}
