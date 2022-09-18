@@ -247,12 +247,11 @@ void Layer::backprop_errors_with_no_weight_change() {
 	}
 }
 
-void Layer::fold_setup_next() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].pop_back();
-		this->weight_updates[n_index].pop_back();
+void Layer::fold_add_scope(Layer* new_scope_input) {
+	this->input_layers.push_back(new_scope_input);
 
-		int layer_size = (int)this->input_layers[4]->acti_vals.size();
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		int layer_size = (int)new_scope_input->acti_vals.size();
 
 		vector<double> layer_weights;
 		vector<double> layer_weight_updates;
@@ -263,6 +262,15 @@ void Layer::fold_setup_next() {
 		}
 		this->weights[n_index].push_back(layer_weights);
 		this->weight_updates[n_index].push_back(layer_weight_updates);
+	}
+}
+
+void Layer::fold_pop_scope() {
+	this->input_layers.pop_back();
+
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index].pop_back();
+		this->weight_updates[n_index].pop_back();
 	}
 }
 
@@ -285,13 +293,13 @@ void Layer::activate_as_linear() {
 void Layer::fold_backprop_next() {
 	// backprop as linear
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		int layer_size = (int)this->input_layers[4]->acti_vals.size();
+		int layer_size = (int)this->input_layers.back()->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			this->input_layers[4]->errors[ln_index] +=
-				this->errors[n_index]*this->weights[n_index][4][ln_index];
+			this->input_layers.back()->errors[ln_index] +=
+				this->errors[n_index]*this->weights[n_index].back()[ln_index];
 			// multiply by this->errors[n_index] for MSE weight updates
-			this->weight_updates[n_index][4][ln_index] +=
-				this->errors[n_index]*this->input_layers[4]->acti_vals[ln_index];
+			this->weight_updates[n_index].back()[ln_index] +=
+				this->errors[n_index]*this->input_layers.back()->acti_vals[ln_index];
 		}
 
 		this->errors[n_index] = 0.0;
@@ -301,9 +309,9 @@ void Layer::fold_backprop_next() {
 void Layer::fold_calc_max_update_next(double& max_update_size,
 									  double learning_rate) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		int layer_size = (int)this->input_layers[4]->acti_vals.size();
+		int layer_size = (int)this->input_layers.back()->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			double update = this->weight_updates[n_index][4][ln_index]
+			double update = this->weight_updates[n_index].back()[ln_index]
 							*learning_rate;
 			double update_size = abs(update);
 			if (update_size > max_update_size) {
@@ -316,37 +324,42 @@ void Layer::fold_calc_max_update_next(double& max_update_size,
 void Layer::fold_update_weights_next(double factor,
 									 double learning_rate) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		int layer_size = (int)this->input_layers[4]->acti_vals.size();
+		int layer_size = (int)this->input_layers.back()->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			double update = this->weight_updates[n_index][4][ln_index]
+			double update = this->weight_updates[n_index].back()[ln_index]
 							*learning_rate;
 			update *= factor;
-			this->weight_updates[n_index][4][ln_index] = 0.0;
-			this->weights[n_index][4][ln_index] += update;
+			this->weight_updates[n_index].back()[ln_index] = 0.0;
+			this->weights[n_index].back()[ln_index] += update;
 		}
 	}
 }
 
-void Layer::fold_take_next() {
+void Layer::fold_backprop_full() {
+	// this->type == RELU_LAYER
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].erase(this->weights[n_index].begin()+3);
-		this->weight_updates[n_index].erase(this->weight_updates[n_index].begin()+3);
+		if (this->acti_vals[n_index] > 0.0) {
+			for (int l_index = 0; l_index < (int)this->input_layers.size()-1; l_index++) {
+				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+					// multiply by this->errors[n_index] for MSE weight updates
+					this->weight_updates[n_index][l_index][ln_index] +=
+						this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
+				}
+			}
 
-		vector<double> layer_weights;
-		vector<double> layer_weight_updates;
-		this->weights[n_index].push_back(layer_weights);
-		this->weight_updates[n_index].push_back(layer_weight_updates);
-	}
-}
+			int layer_size = (int)this->input_layers.back()->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				this->input_layers.back()->errors[ln_index] +=
+					this->errors[n_index]*this->weights[n_index].back()[ln_index];
+				// multiply by this->errors[n_index] for MSE weight updates
+				this->weight_updates[n_index].back()[ln_index] +=
+					this->errors[n_index]*this->input_layers.back()->acti_vals[ln_index];
+			}
 
-void Layer::fold_discard_next() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].pop_back();
-		this->weight_updates[n_index].pop_back();
+			this->constant_updates[n_index] += this->errors[n_index];
+		}
 
-		vector<double> layer_weights;
-		vector<double> layer_weight_updates;
-		this->weights[n_index].push_back(layer_weights);
-		this->weight_updates[n_index].push_back(layer_weight_updates);
+		this->errors[n_index] = 0.0;
 	}
 }

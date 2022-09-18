@@ -41,15 +41,15 @@ public:
 
 	void backprop_errors_with_no_weight_change();
 
-	void fold_setup_next();
+	void fold_add_scope(Layer* new_scope_input);
+	void fold_pop_scope();
 	void activate_as_linear();
 	void fold_backprop_next();
 	void fold_calc_max_update_next(double& max_update_size,
 								   double learning_rate);
 	void fold_update_weights_next(double factor,
 								  double learning_rate);
-	void fold_take_next();
-	void fold_discard_next();
+	void fold_backprop_full();
 };
 
 #endif /* LAYER_H */

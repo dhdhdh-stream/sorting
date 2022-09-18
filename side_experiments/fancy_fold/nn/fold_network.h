@@ -13,15 +13,14 @@ public:
 	int flat_size;
 	int output_size;
 
-	int state_size;
-
 	Layer* flat_input;
 	Layer* activated_input;
 	Layer* obs_input;
-	Layer* state_input;
 
-	int next_state_size;
-	Layer* next_state_input;
+	int fold_index;
+
+	std::vector<int> scope_sizes;
+	std::vector<Layer*> state_inputs;
 
 	Layer* hidden;
 	Layer* output;
@@ -32,76 +31,40 @@ public:
 
 	FoldNetwork(int flat_size,
 				int output_size);
-	FoldNetwork(int flat_size,
-				int output_size,
-				std::ifstream& input_file);
+	FoldNetwork(std::ifstream& input_file);
 	FoldNetwork(FoldNetwork* original);
 	~FoldNetwork();
 
 	void activate(double* flat_inputs,
 				  bool* activated,
 				  std::vector<double>& obs);
-	void activate(double* flat_inputs,
-				  bool* activated,
-				  std::vector<double>& obs,
-				  std::vector<AbstractNetworkHistory*>& network_historys);
-
-	void backprop(std::vector<double>& erors);
+	void backprop(std::vector<double>& errors);
 	void calc_max_update(double& max_update,
 						 double learning_rate);
 	void update_weights(double factor,
 						double learning_rate);
 
-	void set_next_state_size(int next_state_size);
-	void activate_compare_hidden_and_backprop(
-		double* flat_inputs,
+	void add_scope(int scope_size);
+	void pop_scope();
+	void activate_hidden_linear(double* flat_inputs,
 		bool* activated,
-		int fold_index,
 		std::vector<double>& obs,
-		std::vector<double>& state_vals,
-		std::vector<double>& next_state_vals);
-	void next_calc_max_update(double& max_update,
+		std::vector<std::vector<double>>& state_vals);
+	void backprop_hidden_linear();
+	void state_calc_max_update(double& max_update,
+							   double learning_rate);
+	void state_update_weights(double factor,
 							  double learning_rate);
-	void next_update_weights(double factor,
-							 double learning_rate);
 	void activate_full(double* flat_inputs,
 					   bool* activated,
-					   int fold_index,
 					   std::vector<double>& obs,
-					   std::vector<double>& next_state_vals);
-	void activate_full(double* flat_inputs,
-					   bool* activated,
-					   int fold_index,
-					   std::vector<double>& obs,
-					   std::vector<double>& next_state_vals,
-					   std::vector<AbstractNetworkHistory*>& network_historys);
-	void take_next();
-	void discard_next();
-
-	void activate_curr(double* flat_inputs,
-					   bool* activated,
-					   int fold_index,
-					   std::vector<double>& obs,
-					   std::vector<double>& state_vals);
+					   std::vector<std::vector<double>>& state_vals);
+	void backprop_full(std::vector<double>& errors);
 
 	void save(std::ofstream& output_file);
 
 private:
 	void construct();
-};
-
-class FoldNetworkHistory : public AbstractNetworkHistory {
-public:
-	std::vector<double> flat_input_history;
-	std::vector<double> activated_input_history;
-	std::vector<double> state_input_history;
-	std::vector<double> obs_input_history;
-
-	std::vector<double> hidden_history;
-	std::vector<double> output_history;
-
-	FoldNetworkHistory(FoldNetwork* network);
-	void reset_weights() override;
 };
 
 #endif /* FOLD_NETWORK_H */
