@@ -5,6 +5,7 @@
 
 #include "fold_network.h"
 #include "network.h"
+#include "node.h"
 
 const int STATE_NO_OUTPUT_MEASURE = 0;
 const int STATE_LOCAL_SCOPE_LEARN = 1;	// either works or add scope
@@ -13,8 +14,7 @@ const int STATE_LOCAL_SCOPE_ZERO_TRAIN = 3;
 const int STATE_COMPRESS_LEARN = 4;	// if update_existing_scope
 const int STATE_COMPRESS_MEASURE = 5;
 const int STATE_COMPRESS_ZERO_TRAIN = 6;
-const int STATE_NEW_SCOPE_LEARN_FOLD = 7;
-const int STATE_DONE = 8;
+const int STATE_DONE = 7;
 
 class TestNode {
 public:

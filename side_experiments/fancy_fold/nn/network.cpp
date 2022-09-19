@@ -128,6 +128,31 @@ void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors)
 	this->hidden->backprop_errors_with_no_weight_change();
 }
 
+void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->backprop_weights_with_no_error_signal();
+
+	if (this->epoch_iter == 100) {
+		double max_update = 0.0;
+		calc_max_update(max_update,
+						0.001);
+		double factor = 1.0;
+		if (max_update > 0.01) {
+			factor = 0.01/max_update;
+		}
+		update_weights(factor,
+					   0.001);
+
+		this->epoch_iter = 0;
+	} else {
+		this->epoch_iter++;
+	}
+}
+
 void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden->acti_vals.size() << endl;

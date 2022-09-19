@@ -36,6 +36,7 @@ public:
 						double learning_rate);
 
 	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
+	void backprop_weights_with_no_error_signal(std::vector<double>& errors);
 
 	void save(std::ofstream& output_file);
 

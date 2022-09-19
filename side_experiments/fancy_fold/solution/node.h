@@ -32,7 +32,7 @@ public:
 	void activate_zero_train(std::vector<std::vector<double>>& state_vals,
 							 double observation,
 							 std::vector<std::vector<double>>& zero_train_state_vals);
-	// void backprop(std::vector<std::vector<double>>& state_errors);
+	void backprop(std::vector<std::vector<double>>& state_errors);
 
 	void get_scope_sizes(std::vector<int>& scope_sizes);
 

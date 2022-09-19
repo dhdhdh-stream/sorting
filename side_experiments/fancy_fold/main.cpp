@@ -18,13 +18,13 @@ bool zero_train_step(int input_counter,
 					 double observation,
 					 vector<vector<double>>& state_vals,
 					 vector<vector<double>>& zero_train_state_vals,
-					 vector<Node>& nodes,
+					 vector<Node*>& nodes,
 					 TestNode& test_node) {
 	if (input_counter < zero_fold_index) {
-		nodes[input_counter].activate(state_vals, observation);
+		nodes[input_counter]->activate(state_vals, observation);
 		return false;
 	} else if (input_counter == zero_fold_index) {
-		nodes[input_counter].activate(state_vals, observation);
+		nodes[input_counter]->activate(state_vals, observation);
 		zero_train_state_vals = state_vals;
 		for (int sc_index = 0; sc_index < (int)zero_train_state_vals.size()-1; sc_index++) {
 			for (int st_index = 0; st_index < (int)zero_train_state_vals[sc_index].size(); st_index++) {
@@ -33,7 +33,7 @@ bool zero_train_step(int input_counter,
 		}
 		return false;
 	} else if (input_counter < fold_index) {
-		nodes[input_counter].activate_zero_train(
+		nodes[input_counter]->activate_zero_train(
 			state_vals,
 			observation,
 			zero_train_state_vals);
@@ -242,18 +242,24 @@ int main(int argc, char* argv[]) {
 
 	ifstream input_file;
 	input_file.open("saves/fold_network.txt");
+	// input_file.open("saves/f_1.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
 
 	double target_error = 0.5;
 
-	vector<Node> nodes;
-	int fold_index = 0;
-	// load
+	vector<Node*> nodes;
+	// for (int i = 0; i < 2; i++) {
+	// 	ifstream input_file;
+	// 	input_file.open("saves/n_" + to_string(i) + ".txt");
+	// 	nodes.push_back(new Node(i, input_file));
+	// 	input_file.close();
+	// }
 	vector<int> scope_sizes;
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		nodes[n_index].get_scope_sizes(scope_sizes);
+		nodes[n_index]->get_scope_sizes(scope_sizes);
 	}
+	int fold_index = (int)nodes.size();
 
 	for (int compress_index = fold_index; compress_index < 11; compress_index++) {
 		TestNode test_node(target_error,
@@ -269,11 +275,11 @@ int main(int argc, char* argv[]) {
 
 			if (rand_non_zero_index != 0) {
 				int zero_fold_index;
-				int curr_layer = (int)scope_sizes.size()-1;
+				int curr_layer = 0;
 				for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-					curr_layer -= (int)nodes[n_index].compression_networks.size();
+					curr_layer -= (int)nodes[n_index]->compression_networks.size();
 
-					if (!nodes[n_index].update_existing_scope) {
+					if (!nodes[n_index]->update_existing_scope) {
 						curr_layer++;
 					}
 
@@ -313,7 +319,7 @@ int main(int argc, char* argv[]) {
 					flat_input_counter++;
 				}
 				if (halt) {
-					break;
+					continue;
 				}
 
 				// dud
@@ -327,7 +333,7 @@ int main(int argc, char* argv[]) {
 									   nodes,
 									   test_node);
 				if (halt) {
-					break;
+					continue;
 				}
 				flat_input_counter++;
 
@@ -352,7 +358,7 @@ int main(int argc, char* argv[]) {
 					flat_input_counter++;
 				}
 				if (halt) {
-					break;
+					continue;
 				}
 
 				// dud
@@ -366,7 +372,7 @@ int main(int argc, char* argv[]) {
 									   nodes,
 									   test_node);
 				if (halt) {
-					break;
+					continue;
 				}
 				flat_input_counter++;
 
@@ -392,6 +398,9 @@ int main(int argc, char* argv[]) {
 					}
 					flat_input_counter++;
 				}
+				if (halt) {
+					continue;
+				}
 
 				// dud
 				flat_inputs[flat_input_counter] = rand()%2;
@@ -404,7 +413,7 @@ int main(int argc, char* argv[]) {
 									   nodes,
 									   test_node);
 				if (halt) {
-					break;
+					continue;
 				}
 				flat_input_counter++;
 
@@ -430,8 +439,8 @@ int main(int argc, char* argv[]) {
 						flat_inputs[flat_input_counter] = 0.0;
 					}
 					if (fold_index > flat_input_counter) {
-						nodes[flat_input_counter].activate(state_vals,
-														   flat_inputs[flat_input_counter]);
+						nodes[flat_input_counter]->activate(state_vals,
+															flat_inputs[flat_input_counter]);
 					} else if (fold_index == flat_input_counter) {
 						test_node.activate(state_vals,
 										   flat_inputs[flat_input_counter],
@@ -443,8 +452,8 @@ int main(int argc, char* argv[]) {
 				// dud
 				flat_inputs[flat_input_counter] = rand()%2;
 				if (fold_index > flat_input_counter) {
-					nodes[flat_input_counter].activate(state_vals,
-													   flat_inputs[flat_input_counter]);
+					nodes[flat_input_counter]->activate(state_vals,
+														flat_inputs[flat_input_counter]);
 				} else if (fold_index == flat_input_counter) {
 					test_node.activate(state_vals,
 									   flat_inputs[flat_input_counter],
@@ -460,8 +469,8 @@ int main(int argc, char* argv[]) {
 						flat_inputs[flat_input_counter] = 0.0;
 					}
 					if (fold_index > flat_input_counter) {
-						nodes[flat_input_counter].activate(state_vals,
-														   flat_inputs[flat_input_counter]);
+						nodes[flat_input_counter]->activate(state_vals,
+															flat_inputs[flat_input_counter]);
 					} else if (fold_index == flat_input_counter) {
 						test_node.activate(state_vals,
 										   flat_inputs[flat_input_counter],
@@ -473,8 +482,8 @@ int main(int argc, char* argv[]) {
 				// dud
 				flat_inputs[flat_input_counter] = rand()%2;
 				if (fold_index > flat_input_counter) {
-					nodes[flat_input_counter].activate(state_vals,
-													   flat_inputs[flat_input_counter]);
+					nodes[flat_input_counter]->activate(state_vals,
+														flat_inputs[flat_input_counter]);
 				} else if (fold_index == flat_input_counter) {
 					test_node.activate(state_vals,
 									   flat_inputs[flat_input_counter],
@@ -492,8 +501,8 @@ int main(int argc, char* argv[]) {
 						flat_inputs[flat_input_counter] = 0.0;
 					}
 					if (fold_index > flat_input_counter) {
-						nodes[flat_input_counter].activate(state_vals,
-														   flat_inputs[flat_input_counter]);
+						nodes[flat_input_counter]->activate(state_vals,
+															flat_inputs[flat_input_counter]);
 					} else if (fold_index == flat_input_counter) {
 						test_node.activate(state_vals,
 										   flat_inputs[flat_input_counter],
@@ -505,8 +514,8 @@ int main(int argc, char* argv[]) {
 				// dud
 				flat_inputs[flat_input_counter] = rand()%2;
 				if (fold_index > flat_input_counter) {
-					nodes[flat_input_counter].activate(state_vals,
-													   flat_inputs[flat_input_counter]);
+					nodes[flat_input_counter]->activate(state_vals,
+														flat_inputs[flat_input_counter]);
 				} else if (fold_index == flat_input_counter) {
 					test_node.activate(state_vals,
 									   flat_inputs[flat_input_counter],
@@ -537,17 +546,17 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		nodes.push_back(Node(fold_index,
-							 test_node.outputs_state,
-							 test_node.update_existing_scope,
-							 1,
-							 test_node.state_network,
-							 test_node.compression_networks));
+		nodes.push_back(new Node(fold_index,
+								 test_node.outputs_state,
+								 test_node.update_existing_scope,
+								 1,
+								 test_node.state_network,
+								 test_node.compression_networks));
 
 		{
 			ofstream output_file;
-			output_file.open("saves/n_" + to_string(nodes.back().id) + ".txt");
-			nodes.back().save(output_file);
+			output_file.open("saves/n_" + to_string(nodes.back()->id) + ".txt");
+			nodes.back()->save(output_file);
 			output_file.close();
 		}
 
@@ -556,13 +565,22 @@ int main(int argc, char* argv[]) {
 
 		{
 			ofstream output_file;
-			output_file.open("saves/f_" + to_string(nodes.back().id) + ".txt");
+			output_file.open("saves/f_" + to_string(nodes.back()->id) + ".txt");
 			fold_network->save(output_file);
 			output_file.close();
 		}
 
+		cout << "SAVED " << nodes.back()->id << endl;
+
+		scope_sizes = test_node.curr_scope_sizes;
+
 		fold_index++;
 	}
+
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		delete nodes[n_index];
+	}
+	delete fold_network;
 
 	cout << "Done" << endl;
 }

@@ -40,16 +40,25 @@ public:
 	void save_weights(std::ofstream& output_file);
 
 	void backprop_errors_with_no_weight_change();
+	void backprop_weights_with_no_error_signal();
 
 	void fold_add_scope(Layer* new_scope_input);
 	void fold_pop_scope();
-	void activate_as_linear();
-	void fold_backprop_next();
-	void fold_calc_max_update_next(double& max_update_size,
-								   double learning_rate);
-	void fold_update_weights_next(double factor,
-								  double learning_rate);
-	void fold_backprop_full();
+	void fold_backprop_last_state();
+	void fold_calc_max_update_last_state(double& max_update_size,
+										 double learning_rate);
+	void fold_update_weights_last_state(double factor,
+										double learning_rate);
+	void fold_backprop_last_state_with_constant();
+	void fold_calc_max_update_last_state_with_constant(double& max_update_size,
+													   double learning_rate);
+	void fold_update_weights_last_state_with_constant(double factor,
+													  double learning_rate);
+	// void fold_backprop_full_state();
+	// void fold_calc_max_update_full_state(double& max_update_size,
+	// 									 double learning_rate);
+	// void fold_update_weights_full_state(double factor,
+	// 									double learning_rate);
 };
 
 #endif /* LAYER_H */
