@@ -93,7 +93,8 @@ void TestNode::process(double* flat_inputs,
 			this->sum_error = 0.0;
 		}
 
-		if (this->state_iter <= 100000) {
+		// if (this->state_iter <= 100000) {
+		if (this->state_iter <= 450000) {
 			this->test_fold->activate(flat_inputs,
 									  activated,
 									  obs,
@@ -315,7 +316,8 @@ void TestNode::increment() {
 			}
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_LEARN) {
-		if (this->state_iter >= 200000) {
+		// if (this->state_iter >= 200000) {
+		if (this->state_iter >= 500000) {
 			cout << "ending STATE_LOCAL_SCOPE_LEARN" << endl;
 			cout << "starting STATE_LOCAL_SCOPE_MEASURE" << endl;
 
@@ -373,7 +375,8 @@ void TestNode::increment() {
 			}
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_ZERO_TRAIN) {
-		if (this->state_iter >= 200000*(int)this->curr_scope_sizes.size()) {
+		// if (this->state_iter >= 200000*(int)this->curr_scope_sizes.size()) {
+		if (this->state_iter >= 0) {
 			if (this->curr_scope_sizes.size() > 1) {
 				cout << "ending STATE_LOCAL_SCOPE_ZERO_TRAIN" << endl;
 				cout << "starting STATE_COMPRESS_LEARN" << endl;
@@ -403,7 +406,8 @@ void TestNode::increment() {
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_LEARN) {
-		if (this->state_iter >= 200000) {
+		// if (this->state_iter >= 200000) {
+		if (this->state_iter >= 500000) {
 			cout << "ending STATE_COMPRESS_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_MEASURE" << endl;
 
@@ -450,7 +454,8 @@ void TestNode::increment() {
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_ZERO_TRAIN) {
-		if (this->state_iter >= 200000*(int)this->curr_scope_sizes.size()) {
+		// if (this->state_iter >= 200000*(int)this->curr_scope_sizes.size()) {
+		if (this->state_iter >= 0) {
 			if (this->curr_scope_sizes.size() > 1) {
 				cout << "ending STATE_COMPRESS_ZERO_TRAIN" << endl;
 				cout << "starting STATE_COMPRESS_LEARN" << endl;
