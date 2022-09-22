@@ -25,8 +25,6 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	int epoch_iter;
-
 	std::mutex mtx;
 
 	FoldNetwork(int flat_size,
@@ -46,6 +44,7 @@ public:
 
 	void add_scope(int scope_size);
 	void pop_scope();
+	void reset_last();
 	void activate(double* flat_inputs,
 				  bool* activated,
 				  std::vector<double>& obs,
@@ -55,16 +54,11 @@ public:
 									double learning_rate);
 	void update_weights_last_state(double factor,
 								   double learning_rate);
-	void backprop_last_state_with_constant(std::vector<double>& errors);
-	void calc_max_update_last_state_with_constant(double& max_update,
-												  double learning_rate);
-	void update_weights_last_state_with_constant(double factor,
-												 double learning_rate);
-	// void backprop_full_state(std::vector<double>& errors);
-	// void calc_max_update_full_state(double& max_update,
-	// 								double learning_rate);
-	// void update_weights_full_state(double factor,
-	// 							   double learning_rate);
+	void backprop_full_state(std::vector<double>& errors);
+	void calc_max_update_full_state(double& max_update,
+									double learning_rate);
+	void update_weights_full_state(double factor,
+								   double learning_rate);
 
 	void save(std::ofstream& output_file);
 

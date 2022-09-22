@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < 11; i++) {
 		ifstream input_file;
 		input_file.open("saves/n_" + to_string(i) + ".txt");
-		nodes.push_back(new Node(i, input_file));
+		nodes.push_back(new Node("p1_n_"+to_string(i), input_file));
 		input_file.close();
 	}
 

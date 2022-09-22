@@ -405,16 +405,13 @@ int main(int argc, char* argv[]) {
 					total_sum += 5;
 				}
 
-				// test_node.process_zero_train(flat_inputs,
-				// 							 activated,
-				// 							 state_vals,
-				// 							 rand()%2,
-				// 							 total_sum);
 				test_node.process(flat_inputs,
 								  activated,
 								  state_vals,
 								  rand()%2,
-								  total_sum);
+								  total_sum,
+								  true,
+								  nodes);
 			} else {
 				vector<vector<double>> state_vals;
 				vector<bool> scopes_on;
@@ -540,7 +537,9 @@ int main(int argc, char* argv[]) {
 								  activated,
 								  state_vals,
 								  rand()%2,
-								  total_sum);
+								  total_sum,
+								  false,
+								  nodes);
 			}
 
 			if (test_node.state == STATE_DONE) {
@@ -548,12 +547,13 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		nodes.push_back(new Node(fold_index,
+		nodes.push_back(new Node("p1_n_"+to_string(fold_index),
 								 test_node.outputs_state,
 								 test_node.update_existing_scope,
 								 1,
 								 test_node.state_network,
-								 test_node.compression_networks));
+								 test_node.compression_networks,
+								 test_node.compressed_scope_sizes));
 
 		// {
 		// 	ofstream output_file;

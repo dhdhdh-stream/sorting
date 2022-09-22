@@ -23,8 +23,6 @@ void CompressionNetwork::construct() {
 	this->output = new Layer(LINEAR_LAYER, this->scope_sizes[this->scope_sizes.size()-2]);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
-
-	this->epoch_iter = 0;
 }
 
 CompressionNetwork::CompressionNetwork(vector<int> scope_sizes) {
@@ -84,23 +82,16 @@ void CompressionNetwork::backprop(vector<double>& errors) {
 	}
 
 	this->output->backprop();
-	this->hidden->backprop_weights_with_no_error_signal();
+	this->hidden->backprop();
+}
 
-	if (this->epoch_iter == 100) {
-		double max_update = 0.0;
-		calc_max_update(max_update,
-						0.001);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
-		}
-		update_weights(factor,
-					   0.001);
-
-		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
+void CompressionNetwork::backprop_weights_with_no_error_signal(vector<double>& errors) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
 	}
+
+	this->output->backprop();
+	this->hidden->backprop_weights_with_no_error_signal();
 }
 
 void CompressionNetwork::calc_max_update(double& max_update,

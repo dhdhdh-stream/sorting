@@ -6,6 +6,7 @@
 
 const int LINEAR_LAYER = 0;
 const int RELU_LAYER = 1;
+const int LEAKY_LAYER = 2;
 
 class Layer {
 public:
@@ -20,8 +21,6 @@ public:
 	std::vector<double> constants;
 	std::vector<std::vector<std::vector<double>>> weight_updates;
 	std::vector<double> constant_updates;
-	std::vector<std::vector<std::vector<double>>> prev_weight_updates;
-	std::vector<double> prev_constant_updates;
 
 	Layer(int type, int num_nodes);
 	Layer(Layer* original);
@@ -51,16 +50,11 @@ public:
 										 double learning_rate);
 	void fold_update_weights_last_state(double factor,
 										double learning_rate);
-	void fold_backprop_last_state_with_constant();
-	void fold_calc_max_update_last_state_with_constant(double& max_update_size,
-													   double learning_rate);
-	void fold_update_weights_last_state_with_constant(double factor,
-													  double learning_rate);
-	// void fold_backprop_full_state();
-	// void fold_calc_max_update_full_state(double& max_update_size,
-	// 									 double learning_rate);
-	// void fold_update_weights_full_state(double factor,
-	// 									double learning_rate);
+	void fold_backprop_full_state();
+	void fold_calc_max_update_full_state(double& max_update_size,
+										 double learning_rate);
+	void fold_update_weights_full_state(double factor,
+										double learning_rate);
 };
 
 #endif /* LAYER_H */

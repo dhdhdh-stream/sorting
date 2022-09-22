@@ -5,6 +5,7 @@
 
 #include "fold_network.h"
 #include "compression_network.h"
+#include "node.h"
 #include "state_network.h"
 
 const int STATE_NO_OUTPUT_MEASURE = 0;
@@ -35,6 +36,7 @@ public:
 	StateNetwork* state_network;
 
 	std::vector<CompressionNetwork*> compression_networks;
+	std::vector<int> compressed_scope_sizes;
 
 	bool outputs_state;
 	bool update_existing_scope;
@@ -51,12 +53,9 @@ public:
 				 bool* activated,
 				 std::vector<std::vector<double>>& state_vals,
 				 double observation,
-				 double target_val);
-	// void process_zero_train(double* flat_inputs,
-	// 						bool* activated,
-	// 						std::vector<std::vector<double>>& state_vals,
-	// 						double observation,
-	// 						double target_val);
+				 double target_val,
+				 bool is_zero_train,
+				 std::vector<Node*>& nodes);
 
 private:
 	void increment();

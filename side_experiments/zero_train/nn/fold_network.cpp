@@ -14,7 +14,7 @@ void FoldNetwork::construct() {
 	}
 
 	int total_input_size = 2*this->flat_size + 1;
-	this->hidden = new Layer(RELU_LAYER, 2*total_input_size*total_input_size);
+	this->hidden = new Layer(LEAKY_LAYER, 2*total_input_size*total_input_size);
 	this->hidden->input_layers.push_back(this->flat_input);
 	this->hidden->input_layers.push_back(this->activated_input);
 	this->hidden->input_layers.push_back(this->obs_input);
@@ -26,8 +26,6 @@ void FoldNetwork::construct() {
 	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
-
-	this->epoch_iter = 0;
 }
 
 FoldNetwork::FoldNetwork(int flat_size,
@@ -120,22 +118,6 @@ void FoldNetwork::backprop(vector<double>& errors) {
 
 	this->output->backprop();
 	this->hidden->backprop();
-
-	if (this->epoch_iter == 100) {
-		double max_update = 0.0;
-		calc_max_update(max_update,
-						0.001);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
-		}
-		update_weights(factor,
-					   0.001);
-
-		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
-	}
 }
 
 void FoldNetwork::calc_max_update(double& max_update,
@@ -165,6 +147,11 @@ void FoldNetwork::pop_scope() {
 	delete this->state_inputs.back();
 	this->state_inputs.pop_back();
 	this->hidden->fold_pop_scope();
+}
+
+void FoldNetwork::reset_last() {
+	this->hidden->fold_pop_scope();
+	this->hidden->fold_add_scope(this->state_inputs.back());
 }
 
 void FoldNetwork::activate(double* flat_inputs,
@@ -204,20 +191,6 @@ void FoldNetwork::backprop_last_state(vector<double>& errors) {
 
 	this->output->backprop();
 	this->hidden->fold_backprop_last_state();
-
-	if (this->epoch_iter == 100) {
-		double max_update = 0.0;
-		calc_max_update_last_state(max_update, 0.001);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
-		}
-		update_weights_last_state(factor, 0.001);
-
-		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
-	}
 }
 
 void FoldNetwork::calc_max_update_last_state(double& max_update,
@@ -236,85 +209,30 @@ void FoldNetwork::update_weights_last_state(double factor,
 												 learning_rate);
 }
 
-void FoldNetwork::backprop_last_state_with_constant(vector<double>& errors) {
+void FoldNetwork::backprop_full_state(vector<double>& errors) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
 	this->output->backprop();
-	this->hidden->fold_backprop_last_state_with_constant();
-
-	if (this->epoch_iter == 100) {
-		double max_update = 0.0;
-		calc_max_update_last_state_with_constant(max_update, 0.001);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
-		}
-		update_weights_last_state_with_constant(factor, 0.001);
-
-		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
-	}
+	this->hidden->fold_backprop_full_state();
 }
 
-void FoldNetwork::calc_max_update_last_state_with_constant(double& max_update,
-														   double learning_rate) {
+void FoldNetwork::calc_max_update_full_state(double& max_update,
+											 double learning_rate) {
 	this->output->calc_max_update(max_update,
 								  learning_rate);
-	this->hidden->fold_calc_max_update_last_state_with_constant(
-		max_update,
-		learning_rate);
+	this->hidden->fold_calc_max_update_full_state(max_update,
+												  learning_rate);
 }
 
-void FoldNetwork::update_weights_last_state_with_constant(double factor,
-														  double learning_rate) {
+void FoldNetwork::update_weights_full_state(double factor,
+											double learning_rate) {
 	this->output->update_weights(factor,
 								 learning_rate);
-	this->hidden->fold_update_weights_last_state_with_constant(
-		factor,
-		learning_rate);
+	this->hidden->fold_update_weights_full_state(factor,
+												 learning_rate);
 }
-
-// void FoldNetwork::backprop_full_state(vector<double>& errors) {
-// 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
-// 		this->output->errors[e_index] = errors[e_index];
-// 	}
-
-// 	this->output->backprop();
-// 	this->hidden->fold_backprop_full_state();
-
-// 	if (this->epoch_iter == 100) {
-// 		double max_update = 0.0;
-// 		calc_max_update_full_state(max_update, 0.001);
-// 		double factor = 1.0;
-// 		if (max_update > 0.01) {
-// 			factor = 0.01/max_update;
-// 		}
-// 		update_weights_full_state(factor, 0.001);
-
-// 		this->epoch_iter = 0;
-// 	} else {
-// 		this->epoch_iter++;
-// 	}
-// }
-
-// void FoldNetwork::calc_max_update_full_state(double& max_update,
-// 											 double learning_rate) {
-// 	this->output->calc_max_update(max_update,
-// 								  learning_rate);
-// 	this->hidden->fold_calc_max_update_full_state(max_update,
-// 												  learning_rate);
-// }
-
-// void FoldNetwork::update_weights_full_state(double factor,
-// 											double learning_rate) {
-// 	this->output->update_weights(factor,
-// 								 learning_rate);
-// 	this->hidden->fold_update_weights_full_state(factor,
-// 												 learning_rate);
-// }
 
 void FoldNetwork::save(ofstream& output_file) {
 	output_file << this->flat_size << endl;
