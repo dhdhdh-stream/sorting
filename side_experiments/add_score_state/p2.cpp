@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 	// output_file.close();
 
 	// ifstream input_file;
-	// input_file.open("saves/fold_network.txt");
+	// input_file.open("saves/p2_fold_network.txt");
 	// FoldNetwork* fold_network = new FoldNetwork(input_file);
 	// input_file.close();
 
@@ -206,141 +206,146 @@ int main(int argc, char* argv[]) {
 	// cout << "average_error: " << average_error << endl;
 
 	ifstream input_file;
-	input_file.open("saves/p2_fold_network.txt");
+	// input_file.open("saves/p2_fold_network.txt");
+	input_file.open("saves/p2_f_3.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
+	// fold_network->add_scope(1);	// score_state
 
-	double target_error = 0.25;
+	double average_error = 0.16;
 
 	vector<Node*> nodes;
-	// for (int i = 0; i < 4; i++) {
-	// 	ifstream input_file;
-	// 	input_file.open("saves/n_" + to_string(i) + ".txt");
-	// 	nodes.push_back(new Node(i, input_file));
-	// 	input_file.close();
-	// }
+	for (int i = 0; i < 4; i++) {
+		ifstream input_file;
+		input_file.open("saves/p2_n_" + to_string(i) + "_3.txt");
+		nodes.push_back(new Node("p2_n_" + to_string(i), input_file));
+		input_file.close();
+	}
 	vector<int> scope_sizes;
+	scope_sizes.push_back(1);	// first scope is always score_state
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		nodes[n_index]->get_scope_sizes(scope_sizes);
 	}
 	int fold_index = (int)nodes.size();
 
 	for (int compress_index = fold_index; compress_index < 10; compress_index++) {
-		TestNode* test_node = new TestNode(target_error,
+		TestNode* test_node = new TestNode(1.5*average_error,
 										   scope_sizes,
 										   fold_network);
 		while (true) {
-			int rand_non_zero_index = 0;	// # of scopes to include as non_zero
-			if (test_node->state == STATE_LOCAL_SCOPE_LEARN
-					|| test_node->state == STATE_LOCAL_SCOPE_TUNE
-					|| test_node->state == STATE_COMPRESS_LEARN
-					|| test_node->state == STATE_COMPRESS_TUNE) {
-				if (rand()%2 == 0) {
-					// zero only from before compression
-					rand_non_zero_index = rand()%(int)test_node->test_scope_sizes.size();
-				}
-			}
+		// 	int rand_non_zero_index = 0;	// # of scopes to include as non_zero
+		// 	if (test_node->state == STATE_LOCAL_SCOPE_LEARN
+		// 			|| test_node->state == STATE_LOCAL_SCOPE_TUNE
+		// 			|| test_node->state == STATE_COMPRESS_LEARN
+		// 			|| test_node->state == STATE_COMPRESS_TUNE) {
+		// 		if (rand()%2 == 0) {
+		// 			// zero only from before compression
+		// 			rand_non_zero_index = rand()%(int)test_node->test_scope_sizes.size();
+		// 		}
+		// 	}
 
-			if (rand_non_zero_index != 0) {
-				int zero_fold_index;
-				int curr_layer = 0;
-				for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-					curr_layer -= (int)nodes[n_index]->compression_networks.size();
+		// 	if (rand_non_zero_index != 0) {
+		// 		int zero_fold_index;
+		// 		int curr_layer = 0;
+		// 		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
+		// 			curr_layer -= (int)nodes[n_index]->compression_networks.size();
 
-					if (!nodes[n_index]->update_existing_scope) {
-						curr_layer++;
-					}
+		// 			if (!nodes[n_index]->update_existing_scope) {
+		// 				curr_layer++;
+		// 			}
 
-					// bookkeep from before compression
-					if (curr_layer == rand_non_zero_index+(int)test_node->compression_networks.size()) {
-						zero_fold_index = n_index;
-					}
-				}
+		// 			// bookkeep from before compression
+		// 			if (curr_layer == rand_non_zero_index+(int)test_node->compression_networks.size()) {
+		// 				zero_fold_index = n_index;
+		// 			}
+		// 		}
 
+		// 		vector<vector<double>> state_vals;
+		// 		vector<bool> scopes_on;
+
+		// 		double flat_inputs[10];
+		// 		int flat_input_counter = 0;
+		// 		bool activated[10];
+		// 		for (int i = 0; i < 10; i++) {
+		// 			activated[i] = true;
+		// 		}
+
+		// 		// first block
+		// 		int first_block_on_index = rand()%5;
+		// 		flat_inputs[flat_input_counter] = first_block_on_index;
+		// 		zero_train_step(flat_input_counter,
+		// 						zero_fold_index,
+		// 						fold_index,
+		// 						flat_inputs[flat_input_counter],
+		// 						state_vals,
+		// 						scopes_on,
+		// 						nodes,
+		// 						test_node);
+		// 		flat_input_counter++;
+
+		// 		int first_block_sum = 0;
+		// 		for (int i = 0; i < 4; i++) {
+		// 			int value = rand()%4;
+		// 			flat_inputs[flat_input_counter] = value;
+		// 			if (i < first_block_on_index) {
+		// 				first_block_sum += value;
+		// 			}
+		// 			zero_train_step(flat_input_counter,
+		// 							zero_fold_index,
+		// 							fold_index,
+		// 							flat_inputs[flat_input_counter],
+		// 							state_vals,
+		// 							scopes_on,
+		// 							nodes,
+		// 							test_node);
+		// 			flat_input_counter++;
+		// 		}
+
+		// 		// second block
+		// 		int second_block_on_index = rand()%5;
+		// 		flat_inputs[flat_input_counter] = second_block_on_index;
+		// 		zero_train_step(flat_input_counter,
+		// 						zero_fold_index,
+		// 						fold_index,
+		// 						flat_inputs[flat_input_counter],
+		// 						state_vals,
+		// 						scopes_on,
+		// 						nodes,
+		// 						test_node);
+		// 		flat_input_counter++;
+
+		// 		int second_block_sum = 0;
+		// 		for (int i = 0; i < 4; i++) {
+		// 			int value = rand()%4;
+		// 			flat_inputs[flat_input_counter] = value;
+		// 			if (i < second_block_on_index) {
+		// 				second_block_sum += value;
+		// 			}
+		// 			zero_train_step(flat_input_counter,
+		// 							zero_fold_index,
+		// 							fold_index,
+		// 							flat_inputs[flat_input_counter],
+		// 							state_vals,
+		// 							scopes_on,
+		// 							nodes,
+		// 							test_node);
+		// 			flat_input_counter++;
+		// 		}
+
+		// 		int final_value = first_block_sum - second_block_sum;
+
+		// 		test_node->process(flat_inputs,
+		// 						   activated,
+		// 						   state_vals,
+		// 						   rand()%4,
+		// 						   final_value,
+		// 						   true,
+		// 						   nodes);
+		// 	} else {
 				vector<vector<double>> state_vals;
+				state_vals.push_back(vector<double>{average_error});
 				vector<bool> scopes_on;
-
-				double flat_inputs[10];
-				int flat_input_counter = 0;
-				bool activated[10];
-				for (int i = 0; i < 10; i++) {
-					activated[i] = true;
-				}
-
-				// first block
-				int first_block_on_index = rand()%5;
-				flat_inputs[flat_input_counter] = first_block_on_index;
-				zero_train_step(flat_input_counter,
-								zero_fold_index,
-								fold_index,
-								flat_inputs[flat_input_counter],
-								state_vals,
-								scopes_on,
-								nodes,
-								test_node);
-				flat_input_counter++;
-
-				int first_block_sum = 0;
-				for (int i = 0; i < 4; i++) {
-					int value = rand()%4;
-					flat_inputs[flat_input_counter] = value;
-					if (i < first_block_on_index) {
-						first_block_sum += value;
-					}
-					zero_train_step(flat_input_counter,
-									zero_fold_index,
-									fold_index,
-									flat_inputs[flat_input_counter],
-									state_vals,
-									scopes_on,
-									nodes,
-									test_node);
-					flat_input_counter++;
-				}
-
-				// second block
-				int second_block_on_index = rand()%5;
-				flat_inputs[flat_input_counter] = second_block_on_index;
-				zero_train_step(flat_input_counter,
-								zero_fold_index,
-								fold_index,
-								flat_inputs[flat_input_counter],
-								state_vals,
-								scopes_on,
-								nodes,
-								test_node);
-				flat_input_counter++;
-
-				int second_block_sum = 0;
-				for (int i = 0; i < 4; i++) {
-					int value = rand()%4;
-					flat_inputs[flat_input_counter] = value;
-					if (i < second_block_on_index) {
-						second_block_sum += value;
-					}
-					zero_train_step(flat_input_counter,
-									zero_fold_index,
-									fold_index,
-									flat_inputs[flat_input_counter],
-									state_vals,
-									scopes_on,
-									nodes,
-									test_node);
-					flat_input_counter++;
-				}
-
-				int final_value = first_block_sum - second_block_sum;
-
-				test_node->process(flat_inputs,
-								   activated,
-								   state_vals,
-								   rand()%4,
-								   final_value,
-								   true,
-								   nodes);
-			} else {
-				vector<vector<double>> state_vals;
-				vector<bool> scopes_on;
+				scopes_on.push_back(true);
 
 				double flat_inputs[10];
 				int flat_input_counter = 0;
@@ -424,7 +429,7 @@ int main(int argc, char* argv[]) {
 								   final_value,
 								   false,
 								   nodes);
-			}
+			// }
 
 			if (test_node->state == STATE_DONE) {
 				break;
@@ -432,10 +437,13 @@ int main(int argc, char* argv[]) {
 		}
 
 		nodes.push_back(new Node("p2_n_"+to_string(fold_index),
-								 test_node->outputs_state,
+								 test_node->score_network,
+								 test_node->just_score,
 								 test_node->update_existing_scope,
 								 1,
 								 test_node->state_network,
+								 test_node->compress_num_scopes,
+								 test_node->compress_sizes,
 								 test_node->compression_networks,
 								 test_node->compressed_scope_sizes));
 
@@ -461,6 +469,8 @@ int main(int argc, char* argv[]) {
 		scope_sizes = test_node->curr_scope_sizes;
 
 		fold_index++;
+
+		delete test_node;
 	}
 
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
