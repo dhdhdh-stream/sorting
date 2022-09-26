@@ -50,6 +50,7 @@ public:
 										 double learning_rate);
 	void fold_update_weights_last_state(double factor,
 										double learning_rate);
+	void fold_backprop_last_state_with_no_weight_change();
 	void fold_backprop_full_state();
 	void fold_calc_max_update_full_state(double& max_update_size,
 										 double learning_rate);

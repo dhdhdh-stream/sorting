@@ -5,6 +5,7 @@
 
 #include "fold_network.h"
 #include "compression_network.h"
+#include "network.h"
 #include "node.h"
 #include "score_network.h"
 #include "state_network.h"
@@ -41,6 +42,7 @@ public:
 	ScoreNetwork* score_network;
 
 	StateNetwork* state_network;
+	Network* test_state_network;
 
 	std::vector<int> compress_num_scopes;
 	std::vector<int> compress_sizes;

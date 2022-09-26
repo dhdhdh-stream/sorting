@@ -1,6 +1,3 @@
-// zero train currently prevents convergence(?)
-// only zero train after fully converged(?)
-
 #include <chrono>
 #include <iostream>
 #include <thread>

@@ -434,6 +434,23 @@ void Layer::fold_update_weights_last_state(double factor,
 	}
 }
 
+void Layer::fold_backprop_last_state_with_no_weight_change() {
+	// this->type == LEAKY_LAYER
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		if (this->acti_vals[n_index] < 0.0) {
+			this->errors[n_index] *= 0.01;
+		}
+
+		int layer_size = (int)this->input_layers.back()->acti_vals.size();
+		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+			this->input_layers.back()->errors[ln_index] +=
+				this->errors[n_index]*this->weights[n_index].back()[ln_index];
+		}
+
+		this->errors[n_index] = 0.0;
+	}
+}
+
 void Layer::fold_backprop_full_state() {
 	// this->type == LEAKY_LAYER
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {

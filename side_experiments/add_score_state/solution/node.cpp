@@ -83,6 +83,25 @@ Node::Node(string id,
 	}
 }
 
+Node::Node(Node* original) {
+	this->id = original->id + "_c";
+	this->score_network = new ScoreNetwork(original->score_network);
+	this->just_score = original->just_score;
+	this->update_existing_scope = original->update_existing_scope;
+	this->new_scope_size = original->new_scope_size;
+	if (!this->just_score && this->update_existing_scope) {
+		this->state_network = new StateNetwork(original->state_network);
+	} else {
+		this->state_network = NULL;
+	}
+	this->compress_num_scopes = original->compress_num_scopes;
+	this->compress_sizes = original->compress_sizes;
+	for (int c_index = 0; c_index < (int)original->compression_networks.size(); c_index++) {
+		this->compression_networks.push_back(new CompressionNetwork(original->compression_networks[c_index]));
+	}
+	this->compressed_scope_sizes = original->compressed_scope_sizes;
+}
+
 Node::~Node() {
 	delete this->score_network;
 	if (this->state_network != NULL) {
@@ -141,43 +160,99 @@ void Node::activate(vector<vector<double>>& state_vals,
 
 void Node::backprop(double target_val,
 					vector<vector<double>>& state_errors) {
-	// backprop stopped if just_score
-	for (int c_index = (int)this->compression_networks.size()-1; c_index >= 0; c_index--) {
-		this->compression_networks[c_index]->backprop(state_errors.back());
+	if (!this->just_score) {
+		for (int c_index = (int)this->compression_networks.size()-1; c_index >= 0; c_index--) {
+			this->compression_networks[c_index]->backprop(state_errors.back());
 
-		state_errors.pop_back();
-		for (int sc_index = this->compress_num_scopes[c_index]-1; sc_index >= 0; sc_index--) {
-			state_errors.push_back(vector<double>(this->compressed_scope_sizes[c_index][sc_index]));
-		}
+			state_errors.pop_back();
+			for (int sc_index = this->compress_num_scopes[c_index]-1; sc_index >= 0; sc_index--) {
+				state_errors.push_back(vector<double>(this->compressed_scope_sizes[c_index][sc_index]));
+			}
 
-		// state_errors[0][0] doesn't matter
-		for (int sc_index = 1; sc_index < (int)state_errors.size(); sc_index++) {
-			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
-				state_errors[sc_index][st_index] += this->compression_networks[c_index]->state_inputs[sc_index]->errors[st_index];
-				this->compression_networks[c_index]->state_inputs[sc_index]->errors[st_index] = 0.0;
+			// state_errors[0][0] doesn't matter
+			for (int sc_index = 1; sc_index < (int)state_errors.size(); sc_index++) {
+				for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
+					state_errors[sc_index][st_index] += this->compression_networks[c_index]->state_inputs[sc_index]->errors[st_index];
+					this->compression_networks[c_index]->state_inputs[sc_index]->errors[st_index] = 0.0;
+				}
 			}
 		}
-	}
 
-	// copy observation if !update_existing_scope for now
-	if (!update_existing_scope) {
-		state_errors.pop_back();
+		// copy observation if !update_existing_scope for now
+		if (!update_existing_scope) {
+			state_errors.pop_back();
+		} else {
+			this->state_network->backprop(state_errors.back());
+			// state_errors[0][0] doesn't matter
+			for (int sc_index = 1; sc_index < (int)state_errors.size()-1; sc_index++) {
+				for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
+					state_errors[sc_index][st_index] += this->state_network->state_inputs[sc_index]->errors[st_index];
+					this->state_network->state_inputs[sc_index]->errors[st_index] = 0.0;
+				}
+			}
+			for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
+				state_errors.back()[st_index] = this->state_network->state_inputs.back()->errors[st_index];
+				this->state_network->state_inputs.back()->errors[st_index] = 0.0;
+			}
+		}
+
+		this->score_network->backprop_weights_with_no_error_signal(target_val);
+	}
+}
+
+void Node::backprop_zero_train(Node* original,
+							   double& sum_error) {
+	if (!this->just_score) {
+		for (int c_index = (int)this->compression_networks.size()-1; c_index >= 0; c_index--) {
+			vector<double> errors(this->compression_networks[c_index]->output->acti_vals.size());
+			for (int o_index = 0; o_index < (int)this->compression_networks[c_index]->output->acti_vals.size(); o_index++) {
+				errors[o_index] = original->compression_networks[c_index]->output->acti_vals[o_index]
+					- this->compression_networks[c_index]->output->acti_vals[o_index];
+				sum_error += abs(errors[o_index]);
+			}
+			this->compression_networks[c_index]->backprop_weights_with_no_error_signal(errors);
+		}
+
+		if (update_existing_scope) {
+			vector<double> errors(this->state_network->output->acti_vals.size());
+			for (int o_index = 0; o_index < (int)this->state_network->output->acti_vals.size(); o_index++) {
+				errors[o_index] = original->state_network->output->acti_vals[o_index]
+					- this->state_network->output->acti_vals[o_index];
+				sum_error += abs(errors[o_index]);
+			}
+			this->state_network->backprop_weights_with_no_error_signal(errors);
+		}
+	}
+}
+
+void Node::activate_state(vector<vector<double>>& state_vals,
+						  vector<bool>& scopes_on,
+						  double observation) {
+	if (this->just_score) {
+		// do nothing
 	} else {
-		this->state_network->backprop(state_errors.back());
-		// state_errors[0][0] doesn't matter
-		for (int sc_index = 1; sc_index < (int)state_errors.size()-1; sc_index++) {
-			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
-				state_errors[sc_index][st_index] += this->state_network->state_inputs[sc_index]->errors[st_index];
-				this->state_network->state_inputs[sc_index]->errors[st_index] = 0.0;
-			}
-		}
-		for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-			state_errors.back()[st_index] = this->state_network->state_inputs.back()->errors[st_index];
-			this->state_network->state_inputs.back()->errors[st_index] = 0.0;
-		}
+		// has to be update_existing_scope
+		vector<double> obs{observation};
+		this->state_network->activate(state_vals,
+									  scopes_on,
+									  obs);
 	}
+}
 
-	this->score_network->backprop_weights_with_no_error_signal(target_val);
+void Node::backprop_zero_train_state(Node* original,
+									 double& sum_error) {
+	if (this->just_score) {
+		// do nothing
+	} else {
+		// has to be update_existing_scope
+		vector<double> errors(this->state_network->output->acti_vals.size());
+		for (int o_index = 0; o_index < (int)this->state_network->output->acti_vals.size(); o_index++) {
+			errors[o_index] = original->state_network->output->acti_vals[o_index]
+				- this->state_network->output->acti_vals[o_index];
+			sum_error += abs(errors[o_index]);
+		}
+		this->state_network->backprop_weights_with_no_error_signal(errors);
+	}
 }
 
 void Node::calc_max_update(double& max_update,
@@ -207,12 +282,12 @@ void Node::update_weights(double factor,
 		}
 
 		double score_max_update = 0.0;
-		this->score_network->calc_max_update(score_max_update, 0.01*learning_rate);
+		this->score_network->calc_max_update(score_max_update, learning_rate);
 		double score_factor = 1.0;
 		if (score_max_update > 0.001) {
 			score_factor = 0.001/score_max_update;
 		}
-		this->score_network->update_weights(score_factor, 0.01*learning_rate);
+		this->score_network->update_weights(score_factor, learning_rate);
 	}
 }
 

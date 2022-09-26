@@ -24,6 +24,7 @@ public:
 	CompressionNetwork(std::vector<int> scope_sizes,
 					   int output_size);
 	CompressionNetwork(std::ifstream& input_file);
+	CompressionNetwork(CompressionNetwork* original);
 	~CompressionNetwork();
 
 	void activate(std::vector<std::vector<double>>& state_vals,

@@ -52,6 +52,12 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 		for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
 			state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
 		}
+		// vector<double> inputs;
+		// inputs.push_back(observation);
+		// inputs.push_back(state_vals[0][0]);
+		// inputs.push_back(state_vals[1][0]);
+		// this->test_state_network->activate(inputs);
+		// state_vals.back()[0] = this->test_state_network->output->acti_vals[0];
 
 		if (this->state == STATE_COMPRESS_TUNE) {
 			for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
@@ -158,25 +164,29 @@ void TestNode::process(double* flat_inputs,
 					   bool is_zero_train,
 					   vector<Node*>& nodes) {
 	if (this->state == STATE_LEARN_SCORE) {
+		if ((this->state_iter+1)%10000 == 0) {
+			cout << this->state_iter << " sum_error: " << this->sum_error << endl;
+		}
+
 		this->sum_error += abs(target_val - this->score_network->output->acti_vals[0]);
 		this->score_network->backprop_weights_with_no_error_signal(target_val);
 
 		if (this->state_iter <= 200000) {
 			double max_update = 0.0;
-			this->score_network->calc_max_update(max_update, 0.00001);
+			this->score_network->calc_max_update(max_update, 0.001);
 			double factor = 1.0;
 			if (max_update > 0.01) {
 				factor = 0.01/max_update;
 			}
-			this->score_network->update_weights(factor, 0.00001);
+			this->score_network->update_weights(factor, 0.001);
 		} else {
 			double max_update = 0.0;
-			this->score_network->calc_max_update(max_update, 0.000001);
+			this->score_network->calc_max_update(max_update, 0.0001);
 			double factor = 1.0;
 			if (max_update > 0.001) {
 				factor = 0.001/max_update;
 			}
-			this->score_network->update_weights(factor, 0.000001);
+			this->score_network->update_weights(factor, 0.0001);
 		}
 	} else if (this->state == STATE_JUST_SCORE_MEASURE
 			|| this->state == STATE_LOCAL_SCOPE_MEASURE
@@ -197,24 +207,22 @@ void TestNode::process(double* flat_inputs,
 			this->sum_error = 0.0;
 		}
 
-		if (this->state_iter <= 50000) {
-			vector<double> obs;
-			obs.push_back(observation);
+		vector<double> obs;
+		obs.push_back(observation);
 
-			this->test_fold->activate(flat_inputs,
-									  activated,
-									  obs,
-									  state_vals);
+		this->test_fold->activate(flat_inputs,
+								  activated,
+								  obs,
+								  state_vals);
 
-			vector<double> errors;
-			errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
-			// if (!is_zero_train) {
-				this->sum_error += abs(errors[0]);
-			// }
+		vector<double> errors;
+		errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
+		this->sum_error += abs(errors[0]);
 
-			this->test_fold->backprop_last_state(errors);
+		this->test_fold->backprop_last_state(errors);
 
-			if (this->state_iter%100 == 0) {
+		if (this->state_iter%100 == 0) {
+			if (this->state_iter <= 100000) {
 				double max_update = 0.0;
 				this->test_fold->calc_max_update_last_state(max_update, 0.001);
 				double factor = 1.0;
@@ -222,25 +230,7 @@ void TestNode::process(double* flat_inputs,
 					factor = 0.01/max_update;
 				}
 				this->test_fold->update_weights_last_state(factor, 0.001);
-			}
-		} else {
-			vector<double> obs;
-			obs.push_back(observation);
-
-			this->test_fold->activate(flat_inputs,
-									  activated,
-									  obs,
-									  state_vals);
-
-			vector<double> errors;
-			errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
-			// if (!is_zero_train) {
-				this->sum_error += abs(errors[0]);
-			// }
-
-			this->test_fold->backprop_last_state(errors);
-
-			if (this->state_iter%100 == 0) {
+			} else {
 				double max_update = 0.0;
 				this->test_fold->calc_max_update_last_state(max_update, 0.0001);
 				double factor = 1.0;
@@ -258,26 +248,62 @@ void TestNode::process(double* flat_inputs,
 			this->sum_error = 0.0;
 		}
 
-		if (this->state_iter <= 200000) {
-			vector<double> obs;
-			obs.push_back(observation);
+		vector<double> obs;
+		obs.push_back(observation);
 
-			this->test_fold->activate(flat_inputs,
-									  activated,
-									  obs,
-									  state_vals);
+		this->test_fold->activate(flat_inputs,
+								  activated,
+								  obs,
+								  state_vals);
 
-			vector<double> errors;
-			errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
-			// if (!is_zero_train) {
-				this->sum_error += abs(errors[0]);
-			// }
+		vector<double> errors;
+		errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
+		this->sum_error += abs(errors[0]);
 
-			this->test_fold->backprop_last_state(errors);
+		// if (this->state_iter <= 200000) {
+		if (this->state_iter < 0) {
+			this->test_fold->backprop_last_state_with_no_weight_change(errors);
 
 			vector<double> last_scope_state_errors(this->test_scope_sizes.back());
 			for (int st_index = 0; st_index < this->test_scope_sizes.back(); st_index++) {
 				last_scope_state_errors[st_index] = this->test_fold->state_inputs.back()->errors[st_index];
+				this->test_fold->state_inputs.back()->errors[st_index] = 0.0;
+			}
+
+			if (this->state == STATE_CAN_COMPRESS_LEARN
+					|| this->state == STATE_COMPRESS_LEARN) {
+				this->test_compression_network->backprop_weights_with_no_error_signal(last_scope_state_errors);
+
+				if (this->state_iter%100 == 0) {
+					double max_update = 0.0;
+					this->test_compression_network->calc_max_update(max_update, 0.001);
+					double factor = 1.0;
+					if (max_update > 0.01) {
+						factor = 0.01/max_update;
+					}
+					this->test_compression_network->update_weights(factor, 0.001);
+				}
+			} else {
+				this->state_network->backprop_weights_with_no_error_signal(last_scope_state_errors);
+
+				if (this->state_iter%100 == 0) {
+					double max_update = 0.0;
+					this->state_network->calc_max_update(max_update, 0.001);
+					double factor = 1.0;
+					if (max_update > 0.01) {
+						factor = 0.01/max_update;
+					}
+					this->state_network->update_weights(factor, 0.001);
+				}
+			}
+		// } else if (this->state_iter <= 200000) {
+		} else if (this->state_iter <= 600000) {
+			this->test_fold->backprop_last_state(errors);
+
+			vector<double> last_scope_state_errors(this->test_scope_sizes.back());
+			for (int st_index = 0; st_index < this->test_scope_sizes.back(); st_index++) {
+				// last_scope_state_errors[st_index] = this->test_fold->state_inputs.back()->errors[st_index];
+				last_scope_state_errors[st_index] = 100*this->test_fold->state_inputs.back()->errors[st_index];
 				this->test_fold->state_inputs.back()->errors[st_index] = 0.0;
 			}
 
@@ -309,23 +335,37 @@ void TestNode::process(double* flat_inputs,
 					}
 					this->test_fold->update_weights_last_state(factor, 0.001);
 					this->state_network->update_weights(factor, 0.001);
+
+					// double fold_max_update = 0.0;
+					// this->test_fold->calc_max_update_last_state(fold_max_update, 0.001);
+					// double fold_factor = 1.0;
+					// if (fold_max_update > 0.01) {
+					// 	fold_factor = 0.01/fold_max_update;
+					// }
+					// this->test_fold->update_weights_last_state(fold_factor, 0.001);
+
+					// double state_max_update = 0.0;
+					// this->state_network->calc_max_update(state_max_update, 0.001);
+					// double state_factor = 1.0;
+					// if (state_max_update > 0.01) {
+					// 	state_factor = 0.01/state_max_update;
+					// }
+					// this->state_network->update_weights(state_factor, 0.001);
 				}
+
+				// this->test_state_network->backprop(last_scope_state_errors);
+
+				// if (this->state_iter%100 == 0) {
+				// 	double max_update = 0.0;
+				// 	this->test_fold->calc_max_update_last_state(max_update, 0.001);
+				// 	double factor = 1.0;
+				// 	if (max_update > 0.01) {
+				// 		factor = 0.01/max_update;
+				// 	}
+				// 	this->test_fold->update_weights_last_state(factor, 0.001);
+				// }
 			}
 		} else {
-			vector<double> obs;
-			obs.push_back(observation);
-
-			this->test_fold->activate(flat_inputs,
-									  activated,
-									  obs,
-									  state_vals);
-
-			vector<double> errors;
-			errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
-			// if (!is_zero_train) {
-				this->sum_error += abs(errors[0]);
-			// }
-
 			this->test_fold->backprop_last_state(errors);
 
 			vector<double> last_scope_state_errors(this->test_scope_sizes.back());
@@ -460,12 +500,12 @@ void TestNode::process(double* flat_inputs,
 			}
 
 			double score_max_update = 0.0;
-			this->score_network->calc_max_update(score_max_update, 0.000001);
+			this->score_network->calc_max_update(score_max_update, 0.0001);
 			double score_factor = 1.0;
 			if (score_max_update > 0.001) {
 				score_factor = 0.001/score_max_update;
 			}
-			this->score_network->update_weights(score_factor, 0.000001);
+			this->score_network->update_weights(score_factor, 0.0001);
 		}
 	}
 
@@ -476,22 +516,23 @@ void TestNode::increment() {
 	this->state_iter++;
 
 	if (this->state == STATE_LEARN_SCORE) {
-		if (this->state_iter > 300000) {
-			if (this->state_iter%50000 == 0) {
-				cout << this->state_iter << " " << this->sum_error << endl;
-				if (this->best_sum_error == -1.0) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->tune_try = 0;
-				} else {
-					if (this->sum_error < this->best_sum_error) {
-						this->best_sum_error = this->sum_error;
-						this->sum_error = 0.0;
-						this->tune_try = 0;
-					} else if (this->tune_try < 2) {
-						this->sum_error = 0.0;
-						this->tune_try++;
-					} else {
+		// if (this->state_iter > 300000) {
+		if (this->state_iter > 10) {
+			// if (this->state_iter%50000 == 0) {
+			// 	cout << this->state_iter << " " << this->sum_error << endl;
+			// 	if (this->best_sum_error == -1.0) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->tune_try = 0;
+			// 	} else {
+			// 		if (this->sum_error < this->best_sum_error) {
+			// 			this->best_sum_error = this->sum_error;
+			// 			this->sum_error = 0.0;
+			// 			this->tune_try = 0;
+			// 		} else if (this->tune_try < 4) {
+			// 			this->sum_error = 0.0;
+			// 			this->tune_try++;
+			// 		} else {
 						cout << "ending STATE_LEARN_SCORE" << endl;
 						cout << "starting STATE_JUST_SCORE_LEARN" << endl;
 
@@ -504,16 +545,17 @@ void TestNode::increment() {
 						this->state = STATE_JUST_SCORE_LEARN;
 						this->state_iter = 0;
 						this->sum_error = 0.0;
-					}
-				}
-			}
+			// 		}
+			// 	}
+			// }
 		} else {
 			if (this->state_iter%50000 == 0) {
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_JUST_SCORE_LEARN) {
-		if (this->state_iter >= 100000) {
+		// if (this->state_iter >= 200000) {
+		if (this->state_iter >= 10) {
 			cout << "ending STATE_JUST_SCORE_LEARN" << endl;
 			cout << "starting STATE_JUST_SCORE_MEASURE" << endl;
 
@@ -522,8 +564,10 @@ void TestNode::increment() {
 			this->sum_error = 0.0;
 		}
 	} else if (this->state == STATE_JUST_SCORE_MEASURE) {
-		if (this->state_iter >= 10000) {
-			if (this->sum_error/10000 < this->target_error) {
+		// if (this->state_iter >= 10000) {
+		if (this->state_iter >= 10) {
+			// if (this->sum_error/10000 < this->target_error) {
+			if (false) {
 				cout << "ending STATE_JUST_SCORE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "DONE" << endl;
@@ -556,6 +600,7 @@ void TestNode::increment() {
 					this->test_scope_sizes = this->curr_scope_sizes;
 
 					this->state_network = new StateNetwork(this->test_scope_sizes);
+					this->test_state_network = new Network(3, 20, 1);
 
 					this->state = STATE_LOCAL_SCOPE_LEARN;
 					this->state_iter = 0;
@@ -582,6 +627,7 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_LEARN) {
 		if (this->state_iter >= 300000) {
+		// if (this->state_iter >= 1000000) {
 			cout << "ending STATE_LOCAL_SCOPE_LEARN" << endl;
 			cout << "starting STATE_LOCAL_SCOPE_MEASURE" << endl;
 
@@ -645,7 +691,7 @@ void TestNode::increment() {
 					this->sum_error = 0.0;
 					this->state_iter = 0;
 					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
+				} else if (this->tune_try < 4) {
 					this->sum_error = 0.0;
 					this->state_iter = 0;
 					this->tune_try++;
@@ -894,7 +940,7 @@ void TestNode::increment() {
 					this->sum_error = 0.0;
 					this->state_iter = 0;
 					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
+				} else if (this->tune_try < 4) {
 					this->sum_error = 0.0;
 					this->state_iter = 0;
 					this->tune_try++;

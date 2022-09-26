@@ -56,6 +56,7 @@ public:
 									double learning_rate);
 	void update_weights_last_state(double factor,
 								   double learning_rate);
+	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
 	void backprop_full_state(std::vector<double>& errors);
 	void calc_max_update_full_state(double& max_update,
 									double learning_rate);

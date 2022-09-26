@@ -21,20 +21,26 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	ifstream input_file;
-	input_file.open("saves/f_10.txt");
+	// input_file.open("saves/f_10.txt");
+	input_file.open("saves/p1_f_0.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
 
+	double average_score = 6.0;
+
 	vector<Node*> nodes;
-	for (int i = 0; i < 11; i++) {
+	// for (int i = 0; i < 11; i++) {
+	for (int i = 0; i < 1; i++) {
 		ifstream input_file;
-		input_file.open("saves/n_" + to_string(i) + ".txt");
+		input_file.open("saves/p1_n_" + to_string(i) + "_0.txt");
 		nodes.push_back(new Node("p1_n_"+to_string(i), input_file));
 		input_file.close();
 	}
 
 	vector<vector<double>> state_vals;
+	state_vals.push_back(vector<double>{average_score});
 	vector<bool> scopes_on;
+	scopes_on.push_back(true);
 
 	double flat_inputs[11];
 	int flat_input_counter = 0;
@@ -52,6 +58,21 @@ int main(int argc, char* argv[]) {
 		} else {
 			flat_inputs[flat_input_counter] = 0.0;
 		}
+		if (flat_input_counter < (int)nodes.size()) {
+			nodes[flat_input_counter]->activate(state_vals,
+												scopes_on,
+												flat_inputs[flat_input_counter]);
+			cout << "input: " << flat_inputs[flat_input_counter] << endl;
+			for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
+				cout << state_vals[sc_index][0] << endl;
+			}
+		}
+		flat_input_counter++;
+	}
+
+	// dud
+	flat_inputs[flat_input_counter] = rand()%2;
+	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
 											flat_inputs[flat_input_counter]);
@@ -59,17 +80,6 @@ int main(int argc, char* argv[]) {
 		for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
 			cout << state_vals[sc_index][0] << endl;
 		}
-		flat_input_counter++;
-	}
-
-	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
-	nodes[flat_input_counter]->activate(state_vals,
-										scopes_on,
-										flat_inputs[flat_input_counter]);
-	cout << "input: " << flat_inputs[flat_input_counter] << endl;
-	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
-		cout << state_vals[sc_index][0] << endl;
 	}
 	flat_input_counter++;
 
@@ -80,6 +90,21 @@ int main(int argc, char* argv[]) {
 		} else {
 			flat_inputs[flat_input_counter] = 0.0;
 		}
+		if (flat_input_counter < (int)nodes.size()) {
+			nodes[flat_input_counter]->activate(state_vals,
+												scopes_on,
+												flat_inputs[flat_input_counter]);
+			cout << "input: " << flat_inputs[flat_input_counter] << endl;
+			for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
+				cout << state_vals[sc_index][0] << endl;
+			}
+		}
+		flat_input_counter++;
+	}
+
+	// dud
+	flat_inputs[flat_input_counter] = rand()%2;
+	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
 											flat_inputs[flat_input_counter]);
@@ -87,17 +112,6 @@ int main(int argc, char* argv[]) {
 		for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
 			cout << state_vals[sc_index][0] << endl;
 		}
-		flat_input_counter++;
-	}
-
-	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
-	nodes[flat_input_counter]->activate(state_vals,
-										scopes_on,
-										flat_inputs[flat_input_counter]);
-	cout << "input: " << flat_inputs[flat_input_counter] << endl;
-	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
-		cout << state_vals[sc_index][0] << endl;
 	}
 	flat_input_counter++;
 
@@ -110,6 +124,21 @@ int main(int argc, char* argv[]) {
 		} else {
 			flat_inputs[flat_input_counter] = 0.0;
 		}
+		if (flat_input_counter < (int)nodes.size()) {
+			nodes[flat_input_counter]->activate(state_vals,
+												scopes_on,
+												flat_inputs[flat_input_counter]);
+			cout << "input: " << flat_inputs[flat_input_counter] << endl;
+			for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
+				cout << state_vals[sc_index][0] << endl;
+			}
+		}
+		flat_input_counter++;
+	}
+
+	// dud
+	flat_inputs[flat_input_counter] = rand()%2;
+	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
 											flat_inputs[flat_input_counter]);
@@ -117,17 +146,6 @@ int main(int argc, char* argv[]) {
 		for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
 			cout << state_vals[sc_index][0] << endl;
 		}
-		flat_input_counter++;
-	}
-
-	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
-	nodes[flat_input_counter]->activate(state_vals,
-										scopes_on,
-										flat_inputs[flat_input_counter]);
-	cout << "input: " << flat_inputs[flat_input_counter] << endl;
-	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
-		cout << state_vals[sc_index][0] << endl;
 	}
 	flat_input_counter++;
 

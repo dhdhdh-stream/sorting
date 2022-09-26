@@ -86,10 +86,15 @@ void Network::backprop(vector<double>& errors) {
 	this->output->backprop();
 	this->hidden->backprop();
 
-	if (this->epoch_iter == 100) {
+	// if (this->epoch_iter == 100) {
+	if (this->epoch_iter == 1000) {
 		double max_update = 0.0;
 		calc_max_update(max_update,
 						0.001);
+		// for (int n_index = 0; n_index < (int)this->hidden->acti_vals.size(); n_index++) {
+		// 	cout << "1: " << this->hidden->weight_updates[n_index][0][1] << endl;
+		// 	cout << "2: " << this->hidden->weight_updates[n_index][0][2] << endl;
+		// }
 		double factor = 1.0;
 		if (max_update > 0.01) {
 			factor = 0.01/max_update;

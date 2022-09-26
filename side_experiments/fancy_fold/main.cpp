@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// FoldNetwork fold_network(11, 1);
+	// FoldNetwork* fold_network = new FoldNetwork(11, 1);
 
 	// double sum_error = 0.0;
 	// for (int epoch_index = 1; epoch_index < 50000; epoch_index++) {
@@ -137,21 +137,21 @@ int main(int argc, char* argv[]) {
 	// 		vector<double> obs;
 	// 		obs.push_back(rand()%2);
 
-	// 		fold_network.activate(flat_inputs,
-	// 							  activated,
-	// 							  obs);
+	// 		fold_network->activate(flat_inputs,
+	// 							   activated,
+	// 							   obs);
 
 	// 		vector<double> errors;
-	// 		errors.push_back(total_sum - fold_network.output->acti_vals[0]);
+	// 		errors.push_back(total_sum - fold_network->output->acti_vals[0]);
 	// 		sum_error += abs(errors[0]);
 
-	// 		fold_network.backprop(errors);
+	// 		fold_network->backprop(errors);
 	// 	}
 	// }
 
 	// ofstream output_file;
 	// output_file.open("saves/fold_network.txt");
-	// fold_network.save(output_file);
+	// fold_network->save(output_file);
 	// output_file.close();
 
 	// ifstream input_file;
@@ -241,7 +241,8 @@ int main(int argc, char* argv[]) {
 	// cout << "average_error: " << average_error << endl;
 
 	ifstream input_file;
-	input_file.open("saves/fold_network.txt");
+	// input_file.open("saves/fold_network.txt");
+	input_file.open("saves/compare_fold_network.txt");
 	// input_file.open("saves/f_1.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();

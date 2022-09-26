@@ -19,10 +19,14 @@ public:
 	Layer* hidden;
 	Layer* output;
 
+	int epoch_iter;
+	double average_max_update;
+
 	std::mutex mtx;
 
 	StateNetwork(std::vector<int> scope_sizes);
 	StateNetwork(std::ifstream& input_file);
+	StateNetwork(StateNetwork* original);
 	~StateNetwork();
 
 	void activate(std::vector<std::vector<double>>& state_vals,
@@ -30,6 +34,7 @@ public:
 				  std::vector<double>& obs);
 	void backprop(std::vector<double>& errors);
 	void backprop_weights_with_no_error_signal(std::vector<double>& errors);
+	void backprop_zero_train(std::vector<double>& errors);
 	void calc_max_update(double& max_update,
 						 double learning_rate);
 	void update_weights(double factor,

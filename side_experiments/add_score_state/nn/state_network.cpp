@@ -1,5 +1,7 @@
 #include "state_network.h"
 
+#include <iostream>
+
 using namespace std;
 
 void StateNetwork::construct() {
@@ -15,7 +17,7 @@ void StateNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		total_state_size += this->scope_sizes[sc_index];
 	}
-	this->hidden = new Layer(LEAKY_LAYER, 10*total_state_size);
+	this->hidden = new Layer(LEAKY_LAYER, 20*total_state_size);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
@@ -49,6 +51,15 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
+}
+
+StateNetwork::StateNetwork(StateNetwork* original) {
+	this->scope_sizes = original->scope_sizes;
+
+	construct();
+
+	this->hidden->copy_weights_from(original->hidden);
+	this->output->copy_weights_from(original->output);
 }
 
 StateNetwork::~StateNetwork() {

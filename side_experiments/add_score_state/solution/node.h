@@ -37,12 +37,20 @@ public:
 		 std::vector<std::vector<int>> compressed_scope_sizes);
 	Node(std::string id,
 		 std::ifstream& input_file);
+	Node(Node* original);
 	~Node();
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
 				  double observation);
 	void backprop(double target_val,
 				  std::vector<std::vector<double>>& state_errors);
+	void backprop_zero_train(Node* original,
+							 double& sum_error);
+	void activate_state(std::vector<std::vector<double>>& state_vals,
+						std::vector<bool>& scopes_on,
+						double observation);
+	void backprop_zero_train_state(Node* original,
+								   double& sum_error);
 	void calc_max_update(double& max_update,
 						 double learning_rate);
 	void update_weights(double factor,

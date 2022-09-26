@@ -21,6 +21,7 @@ public:
 
 	ScoreNetwork(std::vector<int> scope_sizes);
 	ScoreNetwork(std::ifstream& input_file);
+	ScoreNetwork(ScoreNetwork* original);
 	~ScoreNetwork();
 
 	void activate(std::vector<std::vector<double>>& state_vals,

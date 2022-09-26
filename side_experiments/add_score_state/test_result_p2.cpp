@@ -21,20 +21,26 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	ifstream input_file;
-	input_file.open("saves/p2_f_9.txt");
+	input_file.open("saves/r2_p2_f_9.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
+
+	double average_score = 0.0;
+	// double average_error = 0.16;
 
 	vector<Node*> nodes;
 	for (int i = 0; i < 10; i++) {
 		ifstream input_file;
-		input_file.open("saves/p2_n_" + to_string(i) + "_9.txt");
-		nodes.push_back(new Node("p2_n_"+to_string(i), input_file));
+		// input_file.open("saves/p2_n_" + to_string(i) + "_9.txt");
+		input_file.open("saves/r2_p2_n_" + to_string(i) + "_c_zt.txt");
+		nodes.push_back(new Node("r2_p2_n_"+to_string(i)+"_c", input_file));
 		input_file.close();
 	}
 
 	vector<vector<double>> state_vals;
+	state_vals.push_back(vector<double>{average_score});
 	vector<bool> scopes_on;
+	scopes_on.push_back(true);
 
 	double flat_inputs[10];
 	int flat_input_counter = 0;

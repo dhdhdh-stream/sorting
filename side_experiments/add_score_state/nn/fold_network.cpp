@@ -235,6 +235,15 @@ void FoldNetwork::update_weights_last_state(double factor,
 												 learning_rate);
 }
 
+void FoldNetwork::backprop_last_state_with_no_weight_change(vector<double>& errors) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->fold_backprop_last_state_with_no_weight_change();
+}
+
 void FoldNetwork::backprop_full_state(vector<double>& errors) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
