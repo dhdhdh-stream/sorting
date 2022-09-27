@@ -95,25 +95,11 @@ int main(int argc, char* argv[]) {
 			errors.push_back(final_value - network->output->acti_vals[0]);
 			sum_error += abs(errors[0]);
 
-			network->backprop(errors);
-		}
-
-		if (epoch_index < 2000) {
-			double max_update = 0.0;
-			network->calc_max_update(max_update, 0.001);
-			double factor = 1.0;
-			if (max_update > 0.01) {
-				factor = 0.01/max_update;
+			if (epoch_index < 2000) {
+				network->backprop(errors, 0.01);
+			} else {
+				network->backprop(errors, 0.001);
 			}
-			network->update_weights(factor, 0.001);
-		} else {
-			double max_update = 0.0;
-			network->calc_max_update(max_update, 0.0001);
-			double factor = 1.0;
-			if (max_update > 0.001) {
-				factor = 0.001/max_update;
-			}
-			network->update_weights(factor, 0.0001);
 		}
 	}
 

@@ -4,6 +4,8 @@
 
 using namespace std;
 
+const double TARGET_MAX_UPDATE = 0.001;
+
 Node::Node(string id,
 		   ScoreNetwork* score_network,
 		   bool just_score,
@@ -162,7 +164,8 @@ void Node::backprop(double target_val,
 					vector<vector<double>>& state_errors) {
 	if (!this->just_score) {
 		for (int c_index = (int)this->compression_networks.size()-1; c_index >= 0; c_index--) {
-			this->compression_networks[c_index]->backprop(state_errors.back());
+			this->compression_networks[c_index]->backprop(state_errors.back(),
+														  TARGET_MAX_UPDATE);
 
 			state_errors.pop_back();
 			for (int sc_index = this->compress_num_scopes[c_index]-1; sc_index >= 0; sc_index--) {
@@ -182,7 +185,8 @@ void Node::backprop(double target_val,
 		if (!update_existing_scope) {
 			state_errors.pop_back();
 		} else {
-			this->state_network->backprop(state_errors.back());
+			this->state_network->backprop(state_errors.back(),
+										  TARGET_MAX_UPDATE);
 			// state_errors[0][0] doesn't matter
 			for (int sc_index = 1; sc_index < (int)state_errors.size()-1; sc_index++) {
 				for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
@@ -196,7 +200,9 @@ void Node::backprop(double target_val,
 			}
 		}
 
-		this->score_network->backprop_weights_with_no_error_signal(target_val);
+		this->score_network->backprop_weights_with_no_error_signal(
+			target_val,
+			TARGET_MAX_UPDATE);
 	}
 }
 
@@ -210,7 +216,9 @@ void Node::backprop_zero_train(Node* original,
 					- this->compression_networks[c_index]->output->acti_vals[o_index];
 				sum_error += abs(errors[o_index]);
 			}
-			this->compression_networks[c_index]->backprop_weights_with_no_error_signal(errors);
+			this->compression_networks[c_index]->backprop_weights_with_no_error_signal(
+				errors,
+				TARGET_MAX_UPDATE);
 		}
 
 		if (update_existing_scope) {
@@ -220,7 +228,9 @@ void Node::backprop_zero_train(Node* original,
 					- this->state_network->output->acti_vals[o_index];
 				sum_error += abs(errors[o_index]);
 			}
-			this->state_network->backprop_weights_with_no_error_signal(errors);
+			this->state_network->backprop_weights_with_no_error_signal(
+				errors,
+				TARGET_MAX_UPDATE);
 		}
 	}
 }
@@ -251,43 +261,9 @@ void Node::backprop_zero_train_state(Node* original,
 				- this->state_network->output->acti_vals[o_index];
 			sum_error += abs(errors[o_index]);
 		}
-		this->state_network->backprop_weights_with_no_error_signal(errors);
-	}
-}
-
-void Node::calc_max_update(double& max_update,
-						   double learning_rate) {
-	if (!just_score) {
-		for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
-			this->compression_networks[c_index]->calc_max_update(max_update, learning_rate);
-		}
-
-		if (update_existing_scope) {
-			this->state_network->calc_max_update(max_update, learning_rate);
-		}
-
-		// don't include score_network in calc_max_update
-	}
-}
-
-void Node::update_weights(double factor,
-						  double learning_rate) {
-	if (!just_score) {
-		for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
-			this->compression_networks[c_index]->update_weights(factor, learning_rate);
-		}
-
-		if (update_existing_scope) {
-			this->state_network->update_weights(factor, learning_rate);
-		}
-
-		double score_max_update = 0.0;
-		this->score_network->calc_max_update(score_max_update, learning_rate);
-		double score_factor = 1.0;
-		if (score_max_update > 0.001) {
-			score_factor = 0.001/score_max_update;
-		}
-		this->score_network->update_weights(score_factor, learning_rate);
+		this->state_network->backprop_weights_with_no_error_signal(
+			errors,
+			TARGET_MAX_UPDATE);
 	}
 }
 

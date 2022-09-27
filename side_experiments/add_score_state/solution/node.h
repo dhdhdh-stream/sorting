@@ -51,10 +51,6 @@ public:
 						double observation);
 	void backprop_zero_train_state(Node* original,
 								   double& sum_error);
-	void calc_max_update(double& max_update,
-						 double learning_rate);
-	void update_weights(double factor,
-						double learning_rate);
 
 	void get_scope_sizes(std::vector<int>& scope_sizes);
 

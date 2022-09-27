@@ -21,18 +21,16 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	ifstream input_file;
-	// input_file.open("saves/f_10.txt");
-	input_file.open("saves/p1_f_0.txt");
+	input_file.open("saves/p1_f_10.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
 
-	double average_score = 6.0;
+	double average_score = 0.0;
 
 	vector<Node*> nodes;
-	// for (int i = 0; i < 11; i++) {
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 11; i++) {
 		ifstream input_file;
-		input_file.open("saves/p1_n_" + to_string(i) + "_0.txt");
+		input_file.open("saves/p1_n_" + to_string(i) + "_10.txt");
 		nodes.push_back(new Node("p1_n_"+to_string(i), input_file));
 		input_file.close();
 	}
@@ -56,7 +54,7 @@ int main(int argc, char* argv[]) {
 			flat_inputs[flat_input_counter] = 1.0;
 			first_block_sum++;
 		} else {
-			flat_inputs[flat_input_counter] = 0.0;
+			flat_inputs[flat_input_counter] = -1.0;
 		}
 		if (flat_input_counter < (int)nodes.size()) {
 			nodes[flat_input_counter]->activate(state_vals,
@@ -71,7 +69,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
+	flat_inputs[flat_input_counter] = -1+2*rand()%2;
 	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
@@ -88,7 +86,7 @@ int main(int argc, char* argv[]) {
 			flat_inputs[flat_input_counter] = 1.0;
 			first_block_sum++;
 		} else {
-			flat_inputs[flat_input_counter] = 0.0;
+			flat_inputs[flat_input_counter] = -1.0;
 		}
 		if (flat_input_counter < (int)nodes.size()) {
 			nodes[flat_input_counter]->activate(state_vals,
@@ -103,7 +101,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
+	flat_inputs[flat_input_counter] = -1+2*rand()%2;
 	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
@@ -122,7 +120,7 @@ int main(int argc, char* argv[]) {
 			flat_inputs[flat_input_counter] = 1.0;
 			second_block_sum++;
 		} else {
-			flat_inputs[flat_input_counter] = 0.0;
+			flat_inputs[flat_input_counter] = -1.0;
 		}
 		if (flat_input_counter < (int)nodes.size()) {
 			nodes[flat_input_counter]->activate(state_vals,
@@ -137,7 +135,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// dud
-	flat_inputs[flat_input_counter] = rand()%2;
+	flat_inputs[flat_input_counter] = -1+2*rand()%2;
 	if (flat_input_counter < (int)nodes.size()) {
 		nodes[flat_input_counter]->activate(state_vals,
 											scopes_on,
@@ -149,14 +147,14 @@ int main(int argc, char* argv[]) {
 	}
 	flat_input_counter++;
 
-	int total_sum = 0;
+	double total_sum = -1.0;
 	bool first_block_is_even = (first_block_sum%2 == 0);
 	if (first_block_is_even) {
-		total_sum += 7;
+		total_sum += 1.2;
 	}
 	bool second_block_is_even = (second_block_sum%2 == 0);
 	if (second_block_is_even) {
-		total_sum += 5;
+		total_sum += 0.8;
 	}
 
 	vector<double> obs;

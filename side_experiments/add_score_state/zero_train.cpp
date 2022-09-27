@@ -287,18 +287,6 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
-
-		double max_update = 0.0;
-		for (int n_index = 0; n_index < (int)zero_nodes.size(); n_index++) {
-			zero_nodes[n_index]->calc_max_update(max_update, 0.0001);
-		}
-		double factor = 1.0;
-		if (max_update > 0.001) {
-			factor = 0.001/max_update;
-		}
-		for (int n_index = 0; n_index < (int)zero_nodes.size(); n_index++) {
-			zero_nodes[n_index]->update_weights(factor, 0.0001);
-		}
 	}
 
 	for (int n_index = 0; n_index < (int)zero_nodes.size(); n_index++) {

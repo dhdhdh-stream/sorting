@@ -42,7 +42,6 @@ public:
 	ScoreNetwork* score_network;
 
 	StateNetwork* state_network;
-	Network* test_state_network;
 
 	std::vector<int> compress_num_scopes;
 	std::vector<int> compress_sizes;

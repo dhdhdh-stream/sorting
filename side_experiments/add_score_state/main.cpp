@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 	// FoldNetwork* fold_network = new FoldNetwork(11, 1);
 
 	// double sum_error = 0.0;
-	// for (int epoch_index = 1; epoch_index < 10000; epoch_index++) {
+	// for (int epoch_index = 1; epoch_index < 5000; epoch_index++) {
 	// 	if (epoch_index%100 == 0) {
 	// 		cout << endl;
 	// 		cout << epoch_index << endl;
@@ -110,25 +110,11 @@ int main(int argc, char* argv[]) {
 	// 		errors.push_back(total_sum - fold_network->output->acti_vals[0]);
 	// 		sum_error += abs(errors[0]);
 
-	// 		fold_network->backprop(errors);
-	// 	}
-
-	// 	if (epoch_index < 8000) {
-	// 		double max_update = 0.0;
-	// 		fold_network->calc_max_update(max_update, 0.001);
-	// 		double factor = 1.0;
-	// 		if (max_update > 0.01) {
-	// 			factor = 0.01/max_update;
+	// 		if (epoch_index < 4000) {
+	// 			fold_network->backprop(errors, 0.01);
+	// 		} else {
+	// 			fold_network->backprop(errors, 0.001);
 	// 		}
-	// 		fold_network->update_weights(factor, 0.001);
-	// 	} else {
-	// 		double max_update = 0.0;
-	// 		fold_network->calc_max_update(max_update, 0.0001);
-	// 		double factor = 1.0;
-	// 		if (max_update > 0.001) {
-	// 			factor = 0.001/max_update;
-	// 		}
-	// 		fold_network->update_weights(factor, 0.0001);
 	// 	}
 	// }
 

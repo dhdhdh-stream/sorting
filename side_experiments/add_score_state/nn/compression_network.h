@@ -19,6 +19,10 @@ public:
 	Layer* hidden;
 	Layer* output;
 
+	int epoch_iter;
+	double hidden_average_max_update;
+	double output_average_max_update;
+
 	std::mutex mtx;
 
 	CompressionNetwork(std::vector<int> scope_sizes,
@@ -29,12 +33,12 @@ public:
 
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on);
-	void backprop(std::vector<double>& errors);
-	void backprop_weights_with_no_error_signal(std::vector<double>& errors);
-	void calc_max_update(double& max_update,
-						 double learning_rate);
-	void update_weights(double factor,
-						double learning_rate);
+	void backprop(std::vector<double>& errors,
+				  double target_max_update);
+	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
+											   double target_max_update);
+	void get_max_update(double& max_update);
+	void update_weights(double learning_rate);
 
 	void save(std::ofstream& output_file);
 

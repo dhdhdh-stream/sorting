@@ -33,10 +33,8 @@ public:
 
 	void activate();
 	void backprop();
-	void calc_max_update(double& max_update_size,
-						 double learning_rate);
-	void update_weights(double factor,
-						double learning_rate);
+	void get_max_update(double& max_update_size);
+	void update_weights(double learning_rate);
 
 	void save_weights(std::ofstream& output_file);
 
@@ -46,16 +44,11 @@ public:
 	void fold_add_scope(Layer* new_scope_input);
 	void fold_pop_scope();
 	void fold_backprop_last_state();
-	void fold_calc_max_update_last_state(double& max_update_size,
-										 double learning_rate);
-	void fold_update_weights_last_state(double factor,
-										double learning_rate);
-	void fold_backprop_last_state_with_no_weight_change();
+	void fold_get_max_update_last_state(double& max_update_size);
+	void fold_update_weights_last_state(double learning_rate);
 	void fold_backprop_full_state();
-	void fold_calc_max_update_full_state(double& max_update_size,
-										 double learning_rate);
-	void fold_update_weights_full_state(double factor,
-										double learning_rate);
+	void fold_get_max_update_full_state(double& max_update_size);
+	void fold_update_weights_full_state(double learning_rate);
 };
 
 #endif /* LAYER_H */

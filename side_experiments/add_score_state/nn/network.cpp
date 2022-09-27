@@ -18,6 +18,8 @@ void Network::construct(int input_size,
 	this->output->setup_weights_full();
 
 	this->epoch_iter = 0;
+	this->hidden_average_max_update = 0.0;
+	this->output_average_max_update = 0.0;
 }
 
 Network::Network(int input_size,
@@ -78,7 +80,8 @@ void Network::activate(vector<double>& vals,
 	network_historys.push_back(network_history);
 }
 
-void Network::backprop(vector<double>& errors) {
+void Network::backprop(vector<double>& errors,
+					   double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
@@ -86,42 +89,28 @@ void Network::backprop(vector<double>& errors) {
 	this->output->backprop();
 	this->hidden->backprop();
 
-	// if (this->epoch_iter == 100) {
-	if (this->epoch_iter == 1000) {
-		double max_update = 0.0;
-		calc_max_update(max_update,
-						0.001);
-		// for (int n_index = 0; n_index < (int)this->hidden->acti_vals.size(); n_index++) {
-		// 	cout << "1: " << this->hidden->weight_updates[n_index][0][1] << endl;
-		// 	cout << "2: " << this->hidden->weight_updates[n_index][0][2] << endl;
-		// }
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
+	this->epoch_iter++;
+	if (this->epoch_iter == 100) {
+		double hidden_max_update = 0.0;
+		this->hidden->get_max_update(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.4*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
-		update_weights(factor,
-					   0.001);
+		this->hidden->update_weights(hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.4*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
 
 		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
 	}
-}
-
-void Network::calc_max_update(double& max_update,
-							  double learning_rate) {
-	this->hidden->calc_max_update(max_update,
-								  learning_rate);
-	this->output->calc_max_update(max_update,
-								  learning_rate);
-}
-
-void Network::update_weights(double factor,
-							 double learning_rate) {
-	this->hidden->update_weights(factor,
-								 learning_rate);
-	this->output->update_weights(factor,
-								 learning_rate);
 }
 
 void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors) {
@@ -133,7 +122,8 @@ void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors)
 	this->hidden->backprop_errors_with_no_weight_change();
 }
 
-void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors) {
+void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
+													double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
@@ -141,20 +131,27 @@ void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors)
 	this->output->backprop();
 	this->hidden->backprop_weights_with_no_error_signal();
 
+	this->epoch_iter++;
 	if (this->epoch_iter == 100) {
-		double max_update = 0.0;
-		calc_max_update(max_update,
-						0.001);
-		double factor = 1.0;
-		if (max_update > 0.01) {
-			factor = 0.01/max_update;
+		double hidden_max_update = 0.0;
+		this->hidden->get_max_update(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.4*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
-		update_weights(factor,
-					   0.001);
+		this->hidden->update_weights(hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.4*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
 
 		this->epoch_iter = 0;
-	} else {
-		this->epoch_iter++;
 	}
 }
 
