@@ -61,8 +61,7 @@ public:
 
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
-				  double observation,
-				  bool is_activated);
+				  double observation);
 	void process(double* flat_inputs,
 				 bool* activated,
 				 std::vector<std::vector<double>>& state_vals,

@@ -1,19 +1,13 @@
-#include "state_network.h"
-
-#include <iostream>
+#include "compression_network.h"
 
 using namespace std;
 
-void StateNetwork::construct() {
+void CompressionNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
 
 	this->scopes_on_input = new Layer(LINEAR_LAYER, (int)this->scope_sizes.size());
-
-	this->obs_input = new Layer(LINEAR_LAYER, 1);
-
-	this->activated_input = new Layer(LINEAR_LAYER, 1);
 
 	int total_state_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
@@ -24,11 +18,9 @@ void StateNetwork::construct() {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
 	this->hidden->input_layers.push_back(this->scopes_on_input);
-	this->hidden->input_layers.push_back(this->obs_input);
-	this->hidden->input_layers.push_back(this->activated_input);
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, this->scope_sizes.back());
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
@@ -37,13 +29,15 @@ void StateNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-StateNetwork::StateNetwork(vector<int> scope_sizes) {
+CompressionNetwork::CompressionNetwork(vector<int> scope_sizes,
+									   int output_size) {
 	this->scope_sizes = scope_sizes;
+	this->output_size = output_size;
 
 	construct();
 }
 
-StateNetwork::StateNetwork(ifstream& input_file) {
+CompressionNetwork::CompressionNetwork(ifstream& input_file) {
 	string num_scope_sizes_line;
 	getline(input_file, num_scope_sizes_line);
 	int num_scope_sizes = stoi(num_scope_sizes_line);
@@ -53,6 +47,9 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 		getline(input_file, scope_size_line);
 		this->scope_sizes.push_back(stoi(scope_size_line));
 	}
+	string output_size_line;
+	getline(input_file, output_size_line);
+	this->output_size = stoi(output_size_line);
 
 	construct();
 
@@ -60,8 +57,9 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 	this->output->load_weights_from(input_file);
 }
 
-StateNetwork::StateNetwork(StateNetwork* original) {
+CompressionNetwork::CompressionNetwork(CompressionNetwork* original) {
 	this->scope_sizes = original->scope_sizes;
+	this->output_size = original->output_size;
 
 	construct();
 
@@ -69,22 +67,18 @@ StateNetwork::StateNetwork(StateNetwork* original) {
 	this->output->copy_weights_from(original->output);
 }
 
-StateNetwork::~StateNetwork() {
+CompressionNetwork::~CompressionNetwork() {
 	for (int sc_index = 0; sc_index < (int)this->state_inputs.size(); sc_index++) {
 		delete this->state_inputs[sc_index];
 	}
 	delete this->scopes_on_input;
-	delete this->obs_input;
-	delete this->activated_input;
 
 	delete this->hidden;
 	delete this->output;
 }
 
-void StateNetwork::activate(vector<vector<double>>& state_vals,
-							vector<bool>& scopes_on,
-							vector<double>& obs,
-							bool is_activated) {
+void CompressionNetwork::activate(vector<vector<double>>& state_vals,
+								  vector<bool>& scopes_on) {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
@@ -97,20 +91,34 @@ void StateNetwork::activate(vector<vector<double>>& state_vals,
 		}
 	}
 
-	this->obs_input->acti_vals[0] = obs[0];
-
-	if (is_activated) {
-		this->activated_input->acti_vals[0] = 1.0;
-	} else {
-		this->activated_input->acti_vals[0] = 0.0;
-	}
-
 	this->hidden->activate();
 	this->output->activate();
 }
 
-void StateNetwork::backprop(vector<double>& errors,
-							double target_max_update) {
+void CompressionNetwork::activate(vector<vector<double>>& state_vals,
+								  vector<bool>& scopes_on,
+								  vector<AbstractNetworkHistory*>& network_historys) {
+	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
+		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+		}
+
+		if (scopes_on[sc_index]) {
+			this->scopes_on_input->acti_vals[sc_index] = 1.0;
+		} else {
+			this->scopes_on_input->acti_vals[sc_index] = 0.0;
+		}
+	}
+
+	this->hidden->activate();
+	this->output->activate();
+
+	CompressionNetworkHistory* network_history = new CompressionNetworkHistory(this);
+	network_historys.push_back(network_history);
+}
+
+void CompressionNetwork::backprop(vector<double>& errors,
+								  double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
@@ -142,8 +150,9 @@ void StateNetwork::backprop(vector<double>& errors,
 	}
 }
 
-void StateNetwork::backprop_weights_with_no_error_signal(vector<double>& errors,
-														 double target_max_update) {
+void CompressionNetwork::backprop_weights_with_no_error_signal(
+		vector<double>& errors,
+		double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
@@ -175,7 +184,7 @@ void StateNetwork::backprop_weights_with_no_error_signal(vector<double>& errors,
 	}
 }
 
-void StateNetwork::save(ofstream& output_file) {
+void CompressionNetwork::save(ofstream& output_file) {
 	output_file << this->scope_sizes.size() << endl;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		output_file << this->scope_sizes[sc_index] << endl;
@@ -183,4 +192,49 @@ void StateNetwork::save(ofstream& output_file) {
 
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
+}
+
+CompressionNetworkHistory::CompressionNetworkHistory(CompressionNetwork* network) {
+	this->network = network;
+
+	this->state_inputs_historys.reserve(network->state_inputs.size());
+	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
+		this->state_inputs_historys.push_back(vector<double>(network->state_inputs[sc_index]->acti_vals.size()));
+		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			this->state_inputs_historys[sc_index][st_index] = network->state_inputs[sc_index]->acti_vals[st_index];
+		}
+	}
+	this->scopes_on_input_history.reserve(network->scopes_on_input->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->scopes_on_input->acti_vals.size(); n_index++) {
+		this->scopes_on_input_history.push_back(network->scopes_on_input->acti_vals[n_index]);
+	}
+
+	this->hidden_history.reserve(network->hidden->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
+	}
+	this->output_history.reserve(network->output->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		this->output_history.push_back(network->output->acti_vals[n_index]);
+	}
+}
+
+void CompressionNetworkHistory::reset_weights() {
+	CompressionNetwork* network = (CompressionNetwork*)this->network;
+
+	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			network->state_inputs[sc_index]->acti_vals[st_index] = this->state_inputs_historys[sc_index][st_index];
+		}
+	}
+	for (int n_index = 0; n_index < (int)network->scopes_on_input->acti_vals.size(); n_index++) {
+		network->scopes_on_input->acti_vals[n_index] = this->scopes_on_input_history[n_index];
+	}
+
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
+	}
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		network->output->acti_vals[n_index] = this->output_history[n_index];
+	}
 }

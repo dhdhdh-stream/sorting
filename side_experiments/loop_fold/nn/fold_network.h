@@ -14,7 +14,6 @@ public:
 	int output_size;
 
 	Layer* flat_input;
-	Layer* activated_input;
 	Layer* obs_input;
 
 	int fold_index;
@@ -39,8 +38,10 @@ public:
 	~FoldNetwork();
 
 	void activate(double* flat_inputs,
-				  bool* activated,
 				  std::vector<double>& obs);
+	void activate(double* flat_inputs,
+				  std::vector<double>& obs,
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
 
@@ -50,9 +51,12 @@ public:
 	void set_just_score();
 	void set_can_compress();
 	void activate(double* flat_inputs,
-				  bool* activated,
 				  std::vector<double>& obs,
 				  std::vector<std::vector<double>>& state_vals);
+	void activate(double* flat_inputs,
+				  std::vector<double>& obs,
+				  std::vector<std::vector<double>>& state_vals,
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
 	void backprop_full_state(std::vector<double>& errors,
@@ -62,6 +66,20 @@ public:
 
 private:
 	void construct();
+};
+
+class FoldNetworkHistory : public AbstractNetworkHistory {
+public:
+	std::vector<double> flat_input_history;
+	std::vector<double> obs_input_history;
+
+	std::vector<std::vector<double>> state_inputs_historys;
+
+	std::vector<double> hidden_history;
+	std::vector<double> output_history;
+
+	FoldNetworkHistory(FoldNetwork* network);
+	void reset_weights() override;
 };
 
 #endif /* FOLD_NETWORK_H */

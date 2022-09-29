@@ -13,7 +13,6 @@ public:
 	std::vector<int> scope_sizes;
 	std::vector<Layer*> state_inputs;
 	Layer* obs_input;
-	Layer* activated_input;
 
 	Layer* hidden;
 	Layer* output;
@@ -30,8 +29,10 @@ public:
 	~ScoreNetwork();
 
 	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<double>& obs);
+	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<double>& obs,
-				  bool is_activated);
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(double target_val,
 				  double target_max_update);
 	void backprop_weights_with_no_error_signal(double target_val,
@@ -41,6 +42,18 @@ public:
 
 private:
 	void construct();
+};
+
+class ScoreNetworkHistory : public AbstractNetworkHistory {
+public:
+	std::vector<std::vector<double>> state_inputs_historys;
+	std::vector<double> obs_input_history;
+
+	std::vector<double> hidden_history;
+	std::vector<double> output_history;
+
+	ScoreNetworkHistory(ScoreNetwork* network);
+	void reset_weights() override;
 };
 
 #endif /* SCORE_NETWORK_H */

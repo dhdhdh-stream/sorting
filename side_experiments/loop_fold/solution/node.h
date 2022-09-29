@@ -42,16 +42,19 @@ public:
 	~Node();
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
+				  double observation);
+	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<bool>& scopes_on,
 				  double observation,
-				  bool is_activated);
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(double target_val,
-				  std::vector<std::vector<double>>& state_errors);
+				  std::vector<std::vector<double>>& state_errors,
+				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_zero_train(Node* original,
 							 double& sum_error);
 	void activate_state(std::vector<std::vector<double>>& state_vals,
 						std::vector<bool>& scopes_on,
-						double observation,
-						bool is_activated);
+						double observation);
 	void backprop_zero_train_state(Node* original,
 								   double& sum_error);
 

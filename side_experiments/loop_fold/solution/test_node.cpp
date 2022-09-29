@@ -29,13 +29,11 @@ TestNode::~TestNode() {
 
 void TestNode::activate(vector<vector<double>>& state_vals,
 						vector<bool>& scopes_on,
-						double observation,
-						bool is_activated) {
+						double observation) {
 	vector<double> obs{observation};
 
 	this->score_network->activate(state_vals,
-								  obs,
-								  is_activated);
+								  obs);
 	state_vals[0][0] = this->score_network->output->acti_vals[0];
 
 	if (this->state == STATE_LEARN_SCORE) {
@@ -48,8 +46,7 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 	} else {
 		this->state_network->activate(state_vals,
 									  scopes_on,
-									  obs,
-									  is_activated);
+									  obs);
 		for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
 			state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
 		}
@@ -180,7 +177,6 @@ void TestNode::process(double* flat_inputs,
 		obs.push_back(observation);
 
 		this->test_fold->activate(flat_inputs,
-								  activated,
 								  obs,
 								  state_vals);
 
@@ -195,7 +191,6 @@ void TestNode::process(double* flat_inputs,
 		obs.push_back(observation);
 
 		this->test_fold->activate(flat_inputs,
-								  activated,
 								  obs,
 								  state_vals);
 
@@ -232,10 +227,10 @@ void TestNode::process(double* flat_inputs,
 			}
 		}
 
-		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-			nodes[n_index]->backprop(target_val,
-									 state_errors);
-		}
+		// for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
+		// 	nodes[n_index]->backprop(target_val,
+		// 							 state_errors);
+		// }
 	} else if (this->state == STATE_LOCAL_SCOPE_LEARN
 			|| this->state == STATE_CAN_COMPRESS_LEARN
 			|| this->state == STATE_COMPRESS_LEARN) {
@@ -248,7 +243,6 @@ void TestNode::process(double* flat_inputs,
 		obs.push_back(observation);
 
 		this->test_fold->activate(flat_inputs,
-								  activated,
 								  obs,
 								  state_vals);
 
@@ -305,7 +299,6 @@ void TestNode::process(double* flat_inputs,
 		obs.push_back(observation);
 
 		this->curr_fold->activate(flat_inputs,
-								  activated,
 								  obs,
 								  state_vals);
 
@@ -369,10 +362,10 @@ void TestNode::process(double* flat_inputs,
 			}
 		}
 
-		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-			nodes[n_index]->backprop(target_val,
-									 state_errors);
-		}
+		// for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
+		// 	nodes[n_index]->backprop(target_val,
+		// 							 state_errors);
+		// }
 	}
 
 	increment();

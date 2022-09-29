@@ -20,10 +20,10 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// FoldNetwork* fold_network = new FoldNetwork(10, 1);
+	// FoldNetwork* fold_network = new FoldNetwork(11, 1);
 
 	// double sum_error = 0.0;
-	// for (int epoch_index = 1; epoch_index < 20000; epoch_index++) {
+	// for (int epoch_index = 1; epoch_index < 50000; epoch_index++) {
 	// 	if (epoch_index%100 == 0) {
 	// 		cout << endl;
 	// 		cout << epoch_index << endl;
@@ -32,58 +32,62 @@ int main(int argc, char* argv[]) {
 	// 	}
 
 	// 	for (int iter_index = 0; iter_index < 100; iter_index++) {
+	// 		int num_iters = rand()%6;
 
-	// 		double flat_inputs[10];
+	// 		double flat_inputs[11];
 	// 		int flat_input_counter = 0;
-	// 		bool activated[10];
-	// 		for (int i = 0; i < 10; i++) {
-	// 			activated[i] = true;
-	// 		}
+	// 		bool activated[11];
 
-	// 		// first block
-	// 		int first_block_on_index = rand()%5;
-	// 		flat_inputs[flat_input_counter] = first_block_on_index;
+	// 		int rand_non_empty = rand()%6;
+	// 		flat_inputs[flat_input_counter] = rand_non_empty;
+	// 		activated[flat_input_counter] = true;
 	// 		flat_input_counter++;
 
-	// 		int first_block_sum = 0;
-	// 		for (int i = 0; i < 4; i++) {
-	// 			int value = rand()%4;
-	// 			flat_inputs[flat_input_counter] = value;
+	// 		int sum = 0;
+	// 		for (int i = 0; i < 5; i++) {
+	// 			int first_value = rand()%2;
+	// 			if (i < num_iters) {
+	// 				flat_inputs[flat_input_counter] = first_value;
+	// 				activated[flat_input_counter] = true;
+	// 			} else {
+	// 				flat_inputs[flat_input_counter] = 0.0;
+	// 				activated[flat_input_counter] = false;
+	// 			}
 	// 			flat_input_counter++;
-	// 			if (i < first_block_on_index) {
-	// 				first_block_sum += value;
+
+	// 			int second_value = rand()%2;
+	// 			if (i < num_iters) {
+	// 				flat_inputs[flat_input_counter] = second_value;
+	// 				activated[flat_input_counter] = true;
+	// 			} else {
+	// 				flat_inputs[flat_input_counter] = 0.0;
+	// 				activated[flat_input_counter] = false;
+	// 			}
+	// 			flat_input_counter++;
+
+	// 			if (i < rand_non_empty) {
+	// 				if (first_value == second_value) {
+	// 					sum += 2;
+	// 				}
+	// 			} else {
+	// 				if (i < num_iters) {
+	// 					sum -= 1;
+	// 				}
 	// 			}
 	// 		}
-
-	// 		// second block
-	// 		int second_block_on_index = rand()%5;
-	// 		flat_inputs[flat_input_counter] = second_block_on_index;
-	// 		flat_input_counter++;
-
-	// 		int second_block_sum = 0;
-	// 		for (int i = 0; i < 4; i++) {
-	// 			int value = rand()%4;
-	// 			flat_inputs[flat_input_counter] = value;
-	// 			flat_input_counter++;
-	// 			if (i < second_block_on_index) {
-	// 				second_block_sum += value;
-	// 			}
-	// 		}
-
-	// 		int final_value = first_block_sum - second_block_sum;
 
 	// 		vector<double> obs;
-	// 		obs.push_back(rand()%4);
+	// 		obs.push_back(rand()%2);
 
 	// 		fold_network->activate(flat_inputs,
 	// 							   activated,
 	// 							   obs);
 
 	// 		vector<double> errors;
-	// 		errors.push_back(final_value - fold_network->output->acti_vals[0]);
+	// 		errors.push_back(sum - fold_network->output->acti_vals[0]);
 	// 		sum_error += abs(errors[0]);
 
-	// 		if (epoch_index < 16000) {
+	// 		if (epoch_index < 40000) {
 	// 			fold_network->backprop(errors, 0.01);
 	// 		} else {
 	// 			fold_network->backprop(errors, 0.001);
@@ -103,44 +107,54 @@ int main(int argc, char* argv[]) {
 
 	// double average_error = 0.0;
 	// for (int iter_index = 0; iter_index < 10000; iter_index++) {
-	// 	double flat_inputs[10];
+	// // for (int iter_index = 0; iter_index < 1; iter_index++) {
+	// 	int num_iters = rand()%6;
+	// 	// cout << "num_iters: " << num_iters << endl;
+
+	// 	double flat_inputs[6];
 	// 	int flat_input_counter = 0;
-	// 	bool activated[10];
-	// 	for (int i = 0; i < 10; i++) {
-	// 		activated[i] = true;
-	// 	}
+	// 	bool activated[6];
 
-	// 	// first block
-	// 	int first_block_on_index = rand()%5;
-	// 	flat_inputs[flat_input_counter] = first_block_on_index;
+	// 	int rand_non_empty = rand()%6;
+	// 	flat_inputs[flat_input_counter] = rand_non_empty;
+	// 	activated[flat_input_counter] = true;
 	// 	flat_input_counter++;
+	// 	// cout << "rand_non_empty: " << rand_non_empty << endl;
 
-	// 	int first_block_sum = 0;
-	// 	for (int i = 0; i < 4; i++) {
-	// 		int value = rand()%4;
-	// 		flat_inputs[flat_input_counter] = value;
+	// 	int sum = 0;
+	// 	for (int i = 0; i < 5; i++) {
+	// 		int first_value = rand()%2;
+	// 		if (i < num_iters) {
+	// 			flat_inputs[flat_input_counter] = first_value;
+	// 			activated[flat_input_counter] = true;
+	// 		} else {
+	// 			flat_inputs[flat_input_counter] = 0.0;
+	// 			activated[flat_input_counter] = false;
+	// 		}
 	// 		flat_input_counter++;
-	// 		if (i < first_block_on_index) {
-	// 			first_block_sum += value;
+	// 		// cout << i << " first_value: " << first_value << endl;
+
+	// 		int second_value = rand()%2;
+	// 		if (i < num_iters) {
+	// 			flat_inputs[flat_input_counter] = second_value;
+	// 			activated[flat_input_counter] = true;
+	// 		} else {
+	// 			flat_inputs[flat_input_counter] = 0.0;
+	// 			activated[flat_input_counter] = false;
+	// 		}
+	// 		flat_input_counter++;
+	// 		// cout << i << " second_value: " << second_value << endl;
+
+	// 		if (i < rand_non_empty) {
+	// 			if (first_value == second_value) {
+	// 				sum += 2;
+	// 			}
+	// 		} else {
+	// 			if (i < num_iters) {
+	// 				sum -= 1;
+	// 			}
 	// 		}
 	// 	}
-
-	// 	// second block
-	// 	int second_block_on_index = rand()%5;
-	// 	flat_inputs[flat_input_counter] = second_block_on_index;
-	// 	flat_input_counter++;
-
-	// 	int second_block_sum = 0;
-	// 	for (int i = 0; i < 4; i++) {
-	// 		int value = rand()%4;
-	// 		flat_inputs[flat_input_counter] = value;
-	// 		flat_input_counter++;
-	// 		if (i < second_block_on_index) {
-	// 			second_block_sum += value;
-	// 		}
-	// 	}
-
-	// 	int final_value = first_block_sum - second_block_sum;
 
 	// 	vector<double> obs;
 	// 	obs.push_back(rand()%2);
@@ -149,7 +163,10 @@ int main(int argc, char* argv[]) {
 	// 						   activated,
 	// 						   obs);
 
-	// 	average_error += abs(final_value - fold_network->output->acti_vals[0]);
+	// 	average_error += abs(sum - fold_network->output->acti_vals[0]);
+
+	// 	// cout << "target: " << sum << endl;
+	// 	// cout << "actual: " << fold_network->output->acti_vals[0] << endl;
 	// }
 
 	// average_error /= 10000;
@@ -161,9 +178,9 @@ int main(int argc, char* argv[]) {
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
 	fold_network->add_scope(1);	// score_state
+	fold_network->average_error = 0.6;
 
 	double average_score = 0.0;
-	double average_error = 0.15;
 
 	vector<Node*> nodes;
 	// for (int i = 0; i < 4; i++) {
@@ -179,9 +196,8 @@ int main(int argc, char* argv[]) {
 	}
 	int fold_index = (int)nodes.size();
 
-	for (int compress_index = fold_index; compress_index < 10; compress_index++) {
-		TestNode* test_node = new TestNode(1.5*average_error,
-										   scope_sizes,
+	for (int compress_index = fold_index; compress_index < 11; compress_index++) {
+		TestNode* test_node = new TestNode(scope_sizes,
 										   fold_network);
 		while (true) {
 			vector<vector<double>> state_vals;
@@ -189,87 +205,89 @@ int main(int argc, char* argv[]) {
 			vector<bool> scopes_on;
 			scopes_on.push_back(true);
 
-			double flat_inputs[10];
+			int num_iters = rand()%6;
+
+			double flat_inputs[11];
 			int flat_input_counter = 0;
-			bool activated[10];
-			for (int i = 0; i < 10; i++) {
-				activated[i] = true;
-			}
+			bool activated[11];
 
 			// first block
-			int first_block_on_index = rand()%5;
-			flat_inputs[flat_input_counter] = first_block_on_index;
+			int rand_non_empty = rand()%6;
+			flat_inputs[flat_input_counter] = rand_non_empty;
+			activated[flat_input_counter] = true;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
 													scopes_on,
-													flat_inputs[flat_input_counter]);
+													flat_inputs[flat_input_counter],
+													activated[flat_input_counter]);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
 									scopes_on,
-									flat_inputs[flat_input_counter]);
+									flat_inputs[flat_input_counter],
+									activated[flat_input_counter]);
 			}
 			flat_input_counter++;
 
-			int first_block_sum = 0;
-			for (int i = 0; i < 4; i++) {
-				int value = rand()%4;
-				flat_inputs[flat_input_counter] = value;
-				if (i < first_block_on_index) {
-					first_block_sum += value;
+			int sum = 0;
+			for (int i = 0; i < 5; i++) {
+				int first_value = rand()%2;
+				if (i < num_iters) {
+					flat_inputs[flat_input_counter] = first_value;
+					activated[flat_input_counter] = true;
+				} else {
+					flat_inputs[flat_input_counter] = 0.0;
+					activated[flat_input_counter] = false;
 				}
 				if (fold_index > flat_input_counter) {
 					nodes[flat_input_counter]->activate(state_vals,
 														scopes_on,
-														flat_inputs[flat_input_counter]);
+														flat_inputs[flat_input_counter],
+														activated[flat_input_counter]);
 				} else if (fold_index == flat_input_counter) {
 					test_node->activate(state_vals,
 										scopes_on,
-										flat_inputs[flat_input_counter]);
+										flat_inputs[flat_input_counter],
+										activated[flat_input_counter]);
 				}
 				flat_input_counter++;
-			}
 
-			// second block
-			int second_block_on_index = rand()%5;
-			flat_inputs[flat_input_counter] = second_block_on_index;
-			if (fold_index > flat_input_counter) {
-				nodes[flat_input_counter]->activate(state_vals,
-													scopes_on,
-													flat_inputs[flat_input_counter]);
-			} else if (fold_index == flat_input_counter) {
-				test_node->activate(state_vals,
-									scopes_on,
-									flat_inputs[flat_input_counter]);
-			}
-			flat_input_counter++;
-
-			int second_block_sum = 0;
-			for (int i = 0; i < 4; i++) {
-				int value = rand()%4;
-				flat_inputs[flat_input_counter] = value;
-				if (i < second_block_on_index) {
-					second_block_sum += value;
+				int second_value = rand()%2;
+				if (i < num_iters) {
+					flat_inputs[flat_input_counter] = second_value;
+					activated[flat_input_counter] = true;
+				} else {
+					flat_inputs[flat_input_counter] = 0.0;
+					activated[flat_input_counter] = false;
 				}
 				if (fold_index > flat_input_counter) {
 					nodes[flat_input_counter]->activate(state_vals,
 														scopes_on,
-														flat_inputs[flat_input_counter]);
+														flat_inputs[flat_input_counter],
+														activated[flat_input_counter]);
 				} else if (fold_index == flat_input_counter) {
 					test_node->activate(state_vals,
 										scopes_on,
-										flat_inputs[flat_input_counter]);
+										flat_inputs[flat_input_counter],
+										activated[flat_input_counter]);
 				}
 				flat_input_counter++;
-			}
 
-			int final_value = first_block_sum - second_block_sum;
+				if (i < rand_non_empty) {
+					if (first_value == second_value) {
+						sum += 2;
+					}
+				} else {
+					if (i < num_iters) {
+						sum -= 1;
+					}
+				}
+			}
 
 			test_node->process(flat_inputs,
 							   activated,
 							   state_vals,
-							   rand()%4,
-							   final_value,
-							   false,
+							   rand()%2,
+							   sum,
 							   nodes);
 
 			if (test_node->state == STATE_DONE) {
@@ -277,7 +295,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		nodes.push_back(new Node("p2_n_"+to_string(fold_index),
+		nodes.push_back(new Node("p3_n_"+to_string(fold_index),
 								 test_node->score_network,
 								 test_node->just_score,
 								 test_node->update_existing_scope,
@@ -300,7 +318,7 @@ int main(int argc, char* argv[]) {
 
 		{
 			ofstream output_file;
-			output_file.open("saves/p2_f_" + to_string(compress_index) + ".txt");
+			output_file.open("saves/p3_f_" + to_string(compress_index) + ".txt");
 			fold_network->save(output_file);
 			output_file.close();
 		}

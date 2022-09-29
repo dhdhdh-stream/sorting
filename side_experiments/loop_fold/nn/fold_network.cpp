@@ -6,17 +6,14 @@ using namespace std;
 
 void FoldNetwork::construct() {
 	this->flat_input = new Layer(LINEAR_LAYER, this->flat_size);
-	this->activated_input = new Layer(LINEAR_LAYER, this->flat_size);
 	this->obs_input = new Layer(LINEAR_LAYER, 1);
 
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
 
-	// this->hidden = new Layer(LEAKY_LAYER, 4*this->flat_size*this->flat_size);
-	this->hidden = new Layer(LEAKY_LAYER, 10*this->flat_size*this->flat_size);
+	this->hidden = new Layer(LEAKY_LAYER, 4*this->flat_size*this->flat_size);
 	this->hidden->input_layers.push_back(this->flat_input);
-	this->hidden->input_layers.push_back(this->activated_input);
 	this->hidden->input_layers.push_back(this->obs_input);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
@@ -92,7 +89,6 @@ FoldNetwork::FoldNetwork(FoldNetwork* original) {
 
 FoldNetwork::~FoldNetwork() {
 	delete this->flat_input;
-	delete this->activated_input;
 	delete this->obs_input;
 	for (int sc_index = 0; sc_index < (int)this->state_inputs.size(); sc_index++) {
 		delete this->state_inputs[sc_index];
@@ -103,22 +99,31 @@ FoldNetwork::~FoldNetwork() {
 }
 
 void FoldNetwork::activate(double* flat_inputs,
-						   bool* activated,
 						   vector<double>& obs) {
 	for (int f_index = 0; f_index < this->flat_size; f_index++) {
 		this->flat_input->acti_vals[f_index] = flat_inputs[f_index];
-
-		if (activated[f_index]) {
-			this->activated_input->acti_vals[f_index] = 1.0;
-		} else {
-			this->activated_input->acti_vals[f_index] = 0.0;
-		}
 	}
 
 	this->obs_input->acti_vals[0] = obs[0];
 
 	this->hidden->activate();
 	this->output->activate();
+}
+
+void FoldNetwork::activate(double* flat_inputs,
+						   vector<double>& obs,
+						   vector<AbstractNetworkHistory*>& network_historys) {
+	for (int f_index = 0; f_index < this->flat_size; f_index++) {
+		this->flat_input->acti_vals[f_index] = flat_inputs[f_index];
+	}
+
+	this->obs_input->acti_vals[0] = obs[0];
+
+	this->hidden->activate();
+	this->output->activate();
+
+	FoldNetworkHistory* network_history = new FoldNetworkHistory(this);
+	network_historys.push_back(network_history);
 }
 
 void FoldNetwork::backprop(vector<double>& errors,
@@ -199,7 +204,6 @@ void FoldNetwork::set_can_compress() {
 }
 
 void FoldNetwork::activate(double* flat_inputs,
-						   bool* activated,
 						   vector<double>& obs,
 						   vector<vector<double>>& state_vals) {
 	for (int f_index = 0; f_index < this->flat_size; f_index++) {
@@ -207,12 +211,6 @@ void FoldNetwork::activate(double* flat_inputs,
 			this->flat_input->acti_vals[f_index] = 0.0;
 		} else {
 			this->flat_input->acti_vals[f_index] = flat_inputs[f_index];
-		}
-
-		if (activated[f_index]) {
-			this->activated_input->acti_vals[f_index] = 1.0;
-		} else {
-			this->activated_input->acti_vals[f_index] = 0.0;
 		}
 	}
 
@@ -226,6 +224,33 @@ void FoldNetwork::activate(double* flat_inputs,
 
 	this->hidden->activate();
 	this->output->activate();
+}
+
+void FoldNetwork::activate(double* flat_inputs,
+						   vector<double>& obs,
+						   vector<vector<double>>& state_vals,
+						   vector<AbstractNetworkHistory*>& network_historys) {
+	for (int f_index = 0; f_index < this->flat_size; f_index++) {
+		if (this->fold_index >= f_index) {
+			this->flat_input->acti_vals[f_index] = 0.0;
+		} else {
+			this->flat_input->acti_vals[f_index] = flat_inputs[f_index];
+		}
+	}
+
+	this->obs_input->acti_vals[0] = obs[0];
+
+	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)state_vals[sc_index].size(); st_index++) {
+			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+		}
+	}
+
+	this->hidden->activate();
+	this->output->activate();
+
+	FoldNetworkHistory* network_history = new FoldNetworkHistory(this);
+	network_historys.push_back(network_history);
 }
 
 void FoldNetwork::backprop_last_state(vector<double>& errors,
@@ -307,4 +332,58 @@ void FoldNetwork::save(ofstream& output_file) {
 
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
+}
+
+FoldNetworkHistory::FoldNetworkHistory(FoldNetwork* network) {
+	this->network = network;
+
+	this->flat_input_history.reserve(network->flat_input->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->flat_input->acti_vals.size(); n_index++) {
+		this->flat_input_history.push_back(network->flat_input->acti_vals[n_index]);
+	}
+	this->obs_input_history.reserve(network->obs_input->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->obs_input->acti_vals.size(); n_index++) {
+		this->obs_input_history.push_back(network->obs_input->acti_vals[n_index]);
+	}
+
+	this->state_inputs_historys.reserve(network->state_inputs.size());
+	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
+		this->state_inputs_historys.push_back(vector<double>(network->state_inputs[sc_index]->acti_vals.size()));
+		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			this->state_inputs_historys[sc_index][st_index] = network->state_inputs[sc_index]->acti_vals[st_index];
+		}
+	}
+
+	this->hidden_history.reserve(network->hidden->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
+	}
+	this->output_history.reserve(network->output->acti_vals.size());
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		this->output_history.push_back(network->output->acti_vals[n_index]);
+	}
+}
+
+void FoldNetworkHistory::reset_weights() {
+	FoldNetwork* network = (FoldNetwork*)this->network;
+
+	for (int n_index = 0; n_index < (int)network->flat_input->acti_vals.size(); n_index++) {
+		network->flat_input->acti_vals[n_index] = this->flat_input_history[n_index];
+	}
+	for (int n_index = 0; n_index < (int)network->obs_input->acti_vals.size(); n_index++) {
+		network->obs_input->acti_vals[n_index] = this->obs_input_history[n_index];
+	}
+
+	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			network->state_inputs[sc_index]->acti_vals[st_index] = this->state_inputs_historys[sc_index][st_index];
+		}
+	}
+
+	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
+		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
+	}
+	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
+		network->output->acti_vals[n_index] = this->output_history[n_index];
+	}
 }

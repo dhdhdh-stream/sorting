@@ -109,7 +109,7 @@ void CompressionNetwork::backprop(vector<double>& errors,
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.4*target_max_update)/this->hidden_average_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
 		if (hidden_learning_rate*hidden_max_update > target_max_update) {
 			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
@@ -118,7 +118,7 @@ void CompressionNetwork::backprop(vector<double>& errors,
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.4*target_max_update)/this->output_average_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
 		if (output_learning_rate*output_max_update > target_max_update) {
 			output_learning_rate = target_max_update/output_max_update;
 		}
@@ -143,7 +143,7 @@ void CompressionNetwork::backprop_weights_with_no_error_signal(
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.4*target_max_update)/this->hidden_average_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
 		if (hidden_learning_rate*hidden_max_update > target_max_update) {
 			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
@@ -152,7 +152,7 @@ void CompressionNetwork::backprop_weights_with_no_error_signal(
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.4*target_max_update)/this->output_average_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
 		if (output_learning_rate*output_max_update > target_max_update) {
 			output_learning_rate = target_max_update/output_max_update;
 		}

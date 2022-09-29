@@ -166,12 +166,15 @@ void Network::save(ofstream& output_file) {
 NetworkHistory::NetworkHistory(Network* network) {
 	this->network = network;
 
+	this->input_history.reserve(network->input->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
 		this->input_history.push_back(network->input->acti_vals[n_index]);
 	}
+	this->hidden_history.reserve(network->hidden->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
 	}
+	this->output_history.reserve(network->output->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
 		this->output_history.push_back(network->output->acti_vals[n_index]);
 	}

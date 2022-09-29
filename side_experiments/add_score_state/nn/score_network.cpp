@@ -9,6 +9,8 @@ void ScoreNetwork::construct() {
 
 	this->obs_input = new Layer(LINEAR_LAYER, 1);
 
+	this->activated_input = new Layer(LINEAR_LAYER, 1);
+
 	int total_state_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		total_state_size += this->scope_sizes[sc_index];
@@ -18,6 +20,7 @@ void ScoreNetwork::construct() {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
 	this->hidden->input_layers.push_back(this->obs_input);
+	this->hidden->input_layers.push_back(this->activated_input);
 	this->hidden->setup_weights_full();
 
 	this->output = new Layer(LINEAR_LAYER, 1);
@@ -66,13 +69,15 @@ ScoreNetwork::~ScoreNetwork() {
 		delete this->state_inputs[sc_index];
 	}
 	delete this->obs_input;
+	delete this->activated_input;
 
 	delete this->hidden;
 	delete this->output;
 }
 
 void ScoreNetwork::activate(vector<vector<double>>& state_vals,
-							vector<double>& obs) {
+							vector<double>& obs,
+							bool is_activated) {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
@@ -81,8 +86,45 @@ void ScoreNetwork::activate(vector<vector<double>>& state_vals,
 
 	this->obs_input->acti_vals[0] = obs[0];
 
+	if (is_activated) {
+		this->activated_input->acti_vals[0] = 1.0;
+	} else {
+		this->activated_input->acti_vals[0] = 0.0;
+	}
+
 	this->hidden->activate();
 	this->output->activate();
+}
+
+void ScoreNetwork::backprop(double target_val,
+							double target_max_update) {
+	this->output->errors[0] = target_val - this->output->acti_vals[0];
+
+	this->output->backprop();
+	this->hidden->backprop();
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 100) {
+		double hidden_max_update = 0.0;
+		this->hidden->get_max_update(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
+		}
+		this->hidden->update_weights(hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
+
+		this->epoch_iter = 0;
+	}
 }
 
 void ScoreNetwork::backprop_weights_with_no_error_signal(
@@ -98,7 +140,7 @@ void ScoreNetwork::backprop_weights_with_no_error_signal(
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.4*target_max_update)/this->hidden_average_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
 		if (hidden_learning_rate*hidden_max_update > target_max_update) {
 			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
@@ -107,7 +149,7 @@ void ScoreNetwork::backprop_weights_with_no_error_signal(
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.4*target_max_update)/this->output_average_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
 		if (output_learning_rate*output_max_update > target_max_update) {
 			output_learning_rate = target_max_update/output_max_update;
 		}

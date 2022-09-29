@@ -116,13 +116,11 @@ Node::~Node() {
 
 void Node::activate(vector<vector<double>>& state_vals,
 					vector<bool>& scopes_on,
-					double observation,
-					bool is_activated) {
+					double observation) {
 	vector<double> obs{observation};
 
 	this->score_network->activate(state_vals,
-								  obs,
-								  is_activated);
+								  obs);
 	state_vals[0][0] = this->score_network->output->acti_vals[0];
 
 	if (just_score) {
@@ -136,8 +134,7 @@ void Node::activate(vector<vector<double>>& state_vals,
 		} else {
 			this->state_network->activate(state_vals,
 										  scopes_on,
-										  obs,
-										  is_activated);
+										  obs);
 			for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
 				state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
 			}
@@ -163,8 +160,59 @@ void Node::activate(vector<vector<double>>& state_vals,
 	}
 }
 
+void Node::activate(vector<vector<double>>& state_vals,
+					vector<bool>& scopes_on,
+					double observation,
+					vector<AbstractNetworkHistory*>& network_historys) {
+	vector<double> obs{observation};
+
+	this->score_network->activate(state_vals,
+								  obs,
+								  network_historys);
+	state_vals[0][0] = this->score_network->output->acti_vals[0];
+
+	if (just_score) {
+		state_vals.erase(state_vals.begin()+1, state_vals.end());
+		scopes_on.erase(scopes_on.begin()+1, scopes_on.end());
+	} else {
+		// copy observation if !update_existing_scope for now
+		if (!update_existing_scope) {
+			state_vals.push_back(vector<double>{observation});
+			scopes_on.push_back(true);
+		} else {
+			this->state_network->activate(state_vals,
+										  scopes_on,
+										  obs,
+										  network_historys);
+			for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+				state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
+			}
+		}
+
+		for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
+			this->compression_networks[c_index]->activate(state_vals,
+														  scopes_on,
+														  network_historys);
+
+			int sum_scope_sizes = 0;
+			for (int s_index = 0; s_index < this->compress_num_scopes[c_index]; s_index++) {
+				sum_scope_sizes += (int)state_vals.back().size();
+				state_vals.pop_back();
+				scopes_on.pop_back();
+			}
+			state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
+			scopes_on.push_back(true);
+
+			for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+				state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
+			}
+		}
+	}
+}
+
 void Node::backprop(double target_val,
-					vector<vector<double>>& state_errors) {
+					vector<vector<double>>& state_errors,
+					vector<AbstractNetworkHistory*>& network_historys) {
 	if (this->just_score) {
 		this->score_network->backprop(target_val,
 									  TARGET_MAX_UPDATE);
@@ -264,8 +312,7 @@ void Node::backprop_zero_train(Node* original,
 
 void Node::activate_state(vector<vector<double>>& state_vals,
 						  vector<bool>& scopes_on,
-						  double observation,
-						  bool is_activated) {
+						  double observation) {
 	if (this->just_score) {
 		// do nothing
 	} else {
@@ -273,8 +320,7 @@ void Node::activate_state(vector<vector<double>>& state_vals,
 		vector<double> obs{observation};
 		this->state_network->activate(state_vals,
 									  scopes_on,
-									  obs,
-									  is_activated);
+									  obs);
 	}
 }
 
