@@ -46,15 +46,11 @@ public:
 	void fold_backprop_last_state();
 	void fold_get_max_update_last_state(double& max_update_size);
 	void fold_update_weights_last_state(double learning_rate);
-	void fold_backprop_full_state();
-	void fold_get_max_update_full_state(double& max_update_size);
-	void fold_update_weights_full_state(double learning_rate);
-	void fold_loop_backprop_full_state();
-	void fold_loop_get_max_update_full_state(double& max_update_size);
-	void fold_loop_update_weights_full_state(double learning_rate);
-	void fold_loop_init_backprop_full_state();
-	void fold_loop_init_get_max_update_full_state(double& max_update_size);
-	void fold_loop_init_update_weights_full_state(double learning_rate);
+	void fold_backprop_full_state(int state_size);
+	void fold_get_max_update_full_state(int state_size,
+										double& max_update_size);
+	void fold_update_weights_full_state(int state_size,
+										double learning_rate);
 };
 
 #endif /* LAYER_H */

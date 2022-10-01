@@ -1,5 +1,5 @@
-#ifndef TEST_NODE_H
-#define TEST_NODE_H
+#ifndef LOOP_INIT_TEST_NODE_H
+#define LOOP_INIT_TEST_NODE_H
 
 #include <vector>
 
@@ -26,7 +26,7 @@ const int STATE_ADD_SCOPE_MEASURE = 13;
 const int STATE_ADD_SCOPE_TUNE = 14;
 const int STATE_DONE = 15;
 
-class TestNode {
+class LoopInitTestNode {
 public:
 	int obs_size;
 
@@ -37,10 +37,14 @@ public:
 	double tune_try;
 
 	std::vector<int> curr_scope_sizes;
-	FoldNetwork* curr_fold;
+	FoldLoopInitNetwork* curr_init;
+	FoldLoopNetwork* curr_loop;
+	FoldNetwork* curr_combine;
 
 	std::vector<int> test_scope_sizes;
-	FoldNetwork* test_fold;
+	FoldLoopInitNetwork* test_init;
+	FoldLoopNetwork* test_loop;
+	FoldNetwork* test_combine;
 
 	ScoreNetwork* score_network;
 
@@ -62,15 +66,25 @@ public:
 	int new_scope_size;
 
 	TestNode(std::vector<int> initial_scope_sizes,
-			 FoldNetwork* original_fold,
+			 FoldLoopInitNetwork* original_init,
+			 FoldLoopNetwork* original_loop,
+			 FoldNetwork* original_combine,
 			 int obs_size);
 	~TestNode();
 
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
 				  std::vector<double>& obs);
-	void process(std::vector<std::vector<double>>& flat_inputs,
-				 std::vector<std::vector<double>>& state_vals,
+	void loop_init(std::vector<std::vector<double>>& pre_loop_flat_vals,
+				   std::vector<double>& loop_state,
+				   std::vector<std::vector<double>>& outer_state_vals);
+	void loop_iter(std::vector<std::vector<double>>& pre_loop_flat_vals,
+				   std::vector<std::vector<double>>& loop_flat_vals,
+				   std::vector<double>& loop_state,
+				   std::vector<AbstractNetworkHistory*>& network_historys,
+				   std::vector<std::vector<double>>& outer_state_vals);
+	void process(std::vector<std::vector<double>>& combine_inputs,
+				 std::vector<std::vector<double>>& outer_state_vals,
 				 double target_val,
 				 std::vector<Node*>& nodes);
 
@@ -78,4 +92,4 @@ private:
 	void increment();
 };
 
-#endif /* TEST_NODE_H */
+#endif /* LOOP_INIT_TEST_NODE_H */

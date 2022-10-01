@@ -10,11 +10,9 @@
 
 class FoldNetwork : public AbstractNetwork {
 public:
-	int flat_size;
-	int output_size;
+	std::vector<int> flat_sizes;	// include curr_obs
 
-	Layer* flat_input;
-	Layer* obs_input;
+	std::vector<Layer*> flat_inputs;
 
 	int fold_index;
 	double average_error;
@@ -31,16 +29,13 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(int flat_size,
-				int output_size);
+	FoldNetwork(std::vector<int> flat_sizes);
 	FoldNetwork(std::ifstream& input_file);
 	FoldNetwork(FoldNetwork* original);
 	~FoldNetwork();
 
-	void activate(double* flat_inputs,
-				  std::vector<double>& obs);
-	void activate(double* flat_inputs,
-				  std::vector<double>& obs,
+	void activate(std::vector<std::vector<double>>& flat_vals);
+	void activate(std::vector<std::vector<double>>& flat_vals,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
@@ -50,11 +45,9 @@ public:
 	void reset_last();
 	void set_just_score();
 	void set_can_compress();
-	void activate(double* flat_inputs,
-				  std::vector<double>& obs,
+	void activate(std::vector<std::vector<double>>& flat_inputs,
 				  std::vector<std::vector<double>>& state_vals);
-	void activate(double* flat_inputs,
-				  std::vector<double>& obs,
+	void activate(std::vector<std::vector<double>>& flat_inputs,
 				  std::vector<std::vector<double>>& state_vals,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_last_state(std::vector<double>& errors,
@@ -70,8 +63,7 @@ private:
 
 class FoldNetworkHistory : public AbstractNetworkHistory {
 public:
-	std::vector<double> flat_input_history;
-	std::vector<double> obs_input_history;
+	std::vector<std::vector<double>> flat_inputs_historys;
 
 	std::vector<std::vector<double>> state_inputs_historys;
 

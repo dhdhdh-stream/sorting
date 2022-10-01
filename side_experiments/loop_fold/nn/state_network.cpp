@@ -11,13 +11,14 @@ void StateNetwork::construct() {
 
 	this->scopes_on_input = new Layer(LINEAR_LAYER, (int)this->scope_sizes.size());
 
-	this->obs_input = new Layer(LINEAR_LAYER, 1);
+	this->obs_input = new Layer(LINEAR_LAYER, this->obs_size);
 
-	int total_state_size = 0;
+	int sum_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		total_state_size += this->scope_sizes[sc_index];
+		sum_size += this->scope_sizes[sc_index];
 	}
-	this->hidden = new Layer(LEAKY_LAYER, 20*total_state_size);
+	sum_size += this->obs_size;
+	this->hidden = new Layer(LEAKY_LAYER, 10*sum_size);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
@@ -25,7 +26,7 @@ void StateNetwork::construct() {
 	this->hidden->input_layers.push_back(this->obs_input);
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, this->scope_sizes.back());
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
@@ -34,8 +35,12 @@ void StateNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-StateNetwork::StateNetwork(vector<int> scope_sizes) {
+StateNetwork::StateNetwork(vector<int> scope_sizes,
+						   int obs_size,
+						   int output_size) {
 	this->scope_sizes = scope_sizes;
+	this->obs_size = obs_size;
+	this->output_size = output_size;
 
 	construct();
 }
@@ -51,6 +56,14 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 		this->scope_sizes.push_back(stoi(scope_size_line));
 	}
 
+	string obs_size_line;
+	getline(input_file, obs_size_line);
+	this->obs_size = stoi(obs_size_line);
+
+	string output_size_line;
+	getline(input_file, output_size_line);
+	this->output_size = stoi(output_size_line);
+
 	construct();
 
 	this->hidden->load_weights_from(input_file);
@@ -59,6 +72,8 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 
 StateNetwork::StateNetwork(StateNetwork* original) {
 	this->scope_sizes = original->scope_sizes;
+	this->obs_size = original->obs_size;
+	this->output_size = original->output_size;
 
 	construct();
 
@@ -92,7 +107,9 @@ void StateNetwork::activate(vector<vector<double>>& state_vals,
 		}
 	}
 
-	this->obs_input->acti_vals[0] = obs[0];
+	for (int o_index = 0; o_index < this->obs_size; o_index++) {
+		this->obs_input->acti_vals[o_index] = obs[o_index];
+	}
 
 	this->hidden->activate();
 	this->output->activate();
@@ -114,7 +131,9 @@ void StateNetwork::activate(vector<vector<double>>& state_vals,
 		}
 	}
 
-	this->obs_input->acti_vals[0] = obs[0];
+	for (int o_index = 0; o_index < this->obs_size; o_index++) {
+		this->obs_input->acti_vals[o_index] = obs[o_index];
+	}
 
 	this->hidden->activate();
 	this->output->activate();
@@ -194,6 +213,9 @@ void StateNetwork::save(ofstream& output_file) {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		output_file << this->scope_sizes[sc_index] << endl;
 	}
+
+	output_file << this->obs_size << endl;
+	output_file << this->output_size << endl;
 
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);

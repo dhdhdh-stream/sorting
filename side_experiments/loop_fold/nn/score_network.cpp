@@ -7,13 +7,14 @@ void ScoreNetwork::construct() {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
 
-	this->obs_input = new Layer(LINEAR_LAYER, 1);
+	this->obs_input = new Layer(LINEAR_LAYER, this->obs_size);
 
-	int total_state_size = 0;
+	int sum_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		total_state_size += this->scope_sizes[sc_index];
+		sum_size += this->scope_sizes[sc_index];
 	}
-	this->hidden = new Layer(RELU_LAYER, 20*total_state_size);
+	sum_size += this->obs_size;
+	this->hidden = new Layer(RELU_LAYER, 10*sum_size);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
@@ -29,8 +30,10 @@ void ScoreNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-ScoreNetwork::ScoreNetwork(vector<int> scope_sizes) {
+ScoreNetwork::ScoreNetwork(vector<int> scope_sizes,
+						   int obs_size) {
 	this->scope_sizes = scope_sizes;
+	this->obs_size = obs_size;
 
 	construct();
 }
@@ -46,6 +49,10 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 		this->scope_sizes.push_back(stoi(scope_size_line));
 	}
 
+	string obs_size_line;
+	getline(input_file, obs_size_line);
+	this->obs_size = stoi(obs_size_line);
+
 	construct();
 
 	this->hidden->load_weights_from(input_file);
@@ -54,6 +61,7 @@ ScoreNetwork::ScoreNetwork(ifstream& input_file) {
 
 ScoreNetwork::ScoreNetwork(ScoreNetwork* original) {
 	this->scope_sizes = original->scope_sizes;
+	this->obs_size = original->obs_size;
 
 	construct();
 
@@ -79,7 +87,9 @@ void ScoreNetwork::activate(vector<vector<double>>& state_vals,
 		}
 	}
 
-	this->obs_input->acti_vals[0] = obs[0];
+	for (int o_index = 0; o_index < this->obs_size; o_index++) {
+		this->obs_input->acti_vals[o_index] = obs[o_index];
+	}
 
 	this->hidden->activate();
 	this->output->activate();
@@ -94,7 +104,9 @@ void ScoreNetwork::activate(vector<vector<double>>& state_vals,
 		}
 	}
 
-	this->obs_input->acti_vals[0] = obs[0];
+	for (int o_index = 0; o_index < this->obs_size; o_index++) {
+		this->obs_input->acti_vals[o_index] = obs[o_index];
+	}
 
 	this->hidden->activate();
 	this->output->activate();
@@ -171,6 +183,8 @@ void ScoreNetwork::save(ofstream& output_file) {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		output_file << this->scope_sizes[sc_index] << endl;
 	}
+
+	output_file << this->obs_size << endl;
 
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);

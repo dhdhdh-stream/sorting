@@ -9,11 +9,11 @@ void CompressionNetwork::construct() {
 
 	this->scopes_on_input = new Layer(LINEAR_LAYER, (int)this->scope_sizes.size());
 
-	int total_state_size = 0;
+	int sum_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		total_state_size += this->scope_sizes[sc_index];
+		sum_size += this->scope_sizes[sc_index];
 	}
-	this->hidden = new Layer(LEAKY_LAYER, 20*total_state_size);
+	this->hidden = new Layer(LEAKY_LAYER, 10*sum_size);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}

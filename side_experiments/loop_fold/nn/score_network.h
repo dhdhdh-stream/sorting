@@ -11,6 +11,8 @@
 class ScoreNetwork : public AbstractNetwork {
 public:
 	std::vector<int> scope_sizes;
+	int obs_size;
+
 	std::vector<Layer*> state_inputs;
 	Layer* obs_input;
 
@@ -23,7 +25,8 @@ public:
 
 	std::mutex mtx;
 
-	ScoreNetwork(std::vector<int> scope_sizes);
+	ScoreNetwork(std::vector<int> scope_sizes,
+				 int obs_size);
 	ScoreNetwork(std::ifstream& input_file);
 	ScoreNetwork(ScoreNetwork* original);
 	~ScoreNetwork();

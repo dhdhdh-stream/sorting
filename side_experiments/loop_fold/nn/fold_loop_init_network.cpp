@@ -5,171 +5,132 @@
 using namespace std;
 
 void FoldLoopInitNetwork::construct() {
-	this->pre_loop_flat_input = new Layer(LINEAR_LAYER, this->pre_loop_flat_size);
-	this->post_loop_flat_input = new Layer(LINEAR_LAYER, this->post_loop_flat_size);
-	this->obs_input = new Layer(LINEAR_LAYER, this->obs_size);
-
-	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		this->pre_loop_flat_inputs.push_back(new Layer(LINEAR_LAYER, this->pre_loop_flat_sizes[f_index]));
 	}
 
-	int sum_size = this->pre_loop_flat_size
-				   +this->loop_flat_size
-				   +this->post_loop_flat_size
-				   +this->obs_size;
+	for (int sc_index = 0; sc_index < (int)this->outer_scope_sizes.size(); sc_index++) {
+		this->outer_state_inputs.push_back(new Layer(LINEAR_LAYER, this->outer_scope_sizes[sc_index]));
+	}
+
+	int sum_size = 0;
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		sum_size += this->pre_loop_flat_sizes[f_index];
+	}
+	sum_size += this->loop_state_size;
 	this->hidden = new Layer(LEAKY_LAYER, 4*sum_size*sum_size);
-	this->hidden->input_layers.push_back(this->pre_loop_flat_input);
-	this->hidden->input_layers.push_back(this->post_loop_flat_input);
-	this->hidden->input_layers.push_back(this->obs_input);
-	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		this->hidden->input_layers.push_back(this->pre_loop_flat_inputs[f_index]);
+	}
+	for (int sc_index = 0; sc_index < (int)this->outer_scope_sizes.size(); sc_index++) {
+		this->hidden->input_layers.push_back(this->outer_state_inputs[sc_index]);
 	}
 	this->hidden->setup_weights_full();
 
-	this->loop_state_output = new Layer(LINEAR_LAYER, this->loop_state_size);
-	this->loop_state_output->input_layers.push_back(this->hidden);
-	this->loop_state_output->setup_weights_full();
-
-	this->output = new Layer(LINEAR_LAYER, 1);
+	this->output = new Layer(LINEAR_LAYER, this->loop_state_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
 	this->epoch_iter = 0;
 	this->hidden_average_max_update = 0.0;
-	this->loop_state_output_average_max_update = 0.0;
 	this->output_average_max_update = 0.0;
 }
 
-FoldLoopInitNetwork::FoldLoopInitNetwork(int pre_loop_flat_size,
-										 int loop_flat_size,
-										 int post_loop_flat_size,
-										 int obs_size,
+FoldLoopInitNetwork::FoldLoopInitNetwork(vector<int> pre_loop_flat_sizes,
 										 int loop_state_size) {
-	this->pre_loop_flat_size = pre_loop_flat_size;
-	this->loop_flat_size = loop_flat_size;
-	this->post_loop_flat_size = post_loop_flat_size;
-	this->obs_size = obs_size;
+	this->pre_loop_flat_sizes = pre_loop_flat_sizes;
 	this->loop_state_size = loop_state_size;
 
-	this->fold_index = -1;
+	this->outer_fold_index = -1;
 	this->average_error = -1.0;
 
 	construct();
 }
 
 FoldLoopInitNetwork::FoldLoopInitNetwork(ifstream& input_file) {
-	string pre_loop_flat_size_line;
-	getline(input_file, pre_loop_flat_size_line);
-	this->pre_loop_flat_size = stoi(pre_loop_flat_size_line);
-
-	string loop_flat_size_line;
-	getline(input_file, loop_flat_size_line);
-	this->loop_flat_size = stoi(loop_flat_size_line);
-
-	string post_loop_flat_size_line;
-	getline(input_file, post_loop_flat_size_line);
-	this->post_loop_flat_size = stoi(post_loop_flat_size_line);
-
-	string obs_size_line;
-	getline(input_file, obs_size_line);
-	this->obs_size = stoi(obs_size_line);
+	string num_pre_loop_flat_sizes_line;
+	getline(input_file, num_pre_loop_flat_sizes_line);
+	int num_pre_loop_flat_sizes = stoi(num_pre_loop_flat_sizes_line);
+	for (int f_index = 0; f_index < num_pre_loop_flat_sizes; f_index++) {
+		string flat_size_line;
+		getline(input_file, flat_size_line);
+		this->pre_loop_flat_sizes.push_back(stoi(flat_size_line));
+	}
 
 	string loop_state_size_line;
 	getline(input_file, loop_state_size_line);
 	this->loop_state_size = stoi(loop_state_size_line);
 
-	string fold_index_line;
-	getline(input_file, fold_index_line);
-	this->fold_index = stoi(fold_index_line);
+	string outer_fold_index_line;
+	getline(input_file, outer_fold_index_line);
+	this->outer_fold_index = stoi(outer_fold_index_line);
 
 	string average_error_line;
 	getline(input_file, average_error_line);
 	this->average_error = stof(average_error_line);
 
-	string num_scope_sizes_line;
-	getline(input_file, num_scope_sizes_line);
-	int num_scope_sizes = stoi(num_scope_sizes_line);
-	for (int sc_index = 0; sc_index < num_scope_sizes; sc_index++) {
+	string num_outer_scope_sizes_line;
+	getline(input_file, num_outer_scope_sizes_line);
+	int num_outer_scope_sizes = stoi(num_outer_scope_sizes_line);
+	for (int sc_index = 0; sc_index < num_outer_scope_sizes; sc_index++) {
 		string scope_size_line;
 		getline(input_file, scope_size_line);
-		this->scope_sizes.push_back(stoi(scope_size_line));
+		this->outer_scope_sizes.push_back(stoi(scope_size_line));
 	}
 
 	construct();
 
 	this->hidden->load_weights_from(input_file);
-	this->loop_state_output->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 }
 
 FoldLoopInitNetwork::FoldLoopInitNetwork(FoldLoopInitNetwork* original) {
-	this->pre_loop_flat_size = original->pre_loop_flat_size;
-	this->loop_flat_size = original->loop_flat_size;
-	this->post_loop_flat_size = original->post_loop_flat_size;
-	this->obs_size = original->obs_size;
+	this->pre_loop_flat_sizes = original->pre_loop_flat_sizes;
 	this->loop_state_size = original->loop_state_size;
 
-	this->fold_index = original->fold_index;
+	this->outer_fold_index = original->outer_fold_index;
 	this->average_error = original->average_error;
 
-	this->scope_sizes = original->scope_sizes;
+	this->outer_scope_sizes = original->outer_scope_sizes;
 
 	construct();
 
 	this->hidden->copy_weights_from(original->hidden);
-	this->loop_state_output->copy_weights_from(original->loop_state_output);
 	this->output->copy_weights_from(original->output);
 }
 
 FoldLoopInitNetwork::~FoldLoopInitNetwork() {
-	delete this->pre_loop_flat_input;
-	delete this->post_loop_flat_input;
-	delete this->obs_input;
-	for (int sc_index = 0; sc_index < (int)this->state_inputs.size(); sc_index++) {
-		delete this->state_inputs[sc_index];
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_inputs.size(); f_index++) {
+		delete this->pre_loop_flat_inputs[f_index];
+	}
+	for (int sc_index = 0; sc_index < (int)this->outer_state_inputs.size(); sc_index++) {
+		delete this->outer_state_inputs[sc_index];
 	}
 
 	delete this->hidden;
-	delete this->loop_state_output;
 	delete this->output;
 }
 
-void FoldLoopInitNetwork::activate(double* pre_loop_flat_inputs,
-								   double* post_loop_flat_inputs,
-								   vector<double>& obs) {
-	for (int f_index = 0; f_index < this->pre_loop_flat_size; f_index++) {
-		this->pre_loop_flat_input->acti_vals[f_index] = pre_loop_flat_inputs[f_index];
-	}
-	for (int f_index = 0; f_index < this->post_loop_flat_size; f_index++) {
-		this->post_loop_flat_input->acti_vals[f_index] = post_loop_flat_inputs[f_index];
-	}
-
-	for (int o_index = 0; o_index < this->obs_size; o_index++) {
-		this->obs_input->acti_vals[o_index] = obs[o_index];
+void FoldLoopInitNetwork::activate(vector<vector<double>>& pre_loop_flat_vals) {
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+			this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = pre_loop_flat_vals[f_index][s_index];
+		}
 	}
 
 	this->hidden->activate();
-	this->loop_state_output->activate();
 	this->output->activate();
 }
 
-void FoldLoopInitNetwork::activate(double* pre_loop_flat_inputs,
-								   double* post_loop_flat_inputs,
-								   vector<double>& obs,
+void FoldLoopInitNetwork::activate(vector<vector<double>>& pre_loop_flat_vals,
 								   vector<AbstractNetworkHistory*>& network_historys) {
-	for (int f_index = 0; f_index < this->pre_loop_flat_size; f_index++) {
-		this->pre_loop_flat_input->acti_vals[f_index] = pre_loop_flat_inputs[f_index];
-	}
-	for (int f_index = 0; f_index < this->post_loop_flat_size; f_index++) {
-		this->post_loop_flat_input->acti_vals[f_index] = post_loop_flat_inputs[f_index];
-	}
-
-	for (int o_index = 0; o_index < this->obs_size; o_index++) {
-		this->obs_input->acti_vals[o_index] = obs[o_index];
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+			this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = pre_loop_flat_vals[f_index][s_index];
+		}
 	}
 
 	this->hidden->activate();
-	this->loop_state_output->activate();
 	this->output->activate();
 
 	FoldLoopInitNetworkHistory* network_history = new FoldLoopInitNetworkHistory(this);
@@ -177,17 +138,11 @@ void FoldLoopInitNetwork::activate(double* pre_loop_flat_inputs,
 }
 
 void FoldLoopInitNetwork::backprop(vector<double>& errors,
-								   vector<double>& loop_state_errors,
 								   double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 	this->output->backprop();
-
-	for (int s_index = 0; s_index < this->loop_state_size; s_index++) {
-		this->loop_state_output->errors[s_index] = loop_state_errors[s_index];
-	}
-	this->loop_state_output->backprop();
 
 	this->hidden->backprop();
 
@@ -202,15 +157,6 @@ void FoldLoopInitNetwork::backprop(vector<double>& errors,
 		}
 		this->hidden->update_weights(hidden_learning_rate);
 
-		double loop_state_output_max_update = 0.0;
-		this->loop_state_output->get_max_update(loop_state_output_max_update);
-		this->loop_state_output_average_max_update = 0.999*this->loop_state_output_average_max_update+0.001*loop_state_output_max_update;
-		double loop_state_output_learning_rate = (0.3*target_max_update)/this->loop_state_output_average_max_update;
-		if (loop_state_output_learning_rate*loop_state_output_max_update > target_max_update) {
-			loop_state_output_learning_rate = target_max_update/loop_state_output_max_update;
-		}
-		this->loop_state_output->update_weights(loop_state_output_learning_rate);
-
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
@@ -224,134 +170,108 @@ void FoldLoopInitNetwork::backprop(vector<double>& errors,
 	}
 }
 
-void FoldLoopInitNetwork::add_scope(int scope_size) {
-	this->scope_sizes.push_back(scope_size);
-	this->state_inputs.push_back(new Layer(LINEAR_LAYER, scope_size));
-	this->hidden->fold_add_scope(this->state_inputs.back());
+void FoldLoopInitNetwork::outer_add_scope(int scope_size) {
+	this->outer_scope_sizes.push_back(scope_size);
+	this->outer_state_inputs.push_back(new Layer(LINEAR_LAYER, scope_size));
+	this->hidden->fold_add_scope(this->outer_state_inputs.back());
 }
 
-void FoldLoopInitNetwork::pop_scope() {
-	this->scope_sizes.pop_back();
-	delete this->state_inputs.back();
-	this->state_inputs.pop_back();
+void FoldLoopInitNetwork::outer_pop_scope() {
+	this->outer_scope_sizes.pop_back();
+	delete this->outer_state_inputs.back();
+	this->outer_state_inputs.pop_back();
 	this->hidden->fold_pop_scope();
 }
 
-void FoldLoopInitNetwork::reset_last() {
+void FoldLoopInitNetwork::outer_reset_last() {
 	this->hidden->fold_pop_scope();
-	this->hidden->fold_add_scope(this->state_inputs.back());
+	this->hidden->fold_add_scope(this->outer_state_inputs.back());
 }
 
-void FoldLoopInitNetwork::set_just_score() {
-	while (this->state_inputs.size() > 1) {
-		this->scope_sizes.pop_back();
-		delete this->state_inputs.back();
-		this->state_inputs.pop_back();
+void FoldLoopInitNetwork::outer_set_just_score() {
+	while (this->outer_state_inputs.size() > 1) {
+		this->outer_scope_sizes.pop_back();
+		delete this->outer_state_inputs.back();
+		this->outer_state_inputs.pop_back();
 		this->hidden->fold_pop_scope();
 	}
 
-	reset_last();
+	outer_reset_last();
 }
 
-void FoldLoopInitNetwork::set_can_compress() {
+void FoldLoopInitNetwork::outer_set_can_compress() {
 	int sum_scope_sizes = 0;
-	while (this->state_inputs.size() > 1) {
-		sum_scope_sizes += this->scope_sizes.back();
-		this->scope_sizes.pop_back();
-		delete this->state_inputs.back();
-		this->state_inputs.pop_back();
+	while (this->outer_state_inputs.size() > 1) {
+		sum_scope_sizes += this->outer_scope_sizes.back();
+		this->outer_scope_sizes.pop_back();
+		delete this->outer_state_inputs.back();
+		this->outer_state_inputs.pop_back();
 		this->hidden->fold_pop_scope();
 	}
 
-	this->scope_sizes.push_back(sum_scope_sizes-1);
-	this->state_inputs.push_back(new Layer(LINEAR_LAYER, sum_scope_sizes-1));
-	this->hidden->fold_add_scope(this->state_inputs.back());
+	this->outer_scope_sizes.push_back(sum_scope_sizes-1);
+	this->outer_state_inputs.push_back(new Layer(LINEAR_LAYER, sum_scope_sizes-1));
+	this->hidden->fold_add_scope(this->outer_state_inputs.back());
 }
 
-void FoldLoopInitNetwork::activate(double* pre_loop_flat_inputs,
-								   double* post_loop_flat_inputs,
-								   vector<double>& obs,
-								   vector<vector<double>>& state_vals) {
-	for (int f_index = 0; f_index < this->pre_loop_flat_size; f_index++) {
-		if (this->fold_index >= f_index) {
-			this->pre_loop_flat_input->acti_vals[f_index] = 0.0;
+void FoldLoopInitNetwork::activate(vector<vector<double>>& pre_loop_flat_vals,
+								   vector<vector<double>>& outer_state_vals) {
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		if (this->outer_fold_index >= f_index) {
+			for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+				this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = 0.0;
+			}
 		} else {
-			this->pre_loop_flat_input->acti_vals[f_index] = pre_loop_flat_inputs[f_index];
-		}
-	}
-	for (int f_index = 0; f_index < this->post_loop_flat_size; f_index++) {
-		if (this->fold_index >= this->pre_loop_flat_size + this->loop_flat_size + f_index) {
-			this->post_loop_flat_input->acti_vals[f_index] = 0.0;
-		} else {
-			this->post_loop_flat_input->acti_vals[f_index] = post_loop_flat_inputs[f_index];
+			for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+				this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = pre_loop_flat_vals[f_index][s_index];
+			}
 		}
 	}
 
-	for (int o_index = 0; o_index < this->obs_size; o_index++) {
-		this->obs_input->acti_vals[o_index] = obs[o_index];
-	}
-
-	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
-		for (int st_index = 0; st_index < (int)state_vals[sc_index].size(); st_index++) {
-			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+	for (int sc_index = 0; sc_index < (int)outer_state_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)outer_state_vals[sc_index].size(); st_index++) {
+			this->outer_state_inputs[sc_index]->acti_vals[st_index] = outer_state_vals[sc_index][st_index];
 		}
 	}
 
 	this->hidden->activate();
-	this->loop_state_output->activate();
 	this->output->activate();
 }
 
-void FoldLoopInitNetwork::activate(double* pre_loop_flat_inputs,
-								   double* post_loop_flat_inputs,
-								   vector<double>& obs,
-								   vector<vector<double>>& state_vals,
+void FoldLoopInitNetwork::activate(vector<vector<double>>& pre_loop_flat_vals,
+								   vector<vector<double>>& outer_state_vals,
 								   vector<AbstractNetworkHistory*>& network_historys) {
-	for (int f_index = 0; f_index < this->pre_loop_flat_size; f_index++) {
-		if (this->fold_index >= f_index) {
-			this->pre_loop_flat_input->acti_vals[f_index] = 0.0;
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		if (this->outer_fold_index >= f_index) {
+			for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+				this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = 0.0;
+			}
 		} else {
-			this->pre_loop_flat_input->acti_vals[f_index] = pre_loop_flat_inputs[f_index];
-		}
-	}
-	for (int f_index = 0; f_index < this->post_loop_flat_size; f_index++) {
-		if (this->fold_index >= this->pre_loop_flat_size + this->loop_flat_size + f_index) {
-			this->post_loop_flat_input->acti_vals[f_index] = 0.0;
-		} else {
-			this->post_loop_flat_input->acti_vals[f_index] = post_loop_flat_inputs[f_index];
+			for (int s_index = 0; s_index < this->pre_loop_flat_sizes[f_index]; s_index++) {
+				this->pre_loop_flat_inputs[f_index]->acti_vals[s_index] = pre_loop_flat_vals[f_index][s_index];
+			}
 		}
 	}
 
-	for (int o_index = 0; o_index < this->obs_size; o_index++) {
-		this->obs_input->acti_vals[o_index] = obs[o_index];
-	}
-
-	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
-		for (int st_index = 0; st_index < (int)state_vals[sc_index].size(); st_index++) {
-			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+	for (int sc_index = 0; sc_index < (int)outer_state_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)outer_state_vals[sc_index].size(); st_index++) {
+			this->outer_state_inputs[sc_index]->acti_vals[st_index] = outer_state_vals[sc_index][st_index];
 		}
 	}
 
 	this->hidden->activate();
-	this->loop_state_output->activate();
 	this->output->activate();
 
 	FoldLoopInitNetworkHistory* network_history = new FoldLoopInitNetworkHistory(this);
 	network_historys.push_back(network_history);
 }
 
-void FoldLoopInitNetwork::backprop_last_state(vector<double>& errors,
-											  vector<double>& loop_state_errors,
-											  double target_max_update) {
+void FoldLoopInitNetwork::outer_backprop_last_state(vector<double>& errors,
+													double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 	this->output->backprop();
-	
-	for (int s_index = 0; s_index < this->loop_state_size; s_index++) {
-		this->loop_state_output->errors[s_index] = loop_state_errors[s_index];
-	}
-	this->loop_state_output->backprop();
 
 	this->hidden->fold_backprop_last_state();
 
@@ -366,15 +286,6 @@ void FoldLoopInitNetwork::backprop_last_state(vector<double>& errors,
 		}
 		this->hidden->fold_update_weights_last_state(hidden_learning_rate);
 
-		double loop_state_output_max_update = 0.0;
-		this->loop_state_output->get_max_update(loop_state_output_max_update);
-		this->loop_state_output_average_max_update = 0.999*this->loop_state_output_average_max_update+0.001*loop_state_output_max_update;
-		double loop_state_output_learning_rate = (0.3*target_max_update)/this->loop_state_output_average_max_update;
-		if (loop_state_output_learning_rate*loop_state_output_max_update > target_max_update) {
-			loop_state_output_learning_rate = target_max_update/loop_state_output_max_update;
-		}
-		this->loop_state_output->update_weights(loop_state_output_learning_rate);
-
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
@@ -388,40 +299,27 @@ void FoldLoopInitNetwork::backprop_last_state(vector<double>& errors,
 	}
 }
 
-void FoldLoopInitNetwork::backprop_full_state(vector<double>& errors,
-											  vector<double>& loop_state_errors,
-											  double target_max_update) {
+void FoldLoopInitNetwork::outer_backprop_full_state(vector<double>& errors,
+													double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 	this->output->backprop();
 
-	for (int s_index = 0; s_index < this->loop_state_size; s_index++) {
-		this->loop_state_output->errors[s_index] = loop_state_errors[s_index];
-	}
-	this->loop_state_output->backprop();
-
-	this->hidden->fold_loop_init_backprop_full_state();
+	this->hidden->fold_backprop_full_state((int)this->outer_scope_sizes.size());
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 100) {
 		double hidden_max_update = 0.0;
-		this->hidden->fold_loop_init_get_max_update_full_state(hidden_max_update);
+		this->hidden->fold_get_max_update_full_state((int)this->outer_scope_sizes.size(),
+													 hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
 		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
 		if (hidden_learning_rate*hidden_max_update > target_max_update) {
 			hidden_learning_rate = target_max_update/hidden_max_update;
 		}
-		this->hidden->fold_loop_init_update_weights_full_state(hidden_learning_rate);
-
-		double loop_state_output_max_update = 0.0;
-		this->loop_state_output->get_max_update(loop_state_output_max_update);
-		this->loop_state_output_average_max_update = 0.999*this->loop_state_output_average_max_update+0.001*loop_state_output_max_update;
-		double loop_state_output_learning_rate = (0.3*target_max_update)/this->loop_state_output_average_max_update;
-		if (loop_state_output_learning_rate*loop_state_output_max_update > target_max_update) {
-			loop_state_output_learning_rate = target_max_update/loop_state_output_max_update;
-		}
-		this->loop_state_output->update_weights(loop_state_output_learning_rate);
+		this->hidden->fold_update_weights_full_state((int)this->outer_scope_sizes.size(),
+													 hidden_learning_rate);
 
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
@@ -437,56 +335,46 @@ void FoldLoopInitNetwork::backprop_full_state(vector<double>& errors,
 }
 
 void FoldLoopInitNetwork::save(ofstream& output_file) {
-	output_file << this->pre_loop_flat_size << endl;
-	output_file << this->loop_flat_size << endl;
-	output_file << this->post_loop_flat_size << endl;
-	output_file << this->obs_size << endl;
+	output_file << this->pre_loop_flat_sizes.size() << endl;
+	for (int f_index = 0; f_index < (int)this->pre_loop_flat_sizes.size(); f_index++) {
+		output_file << this->pre_loop_flat_sizes[f_index] << endl;
+	}
 	output_file << this->loop_state_size << endl;
 
-	output_file << this->fold_index << endl;
+	output_file << this->outer_fold_index << endl;
 	output_file << this->average_error << endl;
 
-	output_file << this->scope_sizes.size() << endl;
-	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		output_file << this->scope_sizes[sc_index] << endl;
+	output_file << this->outer_scope_sizes.size() << endl;
+	for (int sc_index = 0; sc_index < (int)this->outer_scope_sizes.size(); sc_index++) {
+		output_file << this->outer_scope_sizes[sc_index] << endl;
 	}
 
 	this->hidden->save_weights(output_file);
-	this->loop_state_output->save_weights(output_file);
 	this->output->save_weights(output_file);
 }
 
 FoldLoopInitNetworkHistory::FoldLoopInitNetworkHistory(FoldLoopInitNetwork* network) {
 	this->network = network;
 
-	this->pre_loop_flat_input_history.reserve(network->pre_loop_flat_input->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->pre_loop_flat_input->acti_vals.size(); n_index++) {
-		this->pre_loop_flat_input_history.push_back(network->pre_loop_flat_input->acti_vals[n_index]);
-	}
-	this->post_loop_flat_input_history.reserve(network->post_loop_flat_input->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->post_loop_flat_input->acti_vals.size(); n_index++) {
-		this->post_loop_flat_input_history.push_back(network->post_loop_flat_input->acti_vals[n_index]);
-	}
-	this->obs_input_history.reserve(network->obs_input->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->obs_input->acti_vals.size(); n_index++) {
-		this->obs_input_history.push_back(network->obs_input->acti_vals[n_index]);
+	this->pre_loop_flat_inputs_historys.reserve(network->pre_loop_flat_inputs.size());
+	for (int f_index = 0; f_index < (int)network->pre_loop_flat_inputs.size(); f_index++) {
+		this->pre_loop_flat_inputs_historys.push_back(vector<double>(network->pre_loop_flat_inputs[f_index]->acti_vals.size()));
+		for (int n_index = 0; n_index < (int)network->pre_loop_flat_inputs[f_index]->acti_vals.size(); n_index++) {
+			this->pre_loop_flat_inputs_historys[f_index][n_index] = network->pre_loop_flat_inputs[f_index]->acti_vals[n_index];
+		}
 	}
 
-	this->state_inputs_historys.reserve(network->state_inputs.size());
-	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
-		this->state_inputs_historys.push_back(vector<double>(network->state_inputs[sc_index]->acti_vals.size()));
-		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
-			this->state_inputs_historys[sc_index][st_index] = network->state_inputs[sc_index]->acti_vals[st_index];
+	this->outer_state_inputs_historys.reserve(network->outer_state_inputs.size());
+	for (int sc_index = 0; sc_index < (int)network->outer_state_inputs.size(); sc_index++) {
+		this->outer_state_inputs_historys.push_back(vector<double>(network->outer_state_inputs[sc_index]->acti_vals.size()));
+		for (int st_index = 0; st_index < (int)network->outer_state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			this->outer_state_inputs_historys[sc_index][st_index] = network->outer_state_inputs[sc_index]->acti_vals[st_index];
 		}
 	}
 
 	this->hidden_history.reserve(network->hidden->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
-	}
-	this->loop_state_output_history.reserve(network->loop_state_output->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->loop_state_output->acti_vals.size(); n_index++) {
-		this->loop_state_output_history.push_back(network->loop_state_output->acti_vals[n_index]);
 	}
 	this->output_history.reserve(network->output->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
@@ -497,27 +385,20 @@ FoldLoopInitNetworkHistory::FoldLoopInitNetworkHistory(FoldLoopInitNetwork* netw
 void FoldLoopInitNetworkHistory::reset_weights() {
 	FoldLoopInitNetwork* network = (FoldLoopInitNetwork*)this->network;
 
-	for (int n_index = 0; n_index < (int)network->pre_loop_flat_input->acti_vals.size(); n_index++) {
-		network->pre_loop_flat_input->acti_vals[n_index] = this->pre_loop_flat_input_history[n_index];
-	}
-	for (int n_index = 0; n_index < (int)network->post_loop_flat_input->acti_vals.size(); n_index++) {
-		network->post_loop_flat_input->acti_vals[n_index] = this->post_loop_flat_input_history[n_index];
-	}
-	for (int n_index = 0; n_index < (int)network->obs_input->acti_vals.size(); n_index++) {
-		network->obs_input->acti_vals[n_index] = this->obs_input_history[n_index];
+	for (int f_index = 0; f_index < (int)network->pre_loop_flat_inputs.size(); f_index++) {
+		for (int n_index = 0; n_index < (int)network->pre_loop_flat_inputs[f_index]->acti_vals.size(); n_index++) {
+			network->pre_loop_flat_inputs[f_index]->acti_vals[n_index] = this->pre_loop_flat_inputs_historys[f_index][n_index];
+		}
 	}
 
-	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
-		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
-			network->state_inputs[sc_index]->acti_vals[st_index] = this->state_inputs_historys[sc_index][st_index];
+	for (int sc_index = 0; sc_index < (int)network->outer_state_inputs.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)network->outer_state_inputs[sc_index]->acti_vals.size(); st_index++) {
+			network->outer_state_inputs[sc_index]->acti_vals[st_index] = this->outer_state_inputs_historys[sc_index][st_index];
 		}
 	}
 
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
-	}
-	for (int n_index = 0; n_index < (int)network->loop_state_output->acti_vals.size(); n_index++) {
-		network->loop_state_output->acti_vals[n_index] = this->loop_state_output_history[n_index];
 	}
 	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
 		network->output->acti_vals[n_index] = this->output_history[n_index];

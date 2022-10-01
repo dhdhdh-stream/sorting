@@ -17,7 +17,7 @@ public:
 	bool just_score;
 
 	bool update_existing_scope;
-	int new_scope_size;	// matters when handling multiple observations at once
+	int new_scope_size;
 	StateNetwork* state_network;
 
 	std::vector<int> compress_num_scopes;
@@ -42,11 +42,13 @@ public:
 	~Node();
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
-				  double observation);
+				  std::vector<double>& obs);
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
-				  double observation,
+				  std::vector<double>& obs,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop(double target_val,
+				  std::vector<std::vector<double>>& state_errors);
 	void backprop(double target_val,
 				  std::vector<std::vector<double>>& state_errors,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
@@ -54,7 +56,7 @@ public:
 							 double& sum_error);
 	void activate_state(std::vector<std::vector<double>>& state_vals,
 						std::vector<bool>& scopes_on,
-						double observation);
+						std::vector<double>& obs);
 	void backprop_zero_train_state(Node* original,
 								   double& sum_error);
 

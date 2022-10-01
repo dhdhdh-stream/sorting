@@ -11,6 +11,8 @@
 class StateNetwork : public AbstractNetwork {
 public:
 	std::vector<int> scope_sizes;
+	int obs_size;
+	int output_size;
 
 	std::vector<Layer*> state_inputs;
 	Layer* scopes_on_input;
@@ -25,7 +27,9 @@ public:
 
 	std::mutex mtx;
 
-	StateNetwork(std::vector<int> scope_sizes);
+	StateNetwork(std::vector<int> scope_sizes,
+				 int obs_size,
+				 int output_size);
 	StateNetwork(std::ifstream& input_file);
 	StateNetwork(StateNetwork* original);
 	~StateNetwork();

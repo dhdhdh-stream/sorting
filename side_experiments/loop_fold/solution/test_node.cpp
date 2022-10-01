@@ -5,13 +5,17 @@
 using namespace std;
 
 TestNode::TestNode(vector<int> initial_scope_sizes,
-				   FoldNetwork* original_fold) {
+				   FoldNetwork* original_fold,
+				   int obs_size) {
+	this->obs_size = obs_size;
+
 	this->curr_scope_sizes = initial_scope_sizes;
 	this->curr_fold = new FoldNetwork(original_fold);
 
 	this->test_fold = NULL;
 
-	this->score_network = new ScoreNetwork(initial_scope_sizes);
+	this->score_network = new ScoreNetwork(initial_scope_sizes,
+										   this->obs_size);
 
 	this->state_network = NULL;
 
@@ -19,6 +23,8 @@ TestNode::TestNode(vector<int> initial_scope_sizes,
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 	this->best_sum_error = -1.0;
+
+	this->new_scope_size = 0;
 }
 
 TestNode::~TestNode() {
@@ -29,9 +35,7 @@ TestNode::~TestNode() {
 
 void TestNode::activate(vector<vector<double>>& state_vals,
 						vector<bool>& scopes_on,
-						double observation) {
-	vector<double> obs{observation};
-
+						vector<double>& obs) {
 	this->score_network->activate(state_vals,
 								  obs);
 	state_vals[0][0] = this->score_network->output->acti_vals[0];
@@ -44,6 +48,11 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 		state_vals.erase(state_vals.begin()+1, state_vals.end());
 		// no need for scopes_on anymore
 	} else {
+		if (this->new_scope_size > 0) {
+			state_vals.push_back(vector<double>(this->new_scope_size));
+			scopes_on.push_back(true);
+		}
+
 		this->state_network->activate(state_vals,
 									  scopes_on,
 									  obs);
@@ -147,10 +156,8 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 	}
 }
 
-void TestNode::process(double* flat_inputs,
-					   bool* activated,
+void TestNode::process(vector<vector<double>>& flat_inputs,
 					   vector<vector<double>>& state_vals,
-					   double observation,
 					   double target_val,
 					   vector<Node*>& nodes) {
 	if (this->state == STATE_LEARN_SCORE) {
@@ -172,12 +179,9 @@ void TestNode::process(double* flat_inputs,
 	} else if (this->state == STATE_JUST_SCORE_MEASURE
 			|| this->state == STATE_LOCAL_SCOPE_MEASURE
 			|| this->state == STATE_CAN_COMPRESS_MEASURE
-			|| this->state == STATE_COMPRESS_MEASURE) {
-		vector<double> obs;
-		obs.push_back(observation);
-
+			|| this->state == STATE_COMPRESS_MEASURE
+			|| this->state == STATE_ADD_SCOPE_MEASURE) {
 		this->test_fold->activate(flat_inputs,
-								  obs,
 								  state_vals);
 
 		this->sum_error += abs(target_val - this->test_fold->output->acti_vals[0]);
@@ -187,11 +191,7 @@ void TestNode::process(double* flat_inputs,
 			this->sum_error = 0.0;
 		}
 
-		vector<double> obs;
-		obs.push_back(observation);
-
 		this->test_fold->activate(flat_inputs,
-								  obs,
 								  state_vals);
 
 		vector<double> errors;
@@ -227,23 +227,20 @@ void TestNode::process(double* flat_inputs,
 			}
 		}
 
-		// for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-		// 	nodes[n_index]->backprop(target_val,
-		// 							 state_errors);
-		// }
+		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
+			nodes[n_index]->backprop(target_val,
+									 state_errors);
+		}
 	} else if (this->state == STATE_LOCAL_SCOPE_LEARN
 			|| this->state == STATE_CAN_COMPRESS_LEARN
-			|| this->state == STATE_COMPRESS_LEARN) {
+			|| this->state == STATE_COMPRESS_LEARN
+			|| this->state == STATE_ADD_SCOPE_LEARN) {
 		if ((this->state_iter+1)%10000 == 0) {
 			cout << this->state_iter << " sum_error: " << this->sum_error << endl;
 			this->sum_error = 0.0;
 		}
 
-		vector<double> obs;
-		obs.push_back(observation);
-
 		this->test_fold->activate(flat_inputs,
-								  obs,
 								  state_vals);
 
 		vector<double> errors;
@@ -290,16 +287,13 @@ void TestNode::process(double* flat_inputs,
 			}
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_TUNE
-			|| this->state == STATE_COMPRESS_TUNE) {
+			|| this->state == STATE_COMPRESS_TUNE
+			|| this->state == STATE_ADD_SCOPE_TUNE) {
 		if ((this->state_iter+1) % 10000 == 0) {
 			cout << this->state_iter << " sum_error: " << this->sum_error << endl;
 		}
 
-		vector<double> obs;
-		obs.push_back(observation);
-
 		this->curr_fold->activate(flat_inputs,
-								  obs,
 								  state_vals);
 
 		vector<double> errors;
@@ -362,10 +356,10 @@ void TestNode::process(double* flat_inputs,
 			}
 		}
 
-		// for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-		// 	nodes[n_index]->backprop(target_val,
-		// 							 state_errors);
-		// }
+		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
+			nodes[n_index]->backprop(target_val,
+									 state_errors);
+		}
 	}
 
 	increment();
@@ -465,7 +459,9 @@ void TestNode::increment() {
 
 					this->test_scope_sizes = this->curr_scope_sizes;
 
-					this->state_network = new StateNetwork(this->test_scope_sizes);
+					this->state_network = new StateNetwork(this->test_scope_sizes,
+														   this->obs_size,
+														   this->test_scope_sizes.back());
 
 					this->state = STATE_LOCAL_SCOPE_LEARN;
 					this->state_iter = 0;
@@ -473,20 +469,26 @@ void TestNode::increment() {
 				} else {
 					cout << "ending STATE_JUST_SCORE_MEASURE" << endl;
 					cout << "error: " << this->sum_error/10000 << endl;
-					cout << "DONE" << endl;
+					cout << "starting STATE_ADD_SCOPE_LEARN" << endl;
 
 					this->update_existing_scope = false;
 
-					this->curr_scope_sizes.push_back(1);
+					this->new_scope_size = 1;
 
-					this->curr_fold->add_scope(1);
-					this->curr_fold->fold_index++;
-					for (int n_index = 0; n_index < (int)this->curr_fold->hidden->acti_vals.size(); n_index++) {
-						this->curr_fold->hidden->weights[n_index].back()[0] =
-							this->curr_fold->hidden->weights[n_index][0][this->curr_fold->fold_index];
-					}
+					this->test_fold = new FoldNetwork(this->curr_fold);
+					this->test_fold->fold_index++;
+					this->test_fold->add_scope(this->new_scope_size);
 
-					this->state = STATE_DONE;
+					this->test_scope_sizes = this->curr_scope_sizes;
+					this->test_scope_sizes.push_back(this->new_scope_size);
+
+					this->state_network = new StateNetwork(this->curr_scope_sizes,
+														   this->obs_size,
+														   this->new_scope_size);
+
+					this->state = STATE_ADD_SCOPE_LEARN;
+					this->state_iter = 0;
+					this->sum_error = 0.0;
 				}
 			}
 		}
@@ -527,7 +529,7 @@ void TestNode::increment() {
 	} else if (this->state == STATE_LOCAL_SCOPE_MEASURE) {
 		if (this->state_iter >= 10000) {
 			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error
-					|| this->curr_fold->fold_index == this->curr_fold->flat_size-1) {
+					|| this->curr_fold->fold_index == (int)this->curr_fold->flat_sizes.size()-1) {
 				cout << "ending STATE_LOCAL_SCOPE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_LOCAL_SCOPE_TUNE" << endl;
@@ -551,24 +553,28 @@ void TestNode::increment() {
 			} else {
 				cout << "ending STATE_LOCAL_SCOPE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
-				cout << "DONE" << endl;
+				cout << "starting STATE_ADD_SCOPE_LEARN" << endl;
 
 				this->update_existing_scope = false;
 
-				this->curr_scope_sizes.push_back(1);
-
-				delete this->state_network;
-				this->state_network = NULL;
+				this->new_scope_size = 1;
 
 				delete this->test_fold;
-				this->curr_fold->add_scope(1);
-				this->curr_fold->fold_index++;
-				for (int n_index = 0; n_index < (int)this->curr_fold->hidden->acti_vals.size(); n_index++) {
-					this->curr_fold->hidden->weights[n_index].back()[0] =
-						this->curr_fold->hidden->weights[n_index][0][this->curr_fold->fold_index];
-				}
+				this->test_fold = new FoldNetwork(this->curr_fold);
+				this->test_fold->fold_index++;
+				this->test_fold->add_scope(this->new_scope_size);
 
-				this->state = STATE_DONE;
+				this->test_scope_sizes = this->curr_scope_sizes;
+				this->test_scope_sizes.push_back(this->new_scope_size);
+
+				delete this->state_network;
+				this->state_network = new StateNetwork(this->curr_scope_sizes,
+													   this->obs_size,
+													   this->new_scope_size);
+
+				this->state = STATE_ADD_SCOPE_LEARN;
+				this->state_iter = 0;
+				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_TUNE) {
@@ -876,6 +882,86 @@ void TestNode::increment() {
 
 						this->state = STATE_DONE;
 					}
+				}
+			}
+		}
+	} else if (this->state == STATE_ADD_SCOPE_LEARN) {
+		if (this->state_iter >= 300000) {
+			cout << "ending STATE_ADD_SCOPE_LEARN" << endl;
+			cout << "starting STATE_ADD_SCOPE_MEASURE" << endl;
+
+			this->state = STATE_ADD_SCOPE_MEASURE;
+			this->state_iter = 0;
+			this->sum_error = 0.0;
+		}
+	} else if (this->state == STATE_ADD_SCOPE_MEASURE) {
+		if (this->state_iter >= 10000) {
+			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+				cout << "ending STATE_ADD_SCOPE_MEASURE" << endl;
+				cout << "error: " << this->sum_error/10000 << endl;
+				cout << "starting STATE_ADD_SCOPE_TUNE" << endl;
+
+				delete this->curr_fold;
+				this->curr_fold = this->test_fold;
+				this->test_fold = NULL;
+
+				if (this->sum_error/10000 < this->curr_fold->average_error) {
+					this->curr_fold->average_error = this->sum_error/10000;
+				}
+
+				this->curr_scope_sizes = this->test_scope_sizes;
+
+				this->state = STATE_ADD_SCOPE_TUNE;
+				this->state_iter = 0;
+				this->sum_error = 0.0;
+				this->best_sum_error = -1.0;
+			} else {
+				cout << "ending STATE_ADD_SCOPE_MEASURE" << endl;
+				cout << "error: " << this->sum_error/10000 << endl;
+				cout << "starting STATE_ADD_SCOPE_LEARN" << endl;
+
+				this->new_scope_size++;
+
+				delete this->test_fold;
+				this->test_fold = new FoldNetwork(this->curr_fold);
+				this->test_fold->fold_index++;
+				this->test_fold->add_scope(this->new_scope_size);
+
+				this->test_scope_sizes = this->curr_scope_sizes;
+				this->test_scope_sizes.push_back(this->new_scope_size);
+
+				delete this->state_network;
+				this->state_network = new StateNetwork(this->curr_scope_sizes,
+													   this->obs_size,
+													   this->new_scope_size);
+
+				this->state = STATE_ADD_SCOPE_LEARN;
+				this->state_iter = 0;
+				this->sum_error = 0.0;
+			}
+		}
+	} else if (this->state == STATE_ADD_SCOPE_TUNE) {
+		if (this->state_iter >= 40000) {
+			if (this->best_sum_error == -1.0) {
+				this->best_sum_error = this->sum_error;
+				this->sum_error = 0.0;
+				this->state_iter = 0;
+				this->tune_try = 0;
+			} else {
+				if (this->sum_error < this->best_sum_error) {
+					this->best_sum_error = this->sum_error;
+					this->sum_error = 0.0;
+					this->state_iter = 0;
+					this->tune_try = 0;
+				} else if (this->tune_try < 2) {
+					this->sum_error = 0.0;
+					this->state_iter = 0;
+					this->tune_try++;
+				} else {
+					cout << "ending STATE_ADD_SCOPE_TUNE" << endl;
+					cout << "DONE" << endl;
+
+					this->state = STATE_DONE;
 				}
 			}
 		}
