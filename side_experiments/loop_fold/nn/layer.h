@@ -51,6 +51,8 @@ public:
 										double& max_update_size);
 	void fold_update_weights_full_state(int state_size,
 										double learning_rate);
+	void fold_loop_backprop_last_state();
+	void fold_loop_backprop_full_state(int state_size);
 };
 
 #endif /* LAYER_H */

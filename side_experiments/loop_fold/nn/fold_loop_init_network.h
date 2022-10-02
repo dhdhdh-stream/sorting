@@ -16,7 +16,6 @@ public:
 	std::vector<Layer*> pre_loop_flat_inputs;
 
 	int outer_fold_index;
-	double average_error;
 
 	std::vector<int> outer_scope_sizes;
 	std::vector<Layer*> outer_state_inputs;

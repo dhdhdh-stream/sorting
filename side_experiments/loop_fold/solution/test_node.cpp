@@ -343,7 +343,6 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			this->state_network->state_inputs.back()->errors[st_index] = 0.0;
 		}
 
-		// this->score_network->backprop_weights_with_no_error_signal(
 		this->score_network->backprop(
 			target_val,
 			0.002);

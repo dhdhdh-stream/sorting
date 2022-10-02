@@ -3,7 +3,9 @@
 
 #include <vector>
 
-#include "fold_network.h"
+#include "fold_combine_network.h"
+#include "fold_loop_init_network.h"
+#include "fold_loop_network.h"
 #include "compression_network.h"
 #include "node.h"
 #include "score_network.h"
@@ -36,15 +38,15 @@ public:
 	double best_sum_error;	// for tune
 	double tune_try;
 
-	std::vector<int> curr_scope_sizes;
+	std::vector<int> curr_outer_scope_sizes;
 	FoldLoopInitNetwork* curr_init;
 	FoldLoopNetwork* curr_loop;
-	FoldNetwork* curr_combine;
+	FoldCombineNetwork* curr_combine;
 
-	std::vector<int> test_scope_sizes;
+	std::vector<int> test_outer_scope_sizes;
 	FoldLoopInitNetwork* test_init;
 	FoldLoopNetwork* test_loop;
-	FoldNetwork* test_combine;
+	FoldCombineNetwork* test_combine;
 
 	ScoreNetwork* score_network;
 
@@ -65,28 +67,31 @@ public:
 
 	int new_scope_size;
 
-	TestNode(std::vector<int> initial_scope_sizes,
-			 FoldLoopInitNetwork* original_init,
-			 FoldLoopNetwork* original_loop,
-			 FoldNetwork* original_combine,
-			 int obs_size);
-	~TestNode();
+	LoopInitTestNode(std::vector<int> initial_outer_scope_sizes,
+					 FoldLoopInitNetwork* original_init,
+					 FoldLoopNetwork* original_loop,
+					 FoldCombineNetwork* original_combine,
+					 int obs_size);
+	~LoopInitTestNode();
 
-	void activate(std::vector<std::vector<double>>& state_vals,
+	void activate(std::vector<std::vector<double>>& outer_state_vals,
 				  std::vector<bool>& scopes_on,
 				  std::vector<double>& obs);
 	void loop_init(std::vector<std::vector<double>>& pre_loop_flat_vals,
-				   std::vector<double>& loop_state,
-				   std::vector<std::vector<double>>& outer_state_vals);
+				   std::vector<std::vector<double>>& outer_state_vals,
+				   std::vector<double>& loop_state);
 	void loop_iter(std::vector<std::vector<double>>& pre_loop_flat_vals,
 				   std::vector<std::vector<double>>& loop_flat_vals,
 				   std::vector<double>& loop_state,
-				   std::vector<AbstractNetworkHistory*>& network_historys,
-				   std::vector<std::vector<double>>& outer_state_vals);
-	void process(std::vector<std::vector<double>>& combine_inputs,
+				   std::vector<std::vector<double>>& outer_state_vals,
+				   std::vector<AbstractNetworkHistory*>& network_historys);
+	void process(std::vector<double>& loop_state,
+				 std::vector<std::vector<double>>& pre_loop_flat_vals,
+				 std::vector<std::vector<double>>& post_loop_flat_vals,
 				 std::vector<std::vector<double>>& outer_state_vals,
 				 double target_val,
-				 std::vector<Node*>& nodes);
+				 std::vector<Node*>& nodes,
+				 std::vector<AbstractNetworkHistory*>& network_historys);
 
 private:
 	void increment();
