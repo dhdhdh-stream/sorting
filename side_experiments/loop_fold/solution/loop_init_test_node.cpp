@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "test_node.h"
+
 using namespace std;
 
 LoopInitTestNode::LoopInitTestNode(vector<int> initial_outer_scope_sizes,
@@ -12,9 +14,9 @@ LoopInitTestNode::LoopInitTestNode(vector<int> initial_outer_scope_sizes,
 	this->obs_size = obs_size;
 
 	this->curr_outer_scope_sizes = initial_outer_scope_sizes;
-	this->curr_init = original_init;
-	this->curr_loop = original_loop;
-	this->curr_combine = original_combine;
+	this->curr_init = new FoldLoopInitNetwork(original_init);
+	this->curr_loop = new FoldLoopNetwork(original_loop);
+	this->curr_combine = new FoldCombineNetwork(original_combine);
 
 	this->test_init = NULL;
 	this->test_loop = NULL;
@@ -39,49 +41,50 @@ LoopInitTestNode::~LoopInitTestNode() {
 	// all networks will be taken or cleared by increment()
 }
 
-void LoopInitTestNode::activate(vector<vector<double>>& outer_state_vals,
+void LoopInitTestNode::activate(vector<vector<double>>& state_vals,
 								vector<bool>& scopes_on,
 								vector<double>& obs) {
-	this->score_network->activate(outer_state_vals,
+	this->score_network->activate(state_vals,
 								  obs);
-	outer_state_vals[0][0] = this->score_network->output->acti_vals[0];
+	state_vals[0][0] = this->score_network->output->acti_vals[0];
 
 	if (this->state == STATE_LEARN_SCORE) {
 		// do nothing
 	} else if (this->state == STATE_JUST_SCORE_LEARN
 			|| this->state == STATE_JUST_SCORE_MEASURE
 			|| this->state == STATE_JUST_SCORE_TUNE) {
-		outer_state_vals.erase(outer_state_vals.begin()+1, outer_state_vals.end());
+		state_vals.erase(state_vals.begin()+1, state_vals.end());
 		// no need for scopes_on anymore
 	} else {
 		if (this->new_scope_size > 0) {
-			outer_state_vals.push_back(vector<double>(this->new_scope_size));
+			state_vals.push_back(vector<double>(this->new_scope_size));
 			scopes_on.push_back(true);
 		}
 
-		this->state_network->activate(outer_state_vals,
+		this->state_network->activate(state_vals,
 									  scopes_on,
 									  obs);
-		for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-			outer_state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
-		}
+		// for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+		// 	state_vals.back()[st_index] = this->state_network->output->acti_vals[st_index];
+		// }
+		state_vals.back()[0] = obs[0];
 
 		if (this->state == STATE_COMPRESS_TUNE) {
 			for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
-				this->compression_networks[c_index]->activate(outer_state_vals,
+				this->compression_networks[c_index]->activate(state_vals,
 															  scopes_on);
 
 				int sum_scope_sizes = 0;
 				for (int s_index = 0; s_index < this->compress_num_scopes[c_index]; s_index++) {
-					sum_scope_sizes += (int)outer_state_vals.back().size();
-					outer_state_vals.pop_back();
+					sum_scope_sizes += (int)state_vals.back().size();
+					state_vals.pop_back();
 					scopes_on.pop_back();
 				}
-				outer_state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
+				state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
 				scopes_on.push_back(true);
 
-				for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-					outer_state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
+				for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+					state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
 				}
 			}
 		} else if ((this->state == STATE_COMPRESS_LEARN
@@ -89,81 +92,81 @@ void LoopInitTestNode::activate(vector<vector<double>>& outer_state_vals,
 				&& this->test_compress_sizes > 1) {
 			// activate all but last
 			for (int c_index = 0; c_index < (int)this->compression_networks.size()-1; c_index++) {
-				this->compression_networks[c_index]->activate(outer_state_vals,
+				this->compression_networks[c_index]->activate(state_vals,
 															  scopes_on);
 
 				int sum_scope_sizes = 0;
 				for (int s_index = 0; s_index < this->compress_num_scopes[c_index]; s_index++) {
-					sum_scope_sizes += (int)outer_state_vals.back().size();
-					outer_state_vals.pop_back();
+					sum_scope_sizes += (int)state_vals.back().size();
+					state_vals.pop_back();
 					scopes_on.pop_back();
 				}
-				outer_state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
+				state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
 				scopes_on.push_back(true);
 
-				for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-					outer_state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
+				for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+					state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
 				}
 			}
 
-			this->test_compression_network->activate(outer_state_vals,
+			this->test_compression_network->activate(state_vals,
 													 scopes_on);
 
 			int sum_scope_sizes = 0;
 			for (int s_index = 0; s_index < this->test_compress_num_scopes; s_index++) {
-				sum_scope_sizes += (int)outer_state_vals.back().size();
-				outer_state_vals.pop_back();
+				sum_scope_sizes += (int)state_vals.back().size();
+				state_vals.pop_back();
 				scopes_on.pop_back();
 			}
-			outer_state_vals.push_back(vector<double>(sum_scope_sizes - this->test_compress_sizes));
+			state_vals.push_back(vector<double>(sum_scope_sizes - this->test_compress_sizes));
 			scopes_on.push_back(true);
 
-			for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-				outer_state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
+			for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+				state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
 			}
 		} else if (this->state == STATE_CAN_COMPRESS_LEARN
 				|| this->state == STATE_CAN_COMPRESS_MEASURE
 				|| this->state == STATE_COMPRESS_LEARN
 				|| this->state == STATE_COMPRESS_MEASURE) {
 			for (int c_index = 0; c_index < (int)this->compression_networks.size(); c_index++) {
-				this->compression_networks[c_index]->activate(outer_state_vals,
+				this->compression_networks[c_index]->activate(state_vals,
 															  scopes_on);
 
 				int sum_scope_sizes = 0;
 				for (int s_index = 0; s_index < this->compress_num_scopes[c_index]; s_index++) {
-					sum_scope_sizes += (int)outer_state_vals.back().size();
-					outer_state_vals.pop_back();
+					sum_scope_sizes += (int)state_vals.back().size();
+					state_vals.pop_back();
 					scopes_on.pop_back();
 				}
-				outer_state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
+				state_vals.push_back(vector<double>(sum_scope_sizes - this->compress_sizes[c_index]));
 				scopes_on.push_back(true);
 
-				for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-					outer_state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
+				for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+					state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
 				}
 			}
 
-			this->test_compression_network->activate(outer_state_vals,
+			this->test_compression_network->activate(state_vals,
 													 scopes_on);
 
 			int sum_scope_sizes = 0;
 			for (int s_index = 0; s_index < this->test_compress_num_scopes; s_index++) {
-				sum_scope_sizes += (int)outer_state_vals.back().size();
-				outer_state_vals.pop_back();
+				sum_scope_sizes += (int)state_vals.back().size();
+				state_vals.pop_back();
 				scopes_on.pop_back();
 			}
-			outer_state_vals.push_back(vector<double>(sum_scope_sizes - this->test_compress_sizes));
+			state_vals.push_back(vector<double>(sum_scope_sizes - this->test_compress_sizes));
 			scopes_on.push_back(true);
 
-			for (int st_index = 0; st_index < (int)outer_state_vals.back().size(); st_index++) {
-				outer_state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
+			for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+				state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
 			}
 		}
 	}
 }
 
 void LoopInitTestNode::loop_init(vector<vector<double>>& pre_loop_flat_vals,
-								 vector<vector<double>>& outer_state_vals,
+								 vector<vector<double>>& state_vals,
 								 vector<double>& loop_state) {
 	if (this->state == STATE_LEARN_SCORE) {
 		// do nothing
@@ -171,14 +174,14 @@ void LoopInitTestNode::loop_init(vector<vector<double>>& pre_loop_flat_vals,
 			|| this->state == STATE_LOCAL_SCOPE_TUNE
 			|| this->state == STATE_COMPRESS_TUNE
 			|| this->state == STATE_ADD_SCOPE_TUNE) {
-		this->curr_init->activate(pre_loop_flat_vals,
-								  outer_state_vals);
+		this->curr_init->init_activate(pre_loop_flat_vals,
+									   state_vals);
 		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 			loop_state[s_index] = this->curr_init->output->acti_vals[s_index];
 		}
 	} else {
-		this->test_init->activate(pre_loop_flat_vals,
-								  outer_state_vals);
+		this->test_init->init_activate(pre_loop_flat_vals,
+									   state_vals);
 		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 			loop_state[s_index] = this->test_init->output->acti_vals[s_index];
 		}
@@ -188,28 +191,40 @@ void LoopInitTestNode::loop_init(vector<vector<double>>& pre_loop_flat_vals,
 void LoopInitTestNode::loop_iter(vector<vector<double>>& pre_loop_flat_vals,
 								 vector<vector<double>>& loop_flat_vals,
 								 vector<double>& loop_state,
-								 vector<vector<double>>& outer_state_vals,
+								 vector<vector<double>>& state_vals,
 								 vector<AbstractNetworkHistory*>& network_historys) {
 	if (this->state == STATE_LEARN_SCORE) {
 		// do nothing
+	} else if (this->state == STATE_JUST_SCORE_MEASURE
+			|| this->state == STATE_LOCAL_SCOPE_MEASURE
+			|| this->state == STATE_CAN_COMPRESS_MEASURE
+			|| this->state == STATE_COMPRESS_MEASURE
+			|| this->state == STATE_ADD_SCOPE_MEASURE) {
+		this->test_loop->init_activate(loop_state,
+									   pre_loop_flat_vals,
+									   loop_flat_vals,
+									   state_vals);
+		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
+			loop_state[s_index] = this->test_loop->output->acti_vals[s_index];
+		}
 	} else if (this->state == STATE_JUST_SCORE_TUNE
 			|| this->state == STATE_LOCAL_SCOPE_TUNE
 			|| this->state == STATE_COMPRESS_TUNE
 			|| this->state == STATE_ADD_SCOPE_TUNE) {
-		this->curr_loop->outer_activate(loop_state,
-										pre_loop_flat_vals,
-										loop_flat_vals,
-										outer_state_vals,
-										network_historys);
+		this->curr_loop->init_activate(loop_state,
+									   pre_loop_flat_vals,
+									   loop_flat_vals,
+									   state_vals,
+									   network_historys);
 		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 			loop_state[s_index] = this->curr_loop->output->acti_vals[s_index];
 		}
 	} else {
-		this->test_loop->outer_activate(loop_state,
-										pre_loop_flat_vals,
-										loop_flat_vals,
-										outer_state_vals,
-										network_historys);
+		this->test_loop->init_activate(loop_state,
+									   pre_loop_flat_vals,
+									   loop_flat_vals,
+									   state_vals,
+									   network_historys);
 		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 			loop_state[s_index] = this->test_loop->output->acti_vals[s_index];
 		}
@@ -219,9 +234,9 @@ void LoopInitTestNode::loop_iter(vector<vector<double>>& pre_loop_flat_vals,
 void LoopInitTestNode::process(vector<double>& loop_state,
 							   vector<vector<double>>& pre_loop_flat_vals,
 							   vector<vector<double>>& post_loop_flat_vals,
-							   vector<vector<double>>& outer_state_vals,
+							   vector<vector<double>>& state_vals,
 							   double target_val,
-							   vector<Node*>& nodes,
+							   vector<Node*>& init_nodes,
 							   vector<AbstractNetworkHistory*>& network_historys) {
 	if (this->state == STATE_LEARN_SCORE) {
 		if ((this->state_iter+1)%10000 == 0) {
@@ -244,10 +259,10 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			|| this->state == STATE_CAN_COMPRESS_MEASURE
 			|| this->state == STATE_COMPRESS_MEASURE
 			|| this->state == STATE_ADD_SCOPE_MEASURE) {
-		this->test_combine->outer_activate(loop_state,
-										   pre_loop_flat_vals,
-										   post_loop_flat_vals,
-										   outer_state_vals);
+		this->test_combine->init_activate(loop_state,
+										  pre_loop_flat_vals,
+										  post_loop_flat_vals,
+										  state_vals);
 
 		this->sum_error += abs(target_val - this->test_combine->output->acti_vals[0]);
 	} else if (this->state == STATE_JUST_SCORE_LEARN) {
@@ -256,19 +271,19 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			this->sum_error = 0.0;
 		}
 
-		this->test_combine->outer_activate(loop_state,
-										   pre_loop_flat_vals,
-										   post_loop_flat_vals,
-										   outer_state_vals);
+		this->test_combine->init_activate(loop_state,
+										  pre_loop_flat_vals,
+										  post_loop_flat_vals,
+										  state_vals);
 
 		vector<double> combine_errors;
 		combine_errors.push_back(target_val - this->test_combine->output->acti_vals[0]);
 		sum_error += abs(combine_errors[0]);
 
-		if (this->state_iter <= 40000) {
-			this->test_combine->outer_backprop_last_state(combine_errors, 0.01);
+		if (this->state_iter <= 240000) {
+			this->test_combine->backprop_last_state(combine_errors, 0.01);
 		} else {
-			this->test_combine->outer_backprop_last_state(combine_errors, 0.002);
+			this->test_combine->backprop_last_state(combine_errors, 0.002);
 		}
 
 		vector<double> loop_state_errors;
@@ -280,12 +295,10 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 		while (network_historys.size() > 0) {
 			network_historys.back()->reset_weights();
 
-			if (this->state_iter <= 40000) {
-				this->test_loop->outer_backprop_last_state(loop_state_errors,
-														   0.01);
+			if (this->state_iter <= 240000) {
+				this->test_loop->backprop_last_state(loop_state_errors, 0.01);
 			} else {
-				this->test_loop->outer_backprop_last_state(loop_state_errors,
-														   0.002);
+				this->test_loop->backprop_last_state(loop_state_errors, 0.002);
 			}
 			for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 				loop_state_errors[s_index] = this->test_loop->loop_state_input->errors[s_index];
@@ -296,12 +309,10 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			network_historys.pop_back();
 		}
 
-		if (this->state_iter <= 40000) {
-			this->test_init->outer_backprop_last_state(loop_state_errors,
-													   0.01);
+		if (this->state_iter <= 240000) {
+			this->test_init->backprop_last_state(loop_state_errors, 0.01);
 		} else {
-			this->test_init->outer_backprop_last_state(loop_state_errors,
-													   0.002);
+			this->test_init->backprop_last_state(loop_state_errors, 0.002);
 		}
 	} else if (this->state == STATE_JUST_SCORE_TUNE) {
 		if ((this->state_iter+1)%10000 == 0) {
@@ -327,9 +338,9 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			}
 		}
 
-		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-			nodes[n_index]->backprop(target_val,
-									 state_errors);
+		for (int n_index = (int)init_nodes.size()-1; n_index >= 0; n_index--) {
+			init_nodes[n_index]->backprop(target_val,
+										  state_errors);
 		}
 	} else if (this->state == STATE_LOCAL_SCOPE_LEARN
 			|| this->state == STATE_CAN_COMPRESS_LEARN
@@ -340,19 +351,19 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			this->sum_error = 0.0;
 		}
 
-		this->test_combine->outer_activate(loop_state,
-										   pre_loop_flat_vals,
-										   post_loop_flat_vals,
-										   outer_state_vals);
+		this->test_combine->init_activate(loop_state,
+										  pre_loop_flat_vals,
+										  post_loop_flat_vals,
+										  state_vals);
 
 		vector<double> combine_errors;
 		combine_errors.push_back(target_val - this->test_combine->output->acti_vals[0]);
 		sum_error += abs(combine_errors[0]);
 
-		if (this->state_iter <= 40000) {
-			this->test_combine->outer_backprop_last_state(combine_errors, 0.01);
+		if (this->state_iter <= 240000) {
+			this->test_combine->backprop_last_state(combine_errors, 0.01);
 		} else {
-			this->test_combine->outer_backprop_last_state(combine_errors, 0.002);
+			this->test_combine->backprop_last_state(combine_errors, 0.002);
 		}
 
 		vector<double> loop_state_errors;
@@ -363,48 +374,44 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 
 		vector<double> last_scope_state_errors(this->test_outer_scope_sizes.back());
 		for (int st_index = 0; st_index < this->test_outer_scope_sizes.back(); st_index++) {
-			last_scope_state_errors[st_index] = this->test_combine->outer_state_inputs.back()->errors[st_index];
-			this->test_combine->outer_state_inputs.back()->errors[st_index] = 0.0;
+			last_scope_state_errors[st_index] = this->test_combine->state_inputs.back()->errors[st_index];
+			this->test_combine->state_inputs.back()->errors[st_index] = 0.0;
 		}
 
 		while (network_historys.size() > 0) {
 			network_historys.back()->reset_weights();
 
-			if (this->state_iter <= 40000) {
-				this->test_loop->outer_backprop_last_state(loop_state_errors,
-														   0.01);
+			if (this->state_iter <= 240000) {
+				this->test_loop->backprop_last_state(loop_state_errors, 0.01);
 			} else {
-				this->test_loop->outer_backprop_last_state(loop_state_errors,
-														   0.002);
+				this->test_loop->backprop_last_state(loop_state_errors, 0.002);
 			}
 			for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 				loop_state_errors[s_index] = this->test_loop->loop_state_input->errors[s_index];
 				this->test_loop->loop_state_input->errors[s_index] = 0.0;
 			}
 			for (int st_index = 0; st_index < this->test_outer_scope_sizes.back(); st_index++) {
-				last_scope_state_errors[st_index] += this->test_loop->outer_state_inputs.back()->errors[st_index];
-				this->test_loop->outer_state_inputs.back()->errors[st_index] = 0.0;
+				last_scope_state_errors[st_index] += this->test_loop->state_inputs.back()->errors[st_index];
+				this->test_loop->state_inputs.back()->errors[st_index] = 0.0;
 			}
 
 			delete network_historys.back();
 			network_historys.pop_back();
 		}
 
-		if (this->state_iter <= 40000) {
-			this->test_init->outer_backprop_last_state(loop_state_errors,
-													   0.01);
+		if (this->state_iter <= 240000) {
+			this->test_init->backprop_last_state(loop_state_errors, 0.01);
 		} else {
-			this->test_init->outer_backprop_last_state(loop_state_errors,
-													   0.002);
+			this->test_init->backprop_last_state(loop_state_errors, 0.002);
 		}
 		for (int st_index = 0; st_index < this->test_outer_scope_sizes.back(); st_index++) {
-			last_scope_state_errors[st_index] += this->test_init->outer_state_inputs.back()->errors[st_index];
-			this->test_init->outer_state_inputs.back()->errors[st_index] = 0.0;
+			last_scope_state_errors[st_index] += this->test_init->state_inputs.back()->errors[st_index];
+			this->test_init->state_inputs.back()->errors[st_index] = 0.0;
 		}
 
 		if (this->state == STATE_CAN_COMPRESS_LEARN
 				|| this->state == STATE_COMPRESS_LEARN) {
-			if (this->state_iter <= 40000) {
+			if (this->state_iter <= 240000) {
 				this->test_compression_network->backprop_weights_with_no_error_signal(
 					last_scope_state_errors,
 					0.01);
@@ -414,7 +421,7 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 					0.002);
 			}
 		} else {
-			if (this->state_iter <= 40000) {
+			if (this->state_iter <= 240000) {
 				this->state_network->backprop_weights_with_no_error_signal(
 					last_scope_state_errors,
 					0.01);
@@ -431,16 +438,16 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			cout << this->state_iter << " sum_error: " << this->sum_error << endl;
 		}
 
-		this->curr_combine->outer_activate(loop_state,
-										   pre_loop_flat_vals,
-										   post_loop_flat_vals,
-										   outer_state_vals);
+		this->curr_combine->init_activate(loop_state,
+										  pre_loop_flat_vals,
+										  post_loop_flat_vals,
+										  state_vals);
 
 		vector<double> combine_errors;
 		combine_errors.push_back(target_val - this->curr_combine->output->acti_vals[0]);
 		sum_error += abs(combine_errors[0]);
 
-		this->curr_combine->outer_backprop_full_state(combine_errors, 0.002);
+		this->curr_combine->backprop_full_state(combine_errors, 0.002);
 		vector<double> loop_state_errors;
 		for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 			loop_state_errors.push_back(this->curr_combine->loop_state_input->errors[s_index]);
@@ -451,16 +458,15 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 		for (int sc_index = 1; sc_index < (int)this->curr_outer_scope_sizes.size(); sc_index++) {
 			state_errors[sc_index].reserve(this->curr_outer_scope_sizes[sc_index]);
 			for (int st_index = 0; st_index < this->curr_outer_scope_sizes[sc_index]; st_index++) {
-				state_errors[sc_index].push_back(this->curr_combine->outer_state_inputs[sc_index]->errors[st_index]);
-				this->curr_combine->outer_state_inputs[sc_index]->errors[st_index] = 0.0;
+				state_errors[sc_index].push_back(this->curr_combine->state_inputs[sc_index]->errors[st_index]);
+				this->curr_combine->state_inputs[sc_index]->errors[st_index] = 0.0;
 			}
 		}
 
 		while (network_historys.size() > 0) {
 			network_historys.back()->reset_weights();
 
-			this->curr_loop->outer_backprop_full_state(loop_state_errors,
-													   0.002);
+			this->curr_loop->backprop_full_state(loop_state_errors, 0.002);
 			for (int s_index = 0; s_index < (int)loop_state.size(); s_index++) {
 				loop_state_errors[s_index] = this->curr_loop->loop_state_input->errors[s_index];
 				this->curr_loop->loop_state_input->errors[s_index] = 0.0;
@@ -469,8 +475,8 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			for (int sc_index = 1; sc_index < (int)this->curr_outer_scope_sizes.size(); sc_index++) {
 				state_errors[sc_index].reserve(this->curr_outer_scope_sizes[sc_index]);
 				for (int st_index = 0; st_index < this->curr_outer_scope_sizes[sc_index]; st_index++) {
-					state_errors[sc_index].push_back(this->curr_loop->outer_state_inputs[sc_index]->errors[st_index]);
-					this->curr_loop->outer_state_inputs[sc_index]->errors[st_index] = 0.0;
+					state_errors[sc_index][st_index] = this->curr_loop->state_inputs[sc_index]->errors[st_index];
+					this->curr_loop->state_inputs[sc_index]->errors[st_index] = 0.0;
 				}
 			}
 
@@ -478,14 +484,13 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			network_historys.pop_back();
 		}
 
-		this->curr_init->outer_backprop_full_state(loop_state_errors,
-												   0.002);
+		this->curr_init->backprop_full_state(loop_state_errors, 0.002);
 		// state_errors[0][0] doesn't matter
 		for (int sc_index = 1; sc_index < (int)this->curr_outer_scope_sizes.size(); sc_index++) {
 			state_errors[sc_index].reserve(this->curr_outer_scope_sizes[sc_index]);
 			for (int st_index = 0; st_index < this->curr_outer_scope_sizes[sc_index]; st_index++) {
-				state_errors[sc_index].push_back(this->curr_init->outer_state_inputs[sc_index]->errors[st_index]);
-				this->curr_init->outer_state_inputs[sc_index]->errors[st_index] = 0.0;
+				state_errors[sc_index][st_index] = this->curr_init->state_inputs[sc_index]->errors[st_index];
+				this->curr_init->state_inputs[sc_index]->errors[st_index] = 0.0;
 			}
 		}
 
@@ -508,6 +513,11 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 		}
 
 		this->state_network->backprop(state_errors.back(), 0.002);
+		
+		if (this->new_scope_size > 0) {
+			state_errors.pop_back();
+		}
+
 		// state_errors[0][0] doesn't matter
 		for (int sc_index = 1; sc_index < (int)state_errors.size()-1; sc_index++) {
 			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
@@ -532,9 +542,9 @@ void LoopInitTestNode::process(vector<double>& loop_state,
 			}
 		}
 
-		for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
-			nodes[n_index]->backprop(target_val,
-									 state_errors);
+		for (int n_index = (int)init_nodes.size()-1; n_index >= 0; n_index--) {
+			init_nodes[n_index]->backprop(target_val,
+										  state_errors);
 		}
 	}
 
@@ -568,15 +578,21 @@ void LoopInitTestNode::increment() {
 
 						this->test_init = new FoldLoopInitNetwork(this->curr_init);
 						this->test_init->outer_fold_index++;
-						this->test_init->outer_set_just_score();
+						while (this->test_init->state_inputs.size() > 1) {
+							this->test_init->pop_scope();
+						}
 
 						this->test_loop = new FoldLoopNetwork(this->curr_loop);
 						this->test_loop->outer_fold_index++;
-						this->test_loop->outer_set_just_score();
+						while (this->test_loop->state_inputs.size() > 1) {
+							this->test_loop->pop_scope();
+						}
 
 						this->test_combine = new FoldCombineNetwork(this->curr_combine);
 						this->test_combine->outer_fold_index++;
-						this->test_combine->outer_set_just_score();
+						while (this->test_combine->state_inputs.size() > 1) {
+							this->test_combine->pop_scope();
+						}
 
 						this->state = STATE_JUST_SCORE_LEARN;
 						this->state_iter = 0;
@@ -653,15 +669,15 @@ void LoopInitTestNode::increment() {
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
 					this->test_init->outer_fold_index++;
-					this->test_init->outer_reset_last();
+					this->test_init->reset_last();
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
 					this->test_loop->outer_fold_index++;
-					this->test_loop->outer_reset_last();
+					this->test_loop->reset_last();
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
 					this->test_combine->outer_fold_index++;
-					this->test_combine->outer_reset_last();
+					this->test_combine->reset_last();
 
 					this->test_outer_scope_sizes = this->curr_outer_scope_sizes;
 
@@ -683,15 +699,15 @@ void LoopInitTestNode::increment() {
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
 					this->test_init->outer_fold_index++;
-					this->test_init->outer_add_scope(this->new_scope_size);
+					this->test_init->add_scope(this->new_scope_size);
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
 					this->test_loop->outer_fold_index++;
-					this->test_loop->outer_add_scope(this->new_scope_size);
+					this->test_loop->add_scope(this->new_scope_size);
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
 					this->test_combine->outer_fold_index++;
-					this->test_combine->outer_add_scope(this->new_scope_size);
+					this->test_combine->add_scope(this->new_scope_size);
 
 					this->test_outer_scope_sizes = this->curr_outer_scope_sizes;
 					this->test_outer_scope_sizes.push_back(this->new_scope_size);
@@ -783,17 +799,17 @@ void LoopInitTestNode::increment() {
 				delete this->test_init;
 				this->test_init = new FoldLoopInitNetwork(this->curr_init);
 				this->test_init->outer_fold_index++;
-				this->test_init->outer_add_scope(this->new_scope_size);
+				this->test_init->add_scope(this->new_scope_size);
 
 				delete this->test_loop;
 				this->test_loop = new FoldLoopNetwork(this->curr_loop);
 				this->test_loop->outer_fold_index++;
-				this->test_loop->outer_add_scope(this->new_scope_size);
+				this->test_loop->add_scope(this->new_scope_size);
 
 				delete this->test_combine;
 				this->test_combine = new FoldCombineNetwork(this->curr_combine);
 				this->test_combine->outer_fold_index++;
-				this->test_combine->outer_add_scope(this->new_scope_size);
+				this->test_combine->add_scope(this->new_scope_size);
 
 				this->test_outer_scope_sizes = this->curr_outer_scope_sizes;
 				this->test_outer_scope_sizes.push_back(this->new_scope_size);
@@ -849,13 +865,22 @@ void LoopInitTestNode::increment() {
 																				sum_scope_sizes-1);
 
 						this->test_init = new FoldLoopInitNetwork(this->curr_init);
-						this->test_init->outer_set_can_compress();
+						while (this->test_init->state_inputs.size() > 1) {
+							this->test_init->pop_scope();
+						}
+						this->test_init->add_scope(sum_scope_sizes-1);
 
 						this->test_loop = new FoldLoopNetwork(this->curr_loop);
-						this->test_loop->outer_set_can_compress();
+						while (this->test_loop->state_inputs.size() > 1) {
+							this->test_loop->pop_scope();
+						}
+						this->test_loop->add_scope(sum_scope_sizes-1);
 
 						this->test_combine = new FoldCombineNetwork(this->curr_combine);
-						this->test_combine->outer_set_can_compress();
+						while (this->test_combine->state_inputs.size() > 1) {
+							this->test_combine->pop_scope();
+						}
+						this->test_combine->add_scope(sum_scope_sizes-1);
 
 						this->state = STATE_CAN_COMPRESS_LEARN;
 						this->state_iter = 0;
@@ -915,19 +940,19 @@ void LoopInitTestNode::increment() {
 																			sum_scope_sizes-1);
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
-					this->test_init->outer_pop_scope();
-					this->test_init->outer_pop_scope();
-					this->test_init->outer_add_scope(sum_scope_sizes-1);
+					this->test_init->pop_scope();
+					this->test_init->pop_scope();
+					this->test_init->add_scope(sum_scope_sizes-1);
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
-					this->test_loop->outer_pop_scope();
-					this->test_loop->outer_pop_scope();
-					this->test_loop->outer_add_scope(sum_scope_sizes-1);
+					this->test_loop->pop_scope();
+					this->test_loop->pop_scope();
+					this->test_loop->add_scope(sum_scope_sizes-1);
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
-					this->test_combine->outer_pop_scope();
-					this->test_combine->outer_pop_scope();
-					this->test_combine->outer_add_scope(sum_scope_sizes-1);
+					this->test_combine->pop_scope();
+					this->test_combine->pop_scope();
+					this->test_combine->add_scope(sum_scope_sizes-1);
 				} else {
 					this->test_compress_num_scopes = 1;
 					this->test_compress_sizes = 1;
@@ -941,16 +966,16 @@ void LoopInitTestNode::increment() {
 																			sum_scope_sizes-1);
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
-					this->test_init->outer_pop_scope();
-					this->test_init->outer_add_scope(sum_scope_sizes-1);
+					this->test_init->pop_scope();
+					this->test_init->add_scope(sum_scope_sizes-1);
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
-					this->test_loop->outer_pop_scope();
-					this->test_loop->outer_add_scope(sum_scope_sizes-1);
+					this->test_loop->pop_scope();
+					this->test_loop->add_scope(sum_scope_sizes-1);
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
-					this->test_combine->outer_pop_scope();
-					this->test_combine->outer_add_scope(sum_scope_sizes-1);
+					this->test_combine->pop_scope();
+					this->test_combine->add_scope(sum_scope_sizes-1);
 				}
 
 				this->state = STATE_COMPRESS_LEARN;
@@ -975,7 +1000,7 @@ void LoopInitTestNode::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_MEASURE) {
 		if (this->state_iter >= 10000) {
-			if (this->sum_error/10000 < this->curr_combine->average_error
+			if (this->sum_error/10000 < 1.2*this->curr_combine->average_error
 					|| this->test_outer_scope_sizes.size() == 2) {
 				if (this->test_compress_sizes > 1) {
 					this->compress_num_scopes.pop_back();
@@ -1045,16 +1070,16 @@ void LoopInitTestNode::increment() {
 						sum_scope_sizes-this->test_compress_sizes);
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
-					this->test_init->outer_pop_scope();
-					this->test_init->outer_add_scope(sum_scope_sizes-this->test_compress_sizes);
+					this->test_init->pop_scope();
+					this->test_init->add_scope(sum_scope_sizes-this->test_compress_sizes);
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
-					this->test_loop->outer_pop_scope();
-					this->test_loop->outer_add_scope(sum_scope_sizes-this->test_compress_sizes);
+					this->test_loop->pop_scope();
+					this->test_loop->add_scope(sum_scope_sizes-this->test_compress_sizes);
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
-					this->test_combine->outer_pop_scope();
-					this->test_combine->outer_add_scope(sum_scope_sizes-this->test_compress_sizes);
+					this->test_combine->pop_scope();
+					this->test_combine->add_scope(sum_scope_sizes-this->test_compress_sizes);
 
 					this->state = STATE_COMPRESS_LEARN;
 					this->state_iter = 0;
@@ -1094,21 +1119,21 @@ void LoopInitTestNode::increment() {
 
 					this->test_init = new FoldLoopInitNetwork(this->curr_init);
 					for (int sc_index = 0; sc_index < this->test_compress_num_scopes; sc_index++) {
-						this->test_init->outer_pop_scope();
+						this->test_init->pop_scope();
 					}
-					this->test_init->outer_add_scope(sum_scope_sizes-1);
+					this->test_init->add_scope(sum_scope_sizes-1);
 
 					this->test_loop = new FoldLoopNetwork(this->curr_loop);
 					for (int sc_index = 0; sc_index < this->test_compress_num_scopes; sc_index++) {
-						this->test_loop->outer_pop_scope();
+						this->test_loop->pop_scope();
 					}
-					this->test_loop->outer_add_scope(sum_scope_sizes-1);
+					this->test_loop->add_scope(sum_scope_sizes-1);
 
 					this->test_combine = new FoldCombineNetwork(this->curr_combine);
 					for (int sc_index = 0; sc_index < this->test_compress_num_scopes; sc_index++) {
-						this->test_combine->outer_pop_scope();
+						this->test_combine->pop_scope();
 					}
-					this->test_combine->outer_add_scope(sum_scope_sizes-1);
+					this->test_combine->add_scope(sum_scope_sizes-1);
 
 					this->state = STATE_COMPRESS_LEARN;
 					this->state_iter = 0;
@@ -1166,13 +1191,22 @@ void LoopInitTestNode::increment() {
 																				sum_scope_sizes-1);
 
 						this->test_init = new FoldLoopInitNetwork(this->curr_init);
-						this->test_init->outer_set_can_compress();
+						while (this->test_init->state_inputs.size() > 1) {
+							this->test_init->pop_scope();
+						}
+						this->test_init->add_scope(sum_scope_sizes-1);
 
 						this->test_loop = new FoldLoopNetwork(this->curr_loop);
-						this->test_loop->outer_set_can_compress();
+						while (this->test_loop->state_inputs.size() > 1) {
+							this->test_loop->pop_scope();
+						}
+						this->test_loop->add_scope(sum_scope_sizes-1);
 
 						this->test_combine = new FoldCombineNetwork(this->curr_combine);
-						this->test_combine->outer_set_can_compress();
+						while (this->test_combine->state_inputs.size() > 1) {
+							this->test_combine->pop_scope();
+						}
+						this->test_combine->add_scope(sum_scope_sizes-1);
 
 						this->state = STATE_CAN_COMPRESS_LEARN;
 						this->state_iter = 0;
@@ -1234,17 +1268,17 @@ void LoopInitTestNode::increment() {
 				delete this->test_init;
 				this->test_init = new FoldLoopInitNetwork(this->curr_init);
 				this->test_init->outer_fold_index++;
-				this->test_init->outer_add_scope(this->new_scope_size);
+				this->test_init->add_scope(this->new_scope_size);
 
 				delete this->test_loop;
 				this->test_loop = new FoldLoopNetwork(this->curr_loop);
 				this->test_loop->outer_fold_index++;
-				this->test_loop->outer_add_scope(this->new_scope_size);
+				this->test_loop->add_scope(this->new_scope_size);
 
 				delete this->test_combine;
 				this->test_combine = new FoldCombineNetwork(this->curr_combine);
 				this->test_combine->outer_fold_index++;
-				this->test_combine->outer_add_scope(this->new_scope_size);
+				this->test_combine->add_scope(this->new_scope_size);
 
 				this->test_outer_scope_sizes = this->curr_outer_scope_sizes;
 				this->test_outer_scope_sizes.push_back(this->new_scope_size);

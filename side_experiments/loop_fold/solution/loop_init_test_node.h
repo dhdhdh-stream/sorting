@@ -11,23 +11,6 @@
 #include "score_network.h"
 #include "state_network.h"
 
-const int STATE_LEARN_SCORE = 0;
-const int STATE_JUST_SCORE_LEARN = 1;
-const int STATE_JUST_SCORE_MEASURE = 2;
-const int STATE_JUST_SCORE_TUNE = 3;
-const int STATE_LOCAL_SCOPE_LEARN = 4;
-const int STATE_LOCAL_SCOPE_MEASURE = 5;
-const int STATE_LOCAL_SCOPE_TUNE = 6;
-const int STATE_CAN_COMPRESS_LEARN = 7;
-const int STATE_CAN_COMPRESS_MEASURE = 8;
-const int STATE_COMPRESS_LEARN = 9;
-const int STATE_COMPRESS_MEASURE = 10;
-const int STATE_COMPRESS_TUNE = 11;
-const int STATE_ADD_SCOPE_LEARN = 12;
-const int STATE_ADD_SCOPE_MEASURE = 13;
-const int STATE_ADD_SCOPE_TUNE = 14;
-const int STATE_DONE = 15;
-
 class LoopInitTestNode {
 public:
 	int obs_size;
@@ -74,23 +57,23 @@ public:
 					 int obs_size);
 	~LoopInitTestNode();
 
-	void activate(std::vector<std::vector<double>>& outer_state_vals,
+	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<bool>& scopes_on,
 				  std::vector<double>& obs);
 	void loop_init(std::vector<std::vector<double>>& pre_loop_flat_vals,
-				   std::vector<std::vector<double>>& outer_state_vals,
+				   std::vector<std::vector<double>>& state_vals,
 				   std::vector<double>& loop_state);
 	void loop_iter(std::vector<std::vector<double>>& pre_loop_flat_vals,
 				   std::vector<std::vector<double>>& loop_flat_vals,
 				   std::vector<double>& loop_state,
-				   std::vector<std::vector<double>>& outer_state_vals,
+				   std::vector<std::vector<double>>& state_vals,
 				   std::vector<AbstractNetworkHistory*>& network_historys);
 	void process(std::vector<double>& loop_state,
 				 std::vector<std::vector<double>>& pre_loop_flat_vals,
 				 std::vector<std::vector<double>>& post_loop_flat_vals,
-				 std::vector<std::vector<double>>& outer_state_vals,
+				 std::vector<std::vector<double>>& state_vals,
 				 double target_val,
-				 std::vector<Node*>& nodes,
+				 std::vector<Node*>& init_nodes,
 				 std::vector<AbstractNetworkHistory*>& network_historys);
 
 private:

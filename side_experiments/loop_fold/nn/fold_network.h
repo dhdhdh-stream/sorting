@@ -43,8 +43,6 @@ public:
 	void add_scope(int scope_size);
 	void pop_scope();
 	void reset_last();
-	void set_just_score();
-	void set_can_compress();
 	void activate(std::vector<std::vector<double>>& flat_inputs,
 				  std::vector<std::vector<double>>& state_vals);
 	void activate(std::vector<std::vector<double>>& flat_inputs,

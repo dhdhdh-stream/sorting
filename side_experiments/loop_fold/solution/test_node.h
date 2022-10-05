@@ -9,6 +9,7 @@
 #include "score_network.h"
 #include "state_network.h"
 
+// TODO: divide into 2 layers
 const int STATE_LEARN_SCORE = 0;
 const int STATE_JUST_SCORE_LEARN = 1;
 const int STATE_JUST_SCORE_MEASURE = 2;

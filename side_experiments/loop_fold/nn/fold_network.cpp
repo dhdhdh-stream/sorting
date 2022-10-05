@@ -180,32 +180,6 @@ void FoldNetwork::reset_last() {
 	this->hidden->fold_add_scope(this->state_inputs.back());
 }
 
-void FoldNetwork::set_just_score() {
-	while (this->state_inputs.size() > 1) {
-		this->scope_sizes.pop_back();
-		delete this->state_inputs.back();
-		this->state_inputs.pop_back();
-		this->hidden->fold_pop_scope();
-	}
-
-	reset_last();
-}
-
-void FoldNetwork::set_can_compress() {
-	int sum_scope_sizes = 0;
-	while (this->state_inputs.size() > 1) {
-		sum_scope_sizes += this->scope_sizes.back();
-		this->scope_sizes.pop_back();
-		delete this->state_inputs.back();
-		this->state_inputs.pop_back();
-		this->hidden->fold_pop_scope();
-	}
-
-	this->scope_sizes.push_back(sum_scope_sizes-1);
-	this->state_inputs.push_back(new Layer(LINEAR_LAYER, sum_scope_sizes-1));
-	this->hidden->fold_add_scope(this->state_inputs.back());
-}
-
 void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 						   vector<vector<double>>& state_vals) {
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {

@@ -331,6 +331,11 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 		}
 
 		this->state_network->backprop(state_errors.back(), 0.002);
+
+		if (this->new_scope_size > 0) {
+			state_errors.pop_back();
+		}
+
 		// state_errors[0][0] doesn't matter
 		for (int sc_index = 1; sc_index < (int)state_errors.size()-1; sc_index++) {
 			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
@@ -343,9 +348,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			this->state_network->state_inputs.back()->errors[st_index] = 0.0;
 		}
 
-		this->score_network->backprop(
-			target_val,
-			0.002);
+		this->score_network->backprop(target_val, 0.002);
 
 		// state_errors[0][0] doesn't matter
 		for (int sc_index = 1; sc_index < (int)state_errors.size(); sc_index++) {
@@ -391,7 +394,10 @@ void TestNode::increment() {
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
 						this->test_fold->fold_index++;
-						this->test_fold->set_just_score();
+						while (this->test_fold->state_inputs.size() > 1) {
+							this->test_fold->pop_scope();
+						}
+						this->test_fold->reset_last();
 
 						this->state = STATE_JUST_SCORE_LEARN;
 						this->state_iter = 0;
@@ -617,7 +623,10 @@ void TestNode::increment() {
 																				sum_scope_sizes-1);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold->set_can_compress();
+						while (this->test_fold->state_inputs.size() > 1) {
+							this->test_fold->pop_scope();
+						}
+						this->test_fold->add_scope(sum_scope_sizes-1);
 
 						this->state = STATE_CAN_COMPRESS_LEARN;
 						this->state_iter = 0;
@@ -870,7 +879,10 @@ void TestNode::increment() {
 																				sum_scope_sizes-1);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold->set_can_compress();
+						while (this->test_fold->state_inputs.size() > 1) {
+							this->test_fold->pop_scope();
+						}
+						this->test_fold->add_scope(sum_scope_sizes-1);
 
 						this->state = STATE_CAN_COMPRESS_LEARN;
 						this->state_iter = 0;

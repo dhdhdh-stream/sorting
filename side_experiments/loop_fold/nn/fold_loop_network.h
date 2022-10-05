@@ -21,11 +21,8 @@ public:
 	int outer_fold_index;
 	int inner_fold_index;
 
-	std::vector<int> outer_scope_sizes;
-	std::vector<Layer*> outer_state_inputs;
-
-	std::vector<int> inner_scope_sizes;
-	std::vector<Layer*> inner_state_inputs;
+	std::vector<int> scope_sizes;
+	std::vector<Layer*> state_inputs;
 
 	Layer* hidden;
 	Layer* output;
@@ -53,43 +50,30 @@ public:
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
 
-	void outer_add_scope(int scope_size);
-	void outer_pop_scope();
-	void outer_reset_last();
-	void outer_set_just_score();
-	void outer_set_can_compress();
-	void outer_activate(std::vector<double>& loop_state,
-						std::vector<std::vector<double>>& pre_loop_flat_vals,
-						std::vector<std::vector<double>>& loop_flat_vals,
-						std::vector<std::vector<double>>& outer_state_vals);
-	void outer_activate(std::vector<double>& loop_state,
-						std::vector<std::vector<double>>& pre_loop_flat_vals,
-						std::vector<std::vector<double>>& loop_flat_vals,
-						std::vector<std::vector<double>>& outer_state_vals,
-						std::vector<AbstractNetworkHistory*>& network_historys);
-	void outer_backprop_last_state(std::vector<double>& errors,
-								   double target_max_update);
-	void outer_backprop_full_state(std::vector<double>& errors,
-								   double target_max_update);
-
-	void inner_add_scope(int scope_size);
-	void inner_pop_scope();
-	void inner_reset_last();
-	void inner_set_just_score();
-	void inner_set_can_compress();
-	void inner_activate(std::vector<double>& loop_state,
-						std::vector<std::vector<double>>& loop_flat_vals,
-						std::vector<std::vector<double>>& outer_state_vals,
-						std::vector<std::vector<double>>& inner_state_vals);
-	void inner_activate(std::vector<double>& loop_state,
-						std::vector<std::vector<double>>& loop_flat_vals,
-						std::vector<std::vector<double>>& outer_state_vals,
-						std::vector<std::vector<double>>& inner_state_vals,
-						std::vector<AbstractNetworkHistory*>& network_historys);
-	void inner_backprop_last_state(std::vector<double>& errors,
-								   double target_max_update);
-	void inner_backprop_full_state(std::vector<double>& errors,
-								   double target_max_update);
+	void add_scope(int scope_size);
+	void pop_scope();
+	void reset_last();
+	void init_activate(std::vector<double>& loop_state,
+					   std::vector<std::vector<double>>& pre_loop_flat_vals,
+					   std::vector<std::vector<double>>& loop_flat_vals,
+					   std::vector<std::vector<double>>& state_vals);
+	void init_activate(std::vector<double>& loop_state,
+					   std::vector<std::vector<double>>& pre_loop_flat_vals,
+					   std::vector<std::vector<double>>& loop_flat_vals,
+					   std::vector<std::vector<double>>& state_vals,
+					   std::vector<AbstractNetworkHistory*>& network_historys);
+	void loop_activate(std::vector<double>& loop_state,
+					   std::vector<std::vector<double>>& loop_flat_vals,
+					   std::vector<std::vector<double>>& state_vals);
+	void loop_activate(std::vector<double>& loop_state,
+					   std::vector<std::vector<double>>& loop_flat_vals,
+					   std::vector<std::vector<double>>& state_vals,
+					   std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_last_state(std::vector<double>& errors,
+							 double target_max_update);
+	void backprop_full_state(std::vector<double>& errors,
+							 double target_max_update);
+	void backprop_loop_errors_with_no_weight_change(std::vector<double>& errors);
 
 	void save(std::ofstream& output_file);
 
@@ -103,8 +87,7 @@ public:
 	std::vector<std::vector<double>> pre_loop_flat_inputs_historys;
 	std::vector<std::vector<double>> loop_flat_inputs_historys;
 
-	std::vector<std::vector<double>> outer_state_inputs_historys;
-	std::vector<std::vector<double>> inner_state_inputs_historys;
+	std::vector<std::vector<double>> state_inputs_historys;
 
 	std::vector<double> hidden_history;
 	std::vector<double> output_history;

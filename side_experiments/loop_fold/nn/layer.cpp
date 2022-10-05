@@ -527,3 +527,20 @@ void Layer::fold_loop_backprop_full_state(int state_size) {
 		this->errors[n_index] = 0.0;
 	}
 }
+
+void Layer::fold_backprop_loop_errors_with_no_weight_change() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		if (this->acti_vals[n_index] < 0.0) {
+			this->errors[n_index] *= 0.01;
+		}
+
+		// backprop loop state errors with no weight change
+		int loop_state_layer_size = (int)this->input_layers[0]->acti_vals.size();
+		for (int ln_index = 0; ln_index < loop_state_layer_size; ln_index++) {
+			this->input_layers[0]->errors[ln_index] +=
+				this->errors[n_index]*this->weights[n_index][0][ln_index];
+		}
+
+		this->errors[n_index] = 0.0;
+	}
+}
