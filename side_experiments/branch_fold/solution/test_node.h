@@ -36,9 +36,9 @@ public:
 	int new_layer_size;
 	Network* obs_network;
 
-	ScoreNetwork* curr_score_network;	// not ending score, but change in score
+	SubFoldNetwork* curr_score_network;	// not ending score, but change in score
 	double average_misguess;
-	ScoreNetwork* test_score_network;
+	SubFoldNetwork* test_score_network;
 	std::vector<int> score_input_layer;
 	std::vector<int> score_input_sizes;
 	std::vector<Network*> score_input_networks;
@@ -48,14 +48,24 @@ public:
 	// it doesn't matter to have multiple compression networks?
 	// what's needed for compound actions is just the state at the end
 	// the compressions need to be re-learned for local everytime anyways
-	CompressionNetwork* curr_compression_network;
+	SubFoldNetwork* curr_compression_network;
 	int compress_num_layers;
 	int compress_size;	// can compress to nothing
-	CompressionNetwork* test_compression_network;
+	vector<int> compressed_scope_sizes;
+	SubFoldNetwork* test_compression_network;
 	std::vector<int> input_layer;	// take from this, and update +1
 	std::vector<int> input_sizes;
 	std::vector<std::vector<Network*>> input_networks;
 	Network* small_compression_network;
+
+	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<double>& obs,
+				  double& predicted_score);
+	void process(std::vector<std::vector<double>>& flat_inputs,
+				 std::vector<std::vector<double>>& state_vals,
+				 double& predicted_score,
+				 double target_val,
+				 std::vector<Node*>& nodes);
 };
 
 #endif /* TEST_NODE_H */

@@ -3,13 +3,13 @@
 
 class Node {
 public:
-	int new_layer_size;
+	int new_layer_size;	// TODO: don't do anything if == 0
 	Network* obs_network;
 
 	// input layers get retrained on branching, rebuilt on compound actions
 	std::vector<int> score_input_layer;
 	std::vector<int> score_input_sizes;
-	std::vector<Network*> score_input_networks;	// includes for just added layer
+	std::vector<Network*> score_input_networks;	// includes just added layer
 	Network* score_network;	// score diff, not full score
 
 	std::vector<int> input_layer;	// take from this, and update +1
@@ -23,9 +23,10 @@ public:
 
 	// no scopes_on, but then should normalize inputs
 	void activate(std::vector<std::vector<double>>& state_vals,
-				  std::vector<double>& obs);
-	void backprop(double target_val,
-				  std::vector<std::vector<double>>& state_errors);
+				  std::vector<double>& obs,
+				  double& predicted_score);
+	void backprop(std::vector<std::vector<double>>& state_errors,
+				  double& score_error);
 };
 
 #endif /* NODE_H */

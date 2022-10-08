@@ -1,13 +1,11 @@
-#include "compression_network.h"
+#include "sub_fold_network.h"
 
 using namespace std;
 
-void CompressionNetwork::construct() {
+void SubFoldNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
-
-	this->scopes_on_input = new Layer(LINEAR_LAYER, (int)this->scope_sizes.size());
 
 	int sum_size = 0;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
@@ -17,7 +15,6 @@ void CompressionNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
-	this->hidden->input_layers.push_back(this->scopes_on_input);
 	this->hidden->setup_weights_full();
 
 	this->output = new Layer(LINEAR_LAYER, this->output_size);
@@ -29,15 +26,18 @@ void CompressionNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-CompressionNetwork::CompressionNetwork(vector<int> scope_sizes,
-									   int output_size) {
+SubFoldNetwork::SubFoldNetwork(vector<int> scope_sizes,
+							   int output_size) {
 	this->scope_sizes = scope_sizes;
 	this->output_size = output_size;
+
+	this->fold_index = -1;
+	this->average_error = -1.0;
 
 	construct();
 }
 
-CompressionNetwork::CompressionNetwork(ifstream& input_file) {
+SubFoldNetwork::SubFoldNetwork(ifstream& input_file) {
 	string num_scope_sizes_line;
 	getline(input_file, num_scope_sizes_line);
 	int num_scope_sizes = stoi(num_scope_sizes_line);
@@ -51,15 +51,26 @@ CompressionNetwork::CompressionNetwork(ifstream& input_file) {
 	getline(input_file, output_size_line);
 	this->output_size = stoi(output_size_line);
 
+	string fold_index_line;
+	getline(input_file, fold_index_line);
+	this->fold_index = stoi(fold_index_line);
+
+	string average_error_line;
+	getline(input_file, average_error_line);
+	this->average_error = stof(average_error_line);
+
 	construct();
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 }
 
-CompressionNetwork::CompressionNetwork(CompressionNetwork* original) {
+SubFoldNetwork::SubFoldNetwork(SubFoldNetwork* original) {
 	this->scope_sizes = original->scope_sizes;
 	this->output_size = original->output_size;
+
+	this->fold_index = original->fold_index;
+	this->average_error = original->average_error;
 
 	construct();
 
@@ -67,27 +78,29 @@ CompressionNetwork::CompressionNetwork(CompressionNetwork* original) {
 	this->output->copy_weights_from(original->output);
 }
 
-CompressionNetwork::~CompressionNetwork() {
+SubFoldNetwork::~SubFoldNetwork() {
 	for (int sc_index = 0; sc_index < (int)this->state_inputs.size(); sc_index++) {
 		delete this->state_inputs[sc_index];
 	}
-	delete this->scopes_on_input;
 
 	delete this->hidden;
 	delete this->output;
 }
 
-void CompressionNetwork::activate(vector<vector<double>>& state_vals,
-								  vector<bool>& scopes_on) {
-	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
-			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
-		}
+void SubFoldNetwork::add_state(int layer) {
+	this->hidden->subfold_add_state(layer);
+}
 
-		if (scopes_on[sc_index]) {
-			this->scopes_on_input->acti_vals[sc_index] = 1.0;
+void SubFoldNetwork::activate(vector<vector<double>>& state_vals) {
+	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
+		if (this->fold_index >= sc_index) {
+			for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+				this->state_inputs[sc_index]->acti_vals[st_index] = 0.0;
+			}
 		} else {
-			this->scopes_on_input->acti_vals[sc_index] = 0.0;
+			for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+				this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+			}
 		}
 	}
 
@@ -95,62 +108,28 @@ void CompressionNetwork::activate(vector<vector<double>>& state_vals,
 	this->output->activate();
 }
 
-void CompressionNetwork::activate(vector<vector<double>>& state_vals,
-								  vector<bool>& scopes_on,
-								  vector<AbstractNetworkHistory*>& network_historys) {
+void SubFoldNetwork::activate(vector<vector<double>>& state_vals,
+							  vector<AbstractNetworkHistory*>& network_historys) {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
-			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
-		}
-
-		if (scopes_on[sc_index]) {
-			this->scopes_on_input->acti_vals[sc_index] = 1.0;
+		if (this->fold_index >= sc_index) {
+			for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+				this->state_inputs[sc_index]->acti_vals[st_index] = 0.0;
+			}
 		} else {
-			this->scopes_on_input->acti_vals[sc_index] = 0.0;
+			for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+				this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
+			}
 		}
 	}
 
 	this->hidden->activate();
 	this->output->activate();
 
-	CompressionNetworkHistory* network_history = new CompressionNetworkHistory(this);
+	SubFoldNetworkHistory* network_history = new SubFoldNetworkHistory(this);
 	network_historys.push_back(network_history);
 }
 
-void CompressionNetwork::backprop(vector<double>& errors,
-								  double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
-		this->output->errors[e_index] = errors[e_index];
-	}
-
-	this->output->backprop();
-	this->hidden->backprop();
-
-	this->epoch_iter++;
-	if (this->epoch_iter == 100) {
-		double hidden_max_update = 0.0;
-		this->hidden->get_max_update(hidden_max_update);
-		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-		if (hidden_learning_rate*hidden_max_update > target_max_update) {
-			hidden_learning_rate = target_max_update/hidden_max_update;
-		}
-		this->hidden->update_weights(hidden_learning_rate);
-
-		double output_max_update = 0.0;
-		this->output->get_max_update(output_max_update);
-		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-		if (output_learning_rate*output_max_update > target_max_update) {
-			output_learning_rate = target_max_update/output_max_update;
-		}
-		this->output->update_weights(output_learning_rate);
-
-		this->epoch_iter = 0;
-	}
-}
-
-void CompressionNetwork::backprop_weights_with_no_error_signal(
+void SubFoldNetwork::backprop_weights_with_no_error_signal(
 		vector<double>& errors,
 		double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
@@ -184,7 +163,81 @@ void CompressionNetwork::backprop_weights_with_no_error_signal(
 	}
 }
 
-void CompressionNetwork::save(ofstream& output_file) {
+void SubFoldNetwork::backprop_new_state(int layer,
+										int new_input_size,
+										vector<double>& errors,
+										double target_max_update) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->subfold_backprop_new_state(layer, new_input_size);
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 100) {
+		double hidden_max_update = 0.0;
+		this->hidden->subfold_get_max_update_new_state(layer,
+													   new_input_size,
+													   hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
+		}
+		this->hidden->subfold_update_weights_new_state(layer,
+													   new_input_size,
+													   hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
+
+		this->epoch_iter = 0;
+	}
+}
+
+void SubFoldNetwork::backprop(vector<double>& errors,
+							  double target_max_update) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->subfold_backprop(this->fold_index);
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 100) {
+		double hidden_max_update = 0.0;
+		this->hidden->subfold_get_max_update(this->fold_index,
+											 hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
+		}
+		this->hidden->subfold_update_weights(this->fold_index,
+											 hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
+
+		this->epoch_iter = 0;
+	}
+}
+
+void SubFoldNetwork::save(ofstream& output_file) {
 	output_file << this->scope_sizes.size() << endl;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		output_file << this->scope_sizes[sc_index] << endl;
@@ -194,7 +247,7 @@ void CompressionNetwork::save(ofstream& output_file) {
 	this->output->save_weights(output_file);
 }
 
-CompressionNetworkHistory::CompressionNetworkHistory(CompressionNetwork* network) {
+SubFoldNetworkHistory::SubFoldNetworkHistory(SubFoldNetwork* network) {
 	this->network = network;
 
 	this->state_inputs_historys.reserve(network->state_inputs.size());
@@ -203,10 +256,6 @@ CompressionNetworkHistory::CompressionNetworkHistory(CompressionNetwork* network
 		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
 			this->state_inputs_historys[sc_index][st_index] = network->state_inputs[sc_index]->acti_vals[st_index];
 		}
-	}
-	this->scopes_on_input_history.reserve(network->scopes_on_input->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->scopes_on_input->acti_vals.size(); n_index++) {
-		this->scopes_on_input_history.push_back(network->scopes_on_input->acti_vals[n_index]);
 	}
 
 	this->hidden_history.reserve(network->hidden->acti_vals.size());
@@ -219,16 +268,13 @@ CompressionNetworkHistory::CompressionNetworkHistory(CompressionNetwork* network
 	}
 }
 
-void CompressionNetworkHistory::reset_weights() {
-	CompressionNetwork* network = (CompressionNetwork*)this->network;
+void SubFoldNetworkHistory::reset_weights() {
+	SubFoldNetwork* network = (SubFoldNetwork*)this->network;
 
 	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
 		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
 			network->state_inputs[sc_index]->acti_vals[st_index] = this->state_inputs_historys[sc_index][st_index];
 		}
-	}
-	for (int n_index = 0; n_index < (int)network->scopes_on_input->acti_vals.size(); n_index++) {
-		network->scopes_on_input->acti_vals[n_index] = this->scopes_on_input_history[n_index];
 	}
 
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {

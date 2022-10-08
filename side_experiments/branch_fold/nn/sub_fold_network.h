@@ -1,5 +1,5 @@
-#ifndef SCORE_NETWORK_H
-#define SCORE_NETWORK_H
+#ifndef SUB_FOLD_NETWORK_H
+#define SUB_FOLD_NETWORK_H
 
 #include <fstream>
 #include <mutex>
@@ -8,14 +8,15 @@
 #include "abstract_network.h"
 #include "layer.h"
 
-class ScoreNetwork : public AbstractNetwork {
+class SubFoldNetwork : public AbstractNetwork {
 public:
 	std::vector<int> scope_sizes;
-
-	std::vector<Layer*> state_inputs;
+	int output_size;
 
 	int fold_index;
 	double average_error;
+
+	std::vector<Layer*> state_inputs;
 
 	Layer* hidden;
 	Layer* output;
@@ -26,19 +27,24 @@ public:
 
 	std::mutex mtx;
 
-	ScoreNetwork(std::vector<int> scope_sizes);
-	ScoreNetwork(std::ifstream& input_file);
-	ScoreNetwork(ScoreNetwork* original);
-	~ScoreNetwork();
+	SubFoldNetwork(std::vector<int> scope_sizes,
+				  int output_size);
+	SubFoldNetwork(std::ifstream& input_file);
+	SubFoldNetwork(SubFoldNetwork* original);
+	~SubFoldNetwork();
 
 	void add_state(int layer);
 	void activate(std::vector<std::vector<double>>& state_vals);
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
-	void backprop(double target_val,
-				  double target_max_update);
-	void backprop_weights_with_no_error_signal(double target_val,
+	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
 											   double target_max_update);
+	void backprop_new_state(int layer,
+							int new_input_size,
+							std::vector<double>& errors,
+							double target_max_update);
+	void backprop(std::vector<double>& errors,
+				  double target_max_update);
 
 	void save(std::ofstream& output_file);
 
@@ -46,15 +52,15 @@ private:
 	void construct();
 };
 
-class ScoreNetworkHistory : public AbstractNetworkHistory {
+class SubFoldNetworkHistory : public AbstractNetworkHistory {
 public:
 	std::vector<std::vector<double>> state_inputs_historys;
 
 	std::vector<double> hidden_history;
 	std::vector<double> output_history;
 
-	ScoreNetworkHistory(ScoreNetwork* network);
+	SubFoldNetworkHistory(SubFoldNetwork* network);
 	void reset_weights() override;
 };
 
-#endif /* SCORE_NETWORK_H */
+#endif /* SUB_FOLD_NETWORK_H */

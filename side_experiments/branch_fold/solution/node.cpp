@@ -7,7 +7,8 @@ using namespace std;
 const double TARGET_MAX_UPDATE = 0.001;
 
 void Node::activate(vector<vector<double>>& state_vals,
-					vector<double>& obs) {
+					vector<double>& obs,
+					double& predicted_score) {
 	if (this->new_layer_size > 0) {
 		this->obs_network->activate(obs);
 		state_vals.push_back(vector<double>(this->new_layer_size));
@@ -26,6 +27,7 @@ void Node::activate(vector<vector<double>>& state_vals,
 
 	// don't necessary need to always activate score_network? (but should always add input)
 	this->score_network->activate(state_vals.back());
+	predicted_score += this->score_network->output->acti_vals[0];
 
 	if (this->compress_size > 0) {
 		for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
@@ -58,14 +60,14 @@ void Node::activate(vector<vector<double>>& state_vals,
 	}
 }
 
-void Node::backprop(double target_val,
-					vector<vector<double>>& state_errors) {
+void Node::backprop(vector<vector<double>>& state_errors,
+					double& score_error) {
 	if (this->compress_size > 0) {
 		this->compression_network->backprop(state_errors.back(),
 											TARGET_MAX_UPDATE);
 
 		state_errors.pop_back();
-		for (int sc_index = this->compress_num_scopes-1; sc_index >= 0; sc_index--) {
+		for (int sc_index = this->compress_num_layers-1; sc_index >= 0; sc_index--) {
 			state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
 		}
 
@@ -93,13 +95,13 @@ void Node::backprop(double target_val,
 		}
 	}
 
-	vector<double> score_errors;
-	score_errors.push_back(target_val - this->score_network->output->acti_vals[0]);
+	vector<double> score_errors{score_error};
 	this->score_network->backprop(score_errors, TARGET_MAX_UPDATE);
 	for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-		state_errors.back()[st_index] = this->score_network->input->errors[st_index];
+		state_errors.back()[st_index] += this->score_network->input->errors[st_index];
 		this->score_network->input->errors[st_index] = 0.0;
 	}
+	score_error -= this->score_network->output->acti_vals[0];
 
 	for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 		vector<double> score_input_errors(this->score_input_sizes[i_index]);
@@ -116,7 +118,7 @@ void Node::backprop(double target_val,
 	}
 
 	if (this->new_layer_size > 0) {
-		this->obs_network->backprop(state_errors.back());
+		this->obs_network->backprop_weights_with_no_error_signal(state_errors.back(), TARGET_MAX_UPDATE);
 		state_errors.pop_back();
 	}
 }
