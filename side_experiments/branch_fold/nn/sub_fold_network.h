@@ -14,7 +14,6 @@ public:
 	int output_size;
 
 	int fold_index;
-	double average_error;
 
 	std::vector<Layer*> state_inputs;
 
@@ -33,7 +32,8 @@ public:
 	SubFoldNetwork(SubFoldNetwork* original);
 	~SubFoldNetwork();
 
-	void add_state(int layer);
+	void add_state(int layer,
+				   int num_state);
 	void activate(std::vector<std::vector<double>>& state_vals);
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<AbstractNetworkHistory*>& network_historys);

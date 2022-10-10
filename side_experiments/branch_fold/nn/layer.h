@@ -46,6 +46,10 @@ public:
 	void fold_backprop_last_state();
 	void fold_get_max_update_last_state(double& max_update_size);
 	void fold_update_weights_last_state(double learning_rate);
+	void fold_backprop_last_state_with_no_weight_change();
+	void fold_backprop_score();
+	void fold_get_max_update_score(double& max_update_size);
+	void fold_update_weights_score(double learning_rate);
 	void fold_backprop_full_state(int state_size);
 	void fold_get_max_update_full_state(int state_size,
 										double& max_update_size);
@@ -55,7 +59,8 @@ public:
 	void fold_loop_backprop_full_state(int state_size);
 	void fold_backprop_loop_errors_with_no_weight_change();
 
-	void subfold_add_state(int layer);
+	void subfold_add_state(int layer,
+						   int num_state);
 	void subfold_backprop_new_state(int layer,
 									int new_input_size);
 	void subfold_get_max_update_new_state(int layer,

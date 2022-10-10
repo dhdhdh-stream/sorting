@@ -32,7 +32,6 @@ SubFoldNetwork::SubFoldNetwork(vector<int> scope_sizes,
 	this->output_size = output_size;
 
 	this->fold_index = -1;
-	this->average_error = -1.0;
 
 	construct();
 }
@@ -55,10 +54,6 @@ SubFoldNetwork::SubFoldNetwork(ifstream& input_file) {
 	getline(input_file, fold_index_line);
 	this->fold_index = stoi(fold_index_line);
 
-	string average_error_line;
-	getline(input_file, average_error_line);
-	this->average_error = stof(average_error_line);
-
 	construct();
 
 	this->hidden->load_weights_from(input_file);
@@ -70,7 +65,6 @@ SubFoldNetwork::SubFoldNetwork(SubFoldNetwork* original) {
 	this->output_size = original->output_size;
 
 	this->fold_index = original->fold_index;
-	this->average_error = original->average_error;
 
 	construct();
 
@@ -87,8 +81,10 @@ SubFoldNetwork::~SubFoldNetwork() {
 	delete this->output;
 }
 
-void SubFoldNetwork::add_state(int layer) {
-	this->hidden->subfold_add_state(layer);
+void SubFoldNetwork::add_state(int layer,
+							   int num_state) {
+	this->hidden->subfold_add_state(layer,
+									num_state);
 }
 
 void SubFoldNetwork::activate(vector<vector<double>>& state_vals) {

@@ -18,8 +18,8 @@ public:
 
 	Network* compression_network;
 	int compress_num_layers;
-	int compress_size;
-	vector<int> compressed_scope_sizes;
+	int compress_new_size;
+	vector<int> compressed_scope_sizes;	// earliest to latest
 
 	// no scopes_on, but then should normalize inputs
 	void activate(std::vector<std::vector<double>>& state_vals,

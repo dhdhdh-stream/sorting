@@ -51,9 +51,11 @@ public:
 				  std::vector<std::vector<double>>& state_vals,
 				  double predicted_score,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
-	// only for obs_network, don't update score weights
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
+	void backprop_score(std::vector<double>& errors,
+						double target_max_update);
+	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
 	void backprop_full_state(std::vector<double>& errors,
 							 double target_max_update);
 

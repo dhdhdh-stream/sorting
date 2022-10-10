@@ -13,14 +13,15 @@ const int STATE_COMPRESS_STATE = 4;
 const int STATE_COMPRESS_SCOPE = 5;
 const int STATE_COMPRESS_INPUT = 6;
 const int STATE_COMPRESS_SMALL = 7;
-const int STATE_DONE = 8;
+const int STATE_FINAL_TUNE = 8;
+const int STATE_DONE = 9;
 
 class TestNode {
 public:
 	int obs_size;
 
-	int stage;
 	int state;
+	int stage;
 	int stage_iter;
 	double sum_error;
 
@@ -45,12 +46,10 @@ public:
 	// zero inputs layer by layer, starting from last to most recent, to determine inputs needed?
 	Network* small_score_network;
 
-	// it doesn't matter to have multiple compression networks?
-	// what's needed for compound actions is just the state at the end
-	// the compressions need to be re-learned for local everytime anyways
 	SubFoldNetwork* curr_compression_network;
-	int compress_num_layers;
-	int compress_size;	// can compress to nothing
+	int compress_size;
+	int compress_num_layers;	// can compress to nothing
+	int compress_new_size;
 	vector<int> compressed_scope_sizes;
 	SubFoldNetwork* test_compression_network;
 	std::vector<int> input_layer;	// take from this, and update +1

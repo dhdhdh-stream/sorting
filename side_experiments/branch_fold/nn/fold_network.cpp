@@ -271,6 +271,48 @@ void FoldNetwork::backprop_last_state(vector<double>& errors,
 	}
 }
 
+void FoldNetwork::backprop_score(std::vector<double>& errors,
+								 double target_max_update) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->fold_backprop_score();
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 100) {
+		double hidden_max_update = 0.0;
+		this->hidden->fold_get_max_update_score(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+		if (hidden_learning_rate*hidden_max_update > target_max_update) {
+			hidden_learning_rate = target_max_update/hidden_max_update;
+		}
+		this->hidden->fold_update_weights_score(hidden_learning_rate);
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > target_max_update) {
+			output_learning_rate = target_max_update/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
+
+		this->epoch_iter = 0;
+	}
+}
+
+void FoldNetwork::backprop_last_state_with_no_weight_change(vector<double>& errors) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->fold_backprop_last_state_with_no_weight_change();
+}
+
 void FoldNetwork::backprop_full_state(vector<double>& errors,
 									  double target_max_update) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {

@@ -389,6 +389,10 @@ void Layer::fold_backprop_last_state() {
 			this->errors[n_index] *= 0.01;
 		}
 
+		// score_input
+		this->weight_updates[n_index].back()[0] +=
+			this->errors[n_index]*this->input_layers.back()->acti_vals[0];
+
 		int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 			this->input_layers[last_state_index]->errors[ln_index] +=
@@ -405,6 +409,12 @@ void Layer::fold_backprop_last_state() {
 void Layer::fold_get_max_update_last_state(double& max_update_size) {
 	int last_state_index = this->input_layers.size()-2;	// last input is score
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		// score_input
+		double update_size = abs(this->weight_updates[n_index].back()[0]);
+		if (update_size > max_update_size) {
+			max_update_size = update_size;
+		}
+
 		int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 			double update_size = abs(this->weight_updates[n_index][last_state_index][ln_index]);
@@ -418,6 +428,12 @@ void Layer::fold_get_max_update_last_state(double& max_update_size) {
 void Layer::fold_update_weights_last_state(double learning_rate) {
 	int last_state_index = this->input_layers.size()-2;	// last input is score
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		// score_input
+		double update = this->weight_updates[n_index].back()[0]
+						*learning_rate;
+		this->weight_updates[n_index].back()[0] = 0.0;
+		this->weights[n_index].back()[0] += update;
+
 		int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 			double update = this->weight_updates[n_index][last_state_index][ln_index]
@@ -428,12 +444,72 @@ void Layer::fold_update_weights_last_state(double learning_rate) {
 	}
 }
 
+void Layer::fold_backprop_last_state_with_no_weight_change() {
+	// this->type == LEAKY_LAYER
+	int last_state_index = this->input_layers.size()-2;	// last input is score
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		if (this->acti_vals[n_index] < 0.0) {
+			this->errors[n_index] *= 0.01;
+		}
+
+		int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
+		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+			this->input_layers[last_state_index]->errors[ln_index] +=
+				this->errors[n_index]*this->weights[n_index][last_state_index][ln_index];
+			// multiply by this->errors[n_index] for MSE weight updates
+			this->weight_updates[n_index][last_state_index][ln_index] +=
+				this->errors[n_index]*this->input_layers[last_state_index]->acti_vals[ln_index];
+		}
+
+		this->errors[n_index] = 0.0;
+	}
+}
+
+void Layer::fold_backprop_score() {
+	// this->type == LEAKY_LAYER
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		if (this->acti_vals[n_index] < 0.0) {
+			this->errors[n_index] *= 0.01;
+		}
+
+		// score_input
+		this->weight_updates[n_index].back()[0] +=
+			this->errors[n_index]*this->input_layers.back()->acti_vals[0];
+
+		this->errors[n_index] = 0.0;
+	}
+}
+
+void Layer::fold_get_max_update_score() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		// score_input
+		double update_size = abs(this->weight_updates[n_index].back()[0]);
+		if (update_size > max_update_size) {
+			max_update_size = update_size;
+		}
+	}
+}
+
+void Layer::fold_update_weights_score() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		// score_input
+		double update = this->weight_updates[n_index].back()[0]
+						*learning_rate;
+		this->weight_updates[n_index].back()[0] = 0.0;
+		this->weights[n_index].back()[0] += update;
+	}
+}
+
 void Layer::fold_backprop_full_state(int state_size) {
 	// this->type == LEAKY_LAYER
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		if (this->acti_vals[n_index] < 0.0) {
 			this->errors[n_index] *= 0.01;
 		}
+
+		// score_input
+		this->weight_updates[n_index].back()[0] +=
+			this->errors[n_index]*this->input_layers.back()->acti_vals[0];
 
 		for (int l_index = (int)this->input_layers.size()-1-state_size; l_index < (int)this->input_layers.size()-1; l_index++) {
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
@@ -444,14 +520,6 @@ void Layer::fold_backprop_full_state(int state_size) {
 				this->weight_updates[n_index][l_index][ln_index] +=
 					this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
 			}
-		}
-
-		// score_input
-		int layer_size = (int)this->input_layers.back()->acti_vals.size();
-		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			// multiply by this->errors[n_index] for MSE weight updates
-			this->weight_updates[n_index].back()[ln_index] +=
-				this->errors[n_index]*this->input_layers.back()->acti_vals[ln_index];
 		}
 
 		this->errors[n_index] = 0.0;
@@ -562,10 +630,13 @@ void Layer::fold_backprop_loop_errors_with_no_weight_change() {
 	}
 }
 
-void Layer::subfold_add_state(int layer) {
+void Layer::subfold_add_state(int layer,
+							  int num_state) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][layer].push_back((randuni()-0.5)*0.02);
-		this->weight_updates[n_index][layer].push_back(0.0);
+		for (int s_index = 0; s_index < num_state; s_index++) {
+			this->weights[n_index][layer].push_back((randuni()-0.5)*0.02);
+			this->weight_updates[n_index][layer].push_back(0.0);
+		}
 	}
 }
 
