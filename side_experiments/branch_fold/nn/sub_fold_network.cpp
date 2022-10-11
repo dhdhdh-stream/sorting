@@ -1,5 +1,7 @@
 #include "sub_fold_network.h"
 
+#include <iostream>
+
 using namespace std;
 
 void SubFoldNetwork::construct() {
@@ -11,7 +13,8 @@ void SubFoldNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		sum_size += this->scope_sizes[sc_index];
 	}
-	this->hidden = new Layer(LEAKY_LAYER, 10*sum_size);
+	int hidden_size = min(10*sum_size, 50);
+	this->hidden = new Layer(LEAKY_LAYER, hidden_size);
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
@@ -83,6 +86,11 @@ SubFoldNetwork::~SubFoldNetwork() {
 
 void SubFoldNetwork::add_state(int layer,
 							   int num_state) {
+	for (int s_index = 0; s_index < num_state; s_index++) {
+		this->state_inputs[layer]->acti_vals.push_back(0.0);
+		this->state_inputs[layer]->errors.push_back(0.0);
+	}
+
 	this->hidden->subfold_add_state(layer,
 									num_state);
 }
@@ -95,6 +103,14 @@ void SubFoldNetwork::activate(vector<vector<double>>& state_vals) {
 			}
 		} else {
 			for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
+				if (this->scope_sizes[sc_index] > (int)state_vals[sc_index].size()) {
+					cout << "sc_index: " << sc_index << endl;
+					cout << "this->scope_sizes[sc_index]: " << this->scope_sizes[sc_index] << endl;
+					cout << "state_vals[sc_index].size(): " << state_vals[sc_index].size() << endl;
+					cout << "this->scope_sizes.size(): " << this->scope_sizes.size() << endl;
+					cout << "heyyo" << endl;
+					exit(1);
+				}
 				this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
 			}
 		}

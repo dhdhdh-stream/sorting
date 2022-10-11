@@ -59,6 +59,9 @@ public:
 	void backprop_full_state(std::vector<double>& errors,
 							 double target_max_update);
 
+	void add_state(int layer,
+				   int num_state);
+
 	void save(std::ofstream& output_file);
 
 private:

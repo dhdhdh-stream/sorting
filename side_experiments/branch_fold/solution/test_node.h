@@ -1,6 +1,13 @@
 #ifndef TEST_NODE_H
 #define TEST_NODE_H
 
+#include <vector>
+
+#include "fold_network.h"
+#include "network.h"
+#include "node.h"
+#include "sub_fold_network.h"
+
 const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
 const int STAGE_TUNE = 2;
@@ -50,12 +57,17 @@ public:
 	int compress_size;
 	int compress_num_layers;	// can compress to nothing
 	int compress_new_size;
-	vector<int> compressed_scope_sizes;
+	std::vector<int> compressed_scope_sizes;
 	SubFoldNetwork* test_compression_network;
 	std::vector<int> input_layer;	// take from this, and update +1
 	std::vector<int> input_sizes;
-	std::vector<std::vector<Network*>> input_networks;
+	std::vector<Network*> input_networks;
 	Network* small_compression_network;
+
+	TestNode(std::vector<int> initial_scope_sizes,
+			 FoldNetwork* original_fold,
+			 int obs_size);
+	~TestNode();
 
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<double>& obs,
@@ -65,6 +77,9 @@ public:
 				 double& predicted_score,
 				 double target_val,
 				 std::vector<Node*>& nodes);
+
+private:
+	void increment();
 };
 
 #endif /* TEST_NODE_H */

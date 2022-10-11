@@ -18,7 +18,8 @@ void FoldNetwork::construct() {
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		sum_size += this->flat_sizes[f_index];
 	}
-	this->hidden = new Layer(LEAKY_LAYER, 4*sum_size*sum_size);
+	int hidden_size = min(4*sum_size*sum_size, 500);
+	this->hidden = new Layer(LEAKY_LAYER, hidden_size);
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		this->hidden->input_layers.push_back(this->flat_inputs[f_index]);
 	}
@@ -198,6 +199,14 @@ void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 	}
 
 	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
+		if (this->state_inputs[sc_index]->acti_vals.size() != state_vals[sc_index].size()) {
+			cout << "state_vals.size(): " << state_vals.size() << endl;
+			cout << "sc_index: " << sc_index << endl;
+			cout << "this->state_inputs[sc_index]->acti_vals.size(): " << this->state_inputs[sc_index]->acti_vals.size() << endl;
+			cout << "state_vals[sc_index].size(): " << state_vals[sc_index].size() << endl;
+			cout << "fold state mismatch" << endl;
+			exit(1);
+		}
 		for (int st_index = 0; st_index < (int)state_vals[sc_index].size(); st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
 		}
@@ -346,6 +355,17 @@ void FoldNetwork::backprop_full_state(vector<double>& errors,
 
 		this->epoch_iter = 0;
 	}
+}
+
+void FoldNetwork::add_state(int layer,
+							int num_state) {
+	for (int s_index = 0; s_index < num_state; s_index++) {
+		this->state_inputs[layer]->acti_vals.push_back(0.0);
+		this->state_inputs[layer]->errors.push_back(0.0);
+	}
+
+	this->hidden->fold_add_state((int)this->flat_sizes.size()+layer,
+								 num_state);
 }
 
 void FoldNetwork::save(ofstream& output_file) {

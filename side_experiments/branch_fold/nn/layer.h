@@ -58,6 +58,8 @@ public:
 	void fold_loop_backprop_last_state();
 	void fold_loop_backprop_full_state(int state_size);
 	void fold_backprop_loop_errors_with_no_weight_change();
+	void fold_add_state(int layer,
+						int num_state);
 
 	void subfold_add_state(int layer,
 						   int num_state);

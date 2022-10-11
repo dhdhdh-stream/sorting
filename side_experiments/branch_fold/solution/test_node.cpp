@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-using namepsace std;
+using namespace std;
 
 TestNode::TestNode(vector<int> initial_scope_sizes,
 				   FoldNetwork* original_fold,
@@ -33,6 +33,10 @@ TestNode::TestNode(vector<int> initial_scope_sizes,
 	this->stage = STAGE_MEASURE;
 	this->stage_iter = 0;
 	this->sum_error = 0.0;
+}
+
+TestNode::~TestNode() {
+	// do nothing
 }
 
 void TestNode::activate(vector<vector<double>>& state_vals,
@@ -77,8 +81,8 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 
 				if (this->state >= STATE_COMPRESS_SMALL) {
 					vector<double> compression_inputs;
-					for (int l_index = state_vals.size()-this->compress_num_layers; l_index < state_vals.size(); l_index++) {
-						for (int st_index = 0; st_index < state_vals[l_index]; st_index++) {
+					for (int l_index = (int)state_vals.size()-this->compress_num_layers; l_index < (int)state_vals.size(); l_index++) {
+						for (int st_index = 0; st_index < (int)state_vals[l_index].size(); st_index++) {
 							compression_inputs.push_back(state_vals[l_index][st_index]);
 						}
 					}
@@ -89,8 +93,8 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 					}
 					state_vals.push_back(vector<double>(this->compress_new_size));
 
-					for (int st_index = 0; st_index < (int)state_vals.back(); st_index++) {
-						state_vals.back()[st_index] = this->compression_networks[c_index]->output->acti_vals[st_index];
+					for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+						state_vals.back()[st_index] = this->small_compression_network->output->acti_vals[st_index];
 					}
 				} else if (this->state >= STATE_COMPRESS_STATE) {
 					this->test_compression_network->activate(state_vals);
@@ -100,8 +104,8 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 					}
 					state_vals.push_back(vector<double>(this->compress_new_size));
 
-					for (int st_index = 0; st_index < (int)state_vals.back(); st_index++) {
-						state_vals.back()[st_index] = this->compression_network->output->acti_vals[st_index];
+					for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+						state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
 					}
 				}
 			}
@@ -118,15 +122,15 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			|| this->state == STATE_SCORE_INPUT
 			|| this->state == STATE_SCORE_SMALL) {
 		if (this->stage == STAGE_LEARN) {
-			if ((this->state_iter+1)%10000 == 0) {
-				cout << this->state_iter << " sum_error: " << this->sum_error << endl;
+			if ((this->stage_iter+1)%10000 == 0) {
+				cout << this->stage_iter << " sum_error: " << this->sum_error << endl;
 			}
 
 			this->sum_error += abs(target_val - predicted_score);
 
 			vector<double> score_errors{target_val - predicted_score};
 			if (this->state == STATE_SCORE) {
-				if (this->state_iter <= 240000) {
+				if (this->stage_iter <= 240000) {
 					this->test_score_network->backprop_weights_with_no_error_signal(
 						score_errors,
 						0.01);
@@ -136,32 +140,44 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 						0.002);
 				}
 			} else if (this->state == STATE_SCORE_INPUT) {
-				if (this->state_iter <= 240000) {
-					this->test_score_network->backprop_new_state(this->score_input_layer.back(),
-																 this->score_input_sizes.back(),
-																 score_errors,
-																 0.01);
+				if (this->score_input_networks.size() == 0) {
+					if (this->stage_iter <= 240000) {
+						this->test_score_network->backprop_weights_with_no_error_signal(
+							score_errors,
+							0.01);
+					} else {
+						this->test_score_network->backprop_weights_with_no_error_signal(
+							score_errors,
+							0.002);
+					}
 				} else {
-					this->test_score_network->backprop_new_state(this->score_input_layer.back(),
-																 this->score_input_sizes.back(),
-																 score_errors,
-																 0.002);
-				}
-				vector<double> input_errors;
-				input_errors.reserve(this->score_input_sizes.back());
-				int layer_size = this->test_score_network->state_inputs[this->score_input_layer.back()+1].size();
-				for (int st_index = layer_size-this->score_input_sizes.back(); st_index < layer_size; st_index++) {
-					input_errors.push_back(this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index]);
-					this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index] = 0.0;
-				}
-				if (this->state_iter <= 240000) {
-					this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
-				} else {
-					this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);
+					if (this->stage_iter <= 240000) {
+						this->test_score_network->backprop_new_state(this->score_input_layer.back(),
+																	 this->score_input_sizes.back(),
+																	 score_errors,
+																	 0.01);
+					} else {
+						this->test_score_network->backprop_new_state(this->score_input_layer.back(),
+																	 this->score_input_sizes.back(),
+																	 score_errors,
+																	 0.002);
+					}
+					vector<double> input_errors;
+					input_errors.reserve(this->score_input_sizes.back());
+					int layer_size = (int)this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors.size();
+					for (int st_index = layer_size-this->score_input_sizes.back(); st_index < layer_size; st_index++) {
+						input_errors.push_back(this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index]);
+						this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index] = 0.0;
+					}
+					if (this->stage_iter <= 240000) {
+						this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
+					} else {
+						this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);
+					}
 				}
 			} else {
 				// this->state == STATE_SCORE_SMALL
-				if (this->state_iter <= 240000) {
+				if (this->stage_iter <= 240000) {
 					this->small_score_network->backprop_weights_with_no_error_signal(score_errors, 0.01);
 				} else {
 					this->small_score_network->backprop_weights_with_no_error_signal(score_errors, 0.002);
@@ -172,8 +188,8 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			this->sum_error += abs(target_val - predicted_score);
 		} else {
 			// this->stage == STAGE_TUNE
-			if ((this->state_iter+1)%10000 == 0) {
-				cout << this->state_iter << " sum_error: " << this->sum_error << endl;
+			if ((this->stage_iter+1)%10000 == 0) {
+				cout << this->stage_iter << " sum_error: " << this->sum_error << endl;
 			}
 
 			this->sum_error += abs(target_val - predicted_score);
@@ -188,7 +204,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			vector<double> score_errors{score_error};
 			if (this->state == STATE_SCORE_INPUT) {
 				this->test_score_network->backprop(score_errors, 0.002);
-				for (int sc_index = this->test_score_network->fold_index+1; sc_index < state_errors.size(); sc_index++) {
+				for (int sc_index = this->test_score_network->fold_index+1; sc_index < (int)state_errors.size(); sc_index++) {
 					for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
 						state_errors[sc_index][st_index] += this->test_score_network->state_inputs[sc_index]->errors[st_index];
 						this->test_score_network->state_inputs[sc_index]->errors[st_index] = 0.0;
@@ -228,8 +244,8 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 		}
 	} else {
 		if (this->stage == STAGE_LEARN) {
-			if ((this->state_iter+1)%10000 == 0) {
-				cout << this->state_iter << " sum_error: " << this->sum_error << endl;
+			if ((this->stage_iter+1)%10000 == 0) {
+				cout << this->stage_iter << " sum_error: " << this->sum_error << endl;
 				this->sum_error = 0.0;
 			}
 
@@ -242,7 +258,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 				errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
 				this->sum_error += abs(errors[0]);
 
-				if (this->state_iter <= 240000) {
+				if (this->stage_iter <= 240000) {
 					this->test_fold->backprop_last_state(errors, 0.01);
 				} else {
 					this->test_fold->backprop_last_state(errors, 0.002);
@@ -255,7 +271,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 				}
 
 				// this->new_layer_size > 0
-				if (this->state_iter <= 240000) {
+				if (this->stage_iter <= 240000) {
 					this->obs_network->backprop_weights_with_no_error_signal(
 						last_scope_state_errors,
 						0.01);
@@ -275,13 +291,13 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 				this->sum_error += abs(errors[0]);
 
 				if (this->compress_new_size == 0) {
-					if (this->state_iter <= 240000) {
+					if (this->stage_iter <= 240000) {
 						this->test_fold->backprop_score(errors, 0.01);
 					} else {
 						this->test_fold->backprop_score(errors, 0.002);
 					}
 				} else {
-					if (this->state_iter <= 240000) {
+					if (this->stage_iter <= 240000) {
 						this->test_fold->backprop_last_state(errors, 0.01);
 					} else {
 						this->test_fold->backprop_last_state(errors, 0.002);
@@ -293,7 +309,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 						this->test_fold->state_inputs.back()->errors[st_index] = 0.0;
 					}
 
-					if (this->state_iter <= 240000) {
+					if (this->stage_iter <= 240000) {
 						this->test_compression_network->backprop_weights_with_no_error_signal(
 							last_scope_state_errors,
 							0.01);
@@ -322,34 +338,46 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 				}
 
 				if (this->state == STATE_COMPRESS_INPUT) {
-					if (this->state_iter <= 240000) {
-						this->test_compression_network->backprop_new_state(
-							this->input_layer.back(),
-							this->input_sizes.back(),
-							last_scope_state_errors,
-							0.01);
+					if (this->input_networks.size() == 0) {
+						if (this->stage_iter <= 240000) {
+							this->test_compression_network->backprop_weights_with_no_error_signal(
+								last_scope_state_errors,
+								0.01);
+						} else {
+							this->test_compression_network->backprop_weights_with_no_error_signal(
+								last_scope_state_errors,
+								0.002);
+						}
 					} else {
-						this->test_compression_network->backprop_new_state(
-							this->input_layer.back(),
-							this->input_sizes.back(),
-							last_scope_state_errors,
-							0.002);
-					}
-					vector<double> input_errors;
-					input_errors.reserve(this->input_sizes.back());
-					int layer_size = this->test_compression_network->state_inputs[this->input_layer.back()+1].size();
-					for (int st_index = layer_size-this->input_sizes.back(); st_index < layer_size; st_index++) {
-						input_errors.push_back(this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index]);
-						this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index] = 0.0;
-					}
-					if (this->state_iter <= 240000) {
-						this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
-					} else {
-						this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);
+						if (this->stage_iter <= 240000) {
+							this->test_compression_network->backprop_new_state(
+								this->input_layer.back(),
+								this->input_sizes.back(),
+								last_scope_state_errors,
+								0.01);
+						} else {
+							this->test_compression_network->backprop_new_state(
+								this->input_layer.back(),
+								this->input_sizes.back(),
+								last_scope_state_errors,
+								0.002);
+						}
+						vector<double> input_errors;
+						input_errors.reserve(this->input_sizes.back());
+						int layer_size = (int)this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors.size();
+						for (int st_index = layer_size-this->input_sizes.back(); st_index < layer_size; st_index++) {
+							input_errors.push_back(this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index]);
+							this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index] = 0.0;
+						}
+						if (this->stage_iter <= 240000) {
+							this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
+						} else {
+							this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);
+						}
 					}
 				} else {
 					// this->state == STATE_COMPRESS_SMALL
-					if (this->state_iter <= 240000) {
+					if (this->stage_iter <= 240000) {
 						this->small_compression_network->backprop_weights_with_no_error_signal(
 							last_scope_state_errors,
 							0.01);
@@ -379,8 +407,8 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			}
 		} else {
 			// this->stage == STAGE_TUNE
-			if ((this->state_iter+1) % 10000 == 0) {
-				cout << this->state_iter << " sum_error: " << this->sum_error << endl;
+			if ((this->stage_iter+1) % 10000 == 0) {
+				cout << this->stage_iter << " sum_error: " << this->sum_error << endl;
 			}
 
 			this->curr_fold->activate(flat_inputs,
@@ -417,8 +445,18 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 							state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
 						}
 
-						for (int sc_index = this->test_compression_network->fold_index+1; sc_index < state_errors.size(); sc_index++) {
+						for (int sc_index = this->test_compression_network->fold_index+1; sc_index < (int)state_errors.size(); sc_index++) {
 							for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
+								if (state_errors[sc_index].size() > this->test_compression_network->state_inputs[sc_index]->errors.size()) {
+									cout << "state_errors.size(): " << state_errors.size() << endl;
+									cout << "this->compressed_scope_sizes.size(): " << this->compressed_scope_sizes.size() << endl;
+									cout << "state_errors[sc_index].size(): " << state_errors[sc_index].size() << endl;
+									cout << "this->test_compression_network->state_inputs[sc_index]->errors.size(): " << this->test_compression_network->state_inputs[sc_index]->errors.size() << endl;
+									cout << "sc_index: " << sc_index << endl;
+									cout << "this->test_compression_network->fold_index: " << this->test_compression_network->fold_index << endl;
+									cout << "here here" << endl;
+									exit(1);
+								}
 								state_errors[sc_index][st_index] += this->test_compression_network->state_inputs[sc_index]->errors[st_index];
 								this->test_compression_network->state_inputs[sc_index]->errors[st_index] = 0.0;
 							}
@@ -433,7 +471,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 						}
 
 						int input_index = 0;
-						for (int l_index = state_errors.size()-this->compress_num_layers; l_index < state_errors.size(); l_index++) {
+						for (int l_index = (int)state_errors.size()-this->compress_num_layers; l_index < (int)state_errors.size(); l_index++) {
 							for (int st_index = 0; st_index < (int)state_errors[l_index].size(); st_index++) {
 								state_errors[l_index][st_index] += this->small_compression_network->input->errors[input_index];
 								this->small_compression_network->input->errors[input_index] = 0.0;
@@ -441,19 +479,19 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 							}
 						}
 					}
-				}
-			}
 
-			for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
-				vector<double> input_errors(this->input_sizes[i_index]);
-				for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-					input_errors[this->input_sizes[i_index]-1-s_index] = state_errors[this->input_layer[i_index]+1].back();
-					state_errors[this->input_layer[i_index]+1].pop_back();
-				}
-				this->input_networks[i_index]->backprop(input_errors, 0.002);
-				for (int st_index = 0; st_index < (int)state_errors[this->input_layer[i_index]].size(); st_index++) {
-					state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->input->errors[st_index];
-					this->input_networks[i_index]->input->errors[st_index] = 0.0;
+					for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
+						vector<double> input_errors(this->input_sizes[i_index]);
+						for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
+							input_errors[this->input_sizes[i_index]-1-s_index] = state_errors[this->input_layer[i_index]+1].back();
+							state_errors[this->input_layer[i_index]+1].pop_back();
+						}
+						this->input_networks[i_index]->backprop(input_errors, 0.002);
+						for (int st_index = 0; st_index < (int)state_errors[this->input_layer[i_index]].size(); st_index++) {
+							state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->input->errors[st_index];
+							this->input_networks[i_index]->input->errors[st_index] = 0.0;
+						}
+					}
 				}
 			}
 
@@ -471,8 +509,7 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					score_input_errors[this->score_input_sizes[i_index]-1-s_index] = state_errors[this->score_input_layer[i_index]+1].back();
 					state_errors[this->score_input_layer[i_index]+1].pop_back();
 				}
-				this->score_input_networks[i_index]->backprop(score_input_errors,
-															  TARGET_MAX_UPDATE);
+				this->score_input_networks[i_index]->backprop(score_input_errors, 0.002);
 				for (int st_index = 0; st_index < (int)state_errors[this->score_input_layer[i_index]].size(); st_index++) {
 					state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->input->errors[st_index];
 					this->score_input_networks[i_index]->input->errors[st_index] = 0.0;
@@ -497,7 +534,8 @@ void TestNode::increment() {
 
 	if (this->state == STATE_OBS
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_OBS-STAGE_LEARN" << endl;
 			cout << "starting STATE_OBS-STAGE_MEASURE" << endl;
 
@@ -508,8 +546,20 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_OBS
 			&& this->stage == STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
+			// if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+			if (rand()%2 == 0) {
+				this->curr_scope_sizes = this->test_scope_sizes;
+
+				delete this->curr_fold;
+				this->curr_fold = this->test_fold;
+				this->test_fold = NULL;
+
+				if (this->sum_error/10000 < this->curr_fold->average_error) {
+					this->curr_fold->average_error = this->sum_error/10000;
+				}
+
 				if (this->new_layer_size == 0) {
 					cout << "ending STATE_OBS-STAGE_MEASURE" << endl;
 					cout << "error: " << this->sum_error/10000 << endl;
@@ -521,21 +571,11 @@ void TestNode::increment() {
 					cout << "error: " << this->sum_error/10000 << endl;
 					cout << "starting STATE_SCORE-STAGE_LEARN" << endl;
 
-					this->curr_scope_sizes = this->test_scope_sizes;
-
-					delete this->curr_fold;
-					this->curr_fold = this->test_fold;
-					this->test_fold = NULL;
-
-					if (this->sum_error/10000 < this->curr_fold->average_error) {
-						this->curr_fold->average_error = this->sum_error/10000;
-					}
-
 					this->test_score_network = new SubFoldNetwork(this->curr_scope_sizes, 1);
 
-					this->stage = STATE_SCORE;
-					this->state = STATE_LEARN;
-					this->state_iter = 0;
+					this->state = STATE_SCORE;
+					this->stage = STAGE_LEARN;
+					this->stage_iter = 0;
 					this->sum_error = 0.0;
 				}
 			} else {
@@ -560,15 +600,16 @@ void TestNode::increment() {
 												10*this->obs_size,
 												this->new_layer_size);
 
-				this->stage = STAGE_LEARN;
 				this->state = STATE_OBS;
-				this->state_iter = 0;
+				this->stage = STAGE_LEARN;
+				this->stage_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_SCORE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_SCORE-STAGE_LEARN" << endl;
 			cout << "starting STATE_SCORE-STAGE_MEASURE" << endl;
 
@@ -579,7 +620,8 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_SCORE
 			&& this->stage == STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
 			this->curr_score_network = this->test_score_network;
 			
 			if (this->curr_scope_sizes.size() == 1) {
@@ -617,7 +659,8 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_SCORE_INPUT-STAGE_LEARN" << endl;
 			cout << "starting STATE_SCORE_INPUT-STAGE_MEASURE" << endl;
 
@@ -628,8 +671,10 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.2*this->average_misguess) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
+			// if (this->sum_error/10000 < 1.2*this->average_misguess) {
+			if (rand()%2 == 0) {
 				cout << "ending STATE_SCORE_INPUT-STAGE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_SCORE_INPUT-STAGE_TUNE" << endl;
@@ -666,6 +711,8 @@ void TestNode::increment() {
 				this->test_scope_sizes[this->test_score_network->fold_index+1] += this->score_input_sizes.back();
 				this->test_score_network->add_state(this->test_score_network->fold_index+1,
 													this->score_input_sizes.back());
+				// add to curr_fold permanently 1 at a time
+				this->curr_fold->add_state(this->test_score_network->fold_index+1, 1);
 
 				this->state = STATE_SCORE_INPUT;
 				this->stage = STAGE_LEARN;
@@ -675,23 +722,24 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_TUNE) {
-		if (this->stage_iter >= 40000) {
-			if (this->best_sum_error == -1.0) {
-				this->best_sum_error = this->sum_error;
-				this->sum_error = 0.0;
-				this->state_iter = 0;
-				this->tune_try = 0;
-			} else {
-				if (this->sum_error < this->best_sum_error) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try++;
-				} else {
+		// if (this->stage_iter >= 40000) {
+		if (this->stage_iter >= 10) {
+			// if (this->best_sum_error == -1.0) {
+			// 	this->best_sum_error = this->sum_error;
+			// 	this->sum_error = 0.0;
+			// 	this->stage_iter = 0;
+			// 	this->tune_try = 0;
+			// } else {
+			// 	if (this->sum_error < this->best_sum_error) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try = 0;
+			// 	} else if (this->tune_try < 2) {
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try++;
+			// 	} else {
 					if (this->curr_score_network != NULL) {
 						delete this->curr_score_network;
 					}
@@ -700,7 +748,7 @@ void TestNode::increment() {
 
 					this->curr_scope_sizes = this->test_scope_sizes;
 
-					if (this->curr_score_network->fold_index == this->curr_scope_sizes-2) {
+					if (this->curr_score_network->fold_index == (int)this->curr_scope_sizes.size()-2) {
 						cout << "ending STATE_SCORE_INPUT-STAGE_TUNE" << endl;
 						cout << "starting STATE_SCORE_SMALL-STAGE_LEARN" << endl;
 
@@ -734,6 +782,8 @@ void TestNode::increment() {
 							this->test_scope_sizes[this->test_score_network->fold_index+1] += 1;
 							this->test_score_network->add_state(this->test_score_network->fold_index+1,
 																1);
+							// add to curr_fold permanently 1 at a time
+							this->curr_fold->add_state(this->test_score_network->fold_index+1, 1);
 						}
 
 						this->state = STATE_SCORE_INPUT;
@@ -741,12 +791,13 @@ void TestNode::increment() {
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
 					}
-				}
-			}
+			// 	}
+			// }
 		}
 	} else if (this->state == STATE_SCORE_SMALL
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_SCORE_SMALL-STAGE_LEARN" << endl;
 			cout << "starting STATE_SCORE_SMALL-STAGE_TUNE" << endl;
 
@@ -757,23 +808,24 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_SCORE_SMALL
 			&& this->stage == STAGE_TUNE) {
-		if (this->stage_iter >= 40000) {
-			if (this->best_sum_error == -1.0) {
-				this->best_sum_error = this->sum_error;
-				this->sum_error = 0.0;
-				this->state_iter = 0;
-				this->tune_try = 0;
-			} else {
-				if (this->sum_error < this->best_sum_error) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try++;
-				} else {
+		// if (this->stage_iter >= 40000) {
+		if (this->stage_iter >= 10) {
+			// if (this->best_sum_error == -1.0) {
+			// 	this->best_sum_error = this->sum_error;
+			// 	this->sum_error = 0.0;
+			// 	this->stage_iter = 0;
+			// 	this->tune_try = 0;
+			// } else {
+			// 	if (this->sum_error < this->best_sum_error) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try = 0;
+			// 	} else if (this->tune_try < 2) {
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try++;
+			// 	} else {
 					cout << "ending STATE_SCORE_SMALL-STAGE_TUNE" << endl;
 					cout << "starting STATE_COMPRESS_STATE-STAGE_LEARN" << endl;
 
@@ -783,7 +835,7 @@ void TestNode::increment() {
 					}
 
 					this->test_scope_sizes = this->curr_scope_sizes;
-					this->compress_num_layers = this->curr_scope_sizes.size();
+					this->compress_num_layers = (int)this->curr_scope_sizes.size();
 					this->compressed_scope_sizes = vector<int>(this->curr_scope_sizes.size());
 					for (int sc_index = (int)this->compressed_scope_sizes.size()-1; sc_index >= 0; sc_index--) {
 						this->compressed_scope_sizes[sc_index] = this->test_scope_sizes.back();
@@ -815,24 +867,27 @@ void TestNode::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
-				}
-			}
+			// 	}
+			// }
 		}
 	} else if (this->state == STATE_COMPRESS_STATE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_COMPRESS_STATE-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_STATE-STAGE_MEASURE" << endl;
 
 			this->state = STATE_COMPRESS_STATE;
-			this->stage = STATE_MEASURE;
+			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
 			this->sum_error = 0.0;
 		}
 	} else if (this->state == STATE_COMPRESS_STATE
 			&& this->stage == STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
+			// if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+			if (rand()%2 == 0) {
 				if (this->curr_compression_network != NULL) {
 					delete this->curr_compression_network;
 				}
@@ -912,7 +967,12 @@ void TestNode::increment() {
 				if (this->compress_size == 0) {
 					cout << "ending STATE_COMPRESS_STATE-STAGE_MEASURE" << endl;
 					cout << "error: " << this->sum_error/10000 << endl;
+					cout << "fail" << endl;
 					cout << "starting STATE_FINAL_TUNE-STAGE_TUNE" << endl;
+
+					this->compress_num_layers = 0;
+					this->compress_new_size = 0;
+					this->compressed_scope_sizes.clear();
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage = STAGE_TUNE;
@@ -946,8 +1006,8 @@ void TestNode::increment() {
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold.pop_scope();
-						this->test_fold.add_scope(this->compressed_scope_sizes[0]);
+						this->test_fold->pop_scope();
+						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
 
@@ -972,9 +1032,9 @@ void TestNode::increment() {
 																			this->compress_new_size);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold.pop_scope();
-						this->test_fold.add_scope(this->compressed_scope_sizes[0]);
-						this->test_fold.add_scope(this->compress_new_size);
+						this->test_fold->pop_scope();
+						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
+						this->test_fold->add_scope(this->compress_new_size);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
 
@@ -988,7 +1048,8 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_SCOPE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_COMPRESS_SCOPE-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
 
@@ -997,10 +1058,12 @@ void TestNode::increment() {
 			this->stage_iter = 0;
 			this->sum_error = 0.0;
 		}
-	} else if (this->state = STATE_COMPRESS_SCOPE
+	} else if (this->state == STATE_COMPRESS_SCOPE
 			&& this->stage == STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
+			// if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+			if (rand()%2 == 0) {
 				if (this->curr_compression_network != NULL) {
 					delete this->curr_compression_network;
 				}
@@ -1063,8 +1126,8 @@ void TestNode::increment() {
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold.pop_scope();
-						this->test_fold.add_scope(this->compressed_scope_sizes[0]);
+						this->test_fold->pop_scope();
+						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
 
@@ -1089,9 +1152,9 @@ void TestNode::increment() {
 																			this->compress_new_size);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
-						this->test_fold.pop_scope();
-						this->test_fold.add_scope(this->compressed_scope_sizes[0]);
-						this->test_fold.add_scope(this->compress_new_size);
+						this->test_fold->pop_scope();
+						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
+						this->test_fold->add_scope(this->compress_new_size);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
 
@@ -1122,7 +1185,7 @@ void TestNode::increment() {
 
 				this->curr_scope_sizes = this->test_scope_sizes;
 
-				if (this->curr_scope_sizes == 1) {
+				if (this->curr_scope_sizes.size() == 1) {
 					cout << "ending STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
 					cout << "error: " << this->sum_error/10000 << endl;
 					cout << "starting STATE_FINAL_TUNE-STAGE_TUNE" << endl;
@@ -1151,7 +1214,8 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
 			cout << "ending STATE_COMPRESS_INPUT-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_INPUT-STAGE_MEASURE" << endl;
 
@@ -1161,9 +1225,11 @@ void TestNode::increment() {
 			this->sum_error = 0.0;
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
-			&& this->stage = STAGE_MEASURE) {
-		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+			&& this->stage == STAGE_MEASURE) {
+		// if (this->stage_iter >= 10000) {
+		if (this->stage_iter >= 10) {
+			// if (this->sum_error/10000 < 1.2*this->curr_fold->average_error) {
+			if (rand()%2 == 0) {
 				cout << "ending STATE_COMPRESS_INPUT-STAGE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_COMPRESS_INPUT-STAGE_TUNE" << endl;
@@ -1197,11 +1263,23 @@ void TestNode::increment() {
 				this->input_networks.push_back(new Network(input_size,
 														   10*input_size,
 														   this->input_sizes.back()));
-				this->test_scope_sizes[this->test_compression_network->fold_index+1] += this->input_sizes.back();
+				if (this->test_compression_network->fold_index == (int)this->test_scope_sizes.size()-2) {
+					cout << "this->test_compression_network->state_inputs[1]->errors.size(): " << this->test_compression_network->state_inputs[1]->errors.size() << endl;
+				}
 				this->test_compression_network->add_state(this->test_compression_network->fold_index+1,
 														  this->input_sizes.back());
-				if (this->test_compression_network->fold_index == this->test_scope_sizes.size()-2) {
+				if (this->test_compression_network->fold_index == (int)this->test_scope_sizes.size()-2) {
+					cout << "added to compressed_scope_sizes[0]" << endl;
+					cout << "this->test_compression_network->state_inputs[1]->errors.size(): " << this->test_compression_network->state_inputs[1]->errors.size() << endl;
+					cout << "this->input_sizes.back(): " << this->input_sizes.back() << endl;
 					this->compressed_scope_sizes[0]++;
+					cout << "this->compressed_scope_sizes[0]: " << this->compressed_scope_sizes[0] << endl;
+					cout << "this->test_scope_sizes[this->test_compression_network->fold_index+1]: " << this->test_scope_sizes[this->test_compression_network->fold_index+1] << endl;
+				} else {
+					// TODO: change fold and scope_size logic to be consistent
+					this->test_scope_sizes[this->test_compression_network->fold_index+1] += this->input_sizes.back();
+					// add to curr_fold permanently 1 at a time
+					this->curr_fold->add_state(this->test_compression_network->fold_index+1, 1);
 				}
 
 				this->state = STATE_COMPRESS_INPUT;
@@ -1212,23 +1290,24 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
 			&& this->stage == STAGE_TUNE) {
-		if (this->stage_iter >= 40000) {
-			if (this->best_sum_error == -1.0) {
-				this->best_sum_error = this->sum_error;
-				this->sum_error = 0.0;
-				this->state_iter = 0;
-				this->tune_try = 0;
-			} else {
-				if (this->sum_error < this->best_sum_error) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try++;
-				} else {
+		// if (this->stage_iter >= 40000) {
+		if (this->stage_iter >= 10) {
+			// if (this->best_sum_error == -1.0) {
+			// 	this->best_sum_error = this->sum_error;
+			// 	this->sum_error = 0.0;
+			// 	this->stage_iter = 0;
+			// 	this->tune_try = 0;
+			// } else {
+			// 	if (this->sum_error < this->best_sum_error) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try = 0;
+			// 	} else if (this->tune_try < 2) {
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try++;
+			// 	} else {
 					if (this->curr_compression_network != NULL) {
 						delete this->curr_compression_network;
 					}
@@ -1237,7 +1316,7 @@ void TestNode::increment() {
 
 					this->curr_scope_sizes = this->test_scope_sizes;
 
-					if (this->curr_compression_network->fold_index == this->curr_scope_sizes-2) {
+					if (this->curr_compression_network->fold_index == (int)this->curr_scope_sizes.size()-2) {
 						cout << "ending STATE_COMPRESS_INPUT-STAGE_TUNE" << endl;
 						cout << "starting STATE_COMPRESS_SMALL-STAGE_LEARN" << endl;
 
@@ -1250,7 +1329,7 @@ void TestNode::increment() {
 																	  10*input_size,
 																	  this->compress_new_size);
 
-						this->state = STATE_SCORE_SMALL;
+						this->state = STATE_COMPRESS_SMALL;
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
@@ -1271,11 +1350,15 @@ void TestNode::increment() {
 							this->input_networks.push_back(new Network(input_size,
 																	   10*input_size,
 																	   1));
-							this->test_scope_sizes[this->test_compression_network->fold_index+1] += 1;
 							this->test_compression_network->add_state(this->test_compression_network->fold_index+1,
 																	  1);
-							if (this->test_compression_network->fold_index == this->test_scope_sizes.size()-2) {
+							if (this->test_compression_network->fold_index == (int)this->test_scope_sizes.size()-2) {
+								cout << "added to compressed_scope_sizes[0]" << endl;
 								this->compressed_scope_sizes[0]++;
+							} else {
+								this->test_scope_sizes[this->test_compression_network->fold_index+1] += 1;
+								// add to curr_fold permanently 1 at a time
+								this->curr_fold->add_state(this->test_score_network->fold_index+1, 1);
 							}
 						}
 
@@ -1284,13 +1367,14 @@ void TestNode::increment() {
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
 					}
-				}
-			}
+			// 	}
+			// }
 		}
-	} else if (this->state == STATE_SCORE_SMALL
+	} else if (this->state == STATE_COMPRESS_SMALL
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 300000) {
-			cout << "ending STATE_SCORE_SMALL-STAGE_LEARN" << endl;
+		// if (this->stage_iter >= 300000) {
+		if (this->stage_iter >= 10) {
+			cout << "ending STATE_COMPRESS_SMALL-STAGE_LEARN" << endl;
 			cout << "starting STATE_FINAL_TUNE-STAGE_TUNE" << endl;
 
 			this->state = STATE_FINAL_TUNE;
@@ -1301,29 +1385,30 @@ void TestNode::increment() {
 		}
 	} else if (this->state == STATE_FINAL_TUNE
 			&& this->stage == STAGE_TUNE) {
-		if (this->stage_iter >= 40000) {
-			if (this->best_sum_error == -1.0) {
-				this->best_sum_error = this->sum_error;
-				this->sum_error = 0.0;
-				this->state_iter = 0;
-				this->tune_try = 0;
-			} else {
-				if (this->sum_error < this->best_sum_error) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
-					this->sum_error = 0.0;
-					this->state_iter = 0;
-					this->tune_try++;
-				} else {
+		// if (this->stage_iter >= 40000) {
+		if (this->stage_iter >= 10) {
+			// if (this->best_sum_error == -1.0) {
+			// 	this->best_sum_error = this->sum_error;
+			// 	this->sum_error = 0.0;
+			// 	this->stage_iter = 0;
+			// 	this->tune_try = 0;
+			// } else {
+			// 	if (this->sum_error < this->best_sum_error) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try = 0;
+			// 	} else if (this->tune_try < 2) {
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try++;
+			// 	} else {
 					cout << "ending STATE_FINAL_TUNE-STAGE_TUNE" << endl;
 					cout << "DONE" << endl;
 
 					this->state = STATE_DONE;
-				}
-			}
+			// 	}
+			// }
 		}
 	}
 }
