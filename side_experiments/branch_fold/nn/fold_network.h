@@ -53,8 +53,8 @@ public:
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
-	void backprop_score(std::vector<double>& errors,
-						double target_max_update);
+	// void backprop_score(std::vector<double>& errors,
+	// 					double target_max_update);
 	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
 	void backprop_full_state(std::vector<double>& errors,
 							 double target_max_update);

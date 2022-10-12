@@ -39,10 +39,10 @@ public:
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
 											   double target_max_update);
-	void backprop_new_state(int layer,
-							int new_input_size,
-							std::vector<double>& errors,
-							double target_max_update);
+	// void backprop_new_state(int layer,
+	// 						int new_input_size,
+	// 						std::vector<double>& errors,
+	// 						double target_max_update);
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
 

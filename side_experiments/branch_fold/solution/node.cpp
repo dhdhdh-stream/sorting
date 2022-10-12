@@ -239,7 +239,6 @@ void Node::backprop(vector<vector<double>>& state_errors,
 			state_errors.back()[st_index] += this->score_network->input->errors[st_index];
 			this->score_network->input->errors[st_index] = 0.0;
 		}
-		score_error -= this->score_network->output->acti_vals[0];
 
 		for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 			vector<double> score_input_errors(this->score_input_sizes[i_index]);

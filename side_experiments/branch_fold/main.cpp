@@ -29,8 +29,7 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1665463233;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -259,13 +258,20 @@ int main(int argc, char* argv[]) {
 
 	ifstream input_file;
 	input_file.open("saves/fold_network.txt");
+	// input_file.open("saves/f_1.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
-	fold_network->average_error = 0.1;
+	fold_network->average_error = 0.01;
 
 	double average_score = 0.0;
 
 	vector<Node*> nodes;
+	// for (int i = 0; i < 2; i++) {
+	// 	ifstream input_file;
+	// 	input_file.open("saves/n_" + to_string(i) + "_1.txt");
+	// 	nodes.push_back(new Node(input_file));
+	// 	input_file.close();
+	// }
 	vector<int> scope_sizes;
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		nodes[n_index]->get_scope_sizes(scope_sizes);
@@ -516,6 +522,8 @@ int main(int argc, char* argv[]) {
 			fold_network->save(output_file);
 			output_file.close();
 		}
+
+		cout << "SAVED " << nodes.back()->id << endl;
 
 		scope_sizes = test_node->curr_scope_sizes;
 

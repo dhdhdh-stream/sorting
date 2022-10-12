@@ -90,24 +90,29 @@ void Network::backprop(vector<double>& errors,
 	this->hidden->backprop();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 100) {
+	// if (this->epoch_iter == 100) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-		if (hidden_learning_rate*hidden_max_update > target_max_update) {
-			hidden_learning_rate = target_max_update/hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->update_weights(hidden_learning_rate);
 		}
-		this->hidden->update_weights(hidden_learning_rate);
 
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-		if (output_learning_rate*output_max_update > target_max_update) {
-			output_learning_rate = target_max_update/output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->update_weights(output_learning_rate);
 		}
-		this->output->update_weights(output_learning_rate);
 
 		this->epoch_iter = 0;
 	}
@@ -132,24 +137,29 @@ void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
 	this->hidden->backprop_weights_with_no_error_signal();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 100) {
+	// if (this->epoch_iter == 100) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-		if (hidden_learning_rate*hidden_max_update > target_max_update) {
-			hidden_learning_rate = target_max_update/hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->update_weights(hidden_learning_rate);
 		}
-		this->hidden->update_weights(hidden_learning_rate);
 
 		double output_max_update = 0.0;
 		this->output->get_max_update(output_max_update);
 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-		if (output_learning_rate*output_max_update > target_max_update) {
-			output_learning_rate = target_max_update/output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->update_weights(output_learning_rate);
 		}
-		this->output->update_weights(output_learning_rate);
 
 		this->epoch_iter = 0;
 	}
