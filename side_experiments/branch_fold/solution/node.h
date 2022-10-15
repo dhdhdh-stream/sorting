@@ -9,6 +9,7 @@ class Node {
 public:
 	std::string id;
 
+	int obs_size;
 	int new_layer_size;
 	Network* obs_network;
 
@@ -27,6 +28,7 @@ public:
 	std::vector<int> compressed_scope_sizes;	// earliest to latest
 
 	Node(std::string id,
+		 int obs_size,
 		 int new_layer_size,
 		 Network* obs_network,
 		 std::vector<int> score_input_layer,
@@ -41,12 +43,14 @@ public:
 		 Network* compression_network,
 		 std::vector<int> compressed_scope_sizes);
 	Node(std::ifstream& input_file);
+	Node(Node* original);
 	~Node();
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<double>& obs,
 				  double& predicted_score);
 	void backprop(std::vector<std::vector<double>>& state_errors,
-				  double& score_error);
+				  double& predicted_score,
+				  double target_val);
 
 	void get_scope_sizes(std::vector<int>& scope_sizes);
 

@@ -26,6 +26,7 @@ const int STATE_DONE = 9;
 class TestNode {
 public:
 	int obs_size;
+	double max_allowable_error;
 
 	int state;
 	int stage;
@@ -44,7 +45,7 @@ public:
 	int new_layer_size;
 	Network* obs_network;
 
-	SubFoldNetwork* curr_score_network;	// not ending score, but change in score
+	SubFoldNetwork* curr_score_network;
 	double average_misguess;
 	SubFoldNetwork* test_score_network;
 	std::vector<int> score_input_layer;
@@ -55,7 +56,7 @@ public:
 
 	SubFoldNetwork* curr_compression_network;
 	int compress_size;
-	int compress_num_layers;	// can compress to nothing
+	int compress_num_layers;
 	int compress_new_size;
 	std::vector<int> compressed_scope_sizes;
 	SubFoldNetwork* test_compression_network;
@@ -66,7 +67,8 @@ public:
 
 	TestNode(std::vector<int> initial_scope_sizes,
 			 FoldNetwork* original_fold,
-			 int obs_size);
+			 int obs_size,
+			 double max_allowable_error);
 	~TestNode();
 
 	void activate(std::vector<std::vector<double>>& state_vals,

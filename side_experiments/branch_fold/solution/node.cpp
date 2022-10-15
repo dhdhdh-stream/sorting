@@ -8,6 +8,7 @@ using namespace std;
 const double TARGET_MAX_UPDATE = 0.001;
 
 Node::Node(string id,
+		   int obs_size,
 		   int new_layer_size,
 		   Network* obs_network,
 		   vector<int> score_input_layer,
@@ -22,6 +23,7 @@ Node::Node(string id,
 		   Network* compression_network,
 		   vector<int> compressed_scope_sizes) {
 	this->id = id;
+	this->obs_size = obs_size;
 	this->new_layer_size = new_layer_size;
 	this->obs_network = obs_network;
 	this->score_input_layer = score_input_layer;
@@ -42,6 +44,10 @@ Node::Node(ifstream& input_file) {
 	getline(input_file, id_line);
 	boost::algorithm::trim(id_line);
 	this->id = id_line;
+
+	string obs_size_line;
+	getline(input_file, obs_size_line);
+	this->obs_size = stoi(obs_size_line);
 
 	string new_layer_size_line;
 	getline(input_file, new_layer_size_line);
@@ -113,7 +119,53 @@ Node::Node(ifstream& input_file) {
 				getline(input_file, scope_size_line);
 				this->compressed_scope_sizes.push_back(stoi(scope_size_line));
 			}
+		} else {
+			this->compression_network = NULL;
 		}
+	} else {
+		this->obs_network = NULL;
+		this->score_network = NULL;
+		this->compression_network = NULL;
+
+		this->compress_num_layers = 0;
+		this->compress_new_size = 0;
+	}
+}
+
+Node::Node(Node* original) {
+	this->id = original->id;
+	this->obs_size = original->obs_size;
+	this->new_layer_size = original->new_layer_size;
+	if (this->new_layer_size > 0) {
+		this->obs_network = new Network(original->obs_network);
+		for (int i_index = 0; i_index < (int)original->score_input_networks.size(); i_index++) {
+			this->score_input_layer.push_back(original->score_input_layer[i_index]);
+			this->score_input_sizes.push_back(original->score_input_sizes[i_index]);
+			this->score_input_networks.push_back(new Network(original->score_input_networks[i_index]));
+		}
+		this->score_network = new Network(original->score_network);
+		this->compress_num_layers = original->compress_num_layers;
+		this->compress_new_size = original->compress_new_size;
+		if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+			for (int i_index = 0; i_index < (int)original->input_networks.size(); i_index++) {
+				this->input_layer.push_back(original->input_layer[i_index]);
+				this->input_sizes.push_back(original->input_sizes[i_index]);
+				this->input_networks.push_back(new Network(original->input_networks[i_index]));
+			}
+			this->compression_network = new Network(original->compression_network);
+			for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+				this->compressed_scope_sizes.push_back(original->compressed_scope_sizes[s_index]);
+			}
+		} else {
+			this->compression_network = NULL;
+		}
+	} else {
+		this->obs_network = NULL;
+		this->score_network = NULL;
+		this->compression_network = NULL;
+
+		this->compress_num_layers = 0;
+		this->compress_new_size = 0;
 	}
 }
 
@@ -192,7 +244,8 @@ void Node::activate(vector<vector<double>>& state_vals,
 }
 
 void Node::backprop(vector<vector<double>>& state_errors,
-					double& score_error) {
+					double& predicted_score,
+					double target_val) {
 	if (this->new_layer_size > 0) {
 		if (this->compress_num_layers > 0) {
 			if (this->compress_new_size == 0) {
@@ -233,12 +286,13 @@ void Node::backprop(vector<vector<double>>& state_errors,
 			}
 		}
 
-		vector<double> score_errors{score_error};
+		vector<double> score_errors{target_val - predicted_score};
 		this->score_network->backprop(score_errors, TARGET_MAX_UPDATE);
 		for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
 			state_errors.back()[st_index] += this->score_network->input->errors[st_index];
 			this->score_network->input->errors[st_index] = 0.0;
 		}
+		predicted_score -= this->score_network->output->acti_vals[0];
 
 		for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 			vector<double> score_input_errors(this->score_input_sizes[i_index]);
@@ -289,6 +343,7 @@ void Node::get_scope_sizes(vector<int>& scope_sizes) {
 void Node::save(ofstream& output_file) {
 	output_file << this->id << endl;
 
+	output_file << this->obs_size << endl;
 	output_file << this->new_layer_size << endl;
 
 	if (this->new_layer_size > 0) {

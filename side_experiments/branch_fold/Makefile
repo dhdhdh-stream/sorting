@@ -11,17 +11,21 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main test_result
+all: p4 p4_test_result convert_to_scope
 
-main: ${OBJECTS} main.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
+p4: ${OBJECTS} p4.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p4.o -o p4 ${LIBS}
 
-test_result: ${OBJECTS} test_result.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} test_result.o -o test_result ${LIBS}
+p4_test_result: ${OBJECTS} p4_test_result.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p4_test_result.o -o p4_test_result ${LIBS}
 
--include ${DEPENDS} main.d test_result.d
+convert_to_scope: ${OBJECTS} convert_to_scope.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} convert_to_scope.o -o convert_to_scope ${LIBS}
+
+-include ${DEPENDS} p4.d p4_test_result.d convert_to_scope.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main \
-	test_result.o test_result.d test_result
+	p4.o p4.d p4 \
+	p4_test_result.o p4_test_result.d p4_test_result \
+	convert_to_scope.o convert_to_scope.d convert_to_scope
