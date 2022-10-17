@@ -45,14 +45,6 @@ public:
 	void fold_pop_scope();
 	void fold_backprop_last_state(int state_size);
 	void fold_backprop_last_state_with_no_weight_change();
-	void fold_backprop_full_state(int state_size);
-	void fold_get_max_update_full_state(int state_size,
-										double& max_update_size);
-	void fold_update_weights_full_state(int state_size,
-										double learning_rate);
-	void fold_loop_backprop_last_state();
-	void fold_loop_backprop_full_state(int state_size);
-	void fold_backprop_loop_errors_with_no_weight_change();
 	void fold_add_state(int layer,
 						int num_state);
 

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const double TARGET_MAX_UPDATE = 0.001;
+const double TARGET_MAX_UPDATE = 0.002;
 
 Node::Node(string id,
 		   int obs_size,
@@ -113,14 +113,14 @@ Node::Node(ifstream& input_file) {
 			compression_network_save_file.open("saves/nns/" + this->id + "_compress.txt");
 			this->compression_network = new Network(compression_network_save_file);
 			compression_network_save_file.close();
-
-			for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
-				string scope_size_line;
-				getline(input_file, scope_size_line);
-				this->compressed_scope_sizes.push_back(stoi(scope_size_line));
-			}
 		} else {
 			this->compression_network = NULL;
+		}
+
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			string scope_size_line;
+			getline(input_file, scope_size_line);
+			this->compressed_scope_sizes.push_back(stoi(scope_size_line));
 		}
 	} else {
 		this->obs_network = NULL;
@@ -153,11 +153,11 @@ Node::Node(Node* original) {
 				this->input_networks.push_back(new Network(original->input_networks[i_index]));
 			}
 			this->compression_network = new Network(original->compression_network);
-			for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
-				this->compressed_scope_sizes.push_back(original->compressed_scope_sizes[s_index]);
-			}
 		} else {
 			this->compression_network = NULL;
+		}
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			this->compressed_scope_sizes.push_back(original->compressed_scope_sizes[s_index]);
 		}
 	} else {
 		this->obs_network = NULL;
@@ -387,10 +387,10 @@ void Node::save(ofstream& output_file) {
 			compression_network_save_file.open("saves/nns/" + this->id + "_compress.txt");
 			this->compression_network->save(compression_network_save_file);
 			compression_network_save_file.close();
+		}
 
-			for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
-				output_file << this->compressed_scope_sizes[s_index] << endl;
-			}
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			output_file << this->compressed_scope_sizes[s_index] << endl;
 		}
 	}
 }

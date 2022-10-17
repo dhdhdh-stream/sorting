@@ -194,17 +194,18 @@ int main(int argc, char* argv[]) {
 
 	ifstream input_file;
 	// input_file.open("saves/fold_network.txt");
-	input_file.open("saves/f_4.txt");
+	input_file.open("saves/f_6.txt");
 	FoldNetwork* fold_network = new FoldNetwork(input_file);
 	input_file.close();
 
 	double average_score = 0.0;
-	double max_allowable_error = 0.1;
+	double max_allowable_error = 0.01;
+	double max_needed_error = 0.002;
 
 	vector<Node*> nodes;
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 7; i++) {
 		ifstream input_file;
-		input_file.open("saves/n_" + to_string(i) + "_4.txt");
+		input_file.open("saves/n_" + to_string(i) + "_6.txt");
 		nodes.push_back(new Node(input_file));
 		input_file.close();
 	}
@@ -218,7 +219,8 @@ int main(int argc, char* argv[]) {
 		TestNode* test_node = new TestNode(scope_sizes,
 										   fold_network,
 										   flat_sizes[fold_index],
-										   max_allowable_error);
+										   max_allowable_error,
+										   max_needed_error);
 		while (true) {
 			vector<vector<double>> state_vals;
 			double predicted_score = average_score;
@@ -226,7 +228,7 @@ int main(int argc, char* argv[]) {
 			int flat_input_counter = 0;
 
 			vector<vector<double>> flat_vals;
-			flat_vals.reserve(11);
+			flat_vals.reserve(12);
 
 			flat_vals.push_back(vector<double>(2));
 			flat_vals[0][0] = rand()%2*2-1;

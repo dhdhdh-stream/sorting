@@ -13,12 +13,6 @@ public:
 	std::vector<int> flat_sizes;
 
 	int fold_index;
-	double average_error;
-	// - represents amount of error willing to accept
-	// - compressing early can lead to the permanent destruction of information,
-	//   so if a fold compresses to this value, then that might be the maximum
-	//   attainable error permamently
-	// - but if too restrictive, then prevents the forming of good scopes/abstraction
 
 	std::vector<Layer*> flat_inputs;
 
@@ -59,8 +53,6 @@ public:
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
 	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
-	void backprop_full_state(std::vector<double>& errors,
-							 double target_max_update);
 
 	void add_state(int layer,
 				   int num_state);

@@ -9,13 +9,7 @@ void SubFoldNetwork::construct() {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
 
-	// int sum_size = 0;
-	// for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
-	// 	sum_size += this->scope_sizes[sc_index];
-	// }
-	// int hidden_size = min(10*sum_size, 50);
-	// this->hidden = new Layer(LEAKY_LAYER, hidden_size);
-	this->hidden = new Layer(LEAKY_LAYER, 100);
+	this->hidden = new Layer(LEAKY_LAYER, 100);	// set fixed number because scope_sizes will change
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
@@ -146,7 +140,6 @@ void SubFoldNetwork::backprop_weights_with_no_error_signal(
 	this->hidden->backprop_weights_with_no_error_signal();
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
@@ -188,7 +181,6 @@ void SubFoldNetwork::backprop_new_state(int layer,
 											 new_input_size);
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->subfold_get_max_update(this->fold_index,
@@ -226,7 +218,6 @@ void SubFoldNetwork::backprop(vector<double>& errors,
 	this->hidden->subfold_backprop(this->fold_index);
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->subfold_get_max_update(this->fold_index,

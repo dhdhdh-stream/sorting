@@ -42,7 +42,6 @@ FoldNetwork::FoldNetwork(vector<int> flat_sizes) {
 	this->flat_sizes = flat_sizes;
 
 	this->fold_index = -1;
-	this->average_error = -1.0;
 
 	construct();
 }
@@ -60,10 +59,6 @@ FoldNetwork::FoldNetwork(ifstream& input_file) {
 	string fold_index_line;
 	getline(input_file, fold_index_line);
 	this->fold_index = stoi(fold_index_line);
-
-	string average_error_line;
-	getline(input_file, average_error_line);
-	this->average_error = stof(average_error_line);
 
 	string num_scope_sizes_line;
 	getline(input_file, num_scope_sizes_line);
@@ -84,7 +79,6 @@ FoldNetwork::FoldNetwork(FoldNetwork* original) {
 	this->flat_sizes = original->flat_sizes;
 
 	this->fold_index = original->fold_index;
-	this->average_error = original->average_error;
 
 	this->scope_sizes = original->scope_sizes;
 
@@ -143,7 +137,6 @@ void FoldNetwork::backprop(vector<double>& errors,
 	this->hidden->backprop();
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
@@ -255,19 +248,16 @@ void FoldNetwork::backprop_last_state(vector<double>& errors,
 	this->hidden->fold_backprop_last_state((int)this->scope_sizes.size());
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
-		this->hidden->fold_get_max_update_full_state((int)this->scope_sizes.size(),
-													 hidden_max_update);
+		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
 		if (hidden_max_update > 0.0) {
 			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
 			if (hidden_learning_rate*hidden_max_update > target_max_update) {
 				hidden_learning_rate = target_max_update/hidden_max_update;
 			}
-			this->hidden->fold_update_weights_full_state((int)this->scope_sizes.size(),
-														 hidden_learning_rate);
+			this->hidden->update_weights(hidden_learning_rate);
 		}
 
 		double output_max_update = 0.0;
@@ -290,48 +280,8 @@ void FoldNetwork::backprop_last_state_with_no_weight_change(vector<double>& erro
 		this->output->errors[e_index] = errors[e_index];
 	}
 
-	this->output->backprop();
+	this->output->backprop_errors_with_no_weight_change();
 	this->hidden->fold_backprop_last_state_with_no_weight_change();
-}
-
-void FoldNetwork::backprop_full_state(vector<double>& errors,
-									  double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
-		this->output->errors[e_index] = errors[e_index];
-	}
-
-	this->output->backprop();
-	this->hidden->fold_backprop_full_state((int)this->scope_sizes.size());
-
-	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
-	if (this->epoch_iter == 20) {
-		double hidden_max_update = 0.0;
-		this->hidden->fold_get_max_update_full_state((int)this->scope_sizes.size(),
-													 hidden_max_update);
-		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		if (hidden_max_update > 0.0) {
-			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-			if (hidden_learning_rate*hidden_max_update > target_max_update) {
-				hidden_learning_rate = target_max_update/hidden_max_update;
-			}
-			this->hidden->fold_update_weights_full_state((int)this->scope_sizes.size(),
-														 hidden_learning_rate);
-		}
-
-		double output_max_update = 0.0;
-		this->output->get_max_update(output_max_update);
-		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		if (output_max_update > 0.0) {
-			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-			if (output_learning_rate*output_max_update > target_max_update) {
-				output_learning_rate = target_max_update/output_max_update;
-			}
-			this->output->update_weights(output_learning_rate);
-		}
-
-		this->epoch_iter = 0;
-	}
 }
 
 void FoldNetwork::add_state(int layer,
@@ -353,7 +303,6 @@ void FoldNetwork::save(ofstream& output_file) {
 	}
 
 	output_file << this->fold_index << endl;
-	output_file << this->average_error << endl;
 
 	output_file << this->scope_sizes.size() << endl;
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {

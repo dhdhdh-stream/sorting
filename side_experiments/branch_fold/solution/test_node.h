@@ -27,6 +27,7 @@ class TestNode {
 public:
 	int obs_size;
 	double max_allowable_error;
+	double max_needed_error;
 
 	int state;
 	int stage;
@@ -68,7 +69,8 @@ public:
 	TestNode(std::vector<int> initial_scope_sizes,
 			 FoldNetwork* original_fold,
 			 int obs_size,
-			 double max_allowable_error);
+			 double max_allowable_error,
+			 double max_needed_error);
 	~TestNode();
 
 	void activate(std::vector<std::vector<double>>& state_vals,

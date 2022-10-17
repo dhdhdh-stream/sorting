@@ -64,7 +64,7 @@ Network::~Network() {
 }
 
 void Network::activate(vector<double>& vals) {
-	for (int i = 0; i < (int)vals.size(); i++) {
+	for (int i = 0; i < (int)this->input->acti_vals.size(); i++) {
 		this->input->acti_vals[i] = vals[i];
 	}
 
@@ -82,7 +82,7 @@ void Network::activate(vector<double>& vals,
 
 void Network::backprop(vector<double>& errors,
 					   double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -90,7 +90,6 @@ void Network::backprop(vector<double>& errors,
 	this->hidden->backprop();
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
@@ -119,7 +118,7 @@ void Network::backprop(vector<double>& errors,
 }
 
 void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -129,7 +128,7 @@ void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors)
 
 void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
 													double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -137,7 +136,6 @@ void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
 	this->hidden->backprop_weights_with_no_error_signal();
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 100) {
 	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
