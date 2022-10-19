@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 
 	// 	for (int iter_index = 0; iter_index < 100; iter_index++) {
 	// 		vector<vector<double>> flat_vals;
-	// 		flat_vals.reserve(11);
+	// 		flat_vals.reserve(12);
 
 	// 		flat_vals.push_back(vector<double>(2));
 	// 		flat_vals[0][0] = rand()%2*2-1;
