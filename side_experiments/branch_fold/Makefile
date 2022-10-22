@@ -11,7 +11,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: p4 p4_test_result convert_to_scope
+all: p4 p4_test_result convert_to_scope zero_train retrain_scope
 
 p4: ${OBJECTS} p4.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} p4.o -o p4 ${LIBS}
@@ -22,10 +22,18 @@ p4_test_result: ${OBJECTS} p4_test_result.o
 convert_to_scope: ${OBJECTS} convert_to_scope.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} convert_to_scope.o -o convert_to_scope ${LIBS}
 
--include ${DEPENDS} p4.d p4_test_result.d convert_to_scope.d
+zero_train: ${OBJECTS} zero_train.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} zero_train.o -o zero_train ${LIBS}
+
+retrain_scope: ${OBJECTS} retrain_scope.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} retrain_scope.o -o retrain_scope ${LIBS}
+
+-include ${DEPENDS} p4.d p4_test_result.d convert_to_scope.d zero_train.d retrain_scope.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	p4.o p4.d p4 \
 	p4_test_result.o p4_test_result.d p4_test_result \
-	convert_to_scope.o convert_to_scope.d convert_to_scope
+	convert_to_scope.o convert_to_scope.d convert_to_scope \
+	zero_train.o zero_train.d zero_train \
+	retrain_scope.o retrain_scope.d retrain_scope

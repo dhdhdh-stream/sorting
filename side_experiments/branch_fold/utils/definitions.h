@@ -5,6 +5,4 @@
 
 extern std::default_random_engine generator;
 
-
-
 #endif /* DEFINITIONS_H */

@@ -52,6 +52,10 @@ public:
 
 	std::vector<int> end_compressed_scope_sizes;	// earliest to latest
 
+	std::vector<double> outputs;
+
+	std::vector<Scope*> zero_scopes;
+
 	Scope(std::vector<AbstractScope*> actions,
 		  int num_inputs,
 		  int num_outputs,
@@ -73,14 +77,22 @@ public:
 	~Scope();
 	void activate(std::vector<std::vector<double>>& flat_vals,
 				  std::vector<double> inputs,
-				  std::vector<double>& outputs,
 				  double& predicted_score);
 	void backprop(std::vector<double> input_errors,
 				  std::vector<double>& output_errors,
 				  double& predicted_score,
 				  double target_val);
-
 	void add_to_dictionary(std::vector<Scope*>& scope_dictionary);
+
+	void setup_zero_scopes();
+	void zero_train_activate(std::vector<std::vector<double>>& flat_vals,
+							 std::vector<double> inputs,
+							 double& predicted_score);
+	void zero_train_backprop(Scope* original);
+	void zero_train_backprop(std::vector<double> input_errors,
+							 std::vector<double>& output_errors,
+							 Scope* original);
+	void add_to_zero_train_dictionary(std::vector<Scope*>& scope_dictionary);
 };
 
 Scope* construct_scope(std::vector<Node*> nodes);

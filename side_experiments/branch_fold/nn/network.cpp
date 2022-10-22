@@ -9,7 +9,7 @@ void Network::construct(int input_size,
 						int output_size) {
 	this->input = new Layer(LINEAR_LAYER, input_size);
 	
-	this->hidden = new Layer(RELU_LAYER, hidden_size);
+	this->hidden = new Layer(LEAKY_LAYER, hidden_size);
 	this->hidden->input_layers.push_back(this->input);
 	this->hidden->setup_weights_full();
 

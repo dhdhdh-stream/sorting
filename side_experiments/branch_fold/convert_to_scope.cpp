@@ -323,7 +323,7 @@ int main(int argc, char* argv[]) {
 	// 				scope_predicted_score);
 
 	double sum_error = 0.0;
-	for (int iter_index = 1; iter_index < 500000; iter_index++) {
+	for (int iter_index = 1; iter_index < 5000000; iter_index++) {
 		if (iter_index%10000 == 0) {
 			cout << endl;
 			cout << iter_index << endl;
@@ -442,15 +442,14 @@ int main(int argc, char* argv[]) {
 		flat_vals[11][0] = rand()%2*2-1;
 		flat_vals[11][1] = rand()%2*2-1;
 
-		double final_val = first_sum%2 - second_sum%2 + index_sum;
+		// double final_val = first_sum%2 - second_sum%2 + index_sum;
+		double final_val = 0.5*(first_sum%2 - second_sum%2 + index_sum);
 
 		// empty
 		vector<double> inputs;
-		vector<double> outputs;
 		double predicted_score = 0.0;
 		scope->activate(flat_vals,
 						inputs,
-						outputs,
 						predicted_score);
 
 		sum_error += abs(final_val - predicted_score);
