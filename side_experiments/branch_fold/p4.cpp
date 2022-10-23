@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 	// 		if (flat_vals[2][0] == 1.0) {
 	// 			first_sum++;
 	// 			if (index == 0) {
-	// 				ndex_sum++;
+	// 				index_sum++;
 	// 			}
 	// 		}
 	// 		flat_vals[2][1] = rand()%2*2-1;

@@ -252,6 +252,9 @@ void Scope::activate(vector<vector<double>>& flat_vals,
 				local_state_vals.pop_back();
 				local_state_vals.push_back(new_scope);
 			}
+
+			// TODO: add score network (or constantly retrain score, or just full backprop)
+			// retrain score on fold
 		}
 	}
 
