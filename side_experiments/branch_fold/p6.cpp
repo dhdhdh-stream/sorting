@@ -14,8 +14,8 @@
  *   - 1 - 2: blank
  *   - 2 - 3: 1 which is val
  * 0 - 2: blank
- * 1 - 3: 1 which is 1st branch val
- * 2 - 2: 1 which is 2nd branch val
+ * 1 - 3: 1 which is 1st branch score modifier
+ * 2 - 2: 1 which is 2nd branch score modifier
  * 3 - 2: 1 which is shared val
  * 4 - 2: 1 which is shared score modifier
  * 5 - 2: blank
@@ -139,9 +139,7 @@ int main(int argc, char* argv[]) {
 
 	// 	flat_vals.push_back(vector<double>(3));
 	// 	flat_vals[10][0] = rand()%2*2-1;
-	// 	if (flat_vals[10][0] == 1.0) {
-	// 		first_val++;
-	// 	}
+	// 	first_score_modifier += flat_vals[10][0];
 	// 	flat_vals[10][1] = rand()%2*2-1;
 	// 	flat_vals[10][2] = rand()%2*2-1;
 
@@ -395,9 +393,7 @@ int main(int argc, char* argv[]) {
 
 			flat_vals.push_back(vector<double>(3));
 			flat_vals[10][0] = rand()%2*2-1;
-			if (flat_vals[10][0] == 1.0) {
-				first_val++;
-			}
+			first_score_modifier += flat_vals[10][0];
 			flat_vals[10][1] = rand()%2*2-1;
 			flat_vals[10][2] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {

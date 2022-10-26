@@ -12,7 +12,6 @@ void FoldNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
-	this->score_input = new Layer(LINEAR_LAYER, 1);
 
 	int sum_size = 0;
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
@@ -26,7 +25,6 @@ void FoldNetwork::construct() {
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}
-	this->hidden->input_layers.push_back(this->score_input);	// score_input at back for easier backprop
 	this->hidden->setup_weights_full();
 
 	this->output = new Layer(LINEAR_LAYER, 1);
@@ -95,7 +93,6 @@ FoldNetwork::~FoldNetwork() {
 	for (int sc_index = 0; sc_index < (int)this->state_inputs.size(); sc_index++) {
 		delete this->state_inputs[sc_index];
 	}
-	delete this->score_input;
 
 	delete this->hidden;
 	delete this->output;
@@ -183,8 +180,7 @@ void FoldNetwork::reset_last() {
 }
 
 void FoldNetwork::activate(vector<vector<double>>& flat_vals,
-						   vector<vector<double>>& state_vals,
-						   double predicted_score) {
+						   vector<vector<double>>& state_vals) {
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		if (this->fold_index >= f_index) {
 			for (int s_index = 0; s_index < this->flat_sizes[f_index]; s_index++) {
@@ -202,7 +198,6 @@ void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
 		}
 	}
-	this->score_input->acti_vals[0] = predicted_score;
 
 	this->hidden->activate();
 	this->output->activate();
@@ -210,7 +205,6 @@ void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 
 void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 						   vector<vector<double>>& state_vals,
-						   double predicted_score,
 						   vector<AbstractNetworkHistory*>& network_historys) {
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		if (this->fold_index >= f_index) {
@@ -229,7 +223,6 @@ void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
 		}
 	}
-	this->score_input->acti_vals[0] = predicted_score;
 
 	this->hidden->activate();
 	this->output->activate();
@@ -324,7 +317,6 @@ FoldNetworkHistory::FoldNetworkHistory(FoldNetwork* network) {
 		}
 	}
 
-	this->score_input_history = network->score_input->acti_vals[0];
 	this->state_inputs_historys.reserve(network->state_inputs.size());
 	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
 		this->state_inputs_historys.push_back(vector<double>(network->state_inputs[sc_index]->acti_vals.size()));
@@ -352,7 +344,6 @@ void FoldNetworkHistory::reset_weights() {
 		}
 	}
 
-	network->score_input->acti_vals[0] = this->score_input_history;
 	for (int sc_index = 0; sc_index < (int)network->state_inputs.size(); sc_index++) {
 		for (int st_index = 0; st_index < (int)network->state_inputs[sc_index]->acti_vals.size(); st_index++) {
 			network->state_inputs[sc_index]->acti_vals[st_index] = this->state_inputs_historys[sc_index][st_index];

@@ -202,12 +202,12 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 
 			this->sum_error += (target_val - predicted_score)*(target_val - predicted_score);
 
+			// predicted_score changes, so fold needs to be updated anyways
 			this->curr_fold->activate(flat_inputs,
-									  state_vals,
-									  predicted_score);
+									  state_vals);
 
 			vector<double> errors;
-			errors.push_back(target_val - this->curr_fold->output->acti_vals[0]);
+			errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 
 			this->curr_fold->backprop(errors, 0.002);
 
@@ -272,11 +272,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 
 			if (this->state == STATE_OBS) {
 				this->test_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
 				vector<double> errors;
-				errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
+				errors.push_back((target_val-predicted_score) - this->test_fold->output->acti_vals[0]);
 				this->sum_error += errors[0]*errors[0];
 
 				if (this->stage_iter <= 240000) {
@@ -305,11 +304,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			} else if (this->state == STATE_COMPRESS_STATE
 					|| this->state == STATE_COMPRESS_SCOPE) {
 				this->test_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
 				vector<double> errors;
-				errors.push_back(target_val - this->test_fold->output->acti_vals[0]);
+				errors.push_back((target_val-predicted_score) - this->test_fold->output->acti_vals[0]);
 				this->sum_error += errors[0]*errors[0];
 
 				if (this->stage_iter <= 240000) {
@@ -337,11 +335,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 				}
 			} else if (this->state == STATE_COMPRESS_INPUT) {
 				this->curr_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
 				vector<double> errors;
-				errors.push_back(target_val - this->curr_fold->output->acti_vals[0]);
+				errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 				this->sum_error += errors[0]*errors[0];
 
 				this->curr_fold->backprop_last_state_with_no_weight_change(errors);
@@ -392,11 +389,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			} else {
 				// this->state == STATE_COMPRESS_SMALL
 				this->curr_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
 				vector<double> errors;
-				errors.push_back(target_val - this->curr_fold->output->acti_vals[0]);
+				errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 				this->sum_error += errors[0]*errors[0];
 
 				if (this->stage_iter <= 240000) {
@@ -426,17 +422,15 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					|| this->state == STATE_COMPRESS_STATE
 					|| this->state == STATE_COMPRESS_SCOPE) {
 				this->test_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
-				this->sum_error += (target_val - this->test_fold->output->acti_vals[0])*(target_val - this->test_fold->output->acti_vals[0]);
+				this->sum_error += ((target_val-predicted_score) - this->test_fold->output->acti_vals[0])*((target_val-predicted_score) - this->test_fold->output->acti_vals[0]);
 			} else {
 				// STATE_COMPRESS_STATE or STATE_COMPRESS_SCOPE
 				this->curr_fold->activate(flat_inputs,
-										  state_vals,
-										  predicted_score);
+										  state_vals);
 
-				this->sum_error += (target_val - this->curr_fold->output->acti_vals[0])*(target_val - this->curr_fold->output->acti_vals[0]);
+				this->sum_error += ((target_val-predicted_score) - this->curr_fold->output->acti_vals[0])*((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 			}
 		} else {
 			// this->stage == STAGE_TUNE
@@ -445,11 +439,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			}
 
 			this->curr_fold->activate(flat_inputs,
-									  state_vals,
-									  predicted_score);
+									  state_vals);
 
 			vector<double> errors;
-			errors.push_back(target_val - this->curr_fold->output->acti_vals[0]);
+			errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 			sum_error += errors[0]*errors[0];
 
 			this->curr_fold->backprop(errors, 0.002);

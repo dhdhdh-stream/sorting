@@ -11,14 +11,12 @@
 class FoldNetwork : public AbstractNetwork {
 public:
 	std::vector<int> flat_sizes;
+	std::vector<Layer*> flat_inputs;
 
 	int fold_index;
 
-	std::vector<Layer*> flat_inputs;
-
 	std::vector<int> scope_sizes;
 	std::vector<Layer*> state_inputs;
-	Layer* score_input;
 
 	Layer* hidden;
 	Layer* output;
@@ -44,11 +42,9 @@ public:
 	void pop_scope();
 	void reset_last();
 	void activate(std::vector<std::vector<double>>& flat_inputs,
-				  std::vector<std::vector<double>>& state_vals,
-				  double predicted_score);
+				  std::vector<std::vector<double>>& state_vals);
 	void activate(std::vector<std::vector<double>>& flat_inputs,
 				  std::vector<std::vector<double>>& state_vals,
-				  double predicted_score,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
@@ -67,7 +63,6 @@ class FoldNetworkHistory : public AbstractNetworkHistory {
 public:
 	std::vector<std::vector<double>> flat_inputs_historys;
 
-	double score_input_history;
 	std::vector<std::vector<double>> state_inputs_historys;
 
 	std::vector<double> hidden_history;

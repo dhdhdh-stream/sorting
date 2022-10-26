@@ -51,6 +51,9 @@ public:
 	void backprop(std::vector<std::vector<double>>& state_errors,
 				  double& predicted_score,
 				  double target_val);
+	void backprop_errors_with_no_weight_change(std::vector<std::vector<double>>& state_errors,
+											   double& predicted_score,
+											   double target_val);
 
 	void get_scope_sizes(std::vector<int>& scope_sizes);
 

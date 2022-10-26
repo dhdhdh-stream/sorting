@@ -351,33 +351,28 @@ void Layer::backprop_weights_with_no_error_signal() {
 }
 
 void Layer::fold_add_scope(Layer* new_scope_input) {
-	int last_state_index = (int)this->input_layers.size()-1;	// last input is score
-
-	this->input_layers.insert(this->input_layers.begin()+last_state_index, new_scope_input);
+	this->input_layers.push_back(new_scope_input);
 
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		int layer_size = (int)new_scope_input->acti_vals.size();
 
 		vector<double> layer_weights;
 		vector<double> layer_weight_updates;
-
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 			layer_weights.push_back((randuni()-0.5)*0.02);
 			layer_weight_updates.push_back(0.0);
 		}
-		this->weights[n_index].insert(this->weights[n_index].begin()+last_state_index, layer_weights);
-		this->weight_updates[n_index].insert(this->weight_updates[n_index].begin()+last_state_index, layer_weight_updates);
+		this->weights[n_index].push_back(layer_weights);
+		this->weight_updates[n_index].push_back(layer_weight_updates);
 	}
 }
 
 void Layer::fold_pop_scope() {
-	int last_state_index = (int)this->input_layers.size()-2;	// last input is score
-
-	this->input_layers.erase(this->input_layers.begin() + last_state_index);
+	this->input_layers.pop_back();
 
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index].erase(this->weights[n_index].begin() + last_state_index);
-		this->weight_updates[n_index].erase(this->weight_updates[n_index].begin() + last_state_index);
+		this->weights[n_index].pop_back();
+		this->weight_updates[n_index].pop_back();
 	}
 }
 
@@ -398,11 +393,10 @@ void Layer::fold_backprop_last_state(int state_size) {
 		}
 
 		if (state_size > 0) {
-			int last_state_index = (int)this->input_layers.size()-2;	// last input is score
-			int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
+			int layer_size = (int)this->input_layers.back()->acti_vals.size();
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				this->input_layers[last_state_index]->errors[ln_index] +=
-					this->errors[n_index]*this->weights[n_index][last_state_index][ln_index];
+				this->input_layers.back()->errors[ln_index] +=
+					this->errors[n_index]*this->weights[n_index].back()[ln_index];
 			}
 		}
 
@@ -412,16 +406,15 @@ void Layer::fold_backprop_last_state(int state_size) {
 
 void Layer::fold_backprop_last_state_with_no_weight_change() {
 	// this->type == LEAKY_LAYER
-	int last_state_index = (int)this->input_layers.size()-2;	// last input is score
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		if (this->acti_vals[n_index] < 0.0) {
 			this->errors[n_index] *= 0.01;
 		}
 
-		int layer_size = (int)this->input_layers[last_state_index]->acti_vals.size();
+		int layer_size = (int)this->input_layers.back()->acti_vals.size();
 		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			this->input_layers[last_state_index]->errors[ln_index] +=
-				this->errors[n_index]*this->weights[n_index][last_state_index][ln_index];
+			this->input_layers.back()->errors[ln_index] +=
+				this->errors[n_index]*this->weights[n_index].back()[ln_index];
 		}
 
 		this->errors[n_index] = 0.0;
