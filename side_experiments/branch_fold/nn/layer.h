@@ -43,20 +43,31 @@ public:
 
 	void fold_add_scope(Layer* new_scope_input);
 	void fold_pop_scope();
-	void fold_backprop_last_state(int state_size);
+	void fold_activate(int fold_index);
+	void fold_backprop_last_state(int fold_index,
+								  int state_size);
 	void fold_backprop_last_state_with_no_weight_change();
-	void fold_add_state(int layer,
-						int num_state);
+	void fold_get_max_update(int fold_index,
+							 double& max_update_size);
+	void fold_update_weights(int fold_index,
+							 double learning_rate);
+	// void fold_add_state(int layer,
+	// 					int num_state);
 
-	void subfold_add_state(int layer,
-						   int num_state);
-	void subfold_backprop_new_state(int fold_index,
-									int layer,
-									int new_input_size);
-	void subfold_backprop(int fold_index);
+	void subfold_add_s_input(int layer,
+							 int num_state);
+	void subfold_activate(int fold_index,
+						  int num_layers);
+	void subfold_backprop_new_s_input(int fold_index,
+									  int num_layers,
+									  int layer,
+									  int new_input_size);
+	// void subfold_backprop(int fold_index);
 	void subfold_get_max_update(int fold_index,
+								int num_layers,
 								double& max_update_size);
 	void subfold_update_weights(int fold_index,
+								int num_layers,
 								double learning_rate);
 };
 

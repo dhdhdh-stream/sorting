@@ -34,13 +34,17 @@ public:
 	int stage_iter;
 	double sum_error;
 
+	double new_state_factor;
+
 	double best_sum_error;
 	double tune_try;
 
 	std::vector<int> curr_scope_sizes;
+	std::vector<int> curr_s_input_sizes;
 	FoldNetwork* curr_fold;
 
 	std::vector<int> test_scope_sizes;
+	std::vector<int> test_s_input_sizes;
 	FoldNetwork* test_fold;
 
 	int new_layer_size;
@@ -51,22 +55,23 @@ public:
 	SubFoldNetwork* test_score_network;
 	std::vector<int> score_input_layer;
 	std::vector<int> score_input_sizes;
-	std::vector<Network*> score_input_networks;
-	// zero inputs layer by layer, starting from last to most recent, to determine inputs needed?
-	Network* small_score_network;
+	std::vector<SmallNetwork*> score_input_networks;
+	SmallNetwork* small_score_network;
 
 	SubFoldNetwork* curr_compression_network;
 	int compress_size;
 	int compress_num_layers;
 	int compress_new_size;
 	std::vector<int> compressed_scope_sizes;
+	std::vector<int> compressed_s_input_sizes;
 	SubFoldNetwork* test_compression_network;
-	std::vector<int> input_layer;	// take from this, and update +1
+	std::vector<int> input_layer;
 	std::vector<int> input_sizes;
-	std::vector<Network*> input_networks;
+	std::vector<SmallNetwork*> input_networks;
 	Network* small_compression_network;
 
 	TestNode(std::vector<int> initial_scope_sizes,
+			 std::vector<int> initial_s_input_sizes,
 			 FoldNetwork* original_fold,
 			 int obs_size,
 			 double max_allowable_error,
@@ -74,6 +79,7 @@ public:
 	~TestNode();
 
 	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<std::vector<double>>& s_input_vals,
 				  std::vector<double>& obs,
 				  double& predicted_score);
 	void process(std::vector<std::vector<double>>& flat_inputs,

@@ -11,25 +11,19 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: p6 p6_test_result p6_branch_front p6_through_back
+all: p7
 
-p6: ${OBJECTS} p6.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p6.o -o p6 ${LIBS}
+p7: ${OBJECTS} p7.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p7.o -o p7 ${LIBS}
 
-p6_test_result: ${OBJECTS} p6_test_result.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p6_test_result.o -o p6_test_result ${LIBS}
+# p7_measure_weight: ${OBJECTS} p7_measure_weight.o
+# 	${CXX} ${CXXFLAGS} ${OBJECTS} p7_measure_weight.o -o p7_measure_weight ${LIBS}
 
-p6_branch_front: ${OBJECTS} p6_branch_front.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p6_branch_front.o -o p6_branch_front ${LIBS}
+# p7_test_result: ${OBJECTS} p7_test_result.o
+# 	${CXX} ${CXXFLAGS} ${OBJECTS} p7_test_result.o -o p7_test_result ${LIBS}
 
-p6_through_back: ${OBJECTS} p6_through_back.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p6_through_back.o -o p6_through_back ${LIBS}
-
--include ${DEPENDS} p6.d p6_test_result.d p6_branch_front.d p6_through_back.d
+-include ${DEPENDS} p7.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	p6.o p6.d p6 \
-	p6_test_result.o p6_test_result.d p6_test_result \
-	p6_branch_front.o p6_branch_front.d p6_branch_front \
-	p6_through_back.o p6_through_back.d p6_through_back
+	p7.o p7.d p7

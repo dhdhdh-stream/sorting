@@ -50,8 +50,8 @@ public:
 							 double target_max_update);
 	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
 
-	void add_state(int layer,
-				   int num_state);
+	// void add_state(int layer,
+	// 			   int num_state);
 
 	void save(std::ofstream& output_file);
 

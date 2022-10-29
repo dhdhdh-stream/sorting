@@ -6,6 +6,7 @@
 using namespace std;
 
 TestNode::TestNode(vector<int> initial_scope_sizes,
+				   vector<int> initial_s_input_sizes,
 				   FoldNetwork* original_fold,
 				   int obs_size,
 				   double max_allowable_error,
@@ -15,9 +16,11 @@ TestNode::TestNode(vector<int> initial_scope_sizes,
 	this->max_needed_error = max_needed_error;
 
 	this->curr_scope_sizes = initial_scope_sizes;
+	this->curr_s_input_sizes = initial_s_input_sizes;
 	this->curr_fold = new FoldNetwork(original_fold);
 
 	this->test_scope_sizes = this->curr_scope_sizes;
+	// leave test_s_input_sizes empty
 	this->test_fold = new FoldNetwork(this->curr_fold);
 	this->test_fold->fold_index++;
 
@@ -38,6 +41,7 @@ TestNode::TestNode(vector<int> initial_scope_sizes,
 	this->stage = STAGE_LEARN;
 	this->stage_iter = 0;
 	this->sum_error = 0.0;
+	this->new_state_factor = 100;
 }
 
 TestNode::~TestNode() {
@@ -45,28 +49,56 @@ TestNode::~TestNode() {
 }
 
 void TestNode::activate(vector<vector<double>>& state_vals,
+						vector<vector<double>>& s_input_vals,
 						vector<double>& obs,
 						double& predicted_score) {
 	if (this->new_layer_size > 0) {
 		this->obs_network->activate(obs);
 		state_vals.push_back(vector<double>(this->new_layer_size));
-		for (int s_index = 0; s_index < this->new_layer_size; s_index++) {
-			state_vals.back()[s_index] = this->obs_network->output->acti_vals[s_index];
+		s_input_vals.push_back(vector<double>());
+		if (this->state == STATE_OBS && this->stage == STAGE_LEARN) {
+			for (int s_index = 0; s_index < this->new_layer_size; s_index++) {
+				state_vals.back()[s_index] = this->new_state_factor*this->obs_network->output->acti_vals[s_index];
+			}
+		} else {
+			for (int s_index = 0; s_index < this->new_layer_size; s_index++) {
+				state_vals.back()[s_index] = this->obs_network->output->acti_vals[s_index];
+			}
 		}
 
-		for (int i_index = 0; i_index < (int)this->score_input_networks.size(); i_index++) {
-			this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]]);
-			for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-				state_vals[this->score_input_layer[i_index]+1].push_back(
-					this->score_input_networks[i_index]->output->acti_vals[s_index]);
+		if (this->score_input_networks.size() > 0) {
+			for (int i_index = 0; i_index < (int)this->score_input_networks.size()-1; i_index++) {
+				this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]],
+															  s_input_vals[this->score_input_layer[i_index]]);
+				for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
+					s_input_vals[this->score_input_layer[i_index]+1].push_back(
+						this->score_input_networks[i_index]->output->acti_vals[s_index]);
+				}
+			}
+			if (this->state == STATE_SCORE_INPUT && this->stage == STAGE_LEARN) {
+				this->score_input_networks.back()->activate(state_vals[this->score_input_layer.back()],
+															s_input_vals[this->score_input_layer.back()]);
+				for (int s_index = 0; s_index < this->score_input_sizes.back(); s_index++) {
+					s_input_vals[this->score_input_layer.back()+1].push_back(
+						this->new_state_factor*this->score_input_networks.back()->output->acti_vals[s_index]);
+				}
+			} else {
+				this->score_input_networks.back()->activate(state_vals[this->score_input_layer.back()],
+															s_input_vals[this->score_input_layer.back()]);
+				for (int s_index = 0; s_index < this->score_input_sizes.back(); s_index++) {
+					s_input_vals[this->score_input_layer.back()+1].push_back(
+						this->score_input_networks.back()->output->acti_vals[s_index]);
+				}
 			}
 		}
 
 		if (this->state >= STATE_SCORE_SMALL) {
-			this->small_score_network->activate(state_vals.back());
+			this->small_score_network->activate(state_vals.back(),
+												s_input_vals.back());
 			predicted_score += this->small_score_network->output->acti_vals[0];
 		} else if (this->state >= STATE_SCORE) {
-			this->test_score_network->activate(state_vals);
+			this->test_score_network->activate(state_vals,
+											   s_input_vals);
 			predicted_score += this->test_score_network->output->acti_vals[0];
 		}
 
@@ -74,13 +106,32 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 			if (this->compress_new_size == 0) {
 				for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 					state_vals.pop_back();
+					s_input_vals.pop_back();
 				}
 			} else {
-				for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
-					this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]]);
-					for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-						state_vals[this->input_layer[i_index]+1].push_back(
-							this->input_networks[i_index]->output->acti_vals[s_index]);
+				if (this->input_networks.size() > 0) {
+					for (int i_index = 0; i_index < (int)this->input_networks.size()-1; i_index++) {
+						this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]],
+																s_input_vals[this->input_layer[i_index]]);
+						for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
+							s_input_vals[this->input_layer[i_index]+1].push_back(
+								this->input_networks[i_index]->output->acti_vals[s_index]);
+						}
+					}
+					if (this->state == STATE_COMPRESS_INPUT && this->stage == STAGE_LEARN) {
+						this->input_networks.back()->activate(state_vals[this->input_layer.back()],
+															  s_input_vals[this->input_layer.back()]);
+						for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
+							s_input_vals[this->input_layer.back()+1].push_back(
+								this->new_state_factor*this->input_networks.back()->output->acti_vals[s_index]);
+						}
+					} else {
+						this->input_networks.back()->activate(state_vals[this->input_layer.back()],
+															  s_input_vals[this->input_layer.back()]);
+						for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
+							s_input_vals[this->input_layer.back()+1].push_back(
+								this->input_networks.back()->output->acti_vals[s_index]);
+						}
 					}
 				}
 
@@ -90,27 +141,41 @@ void TestNode::activate(vector<vector<double>>& state_vals,
 						for (int st_index = 0; st_index < (int)state_vals[l_index].size(); st_index++) {
 							compression_inputs.push_back(state_vals[l_index][st_index]);
 						}
+						for (int st_index = 0; st_index < (int)s_input_vals[l_index].size(); st_index++) {
+							compression_inputs.push_back(s_input_vals[l_index][st_index]);
+						}
 					}
 					this->small_compression_network->activate(compression_inputs);
 
 					for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 						state_vals.pop_back();
+						s_input_vals.pop_back();
 					}
 					state_vals.push_back(vector<double>(this->compress_new_size));
+					s_input_vals.push_back(vector<double>());
 
 					for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
 						state_vals.back()[st_index] = this->small_compression_network->output->acti_vals[st_index];
 					}
 				} else if (this->state >= STATE_COMPRESS_STATE) {
-					this->test_compression_network->activate(state_vals);
+					this->test_compression_network->activate(state_vals,
+															 s_input_vals);
 
 					for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 						state_vals.pop_back();
+						s_input_vals.pop_back();
 					}
 					state_vals.push_back(vector<double>(this->compress_new_size));
+					s_input_vals.push_back(vector<double>());
 
-					for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
-						state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
+					if ((this->state == STATE_COMPRESS_STATE || this->state == STATE_COMPRESS_SCOPE) && this->stage == STAGE_LEARN) {
+						for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+							state_vals.back()[st_index] = this->new_state_factor*this->test_compression_network->output->acti_vals[st_index];
+						}
+					} else {
+						for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
+							state_vals.back()[st_index] = this->test_compression_network->output->acti_vals[st_index];
+						}
 					}
 				}
 			}
@@ -158,13 +223,13 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					}
 				} else {
 					if (this->stage_iter <= 240000) {
-						this->test_score_network->backprop_new_state(
+						this->test_score_network->backprop_new_s_input(
 							this->score_input_layer.back()+1,
 							this->score_input_sizes.back(),
 							score_errors,
 							0.01);
 					} else {
-						this->test_score_network->backprop_new_state(
+						this->test_score_network->backprop_new_s_input(
 							this->score_input_layer.back()+1,
 							this->score_input_sizes.back(),
 							score_errors,
@@ -172,10 +237,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					}
 					vector<double> input_errors;
 					input_errors.reserve(this->score_input_sizes.back());
-					int layer_size = (int)this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors.size();
+					int layer_size = (int)this->test_score_network->s_input_inputs[this->score_input_layer.back()+1]->errors.size();
 					for (int st_index = layer_size-this->score_input_sizes.back(); st_index < layer_size; st_index++) {
-						input_errors.push_back(this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index]);
-						this->test_score_network->state_inputs[this->score_input_layer.back()+1]->errors[st_index] = 0.0;
+						input_errors.push_back(this->test_score_network->s_input_inputs[this->score_input_layer.back()+1]->errors[st_index]);
+						this->test_score_network->s_input_inputs[this->score_input_layer.back()+1]->errors[st_index] = 0.0;
 					}
 					if (this->stage_iter <= 240000) {
 						this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
@@ -219,6 +284,11 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 				}
 			}
+			vector<vector<double>> s_input_errors;
+			s_input_errors.reserve(this->curr_s_input_sizes.size());
+			for (int sc_index = 0; sc_index < (int)this->curr_s_input_sizes.size(); sc_index++) {
+				s_input_errors.push_back(this->curr_s_input_sizes[sc_index], 0.0);
+			}
 			double score_error = target_val - predicted_score;
 
 			vector<double> score_errors{score_error};
@@ -230,13 +300,23 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 						this->test_score_network->state_inputs[sc_index]->errors[st_index] = 0.0;
 					}
 				}
+				for (int sc_index = this->test_score_network->fold_index+1; sc_index < (int)s_input_errors.size(); sc_index++) {
+					for (int st_index = 0; st_index < (int)s_input_errors[sc_index].size(); st_index++) {
+						s_input_errors[sc_index][st_index] += this->test_score_network->s_input_inputs[sc_index]->errors[st_index];
+						this->test_score_network->s_input_inputs[sc_index]->errors[st_index] = 0.0;
+					}
+				}
 				predicted_score -= this->test_score_network->output->acti_vals[0];
 			} else {
 				// this->state == STATE_SCORE_SMALL
 				this->small_score_network->backprop(score_errors, 0.002);
 				for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-					state_errors.back()[st_index] += this->small_score_network->input->errors[st_index];
-					this->small_score_network->input->errors[st_index] = 0.0;
+					state_errors.back()[st_index] += this->small_score_network->state_input->errors[st_index];
+					this->small_score_network->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
+					s_input_errors.back()[st_index] += this->small_score_network->s_input_input->errors[st_index];
+					this->small_score_network->s_input_input->errors[st_index] = 0.0;
 				}
 				predicted_score -= this->small_score_network->output->acti_vals[0];
 			}
@@ -244,21 +324,27 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 				vector<double> score_input_errors(this->score_input_sizes[i_index]);
 				for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-					score_input_errors[this->score_input_sizes[i_index]-1-s_index] = state_errors[this->score_input_layer[i_index]+1].back();
-					state_errors[this->score_input_layer[i_index]+1].pop_back();
+					score_input_errors[this->score_input_sizes[i_index]-1-s_index] = s_input_errors[this->score_input_layer[i_index]+1].back();
+					s_input_errors[this->score_input_layer[i_index]+1].pop_back();
 				}
 				this->score_input_networks[i_index]->backprop(score_input_errors, 0.002);
 				for (int st_index = 0; st_index < (int)state_errors[this->score_input_layer[i_index]].size(); st_index++) {
-					state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->input->errors[st_index];
-					this->score_input_networks[i_index]->input->errors[st_index] = 0.0;
+					state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->state_input->errors[st_index];
+					this->score_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[this->score_input_layer[i_index]].size(); st_index++) {
+					s_input_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->s_input_input->errors[st_index];
+					this->score_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 				}
 			}
 
 			this->obs_network->backprop_weights_with_no_error_signal(state_errors.back(), 0.002);
 			state_errors.pop_back();
+			s_input_errors.pop_back();
 
 			for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
 				nodes[n_index]->backprop(state_errors,
+										 s_input_errors,
 										 predicted_score,
 										 target_val);
 			}
@@ -375,10 +461,10 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					}
 					vector<double> input_errors;
 					input_errors.reserve(this->input_sizes.back());
-					int layer_size = (int)this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors.size();
+					int layer_size = (int)this->test_compression_network->s_input_inputs[this->input_layer.back()+1]->errors.size();
 					for (int st_index = layer_size-this->input_sizes.back(); st_index < layer_size; st_index++) {
-						input_errors.push_back(this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index]);
-						this->test_compression_network->state_inputs[this->input_layer.back()+1]->errors[st_index] = 0.0;
+						input_errors.push_back(this->test_compression_network->s_input_inputs[this->input_layer.back()+1]->errors[st_index]);
+						this->test_compression_network->s_input_inputs[this->input_layer.back()+1]->errors[st_index] = 0.0;
 					}
 					if (this->stage_iter <= 240000) {
 						this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
@@ -455,20 +541,28 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 					this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 				}
 			}
+			vector<vector<double>> s_input_errors;
+			s_input_errors.reserve(this->curr_s_input_sizes.size());
+			for (int sc_index = 0; sc_index < (int)this->curr_s_input_sizes.size(); sc_index++) {
+				s_input_errors.push_back(this->curr_s_input_sizes[sc_index], 0.0);
+			}
 			double score_error = target_val - predicted_score;
 
 			if (this->compress_num_layers > 0) {
 				if (this->compress_new_size == 0) {
 					for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 						state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+						s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 					}
 				} else {
 					if (this->state == STATE_COMPRESS_INPUT) {
 						this->test_compression_network->backprop(state_errors.back(), 0.002);
 
 						state_errors.pop_back();
+						s_input_errors.pop_back();
 						for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 							state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+							s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 						}
 
 						for (int sc_index = this->test_compression_network->fold_index+1; sc_index < (int)state_errors.size(); sc_index++) {
@@ -477,13 +571,21 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 								this->test_compression_network->state_inputs[sc_index]->errors[st_index] = 0.0;
 							}
 						}
+						for (int sc_index = this->test_compression_network->fold_index+1; sc_index < (int)s_input_errors.size(); sc_index++) {
+							for (int st_index = 0; st_index < (int)s_input_errors[sc_index].size(); st_index++) {
+								s_input_errors[sc_index][st_index] += this->test_compression_network->s_input_inputs[sc_index]->errors[st_index];
+								this->test_compression_network->s_input_inputs[sc_index]->errors[st_index] = 0.0;
+							}
+						}
 					} else {
 						// this->state == STATE_FINAL_TUNE
 						this->small_compression_network->backprop(state_errors.back(), 0.002);
 
 						state_errors.pop_back();
+						s_input_errors.pop_back();
 						for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 							state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+							s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 						}
 
 						int input_index = 0;
@@ -493,19 +595,28 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 								this->small_compression_network->input->errors[input_index] = 0.0;
 								input_index++;
 							}
+							for (int st_index = 0; st_index < (int)s_input_errors[l_index].size(); st_index++) {
+								s_input_errors[l_index][st_index] += this->compression_network->input->errors[input_index];
+								this->compression_network->input->errors[input_index] = 0.0;
+								input_index++;
+							}
 						}
 					}
 
 					for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
 						vector<double> input_errors(this->input_sizes[i_index]);
 						for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-							input_errors[this->input_sizes[i_index]-1-s_index] = state_errors[this->input_layer[i_index]+1].back();
-							state_errors[this->input_layer[i_index]+1].pop_back();
+							input_errors[this->input_sizes[i_index]-1-s_index] = s_input_errors[this->input_layer[i_index]+1].back();
+							s_input_errors[this->input_layer[i_index]+1].pop_back();
 						}
 						this->input_networks[i_index]->backprop(input_errors, 0.002);
 						for (int st_index = 0; st_index < (int)state_errors[this->input_layer[i_index]].size(); st_index++) {
-							state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->input->errors[st_index];
-							this->input_networks[i_index]->input->errors[st_index] = 0.0;
+							state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->state_input->errors[st_index];
+							this->input_networks[i_index]->state_input->errors[st_index] = 0.0;
+						}
+						for (int st_index = 0; st_index < (int)s_input_errors[this->input_layer[i_index]].size(); st_index++) {
+							s_input_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->s_input_input->errors[st_index];
+							this->input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 						}
 					}
 				}
@@ -514,29 +625,39 @@ void TestNode::process(vector<vector<double>>& flat_inputs,
 			vector<double> score_errors{score_error};
 			this->small_score_network->backprop(score_errors, 0.002);
 			for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-				state_errors.back()[st_index] += this->small_score_network->input->errors[st_index];
-				this->small_score_network->input->errors[st_index] = 0.0;
+				state_errors.back()[st_index] += this->small_score_network->state_input->errors[st_index];
+				this->small_score_network->state_input->errors[st_index] = 0.0;
+			}
+			for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
+				s_input_errors.back()[st_index] += this->small_score_network->s_input_input->errors[st_index];
+				this->small_score_network->s_input_input->errors[st_index] = 0.0;
 			}
 			predicted_score -= this->small_score_network->output->acti_vals[0];
 
 			for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 				vector<double> score_input_errors(this->score_input_sizes[i_index]);
 				for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-					score_input_errors[this->score_input_sizes[i_index]-1-s_index] = state_errors[this->score_input_layer[i_index]+1].back();
-					state_errors[this->score_input_layer[i_index]+1].pop_back();
+					score_input_errors[this->score_input_sizes[i_index]-1-s_index] = s_input_errors[this->score_input_layer[i_index]+1].back();
+					s_input_errors[this->score_input_layer[i_index]+1].pop_back();
 				}
 				this->score_input_networks[i_index]->backprop(score_input_errors, 0.002);
 				for (int st_index = 0; st_index < (int)state_errors[this->score_input_layer[i_index]].size(); st_index++) {
-					state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->input->errors[st_index];
-					this->score_input_networks[i_index]->input->errors[st_index] = 0.0;
+					state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->state_input->errors[st_index];
+					this->score_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[this->score_input_layer[i_index]].size(); st_index++) {
+					s_input_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->s_input_input->errors[st_index];
+					this->score_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 				}
 			}
 
 			this->obs_network->backprop_weights_with_no_error_signal(state_errors.back(), 0.002);
 			state_errors.pop_back();
+			s_input_errors.pop_back();
 
 			for (int n_index = (int)nodes.size()-1; n_index >= 0; n_index--) {
 				nodes[n_index]->backprop(state_errors,
+										 s_input_errors,
 										 predicted_score,
 										 target_val);
 			}
@@ -551,6 +672,12 @@ void TestNode::increment() {
 
 	if (this->state == STATE_OBS
 			&& this->stage == STAGE_LEARN) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 10;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
 		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_OBS-STAGE_LEARN" << endl;
 			cout << "starting STATE_OBS-STAGE_MEASURE" << endl;
@@ -566,6 +693,7 @@ void TestNode::increment() {
 			if (this->sum_error/10000 < this->max_allowable_error
 					|| this->new_layer_size == this->obs_size) {
 				this->curr_scope_sizes = this->test_scope_sizes;
+				// no change to curr_s_input_sizes
 
 				delete this->curr_fold;
 				this->curr_fold = this->test_fold;
@@ -582,7 +710,9 @@ void TestNode::increment() {
 					cout << "error: " << this->sum_error/10000 << endl;
 					cout << "starting STATE_SCORE-STAGE_LEARN" << endl;
 
-					this->test_score_network = new SubFoldNetwork(this->curr_scope_sizes, 1);
+					this->test_score_network = new SubFoldNetwork(this->curr_scope_sizes,
+																  this->curr_s_input_sizes,
+																  1);
 
 					this->state = STATE_SCORE;
 					this->stage = STAGE_LEARN;
@@ -598,6 +728,7 @@ void TestNode::increment() {
 
 				this->test_scope_sizes = this->curr_scope_sizes;
 				this->test_scope_sizes.push_back(this->new_layer_size);
+				// no change to s_input_sizes
 
 				delete this->test_fold;
 				this->test_fold = new FoldNetwork(this->curr_fold);
@@ -615,6 +746,7 @@ void TestNode::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 100;
 			}
 		}
 	} else if (this->state == STATE_SCORE
@@ -639,10 +771,11 @@ void TestNode::increment() {
 				cout << "starting STATE_SCORE_SMALL-STAGE_LEARN" << endl;
 
 				delete this->curr_score_network;
-				int input_size = this->curr_scope_sizes.back();
-				this->small_score_network = new Network(input_size,
-														10*input_size,
-														1);
+				int input_size = this->curr_scope_sizes.back()+this->curr_s_input_sizes.back();
+				this->small_score_network = new SmallNetwork(this->curr_scope_sizes.back(),
+															 this->curr_s_input_sizes.back(),
+															 10*input_size,
+															 1);
 
 				this->state = STATE_SCORE_SMALL;
 				this->stage = STAGE_LEARN;
@@ -662,10 +795,17 @@ void TestNode::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 100;
 			}
 		}
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_LEARN) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 10;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
 		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_SCORE_INPUT-STAGE_LEARN" << endl;
 			cout << "starting STATE_SCORE_INPUT-STAGE_MEASURE" << endl;
@@ -678,8 +818,16 @@ void TestNode::increment() {
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_MEASURE) {
 		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < this->average_misguess+this->max_allowable_error
-					|| (this->score_input_networks.size() > 0 && this->score_input_sizes.back() == this->curr_scope_sizes[this->score_input_layer.back()])) {
+			double margin;
+			if (0.01*this->average_misguess > this->max_allowable_error) {
+				margin = 0.01*this->average_misguess;
+			} else {
+				margin = this->max_allowable_error;
+			}
+			if (this->sum_error/10000 < this->average_misguess + margin
+					|| (this->score_input_networks.size() > 0
+						&& this->score_input_sizes.back() == (this->curr_scope_sizes[this->score_input_layer.back()]
+							+ this->curr_s_input_sizes[this->score_input_layer.back()]))) {
 				cout << "ending STATE_SCORE_INPUT-STAGE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_SCORE_INPUT-STAGE_TUNE" << endl;
@@ -707,20 +855,22 @@ void TestNode::increment() {
 					this->score_input_layer.push_back(this->test_score_network->fold_index);
 					this->score_input_sizes.push_back(1);
 				}
-				int input_size = this->curr_scope_sizes[this->test_score_network->fold_index];
-				this->score_input_networks.push_back(new Network(input_size,
-																 10*input_size,
-																 this->score_input_sizes.back()));
-				this->test_score_network->add_state(this->test_score_network->fold_index+1,
-													this->score_input_sizes.back());
-				// add to curr_fold permanently 1 at a time
-				this->curr_scope_sizes[this->test_score_network->fold_index+1]++;
-				this->curr_fold->add_state(this->test_score_network->fold_index+1, 1);
+				int input_size = this->curr_scope_sizes[this->test_score_network->fold_index]
+					+ this->curr_s_input_sizes[this->test_score_network->fold_index];
+				this->score_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_score_network->fold_index],
+																	  this->curr_s_input_sizes[this->test_score_network->fold_index],
+																	  10*input_size,
+																	  this->score_input_sizes.back()));
+				this->test_score_network->add_s_input(this->test_score_network->fold_index+1,
+													  this->score_input_sizes.back());
+				// add to curr_s_input_sizes permanently 1 at a time
+				this->curr_s_input_sizes[this->test_score_network->fold_index+1]++;
 
 				this->state = STATE_SCORE_INPUT;
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 100;
 			}
 		}
 	} else if (this->state == STATE_SCORE_INPUT
@@ -761,10 +911,11 @@ void TestNode::increment() {
 					cout << "starting STATE_SCORE_SMALL-STAGE_LEARN" << endl;
 
 					delete this->curr_score_network;
-					int input_size = this->curr_scope_sizes.back();
-					this->small_score_network = new Network(input_size,
-															10*input_size,
-															1);
+					int input_size = this->curr_scope_sizes.back()+this->curr_s_input_sizes.back();
+					this->small_score_network = new SmallNetwork(this->curr_scope_sizes.back(),
+																 this->curr_s_input_sizes.back(),
+																 10*input_size,
+																 1);
 
 					this->state = STATE_SCORE_SMALL;
 					this->stage = STAGE_LEARN;
@@ -781,21 +932,23 @@ void TestNode::increment() {
 					if (this->score_input_networks.size() > 0) {
 						this->score_input_layer.push_back(this->test_score_network->fold_index);
 						this->score_input_sizes.push_back(1);
-						int input_size = this->curr_scope_sizes[this->test_score_network->fold_index];
-						this->score_input_networks.push_back(new Network(input_size,
-																		 10*input_size,
-																		 1));
-						this->test_score_network->add_state(this->test_score_network->fold_index+1,
-															1);
-						// add to curr_fold permanently 1 at a time
-						this->curr_scope_sizes[this->test_score_network->fold_index+1]++;
-						this->curr_fold->add_state(this->test_score_network->fold_index+1, 1);
+						int input_size = this->curr_scope_sizes[this->test_score_network->fold_index]
+							+ this->curr_s_input_sizes[this->test_score_network->fold_index];
+						this->score_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_score_network->fold_index],
+																			  this->curr_s_input_sizes[this->test_score_network->fold_index],
+																			  10*input_size,
+																			  1));
+						this->test_score_network->add_s_input(this->test_score_network->fold_index+1,
+															  1);
+						// add to curr_s_input_sizes permanently 1 at a time
+						this->curr_s_input_sizes[this->test_score_network->fold_index+1]++;
 					}
 
 					this->state = STATE_SCORE_INPUT;
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 100;
 				}
 			}
 		}
@@ -847,11 +1000,16 @@ void TestNode::increment() {
 				}
 
 				this->test_scope_sizes = this->curr_scope_sizes;
+				this->test_s_input_sizes = this->curr_s_input_sizes;
 				this->compress_num_layers = (int)this->curr_scope_sizes.size();
 				this->compressed_scope_sizes = vector<int>(this->curr_scope_sizes.size());
+				this->compressed_s_input_sizes = vector<int>(this->curr_s_input_sizes.size());
 				for (int sc_index = (int)this->compressed_scope_sizes.size()-1; sc_index >= 0; sc_index--) {
 					this->compressed_scope_sizes[sc_index] = this->test_scope_sizes.back();
 					this->test_scope_sizes.pop_back();
+
+					this->compressed_s_input_sizes[sc_index] = this->test_s_input_sizes.back();
+					this->test_s_input_sizes.pop_back();
 				}
 				this->compress_size = 1;
 				this->compress_new_size = sum_scope_sizes-1;
@@ -863,9 +1021,11 @@ void TestNode::increment() {
 					}
 				} else {
 					this->test_scope_sizes.push_back(this->compress_new_size);
+					this->test_s_input_sizes.push_back(0);
 
 					// use curr_scope_sizes for construction
 					this->test_compression_network = new SubFoldNetwork(this->curr_scope_sizes,
+																		this->curr_s_input_sizes,
 																		this->compress_new_size);
 
 					this->test_fold = new FoldNetwork(this->curr_fold);
@@ -879,10 +1039,17 @@ void TestNode::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 100;
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_STATE
 			&& this->stage == STAGE_LEARN) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 10;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
 		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_COMPRESS_STATE-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_STATE-STAGE_MEASURE" << endl;
@@ -914,6 +1081,7 @@ void TestNode::increment() {
 					cout << "starting STATE_FINAL_TUNE-STAGE_TUNE" << endl;
 
 					this->curr_scope_sizes = this->test_scope_sizes;
+					this->curr_s_input_sizes = this->test_s_input_sizes;
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage = STAGE_TUNE;
@@ -930,6 +1098,7 @@ void TestNode::increment() {
 
 					if (this->compress_new_size == 0) {
 						this->test_scope_sizes.pop_back();
+						this->test_s_input_sizes.pop_back();
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
 						this->test_fold->pop_scope();
@@ -938,6 +1107,7 @@ void TestNode::increment() {
 
 						// use curr_scope_sizes for construction
 						this->test_compression_network = new SubFoldNetwork(this->curr_scope_sizes,
+																			this->curr_s_input_sizes,
 																			this->compress_new_size);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
@@ -949,6 +1119,7 @@ void TestNode::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 100;
 				}
 			} else {
 				if (this->test_compression_network != NULL) {
@@ -962,6 +1133,7 @@ void TestNode::increment() {
 				// undo previous increment
 				if (this->compress_new_size == 0) {
 					this->test_scope_sizes.push_back(1);
+					this->test_s_input_sizes.push_back(0);
 				} else {
 					this->test_scope_sizes.back()++;
 				}
@@ -993,11 +1165,13 @@ void TestNode::increment() {
 						cout << "starting STATE_COMPRESS_SMALL-STAGE_LEARN" << endl;
 
 						this->curr_scope_sizes = this->test_scope_sizes;
+						this->curr_s_input_sizes = this->test_s_input_sizes;
 
 						delete this->curr_compression_network;
 						int input_size = 0;
 						for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 							input_size += this->compressed_scope_sizes[sc_index];
+							input_size += this->compressed_s_input_sizes[sc_index];
 						}
 						this->small_compression_network = new Network(input_size,
 																	  10*input_size,
@@ -1017,17 +1191,21 @@ void TestNode::increment() {
 
 						this->test_scope_sizes.pop_back();
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
+						this->test_s_input_sizes.pop_back();
+						this->test_s_input_sizes.push_back(this->compressed_s_input_sizes[0]);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
 						this->test_fold->pop_scope();
 						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
+						this->compressed_s_input_sizes.erase(this->compressed_s_input_sizes.begin());
 
 						this->state = STATE_COMPRESS_SCOPE;
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 100;
 					} else {
 						cout << "ending STATE_COMPRESS_STATE-STAGE_MEASURE" << endl;
 						cout << "error: " << this->sum_error/10000 << endl;
@@ -1039,9 +1217,13 @@ void TestNode::increment() {
 						this->test_scope_sizes.pop_back();
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
 						this->test_scope_sizes.push_back(this->compress_new_size);
+						this->test_s_input_sizes.pop_back();
+						this->test_s_input_sizes.push_back(this->compressed_s_input_sizes[0]);
+						this->test_s_input_sizes.push_back(0);
 
 						// use curr_scope_sizes for construction
 						this->test_compression_network = new SubFoldNetwork(this->curr_scope_sizes,
+																			this->curr_s_input_sizes,
 																			this->compress_new_size);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
@@ -1050,17 +1232,25 @@ void TestNode::increment() {
 						this->test_fold->add_scope(this->compress_new_size);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
+						this->compressed_s_input_sizes.erase(this->compressed_s_input_sizes.begin());
 
 						this->state = STATE_COMPRESS_SCOPE;
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 100;
 					}
 				}
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_SCOPE
 			&& this->stage == STAGE_LEARN) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 10;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
 		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_COMPRESS_SCOPE-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
@@ -1092,6 +1282,7 @@ void TestNode::increment() {
 					cout << "starting STATE_FINAL_TUNE-STAGE_TUNE" << endl;
 
 					this->curr_scope_sizes = this->test_scope_sizes;
+					this->curr_s_input_sizes = this->test_s_input_sizes;
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage = STAGE_TUNE;
@@ -1110,6 +1301,7 @@ void TestNode::increment() {
 
 						// this->curr_scope_sizes > 1
 						this->curr_scope_sizes = this->test_scope_sizes;
+						this->curr_s_input_sizes = this->test_s_input_sizes;
 
 						this->test_compression_network = new SubFoldNetwork(this->curr_compression_network);
 						this->test_compression_network->fold_index++;
@@ -1118,6 +1310,7 @@ void TestNode::increment() {
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 100;
 					} else if (this->compress_size == sum_scope_sizes) {
 						cout << "ending STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
 						cout << "error: " << this->sum_error/10000 << endl;
@@ -1128,17 +1321,21 @@ void TestNode::increment() {
 
 						this->test_scope_sizes.pop_back();
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
+						this->test_s_input_sizes.pop_back();
+						this->test_s_input_sizes.push_back(this->compressed_s_input_sizes[0]);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
 						this->test_fold->pop_scope();
 						this->test_fold->add_scope(this->compressed_scope_sizes[0]);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
+						this->compressed_s_input_sizes.erase(this->compressed_s_input_sizes.begin());
 
 						this->state = STATE_COMPRESS_SCOPE;
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 100;
 					} else {
 						cout << "ending STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
 						cout << "error: " << this->sum_error/10000 << endl;
@@ -1150,9 +1347,13 @@ void TestNode::increment() {
 						this->test_scope_sizes.pop_back();
 						this->test_scope_sizes.push_back(this->compressed_scope_sizes[0]);
 						this->test_scope_sizes.push_back(this->compress_new_size);
+						this->test_s_input_sizes.pop_back();
+						this->test_s_input_sizes.push_back(this->compressed_s_input_sizes[0]);
+						this->test_s_input_sizes.push_back(0);
 
 						// use curr_scope_sizes for construction
 						this->test_compression_network = new SubFoldNetwork(this->curr_scope_sizes,
+																			this->curr_s_input_sizes,
 																			this->compress_new_size);
 
 						this->test_fold = new FoldNetwork(this->curr_fold);
@@ -1161,11 +1362,13 @@ void TestNode::increment() {
 						this->test_fold->add_scope(this->compress_new_size);
 
 						this->compressed_scope_sizes.erase(this->compressed_scope_sizes.begin());
+						this->compressed_s_input_sizes.erase(this->compressed_s_input_sizes.begin());
 
 						this->state = STATE_COMPRESS_SCOPE;
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 100;
 					}
 				}
 			} else {
@@ -1181,13 +1384,18 @@ void TestNode::increment() {
 				this->compress_num_layers++;
 				if (this->compress_new_size > 0) {
 					this->test_scope_sizes.pop_back();
+					this->test_s_input_sizes.pop_back();
 				}
 				this->compress_new_size += this->test_scope_sizes.back();
 				this->compressed_scope_sizes.insert(this->compressed_scope_sizes.begin(), this->test_scope_sizes.back());
 				this->test_scope_sizes.pop_back();
 				this->test_scope_sizes.push_back(this->compress_new_size);
+				this->compressed_s_input_sizes.insert(this->compressed_s_input_sizes.begin(), this->test_s_input_sizes.back());
+				this->test_s_input_sizes.pop_back();
+				this->test_s_input_sizes.push_back(0);
 
 				this->curr_scope_sizes = this->test_scope_sizes;
+				this->curr_s_input_sizes = this->test_s_input_sizes;
 
 				if (this->curr_scope_sizes.size() == 1) {
 					cout << "ending STATE_COMPRESS_SCOPE-STAGE_MEASURE" << endl;
@@ -1198,6 +1406,7 @@ void TestNode::increment() {
 					int input_size = 0;
 					for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 						input_size += this->compressed_scope_sizes[sc_index];
+						input_size += this->compressed_s_input_sizes[sc_index];
 					}
 					this->small_compression_network = new Network(input_size,
 																  10*input_size,
@@ -1219,11 +1428,18 @@ void TestNode::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 100;
 				}
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
 			&& this->stage == STAGE_LEARN) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 10;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
 		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_COMPRESS_INPUT-STAGE_LEARN" << endl;
 			cout << "starting STATE_COMPRESS_INPUT-STAGE_MEASURE" << endl;
@@ -1237,7 +1453,9 @@ void TestNode::increment() {
 			&& this->stage == STAGE_MEASURE) {
 		if (this->stage_iter >= 10000) {
 			if (this->sum_error/10000 < this->max_allowable_error
-					|| (this->input_networks.size() > 0 && this->input_sizes.back() == this->curr_scope_sizes[this->input_layer.back()])) {
+					|| (this->input_networks.size() > 0
+						&& this->input_sizes.back() == (this->curr_scope_sizes[this->input_layer.back()]
+							+ this->curr_s_input_sizes[this->input_layer.back()]))) {
 				cout << "ending STATE_COMPRESS_INPUT-STAGE_MEASURE" << endl;
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_COMPRESS_INPUT-STAGE_TUNE" << endl;
@@ -1265,24 +1483,26 @@ void TestNode::increment() {
 					this->input_layer.push_back(this->test_compression_network->fold_index);
 					this->input_sizes.push_back(1);
 				}
-				int input_size = this->curr_scope_sizes[this->test_compression_network->fold_index];
-				this->input_networks.push_back(new Network(input_size,
-														   10*input_size,
-														   this->input_sizes.back()));
-				this->test_compression_network->add_state(this->test_compression_network->fold_index+1,
-														  this->input_sizes.back());
+				int input_size = this->curr_scope_sizes[this->test_compression_network->fold_index]
+					+ this->curr_s_input_sizes[this->test_compression_network->fold_index];
+				this->input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_compression_network->fold_index],
+																this->curr_s_input_sizes[this->test_compression_network->fold_index],
+																10*input_size,
+																this->input_sizes.back()));
+				this->test_compression_network->add_s_input(this->test_compression_network->fold_index+1,
+															this->input_sizes.back());
 				if (this->test_compression_network->fold_index == (int)this->curr_scope_sizes.size()-2) {
 					this->compressed_scope_sizes[0]++;
 				} else {
-					// add to curr_fold permanently 1 at a time
-					this->curr_scope_sizes[this->test_compression_network->fold_index+1]++;
-					this->curr_fold->add_state(this->test_compression_network->fold_index+1, 1);
+					// add to curr_s_input_sizes permanently 1 at a time
+					this->curr_s_input_sizes[this->test_compression_network->fold_index+1]++;
 				}
 
 				this->state = STATE_COMPRESS_INPUT;
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 100;
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
@@ -1326,6 +1546,7 @@ void TestNode::increment() {
 					int input_size = 0;
 					for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 						input_size += this->compressed_scope_sizes[sc_index];
+						input_size += this->compressed_s_input_sizes[sc_index];
 					}
 					this->small_compression_network = new Network(input_size,
 																  10*input_size,
@@ -1346,18 +1567,19 @@ void TestNode::increment() {
 					if (this->input_networks.size() > 0) {
 						this->input_layer.push_back(this->test_compression_network->fold_index);
 						this->input_sizes.push_back(1);
-						int input_size = this->curr_scope_sizes[this->test_compression_network->fold_index];
-						this->input_networks.push_back(new Network(input_size,
-																   10*input_size,
-																   1));
-						this->test_compression_network->add_state(this->test_compression_network->fold_index+1,
-																  1);
+						int input_size = this->curr_scope_sizes[this->test_compression_network->fold_index]
+							+ this->curr_s_input_sizes[this->test_compression_network->fold_index];
+						this->input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_compression_network->fold_index],
+																		this->curr_s_input_sizes[this->test_compression_network->fold_index],
+																		10*input_size,
+																		1));
+						this->test_compression_network->add_s_input(this->test_compression_network->fold_index+1,
+																	1);
 						if (this->test_compression_network->fold_index == (int)this->curr_scope_sizes.size()-2) {
 							this->compressed_scope_sizes[0]++;
 						} else {
-							// add to curr_fold permanently 1 at a time
-							this->curr_scope_sizes[this->test_compression_network->fold_index+1]++;
-							this->curr_fold->add_state(this->test_compression_network->fold_index+1, 1);
+							// add to curr_s_input_sizes permanently 1 at a time
+							this->curr_s_input_sizes[this->test_compression_network->fold_index+1]++;
 						}
 					}
 
@@ -1365,6 +1587,7 @@ void TestNode::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 100;
 				}
 			}
 		}

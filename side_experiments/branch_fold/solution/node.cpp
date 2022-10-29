@@ -13,15 +13,16 @@ Node::Node(string id,
 		   Network* obs_network,
 		   vector<int> score_input_layer,
 		   vector<int> score_input_sizes,
-		   vector<Network*> score_input_networks,
-		   Network* score_network,
+		   vector<SmallNetwork*> score_input_networks,
+		   SmallNetwork* score_network,
 		   int compress_num_layers,
 		   int compress_new_size,
 		   vector<int> input_layer,
 		   vector<int> input_sizes,
-		   vector<Network*> input_networks,
+		   vector<SmallNetwork*> input_networks,
 		   Network* compression_network,
-		   vector<int> compressed_scope_sizes) {
+		   vector<int> compressed_scope_sizes,
+		   vector<int> compressed_s_input_sizes) {
 	this->id = id;
 	this->obs_size = obs_size;
 	this->new_layer_size = new_layer_size;
@@ -37,6 +38,7 @@ Node::Node(string id,
 	this->input_networks = input_networks;
 	this->compression_network = compression_network;
 	this->compressed_scope_sizes = compressed_scope_sizes;
+	this->compressed_s_input_sizes = compressed_s_input_sizes;
 }
 
 Node::Node(ifstream& input_file) {
@@ -73,13 +75,13 @@ Node::Node(ifstream& input_file) {
 
 			ifstream score_input_network_save_file;
 			score_input_network_save_file.open("saves/nns/" + this->id + "_score_input_" + to_string(i_index) + ".txt");
-			this->score_input_networks.push_back(new Network(score_input_network_save_file));
+			this->score_input_networks.push_back(new SmallNetwork(score_input_network_save_file));
 			score_input_network_save_file.close();
 		}
 
 		ifstream score_network_save_file;
 		score_network_save_file.open("saves/nns/" + this->id + "_score.txt");
-		this->score_network = new Network(score_network_save_file);
+		this->score_network = new SmallNetwork(score_network_save_file);
 		score_network_save_file.close();
 
 		string compress_num_layers_line;
@@ -105,7 +107,7 @@ Node::Node(ifstream& input_file) {
 
 				ifstream input_network_save_file;
 				input_network_save_file.open("saves/nns/" + this->id + "_input_" + to_string(i_index) + ".txt");
-				this->input_networks.push_back(new Network(input_network_save_file));
+				this->input_networks.push_back(new SmallNetwork(input_network_save_file));
 				input_network_save_file.close();
 			}
 
@@ -121,6 +123,11 @@ Node::Node(ifstream& input_file) {
 			string scope_size_line;
 			getline(input_file, scope_size_line);
 			this->compressed_scope_sizes.push_back(stoi(scope_size_line));
+		}
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			string s_input_size_line;
+			getline(input_file, s_input_size_line);
+			this->compressed_s_input_sizes.push_back(stoi(s_input_size_line));
 		}
 	} else {
 		this->obs_network = NULL;
@@ -141,16 +148,16 @@ Node::Node(Node* original) {
 		for (int i_index = 0; i_index < (int)original->score_input_networks.size(); i_index++) {
 			this->score_input_layer.push_back(original->score_input_layer[i_index]);
 			this->score_input_sizes.push_back(original->score_input_sizes[i_index]);
-			this->score_input_networks.push_back(new Network(original->score_input_networks[i_index]));
+			this->score_input_networks.push_back(new SmallNetwork(original->score_input_networks[i_index]));
 		}
-		this->score_network = new Network(original->score_network);
+		this->score_network = new SmallNetwork(original->score_network);
 		this->compress_num_layers = original->compress_num_layers;
 		this->compress_new_size = original->compress_new_size;
 		if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
 			for (int i_index = 0; i_index < (int)original->input_networks.size(); i_index++) {
 				this->input_layer.push_back(original->input_layer[i_index]);
 				this->input_sizes.push_back(original->input_sizes[i_index]);
-				this->input_networks.push_back(new Network(original->input_networks[i_index]));
+				this->input_networks.push_back(new SmallNetwork(original->input_networks[i_index]));
 			}
 			this->compression_network = new Network(original->compression_network);
 		} else {
@@ -158,6 +165,9 @@ Node::Node(Node* original) {
 		}
 		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 			this->compressed_scope_sizes.push_back(original->compressed_scope_sizes[s_index]);
+		}
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			this->compressed_s_input_sizes.push_back(original->compressed_s_input_sizes[s_index]);
 		}
 	} else {
 		this->obs_network = NULL;
@@ -188,36 +198,42 @@ Node::~Node() {
 }
 
 void Node::activate(vector<vector<double>>& state_vals,
+					vector<vector<double>>& s_input_vals,
 					vector<double>& obs,
 					double& predicted_score) {
 	if (this->new_layer_size > 0) {
 		this->obs_network->activate(obs);
 		state_vals.push_back(vector<double>(this->new_layer_size));
+		s_input_vals.push_back(vector<double>());
 		for (int s_index = 0; s_index < this->new_layer_size; s_index++) {
 			state_vals.back()[s_index] = this->obs_network->output->acti_vals[s_index];
 		}
 
 		for (int i_index = 0; i_index < (int)this->score_input_networks.size(); i_index++) {
-			this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]]);
+			this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]],
+														  s_input_vals[this->score_input_layer[i_index]]);
 			for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-				state_vals[this->score_input_layer[i_index]+1].push_back(
+				s_input_vals[this->score_input_layer[i_index]+1].push_back(
 					this->score_input_networks[i_index]->output->acti_vals[s_index]);
 			}
 		}
 
-		this->score_network->activate(state_vals.back());
+		this->score_network->activate(state_vals.back(),
+									  s_input_vals.back());
 		predicted_score += this->score_network->output->acti_vals[0];
 
 		if (this->compress_num_layers > 0) {
 			if (this->compress_new_size == 0) {
 				for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 					state_vals.pop_back();
+					s_input_vals.pop_back();
 				}
 			} else {
 				for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
-					this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]]);
+					this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]],
+															s_input_vals[this->input_layer[i_index]]);
 					for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-						state_vals[this->input_layer[i_index]+1].push_back(
+						s_input_vals[this->input_layer[i_index]+1].push_back(
 							this->input_networks[i_index]->output->acti_vals[s_index]);
 					}
 				}
@@ -227,13 +243,18 @@ void Node::activate(vector<vector<double>>& state_vals,
 					for (int st_index = 0; st_index < (int)state_vals[l_index].size(); st_index++) {
 						compression_inputs.push_back(state_vals[l_index][st_index]);
 					}
+					for (int st_index = 0; st_index < (int)s_input_vals[l_index].size(); st_index++) {
+						compression_inputs.push_back(s_input_vals[l_index][st_index]);
+					}
 				}
 				this->compression_network->activate(compression_inputs);
 
 				for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 					state_vals.pop_back();
+					s_input_vals.pop_back();
 				}
 				state_vals.push_back(vector<double>(this->compress_new_size));
+				s_input_vals.push_back(vector<double>());
 
 				for (int st_index = 0; st_index < (int)state_vals.back().size(); st_index++) {
 					state_vals.back()[st_index] = this->compression_network->output->acti_vals[st_index];
@@ -244,6 +265,7 @@ void Node::activate(vector<vector<double>>& state_vals,
 }
 
 void Node::backprop(vector<vector<double>>& state_errors,
+					vector<vector<double>>& s_input_errors,
 					double& predicted_score,
 					double target_val) {
 	if (this->new_layer_size > 0) {
@@ -251,14 +273,17 @@ void Node::backprop(vector<vector<double>>& state_errors,
 			if (this->compress_new_size == 0) {
 				for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 					state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+					s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 				}
 			} else {
 				this->compression_network->backprop(state_errors.back(),
 													TARGET_MAX_UPDATE);
 
 				state_errors.pop_back();
+				s_input_errors.pop_back();
 				for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 					state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+					s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 				}
 
 				int input_index = 0;
@@ -268,19 +293,28 @@ void Node::backprop(vector<vector<double>>& state_errors,
 						this->compression_network->input->errors[input_index] = 0.0;
 						input_index++;
 					}
+					for (int st_index = 0; st_index < (int)s_input_errors[l_index].size(); st_index++) {
+						s_input_errors[l_index][st_index] += this->compression_network->input->errors[input_index];
+						this->compression_network->input->errors[input_index] = 0.0;
+						input_index++;
+					}
 				}
 
 				for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
 					vector<double> input_errors(this->input_sizes[i_index]);
 					for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-						input_errors[this->input_sizes[i_index]-1-s_index] = state_errors[this->input_layer[i_index]+1].back();
-						state_errors[this->input_layer[i_index]+1].pop_back();
+						input_errors[this->input_sizes[i_index]-1-s_index] = s_input_errors[this->input_layer[i_index]+1].back();
+						s_input_errors[this->input_layer[i_index]+1].pop_back();
 					}
 					this->input_networks[i_index]->backprop(input_errors,
 															TARGET_MAX_UPDATE);
 					for (int st_index = 0; st_index < (int)state_errors[this->input_layer[i_index]].size(); st_index++) {
-						state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->input->errors[st_index];
-						this->input_networks[i_index]->input->errors[st_index] = 0.0;
+						state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->state_input->errors[st_index];
+						this->input_networks[i_index]->state_input->errors[st_index] = 0.0;
+					}
+					for (int st_index = 0; st_index < (int)s_input_errors[this->input_layer[i_index]].size(); st_index++) {
+						s_input_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->s_input_input->errors[st_index];
+						this->input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 					}
 				}
 			}
@@ -289,22 +323,30 @@ void Node::backprop(vector<vector<double>>& state_errors,
 		vector<double> score_errors{target_val - predicted_score};
 		this->score_network->backprop(score_errors, TARGET_MAX_UPDATE);
 		for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-			state_errors.back()[st_index] += this->score_network->input->errors[st_index];
-			this->score_network->input->errors[st_index] = 0.0;
+			state_errors.back()[st_index] += this->score_network->state_input->errors[st_index];
+			this->score_network->state_input->errors[st_index] = 0.0;
+		}
+		for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
+			s_input_errors.back()[st_index] += this->score_network->s_input_input->errors[st_index];
+			this->score_network->s_input_input->errors[st_index] = 0.0;
 		}
 		predicted_score -= this->score_network->output->acti_vals[0];
 
 		for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 			vector<double> score_input_errors(this->score_input_sizes[i_index]);
 			for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-				score_input_errors[this->score_input_sizes[i_index]-1-s_index] = state_errors[this->score_input_layer[i_index]+1].back();
-				state_errors[this->score_input_layer[i_index]+1].pop_back();
+				score_input_errors[this->score_input_sizes[i_index]-1-s_index] = s_input_errors[this->score_input_layer[i_index]+1].back();
+				s_input_errors[this->score_input_layer[i_index]+1].pop_back();
 			}
 			this->score_input_networks[i_index]->backprop(score_input_errors,
 														  TARGET_MAX_UPDATE);
 			for (int st_index = 0; st_index < (int)state_errors[this->score_input_layer[i_index]].size(); st_index++) {
-				state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->input->errors[st_index];
-				this->score_input_networks[i_index]->input->errors[st_index] = 0.0;
+				state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->state_input->errors[st_index];
+				this->score_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+			}
+			for (int st_index = 0; st_index < (int)s_input_errors[this->score_input_layer[i_index]].size(); st_index++) {
+				s_input_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->s_input_input->errors[st_index];
+				this->score_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 			}
 		}
 
@@ -321,13 +363,16 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 			if (this->compress_new_size == 0) {
 				for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 					state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+					s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 				}
 			} else {
 				this->compression_network->backprop_errors_with_no_weight_change(state_errors.back());
 
 				state_errors.pop_back();
+				s_input_errors.pop_back();
 				for (int sc_index = 0; sc_index < this->compress_num_layers; sc_index++) {
 					state_errors.push_back(vector<double>(this->compressed_scope_sizes[sc_index], 0.0));
+					s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[sc_index], 0.0));
 				}
 
 				int input_index = 0;
@@ -337,18 +382,27 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 						this->compression_network->input->errors[input_index] = 0.0;
 						input_index++;
 					}
+					for (int st_index = 0; st_index < (int)s_input_errors[l_index].size(); st_index++) {
+						s_input_errors[l_index][st_index] += this->compression_network->input->errors[input_index];
+						this->compression_network->input->errors[input_index] = 0.0;
+						input_index++;
+					}
 				}
 
 				for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
 					vector<double> input_errors(this->input_sizes[i_index]);
 					for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-						input_errors[this->input_sizes[i_index]-1-s_index] = state_errors[this->input_layer[i_index]+1].back();
-						state_errors[this->input_layer[i_index]+1].pop_back();
+						input_errors[this->input_sizes[i_index]-1-s_index] = s_input_errors[this->input_layer[i_index]+1].back();
+						s_input_errors[this->input_layer[i_index]+1].pop_back();
 					}
 					this->input_networks[i_index]->backprop_errors_with_no_weight_change(input_errors);
 					for (int st_index = 0; st_index < (int)state_errors[this->input_layer[i_index]].size(); st_index++) {
-						state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->input->errors[st_index];
-						this->input_networks[i_index]->input->errors[st_index] = 0.0;
+						state_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->state_input->errors[st_index];
+						this->input_networks[i_index]->state_input->errors[st_index] = 0.0;
+					}
+					for (int st_index = 0; st_index < (int)s_input_errors[this->input_layer[i_index]].size(); st_index++) {
+						s_input_errors[this->input_layer[i_index]][st_index] += this->input_networks[i_index]->s_input_input->errors[st_index];
+						this->input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 					}
 				}
 			}
@@ -357,21 +411,29 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 		vector<double> score_errors{target_val - predicted_score};
 		this->score_network->backprop_errors_with_no_weight_change(score_errors);
 		for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-			state_errors.back()[st_index] += this->score_network->input->errors[st_index];
-			this->score_network->input->errors[st_index] = 0.0;
+			state_errors.back()[st_index] += this->score_network->state_input->errors[st_index];
+			this->score_network->state_input->errors[st_index] = 0.0;
+		}
+		for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
+			s_input_errors.back()[st_index] += this->score_network->s_input_input->errors[st_index];
+			this->score_network->s_input_input->errors[st_index] = 0.0;
 		}
 		predicted_score -= this->score_network->output->acti_vals[0];
 
 		for (int i_index = (int)this->score_input_networks.size()-1; i_index >= 0; i_index--) {
 			vector<double> score_input_errors(this->score_input_sizes[i_index]);
 			for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-				score_input_errors[this->score_input_sizes[i_index]-1-s_index] = state_errors[this->score_input_layer[i_index]+1].back();
-				state_errors[this->score_input_layer[i_index]+1].pop_back();
+				score_input_errors[this->score_input_sizes[i_index]-1-s_index] = s_input_errors[this->score_input_layer[i_index]+1].back();
+				s_input_errors[this->score_input_layer[i_index]+1].pop_back();
 			}
 			this->score_input_networks[i_index]->backprop_errors_with_no_weight_change(score_input_errors);
 			for (int st_index = 0; st_index < (int)state_errors[this->score_input_layer[i_index]].size(); st_index++) {
-				state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->input->errors[st_index];
-				this->score_input_networks[i_index]->input->errors[st_index] = 0.0;
+				state_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->state_input->errors[st_index];
+				this->score_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+			}
+			for (int st_index = 0; st_index < (int)s_input_errors[this->score_input_layer[i_index]].size(); st_index++) {
+				s_input_errors[this->score_input_layer[i_index]][st_index] += this->score_input_networks[i_index]->s_input_input->errors[st_index];
+				this->score_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 			}
 		}
 
@@ -380,28 +442,33 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 	}
 }
 
-void Node::get_scope_sizes(vector<int>& scope_sizes) {
+void Node::get_scope_sizes(vector<int>& scope_sizes,
+						   vector<int>& s_input_sizes) {
 	if (this->new_layer_size > 0) {
 		scope_sizes.push_back(this->new_layer_size);
+		s_input_sizes.push_back(0);
 
 		for (int i_index = 0; i_index < (int)this->score_input_networks.size(); i_index++) {
-			scope_sizes[this->score_input_layer[i_index]+1] += this->score_input_sizes[i_index];
+			s_input_sizes[this->score_input_layer[i_index]+1] += this->score_input_sizes[i_index];
 		}
 
 		if (this->compress_num_layers > 0) {
 			if (this->compress_new_size == 0) {
 				for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 					scope_sizes.pop_back();
+					s_input_sizes.pop_back();
 				}
 			} else {
 				for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
-					scope_sizes[this->input_layer[i_index]+1] += this->input_sizes[i_index];
+					s_input_sizes[this->input_layer[i_index]+1] += this->input_sizes[i_index];
 				}
 
 				for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 					scope_sizes.pop_back();
+					s_input_sizes.pop_back();
 				}
 				scope_sizes.push_back(this->compress_new_size);
+				s_input_sizes.push_back(0);
 			}
 		}
 	}
@@ -458,6 +525,9 @@ void Node::save(ofstream& output_file) {
 
 		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
 			output_file << this->compressed_scope_sizes[s_index] << endl;
+		}
+		for (int s_index = 0; s_index < this->compress_num_layers; s_index++) {
+			output_file << this->compressed_s_input_sizes[s_index] << endl;
 		}
 	}
 }
