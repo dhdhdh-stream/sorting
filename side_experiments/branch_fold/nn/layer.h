@@ -62,7 +62,8 @@ public:
 									  int num_layers,
 									  int layer,
 									  int new_input_size);
-	// void subfold_backprop(int fold_index);
+	void subfold_backprop(int fold_index,
+						  int num_layers);
 	void subfold_get_max_update(int fold_index,
 								int num_layers,
 								double& max_update_size);

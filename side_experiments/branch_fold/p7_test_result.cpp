@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	vector<vector<double>> state_vals;
+	vector<vector<double>> s_input_vals;
 	double predicted_score = average_score;
 
 	int flat_input_counter = 0;
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
 	flat_vals[0][0] = rand()%2*2-1;
 	flat_vals[0][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[0],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -79,13 +81,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -96,6 +101,7 @@ int main(int argc, char* argv[]) {
 	}
 	flat_vals[1][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[1],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -110,13 +116,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -125,6 +134,7 @@ int main(int argc, char* argv[]) {
 	score_modifier += flat_vals[2][0];
 	flat_vals[2][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[2],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -139,13 +149,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -156,6 +169,7 @@ int main(int argc, char* argv[]) {
 	}
 	flat_vals[3][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[3],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -170,13 +184,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -188,6 +205,7 @@ int main(int argc, char* argv[]) {
 	flat_vals[4][1] = rand()%2*2-1;
 	flat_vals[4][2] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[4],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -202,13 +220,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -219,6 +240,7 @@ int main(int argc, char* argv[]) {
 	}
 	flat_vals[5][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[5],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -233,13 +255,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 	
@@ -251,6 +276,7 @@ int main(int argc, char* argv[]) {
 	flat_vals[6][1] = rand()%2*2-1;
 	flat_vals[6][2] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[6],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -265,13 +291,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -279,6 +308,7 @@ int main(int argc, char* argv[]) {
 	flat_vals[7][0] = rand()%2*2-1;
 	flat_vals[7][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[7],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -293,13 +323,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -308,6 +341,7 @@ int main(int argc, char* argv[]) {
 	score_modifier += flat_vals[8][0];
 	flat_vals[8][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[8],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -322,13 +356,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -339,6 +376,7 @@ int main(int argc, char* argv[]) {
 	}
 	flat_vals[9][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[9],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -353,13 +391,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 
@@ -367,6 +408,7 @@ int main(int argc, char* argv[]) {
 	flat_vals[10][0] = rand()%2*2-1;
 	flat_vals[10][1] = rand()%2*2-1;
 	nodes[flat_input_counter]->activate(state_vals,
+										s_input_vals,
 										flat_vals[10],
 										predicted_score);
 	cout << flat_input_counter << endl;
@@ -381,13 +423,16 @@ int main(int argc, char* argv[]) {
 			cout << sc_index << " " << st_index << ": " << state_vals[sc_index][st_index] << endl;
 		}
 	}
+	cout << "s_input:" << endl;
+	for (int sc_index = 0; sc_index < (int)s_input_vals.size(); sc_index++) {
+		for (int st_index = 0; st_index < (int)s_input_vals[sc_index].size(); st_index++) {
+			cout << sc_index << " " << st_index << ": " << s_input_vals[sc_index][st_index] << endl;
+		}
+	}
 	cout << "predicted_score: " << predicted_score << endl;
 	cout << "num score input networks: " << nodes[flat_input_counter]->score_input_networks.size() << endl;
 	cout << "num input networks: " << nodes[flat_input_counter]->input_networks.size() << endl;
 	cout << "compress_num_layers: " << nodes[flat_input_counter]->compress_num_layers << endl;
-	if (nodes[flat_input_counter]->score_network != NULL) {
-		cout << "score_network->input->acti_vals.size(): " << nodes[flat_input_counter]->score_network->input->acti_vals.size() << endl;
-	}
 	cout << endl;
 	flat_input_counter++;
 

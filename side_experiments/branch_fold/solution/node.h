@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "network.h"
+#include "small_network.h"
 
 class Node {
 public:

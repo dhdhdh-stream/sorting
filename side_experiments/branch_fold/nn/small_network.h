@@ -27,13 +27,13 @@ public:
 
 	std::mutex mtx;
 
-	Network(int state_input_size,
-			int s_input_input_size,
-			int hidden_size,
-			int output_size);
-	Network(Network* original);
-	Network(std::ifstream& input_file);
-	~Network();
+	SmallNetwork(int state_input_size,
+				 int s_input_input_size,
+				 int hidden_size,
+				 int output_size);
+	SmallNetwork(SmallNetwork* original);
+	SmallNetwork(std::ifstream& input_file);
+	~SmallNetwork();
 
 	void activate(std::vector<double>& state_vals,
 				  std::vector<double>& s_input_vals);

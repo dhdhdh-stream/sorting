@@ -34,7 +34,7 @@ SmallNetwork::SmallNetwork(int state_input_size,
 	construct();
 }
 
-SmallNetwork::SmallNetwork(Network* original) {
+SmallNetwork::SmallNetwork(SmallNetwork* original) {
 	this->state_input_size = original->state_input_size;
 	this->s_input_input_size = original->s_input_input_size;
 	this->hidden_size = original->hidden_size;

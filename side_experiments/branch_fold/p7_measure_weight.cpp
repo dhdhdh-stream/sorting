@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
 
 	for (int iter_index = 0; iter_index < 10000; iter_index++) {
 		vector<vector<double>> state_vals;
+		vector<vector<double>> s_input_vals;
 		double predicted_score = 0.0;
 
 		int flat_input_counter = 0;
@@ -66,6 +67,7 @@ int main(int argc, char* argv[]) {
 		flat_vals[0][0] = rand()%2*2-1;
 		flat_vals[0][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[0],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -81,6 +83,7 @@ int main(int argc, char* argv[]) {
 		}
 		flat_vals[1][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[1],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -94,6 +97,7 @@ int main(int argc, char* argv[]) {
 		score_modifier += flat_vals[2][0];
 		flat_vals[2][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[2],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -109,6 +113,7 @@ int main(int argc, char* argv[]) {
 		}
 		flat_vals[3][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[3],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -125,6 +130,7 @@ int main(int argc, char* argv[]) {
 		flat_vals[4][1] = rand()%2*2-1;
 		flat_vals[4][2] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[4],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -140,6 +146,7 @@ int main(int argc, char* argv[]) {
 		}
 		flat_vals[5][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[5],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -156,6 +163,7 @@ int main(int argc, char* argv[]) {
 		flat_vals[6][1] = rand()%2*2-1;
 		flat_vals[6][2] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[6],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -168,6 +176,7 @@ int main(int argc, char* argv[]) {
 		flat_vals[7][0] = rand()%2*2-1;
 		flat_vals[7][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[7],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -181,6 +190,7 @@ int main(int argc, char* argv[]) {
 		score_modifier += flat_vals[8][0];
 		flat_vals[8][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[8],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -196,6 +206,7 @@ int main(int argc, char* argv[]) {
 		}
 		flat_vals[9][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[9],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {
@@ -208,6 +219,7 @@ int main(int argc, char* argv[]) {
 		flat_vals[10][0] = rand()%2*2-1;
 		flat_vals[10][1] = rand()%2*2-1;
 		nodes[flat_input_counter]->activate(state_vals,
+											s_input_vals,
 											flat_vals[10],
 											predicted_score);
 		if (nodes[flat_input_counter]->score_network != NULL) {

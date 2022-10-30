@@ -243,9 +243,9 @@ void Node::activate(vector<vector<double>>& state_vals,
 					for (int st_index = 0; st_index < (int)state_vals[l_index].size(); st_index++) {
 						compression_inputs.push_back(state_vals[l_index][st_index]);
 					}
-					for (int st_index = 0; st_index < (int)s_input_vals[l_index].size(); st_index++) {
-						compression_inputs.push_back(s_input_vals[l_index][st_index]);
-					}
+				}
+				for (int st_index = 0; st_index < (int)s_input_vals[(int)state_vals.size()-this->compress_num_layers].size(); st_index++) {
+					compression_inputs.push_back(s_input_vals[(int)state_vals.size()-this->compress_num_layers][st_index]);
 				}
 				this->compression_network->activate(compression_inputs);
 
@@ -293,11 +293,11 @@ void Node::backprop(vector<vector<double>>& state_errors,
 						this->compression_network->input->errors[input_index] = 0.0;
 						input_index++;
 					}
-					for (int st_index = 0; st_index < (int)s_input_errors[l_index].size(); st_index++) {
-						s_input_errors[l_index][st_index] += this->compression_network->input->errors[input_index];
-						this->compression_network->input->errors[input_index] = 0.0;
-						input_index++;
-					}
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[state_errors.size()-this->compress_num_layers].size(); st_index++) {
+					s_input_errors[state_errors.size()-this->compress_num_layers][st_index] += this->compression_network->input->errors[input_index];
+					this->compression_network->input->errors[input_index] = 0.0;
+					input_index++;
 				}
 
 				for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
@@ -352,10 +352,12 @@ void Node::backprop(vector<vector<double>>& state_errors,
 
 		this->obs_network->backprop_weights_with_no_error_signal(state_errors.back(), TARGET_MAX_UPDATE);
 		state_errors.pop_back();
+		s_input_errors.pop_back();
 	}
 }
 
 void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_errors,
+												 vector<vector<double>>& s_input_errors,
 												 double& predicted_score,
 												 double target_val) {
 	if (this->new_layer_size > 0) {
@@ -382,11 +384,11 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 						this->compression_network->input->errors[input_index] = 0.0;
 						input_index++;
 					}
-					for (int st_index = 0; st_index < (int)s_input_errors[l_index].size(); st_index++) {
-						s_input_errors[l_index][st_index] += this->compression_network->input->errors[input_index];
-						this->compression_network->input->errors[input_index] = 0.0;
-						input_index++;
-					}
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[state_errors.size()-this->compress_num_layers].size(); st_index++) {
+					s_input_errors[state_errors.size()-this->compress_num_layers][st_index] += this->compression_network->input->errors[input_index];
+					this->compression_network->input->errors[input_index] = 0.0;
+					input_index++;
 				}
 
 				for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
@@ -439,6 +441,7 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 
 		// no need to backprop obs_network
 		state_errors.pop_back();
+		s_input_errors.pop_back();
 	}
 }
 

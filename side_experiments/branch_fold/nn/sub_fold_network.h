@@ -46,8 +46,8 @@ public:
 							  int new_input_size,
 							  std::vector<double>& errors,
 							  double target_max_update);
-	// void backprop(std::vector<double>& errors,
-	// 			  double target_max_update);
+	void backprop(std::vector<double>& errors,
+				  double target_max_update);
 
 private:
 	void construct();

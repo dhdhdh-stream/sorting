@@ -262,36 +262,40 @@ int main(int argc, char* argv[]) {
 	// cout << "average_error: " << average_error/10000 << endl;
 
 	ifstream input_file;
-	// input_file.open("saves/initial_fold_network.txt");
-	input_file.open("saves/f_2.txt");
+	input_file.open("saves/initial_fold_network.txt");
+	// input_file.open("saves/f_2.txt");
 	FoldNetwork* initial_fold_network = new FoldNetwork(input_file);
 	input_file.close();
 
 	double average_score = -2.25;
-	double max_allowable_error = 0.03;
+	double max_allowable_error = 0.01;
 	double max_needed_error = 0.005;
 
 	vector<Node*> nodes;
-	for (int i = 0; i < 3; i++) {
-		ifstream input_file;
-		input_file.open("saves/n_" + to_string(i) + "_2.txt");
-		nodes.push_back(new Node(input_file));
-		input_file.close();
-	}
+	// for (int i = 0; i < 3; i++) {
+	// 	ifstream input_file;
+	// 	input_file.open("saves/n_" + to_string(i) + "_2.txt");
+	// 	nodes.push_back(new Node(input_file));
+	// 	input_file.close();
+	// }
 	vector<int> scope_sizes;
+	vector<int> s_input_sizes;
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		nodes[n_index]->get_scope_sizes(scope_sizes);
+		nodes[n_index]->get_scope_sizes(scope_sizes,
+										s_input_sizes);
 	}
 	int fold_index = (int)nodes.size();
 
 	for (int compress_index = fold_index; compress_index < 11; compress_index++) {
 		TestNode* test_node = new TestNode(scope_sizes,
+										   s_input_sizes,
 										   initial_fold_network,
 										   initial_flat_sizes[fold_index],
 										   max_allowable_error,
 										   max_needed_error);
 		while (true) {
 			vector<vector<double>> state_vals;
+			vector<vector<double>> s_input_vals;
 			double predicted_score = average_score;
 
 			int flat_input_counter = 0;
@@ -308,10 +312,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[0][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[0],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[0],
 									predicted_score);
 			}
@@ -325,10 +331,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[1][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[1],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[1],
 									predicted_score);
 			}
@@ -340,10 +348,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[2][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[2],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[2],
 									predicted_score);
 			}
@@ -357,10 +367,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[3][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[3],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[3],
 									predicted_score);
 			}
@@ -375,10 +387,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[4][2] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[4],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[4],
 									predicted_score);
 			}
@@ -392,10 +406,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[5][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[5],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[5],
 									predicted_score);
 			}
@@ -410,10 +426,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[6][2] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[6],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[6],
 									predicted_score);
 			}
@@ -424,10 +442,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[7][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[7],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[7],
 									predicted_score);
 			}
@@ -439,10 +459,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[8][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[8],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[8],
 									predicted_score);
 			}
@@ -456,10 +478,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[9][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[9],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[9],
 									predicted_score);
 			}
@@ -470,10 +494,12 @@ int main(int argc, char* argv[]) {
 			flat_vals[10][1] = rand()%2*2-1;
 			if (fold_index > flat_input_counter) {
 				nodes[flat_input_counter]->activate(state_vals,
+													s_input_vals,
 													flat_vals[10],
 													predicted_score);
 			} else if (fold_index == flat_input_counter) {
 				test_node->activate(state_vals,
+									s_input_vals,
 									flat_vals[10],
 									predicted_score);
 			}
@@ -511,7 +537,8 @@ int main(int argc, char* argv[]) {
 								 test_node->input_sizes,
 								 test_node->input_networks,
 								 test_node->small_compression_network,
-								 test_node->compressed_scope_sizes));
+								 test_node->compressed_scope_sizes,
+								 test_node->compressed_s_input_sizes));
 
 		for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 			ofstream output_file;
@@ -533,6 +560,7 @@ int main(int argc, char* argv[]) {
 		cout << "SAVED " << nodes.back()->id << endl;
 
 		scope_sizes = test_node->curr_scope_sizes;
+		s_input_sizes = test_node->curr_s_input_sizes;
 
 		fold_index++;
 

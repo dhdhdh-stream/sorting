@@ -6,6 +6,7 @@
 #include "fold_network.h"
 #include "network.h"
 #include "node.h"
+#include "small_network.h"
 #include "sub_fold_network.h"
 
 const int STAGE_LEARN = 0;

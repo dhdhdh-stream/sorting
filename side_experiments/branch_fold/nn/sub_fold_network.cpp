@@ -96,8 +96,8 @@ void SubFoldNetwork::activate(vector<vector<double>>& state_vals,
 	this->output->activate();
 }
 
-void SubFoldNetwork::activate(vector<vector<double>>& state_vals,
-							  vector<vector<double>>& s_input_vals) {
+void SubFoldNetwork::activate_new_s_input(vector<vector<double>>& state_vals,
+										  vector<vector<double>>& s_input_vals) {
 	for (int sc_index = this->fold_index+1; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];
@@ -196,41 +196,44 @@ void SubFoldNetwork::backprop_new_s_input(int layer,
 	}
 }
 
-// void SubFoldNetwork::backprop(vector<double>& errors,
-// 							  double target_max_update) {
-// 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
-// 		this->output->errors[e_index] = errors[e_index];
-// 	}
+void SubFoldNetwork::backprop(vector<double>& errors,
+							  double target_max_update) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
 
-// 	this->output->backprop();
-// 	this->hidden->subfold_backprop(this->fold_index);
+	this->output->backprop();
+	this->hidden->subfold_backprop(this->fold_index,
+								   (int)this->state_inputs.size());
 
-// 	this->epoch_iter++;
-// 	if (this->epoch_iter == 20) {
-// 		double hidden_max_update = 0.0;
-// 		this->hidden->subfold_get_max_update(this->fold_index,
-// 											 hidden_max_update);
-// 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-// 		if (hidden_max_update > 0.0) {
-// 			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-// 			if (hidden_learning_rate*hidden_max_update > target_max_update) {
-// 				hidden_learning_rate = target_max_update/hidden_max_update;
-// 			}
-// 			this->hidden->subfold_update_weights(this->fold_index,
-// 												 hidden_learning_rate);
-// 		}
+	this->epoch_iter++;
+	if (this->epoch_iter == 20) {
+		double hidden_max_update = 0.0;
+		this->hidden->subfold_get_max_update(this->fold_index,
+											 (int)this->state_inputs.size(),
+											 hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->subfold_update_weights(this->fold_index,
+												 (int)this->state_inputs.size(),
+												 hidden_learning_rate);
+		}
 
-// 		double output_max_update = 0.0;
-// 		this->output->get_max_update(output_max_update);
-// 		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-// 		if (output_max_update > 0.0) {
-// 			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-// 			if (output_learning_rate*output_max_update > target_max_update) {
-// 				output_learning_rate = target_max_update/output_max_update;
-// 			}
-// 			this->output->update_weights(output_learning_rate);
-// 		}
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->update_weights(output_learning_rate);
+		}
 
-// 		this->epoch_iter = 0;
-// 	}
-// }
+		this->epoch_iter = 0;
+	}
+}
