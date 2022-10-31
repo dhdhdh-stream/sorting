@@ -13,11 +13,12 @@ void FoldNetwork::construct() {
 		this->state_inputs.push_back(new Layer(LINEAR_LAYER, this->scope_sizes[sc_index]));
 	}
 
-	int sum_size = 0;
-	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
-		sum_size += this->flat_sizes[f_index];
-	}
-	int hidden_size = min(4*sum_size*sum_size, 500);
+	// int sum_size = 0;
+	// for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
+	// 	sum_size += this->flat_sizes[f_index];
+	// }
+	// int hidden_size = min(4*sum_size*sum_size, 500);
+	int hidden_size = 100;
 	this->hidden = new Layer(LEAKY_LAYER, hidden_size);
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		this->hidden->input_layers.push_back(this->flat_inputs[f_index]);

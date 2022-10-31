@@ -30,6 +30,7 @@
 using namespace std;
 
 default_random_engine generator;
+double global_sum_error;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;

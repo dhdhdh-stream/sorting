@@ -34,6 +34,7 @@
 using namespace std;
 
 default_random_engine generator;
+double global_sum_error;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -58,7 +59,7 @@ int main(int argc, char* argv[]) {
 	// FoldNetwork* initial_fold_network = new FoldNetwork(initial_flat_sizes);
 
 	// double sum_error = 0.0;
-	// for (int iter_index = 1; iter_index < 3000000; iter_index++) {
+	// for (int iter_index = 1; iter_index < 500000; iter_index++) {
 	// 	if (iter_index%10000 == 0) {
 	// 		cout << endl;
 	// 		cout << iter_index << endl;
@@ -152,7 +153,9 @@ int main(int argc, char* argv[]) {
 	// 	errors.push_back(final_val - initial_fold_network->output->acti_vals[0]);
 	// 	sum_error += abs(errors[0]);
 
-	// 	if (iter_index < 2400000) {
+	// 	if (iter_index < 300000) {
+	// 		initial_fold_network->backprop(errors, 0.05);
+	// 	} else if (iter_index < 400000) {
 	// 		initial_fold_network->backprop(errors, 0.01);
 	// 	} else {
 	// 		initial_fold_network->backprop(errors, 0.001);
