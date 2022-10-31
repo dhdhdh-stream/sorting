@@ -91,6 +91,12 @@ public:
 				  std::vector<double>& output_errors,
 				  double& predicted_score,
 				  double target_val);
+
+	void backprop_errors_with_no_weight_change(std::vector<double> input_errors,
+											   std::vector<double>& output_errors,
+											   double& predicted_score,
+											   double target_val);
+
 	void add_to_dictionary(std::vector<Scope*>& scope_dictionary);
 
 	// void setup_zero_scopes();
@@ -104,13 +110,41 @@ public:
 	// void add_to_zero_train_dictionary(std::vector<Scope*>& scope_dictionary);
 
 	// custom code flat_vals for now
-	// void explore_activate_flat(std::vector<std::vector<double>>& flat_vals,
-	// 						   std::vector<double> inputs,
-	// 						   double& predicted_score,
-	// 						   std::vector<int> explore_path,
-	// 						   int explore_start_inclusive,
-	// 						   int explore_end_non_inclusive,
-	// 						   std::vector<std::vector<double>>& new_flat_vals);
+	void branch_front(std::vector<std::vector<double>>& flat_vals,
+					  std::vector<double> inputs,
+					  std::vector<int> explore_path,
+					  int explore_start_inclusive,
+					  int explore_end_non_inclusive,
+					  Network* front_network,
+					  double target_val,
+					  double target_max_update);
+	void branch_combine_activate(std::vector<std::vector<double>>& flat_vals,
+								 std::vector<double> inputs,
+								 std::vector<int> explore_path,
+								 int explore_start_inclusive,
+								 int explore_end_non_inclusive,
+								 Network* front_network,
+								 Network* back_network,
+								 double& front_predicted_score,
+								 double& back_predicted_score);
+	void branch_back_backprop(std::vector<double> input_errors,
+							  double& predicted_score,
+							  double target_val,
+							  std::vector<int> explore_path,
+							  int explore_start_inclusive,
+							  int explore_end_non_inclusive,
+							  Network* back_network,
+							  double target_max_update);
+	void branch_combine_backprop(std::vector<double> input_errors,
+								 double& predicted_score,
+								 double target_val,
+								 std::vector<int> explore_path,
+								 int explore_start_inclusive,
+								 int explore_end_non_inclusive,
+								 Network* front_network,
+								 double front_error,
+								 Network* back_network,
+								 double target_max_update);
 };
 
 Scope* construct_scope(std::vector<Node*> nodes);
