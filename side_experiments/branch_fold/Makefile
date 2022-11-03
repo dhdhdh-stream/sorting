@@ -11,17 +11,13 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: p7 p7_test_result
+all: p8_compound_action
 
-p7: ${OBJECTS} p7.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p7.o -o p7 ${LIBS}
+p8_compound_action: ${OBJECTS} p8_compound_action.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p8_compound_action.o -o p8_compound_action ${LIBS}
 
-p7_test_result: ${OBJECTS} p7_test_result.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p7_test_result.o -o p7_test_result ${LIBS}
-
--include ${DEPENDS} p7.d p7_test_result.d
+-include ${DEPENDS} p8_compound_action.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	p7.o p7.d p7 \
-	p7_test_result.o p7_test_result.d p7_test_result
+	p8_compound_action.o p8_compound_action.d p8_compound_action

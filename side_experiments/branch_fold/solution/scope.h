@@ -27,6 +27,8 @@ public:
 
 class Scope : public AbstractScope {
 public:
+	std::string id;
+
 	std::vector<AbstractScope*> actions;
 
 	int num_inputs;
@@ -83,6 +85,7 @@ public:
 		  std::vector<int> end_compressed_scope_sizes,
 		  std::vector<int> end_compressed_s_input_sizes);
 	Scope(Scope* original);
+	Scope(std::ifstream& input_file);
 	~Scope();
 	void activate(std::vector<std::vector<double>>& flat_vals,
 				  std::vector<double> inputs,
@@ -98,6 +101,13 @@ public:
 											   double target_val);
 
 	void add_to_dictionary(std::vector<Scope*>& scope_dictionary);
+
+	void backprop(std::vector<double> input_errors,
+				  std::vector<double>& output_errors,
+				  double predicted_score_error);
+	void backprop_errors_with_no_weight_change(std::vector<double> input_errors,
+											   std::vector<double>& output_errors,
+											   double predicted_score_error);
 
 	// void setup_zero_scopes();
 	// void zero_train_activate(std::vector<std::vector<double>>& flat_vals,
@@ -145,6 +155,8 @@ public:
 								 double front_error,
 								 Network* back_network,
 								 double target_max_update);
+
+	void save(std::ofstream& output_file);
 };
 
 Scope* construct_scope(std::vector<Node*> nodes);

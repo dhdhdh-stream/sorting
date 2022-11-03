@@ -484,15 +484,35 @@ void Layer::fold_update_weights(int fold_index,
 	}
 }
 
-// void Layer::fold_add_state(int layer,
-// 						   int num_state) {
-// 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-// 		for (int s_index = 0; s_index < num_state; s_index++) {
-// 			this->weights[n_index][layer].push_back((randuni()-0.5)*0.02);
-// 			this->weight_updates[n_index][layer].push_back(0.0);
-// 		}
-// 	}
-// }
+void Layer::fold_backprop_state(int fold_index,
+								int state_size) {
+	// this->type == LEAKY_LAYER
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		if (this->acti_vals[n_index] < 0.0) {
+			this->errors[n_index] *= 0.01;
+		}
+
+		for (int l_index = fold_index+1; l_index < (int)this->input_layers.size(); l_index++) {
+			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				// multiply by this->errors[n_index] for MSE weight updates
+				this->weight_updates[n_index][l_index][ln_index] +=
+					this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
+			}
+		}
+		this->constant_updates[n_index] += this->errors[n_index];
+
+		for (int l_index = (int)this->input_layers.size() - state_size; l_index < (int)this->input_layers.size(); l_index++) {
+			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				this->input_layers[l_index]->errors[ln_index] +=
+					this->errors[n_index]*this->weights[n_index][l_index][ln_index];
+			}
+		}
+
+		this->errors[n_index] = 0.0;
+	}
+}
 
 void Layer::subfold_add_s_input(int layer,
 								int num_state) {

@@ -28,7 +28,7 @@ void FoldNetwork::construct() {
 	}
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, 1);
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
@@ -37,8 +37,10 @@ void FoldNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-FoldNetwork::FoldNetwork(vector<int> flat_sizes) {
+FoldNetwork::FoldNetwork(vector<int> flat_sizes,
+						 int output_size) {
 	this->flat_sizes = flat_sizes;
+	this->output_size = output_size;
 
 	this->fold_index = -1;
 
@@ -54,6 +56,9 @@ FoldNetwork::FoldNetwork(ifstream& input_file) {
 		getline(input_file, flat_size_line);
 		this->flat_sizes.push_back(stoi(flat_size_line));
 	}
+	string output_size_line;
+	getline(input_file, output_size_line);
+	this->output_size = stoi(output_size_line);
 
 	string fold_index_line;
 	getline(input_file, fold_index_line);
@@ -76,6 +81,7 @@ FoldNetwork::FoldNetwork(ifstream& input_file) {
 
 FoldNetwork::FoldNetwork(FoldNetwork* original) {
 	this->flat_sizes = original->flat_sizes;
+	this->output_size = original->output_size;
 
 	this->fold_index = original->fold_index;
 
@@ -250,23 +256,52 @@ void FoldNetwork::backprop_last_state_with_no_weight_change(vector<double>& erro
 	this->hidden->fold_backprop_last_state_with_no_weight_change();
 }
 
-// void FoldNetwork::add_state(int layer,
-// 							int num_state) {
-// 	this->scope_sizes[layer] += num_state;
-// 	for (int s_index = 0; s_index < num_state; s_index++) {
-// 		this->state_inputs[layer]->acti_vals.push_back(0.0);
-// 		this->state_inputs[layer]->errors.push_back(0.0);
-// 	}
+void FoldNetwork::backprop_state(vector<double>& errors,
+								 double target_max_update) {
+	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
 
-// 	this->hidden->fold_add_state((int)this->flat_sizes.size()+layer,
-// 								 num_state);
-// }
+	this->output->backprop();
+	this->hidden->fold_backprop_state(this->fold_index,
+									  (int)this->scope_sizes.size());
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 20) {
+		double hidden_max_update = 0.0;
+		this->hidden->fold_get_max_update(this->fold_index,
+										  hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->fold_update_weights(this->fold_index,
+											  hidden_learning_rate);
+		}
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->update_weights(output_learning_rate);
+		}
+
+		this->epoch_iter = 0;
+	}
+}
 
 void FoldNetwork::save(ofstream& output_file) {
 	output_file << this->flat_sizes.size() << endl;
 	for (int f_index = 0; f_index < (int)this->flat_sizes.size(); f_index++) {
 		output_file << this->flat_sizes[f_index] << endl;
 	}
+	output_file << this->output_size << endl;
 
 	output_file << this->fold_index << endl;
 

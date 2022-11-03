@@ -1,6 +1,7 @@
 #include "scope.h"
 
 #include <iostream>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "definitions.h"
 
@@ -148,6 +149,195 @@ Scope::Scope(Scope* original) {
 	}
 }
 
+Scope::Scope(ifstream& input_file) {
+	string id_line;
+	getline(input_file, id_line);
+	boost::algorithm::trim(id_line);
+	this->id = id_line;
+
+	string num_actions_line;
+	getline(input_file, num_actions_line);
+	int num_actions = stoi(num_actions_line);
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string action_type_line;
+		getline(input_file, action_type_line);
+		int action_type = stoi(action_type_line);
+		if (action_type == SCOPE_TYPE_BASE) {
+			string num_outputs_line;
+			getline(input_file, num_outputs_line);
+			this->actions.push_back(new BaseScope(stoi(num_outputs_line)));
+		} else {
+			// action_type == SCOPE_TYPE_SCOPE
+			string scope_id_line;
+			getline(input_file, scope_id_line);
+			boost::algorithm::trim(scope_id_line);
+			string scope_id = scope_id_line;
+
+			ifstream scope_save_file;
+			scope_save_file.open("saves/" + scope_id + ".txt");
+			this->actions.push_back(new Scope(scope_save_file));
+			scope_save_file.close();
+		}
+	}
+
+	string num_inputs_line;
+	getline(input_file, num_inputs_line);
+	this->num_inputs = stoi(num_inputs_line);
+
+	string num_outputs_line;
+	getline(input_file, num_outputs_line);
+	this->num_outputs = stoi(num_outputs_line);
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->input_sizes.push_back(vector<int>());
+		this->input_networks.push_back(vector<SmallNetwork*>());
+
+		string num_input_networks_line;
+		getline(input_file, num_input_networks_line);
+		int num_input_networks = stoi(num_input_networks_line);
+		for (int i_index = 0; i_index < num_input_networks; i_index++) {
+			string input_size_line;
+			getline(input_file, input_size_line);
+			this->input_sizes[a_index].push_back(stoi(input_size_line));
+
+			ifstream input_network_save_file;
+			input_network_save_file.open("saves/nns/" + this->id + "_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
+			this->input_networks[a_index].push_back(new SmallNetwork(input_network_save_file));
+			input_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string scope_compressed_scope_size_line;
+		getline(input_file, scope_compressed_scope_size_line);
+		this->scope_compressed_scope_sizes.push_back(stoi(scope_compressed_scope_size_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string scope_compressed_s_input_size_line;
+		getline(input_file, scope_compressed_s_input_size_line);
+		this->scope_compressed_s_input_sizes.push_back(stoi(scope_compressed_s_input_size_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string is_simple_append_line;
+		getline(input_file, is_simple_append_line);
+		this->is_simple_append.push_back(stoi(is_simple_append_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string new_layer_size_line;
+		getline(input_file, new_layer_size_line);
+		this->new_layer_sizes.push_back(stoi(new_layer_size_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		if (this->new_layer_sizes[a_index] > 0) {
+			ifstream obs_network_save_file;
+			obs_network_save_file.open("saves/nns/" + this->id + "_obs_" + to_string(a_index) + ".txt");
+			this->obs_networks.push_back(new Network(obs_network_save_file));
+			obs_network_save_file.close();
+		} else {
+			this->obs_networks.push_back(NULL);
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->outer_input_indexes.push_back(vector<int>());
+
+		string num_outer_input_indexes_line;
+		getline(input_file, num_outer_input_indexes_line);
+		int num_outer_input_indexes = stoi(num_outer_input_indexes_line);
+		for (int i_index = 0; i_index < num_outer_input_indexes; i_index++) {
+			string outer_input_indexes_line;
+			getline(input_file, outer_input_indexes_line);
+			this->outer_input_indexes[a_index].push_back(stoi(outer_input_indexes_line));
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE
+				&& this->new_layer_sizes[a_index] > 0) {
+			ifstream score_network_save_file;
+			score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+			this->score_networks.push_back(new SmallNetwork(score_network_save_file));
+			score_network_save_file.close();
+		} else {
+			this->score_networks.push_back(NULL);
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->inner_input_sizes.push_back(vector<int>());
+		this->inner_input_networks.push_back(vector<SmallNetwork*>());
+
+		string num_inner_input_networks_line;
+		getline(input_file, num_inner_input_networks_line);
+		int num_inner_input_networks = stoi(num_inner_input_networks_line);
+		for (int i_index = 0; i_index < num_inner_input_networks; i_index++) {
+			string inner_input_size_line;
+			getline(input_file, inner_input_size_line);
+			this->inner_input_sizes[a_index].push_back(stoi(inner_input_size_line));
+
+			ifstream inner_input_network_save_file;
+			inner_input_network_save_file.open("saves/nns/" + this->id + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
+			this->inner_input_networks[a_index].push_back(new SmallNetwork(inner_input_network_save_file));
+			inner_input_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string inner_compress_num_layers_line;
+		getline(input_file, inner_compress_num_layers_line);
+		this->inner_compress_num_layers.push_back(stoi(inner_compress_num_layers_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		string inner_compress_new_size_line;
+		getline(input_file, inner_compress_new_size_line);
+		this->inner_compress_new_sizes.push_back(stoi(inner_compress_new_size_line));
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		if (this->inner_compress_new_sizes[a_index] > 0) {
+			ifstream inner_compress_network_save_file;
+			inner_compress_network_save_file.open("saves/nns/" + this->id + "_inner_compress_" + to_string(a_index) + ".txt");
+			this->inner_compression_networks.push_back(new Network(inner_compress_network_save_file));
+			inner_compress_network_save_file.close();
+		} else {
+			this->inner_compression_networks.push_back(NULL);
+		}
+	}
+
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->inner_compressed_scope_sizes.push_back(vector<int>());
+		this->inner_compressed_s_input_sizes.push_back(vector<int>());
+
+		for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+			string inner_compressed_scope_size_line;
+			getline(input_file, inner_compressed_scope_size_line);
+			this->inner_compressed_scope_sizes[a_index].push_back(stoi(inner_compressed_scope_size_line));
+
+			string inner_compressed_s_input_size_line;
+			getline(input_file, inner_compressed_s_input_size_line);
+			this->inner_compressed_s_input_sizes[a_index].push_back(stoi(inner_compressed_s_input_size_line));
+		}
+	}
+
+	string num_end_compressed_line;
+	getline(input_file, num_end_compressed_line);
+	int num_end_compressed = stoi(num_end_compressed_line);
+	for (int sc_index = 0; sc_index < num_end_compressed; sc_index++) {
+		string end_compressed_scope_size_line;
+		getline(input_file, end_compressed_scope_size_line);
+		this->end_compressed_scope_sizes.push_back(stoi(end_compressed_scope_size_line));
+
+		string end_compressed_s_input_size_line;
+		getline(input_file, end_compressed_s_input_size_line);
+		this->end_compressed_s_input_sizes.push_back(stoi(end_compressed_s_input_size_line));
+	}
+}
+
 Scope::~Scope() {
 	for (int a_index = 0; a_index < (int)this->actions.size(); a_index++) {
 		delete this->actions[a_index];
@@ -287,6 +477,7 @@ void Scope::activate(vector<vector<double>>& flat_vals,
 				local_s_input_vals.pop_back();
 				local_s_input_vals.push_back(vector<double>());
 			}
+			// if this->new_layer_sizes[a_index] == 0 (i.e., compression_network is NULL), then no action needed
 		}
 	}
 
@@ -620,6 +811,315 @@ void Scope::add_to_dictionary(vector<Scope*>& scope_dictionary) {
 			scope_dictionary.push_back(new Scope((Scope*)this->actions[a_index]));
 
 			((Scope*)this->actions[a_index])->add_to_dictionary(scope_dictionary);
+		}
+	}
+}
+
+void Scope::backprop(vector<double> input_errors,
+					 vector<double>& output_errors,
+					 double predicted_score_error) {
+	vector<vector<double>> local_state_errors;
+	int input_errors_index = 0;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
+		local_state_errors.push_back(vector<double>(this->end_compressed_scope_sizes[sc_index]));
+		for (int st_index = 0; st_index < (int)this->end_compressed_scope_sizes[sc_index]; st_index++) {
+			local_state_errors[sc_index][st_index] = input_errors[input_errors_index];
+			input_errors_index++;
+		}
+	}
+	vector<vector<double>> local_s_input_errors;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_s_input_sizes.size(); sc_index++) {
+		local_s_input_errors.push_back(vector<double>(this->end_compressed_s_input_sizes[sc_index], 0.0));
+	}
+
+	output_errors.reserve(this->num_inputs);
+	for (int i_index = 0; i_index < this->num_inputs; i_index++) {
+		output_errors.push_back(0.0);
+	}
+
+	for (int a_index = (int)this->actions.size()-1; a_index >= 0; a_index--) {
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE) {
+			if (this->new_layer_sizes[a_index] > 0) {
+				if (this->inner_compress_num_layers[a_index] > 0) {
+					if (this->inner_compression_networks[a_index] != NULL) {
+						this->inner_compression_networks[a_index]->backprop(local_state_errors.back(), TARGET_MAX_UPDATE);
+
+						local_state_errors.pop_back();
+						local_s_input_errors.pop_back();
+						int input_index = 0;
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index]));
+							for (int st_index = 0; st_index < this->inner_compressed_scope_sizes[a_index][sc_index]; st_index++) {
+								local_state_errors[sc_index][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+								this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+								input_index++;
+							}
+
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+						for (int st_index = 0; st_index < this->inner_compressed_s_input_sizes[a_index][0]; st_index++) {
+							local_s_input_errors[0][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+							this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+							input_index++;
+						}
+					} else {
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index], 0.0));
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+					}
+				}
+
+				vector<double> score_errors{predicted_score_error};
+				this->score_networks[a_index]->backprop(score_errors, TARGET_MAX_UPDATE);
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->state_input->errors.size(); st_index++) {
+					local_state_errors.back()[st_index] += this->score_networks[a_index]->state_input->errors[st_index];
+					this->score_networks[a_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->s_input_input->errors.size(); st_index++) {
+					local_s_input_errors.back()[st_index] += this->score_networks[a_index]->s_input_input->errors[st_index];
+					this->score_networks[a_index]->s_input_input->errors[st_index] = 0.0;
+				}
+
+				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
+					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
+						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = local_s_input_errors[1].back();
+						local_s_input_errors[1].pop_back();
+					}
+					this->inner_input_networks[a_index][i_index]->backprop(inner_input_errors, TARGET_MAX_UPDATE);
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+						local_state_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->state_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+					}
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+						local_s_input_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+					}
+				}
+
+				for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+					output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+					local_s_input_errors[0].pop_back();
+				}
+
+				this->obs_networks[a_index]->backprop_weights_with_no_error_signal(local_state_errors.back(), TARGET_MAX_UPDATE);
+				local_state_errors.pop_back();
+				local_s_input_errors.pop_back();
+			}
+		} else {
+			int scope_num_outputs = ((Scope*)this->actions[a_index])->num_outputs;
+			vector<double> new_input_errors(scope_num_outputs);
+			if (this->is_simple_append[a_index]) {
+				for (int o_index = 0; o_index < scope_num_outputs; o_index++) {
+					new_input_errors[scope_num_outputs-1-o_index] = local_state_errors.back().back();
+					local_state_errors.back().pop_back();
+				}
+			} else if (this->new_layer_sizes[a_index] > 0) {
+				this->obs_networks[a_index]->backprop(local_state_errors.back(), TARGET_MAX_UPDATE);
+				local_state_errors.pop_back();
+				for (int i_index = 0; i_index < scope_num_outputs; i_index++) {
+					new_input_errors[i_index] = this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index];
+					this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index] = 0.0;
+				}
+				local_state_errors.push_back(vector<double>(this->scope_compressed_scope_sizes[a_index]));
+				local_s_input_errors.push_back(vector<double>(this->scope_compressed_s_input_sizes[a_index]));
+				int input_index = 0;
+				for (int st_index = 0; st_index < this->scope_compressed_scope_sizes[a_index]; st_index++) {
+					local_state_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+				for (int st_index = 0; st_index < this->scope_compressed_s_input_sizes[a_index]; st_index++) {
+					local_s_input_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+			}
+
+			vector<double> new_output_errors;
+			((Scope*)this->actions[a_index])->backprop(new_input_errors,
+													   new_output_errors,
+													   predicted_score_error);
+
+			for (int i_index = (int)this->input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+				vector<double> input_errors(this->input_sizes[a_index][i_index]);
+				for (int s_index = 0; s_index < this->input_sizes[a_index][i_index]; s_index++) {
+					input_errors[this->input_sizes[a_index][i_index]-1-s_index] = new_output_errors.back();
+					new_output_errors.pop_back();
+				}
+				this->input_networks[a_index][i_index]->backprop(input_errors, TARGET_MAX_UPDATE);
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+					local_state_errors[0][in_index] += this->input_networks[a_index][i_index]->state_input->errors[in_index];
+					this->input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+				}
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+					local_s_input_errors[0][in_index] += this->input_networks[a_index][i_index]->s_input_input->errors[in_index];
+					this->input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+				}
+			}
+
+			for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+				output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+				local_s_input_errors[0].pop_back();
+			}
+		}
+	}
+}
+
+void Scope::backprop_errors_with_no_weight_change(vector<double> input_errors,
+												  vector<double>& output_errors,
+												  double predicted_score_error) {
+	vector<vector<double>> local_state_errors;
+	int input_errors_index = 0;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
+		local_state_errors.push_back(vector<double>(this->end_compressed_scope_sizes[sc_index]));
+		for (int st_index = 0; st_index < (int)this->end_compressed_scope_sizes[sc_index]; st_index++) {
+			local_state_errors[sc_index][st_index] = input_errors[input_errors_index];
+			input_errors_index++;
+		}
+	}
+	vector<vector<double>> local_s_input_errors;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_s_input_sizes.size(); sc_index++) {
+		local_s_input_errors.push_back(vector<double>(this->end_compressed_s_input_sizes[sc_index], 0.0));
+	}
+
+	output_errors.reserve(this->num_inputs);
+	for (int i_index = 0; i_index < this->num_inputs; i_index++) {
+		output_errors.push_back(0.0);
+	}
+
+	for (int a_index = (int)this->actions.size()-1; a_index >= 0; a_index--) {
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE) {
+			if (this->new_layer_sizes[a_index] > 0) {
+				if (this->inner_compress_num_layers[a_index] > 0) {
+					if (this->inner_compression_networks[a_index] != NULL) {
+						this->inner_compression_networks[a_index]->backprop_errors_with_no_weight_change(local_state_errors.back());
+
+						local_state_errors.pop_back();
+						local_s_input_errors.pop_back();
+						int input_index = 0;
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index]));
+							for (int st_index = 0; st_index < this->inner_compressed_scope_sizes[a_index][sc_index]; st_index++) {
+								local_state_errors[sc_index][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+								this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+								input_index++;
+							}
+
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+						for (int st_index = 0; st_index < this->inner_compressed_s_input_sizes[a_index][0]; st_index++) {
+							local_s_input_errors[0][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+							this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+							input_index++;
+						}
+					} else {
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index], 0.0));
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+					}
+				}
+
+				vector<double> score_errors{predicted_score_error};
+				this->score_networks[a_index]->backprop_errors_with_no_weight_change(score_errors);
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->state_input->errors.size(); st_index++) {
+					local_state_errors.back()[st_index] += this->score_networks[a_index]->state_input->errors[st_index];
+					this->score_networks[a_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->s_input_input->errors.size(); st_index++) {
+					local_s_input_errors.back()[st_index] += this->score_networks[a_index]->s_input_input->errors[st_index];
+					this->score_networks[a_index]->s_input_input->errors[st_index] = 0.0;
+				}
+
+				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
+					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
+						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = local_s_input_errors[1].back();
+						local_s_input_errors[1].pop_back();
+					}
+					this->inner_input_networks[a_index][i_index]->backprop_errors_with_no_weight_change(inner_input_errors);
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+						local_state_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->state_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+					}
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+						local_s_input_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+					}
+				}
+
+				for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+					output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+					local_s_input_errors[0].pop_back();
+				}
+
+				// no backprop needed for obs_networks
+				local_state_errors.pop_back();
+				local_s_input_errors.pop_back();
+			}
+		} else {
+			int scope_num_outputs = ((Scope*)this->actions[a_index])->num_outputs;
+			vector<double> new_input_errors(scope_num_outputs);
+			if (this->is_simple_append[a_index]) {
+				for (int o_index = 0; o_index < scope_num_outputs; o_index++) {
+					new_input_errors[scope_num_outputs-1-o_index] = local_state_errors.back().back();
+					local_state_errors.back().pop_back();
+				}
+			} else if (this->new_layer_sizes[a_index] > 0) {
+				this->obs_networks[a_index]->backprop_errors_with_no_weight_change(local_state_errors.back());
+				local_state_errors.pop_back();
+				for (int i_index = 0; i_index < scope_num_outputs; i_index++) {
+					new_input_errors[i_index] = this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index];
+					this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index] = 0.0;
+				}
+				local_state_errors.push_back(vector<double>(this->scope_compressed_scope_sizes[a_index]));
+				local_s_input_errors.push_back(vector<double>(this->scope_compressed_s_input_sizes[a_index]));
+				int input_index = 0;
+				for (int st_index = 0; st_index < this->scope_compressed_scope_sizes[a_index]; st_index++) {
+					local_state_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+				for (int st_index = 0; st_index < this->scope_compressed_s_input_sizes[a_index]; st_index++) {
+					local_s_input_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+			}
+
+			vector<double> new_output_errors;
+			((Scope*)this->actions[a_index])->backprop_errors_with_no_weight_change(
+				new_input_errors,
+				new_output_errors,
+				predicted_score_error);
+
+			for (int i_index = (int)this->input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+				vector<double> input_errors(this->input_sizes[a_index][i_index]);
+				for (int s_index = 0; s_index < this->input_sizes[a_index][i_index]; s_index++) {
+					input_errors[this->input_sizes[a_index][i_index]-1-s_index] = new_output_errors.back();
+					new_output_errors.pop_back();
+				}
+				this->input_networks[a_index][i_index]->backprop_errors_with_no_weight_change(input_errors);
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+					local_state_errors[0][in_index] += this->input_networks[a_index][i_index]->state_input->errors[in_index];
+					this->input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+				}
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+					local_s_input_errors[0][in_index] += this->input_networks[a_index][i_index]->s_input_input->errors[in_index];
+					this->input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+				}
+			}
+
+			for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+				output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+				local_s_input_errors[0].pop_back();
+			}
 		}
 	}
 }
@@ -2283,6 +2783,132 @@ void Scope::branch_combine_backprop(vector<double> input_errors,
 				}
 			}
 		}
+	}
+}
+
+void Scope::save(ofstream& output_file) {
+	output_file << this->id << endl;
+
+	output_file << this->actions.size() << endl;
+	for (int a_index = 0; a_index < (int)this->actions.size(); a_index++) {
+		output_file << this->actions[a_index]->type << endl;
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE) {
+			BaseScope* base_scope_action = (BaseScope*)this->actions[a_index];
+			output_file << base_scope_action->num_outputs << endl;
+		} else {
+			// this->actions[a_index]->type == SCOPE_TYPE_SCOPE
+			Scope* scope_action = (Scope*)this->actions[a_index];
+			output_file << scope_action->id << endl;
+
+			ofstream scope_save_file;
+			scope_save_file.open("saves/" + scope_action->id + ".txt");
+			scope_action->save(scope_save_file);
+			scope_save_file.close();
+		}
+	}
+
+	output_file << this->num_inputs << endl;
+	output_file << this->num_outputs << endl;
+
+	for (int a_index = 0; a_index < (int)this->input_networks.size(); a_index++) {
+		output_file << this->input_networks[a_index].size() << endl;
+		for (int i_index = 0; i_index < (int)this->input_networks[a_index].size(); i_index++) {
+			output_file << this->input_sizes[a_index][i_index] << endl;
+
+			ofstream input_network_save_file;
+			input_network_save_file.open("saves/nns/" + this->id + "_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
+			this->input_networks[a_index][i_index]->save(input_network_save_file);
+			input_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->scope_compressed_scope_sizes.size(); a_index++) {
+		output_file << this->scope_compressed_scope_sizes[a_index] << endl;
+	}
+
+	for (int a_index = 0; a_index < (int)this->scope_compressed_s_input_sizes.size(); a_index++) {
+		output_file << this->scope_compressed_s_input_sizes[a_index] << endl;
+	}
+
+	for (int a_index = 0; a_index < (int)this->is_simple_append.size(); a_index++) {
+		if (this->is_simple_append[a_index]) {
+			output_file << 1 << endl;
+		} else {
+			output_file << 0 << endl;
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->new_layer_sizes.size(); a_index++) {
+		output_file << this->new_layer_sizes[a_index] << endl;
+	}
+
+	for (int a_index = 0; a_index < (int)this->obs_networks.size(); a_index++) {
+		if (this->new_layer_sizes[a_index] > 0) {
+			ofstream obs_network_save_file;
+			obs_network_save_file.open("saves/nns/" + this->id + "_obs_" + to_string(a_index) + ".txt");
+			this->obs_networks[a_index]->save(obs_network_save_file);
+			obs_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->outer_input_indexes.size(); a_index++) {
+		output_file << this->outer_input_indexes[a_index].size() << endl;
+		for (int i_index = 0; i_index < (int)this->outer_input_indexes[a_index].size(); i_index++) {
+			output_file << this->outer_input_indexes[a_index][i_index] << endl;
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->score_networks.size(); a_index++) {
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE
+				&& this->new_layer_sizes[a_index] > 0) {
+			ofstream score_network_save_file;
+			score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+			this->score_networks[a_index]->save(score_network_save_file);
+			score_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->inner_input_networks.size(); a_index++) {
+		output_file << this->inner_input_networks[a_index].size() << endl;
+
+		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
+			output_file << this->inner_input_sizes[a_index][i_index] << endl;
+
+			ofstream inner_input_network_save_file;
+			inner_input_network_save_file.open("saves/nns/" + this->id + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
+			this->inner_input_networks[a_index][i_index]->save(inner_input_network_save_file);
+			inner_input_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->inner_compress_num_layers.size(); a_index++) {
+		output_file << this->inner_compress_num_layers[a_index] << endl;
+	}
+
+	for (int a_index = 0; a_index < (int)this->inner_compress_new_sizes.size(); a_index++) {
+		output_file << this->inner_compress_new_sizes[a_index] << endl;
+	}
+
+	for (int a_index = 0; a_index < (int)this->inner_compression_networks.size(); a_index++) {
+		if (this->inner_compress_new_sizes[a_index] > 0) {
+			ofstream inner_compress_network_save_file;
+			inner_compress_network_save_file.open("saves/nns/" + this->id + "_inner_compress_" + to_string(a_index) + ".txt");
+			this->inner_compression_networks[a_index]->save(inner_compress_network_save_file);
+			inner_compress_network_save_file.close();
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->inner_compressed_scope_sizes.size(); a_index++) {
+		for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+			output_file << this->inner_compressed_scope_sizes[a_index][sc_index] << endl;
+			output_file << this->inner_compressed_s_input_sizes[a_index][sc_index] << endl;
+		}
+	}
+
+	output_file << this->end_compressed_scope_sizes.size() << endl;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
+		output_file << this->end_compressed_scope_sizes[sc_index] << endl;
+		output_file << this->end_compressed_s_input_sizes[sc_index] << endl;
 	}
 }
 

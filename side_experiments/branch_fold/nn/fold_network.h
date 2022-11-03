@@ -11,6 +11,8 @@
 class FoldNetwork : public AbstractNetwork {
 public:
 	std::vector<int> flat_sizes;
+	int output_size;
+
 	std::vector<Layer*> flat_inputs;
 
 	int fold_index;
@@ -27,7 +29,8 @@ public:
 
 	std::mutex mtx;
 
-	FoldNetwork(std::vector<int> flat_sizes);
+	FoldNetwork(std::vector<int> flat_sizes,
+				int output_size);
 	FoldNetwork(std::ifstream& input_file);
 	FoldNetwork(FoldNetwork* original);
 	~FoldNetwork();
@@ -49,9 +52,8 @@ public:
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
 	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
-
-	// void add_state(int layer,
-	// 			   int num_state);
+	void backprop_state(std::vector<double>& errors,
+						double target_max_update);
 
 	void save(std::ofstream& output_file);
 
