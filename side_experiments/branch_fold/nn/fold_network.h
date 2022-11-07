@@ -41,6 +41,8 @@ public:
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
 
+	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
+
 	void add_scope(int scope_size);
 	void pop_scope();
 	void reset_last();
@@ -49,11 +51,15 @@ public:
 	void activate(std::vector<std::vector<double>>& flat_inputs,
 				  std::vector<std::vector<double>>& state_vals,
 				  std::vector<AbstractNetworkHistory*>& network_historys);
+	void backprop_no_state(std::vector<double>& errors,
+						   double target_max_update);
 	void backprop_last_state(std::vector<double>& errors,
 							 double target_max_update);
 	void backprop_last_state_with_no_weight_change(std::vector<double>& errors);
-	void backprop_state(std::vector<double>& errors,
-						double target_max_update);
+	// void backprop_state(std::vector<double>& errors,
+	// 					double target_max_update);
+	void backprop_fold(std::vector<double>& errors,
+					   double target_max_update);
 
 	void save(std::ofstream& output_file);
 

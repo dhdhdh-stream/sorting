@@ -12,7 +12,7 @@ void SubFoldNetwork::construct() {
 		this->s_input_inputs.push_back(new Layer(LINEAR_LAYER, this->s_input_sizes[sc_index]));
 	}
 
-	this->hidden = new Layer(LEAKY_LAYER, 100);	// set fixed number because scope_sizes will change
+	this->hidden = new Layer(LEAKY_LAYER, 50);	// set fixed number because scope_sizes will change
 	for (int sc_index = 0; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		this->hidden->input_layers.push_back(this->state_inputs[sc_index]);
 	}

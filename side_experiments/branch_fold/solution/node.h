@@ -4,11 +4,18 @@
 #include <vector>
 
 #include "network.h"
+#include "scope.h"
 #include "small_network.h"
 
+class Scope;
 class Node {
 public:
 	std::string id;
+
+	bool is_scope;
+	SmallNetwork* action_input_network;
+	// always activate action even if new_layer_size == 0
+	Scope* action;
 
 	int obs_size;
 	int new_layer_size;
@@ -29,6 +36,9 @@ public:
 	std::vector<int> compressed_s_input_sizes;
 
 	Node(std::string id,
+		 bool is_scope,
+		 SmallNetwork* action_input_network,
+		 Scope* action,
 		 int obs_size,
 		 int new_layer_size,
 		 Network* obs_network,
@@ -45,11 +55,14 @@ public:
 		 std::vector<int> compressed_scope_sizes,
 		 std::vector<int> compressed_s_input_sizes);
 	Node(std::ifstream& input_file);
-	Node(Node* original);
 	~Node();
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<std::vector<double>>& s_input_vals,
 				  std::vector<double>& obs,
+				  double& predicted_score);
+	void activate(std::vector<std::vector<double>>& state_vals,
+				  std::vector<std::vector<double>>& s_input_vals,
+				  std::vector<std::vector<double>>& inner_flat_vals,
 				  double& predicted_score);
 	void backprop(std::vector<std::vector<double>>& state_errors,
 				  std::vector<std::vector<double>>& s_input_errors,

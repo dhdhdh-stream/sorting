@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 	vector<Node*> nodes;
 	for (int i = 0; i < 8; i++) {
 		ifstream input_file;
-		input_file.open("saves/n_" + to_string(i) + "_7.txt");
+		input_file.open("saves/fold_n_" + to_string(i) + ".txt");
 		nodes.push_back(new Node(input_file));
 		input_file.close();
 	}

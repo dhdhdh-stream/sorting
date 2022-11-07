@@ -94,6 +94,11 @@ public:
 				  std::vector<double>& output_errors,
 				  double& predicted_score,
 				  double target_val);
+	void backprop(std::vector<double> input_errors,
+				  std::vector<double>& output_errors,
+				  double& predicted_score,
+				  double target_val,
+				  double target_max_update);
 
 	void backprop_errors_with_no_weight_change(std::vector<double> input_errors,
 											   std::vector<double>& output_errors,
@@ -159,6 +164,7 @@ public:
 	void save(std::ofstream& output_file);
 };
 
+class Node;
 Scope* construct_scope(std::vector<Node*> nodes);
 
 #endif /* SCOPE_H */

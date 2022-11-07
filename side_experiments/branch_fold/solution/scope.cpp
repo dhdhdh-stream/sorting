@@ -647,6 +647,165 @@ void Scope::backprop(vector<double> input_errors,
 	}
 }
 
+void Scope::backprop(vector<double> input_errors,
+					 vector<double>& output_errors,
+					 double& predicted_score,
+					 double target_val,
+					 double target_max_update) {
+	vector<vector<double>> local_state_errors;
+	int input_errors_index = 0;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
+		local_state_errors.push_back(vector<double>(this->end_compressed_scope_sizes[sc_index]));
+		for (int st_index = 0; st_index < (int)this->end_compressed_scope_sizes[sc_index]; st_index++) {
+			local_state_errors[sc_index][st_index] = input_errors[input_errors_index];
+			input_errors_index++;
+		}
+	}
+	vector<vector<double>> local_s_input_errors;
+	for (int sc_index = 0; sc_index < (int)this->end_compressed_s_input_sizes.size(); sc_index++) {
+		local_s_input_errors.push_back(vector<double>(this->end_compressed_s_input_sizes[sc_index], 0.0));
+	}
+
+	output_errors.reserve(this->num_inputs);
+	for (int i_index = 0; i_index < this->num_inputs; i_index++) {
+		output_errors.push_back(0.0);
+	}
+
+	for (int a_index = (int)this->actions.size()-1; a_index >= 0; a_index--) {
+		if (this->actions[a_index]->type == SCOPE_TYPE_BASE) {
+			if (this->new_layer_sizes[a_index] > 0) {
+				if (this->inner_compress_num_layers[a_index] > 0) {
+					if (this->inner_compression_networks[a_index] != NULL) {
+						this->inner_compression_networks[a_index]->backprop(local_state_errors.back(), target_max_update);
+
+						local_state_errors.pop_back();
+						local_s_input_errors.pop_back();
+						int input_index = 0;
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index]));
+							for (int st_index = 0; st_index < this->inner_compressed_scope_sizes[a_index][sc_index]; st_index++) {
+								local_state_errors[sc_index][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+								this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+								input_index++;
+							}
+
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+						for (int st_index = 0; st_index < this->inner_compressed_s_input_sizes[a_index][0]; st_index++) {
+							local_s_input_errors[0][st_index] = this->inner_compression_networks[a_index]->input->errors[input_index];
+							this->inner_compression_networks[a_index]->input->errors[input_index] = 0.0;
+							input_index++;
+						}
+					} else {
+						for (int sc_index = 0; sc_index < this->inner_compress_num_layers[a_index]; sc_index++) {
+							local_state_errors.push_back(vector<double>(this->inner_compressed_scope_sizes[a_index][sc_index], 0.0));
+							local_s_input_errors.push_back(vector<double>(this->inner_compressed_s_input_sizes[a_index][sc_index], 0.0));
+						}
+					}
+				}
+
+				vector<double> score_errors{target_val - predicted_score};
+				this->score_networks[a_index]->backprop(score_errors, target_max_update);
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->state_input->errors.size(); st_index++) {
+					local_state_errors.back()[st_index] += this->score_networks[a_index]->state_input->errors[st_index];
+					this->score_networks[a_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)this->score_networks[a_index]->s_input_input->errors.size(); st_index++) {
+					local_s_input_errors.back()[st_index] += this->score_networks[a_index]->s_input_input->errors[st_index];
+					this->score_networks[a_index]->s_input_input->errors[st_index] = 0.0;
+				}
+				predicted_score -= this->score_networks[a_index]->output->acti_vals[0];
+
+				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
+					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
+						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = local_s_input_errors[1].back();
+						local_s_input_errors[1].pop_back();
+					}
+					this->inner_input_networks[a_index][i_index]->backprop(inner_input_errors, target_max_update);
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+						local_state_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->state_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+					}
+					for (int in_index = 0; in_index < (int)this->inner_input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+						local_s_input_errors[0][in_index] += this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index];
+						this->inner_input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+					}
+				}
+
+				for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+					output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+					local_s_input_errors[0].pop_back();
+				}
+
+				this->obs_networks[a_index]->backprop_weights_with_no_error_signal(local_state_errors.back(), target_max_update);
+				local_state_errors.pop_back();
+				local_s_input_errors.pop_back();
+			}
+		} else {
+			int scope_num_outputs = ((Scope*)this->actions[a_index])->num_outputs;
+			vector<double> new_input_errors(scope_num_outputs);
+			if (this->is_simple_append[a_index]) {
+				for (int o_index = 0; o_index < scope_num_outputs; o_index++) {
+					new_input_errors[scope_num_outputs-1-o_index] = local_state_errors.back().back();
+					local_state_errors.back().pop_back();
+				}
+			} else if (this->new_layer_sizes[a_index] > 0) {
+				this->obs_networks[a_index]->backprop(local_state_errors.back(), target_max_update);
+				local_state_errors.pop_back();
+				for (int i_index = 0; i_index < scope_num_outputs; i_index++) {
+					new_input_errors[i_index] = this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index];
+					this->obs_networks[a_index]->input->errors[
+						this->obs_networks[a_index]->input->errors.size()-scope_num_outputs+i_index] = 0.0;
+				}
+				local_state_errors.push_back(vector<double>(this->scope_compressed_scope_sizes[a_index]));
+				local_s_input_errors.push_back(vector<double>(this->scope_compressed_s_input_sizes[a_index]));
+				int input_index = 0;
+				for (int st_index = 0; st_index < this->scope_compressed_scope_sizes[a_index]; st_index++) {
+					local_state_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+				for (int st_index = 0; st_index < this->scope_compressed_s_input_sizes[a_index]; st_index++) {
+					local_s_input_errors.back()[st_index] = this->obs_networks[a_index]->input->errors[input_index];
+					this->obs_networks[a_index]->input->errors[input_index] = 0.0;
+					input_index++;
+				}
+			}
+
+			vector<double> new_output_errors;
+			((Scope*)this->actions[a_index])->backprop(new_input_errors,
+													   new_output_errors,
+													   predicted_score,
+													   target_val,
+													   target_max_update);
+
+			for (int i_index = (int)this->input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+				vector<double> input_errors(this->input_sizes[a_index][i_index]);
+				for (int s_index = 0; s_index < this->input_sizes[a_index][i_index]; s_index++) {
+					input_errors[this->input_sizes[a_index][i_index]-1-s_index] = new_output_errors.back();
+					new_output_errors.pop_back();
+				}
+				this->input_networks[a_index][i_index]->backprop(input_errors, target_max_update);
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->state_input->errors.size(); in_index++) {
+					local_state_errors[0][in_index] += this->input_networks[a_index][i_index]->state_input->errors[in_index];
+					this->input_networks[a_index][i_index]->state_input->errors[in_index] = 0.0;
+				}
+				for (int in_index = 0; in_index < (int)this->input_networks[a_index][i_index]->s_input_input->errors.size(); in_index++) {
+					local_s_input_errors[0][in_index] += this->input_networks[a_index][i_index]->s_input_input->errors[in_index];
+					this->input_networks[a_index][i_index]->s_input_input->errors[in_index] = 0.0;
+				}
+			}
+
+			for (int i_index = (int)this->outer_input_indexes[a_index].size()-1; i_index >= 0; i_index--) {
+				output_errors[this->outer_input_indexes[a_index][i_index]] = local_s_input_errors[0].back();
+				local_s_input_errors[0].pop_back();
+			}
+		}
+	}
+}
+
 void Scope::backprop_errors_with_no_weight_change(vector<double> input_errors,
 												  vector<double>& output_errors,
 												  double& predicted_score,

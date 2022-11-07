@@ -44,11 +44,15 @@ public:
 	void fold_add_scope(Layer* new_scope_input);
 	void fold_pop_scope();
 	void fold_activate(int fold_index);
+	void fold_backprop_no_state(int fold_index,
+								int state_size);
 	void fold_backprop_last_state(int fold_index,
 								  int state_size);
 	void fold_backprop_last_state_with_no_weight_change();
-	void fold_backprop_state(int fold_index,
-							 int state_size);
+	void fold_backprop(int fold_index,
+					   int state_size);
+	// void fold_backprop_state(int fold_index,
+	// 						 int state_size);
 	void fold_get_max_update(int fold_index,
 							 double& max_update_size);
 	void fold_update_weights(int fold_index,
