@@ -18,6 +18,7 @@
 #include <thread>
 #include <random>
 
+#include "fold.h"
 #include "fold_network.h"
 #include "network.h"
 #include "node.h"
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
 	// vector<Node*> nodes;
 	// for (int i = 0; i < 8; i++) {
 	// 	ifstream input_file;
-	// 	input_file.open("saves/n_" + to_string(i) + "_7.txt");
+	// 	input_file.open("saves/fold_n_" + to_string(i) + ".txt");
 	// 	nodes.push_back(new Node(input_file));
 	// 	input_file.close();
 	// }
@@ -58,21 +59,21 @@ int main(int argc, char* argv[]) {
 	// 	cout << endl;
 	// }
 
- //    scope_dictionary[1]->id = "original_scope";
- //    ofstream original_scope_save_file;
- //    original_scope_save_file.open("saves/" + scope_dictionary[1]->id + ".txt");
- //    scope_dictionary[1]->save(original_scope_save_file);
- //    original_scope_save_file.close();
+	// scope_dictionary[1]->id = "original_scope";
+	// ofstream original_scope_save_file;
+	// original_scope_save_file.open("saves/" + scope_dictionary[1]->id + ".txt");
+	// scope_dictionary[1]->save(original_scope_save_file);
+	// original_scope_save_file.close();
 
-    // for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-    //  delete nodes[n_index];
-    // }
-    // delete scope;
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	//  delete nodes[n_index];
+	// }
+	// delete scope;
 
-    ifstream original_scope_save_file;
-    original_scope_save_file.open("saves/original_scope.txt");
-    Scope* original_scope = new Scope(original_scope_save_file);
-    original_scope_save_file.close();
+	ifstream original_scope_save_file;
+	original_scope_save_file.open("saves/original_scope.txt");
+	Scope* original_scope = new Scope(original_scope_save_file);
+	original_scope_save_file.close();
 
 	vector<int> flat_sizes;
 	flat_sizes.push_back(2);
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]) {
 	scope_input_1_flat_sizes.push_back(2);
 	scope_input_1_flat_sizes.push_back(2);
 	scope_input_1_flat_sizes.push_back(2);
-	FoldNetwork* scope_input_network_1 = new FoldNetwork(scope_input_1_flat_sizes, 3);
+	FoldNetwork* scope_input_network_1 = new FoldNetwork(scope_input_1_flat_sizes, 2);
 	Scope* scope_1 = new Scope(original_scope);
 
 	vector<int> scope_input_2_flat_sizes;
@@ -100,7 +101,7 @@ int main(int argc, char* argv[]) {
 	scope_input_2_flat_sizes.push_back(2);
 	scope_input_2_flat_sizes.push_back(3);
 	scope_input_2_flat_sizes.push_back(2);
-	FoldNetwork* scope_input_network_2 = new FoldNetwork(scope_input_2_flat_sizes, 3);
+	FoldNetwork* scope_input_network_2 = new FoldNetwork(scope_input_2_flat_sizes, 2);
 	Scope* scope_2 = new Scope(original_scope);
 
 	double sum_error = 0.0;
@@ -172,10 +173,9 @@ int main(int argc, char* argv[]) {
 		scope_input_2_flat_vals[3][1] = flat_vals[3][1];
 
 		scope_input_network_1->activate(scope_input_1_flat_vals);
-		vector<double> scope_1_input(3);
+		vector<double> scope_1_input(2);
 		scope_1_input[0] = scope_input_network_1->output->acti_vals[0];
 		scope_1_input[1] = scope_input_network_1->output->acti_vals[1];
-		scope_1_input[2] = scope_input_network_1->output->acti_vals[2];
 
 		vector<vector<double>> inner_scope_1_flat_vals;
 		inner_scope_1_flat_vals.reserve(3);
@@ -227,10 +227,9 @@ int main(int argc, char* argv[]) {
 		scope_input_2_flat_vals[5][1] = flat_vals[5][1];
 
 		scope_input_network_2->activate(scope_input_2_flat_vals);
-		vector<double> scope_2_input(3);
+		vector<double> scope_2_input(2);
 		scope_2_input[0] = scope_input_network_2->output->acti_vals[0];
 		scope_2_input[1] = scope_input_network_2->output->acti_vals[1];
-		scope_2_input[2] = scope_input_network_2->output->acti_vals[2];
 
 		vector<vector<double>> inner_scope_2_flat_vals;
 		inner_scope_2_flat_vals.reserve(3);
@@ -340,236 +339,158 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	// double average_score = 0.0;
- //    double max_allowable_error = 0.02;
- //    double max_needed_error = 0.005;
+	double average_score = 0.0;
 
- //    vector<Node*> nodes;
- //    vector<int> scope_sizes;
- //    vector<int> s_input_sizes;
+	vector<Scope*> compound_actions(8);
+	compound_actions[0] = NULL;
+	compound_actions[1] = NULL;
+	compound_actions[2] = NULL;
+	compound_actions[3] = NULL;
+	compound_actions[4] = scope_1;
+	compound_actions[5] = NULL;
+	compound_actions[6] = scope_2;
+	compound_actions[7] = NULL;
+	vector<int> obs_sizes(8);
+	obs_sizes[0] = 2;
+	obs_sizes[1] = 2;
+	obs_sizes[2] = 2;
+	obs_sizes[3] = 2;
+	obs_sizes[4] = -1;
+	obs_sizes[5] = 2;
+	obs_sizes[6] = -1;
+	obs_sizes[7] = 2;
+	vector<FoldNetwork*> original_input_folds(8);
+	original_input_folds[0] = NULL;
+	original_input_folds[1] = NULL;
+	original_input_folds[2] = NULL;
+	original_input_folds[3] = NULL;
+	original_input_folds[4] = scope_input_network_1;
+	original_input_folds[5] = NULL;
+	original_input_folds[6] = scope_input_network_2;
+	original_input_folds[7] = NULL;
+	Fold fold("fold_2",
+			  8,
+			  compound_actions,
+			  obs_sizes,
+			  average_score,
+			  0.02,
+			  fold_network,
+			  original_input_folds);
 
- //    for (int compress_index = 0; compress_index < 8; compress_index++) {
- //        TestNode* test_node = new TestNode(scope_sizes,
- //                                           s_input_sizes,
- //                                           fold_network,
- //                                           initial_flat_sizes[fold_index],
- //                                           max_allowable_error,
- //                                           max_needed_error);
- //        while (true) {
- //            vector<vector<double>> state_vals;
- //            vector<vector<double>> s_input_vals;
- //            double predicted_score = average_score;
+	while (true) {
+		double final_val = 0;
 
- //            int flat_input_counter = 0;
+		vector<vector<double>> flat_vals;
+		flat_vals.reserve(8);
+		vector<vector<vector<double>>> inner_flat_vals(8);
 
- //            double final_val = 0;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[0][0] = rand()%2*2-1;
+		flat_vals[0][1] = rand()%2*2-1;
 
- //            vector<vector<double>> flat_vals;
- //            flat_vals.reserve(8);
+		int index = 0;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[0][0] = rand()%2*2-1;
- //            flat_vals[0][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[0],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[0],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[1][0] = rand()%2*2-1;
+		if (flat_vals[1][0] == 1.0) {
+			index++;
+		}
+		flat_vals[1][1] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            int index = rand()%3;
- //            flat_vals[1][0] = index;
- //            flat_vals[1][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[1],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[1],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[2][0] = rand()%2*2-1;
+		if (flat_vals[2][0] == 1.0) {
+			index++;
+		}
+		flat_vals[2][1] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[2][0] = rand()%2*2-1;
- //            if (index == 0) {
- //                final_val += flat_vals[2][0];
- //            }
- //            final_val += flat_vals[2][0];
- //            flat_vals[2][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[2],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[2],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[3][0] = rand()%2*2-1;
+		flat_vals[3][1] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[3][0] = rand()%2*2-1;
- //            if (index == 1) {
- //                final_val += flat_vals[3][0];
- //            }
- //            final_val += flat_vals[3][0];
- //            flat_vals[3][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[3],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[3],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		flat_vals.push_back(vector<double>());	// push empty
+		inner_flat_vals[4].reserve(3);
 
- //            flat_vals.push_back(vector<double>(3));
- //            flat_vals[4][0] = rand()%2*2-1;
- //            if (index == 2) {
- //                final_val += flat_vals[4][0];
- //            }
- //            final_val += flat_vals[4][0];
- //            flat_vals[4][1] = rand()%2*2-1;
- //            flat_vals[4][2] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[4],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[4],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		inner_flat_vals[4].push_back(vector<double>(2));
+		inner_flat_vals[4][0][0] = rand()%2*2-1;
+		if (index == 0) {
+			final_val += inner_flat_vals[4][0][0];
+		}
+		final_val += inner_flat_vals[4][0][0];
+		inner_flat_vals[4][0][1] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[5][0] = rand()%2*2-1;
- //            flat_vals[5][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[5],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[5],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		inner_flat_vals[4].push_back(vector<double>(2));
+		inner_flat_vals[4][1][0] = rand()%2*2-1;
+		if (index == 1) {
+			final_val += inner_flat_vals[4][1][0];
+		}
+		final_val += inner_flat_vals[4][1][0];
+		inner_flat_vals[4][1][1] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[6][0] = rand()%2*2-1;
- //            if (flat_vals[6][0] == 1.0) {
- //                final_val = 0.0;
- //            }
- //            flat_vals[6][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[6],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[6],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		inner_flat_vals[4].push_back(vector<double>(3));
+		inner_flat_vals[4][2][0] = rand()%2*2-1;
+		if (index == 2) {
+			final_val += inner_flat_vals[4][2][0];
+		}
+		final_val += inner_flat_vals[4][2][0];
+		inner_flat_vals[4][2][1] = rand()%2*2-1;
+		inner_flat_vals[4][2][2] = rand()%2*2-1;
 
- //            flat_vals.push_back(vector<double>(2));
- //            flat_vals[7][0] = rand()%2*2-1;
- //            flat_vals[7][1] = rand()%2*2-1;
- //            if (fold_index > flat_input_counter) {
- //                nodes[flat_input_counter]->activate(state_vals,
- //                                                    s_input_vals,
- //                                                    flat_vals[7],
- //                                                    predicted_score);
- //            } else if (fold_index == flat_input_counter) {
- //                test_node->activate(state_vals,
- //                                    s_input_vals,
- //                                    flat_vals[7],
- //                                    predicted_score);
- //            }
- //            flat_input_counter++;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[5][0] = rand()%2*2-1;
+		flat_vals[5][1] = rand()%2*2-1;
 
- //            test_node->process(flat_vals,
- //                               state_vals,
- //                               predicted_score,
- //                               final_val,
- //                               nodes);
+		flat_vals.push_back(vector<double>());	// push empty
+		inner_flat_vals[6].reserve(3);
 
- //            if (test_node->state == STATE_DONE) {
- //                break;
- //            }
- //        }
+		inner_flat_vals[6].push_back(vector<double>(2));
+		inner_flat_vals[6][0][0] = rand()%2*2-1;
+		if (index == 0) {
+			final_val += inner_flat_vals[6][0][0];
+		}
+		final_val += inner_flat_vals[6][0][0];
+		inner_flat_vals[6][0][1] = rand()%2*2-1;
 
- //        nodes.push_back(new Node("n_"+to_string(fold_index),
- //                                 test_node->obs_size,
- //                                 test_node->new_layer_size,
- //                                 test_node->obs_network,
- //                                 test_node->score_input_layer,
- //                                 test_node->score_input_sizes,
- //                                 test_node->score_input_networks,
- //                                 test_node->small_score_network,
- //                                 test_node->compress_num_layers,
- //                                 test_node->compress_new_size,
- //                                 test_node->input_layer,
- //                                 test_node->input_sizes,
- //                                 test_node->input_networks,
- //                                 test_node->small_compression_network,
- //                                 test_node->compressed_scope_sizes,
- //                                 test_node->compressed_s_input_sizes));
+		inner_flat_vals[6].push_back(vector<double>(2));
+		inner_flat_vals[6][1][0] = rand()%2*2-1;
+		if (index == 1) {
+			final_val += inner_flat_vals[6][1][0];
+		}
+		final_val += inner_flat_vals[6][1][0];
+		inner_flat_vals[6][1][1] = rand()%2*2-1;
 
- //        for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
- //            ofstream output_file;
- //            output_file.open("saves/" + nodes[n_index]->id + "_" + to_string(compress_index) + ".txt");
- //            nodes[n_index]->save(output_file);
- //            output_file.close();
- //        }
+		inner_flat_vals[6].push_back(vector<double>(3));
+		inner_flat_vals[6][2][0] = rand()%2*2-1;
+		if (index == 2) {
+			final_val += inner_flat_vals[6][2][0];
+		}
+		final_val += inner_flat_vals[6][2][0];
+		inner_flat_vals[6][2][1] = rand()%2*2-1;
+		inner_flat_vals[6][2][2] = rand()%2*2-1;
 
- //        delete initial_fold_network;
- //        initial_fold_network = test_node->curr_fold;
+		flat_vals.push_back(vector<double>(2));
+		flat_vals[7][0] = rand()%2*2-1;
+		flat_vals[7][1] = rand()%2*2-1;
 
- //        {
- //            ofstream output_file;
- //            output_file.open("saves/f_" + to_string(compress_index) + ".txt");
- //            initial_fold_network->save(output_file);
- //            output_file.close();
- //        }
+		fold.process(flat_vals,
+					 inner_flat_vals,
+					 final_val);
 
- //        cout << "SAVED " << nodes.back()->id << endl;
+		if (fold.state == STATE_DONE) {
+			break;
+		}
+	}
 
- //        scope_sizes = test_node->curr_scope_sizes;
- //        s_input_sizes = test_node->curr_s_input_sizes;
-
- //        fold_index++;
-
- //        delete test_node;
- //    }
-
- //    for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
- //        delete nodes[n_index];
- //    }
+	delete original_scope;
+	for (int n_index = 0; n_index < (int)fold.nodes.size(); n_index++) {
+		delete fold.nodes[n_index];
+	}
+	delete fold.curr_fold;
+	for (int f_index = 0; f_index < (int)fold.curr_scope_input_folds.size(); f_index++) {
+		if (fold.curr_scope_input_folds[f_index] != NULL) {
+			delete fold.curr_scope_input_folds[f_index];
+		}
+	}
 
 	cout << "Done" << endl;
 }

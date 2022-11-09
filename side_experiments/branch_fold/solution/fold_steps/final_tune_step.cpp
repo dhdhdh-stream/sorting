@@ -50,7 +50,8 @@ void Fold::final_tune_step(vector<vector<double>>& flat_vals,
 				}
 			}
 		} else {
-			this->curr_scope_input_folds[f_index]->activate(input_fold_inputs[f_index]);
+			this->curr_scope_input_folds[f_index]->activate(input_fold_inputs[f_index],
+															state_vals);
 			vector<double> scope_input(this->compound_actions[f_index]->num_inputs);
 			for (int i_index = 0; i_index < this->compound_actions[f_index]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_scope_input_folds[f_index]->output->acti_vals[i_index];
@@ -80,7 +81,7 @@ void Fold::final_tune_step(vector<vector<double>>& flat_vals,
 	errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 	this->sum_error += errors[0]*errors[0];
 
-	this->curr_fold->backprop_fold(errors, 0.002);
+	this->curr_fold->backprop_fold(errors, 0.001);
 
 	vector<vector<double>> state_errors(this->curr_scope_sizes.size());
 	for (int sc_index = 0; sc_index < (int)this->curr_scope_sizes.size(); sc_index++) {
@@ -116,7 +117,7 @@ void Fold::final_tune_step(vector<vector<double>>& flat_vals,
 				scope_input_errors[f_index],
 				scope_output_errors,
 				scope_predicted_score_errors[f_index]);
-			this->curr_scope_input_folds[f_index]->backprop_fold(scope_output_errors, 0.002);
+			this->curr_scope_input_folds[f_index]->backprop_fold(scope_output_errors, 0.001);
 
 			for (int sc_index = 0; sc_index < (int)state_errors.size(); sc_index++) {
 				for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {

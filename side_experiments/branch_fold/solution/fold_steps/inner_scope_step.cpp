@@ -43,21 +43,33 @@ void Fold::inner_scope_step(vector<vector<double>>& flat_vals,
 
 	vector<double> action_input;
 	if (this->action->num_inputs > 0) {
-		this->action_input_network->activate(state_vals.back(),
-											 s_input_vals.back());
+		for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
+			this->action_input_input_networks[i_index]->activate(state_vals[this->action_input_input_layer[i_index]],
+																 s_input_vals[this->action_input_input_layer[i_index]]);
+			for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+				s_input_vals[this->action_input_input_layer[i_index]+1].push_back(
+					this->action_input_input_networks[i_index]->output->acti_vals[s_index]);
+			}
+		}
+
+		this->small_action_input_network->activate(state_vals.back(),
+												   s_input_vals.back());
 		action_input.reserve(this->action->num_inputs);
 		for (int i_index = 0; i_index < this->action->num_inputs; i_index++) {
-			action_input.push_back(this->action_input_network->output->acti_vals[i_index]);
+			action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 		}
 	}
 	this->action->activate(inner_flat_vals[this->nodes.size()],
 						   action_input,
 						   predicted_score);
 
-	fold_input.push_back(vector<double>());	// empty
+	vector<double> scope_outputs = this->action->outputs;
+	scope_outputs.push_back(predicted_score);
+
+	fold_input.push_back(scope_outputs);
 	for (int i_index = (int)this->nodes.size()+1; i_index < this->sequence_length; i_index++) {
 		if (this->compound_actions[i_index] != NULL) {
-			input_fold_inputs[i_index].push_back(vector<double>());	// empty
+			input_fold_inputs[i_index].push_back(scope_outputs);
 		}
 	}
 
@@ -70,7 +82,8 @@ void Fold::inner_scope_step(vector<vector<double>>& flat_vals,
 				}
 			}
 		} else {
-			this->curr_scope_input_folds[f_index]->activate(input_fold_inputs[f_index]);
+			this->curr_scope_input_folds[f_index]->activate(input_fold_inputs[f_index],
+															state_vals);
 			vector<double> scope_input(this->compound_actions[f_index]->num_inputs);
 			for (int i_index = 0; i_index < this->compound_actions[f_index]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_scope_input_folds[f_index]->output->acti_vals[i_index];
@@ -100,7 +113,7 @@ void Fold::inner_scope_step(vector<vector<double>>& flat_vals,
 	this->sum_error += (target_val-predicted_score)*(target_val-predicted_score);
 
 	vector<double> errors;
-	errors.push_back((target_val-predicted_score) - this->test_fold->output->acti_vals[0]);
+	errors.push_back((target_val-predicted_score) - this->curr_fold->output->acti_vals[0]);
 
 	if (this->stage_iter <= 320000) {
 		this->curr_fold->backprop_no_state(errors, 0.01);

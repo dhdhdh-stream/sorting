@@ -38,8 +38,8 @@ public:
 					 int num_input);
 	void activate(std::vector<std::vector<double>>& state_vals,
 				  std::vector<std::vector<double>>& s_input_vals);
-	void activate_new_s_input(std::vector<std::vector<double>>& state_vals,
-							  std::vector<std::vector<double>>& s_input_vals);
+	void activate_fold(std::vector<std::vector<double>>& state_vals,
+					   std::vector<std::vector<double>>& s_input_vals);
 	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
 											   double target_max_update);
 	void backprop_new_s_input(int layer,

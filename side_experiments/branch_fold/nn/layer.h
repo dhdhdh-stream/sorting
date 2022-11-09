@@ -48,7 +48,8 @@ public:
 								int state_size);
 	void fold_backprop_last_state(int fold_index,
 								  int state_size);
-	void fold_backprop_last_state_with_no_weight_change();
+	void fold_backprop_last_state_with_no_weight_change(int fold_index,
+														int state_size);
 	void fold_backprop(int fold_index,
 					   int state_size);
 	// void fold_backprop_state(int fold_index,

@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const double TARGET_MAX_UPDATE = 0.002;
+const double TARGET_MAX_UPDATE = 0.001;
 
 BaseScope::BaseScope(int num_outputs) {
 	this->type = SCOPE_TYPE_BASE;

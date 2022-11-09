@@ -96,8 +96,8 @@ void SubFoldNetwork::activate(vector<vector<double>>& state_vals,
 	this->output->activate();
 }
 
-void SubFoldNetwork::activate_new_s_input(vector<vector<double>>& state_vals,
-										  vector<vector<double>>& s_input_vals) {
+void SubFoldNetwork::activate_fold(vector<vector<double>>& state_vals,
+								   vector<vector<double>>& s_input_vals) {
 	for (int sc_index = this->fold_index+1; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[sc_index][st_index];

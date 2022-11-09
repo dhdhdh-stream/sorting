@@ -14,18 +14,20 @@ const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
 
 const int STATE_INNER_SCOPE_INPUT = 0;
-const int STATE_INNER_SCOPE = 1;
-const int STATE_OBS = 2;
-const int STATE_SCORE = 3;
-const int STATE_SCORE_INPUT = 4;
-const int STATE_SCORE_SMALL = 5;
-const int STATE_SCORE_TUNE = 6;
-const int STATE_COMPRESS_STATE = 7;
-const int STATE_COMPRESS_SCOPE = 8;
-const int STATE_COMPRESS_INPUT = 9;
-const int STATE_COMPRESS_SMALL = 10;
-const int STATE_FINAL_TUNE = 11;
-const int STATE_DONE = 12;
+const int STATE_INNER_SCOPE_INPUT_INPUT = 1;
+const int STATE_INNER_SCOPE_INPUT_SMALL = 2;
+const int STATE_INNER_SCOPE = 3;
+const int STATE_OBS = 4;
+const int STATE_SCORE = 5;
+const int STATE_SCORE_INPUT = 6;
+const int STATE_SCORE_SMALL = 7;
+const int STATE_SCORE_TUNE = 8;
+const int STATE_COMPRESS_STATE = 9;
+const int STATE_COMPRESS_SCOPE = 10;
+const int STATE_COMPRESS_INPUT = 11;
+const int STATE_COMPRESS_SMALL = 12;
+const int STATE_FINAL_TUNE = 13;
+const int STATE_DONE = 14;
 
 class Fold {
 public:
@@ -59,8 +61,13 @@ public:
 	FoldNetwork* test_fold;
 	std::vector<FoldNetwork*> test_scope_input_folds;
 
-	SmallNetwork* action_input_network;
 	Scope* action;
+	SubFoldNetwork* curr_action_input_network;
+	SubFoldNetwork* test_action_input_network;
+	std::vector<int> action_input_input_layer;
+	std::vector<int> action_input_input_sizes;
+	std::vector<SmallNetwork*> action_input_input_networks;
+	SmallNetwork* small_action_input_network;
 
 	int new_layer_size;
 	Network* obs_network;
@@ -105,6 +112,12 @@ private:
 	void inner_scope_input_step(std::vector<std::vector<double>>& flat_vals,
 								std::vector<std::vector<std::vector<double>>>& inner_flat_vals,
 								double target_val);
+	void inner_scope_input_input_step(std::vector<std::vector<double>>& flat_vals,
+									  std::vector<std::vector<std::vector<double>>>& inner_flat_vals,
+									  double target_val);
+	void inner_scope_input_small_step(std::vector<std::vector<double>>& flat_vals,
+									  std::vector<std::vector<std::vector<double>>>& inner_flat_vals,
+									  double target_val);
 	void inner_scope_step(std::vector<std::vector<double>>& flat_vals,
 						  std::vector<std::vector<std::vector<double>>>& inner_flat_vals,
 						  double target_val);

@@ -5,10 +5,13 @@
 
 using namespace std;
 
-const double TARGET_MAX_UPDATE = 0.002;
+const double TARGET_MAX_UPDATE = 0.001;
 
 Node::Node(string id,
 		   bool is_scope,
+		   vector<int> action_input_input_layer,
+		   vector<int> action_input_input_sizes,
+		   vector<SmallNetwork*> action_input_input_networks,
 		   SmallNetwork* action_input_network,
 		   Scope* action,
 		   int obs_size,
@@ -28,6 +31,9 @@ Node::Node(string id,
 		   vector<int> compressed_s_input_sizes) {
 	this->id = id;
 	this->is_scope = is_scope;
+	this->action_input_input_layer = action_input_input_layer;
+	this->action_input_input_sizes = action_input_input_sizes;
+	this->action_input_input_networks = action_input_input_networks;
 	this->action_input_network = action_input_network;
 	this->action = action;
 	this->obs_size = obs_size;
@@ -64,6 +70,24 @@ Node::Node(ifstream& input_file) {
 		action_save_file.close();
 
 		if (this->action->num_inputs > 0) {
+			string num_action_input_input_line;
+			getline(input_file, num_action_input_input_line);
+			int num_action_input_input = stoi(num_action_input_input_line);
+			for (int i_index = 0; i_index < num_action_input_input; i_index++) {
+				string input_layer_line;
+				getline(input_file, input_layer_line);
+				this->action_input_input_layer.push_back(stoi(input_layer_line));
+
+				string input_size_line;
+				getline(input_file, input_size_line);
+				this->action_input_input_sizes.push_back(stoi(input_size_line));
+
+				ifstream action_input_input_network_save_file;
+				action_input_input_network_save_file.open("saves/nns/" + this->id + "_action_input_input_" + to_string(i_index) + ".txt");
+				this->action_input_input_networks.push_back(new SmallNetwork(action_input_input_network_save_file));
+				action_input_input_network_save_file.close();
+			}
+
 			ifstream action_input_network_save_file;
 			action_input_network_save_file.open("saves/nns/" + this->id + "_action_input.txt");
 			this->action_input_network = new SmallNetwork(action_input_network_save_file);
@@ -171,6 +195,9 @@ Node::Node(ifstream& input_file) {
 Node::~Node() {
 	if (this->is_scope) {
 		if (this->action->num_inputs > 0) {
+			for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
+				delete this->action_input_input_networks[i_index];
+			}
 			delete this->action_input_network;
 		}
 		delete this->action;
@@ -267,6 +294,15 @@ void Node::activate(vector<vector<double>>& state_vals,
 					double& predicted_score) {
 	vector<double> action_input;
 	if (this->action->num_inputs > 0) {
+		for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
+			this->action_input_input_networks[i_index]->activate(state_vals[this->action_input_input_layer[i_index]],
+																 s_input_vals[this->action_input_input_layer[i_index]]);
+			for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+				s_input_vals[this->action_input_input_layer[i_index]+1].push_back(
+					this->action_input_input_networks[i_index]->output->acti_vals[s_index]);
+			}
+		}
+
 		this->action_input_network->activate(state_vals.back(),
 											 s_input_vals.back());
 		action_input.reserve(this->action->num_inputs);
@@ -430,21 +466,25 @@ void Node::backprop(vector<vector<double>>& state_errors,
 		this->obs_network->backprop(state_errors.back(), TARGET_MAX_UPDATE);
 		state_errors.pop_back();
 		s_input_errors.pop_back();
+	}
 
-		if (this->is_scope) {
-			vector<double> action_input_errors(this->action->num_outputs);
+	if (this->is_scope) {
+		vector<double> action_input_errors(this->action->num_outputs, 0.0);
+		if (this->new_layer_size > 0) {
 			for (int o_index = 0; o_index < this->action->num_outputs; o_index++) {
 				action_input_errors[o_index] = this->obs_network->input->errors[o_index];
 				this->obs_network->input->errors[o_index] = 0.0;
 			}
-			vector<double> action_output_errors;
-			this->action->backprop(action_input_errors,
-								   action_output_errors,
-								   predicted_score,
-								   target_val);
+		}
+		vector<double> action_output_errors;
+		this->action->backprop(action_input_errors,
+							   action_output_errors,
+							   predicted_score,
+							   target_val);
 
-			if (this->action->num_inputs > 0) {
-				this->action_input_network->backprop(action_output_errors, TARGET_MAX_UPDATE);
+		if (this->action->num_inputs > 0) {
+			this->action_input_network->backprop(action_output_errors, TARGET_MAX_UPDATE);
+			if (state_errors.size() > 0) {
 				for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
 					state_errors.back()[st_index] += this->action_input_network->state_input->errors[st_index];
 					this->action_input_network->state_input->errors[st_index] = 0.0;
@@ -452,6 +492,24 @@ void Node::backprop(vector<vector<double>>& state_errors,
 				for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
 					s_input_errors.back()[st_index] += this->action_input_network->s_input_input->errors[st_index];
 					this->action_input_network->s_input_input->errors[st_index] = 0.0;
+				}
+			}
+
+			for (int i_index = (int)this->action_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				vector<double> action_input_errors(this->action_input_input_sizes[i_index]);
+				for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+					action_input_errors[this->action_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->action_input_input_layer[i_index]+1].back();
+					s_input_errors[this->action_input_input_layer[i_index]+1].pop_back();
+				}
+				this->action_input_input_networks[i_index]->backprop(action_input_errors,
+																	 TARGET_MAX_UPDATE);
+				for (int st_index = 0; st_index < (int)state_errors[this->action_input_input_layer[i_index]].size(); st_index++) {
+					state_errors[this->action_input_input_layer[i_index]][st_index] += this->action_input_input_networks[i_index]->state_input->errors[st_index];
+					this->action_input_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[this->action_input_input_layer[i_index]].size(); st_index++) {
+					s_input_errors[this->action_input_input_layer[i_index]][st_index] += this->action_input_input_networks[i_index]->s_input_input->errors[st_index];
+					this->action_input_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 				}
 			}
 		}
@@ -544,29 +602,48 @@ void Node::backprop_errors_with_no_weight_change(vector<vector<double>>& state_e
 		this->obs_network->backprop_errors_with_no_weight_change(state_errors.back());
 		state_errors.pop_back();
 		s_input_errors.pop_back();
+	}
 
-		if (this->is_scope) {
-			vector<double> action_input_errors(this->action->num_outputs);
+	if (this->is_scope) {
+		vector<double> action_input_errors(this->action->num_outputs, 0.0);
+		if (this->new_layer_size > 0) {
 			for (int o_index = 0; o_index < this->action->num_outputs; o_index++) {
 				action_input_errors[o_index] = this->obs_network->input->errors[o_index];
 				this->obs_network->input->errors[o_index] = 0.0;
 			}
-			vector<double> action_output_errors;
-			this->action->backprop_errors_with_no_weight_change(
-				action_input_errors,
-				action_output_errors,
-				predicted_score,
-				target_val);
+		}
+		vector<double> action_output_errors;
+		this->action->backprop_errors_with_no_weight_change(
+			action_input_errors,
+			action_output_errors,
+			predicted_score,
+			target_val);
 
-			if (this->action->num_inputs > 0) {
-				this->action_input_network->backprop_errors_with_no_weight_change(action_output_errors);
-				for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
-					state_errors.back()[st_index] += this->action_input_network->state_input->errors[st_index];
-					this->action_input_network->state_input->errors[st_index] = 0.0;
+		if (this->action->num_inputs > 0) {
+			this->action_input_network->backprop_errors_with_no_weight_change(action_output_errors);
+			for (int st_index = 0; st_index < (int)state_errors.back().size(); st_index++) {
+				state_errors.back()[st_index] += this->action_input_network->state_input->errors[st_index];
+				this->action_input_network->state_input->errors[st_index] = 0.0;
+			}
+			for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
+				s_input_errors.back()[st_index] += this->action_input_network->s_input_input->errors[st_index];
+				this->action_input_network->s_input_input->errors[st_index] = 0.0;
+			}
+
+			for (int i_index = (int)this->action_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				vector<double> action_input_errors(this->action_input_input_sizes[i_index]);
+				for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+					action_input_errors[this->action_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->action_input_input_layer[i_index]+1].back();
+					s_input_errors[this->action_input_input_layer[i_index]+1].pop_back();
 				}
-				for (int st_index = 0; st_index < (int)s_input_errors.back().size(); st_index++) {
-					s_input_errors.back()[st_index] += this->action_input_network->s_input_input->errors[st_index];
-					this->action_input_network->s_input_input->errors[st_index] = 0.0;
+				this->action_input_input_networks[i_index]->backprop_errors_with_no_weight_change(action_input_errors);
+				for (int st_index = 0; st_index < (int)state_errors[this->action_input_input_layer[i_index]].size(); st_index++) {
+					state_errors[this->action_input_input_layer[i_index]][st_index] += this->action_input_input_networks[i_index]->state_input->errors[st_index];
+					this->action_input_input_networks[i_index]->state_input->errors[st_index] = 0.0;
+				}
+				for (int st_index = 0; st_index < (int)s_input_errors[this->action_input_input_layer[i_index]].size(); st_index++) {
+					s_input_errors[this->action_input_input_layer[i_index]][st_index] += this->action_input_input_networks[i_index]->s_input_input->errors[st_index];
+					this->action_input_input_networks[i_index]->s_input_input->errors[st_index] = 0.0;
 				}
 			}
 		}
@@ -617,6 +694,17 @@ void Node::save(ofstream& output_file) {
 		action_save_file.close();
 
 		if (this->action->num_inputs > 0) {
+			output_file << this->action_input_input_networks.size() << endl;
+			for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
+				output_file << this->action_input_input_layer[i_index] << endl;
+				output_file << this->action_input_input_sizes[i_index] << endl;
+
+				ofstream action_input_input_network_save_file;
+				action_input_input_network_save_file.open("saves/nns/" + this->id + "_action_input_input_" + to_string(i_index) + ".txt");
+				this->action_input_input_networks[i_index]->save(action_input_input_network_save_file);
+				action_input_input_network_save_file.close();
+			}
+
 			ofstream action_input_network_save_file;
 			action_input_network_save_file.open("saves/nns/" + this->id + "_action_input.txt");
 			this->action_input_network->save(action_input_network_save_file);

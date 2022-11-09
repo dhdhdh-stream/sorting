@@ -13,6 +13,9 @@ public:
 	std::string id;
 
 	bool is_scope;
+	std::vector<int> action_input_input_layer;
+	std::vector<int> action_input_input_sizes;
+	std::vector<SmallNetwork*> action_input_input_networks;
 	SmallNetwork* action_input_network;
 	// always activate action even if new_layer_size == 0
 	Scope* action;
@@ -37,6 +40,9 @@ public:
 
 	Node(std::string id,
 		 bool is_scope,
+		 std::vector<int> action_input_input_layer,
+		 std::vector<int> action_input_input_sizes,
+		 std::vector<SmallNetwork*> action_input_input_networks,
 		 SmallNetwork* action_input_network,
 		 Scope* action,
 		 int obs_size,

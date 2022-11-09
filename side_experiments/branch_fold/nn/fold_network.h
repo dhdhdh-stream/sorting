@@ -42,6 +42,8 @@ public:
 				  double target_max_update);
 
 	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
+	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
+											   double target_max_update);
 
 	void add_scope(int scope_size);
 	void pop_scope();

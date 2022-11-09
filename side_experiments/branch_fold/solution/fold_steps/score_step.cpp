@@ -32,11 +32,20 @@ void Fold::score_step(vector<vector<double>>& flat_vals,
 	} else {
 		vector<double> action_input;
 		if (this->action->num_inputs > 0) {
-			this->action_input_network->activate(state_vals.back(),
-												 s_input_vals.back());
+			for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
+				this->action_input_input_networks[i_index]->activate(state_vals[this->action_input_input_layer[i_index]],
+																	 s_input_vals[this->action_input_input_layer[i_index]]);
+				for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+					s_input_vals[this->action_input_input_layer[i_index]+1].push_back(
+						this->action_input_input_networks[i_index]->output->acti_vals[s_index]);
+				}
+			}
+
+			this->small_action_input_network->activate(state_vals.back(),
+													   s_input_vals.back());
 			action_input.reserve(this->action->num_inputs);
 			for (int i_index = 0; i_index < this->action->num_inputs; i_index++) {
-				action_input.push_back(this->action_input_network->output->acti_vals[i_index]);
+				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
 		this->action->activate(inner_flat_vals[this->nodes.size()],
