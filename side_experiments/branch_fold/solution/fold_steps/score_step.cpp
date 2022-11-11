@@ -48,10 +48,12 @@ void Fold::score_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 
 	this->obs_network->activate(obs_input);
@@ -74,11 +76,13 @@ void Fold::score_step(vector<vector<double>>& flat_vals,
 		}
 
 		vector<double> score_errors{target_val - predicted_score};
-		if (this->stage_iter <= 80000) {
+		// if (this->stage_iter <= 120000) {
+		if (this->stage_iter <= 240000) {
 			this->test_score_network->backprop_weights_with_no_error_signal(
 				score_errors,
 				0.05);
-		} else if (this->stage_iter <= 160000) {
+		// } else if (this->stage_iter <= 160000) {
+		} else if (this->stage_iter <= 270000) {
 			this->test_score_network->backprop_weights_with_no_error_signal(
 				score_errors,
 				0.01);

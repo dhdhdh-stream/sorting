@@ -33,7 +33,8 @@ double global_sum_error;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1668111371;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -237,25 +238,25 @@ int main(int argc, char* argv[]) {
 		inner_scope_2_flat_vals.push_back(vector<double>(2));
 		inner_scope_2_flat_vals[0][0] = rand()%2*2-1;
 		if (index == 0) {
-			final_val += inner_scope_2_flat_vals[0][0];
+			final_val += 2*inner_scope_2_flat_vals[0][0];
 		}
-		final_val += inner_scope_2_flat_vals[0][0];
+		final_val += 2*inner_scope_2_flat_vals[0][0];
 		inner_scope_2_flat_vals[0][1] = rand()%2*2-1;
 
 		inner_scope_2_flat_vals.push_back(vector<double>(2));
 		inner_scope_2_flat_vals[1][0] = rand()%2*2-1;
 		if (index == 1) {
-			final_val += inner_scope_2_flat_vals[1][0];
+			final_val += 2*inner_scope_2_flat_vals[1][0];
 		}
-		final_val += inner_scope_2_flat_vals[1][0];
+		final_val += 2*inner_scope_2_flat_vals[1][0];
 		inner_scope_2_flat_vals[1][1] = rand()%2*2-1;
 
 		inner_scope_2_flat_vals.push_back(vector<double>(3));
 		inner_scope_2_flat_vals[2][0] = rand()%2*2-1;
 		if (index == 2) {
-			final_val += inner_scope_2_flat_vals[2][0];
+			final_val += 2*inner_scope_2_flat_vals[2][0];
 		}
-		final_val += inner_scope_2_flat_vals[2][0];
+		final_val += 2*inner_scope_2_flat_vals[2][0];
 		inner_scope_2_flat_vals[2][1] = rand()%2*2-1;
 		inner_scope_2_flat_vals[2][2] = rand()%2*2-1;
 
@@ -295,8 +296,8 @@ int main(int argc, char* argv[]) {
 		double scope_2_predicted_score_error = fold_network->flat_inputs[6]->errors[2];
 		fold_network->flat_inputs[6]->errors[2] = 0.0;
 		vector<double> scope_2_output_errors;
-		scope_2->backprop_errors_with_no_weight_change(
-		// scope_2->backprop(
+		// scope_2->backprop_loose_errors_with_no_weight_change(
+		scope_2->backprop_loose(
 			scope_2_input_errors,
 			scope_2_output_errors,
 			scope_2_predicted_score_error);
@@ -324,8 +325,8 @@ int main(int argc, char* argv[]) {
 		scope_1_predicted_score_error += scope_input_network_2->flat_inputs[4]->errors[2];
 		scope_input_network_2->flat_inputs[4]->errors[2] = 0.0;
 		vector<double> scope_1_output_errors;
-		scope_1->backprop_errors_with_no_weight_change(
-		// scope_1->backprop(
+		// scope_1->backprop_loose_errors_with_no_weight_change(
+		scope_1->backprop_loose(
 			scope_1_input_errors,
 			scope_1_output_errors,
 			scope_1_predicted_score_error);
@@ -368,12 +369,12 @@ int main(int argc, char* argv[]) {
 	original_input_folds[5] = NULL;
 	original_input_folds[6] = scope_input_network_2;
 	original_input_folds[7] = NULL;
-	Fold fold("fold_2",
+	Fold fold("compound_fold",
 			  8,
 			  compound_actions,
 			  obs_sizes,
 			  average_score,
-			  0.02,
+			  0.01,
 			  fold_network,
 			  original_input_folds);
 
@@ -446,25 +447,25 @@ int main(int argc, char* argv[]) {
 		inner_flat_vals[6].push_back(vector<double>(2));
 		inner_flat_vals[6][0][0] = rand()%2*2-1;
 		if (index == 0) {
-			final_val += inner_flat_vals[6][0][0];
+			final_val += 2*inner_flat_vals[6][0][0];
 		}
-		final_val += inner_flat_vals[6][0][0];
+		final_val += 2*inner_flat_vals[6][0][0];
 		inner_flat_vals[6][0][1] = rand()%2*2-1;
 
 		inner_flat_vals[6].push_back(vector<double>(2));
 		inner_flat_vals[6][1][0] = rand()%2*2-1;
 		if (index == 1) {
-			final_val += inner_flat_vals[6][1][0];
+			final_val += 2*inner_flat_vals[6][1][0];
 		}
-		final_val += inner_flat_vals[6][1][0];
+		final_val += 2*inner_flat_vals[6][1][0];
 		inner_flat_vals[6][1][1] = rand()%2*2-1;
 
 		inner_flat_vals[6].push_back(vector<double>(3));
 		inner_flat_vals[6][2][0] = rand()%2*2-1;
 		if (index == 2) {
-			final_val += inner_flat_vals[6][2][0];
+			final_val += 2*inner_flat_vals[6][2][0];
 		}
-		final_val += inner_flat_vals[6][2][0];
+		final_val += 2*inner_flat_vals[6][2][0];
 		inner_flat_vals[6][2][1] = rand()%2*2-1;
 		inner_flat_vals[6][2][2] = rand()%2*2-1;
 
@@ -479,6 +480,13 @@ int main(int argc, char* argv[]) {
 		if (fold.state == STATE_DONE) {
 			break;
 		}
+	}
+
+	for (int n_index = 0; n_index < (int)fold.nodes.size(); n_index++) {
+		ofstream output_file;
+		output_file.open("saves/" + fold.nodes[n_index]->id + ".txt");
+		fold.nodes[n_index]->save(output_file);
+		output_file.close();
 	}
 
 	delete original_scope;

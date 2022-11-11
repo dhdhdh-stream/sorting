@@ -53,10 +53,12 @@ void Fold::compress_small_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 
 	this->obs_network->activate(obs_input);
@@ -93,35 +95,86 @@ void Fold::compress_small_step(vector<vector<double>>& flat_vals,
 	this->curr_compression_network->activate_fold(state_vals,
 												  s_input_vals);
 
+
+	// maybe easier to backprop hidden layer?
+
 	vector<double> compression_inputs;
 	for (int l_index = (int)state_vals.size()-this->compress_num_layers; l_index < (int)state_vals.size(); l_index++) {
 		for (int st_index = 0; st_index < (int)state_vals[l_index].size(); st_index++) {
 			compression_inputs.push_back(state_vals[l_index][st_index]);
 		}
+		for (int st_index = 0; st_index < (int)s_input_vals[l_index].size(); st_index++) {
+			compression_inputs.push_back(s_input_vals[l_index][st_index]);
+		}
 	}
-	for (int st_index = 0; st_index < (int)s_input_vals[state_vals.size()-this->compress_num_layers].size(); st_index++) {
-		compression_inputs.push_back(s_input_vals[state_vals.size()-this->compress_num_layers][st_index]);
+	if ((this->stage_iter+1)%10000 == 0) {
+		cout << "this->curr_compression_network->fold_index: " << this->curr_compression_network->fold_index << endl;
+		cout << "state_vals.size(): " << state_vals.size() << endl;
+		cout << "compression_inputs.size(): " << compression_inputs.size() << endl;
+		cout << "this->small_compression_network->input->acti_vals.size(): " << this->small_compression_network->input->acti_vals.size() << endl;
 	}
+	// for (int st_index = 0; st_index < (int)s_input_vals[state_vals.size()-this->compress_num_layers].size(); st_index++) {
+	// 	compression_inputs.push_back(s_input_vals[state_vals.size()-this->compress_num_layers][st_index]);
+	// }
 	this->small_compression_network->activate(compression_inputs);
 
-	vector<double> compression_errors(this->compress_new_size);
-	for (int s_index = 0; s_index < this->compress_new_size; s_index++) {
-		compression_errors[s_index] = this->curr_compression_network->output->acti_vals[s_index]
-			- this->small_compression_network->output->acti_vals[s_index];
-		this->sum_error += compression_errors[s_index]*compression_errors[s_index];
-	}
+	// TODO: try magnifying
+	if (compression_inputs.size() == 7) {
+		vector<double> compression_errors(this->compress_new_size);
+		for (int s_index = 0; s_index < this->compress_new_size; s_index++) {
+			compression_errors[s_index] = this->curr_compression_network->output->acti_vals[s_index]
+				- this->small_compression_network->output->acti_vals[s_index];
+			this->sum_error += compression_errors[s_index]*compression_errors[s_index];
+			if ((this->stage_iter+1)%10000 == 0) {
+				cout << "this->curr_compression_network->output->acti_vals[s_index]: " << this->curr_compression_network->output->acti_vals[s_index] << endl;
+				cout << "this->small_compression_network->output->acti_vals[s_index]: " << this->small_compression_network->output->acti_vals[s_index] << endl;
+			}
+		}
+		if ((this->stage_iter+1)%10000 == 0) {
+			cout << endl;
+		}
 
-	if (this->stage_iter <= 80000) {
-		this->small_compression_network->backprop_weights_with_no_error_signal(
-			compression_errors,
-			0.05);
-	} else if (this->stage_iter <= 160000) {
-		this->small_compression_network->backprop_weights_with_no_error_signal(
-			compression_errors,
-			0.01);
+		// if (this->stage_iter <= 160000) {
+		if (this->stage_iter <= 240000) {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.05);
+		// } else if (this->stage_iter <= 200000) {
+		} else if (this->stage_iter <= 270000) {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.01);
+		} else {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.002);
+		}
+
+		if (this->stage_iter >= 299999) {
+			exit(1);
+		}
 	} else {
-		this->small_compression_network->backprop_weights_with_no_error_signal(
-			compression_errors,
-			0.002);
+		vector<double> compression_errors(this->compress_new_size);
+		for (int s_index = 0; s_index < this->compress_new_size; s_index++) {
+			compression_errors[s_index] = this->curr_compression_network->output->acti_vals[s_index]
+				- this->small_compression_network->output->acti_vals[s_index];
+			this->sum_error += compression_errors[s_index]*compression_errors[s_index];
+		}
+
+		// if (this->stage_iter <= 180000) {
+		if (this->stage_iter <= 240000) {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.05);
+		// } else if (this->stage_iter <= 240000) {
+		} else if (this->stage_iter <= 270000) {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.01);
+		} else {
+			this->small_compression_network->backprop_weights_with_no_error_signal(
+				compression_errors,
+				0.002);
+		}
 	}
 }

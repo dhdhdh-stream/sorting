@@ -53,10 +53,12 @@ void Fold::score_small_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 
 	this->obs_network->activate(obs_input);
@@ -75,16 +77,25 @@ void Fold::score_small_step(vector<vector<double>>& flat_vals,
 		}
 	}
 
+	this->curr_score_network->activate_fold(state_vals,
+											s_input_vals);
+
 	this->small_score_network->activate(state_vals.back(),
 										s_input_vals.back());
-	predicted_score += this->small_score_network->output->acti_vals[0];
+	// predicted_score += this->small_score_network->output->acti_vals[0];
 
-	this->sum_error += (target_val - predicted_score)*(target_val - predicted_score);
+	// this->sum_error += (target_val - predicted_score)*(target_val - predicted_score);
 
-	vector<double> score_errors{target_val - predicted_score};
-	if (this->stage_iter <= 80000) {
+	vector<double> score_errors{this->curr_score_network->output->acti_vals[0]
+		- this->small_score_network->output->acti_vals[0]};
+	this->sum_error += score_errors[0]*score_errors[0];
+
+	// vector<double> score_errors{target_val - predicted_score};
+	// if (this->stage_iter <= 180000) {
+	if (this->stage_iter <= 240000) {
 		this->small_score_network->backprop_weights_with_no_error_signal(score_errors, 0.05);
-	} else if (this->stage_iter <= 160000) {
+	// } else if (this->stage_iter <= 240000) {
+	} else if (this->stage_iter <= 270000) {
 		this->small_score_network->backprop_weights_with_no_error_signal(score_errors, 0.01);
 	} else {
 		this->small_score_network->backprop_weights_with_no_error_signal(score_errors, 0.002);

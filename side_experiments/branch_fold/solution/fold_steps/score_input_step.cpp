@@ -48,10 +48,12 @@ void Fold::score_input_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 
 	this->obs_network->activate(obs_input);
@@ -61,20 +63,44 @@ void Fold::score_input_step(vector<vector<double>>& flat_vals,
 		state_vals.back()[s_index] = this->obs_network->output->acti_vals[s_index];
 	}
 
-	for (int i_index = 0; i_index < (int)this->score_input_networks.size(); i_index++) {
-		this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]],
-													  s_input_vals[this->score_input_layer[i_index]]);
-		for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
-			s_input_vals[this->score_input_layer[i_index]+1].push_back(
-				this->score_input_networks[i_index]->output->acti_vals[s_index]);
+	if (this->score_input_networks.size() > 0) {
+		for (int i_index = 0; i_index < (int)this->score_input_networks.size()-1; i_index++) {
+			this->score_input_networks[i_index]->activate(state_vals[this->score_input_layer[i_index]],
+														  s_input_vals[this->score_input_layer[i_index]]);
+			for (int s_index = 0; s_index < this->score_input_sizes[i_index]; s_index++) {
+				s_input_vals[this->score_input_layer[i_index]+1].push_back(
+					this->score_input_networks[i_index]->output->acti_vals[s_index]);
+			}
+		}
+		if (this->stage == STAGE_LEARN) {
+			this->score_input_networks.back()->activate(state_vals[this->score_input_layer.back()],
+														s_input_vals[this->score_input_layer.back()]);
+			for (int s_index = 0; s_index < this->score_input_sizes.back(); s_index++) {
+				s_input_vals[this->score_input_layer.back()+1].push_back(
+					this->new_state_factor*this->score_input_networks.back()->output->acti_vals[s_index]);
+			}
+		} else {
+			this->score_input_networks.back()->activate(state_vals[this->score_input_layer.back()],
+														s_input_vals[this->score_input_layer.back()]);
+			for (int s_index = 0; s_index < this->score_input_sizes.back(); s_index++) {
+				s_input_vals[this->score_input_layer.back()+1].push_back(
+					this->score_input_networks.back()->output->acti_vals[s_index]);
+			}
 		}
 	}
 
+	this->curr_score_network->activate_fold(state_vals,
+											s_input_vals);
+
 	this->test_score_network->activate_fold(state_vals,
 											s_input_vals);
-	predicted_score += this->test_score_network->output->acti_vals[0];
+	// predicted_score += this->test_score_network->output->acti_vals[0];
 
-	this->sum_error += (target_val - predicted_score)*(target_val - predicted_score);
+	// this->sum_error += (target_val - predicted_score)*(target_val - predicted_score);
+
+	vector<double> score_errors{this->curr_score_network->output->acti_vals[0]
+		- this->test_score_network->output->acti_vals[0]};
+	this->sum_error += score_errors[0]*score_errors[0];
 
 	if (this->stage == STAGE_LEARN) {
 		if ((this->stage_iter+1)%10000 == 0) {
@@ -82,9 +108,10 @@ void Fold::score_input_step(vector<vector<double>>& flat_vals,
 			this->sum_error = 0.0;
 		}
 
-		vector<double> score_errors{target_val - predicted_score};
+		// vector<double> score_errors{target_val - predicted_score};
 		if (this->score_input_networks.size() == 0) {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_score_network->backprop_weights_with_no_error_signal(
 					score_errors,
 					0.01);
@@ -94,7 +121,8 @@ void Fold::score_input_step(vector<vector<double>>& flat_vals,
 					0.002);
 			}
 		} else {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_score_network->backprop_new_s_input(
 					this->score_input_layer.back()+1,
 					this->score_input_sizes.back(),
@@ -114,9 +142,11 @@ void Fold::score_input_step(vector<vector<double>>& flat_vals,
 				input_errors.push_back(this->test_score_network->s_input_inputs[this->score_input_layer.back()+1]->errors[st_index]);
 				this->test_score_network->s_input_inputs[this->score_input_layer.back()+1]->errors[st_index] = 0.0;
 			}
-			if (this->stage_iter <= 80000) {
+			// if (this->stage_iter <= 120000) {
+			if (this->stage_iter <= 240000) {
 				this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.05);
-			} else if (this->stage_iter <= 160000) {
+			// } else if (this->stage_iter <= 160000) {
+			} else if (this->stage_iter <= 270000) {
 				this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
 			} else {
 				this->score_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);

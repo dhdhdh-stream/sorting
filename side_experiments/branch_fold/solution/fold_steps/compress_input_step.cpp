@@ -48,10 +48,12 @@ void Fold::compress_input_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 
 	this->obs_network->activate(obs_input);
@@ -76,12 +78,29 @@ void Fold::compress_input_step(vector<vector<double>>& flat_vals,
 
 	// this->compress_num_layers > 0
 	// this->compress_new_size > 0
-	for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
-		this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]],
-												s_input_vals[this->input_layer[i_index]]);
-		for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
-			s_input_vals[this->input_layer[i_index]+1].push_back(
-				this->input_networks[i_index]->output->acti_vals[s_index]);
+	if (this->input_networks.size() > 0) {
+		for (int i_index = 0; i_index < (int)this->input_networks.size()-1; i_index++) {
+			this->input_networks[i_index]->activate(state_vals[this->input_layer[i_index]],
+													s_input_vals[this->input_layer[i_index]]);
+			for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
+				s_input_vals[this->input_layer[i_index]+1].push_back(
+					this->input_networks[i_index]->output->acti_vals[s_index]);
+			}
+		}
+		if (this->stage == STAGE_LEARN) {
+			this->input_networks.back()->activate(state_vals[this->input_layer.back()],
+												  s_input_vals[this->input_layer.back()]);
+			for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
+				s_input_vals[this->input_layer.back()+1].push_back(
+					this->new_state_factor*this->input_networks.back()->output->acti_vals[s_index]);
+			}
+		} else {
+			this->input_networks.back()->activate(state_vals[this->input_layer.back()],
+												  s_input_vals[this->input_layer.back()]);
+			for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
+				s_input_vals[this->input_layer.back()+1].push_back(
+					this->input_networks.back()->output->acti_vals[s_index]);
+			}
 		}
 	}
 
@@ -105,7 +124,8 @@ void Fold::compress_input_step(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->input_networks.size() == 0) {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_compression_network->backprop_weights_with_no_error_signal(
 					compression_errors,
 					0.01);
@@ -115,7 +135,8 @@ void Fold::compress_input_step(vector<vector<double>>& flat_vals,
 					0.002);
 			}
 		} else {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_compression_network->backprop_new_s_input(
 					this->input_layer.back()+1,
 					this->input_sizes.back(),
@@ -135,9 +156,11 @@ void Fold::compress_input_step(vector<vector<double>>& flat_vals,
 				input_errors.push_back(this->test_compression_network->s_input_inputs[this->input_layer.back()+1]->errors[st_index]);
 				this->test_compression_network->s_input_inputs[this->input_layer.back()+1]->errors[st_index] = 0.0;
 			}
-			if (this->stage_iter <= 80000) {
+			// if (this->stage_iter <= 120000) {
+			if (this->stage_iter <= 240000) {
 				this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.05);
-			} else if (this->stage_iter <= 160000) {
+			// } else if (this->stage_iter <= 160000) {
+			} else if (this->stage_iter <= 270000) {
 				this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
 			} else {
 				this->input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);

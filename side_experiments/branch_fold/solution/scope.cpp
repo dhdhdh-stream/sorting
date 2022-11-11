@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const double TARGET_MAX_UPDATE = 0.001;
+const double TARGET_MAX_UPDATE = 0.002;
 
 BaseScope::BaseScope(int num_outputs) {
 	this->type = SCOPE_TYPE_BASE;
@@ -335,6 +335,11 @@ Scope::Scope(ifstream& input_file) {
 		string end_compressed_s_input_size_line;
 		getline(input_file, end_compressed_s_input_size_line);
 		this->end_compressed_s_input_sizes.push_back(stoi(end_compressed_s_input_size_line));
+	}
+
+	this->outputs.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
+		this->outputs.push_back(0.0);
 	}
 }
 
@@ -974,9 +979,9 @@ void Scope::add_to_dictionary(vector<Scope*>& scope_dictionary) {
 	}
 }
 
-void Scope::backprop(vector<double> input_errors,
-					 vector<double>& output_errors,
-					 double predicted_score_error) {
+void Scope::backprop_loose(vector<double> input_errors,
+						   vector<double>& output_errors,
+						   double predicted_score_error) {
 	vector<vector<double>> local_state_errors;
 	int input_errors_index = 0;
 	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
@@ -1099,9 +1104,9 @@ void Scope::backprop(vector<double> input_errors,
 			}
 
 			vector<double> new_output_errors;
-			((Scope*)this->actions[a_index])->backprop(new_input_errors,
-													   new_output_errors,
-													   predicted_score_error);
+			((Scope*)this->actions[a_index])->backprop_loose(new_input_errors,
+															 new_output_errors,
+															 predicted_score_error);
 
 			for (int i_index = (int)this->input_networks[a_index].size()-1; i_index >= 0; i_index--) {
 				vector<double> input_errors(this->input_sizes[a_index][i_index]);
@@ -1128,9 +1133,9 @@ void Scope::backprop(vector<double> input_errors,
 	}
 }
 
-void Scope::backprop_errors_with_no_weight_change(vector<double> input_errors,
-												  vector<double>& output_errors,
-												  double predicted_score_error) {
+void Scope::backprop_loose_errors_with_no_weight_change(vector<double> input_errors,
+														vector<double>& output_errors,
+														double predicted_score_error) {
 	vector<vector<double>> local_state_errors;
 	int input_errors_index = 0;
 	for (int sc_index = 0; sc_index < (int)this->end_compressed_scope_sizes.size(); sc_index++) {
@@ -1253,7 +1258,7 @@ void Scope::backprop_errors_with_no_weight_change(vector<double> input_errors,
 			}
 
 			vector<double> new_output_errors;
-			((Scope*)this->actions[a_index])->backprop_errors_with_no_weight_change(
+			((Scope*)this->actions[a_index])->backprop_loose_errors_with_no_weight_change(
 				new_input_errors,
 				new_output_errors,
 				predicted_score_error);

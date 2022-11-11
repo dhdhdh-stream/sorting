@@ -58,10 +58,12 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 				action_input.push_back(this->small_action_input_network->output->acti_vals[i_index]);
 			}
 		}
+		double scope_predicted_score = 0.0;
 		this->action->activate(inner_flat_vals[this->nodes.size()],
 							   action_input,
-							   predicted_score);
+							   scope_predicted_score);
 		obs_input = this->action->outputs;
+		obs_input.push_back(scope_predicted_score);
 	}
 	fold_input.push_back(vector<double>());	// empty
 	for (int i_index = (int)this->nodes.size()+1; i_index < this->sequence_length; i_index++) {
@@ -165,7 +167,8 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->compress_new_size > 0) {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_fold->backprop_last_state(errors, 0.01);
 			} else {
 				this->test_fold->backprop_last_state(errors, 0.002);
@@ -186,18 +189,19 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 						scope_input_errors[f_index][i_index] = this->test_fold->flat_inputs[f_index]->errors[i_index];
 						this->test_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 					}
-					scope_predicted_score_errors[f_index] += this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs];
+					scope_predicted_score_errors[f_index] = this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs];
 					this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs] = 0.0;
 				}
 			}
 			for (int f_index = this->sequence_length-1; f_index >= (int)this->nodes.size()+1; f_index--) {
 				if (this->compound_actions[f_index] != NULL) {
 					vector<double> scope_output_errors;
-					this->compound_actions[f_index]->backprop_errors_with_no_weight_change(
+					this->compound_actions[f_index]->backprop_loose_errors_with_no_weight_change(
 						scope_input_errors[f_index],
 						scope_output_errors,
 						scope_predicted_score_errors[f_index]);
-					if (this->stage_iter <= 160000) {
+					// if (this->stage_iter <= 160000) {
+					if (this->stage_iter <= 270000) {
 						this->test_scope_input_folds[f_index]->backprop_last_state(scope_output_errors, 0.01);
 					} else {
 						this->test_scope_input_folds[f_index]->backprop_last_state(scope_output_errors, 0.002);
@@ -211,7 +215,7 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 					for (int ff_index = f_index-1; ff_index >= (int)this->nodes.size()+1; ff_index--) {
 						if (this->compound_actions[ff_index] != NULL) {
 							for (int i_index = 0; i_index < this->compound_actions[ff_index]->num_outputs; i_index++) {
-								scope_input_errors[ff_index][i_index] = this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
+								scope_input_errors[ff_index][i_index] += this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 								this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 							}
 							scope_predicted_score_errors[ff_index] += this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[this->compound_actions[ff_index]->num_outputs];
@@ -221,11 +225,13 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			if (this->stage_iter <= 80000) {
+			// if (this->stage_iter <= 120000) {
+			if (this->stage_iter <= 240000) {
 				this->test_compression_network->backprop_weights_with_no_error_signal(
 					last_scope_state_errors,
 					0.05);
-			} else if (this->stage_iter <= 160000) {
+			// } else if (this->stage_iter <= 160000) {
+			} else if (this->stage_iter <= 270000) {
 				this->test_compression_network->backprop_weights_with_no_error_signal(
 					last_scope_state_errors,
 					0.01);
@@ -235,7 +241,8 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 					0.002);
 			}
 		} else {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_fold->backprop_no_state(errors, 0.01);
 			} else {
 				this->test_fold->backprop_no_state(errors, 0.002);
@@ -250,18 +257,19 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 						scope_input_errors[f_index][i_index] = this->test_fold->flat_inputs[f_index]->errors[i_index];
 						this->test_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 					}
-					scope_predicted_score_errors[f_index] += this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs];
+					scope_predicted_score_errors[f_index] = this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs];
 					this->test_fold->flat_inputs[f_index]->errors[this->compound_actions[f_index]->num_outputs] = 0.0;
 				}
 			}
 			for (int f_index = this->sequence_length-1; f_index >= (int)this->nodes.size()+1; f_index--) {
 				if (this->compound_actions[f_index] != NULL) {
 					vector<double> scope_output_errors;
-					this->compound_actions[f_index]->backprop_errors_with_no_weight_change(
+					this->compound_actions[f_index]->backprop_loose_errors_with_no_weight_change(
 						scope_input_errors[f_index],
 						scope_output_errors,
 						scope_predicted_score_errors[f_index]);
-					if (this->stage_iter <= 160000) {
+					// if (this->stage_iter <= 160000) {
+					if (this->stage_iter <= 270000) {
 						this->test_scope_input_folds[f_index]->backprop_no_state(scope_output_errors, 0.01);
 					} else {
 						this->test_scope_input_folds[f_index]->backprop_no_state(scope_output_errors, 0.002);
@@ -270,7 +278,7 @@ void Fold::compress_step(vector<vector<double>>& flat_vals,
 					for (int ff_index = f_index-1; ff_index >= (int)this->nodes.size()+1; ff_index--) {
 						if (this->compound_actions[ff_index] != NULL) {
 							for (int i_index = 0; i_index < this->compound_actions[ff_index]->num_outputs; i_index++) {
-								scope_input_errors[ff_index][i_index] = this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
+								scope_input_errors[ff_index][i_index] += this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 								this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 							}
 							scope_predicted_score_errors[ff_index] += this->test_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[this->compound_actions[ff_index]->num_outputs];

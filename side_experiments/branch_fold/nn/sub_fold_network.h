@@ -49,6 +49,12 @@ public:
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
 
+	// TODO: training new small can lead to misses due to difficulties with hidden layer, so instead reuse sub_fold
+	void activate_small(std::vector<double>& state_vals,
+						std::vector<double>& s_input_vals);
+	void activate_compress_small(std::vector<std::vector<double>>& state_vals,
+								 std::vector<std::vector<double>>& s_input_vals);
+
 private:
 	void construct();
 };

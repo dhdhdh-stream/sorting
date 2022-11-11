@@ -44,11 +44,13 @@ void Fold::inner_scope_input_step(vector<vector<double>>& flat_vals,
 			- this->curr_action_input_network->output->acti_vals[i_index];
 		this->sum_error += action_input_errors[i_index]*action_input_errors[i_index];
 	}
-	if (this->stage_iter <= 80000) {
+	// if (this->stage_iter <= 120000) {
+	if (this->stage_iter <= 240000) {
 		this->curr_action_input_network->backprop_weights_with_no_error_signal(
 			action_input_errors,
 			0.05);
-	} else if (this->stage_iter <= 160000) {
+	// } else if (this->stage_iter <= 160000) {
+	} else if (this->stage_iter <= 270000) {
 		this->curr_action_input_network->backprop_weights_with_no_error_signal(
 			action_input_errors,
 			0.01);

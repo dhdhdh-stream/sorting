@@ -32,7 +32,7 @@ public:
 	std::vector<AbstractScope*> actions;
 
 	int num_inputs;
-	int num_outputs;
+	int num_outputs;	// TODO: include both state_vals and s_input?
 
 	std::vector<std::vector<int>> input_sizes;
 	std::vector<std::vector<SmallNetwork*>> input_networks;
@@ -107,12 +107,13 @@ public:
 
 	void add_to_dictionary(std::vector<Scope*>& scope_dictionary);
 
-	void backprop(std::vector<double> input_errors,
-				  std::vector<double>& output_errors,
-				  double predicted_score_error);
-	void backprop_errors_with_no_weight_change(std::vector<double> input_errors,
-											   std::vector<double>& output_errors,
-											   double predicted_score_error);
+	void backprop_loose(std::vector<double> input_errors,
+						std::vector<double>& output_errors,
+						double predicted_score_error);
+	void backprop_loose_errors_with_no_weight_change(
+		std::vector<double> input_errors,
+		std::vector<double>& output_errors,
+		double predicted_score_error);
 
 	// void setup_zero_scopes();
 	// void zero_train_activate(std::vector<std::vector<double>>& flat_vals,

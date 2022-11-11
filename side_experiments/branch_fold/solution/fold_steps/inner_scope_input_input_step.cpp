@@ -26,12 +26,29 @@ void Fold::inner_scope_input_input_step(vector<vector<double>>& flat_vals,
 		}
 	}
 
-	for (int i_index = 0; i_index < (int)this->action_input_input_networks.size(); i_index++) {
-		this->action_input_input_networks[i_index]->activate(state_vals[this->action_input_input_layer[i_index]],
-															 s_input_vals[this->action_input_input_layer[i_index]]);
-		for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
-			s_input_vals[this->action_input_input_layer[i_index]+1].push_back(
-				this->action_input_input_networks[i_index]->output->acti_vals[s_index]);
+	if (this->action_input_input_networks.size() > 0) {
+		for (int i_index = 0; i_index < (int)this->action_input_input_networks.size()-1; i_index++) {
+			this->action_input_input_networks[i_index]->activate(state_vals[this->action_input_input_layer[i_index]],
+																 s_input_vals[this->action_input_input_layer[i_index]]);
+			for (int s_index = 0; s_index < this->action_input_input_sizes[i_index]; s_index++) {
+				s_input_vals[this->action_input_input_layer[i_index]+1].push_back(
+					this->action_input_input_networks[i_index]->output->acti_vals[s_index]);
+			}
+		}
+		if (this->stage == STAGE_LEARN) {
+			this->action_input_input_networks.back()->activate(state_vals[this->action_input_input_layer.back()],
+															   s_input_vals[this->action_input_input_layer.back()]);
+			for (int s_index = 0; s_index < this->action_input_input_sizes.back(); s_index++) {
+				s_input_vals[this->action_input_input_layer.back()+1].push_back(
+					this->new_state_factor*this->action_input_input_networks.back()->output->acti_vals[s_index]);
+			}
+		} else {
+			this->action_input_input_networks.back()->activate(state_vals[this->action_input_input_layer.back()],
+															   s_input_vals[this->action_input_input_layer.back()]);
+			for (int s_index = 0; s_index < this->action_input_input_sizes.back(); s_index++) {
+				s_input_vals[this->action_input_input_layer.back()+1].push_back(
+					this->action_input_input_networks.back()->output->acti_vals[s_index]);
+			}
 		}
 	}
 
@@ -39,8 +56,8 @@ void Fold::inner_scope_input_input_step(vector<vector<double>>& flat_vals,
 	this->curr_scope_input_folds[this->nodes.size()]->activate(input_fold_inputs,
 															   state_vals);
 
-	this->test_action_input_network->activate(state_vals,
-											  s_input_vals);
+	this->test_action_input_network->activate_fold(state_vals,
+												   s_input_vals);
 
 	vector<double> action_input_errors(this->action->num_inputs);
 	for (int i_index = 0; i_index < this->action->num_inputs; i_index++) {
@@ -56,7 +73,8 @@ void Fold::inner_scope_input_input_step(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->action_input_input_networks.size() == 0) {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_action_input_network->backprop_weights_with_no_error_signal(
 					action_input_errors,
 					0.01);
@@ -66,7 +84,8 @@ void Fold::inner_scope_input_input_step(vector<vector<double>>& flat_vals,
 					0.002);
 			}
 		} else {
-			if (this->stage_iter <= 160000) {
+			// if (this->stage_iter <= 160000) {
+			if (this->stage_iter <= 270000) {
 				this->test_action_input_network->backprop_new_s_input(
 					this->action_input_input_layer.back()+1,
 					this->action_input_input_sizes.back(),
@@ -86,9 +105,11 @@ void Fold::inner_scope_input_input_step(vector<vector<double>>& flat_vals,
 				input_errors.push_back(this->test_action_input_network->s_input_inputs[this->action_input_input_layer.back()+1]->errors[st_index]);
 				this->test_action_input_network->s_input_inputs[this->action_input_input_layer.back()+1]->errors[st_index] = 0.0;
 			}
-			if (this->stage_iter <= 80000) {
+			// if (this->stage_iter <= 120000) {
+			if (this->stage_iter <= 240000) {
 				this->action_input_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.05);
-			} else if (this->stage_iter <= 160000) {
+			// } else if (this->stage_iter <= 160000) {
+			} else if (this->stage_iter <= 270000) {
 				this->action_input_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.01);
 			} else {
 				this->action_input_input_networks.back()->backprop_weights_with_no_error_signal(input_errors, 0.002);

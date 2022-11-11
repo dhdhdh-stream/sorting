@@ -178,7 +178,7 @@ void Fold::increment() {
 	this->stage_iter++;
 
 	if (this->state == STATE_INNER_SCOPE_INPUT) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_INNER_SCOPE_INPUT" << endl;
 
 			if (this->curr_scope_sizes.size() == 1) {
@@ -186,7 +186,7 @@ void Fold::increment() {
 
 				delete this->curr_action_input_network;
 				int hidden_size = 5*(this->curr_scope_sizes.back()+this->curr_s_input_sizes.back());
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->small_action_input_network = new SmallNetwork(this->curr_scope_sizes.back(),
 																	this->curr_s_input_sizes.back(),
 																	hidden_size,
@@ -205,11 +205,18 @@ void Fold::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 25;
 			}
 		}
 	} else if (this->state == STATE_INNER_SCOPE_INPUT_INPUT
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_INNER_SCOPE_INPUT_INPUT;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -218,10 +225,10 @@ void Fold::increment() {
 	} else if (this->state == STATE_INNER_SCOPE_INPUT_INPUT
 			&& this->stage == STAGE_MEASURE) {
 		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 0.0001
-					|| (this->score_input_networks.size() > 0
-						&& this->score_input_sizes.back() == (this->curr_scope_sizes[this->score_input_layer.back()]
-							+ this->curr_s_input_sizes[this->score_input_layer.back()]))) {
+			if (this->sum_error/10000 < 0.001
+					|| (this->action_input_input_networks.size() > 0
+						&& this->action_input_input_sizes.back() == (this->curr_scope_sizes[this->action_input_input_layer.back()]
+							+ this->curr_s_input_sizes[this->action_input_input_layer.back()]))) {
 				delete this->curr_action_input_network;
 				this->curr_action_input_network = this->test_action_input_network;
 				this->test_action_input_network = NULL;
@@ -234,7 +241,7 @@ void Fold::increment() {
 
 					delete this->curr_action_input_network;
 					int hidden_size = 5*(this->curr_scope_sizes.back()+this->curr_s_input_sizes.back());
-					hidden_size = max(min(hidden_size, 50), 10);
+					hidden_size = max(min(hidden_size, 20), 10);
 					this->small_action_input_network = new SmallNetwork(this->curr_scope_sizes.back(),
 																		this->curr_s_input_sizes.back(),
 																		hidden_size,
@@ -258,7 +265,7 @@ void Fold::increment() {
 						this->action_input_input_sizes.push_back(1);
 						int hidden_size = 5*(this->curr_scope_sizes[this->test_action_input_network->fold_index]
 							+ this->curr_s_input_sizes[this->test_action_input_network->fold_index]);
-						hidden_size = max(min(hidden_size, 50), 10);
+						hidden_size = max(min(hidden_size, 50), 20);
 						this->action_input_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_action_input_network->fold_index],
 																					 this->curr_s_input_sizes[this->test_action_input_network->fold_index],
 																					 hidden_size,
@@ -273,6 +280,7 @@ void Fold::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 25;
 				}
 			} else {
 				cout << "ending STATE_INNER_SCOPE_INPUT_INPUT" << endl;
@@ -295,7 +303,7 @@ void Fold::increment() {
 				}
 				int hidden_size = 5*(this->curr_scope_sizes[this->test_action_input_network->fold_index]
 					+ this->curr_s_input_sizes[this->test_action_input_network->fold_index]);
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->action_input_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_action_input_network->fold_index],
 																			 this->curr_s_input_sizes[this->test_action_input_network->fold_index],
 																			 hidden_size,
@@ -309,10 +317,11 @@ void Fold::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 25;
 			}
 		}
 	} else if (this->state == STATE_INNER_SCOPE_INPUT_SMALL) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_INNER_SCOPE_INPUT_SMALL" << endl;
 			cout << "starting STATE_INNER_SCOPE" << endl;
 
@@ -321,7 +330,8 @@ void Fold::increment() {
 			this->sum_error = 0.0;
 		}
 	} else if (this->state == STATE_INNER_SCOPE) {
-		if (this->stage_iter >= 400000) {
+		// if (this->stage_iter >= 400000) {
+		if (this->stage_iter >= 0) {
 			cout << "ending STATE_INNER_SCOPE" << endl;
 			cout << "starting STATE_OBS" << endl;
 
@@ -349,13 +359,13 @@ void Fold::increment() {
 		}
 	} else if (this->state == STATE_OBS
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter == 30000) {
+		if (this->stage_iter == 50000) {
 			this->new_state_factor = 5;
-		} else if (this->stage_iter == 60000) {
+		} else if (this->stage_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_OBS;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -368,7 +378,7 @@ void Fold::increment() {
 			if (this->compound_actions[this->nodes.size()] == NULL) {
 				is_max_size = (this->new_layer_size == this->obs_sizes[this->nodes.size()]);
 			} else {
-				is_max_size = (this->new_layer_size == this->compound_actions[this->nodes.size()]->num_outputs);
+				is_max_size = (this->new_layer_size == this->compound_actions[this->nodes.size()]->num_outputs+1);
 			}
 			if (this->sum_error/10000 < 1.02*this->original_flat_error || is_max_size) {
 				this->curr_scope_sizes = this->test_scope_sizes;
@@ -395,7 +405,7 @@ void Fold::increment() {
 					if (this->compound_actions[this->nodes.size()] == NULL) {
 						obs_size = this->obs_sizes[this->nodes.size()];
 					} else {
-						obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+						obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 					}
 					Node* new_node = new Node(this->id+"_n_"+to_string(this->nodes.size()),
 											  (this->compound_actions[this->nodes.size()] != NULL),
@@ -420,6 +430,7 @@ void Fold::increment() {
 											  this->compressed_scope_sizes,
 											  this->compressed_s_input_sizes);
 					this->nodes.push_back(new_node);
+					cout << "added node #" << this->nodes.size() << endl;
 
 					if ((int)this->nodes.size() == this->sequence_length) {
 						cout << "DONE" << endl;
@@ -541,10 +552,10 @@ void Fold::increment() {
 				if (this->compound_actions[this->nodes.size()] == NULL) {
 					obs_size = this->obs_sizes[this->nodes.size()];
 				} else {
-					obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+					obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 				}
 				int hidden_size = 5*obs_size;
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->obs_network = new Network(obs_size,
 												hidden_size,
 												this->new_layer_size);
@@ -558,7 +569,7 @@ void Fold::increment() {
 		}
 	} else if (this->state == STATE_SCORE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_SCORE;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -574,9 +585,9 @@ void Fold::increment() {
 				cout << "error: " << this->sum_error/10000 << endl;
 				cout << "starting STATE_SCORE_SMALL" << endl;
 
-				delete this->curr_score_network;
+				// delete this->curr_score_network;
 				int hidden_size = 5*(this->curr_scope_sizes.back()+this->curr_s_input_sizes.back());
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->small_score_network = new SmallNetwork(this->curr_scope_sizes.back(),
 															 this->curr_s_input_sizes.back(),
 															 hidden_size,
@@ -599,11 +610,18 @@ void Fold::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 25;
 			}
 		}
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_SCORE_INPUT;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -612,7 +630,7 @@ void Fold::increment() {
 	} else if (this->state == STATE_SCORE_INPUT
 			&& this->stage == STAGE_MEASURE) {
 		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 1.02*this->average_misguess
+			if (this->sum_error/10000 < 0.001
 					|| (this->score_input_networks.size() > 0
 						&& this->score_input_sizes.back() == (this->curr_scope_sizes[this->score_input_layer.back()]
 							+ this->curr_s_input_sizes[this->score_input_layer.back()]))) {
@@ -628,9 +646,9 @@ void Fold::increment() {
 					cout << "error: " << this->sum_error/10000 << endl;
 					cout << "starting STATE_SCORE_SMALL" << endl;
 
-					delete this->curr_score_network;
+					// delete this->curr_score_network;
 					int hidden_size = 5*(this->curr_scope_sizes.back()+this->curr_s_input_sizes.back());
-					hidden_size = max(min(hidden_size, 50), 10);
+					hidden_size = max(min(hidden_size, 50), 20);
 					this->small_score_network = new SmallNetwork(this->curr_scope_sizes.back(),
 																 this->curr_s_input_sizes.back(),
 																 hidden_size,
@@ -654,7 +672,7 @@ void Fold::increment() {
 						this->score_input_sizes.push_back(1);
 						int hidden_size = 5*(this->curr_scope_sizes[this->test_score_network->fold_index]
 							+ this->curr_s_input_sizes[this->test_score_network->fold_index]);
-						hidden_size = max(min(hidden_size, 50), 10);
+						hidden_size = max(min(hidden_size, 50), 20);
 						this->score_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_score_network->fold_index],
 																			  this->curr_s_input_sizes[this->test_score_network->fold_index],
 																			  hidden_size,
@@ -669,6 +687,7 @@ void Fold::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 25;
 				}
 			} else {
 				cout << "ending STATE_SCORE_INPUT" << endl;
@@ -691,7 +710,7 @@ void Fold::increment() {
 				}
 				int hidden_size = 5*(this->curr_scope_sizes[this->test_score_network->fold_index]
 					+ this->curr_s_input_sizes[this->test_score_network->fold_index]);
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->score_input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_score_network->fold_index],
 																	  this->curr_s_input_sizes[this->test_score_network->fold_index],
 																	  hidden_size,
@@ -705,19 +724,23 @@ void Fold::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 25;
 			}
 		}
 	} else if (this->state == STATE_SCORE_SMALL) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_SCORE_SMALL" << endl;
 			cout << "starting STATE_SCORE_TUNE" << endl;
+
+			delete this->curr_score_network;
+			this->curr_score_network = NULL;
 
 			this->state = STATE_SCORE_TUNE;
 			this->stage_iter = 0;
 			this->sum_error = 0.0;
 		}
 	} else if (this->state == STATE_SCORE_TUNE) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_SCORE_TUNE" << endl;
 			cout << "starting STATE_COMPRESS_STATE" << endl;
 
@@ -789,13 +812,13 @@ void Fold::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_STATE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter == 30000) {
+		if (this->stage_iter == 50000) {
 			this->new_state_factor = 5;
-		} else if (this->stage_iter == 60000) {
+		} else if (this->stage_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_COMPRESS_STATE;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -838,7 +861,7 @@ void Fold::increment() {
 					if (this->compound_actions[this->nodes.size()] == NULL) {
 						obs_size = this->obs_sizes[this->nodes.size()];
 					} else {
-						obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+						obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 					}
 					Node* new_node = new Node(this->id+"_n_"+to_string(this->nodes.size()),
 											  (this->compound_actions[this->nodes.size()] != NULL),
@@ -863,6 +886,7 @@ void Fold::increment() {
 											  this->compressed_scope_sizes,
 											  this->compressed_s_input_sizes);
 					this->nodes.push_back(new_node);
+					cout << "added node #" << this->nodes.size() << endl;
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage_iter = 0;
@@ -957,7 +981,7 @@ void Fold::increment() {
 					if (this->compound_actions[this->nodes.size()] == NULL) {
 						obs_size = this->obs_sizes[this->nodes.size()];
 					} else {
-						obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+						obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 					}
 					Node* new_node = new Node(this->id+"_n_"+to_string(this->nodes.size()),
 											  (this->compound_actions[this->nodes.size()] != NULL),
@@ -982,6 +1006,7 @@ void Fold::increment() {
 											  this->compressed_scope_sizes,
 											  this->compressed_s_input_sizes);
 					this->nodes.push_back(new_node);
+					cout << "added node #" << this->nodes.size() << endl;
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage_iter = 0;
@@ -998,16 +1023,19 @@ void Fold::increment() {
 						cout << "error: " << this->sum_error/10000 << endl;
 						cout << "starting STATE_COMPRESS_SMALL" << endl;
 
+						// TODO: goto STATE_COMPRESS_INPUT?
+
 						this->curr_scope_sizes = this->test_scope_sizes;
 						this->curr_s_input_sizes = this->test_s_input_sizes;
 
 						int input_size = 0;
 						for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 							input_size += this->compressed_scope_sizes[sc_index];
+							input_size += this->compressed_s_input_sizes[sc_index];
 						}
-						input_size += this->compressed_s_input_sizes[0];
+						// input_size += this->compressed_s_input_sizes[0];
 						int hidden_size = 5*input_size;
-						hidden_size = max(min(hidden_size, 50), 10);
+						hidden_size = max(min(hidden_size, 50), 20);
 						this->small_compression_network = new Network(input_size,
 																	  hidden_size,
 																	  this->compress_new_size);
@@ -1098,13 +1126,13 @@ void Fold::increment() {
 		}
 	} else if (this->state == STATE_COMPRESS_SCOPE
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter == 30000) {
+		if (this->stage_iter == 50000) {
 			this->new_state_factor = 5;
-		} else if (this->stage_iter == 60000) {
+		} else if (this->stage_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_COMPRESS_SCOPE;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -1147,7 +1175,7 @@ void Fold::increment() {
 					if (this->compound_actions[this->nodes.size()] == NULL) {
 						obs_size = this->obs_sizes[this->nodes.size()];
 					} else {
-						obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+						obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 					}
 					Node* new_node = new Node(this->id+"_n_"+to_string(this->nodes.size()),
 											  (this->compound_actions[this->nodes.size()] != NULL),
@@ -1172,6 +1200,7 @@ void Fold::increment() {
 											  this->compressed_scope_sizes,
 											  this->compressed_s_input_sizes);
 					this->nodes.push_back(new_node);
+					cout << "added node #" << this->nodes.size() << endl;
 
 					this->state = STATE_FINAL_TUNE;
 					this->stage_iter = 0;
@@ -1199,6 +1228,7 @@ void Fold::increment() {
 						this->stage = STAGE_LEARN;
 						this->stage_iter = 0;
 						this->sum_error = 0.0;
+						this->new_state_factor = 25;
 					} else if (this->compress_size == sum_scope_sizes) {
 						cout << "ending STATE_COMPRESS_SCOPE" << endl;
 						cout << "SUCCESS" << endl;
@@ -1294,6 +1324,8 @@ void Fold::increment() {
 					}
 				}
 
+				// TODO: maybe issue here with decompression?
+
 				// undo previous uncompressed scope
 				this->compress_num_layers++;
 				if (this->compress_new_size > 0) {
@@ -1308,6 +1340,8 @@ void Fold::increment() {
 				this->test_s_input_sizes.pop_back();
 				this->test_s_input_sizes.push_back(0);
 
+				cout << "starting this->curr_scope_sizes.size(): " << this->curr_scope_sizes.size() << endl;
+
 				this->curr_scope_sizes = this->test_scope_sizes;
 				this->curr_s_input_sizes = this->test_s_input_sizes;
 
@@ -1317,13 +1351,21 @@ void Fold::increment() {
 					cout << "error: " << this->sum_error/10000 << endl;
 					cout << "starting STATE_COMPRESS_SMALL" << endl;
 
+					// TODO: curr_scope_sizes is new size. logic incorrect here?
+
 					int input_size = 0;
+					cout << "this->compress_num_layers: " << this->compress_num_layers << endl;
+					cout << "this->compressed_scope_sizes.size(): " << this->compressed_scope_sizes.size() << endl;
 					for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 						input_size += this->compressed_scope_sizes[sc_index];
+						input_size += this->compressed_s_input_sizes[sc_index];
 					}
-					input_size += this->compressed_s_input_sizes[0];
-					int hidden_size = 5*input_size;
-					hidden_size = max(min(hidden_size, 50), 10);
+					// input_size += this->compressed_s_input_sizes[0];
+					// missing compressed_s_input_sizes causing issues
+					
+					// int hidden_size = 5*input_size;
+					// hidden_size = max(min(hidden_size, 50), 20);
+					int hidden_size = 100;
 					this->small_compression_network = new Network(input_size,
 																  hidden_size,
 																  this->compress_new_size);
@@ -1344,12 +1386,19 @@ void Fold::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 25;
 				}
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_INPUT
 			&& this->stage == STAGE_LEARN) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->stage_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
+		if (this->stage_iter >= 300000) {
 			this->state = STATE_COMPRESS_INPUT;
 			this->stage = STAGE_MEASURE;
 			this->stage_iter = 0;
@@ -1358,7 +1407,7 @@ void Fold::increment() {
 	} else if (this->state == STATE_COMPRESS_INPUT
 			&& this->stage == STAGE_MEASURE) {
 		if (this->stage_iter >= 10000) {
-			if (this->sum_error/10000 < 0.0001
+			if (this->sum_error/10000 < 0.001
 					|| (this->input_networks.size() > 0
 						&& this->input_sizes.back() == (this->curr_scope_sizes[this->input_layer.back()]
 							+ this->curr_s_input_sizes[this->input_layer.back()]))) {
@@ -1377,10 +1426,11 @@ void Fold::increment() {
 					int input_size = 0;
 					for (int sc_index = 0; sc_index < (int)this->compressed_scope_sizes.size(); sc_index++) {
 						input_size += this->compressed_scope_sizes[sc_index];
+						input_size += this->compressed_s_input_sizes[sc_index];
 					}
-					input_size += this->compressed_s_input_sizes[0];
+					// input_size += this->compressed_s_input_sizes[0];
 					int hidden_size = 5*input_size;
-					hidden_size = max(min(hidden_size, 50), 10);
+					hidden_size = max(min(hidden_size, 50), 20);
 					this->small_compression_network = new Network(input_size,
 																  hidden_size,
 																  this->compress_new_size);
@@ -1403,7 +1453,7 @@ void Fold::increment() {
 						this->input_sizes.push_back(1);
 						int hidden_size = 5*(this->curr_scope_sizes[this->test_compression_network->fold_index]
 							+ this->curr_s_input_sizes[this->test_compression_network->fold_index]);
-						hidden_size = max(min(hidden_size, 50), 10);
+						hidden_size = max(min(hidden_size, 50), 20);
 						this->input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_compression_network->fold_index],
 																		this->curr_s_input_sizes[this->test_compression_network->fold_index],
 																		hidden_size,
@@ -1422,6 +1472,7 @@ void Fold::increment() {
 					this->stage = STAGE_LEARN;
 					this->stage_iter = 0;
 					this->sum_error = 0.0;
+					this->new_state_factor = 25;
 				}
 			} else {
 				cout << "ending STATE_COMPRESS_INPUT" << endl;
@@ -1444,7 +1495,7 @@ void Fold::increment() {
 				}
 				int hidden_size = 5*(this->curr_scope_sizes[this->test_compression_network->fold_index]
 					+ this->curr_s_input_sizes[this->test_compression_network->fold_index]);
-				hidden_size = max(min(hidden_size, 50), 10);
+				hidden_size = max(min(hidden_size, 50), 20);
 				this->input_networks.push_back(new SmallNetwork(this->curr_scope_sizes[this->test_compression_network->fold_index],
 																this->curr_s_input_sizes[this->test_compression_network->fold_index],
 																hidden_size,
@@ -1462,20 +1513,22 @@ void Fold::increment() {
 				this->stage = STAGE_LEARN;
 				this->stage_iter = 0;
 				this->sum_error = 0.0;
+				this->new_state_factor = 25;
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_SMALL) {
-		if (this->stage_iter >= 200000) {
+		if (this->stage_iter >= 300000) {
 			cout << "ending STATE_COMPRESS_SMALL" << endl;
 			cout << "starting STATE_FINAL_TUNE" << endl;
 
 			delete this->curr_compression_network;
+			this->curr_compression_network = NULL;
 
 			int obs_size;
 			if (this->compound_actions[this->nodes.size()] == NULL) {
 				obs_size = this->obs_sizes[this->nodes.size()];
 			} else {
-				obs_size = this->compound_actions[this->nodes.size()]->num_outputs;
+				obs_size = this->compound_actions[this->nodes.size()]->num_outputs+1;
 			}
 			Node* new_node = new Node(this->id+"_n_"+to_string(this->nodes.size()),
 									  (this->compound_actions[this->nodes.size()] != NULL),
@@ -1500,6 +1553,7 @@ void Fold::increment() {
 									  this->compressed_scope_sizes,
 									  this->compressed_s_input_sizes);
 			this->nodes.push_back(new_node);
+			cout << "added node #" << this->nodes.size() << endl;
 
 			this->state = STATE_FINAL_TUNE;
 			this->stage_iter = 0;
@@ -1507,29 +1561,30 @@ void Fold::increment() {
 			this->best_sum_error = -1.0;
 		}
 	} else if (this->state == STATE_FINAL_TUNE) {
-		if (this->stage_iter >= 40000) {
-			bool done = false;
-			if (this->best_sum_error == -1.0) {
-				this->best_sum_error = this->sum_error;
-				this->sum_error = 0.0;
-				this->stage_iter = 0;
-				this->tune_try = 0;
-			} else {
-				if (this->sum_error < this->best_sum_error) {
-					this->best_sum_error = this->sum_error;
-					this->sum_error = 0.0;
-					this->stage_iter = 0;
-					this->tune_try = 0;
-				} else if (this->tune_try < 2) {
-					this->sum_error = 0.0;
-					this->stage_iter = 0;
-					this->tune_try++;
-				} else {
-					done = true;
-				}
-			}
+		// if (this->stage_iter >= 40000) {
+		if (this->stage_iter >= 400000) {
+			// bool done = false;
+			// if (this->best_sum_error == -1.0) {
+			// 	this->best_sum_error = this->sum_error;
+			// 	this->sum_error = 0.0;
+			// 	this->stage_iter = 0;
+			// 	this->tune_try = 0;
+			// } else {
+			// 	if (this->sum_error < this->best_sum_error) {
+			// 		this->best_sum_error = this->sum_error;
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try = 0;
+			// 	} else if (this->tune_try < 2) {
+			// 		this->sum_error = 0.0;
+			// 		this->stage_iter = 0;
+			// 		this->tune_try++;
+			// 	} else {
+			// 		done = true;
+			// 	}
+			// }
 
-			if (done) {
+			// if (done) {
 				cout << "ending STATE_FINAL_TUNE" << endl;
 
 				if ((int)this->nodes.size() == this->sequence_length) {
@@ -1625,7 +1680,7 @@ void Fold::increment() {
 						this->sum_error = 0.0;
 					}
 				}
-			}
+			// }
 		}
 	}
 }

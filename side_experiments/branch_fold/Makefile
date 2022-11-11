@@ -13,21 +13,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: p8 p8_test_result p8_compound_action
-
-p8: ${OBJECTS} p8.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p8.o -o p8 ${LIBS}
-
-p8_test_result: ${OBJECTS} p8_test_result.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p8_test_result.o -o p8_test_result ${LIBS}
+all: p8_compound_action p8_compound_test_result
 
 p8_compound_action: ${OBJECTS} p8_compound_action.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} p8_compound_action.o -o p8_compound_action ${LIBS}
 
--include ${DEPENDS} p8.d p8_test_result.d p8_compound_action.d
+p8_compound_test_result: ${OBJECTS} p8_compound_test_result.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p8_compound_test_result.o -o p8_compound_test_result ${LIBS}
+
+-include ${DEPENDS} p8_compound_action.d p8_compound_test_result.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	p8.o p8.d p8 \
-	p8_test_result.o p8_test_result.d p8_test_result \
-	p8_compound_action.o p8_compound_action.d p8_compound_action
+	p8_compound_action.o p8_compound_action.d p8_compound_action \
+	p8_compound_test_result.o p8_compound_test_result.d p8_compound_test_result
