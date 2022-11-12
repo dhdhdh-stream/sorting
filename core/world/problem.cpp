@@ -60,7 +60,7 @@ double Problem::score_result() {
 	if (correct) {
 		return 1.0;
 	} else {
-		return 0.0;
+		return -1.0;
 	}
 }
 

@@ -6,6 +6,7 @@
 
 const int LINEAR_LAYER = 0;
 const int RELU_LAYER = 1;
+const int LEAKY_LAYER = 2;
 
 class Layer {
 public:
@@ -20,8 +21,6 @@ public:
 	std::vector<double> constants;
 	std::vector<std::vector<std::vector<double>>> weight_updates;
 	std::vector<double> constant_updates;
-	std::vector<std::vector<std::vector<double>>> prev_weight_updates;
-	std::vector<double> prev_constant_updates;
 
 	Layer(int type, int num_nodes);
 	Layer(Layer* original);
@@ -34,28 +33,43 @@ public:
 
 	void activate();
 	void backprop();
-	void calc_max_update(double& max_update_size,
-						 double learning_rate,
-						 double momentum);
-	void update_weights(double factor,
-						double learning_rate,
-						double momentum);
+	void get_max_update(double& max_update_size);
+	void update_weights(double learning_rate);
 
 	void save_weights(std::ofstream& output_file);
 
 	void backprop_errors_with_no_weight_change();
+	void backprop_weights_with_no_error_signal();
 
-	void insert_input_layer(int layer_index, Layer* layer);
-	void add_nodes(int num_nodes);
-	void output_input_extend(int num_nodes);
+	void fold_add_scope(Layer* new_scope_input);
+	void fold_pop_scope();
+	void fold_activate(int fold_index);
+	void fold_backprop_no_state(int fold_index,
+								int state_size);
+	void fold_backprop_last_state(int fold_index,
+								  int state_size);
+	void fold_get_max_update(int fold_index,
+							 double& max_update_size);
+	void fold_update_weights(int fold_index,
+							 double learning_rate);
 
-	void backprop_fold_state();
-	void calc_max_update_fold_state(double& max_update_size,
-									double learning_rate,
-									double momentum);
-	void update_weights_fold_state(double factor,
-								   double learning_rate,
-								   double momentum);
+	void subfold_set_s_input(int layer,
+							 Layer* new_s_input);
+	void subfold_activate(int subfold_index,
+						  int num_state_layers);
+	void subfold_backprop(int subfold_index,
+						  int num_state_layers);
+	void subfold_backprop_weights_with_no_error_signal(
+		int subfold_index,
+		int num_state_layers);
+	void subfold_backprop_s_input(int subfold_index,
+								  int num_state_layers);
+	void subfold_get_max_update(int subfold_index,
+								int num_state_layers,
+								double& max_update_size);
+	void subfold_update_weights(int subfold_index,
+								int num_state_layers,
+								double learning_rate);
 };
 
 #endif /* LAYER_H */
