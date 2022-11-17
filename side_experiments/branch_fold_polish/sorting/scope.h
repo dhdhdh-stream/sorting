@@ -46,15 +46,10 @@ public:
 	std::vector<FoldNetwork*> compress_networks;
 	std::vector<int> compress_new_sizes;
 
-	int explore_index;
+	int explore_index_inclusive;	// -1 if not on path
 	bool explore_in;
-	int explore_start_inclusive;
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
-	std::vector<Fold*>
-	Fold* explore_ending_fold;
-	double previous_average_mod;
-	double previous_
 
 };
 
