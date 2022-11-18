@@ -8,15 +8,18 @@ public:
 	std::vector<SubFoldNetwork*> score_networks;
 	std::vector<BranchPath*> branches;
 
-	std::vector<double> previous_average_mods;
-	std::vector<double> previous_scale_mods;
+	// no start_mods, just rely on score_networks instead
 
 	std::vector<int> compress_sizes;
 	std::vector<bool> active_compress;
 	std::vector<Network*> compress_networks;
 
-	std::vector<double> ending_average_mods;
-	std::vector<double> ending_scale_mods;
+	std::vector<double> end_average_mods;
+	std::vector<double> end_scale_mods;
+
+	// used for backprop
+	// TODO: create a backprop_history abstraction for this
+	double best_index;
 };
 
 #endif /* BRANCH_H */

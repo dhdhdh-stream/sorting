@@ -11,14 +11,15 @@ const int PHASE_FLAT = 0;
 const int PHASE_FOLD = 1;
 
 const int STATE_INNER_SCOPE_INPUT_INPUT = 0;
-const int STATE_OBS_NEEDED = 1;
-const int STATE_SCORE = 2;
-const int STATE_SCORE_INPUT = 3;
-const int STATE_SCORE_TUNE = 4;
-const int STATE_COMPRESS_STATE = 5;
-const int STATE_COMPRESS_SCOPE = 6;
-const int STATE_COMPRESS_INPUT = 7;
-const int STATE_DONE = 8;
+const int STATE_INNER_SCOPE_TUNE = 1;
+const int STATE_OBS_NEEDED = 2;
+const int STATE_SCORE = 3;
+const int STATE_SCORE_INPUT = 4;
+const int STATE_SCORE_TUNE = 5;
+const int STATE_COMPRESS_STATE = 6;
+const int STATE_COMPRESS_SCOPE = 7;
+const int STATE_COMPRESS_INPUT = 8;
+const int STATE_DONE = 9;
 
 const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
@@ -43,20 +44,18 @@ public:
 
 	double new_state_factor;
 
-	double previous_average_mod;
-	Network* previous_average_mod_calc;
-	double previous_scale_mod;
-	Network* previous_scale_mod_calc;
+	FoldNetwork* starting_score_network;
+	FoldNetwork* starting_compress_network;
 
-	std::vector<double> scope_average_mods;
 	std::vector<Network*> scope_average_mod_calcs;
-	std::vector<double> scope_scale_mods;
+	std::vector<double> scope_average_mods;
 	std::vector<Network*> scope_scale_mod_calcs;
+	std::vector<double> scope_scale_mods;
 
-	double ending_average_mod;
-	Network* ending_average_mod_calc;
-	double ending_scale_mod;
-	Network* ending_scale_mod_calc;
+	Network* end_average_mod_calc;
+	double end_average_mod;
+	Network* end_scale_mod_calc;
+	double end_scale_mod;
 
 	std::vector<int> curr_scope_sizes;
 	std::vector<int> curr_s_input_sizes;

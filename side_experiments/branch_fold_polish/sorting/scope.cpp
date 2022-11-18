@@ -144,9 +144,10 @@ void Scope::activate(vector<vector<double>>& flat_vals,
 					this->compress_networks[a_index]->activate_small(combined_state_vals,
 																	 inputs);
 
+					int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
 					local_state_vals.clear();
-					local_state_vals.reserve(this->compress_new_sizes[a_index]);
-					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
+					local_state_vals.reserve(compress_new_size);
+					for (int s_index = 0; s_index < compress_new_size; s_index++) {
 						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 					}
 				}
@@ -178,7 +179,7 @@ void Scope::activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			predicted_score += this->scope_average_mod[this->scopes.size()-1];
+			predicted_score += scale_factor*this->scope_average_mod[this->scopes.size()-1];
 
 			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
@@ -200,7 +201,117 @@ void Scope::activate(vector<vector<double>>& flat_vals,
 	output = local_state_vals;
 }
 
+void Scope::existing_backprop(vector<double> input_errors,
+							  vector<double>& output_errors,
+							  double& predicted_score,
+							  double predicted_score_error,
+							  double& scale_factor,
+							  double new_scale_factor,
+							  double& new_scale_factor_error) {
+	vector<double> local_state_errors = input_errors;
+	vector<double> local_s_input_errors(this->num_inputs, 0.0);
 
+	// end
+	if (this->scopes.size() > 1) {
+		// this->need_process[this->scopes.size()-1] == true
+		if (this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_BASE) {
+			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[this->scopes.size()-1],
+				local_state_errors.end());
+		} else {
+			// this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_SCOPE
+			Scope* scope_scope = (Scope*)this->scopes[this->scopes.size()-1];
+
+			vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+				local_state_errors.end());
+			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+				local_state_errors.end());
+
+			// don't need to pass/backprop scope_average_mod/scope_scale_mod as not changing them
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
+
+			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
+			scope_scope->existing_backprop(scope_input_errors,
+										   scope_output_errors,
+										   predicted_score,
+										   predicted_score_error,
+										   scale_factor,
+										   new_scale_factor,
+										   new_scale_factor_error);
+
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
+
+			predicted_score -= scale_factor*this->scope_average_mod[this->scopes.size()-1];
+
+			for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
+				vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
+				for (int s_index = 0; s_index < this->inner_input_sizes[this->scopes.size()-1][i_index]; s_index++) {
+					inner_input_errors[this->inner_input_sizes[this->scopes.size()-1][i_index]-1-s_index] = scope_output_errors.back();
+					scope_output_errors.pop_back();
+				}
+				vector<double> inner_input_state_output_errors;
+				vector<double> inner_input_s_input_output_errors;
+				this->inner_input_networks[this->scopes.size()-1][i_index]->backprop_small_errors_with_no_weight_change(
+					inner_input_errors,
+					inner_input_state_output_errors,
+					inner_input_s_input_output_errors);
+				for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
+					local_state_errors[s_index] += inner_input_state_output_errors[s_index];
+				}
+				// use output sizes as compress_networks might not have used all inputs
+				for (int s_index = 0; s_index < (int)inner_input_s_input_output_errors.size(); s_index++) {
+					local_s_input_errors[s_index] += inner_input_s_input_output_errors[s_index];
+				}
+			}
+		}
+	}
+
+	// mid
+	for (int a_index = (int)this->scopes.size()-2; a_index >= 1; a_index--) {
+		if (this->need_process[a_index]) {
+			if (this->is_branch[a_index]) {
+				vector<double> branch_state_output_errors;
+				this->branches[a_index]->existing_backprop(local_state_errors,
+														   branch_state_output_errors,
+														   local_s_input_errors,
+														   predicted_score_error,
+														   scale_factor,
+														   new_scale_factor,
+														   new_scale_factor_error);
+				local_state_errors = branch_state_output_errors;
+			} else {
+				if (this->active_compress[a_index]) {
+					vector<double> compress_state_output_errors;
+					vector<double> compress_s_input_output_errors;
+					this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
+						local_state_errors,
+						compress_state_output_errors,
+						compress_s_input_output_errors);
+					local_state_errors = compress_state_output_errors;
+					// use output sizes as compress_networks might not have used all inputs
+					for (int s_index = 0; s_index < (int)compress_s_input_output_errors.size(); s_index++) {
+						local_s_input_errors[s_index] += compress_s_input_output_errors[s_index];
+					}
+				} else {
+					for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
+						local_state_errors.push_back(0.0);
+					}
+				}
+
+				// with only predicted_score_error, don't worry about average_factor yet
+
+				double score_add_w_o_new_scale = 
+
+				vector<double> score_errors{predicted_score_error};
+				vector<double> score_state_output_errors;
+				vector<double> score_s_input_output_errors;
+				this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
+					score_errors,
+					score_state_output_errors,
+					score_s_input_output_errors);
+			}
+		}
+	}
+}
 
 void Scope::explore_activate(vector<vector<double>>& flat_vals,
 							 vector<double>& input,
@@ -434,7 +545,7 @@ void Scope::explore_backprop(vector<double> input_errors,
 							 double target_val,
 							 double& scale_factor,
 							 double& new_average_factor_error,
-							 double& new_scale_factor,
+							 double new_scale_factor,
 							 double& new_scale_factor_error) {
 	vector<double> local_state_errors = input_errors;
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);

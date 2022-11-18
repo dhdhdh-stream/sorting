@@ -43,8 +43,9 @@ public:
 
 	std::vector<FoldNetwork*> score_networks;
 
+	std::vector<int> compress_sizes;
+	std::vector<bool> active_compress;
 	std::vector<FoldNetwork*> compress_networks;
-	std::vector<int> compress_new_sizes;
 
 	int explore_index_inclusive;	// -1 if not on path
 	bool explore_in;
