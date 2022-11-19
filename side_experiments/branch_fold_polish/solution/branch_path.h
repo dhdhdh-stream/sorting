@@ -23,6 +23,11 @@ public:
 
 	int end_input_size;
 	FoldNetwork* end_input_network;
+
+	int explore_index_inclusive;	// -1 if not on path
+	int explore_type;
+	int explore_end_non_inclusive;
+	Fold* explore_fold;
 };
 
 #endif /* BRANCH_PATH_H */

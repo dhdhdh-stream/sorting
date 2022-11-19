@@ -48,7 +48,7 @@ public:
 	std::vector<FoldNetwork*> compress_networks;
 
 	int explore_index_inclusive;	// -1 if not on path
-	bool explore_in;
+	int explore_type;
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
 

@@ -72,8 +72,13 @@ void Fold::flat_step_activate(vector<vector<double>>& flat_vals,
 		output_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	// don't worry about end_average_mod at flat
 	vector<double> empty_input;
+
+	this->end_average_mod_calc->activate(empty_input);
+	double end_average_mod_val = this->end_average_mod_calc->output->acti_vals[0];
+	predicted_score += end_average_mod_val;
+
+	// don't worry about end_average_mod at flat
 	this->end_scale_mod_calc->activate(empty_input);
 	double end_scale_mod_val = this->end_scale_mod_calc->output->acti_vals[0];
 	scale_factor *= end_scale_mod_val;
@@ -84,6 +89,7 @@ void Fold::flat_step_backprop(vector<double> input_errors,
 							  double& predicted_score,
 							  double target_val,
 							  double& scale_factor,
+							  double& new_average_factor_error,
 							  double& new_scale_factor_error) {
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -94,6 +100,7 @@ void Fold::flat_step_backprop(vector<double> input_errors,
 
 	double predicted_score_error = target_val - predicted_score;
 	if (this->stage_iter <= 300000) {
+		this->ending_scale_mod_calc->backprop(new_average_factor_error, 0.005);
 		this->ending_scale_mod_calc->backprop(new_scale_factor_error, 0.005);
 
 		this->curr_end_fold->backprop(input_errors, 0.05);
@@ -101,6 +108,7 @@ void Fold::flat_step_backprop(vector<double> input_errors,
 		vector<double> curr_fold_error{predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.05);
 	} else if (this->stage_iter <= 400000) {
+		this->ending_scale_mod_calc->backprop(new_average_factor_error, 0.001);
 		this->ending_scale_mod_calc->backprop(new_scale_factor_error, 0.001);
 
 		this->curr_end_fold->backprop(input_errors, 0.01);
@@ -108,6 +116,7 @@ void Fold::flat_step_backprop(vector<double> input_errors,
 		vector<double> curr_fold_error{predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.01);
 	} else {
+		this->ending_scale_mod_calc->backprop(new_average_factor_error, 0.0002);
 		this->ending_scale_mod_calc->backprop(new_scale_factor_error, 0.0002);
 
 		this->curr_end_fold->backprop(input_errors, 0.002);
