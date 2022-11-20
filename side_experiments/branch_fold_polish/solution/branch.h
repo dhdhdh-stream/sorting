@@ -5,21 +5,26 @@
 
 class Branch {
 public:
-	std::vector<SubFoldNetwork*> score_networks;
+	std::vector<FoldNetwork*> score_networks;
 	std::vector<BranchPath*> branches;
 
 	// no start_mods, just rely on score_networks instead
 
 	std::vector<int> compress_sizes;
 	std::vector<bool> active_compress;
-	std::vector<Network*> compress_networks;
+	std::vector<FoldNetwork*> compress_networks;
 
 	std::vector<double> end_average_mods;
 	std::vector<double> end_scale_mods;
+};
 
-	// used for backprop
-	// TODO: create a backprop_history abstraction for this
+class BranchHistory {
+public:
 	double best_index;
+
+	FoldNetworkHistory* score_network_history;
+	BranchPathHistory* branch_history;
+	FoldNetworkHistory* compress_history;
 };
 
 #endif /* BRANCH_H */

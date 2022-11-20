@@ -14,12 +14,11 @@ const int STATE_INNER_SCOPE_INPUT_INPUT = 0;
 const int STATE_INNER_SCOPE_TUNE = 1;
 const int STATE_OBS_NEEDED = 2;
 const int STATE_SCORE = 3;
-const int STATE_SCORE_INPUT = 4;
-const int STATE_SCORE_TUNE = 5;
-const int STATE_COMPRESS_STATE = 6;
-const int STATE_COMPRESS_SCOPE = 7;
-const int STATE_COMPRESS_INPUT = 8;
-const int STATE_DONE = 9;
+const int STATE_SCORE_TUNE = 4;
+const int STATE_COMPRESS_STATE = 5;
+const int STATE_COMPRESS_SCOPE = 6;
+const int STATE_INPUT = 7;
+const int STATE_DONE = 8;
 
 const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
@@ -29,6 +28,7 @@ public:
 	int phase;
 
 	int sequence_length;
+	// TODO: begin using backprop histories to not have to copy scopes
 	std::vector<Scope*> existing_actions;
 	std::vector<int> obs_sizes;
 	int output_size;
@@ -48,26 +48,50 @@ public:
 	FoldNetwork* starting_compress_network;
 
 	std::vector<Network*> scope_average_mod_calcs;
-	std::vector<double> scope_average_mods;
 	std::vector<Network*> scope_scale_mod_calcs;
-	std::vector<double> scope_scale_mods;
 
 	Network* end_average_mod_calc;
-	double end_average_mod;
 	Network* end_scale_mod_calc;
-	double end_scale_mod;
 
-	std::vector<int> curr_scope_sizes;
 	std::vector<int> curr_s_input_sizes;
+	std::vector<int> curr_scope_sizes;
 	FoldNetwork* curr_fold;
-	std::vector<FoldNetwork*> curr_scope_input_folds;
+	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;
 
-	std::vector<int> test_scope_sizes;
 	std::vector<int> test_s_input_sizes;
+	std::vector<int> test_scope_sizes;
 	FoldNetwork* test_fold;
-	std::vector<FoldNetwork*> test_scope_input_folds;
-	FoldNetwork* curr_test_fold;
+	std::vector<FoldNetwork*> test_input_folds;
+	FoldNetwork* test_end_fold;
+
+	FoldNetwork* curr_input_network;
+	FoldNetwork* test_input_network;
+	std::vector<int> inner_input_input_layer;
+	std::vector<int> inner_input_input_sizes;
+	std::vector<FoldNetwork*> inner_input_input_networks;
+
+	FoldNetwork* curr_score_network;
+	FoldNetwork* test_score_network;
+
+	FoldNetwork* curr_compression_network;
+	int compress_size;
+	int compress_num_layers;
+	int compress_new_size;
+	std::vector<int> compressed_s_input_sizes;
+	std::vector<int> compressed_scope_sizes;
+	FoldNetwork* test_compression_network;
+
+	std::vector<int> input_layer;
+	std::vector<int> input_sizes;
+	std::vector<FoldNetwork*> input_networks;
+};
+
+class FoldHistory {
+public:
+	std::vector<ScopeHistory*> scope_histories;
+
+	// don't worry about other histories for now (as they're unique)
 };
 
 #endif /* FOLD_H */

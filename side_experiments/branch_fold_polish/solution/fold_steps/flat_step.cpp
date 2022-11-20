@@ -30,12 +30,12 @@ void Fold::flat_step_activate(vector<vector<double>>& flat_vals,
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			this->curr_scope_input_folds[f_index]->activate(input_fold_inputs[f_index],
+			this->curr_input_folds[f_index]->activate(input_fold_inputs[f_index],
 															starting_state_vals,
 															starting_s_input_vals);
 			vector<double> scope_input(this->existing_actions[f_index]->num_inputs);
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_inputs; i_index++) {
-				scope_input[i_index] = this->curr_scope_input_folds[f_index]->output->acti_vals[i_index];
+				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
 			// don't worry about scope_average_mods at flat
@@ -157,21 +157,21 @@ void Fold::flat_step_backprop(vector<double> input_errors,
 			if (this->stage_iter <= 300000) {
 				this->scope_scale_mod_calcs[f_index]->backprop(new_scale_factor_error, 0.005);
 
-				this->curr_scope_input_folds[f_index]->backprop(scope_output_errors, 0.05);
+				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.05);
 			} else if (this->stage_iter <= 400000) {
 				this->scope_scale_mod_calcs[f_index]->backprop(new_scale_factor_error, 0.001);
 				
-				this->curr_scope_input_folds[f_index]->backprop(scope_output_errors, 0.01);
+				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.01);
 			} else {
 				this->scope_scale_mod_calcs[f_index]->backprop(new_scale_factor_error, 0.0002);
 
-				this->curr_scope_input_folds[f_index]->backprop(scope_output_errors, 0.002);
+				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.002);
 			}
 			for (int ff_index = f_index-1; ff_index >= 0; ff_index--) {
 				if (this->existing_actions[ff_index] != NULL) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
-						scope_input_errors[ff_index][i_index] += this->curr_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
-						this->curr_scope_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
+						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
+						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 					}
 				}
 			}

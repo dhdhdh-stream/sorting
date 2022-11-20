@@ -54,4 +54,15 @@ public:
 
 };
 
+class ScopeHistory {
+public:
+	Scope* scope;
+
+	std::vector<std::vector<FoldNetworkHistory*>> inner_input_network_histories;
+	std::vector<ScopeHistory*> scope_histories;
+	std::vector<BranchHistory*> branch_histories;
+	std::vector<FoldNetworkHistory*> score_network_histories;
+	std::vector<FoldNetworkHistory*> compress_network_histories;
+};
+
 #endif /* SCOPE_H */
