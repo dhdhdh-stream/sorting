@@ -9,14 +9,13 @@ using namespace std;
 
 
 
-void Scope::explore_activate(vector<vector<double>>& flat_vals,
-							 vector<double>& input,
-							 vector<double>& output,
-							 double& predicted_score,
-							 double& scale_factor,
-							 int& explore_phase,
-							 double& new_scale_factor,
-							 ScopeHistory& history) {
+void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
+									 vector<double>& input,
+									 vector<double>& output,
+									 double& predicted_score,
+									 double& scale_factor,
+									 int& explore_phase,
+									 ScopeHistory* history) {
 	int a_index = 1;
 
 	// start
@@ -40,21 +39,15 @@ void Scope::explore_activate(vector<vector<double>>& flat_vals,
 
 		scale_factor *= this->scope_scale_mod[0];
 
-		vector<double> scope_output;
-		if (explore_phase == EXPLORE_PHASE_LEARN) {
-			scope_scope->explore_activate(flat_vals,
-										  scope_input,
-										  scope_output,
-										  predicted_score,
-										  scale_factor,
-										  new_scale_factor);
-		} else {
-			scope_scope->activate(flat_vals,
-								  scope_input,
-								  scope_output,
-								  predicted_score,
-								  scale_factor);
-		}
+		ScopeHistory* scope_history = new ScopeHistory(scope_scope);
+		scope_scope->explore_activate(flat_vals,
+									  scope_input,
+									  scope_output,
+									  predicted_score,
+									  scale_factor,
+									  explore_phase,
+									  scope_history);
+		history->scope_histories[0] = scope_history;
 
 		scale_factor /= this->scope_scale_mod[0];
 
@@ -62,37 +55,51 @@ void Scope::explore_activate(vector<vector<double>>& flat_vals,
 	}
 
 	// this->need_process[0] == true
-	if (this->explore_index_inclusive == 0
-			&& this->explore_type == EXPLORE_TYPE_NEW) {
+	if (this->is_branch[0]) {
 		vector<double> output_state_vals;
-		this->explore_fold->activate(flat_vals,
-									 local_state_vals,
-									 input,
-									 output_state_vals,
-									 predicted_score,
-									 scale_factor,
-									 new_scale_factor);
-
-		a_index = explore_end_non_inclusive;
+		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+		this->branches[0]->explore_activate(flat_vals,
+											input,
+											local_state_vals,
+											output_state_vals,
+											predicted_score,
+											scale_factor,
+											explore_phase,
+											branch_history);
+		history->branch_histories[0] = branch_history;
+		local_state_vals = output_state_vals;
+		// if is also last action, extended local_state_vals will still be set correctly
 	} else {
-		if (this->is_branch[0]) {
-			vector<double> output_state_vals;
-			this->branches[0]->explore_activate(flat_vals,
+		// always save score_network_history on path
+		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[0]);
+		this->score_networks[0]->activate_small(inputs,
 												local_state_vals,
-												input,
-												output_state_vals,
-												predicted_score,
-												scale_factor,
-												new_scale_factor);
-			local_state_vals = output_state_vals;
-			// if is also last action, extended local_state_vals will still be set correctly
-		} else {
-			this->score_networks[0]->activate_small(local_state_vals,
-													inputs);
-			predicted_score += scale_factor*this->score_networks[0]->output->acti_vals[0];
+												score_network_history);
+		history->score_network_histories[0] = score_network_history;
+		double curr_score = scale_factor*this->score_networks[0]->output->acti_vals[0];
 
-			if (this->compress_sizes[0] > 0) {
-				// this->active_compress[0] == true
+		if (this->explore_index_inclusive == 0
+				&& this->explore_type == EXPLORE_TYPE_INNER
+				&& this->explore_fold->do_fold(input,
+											   local_state_vals,
+											   curr_score,
+											   explore_phase)) {
+			vector<double> output_state_vals;
+			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+			this->explore_fold->activate(flat_vals,
+										 input,
+										 local_state_vals,
+										 output_state_vals,
+										 predicted_score,
+										 scale_factor,
+										 explore_phase,
+										 fold_history);
+			history->fold_history = fold_history;
+			a_index = explore_end_non_inclusive;
+		} else {
+			predicted_score += curr_score;
+
+			if (this->active_compress[0]) {
 				// cannot be last action
 				// compress 1 layer, add 1 layer
 				this->compress_networks[0]->activate_small(local_state_vals,

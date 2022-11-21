@@ -28,6 +28,7 @@ public:
 
 	std::vector<int> start_scope_input_input_indexes;
 
+	// start can't be inherited_score
 	std::vector<AbstractScope*> scopes;
 
 	std::vector<bool> need_process;
@@ -63,6 +64,8 @@ public:
 	std::vector<BranchHistory*> branch_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
+
+	FoldHistory* fold_history;
 };
 
 #endif /* SCOPE_H */

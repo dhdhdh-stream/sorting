@@ -55,7 +55,7 @@ public:
 
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
-	FoldNetwork* curr_fold;
+	FoldNetwork* curr_fold;	// after PHASE_FLAT, no longer need to backprop till end?
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;
 

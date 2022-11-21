@@ -7,12 +7,50 @@ using namespace std;
 
 
 void BranchPath::activate(vector<vector<double>>& flat_vals,
-						  vector<double>& local_state_vals,
-						  vector<double>& local_s_input_vals,
+						  double starting_score,
+						  int starting_branch_index,
+						  vector<double>& starting_combined_state_vals,
+						  vector<double>& s_input_vals,
 						  vector<double>& output_state_vals,
 						  double& predicted_score,
 						  double& scale_factor) {
-	for (int a_index = 0; a_index < (int)this->scopes.size(); a_index++) {
+	vector<double> local_state_vals;
+
+	// start
+	if (this->is_branch[0]) {
+		vector<double> output_state_vals;
+		this->branches[0]->activate(flat_vals,
+									starting_score,
+									starting_combined_state_vals,
+									s_input_vals,
+									output_state_vals,
+									predicted_score,
+									scale_factor);
+		local_state_vals = output_state_vals;
+	} else {
+		// starting_score already scaled
+		predicted_score += starting_score;
+
+		if (this->compress_sizes[0] > 0) {
+			if (this->active_compress[0]) {
+				this->compress_networks[0]->activate_small(starting_combined_state_vals,
+														   s_input_vals);
+				int compress_new_size = (int)starting_combined_state_vals.size() - this->compress_sizes[0];
+				local_state_vals.reserve(compress_new_size);
+				for (int s_index = 0; s_index < compress_new_size; s_index++) {
+					local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
+				}
+			} else {
+				local_state_vals = vector<double>(starting_combined_state_vals.begin(),
+					starting_combined_state_vals.end()-this->compress_sizes[0]);
+			}
+		} else {
+			local_state_vals = starting_combined_state_vals;
+		}
+	}
+
+	// mid
+	for (int a_index = 1; a_index < (int)this->scopes.size(); a_index++) {
 		vector<double> new_state_vals;
 
 		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {

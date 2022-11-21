@@ -7,6 +7,7 @@ using namespace std;
 
 
 
+
 void Branch::activate(vector<vector<double>>& flat_vals,
 					  vector<double>& input_state_vals,
 					  vector<double>& s_input_vals,
@@ -24,24 +25,36 @@ void Branch::activate(vector<vector<double>>& flat_vals,
 		}
 	}
 
-	predicted_score += curr_predicted_score;
+	this->branches[this->best_index]->activate(flat_vals,
+											   scope_state_vals,
+											   s_input_vals,
+											   output_state_vals,
+											   predicted_score,
+											   scale_factor);
 
-	vector<double> scope_state_vals;
-	if (this->compress_sizes[this->best_index] > 0) {
-		if (this->active_compress[this->best_index]) {
-			this->compress_networks[this->best_index]->activate_small(input_state_vals,
-																	  s_input_vals);
-			int compress_new_size = (int)input_state_vals.size() - this->compress_sizes[this->best_index];
-			scope_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
-				scope_state_vals.push_back(this->compress_networks[this->best_index]->output->acti_vals[s_index]);
-			}
-		} else {
-			scope_state_vals = vector<double>(input_state_vals.begin(),
-				input_state_vals.end()-this->compress_sizes[this->best_index]);
+	predicted_score += scale_factor*this->end_averages_mods[this->best_index];
+	scale_factor *= this->end_scale_mods[this->best_index];
+}
+
+void Branch::activate(vector<vector<double>>& flat_vals,
+					  double inherited_score,
+					  double inherited_branch_index,
+					  vector<double>& input_state_vals,
+					  vector<double>& s_input_vals,
+					  vector<double>& output_state_vals,
+					  double& predicted_score,
+					  double& scale_factor) {
+	double best_score = inherited_score;
+	this->best_index = 0;
+
+	for (int b_index = 1; b_index < (int)this->branches.size(); b_index++) {
+		this->score_networks[b_index]->activate_small(input_state_vals,
+													  s_input_vals);
+		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
+		if (curr_predicted_score > best_score) {
+			best_score = curr_score;
+			this->best_index = b_index;
 		}
-	} else {
-		scope_state_vals = input_state_vals;
 	}
 
 	this->branches[this->best_index]->activate(flat_vals,
@@ -128,52 +141,97 @@ void Branch::existing_backprop(vector<double> state_input_errors,
 }
 
 void Branch::explore_activate(vector<vector<double>>& flat_vals,
-							  vector<double>& input_state_vals,
 							  vector<double>& s_input_vals,
+							  vector<double>& input_state_vals,
 							  vector<double>& output_state_vals,
 							  double& predicted_score,
 							  double& scale_factor,
-							  double& new_scale_factor) {
+							  int& explore_phase,
+							  BranchHistory* history) {
+	predicted_score += scale_factor*this->start_average_mod;
+	scale_factor *= this->start_scale_mod;
+
 	double best_score = numeric_limits<double>::lowest();
-	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
-		this->score_networks[b_index]->activate_small(input_state_vals,
-													  s_input_vals);
-		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_predicted_score > best_score) {
-			best_score = curr_score;
-			this->best_index = b_index;
-		}
-	}
-
-	predicted_score += curr_predicted_score;
-
-	vector<double> scope_state_vals;
-	if (this->compress_sizes[this->best_index] > 0) {
-		if (this->active_compress[this->best_index]) {
-			this->compress_networks[this->best_index]->activate_small(input_state_vals,
-																	  s_input_vals);
-			int compress_new_size = (int)input_state_vals.size() - this->compress_sizes[this->best_index];
-			scope_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
-				scope_state_vals.push_back(this->compress_networks[this->best_index]->output->acti_vals[s_index]);
+	double best_index = -1;
+	double best_sub_index = -1;
+	if (this->explore_phase == EXPLORE_PHASE_LEARN) {
+		FoldNetworkHistory* best_history = NULL
+		for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+			for (int n_index = 0; n_index < (int)this->score_networks[b_index].size(); n_index++) {
+				FoldNetworkHistory* curr_history = new FoldNetworkHistory(this->score_networks[b_index][n_index]);
+				this->score_networks[b_index][n_index]->activate_small(input_state_vals,
+																	   s_input_vals,
+																	   curr_history);
+				double curr_score = scale_factor*this->score_networks[b_index][n_index]->output->acti_vals[0];
+				if (curr_predicted_score > best_score) {
+					best_score = curr_score;
+					if (best_history != NULL) {
+						delete best_history;
+					}
+					best_history = curr_history;
+					best_index = b_index;
+					best_sub_index = n_index;
+				} else {
+					delete curr_history;
+				}
 			}
-		} else {
-			scope_state_vals = vector<double>(input_state_vals.begin(),
-				input_state_vals.end()-this->compress_sizes[this->best_index]);
 		}
 	} else {
-		scope_state_vals = input_state_vals;
+		for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+			for (int n_index = 0; n_index < (int)this->score_networks[b_index].size(); n_index++) {
+				this->score_networks[b_index][n_index]->activate_small(input_state_vals,
+																	   s_input_vals);
+				double curr_score = scale_factor*this->score_networks[b_index][n_index]->output->acti_vals[0];
+				if (curr_predicted_score > best_score) {
+					best_score = curr_score;
+					best_index = b_index;
+					best_sub_index = n_index;
+				}
+			}
+		}
 	}
 
-	this->branches[this->best_index]->activate(flat_vals,
-											   scope_state_vals,
-											   s_input_vals,
-											   output_state_vals,
-											   predicted_score,
-											   scale_factor);
+	if (this->explore_type == EXPLORE_TYPE_LOCAL) {
+		FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+		this->explore_fold->activate(flat_vals,
+									 s_input_vals,
+									 input_state_vals,
+									 output_state_vals,
+									 predicted_score,
+									 scale_factor,
+									 explore_phase,
+									 new_scale_factor,
+									 fold_history);
+		history->fold_history = fold_history;
+	} else {
+		if (this->explore_phase == EXPLORE_PHASE_LEARN) {
+			BranchHistory* branch_history = new BranchHistory(this->branches[best_index]);
+			this->branches[best_index]->explore_activate(flat_vals,
+														 best_score,
+														 best_sub_index,
+														 s_input_vals,
+														 input_state_vals,
+														 output_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 explore_phase,
+														 new_scale_factor,
+														 branch_history);
+			history->branch_history = branch_history;
+		} else {
+			this->branches[best_index]->activate(flat_vals,
+												 best_score,
+												 best_sub_index,
+												 s_input_vals,
+												 input_state_vals,
+												 output_state_vals,
+												 predicted_score,
+												 scale_factor);
+		}
+	}
 
-	predicted_score += scale_factor*this->end_averages_mods[this->best_index];
-	scale_factor *= this->end_scale_mods[this->best_index];
+	predicted_score += scale_factor*this->end_averages_mods[best_index];
+	scale_factor *= this->end_scale_mods[best_index];
 }
 
 void Branch::explore_backprop(vector<double> state_input_errors,
@@ -182,9 +240,10 @@ void Branch::explore_backprop(vector<double> state_input_errors,
 							  double& predicted_score,
 							  double target_val,
 							  double& scale_factor,
-							  double& new_average_factor_error,
-							  double new_scale_factor,
-							  double& new_scale_factor_error) {
+							  // TODO: it's possible to keep a single value to update all
+							  // only update branch and ancestors when backproping, as that is where scores are improved (everywhere else is an adjustment)
+							  double& average_factor_error,
+							  double& scale_factor_error) {
 	scale_factor /= this->end_scale_mods[this->best_index];
 	predicted_score -= scale_factor*this->end_averages_mods[this->best_index];
 	// end_mods don't need to be accounted for in backprop as not changing them
