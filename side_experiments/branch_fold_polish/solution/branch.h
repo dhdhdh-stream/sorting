@@ -5,11 +5,6 @@
 
 class Branch {
 public:
-	// for when retrain front (i.e., average will need to be modified down as overall score increases)
-	// TODO: when retrain front, only modify score networks
-	double start_average_mod;
-	double start_scale_mod;
-
 	bool does_inherit;
 	std::vector<std::vector<FoldNetwork*>> score_networks;
 	std::vector<BranchPath*> branches;
