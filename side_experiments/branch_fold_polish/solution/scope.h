@@ -33,6 +33,7 @@ public:
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
+	// TODO: initialize mods to 0.0 and 1.0
 	std::vector<Network*> scope_average_mod;
 	std::vector<Network*> scope_scale_mod;
 	// scope end average adjusted by score network

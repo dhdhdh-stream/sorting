@@ -28,7 +28,6 @@ public:
 	int phase;
 
 	int sequence_length;
-	// TODO: begin using backprop histories to not have to copy scopes
 	std::vector<Scope*> existing_actions;
 	std::vector<int> obs_sizes;
 	int output_size;

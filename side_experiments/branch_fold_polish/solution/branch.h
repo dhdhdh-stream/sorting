@@ -8,6 +8,7 @@ public:
 	bool does_inherit;
 	std::vector<std::vector<FoldNetwork*>> score_networks;
 	std::vector<BranchPath*> branches;
+	std::vector<Fold*> folds;	// only 1 non-NULL at a time?
 	// no differing end_indexes, but instead, multiple score_networks per branch
 
 	// no start_mods, just rely on score_networks instead

@@ -69,99 +69,70 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 	}
 
 	// this->need_process[0] == true
-	if (this->is_branch[0]) {
-		double branch_average_mod_val = this->branch_average_mod[0]->output->constants[0];
-		predicted_score += scale_factor*branch_average_mod_val;
-		// permanently adjust scale_factor
-		double branch_scale_mod_val = this->branch_scale_mod[0]->output->constants[0];
-		scale_factor *= branch_scale_mod_val;
-
+	if (this->explore_index_inclusive == 0
+			&& this->explore_type == EXPLORE_TYPE_LOCAL) {
 		vector<double> output_state_vals;
-		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
-		if (this->explore_index_inclusive == 0
-				&& this->explore_type == EXPLORE_TYPE_LOCAL) {
-			bool do_fold;
-			this->branches[0]->explore_local_activate(flat_vals,
-													  input,
-													  local_state_vals,
-													  output_state_vals,
-													  predicted_score,
-													  scale_factor,
-													  explore_phase,
-													  branch_history,
-													  do_fold);
-
-			if (do_fold) {
-				a_index = this->explore_end_non_inclusive;
-			}
-		} else if (this->explore_index_inclusive == 0
-				&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-			this->branches[0]->explore_on_path_activate(flat_vals,
-														input,
-														local_state_vals,
-														output_state_vals,
-														predicted_score,
-														scale_factor,
-														explore_phase,
-														branch_history);
-		} else {
-			this->branches[0]->existing_activate(flat_vals,
-												 input,
-												 local_state_vals,
-												 output_state_vals,
-												 predicted_score,
-												 scale_factor,
-												 explore_phase,
-												 branch_history);
-		}
-		history->branch_histories[0] = branch_history;
+		FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+		this->explore_fold->activate(flat_vals,
+									 input,
+									 local_state_vals,
+									 output_state_vals,
+									 predicted_score,
+									 scale_factor,
+									 explore_phase,
+									 fold_history);
+		history->fold_history = fold_history;
 		local_state_vals = output_state_vals;
-		// if is also last action, extended local_state_vals will still be set correctly
+
+		a_index = this->explore_end_non_inclusive;
 	} else {
-		// explore_phase == EXPLORE_PHASE_NONE
-		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[0]);
-		this->score_networks[0]->activate_small(inputs,
-												local_state_vals,
-												score_network_history);
-		history->score_network_histories[0] = score_network_history;
-		double curr_score = scale_factor*this->score_networks[0]->output->acti_vals[0];
+		if (this->is_branch[0]) {
+			double branch_average_mod_val = this->branch_average_mod[0]->output->constants[0];
+			predicted_score += scale_factor*branch_average_mod_val;
+			// permanently adjust scale_factor
+			double branch_scale_mod_val = this->branch_scale_mod[0]->output->constants[0];
+			scale_factor *= branch_scale_mod_val;
 
-		if (this->explore_index_inclusive == 0
-				&& this->explore_type == EXPLORE_TYPE_LOCAL
-				&& this->explore_fold->do_fold(input,
-											   local_state_vals,
-											   curr_score,
-											   explore_phase)) {
 			vector<double> output_state_vals;
-			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-			this->explore_fold->activate(flat_vals,
-										 input,
-										 local_state_vals,
-										 output_state_vals,
-										 predicted_score,
-										 scale_factor,
-										 explore_phase,
-										 fold_history);
-			history->fold_history = fold_history;
+			BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+			if (this->explore_index_inclusive == 0
+					&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+				this->branches[0]->explore_on_path_activate(flat_vals,
+															input,
+															local_state_vals,
+															output_state_vals,
+															predicted_score,
+															scale_factor,
+															explore_phase,
+															branch_history);
+			} else {
+				this->branches[0]->existing_activate(flat_vals,
+													 input,
+													 local_state_vals,
+													 output_state_vals,
+													 predicted_score,
+													 scale_factor,
+													 explore_phase,
+													 branch_history);
+			}
+			history->branch_histories[0] = branch_history;
 			local_state_vals = output_state_vals;
-
-			a_index = this->explore_end_non_inclusive;
+			// if is also last action, extended local_state_vals will still be set correctly
 		} else {
-			predicted_score += curr_score;
+			// explore_phase == EXPLORE_PHASE_NONE
+			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[0]);
+			this->score_networks[0]->activate_small(inputs,
+													local_state_vals,
+													score_network_history);
+			history->score_network_histories[0] = score_network_history;
+			predicted_score += scale_factor*this->score_networks[0]->output->acti_vals[0];
 
 			if (this->active_compress[0]) {
 				// cannot be last action
 				// compress 1 layer, add 1 layer
-				if (this->explore_phase == EXPLORE_PHASE_FLAT) {
-					FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[0]);
-					this->compress_networks[0]->activate_small(inputs,
-															   local_state_vals,
-															   compress_network_history);
-					history->compress_network_histories[0] = compress_network_history;
-				} else {
-					this->compress_networks[0]->activate_small(inputs,
-															   local_state_vals);
-				}
+				// explore_phase == EXPLORE_PHASE_NONE
+				this->compress_networks[0]->activate_small(inputs,
+														   local_state_vals);
 
 				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
 				local_state_vals.clear();
@@ -242,89 +213,69 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			combined_state_vals.insert(combined_state_vals.end(),
 				new_state_vals.begin(), new_state_vals.end());
 
-			if (this->is_branch[a_index]) {
-				double branch_average_mod_val = this->branch_average_mod[a_index]->output->constants[0];
-				predicted_score += scale_factor*branch_average_mod_val;
-				// permanently adjust scale_factor
-				double branch_scale_mod_val = this->branch_scale_mod[a_index]->output->constants[0];
-				scale_factor *= branch_scale_mod_val;
-
+			if (this->explore_index_inclusive == a_index
+					&& this->explore_type == EXPLORE_TYPE_LOCAL) {
 				vector<double> output_state_vals;
-				BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-				if (this->explore_index_inclusive == a_index
-						&& this->explore_type == EXPLORE_TYPE_LOCAL) {
-					bool do_fold;
-					this->branches[a_index]->explore_local_activate(flat_vals,
-																	input,
-																	local_state_vals,
-																	output_state_vals,
-																	predicted_score,
-																	scale_factor,
-																	explore_phase,
-																	branch_history,
-																	do_fold);
-
-					if (do_fold) {
-						a_index = this->explore_end_non_inclusive;
-					}
-				} else if (this->explore_index_inclusive == a_index
-						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-					this->branches[a_index]->explore_on_path_activate(flat_vals,
-																	  input,
-																	  local_state_vals,
-																	  output_state_vals,
-																	  predicted_score,
-																	  scale_factor,
-																	  explore_phase,
-																	  branch_history);
-				} else {
-					this->branches[a_index]->existing_activate(flat_vals,
-															   input,
-															   local_state_vals,
-															   output_state_vals,
-															   predicted_score,
-															   scale_factor,
-															   explore_phase,
-															   branch_history);
-				}
-				history->branch_histories[a_index] = branch_history;
+				FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+				this->explore_fold->activate(flat_vals,
+											 input,
+											 local_state_vals,
+											 output_state_vals,
+											 predicted_score,
+											 scale_factor,
+											 explore_phase,
+											 fold_history);
+				history->fold_history = fold_history;
 				local_state_vals = output_state_vals;
+
+				a_index = this->explore_end_non_inclusive;
 			} else {
-				if (explore_phase == EXPLORE_PHASE_NONE || explore_phase == EXPLORE_PHASE_FLAT) {
-					FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-					this->score_networks[a_index]->activate_small(inputs,
-																  local_state_vals,
-																  score_network_history);
-					history->score_network_histories[a_index] = score_network_history;
-				} else {
-					this->score_networks[a_index]->activate_small(inputs,
-																  combined_state_vals);
-					history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				}
-				double curr_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+				if (this->is_branch[a_index]) {
+					double branch_average_mod_val = this->branch_average_mod[a_index]->output->constants[0];
+					predicted_score += scale_factor*branch_average_mod_val;
+					// permanently adjust scale_factor
+					double branch_scale_mod_val = this->branch_scale_mod[a_index]->output->constants[0];
+					scale_factor *= branch_scale_mod_val;
 
-				if (this->explore_index_inclusive == a_index
-						&& this->explore_type == EXPLORE_TYPE_LOCAL
-						&& this->explore_fold->do_fold(input,
-													   local_state_vals,
-													   curr_score,
-													   explore_phase)) {
 					vector<double> output_state_vals;
-					FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-					this->explore_fold->activate(flat_vals,
-												 input,
-												 local_state_vals,
-												 output_state_vals,
-												 predicted_score,
-												 scale_factor,
-												 explore_phase,
-												 fold_history);
-					history->fold_history = fold_history;
+					BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
+					if (this->explore_index_inclusive == a_index
+							&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+						this->branches[a_index]->explore_on_path_activate(flat_vals,
+																		  input,
+																		  local_state_vals,
+																		  output_state_vals,
+																		  predicted_score,
+																		  scale_factor,
+																		  explore_phase,
+																		  branch_history);
+					} else {
+						this->branches[a_index]->existing_activate(flat_vals,
+																   input,
+																   local_state_vals,
+																   output_state_vals,
+																   predicted_score,
+																   scale_factor,
+																   explore_phase,
+																   branch_history);
+					}
+					history->branch_histories[a_index] = branch_history;
 					local_state_vals = output_state_vals;
-
-					a_index = this->explore_end_non_inclusive;
 				} else {
-					predicted_score += curr_score;
+					if (explore_phase == EXPLORE_PHASE_NONE || explore_phase == EXPLORE_PHASE_FLAT) {
+						FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
+						this->score_networks[a_index]->activate_small(inputs,
+																	  local_state_vals,
+																	  score_network_history);
+						history->score_network_histories[a_index] = score_network_history;
+					} else {
+						// for explore_phase == EXPLORE_PHASE_FOLD
+						// (don't bother special casing EXPLORE_PHASE_MEASURE)
+						this->score_networks[a_index]->activate_small(inputs,
+																	  combined_state_vals);
+						history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+					}
+					predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
 
 					if (this->active_compress[a_index]) {
 						// compress 2 layers, add 1 layer
@@ -449,7 +400,6 @@ void Scope::existing_activate(vector<vector<double>>& flat_vals,
 
 		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
 		predicted_score += scale_factor*scope_average_mod_val;
-		// Note: can backprop scope_average_mod without activate
 
 		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
 		scale_factor *= scope_scale_mod_val;
@@ -499,6 +449,7 @@ void Scope::existing_activate(vector<vector<double>>& flat_vals,
 													score_network_history);
 			history->score_network_histories[0] = score_network_history;
 		} else {
+			// if explore_phase == EXPLORE_PHASE_NONE, only have to save score for off path
 			this->score_networks[0]->activate_small(inputs,
 													local_state_vals);
 			history->score_updates[0] = this->score_networks[0]->output->acti_vals[0];
@@ -612,6 +563,7 @@ void Scope::existing_activate(vector<vector<double>>& flat_vals,
 																  score_network_history);
 					history->score_network_histories[a_index] = score_network_history;
 				} else {
+					// if explore_phase == EXPLORE_PHASE_NONE, only have to save score for off path
 					this->score_networks[a_index]->activate_small(inputs,
 																  combined_state_vals);
 					history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
@@ -709,11 +661,20 @@ void Scope::explore_on_path_backprop(vector<double> input_errors,
 									 double& scale_factor_error,
 									 int& explore_phase,
 									 ScopeHistory* history) {
+	int a_index;
+	if (this->explore_end_non_inclusive == this->scopes.size()
+			&& this->explore_type == EXPLORE_TYPE_LOCAL) {
+		a_index = this->explore_index_inclusive;
+	} else {
+		a_index = this->scopes.size()-1;
+	}
+
 	vector<double> local_state_errors = input_errors;
+	// don't need to output local_s_input_errors on path but for existing_full_backprop
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
 
 	// end
-	if (this->scopes.size() > 1) {
+	if (this->scopes.size() > 1 && a_index == this->scopes.size()-1) {
 		// this->need_process[this->scopes.size()-1] == true
 		if (this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_BASE) {
 			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[this->scopes.size()-1],
@@ -722,200 +683,299 @@ void Scope::explore_on_path_backprop(vector<double> input_errors,
 			// this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_SCOPE
 			Scope* scope_scope = (Scope*)this->scopes[this->scopes.size()-1];
 
-			vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
-				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
-				local_state_errors.end());
+			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
-			if (explore_phase == EXPLORE_PHASE_BACKPROP_FRONT) {
-
-			}
-			// clear scale_factor_error on end?
-			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
-
-			// if front, don't need scope_output_errors
-			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
+			double scope_average_factor_error = 0.0;
+			double scope_scale_factor_error = 0.0;
 			if (this->explore_index_inclusive == this->scopes.size()-1
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-				// on_path doesn't need scope_output_errors, as will only modify score
+				vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+					local_state_errors.end());
+				local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+					local_state_errors.end());
+
+				// on_path doesn't need scope_output_errors, as will only modify score for forward
+				// overall errors modified within and passed out for scope branch mods and before
 				scope_scope->explore_on_path_backprop(scope_input_errors,
+													  predicted_score,
+													  target_val,
+													  scale_factor,
+													  scope_average_factor_error,
+													  scope_scale_factor_error,
+													  explore_phase,
+													  history->scope_histories[this->scopes.size()-1]);
+
+				if (explore_phase == EXPLORE_PHASE_FLAT || explore_phase == EXPLORE_PHASE_MEASURE) {
+					return;
+				}
+			} else {
+				if (explore_phase == EXPLORE_PHASE_FLAT) {
+					vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+						local_state_errors.end());
+					local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+						local_state_errors.end());
+
+					vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
+					scope_scope->existing_full_backprop(scope_input_errors,
+														scope_output_errors,
+														predicted_score,
+														target_val,
+														scale_factor,
+														scope_average_factor_error,
+														scope_scale_factor_error,
+														history->scope_histories[this->scopes.size()-1]);
+
+					for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
+						vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
+						for (int s_index = 0; s_index < this->inner_input_sizes[this->scopes.size()-1][i_index]; s_index++) {
+							inner_input_errors[this->inner_input_sizes[this->scopes.size()-1][i_index]-1-s_index] = scope_output_errors.back();
+							scope_output_errors.pop_back();
+						}
+						this->inner_input_networks[this->scopes.size()-1][i_index]->backprop_errors_with_no_weight_change(inner_input_errors);
+						for (int s_index = 0; s_index < (int)local_state_errors.size(); s_index++) {
+							local_state_errors[s_index] += this->inner_input_networks[this->scopes.size()-1][i_index]->state_inputs.back()->errors[s_index];
+							this->inner_input_networks[this->scopes.size()-1][i_index]->state_inputs.back()->errors[s_index] = 0.0;
+						}
+						// don't need to output local_s_input_errors on path
+					}
+				} else {
+					scope_scope->existing_score_backprop(predicted_score,
+														 target_val,
+														 scale_factor,
+														 scope_average_factor_error,
+														 scope_scale_factor_error,
+														 history->scope_histories[this->scopes.size()-1]);
+
+					if (explore_phase == EXPLORE_PHASE_FRONT) {
+						// can backprop mods without activate
+						this->scope_average_mod[this->scopes.size()-1]->backprop(scope_average_factor_error, 0.001);
+						this->scope_scale_mod[this->scopes.size()-1]->backprop(scope_scale_factor_error, 0.001);
+					}
+					// don't modify mods on path as score networks being updated anyways
+				}
+			}
+
+			// for scope branch mods and before
+			average_factor_error += scope_scale_mod_val*scope_average_factor_error;
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+
+			scale_factor /= scope_scale_mod_val;
+
+			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
+			predicted_score -= scale_factor*scope_average_mod_val;
+		}
+
+		if (this->explore_end_non_inclusive == this->scopes.size()-1
+				&& this->explore_type == EXPLORE_TYPE_LOCAL) {
+			a_index = this->explore_index_inclusive;
+		} else {
+			a_index--;
+		}
+	}
+
+	// mid
+	while (a_index >= 1) {
+		if (this->need_process[a_index]) {
+			if (this->explore_index_inclusive == a_index
+					&& this->explore_type == EXPLORE_TYPE_NEW) {
+				// set explore_phase in fold
+				this->explore_fold->backprop(local_state_errors,
+											 predicted_score,
+											 target_val,
+											 scale_factor,
+											 average_factor_error,
+											 scale_factor_error,
+											 explore_phase,
+											 history->fold_history);
+
+				// explore_phase == EXPLORE_PHASE_FLAT or EXPLORE_PHASE_MEASURE
+				return;
+			} else {
+				if (this->is_branch[a_index]) {
+					if (this->explore_index_inclusive == a_index
+							&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+						this->branches[a_index]->explore_on_path_backprop(local_state_errors,
+																		  predicted_score,
+																		  target_val,
+																		  scale_factor,
+																		  average_factor_error,
+																		  scale_factor_error,
+																		  history->branch_histories[a_index]);
+
+						// explore_phase == EXPLORE_PHASE_FRONT
+					} else {
+						if (explore_phase == EXPLORE_PHASE_FLAT) {
+							vector<double> branch_state_output_errors;
+							this->branches[a_index]->existing_full_backprop(local_state_errors,
+																			branch_state_output_errors,
+																			local_s_input_errors,
+																			predicted_score,
+																			target_val,
+																			scale_factor,
+																			average_factor_error,
+																			scale_factor_error,
+																			history->branch_histories[a_index]);
+							local_state_errors = branch_state_output_errors;
+						} else {
+							this->branches[a_index]->existing_score_backprop(predicted_score,
+																			 target_val,
+																			 scale_factor,
+																			 average_factor_error,
+																			 scale_factor_error,
+																			 history->branch_histories[a_index]);
+						}
+					}
+
+					if (explore_phase == EXPLORE_PHASE_FRONT) {
+						this->branch_average_mod[a_index]->backprop(average_factor_error, 0.001);
+						this->branch_scale_mod[a_index]->backprop(scale_factor_error, 0.001);
+					}
+
+					double branch_scale_mod_val = this->branch_scale_mod[a_index]->output->constants[0];
+					scale_factor /= branch_scale_mod_val;
+
+					double branch_average_mod_val = this->branch_average_mod[a_index]->output->constants[0];
+					predicted_score -= scale_factor*branch_average_mod_val;
+
+					average_factor_error *= branch_scale_mod_val;
+					average_scale_error *= branch_scale_mod_val;
+				} else {
+					if (explore_phase == EXPLORE_PHASE_FLAT) {
+						if (this->active_compress[a_index]) {
+							vector<double> compress_state_output_errors;
+							vector<double> compress_s_input_output_errors;
+							this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
+								local_state_errors,
+								compress_state_output_errors,
+								compress_s_input_output_errors,
+								history->compress_network_histories[a_index]);
+							local_state_errors = compress_state_output_errors;
+							// TODO: don't need to update local_s_input_errors
+							// use output sizes as might not have used all inputs
+							// for (int s_index = 0; s_index < (int)compress_s_input_output_errors.size(); s_index++) {
+							// 	local_s_input_errors[s_index] += compress_s_input_output_errors[s_index];
+							// }
+						} else {
+							for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
+								local_state_errors.push_back(0.0);
+							}
+						}
+					}
+
+					double predicted_score_error = target_val - predicted_score;
+
+					average_factor_error += predicted_score_error;
+
+					if (explore_phase == EXPLORE_PHASE_FLAT) {
+						scale_factor_error += this->score_networks[a_index]->output->acti_vals[0]*predicted_score_error;
+
+						// scale_factor actually has no impact as it's a constant, but adding is proper gradient
+						vector<double> score_errors{scale_factor*predicted_score_error};
+						vector<double> score_state_output_errors;
+						vector<double> score_s_input_output_errors;
+						this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
+							score_errors,
+							score_state_output_errors,
+							score_s_input_output_errors,
+							history->score_network_histories[a_index]);
+						for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
+							local_state_errors[s_index] += score_state_output_errors[s_index];
+						}
+						// TODO: don't need to update local_s_input_errors
+						// use output sizes as might not have used all inputs
+						// for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
+						// 	local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
+						// }
+					} else if (explore_phase == EXPLORE_PHASE_FRONT) {
+						scale_factor_error += this->score_networks[a_index]->output->acti_vals[0]*predicted_score_error;
+
+						vector<double> score_errors{scale_factor*predicted_score_error};
+						this->score_networks[a_index]->backprop_weights_with_no_error_signal(
+							score_errors,
+							history->score_network_histories[a_index]);
+					} else {
+						scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+					}
+				}
+			}
+		}
+
+		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[a_index],
+				local_state_errors.end());
+		} else {
+			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
+			Scope* scope_scope = (Scope*)this->scopes[a_index];
+
+			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
+
+			if (this->explore_index_inclusive == a_index
+					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
+				scope_scope->explore_on_path_backprop(local_state_errors,
 													  predicted_score,
 													  target_val,
 													  scale_factor,
 													  average_factor_error,
 													  scale_factor_error,
 													  explore_phase,
-													  history->scope_histories[this->scopes.size()-1]);
+													  history->scope_histories[a_index]);
 
-				if (explore_phase == EXPLORE_PHASE_FLAT) {
+				// TODO: modify mods
+
+				if (explore_phase == EXPLORE_PHASE_FLAT || explore_phase == EXPLORE_PHASE_MEASURE) {
 					return;
 				}
 			} else {
-				// if EXPLORE_PHASE_FRONT, add a separate variable to keep track of local impact, then merge it with overall
+				if (explore_phase == EXPLORE_PHASE_FLAT) {
 
-				scope_scope->existing_backprop(scope_input_errors,
-											   scope_output_errors,
-											   predicted_score,
-											   target_val,
-											   scale_factor,
-											   average_factor_error,
-											   scale_factor_error,
-											   explore_phase,
-											   history->scope_histories[this->scopes.size()-1]);
+				}
 			}
 
-			// TODO: adjust mods if front
-			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
+			vector<double> scope_output_errors;
+			scope_scope->explore_backprop(local_state_errors,
+										  scope_output_errors,
+										  predicted_score,
+										  target_val,
+										  scale_factor,
+										  new_average_factor_error,
+										  new_scale_factor,
+										  new_scale_factor_error);
 
-			predicted_score -= new_scale_factor*this->scope_average_mod[this->scopes.size()-1];
+			if (this->explore_index_inclusive == a_index) {
+				// this->explore_type == EXPLORE_TYPE_SCOPE
+				return;
+			}
 
-			// only need if EXPLORE_PHASE_FLAT
-			for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
-				vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
-				for (int s_index = 0; s_index < this->inner_input_sizes[this->scopes.size()-1][i_index]; s_index++) {
-					inner_input_errors[this->inner_input_sizes[this->scopes.size()-1][i_index]-1-s_index] = scope_output_errors.back();
+			scale_factor /= scope_scale_mod_val;
+
+			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
+			predicted_score -= scale_factor*scope_average_mod_val;
+
+			for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
+				vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
+				for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
+					inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = scope_output_errors.back();
 					scope_output_errors.pop_back();
 				}
-				this->inner_input_networks[this->scopes.size()-1][i_index]->backprop_errors_with_no_weight_change(inner_input_errors);
-				for (int s_index = 0; s_index < (int)local_state_errors.size(); s_index++) {
-					local_state_errors[s_index] += this->inner_input_networks[this->scopes.size()-1][i_index]
-						->state_inputs.back()->errors[s_index];
-					this->inner_input_networks[this->scopes.size()-1][i_index]->state_inputs.back()->errors[s_index] = 0.0;
+				vector<double> inner_input_state_output_errors;
+				vector<double> inner_input_s_input_output_errors;
+				this->inner_input_networks[a_index][i_index]->backprop_small_errors_with_no_weight_change(
+					inner_input_errors,
+					inner_input_state_output_errors,
+					inner_input_s_input_output_errors);
+				for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
+					local_state_errors[s_index] += inner_input_state_output_errors[s_index];
 				}
-				for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-					local_s_input_errors[s_index] += this->inner_input_networks[this->scopes.size()-1][i_index]
-						->s_input_input->errors[s_index];
-					this->inner_input_networks[this->scopes.size()-1][i_index]->s_input_input->errors[s_index] = 0.0;
-				}
-			}
-		}
-	}
-
-	// mid
-	for (int a_index = (int)this->scopes.size()-2; a_index >= 1; a_index--) {
-		if (this->need_process[a_index]) {
-			if (this->explore_index_inclusive == a_index
-					&& this->explore_type == EXPLORE_TYPE_NEW) {
-				this->explore_fold->backprop(local_state_errors,
-											 predicted_score,
-											 target_val,
-											 scale_factor,
-											 new_average_factor_error,
-											 new_scale_factor_error);
-
-				return;
-			} else {
-				if (this->is_branch[a_index]) {
-					vector<double> branch_state_output_errors;
-					this->branches[a_index]->explore_backprop(local_state_errors,
-															  branch_state_output_errors,
-															  local_s_input_errors,
-															  predicted_score,
-															  target_val,
-															  scale_factor,
-															  new_average_factor_error,
-															  new_scale_factor,
-															  new_scale_factor_error);
-					
-					if (this->explore_index_inclusive == a_index
-							&& this->explore_type == EXPLORE_TYPE_BRANCH) {
-						return;
-					}
-
-					local_state_errors = branch_state_output_errors;
-				} else {
-					if (this->active_compress[a_index]) {
-						vector<double> compress_state_output_errors;
-						vector<double> compress_s_input_output_errors;
-						this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
-							local_state_errors,
-							compress_state_output_errors,
-							compress_s_input_output_errors);
-						local_state_errors = compress_state_output_errors;
-						// use output sizes as might not have used all inputs
-						for (int s_index = 0; s_index < (int)compress_s_input_output_errors.size(); s_index++) {
-							local_s_input_errors[s_index] += compress_s_input_output_errors[s_index];
-						}
-					} else {
-						for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
-							local_state_errors.push_back(0.0);
-						}
-					}
-
-					double predicted_score_error = target_val - predicted_score;
-
-					new_average_factor_error += predicted_score_error;
-
-					double score_add_w_o_new_scale = scale_factor/new_scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-					new_scale_factor_error += score_add_w_o_new_scale*predicted_score_error;
-
-					vector<double> score_errors{scale_factor*predicted_score_error};
-					vector<double> score_state_output_errors;
-					vector<double> score_s_input_output_errors;
-					this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-						score_errors,
-						score_state_output_errors,
-						score_s_input_output_errors);
-					for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += score_state_output_errors[s_index];
-					}
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
-					}
-				}
-			}
-
-			if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
-				local_state_errors.erase(local_state_errors.end()-this->obs_sizes[a_index],
-					local_state_errors.end());
-			} else {
-				// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-				Scope* scope_scope = (Scope*)this->scopes[a_index];
-
-				scale_factor *= this->scope_scale_mod[a_index];
-
-				vector<double> scope_output_errors;
-				scope_scope->explore_backprop(local_state_errors,
-											  scope_output_errors,
-											  predicted_score,
-											  target_val,
-											  scale_factor,
-											  new_average_factor_error,
-											  new_scale_factor,
-											  new_scale_factor_error);
-
-				if (this->explore_index_inclusive == a_index) {
-					// this->explore_type == EXPLORE_TYPE_SCOPE
-					return;
-				}
-
-				scale_factor /= this->scope_scale_mod[a_index];
-
-				predicted_score -= scale_factor*this->scope_average_mod[a_index];
-
-				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
-					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = scope_output_errors.back();
-						scope_output_errors.pop_back();
-					}
-					vector<double> inner_input_state_output_errors;
-					vector<double> inner_input_s_input_output_errors;
-					this->inner_input_networks[a_index][i_index]->backprop_small_errors_with_no_weight_change(
-						inner_input_errors,
-						inner_input_state_output_errors,
-						inner_input_s_input_output_errors);
-					for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += inner_input_state_output_errors[s_index];
-					}
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)inner_input_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += inner_input_s_input_output_errors[s_index];
-					}
+				// use output sizes as might not have used all inputs
+				for (int s_index = 0; s_index < (int)inner_input_s_input_output_errors.size(); s_index++) {
+					local_s_input_errors[s_index] += inner_input_s_input_output_errors[s_index];
 				}
 			}
 		}
+
+		a_index--;
 	}
 
 	// start
