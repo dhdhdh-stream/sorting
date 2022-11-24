@@ -7,18 +7,15 @@ class Branch {
 public:
 	bool does_inherit;
 	std::vector<std::vector<FoldNetwork*>> score_networks;
+	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
-	std::vector<Fold*> folds;	// only 1 non-NULL at a time?
+	std::vector<Fold*> folds;
 	// no differing end_indexes, but instead, multiple score_networks per branch
 
-	// no start_mods, just rely on score_networks instead
-
-	std::vector<double> end_average_mods;
-	std::vector<double> end_scale_mods;
-
-	int explore_type;
-	Fold* explore_fold;
-
+	// TODO: when exploring, branches will not find flats at once, but whenever one does,
+	// go upwards, and freeze
+	// reference counts flats downwards, and if all fail, move on
+	// if success, can keep reference counts and keep going? (because of folds, might be more likely to go to 0) (can also just reset after a certain number of successes)
 };
 
 class BranchHistory {
@@ -27,7 +24,6 @@ public:
 
 	FoldNetworkHistory* score_network_history;
 	BranchPathHistory* branch_history;
-
 	FoldHistory* fold_history;
 };
 

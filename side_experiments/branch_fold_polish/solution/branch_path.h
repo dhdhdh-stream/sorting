@@ -24,6 +24,9 @@ public:
 	int end_input_size;
 	FoldNetwork* end_input_network;
 
+	Network* end_average_mod;
+	Network* end_scale_mod;
+
 	int explore_index_inclusive;	// -1 if not on path
 	int explore_type;
 	int explore_end_non_inclusive;

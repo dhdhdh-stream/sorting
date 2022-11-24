@@ -12,13 +12,12 @@ const int PHASE_FOLD = 1;
 
 const int STATE_INNER_SCOPE_INPUT_INPUT = 0;
 const int STATE_INNER_SCOPE_TUNE = 1;
-const int STATE_OBS_NEEDED = 2;
-const int STATE_SCORE = 3;
-const int STATE_SCORE_TUNE = 4;
-const int STATE_COMPRESS_STATE = 5;
-const int STATE_COMPRESS_SCOPE = 6;
-const int STATE_INPUT = 7;
-const int STATE_DONE = 8;
+const int STATE_SCORE = 2;
+const int STATE_SCORE_TUNE = 3;
+const int STATE_COMPRESS_STATE = 4;
+const int STATE_COMPRESS_SCOPE = 5;
+const int STATE_INPUT = 6;
+const int STATE_DONE = 7;
 
 const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
@@ -49,8 +48,8 @@ public:
 	std::vector<Network*> scope_average_mod_calcs;
 	std::vector<Network*> scope_scale_mod_calcs;
 
-	Network* end_average_mod_calc;
-	Network* end_scale_mod_calc;
+	Network* end_average_mod;
+	Network* end_scale_mod;
 
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
@@ -84,6 +83,8 @@ public:
 	std::vector<int> input_layer;
 	std::vector<int> input_sizes;
 	std::vector<FoldNetwork*> input_networks;
+
+	// TODO: need to be able to save Folds, even during partial progress
 };
 
 class FoldHistory {

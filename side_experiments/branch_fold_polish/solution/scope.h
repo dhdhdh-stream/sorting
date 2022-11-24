@@ -38,7 +38,8 @@ public:
 	std::vector<Network*> scope_scale_mod;
 	// scope end average adjusted by score network
 
-	std::vector<bool> need_process;
+	// always need_process, as observations might become relevant later
+	// std::vector<bool> need_process;
 
 	std::vector<bool> is_branch;
 	std::vector<Branch*> branches;
@@ -66,8 +67,8 @@ public:
 	std::vector<std::vector<FoldNetworkHistory*>> inner_input_network_histories;
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<BranchHistory*> branch_histories;
-	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> score_network_histories;
+	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 
 	FoldHistory* fold_history;
