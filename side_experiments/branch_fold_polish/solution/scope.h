@@ -1,3 +1,7 @@
+/**
+ * Note: if scope gets updated, then deepcopy
+ */
+
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -36,16 +40,11 @@ public:
 	// TODO: initialize mods to 0.0 and 1.0
 	std::vector<Network*> scope_average_mod;
 	std::vector<Network*> scope_scale_mod;
-	// scope end average adjusted by score network
-
-	// always need_process, as observations might become relevant later
-	// std::vector<bool> need_process;
+	// mods to bootstrap flat, but score networks after flat to adjust end
 
 	std::vector<bool> is_branch;
 	std::vector<Branch*> branches;
-	// for when retrain front (i.e., all averages will need to be modified down as overall score increases)
-	std::vector<Network*> branch_average_mod;
-	std::vector<Network*> branch_scale_mod;
+	// don't need branch mods after flat as all scores will be updated
 
 	std::vector<FoldNetwork*> score_networks;
 

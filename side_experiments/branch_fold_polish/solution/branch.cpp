@@ -7,6 +7,60 @@ using namespace std;
 
 
 
+void Branch::activate_score(double& existing_score,
+							vector<double>& s_input_vals,
+							vector<double>& input_state_vals,
+							double& scale_factor,
+							bool save_history,
+							BranchHistory* history) {
+	double best_score = numeric_limits<double>::lowest();
+	double best_index = -1;
+	double best_sub_index = -1;
+	// on explore, avoid folds on path as want explore
+	if (save_history) {
+		FoldNetworkHistory* best_history = NULL
+		for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+			// can fold multiple at once
+			for (int n_index = 0; n_index < (int)this->score_networks[b_index].size(); n_index++) {
+				FoldNetworkHistory* curr_history = new FoldNetworkHistory(this->score_networks[b_index][n_index]);
+				this->score_networks[b_index][n_index]->activate_small(s_input_vals,
+																	   input_state_vals,
+																	   curr_history);
+				double curr_score = scale_factor*this->score_networks[b_index][n_index]->output->acti_vals[0];
+				if (curr_score > best_score) {
+					best_score = curr_score;
+					if (best_history != NULL) {
+						delete best_history;
+					}
+					best_history = curr_history;
+					best_index = b_index;
+					best_sub_index = n_index;
+				} else {
+					delete curr_history;
+				}
+			}
+		}
+		history->score_network_history = best_history;
+	} else {
+		for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+			// can fold multiple at once
+			for (int n_index = 0; n_index < (int)this->score_networks[b_index].size(); n_index++) {
+				this->score_networks[b_index][n_index]->activate_small(input_state_vals,
+																	   s_input_vals);
+				double curr_score = scale_factor*this->score_networks[b_index][n_index]->output->acti_vals[0];
+				if (curr_predicted_score > best_score) {
+					best_score = curr_score;
+					best_index = b_index;
+					best_sub_index = n_index;
+				}
+			}
+		}
+	}
+	history->best_index = best_index;
+
+	existing_score = best_score;
+}
+
 void Branch::explore_on_path_activate(vector<vector<double>>& flat_vals,
 									  vector<double>& s_input_vals,
 									  vector<double>& input_state_vals,

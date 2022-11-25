@@ -14,9 +14,8 @@ const int EXPLORE_TYPE_NEW = 2;	// after flat, becomes EXPLORE_TYPE_INNER_BRANCH
 
 const int EXPLORE_PHASE_NONE = 0;
 const int EXPLORE_PHASE_FLAT = 1;
-const int EXPLORE_PHASE_MEASURE = 2;
-// if EXPLORE_PHASE_NONE till end, then potentially multiple folds, so update score networks along path till start
+const int EXPLORE_PHASE_MEASURE = 2;	// if measure, don't need to save anything, but also not bothering to special case for now
 
-// Note: safe to update scores/branch mods even with flats in progress, as the flats will be scaled by the mods as well
+// Note: update scores even with flats in progress (hopefully, effect negligible, or flat can adjust)
 
 #endif /* DEFINITIONS_H */

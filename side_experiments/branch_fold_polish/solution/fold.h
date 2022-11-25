@@ -10,14 +10,14 @@
 const int PHASE_FLAT = 0;
 const int PHASE_FOLD = 1;
 
-const int STATE_INNER_SCOPE_INPUT_INPUT = 0;
-const int STATE_INNER_SCOPE_TUNE = 1;
-const int STATE_SCORE = 2;
-const int STATE_SCORE_TUNE = 3;
-const int STATE_COMPRESS_STATE = 4;
-const int STATE_COMPRESS_SCOPE = 5;
-const int STATE_INPUT = 6;
-const int STATE_DONE = 7;
+const int STATE_INNER_SCOPE_INPUT = 0;
+// don't adjust mods after flat, and instead rely on score networks
+const int STATE_SCORE = 1;
+const int STATE_SCORE_TUNE = 2;
+const int STATE_COMPRESS_STATE = 3;
+const int STATE_COMPRESS_SCOPE = 4;
+const int STATE_INPUT = 5;
+const int STATE_DONE = 6;
 
 const int STAGE_LEARN = 0;
 const int STAGE_MEASURE = 1;
@@ -48,6 +48,7 @@ public:
 	std::vector<Network*> scope_average_mod_calcs;
 	std::vector<Network*> scope_scale_mod_calcs;
 
+	// Note: need end mods as well to help bootstrap flat
 	Network* end_average_mod;
 	Network* end_scale_mod;
 
