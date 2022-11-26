@@ -1,7 +1,3 @@
-/**
- * Note: if scope gets updated, then deepcopy
- */
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -34,6 +30,7 @@ public:
 
 	// start can't be inherited_score
 	std::vector<AbstractScope*> scopes;
+	std::vector<int> obs_sizes;
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
@@ -57,6 +54,7 @@ public:
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
 
+	// TODO: add deepcopy
 };
 
 class ScopeHistory {

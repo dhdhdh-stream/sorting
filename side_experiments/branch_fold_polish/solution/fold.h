@@ -44,6 +44,7 @@ public:
 
 	FoldNetwork* starting_score_network;
 	FoldNetwork* starting_compress_network;
+	FoldNetwork* combined_score_network;
 
 	std::vector<Network*> scope_average_mod_calcs;
 	std::vector<Network*> scope_scale_mod_calcs;
