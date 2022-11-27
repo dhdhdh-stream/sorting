@@ -3,12 +3,7 @@
 
 class BranchPath {
 public:
-	Branch* parent_branch;	// reference for if branching starting step
-
-	// starting step might be branch
-	// but if not, score is passed in?
-
-	// don't special case starting step
+	// don't special case starting step in fields
 	std::vector<AbstractScope*> scopes;
 	std::vector<int> obs_sizes;
 
@@ -51,7 +46,7 @@ public:
 	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
-	FoldNetworkHistory* end_input_history;
+	FoldNetworkHistory* end_input_network_history;
 };
 
 #endif /* BRANCH_PATH_H */

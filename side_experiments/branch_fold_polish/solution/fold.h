@@ -45,6 +45,9 @@ public:
 	FoldNetwork* starting_score_network;
 	FoldNetwork* starting_compress_network;
 	FoldNetwork* combined_score_network;
+	// set value to largest between predicted existing and actual experimental?
+	// or probably the largest between the 2 predictions?
+	// setting against 2 predictions more accurate since matches underlying score networks and actual resulting behavior
 
 	std::vector<Network*> scope_average_mod_calcs;
 	std::vector<Network*> scope_scale_mod_calcs;

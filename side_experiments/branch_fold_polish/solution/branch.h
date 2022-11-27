@@ -7,12 +7,9 @@ class Branch {
 public:
 	FoldNetwork* branch_score_network;
 	bool passed_branch_score;	// if branch_score_network taken by outer branch
-	// TODO: need starting score networks?
-	// can actually learn while flatting because exiting score getting passed in
-	// don't modify predicted score for starting score network to preserve existing behavior?
 
 	bool does_inherit;
-	std::vector<FoldNetwork*> score_networks;
+	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
 	std::vector<Fold*> folds;
@@ -36,6 +33,7 @@ public:
 	int best_index;
 
 	FoldNetworkHistory* branch_score_network_history;
+	double branch_score;
 
 	FoldNetworkHistory* score_network_history;
 	BranchPathHistory* branch_path_history;
