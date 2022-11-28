@@ -119,7 +119,6 @@ void Branch::explore_on_path_activate(vector<vector<double>>& flat_vals,
 									  double& predicted_score,
 									  double& scale_factor,
 									  int& explore_phase,
-									  Fold*& flat_ref,
 									  BranchHistory* history) {
 	BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[best_index]);
 	this->branches[history->best_index]->explore_on_path_activate(flat_vals,
@@ -129,7 +128,6 @@ void Branch::explore_on_path_activate(vector<vector<double>>& flat_vals,
 																  predicted_score,
 																  scale_factor,
 																  explore_phase,
-																  flat_ref,
 																  branch_path_history);
 	history->branch_path_history = branch_path_history;
 }
@@ -154,14 +152,14 @@ void Branch::explore_off_path_activate(vector<vector<double>>& flat_vals,
 		history->branch_path_history = branch_path_history;
 	} else {
 		FoldHistory* fold_history = new FoldHistory(this->folds[history->best_index]);
-		this->folds[history->best_index]->activate(history->best_score,	// doesn't matter
-												   flat_vals,
-												   local_s_input_vals,
-												   local_state_vals,
-												   predicted_score,
-												   scale_factor,
-												   explore_phase,
-												   fold_history);
+		this->folds[history->best_index]->explore_off_path_activate(flat_vals,
+																	history->best_score,
+																	local_s_input_vals,
+																	local_state_vals,
+																	predicted_score,
+																	scale_factor,
+																	explore_phase,
+																	fold_history);
 		history->fold_history = fold_history;
 	}
 }
@@ -170,14 +168,12 @@ void Branch::explore_on_path_backprop(vector<double>& local_state_errors,
 									  double& predicted_score,
 									  double target_val,
 									  double& scale_factor,
-									  double& average_factor_error,
 									  double& scale_factor_error,
 									  BranchHistory* history) {
 	this->branches[history->best_index]->explore_on_path_backprop(local_state_errors,
 																  predited_score,
 																  target_val,
 																  scale_factor,
-																  average_factor_error,
 																  scale_factor_error,
 																  history->branch_path_history);
 
@@ -189,7 +185,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 									   double& predicted_score,
 									   double target_val,
 									   double& scale_factor,
-									   double& average_factor_error,
 									   double& scale_factor_error,
 									   BranchHistory* history) {
 	if (this->is_branch[history->best_index]) {
@@ -198,7 +193,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 																	   predited_score,
 																	   target_val,
 																	   scale_factor,
-																	   average_factor_error,
 																	   scale_factor_error,
 																	   history->branch_path_history);
 	} else {
@@ -207,7 +201,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 																	predicted_score,
 																	target_val,
 																	scale_factor,
-																	average_factor_error,
 																	scale_factor_error,
 																	history->fold_history);
 	}
@@ -215,8 +208,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 	// predicted_score already modified to before branch value in branch_path
 	double score_predicted_score = predited_score + history->best_score;
 	double score_predicted_score_error = target_val - score_predicted_score;
-
-	average_factor_error += score_predicted_score_error;
 
 	scale_factor_error += history->best_score*score_predicted_score_error;
 
@@ -241,8 +232,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 	if (!this->passed_branch_score) {
 		double branch_score_predicted_score = predited_score + history->branch_score;
 		double branch_score_predicted_score_error = target_val - branch_score_predicted_score;
-
-		average_factor_error += branch_score_predicted_score_error;
 
 		scale_factor_error += history->branch_score*branch_score_predicted_score_error;
 
@@ -315,13 +304,13 @@ void Branch::existing_flat_activate(vector<vector<double>>& flat_vals,
 		history->branch_path_history = branch_path_history;
 	} else {
 		FoldHistory* fold_history = new FoldHistory(this->folds[best_index]);
-		this->folds[best_index]->activate(best_score,	// doesn't matter
-										  flat_vals,
-										  local_s_input_vals,
-										  local_state_vals,
-										  predicted_score,
-										  scale_factor,
-										  fold_history);
+		this->folds[best_index]->existing_flat_activate(flat_vals,
+														best_score,
+														local_s_input_vals,
+														local_state_vals,
+														predicted_score,
+														scale_factor,
+														fold_history);
 		history->fold_history = fold_history;
 	}
 }
@@ -331,7 +320,6 @@ void Branch::existing_flat_backprop(vector<double>& local_s_input_errors,
 									double& predicted_score,
 									double predicted_score_error,
 									double& scale_factor,
-									double& average_factor_error,
 									double& scale_factor_error,
 									BranchHistory* history) {
 	if (this->is_branch[history->best_index]) {
@@ -340,7 +328,6 @@ void Branch::existing_flat_backprop(vector<double>& local_s_input_errors,
 																	predited_score,
 																	predicted_score_error,
 																	scale_factor,
-																	average_factor_error,
 																	scale_factor_error,
 																	history->branch_path_history);
 	} else {
@@ -349,13 +336,11 @@ void Branch::existing_flat_backprop(vector<double>& local_s_input_errors,
 																 predicted_score,
 																 predicted_score_error,
 																 scale_factor,
-																 average_factor_error,
 																 scale_factor_error,
 																 history->fold_history);
 	}
 
 	// TODO: score_network may not have direct connection to predicted_score_error, so examine if is OK
-	average_factor_error += predicted_score_error;
 
 	scale_factor_error += history->best_score*predicted_score_error;
 
@@ -432,13 +417,13 @@ void Branch::update_activate(vector<vector<double>>& flat_vals,
 		history->branch_path_history = branch_path_history;
 	} else {
 		FoldHistory* fold_history = new FoldHistory(this->folds[best_index]);
-		this->folds[best_index]->activate(best_score,	// doesn't matter
-										  flat_vals,
-										  local_s_input_vals,
-										  local_state_vals,
-										  predicted_score,
-										  scale_factor,
-										  fold_history);
+		this->folds[best_index]->update_activate(flat_vals,
+												 best_score,
+												 local_s_input_vals,
+												 local_state_vals,
+												 predicted_score,
+												 scale_factor,
+												 fold_history);
 		history->fold_history = fold_history;
 	}
 }

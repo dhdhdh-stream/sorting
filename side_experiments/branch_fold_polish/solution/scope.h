@@ -34,9 +34,7 @@ public:
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
-	// TODO: initialize mods to 0.0 and 1.0
-	std::vector<Network*> scope_average_mod;
-	std::vector<Network*> scope_scale_mod;
+	std::vector<double> scope_scale_mod;
 	// mods to bootstrap flat, but score networks after flat to adjust end
 
 	std::vector<bool> is_branch;
@@ -44,6 +42,9 @@ public:
 	// don't need branch mods after flat as all scores will be updated
 
 	std::vector<FoldNetwork*> score_networks;
+	// outer solution will hold on to final outer score_network (and no compress needed)
+
+	std::vector<double> average_misguesses;	// track also after branches
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_sizes;
@@ -54,7 +55,6 @@ public:
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
 
-	// TODO: add deepcopy
 };
 
 class ScopeHistory {
@@ -65,6 +65,7 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<BranchHistory*> branch_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
+	// TODO: in FoldNetworkHistory, don't save output
 	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 

@@ -1,3 +1,5 @@
+// TODO: loops not difficult to add, but will wait to switch problem to sorting for easier testing
+
 #ifndef FOLD_H
 #define FOLD_H
 
@@ -7,60 +9,51 @@
 #include "fold_network.h"
 #include "scope.h"
 
-const int PHASE_FLAT = 0;
-const int PHASE_FOLD = 1;
+const int STATE_FLAT = -1;
 
 const int STATE_INNER_SCOPE_INPUT = 0;
-// don't adjust mods after flat, and instead rely on score networks
 const int STATE_SCORE = 1;
 const int STATE_SCORE_TUNE = 2;
 const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
 const int STATE_INPUT = 5;
-const int STATE_DONE = 6;
 
-const int STAGE_LEARN = 0;
-const int STAGE_MEASURE = 1;
+// don't split into LEARN and MEASURE stages, and instead combine
 
 class Fold {
 public:
-	int phase;
-
 	int sequence_length;
 	std::vector<Scope*> existing_actions;
 	std::vector<int> obs_sizes;
 	int output_size;
 
-	double original_flat_error;
-
 	std::vector<FinishedStep*> finished_steps;
 
 	int state;
-	int stage;
-	int stage_iter;
+	int last_state;	// for supporting explore_off_path
+	int state_iter;
 	double sum_error;
 
 	double new_state_factor;
 
 	FoldNetwork* starting_score_network;
+	double replace_improvement;
 	FoldNetwork* starting_compress_network;
-	FoldNetwork* combined_score_network;
-	// set value to largest between predicted existing and actual experimental?
-	// or probably the largest between the 2 predictions?
-	// setting against 2 predictions more accurate since matches underlying score networks and actual resulting behavior
+	FoldNetwork* combined_score_network;	// replace existing if already branch
+	double combined_improvement;
 
-	std::vector<Network*> scope_average_mod_calcs;
 	std::vector<Network*> scope_scale_mod_calcs;
-
-	// Note: need end mods as well to help bootstrap flat
-	Network* end_average_mod;
-	Network* end_scale_mod;
+	Network* end_scale_mod_calc;
+	// only need to modify scale as can't modify average at flat anyways
 
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
-	FoldNetwork* curr_fold;	// after PHASE_FLAT, no longer need to backprop till end?
+	FoldNetwork* curr_fold;
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;
+
+	double average_misguess;
+	double* existing_misguess;	// ref to branch end average_misguess
 
 	std::vector<int> test_s_input_sizes;
 	std::vector<int> test_scope_sizes;
@@ -94,9 +87,20 @@ public:
 
 class FoldHistory {
 public:
+	double existing_score;
+
+	double starting_score_update;
+	double combined_score_update;
+
+	std::vector<FoldNetworkHistory*> curr_input_fold_histories;
 	std::vector<ScopeHistory*> scope_histories;
 
-	// don't worry about other histories for now (as they're unique)
+	FoldNetworkHistory* curr_fold_history;
+	FoldNetworkHistory* curr_end_fold_history;
+
+	double ending_score_update;
+
+	std::vector<FinishedStepHistory*> finished_step_histories;
 };
 
 #endif /* FOLD_H */

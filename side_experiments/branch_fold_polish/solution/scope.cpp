@@ -15,15 +15,14 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 									 double& predicted_score,
 									 double& scale_factor,
 									 int& explore_phase,
-									 Fold*& flat_ref,
 									 ScopeHistory* history) {
 	int a_index = 1;
 
 	// start
-	// TODO: think about starting action being NO-OP
 	if (this->scopes[0]->type == SCOPE_TYPE_BASE) {
 		local_state_vals = flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
+		// safe for starting action to be NO-OP -- still have full flexibility after
 	} else {
 		// this->scopes[0]->type == SCOPE_TYPE_SCOPE
 		Scope* scope_scope = (Scope*)this->scopes[0];
@@ -33,11 +32,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			scope_input[i_index] = local_s_input_vals[this->start_score_input_input_indexes[i_index]];
 		}
 
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score += scale_factor*scope_average_mod_val;
-
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -49,7 +44,6 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 												  predicted_score,
 												  scale_factor,
 												  explore_phase,
-												  flat_ref,
 												  scope_history);
 		} else {
 			scope_scope->explore_off_path_activate(flat_vals,
@@ -62,7 +56,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		}
 		history->scope_histories[0] = scope_history;
 
-		scale_factor /= scope_scale_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		local_state_vals = scope_output;
 	}
@@ -87,16 +81,16 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		if (this->explore_index_inclusive == 0
 				&& this->explore_type == EXPLORE_TYPE_NEW) {
 			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-			this->explore_fold->activate(branch_history->best_score,
-										 flat_vals,
-										 local_s_input_vals,
-										 local_state_vals,
-										 predicted_score,
-										 scale_factor,
-										 explore_phase,
-										 fold_history);
-			flat_ref = this->explore_fold;
+			this->explore_fold->explore_on_path_activate(branch_history->best_score,
+														 flat_vals,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 fold_history);
 			history->fold_history = fold_history;
+
+			explore_phase = EXPLORE_PHASE_FLAT;
 
 			a_index = this->explore_end_non_inclusive;
 
@@ -110,7 +104,6 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 															predicted_score,
 															scale_factor,
 															explore_phase,
-															flat_ref,
 															branch_history);
 			} else {
 				this->branches[0]->explore_off_path_activate(flat_vals,
@@ -133,16 +126,16 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		if (this->explore_index_inclusive == 0
 				&& this->explore_type == EXPLORE_TYPE_NEW) {
 			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-			this->explore_fold->activate(existing_score,
-										 flat_vals,
-										 local_s_input_vals,
-										 local_state_vals,
-										 predicted_score,
-										 scale_factor,
-										 explore_phase,
-										 fold_history);
-			flat_ref = this->explore_fold;
+			this->explore_fold->explore_on_path_activate(existing_score,
+														 flat_vals,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 fold_history);
 			history->fold_history = fold_history;
+
+			explore_phase = EXPLORE_PHASE_FLAT;
 
 			a_index = this->explore_end_non_inclusive;
 		} else {
@@ -196,11 +189,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -212,7 +201,6 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 													  predicted_score,
 													  scale_factor,
 													  explore_phase,
-													  flat_ref,
 													  scope_history);
 			} else {
 				scope_scope->explore_off_path_activate(flat_vals,
@@ -225,7 +213,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			}
 			history->scope_histories[a_index] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -251,16 +239,16 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_NEW) {
 				FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-				this->explore_fold->activate(branch_history->best_score,
-											 flat_vals,
-											 local_s_input_vals,
-											 local_state_vals,
-											 predicted_score,
-											 scale_factor,
-											 explore_phase,
-											 fold_history);
-				flat_ref = this->explore_fold;
+				this->explore_fold->explore_on_path_activate(branch_history->best_score,
+															 flat_vals,
+															 local_s_input_vals,
+															 local_state_vals,
+															 predicted_score,
+															 scale_factor,
+															 fold_history);
 				history->fold_history = fold_history;
+
+				explore_phase = EXPLORE_PHASE_FLAT;
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
 
@@ -274,7 +262,6 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 																	  predicted_score,
 																	  scale_factor,
 																	  explore_phase,
-																	  flat_ref,
 																	  branch_history);
 				} else {
 					this->branches[a_index]->explore_off_path_activate(flat_vals,
@@ -305,16 +292,16 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
 
 				FoldHistory* fold_history = new FoldHistory(this->explore_fold);
-				this->explore_fold->activate(existing_score,
-											 flat_vals,
-											 local_s_input_vals,
-											 local_state_vals,
-											 predicted_score,
-											 scale_factor,
-											 explore_phase,
-											 fold_history);
-				flat_ref = this->explore_fold;
+				this->explore_fold->explore_on_path_activate(existing_score,
+															 flat_vals,
+															 local_s_input_vals,
+															 local_state_vals,
+															 predicted_score,
+															 scale_factor,
+															 fold_history);
 				history->fold_history = fold_history;
+
+				explore_phase = EXPLORE_PHASE_FLAT;
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
 			} else {
@@ -380,11 +367,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -396,7 +379,6 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 													  predicted_score,
 													  scale_factor,
 													  explore_phase,
-													  flat_ref,
 													  scope_history);
 			} else {
 				scope_scope->explore_off_path_activate(flat_vals,
@@ -409,7 +391,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			}
 			history->scope_histories[this->scopes.size()-1] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -437,11 +419,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 			scope_input[i_index] = local_s_input_vals[this->start_score_input_input_indexes[i_index]];
 		}
 
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score += scale_factor*scope_average_mod_val;
-
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -454,7 +432,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 											   scope_history);
 		history->scope_histories[0] = scope_history;
 
-		scale_factor /= scope_scale_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		local_state_vals = scope_output;
 	}
@@ -544,11 +522,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -561,7 +535,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 												   scope_history);
 			history->scope_histories[a_index] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -652,11 +626,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -669,7 +639,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 												   scope_history);
 			history->scope_histories[this->scopes.size()-1] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -681,7 +651,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 									 double& predicted_score,
 									 double target_val,
 									 double& scale_factor,
-									 double& average_factor_error,
 									 double& scale_factor_error,
 									 ScopeHistory* history) {
 	// don't need to output local_s_input_errors on path but for explore_off_path_backprop
@@ -709,45 +678,36 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			if (this->explore_index_inclusive == this->scopes.size()-1
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 				// on_path doesn't need scope_output_errors
 				
-				// average_factor_error doesn't need to be scaled
-				scale_factor_error /= scope_scale_mod_val;
+				scale_factor_error /= this->scope_scale_mod[this->scopes.size()-1];
 
 				scope_scope->explore_on_path_backprop(scope_input_errors,
 													  predicted_score,
 													  target_val,
 													  scale_factor,
-													  average_factor_error,
 													  scale_factor_error,
 													  history->scope_histories[this->scopes.size()-1]);
 
 				return;
 			} else {
 				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
-				double scope_average_factor_error = 0.0;
 				double scope_scale_factor_error = 0.0;
 				scope_scope->explore_off_path_backprop(scope_input_errors,
 													   scope_output_errors,
 													   predicted_score,
 													   target_val,
 													   scale_factor,
-													   scope_average_factor_error,
 													   scope_scale_factor_error,
 													   history->scope_histories[this->scopes.size()-1]);
 
-				average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-				scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+				scale_factor_error += this->scope_scale_mod[this->scopes.size()-1]*scope_scale_factor_error;
 
-				scale_factor /= scope_scale_mod_val;
-
-				double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-				predicted_score -= scale_factor*scope_average_mod_val;
+				scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 				for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
 					vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
@@ -782,13 +742,12 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 	while (a_index >= 1) {
 		if (this->explore_index_inclusive == a_index
 				&& this->explore_type == EXPLORE_TYPE_NEW) {
-			this->explore_fold->backprop(local_state_errors,
-										 predicted_score,
-										 target_val,
-										 scale_factor,
-										 average_factor_error,
-										 scale_factor_error,
-										 history->fold_history);
+			this->explore_fold->explore_on_path_backprop(local_state_errors,
+														 predicted_score,
+														 target_val,
+														 scale_factor,
+														 scale_factor_error,
+														 history->fold_history);
 
 			return;
 		} else {
@@ -799,7 +758,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	  predicted_score,
 																	  target_val,
 																	  scale_factor,
-																	  average_factor_error,
 																	  scale_factor_error,
 																	  history->branch_histories[a_index]);
 
@@ -810,7 +768,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	   predicted_score,
 																	   target_val,
 																	   scale_factor,
-																	   average_factor_error,
 																	   scale_factor_error,
 																	   history->branch_histories[a_index]);
 				}
@@ -832,8 +789,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				}
 
 				double predicted_score_error = target_val - predicted_score;
-
-				average_factor_error += predicted_score_error;
 
 				scale_factor_error += this->score_updates[a_index]*predicted_score_error;
 
@@ -867,43 +822,35 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 				// average_factor_error doesn't need to be scaled
-				scale_factor_error /= scope_scale_mod_val;
+				scale_factor_error /= this->scope_scale_mod[a_index];
 
 				scope_scope->explore_on_path_backprop(scope_input_errors,
 													  predicted_score,
 													  target_val,
 													  scale_factor,
-													  average_factor_error,
 													  scale_factor_error,
 													  history->scope_histories[a_index]);
 
 				return;
 			} else {
 				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
-				double scope_average_factor_error = 0.0;
 				double scope_scale_factor_error = 0.0;
 				scope_scope->explore_off_path_backprop(scope_input_errors,
 													   scope_output_errors,
 													   predicted_score,
 													   target_val,
 													   scale_factor,
-													   scope_average_factor_error,
 													   scope_scale_factor_error,
 													   history->scope_histories[a_index]);
 
-				average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-				scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+				scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
-				scale_factor /= scope_scale_mod_val;
-
-				double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-				predicted_score -= scale_factor*scope_average_mod_val;
+				scale_factor /= this->scope_scale_mod[a_index];
 
 				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
 					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
@@ -937,13 +884,12 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 	// start
 	if (this->explore_index_inclusive == 0
 			&& this->explore_type == EXPLORE_TYPE_NEW) {
-		this->explore_fold->backprop(local_state_errors,
-									 predicted_score,
-									 target_val,
-									 scale_factor,
-									 average_factor_error,
-									 scale_factor_error,
-									 history->fold_history);
+		this->explore_fold->explore_on_path_backprop(local_state_errors,
+													 predicted_score,
+													 target_val,
+													 scale_factor,
+													 scale_factor_error,
+													 history->fold_history);
 
 		return;
 	} else {
@@ -954,7 +900,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 															predicted_score,
 															target_val,
 															scale_factor,
-															average_factor_error,
 															scale_factor_error,
 															history->branch_histories[0]);
 
@@ -965,7 +910,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 															 predicted_score,
 															 target_val,
 															 scale_factor,
-															 average_factor_error,
 															 scale_factor_error,
 															 history->branch_histories[0]);
 			}
@@ -987,8 +931,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			}
 
 			double predicted_score_error = target_val - predicted_score;
-
-			average_factor_error += predicted_score_error;
 
 			scale_factor_error += this->score_updates[0]*predicted_score_error;
 
@@ -1018,19 +960,16 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 		// scope_input_errors is just local_state_errors at start
 
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		// this->explore_index_inclusive == 0 && this->explore_type == EXPLORE_TYPE_INNER_SCOPE
 
-		// average_factor_error doesn't need to be scaled
-		scale_factor_error /= scope_scale_mod_val;
+		scale_factor_error /= this->scope_scale_mod[0];
 
 		scope_scope->explore_on_path_backprop(local_state_errors,
 											  predicted_score,
 											  target_val,
 											  scale_factor,
-											  average_factor_error,
 											  scale_factor_error,
 											  history->scope_histories[0]);
 
@@ -1043,7 +982,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 									  double& predicted_score,
 									  double target_val,
 									  double& scale_factor,
-									  double& average_factor_error,
 									  double& scale_factor_error,
 									  ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
@@ -1063,28 +1001,21 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
-			double scope_average_factor_error = 0.0;
 			double scope_scale_factor_error = 0.0;
 			scope_scope->explore_off_path_backprop(scope_input_errors,
 												   scope_output_errors,
 												   predicted_score,
 												   target_val,
 												   scale_factor,
-												   scope_average_factor_error,
 												   scope_scale_factor_error,
 												   history->scope_histories[this->scopes.size()-1]);
 
-			average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+			scale_factor_error += this->scope_scale_mod[this->scopes.size()-1]*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
 				vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
@@ -1118,7 +1049,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															   predicted_score,
 															   target_val,
 															   scale_factor,
-															   average_factor_error,
 															   scale_factor_error,
 															   history->branch_histories[a_index]);
 		} else {
@@ -1142,8 +1072,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			}
 
 			double predicted_score_error = target_val - predicted_score;
-
-			average_factor_error += predicted_score_error;
 
 			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
 
@@ -1178,28 +1106,21 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output_errors;
-			double scope_average_factor_error = 0.0;
 			double scope_scale_factor_error = 0.0;
 			scope_scope->explore_off_path_backprop(scope_input_errors,
 												   scope_output_errors,
 												   predicted_score,
 												   target_val,
 												   scale_factor,
-												   scope_average_factor_error,
 												   scope_scale_factor_error,
 												   history->scope_histories[a_index]);
 
-			average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
 				vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
@@ -1232,7 +1153,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 													 predicted_score,
 													 target_val,
 													 scale_factor,
-													 average_factor_error,
 													 scale_factor_error,
 													 history->branch_histories[0]);
 	} else {
@@ -1253,8 +1173,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 		// else cannot be compress
 
 		double predicted_score_error = target_val - predicted_score;
-
-		average_factor_error += predicted_score_error;
 
 		scale_factor_error += this->score_updates[0]*predicted_score_error;
 
@@ -1285,28 +1203,21 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 		// scope_input_errors is just local_state_errors at start
 
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output_errors;
-		double scope_average_factor_error = 0.0;
 		double scope_scale_factor_error = 0.0;
 		scope_scope->explore_off_path_backprop(local_state_errors,
 											   scope_output_errors,
 											   predicted_score,
 											   target_val,
 											   scale_factor,
-											   scope_average_factor_error,
 											   scope_scale_factor_error,
 											   history->scope_histories[0]);
 
-		average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-		scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+		scale_factor_error += this->scope_scale_mod[0]*scope_scale_factor_error;
 
-		scale_factor /= scope_scale_mod_val;
-
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score -= scale_factor*scope_average_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		for (int i_index = 0; i_index < scope_scope->num_inputs; i_index++) {
 			local_s_input_errors[this->start_score_input_input_indexes[i_index]] += scope_output_errors[i_index];
@@ -1333,11 +1244,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 			scope_input[i_index] = local_s_input_vals[this->start_score_input_input_indexes[i_index]];
 		}
 
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score += scale_factor*scope_average_mod_val;
-
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1349,7 +1256,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 											scope_history);
 		history->scope_histories[0] = scope_history;
 
-		scale_factor /= scope_scale_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		local_state_vals = scope_output;
 	}
@@ -1416,11 +1323,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1432,7 +1335,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 												scope_history);
 			history->scope_histories[a_index] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -1501,11 +1404,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1517,7 +1416,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 												scope_history);
 			history->scope_histories[this->scopes.size()-1] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			// append to local_state_vals for outer
 			local_state_vals.insert(local_state_vals.end(),
@@ -1531,7 +1430,6 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 								   double& predicted_score,
 								   double predicted_score_error,
 								   double& scale_factor,
-								   double& average_factor_error,
 								   double& scale_factor_error,
 								   ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
@@ -1551,28 +1449,21 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
-			double scope_average_factor_error = 0.0;
 			double scope_scale_factor_error = 0.0;
 			scope_scope->existing_flat_backprop(scope_input_errors,
 												scope_output_errors,
 												predicted_score,
 												predicted_score_error,
 												scale_factor,
-												scope_average_factor_error,
 												scope_scale_factor_error,
 												history->scope_histories[this->scopes.size()-1]);
 
-			average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+			scale_factor_error += this->scope_scale_mod[this->scopes.size()-1]*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			for (int i_index = (int)this->inner_input_networks[this->scopes.size()-1].size()-1; i_index >= 0; i_index--) {
 				vector<double> inner_input_errors(this->inner_input_sizes[this->scopes.size()-1][i_index]);
@@ -1606,7 +1497,6 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 															predicted_score,
 															predicted_score_error,
 															scale_factor,
-															average_factor_error,
 															scale_factor_error,
 															history->branch_histories[a_index]);
 		} else {
@@ -1628,8 +1518,6 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 					local_state_errors.push_back(0.0);
 				}
 			}
-
-			average_factor_error += predicted_score_error;
 
 			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
 
@@ -1664,28 +1552,21 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
 				local_state_errors.end());
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output_errors;
-			double scope_average_factor_error = 0.0;
 			double scope_scale_factor_error = 0.0;
 			scope_scope->existing_flat_backprop(scope_input_errors,
 												scope_output_errors,
 												predicted_score,
 												predicted_score_error,
 												scale_factor,
-												scope_average_factor_error,
 												scope_scale_factor_error,
 												history->scope_histories[a_index]);
 
-			average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
 				vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
@@ -1718,7 +1599,6 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 												  predicted_score,
 												  predicted_score_error,
 												  scale_factor,
-												  average_factor_error,
 												  scale_factor_error,
 												  history->branch_histories[0]);
 	} else {
@@ -1737,8 +1617,6 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			local_state_errors = compress_state_output_errors;
 		}
 		// else cannot be compress
-
-		average_factor_error += predicted_score_error;
 
 		scale_factor_error += this->score_updates[0]*predicted_score_error;
 
@@ -1769,28 +1647,21 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 
 		// scope_input_errors is just local_state_errors at start
 
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output_errors;
-		double scope_average_factor_error = 0.0;
 		double scope_scale_factor_error = 0.0;
 		scope_scope->existing_flat_backprop(local_state_errors,
 											scope_output_errors,
 											predicted_score,
 											predicted_score_error,
 											scale_factor,
-											scope_average_factor_error,
 											scope_scale_factor_error,
 											history->scope_histories[0]);
 
-		average_factor_error += scope_scale_mod_val*scope_average_factor_error;
-		scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+		scale_factor_error += this->scope_scale_mod[0]*scope_scale_factor_error;
 
-		scale_factor /= scope_scale_mod_val;
-
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score -= scale_factor*scope_average_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		for (int i_index = 0; i_index < scope_scope->num_inputs; i_index++) {
 			local_s_input_errors[this->start_score_input_input_indexes[i_index]] += scope_output_errors[i_index];
@@ -1817,11 +1688,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 			scope_input[i_index] = local_s_input_vals[this->start_score_input_input_indexes[i_index]];
 		}
 
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score += scale_factor*scope_average_mod_val;
-
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1833,7 +1700,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 									 scope_history);
 		history->scope_histories[0] = scope_history;
 
-		scale_factor /= scope_scale_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 
 		local_state_vals = scope_output;
 	}
@@ -1894,11 +1761,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1910,7 +1773,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 										 scope_history);
 			history->scope_histories[a_index] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -1973,11 +1836,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 				}
 			}
 
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score += scale_factor*scope_average_mod_val;
-
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
@@ -1989,7 +1848,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 										 scope_history);
 			history->scope_histories[this->scopes.size()-1] = scope_history;
 
-			scale_factor /= scope_scale_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 
 			// append to local_state_vals for outer
 			local_state_vals.insert(local_state_vals.end(),
@@ -1999,39 +1858,43 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 }
 
 void Scope::update_backprop(double& predicted_score,
+							double& next_predicted_score,	// for ending misguess from outside
 							double target_val,
 							double& scale_factor,
 							ScopeHistory* history) {
 	// end
 	if (this->scopes.size() > 1) {
-		// this->need_process[this->scopes.size()-1] == true
+		double misguess = target_val - next_predicted_score;
+		this->average_misguesses[this->scopes.size()-1] = 0.999*this->average_misguesses[this->scopes.size()-1] + 0.001*misguess;
+
 		if (this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_BASE) {
 			// do nothing
 		} else {
 			// this->scopes[this->scopes.size()-1]->type == SCOPE_TYPE_SCOPE
 			Scope* scope_scope = (Scope*)this->scopes[this->scopes.size()-1];
 
-			double scope_scale_mod_val = this->scope_scale_mod[this->scopes.size()-1]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[this->scopes.size()-1];
 
 			scope_scope->update_backprop(predicted_score,
+										 next_predicted_score,
 										 target_val,
 										 scale_factor,
 										 history->scope_histories[this->scopes.size()-1]);
 
 			// mods are a helper for initial flat, so no need to modify after
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[this->scopes.size()-1]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[this->scopes.size()-1];
 		}
 	}
 
 	// mid
 	for (int a_index = (int)this->scopes.size()-2; a_index >= 1; a_index--) {
+		double misguess = target_val - predicted_score;
+		this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+
 		if (this->is_branch[a_index]) {
 			this->branches[a_index]->update_backprop(predicted_score,
+													 next_predicted_score,
 													 target_val,
 													 scale_factor,
 													 history->branch_histories[a_index]);
@@ -2044,6 +1907,7 @@ void Scope::update_backprop(double& predicted_score,
 				0.001,
 				history->score_network_histories[a_index]);
 
+			next_predicted_score = predicted_score;
 			predicted_score -= scale_factor*this->score_updates[a_index];
 		}
 
@@ -2053,26 +1917,27 @@ void Scope::update_backprop(double& predicted_score,
 			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
 			Scope* scope_scope = (Scope*)this->scopes[a_index];
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+			scale_factor *= this->scope_scale_mod[a_index];
 
 			scope_scope->update_backprop(predicted_score,
+										 next_predicted_score,
 										 target_val,
 										 scale_factor,
 										 history->scope_histories[a_index]);
 
 			// mods are a helper for initial flat, so no need to modify after
 
-			scale_factor /= scope_scale_mod_val;
-
-			double scope_average_mod_val = this->scope_average_mod[a_index]->output->constants[0];
-			predicted_score -= scale_factor*scope_average_mod_val;
+			scale_factor /= this->scope_scale_mod[a_index];
 		}
 	}
 
 	// start
+	double misguess = target_val - predicted_score;
+	this->average_misguesses[0] = 0.999*this->average_misguesses[0] + 0.001*misguess;
+
 	if (this->is_branch[0]) {
 		this->branches[0]->update_backprop(predicted_score,
+										   next_predicted_score,
 										   target_val,
 										   scale_factor,
 										   history->branch_histories[0]);
@@ -2085,6 +1950,7 @@ void Scope::update_backprop(double& predicted_score,
 			0.001,
 			history->score_network_histories[0]);
 
+		next_predicted_score = predicted_score;
 		predicted_score -= scale_factor*this->score_updates[0];
 	}
 
@@ -2094,20 +1960,17 @@ void Scope::update_backprop(double& predicted_score,
 		// this->scopes[0]->type == SCOPE_TYPE_SCOPE
 		Scope* scope_scope = (Scope*)this->scopes[0];
 
-		double scope_scale_mod_val = this->scope_scale_mod[0]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
+		scale_factor *= this->scope_scale_mod[0];
 
 		scope_scope->update_backprop(predicted_score,
+									 next_predicted_score,
 									 target_val,
 									 scale_factor,
 									 history->scope_histories[0]);
 
 		// mods are a helper for initial flat, so no need to modify after
 
-		scale_factor /= scope_scale_mod_val;
-
-		double scope_average_mod_val = this->scope_average_mod[0]->output->constants[0];
-		predicted_score -= scale_factor*scope_average_mod_val;
+		scale_factor /= this->scope_scale_mod[0];
 	}
 }
 
@@ -2118,6 +1981,7 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope_histories = vector<ScopeHistory*>(scope->sequence_length, NULL);
 	this->branch_histories = vector<BranchHistory*>(scope->sequence_length, NULL);
 	this->score_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
+	this->score_updates = vector<double>(scope->sequence_length, 0.0);
 	this->compress_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
 
 	this->fold_history = NULL;
