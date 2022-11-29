@@ -26,11 +26,11 @@ class BranchHistory {
 public:
 	Branch* branch;
 
-	double best_score;
+	double best_score;	// scaled
 	int best_index;
 
 	FoldNetworkHistory* branch_score_network_history;
-	double branch_score;
+	double branch_score_update;
 
 	FoldNetworkHistory* score_network_history;
 	BranchPathHistory* branch_path_history;

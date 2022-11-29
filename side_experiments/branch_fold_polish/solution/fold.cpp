@@ -211,5 +211,578 @@ void Fold::explore_off_path_activate(vector<vector<double>>& flat_vals,
 									 double& scale_factor,
 									 int& explore_phase,
 									 FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_FLAT:
+			flat_step_explore_off_path_activate(flat_vals,
+												starting_score,
+												local_s_input_vals,
+												local_state_vals,
+												predicted_score,
+												scale_factor,
+												explore_phase,
+												history);
+			break;
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_explore_off_path_activate(flat_vals,
+															 starting_score,
+															 local_s_input_vals,
+															 local_state_vals,
+															 predicted_score,
+															 scale_factor,
+															 explore_phase,
+															 history);
+			break;
+		case STATE_SCORE:
+			score_step_explore_off_path_activate(flat_vals,
+												 starting_score,
+												 local_s_input_vals,
+												 local_state_vals,
+												 predicted_score,
+												 scale_factor,
+												 explore_phase,
+												 history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_explore_off_path_activate(flat_vals,
+													  starting_score,
+													  local_s_input_vals,
+													  local_state_vals,
+													  predicted_score,
+													  scale_factor,
+													  explore_phase,
+													  history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_explore_off_path_activate(flat_vals,
+														  starting_score,
+														  local_s_input_vals,
+														  local_state_vals,
+														  predicted_score,
+														  scale_factor,
+														  explore_phase,
+														  history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_explore_off_path_activate(flat_vals,
+														  starting_score,
+														  local_s_input_vals,
+														  local_state_vals,
+														  predicted_score,
+														  scale_factor,
+														  explore_phase,
+														  history);
+			break;
+		case STATE_INPUT:
+			input_step_explore_off_path_activate(flat_vals,
+												 starting_score,
+												 local_s_input_vals,
+												 local_state_vals,
+												 predicted_score,
+												 scale_factor,
+												 explore_phase,
+												 history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_explore_off_path_activate(flat_vals,
+													  starting_score,
+													  local_s_input_vals,
+													  local_state_vals,
+													  predicted_score,
+													  scale_factor,
+													  explore_phase,
+													  history);
+			break;
+	}
+}
+
+void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
+									 vector<double>& local_state_errors,
+									 double& predicted_score,
+									 double target_val,
+									 double& scale_factor,
+									 double& scale_factor_error,
+									 FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_explore_off_path_backprop(local_s_input_errors,
+															 local_state_errors,
+															 predicted_score,
+															 target_val,
+															 scale_factor,
+															 scale_factor_error,
+															 history);
+			break;
+		case STATE_SCORE:
+			score_step_explore_off_path_backprop(local_s_input_errors,
+												 local_state_errors,
+												 predicted_score,
+												 target_val,
+												 scale_factor,
+												 scale_factor_error,
+												 history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_explore_off_path_backprop(local_s_input_errors,
+													  local_state_errors,
+													  predicted_score,
+													  target_val,
+													  scale_factor,
+													  scale_factor_error,
+													  history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_explore_off_path_backprop(local_s_input_errors,
+														  local_state_errors,
+														  predicted_score,
+														  target_val,
+														  scale_factor,
+														  scale_factor_error,
+														  history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_explore_off_path_backprop(local_s_input_errors,
+														  local_state_errors,
+														  predicted_score,
+														  target_val,
+														  scale_factor,
+														  scale_factor_error,
+														  history);
+			break;
+		case STATE_INPUT:
+			input_step_explore_off_path_backprop(local_s_input_errors,
+												 local_state_errors,
+												 predicted_score,
+												 target_val,
+												 scale_factor,
+												 scale_factor_error,
+												 history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_explore_off_path_backprop(local_s_input_errors,
+													  local_state_errors,
+													  predicted_score,
+													  target_val,
+													  scale_factor,
+													  scale_factor_error,
+													  history);
+			break;
+	}
+}
+
+void Fold::existing_flat_activate(vector<vector<double>>& flat_vals,
+								  double starting_score,
+								  vector<double>& local_s_input_vals,
+								  vector<double>& local_state_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_existing_flat_activate(flat_vals,
+														  starting_score,
+														  local_s_input_vals,
+														  local_state_vals,
+														  predicted_score,
+														  scale_factor,
+														  history);
+			break;
+		case STATE_SCORE:
+			score_step_existing_flat_activate(flat_vals,
+											  starting_score,
+											  local_s_input_vals,
+											  local_state_vals,
+											  predicted_score,
+											  scale_factor,
+											  history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_existing_flat_activate(flat_vals,
+												   starting_score,
+												   local_s_input_vals,
+												   local_state_vals,
+												   predicted_score,
+												   scale_factor,
+												   history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_existing_flat_activate(flat_vals,
+													   starting_score,
+													   local_s_input_vals,
+													   local_state_vals,
+													   predicted_score,
+													   scale_factor,
+													   history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_existing_flat_activate(flat_vals,
+													   starting_score,
+													   local_s_input_vals,
+													   local_state_vals,
+													   predicted_score,
+													   scale_factor,
+													   history);
+			break;
+		case STATE_INPUT:
+			input_step_existing_flat_activate(flat_vals,
+											  starting_score,
+											  local_s_input_vals,
+											  local_state_vals,
+											  predicted_score,
+											  scale_factor,
+											  history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_existing_flat_activate(flat_vals,
+												   starting_score,
+												   local_s_input_vals,
+												   local_state_vals,
+												   predicted_score,
+												   scale_factor,
+												   history);
+			break;
+	}
+}
+
+void Fold::existing_flat_backprop(vector<double>& local_s_input_errors,
+								  vector<double>& local_state_errors,
+								  double& predicted_score,
+								  double predicted_score_error,
+								  double& scale_factor,
+								  double& scale_factor_error,
+								  FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_existing_flat_backprop(local_s_input_errors,
+														  local_state_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scale_factor_error,
+														  history);
+			break;
+		case STATE_SCORE:
+			score_step_existing_flat_backprop(local_s_input_errors,
+											  local_state_errors,
+											  predicted_score,
+											  predicted_score_error,
+											  scale_factor,
+											  scale_factor_error,
+											  history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_existing_flat_backprop(local_s_input_errors,
+												   local_state_errors,
+												   predicted_score,
+												   predicted_score_error,
+												   scale_factor,
+												   scale_factor_error,
+												   history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_existing_flat_backprop(local_s_input_errors,
+													   local_state_errors,
+													   predicted_score,
+													   predicted_score_error,
+													   scale_factor,
+													   scale_factor_error,
+													   history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_existing_flat_backprop(local_s_input_errors,
+													   local_state_errors,
+													   predicted_score,
+													   predicted_score_error,
+													   scale_factor,
+													   scale_factor_error,
+													   history);
+			break;
+		case STATE_INPUT:
+			input_step_existing_flat_backprop(local_s_input_errors,
+											  local_state_errors,
+											  predicted_score,
+											  predicted_score_error,
+											  scale_factor,
+											  scale_factor_error,
+											  history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_existing_flat_backprop(local_s_input_errors,
+												   local_state_errors,
+												   predicted_score,
+												   predicted_score_error,
+												   scale_factor,
+												   scale_factor_error,
+												   history);
+			break;
+	}
+}
+
+void Fold::update_activate(vector<vector<double>>& flat_vals,
+						   double starting_score,
+						   vector<double>& local_s_input_vals,
+						   vector<double>& local_state_vals,
+						   double& predicted_score,
+						   double& scale_factor,
+						   FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_update_activate(flat_vals,
+												   starting_score,
+												   local_s_input_vals,
+												   local_state_vals,
+												   predicted_score,
+												   scale_factor,
+												   history);
+			break;
+		case STATE_SCORE:
+			score_step_update_activate(flat_vals,
+									   starting_score,
+									   local_s_input_vals,
+									   local_state_vals,
+									   predicted_score,
+									   scale_factor,
+									   history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_update_activate(flat_vals,
+											starting_score,
+											local_s_input_vals,
+											local_state_vals,
+											predicted_score,
+											scale_factor,
+											history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_update_activate(flat_vals,
+												starting_score,
+												local_s_input_vals,
+												local_state_vals,
+												predicted_score,
+												scale_factor,
+												history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_update_activate(flat_vals,
+												starting_score,
+												local_s_input_vals,
+												local_state_vals,
+												predicted_score,
+												scale_factor,
+												history);
+			break;
+		case STATE_INPUT:
+			input_step_update_activate(flat_vals,
+									   starting_score,
+									   local_s_input_vals,
+									   local_state_vals,
+									   predicted_score,
+									   scale_factor,
+									   history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_update_activate(flat_vals,
+											starting_score,
+											local_s_input_vals,
+											local_state_vals,
+											predicted_score,
+											scale_factor,
+											history);
+			break;
+	}
+}
+
+void Fold::update_backprop(double& predicted_score,
+						   double& next_predicted_score,
+						   double target_val,
+						   double& scale_factor,
+						   FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_update_backprop(predicted_score,
+												   next_predicted_score,
+												   target_val,
+												   scale_factor,
+												   history);
+			break;
+		case STATE_SCORE:
+			score_step_update_backprop(predicted_score,
+									   next_predicted_score,
+									   target_val,
+									   scale_factor,
+									   history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_update_backprop(predicted_score,
+											next_predicted_score,
+											target_val,
+											scale_factor,
+											history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_update_backprop(predicted_score,
+												next_predicted_score,
+												target_val,
+												scale_factor,
+												history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_update_backprop(predicted_score,
+												next_predicted_score,
+												target_val,
+												scale_factor,
+												history);
+			break;
+		case STATE_INPUT:
+			input_step_update_backprop(predicted_score,
+									   next_predicted_score,
+									   target_val,
+									   scale_factor,
+									   history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_update_backprop(predicted_score,
+											next_predicted_score,
+											target_val,
+											scale_factor,
+											history);
+			break;
+	}
+
+	fold_increment();
+}
+
+void Fold::existing_update_activate(vector<vector<double>>& flat_vals,
+									double starting_score,
+									vector<double>& local_s_input_vals,
+									vector<double>& local_state_vals,
+									double& predicted_score,
+									double& scale_factor,
+									FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_existing_update_activate(flat_vals,
+															starting_score,
+															local_s_input_vals,
+															local_state_vals,
+															predicted_score,
+															scale_factor,
+															history);
+			break;
+		case STATE_SCORE:
+			score_step_existing_update_activate(flat_vals,
+												starting_score,
+												local_s_input_vals,
+												local_state_vals,
+												predicted_score,
+												scale_factor,
+												history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_existing_update_activate(flat_vals,
+													 starting_score,
+													 local_s_input_vals,
+													 local_state_vals,
+													 predicted_score,
+													 scale_factor,
+													 history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_existing_update_activate(flat_vals,
+														 starting_score,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_existing_update_activate(flat_vals,
+														 starting_score,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 history);
+			break;
+		case STATE_INPUT:
+			input_step_existing_update_activate(flat_vals,
+												starting_score,
+												local_s_input_vals,
+												local_state_vals,
+												predicted_score,
+												scale_factor,
+												history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_existing_update_activate(flat_vals,
+													 starting_score,
+													 local_s_input_vals,
+													 local_state_vals,
+													 predicted_score,
+													 scale_factor,
+													 history);
+			break;
+	}
+}
+
+void Fold::existing_update_backprop(double& predicted_score,
+									double predicted_score_error,
+									double& scale_factor,
+									double& scale_factor_error,
+									FoldHistory* history) {
+	switch (this->last_state) {
+		case STATE_INNER_SCOPE_INPUT:
+			inner_scope_input_step_existing_update_backprop(predicted_score,
+															predicted_score_error,
+															scale_factor,
+															scale_factor_error,
+															history);
+			break;
+		case STATE_SCORE:
+			score_step_existing_update_backprop(predicted_score,
+												predicted_score_error,
+												scale_factor,
+												scale_factor_error,
+												history);
+			break;
+		case STATE_SCORE_TUNE:
+			score_tune_step_existing_update_backprop(predicted_score,
+													 predicted_score_error,
+													 scale_factor,
+													 scale_factor_error,
+													 history);
+			break;
+		case STATE_COMPRESS_STATE:
+			compress_state_step_existing_update_backprop(predicted_score,
+														 predicted_score_error,
+														 scale_factor,
+														 scale_factor_error,
+														 history);
+			break;
+		case STATE_COMPRESS_SCOPE:
+			compress_scope_step_existing_update_backprop(predicted_score,
+														 predicted_score_error,
+														 scale_factor,
+														 scale_factor_error,
+														 history);
+			break;
+		case STATE_INPUT:
+			input_step_existing_update_backprop(predicted_score,
+												predicted_score_error,
+												scale_factor,
+												scale_factor_error,
+												history);
+			break;
+		case STATE_STEP_ADDED:
+			step_added_step_existing_update_backprop(predicted_score,
+													 predicted_score_error,
+													 scale_factor,
+													 scale_factor_error,
+													 history);
+			break;
+	}
+}
+
+void Fold::fold_increment() {
 
 }

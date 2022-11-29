@@ -47,6 +47,8 @@ public:
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
 	FoldNetworkHistory* end_input_network_history;
+
+	FoldHistory* fold_history;
 };
 
 #endif /* BRANCH_PATH_H */

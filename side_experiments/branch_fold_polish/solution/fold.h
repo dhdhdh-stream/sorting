@@ -17,6 +17,8 @@ const int STATE_SCORE_TUNE = 2;
 const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
 const int STATE_INPUT = 5;
+const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
+// TODO: merge STATE_STEP_ADDED and STATE_FLAT
 
 // don't split into LEARN and MEASURE stages, and instead combine
 
