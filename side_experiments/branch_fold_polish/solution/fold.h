@@ -11,13 +11,15 @@
 
 const int STATE_FLAT = -1;
 
-const int STATE_INNER_SCOPE_INPUT = 0;
-const int STATE_SCORE = 1;
-const int STATE_SCORE_TUNE = 2;
-const int STATE_COMPRESS_STATE = 3;
-const int STATE_COMPRESS_SCOPE = 4;
-const int STATE_INPUT = 5;
-const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
+const int STATE_STARTING_COMPRESS = 0;
+
+const int STATE_INNER_SCOPE_INPUT = 1;
+const int STATE_SCORE = 2;
+const int STATE_SCORE_TUNE = 3;
+const int STATE_COMPRESS_STATE = 4;
+const int STATE_COMPRESS_SCOPE = 5;
+const int STATE_INPUT = 6;
+const int STATE_STEP_ADDED = 7;	// for last_state bookkeeping
 // TODO: merge STATE_STEP_ADDED and STATE_FLAT
 
 // don't split into LEARN and MEASURE stages, and instead combine
@@ -72,13 +74,13 @@ public:
 	FoldNetwork* curr_score_network;
 	FoldNetwork* test_score_network;
 
-	FoldNetwork* curr_compression_network;
+	FoldNetwork* curr_compress_network;
 	int compress_size;
 	int compress_num_layers;
 	int compress_new_size;
 	std::vector<int> compressed_s_input_sizes;
 	std::vector<int> compressed_scope_sizes;
-	FoldNetwork* test_compression_network;
+	FoldNetwork* test_compress_network;
 
 	std::vector<int> input_layer;
 	std::vector<int> input_sizes;

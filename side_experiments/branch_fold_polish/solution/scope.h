@@ -1,36 +1,16 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
-const int SCOPE_TYPE_BASE = 0;
-const int SCOPE_TYPE_SCOPE = 1;
-
-class AbstractScope {
-public:
-	int type;
-
-	virtual ~AbstractScope() {};
-};
-
-class BaseScope : public AbstractScope {
-public:
-	int num_outputs;
-
-	BaseScope(int num_outputs);
-	~BaseScope();
-};
-
-class Scope : public AbstractScope {
+class Scope {
 public:
 	std::string id;
 
 	int num_inputs;
 	int num_outputs;
 
-	std::vector<int> start_scope_input_input_indexes;
-
-	// start can't be inherited_score
-	std::vector<AbstractScope*> scopes;
-	std::vector<int> obs_sizes;
+	std::vector<bool> is_inner_scope;
+	std::vector<Scope*> scopes;
+	std::vector<int> obs_sizes;	// TODO: exchange with raw actions later
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;

@@ -113,14 +113,11 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 
 	// mid
 	while (a_index < this->scopes.size()) {
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
 				flat_vals.begin().begin(), flat_vals.begin().end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
@@ -144,24 +141,24 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
+			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-				scope_scope->explore_on_path_activate(flat_vals,
-													  temp_new_s_input_vals,
-													  scope_output,
-													  predicted_score,
-													  scale_factor,
-													  explore_phase,
-													  scope_history);
+				this->scopes[a_index]->explore_on_path_activate(flat_vals,
+																temp_new_s_input_vals,
+																scope_output,
+																predicted_score,
+																scale_factor,
+																explore_phase,
+																scope_history);
 			} else {
-				scope_scope->explore_off_path_activate(flat_vals,
-													   temp_new_s_input_vals,
-													   scope_output,
-													   predicted_score,
-													   scale_factor,
-													   explore_phase,
-													   scope_history);
+				this->scopes[a_index]->explore_off_path_activate(flat_vals,
+																 temp_new_s_input_vals,
+																 scope_output,
+																 predicted_score,
+																 scale_factor,
+																 explore_phase,
+																 scope_history);
 			}
 			history->scope_histories[a_index] = scope_history;
 
@@ -361,14 +358,11 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 
 	// mid
 	for (int a_index = 1; a_index < this->scopes.size(); a_index++) {
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
 				flat_vals.begin().begin(), flat_vals.begin().end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
@@ -392,14 +386,14 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
-			scope_scope->explore_off_path_activate(flat_vals,
-												   temp_new_s_input_vals,
-												   scope_output,
-												   predicted_score,
-												   scale_factor,
-												   explore_phase,
-												   scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
+			this->scopes[a_index]->explore_off_path_activate(flat_vals,
+															 temp_new_s_input_vals,
+															 scope_output,
+															 predicted_score,
+															 scale_factor,
+															 explore_phase,
+															 scope_history);
 			history->scope_histories[a_index] = scope_history;
 
 			scale_factor /= this->scope_scale_mod[a_index];
@@ -585,16 +579,13 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 			}
 		}
 
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[a_index],
 				local_state_errors.end());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
-			vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
 
 			scale_factor *= this->scope_scale_mod[a_index];
@@ -603,24 +594,24 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 				scale_factor_error /= this->scope_scale_mod[a_index];
 
-				scope_scope->explore_on_path_backprop(scope_input_errors,
-													  predicted_score,
-													  target_val,
-													  scale_factor,
-													  scale_factor_error,
-													  history->scope_histories[a_index]);
+				this->scopes[a_index]->explore_on_path_backprop(scope_input_errors,
+																predicted_score,
+																target_val,
+																scale_factor,
+																scale_factor_error,
+																history->scope_histories[a_index]);
 
 				return;
 			} else {
 				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
 				double scope_scale_factor_error = 0.0;
-				scope_scope->explore_off_path_backprop(scope_input_errors,
-													   scope_output_errors,
-													   predicted_score,
-													   target_val,
-													   scale_factor,
-													   scope_scale_factor_error,
-													   history->scope_histories[a_index]);
+				this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
+																 scope_output_errors,
+																 predicted_score,
+																 target_val,
+																 scale_factor,
+																 scope_scale_factor_error,
+																 history->scope_histories[a_index]);
 
 				scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
@@ -789,29 +780,26 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 			predicted_score -= scale_factor*this->score_updates[a_index];
 		}
 
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[a_index],
 				local_state_errors.end());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
-			vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
 
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
 			double scope_scale_factor_error = 0.0;
-			scope_scope->explore_off_path_backprop(scope_input_errors,
-												   scope_output_errors,
-												   predicted_score,
-												   target_val,
-												   scale_factor,
-												   scope_scale_factor_error,
-												   history->scope_histories[a_index]);
+			this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
+															 scope_output_errors,
+															 predicted_score,
+															 target_val,
+															 scale_factor,
+															 scope_scale_factor_error,
+															 history->scope_histories[a_index]);
 
 			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
@@ -921,14 +909,11 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 
 	// mid
 	for (int a_index = 1; a_index < this->scopes.size(); a_index++) {
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
 				flat_vals.begin().begin(), flat_vals.begin().end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
@@ -947,13 +932,13 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
-			scope_scope->existing_flat_activate(flat_vals,
-												temp_new_s_input_vals,
-												scope_output,
-												predicted_score,
-												scale_factor,
-												scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
+			this->scopes[a_index]->existing_flat_activate(flat_vals,
+														  temp_new_s_input_vals,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  scope_history);
 			history->scope_histories[a_index] = scope_history;
 
 			scale_factor /= this->scope_scale_mod[a_index];
@@ -1091,29 +1076,26 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 			predicted_score -= scale_factor*this->score_updates[a_index];
 		}
 
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_errors.erase(local_state_errors.end()-this->obs_sizes[a_index],
 				local_state_errors.end());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
-			vector<double> scope_input_errors(local_state_errors.end()-scope_scope->num_outputs,
+			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-scope_scope->num_outputs,
+			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
 				local_state_errors.end());
 
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
 			double scope_scale_factor_error = 0.0;
-			scope_scope->existing_flat_backprop(scope_input_errors,
-												scope_output_errors,
-												predicted_score,
-												predicted_score_error,
-												scale_factor,
-												scope_scale_factor_error,
-												history->scope_histories[a_index]);
+			this->scopes[a_index]->existing_flat_backprop(scope_input_errors,
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[a_index]);
 
 			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
@@ -1220,14 +1202,11 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 
 	// mid
 	for (int a_index = 1; a_index < this->scopes.size(); a_index++) {
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
 				flat_vals.begin().begin(), flat_vals.begin().end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
@@ -1243,13 +1222,13 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
-			scope_scope->update_activate(flat_vals,
-										 temp_new_s_input_vals,
-										 scope_output,
-										 predicted_score,
-										 scale_factor,
-										 scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
+			this->scopes[a_index]->update_activate(flat_vals,
+												   temp_new_s_input_vals,
+												   scope_output,
+												   predicted_score,
+												   scale_factor,
+												   scope_history);
 			history->scope_histories[a_index] = scope_history;
 
 			scale_factor /= this->scope_scale_mod[a_index];
@@ -1337,19 +1316,16 @@ void BranchPath::update_backprop(double& predicted_score,
 			predicted_score -= scale_factor*this->score_updates[a_index];
 		}
 
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			// do nothing
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			scale_factor *= this->scope_scale_mod[a_index];
 
-			scope_scope->update_backprop(predicted_score,
-										 next_predicted_score,
-										 target_val,
-										 scale_factor,
-										 history->scope_histories[a_index]);
+			this->scopes[a_index]->update_backprop(predicted_score,
+												   next_predicted_score,
+												   target_val,
+												   scale_factor,
+												   history->scope_histories[a_index]);
 
 			// mods are a helper for initial flat, so no need to modify after
 
@@ -1417,14 +1393,11 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 
 	// mid
 	for (int a_index = 1; a_index < this->scopes.size(); a_index++) {
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
 				flat_vals.begin().begin(), flat_vals.begin().end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
@@ -1440,13 +1413,13 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(scope_scope);
-			scope_scope->existing_update_activate(flat_vals,
-												  temp_new_s_input_vals,
-												  scope_output,
-												  predicted_score,
-												  scale_factor,
-												  scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
+			this->scopes[a_index]->existing_update_activate(flat_vals,
+															temp_new_s_input_vals,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															scope_history);
 			history->scope_histories[a_index] = scope_history;
 
 			scale_factor /= this->scope_scale_mod[a_index];
@@ -1522,20 +1495,17 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 			predicted_score -= scale_factor*this->score_updates[a_index];
 		}
 
-		if (this->scopes[a_index]->type == SCOPE_TYPE_BASE) {
+		if (!this->is_inner_scope[a_index]) {
 			// do nothing
 		} else {
-			// this->scopes[a_index]->type == SCOPE_TYPE_SCOPE
-			Scope* scope_scope = (Scope*)this->scopes[a_index];
-
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			double scope_scale_factor_error = 0.0;
-			scope_scope->existing_update_backprop(predicted_score,
-												  predicted_score_error,
-												  scale_factor,
-												  scope_scale_factor_error,
-												  history->scope_histories[a_index]);
+			this->scopes[a_index]->existing_update_backprop(predicted_score,
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[a_index]);
 
 			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 

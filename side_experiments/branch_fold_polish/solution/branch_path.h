@@ -4,7 +4,8 @@
 class BranchPath {
 public:
 	// don't special case starting step in fields
-	std::vector<AbstractScope*> scopes;
+	std::vector<bool> is_inner_scope;
+	std::vector<Scope*> scopes;
 	std::vector<int> obs_sizes;
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;

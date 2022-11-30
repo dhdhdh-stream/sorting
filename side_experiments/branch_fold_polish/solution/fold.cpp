@@ -784,5 +784,5 @@ void Fold::existing_update_backprop(double& predicted_score,
 }
 
 void Fold::fold_increment() {
-
+	// TODO: special case starting compress
 }
