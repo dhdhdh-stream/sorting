@@ -14,12 +14,12 @@ const int STATE_FLAT = -1;
 const int STATE_STARTING_COMPRESS = 0;
 
 const int STATE_INNER_SCOPE_INPUT = 1;
-const int STATE_SCORE = 2;
-const int STATE_SCORE_TUNE = 3;
-const int STATE_COMPRESS_STATE = 4;
-const int STATE_COMPRESS_SCOPE = 5;
-const int STATE_INPUT = 6;
-const int STATE_STEP_ADDED = 7;	// for last_state bookkeeping
+// no fold step, and instead, simply transfer weights
+const int STATE_SCORE = 2;	// adjust fold meanwhile as well
+const int STATE_COMPRESS_STATE = 3;
+const int STATE_COMPRESS_SCOPE = 4;
+const int STATE_INPUT = 5;
+const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
 // TODO: merge STATE_STEP_ADDED and STATE_FLAT
 
 // don't split into LEARN and MEASURE stages, and instead combine
@@ -42,7 +42,6 @@ public:
 
 	FoldNetwork* starting_score_network;
 	double replace_improvement;
-	FoldNetwork* starting_compress_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
 	double combined_improvement;
 
@@ -59,17 +58,23 @@ public:
 	double average_misguess;
 	double* existing_misguess;	// ref to branch end average_misguess
 
+	int curr_starting_compress_size;
+	FoldNetwork* curr_starting_compress_network;
+	int test_starting_compress_size;
+	FoldNetwork* test_starting_compress_network;
+
 	std::vector<int> test_s_input_sizes;
 	std::vector<int> test_scope_sizes;
 	FoldNetwork* test_fold;
 	std::vector<FoldNetwork*> test_input_folds;
 	FoldNetwork* test_end_fold;
 
-	FoldNetwork* curr_input_network;
-	FoldNetwork* test_input_network;
+	// compare against original curr_input_folds, so don't need extra test fields
 	std::vector<int> inner_input_input_layer;
 	std::vector<int> inner_input_input_sizes;
 	std::vector<FoldNetwork*> inner_input_input_networks;
+	FoldNetwork* curr_input_network;
+	FoldNetwork* test_input_network;
 
 	FoldNetwork* curr_score_network;
 	FoldNetwork* test_score_network;

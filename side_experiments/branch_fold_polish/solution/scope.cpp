@@ -1826,7 +1826,7 @@ void Scope::update_backprop(double& predicted_score,
 			double predicted_score_error = target_val - predicted_score;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
-			this->score_networks[a_index]->backprop_weights_with_no_error_signal(
+			this->score_networks[a_index]->backprop_small_weights_with_no_error_signal(
 				score_errors,
 				0.001,
 				history->score_network_histories[a_index]);
@@ -1866,7 +1866,7 @@ void Scope::update_backprop(double& predicted_score,
 		double predicted_score_error = target_val - predicted_score;
 
 		vector<double> score_errors{scale_factor*predicted_score_error};
-		this->score_networks[0]->backprop_weights_with_no_error_signal(
+		this->score_networks[0]->backprop_small_weights_with_no_error_signal(
 			score_errors,
 			0.001,
 			history->score_network_histories[0]);

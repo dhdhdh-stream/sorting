@@ -45,7 +45,7 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[0]->output->constants[0];
+			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output;
@@ -280,7 +280,7 @@ void Fold::flat_step_explore_off_path_activate(vector<vector<double>>& flat_vals
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[0]->output->constants[0];
+			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output;
@@ -480,7 +480,7 @@ void Fold::flat_step_existing_flat_activate(vector<vector<double>>& flat_vals,
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[0]->output->constants[0];
+			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output;
@@ -661,7 +661,7 @@ void Fold::flat_step_update_activate(vector<vector<double>>& flat_vals,
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[0]->output->constants[0];
+			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output;
@@ -782,7 +782,7 @@ void Fold::flat_step_existing_update_activate(vector<vector<double>>& flat_vals,
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[0]->output->constants[0];
+			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output;

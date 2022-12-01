@@ -444,7 +444,7 @@ void Branch::update_backprop(double& predicted_score,
 	double score_predicted_score_error = target_val - score_predicted_score;
 
 	vector<double> score_errors{scale_factor*score_predicted_score_error}
-	this->score_networks[history->best_index]->backprop_weights_with_no_error_signal(
+	this->score_networks[history->best_index]->backprop_small_weights_with_no_error_signal(
 		score_errors,
 		0.001,
 		history->score_network_history);
@@ -456,7 +456,7 @@ void Branch::update_backprop(double& predicted_score,
 		double branch_score_predicted_score_error = target_val - branch_score_predicted_score;
 
 		vector<double> branch_score_errors{scale_factor*branch_score_predicted_score_error};
-		this->branch_score_network->backprop_weights_with_no_error_signal(
+		this->branch_score_network->backprop_small_weights_with_no_error_signal(
 			branch_score_errors,
 			0.001,
 			history->branch_score_network_history);

@@ -26,9 +26,9 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		this->inner_input_network->activate_small(s_input_vals.back(),
 												  state_vals.back());
+		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
 			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
 		}
@@ -67,15 +67,15 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 	} else {
 		s_input_index = s_input_vals.size()-1;
 	}
-	this->score_network->activate(s_input_vals[s_input_index],
-								  state_vals);
+	this->score_network->activate_subfold(s_input_vals[s_input_index],
+										  state_vals);
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			this->compress_network->activate(s_input_vals[s_input_index],
-											 state_vals);
+			this->compress_network->activate_subfold(s_input_vals[s_input_index],
+													 state_vals);
 			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
@@ -126,7 +126,6 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		if (explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_network);
 			this->inner_input_network->activate_small(s_input_vals.back(),
@@ -137,6 +136,7 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 			this->inner_input_network->activate_small(s_input_vals.back(),
 													  state_vals.back());
 		}
+		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
 			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
 		}
@@ -185,13 +185,13 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 	}
 	if (explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
-		this->score_network->activate(s_input_vals[s_input_index],
-									  state_vals,
-									  score_network_history);
+		this->score_network->activate_subfold(s_input_vals[s_input_index],
+											  state_vals,
+											  score_network_history);
 		history->score_network_history = score_network_history;
 	} else {
-		this->score_network->activate(s_input_vals[s_input_index],
-									  state_vals);
+		this->score_network->activate_subfold(s_input_vals[s_input_index],
+											  state_vals);
 	}
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
@@ -200,13 +200,13 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 		if (this->active_compress) {
 			if (explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_network);
-				this->compress_network->activate(s_input_vals[s_input_index],
-												 state_vals,
-												 compress_network_history);
+				this->compress_network->activate_subfold(s_input_vals[s_input_index],
+														 state_vals,
+														 compress_network_history);
 				history->compress_network_history = compress_network_history;
 			} else {
-				this->compress_network->activate(s_input_vals[s_input_index],
-												 state_vals);
+				this->compress_network->activate_subfold(s_input_vals[s_input_index],
+														 state_vals);
 			}
 			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
 				s_input_vals.pop_back();
@@ -236,7 +236,7 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 											 FinishedStepHistory* history) {
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			this->compress_network->backprop_errors_with_no_weight_change(
+			this->compress_network->backprop_subfold_errors_with_no_weight_change(
 				state_errors.back(),
 				history->compress_network_history);
 
@@ -276,7 +276,7 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 		s_input_index = s_input_vals.size()-1;
 	}
 	vector<double> score_errors{scale_factor*predicted_score_error};
-	this->score_network->backprop_errors_with_no_weight_change(
+	this->score_network->backprop_subfold_errors_with_no_weight_change(
 		score_errors,
 		history->score_network_history);
 	for (int s_index = 0; s_index < (int)s_input_errors[s_input_index].size(); s_index++) {
@@ -395,14 +395,14 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
-		FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_network);
-		this->inner_input_network->activate_small(s_input_vals.back(),
-												  state_vals.back(),
-												  inner_input_network_history);
+		FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->curr_inner_input_network);
+		this->curr_inner_input_network->activate_small(s_input_vals.back(),
+													   state_vals.back(),
+													   inner_input_network_history);
 		history->inner_input_network_history = inner_input_network_history;
+		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
-			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
+			scope_input[s_index] = this->curr_inner_input_network->output->acti_vals[s_index];
 		}
 
 		scale_factor *= this->scope_scale_mod;
@@ -442,9 +442,9 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 		s_input_index = s_input_vals.size()-1;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
-	this->score_network->activate(s_input_vals[s_input_index],
-								  state_vals,
-								  score_network_history);
+	this->score_network->activate_subfold(s_input_vals[s_input_index],
+										  state_vals,
+										  score_network_history);
 	history->score_network_history = score_network_history;
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
@@ -452,9 +452,9 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
 			FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_network);
-			this->compress_network->activate(s_input_vals[s_input_index],
-											 state_vals,
-											 compress_network_history);
+			this->compress_network->activate_subfold(s_input_vals[s_input_index],
+													 state_vals,
+													 compress_network_history);
 			history->compress_network_history = compress_network_history;
 			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
 				s_input_vals.pop_back();
@@ -484,7 +484,7 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 										  FinishedStepHistory* history) {
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			this->compress_network->backprop_errors_with_no_weight_change(
+			this->compress_network->backprop_subfold_errors_with_no_weight_change(
 				state_errors.back(),
 				history->compress_network_history);
 
@@ -522,7 +522,7 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 		s_input_index = s_input_vals.size()-1;
 	}
 	vector<double> score_errors{scale_factor*predicted_score_error};
-	this->score_network->backprop_errors_with_no_weight_change(
+	this->score_network->backprop_subfold_errors_with_no_weight_change(
 		score_errors,
 		history->score_network_history);
 	for (int s_index = 0; s_index < (int)s_input_errors[s_input_index].size(); s_index++) {
@@ -638,9 +638,9 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		this->inner_input_network->activate_small(s_input_vals.back(),
 												  state_vals.back());
+		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
 			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
 		}
@@ -679,17 +679,17 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 		s_input_index = s_input_vals.size()-1;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
-	this->score_network->activate(s_input_vals[s_input_index],
-								  state_vals,
-								  score_network_history);
+	this->score_network->activate_subfold(s_input_vals[s_input_index],
+										  state_vals,
+										  score_network_history);
 	history->score_network_history = score_network_history;
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			this->compress_network->activate(s_input_vals[s_input_index],
-											 state_vals);
+			this->compress_network->activate_subfold(s_input_vals[s_input_index],
+													 state_vals);
 			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
@@ -717,7 +717,7 @@ void FinishedStep::update_backprop(double& predicted_score,
 	double predicted_score_error = target_val - predicted_score;
 
 	vector<double> score_errors{scale_factor*predicted_score_error};
-	this->score_network->backprop_weights_with_no_error_signal(
+	this->score_network->backprop_subfold_weights_with_no_error_signal(
 		score_errors,
 		0.001,
 		history->score_network_history);
@@ -759,9 +759,9 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		this->inner_input_network->activate_small(s_input_vals.back(),
 												  state_vals.back());
+		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
 			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
 		}
@@ -799,15 +799,15 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 	} else {
 		s_input_index = s_input_vals.size()-1;
 	}
-	this->score_network->activate(s_input_vals[s_input_index],
-								  state_vals);
+	this->score_network->activate_subfold(s_input_vals[s_input_index],
+										  state_vals);
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			this->compress_network->activate(s_input_vals[s_input_index],
-											 state_vals);
+			this->compress_network->activate_subfold(s_input_vals[s_input_index],
+													 state_vals);
 			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
