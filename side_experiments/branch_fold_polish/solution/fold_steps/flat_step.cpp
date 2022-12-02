@@ -133,6 +133,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.002);
 	}
+	// don't need to worry about s_input_errors and state_errors
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] != NULL) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {

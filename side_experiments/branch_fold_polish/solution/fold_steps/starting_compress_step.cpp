@@ -64,13 +64,13 @@ void Fold::starting_compress_step_update_activate(
 
 	// this->starting_compress_size > 0
 
-	int test_compress_new_size = (int)local_state_vals.size() - this->test_starting_compress_size;
-	vector<double> test_local_state_vals(test_compress_new_size);
-	vector<double> test_local_state_errors(test_compress_new_size, 0.0);
+	int test_starting_compress_new_size = (int)local_state_vals.size() - this->test_starting_compress_size;
+	vector<double> test_local_state_vals(test_starting_compress_new_size);
+	vector<double> test_local_state_errors(test_starting_compress_new_size, 0.0);
 
 	this->test_starting_compress_network->activate_small(local_s_input_vals,
 														 local_state_vals);
-	for (int s_index = 0; s_index < test_compress_new_size; s_index++) {
+	for (int s_index = 0; s_index < test_starting_compress_new_size; s_index++) {
 		test_local_state_vals[s_index] = this->test_starting_compress_network->output->acti_vals[s_index];
 	}
 
@@ -114,11 +114,11 @@ void Fold::starting_compress_step_update_activate(
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
 			}
 			if (this->state_iter <= 270000) {
-				this->test_input_folds[f_index]->backprop_state(input_fold_errors, 0.01);
+				this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.01);
 			} else {
-				this->test_input_folds[f_index]->backprop_state(input_fold_errors, 0.002);
+				this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.002);
 			}
-			for (int s_index = 0; s_index < test_compress_new_size; s_index++) {
+			for (int s_index = 0; s_index < test_starting_compress_new_size; s_index++) {
 				test_local_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
 				this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
 			}
@@ -152,6 +152,33 @@ void Fold::starting_compress_step_update_activate(
 		}
 	}
 
+	FoldNetworkHistory* curr_fold_history = new FoldNetworkHistory(this->curr_fold);
+	// TODO: if pointers don't match, then don't backprop
+	this->curr_fold->activate(fold_input,
+							  local_s_input_vals,
+							  local_state_vals,
+							  curr_fold_history);
+	history->curr_fold_history = curr_fold_history;
+	history->ending_score_update = this->curr_fold->output->acti_vals[0];
+
+	this->test_fold->activate(fold_input,
+							  local_s_input_vals,
+							  test_local_state_vals);
+
+	// TODO: special case empty state
+	vector<double> fold_errors{this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0]};
+	if (this->state_iter <= 270000) {
+		this->test_fold->backprop_last_state(fold_errors, 0.01);
+	} else {
+		this->test_fold->backprop_last_state(fold_errors, 0.002);
+	}
+	for (int s_index = 0; s_index < test_starting_compress_new_size; s_index++) {
+		test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
+		this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
+	}
+
+	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
+
 	if (this->state_iter <= 240000) {
 		this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
 			test_local_state_errors,
@@ -165,16 +192,6 @@ void Fold::starting_compress_step_update_activate(
 			test_local_state_errors,
 			0.002);
 	}
-
-	FoldNetworkHistory* curr_fold_history = new FoldNetworkHistory(this->curr_fold);
-	// TODO: if pointers don't match, then don't backprop
-	this->curr_fold->activate(fold_input,
-							  local_s_input_vals,
-							  local_state_vals,
-							  curr_fold_history);
-	history->curr_fold_history = curr_fold_history;
-	history->ending_score_update = this->curr_fold->output->acti_vals[0];
-	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
 
 	this->curr_end_fold->activate(fold_input,
 								  local_s_input_vals,

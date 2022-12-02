@@ -70,7 +70,7 @@ void Fold::score_step_update_activate(
 		local_state_vals.clear();
 		local_state_vals.reserve(compress_new_size);
 		for (int s_index = 0; s_index < compress_new_size; s_index++) {
-			local_state_vals.push_back(this->starting_compress_network->output->acti_vals[s_index]);
+			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
 		}
 	}
 
@@ -137,14 +137,20 @@ void Fold::score_step_update_activate(
 		s_input_vals.push_back(scope_input);
 		state_vals.push_back(scope_output);
 	}
+	fold_input.push_back(vector<double>());	// empty
+	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+		if (this->existing_actions[f_index] != NULL) {
+			input_fold_inputs[f_index].push_back(vector<double>());	// empty
+		}
+	}
 
-	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
-	this->score_network->activate_subfold(local_s_input_vals,
-										  state_vals,
-										  score_network_history);
+	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->curr_score_network);
+	this->curr_score_network->activate_subfold(local_s_input_vals,
+											   state_vals,
+											   score_network_history);
 	history->score_network_history = score_network_history;
-	history->score_update = this->score_network->output->acti_vals[0];
-	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
+	history->score_update = this->curr_score_network->output->acti_vals[0];
+	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] == NULL) {

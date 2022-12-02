@@ -70,7 +70,7 @@ void Fold::inner_scope_input_step_update_activate(
 		local_state_vals.clear();
 		local_state_vals.reserve(compress_new_size);
 		for (int s_index = 0; s_index < compress_new_size; s_index++) {
-			local_state_vals.push_back(this->starting_compress_network->output->acti_vals[s_index]);
+			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
 		}
 	}
 
@@ -116,18 +116,11 @@ void Fold::inner_scope_input_step_update_activate(
 		}
 	}
 
-	// TODO: change to compare against curr_input_network and subfold?
-	vector<double> empty_input_fold_input;
-	this->curr_input_folds[this->finished_steps.size()]->activate_fold(empty_input_fold_input,
-																	   local_s_input_vals,
-																	   state_vals);
-	vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
-	for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
-		scope_input[i_index] = this->curr_input_folds[this->finished_steps.size()]->output->acti_vals[i_index];
-	}
+	// TODO: copy curr_input_folds[this->finished_steps.size()] to curr_input_network on start
+	this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index],
+											   state_vals);
 
-	this->test_input_network->activate_subfold(empty_input_fold_input,
-											   s_input_vals[this->test_input_network->subfold_index],
+	this->test_input_network->activate_subfold(s_input_vals[this->test_input_network->subfold_index],
 											   state_vals);
 
 	vector<double> inner_input_errors(this->existing_actions[this->finished_steps.size()]->num_inputs);
@@ -160,12 +153,11 @@ void Fold::inner_scope_input_step_update_activate(
 				inner_input_errors,
 				0.002);
 		}
-		vector<double> inner_input_input_errors;
-		inner_input_input_errors.reserve(this->inner_input_input_sizes.back());
-		int layer_size = (int)this->test_input_network->s_input_input->errors.size();
-		for (int st_index = layer_size-this->inner_input_input_sizes.back(); st_index < layer_size; st_index++) {
-			inner_input_input_errors.push_back(this->test_input_network->s_input_input->errors[st_index]);
-			this->test_input_network->s_input_input->errors[st_index] = 0.0;
+		vector<double> inner_input_input_errors(this->inner_input_input_sizes.back());
+		int initial_size = (int)this->test_input_network->s_input_input->errors.size() - this->inner_input_input_sizes.back();
+		for (int s_index = 0; s_index < this->inner_input_input_sizes.back(); s_index++) {
+			inner_input_input_errors[s_index] = this->test_input_network->s_input_input->errors[initial_size+s_index];
+			this->test_input_network->s_input_input->errors[initial_size+s_index] = 0.0;
 		}
 		if (this->state_iter <= 240000) {
 			this->inner_input_input_networks.back()->backprop_small_weights_with_no_error_signal(
@@ -180,6 +172,11 @@ void Fold::inner_scope_input_step_update_activate(
 				inner_input_input_errors,
 				0.002);
 		}
+	}
+
+	vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
+	for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
+		scope_input[i_index] = this->curr_input_network->output->acti_vals[i_index];
 	}
 
 	double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];

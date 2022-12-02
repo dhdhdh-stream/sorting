@@ -69,7 +69,7 @@ public:
 	std::vector<FoldNetwork*> test_input_folds;
 	FoldNetwork* test_end_fold;
 
-	// compare against original curr_input_folds, so don't need extra test fields
+	// don't need extra test fields as curr_input_network and test_input_network use different layers
 	std::vector<int> inner_input_input_layer;
 	std::vector<int> inner_input_input_sizes;
 	std::vector<FoldNetwork*> inner_input_input_networks;
@@ -80,12 +80,18 @@ public:
 	FoldNetwork* test_score_network;
 
 	FoldNetwork* curr_compress_network;
-	int compress_size;
-	int compress_num_layers;
-	int compress_new_size;
-	std::vector<int> compressed_s_input_sizes;
-	std::vector<int> compressed_scope_sizes;
+	int curr_compress_size;
+	int curr_compress_num_layers;
+	int curr_compress_new_size;
+	std::vector<int> curr_compressed_s_input_sizes;
+	std::vector<int> curr_compressed_scope_sizes;
+	
 	FoldNetwork* test_compress_network;
+	int test_compress_size;
+	int test_compress_num_layers;
+	int test_compress_new_size;
+	std::vector<int> test_compressed_s_input_sizes;
+	std::vector<int> test_compressed_scope_sizes;
 
 	std::vector<int> input_layer;
 	std::vector<int> input_sizes;
@@ -100,6 +106,8 @@ public:
 
 	double starting_score_update;
 	double combined_score_update;
+
+	FoldNetworkHistory* curr_starting_compress_network_history;
 
 	std::vector<FoldNetworkHistory*> curr_input_fold_histories;
 	std::vector<ScopeHistory*> scope_histories;
