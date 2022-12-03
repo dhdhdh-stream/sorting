@@ -313,8 +313,8 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 	}
 
 	if (!this->is_inner_scope) {
-		s_input_vals.pop_back();
-		state_vals.pop_back();
+		s_input_errors.pop_back();
+		state_errors.pop_back();
 	} else {
 		vector<double> scope_input_errors = state_errors.back();
 		state_errors.pop_back();
@@ -342,11 +342,11 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 			inner_input_s_input_output_errors,
 			inner_input_state_output_errors,
 			history->inner_input_network_history);
-		for (int s_index = 0; s_index < (int)s_input_vals.back().size(); s_index++) {
-			s_input_vals.back()[s_index] += inner_input_s_input_output_errors[s_index];
+		for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
+			s_input_errors.back()[s_index] += inner_input_s_input_output_errors[s_index];
 		}
-		for (int s_index = 0; s_index < (int)state_vals.back().size(); s_index++) {
-			state_vals.back()[s_index] += inner_input_state_output_errors[s_index];
+		for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
+			state_errors.back()[s_index] += inner_input_state_output_errors[s_index];
 		}
 
 		for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
@@ -559,8 +559,8 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 	}
 
 	if (!this->is_inner_scope) {
-		s_input_vals.pop_back();
-		state_vals.pop_back();
+		s_input_errors.pop_back();
+		state_errors.pop_back();
 	} else {
 		vector<double> scope_input_errors = state_errors.back();
 		state_errors.pop_back();
@@ -572,7 +572,7 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 		this->scope->existing_flat_backprop(scope_input_errors,
 											scope_output_errors,
 											predicted_score,
-											target_val,
+											predicted_score_error,
 											scale_factor,
 											scope_scale_factor_error,
 											history->scope_history);
@@ -588,11 +588,11 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 			inner_input_s_input_output_errors,
 			inner_input_state_output_errors,
 			history->inner_input_network_history);
-		for (int s_index = 0; s_index < (int)s_input_vals.back().size(); s_index++) {
-			s_input_vals.back()[s_index] += inner_input_s_input_output_errors[s_index];
+		for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
+			s_input_errors.back()[s_index] += inner_input_s_input_output_errors[s_index];
 		}
-		for (int s_index = 0; s_index < (int)state_vals.back().size(); s_index++) {
-			state_vals.back()[s_index] += inner_input_state_output_errors[s_index];
+		for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
+			state_errors.back()[s_index] += inner_input_state_output_errors[s_index];
 		}
 
 		for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {

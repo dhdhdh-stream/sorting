@@ -9,8 +9,6 @@
 #include "fold_network.h"
 #include "scope.h"
 
-const int STATE_FLAT = -1;
-
 const int STATE_STARTING_COMPRESS = 0;
 
 const int STATE_INNER_SCOPE_INPUT = 1;
@@ -20,7 +18,6 @@ const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
 const int STATE_INPUT = 5;
 const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
-// TODO: merge STATE_STEP_ADDED and STATE_FLAT
 
 // don't split into LEARN and MEASURE stages, and instead combine
 
@@ -52,6 +49,7 @@ public:
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
 	FoldNetwork* curr_fold;
+	// Note: input_folds don't care about current obs whereas fold and end_fold do
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;
 
@@ -109,6 +107,11 @@ public:
 
 	FoldNetworkHistory* curr_starting_compress_network_history;
 
+	std::vector<FinishedStepHistory*> finished_step_histories;
+
+	std::vector<FoldNetworkHistory*> inner_input_input_network_histories;
+	FoldNetworkHistory* curr_input_network_history;
+
 	std::vector<FoldNetworkHistory*> curr_input_fold_histories;
 	std::vector<ScopeHistory*> scope_histories;
 
@@ -116,8 +119,6 @@ public:
 	FoldNetworkHistory* curr_end_fold_history;
 
 	double ending_score_update;
-
-	std::vector<FinishedStepHistory*> finished_step_histories;
 };
 
 #endif /* FOLD_H */

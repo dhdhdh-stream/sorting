@@ -1,3 +1,5 @@
+// TODO: don't deep copy, but only deep copy score networks? add an extra layer of abstraction?
+
 #ifndef SCOPE_H
 #define SCOPE_H
 

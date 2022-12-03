@@ -279,18 +279,50 @@ void Fold::compress_step_update_activate(
 								   test_state_vals);
 
 	// TODO: special case empty state
-	vector<double> fold_errors{this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0]};
+	double fold_error = this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0];
+	this->sum_error += fold_error*fold_error;
+	vector<double> fold_errors{fold_error};
 	if (this->state_iter <= 270000) {
 		this->test_fold->backprop_last_state(fold_errors, 0.01);
 	} else {
 		this->test_fold->backprop_last_state(fold_errors, 0.002);
 	}
-	for (int s_index = 0; s_index < test_starting_compress_new_size; s_index++) {
-		test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
+	for (int s_index = 0; s_index < this->test_compress_new_size; s_index++) {
+		test_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
 		this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
 	}
 
 	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
+
+	this->curr_end_fold->activate_fold(fold_input,
+									   local_s_input_vals,
+									   state_vals);
+	
+	this->test_end_fold->activate_fold(fold_input,
+									   local_s_input_vals,
+									   test_state_vals);
+
+	vector<double> end_fold_errors(this->output_size);
+	for (int o_index = 0; o_index < this->output_size; o_index++) {
+		end_fold_errors[o_index] = this->curr_end_fold->output->acti_vals[o_index]
+			- this->test_end_fold->output->acti_vals[o_index];
+		this->sum_error += end_fold_errors[o_index]*end_fold_errors[o_index];
+	}
+	if (this->state_iter <= 270000) {
+		this->test_end_fold->backprop_last_state(end_fold_errors, 0.01);
+	} else {
+		this->test_end_fold->backprop_last_state(end_fold_errors, 0.002);
+	}
+	for (int s_index = 0; s_index < this->test_compress_new_size; s_index++) {
+		test_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
+		this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
+	}
+
+	local_state_vals.clear();
+	local_state_vals.reserve(this->output_size);
+	for (int o_index = 0; o_index < this->output_size; o_index++) {
+		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
+	}
 
 	if (this->test_compress_new_size > 0) {
 		if (this->state_iter <= 240000) {
@@ -306,15 +338,6 @@ void Fold::compress_step_update_activate(
 				test_state_errors,
 				0.002);
 		}
-	}
-
-	this->curr_end_fold->activate_fold(fold_input,
-									   local_s_input_vals,
-									   state_vals);
-	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
-		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
 	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
