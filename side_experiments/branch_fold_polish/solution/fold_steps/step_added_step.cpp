@@ -51,6 +51,7 @@ void Fold::step_added_step_explore_off_path_activate(
 																 state_vals,
 																 predicted_score,
 																 scale_factor,
+																 explore_phase,
 																 finished_step_history);
 		history->finished_step_histories[n_index] = finished_step_history;
 

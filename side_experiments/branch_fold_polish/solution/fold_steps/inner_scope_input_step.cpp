@@ -51,6 +51,7 @@ void Fold::inner_scope_input_step_explore_off_path_activate(
 																 state_vals,
 																 predicted_score,
 																 scale_factor,
+																 explore_phase,
 																 finished_step_history);
 		history->finished_step_histories[n_index] = finished_step_history;
 
@@ -270,6 +271,7 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 			this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 		}
 	}
+	// include this->finished_steps.size()
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] != NULL) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
@@ -315,7 +317,8 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 					this->curr_input_folds[f_index]->state_inputs[sc_index]->errors[st_index] = 0.0;
 				}
 			}
-			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size()+1; ff_index--) {
+			// include this->finished_steps.size()
+			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size(); ff_index--) {
 				if (this->existing_actions[ff_index] != NULL) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
@@ -327,15 +330,12 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 	}
 
 	// this->existing_actions[this->finished_steps.size()] != NULL
-	vector<double> scope_input_errors = state_errors.back();
-	state_errors.pop_back();
-
 	scale_factor *= this->scope_scale_mod;
 
 	vector<double> scope_output_errors;
 	double scope_scale_factor_error = 0.0;
 	this->existing_actions[this->finished_steps.size()]->explore_off_path_backprop(
-		scope_input_errors,
+		scope_input_errors[this->finished_steps.size()],
 		scope_output_errors,
 		predicted_score,
 		target_val,
@@ -644,6 +644,7 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 			this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 		}
 	}
+	// include this->finished_steps.size()
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] != NULL) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
@@ -689,7 +690,8 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 					this->curr_input_folds[f_index]->state_inputs[sc_index]->errors[st_index] = 0.0;
 				}
 			}
-			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size()+1; ff_index--) {
+			// include this->finished_steps.size()
+			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size(); ff_index--) {
 				if (this->existing_actions[ff_index] != NULL) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
@@ -701,15 +703,12 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 	}
 
 	// this->existing_actions[this->finished_steps.size()] != NULL
-	vector<double> scope_input_errors = state_errors.back();
-	state_errors.pop_back();
-
 	scale_factor *= this->scope_scale_mod;
 
 	vector<double> scope_output_errors;
 	double scope_scale_factor_error = 0.0;
 	this->existing_actions[this->finished_steps.size()]->existing_flat_backprop(
-		scope_input_errors,
+		scope_input_errors[this->finished_steps.size()],
 		scope_output_errors,
 		predicted_score,
 		predicted_score_error,
@@ -866,7 +865,7 @@ void Fold::inner_scope_input_step_update_activate(
 
 	vector<double> inner_input_errors(this->existing_actions[this->finished_steps.size()]->num_inputs);
 	for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
-		inner_input_errors[i_index] = this->curr_input_folds[this->finished_steps.size()]->output->acti_vals[i_index]
+		inner_input_errors[i_index] = this->curr_input_network->output->acti_vals[i_index]
 			- this->test_input_network->output->acti_vals[i_index];
 		this->sum_error += inner_input_errors[i_index]*inner_input_errors[i_index];
 	}
@@ -1018,10 +1017,13 @@ void Fold::inner_scope_input_step_update_backprop(
 	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
 	scale_factor /= end_scale_mod_val;
 
+	double predicted_score_error = target_val - predicted_score;
+
 	vector<double> curr_fold_error{scale_factor*predicted_score_error};
-	this->curr_fold->backprop(curr_fold_error,
-							  0.001,
-							  history->curr_fold_history);
+	this->curr_fold->backprop_fold_weights_with_no_error_signal(
+		curr_fold_error,
+		0.001,
+		history->curr_fold_history);
 
 	next_predicted_score = predicted_score;	// doesn't matter
 	predicted_score -= scale_factor*this->ending_score_update;

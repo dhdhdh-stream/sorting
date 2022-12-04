@@ -37,6 +37,9 @@ public:
 
 	double new_state_factor;
 
+	double average_misguess;
+	double* existing_misguess;	// ref to branch end average_misguess
+
 	FoldNetwork* starting_score_network;
 	double replace_improvement;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
@@ -52,9 +55,6 @@ public:
 	// Note: input_folds don't care about current obs whereas fold and end_fold do
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;
-
-	double average_misguess;
-	double* existing_misguess;	// ref to branch end average_misguess
 
 	int curr_starting_compress_size;
 	FoldNetwork* curr_starting_compress_network;
@@ -111,6 +111,10 @@ public:
 
 	std::vector<FoldNetworkHistory*> inner_input_input_network_histories;
 	FoldNetworkHistory* curr_input_network_history;
+
+	FoldNetworkHistory* curr_score_network_history;
+
+	FoldNetworkHistory* curr_compress_network_history;
 
 	std::vector<FoldNetworkHistory*> curr_input_fold_histories;
 	std::vector<ScopeHistory*> scope_histories;

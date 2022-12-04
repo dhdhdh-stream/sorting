@@ -242,6 +242,7 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 
 			// don't pop last_s_input_errors
 			state_errors.pop_back();
+			state_errors.push_back(vector<double>(this->compressed_scope_sizes[0], 0.0));
 			for (int l_index = 1; l_index < this->compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->compressed_scope_sizes[l_index], 0.0));
@@ -316,6 +317,8 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 		s_input_errors.pop_back();
 		state_errors.pop_back();
 	} else {
+		vector<double> existing_scope_output_errors = s_input_errors.back();
+		s_input_errors.pop_back();
 		vector<double> scope_input_errors = state_errors.back();
 		state_errors.pop_back();
 
@@ -334,6 +337,10 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 		scale_factor_error += this->scope_scale_mod*scope_scale_factor_error;
 
 		scale_factor /= this->scope_scale_mod;
+
+		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
+			scope_output_errors[s_index] += existing_scope_output_errors[s_index];
+		}
 
 		vector<double> inner_input_s_input_output_errors;
 		vector<double> inner_input_state_output_errors;
@@ -490,6 +497,7 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 
 			// don't pop last_s_input_errors
 			state_errors.pop_back();
+			state_errors.push_back(vector<double>(this->compressed_scope_sizes[0], 0.0));
 			for (int l_index = 1; l_index < this->compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->compressed_scope_sizes[l_index], 0.0));
@@ -562,6 +570,8 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 		s_input_errors.pop_back();
 		state_errors.pop_back();
 	} else {
+		vector<double> existing_scope_output_errors = s_input_errors.back();
+		s_input_errors.pop_back();
 		vector<double> scope_input_errors = state_errors.back();
 		state_errors.pop_back();
 
@@ -580,6 +590,10 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 		scale_factor_error += this->scope_scale_mod*scope_scale_factor_error;
 
 		scale_factor /= this->scope_scale_mod;
+
+		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
+			scope_output_errors[s_index] += existing_scope_output_errors[s_index];
+		}
 
 		vector<double> inner_input_s_input_output_errors;
 		vector<double> inner_input_state_output_errors;

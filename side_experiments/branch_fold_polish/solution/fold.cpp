@@ -17,6 +17,7 @@ Fold::Fold(int sequence_length,
 	this->existing_actions = existing_actions;
 	this->output_size = output_size;
 
+	this->average_misguess = 0.0;
 	this->existing_misguess = existing_misguess;
 
 	this->starting_score_network = new FoldNetwork(1,
@@ -25,8 +26,6 @@ Fold::Fold(int sequence_length,
 												   20);
 
 	this->replace_improvement = 0.0;
-
-	// don't worry about starting_compress_network initially
 
 	this->combined_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
@@ -44,7 +43,7 @@ Fold::Fold(int sequence_length,
 	}
 
 	this->end_scale_mod_calc = new Network(0, 0, 1);
-	this->end_scale_mod_calc->output->constants[0] = 0.0;
+	this->end_scale_mod_calc->output->constants[0] = 1.0;
 
 	this->curr_s_input_sizes.push_back(starting_s_input_size);
 	this->curr_scope_sizes.push_back(starting_state_size);
