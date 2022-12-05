@@ -130,6 +130,8 @@ void Branch::explore_on_path_activate(vector<vector<double>>& flat_vals,
 																  explore_phase,
 																  branch_path_history);
 	history->branch_path_history = branch_path_history;
+
+	scale_factor *= this->end_scale_mods[history->best_index];
 }
 
 void Branch::explore_off_path_activate(vector<vector<double>>& flat_vals,
@@ -162,6 +164,8 @@ void Branch::explore_off_path_activate(vector<vector<double>>& flat_vals,
 																	fold_history);
 		history->fold_history = fold_history;
 	}
+
+	scale_factor *= this->end_scale_mods[history->best_index];
 }
 
 void Branch::explore_on_path_backprop(vector<double>& local_state_errors,
@@ -170,6 +174,9 @@ void Branch::explore_on_path_backprop(vector<double>& local_state_errors,
 									  double& scale_factor,
 									  double& scale_factor_error,
 									  BranchHistory* history) {
+	scale_factor /= this->end_scale_mods[history->best_index];
+	scale_factor_error *= this->end_scale_mods[history->best_index];
+
 	this->branches[history->best_index]->explore_on_path_backprop(local_state_errors,
 																  predicted_score,
 																  target_val,
@@ -187,6 +194,9 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 									   double& scale_factor,
 									   double& scale_factor_error,
 									   BranchHistory* history) {
+	scale_factor /= this->end_scale_mods[history->best_index];
+	scale_factor_error *= this->end_scale_mods[history->best_index];
+
 	if (this->is_branch[history->best_index]) {
 		this->branches[history->best_index]->explore_off_path_backprop(local_s_input_errors,
 																	   local_state_errors,
@@ -307,6 +317,8 @@ void Branch::existing_flat_activate(vector<vector<double>>& flat_vals,
 														fold_history);
 		history->fold_history = fold_history;
 	}
+
+	scale_factor *= this->end_scale_mods[history->best_index];
 }
 
 void Branch::existing_flat_backprop(vector<double>& local_s_input_errors,
@@ -316,6 +328,9 @@ void Branch::existing_flat_backprop(vector<double>& local_s_input_errors,
 									double& scale_factor,
 									double& scale_factor_error,
 									BranchHistory* history) {
+	scale_factor /= this->end_scale_mods[history->best_index];
+	scale_factor_error *= this->end_scale_mods[history->best_index];
+
 	if (this->is_branch[history->best_index]) {
 		this->branches[history->best_index]->existing_flat_backprop(local_s_input_errors,
 																	local_state_errors,
@@ -421,12 +436,16 @@ void Branch::update_activate(vector<vector<double>>& flat_vals,
 												 fold_history);
 		history->fold_history = fold_history;
 	}
+
+	scale_factor *= this->end_scale_mods[history->best_index];
 }
 
 void Branch::update_backprop(double& predicted_score,
 							 double target_val,
 							 double& scale_factor,
 							 BranchHistory* history) {
+	scale_factor /= this->end_scale_mods[history->best_index];
+
 	if (this->is_branch[history->best_index]) {
 		this->branches[history->best_index]->update_backprop(predicted_score,
 															 target_val,
@@ -507,6 +526,8 @@ void Branch::existing_update_activate(vector<vector<double>>& flat_vals,
 														  fold_history);
 		history->fold_history = fold_history;
 	}
+
+	scale_factor *= this->end_scale_mods[history->best_index];
 }
 
 void Branch::existing_update_backprop(double& predicted_score,
@@ -514,6 +535,9 @@ void Branch::existing_update_backprop(double& predicted_score,
 									  double& scale_factor,
 									  double& scale_factor_error,
 									  BranchHistory* history) {
+	scale_factor /= this->end_scale_mods[history->best_index];
+	scale_factor_error *= this->end_scale_mods[history->best_index];
+
 	if (this->is_branch[history->best_index]) {
 		this->branches[history->best_index]->existing_update_backprop(predicted_score,
 																	  predicted_score_error,

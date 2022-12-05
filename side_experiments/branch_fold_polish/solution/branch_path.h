@@ -1,3 +1,5 @@
+// Note: BranchPath fields are identical to Scope, but methods are different
+
 #ifndef BRANCH_PATH_H
 #define BRANCH_PATH_H
 
@@ -12,21 +14,18 @@ public:
 	std::vector<std::vector<int>> inner_input_sizes;
 	std::vector<double> scope_scale_mod;
 
-	std::vector<bool> is_branch;
+	std::vector<bool> step_types;
 	std::vector<Branch*> branches;
+	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
 
 	std::vector<double> average_misguesses;
 
 	std::vector<bool> active_compress;
-	std::vector<int> compress_sizes;
+	std::vector<int> compress_new_sizes;
 	std::vector<FoldNetwork*> compress_networks;
-
-	int end_input_size;
-	FoldNetwork* end_input_network;
-
-	double end_scale_mod;
+	std::vector<int> compress_original_sizes;
 
 	int explore_index_inclusive;
 	int explore_type;

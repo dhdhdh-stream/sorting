@@ -13,6 +13,7 @@ public:
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
 	std::vector<Fold*> folds;
+	std::vector<double> end_scale_mods;
 
 	// TODO: when exploring, branches will not find flats at once, but whenever one does,
 	// go upwards, and freeze
@@ -20,6 +21,10 @@ public:
 	// if success, can keep reference counts and keep going? (because of folds, might be more likely to go to 0) (can also just reset after a certain number of successes)
 
 	// TODO: for folding a branch with the front, for the other branches' input, add output networks (like the opposite of the input networks currently)
+	// set one full path as primary, and fold completely?
+	// - there will be branches coming off, but can try to match existing
+	// - if branch travelled, set unhit to blank
+	// so can still be made a simple flat into a simple fold?
 };
 
 class BranchHistory {

@@ -13,6 +13,7 @@ const int STATE_STARTING_COMPRESS = 0;
 
 const int STATE_INNER_SCOPE_INPUT = 1;
 // no fold step, and instead, simply transfer weights
+// TODO: when full folding, might need step to add state to mark branch taken
 const int STATE_SCORE = 2;	// adjust fold meanwhile as well
 const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
@@ -37,7 +38,7 @@ public:
 
 	double new_state_factor;
 
-	double average_misguess;
+	double average_misguess;	// TODO: continue updating during folding
 	double* existing_misguess;	// ref to branch end average_misguess
 
 	FoldNetwork* starting_score_network;
@@ -46,7 +47,7 @@ public:
 	double combined_improvement;
 
 	std::vector<Network*> scope_scale_mod_calcs;
-	Network* end_scale_mod_calc;
+	Network* end_scale_mod_calc;	// can drop if replace
 	// only need to modify scale as can't modify average at flat anyways
 
 	std::vector<int> curr_s_input_sizes;
@@ -54,7 +55,7 @@ public:
 	FoldNetwork* curr_fold;
 	// Note: input_folds don't care about current obs whereas fold and end_fold do
 	std::vector<FoldNetwork*> curr_input_folds;
-	FoldNetwork* curr_end_fold;
+	FoldNetwork* curr_end_fold;	// becomes last compress network
 
 	int curr_starting_compress_size;
 	FoldNetwork* curr_starting_compress_network;

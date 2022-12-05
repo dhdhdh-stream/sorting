@@ -285,20 +285,6 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 
 		a_index++;
 	}
-
-	// explore_phase == EXPLORE_PHASE_FLAT
-	FoldNetworkHistory* end_input_network_history = new FoldNetworkHistory(this->end_input_network);
-	this->end_input_network->activate_small(local_s_input_vals,
-											local_state_vals,
-											end_input_network_history);
-	history->end_input_network_history = end_input_network_history;
-	local_state_vals.clear();
-	local_state_vals.reserve(this->end_input_size);
-	for (int i_index = 0; i_index < this->end_input_size; i_index++) {
-		local_state_vals.push_back(this->end_input_network->output->acti_vals[i_index]);
-	}
-
-	scale_factor *= this->end_scale_mod;
 }
 
 void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,

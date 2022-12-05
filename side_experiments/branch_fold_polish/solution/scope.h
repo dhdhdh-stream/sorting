@@ -3,6 +3,10 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+const int STEP_TYPE_STEP = 0;
+const int STEP_TYPE_BRANCH = 1;
+const int STEP_TYPE_FOLD = 2;
+
 class Scope {
 public:
 	std::string id;
@@ -19,9 +23,10 @@ public:
 	std::vector<double> scope_scale_mod;
 	// mods to bootstrap flat, but score networks after flat to adjust end
 
-	std::vector<bool> is_branch;
+	std::vector<int> step_types;
 	std::vector<Branch*> branches;
 	// don't need branch mods after flat as all scores will be updated
+	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
 	// outer solution will hold on to final outer score_network (and no compress needed)
@@ -29,8 +34,9 @@ public:
 	std::vector<double> average_misguesses;	// track also after branches
 
 	std::vector<bool> active_compress;
-	std::vector<int> compress_sizes;
+	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds
 	std::vector<FoldNetwork*> compress_networks;
+	std::vector<int> compress_original_sizes;	// for backprop
 
 	int explore_index_inclusive;
 	int explore_type;
@@ -46,12 +52,13 @@ public:
 	std::vector<std::vector<FoldNetworkHistory*>> inner_input_network_histories;
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<BranchHistory*> branch_histories;
+	std::vector<FoldHistory*> fold_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
 	// TODO: in FoldNetworkHistory, don't save output
 	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 
-	FoldHistory* fold_history;
+	FoldHistory* explore_fold_history;
 };
 
 #endif /* SCOPE_H */
