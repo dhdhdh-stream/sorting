@@ -13,7 +13,6 @@ const int STATE_STARTING_COMPRESS = 0;
 
 const int STATE_INNER_SCOPE_INPUT = 1;
 // no fold step, and instead, simply transfer weights
-// TODO: when full folding, might need step to add state to mark branch taken
 const int STATE_SCORE = 2;	// adjust fold meanwhile as well
 const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
@@ -38,7 +37,7 @@ public:
 
 	double new_state_factor;
 
-	double average_misguess;	// TODO: continue updating during folding
+	double average_misguess;	// if replace, pass to scope
 	double* existing_misguess;	// ref to branch end average_misguess
 
 	FoldNetwork* starting_score_network;
@@ -57,9 +56,10 @@ public:
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;	// becomes last compress network
 
-	int curr_starting_compress_size;
+	int curr_starting_compress_new_size;
 	FoldNetwork* curr_starting_compress_network;
-	int test_starting_compress_size;
+	int starting_compress_original_size;
+	int test_starting_compress_new_size;
 	FoldNetwork* test_starting_compress_network;
 
 	std::vector<int> test_s_input_sizes;
@@ -79,16 +79,16 @@ public:
 	FoldNetwork* test_score_network;
 
 	FoldNetwork* curr_compress_network;
-	int curr_compress_size;
 	int curr_compress_num_layers;
 	int curr_compress_new_size;
+	int curr_compress_original_size;	// for constructing scope
 	std::vector<int> curr_compressed_s_input_sizes;
 	std::vector<int> curr_compressed_scope_sizes;
 	
 	FoldNetwork* test_compress_network;
-	int test_compress_size;
 	int test_compress_num_layers;
 	int test_compress_new_size;
+	int test_compress_original_size;
 	std::vector<int> test_compressed_s_input_sizes;
 	std::vector<int> test_compressed_scope_sizes;
 

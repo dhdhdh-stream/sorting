@@ -961,7 +961,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-				// average_factor_error doesn't need to be scaled
 				scale_factor_error /= this->scope_scale_mod[a_index];
 
 				this->scopes[a_index]->explore_on_path_backprop(scope_input_errors,

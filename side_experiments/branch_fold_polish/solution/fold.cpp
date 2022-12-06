@@ -805,4 +805,6 @@ void Fold::fold_increment() {
 	// TODO: special case starting compress
 
 	// TODO: jump from STATE_STEP_ADDED to STATE_SCORE if not existing_action
+
+	// TODO: for last compress network/end_fold, don't need input step as will just use starting input, so can copy over directly
 }

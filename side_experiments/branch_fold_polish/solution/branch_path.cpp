@@ -17,7 +17,43 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 	int a_index = 1;
 
 	// start
-	if (this->is_branch[0]) {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
+		// starting_score already scaled
+
+		if (this->explore_index_inclusive == 0
+				&& this->explore_type == EXPLORE_TYPE_NEW) {
+			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+			this->explore_fold->explore_on_path_activate(starting_score,
+														 flat_vals,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 fold_history);
+			history->fold_history = fold_history;
+
+			explore_phase = EXPLORE_PHASE_FLAT;
+
+			a_index = this->explore_end_non_inclusive;
+		} else {
+			// wait until on branch_path to update predicted_score
+			history->score_updates[0] = starting_score;
+			predicted_score += starting_score;
+
+			if (this->active_compress[0]) {
+				// explore_phase == EXPLORE_PHASE_NONE
+				this->compress_networks[0]->activate_small(local_s_input_vals,
+														   local_state_vals);
+				local_state_vals.clear();
+				local_state_vals.reserve(this->compress_new_sizes[0]);
+				for (int s_index = 0; s_index < this->compress_new_sizes[0]; s_index++) {
+					local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
+				}
+			} else {
+				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
+			}
+		}
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
 		if (this->explore_index_inclusive == 0
 				&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
@@ -73,41 +109,38 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 			history->branch_histories[0] = branch_history;
 		}
 	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
 		// starting_score already scaled
 
 		if (this->explore_index_inclusive == 0
 				&& this->explore_type == EXPLORE_TYPE_NEW) {
-			FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+			FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
 			this->explore_fold->explore_on_path_activate(starting_score,
 														 flat_vals,
 														 local_s_input_vals,
 														 local_state_vals,
 														 predicted_score,
 														 scale_factor,
-														 fold_history);
-			history->fold_history = fold_history;
+														 explore_fold_history);
+			history->explore_fold_history = explore_fold_history;
 
 			explore_phase = EXPLORE_PHASE_FLAT;
 
 			a_index = this->explore_end_non_inclusive;
 		} else {
-			// wait until on branch_path to update predicted_score
 			history->score_updates[0] = starting_score;
-			predicted_score += starting_score;
+			// predicted_score updated in fold
 
-			if (this->active_compress[0]) {
-				// explore_phase == EXPLORE_PHASE_NONE
-				this->compress_networks[0]->activate_small(local_s_input_vals,
-														   local_state_vals);
-				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
-				local_state_vals.clear();
-				local_state_vals.reserve(compress_new_size);
-				for (int s_index = 0; s_index < compress_new_size; s_index++) {
-					local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
-				}
-			} else {
-				local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
-			}
+			FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+			this->folds[0]->explore_off_path_activate(flat_vals,
+													  starting_score,
+													  local_s_input_vals,
+													  local_state_vals,
+													  predicted_score,
+													  scale_factor,
+													  explore_phase,
+													  fold_history);
+			history->fold_histories[0] = fold_history;
 		}
 	}
 
@@ -168,7 +201,64 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->is_branch[a_index]) {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+			FoldNetworkHistory* score_network_history = NULL;
+			if (explore_phase == EXPLORE_PHASE_FLAT) {
+				score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
+				this->score_networks[a_index]->activate_small(local_s_input_vals,
+															  local_state_vals,
+															  score_network_history);
+			} else {
+				this->score_networks[a_index]->activate_small(local_s_input_vals,
+															  local_state_vals);
+			}
+			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+
+			if (this->explore_index_inclusive == a_index
+					&& this->explore_type == EXPLORE_TYPE_NEW) {
+				// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
+
+				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
+				this->explore_fold->explore_on_path_activate(existing_score,
+															 flat_vals,
+															 local_s_input_vals,
+															 local_state_vals,
+															 predicted_score,
+															 scale_factor,
+															 explore_fold_history);
+				history->explore_fold_history = explore_fold_history;
+
+				explore_phase = EXPLORE_PHASE_FLAT;
+
+				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
+			} else {
+				history->score_network_histories[a_index] = score_network_history;
+				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+				predicted_score += existing_score;
+
+				if (this->active_compress[a_index]) {
+					// compress 2 layers, add 1 layer
+					if (explore_phase == EXPLORE_PHASE_FLAT) {
+						FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
+						this->compress_networks[a_index]->activate_small(local_s_input_vals,
+																		 local_state_vals,
+																		 compress_network_history);
+						history->compress_network_histories[a_index] = compress_network_history;
+					} else {
+						this->compress_networks[a_index]->activate_small(local_s_input_vals,
+																		 local_state_vals);
+					}
+
+					local_state_vals.clear();
+					local_state_vals.reserve(this->compress_new_sizes[a_index]);
+					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
+						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
+					}
+				} else {
+					local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
+				}
+			}
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
@@ -187,15 +277,15 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_NEW) {
-				FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
 				this->explore_fold->explore_on_path_activate(branch_history->best_score,
 															 flat_vals,
 															 local_s_input_vals,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 fold_history);
-				history->fold_history = fold_history;
+															 explore_fold_history);
+				history->explore_fold_history = explore_fold_history;
 
 				explore_phase = EXPLORE_PHASE_FLAT;
 
@@ -224,6 +314,7 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				history->branch_histories[a_index] = branch_history;
 			}
 		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
 			FoldNetworkHistory* score_network_history = NULL;
 			if (explore_phase == EXPLORE_PHASE_FLAT) {
 				score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
@@ -240,46 +331,33 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 					&& this->explore_type == EXPLORE_TYPE_NEW) {
 				// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
 
-				FoldHistory* fold_history = new FoldHistory(this->explore_fold);
+				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
 				this->explore_fold->explore_on_path_activate(existing_score,
 															 flat_vals,
 															 local_s_input_vals,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 fold_history);
-				history->fold_history = fold_history;
+															 explore_fold_history);
+				history->explore_fold_history = explore_fold_history;
 
 				explore_phase = EXPLORE_PHASE_FLAT;
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
 			} else {
-				history->score_network_histories[a_index] = score_network_history;
 				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				predicted_score += existing_score;
+				// predicted_score updated in fold
 
-				if (this->active_compress[a_index]) {
-					// compress 2 layers, add 1 layer
-					if (explore_phase == EXPLORE_PHASE_FLAT) {
-						FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
-						this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																		 local_state_vals,
-																		 compress_network_history);
-						history->compress_network_histories[a_index] = compress_network_history;
-					} else {
-						this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																		 local_state_vals);
-					}
-
-					int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
-					local_state_vals.clear();
-					local_state_vals.reserve(compress_new_size);
-					for (int s_index = 0; s_index < compress_new_size; s_index++) {
-						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-					}
-				} else {
-					local_state_vals.erase(local_state_vals.end()-this->compress_sizes[a_index], local_state_vals.end());
-				}
+				FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+				this->folds[a_index]->explore_off_path_activate(flat_vals,
+																existing_score,
+																local_s_input_vals,
+																local_state_vals,
+																predicted_score,
+																scale_factor,
+																explore_phase,
+																fold_history);
+				history->fold_histories[a_index] = fold_history;
 			}
 		}
 
@@ -296,23 +374,7 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 										   int& explore_phase,
 										   BranchPathHistory* history) {
 	// start
-	if (this->is_branch[0]) {
-		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
-		this->branches[0]->explore_off_path_activate_score(local_s_input_vals,
-														   local_state_vals,
-														   scale_factor,
-														   explore_phase,
-														   branch_history);
-
-		this->branches[0]->explore_off_path_activate(flat_vals,
-													 local_s_input_vals,
-													 local_state_vals,
-													 predicted_score,
-													 scale_factor,
-													 explore_phase,
-													 branch_history);
-		history->branch_histories[0] = branch_history;
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// starting_score already scaled
 
 		// wait until on branch_path to update predicted_score
@@ -331,15 +393,47 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 														   local_state_vals);
 			}
 
-			int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
 			local_state_vals.clear();
-			local_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
+			local_state_vals.reserve(this->compress_new_sizes[0]);
+			for (int s_index = 0; s_index < this->compress_new_sizes[0]; s_index++) {
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
+			local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
 		}
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+		this->branches[0]->explore_off_path_activate_score(local_s_input_vals,
+														   local_state_vals,
+														   scale_factor,
+														   explore_phase,
+														   branch_history);
+
+		this->branches[0]->explore_off_path_activate(flat_vals,
+													 local_s_input_vals,
+													 local_state_vals,
+													 predicted_score,
+													 scale_factor,
+													 explore_phase,
+													 branch_history);
+		history->branch_histories[0] = branch_history;
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		// starting_score already scaled
+
+		history->score_updates[0] = starting_score;
+		// predicted_score updated in fold
+
+		FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+		this->folds[0]->explore_off_path_activate(flat_vals,
+												  starting_score,
+												  local_s_input_vals,
+												  local_state_vals,
+												  predicted_score,
+												  scale_factor,
+												  explore_phase,
+												  fold_history);
+		history->fold_histories[0] = fold_history;
 	}
 
 	// mid
@@ -388,23 +482,7 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->is_branch[a_index]) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
-																	 local_state_vals,
-																	 scale_factor,
-																	 explore_phase,
-																	 branch_history);
-
-			this->branches[a_index]->explore_off_path_activate(flat_vals,
-															   local_s_input_vals,
-															   local_state_vals,
-															   predicted_score,
-															   scale_factor,
-															   explore_phase,
-															   branch_history);
-			history->branch_histories[a_index] = branch_history;
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
@@ -431,37 +509,58 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 																	 local_state_vals);
 				}
 
-				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
 				local_state_vals.clear();
-				local_state_vals.reserve(compress_new_size);
-				for (int s_index = 0; s_index < compress_new_size; s_index++) {
+				local_state_vals.reserve(this->compress_new_sizes[a_index]);
+				for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
 					local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 				}
 			} else {
-				local_state_vals.erase(local_state_vals.end()-this->compress_sizes[a_index], local_state_vals.end());
+				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
 			}
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
+			this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
+																	 local_state_vals,
+																	 scale_factor,
+																	 explore_phase,
+																	 branch_history);
+
+			this->branches[a_index]->explore_off_path_activate(flat_vals,
+															   local_s_input_vals,
+															   local_state_vals,
+															   predicted_score,
+															   scale_factor,
+															   explore_phase,
+															   branch_history);
+			history->branch_histories[a_index] = branch_history;
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			if (explore_phase == EXPLORE_PHASE_FLAT) {
+				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
+				this->score_networks[a_index]->activate_small(local_s_input_vals,
+															  local_state_vals,
+															  score_network_history);
+				history->score_network_histories[a_index] = score_network_history;
+			} else {
+				this->score_networks[a_index]->activate_small(local_s_input_vals,
+															  local_state_vals);
+			}
+			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+			// predicted_score updated in fold
+
+			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+			this->folds[a_index]->explore_off_path_activate(flat_vals,
+															existing_score,
+															local_s_input_vals,
+															local_state_vals,
+															predicted_score,
+															scale_factor,
+															explore_phase,
+															fold_history);
+			history->fold_histories[a_index] = fold_history;
 		}
-
-		a_index++;
 	}
-
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
-		FoldNetworkHistory* end_input_network_history = new FoldNetworkHistory(this->end_input_network);
-		this->end_input_network->activate_small(local_s_input_vals,
-												local_state_vals,
-												end_input_network_history);
-		history->end_input_network_history = end_input_network_history;
-	} else {
-		this->end_input_network->activate_small(local_s_input_vals,
-												local_state_vals);
-	}
-	local_state_vals.clear();
-	local_state_vals.reserve(this->end_input_size);
-	for (int i_index = 0; i_index < this->end_input_size; i_index++) {
-		local_state_vals.push_back(this->end_input_network->output->acti_vals[i_index]);
-	}
-
-	scale_factor *= this->end_scale_mod;
 }
 
 void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
@@ -472,19 +571,6 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 										  BranchPathHistory* history) {
 	// don't need to output local_s_input_errors on path but for explore_off_path_backprop
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
-
-	scale_factor /= this->end_scale_mod;
-	scale_factor_error *= this->end_scale_mod;
-
-	vector<double> end_s_input_output_errors;
-	vector<double> end_state_output_errors;
-	this->end_input_network->backprop_small_errors_with_no_weight_change(
-		local_state_errors,
-		end_s_input_output_errors,
-		end_state_output_errors,
-		history->end_input_network_history);
-	// don't need to output local_s_input_errors on path
-	local_state_vals = end_state_output_errors;
 
 	int a_index;
 	if (this->explore_end_non_inclusive == this->scopes.size()
@@ -507,27 +593,7 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 
 			return;
 		} else {
-			if (this->is_branch[a_index]) {
-				if (this->explore_index_inclusive == a_index
-						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-					this->branches[a_index]->explore_on_path_backprop(local_state_errors,
-																	  predicted_score,
-																	  target_val,
-																	  scale_factor,
-																	  scale_factor_error,
-																	  history->branch_histories[a_index]);
-
-					return;
-				} else {
-					this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
-																	   local_state_errors,
-																	   predicted_score,
-																	   target_val,
-																	   scale_factor,
-																	   scale_factor_error,
-																	   history->branch_histories[a_index]);
-				}
-			} else {
+			if (this->step_types[a_index] == STEP_TYPE_STEP) {
 				if (this->active_compress[a_index]) {
 					vector<double> compress_s_input_output_errors;
 					vector<double> compress_state_output_errors;
@@ -539,7 +605,9 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 					// don't need to output local_s_input_errors on path
 					local_state_errors = compress_state_output_errors;
 				} else {
-					for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
+					// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
+					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+					for (int c_index = 0; c_index < compress_size; c_index++) {
 						local_state_errors.push_back(0.0);
 					}
 				}
@@ -562,6 +630,55 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 				}
 
 				predicted_score -= scale_factor*this->score_updates[a_index];
+			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+				if (this->explore_index_inclusive == a_index
+						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+					this->branches[a_index]->explore_on_path_backprop(local_state_errors,
+																	  predicted_score,
+																	  target_val,
+																	  scale_factor,
+																	  scale_factor_error,
+																	  history->branch_histories[a_index]);
+
+					return;
+				} else {
+					this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
+																	   local_state_errors,
+																	   predicted_score,
+																	   target_val,
+																	   scale_factor,
+																	   scale_factor_error,
+																	   history->branch_histories[a_index]);
+				}
+			} else {
+				// this->step_types[a_index] == STEP_TYPE_FOLD
+				this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
+																local_state_errors,
+																predicted_score,
+																target_val,
+																scale_factor,
+																scale_factor_error,
+																history->fold_histories[a_index]);
+
+				// predicted_score already modified to before fold value in fold
+				double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
+				double score_predicted_score_error = target_val - score_predicted_score;
+
+				scale_factor_error += this->score_updates[a_index]*score_predicted_score_error;
+
+				// have to include scale_factor as it can change the sign of the gradient
+				vector<double> score_errors{scale_factor*score_predicted_score_error};
+				vector<double> score_s_input_output_errors;
+				vector<double> score_state_output_errors;
+				this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
+					score_errors,
+					score_s_input_output_errors,
+					score_state_output_errors,
+					history->score_network_histories[a_index]);
+				// don't need to output local_s_input_errors on path
+				for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
+					local_state_errors[s_index] += score_state_output_errors[s_index];
+				}
 			}
 		}
 
@@ -644,48 +761,16 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_state_errors,
 
 		return;
 	} else {
-		if (this->is_branch[0]) {
-			if (this->explore_index_inclusive == 0
-					&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-				this->branches[0]->explore_on_path_backprop(local_state_errors,
-															predicted_score,
-															target_val,
-															scale_factor,
-															scale_factor_error,
-															history->branch_histories[0]);
+		// this->step_types[0] == STEP_TYPE_BRANCH
+		// this->explore_index_inclusive == 0 && this->explore_type == EXPLORE_TYPE_INNER_BRANCH
+		this->branches[0]->explore_on_path_backprop(local_state_errors,
+													predicted_score,
+													target_val,
+													scale_factor,
+													scale_factor_error,
+													history->branch_histories[0]);
 
-				return;
-			} else {
-				this->branches[0]->explore_off_path_backprop(local_s_input_errors,
-															 local_state_errors,
-															 predicted_score,
-															 target_val,
-															 scale_factor,
-															 scale_factor_error,
-															 history->branch_histories[0]);
-			}
-		} else {
-			if (this->active_compress[0]) {
-				vector<double> compress_s_input_output_errors;
-				vector<double> compress_state_output_errors;
-				this->compress_networks[0]->backprop_small_errors_with_no_weight_change(
-					local_state_errors,
-					compress_s_input_output_errors,
-					compress_state_output_errors,
-					history->compress_network_histories[0]);
-				// don't need to output local_s_input_errors on path
-				local_state_errors = compress_state_output_errors;
-			} else {
-				for (int c_index = 0; c_index < this->compress_sizes[0]; c_index++) {
-					local_state_errors.push_back(0.0);
-				}
-			}
-
-			// start step score errors handled in branch
-
-			// starting score already scaled
-			predicted_score -= this->score_updates[0];
-		}
+		return;
 	}
 }
 
@@ -698,32 +783,9 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 										   BranchPathHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
-	scale_factor /= this->end_scale_mod;
-	scale_factor_error *= this->end_scale_mod;
-
-	vector<double> end_s_input_output_errors;
-	vector<double> end_state_output_errors;
-	this->end_input_network->backprop_small_errors_with_no_weight_change(
-		local_state_errors,
-		end_s_input_output_errors,
-		end_state_output_errors,
-		history->end_input_network_history);
-	for (int s_index = 0; s_index < (int)end_s_input_output_errors.size(); s_index++) {
-		local_s_input_errors[s_index] += end_s_input_output_errors[s_index];
-	}
-	local_state_vals = end_state_output_errors;
-
 	// mid
 	for (int a_index = this->scopes.size()-1; a_index >= 1; a_index--) {
-		if (this->is_branch[a_index]) {
-			this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
-															   local_state_errors,
-															   predicted_score,
-															   target_val,
-															   scale_factor,
-															   scale_factor_error,
-															   history->branch_histories[a_index]);
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (this->active_compress[a_index]) {
 				vector<double> compress_s_input_output_errors;
 				vector<double> compress_state_output_errors;
@@ -738,7 +800,9 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 				}
 				local_state_errors = compress_state_output_errors;
 			} else {
-				for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
+				// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
+				int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+				for (int c_index = 0; c_index < compress_size; c_index++) {
 					local_state_errors.push_back(0.0);
 				}
 			}
@@ -764,6 +828,45 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 			}
 
 			predicted_score -= scale_factor*this->score_updates[a_index];
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
+															   local_state_errors,
+															   predicted_score,
+															   target_val,
+															   scale_factor,
+															   scale_factor_error,
+															   history->branch_histories[a_index]);
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
+															local_state_errors,
+															predicted_score,
+															target_val,
+															scale_factor,
+															scale_factor_error,
+															history->fold_histories[a_index]);
+
+			// predicted_score already modified to before fold value in fold
+			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
+			double score_predicted_score_error = target_val - score_predicted_score;
+
+			scale_factor_error += this->score_updates[a_index]*score_predicted_score_error;
+
+			vector<double> score_errors{scale_factor*score_predicted_score_error};
+			vector<double> score_s_input_output_errors;
+			vector<double> score_state_output_errors;
+			this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
+				score_errors,
+				score_s_input_output_errors,
+				score_state_output_errors,
+				history->score_network_histories[a_index]);
+			// use output sizes as might not have used all inputs
+			for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
+			}
+			for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
+				local_state_errors[s_index] += score_state_output_errors[s_index];
+			}
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -816,15 +919,7 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 	}
 
 	// start
-	if (this->is_branch[0]) {
-		this->branches[0]->explore_off_path_backprop(local_s_input_errors,
-													 local_state_errors,
-													 predicted_score,
-													 target_val,
-													 scale_factor,
-													 scale_factor_error,
-													 history->branch_histories[0]);
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		if (this->active_compress[0]) {
 			vector<double> compress_s_input_output_errors;
 			vector<double> compress_state_output_errors;
@@ -839,7 +934,9 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 			}
 			local_state_errors = compress_state_output_errors;
 		} else {
-			for (int c_index = 0; c_index < this->compress_sizes[0]; c_index++) {
+			// this->compress_original_sizes[0] > this->compress_new_sizes[0]
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			for (int c_index = 0; c_index < compress_size; c_index++) {
 				local_state_errors.push_back(0.0);
 			}
 		}
@@ -848,6 +945,27 @@ void BranchPath::explore_off_path_backprop(vector<double>* local_s_input_errors,
 
 		// starting score already scaled
 		predicted_score -= this->score_updates[0];
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		this->branches[0]->explore_off_path_backprop(local_s_input_errors,
+													 local_state_errors,
+													 predicted_score,
+													 target_val,
+													 scale_factor,
+													 scale_factor_error,
+													 history->branch_histories[0]);
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		this->folds[0]->explore_off_path_backprop(local_s_input_errors,
+												  local_state_errors,
+												  predicted_score,
+												  target_val,
+												  scale_factor,
+												  scale_factor_error,
+												  history->fold_histories[0]);
+
+		// start step score errors handled in branch
+
+		// predicted_score already modified to before fold value in fold
 	}
 }
 
@@ -859,16 +977,7 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 										double& scale_factor,
 										BranchPathHistory* history) {
 	// start
-	if (this->is_branch[0]) {
-		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
-		this->branches[0]->existing_flat_activate(flat_vals,
-												  local_s_input_vals,
-												  local_state_vals,
-												  predicted_score,
-												  scale_factor,
-												  branch_history);
-		history->branch_histories[0] = branch_history;
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// starting_score already scaled
 
 		// wait until on branch_path to update predicted_score
@@ -882,15 +991,39 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 													   compress_network_history);
 			history->compress_network_histories[0] = compress_network_history;
 
-			int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
 			local_state_vals.clear();
-			local_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
+			local_state_vals.reserve(this->compress_new_sizes[0]);
+			for (int s_index = 0; s_index < this->compress_new_sizes[0]; s_index++) {
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
 			local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
 		}
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+		this->branches[0]->existing_flat_activate(flat_vals,
+												  local_s_input_vals,
+												  local_state_vals,
+												  predicted_score,
+												  scale_factor,
+												  branch_history);
+		history->branch_histories[0] = branch_history;
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		// starting_score already scaled
+
+		history->score_updates[0] = starting_score;
+		// predicted_score updated in fold
+
+		FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+		this->folds[0]->existing_flat_activate(flat_vals,
+											   starting_score,
+											   local_s_input_vals,
+											   local_state_vals,
+											   predicted_score,
+											   scale_factor,
+											   fold_history);
+		history->fold_histories[0] = fold_history;
 	}
 
 	// mid
@@ -933,16 +1066,7 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->is_branch[a_index]) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->existing_flat_activate(flat_vals,
-															local_s_input_vals,
-															local_state_vals,
-															predicted_score,
-															scale_factor,
-															branch_history);
-			history->branch_histories[a_index] = branch_history;
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 			this->score_networks[a_index]->activate_small(local_s_input_vals,
 														  local_state_vals,
@@ -959,32 +1083,45 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 																 compress_network_history);
 				history->compress_network_histories[a_index] = compress_network_history;
 
-				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
 				local_state_vals.clear();
-				local_state_vals.reserve(compress_new_size);
-				for (int s_index = 0; s_index < compress_new_size; s_index++) {
+				local_state_vals.reserve(this->compress_new_sizes[a_index]);
+				for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
 					local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 				}
 			} else {
-				local_state_vals.erase(local_state_vals.end()-this->compress_sizes[a_index], local_state_vals.end());
+				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
 			}
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
+			this->branches[a_index]->existing_flat_activate(flat_vals,
+															local_s_input_vals,
+															local_state_vals,
+															predicted_score,
+															scale_factor,
+															branch_history);
+			history->branch_histories[a_index] = branch_history;
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
+			this->score_networks[a_index]->activate_small(local_s_input_vals,
+														  local_state_vals,
+														  score_network_history);
+			history->score_network_histories[a_index] = score_network_history;
+			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+			// predicted_score updated in fold
+
+			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+			this->folds[a_index]->existing_flat_activate(flat_vals,
+														 existing_score,
+														 local_s_input_vals,
+														 local_state_vals,
+														 predicted_score,
+														 scale_factor,
+														 fold_history);
+			history->fold_histories[a_index] = fold_history;
 		}
-
-		a_index++;
 	}
-
-	FoldNetworkHistory* end_input_network_history = new FoldNetworkHistory(this->end_input_network);
-	this->end_input_network->activate_small(local_s_input_vals,
-											local_state_vals,
-											end_input_network_history);
-	history->end_input_network_history = end_input_network_history;
-	local_state_vals.clear();
-	local_state_vals.reserve(this->end_input_size);
-	for (int i_index = 0; i_index < this->end_input_size; i_index++) {
-		local_state_vals.push_back(this->end_input_network->output->acti_vals[i_index]);
-	}
-
-	scale_factor *= this->end_scale_mod;
 }
 
 void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
@@ -996,32 +1133,9 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 										BranchPathHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
-	scale_factor /= this->end_scale_mod;
-	scale_factor_error *= this->end_scale_mod;
-
-	vector<double> end_s_input_output_errors;
-	vector<double> end_state_output_errors;
-	this->end_input_network->backprop_small_errors_with_no_weight_change(
-		local_state_errors,
-		end_s_input_output_errors,
-		end_state_output_errors,
-		history->end_input_network_history);
-	for (int s_index = 0; s_index < (int)end_s_input_output_errors.size(); s_index++) {
-		local_s_input_errors[s_index] += end_s_input_output_errors[s_index];
-	}
-	local_state_vals = end_state_output_errors;
-
 	// mid
 	for (int a_index = this->scopes.size()-1; a_index >= 1; a_index--) {
-		if (this->is_branch[a_index]) {
-			this->branches[a_index]->existing_flat_backprop(local_s_input_errors,
-															local_state_errors,
-															predicted_score,
-															predicted_score_error,
-															scale_factor,
-															scale_factor_error,
-															history->branch_histories[a_index]);
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (this->active_compress[a_index]) {
 				vector<double> compress_s_input_output_errors;
 				vector<double> compress_state_output_errors;
@@ -1036,7 +1150,9 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 				}
 				local_state_errors = compress_state_output_errors;
 			} else {
-				for (int c_index = 0; c_index < this->compress_sizes[a_index]; c_index++) {
+				// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
+				int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+				for (int c_index = 0; c_index < compress_size; c_index++) {
 					local_state_errors.push_back(0.0);
 				}
 			}
@@ -1060,6 +1176,43 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 			}
 
 			predicted_score -= scale_factor*this->score_updates[a_index];
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			this->branches[a_index]->existing_flat_backprop(local_s_input_errors,
+															local_state_errors,
+															predicted_score,
+															predicted_score_error,
+															scale_factor,
+															scale_factor_error,
+															history->branch_histories[a_index]);
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			this->folds[a_index]->existing_flat_backprop(local_s_input_errors,
+														 local_state_errors,
+														 predicted_score,
+														 predicted_score_error,
+														 scale_factor,
+														 scale_factor_error,
+														 history->fold_histories[a_index]);
+
+			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+
+			vector<double> score_errors{scale_factor*predicted_score_error};
+			vector<double> score_s_input_output_errors;
+			vector<double> score_state_output_errors;
+			this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
+				score_errors,
+				score_s_input_output_errors,
+				score_state_output_errors,
+				history->score_network_histories[a_index]);
+			// use output sizes as might not have used all inputs
+			for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
+			}
+			for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
+				local_state_errors[s_index] += score_state_output_errors[s_index];
+			}
+
+			// predicted_score updated in fold
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -1112,15 +1265,7 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 	}
 
 	// start
-	if (this->is_branch[0]) {
-		this->branches[0]->existing_flat_backprop(local_s_input_errors,
-												  local_state_errors,
-												  predicted_score,
-												  predicted_score_error,
-												  scale_factor,
-												  scale_factor_error,
-												  history->branch_histories[0]);
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		if (this->active_compress[0]) {
 			vector<double> compress_s_input_output_errors;
 			vector<double> compress_state_output_errors;
@@ -1135,7 +1280,9 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 			}
 			local_state_errors = compress_state_output_errors;
 		} else {
-			for (int c_index = 0; c_index < this->compress_sizes[0]; c_index++) {
+			// this->compress_original_sizes[0] > this->compress_new_sizes[0]
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			for (int c_index = 0; c_index < compress_size; c_index++) {
 				local_state_errors.push_back(0.0);
 			}
 		}
@@ -1144,6 +1291,27 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 
 		// starting score already scaled
 		predicted_score -= this->score_updates[0];
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		this->branches[0]->existing_flat_backprop(local_s_input_errors,
+												  local_state_errors,
+												  predicted_score,
+												  predicted_score_error,
+												  scale_factor,
+												  scale_factor_error,
+												  history->branch_histories[0]);
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		this->folds[0]->existing_flat_backprop(local_s_input_errors,
+											   local_state_errors,
+											   predicted_score,
+											   predicted_score_error,
+											   scale_factor,
+											   scale_factor_error,
+											   history->fold_histories[0]);
+
+		// start step score errors handled in branch
+
+		// predicted_score already modified to before fold value in fold
 	}
 }
 
@@ -1155,16 +1323,7 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 								 double& scale_factor,
 								 BranchPathHistory* history) {
 	// start
-	if (this->is_branch[0]) {
-		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
-		this->branches[0]->update_activate(flat_vals,
-										   local_s_input_vals,
-										   local_state_vals,
-										   predicted_score,
-										   scale_factor,
-										   branch_history);
-		history->branch_histories[0] = branch_history;
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// starting_score already scaled
 
 		// wait until on branch_path to update predicted_score
@@ -1175,15 +1334,39 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 			this->compress_networks[0]->activate_small(local_s_input_vals,
 													   local_state_vals);
 
-			int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
 			local_state_vals.clear();
-			local_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
+			local_state_vals.reserve(this->compress_new_sizes[0]);
+			for (int s_index = 0; s_index < this->compress_new_sizes[0]; s_index++) {
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
+			local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
 		}
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+		this->branches[0]->update_activate(flat_vals,
+										   local_s_input_vals,
+										   local_state_vals,
+										   predicted_score,
+										   scale_factor,
+										   branch_history);
+		history->branch_histories[0] = branch_history;
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		// starting_score already scaled
+
+		history->score_updates[0] = starting_score;
+		// predicted_score updated in fold
+
+		FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+		this->folds[0]->update_activate(flat_vals,
+										starting_score,
+										local_s_input_vals,
+										local_state_vals,
+										predicted_score,
+										scale_factor,
+										fold_history);
+		history->fold_histories[0] = fold_history;
 	}
 
 	// mid
@@ -1223,16 +1406,7 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->is_branch[a_index]) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->update_activate(flat_vals,
-													 local_s_input_vals,
-													 local_state_vals,
-													 predicted_score,
-													 scale_factor,
-													 branch_history);
-			history->branch_histories[a_index] = branch_history;
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 			this->score_networks[a_index]->activate_small(local_s_input_vals,
 														  local_state_vals,
@@ -1246,29 +1420,45 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 				this->compress_networks[a_index]->activate_small(local_s_input_vals,
 																 local_state_vals);
 
-				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
 				local_state_vals.clear();
-				local_state_vals.reserve(compress_new_size);
-				for (int s_index = 0; s_index < compress_new_size; s_index++) {
+				local_state_vals.reserve(this->compress_new_sizes[a_index]);
+				for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
 					local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 				}
 			} else {
-				local_state_vals.erase(local_state_vals.end()-this->compress_sizes[a_index], local_state_vals.end());
+				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
 			}
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
+			this->branches[a_index]->update_activate(flat_vals,
+													 local_s_input_vals,
+													 local_state_vals,
+													 predicted_score,
+													 scale_factor,
+													 branch_history);
+			history->branch_histories[a_index] = branch_history;
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
+			this->score_networks[a_index]->activate_small(local_s_input_vals,
+														  local_state_vals,
+														  score_network_history);
+			history->score_network_histories[a_index] = score_network_history;
+			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+			// predicted_score updated in fold
+
+			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+			this->folds[a_index]->update_activate(flat_vals,
+												  existing_score,
+												  local_s_input_vals,
+												  local_state_vals,
+												  predicted_score,
+												  scale_factor,
+												  fold_history);
+			history->fold_histories[a_index] = fold_history;
 		}
-
-		a_index++;
 	}
-
-	this->end_input_network->activate_small(local_s_input_vals,
-											local_state_vals);
-	local_state_vals.clear();
-	local_state_vals.reserve(this->end_input_size);
-	for (int i_index = 0; i_index < this->end_input_size; i_index++) {
-		local_state_vals.push_back(this->end_input_network->output->acti_vals[i_index]);
-	}
-
-	scale_factor *= this->end_scale_mod;
 }
 
 void BranchPath::update_backprop(double& predicted_score,
@@ -1276,20 +1466,12 @@ void BranchPath::update_backprop(double& predicted_score,
 								 double target_val,
 								 double& scale_factor,
 								 ScopeHistory* history) {
-	scale_factor /= this->end_scale_mod;
-
 	// mid
 	for (int a_index = this->scopes.size()-1; a_index >= 1; a_index--) {
 		double misguess = target_val - predicted_score;
 		this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 
-		if (this->is_branch[a_index]) {
-			this->branches[a_index]->update_backprop(predicted_score,
-													 next_predicted_score,
-													 target_val,
-													 scale_factor,
-													 history->branch_histories[a_index]);
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			double predicted_score_error = target_val - predicted_score;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
@@ -1300,6 +1482,29 @@ void BranchPath::update_backprop(double& predicted_score,
 
 			next_predicted_score = predicted_score;
 			predicted_score -= scale_factor*this->score_updates[a_index];
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			this->branches[a_index]->update_backprop(predicted_score,
+													 next_predicted_score,
+													 target_val,
+													 scale_factor,
+													 history->branch_histories[a_index]);
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			this->folds[a_index]->update_backprop(predicted_score,
+												  next_predicted_score,
+												  target_val,
+												  scale_factor,
+												  history->fold_histories[a_index]);
+
+			// predicted_score already modified to before fold value in fold
+			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
+			double score_predicted_score_error = target_val - score_predicted_score;
+
+			vector<double> score_errors{scale_factor*score_predicted_score_error};
+			this->score_networks[a_index]->backprop_small_weights_with_no_error_signal(
+				score_errors,
+				0.001,
+				history->score_network_histories[a_index]);
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -1323,18 +1528,29 @@ void BranchPath::update_backprop(double& predicted_score,
 	double misguess = target_val - predicted_score;
 	this->average_misguesses[0] = 0.999*this->average_misguesses[0] + 0.001*misguess;
 
-	if (this->is_branch[0]) {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
+		// start step score errors handled in branch
+
+		next_predicted_score = predicted_score;
+		// starting score already scaled
+		predicted_score -= this->score_updates[0];
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		this->branches[0]->update_backprop(predicted_score,
 										   next_predicted_score,
 										   target_val,
 										   scale_factor,
 										   history->branch_histories[0]);
 	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		this->folds[0]->update_backprop(predicted_score,
+										next_predicted_score,
+										target_val,
+										scale_factor,
+										history->fold_histories[0]);
+
 		// start step score errors handled in branch
 
-		next_predicted_score = predicted_score;
-		// starting score already scaled
-		predicted_score -= this->score_updates[0];
+		// predicted_score already modified to before fold value in fold
 	}
 }
 
@@ -1346,16 +1562,7 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 										  double& scale_factor,
 										  BranchPathHistory* history) {
 	// start
-	if (this->is_branch[0]) {
-		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
-		this->branches[0]->existing_update_activate(flat_vals,
-													local_s_input_vals,
-													local_state_vals,
-													predicted_score,
-													scale_factor,
-													branch_history);
-		history->branch_histories[0] = branch_history;
-	} else {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// starting_score already scaled
 
 		// wait until on branch_path to update predicted_score
@@ -1366,15 +1573,39 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 			this->compress_networks[0]->activate_small(local_s_input_vals,
 													   local_state_vals);
 
-			int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[0];
 			local_state_vals.clear();
-			local_state_vals.reserve(compress_new_size);
-			for (int s_index = 0; s_index < compress_new_size; s_index++) {
+			local_state_vals.reserve(this->compress_new_sizes[0]);
+			for (int s_index = 0; s_index < this->compress_new_sizes[0]; s_index++) {
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
+			local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
 		}
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
+		this->branches[0]->existing_update_activate(flat_vals,
+													local_s_input_vals,
+													local_state_vals,
+													predicted_score,
+													scale_factor,
+													branch_history);
+		history->branch_histories[0] = branch_history;
+	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		// starting_score already scaled
+
+		history->score_updates[0] = starting_score;
+		// predicted_score updated in fold
+
+		FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+		this->folds[0]->existing_update_activate(flat_vals,
+												 starting_score,
+												 local_s_input_vals,
+												 local_state_vals,
+												 predicted_score,
+												 scale_factor,
+												 fold_history);
+		history->fold_histories[0] = fold_history;
 	}
 
 	// mid
@@ -1414,16 +1645,7 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->is_branch[a_index]) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->existing_update_activate(flat_vals,
-															  local_s_input_vals,
-															  local_state_vals,
-															  predicted_score,
-															  scale_factor,
-															  branch_history);
-			history->branch_histories[a_index] = branch_history;
-		} else {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			this->score_networks[a_index]->activate_small(local_s_input_vals,
 														  local_state_vals);
 			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
@@ -1434,29 +1656,42 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 				this->compress_networks[a_index]->activate_small(local_s_input_vals,
 																 local_state_vals);
 
-				int compress_new_size = (int)local_state_vals.size() - this->compress_sizes[a_index];
 				local_state_vals.clear();
-				local_state_vals.reserve(compress_new_size);
-				for (int s_index = 0; s_index < compress_new_size; s_index++) {
+				local_state_vals.reserve(this->compress_new_sizes[a_index]);
+				for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
 					local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 				}
 			} else {
-				local_state_vals.erase(local_state_vals.end()-this->compress_sizes[a_index], local_state_vals.end());
+				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
 			}
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
+			this->branches[a_index]->existing_update_activate(flat_vals,
+															  local_s_input_vals,
+															  local_state_vals,
+															  predicted_score,
+															  scale_factor,
+															  branch_history);
+			history->branch_histories[a_index] = branch_history;
+		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			this->score_networks[a_index]->activate_small(local_s_input_vals,
+														  local_state_vals);
+			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+			// predicted_score updated in fold
+
+			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+			this->folds[a_index]->existing_update_activate(flat_vals,
+														   existing_score,
+														   local_s_input_vals,
+														   local_state_vals,
+														   predicted_score,
+														   scale_factor,
+														   fold_history);
+			history->fold_histories[a_index] = fold_history;
 		}
-
-		a_index++;
 	}
-
-	this->end_input_network->activate_small(local_s_input_vals,
-											local_state_vals);
-	local_state_vals.clear();
-	local_state_vals.reserve(this->end_input_size);
-	for (int i_index = 0; i_index < this->end_input_size; i_index++) {
-		local_state_vals.push_back(this->end_input_network->output->acti_vals[i_index]);
-	}
-
-	scale_factor *= this->end_scale_mod;
 }
 
 void BranchPath::existing_update_backprop(double& predicted_score,
@@ -1464,21 +1699,29 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 										  double& scale_factor,
 										  double& scale_factor_error,
 										  BranchPathHistory* history) {
-	scale_factor /= this->end_scale_mod;
-	scale_factor_error *= this->end_scale_mod;
-
 	// mid
 	for (int a_index = this->scopes.size()-1; a_index >= 1; a_index--) {
-		if (this->is_branch[a_index]) {
+		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+
+			predicted_score -= scale_factor*this->score_updates[a_index];
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->branches[a_index]->existing_update_backprop(predicted_score,
 															  predicted_score_error,
 															  scale_factor,
 															  scale_factor_error,
 															  history->branch_histories[a_index]);
 		} else {
+			// this->step_types[a_index] == STEP_TYPE_FOLD
+			this->folds[a_index]->existing_update_backprop(predicted_score,
+														   predicted_score_error,
+														   scale_factor,
+														   scale_factor_error,
+														   history->fold_histories[a_index]);
+
 			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
 
-			predicted_score -= scale_factor*this->score_updates[a_index];
+			// predicted_score updated in fold
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -1500,16 +1743,27 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 	}
 
 	// start
-	if (this->is_branch[0]) {
+	if (this->step_types[0] == STEP_TYPE_STEP) {
+		// start step score errors handled in branch
+
+		// starting score already scaled
+		predicted_score -= this->score_updates[0];
+	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		this->branches[0]->existing_update_backprop(predicted_score,
 													predicted_score_error,
 													scale_factor,
 													scale_factor_error,
 													history->branch_histories[0]);
 	} else {
+		// this->step_types[0] == STEP_TYPE_FOLD
+		this->folds[0]->existing_update_backprop(predicted_score,
+												 predicted_score_error,
+												 scale_factor,
+												 scale_factor_error,
+												 history->fold_histories[0]);
+
 		// start step score errors handled in branch
 
-		// starting score already scaled
-		predicted_score -= this->score_updates[0];
+		// predicted_score already modified to before fold value in fold
 	}
 }

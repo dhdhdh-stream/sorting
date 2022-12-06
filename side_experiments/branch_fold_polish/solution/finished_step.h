@@ -22,9 +22,9 @@ public:
 
 	int compress_num_layers;
 	bool active_compress;
-	int compress_size;
 	int compress_new_size;
 	FoldNetwork* compress_network;
+	int compress_original_size;	// for constructing scope
 
 	std:;vector<int> compressed_s_input_sizes;	// earliest to latest
 	std::vector<int> compressed_scope_sizes;

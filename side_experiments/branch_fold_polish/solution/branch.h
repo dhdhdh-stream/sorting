@@ -8,7 +8,6 @@ public:
 	FoldNetwork* branch_score_network;
 	bool passed_branch_score;	// if branch_score_network taken by outer branch
 
-	bool does_inherit;
 	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
@@ -23,8 +22,19 @@ public:
 	// TODO: for folding a branch with the front, for the other branches' input, add output networks (like the opposite of the input networks currently)
 	// set one full path as primary, and fold completely?
 	// - there will be branches coming off, but can try to match existing
+	//   - during flat (and later during fold), if not taking branch, add state to mark
 	// - if branch travelled, set unhit to blank
 	// so can still be made a simple flat into a simple fold?
+
+	Branch(FoldNetwork* branch_score_network,
+		   std::vector<FoldNetwork*> score_networks,
+		   std::vector<bool> is_branch,
+		   std::vector<BranchPath*> branches,
+		   std::vector<Fold*> folds,
+		   std::vector<double> end_scale_mods);
+	~Branch();
+
+
 };
 
 class BranchHistory {
