@@ -19,8 +19,12 @@ public:
 	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
+	// use NULL score_network to signify was scope end and no further processing needed
 
 	std::vector<double> average_misguesses;
+	std::vector<double> average_inner_scope_impacts;
+	std::vector<double> average_local_impacts;
+	std::vector<double> average_inner_branch_impacts;
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;
@@ -43,6 +47,9 @@ public:
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
 			   std::vector<double> average_misguesses,
+			   std::vector<double> average_inner_scope_impacts,
+			   std::vector<double> average_local_impacts,
+			   std::vector<double> average_inner_branch_impacts,
 			   std::vector<bool> active_compress,
 			   std::vector<int> compress_new_sizes,
 			   std::vector<FoldNetwork*> compress_networks,

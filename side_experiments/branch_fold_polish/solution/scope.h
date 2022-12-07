@@ -32,6 +32,12 @@ public:
 	// outer solution will hold on to final outer score_network (and no compress needed)
 
 	std::vector<double> average_misguesses;	// track also after branches
+	std::vector<double> average_inner_scope_impacts;
+	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
+	std::vector<double> average_inner_branch_impacts;
+	// 50% of the time, explore inner -- otherwise, explore local
+	// TODO: compare against parent impact to determine explore weight
+	// TODO: explore when predicted_score drops and hit explore weight
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds

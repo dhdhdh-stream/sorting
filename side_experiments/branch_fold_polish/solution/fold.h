@@ -37,13 +37,18 @@ public:
 
 	double new_state_factor;
 
-	double average_misguess;	// if replace, pass to scope
+	double average_misguess;
 	double* existing_misguess;	// ref to branch end average_misguess
+	double average_misguess_standard_deviation;	// assume equal standard deviation for existing
 
 	FoldNetwork* starting_score_network;
-	double replace_improvement;
+	double replace_existing;
+	double replace_existing_standard_deviation;
+	double replace_combined;
+	double replace_combined_standard_deviation;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
 	double combined_improvement;
+	double combined_standard_deviation;
 
 	std::vector<Network*> scope_scale_mod_calcs;
 	Network* end_scale_mod_calc;	// can drop if replace

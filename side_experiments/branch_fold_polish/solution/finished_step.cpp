@@ -728,6 +728,9 @@ void FinishedStep::update_backprop(double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
 								   FinishedStepHistory* history) {
+	double misguess = abs(target_val - predicted_score);
+	this->average_misguess = 0.999*this->average_misguess + 0.001*misguess;
+
 	double predicted_score_error = target_val - predicted_score;
 
 	vector<double> score_errors{scale_factor*predicted_score_error};
@@ -738,9 +741,14 @@ void FinishedStep::update_backprop(double& predicted_score,
 	next_predicted_score = predicted_score;
 	predicted_score -= scale_factor*this->score_update;
 
+	this->average_local_impact = 0.999*this->average_local_impact
+		+ 0.001*abs(scale_factor*this->score_update);
+
 	if (!this->is_inner_scope) {
 		// do nothing
 	} else {
+		double ending_predicted_score = predicted_score;
+
 		scale_factor *= this->scope_scale_mod;
 
 		this->scope->update_backprop(predicted_score,
@@ -750,6 +758,10 @@ void FinishedStep::update_backprop(double& predicted_score,
 									 history->scope_history);
 
 		scale_factor /= this->scope_scale_mod;
+
+		double starting_predicted_score = predicted_score;
+		this->average_inner_scope_impact = 0.999*this->average_inner_scope_impact
+			+ 0.001*abs(ending_predicted_score - starting_predicted_score);
 	}
 }
 

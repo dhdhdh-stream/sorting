@@ -86,6 +86,8 @@ Fold::Fold(int sequence_length,
 										  starting_state_size,
 										  50);
 
+	int starting_compress_original_size = starting_state_size;
+	int curr_starting_compress_new_size = starting_state_size;
 	this->curr_starting_compress_network = NULL;
 	this->test_starting_compress_network = NULL;
 
@@ -206,7 +208,7 @@ void Fold::explore_on_path_activate(double existing_score,
 									   history);
 }
 
-void Fold::explore_on_path_backprop(vector<double>& local_state_errors,
+int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 									double& predicted_score,
 									double target_val,
 									double& scale_factor,
@@ -221,27 +223,62 @@ void Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	if (this->state_iter >= 500000) {
-		if (this->combined_improvement > MIN_SCORE_GAIN) {
-			if (this->replace_improvement > this->combined_improvement + MAX_SCORE_LOSS) {
-				// replace
-
-				this->last_state = state;
+	if (this->state_iter == 495000) {
+		this->average_misguess /= 5000;
+		this->replace_existing /= 5000;
+		this->replace_combined /= 5000;
+		this->combined_improvement /= 5000;
+	} else if (this->state_iter == 500000) {
+		this->combined_standard_deviation =
+			sqrt(this->combined_standard_deviation/4999);
+		double combined_t_value = this->combined_improvement
+			/ (this->combined_standard_deviation / sqrt(5000));
+		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
+			this->replace_combined_standard_deviation =
+				sqrt(this->replace_combined_standard_deviation/4999);
+			double replace_combined_t_value = this->replace_combined
+				/ (this->replace_combined_standard_deviation / sqrt(5000));
+			if (this->replace_combined > 0.0
+					|| abs(replace_combined_t_value) < 2.576) {
+				this->last_state = STATE_STEP_ADDED;
 				this->state = STATE_INNER_SCOPE_INPUT;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
+
+				return EXPLORE_SIGNAL_REPLACE;
 			} else {
-				// branch
-			}
-		} else if (this->replace_improvement > MAX_SCORE_LOSS) {
-			if (this->average_misguess + MIN_INFO_GAIN < *this->existing_misguess) {
-				// replace
-			} else {
-				// clean-up
+				this->last_state = STATE_STEP_ADDED;
+				this->state = STATE_INNER_SCOPE_INPUT;
+				this->state_iter = 0;
+				this->sum_error = 0.0;
+
+				return EXPLORE_SIGNAL_BRANCH;
 			}
 		} else {
-			// clean-up
+			this->replace_existing_standard_deviation =
+				sqrt(this->replace_existing_standard_deviation/4999);
+			double replace_existing_t_value = this->replace_existing
+				/ (this->replace_existing_standard_deviation / sqrt(5000));
+
+			this->average_misguess_standard_deviation =
+				sqrt(this->average_misguess_standard_deviation/4999);
+			double average_misguess_t_value = this->average_misguess
+				/ (this->average_misguess_standard_deviation / sqrt(5000));
+
+			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 2.576)
+					&& (this->average_misguess > 0.0 && average_misguess_t_value > 2.576)) {
+				this->last_state = STATE_STEP_ADDED;
+				this->state = STATE_INNER_SCOPE_INPUT;
+				this->state_iter = 0;
+				this->sum_error = 0.0;
+
+				return EXPLORE_SIGNAL_REPLACE;
+			} else {
+				return EXPLORE_SIGNAL_CLEAN;
+			}
 		}
+	} else {
+		return EXPLORE_SIGNAL_NONE;
 	}
 }
 
@@ -807,4 +844,44 @@ void Fold::fold_increment() {
 	// TODO: jump from STATE_STEP_ADDED to STATE_SCORE if not existing_action
 
 	// TODO: for last compress network/end_fold, don't need input step as will just use starting input, so can copy over directly
+
+	this->state_iter++;
+
+	if (this->state == STATE_STARTING_COMPRESS) {
+		if (this->state_iter >= 300000) {
+			
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
+		}
+	}
+}
+
+void Fold::flat_to_starting_compress() {
+
+}
+
+void Fold::starting_compress_end() {
+
+}
+
+void Fold::inner_scope_input_end() {
+
+}
+
+void Fold::score_end() {
+
+}
+
+void Fold::compress_state_end() {
+
+}
+
+void Fold::compress_scope_end() {
+
+}
+
+void Fold::input_end() {
+
 }

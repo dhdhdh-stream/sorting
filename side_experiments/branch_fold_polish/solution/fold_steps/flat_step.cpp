@@ -12,7 +12,6 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 											  double& predicted_score,
 											  double& scale_factor,
 											  FoldHistory* history) {
-	// train starting_score_network as part of flat, but don't worry about starting_compress_network yet
 	this->starting_score_network->activate_small(local_s_input_vals,
 												 local_state_vals);
 	history->starting_score_update = this->starting_score_network->output->acti_vals[0];
@@ -98,8 +97,13 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	scale_factor /= end_scale_mod_val;
 	scale_factor_error *= end_scale_mod_val;
 
-	if (this->state_iter >= 490000) {
-		double misguess = target_val - predicted_score;
+	if (this->state_iter >= 495000) {
+		double misguess = abs(target_val - predicted_score);
+		// don't worry about updating average_misguess
+		double misguess_diff = misguess - this->average_misguess;
+		this->average_misguess_standard_deviation += misguess_diff*misguess_diff;
+	} else if (this->state_iter >= 490000) {
+		double misguess = abs(target_val - predicted_score);
 		this->average_misguess += misguess;
 	}
 
@@ -190,10 +194,6 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		}
 	}
 
-	if (this->state_iter >= 490000) {
-		this->replace_improvement += scale_factor*history->starting_score_update - history->existing_score;
-	}
-
 	double starting_predicted_score_error = target_val - predicted_score;
 	vector<double> starting_score_errors{scale_factor*starting_predicted_score_error};
 	if (this->state_iter <= 300000) {
@@ -211,7 +211,21 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 	// end of backprop so no need to modify predicted_score
 
-	if (this->state_iter >= 490000) {
+	if (this->state_iter >= 495000) {
+		double replace_existing_diff = (scale_factor*history->starting_score_update - history->existing_score)
+			- this->replace_existing;
+		this->replace_existing_standard_deviation += replace_existing_diff*replace_existing_diff;
+
+		double replace_combined_diff = (scale_factor*history->starting_score_update - scale_factor*history->combined_score_update)
+			- this->replace_combined;
+		this->replace_combined_standard_deviation += replace_combined_diff*replace_combined_diff;
+
+		double combined_diff = (scale_factor*history->combined_score_update - history->existing_score)
+			- this->combined_improvement;
+		this->combined_standard_deviation += combined_diff*combined_diff;
+	} else if (this->state_iter >= 490000) {
+		this->replace_existing += scale_factor*history->starting_score_update - history->existing_score;
+		this->replace_combined += scale_factor*history->starting_score_update - scale_factor*history->combined_score_update;
 		this->combined_improvement += scale_factor*history->combined_score_update - history->existing_score;
 	}
 

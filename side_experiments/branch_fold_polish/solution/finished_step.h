@@ -20,6 +20,10 @@ public:
 
 	FoldNetwork* score_network;
 
+	double average_misguess;
+	double average_inner_scope_impact;
+	double average_local_impact;
+
 	int compress_num_layers;
 	bool active_compress;
 	int compress_new_size;

@@ -16,4 +16,9 @@ const int EXPLORE_TYPE_NEW = 2;	// after flat, becomes EXPLORE_TYPE_INNER_BRANCH
 const int EXPLORE_PHASE_NONE = 0;
 const int EXPLORE_PHASE_FLAT = 1;
 
+const int EXPLORE_SIGNAL_NONE = 0;
+const int EXPLORE_SIGNAL_REPLACE = 1;
+const int EXPLORE_SIGNAL_BRANCH = 2;
+const int EXPLORE_SIGNAL_CLEAN = 3;
+
 #endif /* DEFINITIONS_H */

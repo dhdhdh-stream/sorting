@@ -1,4 +1,4 @@
-#include "scope.h"
+#include "branch_path.h"
 
 #include <iostream>
 
@@ -6,7 +6,9 @@
 
 using namespace std;
 
-void Scope::explore_replace() {
+// identical to for Scope
+
+void BranchPath::explore_replace() {
 	if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_STEP) {
 		// can't be scope end
 
@@ -119,7 +121,7 @@ void Scope::explore_replace() {
 	this->explore_fold = NULL;
 }
 
-void Scope::explore_branch() {
+void BranchPath::explore_branch() {
 	if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH
 			&& this->explore_index_inclusive+1 == this->explore_end_non_inclusive) {
 		// this->branches[this->explore_index_inclusive]->passed_branch_score == false
