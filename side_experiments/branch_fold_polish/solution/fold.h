@@ -101,6 +101,14 @@ public:
 	std::vector<int> input_sizes;
 	std::vector<FoldNetwork*> input_networks;
 
+	Fold(int sequence_length,
+		 std::vector<Scope*> existing_actions,
+		 std::vector<int> obs_sizes,
+		 int output_size,
+		 double* existing_misguess,
+		 int starting_s_input_size,
+		 int starting_state_size);	// super edge case but can be 0 if scope num_outputs is 0
+
 	// TODO: need to be able to save Folds, even during partial progress
 };
 

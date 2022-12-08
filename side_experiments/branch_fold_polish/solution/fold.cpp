@@ -239,18 +239,12 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 			double replace_combined_t_value = this->replace_combined
 				/ (this->replace_combined_standard_deviation / sqrt(5000));
 			if (this->replace_combined > 0.0
-					|| abs(replace_combined_t_value) < 2.576) {
-				this->last_state = STATE_STEP_ADDED;
-				this->state = STATE_INNER_SCOPE_INPUT;
-				this->state_iter = 0;
-				this->sum_error = 0.0;
+					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
+				flat_to_fold();
 
 				return EXPLORE_SIGNAL_REPLACE;
 			} else {
-				this->last_state = STATE_STEP_ADDED;
-				this->state = STATE_INNER_SCOPE_INPUT;
-				this->state_iter = 0;
-				this->sum_error = 0.0;
+				flat_to_fold();
 
 				return EXPLORE_SIGNAL_BRANCH;
 			}
@@ -265,12 +259,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 			double average_misguess_t_value = this->average_misguess
 				/ (this->average_misguess_standard_deviation / sqrt(5000));
 
-			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 2.576)
+			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
 					&& (this->average_misguess > 0.0 && average_misguess_t_value > 2.576)) {
-				this->last_state = STATE_STEP_ADDED;
-				this->state = STATE_INNER_SCOPE_INPUT;
-				this->state_iter = 0;
-				this->sum_error = 0.0;
+				flat_to_fold();
 
 				return EXPLORE_SIGNAL_REPLACE;
 			} else {
@@ -839,8 +830,6 @@ void Fold::existing_update_backprop(double& predicted_score,
 }
 
 void Fold::fold_increment() {
-	// TODO: special case starting compress
-
 	// TODO: jump from STATE_STEP_ADDED to STATE_SCORE if not existing_action
 
 	// TODO: for last compress network/end_fold, don't need input step as will just use starting input, so can copy over directly
@@ -848,34 +837,59 @@ void Fold::fold_increment() {
 	this->state_iter++;
 
 	if (this->state == STATE_STARTING_COMPRESS) {
-		if (this->state_iter >= 300000) {
-			
+		// TODO: experiment with lowering to 100000
+		if (this->state_iter == 300000) {
+			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
 				this->sum_error = 0.0;
 			}
 		}
+	} else if (this->state == STATE_INNER_SCOPE_INPUT) {
+		if (this->state_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->state_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
+		if (this->state_iter == 300000) {
+			inner_scope_input_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
+		}
+	} else if (this->state == STATE_SCORE) {
+		if (this->state_iter == 300000) {
+			score_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
+		}
+	} else if (this->state == STATE_COMPRESS_STATE) {
+		if (this->state_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->state_iter == 100000) {
+			this->new_state_factor = 1;
+		}
+
+
 	}
 }
 
-void Fold::flat_to_starting_compress() {
-
-}
-
-void Fold::starting_compress_end() {
-
-}
-
-void Fold::inner_scope_input_end() {
-
-}
-
-void Fold::score_end() {
-
-}
-
 void Fold::compress_state_end() {
+	if (this->sum_error/10000 < 0.001) {
+		if (this->curr_compress_network != NULL) {
+			delete this->curr_compress_network;
+		}
+		this->curr_compress_network = this->test_compress_network;
+		this->test_compress_network = NULL;
 
+		
+	} else {
+
+	}
 }
 
 void Fold::compress_scope_end() {
@@ -883,5 +897,9 @@ void Fold::compress_scope_end() {
 }
 
 void Fold::input_end() {
+
+}
+
+void Fold::add_finished_step() {
 
 }

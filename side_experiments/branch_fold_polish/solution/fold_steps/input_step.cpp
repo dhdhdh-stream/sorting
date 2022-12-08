@@ -18,22 +18,26 @@ void Fold::input_step_explore_off_path_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		if (explore_phase == EXPLORE_PHASE_FLAT) {
-			FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
-			this->curr_starting_compress_network->activate_small(local_s_input_vals,
-																 local_state_vals,
-																 curr_starting_compress_network_history);
-			history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+		if (this->curr_starting_compress_new_size > 0) {
+			if (explore_phase == EXPLORE_PHASE_FLAT) {
+				FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
+				this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																	 local_state_vals,
+																	 curr_starting_compress_network_history);
+				history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+			} else {
+				this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																	 local_state_vals);
+			}
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
 		} else {
-			this->curr_starting_compress_network->activate_small(local_s_input_vals,
-																 local_state_vals);
-		}
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 
@@ -549,18 +553,23 @@ void Fold::input_step_explore_off_path_backprop(
 	local_state_errors = state_errors[0];
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
-			local_state_errors,
-			history->curr_starting_compress_network_history);
-		for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-			local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-			this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
-		}
-		local_state_errors.clear();
-		local_state_errors.reserve(this->starting_compress_original_size);
-		for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-			local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-			this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
+				local_state_errors,
+				history->curr_starting_compress_network_history);
+			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
+				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+			}
+			local_state_errors.clear();
+			local_state_errors.reserve(this->starting_compress_original_size);
+			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
+				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
+				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+			}
+		} else {
+			// local_state_errors.size() == 0
+			local_state_errors = vector<double>(this->starting_compress_original_size, 0.0);
 		}
 	}
 
@@ -579,17 +588,21 @@ void Fold::input_step_existing_flat_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
-		this->curr_starting_compress_network->activate_small(local_s_input_vals,
-															 local_state_vals,
-															 curr_starting_compress_network_history);
-		history->curr_starting_compress_network_history = curr_starting_compress_network_history;
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+		if (this->curr_starting_compress_new_size > 0) {
+			FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
+			this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																 local_state_vals,
+																 curr_starting_compress_network_history);
+			history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
+		} else {
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 
@@ -1056,18 +1069,23 @@ void Fold::input_step_existing_flat_backprop(
 	local_state_errors = state_errors[0];
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
-			local_state_errors,
-			history->curr_starting_compress_network_history);
-		for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-			local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-			this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
-		}
-		local_state_errors.clear();
-		local_state_errors.reserve(this->starting_compress_original_size);
-		for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-			local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-			this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
+				local_state_errors,
+				history->curr_starting_compress_network_history);
+			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
+				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+			}
+			local_state_errors.clear();
+			local_state_errors.reserve(this->starting_compress_original_size);
+			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
+				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
+				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+			}
+		} else {
+			// local_state_errors.size() == 0
+			local_state_errors = vector<double>(this->starting_compress_original_size, 0.0);
 		}
 	}
 
@@ -1086,14 +1104,18 @@ void Fold::input_step_update_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->activate_small(local_s_input_vals,
-															 local_state_vals);
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																 local_state_vals);
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
+		} else {
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 
@@ -1468,14 +1490,18 @@ void Fold::input_step_existing_update_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->activate_small(local_s_input_vals,
-															 local_state_vals);
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																 local_state_vals);
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
+		} else {
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 

@@ -18,22 +18,26 @@ void Fold::starting_compress_step_explore_off_path_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		if (explore_phase == EXPLORE_PHASE_FLAT) {
-			FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
-			this->curr_starting_compress_network->activate_small(local_s_input_vals,
-																 local_state_vals,
-																 curr_starting_compress_network_history);
-			history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+		if (this->curr_starting_compress_new_size > 0) {
+			if (explore_phase == EXPLORE_PHASE_FLAT) {
+				FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
+				this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																	 local_state_vals,
+																	 curr_starting_compress_network_history);
+				history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+			} else {
+				this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																	 local_state_vals);
+			}
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
 		} else {
-			this->curr_starting_compress_network->activate_small(local_s_input_vals,
-																 local_state_vals);
-		}
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 
@@ -232,18 +236,23 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 	}
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
-			local_state_errors,
-			history->curr_starting_compress_network_history);
-		for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-			local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-			this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
-		}
-		local_state_errors.clear();
-		local_state_errors.reserve(this->starting_compress_original_size);
-		for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-			local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-			this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
+				local_state_errors,
+				history->curr_starting_compress_network_history);
+			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
+				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+			}
+			local_state_errors.clear();
+			local_state_errors.reserve(this->starting_compress_original_size);
+			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
+				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
+				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+			}
+		} else {
+			// local_state_errors.size() == 0
+			local_state_errors = vector<double>(this->starting_compress_original_size, 0.0);
 		}
 	}
 
@@ -262,17 +271,21 @@ void Fold::starting_compress_step_existing_flat_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
-		this->curr_starting_compress_network->activate_small(local_s_input_vals,
-															 local_state_vals,
-															 curr_starting_compress_network_history);
-		history->curr_starting_compress_network_history = curr_starting_compress_network_history;
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+		if (this->curr_starting_compress_new_size > 0) {
+			FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
+			this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																 local_state_vals,
+																 curr_starting_compress_network_history);
+			history->curr_starting_compress_network_history = curr_starting_compress_network_history;
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
+		} else {
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 
@@ -451,18 +464,23 @@ void Fold::starting_compress_step_existing_flat_backprop(
 	}
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
-			local_state_errors,
-			history->curr_starting_compress_network_history);
-		for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-			local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-			this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
-		}
-		local_state_errors.clear();
-		local_state_errors.reserve(this->starting_compress_original_size);
-		for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-			local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-			this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
+				local_state_errors,
+				history->curr_starting_compress_network_history);
+			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
+				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
+				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+			}
+			local_state_errors.clear();
+			local_state_errors.reserve(this->starting_compress_original_size);
+			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
+				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
+				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+			}
+		} else {
+			// local_state_errors.size() == 0
+			local_state_errors = vector<double>(this->starting_compress_original_size, 0.0);
 		}
 	}
 
@@ -485,13 +503,19 @@ void Fold::starting_compress_step_update_activate(
 	vector<double> test_local_state_vals(this->test_starting_compress_new_size);
 	vector<double> test_local_state_errors(this->test_starting_compress_new_size, 0.0);
 
-	this->test_starting_compress_network->activate_small(local_s_input_vals,
-														 local_state_vals);
-	for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-		test_local_state_vals[s_index] = this->test_starting_compress_network->output->acti_vals[s_index];
+	if (this->test_starting_compress_new_size > 0) {
+		this->test_starting_compress_network->activate_small(local_s_input_vals,
+															 local_state_vals);
+		for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+			test_local_state_vals[s_index] = this->new_state_factor*this->test_starting_compress_network->output->acti_vals[s_index];
+		}
+	} else {
+		// compress down to 0
+		test_local_state_vals.clear();
 	}
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
+		// this->curr_starting_compress_new_size > 0
 		this->curr_starting_compress_network->activate_small(local_s_input_vals,
 															 local_state_vals);
 		local_state_vals.clear();
@@ -529,14 +553,22 @@ void Fold::starting_compress_step_update_activate(
 					- this->test_input_folds[f_index]->output->acti_vals[i_index];
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
 			}
-			if (this->state_iter <= 270000) {
-				this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.01);
+			if (this->test_starting_compress_new_size > 0) {
+				if (this->state_iter <= 270000) {
+					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.01);
+				} else {
+					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.002);
+				}
+				for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+					test_local_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
+					this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
+				}
 			} else {
-				this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.002);
-			}
-			for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-				test_local_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
-				this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
+				if (this->state_iter <= 270000) {
+					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.01);
+				} else {
+					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.002);
+				}
 			}
 
 			vector<double> scope_input(this->existing_actions[f_index]->num_inputs);
@@ -584,14 +616,22 @@ void Fold::starting_compress_step_update_activate(
 	double fold_error = this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0];
 	this->sum_error += fold_error*fold_error;
 	vector<double> fold_errors{fold_error};
-	if (this->state_iter <= 270000) {
-		this->test_fold->backprop_last_state(fold_errors, 0.01);
+	if (this->test_starting_compress_new_size > 0) {
+		if (this->state_iter <= 270000) {
+			this->test_fold->backprop_last_state(fold_errors, 0.01);
+		} else {
+			this->test_fold->backprop_last_state(fold_errors, 0.002);
+		}
+		for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+			test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
+			this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
+		}
 	} else {
-		this->test_fold->backprop_last_state(fold_errors, 0.002);
-	}
-	for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-		test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
-		this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
+		if (this->state_iter <= 270000) {
+			this->test_fold->backprop_no_state(fold_errors, 0.01);
+		} else {
+			this->test_fold->backprop_no_state(fold_errors, 0.002);
+		}
 	}
 
 	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
@@ -610,14 +650,22 @@ void Fold::starting_compress_step_update_activate(
 			- this->test_end_fold->output->acti_vals[o_index];
 		this->sum_error += end_fold_errors[o_index]*end_fold_errors[o_index];
 	}
-	if (this->state_iter <= 270000) {
-		this->test_end_fold->backprop_last_state(end_fold_errors, 0.01);
+	if (this->test_starting_compress_new_size > 0) {
+		if (this->state_iter <= 270000) {
+			this->test_end_fold->backprop_last_state(end_fold_errors, 0.01);
+		} else {
+			this->test_end_fold->backprop_last_state(end_fold_errors, 0.002);
+		}
+		for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+			test_local_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
+			this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
+		}
 	} else {
-		this->test_end_fold->backprop_last_state(end_fold_errors, 0.002);
-	}
-	for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-		test_local_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
-		this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
+		if (this->state_iter <= 270000) {
+			this->test_end_fold->backprop_no_state(end_fold_errors, 0.01);
+		} else {
+			this->test_end_fold->backprop_no_state(end_fold_errors, 0.002);
+		}
 	}
 
 	local_state_vals.clear();
@@ -626,18 +674,20 @@ void Fold::starting_compress_step_update_activate(
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	if (this->state_iter <= 240000) {
-		this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
-			test_local_state_errors,
-			0.05);
-	} else if (this->state_iter <= 270000) {
-		this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
-			test_local_state_errors,
-			0.01);
-	} else {
-		this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
-			test_local_state_errors,
-			0.002);
+	if (this->test_starting_compress_new_size > 0) {
+		if (this->state_iter <= 240000) {
+			this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
+				test_local_state_errors,
+				0.05);
+		} else if (this->state_iter <= 270000) {
+			this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
+				test_local_state_errors,
+				0.01);
+		} else {
+			this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
+				test_local_state_errors,
+				0.002);
+		}
 	}
 
 	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
@@ -700,14 +750,18 @@ void Fold::starting_compress_step_existing_update_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// starting compress for Folds will always be active_compress (vs. existing path which may not be)
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
-		this->curr_starting_compress_network->activate_small(local_s_input_vals,
-															 local_state_vals);
-		local_state_vals.clear();
-		local_state_vals.reserve(this->curr_starting_compress_new_size);
-		for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
-			local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+		if (this->curr_starting_compress_new_size > 0) {
+			this->curr_starting_compress_network->activate_small(local_s_input_vals,
+																 local_state_vals);
+			local_state_vals.clear();
+			local_state_vals.reserve(this->curr_starting_compress_new_size);
+			for (int s_index = 0; s_index < this->curr_starting_compress_new_size; s_index++) {
+				local_state_vals.push_back(this->curr_starting_compress_network->output->acti_vals[s_index]);
+			}
+		} else {
+			// compress down to 0
+			local_state_vals.clear();
 		}
 	}
 

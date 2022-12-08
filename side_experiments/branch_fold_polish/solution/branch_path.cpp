@@ -52,6 +52,7 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 					local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 				}
 			} else {
+				// can compress down to 0
 				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
 			}
 		}
@@ -260,6 +261,7 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 							local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 						}
 					} else {
+						// can compress down to 0
 						local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
 					}
 				}
@@ -1047,7 +1049,7 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			local_state_vals.erase(local_state_vals.end()-this->compress_sizes[0], local_state_vals.end());
+			local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);

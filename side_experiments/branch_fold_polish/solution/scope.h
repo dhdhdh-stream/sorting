@@ -12,7 +12,7 @@ public:
 	std::string id;
 
 	int num_inputs;
-	int num_outputs;
+	int num_outputs;	// cannot be 0 aside from starting/outer scope, which won't be included in dictionary
 
 	std::vector<bool> is_inner_scope;
 	std::vector<Scope*> scopes;
