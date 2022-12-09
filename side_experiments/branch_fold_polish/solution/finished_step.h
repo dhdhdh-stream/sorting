@@ -25,7 +25,7 @@ public:
 	double average_local_impact;
 
 	int compress_num_layers;
-	bool active_compress;
+	bool active_compress;	// TODO: determine in initialization
 	int compress_new_size;
 	FoldNetwork* compress_network;
 	int compress_original_size;	// for constructing scope
@@ -36,6 +36,26 @@ public:
 	std::vector<int> input_layer;
 	std::vector<int> input_sizes;
 	std::vector<FoldNetwork*> input_networks;
+
+	FinishedStep(bool is_inner_scope,
+				 Scope* scope,
+				 int obs_size,
+				 std::vector<int> inner_input_input_layer,
+				 std::vector<int> inner_input_input_sizes,
+				 std::vector<FoldNetwork*> inner_input_input_networks,
+				 FoldNetwork* inner_input_network,
+				 double scope_scale_mod,
+				 FoldNetwork* score_network,
+				 int compress_num_layers,
+				 int compress_new_size,
+				 FoldNetwork* compress_network,
+				 int compress_original_size,
+				 std:;vector<int> compressed_s_input_sizes,
+				 std::vector<int> compressed_scope_sizes,
+				 std::vector<int> input_layer,
+				 std::vector<int> input_sizes,
+				 std::vector<FoldNetwork*> input_networks);
+	~FinishedStep();
 
 
 };

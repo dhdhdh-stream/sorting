@@ -1586,6 +1586,10 @@ void BranchPath::update_backprop(double& predicted_score,
 				score_errors,
 				0.001,
 				history->score_network_histories[a_index]);
+
+			if (this->folds[a_index]->state == STATE_DONE) {
+				resolve_fold(a_index);
+			}
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -1649,6 +1653,10 @@ void BranchPath::update_backprop(double& predicted_score,
 		// start step score errors handled in branch
 
 		// predicted_score already modified to before fold value in fold
+
+		if (this->folds[0]->state == STATE_DONE) {
+			resolve_fold(0);
+		}
 	}
 }
 

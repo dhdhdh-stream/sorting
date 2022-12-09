@@ -19,6 +19,8 @@ const int STATE_COMPRESS_SCOPE = 4;
 const int STATE_INPUT = 5;
 const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
 
+const int STATE_DONE = 7;
+
 // don't split into LEARN and MEASURE stages, and instead combine
 
 class Fold {

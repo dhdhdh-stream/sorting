@@ -109,6 +109,13 @@ Fold::Fold(int sequence_length,
 }
 
 Fold::~Fold() {
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->existing_actions[f_index] != NULL) {
+			delete this->existing_actions[f_index];
+			// don't clear this->existing_actions[f_index] value
+		}
+	}
+
 	if (this->starting_score_network != NULL) {
 		delete this->starting_score_network;
 	}
@@ -830,10 +837,6 @@ void Fold::existing_update_backprop(double& predicted_score,
 }
 
 void Fold::fold_increment() {
-	// TODO: jump from STATE_STEP_ADDED to STATE_SCORE if not existing_action
-
-	// TODO: for last compress network/end_fold, don't need input step as will just use starting input, so can copy over directly
-
 	this->state_iter++;
 
 	if (this->state == STATE_STARTING_COMPRESS) {
@@ -874,32 +877,193 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-
-	}
-}
-
-void Fold::compress_state_end() {
-	if (this->sum_error/10000 < 0.001) {
-		if (this->curr_compress_network != NULL) {
-			delete this->curr_compress_network;
+		if (this->state_iter == 300000) {
+			compress_state_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
 		}
-		this->curr_compress_network = this->test_compress_network;
-		this->test_compress_network = NULL;
+	} else if (this->state == STATE_COMPRESS_SCOPE) {
+		if (this->state_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->state_iter == 100000) {
+			this->new_state_factor = 1;
+		}
 
-		
+		if (this->state_iter == 300000) {
+			compress_scope_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
+		}
 	} else {
+		// this->state == STATE_INPUT
+		if (this->state_iter == 50000) {
+			this->new_state_factor = 5;
+		} else if (this->state_iter == 100000) {
+			this->new_state_factor = 1;
+		}
 
+		if (this->state_iter == 300000) {
+			input_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				this->sum_error = 0.0;
+			}
+		}
 	}
 }
 
 void Fold::compress_scope_end() {
+	if (this->sum_error/10000 < 0.001) {
+		delete this->curr_compress_network;	// can't be NULL
+		this->curr_compress_network = this->test_compress_network;	// can be NULL
+		this->test_compress_network = NULL;
 
+		this->curr_compress_num_layers = this->test_compress_num_layers;
+		this->curr_compress_new_size = this->test_compress_new_size;
+		this->curr_compress_original_size = this->test_compress_original_size;
+		this->curr_compressed_s_input_sizes = this->test_compressed_s_input_sizes;
+		this->curr_compressed_scope_sizes = this->test_compressed_scope_sizes;
+
+		// update curr_fold without updating curr_scope_sizes
+		delete this->curr_fold;
+		this->curr_fold = this->test_fold;
+		this->test_fold = NULL;
+		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			if (this->existing_actions[f_index] != NULL) {
+				delete this->curr_input_folds[f_index];
+				this->curr_input_folds[f_index] = this->test_input_folds[f_index];
+				this->test_input_folds[f_index] = NULL;
+			}
+		}
+		delete this->curr_end_fold;
+		this->curr_end_fold = this->test_end_fold;
+		this->test_end_fold = NULL;
+
+		int sum_scope_sizes = 0;
+		for (int sc_index = 0; sc_index < this->curr_compress_num_layers-1; sc_index++) {
+			sum_scope_sizes += this->curr_scope_sizes[this->curr_scope_sizes.size()-1-sc_index];
+		}
+		int compress_size = this->curr_compress_original_size - this->curr_compress_new_size;
+		if (compress_size > sum_scope_sizes) {
+			this->curr_s_input_sizes = this->test_s_input_sizes;
+			this->curr_scope_sizes = this->test_scope_sizes;
+
+			// this->curr_scope_sizes > 1
+
+			this->test_score_network = new FoldNetwork(this->curr_score_network);
+			this->test_score_network->subfold_index++;
+
+			if (this->curr_compress_new_size > 0) {
+				this->test_compress_network = new FoldNetwork(this->curr_compress_network);
+				this->test_compress_network->subfold_index++;
+			}
+
+			this->last_state = STATE_COMPRESS_SCOPE;
+			this->state = STATE_INPUT;
+			this->state_iter = 0;
+			this->sum_error = 0.0;
+			this->new_state_factor = 25;
+		} else if (compress_size == sum_scope_sizes) {
+			this->test_compress_num_layers = this->curr_compress_num_layers-1;
+			this->test_compress_new_size = 0;
+			this->test_compress_original_size = sum_scope_sizes;
+
+			this->test_compressed_s_input_sizes = this->curr_compressed_s_input_sizes;
+			this->test_compressed_scope_sizes = this->curr_compressed_scope_sizes;
+
+			this->test_compressed_s_input_sizes.erase(this->test_compressed_s_input_sizes.begin());
+			// no change to test_s_input_sizes
+
+			this->test_scope_sizes.pop_back();
+			this->test_scope_sizes.push_back(this->test_compressed_scope_sizes[0]);
+
+			this->test_fold = new FoldNetwork(this->curr_fold);
+			this->test_fold->pop_scope();
+			this->test_fold->add_scope(this->test_compressed_scope_sizes[0]);
+			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+				if (this->existing_actions[f_index] != NULL) {
+					this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
+					this->test_input_folds[f_index]->pop_scope();
+					this->test_input_folds[f_index]->add_scope(this->test_compressed_scope_sizes[0]);
+				}
+			}
+			this->test_end_fold = new FoldNetwork(this->curr_end_fold);
+			this->test_end_fold->pop_scope();
+			this->test_end_fold->add_scope(this->test_compressed_scope_sizes[0]);
+
+			this->test_compressed_scope_sizes.erase(this->test_compressed_scope_sizes.begin());
+
+			this->last_state = STATE_COMPRESS_SCOPE;
+			this->state = STATE_COMPRESS_SCOPE;
+			this->state_iter = 0;
+			this->sum_error = 0.0;
+			this->new_state_factor = 25;	// though doesn't matter
+		} else {
+			this->test_compress_num_layers = this->curr_compress_num_layers-1;
+			this->test_compress_new_size = sum_scope_sizes - compress_size;
+			this->test_compress_original_size = sum_scope_sizes;
+
+			this->test_compressed_s_input_sizes = this->curr_compressed_s_input_sizes;
+			this->test_compressed_scope_sizes = this->curr_compressed_scope_sizes;
+
+			this->test_compressed_s_input_sizes.erase(this->test_compressed_s_input_sizes.begin());
+			this->test_s_input_sizes.push_back(this->test_compressed_s_input_sizes[0]);
+
+			this->test_scope_sizes.pop_back();
+			this->test_scope_sizes.push_back(this->test_compressed_scope_sizes[0]);
+			this->test_scope_sizes.push_back(this->test_compress_new_size);
+
+			// use curr_scope_sizes for construction
+			this->test_compress_network = new FoldNetwork(this->test_compress_new_size,
+														  this->curr_s_input_sizes[0],
+														  this->curr_scope_sizes,
+														  20);
+
+			this->test_fold = new FoldNetwork(this->curr_fold);
+			this->test_fold->pop_scope();
+			this->test_fold->add_scope(this->test_compressed_scope_sizes[0]);
+			this->test_fold->add_scope(this->test_compress_new_size);
+			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+				if (this->existing_actions[f_index] != NULL) {
+					this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
+					this->test_input_folds[f_index]->pop_scope();
+					this->test_input_folds[f_index]->add_scope(this->test_compressed_scope_sizes[0]);
+					this->test_input_folds[f_index]->add_scope(this->test_compress_new_size);
+				}
+			}
+			this->test_end_fold = new FoldNetwork(this->curr_end_fold);
+			this->test_end_fold->pop_scope();
+			this->test_end_fold->add_scope(this->test_compressed_scope_sizes[0]);
+			this->test_end_fold->add_scope(this->test_compress_new_size);
+
+			this->test_compressed_scope_sizes.erase(this->test_compressed_scope_sizes.begin());
+
+			this->last_state = STATE_COMPRESS_SCOPE;
+			this->state = STATE_COMPRESS_SCOPE;
+			this->state_iter = 0;
+			this->sum_error = 0.0;
+			this->new_state_factor = 25;
+		}
+	} else {
+		if (this->test_compress_network != NULL) {
+			delete this->test_compress_network;
+			this->test_compress_network = NULL;
+		}
+
+		delete this->test_fold;
+		this->test_fold = NULL;
+		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			if (this->existing_actions[f_index] != NULL) {
+
+			}
+		}
+	}
 }
 
 void Fold::input_end() {
-
-}
-
-void Fold::add_finished_step() {
 
 }

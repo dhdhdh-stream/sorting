@@ -325,3 +325,7 @@ void BranchPath::explore_branch() {
 	this->explore_end_non_inclusive = -1;
 	this->explore_fold = NULL;
 }
+
+void BranchPath::resolve_fold(int a_index) {
+
+}

@@ -1963,6 +1963,10 @@ void Scope::update_backprop(double& predicted_score,
 				score_errors,
 				0.001,
 				history->score_network_histories[a_index]);
+
+			if (this->folds[a_index]->state == STATE_DONE) {
+				resolve_fold(a_index);
+			}
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -2037,6 +2041,10 @@ void Scope::update_backprop(double& predicted_score,
 			score_errors,
 			0.001,
 			history->score_network_histories[0]);
+
+		if (this->folds[0]->state == STATE_DONE) {
+			resolve_fold(0);
+		}
 	}
 
 	if (!this->is_inner_scope[0]) {

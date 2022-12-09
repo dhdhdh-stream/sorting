@@ -35,13 +35,16 @@ void Fold::starting_compress_end() {
 		if (this->curr_starting_compress_new_size == 0) {
 			// if this->existing_actions[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
-			this->curr_input_network = this->curr_input_folds[0];
+			if (this->existing_actions[0] != NULL) {
+				this->curr_input_network = this->curr_input_folds[0];
+				this->curr_input_folds[0] = NULL;
+			}
 
 			if (this->existing_actions[0] == NULL) {
 				this->curr_s_input_sizes.push_back(0);
 				this->curr_scope_sizes.push_back(this->obs_sizes[0]);
 			} else {
-				this->curr_s_input_sizes.push_back(0);
+				this->curr_s_input_sizes.push_back(this->existing_actions[0]->num_inputs);
 				this->curr_scope_sizes.push_back(this->existing_actions[0]->num_outputs);
 			}
 
@@ -119,13 +122,16 @@ void Fold::starting_compress_end() {
 
 		// if this->existing_actions[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
-		this->curr_input_network = this->curr_input_folds[0];
+		if (this->existing_actions[0] != NULL) {
+			this->curr_input_network = this->curr_input_folds[0];
+			this->curr_input_folds[0] = NULL;
+		}
 
 		if (this->existing_actions[0] == NULL) {
 			this->curr_s_input_sizes.push_back(0);
 			this->curr_scope_sizes.push_back(this->obs_sizes[0]);
 		} else {
-			this->curr_s_input_sizes.push_back(0);
+			this->curr_s_input_sizes.push_back(this->existing_actions[0]->num_inputs);
 			this->curr_scope_sizes.push_back(this->existing_actions[0]->num_outputs);
 		}
 

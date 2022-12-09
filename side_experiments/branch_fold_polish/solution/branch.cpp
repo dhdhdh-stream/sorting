@@ -456,6 +456,10 @@ void Branch::update_backprop(double& predicted_score,
 														  target_val,
 														  scale_factor,
 														  history->fold_history);
+
+		if (this->folds[history->best_index]->state == STATE_DONE) {
+			resolve_fold(history->best_index);
+		}
 	}
 
 	// predicted_score already modified to before branch value in branch_path
@@ -557,4 +561,8 @@ void Branch::existing_update_backprop(double& predicted_score,
 	scale_factor_error += score_update*predicted_score_error;
 
 	// score_networks don't update predicted_score
+}
+
+void Branch::resolve_fold(int b_index) {
+
 }
