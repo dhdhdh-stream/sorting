@@ -307,7 +307,7 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
@@ -687,7 +687,7 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
@@ -898,13 +898,13 @@ void Fold::inner_scope_input_step_update_activate(
 		}
 	} else {
 		if (this->state_iter <= 270000) {
-			this->test_input_network->backprop_new_s_input(
+			this->test_input_network->backprop_subfold_new_s_input(
 				this->inner_input_input_layer.back()+1,
 				this->inner_input_input_sizes.back(),
 				inner_input_errors,
 				0.01);
 		} else {
-			this->test_input_network->backprop_new_s_input(
+			this->test_input_network->backprop_subfold_new_s_input(
 				this->inner_input_input_layer.back()+1,
 				this->inner_input_input_sizes.back(),
 				inner_input_errors,

@@ -10,7 +10,7 @@ extern double global_sum_error;
 const int EXPLORE_TYPE_NONE = -1;
 const int EXPLORE_TYPE_INNER_SCOPE = 0;
 const int EXPLORE_TYPE_INNER_BRANCH = 1;
-const int EXPLORE_TYPE_NEW = 2;	// after flat, becomes EXPLORE_TYPE_INNER_BRANCH
+const int EXPLORE_TYPE_NEW = 2;
 // can't explore within a fold (that hasn't been fully processed)
 
 const int EXPLORE_PHASE_NONE = 0;

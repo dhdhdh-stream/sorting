@@ -90,13 +90,13 @@ void Fold::compress_step_explore_off_path_activate(
 
 		if (explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-			this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-													   state_vals,
-													   curr_input_network_history);
+			this->curr_input_network->activate_small(s_input_vals.back(),
+													 state_vals.back(),
+													 curr_input_network_history);
 			history->curr_input_network_history = curr_input_network_history;
 		} else {
-			this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-													   state_vals);
+			this->curr_input_network->activate_small(s_input_vals.back(),
+													 state_vals.back());
 		}
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
@@ -356,7 +356,7 @@ void Fold::compress_step_explore_off_path_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
@@ -610,9 +610,9 @@ void Fold::compress_step_existing_flat_activate(
 		}
 
 		FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-		this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-												   state_vals,
-												   curr_input_network_history);
+		this->curr_input_network->activate_small(s_input_vals.back(),
+												 state_vals.back(),
+												 curr_input_network_history);
 		history->curr_input_network_history = curr_input_network_history;
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
@@ -841,7 +841,7 @@ void Fold::compress_step_existing_flat_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
@@ -1086,11 +1086,11 @@ void Fold::compress_step_update_activate(
 			}
 		}
 
-		this->curr_inner_input_network->activate_small(s_input_vals.back(),
-													   state_vals.back());
+		this->curr_input_network->activate_small(s_input_vals.back(),
+												 state_vals.back());
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
-			scope_input[s_index] = this->curr_inner_input_network->output->acti_vals[s_index];
+			scope_input[s_index] = this->curr_input_network->output->acti_vals[s_index];
 		}
 
 		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
@@ -1201,9 +1201,9 @@ void Fold::compress_step_update_activate(
 			}
 			if (this->test_compress_new_size > 0) {
 				if (this->state_iter <= 270000) {
-					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.01);
+					this->test_input_folds[f_index]->backprop_fold_last_state(input_fold_errors, 0.01);
 				} else {
-					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.002);
+					this->test_input_folds[f_index]->backprop_fold_last_state(input_fold_errors, 0.002);
 				}
 				for (int s_index = 0; s_index < this->test_compress_new_size; s_index++) {
 					test_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
@@ -1211,9 +1211,9 @@ void Fold::compress_step_update_activate(
 				}
 			} else {
 				if (this->state_iter <= 270000) {
-					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.01);
+					this->test_input_folds[f_index]->backprop_fold_no_state(input_fold_errors, 0.01);
 				} else {
-					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.002);
+					this->test_input_folds[f_index]->backprop_fold_no_state(input_fold_errors, 0.002);
 				}
 			}
 
@@ -1264,9 +1264,9 @@ void Fold::compress_step_update_activate(
 	vector<double> fold_errors{fold_error};
 	if (this->test_compress_new_size > 0) {
 		if (this->state_iter <= 270000) {
-			this->test_fold->backprop_last_state(fold_errors, 0.01);
+			this->test_fold->backprop_fold_last_state(fold_errors, 0.01);
 		} else {
-			this->test_fold->backprop_last_state(fold_errors, 0.002);
+			this->test_fold->backprop_fold_last_state(fold_errors, 0.002);
 		}
 		for (int s_index = 0; s_index < this->test_compress_new_size; s_index++) {
 			test_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
@@ -1274,9 +1274,9 @@ void Fold::compress_step_update_activate(
 		}
 	} else {
 		if (this->state_iter <= 270000) {
-			this->test_fold->backprop_no_state(fold_errors, 0.01);
+			this->test_fold->backprop_fold_no_state(fold_errors, 0.01);
 		} else {
-			this->test_fold->backprop_no_state(fold_errors, 0.002);
+			this->test_fold->backprop_fold_no_state(fold_errors, 0.002);
 		}
 	}
 
@@ -1298,9 +1298,9 @@ void Fold::compress_step_update_activate(
 	}
 	if (this->test_compress_new_size > 0) {
 		if (this->state_iter <= 270000) {
-			this->test_end_fold->backprop_last_state(end_fold_errors, 0.01);
+			this->test_end_fold->backprop_fold_last_state(end_fold_errors, 0.01);
 		} else {
-			this->test_end_fold->backprop_last_state(end_fold_errors, 0.002);
+			this->test_end_fold->backprop_fold_last_state(end_fold_errors, 0.002);
 		}
 		for (int s_index = 0; s_index < this->test_compress_new_size; s_index++) {
 			test_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
@@ -1308,9 +1308,9 @@ void Fold::compress_step_update_activate(
 		}
 	} else {
 		if (this->state_iter <= 270000) {
-			this->test_end_fold->backprop_no_state(end_fold_errors, 0.01);
+			this->test_end_fold->backprop_fold_no_state(end_fold_errors, 0.01);
 		} else {
-			this->test_end_fold->backprop_no_state(end_fold_errors, 0.002);
+			this->test_end_fold->backprop_fold_no_state(end_fold_errors, 0.002);
 		}
 	}
 
@@ -1322,15 +1322,15 @@ void Fold::compress_step_update_activate(
 
 	if (this->test_compress_new_size > 0) {
 		if (this->state_iter <= 240000) {
-			this->test_compress_network->backprop_weights_with_no_error_signal(
+			this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 				test_state_errors,
 				0.05);
 		} else if (this->state_iter <= 270000) {
-			this->test_compress_network->backprop_weights_with_no_error_signal(
+			this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 				test_state_errors,
 				0.01);
 		} else {
-			this->test_compress_network->backprop_weights_with_no_error_signal(
+			this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 				test_state_errors,
 				0.002);
 		}
@@ -1483,8 +1483,8 @@ void Fold::compress_step_existing_update_activate(
 			}
 		}
 
-		this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-												   state_vals);
+		this->curr_input_network->activate_small(s_input_vals.back(),
+												 state_vals.back());
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
 			scope_input[i_index] = this->curr_input_network->output->acti_vals[i_index];

@@ -213,7 +213,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)local_s_input_errors.size(); st_index++) {
@@ -441,7 +441,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)local_s_input_errors.size(); st_index++) {
@@ -553,22 +553,14 @@ void Fold::starting_compress_step_update_activate(
 					- this->test_input_folds[f_index]->output->acti_vals[i_index];
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
 			}
-			if (this->test_starting_compress_new_size > 0) {
-				if (this->state_iter <= 270000) {
-					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.01);
-				} else {
-					this->test_input_folds[f_index]->backprop_last_state(input_fold_errors, 0.002);
-				}
-				for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-					test_local_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
-					this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
-				}
+			if (this->state_iter <= 270000) {
+				this->test_input_folds[f_index]->backprop(input_fold_errors, 0.01);
 			} else {
-				if (this->state_iter <= 270000) {
-					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.01);
-				} else {
-					this->test_input_folds[f_index]->backprop_no_state(input_fold_errors, 0.002);
-				}
+				this->test_input_folds[f_index]->backprop(input_fold_errors, 0.002);
+			}
+			for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+				test_local_state_errors[s_index] += this->test_input_folds[f_index]->state_inputs.back()->errors[s_index];
+				this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
 			}
 
 			vector<double> scope_input(this->existing_actions[f_index]->num_inputs);
@@ -616,22 +608,14 @@ void Fold::starting_compress_step_update_activate(
 	double fold_error = this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0];
 	this->sum_error += fold_error*fold_error;
 	vector<double> fold_errors{fold_error};
-	if (this->test_starting_compress_new_size > 0) {
-		if (this->state_iter <= 270000) {
-			this->test_fold->backprop_last_state(fold_errors, 0.01);
-		} else {
-			this->test_fold->backprop_last_state(fold_errors, 0.002);
-		}
-		for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-			test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
-			this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
-		}
+	if (this->state_iter <= 270000) {
+		this->test_fold->backprop(fold_errors, 0.01);
 	} else {
-		if (this->state_iter <= 270000) {
-			this->test_fold->backprop_no_state(fold_errors, 0.01);
-		} else {
-			this->test_fold->backprop_no_state(fold_errors, 0.002);
-		}
+		this->test_fold->backprop(fold_errors, 0.002);
+	}
+	for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+		test_local_state_errors[s_index] += this->test_fold->state_inputs.back()->errors[s_index];
+		this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
 	}
 
 	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
@@ -650,22 +634,14 @@ void Fold::starting_compress_step_update_activate(
 			- this->test_end_fold->output->acti_vals[o_index];
 		this->sum_error += end_fold_errors[o_index]*end_fold_errors[o_index];
 	}
-	if (this->test_starting_compress_new_size > 0) {
-		if (this->state_iter <= 270000) {
-			this->test_end_fold->backprop_last_state(end_fold_errors, 0.01);
-		} else {
-			this->test_end_fold->backprop_last_state(end_fold_errors, 0.002);
-		}
-		for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
-			test_local_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
-			this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
-		}
+	if (this->state_iter <= 270000) {
+		this->test_end_fold->backprop(end_fold_errors, 0.01);
 	} else {
-		if (this->state_iter <= 270000) {
-			this->test_end_fold->backprop_no_state(end_fold_errors, 0.01);
-		} else {
-			this->test_end_fold->backprop_no_state(end_fold_errors, 0.002);
-		}
+		this->test_end_fold->backprop(end_fold_errors, 0.002);
+	}
+	for (int s_index = 0; s_index < this->test_starting_compress_new_size; s_index++) {
+		test_local_state_errors[s_index] += this->test_end_fold->state_inputs.back()->errors[s_index];
+		this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
 	}
 
 	local_state_vals.clear();

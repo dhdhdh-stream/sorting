@@ -197,15 +197,15 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	double starting_predicted_score_error = target_val - predicted_score;
 	vector<double> starting_score_errors{scale_factor*starting_predicted_score_error};
 	if (this->state_iter <= 300000) {
-		this->starting_score_network->backprop_weights_with_no_error_signal(
+		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
 			0.05);
 	} else if (this->state_iter <= 400000) {
-		this->starting_score_network->backprop_weights_with_no_error_signal(
+		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
 			0.01);
 	} else {
-		this->starting_score_network->backprop_weights_with_no_error_signal(
+		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
 			0.002);
 	}
@@ -238,15 +238,15 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	double combined_score_error = higher_branch_val - scale_factor*history->combined_score_update;
 	vector<double> combined_score_errors{scale_factor*combined_score_error};
 	if (this->state_iter <= 300000) {
-		this->combined_score_network->backprop_weights_with_no_error_signal(
+		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
 			0.05);
 	} else if (this->state_iter <= 400000) {
-		this->combined_score_network->backprop_weights_with_no_error_signal(
+		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
 			0.01);
 	} else {
-		this->combined_score_network->backprop_weights_with_no_error_signal(
+		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
 			0.002);
 	}

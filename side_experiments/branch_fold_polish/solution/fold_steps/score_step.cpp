@@ -90,13 +90,13 @@ void Fold::score_step_explore_off_path_activate(
 
 		if (explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-			this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-													   state_vals,
-													   curr_input_network_history);
+			this->curr_input_network->activate_small(s_input_vals.back(),
+													 state_vals.back(),
+													 curr_input_network_history);
 			history->curr_input_network_history = curr_input_network_history;
 		} else {
-			this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-													   state_vals);
+			this->curr_input_network->activate_small(s_input_vals.back(),
+													 state_vals.back());
 		}
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
@@ -326,7 +326,7 @@ void Fold::score_step_explore_off_path_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
@@ -548,9 +548,9 @@ void Fold::score_step_existing_flat_activate(
 		}
 
 		FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-		this->curr_input_network->activate_subfold(s_input_vals[this->curr_input_network->subfold_index+1],
-												   state_vals,
-												   curr_input_network_history);
+		this->curr_input_network->activate_small(s_input_vals.back(),
+												 state_vals.back(),
+												 curr_input_network_history);
 		history->curr_input_network_history = curr_input_network_history;
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
@@ -754,7 +754,7 @@ void Fold::score_step_existing_flat_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->curr_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(
+			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
 				history->curr_input_fold_histories[f_index]);
 			for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
