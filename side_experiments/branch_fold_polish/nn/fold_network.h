@@ -85,11 +85,6 @@ public:
 	void backprop_fold_weights_with_no_error_signal(std::vector<double>& errors,
 													double target_max_update,
 													FoldNetworkHistory* history);
-	void backprop_fold_no_state(std::vector<double>& errors,
-								double target_max_update);
-	void backprop_fold_no_state(std::vector<double>& errors,
-								double target_max_update,
-								FoldNetworkHistory* history);
 	void backprop_fold_last_state(std::vector<double>& errors,
 								  double target_max_update);
 	void backprop_fold_last_state(std::vector<double>& errors,
@@ -101,11 +96,6 @@ public:
 						  std::vector<std::vector<double>>& state_vals);
 	void activate_subfold(std::vector<double>& s_input_vals,
 						  std::vector<std::vector<double>>& state_vals,
-						  FoldNetworkHistory* history);
-	void backprop_subfold(std::vector<double>& errors,
-						  double target_max_update);
-	void backprop_subfold(std::vector<double>& errors,
-						  double target_max_update,
 						  FoldNetworkHistory* history);
 	void backprop_subfold_errors_with_no_weight_change(std::vector<double>& errors);
 	void backprop_subfold_errors_with_no_weight_change(std::vector<double>& errors,
@@ -125,15 +115,6 @@ public:
 						std::vector<double>& state_vals);
 	void activate_small(std::vector<double>& s_input_vals,
 						std::vector<double>& state_vals,
-						FoldNetworkHistory* history);
-	void backprop_small(std::vector<double>& errors,
-						double target_max_update,
-						std::vector<double>& s_input_errors,
-						std::vector<double>& state_errors);
-	void backprop_small(std::vector<double>& errors,
-						double target_max_update,
-						std::vector<double>& s_input_errors,
-						std::vector<double>& state_errors,
 						FoldNetworkHistory* history);
 	void backprop_small_errors_with_no_weight_change(
 		std::vector<double>& errors,

@@ -17,9 +17,16 @@ void FoldNetwork::pop_scope() {
 	this->hidden->fold_pop_scope();
 }
 
-void FoldNetwork::activate(vector<vector<double>>& flat_vals,
-						   vector<double>& outer_s_input_vals,
-						   vector<vector<double>>& state_vals) {
+void FoldNetwork::migrate_weights() {
+	for (int n_index = 0; n_index < (int)this->hidden->acti_vals.size(); n_index++) {
+		for (int s_index = 0; s_index < this->scope_sizes.back(); s_index++)
+			this->hidden->weights[n_index].back()[s_index] = this->hidden->weights[n_index][this->fold_index][s_index];
+	}
+}
+
+void FoldNetwork::activate_fold(vector<vector<double>>& flat_vals,
+								vector<double>& outer_s_input_vals,
+								vector<vector<double>>& state_vals) {
 	for (int f_index = this->fold_index+1; f_index < (int)this->flat_sizes.size(); f_index++) {
 		for (int s_index = 0; s_index < this->flat_sizes[f_index]; s_index++) {
 			this->flat_inputs[f_index]->acti_vals[s_index] = flat_vals[f_index][s_index];
@@ -38,15 +45,41 @@ void FoldNetwork::activate(vector<vector<double>>& flat_vals,
 	this->output->activate();
 }
 
-void FoldNetwork::backprop_no_state(vector<double>& errors,
-									double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+void FoldNetwork::activate_fold(vector<vector<double>>& flat_vals,
+								vector<double>& outer_s_input_vals,
+								vector<vector<double>>& state_vals,
+								FoldNetworkHistory* history) {
+	activate_fold(flat_vals,
+				  outer_s_input_vals,
+				  state_vals);
+
+	history->save_weights();
+}
+
+void FoldNetwork::backprop_fold_errors_with_no_weight_change(vector<double>& errors) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->backprop_errors_with_no_weight_change();	// don't special case for now
+}
+
+void FoldNetwork::backprop_fold_errors_with_no_weight_change(vector<double>& errors,
+															 NetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_fold_errors_with_no_weight_change(errors);
+}
+
+void FoldNetwork::backprop_fold_weights_with_no_error_signal(vector<double>& errors,
+															 double target_max_update) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
 	this->output->backprop();
-	this->hidden->fold_backprop_no_state(this->fold_index,
-										 (int)this->scope_sizes.size());
+	this->hidden->fold_backprop_weights_with_no_error_signal(this->fold_index);
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 20) {
@@ -78,15 +111,23 @@ void FoldNetwork::backprop_no_state(vector<double>& errors,
 	}
 }
 
-void FoldNetwork::backprop_last_state(vector<double>& errors,
-									  double target_max_update) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+void FoldNetwork::backprop_fold_weights_with_no_error_signal(vector<double>& errors,
+															 double target_max_update,
+															 FoldNetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_fold_weights_with_no_error_signal(errors,
+											   target_max_update);
+}
+
+void FoldNetwork::backprop_fold_last_state(vector<double>& errors,
+										   double target_max_update) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
 	this->output->backprop();
-	this->hidden->fold_backprop_last_state(this->fold_index,
-										   (int)this->scope_sizes.size());
+	this->hidden->fold_backprop_last_state(this->fold_index);
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 20) {
@@ -116,4 +157,13 @@ void FoldNetwork::backprop_last_state(vector<double>& errors,
 
 		this->epoch_iter = 0;
 	}
+}
+
+void FoldNetwork::backprop_fold_last_state(vector<double>& errors,
+										   double target_max_update,
+										   FoldNetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_fold_last_state(errors,
+							 target_max_update);
 }

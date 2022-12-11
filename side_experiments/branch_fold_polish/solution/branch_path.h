@@ -31,6 +31,8 @@ public:
 	std::vector<FoldNetwork*> compress_networks;
 	std::vector<int> compress_original_sizes;
 
+	bool is_scope_end;
+
 	int explore_index_inclusive;
 	int explore_type;
 	int explore_end_non_inclusive;
@@ -53,7 +55,8 @@ public:
 			   std::vector<bool> active_compress,
 			   std::vector<int> compress_new_sizes,
 			   std::vector<FoldNetwork*> compress_networks,
-			   std::vector<int> compress_original_sizes);
+			   std::vector<int> compress_original_sizes,
+			   bool is_scope_end);
 	~BranchPath();
 
 

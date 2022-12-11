@@ -9,8 +9,6 @@ const int STEP_TYPE_FOLD = 2;
 
 class Scope {
 public:
-	std::string id;
-
 	int num_inputs;
 	int num_outputs;	// cannot be 0 aside from starting/outer scope, which won't be included in dictionary
 

@@ -44,10 +44,8 @@ public:
 	void fold_add_scope(Layer* new_scope_input);
 	void fold_pop_scope();
 	void fold_activate(int fold_index);
-	void fold_backprop_no_state(int fold_index,
-								int state_size);
-	void fold_backprop_last_state(int fold_index,
-								  int state_size);
+	void fold_backprop_weights_with_no_error_signal(int fold_index);
+	void fold_backprop_last_state(int fold_index);
 	void fold_get_max_update(int fold_index,
 							 double& max_update_size);
 	void fold_update_weights(int fold_index,
@@ -57,8 +55,9 @@ public:
 							 Layer* new_s_input);
 	void subfold_activate(int subfold_index,
 						  int num_state_layers);
-	void subfold_backprop(int subfold_index,
-						  int num_state_layers);
+	void subfold_backprop_errors_with_no_weight_change(
+		int subfold_index,
+		int num_state_layers);
 	void subfold_backprop_weights_with_no_error_signal(
 		int subfold_index,
 		int num_state_layers);

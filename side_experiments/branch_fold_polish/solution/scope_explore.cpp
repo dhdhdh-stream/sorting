@@ -227,6 +227,8 @@ void Scope::explore_branch() {
 			this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
 		this->compress_original_sizes[this->explore_index_inclusive] = -1;
 
+		bool branch_is_scope_end = (this->explore_end_non_inclusive == this->scopes.size());
+
 		BranchPath* new_branch_path = new BranchPath(branch_is_inner_scope,
 													 branch_scopes,
 													 branch_obs_sizes,
@@ -244,7 +246,8 @@ void Scope::explore_branch() {
 													 branch_active_compress,
 													 branch_compress_new_sizes,
 													 branch_compress_networks,
-													 branch_compress_original_sizes);
+													 branch_compress_original_sizes,
+													 branch_is_scope_end);
 
 		vector<bool> new_is_branch;
 		new_is_branch.push_back(true);

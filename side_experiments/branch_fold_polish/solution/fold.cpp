@@ -13,19 +13,23 @@ Fold::Fold(int sequence_length,
 		   int starting_s_input_size,
 		   int starting_state_size) {
 	this->sequence_length = sequence_length;
-	this->obs_sizes = obs_sizes;	// for now, -1 also signals is existing action
 	this->existing_actions = existing_actions;
+	this->obs_sizes = obs_sizes;
 	this->output_size = output_size;
 
 	this->average_misguess = 0.0;
 	this->existing_misguess = existing_misguess;
+	this->average_misguess_standard_deviation = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
 												   starting_state_size,
 												   20);
 
-	this->replace_improvement = 0.0;
+	this->replace_existing = 0.0;
+	this->replace_existing_standard_deviation = 0.0;
+	this->replace_combined = 0.0;
+	this->replace_combined_standard_deviation = 0.0;
 
 	this->combined_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
@@ -33,6 +37,7 @@ Fold::Fold(int sequence_length,
 												   20);
 
 	this->combined_improvement = 0.0;
+	this->combined_standard_deviation = 0.0;
 
 	this->scope_scale_mod_calcs = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -70,14 +75,14 @@ Fold::Fold(int sequence_length,
 									  starting_s_input_size,
 									  starting_state_size,
 									  100);
-	this->curr_scope_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
+	this->curr_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] != NULL) {
-			this->curr_scope_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
-																	this->existing_actions[f_index]->num_inputs,
-																	starting_s_input_size,
-																	starting_state_size,
-																	50);
+			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
+															  this->existing_actions[f_index]->num_inputs,
+															  starting_s_input_size,
+															  starting_state_size,
+															  50);
 		}
 	}
 	this->curr_end_fold = new FoldNetwork(flat_sizes,

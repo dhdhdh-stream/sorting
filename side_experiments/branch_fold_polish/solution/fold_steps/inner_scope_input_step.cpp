@@ -899,14 +899,10 @@ void Fold::inner_scope_input_step_update_activate(
 	} else {
 		if (this->state_iter <= 270000) {
 			this->test_input_network->backprop_subfold_new_s_input(
-				this->inner_input_input_layer.back()+1,
-				this->inner_input_input_sizes.back(),
 				inner_input_errors,
 				0.01);
 		} else {
 			this->test_input_network->backprop_subfold_new_s_input(
-				this->inner_input_input_layer.back()+1,
-				this->inner_input_input_sizes.back(),
 				inner_input_errors,
 				0.002);
 		}

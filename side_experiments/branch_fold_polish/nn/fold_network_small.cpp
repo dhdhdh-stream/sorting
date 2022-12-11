@@ -14,6 +14,7 @@ void FoldNetwork::activate_small(std::vector<double>& s_input_vals,
 	for (int sc_index = this->subfold_index+1; sc_index < (int)this->scope_sizes.size(); sc_index++) {
 		for (int st_index = 0; st_index < this->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs[sc_index]->acti_vals[st_index] = state_vals[state_vals_index];
+			state_vals_index++;
 		}
 	}
 
@@ -22,17 +23,28 @@ void FoldNetwork::activate_small(std::vector<double>& s_input_vals,
 	this->output->activate();
 }
 
-void FoldNetwork::backprop_small(vector<double>& errors,
-								 double target_max_update,
-								 vector<double>& s_input_errors,
-								 vector<double>& state_errors) {
-	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
+void FoldNetwork::activate_small(std::vector<double>& s_input_vals,
+								 std::vector<double>& state_vals,
+								 FoldNetworkHistory* history) {
+	activate_small(s_input_vals,
+				   state_vals);
+
+	history->save_weights();
+}
+
+// TODO: reserve memory for s_input_errors, state_errors outside
+void FoldNetwork::backprop_small_errors_with_no_weight_change(
+		vector<double>& errors,
+		vector<double>& s_input_errors,
+		vector<double>& state_errors) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
-	this->output->backprop();
-	this->hidden->subfold_backprop(this->subfold_index,
-								   (int)this->state_inputs.size());
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->subfold_backprop_errors_with_no_weight_change(
+		this->subfold_index,
+		(int)this->state_inputs.size());
 
 	for (int st_index = 0; st_index < this->s_input_size; st_index++) {
 		s_input_errors.push_back(this->s_input_input->errors[st_index]);
@@ -45,6 +57,31 @@ void FoldNetwork::backprop_small(vector<double>& errors,
 			this->state_inputs[sc_index]->errors[st_index] = 0.0;
 		}
 	}
+}
+
+void FoldNetwork::backprop_small_errors_with_no_weight_change(
+		vector<double>& errors,
+		vector<double>& s_input_errors,
+		vector<double>& state_errors,
+		FoldNetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_small_errors_with_no_weight_change(errors,
+												s_input_errors,
+												state_errors);
+}
+
+void FoldNetwork::backprop_small_weights_with_no_error_signal(
+		std::vector<double>& errors,
+		double target_max_update) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
+		this->output->errors[e_index] = errors[e_index];
+	}
+
+	this->output->backprop();
+	this->hidden->subfold_backprop_weights_with_no_error_signal(
+		this->subfold_index,
+		(int)this->state_inputs.size());
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 20) {
@@ -74,4 +111,14 @@ void FoldNetwork::backprop_small(vector<double>& errors,
 
 		this->epoch_iter = 0;
 	}
+}
+
+void FoldNetwork::backprop_small_weights_with_no_error_signal(
+		std::vector<double>& errors,
+		double target_max_update,
+		FoldNetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_small_weights_with_no_error_signal(errors,
+												target_max_update);
 }

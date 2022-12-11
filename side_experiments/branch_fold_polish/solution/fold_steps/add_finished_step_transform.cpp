@@ -6,6 +6,15 @@
 using namespace std;
 
 void Fold::add_finished_step() {
+	double scope_scale_mod;
+	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+		scope_scale_mod = 0.0;	// doesn't matter
+	} else {
+		scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0]
+		delete this->scope_scale_mod_calcs[this->finished_steps.size()];
+		this->scope_scale_mod_calcs[this->finished_steps.size()] = NULL;
+	}
+
 	FinishedStep* new_finished_step = new FinishedStep((this->existing_actions[this->finished_steps.size()] != NULL),
 													   this->existing_actions[this->finished_steps.size()],
 													   this->obs_sizes[this->finished_steps.size()],
@@ -13,7 +22,7 @@ void Fold::add_finished_step() {
 													   this->inner_input_input_sizes,
 													   this->inner_input_input_networks,
 													   this->curr_input_network,
-													   this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0],
+													   scope_scale_mod,
 													   this->curr_score_network,
 													   this->curr_compress_num_layers,
 													   this->curr_compress_new_size,
@@ -30,8 +39,6 @@ void Fold::add_finished_step() {
 	this->inner_input_input_sizes.clear();
 	this->inner_input_input_networks.clear();
 	this->curr_input_network.clear();
-	delete this->scope_scale_mod_calcs[this->finished_steps.size()];
-	this->scope_scale_mod_calcs[this->finished_steps.size()] = NULL;
 	this->curr_score_network = NULL;
 	this->curr_compress_network = NULL;
 	this->curr_compressed_s_input_sizes.clear();

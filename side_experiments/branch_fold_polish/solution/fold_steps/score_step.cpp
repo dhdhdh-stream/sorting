@@ -356,17 +356,17 @@ void Fold::score_step_explore_off_path_backprop(
 	scale_factor_error += this->score_update*inner_predicted_score_error;
 
 	vector<double> score_errors{scale_factor*inner_predicted_score_error};
-	this->score_network->backprop_subfold_errors_with_no_weight_change(
+	this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
 		score_errors,
 		history->curr_score_network_history);
 	for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-		s_input_errors[0][s_index] += this->score_network->s_input_input->errors[s_index];
-		this->score_network->s_input_input->errors[s_index] = 0.0;
+		s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+		this->curr_score_network->s_input_input->errors[s_index] = 0.0;
 	}
 	for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
 		for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-			state_errors[l_index][s_index] += this->score_network->state_inputs[l_index]->errors[s_index];
-			this->score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+			state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+			this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 		}
 	}
 	predicted_score -= scale_factor*this->score_update;
@@ -782,17 +782,17 @@ void Fold::score_step_existing_flat_backprop(
 	scale_factor_error += this->score_update*predicted_score_error;
 
 	vector<double> score_errors{scale_factor*predicted_score_error};
-	this->score_network->backprop_subfold_errors_with_no_weight_change(
+	this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
 		score_errors,
 		history->curr_score_network_history);
 	for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-		s_input_errors[0][s_index] += this->score_network->s_input_input->errors[s_index];
-		this->score_network->s_input_input->errors[s_index] = 0.0;
+		s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+		this->curr_score_network->s_input_input->errors[s_index] = 0.0;
 	}
 	for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
 		for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-			state_errors[l_index][s_index] += this->score_network->state_inputs[l_index]->errors[s_index];
-			this->score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+			state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+			this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 		}
 	}
 	predicted_score -= scale_factor*this->score_update;
@@ -1116,7 +1116,7 @@ void Fold::score_step_update_backprop(
 	double inner_predicted_score_error = target_val - predicted_score;
 
 	vector<double> score_errors{scale_factor*inner_predicted_score_error};
-	this->score_network->backprop_subfold_weights_with_no_error_signal(
+	this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
 		score_errors,
 		0.001,
 		history->curr_score_network_history);

@@ -1536,8 +1536,13 @@ void BranchPath::update_backprop(double& predicted_score,
 								 ScopeHistory* history) {
 	// mid
 	for (int a_index = this->scopes.size()-1; a_index >= 1; a_index--) {
-		double misguess = abs(target_val - predicted_score);
-		this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+		if (a_index == this->scopes.size()-1 && this->is_scope_end) {
+			double misguess = abs(target_val - next_predicted_score);
+			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+		} else {
+			double misguess = abs(target_val - predicted_score);
+			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (this->score_networks[a_index] == NULL) {
