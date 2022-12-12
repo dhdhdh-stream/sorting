@@ -6,6 +6,9 @@
 using namespace std;
 
 void Fold::flat_to_fold() {
+	this->starting_average_misguess = 0.0;
+	this->starting_average_local_impact = 0.0;
+
 	// this->starting_compress_original_size > 0
 	// this->starting_compress_original_size == this->curr_starting_compress_new_size
 	this->test_starting_compress_new_size = this->curr_starting_compress_new_size-1;

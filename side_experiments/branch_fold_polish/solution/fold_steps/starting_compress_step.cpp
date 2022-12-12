@@ -710,8 +710,14 @@ void Fold::starting_compress_step_update_backprop(
 		}
 	}
 
+	double misguess = abs(target_val - predicted_score);
+	this->starting_average_misguess = 0.999*this->starting_average_misguess + 0.001*misguess;
+
 	next_predicted_score = predicted_score;
 	predicted_score -= history->starting_score_update;	// already scaled
+
+	this->starting_average_local_impact = 0.999*this->starting_average_local_impact
+		+ 0.001*abs(history->starting_score_update);
 }
 
 void Fold::starting_compress_step_existing_update_activate(

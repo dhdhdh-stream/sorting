@@ -562,7 +562,3 @@ void Branch::existing_update_backprop(double& predicted_score,
 
 	// score_networks don't update predicted_score
 }
-
-void Branch::resolve_fold(int b_index) {
-
-}

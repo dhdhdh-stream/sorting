@@ -229,7 +229,7 @@ void BranchPath::explore_branch() {
 			this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
 		this->compress_original_sizes[this->explore_index_inclusive] = -1;
 
-		bool branch_is_scope_end = (this->explore_end_non_inclusive == this->scopes.size() && this->is_scope_end);
+		bool is_scope_end = (this->explore_end_non_inclusive == this->scopes.size() && this->is_scope_end);
 
 		BranchPath* new_branch_path = new BranchPath(branch_is_inner_scope,
 													 branch_scopes,
@@ -274,7 +274,8 @@ void BranchPath::explore_branch() {
 										new_is_branch,
 										new_branches,
 										new_folds,
-										new_end_scale_mods);
+										new_end_scale_mods,
+										is_scope_end);
 		this->explore_fold->combined_score_network = NULL;
 
 		this->step_types[this->explore_index_inclusive] = STEP_TYPE_BRANCH;
@@ -330,5 +331,114 @@ void BranchPath::explore_branch() {
 }
 
 void BranchPath::resolve_fold(int a_index) {
+	vector<bool> new_is_inner_scope;
+	vector<Scope*> new_scopes;
+	vector<int> new_obs_sizes;
+	vector<vector<FoldNetwork*>> new_inner_input_networks;
+	vector<vector<int>> new_inner_input_sizes;
+	vector<double> new_scope_scale_mod;
+	vector<bool> new_step_types;
+	vector<Branch*> new_branches;
+	vector<Fold*> new_folds;
+	vector<FoldNetwork*> new_score_networks;
+	vector<double> new_average_misguesses;
+	vector<double> new_average_inner_scope_impacts;
+	vector<double> new_average_local_impacts;
+	vector<double> new_average_inner_branch_impacts;
+	vector<bool> new_active_compress;
+	vector<int> new_compress_new_sizes;
+	vector<FoldNetwork*> new_compress_networks;
+	vector<int> new_compress_original_sizes;
+	fold_to_path(this->folds[a_index]->finished_steps,
+				 new_is_inner_scope,
+				 new_scopes,
+				 new_obs_sizes,
+				 new_inner_input_networks,
+				 new_inner_input_sizes,
+				 new_scope_scale_mod,
+				 new_step_types,
+				 new_branches,
+				 new_folds,
+				 new_score_networks,
+				 new_average_misguesses,
+				 new_average_inner_scope_impacts,
+				 new_average_local_impacts,
+				 new_average_inner_branch_impacts,
+				 new_active_compress,
+				 new_compress_new_sizes,
+				 new_compress_networks,
+				 new_compress_original_sizes);
 
+	// this->score_networks[a_index] already set correctly
+
+	this->average_misguesses[a_index] = this->folds[a_index]->starting_average_misguess;
+	// this->average_inner_scope_impacts[a_index] unchanged
+	this->average_local_impacts[a_index] = this->folds[a_index]->starting_average_local_impact;
+	// this->average_inner_branch_impacts[a_index] doesn't matter and unchanged
+
+	if (this->folds[a_index]->curr_starting_compress_new_size < this->folds[a_index]->starting_compress_original_size) {
+		this->active_compress[a_index] = true;
+	} else {
+		this->active_compress[a_index] = false;
+	}
+	this->compress_new_sizes[a_index] = this->folds[a_index]->curr_starting_compress_new_size;
+	this->compress_networks[a_index] = this->folds[a_index]->curr_starting_compress_network;
+	this->folds[a_index]->curr_starting_compress_network = NULL;
+	this->compress_original_sizes[a_index] = this->folds[a_index]->starting_compress_original_size;
+
+	this->is_inner_scope.insert(this->is_inner_scope.begin()+a_index+1,
+		new_is_inner_scope.begin(), new_is_inner_scope.end());
+	this->scopes.insert(this->scopes.begin()+a_index+1,
+		new_scopes.begin(), new_scopes.end());
+	this->obs_sizes.insert(this->obs_sizes.begin()+a_index+1,
+		new_obs_sizes.begin(), new_obs_sizes.end());
+
+	this->inner_input_networks.insert(this->inner_input_networks.begin()+a_index+1,
+		new_inner_input_networks.begin(), new_inner_input_networks.end());
+	this->inner_input_sizes.insert(this->inner_input_sizes.begin()+a_index+1,
+		new_inner_input_sizes.begin(), new_inner_input_sizes.end());
+	this->scope_scale_mod.insert(this->scope_scale_mod.begin()+a_index+1,
+		new_scope_scale_mod.begin(), new_scope_scale_mod.end());
+
+	this->step_types.insert(this->step_types.begin()+a_index+1,
+		new_step_types.begin(), new_step_types.end());
+	this->branches.insert(this->branches.begin()+a_index+1,
+		new_branches.begin(), new_branches.end());
+	this->folds.insert(this->folds.begin()+a_index+1,
+		new_folds.begin(), new_folds.end());
+
+	this->score_networks.insert(this->score_networks.begin()+a_index+1,
+		new_score_networks.begin(), new_score_networks.end());
+
+	this->average_misguesses.insert(this->average_misguesses.begin()+a_index+1,
+		new_average_misguesses.begin(), new_average_misguesses.end());
+	this->average_inner_scope_impacts.insert(this->average_inner_scope_impacts.begin()+a_index+1,
+		new_average_inner_scope_impacts.begin(), new_average_inner_scope_impacts.end());
+	this->average_local_impacts.insert(this->average_local_impacts.begin()+a_index+1,
+		new_average_local_impacts.begin(), new_average_local_impacts.end());
+	this->average_inner_branch_impacts.insert(this->average_inner_branch_impacts.begin()+a_index+1,
+		new_average_inner_branch_impacts.begin(), new_average_inner_branch_impacts.end());
+
+	this->active_compress.insert(this->active_compress.begin()+a_index+1,
+		new_active_compress.begin(), new_active_compress.end());
+	this->compress_new_sizes.insert(this->compress_new_sizes.begin()+a_index+1,
+		new_compress_new_sizes.begin(), new_compress_new_sizes.end());
+	this->compress_networks.insert(this->compress_networks.begin()+a_index+1,
+		new_compress_networks.begin(), new_compress_networks.end());
+	this->compress_original_sizes.insert(this->compress_original_sizes.begin()+a_index+1,
+		new_compress_original_sizes.begin(), new_compress_original_sizes.end());
+
+	if (this->explore_type == EXPLORE_TYPE_NEW) {
+		if (this->explore_index_inclusive > a_index) {
+			// TODO: explore_index_inclusive != a_index as local_impact is not set, but examine if good to do so
+			this->explore_index_inclusive += this->folds[a_index]->sequence_length;
+		}
+		if (this->explore_end_non_inclusive > a_index) {
+			this->explore_end_non_inclusive += this->folds[a_index]->sequence_length;
+		}
+	}
+
+	delete this->folds[a_index];
+	this->folds[a_index] = NULL;
+	this->step_types[a_index] = STEP_TYPE_STEP;
 }

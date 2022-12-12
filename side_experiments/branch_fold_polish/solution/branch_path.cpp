@@ -1557,10 +1557,10 @@ void BranchPath::update_backprop(double& predicted_score,
 					history->score_network_histories[a_index]);
 
 				next_predicted_score = predicted_score;
-				predicted_score -= scale_factor*this->score_updates[a_index];
+				predicted_score -= scale_factor*history->score_updates[a_index];
 
 				this->average_local_impacts[a_index] = 0.999*this->average_local_impacts[a_index]
-					+ 0.001*abs(scale_factor*this->score_updates[a_index]);
+					+ 0.001*abs(scale_factor*history->score_updates[a_index]);
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			double ending_predicted_score = predicted_score;
@@ -1591,6 +1591,8 @@ void BranchPath::update_backprop(double& predicted_score,
 				score_errors,
 				0.001,
 				history->score_network_histories[a_index]);
+
+			// local_impact kept track of as starting impact in fold
 
 			if (this->folds[a_index]->state == STATE_DONE) {
 				resolve_fold(a_index);
@@ -1631,10 +1633,10 @@ void BranchPath::update_backprop(double& predicted_score,
 
 		next_predicted_score = predicted_score;
 		// starting score already scaled
-		predicted_score -= this->score_updates[0];
+		predicted_score -= history->score_updates[0];
 
 		this->average_local_impacts[0] = 0.999*this->average_local_impacts[0]
-			+ 0.001*abs(this->score_updates[0]);
+			+ 0.001*abs(history->score_updates[0]);
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		double ending_predicted_score = predicted_score;
 
@@ -1658,6 +1660,8 @@ void BranchPath::update_backprop(double& predicted_score,
 		// start step score errors handled in branch
 
 		// predicted_score already modified to before fold value in fold
+
+		// local_impact kept track of as starting impact in fold
 
 		if (this->folds[0]->state == STATE_DONE) {
 			resolve_fold(0);

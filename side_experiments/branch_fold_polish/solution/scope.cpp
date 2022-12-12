@@ -7,7 +7,40 @@
 
 using namespace std;
 
+Scope::Scope(int num_inputs,
+			 int num_outputs,
+			 std::vector<bool> is_inner_scope,
+			 std::vector<Scope*> scopes,
+			 std::vector<int> obs_sizes,
+			 std::vector<std::vector<FoldNetwork*>> inner_input_networks,
+			 std::vector<std::vector<int>> inner_input_sizes,
+			 std::vector<double> scope_scale_mod,
+			 std::vector<int> step_types,
+			 std::vector<Branch*> branches,
+			 std::vector<Fold*> folds,
+			 std::vector<FoldNetwork*> score_networks,
+			 std::vector<double> average_misguesses,
+			 std::vector<double> average_inner_scope_impacts,
+			 std::vector<double> average_local_impacts,
+			 std::vector<double> average_inner_branch_impacts,
+			 std::vector<bool> active_compress,
+			 std::vector<int> compress_new_sizes,
+			 std::vector<FoldNetwork*> compress_networks,
+			 std::vector<int> compress_original_sizes) {
 
+}
+
+Scope::Scope(Scope* original) {
+
+}
+
+Scope::Scope(std::ifstream& input_file) {
+
+}
+
+Scope::~Scope() {
+
+}
 
 void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 									 vector<double>& local_s_input_vals,	// i.e., input
@@ -22,11 +55,10 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 	if (!this->is_inner_scope[0]) {
 		local_state_vals = flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
-		// Note: no NO-OPs, and instead, if want to branch start, explore from outside
+		// Note: no NO-OPs besides absolute start, and instead, if want to branch start, explore from outside
 	} else {
 		// for start, if inner scope, scope_input is first local_s_input_vals
 		vector<double> scope_input(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-		// TODO: check if this always holds (should always hold if scope construction sequential/correct)
 
 		scale_factor *= this->scope_scale_mod[0];
 
@@ -1934,10 +1966,10 @@ void Scope::update_backprop(double& predicted_score,
 					history->score_network_histories[a_index]);
 
 				next_predicted_score = predicted_score;
-				predicted_score -= scale_factor*this->score_updates[a_index];
+				predicted_score -= scale_factor*history->score_updates[a_index];
 
 				this->average_local_impacts[a_index] = 0.999*this->average_local_impacts[a_index]
-					+ 0.001*abs(scale_factor*this->score_updates[a_index]);
+					+ 0.001*abs(scale_factor*history->score_updates[a_index]);
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			double ending_predicted_score = predicted_score;
@@ -1968,6 +2000,8 @@ void Scope::update_backprop(double& predicted_score,
 				score_errors,
 				0.001,
 				history->score_network_histories[a_index]);
+
+			// local_impact kept track of as starting impact in fold
 
 			if (this->folds[a_index]->state == STATE_DONE) {
 				resolve_fold(a_index);
@@ -2013,10 +2047,10 @@ void Scope::update_backprop(double& predicted_score,
 			history->score_network_histories[0]);
 
 		next_predicted_score = predicted_score;
-		predicted_score -= scale_factor*this->score_updates[0];
+		predicted_score -= scale_factor*history->score_updates[0];
 
 		this->average_local_impacts[0] = 0.999*this->average_local_impacts[0]
-			+ 0.001*abs(scale_factor*this->score_updates[0]);
+			+ 0.001*abs(scale_factor*history->score_updates[0]);
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		double ending_predicted_score = predicted_score;
 
@@ -2046,6 +2080,8 @@ void Scope::update_backprop(double& predicted_score,
 			score_errors,
 			0.001,
 			history->score_network_histories[0]);
+
+		// local_impact kept track of as starting impact in fold
 
 		if (this->folds[0]->state == STATE_DONE) {
 			resolve_fold(0);
@@ -2343,16 +2379,20 @@ void Scope::existing_update_backprop(double& predicted_score,
 	}
 }
 
+void Scope::save(ofstream& output_file) {
+
+}
+
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->inner_input_networks = vector<vector<FoldNetworkHistory*>>(scope->sequence_length);
-	this->scope_histories = vector<ScopeHistory*>(scope->sequence_length, NULL);
-	this->branch_histories = vector<BranchHistory*>(scope->sequence_length, NULL);
-	this->fold_histories = vector<FoldHistory*>(scope->sequence_length, NULL);
-	this->score_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
-	this->score_updates = vector<double>(scope->sequence_length, 0.0);
-	this->compress_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
+	this->inner_input_networks = vector<vector<FoldNetworkHistory*>>(scope->scopes.size());
+	this->scope_histories = vector<ScopeHistory*>(scope->scopes.size(), NULL);
+	this->branch_histories = vector<BranchHistory*>(scope->scopes.size(), NULL);
+	this->fold_histories = vector<FoldHistory*>(scope->scopes.size(), NULL);
+	this->score_network_histories = vector<FoldNetworkHistory*>(scope->scopes.size(), NULL);
+	this->score_updates = vector<double>(scope->scopes.size(), 0.0);
+	this->compress_network_histories = vector<FoldNetworkHistory*>(scope->scopes.size(), NULL);
 
 	this->explore_fold_history = NULL;
 }

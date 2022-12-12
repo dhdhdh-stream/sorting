@@ -63,6 +63,9 @@ public:
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;	// becomes last compress network
 
+	double starting_average_misguess;
+	double starting_average_local_impact;
+
 	int curr_starting_compress_new_size;
 	FoldNetwork* curr_starting_compress_network;
 	int starting_compress_original_size;
@@ -109,7 +112,7 @@ public:
 		 int output_size,
 		 double* existing_misguess,
 		 int starting_s_input_size,
-		 int starting_state_size);	// super edge case but can be 0 if scope num_outputs is 0
+		 int starting_state_size);
 
 	// TODO: need to be able to save Folds, even during partial progress
 };
