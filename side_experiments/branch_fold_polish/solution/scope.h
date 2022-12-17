@@ -3,13 +3,22 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+#include <vector>
+
+#include "branch.h"
+#include "fold.h"
+#include "fold_network.h"
+
+class Branch;
+class Fold;
 class Scope {
 public:
-	int scope_id;
+	int id;
 
 	int num_inputs;
 	int num_outputs;	// cannot be 0 aside from starting/outer scope, which won't be included in dictionary
 
+	int sequence_length;
 	std::vector<bool> is_inner_scope;
 	std::vector<Scope*> scopes;
 	std::vector<int> obs_sizes;	// TODO: exchange with raw actions later
@@ -45,10 +54,9 @@ public:
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
 
-	std::mutex mtx;
-
 	Scope(int num_inputs,
 		  int num_outputs,
+		  int sequence_length,
 		  std::vector<bool> is_inner_scope,
 		  std::vector<Scope*> scopes,
 		  std::vector<int> obs_sizes,

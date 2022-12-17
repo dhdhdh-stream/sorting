@@ -25,6 +25,7 @@ const int EXPLORE_SIGNAL_REPLACE = 1;
 const int EXPLORE_SIGNAL_BRANCH = 2;
 const int EXPLORE_SIGNAL_CLEAN = 3;
 
+// TODO: save id
 extern int id_counter;
 extern std::mutex id_counter_mtx;
 

@@ -49,6 +49,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	int scope_num_inputs = 0;
 	int scope_num_outputs;
 
+	int scope_sequence_length = 0;
 	vector<bool> scope_is_inner_scope;
 	vector<Scope*> scope_scopes;
 	vector<int> scope_obs_sizes;
@@ -77,6 +78,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	for (int s_index = 0; s_index < (int)scope_starts.size(); s_index++) {
 		while (true) {
 			if (n_index < scope_starts[s_index]) {
+				scope_sequence_length++;
 				scope_is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 				scope_scopes.push_back(finished_steps[n_index]->scope);
 				scope_obs_sizes.push_back(finished_steps[n_index]->obs_size);
@@ -155,6 +157,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 														  new_outer_compress_original_size,
 														  new_compressed_scope_sizes);
 
+				scope_sequence_length++;
 				scope_is_inner_scope.push_back(true);
 				scope_scopes.push_back(new_scope);
 				scope_obs_sizes.push_back(-1);
@@ -218,6 +221,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			break;
 		}
 
+		scope_sequence_length++;
 		scope_is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 		scope_scopes.push_back(finished_steps[n_index]->scope);
 		scope_obs_sizes.push_back(finished_steps[n_index]->obs_size);
@@ -300,6 +304,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 	Scope* scope = new Scope(scope_num_inputs,
 							 scope_num_outputs,
+							 scope_sequence_length,
 							 scope_is_inner_scope,
 							 scope_scopes,
 							 scope_obs_sizes,

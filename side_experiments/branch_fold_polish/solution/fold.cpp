@@ -6,6 +6,7 @@
 using namespace std;
 
 Fold::Fold(int sequence_length,
+		   vector<bool> is_existing,
 		   vector<Scope*> existing_actions,
 		   vector<int> obs_sizes,
 		   int output_size,
@@ -13,6 +14,7 @@ Fold::Fold(int sequence_length,
 		   int starting_s_input_size,
 		   int starting_state_size) {
 	this->sequence_length = sequence_length;
+	this->is_existing = is_existing;
 	this->existing_actions = existing_actions;
 	this->obs_sizes = obs_sizes;
 	this->output_size = output_size;
@@ -41,7 +43,7 @@ Fold::Fold(int sequence_length,
 
 	this->scope_scale_mod_calcs = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			this->scope_scale_mod_calcs[f_index] = new Network(0, 0, 1);
 			this->scope_scale_mod_calcs[f_index]->output->constants[0] = 1.0;
 		}
@@ -57,14 +59,14 @@ Fold::Fold(int sequence_length,
 	vector<vector<double>> input_flat_sizes(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		int flat_size;
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			flat_size = this->obs_sizes[f_index];
 		} else {
 			flat_size = this->existing_actions[f_index]->num_outputs;
 		}
 		flat_sizes.push_back(flat_size);
 		for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
-			if (this->existing_actions[ff_index] == NULL) {
+			if (this->is_existing[ff_index]) {
 				input_flat_sizes[ff_index].push_back(flat_size);
 			}
 		}
@@ -77,7 +79,7 @@ Fold::Fold(int sequence_length,
 									  100);
 	this->curr_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
 															  this->existing_actions[f_index]->num_inputs,
 															  starting_s_input_size,
@@ -117,7 +119,6 @@ Fold::~Fold() {
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->existing_actions[f_index] != NULL) {
 			delete this->existing_actions[f_index];
-			// don't clear this->existing_actions[f_index] value
 		}
 	}
 
@@ -129,7 +130,7 @@ Fold::~Fold() {
 	}
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			if (this->scope_scale_mod_calcs[f_index] != NULL) {
 				delete this->scope_scale_mod_calcs[f_index];
 			}
@@ -143,7 +144,7 @@ Fold::~Fold() {
 		delete this->curr_fold;
 	}
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			if (this->curr_input_folds[f_index] != NULL) {
 				delete this->curr_input_folds[f_index];
 			}
@@ -164,7 +165,7 @@ Fold::~Fold() {
 		delete this->test_fold;
 	}
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			if (this->test_input_folds[f_index] != NULL) {
 				delete this->test_input_folds[f_index];
 			}
@@ -221,11 +222,11 @@ void Fold::explore_on_path_activate(double existing_score,
 }
 
 int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
-									double& predicted_score,
-									double target_val,
-									double& scale_factor,
-									double& scale_factor_error,
-									FoldHistory* history) {
+								   double& predicted_score,
+								   double target_val,
+								   double& scale_factor,
+								   double& scale_factor_error,
+								   FoldHistory* history) {
 	flat_step_explore_on_path_backprop(local_state_errors,
 									   predicted_score,
 									   target_val,

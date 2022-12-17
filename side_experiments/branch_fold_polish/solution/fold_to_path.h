@@ -1,6 +1,14 @@
 #ifndef FOLD_TO_PATH_H
 #define FOLD_TO_PATH_H
 
+#include <vector>
+
+#include "branch.h"
+#include "finished_step.h"
+#include "fold.h"
+#include "fold_network.h"
+#include "scope.h"
+
 void fold_to_path(std::vector<FinishedStep*> finished_steps,
 				  std::vector<bool>& is_inner_scope,
 				  std::vector<Scope*>& scopes,
