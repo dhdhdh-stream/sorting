@@ -60,13 +60,13 @@ void Fold::compress_step_explore_off_path_activate(
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				input_fold_inputs[f_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_vals.push_back(vector<double>());
 		state_vals.push_back(flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
@@ -125,7 +125,7 @@ void Fold::compress_step_explore_off_path_activate(
 	}
 	fold_input.push_back(vector<double>());	// empty
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			input_fold_inputs[f_index].push_back(vector<double>());	// empty
 		}
 	}
@@ -174,10 +174,10 @@ void Fold::compress_step_explore_off_path_activate(
 	}
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			fold_input.push_back(flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(flat_vals.begin());
 				}
 			}
@@ -218,7 +218,7 @@ void Fold::compress_step_explore_off_path_activate(
 
 			fold_input.push_back(scope_output);
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(scope_output);
 				}
 			}
@@ -302,7 +302,7 @@ void Fold::compress_step_explore_off_path_backprop(
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			scope_input_errors[f_index] = vector<double>(this->existing_actions[f_index]->num_outputs, 0.0);
 		}
 	}
@@ -325,7 +325,7 @@ void Fold::compress_step_explore_off_path_backprop(
 	}
 	// don't include this->finished_steps.size()
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
 				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
@@ -338,7 +338,7 @@ void Fold::compress_step_explore_off_path_backprop(
 	predicted_score -= scale_factor*this->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
@@ -371,7 +371,7 @@ void Fold::compress_step_explore_off_path_backprop(
 			}
 			// don't include this->finished_steps.size()
 			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size()+1; ff_index--) {
-				if (this->existing_actions[ff_index] != NULL) {
+				if (this->is_existing[ff_index]) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
@@ -433,7 +433,7 @@ void Fold::compress_step_explore_off_path_backprop(
 	}
 	predicted_score -= scale_factor*this->score_update;
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_errors.pop_back();
 		state_errors.pop_back();
 	} else {
@@ -586,13 +586,13 @@ void Fold::compress_step_existing_flat_activate(
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				input_fold_inputs[f_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_vals.push_back(vector<double>());
 		state_vals.push_back(flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
@@ -640,7 +640,7 @@ void Fold::compress_step_existing_flat_activate(
 	}
 	fold_input.push_back(vector<double>());	// empty
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			input_fold_inputs[f_index].push_back(vector<double>());	// empty
 		}
 	}
@@ -679,10 +679,10 @@ void Fold::compress_step_existing_flat_activate(
 	}
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			fold_input.push_back(flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(flat_vals.begin());
 				}
 			}
@@ -717,7 +717,7 @@ void Fold::compress_step_existing_flat_activate(
 
 			fold_input.push_back(scope_output);
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(scope_output);
 				}
 			}
@@ -787,7 +787,7 @@ void Fold::compress_step_existing_flat_backprop(
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			scope_input_errors[f_index] = vector<double>(this->existing_actions[f_index]->num_outputs, 0.0);
 		}
 	}
@@ -810,7 +810,7 @@ void Fold::compress_step_existing_flat_backprop(
 	}
 	// don't include this->finished_steps.size()
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
 				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
@@ -823,7 +823,7 @@ void Fold::compress_step_existing_flat_backprop(
 	predicted_score -= scale_factor*this->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
@@ -856,7 +856,7 @@ void Fold::compress_step_existing_flat_backprop(
 			}
 			// don't include this->finished_steps.size()
 			for (int ff_index = f_index-1; ff_index >= (int)this->finished_steps.size()+1; ff_index--) {
-				if (this->existing_actions[ff_index] != NULL) {
+				if (this->is_existing[ff_index]) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
@@ -916,7 +916,7 @@ void Fold::compress_step_existing_flat_backprop(
 	}
 	predicted_score -= scale_factor*this->score_update;
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_errors.pop_back();
 		state_errors.pop_back();
 	} else {
@@ -1066,13 +1066,13 @@ void Fold::compress_step_update_activate(
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				input_fold_inputs[f_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_vals.push_back(vector<double>());
 		state_vals.push_back(flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
@@ -1113,7 +1113,7 @@ void Fold::compress_step_update_activate(
 	}
 	fold_input.push_back(vector<double>());	// empty
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			input_fold_inputs[f_index].push_back(vector<double>());	// empty
 		}
 	}
@@ -1175,10 +1175,10 @@ void Fold::compress_step_update_activate(
 	}
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			fold_input.push_back(flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(flat_vals.begin());
 				}
 			}
@@ -1239,7 +1239,7 @@ void Fold::compress_step_update_activate(
 
 			fold_input.push_back(scope_output);
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(scope_output);
 				}
 			}
@@ -1361,7 +1361,7 @@ void Fold::compress_step_update_backprop(
 	predicted_score -= scale_factor*this->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
@@ -1390,7 +1390,7 @@ void Fold::compress_step_update_backprop(
 	next_predicted_score = predicted_score;
 	predicted_score -= scale_factor*this->score_update;
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		// do nothing
 	} else {
 		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
@@ -1469,13 +1469,13 @@ void Fold::compress_step_existing_update_activate(
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				input_fold_inputs[f_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_vals.push_back(vector<double>());
 		state_vals.push_back(flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
@@ -1517,7 +1517,7 @@ void Fold::compress_step_existing_update_activate(
 	}
 	fold_input.push_back(vector<double>());	// empty
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			input_fold_inputs[f_index].push_back(vector<double>());	// empty
 		}
 	}
@@ -1550,10 +1550,10 @@ void Fold::compress_step_existing_update_activate(
 	}
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			fold_input.push_back(flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(flat_vals.begin());
 				}
 			}
@@ -1585,7 +1585,7 @@ void Fold::compress_step_existing_update_activate(
 
 			fold_input.push_back(scope_output);
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(scope_output);
 				}
 			}
@@ -1626,7 +1626,7 @@ void Fold::compress_step_existing_update_backprop(
 	predicted_score -= scale_factor*this->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
@@ -1647,7 +1647,7 @@ void Fold::compress_step_existing_update_backprop(
 
 	predicted_score -= scale_factor*this->score_update;
 
-	if (this->existing_actions[this->finished_steps.size()] == NULL) {
+	if (!this->is_existing[this->finished_steps.size()]) {
 		// do nothing
 	} else {
 		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];

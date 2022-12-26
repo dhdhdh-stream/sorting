@@ -27,9 +27,11 @@ const int STATE_DONE = 7;
 class Scope;
 class Fold {
 public:
+	int id;
+
 	int sequence_length;
-	std::vector<bool> is_existing;	// TODO: add for serial/deserial
-	std::vector<Scope*> existing_actions;
+	std::vector<bool> is_existing;
+	std::vector<Scope*> existing_actions;	// shallow copy initialy, deep copy on adding FinishedStep
 	std::vector<int> obs_sizes;
 	int output_size;
 
@@ -530,6 +532,7 @@ private:
 	void input_end();
 
 	void add_finished_step();
+	void restart_from_finished_step();
 
 	void step_added_step_explore_off_path_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -584,6 +587,8 @@ private:
 
 class FoldHistory {
 public:
+	Fold* fold;
+
 	double existing_score;
 
 	double starting_score_update;
@@ -600,13 +605,15 @@ public:
 
 	FoldNetworkHistory* curr_compress_network_history;
 
-	std::vector<FoldNetworkHistory*> curr_input_fold_histories;
-	std::vector<ScopeHistory*> scope_histories;
+	std::vector<FoldNetworkHistory*> curr_input_fold_histories;	// initialize to empty
+	std::vector<ScopeHistory*> scope_histories;	// initialize to empty
 
 	FoldNetworkHistory* curr_fold_history;
 	FoldNetworkHistory* curr_end_fold_history;
 
 	double ending_score_update;
+
+	FoldHistory(Fold* fold);
 };
 
 #endif /* FOLD_H */

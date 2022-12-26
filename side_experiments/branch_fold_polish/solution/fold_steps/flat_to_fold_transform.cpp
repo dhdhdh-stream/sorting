@@ -31,7 +31,7 @@ void Fold::flat_to_fold() {
 	// this->test_starting_compress_new_size can be 0
 	this->test_fold->add_scope(this->test_starting_compress_new_size);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 			this->test_input_folds[f_index]->pop_scope();
 			this->test_input_folds[f_index]->add_scope(this->test_starting_compress_new_size);

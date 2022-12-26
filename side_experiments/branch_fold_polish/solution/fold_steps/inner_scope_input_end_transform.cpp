@@ -15,7 +15,7 @@ void Fold::inner_scope_input_end() {
 		this->test_input_network = NULL;
 
 		if (this->curr_input_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
-			if (this->existing_actions[this->finished_steps.size()] == NULL) {
+			if (!this->is_existing[this->finished_steps.size()]) {
 				this->curr_s_input_sizes.push_back(0);
 				this->curr_scope_sizes.push_back(this->obs_sizes[this->finished_steps.size()]);
 			} else {
@@ -25,9 +25,9 @@ void Fold::inner_scope_input_end() {
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
-			this->curr_fold->migrate_weights();	// TODO: migrate from fold_index to last_state for all hidden layer
+			this->curr_fold->migrate_weights();
 			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-				if (this->existing_actions[f_index] != NULL) {
+				if (this->is_existing[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
 					this->curr_input_folds[f_index]->migrate_weights();

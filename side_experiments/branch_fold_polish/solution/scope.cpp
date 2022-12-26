@@ -2722,7 +2722,7 @@ void Scope::save(ofstream& output_file) {
 			output_file << this->inner_input_networks[a_index].size() << endl;
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
 				ofstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/scope_" + this->id + "_inner_input_" + to_string(a_index) + " " + to_string(i_index) + ".txt");
+				inner_input_network_save_file.open("saves/nns/scope_" + this->id + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
 				this->inner_input_networks[a_index][i_index]->save(inner_input_network_save_file);
 				inner_input_network_save_file.close();
 

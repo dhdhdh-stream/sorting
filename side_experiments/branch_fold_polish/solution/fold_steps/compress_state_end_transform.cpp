@@ -25,7 +25,7 @@ void Fold::compress_state_end() {
 		this->curr_fold = this->test_fold;
 		this->test_fold = NULL;
 		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				delete this->curr_input_folds[f_index];
 				this->curr_input_folds[f_index] = this->test_input_folds[f_index];
 				this->test_input_folds[f_index] = NULL;
@@ -62,7 +62,7 @@ void Fold::compress_state_end() {
 			this->test_fold->pop_scope();
 			this->test_fold->add_scope(this->test_compress_new_size);
 			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-				if (this->existing_actions[f_index] != NULL) {
+				if (this->is_existing[f_index]) {
 					this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 					this->test_input_folds[f_index]->pop_scope();
 					this->test_input_folds[f_index]->add_scope(this->test_compress_new_size);
@@ -88,7 +88,7 @@ void Fold::compress_state_end() {
 		delete this->test_fold;
 		this->test_fold = NULL;
 		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				delete this->test_input_folds[f_index];
 				this->test_input_folds[f_index] = NULL;
 			}
@@ -147,7 +147,7 @@ void Fold::compress_state_end() {
 				this->test_fold->pop_scope();
 				this->test_fold->add_scope(this->test_compressed_scope_sizes[0]);
 				for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-					if (this->existing_actions[f_index] != NULL) {
+					if (this->is_existing[f_index]) {
 						this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 						this->test_input_folds[f_index]->pop_scope();
 						this->test_input_folds[f_index]->add_scope(this->test_compressed_scope_sizes[0]);
@@ -190,7 +190,7 @@ void Fold::compress_state_end() {
 				this->test_fold->add_scope(this->test_compressed_scope_sizes[0]);
 				this->test_fold->add_scope(this->test_compress_new_size);
 				for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-					if (this->existing_actions[f_index] != NULL) {
+					if (this->is_existing[f_index]) {
 						this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 						this->test_input_folds[f_index]->pop_scope();
 						this->test_input_folds[f_index]->add_scope(this->test_compressed_scope_sizes[0]);

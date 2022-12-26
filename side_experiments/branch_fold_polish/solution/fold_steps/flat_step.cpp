@@ -26,10 +26,10 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 	vector<vector<vector<double>>> input_fold_inputs(this->sequence_length);
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] == NULL) {
+		if (!this->is_existing[f_index]) {
 			fold_input.push_back(flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(flat_vals.begin());
 				}
 			}
@@ -61,7 +61,7 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 
 			fold_input.push_back(scope_output);
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->existing_actions[i_index] != NULL) {
+				if (this->is_existing[i_index]) {
 					input_fold_inputs[i_index].push_back(scope_output);
 				}
 			}
@@ -109,7 +109,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			scope_input_errors[f_index] = vector<double>(this->existing_actions[f_index]->num_outputs, 0.0);
 		}
 	}
@@ -139,7 +139,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 	// don't need to worry about s_input_errors and state_errors
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
 				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
@@ -152,7 +152,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	predicted_score -= scale_factor*this->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
-		if (this->existing_actions[f_index] != NULL) {
+		if (this->is_existing[f_index]) {
 			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
 			scale_factor *= scope_scale_mod;
 
@@ -184,7 +184,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.002);
 			}
 			for (int ff_index = f_index-1; ff_index >= 0; ff_index--) {
-				if (this->existing_actions[ff_index] != NULL) {
+				if (this->is_existing[ff_index]) {
 					for (int i_index = 0; i_index < this->existing_actions[ff_index]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;

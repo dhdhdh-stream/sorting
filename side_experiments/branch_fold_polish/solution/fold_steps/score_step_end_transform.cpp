@@ -44,7 +44,7 @@ void Fold::score_end() {
 
 		this->test_fold = new FoldNetwork(this->curr_fold);
 		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 			}
 		}
@@ -61,7 +61,7 @@ void Fold::score_end() {
 
 			this->test_fold->pop_scope();
 			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-				if (this->existing_actions[f_index] != NULL) {
+				if (this->is_existing[f_index]) {
 					this->test_input_folds[f_index]->pop_scope();
 				}
 			}
@@ -74,7 +74,7 @@ void Fold::score_end() {
 		this->test_fold->pop_scope();
 		this->test_fold->add_scope(this->test_compress_new_size);
 		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
+			if (this->is_existing[f_index]) {
 				this->test_input_folds[f_index]->pop_scope();
 				this->test_input_folds[f_index]->add_scope(this->test_compress_new_size);
 			}
