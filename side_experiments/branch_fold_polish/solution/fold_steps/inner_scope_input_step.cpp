@@ -210,8 +210,7 @@ void Fold::inner_scope_input_step_explore_off_path_activate(
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor *= end_scale_mod_val;
+	// end_scale_mod passed on
 }
 
 void Fold::inner_scope_input_step_explore_off_path_backprop(
@@ -222,9 +221,7 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor /= end_scale_mod_val;
-	scale_factor_error *= end_scale_mod_val;
+	// end_scale_mod passed on
 
 	double predicted_score_error = target_val - predicted_score;
 
@@ -592,8 +589,7 @@ void Fold::inner_scope_input_step_existing_flat_activate(
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor *= end_scale_mod_val;
+	// end_scale_mod passed on
 }
 
 void Fold::inner_scope_input_step_existing_flat_backprop(
@@ -604,9 +600,7 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor /= end_scale_mod_val;
-	scale_factor_error *= end_scale_mod_val;
+	// end_scale_mod passed on
 
 	scale_factor_error += this->ending_score_update*predicted_score_error;
 
@@ -1016,8 +1010,7 @@ void Fold::inner_scope_input_step_update_activate(
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor *= end_scale_mod_val;
+	// end_scale_mod passed on
 }
 
 void Fold::inner_scope_input_step_update_backprop(
@@ -1026,8 +1019,7 @@ void Fold::inner_scope_input_step_update_backprop(
 		double target_val,
 		double& scale_factor,
 		FoldHistory* history) {
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor /= end_scale_mod_val;
+	// end_scale_mod passed on
 
 	double predicted_score_error = target_val - predicted_score;
 
@@ -1240,8 +1232,7 @@ void Fold::inner_scope_input_step_existing_update_activate(
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor *= end_scale_mod_val;
+	// end_scale_mod passed on
 }
 
 void Fold::inner_scope_input_step_existing_update_backprop(
@@ -1250,9 +1241,7 @@ void Fold::inner_scope_input_step_existing_update_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor /= end_scale_mod_val;
-	scale_factor_error *= end_scale_mod_val;
+	// end_scale_mod passed on
 
 	scale_factor_error += this->ending_score_update*predicted_score_error;
 

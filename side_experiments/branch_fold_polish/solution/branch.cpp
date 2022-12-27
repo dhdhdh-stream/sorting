@@ -5,7 +5,142 @@
 
 using namespace std;
 
+Branch::Branch(FoldNetwork* branch_score_network,
+			   vector<FoldNetwork*> score_networks,
+			   vector<bool> is_branch,
+			   vector<BranchPath*> branches,
+			   vector<Fold*> folds,
+			   vector<double> end_scale_mods,
+			   bool is_scope_end) {
+	id_counter_mtx.lock();
+	this->id = id_counter;
+	id_counter++;
+	id_counter_mtx.unlock();
 
+	this->branch_score_network = branch_score_network;
+	this->passed_branch_score = false;
+
+	this->score_networks = score_networks;
+	this->is_branch = is_branch;
+	this->branches = branches;
+	this->folds = folds;
+	this->end_scale_mods = end_scale_mods;
+
+	this->is_scope_end = is_scope_end;
+}
+
+Branch::Branch(Branch* original) {
+	id_counter_mtx.lock();
+	this->id = id_counter;
+	id_counter++;
+	id_counter_mtx.unlock();
+
+	this->passed_branch_score = original->passed_branch_score;
+	if (!this->passed_branch_score) {
+		this->branch_score_network = new FoldNetwork(original->branch_score_network);
+	} else {
+		this->branch_score_network = NULL;
+	}
+
+	this->passed_branch_score = original->passed_branch_score;
+
+	this->is_branch = original->is_branch;
+	this->end_scale_mods = original->end_scale_mods;
+	for (int b_index = 0; (int)original->branches.size(); b_index++) {
+		this->score_networks.push_back(new FoldNetwork(original->score_networks[b_index]));
+		if (this->is_branch[b_index]) {
+			this->branches.push_back(original->branches[b_index]);
+			this->folds.push_back(NULL);
+		} else {
+			this->branches.push_back(NULL);
+			this->folds.push_back(original->folds[b_index]);
+		}
+	}
+
+	this->is_scope_end = original->is_scope_end;
+}
+
+Branch::Branch(ifstream& input_file) {
+	string id_line;
+	getline(input_file, id_line);
+	this->id = stoi(id_line);
+
+	string passed_branch_score_line;
+	getline(input_file, passed_branch_score_line);
+	this->passed_branch_score = stoi(passed_branch_score_line);
+
+	if (!this->passed_branch_score) {
+		ifstream branch_score_network_save_file;
+		branch_score_network_save_file.open("saves/branch_" + to_string(this->id) + "_branch_score.txt");
+		this->branch_score_network = new FoldNetwork(branch_score_network_save_file);
+		branch_score_network_save_file.close();
+	}
+
+	string branches_size_line;
+	getline(input_file, branches_size_line);
+	int branches_size = stoi(branches_size_line);
+
+	for (int b_index = 0; b_index < branches_size; b_index++) {
+		ifstream score_network_save_file;
+		score_network_save_file.open("saves/branch_" + to_string(this->id) + "_score_" + to_string(b_index) + ".txt");
+		this->score_networks.push_back(new FoldNetwork(score_network_save_file));
+		score_network_save_file.close();
+
+		string is_branch_line;
+		getline(input_file, is_branch_line);
+		this->is_branch.push_back(stoi(is_branch_line));
+
+		if (this->is_branch[b_index]) {
+			string branch_id_line;
+			getline(input_file, branch_id_line);
+			int branch_id = stoi(branch_id_line);
+
+			ifstream branch_save_file;
+			branch_save_file.open("saves/branch_" + to_string(branch_id) + ".txt");
+			this->branches.push_back(new Branch(branch_save_file));
+			branch_save_file.close();
+
+			this->folds.push_back(NULL);
+		} else {
+			string fold_id_line;
+			getline(input_file, fold_id_line);
+			int fold_id = stoi(fold_id_line);
+
+			ifstream fold_save_file;
+			fold_save_file.open("saves/fold_" + to_string(fold_id) + ".txt");
+			this->folds.push_back(new Fold(fold_save_file));
+			fold_save_file.close();
+
+			this->branches.push_back(NULL);
+		}
+
+		string end_scale_mod_line;
+		getline(input_file, end_scale_mod_line);
+		this->end_scale_mods.push_back(stof(end_scale_mod_line));
+	}
+
+	string is_scope_end_line;
+	getline(input_file, is_scope_end_line);
+	this->is_scope_end = stoi(is_scope_end_line);
+}
+
+Branch::~Branch() {
+	if (this->branch_score_network != NULL) {
+		delete this->branch_score_network;
+	}
+
+	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+		delete this->score_networks[b_index];
+
+		if (this->branches[b_index] != NULL) {
+			delete this->branches[b_index];
+		}
+
+		if (this->folds[b_index] != NULL) {
+			delete this->folds[b_index];
+		}
+	}
+}
 
 void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 											vector<double>& local_state_vals,
@@ -561,4 +696,52 @@ void Branch::existing_update_backprop(double& predicted_score,
 	scale_factor_error += score_update*predicted_score_error;
 
 	// score_networks don't update predicted_score
+}
+
+void Branch::save(ofstream& output_file) {
+	output_file << this->id << endl;
+
+	output_file << this->passed_branch_score << endl;
+	if (!this->passed_branch_score) {
+		ofstream branch_score_network_save_file;
+		branch_score_network_save_file.open("saves/branch_" + to_string(this->id) + "_branch_score.txt");
+		this->branch_score_network->save(branch_score_network_save_file);
+		branch_score_network_save_file.close();
+	}
+
+	output_file << this->branches.size() << endl;
+	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+		ofstream score_network_save_file;
+		score_network_save_file.open("saves/branch_" + to_string(this->id) + "_score_" + to_string(b_index) + ".txt");
+		this->score_networks[b_index]->save(score_network_save_file);
+		score_network_save_file.close();
+
+		output_file << this->is_branch[b_index] << endl;
+
+		if (this->is_branch[b_index]) {
+			output_file << this->branches[b_index]->id << endl;
+
+			ofstream branch_save_file;
+			branch_save_file.open("saves/branch_" + to_string(this->branches[b_index]->id) + ".txt");
+			this->branches[b_index]->save(branch_save_file);
+			branch_save_file.close();
+		} else {
+			output_file << this->folds[b_index]->id << endl;
+
+			ofstream fold_save_file;
+			fold_save_file.open("saves/fold_" + to_string(this->folds[b_index]->id) + ".txt");
+			this->folds[b_index]->save(fold_save_file);
+			fold_save_file.close();
+		}
+
+		output_file << this->end_scale_mods[b_index] << endl;
+	}
+
+	output_file << this->is_scope_end << endl;
+}
+
+BranchHistory::BranchHistory(Branch* branch) {
+	this->branch = branch;
+
+	// other fields don't need to be initialized
 }

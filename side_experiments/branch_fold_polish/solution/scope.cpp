@@ -91,7 +91,7 @@ Scope::Scope(Scope* original) {
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		this->inner_input_networks.push_back(vector<FoldNetwork*>());
 		for (int i_index = 0; i_index < (int)original->inner_input_networks[a_index].size(); i_index++) {
-			this->inner_input_networks.back().push_back(original->inner_input_networks[a_index][i_index]);
+			this->inner_input_networks.back().push_back(new FoldNetwork(original->inner_input_networks[a_index][i_index]));
 		}
 	}
 	this->inner_input_sizes = original->inner_input_sizes;
@@ -114,7 +114,8 @@ Scope::Scope(Scope* original) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (original->step_types[a_index] == STEP_TYPE_STEP) {
+		if (original->step_types[a_index] == STEP_TYPE_STEP
+				|| original->step_types[a_index] == STEP_TYPE_FOLD) {
 			this->score_networks.push_back(new FoldNetwork(original->score_networks[a_index]));
 		} else {
 			this->score_networks.push_back(NULL);
@@ -136,7 +137,7 @@ Scope::Scope(Scope* original) {
 			this->compress_networks.push_back(NULL);
 		}
 	}
-	this->compress_original_sizes = compress_original_sizes;
+	this->compress_original_sizes = original->compress_original_sizes;
 
 	// initialize to empty
 	this->explore_index_inclusive = -1;
@@ -187,7 +188,7 @@ Scope::Scope(std::ifstream& input_file) {
 			this->inner_input_sizes.push_back(vector<int>());
 			for (int i_index = 0; i_index < inner_input_networks_size; i_index++) {
 				ifstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/scope_" + this->id + "_inner_input_" + to_string(a_index) + " " + to_string(i_index) + ".txt");
+				inner_input_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + " " + to_string(i_index) + ".txt");
 				this->inner_input_networks[a_index].push_back(new FoldNetwork(inner_input_network_save_file));
 				inner_input_network_save_file.close();
 
@@ -220,7 +221,7 @@ Scope::Scope(std::ifstream& input_file) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index != this->sequence_length-1) {
 				ifstream score_network_save_file;
-				score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
 				score_network_save_file.close();
 
@@ -234,7 +235,7 @@ Scope::Scope(std::ifstream& input_file) {
 					this->compress_new_sizes.push_back(stoi(compress_new_size_line))
 
 					ifstream compress_network_save_file;
-					compress_network_save_file.open("saves/nns/" + this->id + "_compress_" + to_string(a_index) + ".txt");
+					compress_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
 					this->compress_networks.push_back(new FoldNetwork(compress_network_save_file));
 					compress_network_save_file.close();
 
@@ -259,7 +260,7 @@ Scope::Scope(std::ifstream& input_file) {
 			this->folds.push_back(NULL);
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->score_networks.push_back(NULL);
-			
+
 			string branch_id_line;
 			getline(input_file, branch_id_line);
 			int branch_id = stoi(branch_id_line);
@@ -278,7 +279,7 @@ Scope::Scope(std::ifstream& input_file) {
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			ifstream score_network_save_file;
-			score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 			this->score_networks.push_back(new FoldNetwork(score_network_save_file));
 			score_network_save_file.close();
 
@@ -2715,20 +2716,20 @@ void Scope::save(ofstream& output_file) {
 			output_file << this->scopes[a_index]->id << endl;
 
 			ofstream scope_save_file;
-			scope_save_file.open("saves/scope_" + this->scopes[a_index]->id + ".txt");
+			scope_save_file.open("saves/scope_" + to_string(this->scopes[a_index]->id) + ".txt");
 			this->scopes[a_index]->save(scope_save_file);
 			scope_save_file.close();
 
 			output_file << this->inner_input_networks[a_index].size() << endl;
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
 				ofstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/scope_" + this->id + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
+				inner_input_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
 				this->inner_input_networks[a_index][i_index]->save(inner_input_network_save_file);
 				inner_input_network_save_file.close();
 
 				output_file << this->inner_input_sizes[a_index][i_index] << endl;
 			}
-			output_file << scope_scale_mod[a_index] << endl;
+			output_file << this->scope_scale_mod[a_index] << endl;
 		} else {
 			output_file << this->obs_sizes[a_index] << endl;
 		}
@@ -2740,7 +2741,7 @@ void Scope::save(ofstream& output_file) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index != this->sequence_length-1) {
 				ofstream score_network_save_file;
-				score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 				this->score_networks[a_index]->save(score_network_save_file);
 				score_network_save_file.close();
 
@@ -2749,7 +2750,7 @@ void Scope::save(ofstream& output_file) {
 					output_file << this->compress_new_sizes[a_index] << endl;
 
 					ofstream compress_network_save_file;
-					compress_network_save_file.open("saves/nns/" + this->id + "_compress_" + to_string(a_index) + ".txt");
+					compress_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
 					this->compress_networks[a_index]->save(compress_network_save_file);
 					compress_network_save_file.close();
 
@@ -2760,20 +2761,20 @@ void Scope::save(ofstream& output_file) {
 			output_file << this->branches[a_index]->id << endl;
 
 			ofstream branch_save_file;
-			branch_save_file.open("saves/branch_" + this->branches[a_index]->id + ".txt");
+			branch_save_file.open("saves/branch_" + to_string(this->branches[a_index]->id) + ".txt");
 			this->branches[a_index]->save(branch_save_file);
 			branch_save_file.close();
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			ofstream score_network_save_file;
-			score_network_save_file.open("saves/nns/" + this->id + "_score_" + to_string(a_index) + ".txt");
+			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 			this->score_networks[a_index]->save(score_network_save_file);
 			score_network_save_file.close();
 
 			output_file << this->folds[a_index]->id << endl;
 
 			ofstream fold_save_file;
-			fold_save_file.open("saves/fold_" + this->folds[a_index]->id + ".txt");
+			fold_save_file.open("saves/fold_" + to_string(this->folds[a_index]->id) + ".txt");
 			this->folds[a_index]->save(fold_save_file);
 			fold_save_file.close();
 		}

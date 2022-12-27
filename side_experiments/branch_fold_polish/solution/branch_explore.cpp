@@ -68,9 +68,7 @@ void Branch::resolve_fold(int b_index) {
 
 	this->is_branch[b_index] = true;
 	this->branches[b_index] = new_branch_path;
-	this->end_scale_mods = this->folds[b_index]->end_scale_mod_calc->output->constants[0];
-	delete this->folds[b_index]->end_scale_mod_calc->output->constants[0];
-	this->folds[b_index]->end_scale_mod_calc->output->constants[0] = NULL;
+	// this->end_scale_mods already set correctly
 
 	delete this->folds[b_index];
 	this->folds[b_index] = NULL;

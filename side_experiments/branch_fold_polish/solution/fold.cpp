@@ -152,7 +152,8 @@ Fold::Fold(Fold* original) {
 			this->scope_scale_mod_calcs.push_back(NULL);
 		}
 	}
-	this->end_scale_mod_calc = new Network(original->end_scale_mod_calc);
+	
+	// this->end_scale_mod has already been passed on
 
 	this->curr_s_input_sizes = original->curr_s_input_sizes;
 	this->curr_scope_sizes = original->curr_scope_sizes;
@@ -265,10 +266,7 @@ Fold::Fold(ifstream& input_file) {
 		}
 	}
 
-	ifstream end_scale_mod_calc_save_file;
-	end_scale_mod_calc_save_file.open("saves/nns/fold_" + this->id + "_end_scale_mod.txt");
-	this->end_scale_mod_calc = new Network(end_scale_mod_calc_save_file);
-	end_scale_mod_calc_save_file.close();
+	// this->end_scale_mod has already been passed on
 
 	string curr_s_input_sizes_size_line;
 	getline(input_file, curr_s_input_sizes_size_line);
@@ -1196,16 +1194,13 @@ void Fold::save(ofstream& output_file) {
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			ofstream scope_scale_mod_calc_save_file;
-			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + this->id + "_scope_scale_mod_" + to_string(f_index) + ".txt");
+			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
 			this->scope_scale_mod_calcs[f_index]->save(scope_scale_mod_calc_save_file);
 			scope_scale_mod_calc_save_file.close();
 		}
 	}
 
-	ofstream end_scale_mod_calc_save_file;
-	end_scale_mod_calc_save_file.open("saves/nns/fold_" + this->id + "_end_scale_mod.txt");
-	this->end_scale_mod_calc->save(end_scale_mod_calc_save_file);
-	end_scale_mod_calc_save_file.close();
+	// this->end_scale_mod has already been passed on
 
 	output_file << this->curr_s_input_sizes.size() << endl;
 	for (int l_index = 0; l_index < (int)this->curr_s_input_sizes.size(); l_index++) {
@@ -1214,21 +1209,21 @@ void Fold::save(ofstream& output_file) {
 	}
 
 	ofstream curr_fold_save_file;
-	curr_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_fold.txt");
+	curr_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_fold.txt");
 	this->curr_fold->save_file(curr_fold_save_file);
 	curr_fold_save_file.close();
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			ofstream curr_input_fold_save_file;
-			curr_input_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_input_fold_" + to_string(f_index) + ".txt");
+			curr_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
 			this->curr_input_folds[f_index]->save(curr_input_fold_save_file);
 			curr_input_fold_save_file.close();
 		}
 	}
 
 	ofstream curr_end_fold_save_file;
-	curr_end_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_end_fold.txt");
+	curr_end_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_end_fold.txt");
 	this->curr_end_fold->save(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
 
@@ -1239,7 +1234,7 @@ void Fold::save(ofstream& output_file) {
 	output_file << this->starting_compress_original_size << endl;
 	if (this->curr_starting_compress_new_size != this->starting_compress_original_size) {
 		ofstream curr_starting_compress_network_save_file;
-		curr_starting_compress_network_save_file.open("saves/nns/fold_" + this->id + "_curr_starting_compress.txt");
+		curr_starting_compress_network_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_starting_compress.txt");
 		this->curr_starting_compress_network->save(curr_starting_compress_network_save_file);
 		curr_starting_compress_network_save_file.close();
 	}

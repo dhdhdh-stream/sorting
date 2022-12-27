@@ -3,6 +3,7 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+#include <fstream>
 #include <vector>
 
 #include "branch.h"

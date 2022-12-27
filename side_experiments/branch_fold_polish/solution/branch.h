@@ -1,18 +1,26 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+#include <fstream>
 #include <vector>
 
+#include "branch_path.h"
+#include "fold.h"
+#include "fold_network.h"
+
+class BranchPath;
 class Branch {
 public:
+	int id;
+
 	FoldNetwork* branch_score_network;
 	bool passed_branch_score;	// if branch_score_network taken by outer branch
 
 	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
+	std::vector<double> end_scale_mods;	// TODO: need to clarify whether fold holds on to this
 	std::vector<Fold*> folds;
-	std::vector<double> end_scale_mods;
 
 	bool is_scope_end;
 
@@ -35,9 +43,85 @@ public:
 		   std::vector<Fold*> folds,
 		   std::vector<double> end_scale_mods,
 		   bool is_scope_end);
+	Branch(Branch* original);
+	Branch(std::ifstream& input_file);
 	~Branch();
 
+	void explore_on_path_activate_score(std::vector<double>& local_s_input_vals,
+										std::vector<double>& local_state_vals,
+										double& scale_factor,
+										int& explore_phase,
+										BranchHistory* history);
+	void explore_off_path_activate_score(std::vector<double>& local_s_input_vals,
+										 std::vector<double>& local_state_vals,
+										 double& scale_factor,
+										 int& explore_phase,
+										 BranchHistory* history);
+	void explore_on_path_activate(std::vector<std::vector<double>>& flat_vals,
+								  std::vector<double>& local_s_input_vals,
+								  std::vector<double>& local_state_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  int& explore_phase,
+								  BranchHistory* history);
+	void explore_off_path_activate(std::vector<std::vector<double>>& flat_vals,
+								   std::vector<double>& local_s_input_vals,
+								   std::vector<double>& local_state_vals,
+								   double& predicted_score,
+								   double& scale_factor,
+								   int& explore_phase,
+								   BranchHistory* history);
+	void explore_on_path_backprop(std::vector<double>& local_state_errors,
+								  double& predicted_score,
+								  double target_val,
+								  double& scale_factor,
+								  double& scale_factor_error,
+								  BranchHistory* history);
+	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
+								   std::vector<double>& local_state_errors,
+								   double& predicted_score,
+								   double target_val,
+								   double& scale_factor,
+								   double& scale_factor_error,
+								   BranchHistory* history);
+	void existing_flat_activate(std::vector<std::vector<double>>& flat_vals,
+								std::vector<double>& local_s_input_vals,
+								std::vector<double>& local_state_vals,
+								double& predicted_score,
+								double& scale_factor,
+								BranchHistory* history);
+	void existing_flat_backprop(std::vector<double>& local_s_input_errors,
+								std::vector<double>& local_state_errors,
+								double& predicted_score,
+								double predicted_score_error,
+								double& scale_factor,
+								double& scale_factor_error,
+								BranchHistory* history);
+	void update_activate(std::vector<std::vector<double>>& flat_vals,
+						 std::vector<double>& local_s_input_vals,
+						 std::vector<double>& local_state_vals,
+						 double& predicted_score,
+						 double& scale_factor,
+						 BranchHistory* history);
+	void update_backprop(double& predicted_score,
+						 double target_val,
+						 double& scale_factor,
+						 BranchHistory* history);
+	void existing_update_activate(std::vector<std::vector<double>>& flat_vals,
+								  std::vector<double>& local_s_input_vals,
+								  std::vector<double>& local_state_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  BranchHistory* history);
+	void existing_update_backprop(double& predicted_score,
+								  double predicted_score_error,
+								  double& scale_factor,
+								  double& scale_factor_error,
+								  BranchHistory* history);
 
+	void resolve_fold(int b_index);
+
+	void save(std::ofstream& output_file);
 };
 
 class BranchHistory {
@@ -53,6 +137,8 @@ public:
 	FoldNetworkHistory* score_network_history;
 	BranchPathHistory* branch_path_history;
 	FoldHistory* fold_history;
+
+	BranchHistory(Branch* branch);
 };
 
 #endif /* BRANCH_H */

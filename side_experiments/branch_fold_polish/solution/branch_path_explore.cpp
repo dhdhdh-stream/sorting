@@ -39,6 +39,9 @@ void BranchPath::explore_replace() {
 
 	this->folds[this->explore_index_inclusive] = this->explore_fold;
 
+	delete this->explore_fold->end_scale_mod_calc;
+	this->explore_fold->end_scale_mod_calc = NULL;
+
 	this->average_misguesses[this->explore_index_inclusive] = this->explore_fold->average_misguess;
 	// this->average_inner_scope_impacts[this->explore_index_inclusive] unchanged
 	this->average_local_impacts[this->explore_index_inclusive] = 0.0;	// no longer matters
@@ -430,7 +433,7 @@ void BranchPath::resolve_fold(int a_index) {
 
 	if (this->explore_type == EXPLORE_TYPE_NEW) {
 		if (this->explore_index_inclusive > a_index) {
-			// TODO: explore_index_inclusive != a_index as local_impact is not set, but examine if good to do so
+			// TODO: explore_index_inclusive != a_index as local_impact is not set during fold, but examine if good to do so
 			this->explore_index_inclusive += this->folds[a_index]->sequence_length;
 		}
 		if (this->explore_end_non_inclusive > a_index) {

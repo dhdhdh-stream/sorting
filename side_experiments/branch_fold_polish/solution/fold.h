@@ -3,6 +3,7 @@
 #ifndef FOLD_H
 #define FOLD_H
 
+#include <fstream>
 #include <vector>
 
 #include "finished_step.h"
@@ -58,7 +59,7 @@ public:
 	double combined_standard_deviation;
 
 	std::vector<Network*> scope_scale_mod_calcs;
-	Network* end_scale_mod_calc;	// can drop if replace
+	Network* end_scale_mod_calc;	// drop if replace, passed after flat
 	// only need to modify scale as can't modify average at flat anyways
 
 	std::vector<int> curr_s_input_sizes;

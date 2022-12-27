@@ -1,6 +1,7 @@
 #ifndef FINISHED_STEP_H
 #define FINISHED_STEP_H
 
+#include <fstream>
 #include <vector>
 
 #include "fold_network.h"
