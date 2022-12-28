@@ -232,7 +232,7 @@ Scope::Scope(std::ifstream& input_file) {
 				if (this->active_compress[a_index]) {
 					string compress_new_size_line;
 					getline(input_file, compress_new_size_line);
-					this->compress_new_sizes.push_back(stoi(compress_new_size_line))
+					this->compress_new_sizes.push_back(stoi(compress_new_size_line));
 
 					ifstream compress_network_save_file;
 					compress_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
@@ -289,7 +289,7 @@ Scope::Scope(std::ifstream& input_file) {
 
 			ifstream fold_save_file;
 			fold_save_file.open("saves/fold_" + to_string(fold_id) + ".txt");
-			this->folds.push_back(fold_save_file);
+			this->folds.push_back(new Fold(fold_save_file));
 			fold_save_file.close();
 
 			this->active_compress.push_back(false);	// doesn't matter
@@ -377,7 +377,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 
 	// start
 	if (!this->is_inner_scope[0]) {
-		local_state_vals = flat_vals.begin();
+		local_state_vals = *flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
 		// Note: no NO-OPs besides absolute start, and instead, if want to branch start, explore from outside
 	} else {
@@ -557,7 +557,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 	while (a_index < this->sequence_length) {
 		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
-				flat_vals.begin().begin(), flat_vals.begin().end());
+				flat_vals.begin()->begin(), flat_vals.begin()->end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			// temp_new_s_input_vals only used as scope_input
@@ -788,7 +788,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 									  ScopeHistory* history) {
 	// start
 	if (!this->is_inner_scope[0]) {
-		local_state_vals = flat_vals.begin();
+		local_state_vals = *flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		// for start, if inner scope, scope_input is first local_s_input_vals
@@ -899,7 +899,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 	for (int a_index = 1; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
-				flat_vals.begin().begin(), flat_vals.begin().end());
+				flat_vals.begin()->begin(), flat_vals.begin()->end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			// temp_new_s_input_vals only used as scope_input
@@ -1093,7 +1093,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 					double predicted_score_error = target_val - predicted_score;
 
-					scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+					scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 					// have to include scale_factor as it can change the sign of the gradient
 					vector<double> score_errors{scale_factor*predicted_score_error};
@@ -1109,12 +1109,13 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 						local_state_errors[s_index] += score_state_output_errors[s_index];
 					}
 
-					predicted_score -= scale_factor*this->score_updates[a_index];
+					predicted_score -= scale_factor*history->score_updates[a_index];
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 				if (this->explore_index_inclusive == a_index
 						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-					this->branches[a_index]->explore_on_path_backprop(local_state_errors,
+					this->branches[a_index]->explore_on_path_backprop(local_s_input_errors,
+																	  local_state_errors,
 																	  predicted_score,
 																	  target_val,
 																	  scale_factor,
@@ -1145,7 +1146,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 				double score_predicted_score_error = target_val - score_predicted_score;
 
-				scale_factor_error += this->score_updates[a_index]*score_predicted_score_error;
+				scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 				// have to include scale_factor as it can change the sign of the gradient
 				vector<double> score_errors{scale_factor*score_predicted_score_error};
@@ -1280,7 +1281,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 			double predicted_score_error = target_val - predicted_score;
 
-			scale_factor_error += this->score_updates[0]*predicted_score_error;
+			scale_factor_error += history->score_updates[0]*predicted_score_error;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1295,11 +1296,12 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				local_state_errors[s_index] += score_state_output_errors[s_index];
 			}
 
-			predicted_score -= scale_factor*this->score_updates[0];
+			predicted_score -= scale_factor*history->score_updates[0];
 		} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 			if (this->explore_index_inclusive == 0
 					&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-				this->branches[0]->explore_on_path_backprop(local_state_errors,
+				this->branches[0]->explore_on_path_backprop(local_s_input_errors,
+															local_state_errors,
 															predicted_score,
 															target_val,
 															scale_factor,
@@ -1330,7 +1332,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[0];
 			double score_predicted_score_error = target_val - score_predicted_score;
 
-			scale_factor_error += this->score_updates[0]*score_predicted_score_error;
+			scale_factor_error += history->score_updates[0]*score_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*score_predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1405,7 +1407,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 				double predicted_score_error = target_val - predicted_score;
 
-				scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 				vector<double> score_errors{scale_factor*predicted_score_error};
 				vector<double> score_s_input_output_errors;
@@ -1423,7 +1425,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 					local_state_errors[s_index] += score_state_output_errors[s_index];
 				}
 
-				predicted_score -= scale_factor*this->score_updates[a_index];
+				predicted_score -= scale_factor*history->score_updates[a_index];
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
@@ -1447,7 +1449,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 			double score_predicted_score_error = target_val - score_predicted_score;
 
-			scale_factor_error += this->score_updates[a_index]*score_predicted_score_error;
+			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*score_predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1542,7 +1544,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 		double predicted_score_error = target_val - predicted_score;
 
-		scale_factor_error += this->score_updates[0]*predicted_score_error;
+		scale_factor_error += history->score_updates[0]*predicted_score_error;
 
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		vector<double> score_s_input_output_errors;
@@ -1560,7 +1562,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			local_state_errors[s_index] += score_state_output_errors[s_index];
 		}
 
-		predicted_score -= scale_factor*this->score_updates[0];
+		predicted_score -= scale_factor*history->score_updates[0];
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		this->branches[0]->explore_off_path_backprop(local_s_input_errors,
 													 local_state_errors,
@@ -1583,7 +1585,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 		double score_predicted_score = predicted_score + scale_factor*history->score_updates[0];
 		double score_predicted_score_error = target_val - score_predicted_score;
 
-		scale_factor_error += this->score_updates[0]*score_predicted_score_error;
+		scale_factor_error += history->score_updates[0]*score_predicted_score_error;
 
 		vector<double> score_errors{scale_factor*score_predicted_score_error};
 		vector<double> score_s_input_output_errors;
@@ -1638,7 +1640,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 								   ScopeHistory* history) {
 	// start
 	if (!this->is_inner_scope[0]) {
-		local_state_vals = flat_vals.begin();
+		local_state_vals = *flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		// for start, if inner scope, scope_input is first local_s_input_vals
@@ -1725,7 +1727,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 	for (int a_index = 1; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
-				flat_vals.begin().begin(), flat_vals.begin().end());
+				flat_vals.begin()->begin(), flat_vals.begin()->end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			// temp_new_s_input_vals only used as scope_input
@@ -1859,7 +1861,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 					}
 				}
 
-				scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 				vector<double> score_errors{scale_factor*predicted_score_error};
 				vector<double> score_s_input_output_errors;
@@ -1877,7 +1879,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 					local_state_errors[s_index] += score_state_output_errors[s_index];
 				}
 
-				predicted_score -= scale_factor*this->score_updates[a_index];
+				predicted_score -= scale_factor*history->score_updates[a_index];
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->branches[a_index]->existing_flat_backprop(local_s_input_errors,
@@ -1897,7 +1899,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 														 scale_factor_error,
 														 history->fold_histories[a_index]);
 
-			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+			scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1992,7 +1994,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			}
 		}
 
-		scale_factor_error += this->score_updates[0]*predicted_score_error;
+		scale_factor_error += history->score_updates[0]*predicted_score_error;
 
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		vector<double> score_s_input_output_errors;
@@ -2010,7 +2012,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			local_state_errors[s_index] += score_state_output_errors[s_index];
 		}
 
-		predicted_score -= scale_factor*this->score_updates[0];
+		predicted_score -= scale_factor*history->score_updates[0];
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		this->branches[0]->existing_flat_backprop(local_s_input_errors,
 												  local_state_errors,
@@ -2029,7 +2031,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 											   scale_factor_error,
 											   history->fold_histories[0]);
 
-		scale_factor_error += this->score_updates[0]*predicted_score_error;
+		scale_factor_error += history->score_updates[0]*predicted_score_error;
 
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		vector<double> score_s_input_output_errors;
@@ -2086,7 +2088,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 							ScopeHistory* history) {
 	// start
 	if (!this->is_inner_scope[0]) {
-		local_state_vals = flat_vals.begin();
+		local_state_vals = *flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		// for start, if inner scope, scope_input is first local_s_input_vals
@@ -2170,7 +2172,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 	for (int a_index = 1; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
-				flat_vals.begin().begin(), flat_vals.begin().end());
+				flat_vals.begin()->begin(), flat_vals.begin()->end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			// temp_new_s_input_vals only used as scope_input
@@ -2443,7 +2445,7 @@ void Scope::existing_update_activate(vector<vector<double>>& flat_vals,
 									 ScopeHistory* history) {
 	// start
 	if (!this->is_inner_scope[0]) {
-		local_state_vals = flat_vals.begin();
+		local_state_vals = *flat_vals.begin();
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		// for start, if inner scope, scope_input is first local_s_input_vals
@@ -2521,7 +2523,7 @@ void Scope::existing_update_activate(vector<vector<double>>& flat_vals,
 	for (int a_index = 1; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			local_state_vals.insert(local_state_vals.end(),
-				flat_vals.begin().begin(), flat_vals.begin().end());
+				flat_vals.begin()->begin(), flat_vals.begin()->end());
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			// temp_new_s_input_vals only used as scope_input
@@ -2618,9 +2620,9 @@ void Scope::existing_update_backprop(double& predicted_score,
 			if (a_index == this->sequence_length-1) {
 				// scope end -- do nothing
 			} else {
-				scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
-				predicted_score -= scale_factor*this->score_updates[a_index];
+				predicted_score -= scale_factor*history->score_updates[a_index];
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->branches[a_index]->existing_update_backprop(predicted_score,
@@ -2636,7 +2638,7 @@ void Scope::existing_update_backprop(double& predicted_score,
 														   scale_factor_error,
 														   history->fold_histories[a_index]);
 
-			scale_factor_error += this->score_updates[a_index]*predicted_score_error;
+			scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 			// predicted_score updated in fold
 		}
@@ -2663,9 +2665,9 @@ void Scope::existing_update_backprop(double& predicted_score,
 	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// can't be scope end
 
-		scale_factor_error += this->score_updates[0]*predicted_score_error;
+		scale_factor_error += history->score_updates[0]*predicted_score_error;
 
-		predicted_score -= scale_factor*this->score_updates[0];
+		predicted_score -= scale_factor*history->score_updates[0];
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		this->branches[0]->existing_update_backprop(predicted_score,
 													predicted_score_error,
@@ -2680,7 +2682,7 @@ void Scope::existing_update_backprop(double& predicted_score,
 												 scale_factor_error,
 												 history->fold_histories[0]);
 
-		scale_factor_error += this->score_updates[0]*predicted_score_error;
+		scale_factor_error += history->score_updates[0]*predicted_score_error;
 
 		// predicted_score updated in fold
 	}
@@ -2791,7 +2793,7 @@ void Scope::save(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->inner_input_networks = vector<vector<FoldNetworkHistory*>>(scope->sequence_length);
+	this->inner_input_network_histories = vector<vector<FoldNetworkHistory*>>(scope->sequence_length);
 	this->scope_histories = vector<ScopeHistory*>(scope->sequence_length, NULL);
 	this->branch_histories = vector<BranchHistory*>(scope->sequence_length, NULL);
 	this->fold_histories = vector<FoldHistory*>(scope->sequence_length, NULL);

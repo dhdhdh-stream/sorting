@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "definitions.h"
+
 using namespace std;
 
 FinishedStep::FinishedStep(bool is_inner_scope,
@@ -39,7 +41,7 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 
 	this->score_network = score_network;
 
-	this->average_misguesses = 0.0;
+	this->average_misguess = 0.0;
 	this->average_inner_scope_impact = 0.0;
 	this->average_local_impact = 0.0;
 
@@ -252,7 +254,7 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 											FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -274,15 +276,16 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		scale_factor *= this->scope_scale_mod;
 
 		vector<double> scope_output;
+		int explore_phase = EXPLORE_PHASE_NONE;
 		ScopeHistory* scope_history = new ScopeHistory(this->scope);	// though not important as will not backprop
 		this->scope->explore_off_path_activate(flat_vals,
 											   scope_input,
 											   scope_output,
 											   predicted_score,
 											   scale_factor,
-											   EXPLORE_PHASE_NONE,
+											   explore_phase,
 											   scope_history);
-		this->scope_history = scope_history;
+		history->scope_history = scope_history;
 
 		scale_factor /= this->scope_scale_mod;
 
@@ -301,9 +304,9 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_vals.size()-1;
 	}
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
 										  state_vals);
@@ -344,7 +347,7 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 											 FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -390,7 +393,7 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 											   scale_factor,
 											   explore_phase,
 											   scope_history);
-		this->scope_history = scope_history;
+		history->scope_history = scope_history;
 
 		scale_factor /= this->scope_scale_mod;
 
@@ -417,9 +420,9 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_vals.size()-1;
 	}
 	if (explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
@@ -506,13 +509,13 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 
 	double predicted_score_error = target_val - predicted_score;
 
-	scale_factor_error += this->score_update*predicted_score_error;
+	scale_factor_error += history->score_update*predicted_score_error;
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_errors.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_errors.size()-1;
 	}
 	vector<double> score_errors{scale_factor*predicted_score_error};
 	this->score_network->backprop_subfold_errors_with_no_weight_change(
@@ -528,7 +531,7 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 			this->score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 		}
 	}
-	predicted_score -= scale_factor*this->score_update;
+	predicted_score -= scale_factor*history->score_update;
 
 	for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
 		vector<double> input_errors(this->input_sizes[i_index]);
@@ -625,7 +628,7 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 										  FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -640,14 +643,14 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 			}
 		}
 
-		FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->curr_inner_input_network);
-		this->curr_inner_input_network->activate_small(s_input_vals.back(),
+		FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_network);
+		this->inner_input_network->activate_small(s_input_vals.back(),
 													   state_vals.back(),
 													   inner_input_network_history);
 		history->inner_input_network_history = inner_input_network_history;
 		vector<double> scope_input(this->scope->num_inputs);	// also new s_input_vals
 		for (int s_index = 0; s_index < this->scope->num_inputs; s_index++) {
-			scope_input[s_index] = this->curr_inner_input_network->output->acti_vals[s_index];
+			scope_input[s_index] = this->inner_input_network->output->acti_vals[s_index];
 		}
 
 		scale_factor *= this->scope_scale_mod;
@@ -660,7 +663,7 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 											predicted_score,
 											scale_factor,
 											scope_history);
-		this->scope_history = scope_history;
+		history->scope_history = scope_history;
 
 		scale_factor /= this->scope_scale_mod;
 
@@ -682,9 +685,9 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_vals.size()-1;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
@@ -759,13 +762,13 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 		}
 	}
 
-	scale_factor_error += this->score_update*predicted_score_error;
+	scale_factor_error += history->score_update*predicted_score_error;
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_errors.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_errors.size()-1;
 	}
 	vector<double> score_errors{scale_factor*predicted_score_error};
 	this->score_network->backprop_subfold_errors_with_no_weight_change(
@@ -781,7 +784,7 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 			this->score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 		}
 	}
-	predicted_score -= scale_factor*this->score_update;
+	predicted_score -= scale_factor*history->score_update;
 
 	for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
 		vector<double> input_errors(this->input_sizes[i_index]);
@@ -878,7 +881,7 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 								   FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -907,7 +910,7 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 									 predicted_score,
 									 scale_factor,
 									 scope_history);
-		this->scope_history = scope_history;
+		history->scope_history = scope_history;
 
 		scale_factor /= this->scope_scale_mod;
 
@@ -926,9 +929,9 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_vals.size()-1;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
@@ -977,10 +980,10 @@ void FinishedStep::update_backprop(double& predicted_score,
 		0.001,
 		history->score_network_history);
 	next_predicted_score = predicted_score;
-	predicted_score -= scale_factor*this->score_update;
+	predicted_score -= scale_factor*history->score_update;
 
 	this->average_local_impact = 0.999*this->average_local_impact
-		+ 0.001*abs(scale_factor*this->score_update);
+		+ 0.001*abs(scale_factor*history->score_update);
 
 	if (!this->is_inner_scope) {
 		// do nothing
@@ -1011,7 +1014,7 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 											FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -1040,7 +1043,7 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 											  predicted_score,
 											  scale_factor,
 											  scope_history);
-		this->scope_history = scope_history;
+		history->scope_history = scope_history;
 
 		scale_factor /= this->scope_scale_mod;
 
@@ -1059,9 +1062,9 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
-		s_input_index = s_input_vals.size()-this->compress_num_layers;
+		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
 	} else {
-		s_input_index = s_input_vals.size()-1;
+		s_input_index = (int)s_input_vals.size()-1;
 	}
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
 										  state_vals);
@@ -1096,9 +1099,9 @@ void FinishedStep::existing_update_backprop(double& predicted_score,
 											double& scale_factor,
 											double& scale_factor_error,
 											FinishedStepHistory* history) {
-	scale_factor_error += this->score_update*predicted_score_error;
+	scale_factor_error += history->score_update*predicted_score_error;
 
-	predicted_score -= scale_factor*this->score_update;
+	predicted_score -= scale_factor*history->score_update;
 
 	if (!this->is_inner_scope) {
 		// do nothing

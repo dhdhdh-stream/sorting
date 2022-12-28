@@ -8,7 +8,7 @@ void FoldNetwork::set_s_input_size(int s_input_size) {
 	this->s_input_size = s_input_size;
 	delete this->s_input_input;
 	this->s_input_input = new Layer(LINEAR_LAYER, s_input_size);
-	this->hidden->subfold_set_s_input(this->flat_sizes.size(),
+	this->hidden->subfold_set_s_input((int)this->flat_sizes.size(),
 									  this->s_input_input);
 }
 

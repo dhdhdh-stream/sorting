@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "definitions.h"
+
 using namespace std;
 
 void Fold::input_step_explore_off_path_activate(
@@ -68,7 +70,7 @@ void Fold::input_step_explore_off_path_activate(
 
 	if (!this->is_existing[this->finished_steps.size()]) {
 		s_input_vals.push_back(vector<double>());
-		state_vals.push_back(flat_vals.begin());
+		state_vals.push_back(*flat_vals.begin());
 		flat_vals.erase(flat_vals.begin());
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
@@ -107,7 +109,7 @@ void Fold::input_step_explore_off_path_activate(
 		scale_factor *= scope_scale_mod;
 
 		vector<double> scope_output;
-		ScoopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
+		ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
 		this->existing_actions[this->finished_steps.size()]->explore_off_path_activate(
 			flat_vals,
 			scope_input,

@@ -7,6 +7,7 @@
 
 #include "layer.h"
 
+class FoldNetworkHistory;
 class FoldNetwork {
 public:
 	std::vector<int> flat_sizes;

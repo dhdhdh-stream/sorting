@@ -326,7 +326,7 @@ void FoldNetworkHistory::save_weights() {
 	}
 
 	this->state_inputs_historys = vector<vector<double>>(this->network->scope_sizes.size());
-	for (int sc_index = this->subfold_index+1; sc_index < (int)this->network->scope_sizes.size(); sc_index++) {
+	for (int sc_index = this->network->subfold_index+1; sc_index < (int)this->network->scope_sizes.size(); sc_index++) {
 		this->state_inputs_historys[sc_index].reserve(this->network->scope_sizes[sc_index]);
 		for (int st_index = 0; st_index < this->network->scope_sizes[sc_index]; st_index++) {
 			this->state_inputs_historys[sc_index].push_back(this->network->state_inputs[sc_index]->acti_vals[st_index]);

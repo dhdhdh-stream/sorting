@@ -71,7 +71,8 @@ public:
 								   double& scale_factor,
 								   int& explore_phase,
 								   BranchHistory* history);
-	void explore_on_path_backprop(std::vector<double>& local_state_errors,
+	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
+								  std::vector<double>& local_state_errors,
 								  double& predicted_score,
 								  double target_val,
 								  double& scale_factor,
@@ -104,6 +105,7 @@ public:
 						 double& scale_factor,
 						 BranchHistory* history);
 	void update_backprop(double& predicted_score,
+						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
 						 BranchHistory* history);
@@ -124,6 +126,7 @@ public:
 	void save(std::ofstream& output_file);
 };
 
+class BranchPathHistory;
 class BranchHistory {
 public:
 	Branch* branch;

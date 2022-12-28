@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "definitions.h"
+
 using namespace std;
 
 Fold::Fold(int sequence_length,
@@ -30,7 +32,7 @@ Fold::Fold(int sequence_length,
 
 	this->starting_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
-												   starting_state_size,
+												   vector<int>{starting_state_size},
 												   20);
 
 	this->replace_existing = 0.0;
@@ -40,7 +42,7 @@ Fold::Fold(int sequence_length,
 
 	this->combined_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
-												   starting_state_size,
+												   vector<int>{starting_state_size},
 												   20);
 
 	this->combined_improvement = 0.0;
@@ -60,8 +62,8 @@ Fold::Fold(int sequence_length,
 	this->curr_s_input_sizes.push_back(starting_s_input_size);
 	this->curr_scope_sizes.push_back(starting_state_size);
 
-	vector<double> flat_sizes;
-	vector<vector<double>> input_flat_sizes(this->sequence_length);
+	vector<int> flat_sizes;
+	vector<vector<int>> input_flat_sizes(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		int flat_size;
 		if (!this->is_existing[f_index]) {
@@ -98,8 +100,8 @@ Fold::Fold(int sequence_length,
 										  starting_state_size,
 										  50);
 
-	int starting_compress_original_size = starting_state_size;
-	int curr_starting_compress_new_size = starting_state_size;
+	this->starting_compress_original_size = starting_state_size;
+	this->curr_starting_compress_new_size = starting_state_size;
 	this->curr_starting_compress_network = NULL;
 	this->test_starting_compress_network = NULL;
 
@@ -258,7 +260,7 @@ Fold::Fold(ifstream& input_file) {
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			ifstream scope_scale_mod_calc_save_file;
-			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + this->id + "_scope_scale_mod_" + to_string(f_index) + ".txt");
+			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
 			this->scope_scale_mod_calcs.push_back(new Network(scope_scale_mod_calc_save_file));
 			scope_scale_mod_calc_save_file.close();
 		} else {
@@ -283,7 +285,7 @@ Fold::Fold(ifstream& input_file) {
 	}
 
 	ifstream curr_fold_save_file;
-	curr_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_fold.txt");
+	curr_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_fold.txt");
 	this->curr_fold = new FoldNetwork(curr_fold_save_file);
 	curr_fold_save_file.close();
 
@@ -293,7 +295,7 @@ Fold::Fold(ifstream& input_file) {
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			ifstream curr_input_fold_save_file;
-			curr_input_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_input_fold_" + to_string(f_index) + ".txt");
+			curr_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
 			this->curr_input_folds.push_back(new FoldNetwork(curr_input_fold_save_file));
 			curr_input_fold_save_file.close();
 		} else {
@@ -302,7 +304,7 @@ Fold::Fold(ifstream& input_file) {
 	}
 
 	ifstream curr_end_fold_save_file;
-	curr_end_fold_save_file.open("saves/nns/fold_" + this->id + "_curr_end_fold.txt");
+	curr_end_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_end_fold.txt");
 	this->curr_end_fold = new FoldNetwork(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
 
@@ -324,7 +326,7 @@ Fold::Fold(ifstream& input_file) {
 
 	if (this->curr_starting_compress_new_size != this->starting_compress_original_size) {
 		ifstream curr_starting_compress_network_save_file;
-		curr_starting_compress_network_save_file.open("saves/nns/fold_" + this->id + "_curr_starting_compress.txt");
+		curr_starting_compress_network_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_starting_compress.txt");
 		this->curr_starting_compress_network = new FoldNetwork(curr_starting_compress_network_save_file);
 		curr_starting_compress_network_save_file.close();
 	}
@@ -472,6 +474,8 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		this->replace_existing /= 5000;
 		this->replace_combined /= 5000;
 		this->combined_improvement /= 5000;
+
+		return EXPLORE_SIGNAL_NONE;
 	} else if (this->state_iter == 500000) {
 		this->combined_standard_deviation =
 			sqrt(this->combined_standard_deviation/4999);
@@ -1210,7 +1214,7 @@ void Fold::save(ofstream& output_file) {
 
 	ofstream curr_fold_save_file;
 	curr_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_fold.txt");
-	this->curr_fold->save_file(curr_fold_save_file);
+	this->curr_fold->save(curr_fold_save_file);
 	curr_fold_save_file.close();
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {

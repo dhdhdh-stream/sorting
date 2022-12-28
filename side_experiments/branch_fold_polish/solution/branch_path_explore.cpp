@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "definitions.h"
+#include "fold_to_path.h"
 
 using namespace std;
 
@@ -57,7 +58,7 @@ void BranchPath::explore_replace() {
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->scopes.size()-1) {
+			if (a_index == (int)this->scopes.size()-1) {
 				// scope end -- do nothing
 			} else {
 				delete this->score_networks[a_index];
@@ -195,7 +196,7 @@ void BranchPath::explore_branch() {
 		// set this->branches[this->explore_index_inclusive] below
 		vector<Fold*> branch_folds(this->folds.begin()+this->explore_index_inclusive,
 			this->folds.begin()+this->explore_end_non_inclusive);
-		this->branch_folds[this->explore_index_inclusive] = NULL;
+		this->folds[this->explore_index_inclusive] = NULL;
 
 		vector<FoldNetwork*> branch_score_networks;
 		branch_score_networks.push_back(NULL);	// start doesn't matter
@@ -232,9 +233,10 @@ void BranchPath::explore_branch() {
 			this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
 		this->compress_original_sizes[this->explore_index_inclusive] = -1;
 
-		bool is_scope_end = (this->explore_end_non_inclusive == this->scopes.size() && this->is_scope_end);
+		bool branch_is_scope_end = (this->explore_end_non_inclusive == (int)this->scopes.size() && this->is_scope_end);
 
-		BranchPath* new_branch_path = new BranchPath(branch_is_inner_scope,
+		BranchPath* new_branch_path = new BranchPath(this->explore_end_non_inclusive-this->explore_index_inclusive-1,
+													 branch_is_inner_scope,
 													 branch_scopes,
 													 branch_obs_sizes,
 													 branch_inner_input_networks,
@@ -334,6 +336,7 @@ void BranchPath::explore_branch() {
 }
 
 void BranchPath::resolve_fold(int a_index) {
+	int new_sequence_length;
 	vector<bool> new_is_inner_scope;
 	vector<Scope*> new_scopes;
 	vector<int> new_obs_sizes;
@@ -353,6 +356,7 @@ void BranchPath::resolve_fold(int a_index) {
 	vector<FoldNetwork*> new_compress_networks;
 	vector<int> new_compress_original_sizes;
 	fold_to_path(this->folds[a_index]->finished_steps,
+				 new_sequence_length,
 				 new_is_inner_scope,
 				 new_scopes,
 				 new_obs_sizes,

@@ -12,6 +12,7 @@
 
 class Branch;
 class Fold;
+class ScopeHistory;
 class Scope {
 public:
 	int id;
@@ -150,6 +151,8 @@ public:
 	void save(std::ofstream& output_file);
 };
 
+class BranchHistory;
+class FoldHistory;
 class ScopeHistory {
 public:
 	Scope* scope;

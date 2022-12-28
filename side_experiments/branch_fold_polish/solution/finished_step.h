@@ -7,6 +7,8 @@
 #include "fold_network.h"
 #include "scope.h"
 
+class FinishedStepHistory;
+class Scope;
 class FinishedStep {
 public:
 	int id;
@@ -33,7 +35,7 @@ public:
 	FoldNetwork* compress_network;
 	int compress_original_size;	// for constructing scope
 
-	std:;vector<int> compressed_s_input_sizes;	// earliest to latest
+	std::vector<int> compressed_s_input_sizes;	// earliest to latest
 	std::vector<int> compressed_scope_sizes;
 
 	std::vector<int> input_layer;
@@ -121,6 +123,7 @@ public:
 	void save(std::ofstream& output_file);
 };
 
+class ScopeHistory;
 class FinishedStepHistory {
 public:
 	FinishedStep* finished_step;

@@ -11,6 +11,9 @@
 #include "fold_network.h"
 #include "scope.h"
 
+class Branch;
+class BranchPathHistory;
+class Fold;
 class Scope;
 class BranchPath {
 public:
@@ -89,13 +92,14 @@ public:
 								   double& scale_factor,
 								   int& explore_phase,
 								   BranchPathHistory* history);
-	void explore_on_path_backprop(std::vector<double>& local_state_errors,
+	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
+								  std::vector<double>& local_state_errors,
 								  double& predicted_score,
 								  double target_val,
 								  double& scale_factor,
 								  double& scale_factor_error,
 								  BranchPathHistory* history);
-	void explore_off_path_backprop(std::vector<double>* local_s_input_errors,
+	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
@@ -127,7 +131,7 @@ public:
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
-						 ScopeHistory* history);
+						 BranchPathHistory* history);
 	void existing_update_activate(std::vector<std::vector<double>>& flat_vals,
 								  double starting_score,
 								  std::vector<double>& local_s_input_vals,
@@ -148,6 +152,9 @@ public:
 	void save(std::ofstream& output_file);
 };
 
+class BranchHistory;
+class FoldHistory;
+class ScopeHistory;
 class BranchPathHistory {
 public:
 	BranchPath* branch_path;

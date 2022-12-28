@@ -25,6 +25,8 @@ const int STATE_DONE = 7;
 
 // don't split into LEARN and MEASURE stages, and instead combine
 
+class FinishedStep;
+class FoldHistory;
 class Scope;
 class Fold {
 public:
@@ -113,7 +115,7 @@ public:
 	std::vector<FoldNetwork*> input_networks;
 
 	Fold(int sequence_length,
-		 std::vector<bool> is_existing;
+		 std::vector<bool> is_existing,
 		 std::vector<Scope*> existing_actions,
 		 std::vector<int> obs_sizes,
 		 int output_size,
@@ -178,7 +180,7 @@ public:
 						 double target_val,
 						 double& scale_factor,
 						 FoldHistory* history);
-	void existing_update_activate(std::vector<vector<double>>& flat_vals,
+	void existing_update_activate(std::vector<std::vector<double>>& flat_vals,
 								  double starting_score,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
@@ -258,7 +260,7 @@ private:
 		double& scale_factor,
 		FoldHistory* history);
 	void starting_compress_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -322,7 +324,7 @@ private:
 		double& scale_factor,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -386,7 +388,7 @@ private:
 		double& scale_factor,
 		FoldHistory* history);
 	void score_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -450,7 +452,7 @@ private:
 		double& scale_factor,
 		FoldHistory* history);
 	void compress_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -516,7 +518,7 @@ private:
 		double& scale_factor,
 		FoldHistory* history);
 	void input_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -569,7 +571,7 @@ private:
 		double& scale_factor_error,
 		FoldHistory* history);
 	void step_added_step_existing_update_activate(
-		std::vector<vector<double>>& flat_vals,
+		std::vector<std::vector<double>>& flat_vals,
 		double starting_score,
 		std::vector<double>& local_s_input_vals,
 		std::vector<double>& local_state_vals,
@@ -586,6 +588,8 @@ private:
 	void fold_increment();
 };
 
+class FinishedStepHistory;
+class ScopeHistory;
 class FoldHistory {
 public:
 	Fold* fold;
@@ -605,6 +609,8 @@ public:
 	FoldNetworkHistory* curr_score_network_history;
 
 	FoldNetworkHistory* curr_compress_network_history;
+
+	std::vector<FoldNetworkHistory*> input_network_histories;
 
 	std::vector<FoldNetworkHistory*> curr_input_fold_histories;	// initialize to empty
 	std::vector<ScopeHistory*> scope_histories;	// initialize to empty

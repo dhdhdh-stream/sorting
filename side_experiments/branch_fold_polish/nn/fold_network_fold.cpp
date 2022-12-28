@@ -33,7 +33,7 @@ void FoldNetwork::activate_fold(vector<vector<double>>& flat_vals,
 		}
 	}
 	for (int s_index = 0; s_index < this->s_input_size; s_index++) {
-		this->s_input_input->acti_vals[s_index] = s_input_vals[s_index];
+		this->s_input_input->acti_vals[s_index] = outer_s_input_vals[s_index];
 	}
 	for (int sc_index = 0; sc_index < (int)state_vals.size(); sc_index++) {
 		for (int st_index = 0; st_index < (int)state_vals[sc_index].size(); st_index++) {
@@ -66,7 +66,7 @@ void FoldNetwork::backprop_fold_errors_with_no_weight_change(vector<double>& err
 }
 
 void FoldNetwork::backprop_fold_errors_with_no_weight_change(vector<double>& errors,
-															 NetworkHistory* history) {
+															 FoldNetworkHistory* history) {
 	history->reset_weights();
 
 	backprop_fold_errors_with_no_weight_change(errors);

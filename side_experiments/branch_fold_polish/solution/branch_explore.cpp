@@ -3,9 +3,12 @@
 #include <iostream>
 #include <limits>
 
+#include "fold_to_path.h"
+
 using namespace std;
 
 void Branch::resolve_fold(int b_index) {
+	int new_sequence_length;
 	vector<bool> new_is_inner_scope;
 	vector<Scope*> new_scopes;
 	vector<int> new_obs_sizes;
@@ -25,6 +28,7 @@ void Branch::resolve_fold(int b_index) {
 	vector<FoldNetwork*> new_compress_networks;
 	vector<int> new_compress_original_sizes;
 	fold_to_path(this->folds[b_index]->finished_steps,
+				 new_sequence_length,
 				 new_is_inner_scope,
 				 new_scopes,
 				 new_obs_sizes,
@@ -46,7 +50,8 @@ void Branch::resolve_fold(int b_index) {
 
 	// this->score_networks[b_index] already set correctly
 
-	BranchPath* new_branch_path = new BranchPath(new_is_inner_scope,
+	BranchPath* new_branch_path = new BranchPath(new_sequence_length,
+												 new_is_inner_scope,
 												 new_scopes,
 												 new_obs_sizes,
 												 new_inner_input_networks,

@@ -10,6 +10,7 @@
 #include "scope.h"
 
 void fold_to_path(std::vector<FinishedStep*> finished_steps,
+				  int& sequence_length,
 				  std::vector<bool>& is_inner_scope,
 				  std::vector<Scope*>& scopes,
 				  std::vector<int>& obs_sizes,
@@ -29,4 +30,4 @@ void fold_to_path(std::vector<FinishedStep*> finished_steps,
 				  std::vector<FoldNetwork*>& compress_networks,
 				  std::vector<int>& compress_original_sizes);
 
-#endif FOLD_TO_PATH_H
+#endif /* FOLD_TO_PATH_H */

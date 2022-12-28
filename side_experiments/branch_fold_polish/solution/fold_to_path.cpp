@@ -92,7 +92,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 					for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 						if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
-							num_inputs += finished_steps[n_index]->inner_input_input_sizes[i_index];
+							scope_num_inputs += finished_steps[n_index]->inner_input_input_sizes[i_index];
 						}
 
 						outer_input_layer.push_back(finished_steps[n_index]->inner_input_input_layer[i_index]);
@@ -107,7 +107,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 				for (int i_index = 0; i_index < (int)finished_steps[n_index]->input_networks.size(); i_index++) {
 					if (finished_steps[n_index]->input_layer[i_index] == curr_layer-1) {
-						num_inputs += finished_steps[n_index]->input_sizes[i_index];
+						scope_num_inputs += finished_steps[n_index]->input_sizes[i_index];
 					}
 
 					outer_input_layer.push_back(finished_steps[n_index]->input_layer[i_index]);
@@ -118,7 +118,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				scope_score_networks.push_back(finished_steps[n_index]->score_network);
 
 				scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);
-				scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impacts);
+				scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 				scope_average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
 				scope_average_inner_branch_impacts.push_back(0.0);
 
@@ -133,7 +133,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 					finished_steps.begin()+scope_ends[s_index]+1);	// inclusive end
 
 				vector<int> new_outer_input_layer;
-				vector<int>& new_outer_input_sizes;
+				vector<int> new_outer_input_sizes;
 				vector<FoldNetwork*> new_outer_input_networks;
 				FoldNetwork* new_outer_score_network;
 				double new_outer_average_misguess;
@@ -171,7 +171,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 						scope_inner_input_sizes.back().push_back(new_outer_input_sizes[i_index]);
 					} else {
 						if (new_outer_input_layer[i_index] == curr_layer-1) {
-							num_inputs += new_outer_input_sizes[i_index];
+							scope_num_inputs += new_outer_input_sizes[i_index];
 						}
 
 						outer_input_layer.push_back(new_outer_input_layer[i_index]);
@@ -235,7 +235,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 			for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 				if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
-					num_inputs += finished_steps[n_index]->inner_input_input_sizes[i_index];
+					scope_num_inputs += finished_steps[n_index]->inner_input_input_sizes[i_index];
 				}
 
 				outer_input_layer.push_back(finished_steps[n_index]->inner_input_input_layer[i_index]);
@@ -250,7 +250,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 		for (int i_index = 0; i_index < (int)finished_steps[n_index]->input_networks.size(); i_index++) {
 			if (finished_steps[n_index]->input_layer[i_index] == curr_layer-1) {
-				num_inputs += finished_steps[n_index]->input_sizes[i_index];
+				scope_num_inputs += finished_steps[n_index]->input_sizes[i_index];
 			}
 
 			outer_input_layer.push_back(finished_steps[n_index]->input_layer[i_index]);
@@ -263,7 +263,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			outer_score_network = finished_steps[n_index]->score_network;
 
 			scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);	// starts identical for both inner and outer
-			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impacts);
+			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 			scope_average_local_impacts.push_back(0.0);	// doesn't matter
 			scope_average_inner_branch_impacts.push_back(0.0);
 
@@ -289,7 +289,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			scope_score_networks.push_back(finished_steps[n_index]->score_network);
 
 			scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);
-			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impacts);
+			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 			scope_average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
 			scope_average_inner_branch_impacts.push_back(0.0);
 
@@ -328,6 +328,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 }
 
 void fold_to_path(vector<FinishedStep*> finished_steps,
+				  int& sequence_length,
 				  vector<bool>& is_inner_scope,
 				  vector<Scope*>& scopes,
 				  vector<int>& obs_sizes,
@@ -372,10 +373,13 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		}
 	}
 
+	sequence_length = 0;
+
 	int n_index = 0;
 	for (int s_index = 0; s_index < (int)scope_starts.size(); s_index++) {
 		while (true) {
 			if (n_index < scope_starts[s_index]) {
+				sequence_length++;
 				is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 				scopes.push_back(finished_steps[n_index]->scope);
 				obs_sizes.push_back(finished_steps[n_index]->obs_size);
@@ -399,7 +403,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				score_networks.push_back(finished_steps[n_index]->score_network);
 
 				average_misguesses.push_back(finished_steps[n_index]->average_misguess);
-				average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impacts);
+				average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 				average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
 				average_inner_branch_impacts.push_back(0.0);
 
@@ -414,7 +418,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 					finished_steps.begin()+scope_ends[s_index]+1);	// inclusive end
 
 				vector<int> new_outer_input_layer;
-				vector<int>& new_outer_input_sizes;
+				vector<int> new_outer_input_sizes;
 				vector<FoldNetwork*> new_outer_input_networks;
 				FoldNetwork* new_outer_score_network;
 				double new_outer_average_misguess;
@@ -438,6 +442,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 														  new_outer_compress_original_size,
 														  new_compressed_scope_sizes);
 
+				sequence_length++;
 				is_inner_scope.push_back(true);
 				scopes.push_back(new_scope);
 				obs_sizes.push_back(-1);
@@ -478,6 +483,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 			break;
 		}
 
+		sequence_length++;
 		is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 		scopes.push_back(finished_steps[n_index]->scope);
 		obs_sizes.push_back(finished_steps[n_index]->obs_size);
@@ -501,7 +507,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		score_networks.push_back(finished_steps[n_index]->score_network);
 
 		average_misguesses.push_back(finished_steps[n_index]->average_misguess);
-		average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impacts);
+		average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 		average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
 		average_inner_branch_impacts.push_back(0.0);
 
