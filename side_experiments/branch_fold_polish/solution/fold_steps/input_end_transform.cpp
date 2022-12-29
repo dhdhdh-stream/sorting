@@ -9,7 +9,7 @@ void Fold::input_end() {
 	if (this->sum_error/10000 < 0.001
 			|| (this->input_networks.size() > 0
 				&& this->input_sizes.back() == (this->curr_s_input_sizes[this->input_layer.back()]
-					this->curr_scope_sizes[this->input_layer.back()]))) {
+					+ this->curr_scope_sizes[this->input_layer.back()]))) {
 		delete this->curr_score_network;
 		this->curr_score_network = this->test_score_network;
 		this->test_score_network = NULL;
@@ -38,7 +38,7 @@ void Fold::input_end() {
 				this->input_sizes.push_back(1);
 				this->input_networks.push_back(new FoldNetwork(1,
 															   this->curr_s_input_sizes[this->test_score_network->subfold_index],
-															   this->curr_scope_sizes[this->test_score_network->subfold_index],
+															   vector<int>{this->curr_scope_sizes[this->test_score_network->subfold_index]},
 															   20));
 				// add to curr_s_input_sizes permanently 1 at a time
 				this->curr_s_input_sizes[this->test_score_network->subfold_index+1]++;
@@ -79,7 +79,7 @@ void Fold::input_end() {
 		}
 		this->input_networks.push_back(new FoldNetwork(this->input_sizes.back(),
 													   this->curr_s_input_sizes[this->test_score_network->subfold_index],
-													   this->curr_scope_sizes[this->test_score_network->subfold_index],
+													   vector<int>{this->curr_scope_sizes[this->test_score_network->subfold_index]},
 													   20));
 		// add to curr_s_input_sizes permanently 1 at a time
 		this->curr_s_input_sizes[this->test_score_network->subfold_index+1]++;

@@ -10,7 +10,7 @@ void Fold::add_finished_step() {
 	if (!this->is_existing[this->finished_steps.size()]) {
 		scope_scale_mod = 0.0;	// doesn't matter
 	} else {
-		scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0]
+		scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
 		delete this->scope_scale_mod_calcs[this->finished_steps.size()];
 		this->scope_scale_mod_calcs[this->finished_steps.size()] = NULL;
 	}
@@ -43,7 +43,7 @@ void Fold::add_finished_step() {
 	this->inner_input_input_layer.clear();
 	this->inner_input_input_sizes.clear();
 	this->inner_input_input_networks.clear();
-	this->curr_input_network.clear();
+	this->curr_input_network = NULL;
 	this->curr_score_network = NULL;
 	this->curr_compress_network = NULL;
 	this->curr_compressed_s_input_sizes.clear();
@@ -54,17 +54,17 @@ void Fold::add_finished_step() {
 
 	this->finished_steps.push_back(new_finished_step);
 
-	if (this->finished_steps.size() == this->sequence_length) {
+	if ((int)this->finished_steps.size() == this->sequence_length) {
 		this->state = STATE_DONE;
 	} else {
-		if (!this->is_existing_actions[this->finished_steps.size()]) {
+		if (!this->is_existing[this->finished_steps.size()]) {
 			this->curr_s_input_sizes.push_back(0);
 			this->curr_scope_sizes.push_back(this->obs_sizes[this->finished_steps.size()]);
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
 			this->curr_fold->migrate_weights();
-			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 				if (this->is_existing[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
@@ -104,7 +104,7 @@ void Fold::add_finished_step() {
 				this->curr_fold->add_scope(this->curr_scope_sizes.back());
 				this->curr_fold->fold_index++;
 				this->curr_fold->migrate_weights();
-				for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+				for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 					if (this->is_existing[f_index]) {
 						this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 						this->curr_input_folds[f_index]->fold_index++;
@@ -129,7 +129,7 @@ void Fold::add_finished_step() {
 	}
 }
 
-void restart_from_finished_step() {
+void Fold::restart_from_finished_step() {
 	if (this->finished_steps.size() == 0
 			&& this->curr_starting_compress_new_size == this->starting_compress_original_size) {
 		// if no steps have been added yet, always try STARTING_COMPRESS as should be safe either way
@@ -142,7 +142,7 @@ void restart_from_finished_step() {
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
 			this->curr_fold->migrate_weights();
-			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 				if (this->is_existing[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
@@ -182,7 +182,7 @@ void restart_from_finished_step() {
 				this->curr_fold->add_scope(this->curr_scope_sizes.back());
 				this->curr_fold->fold_index++;
 				this->curr_fold->migrate_weights();
-				for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+				for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 					if (this->is_existing[f_index]) {
 						this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 						this->curr_input_folds[f_index]->fold_index++;

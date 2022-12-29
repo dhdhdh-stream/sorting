@@ -26,7 +26,7 @@ void Fold::inner_scope_input_end() {
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
 			this->curr_fold->migrate_weights();
-			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 				if (this->is_existing[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
@@ -56,7 +56,7 @@ void Fold::inner_scope_input_end() {
 				this->inner_input_input_sizes.push_back(1);
 				this->inner_input_input_networks.push_back(new FoldNetwork(1,
 																		   this->curr_s_input_sizes[this->test_input_network->subfold_index],
-																		   this->curr_scope_sizes[this->test_input_network->subfold_index],
+																		   vector<int>{this->curr_scope_sizes[this->test_input_network->subfold_index]},
 																		   20));
 				// add to curr_s_input_sizes permanently 1 at a time
 				this->curr_s_input_sizes[this->test_input_network->subfold_index+1]++;
@@ -87,7 +87,7 @@ void Fold::inner_scope_input_end() {
 		}
 		this->inner_input_input_networks.push_back(new FoldNetwork(this->inner_input_input_sizes.back(),
 																   this->curr_s_input_sizes[this->test_input_network->subfold_index],
-																   this->curr_scope_sizes[this->test_input_network->subfold_index],
+																   vector<int>{this->curr_scope_sizes[this->test_input_network->subfold_index]},
 																   20));
 		// add to curr_s_input_sizes permanently 1 at a time
 		this->curr_s_input_sizes[this->test_input_network->subfold_index+1]++;

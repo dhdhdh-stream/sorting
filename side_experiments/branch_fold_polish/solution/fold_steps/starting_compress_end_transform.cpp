@@ -83,7 +83,7 @@ void Fold::starting_compress_end() {
 				this->test_starting_compress_network = new FoldNetwork(
 					this->test_starting_compress_new_size,
 					this->curr_s_input_sizes[0],	// i.e., starting_s_input_size
-					this->curr_scope_sizes[0],		// i.e., starting_state_size
+					vector<int>{this->curr_scope_sizes[0]},		// i.e., starting_state_size
 					20);
 			}
 

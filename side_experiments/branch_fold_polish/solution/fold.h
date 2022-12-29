@@ -203,12 +203,12 @@ private:
 											double& predicted_score,
 											double& scale_factor,
 											FoldHistory* history);
-	int flat_step_explore_on_path_backprop(std::vector<double>& local_state_errors,
-										   double& predicted_score,
-										   double target_val,
-										   double& scale_factor,
-										   double& scale_factor_error,
-										   FoldHistory* history);
+	void flat_step_explore_on_path_backprop(std::vector<double>& local_state_errors,
+											double& predicted_score,
+											double target_val,
+											double& scale_factor,
+											double& scale_factor_error,
+											FoldHistory* history);
 
 	void flat_to_fold();
 
@@ -607,6 +607,7 @@ public:
 	FoldNetworkHistory* curr_input_network_history;
 
 	FoldNetworkHistory* curr_score_network_history;
+	double score_update;
 
 	FoldNetworkHistory* curr_compress_network_history;
 

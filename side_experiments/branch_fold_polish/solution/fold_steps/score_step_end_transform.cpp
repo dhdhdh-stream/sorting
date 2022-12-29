@@ -12,7 +12,7 @@ void Fold::score_end() {
 	}
 	// sum_scope_sizes > 0
 
-	if (this->finished_steps.size() == this->sequence_length-1) {
+	if ((int)this->finished_steps.size() == this->sequence_length-1) {
 		this->curr_compress_num_layers = (int)this->curr_scope_sizes.size();
 		this->curr_compress_new_size = this->output_size;
 		this->curr_compress_original_size = sum_scope_sizes;
@@ -43,7 +43,7 @@ void Fold::score_end() {
 		this->test_scope_sizes = this->curr_scope_sizes;
 
 		this->test_fold = new FoldNetwork(this->curr_fold);
-		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 			if (this->is_existing[f_index]) {
 				this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 			}
@@ -60,7 +60,7 @@ void Fold::score_end() {
 			this->test_scope_sizes.pop_back();
 
 			this->test_fold->pop_scope();
-			for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 				if (this->is_existing[f_index]) {
 					this->test_input_folds[f_index]->pop_scope();
 				}
@@ -73,7 +73,7 @@ void Fold::score_end() {
 		this->test_scope_sizes.back() = this->test_compress_new_size;	// can be 0
 		this->test_fold->pop_scope();
 		this->test_fold->add_scope(this->test_compress_new_size);
-		for (int f_index = this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 			if (this->is_existing[f_index]) {
 				this->test_input_folds[f_index]->pop_scope();
 				this->test_input_folds[f_index]->add_scope(this->test_compress_new_size);

@@ -197,7 +197,9 @@ void Network::save(ofstream& output_file) {
 
 NetworkHistory::NetworkHistory(Network* network) {
 	this->network = network;
+}
 
+void NetworkHistory::save_weights() {
 	this->input_history.reserve(network->input->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
 		this->input_history.push_back(network->input->acti_vals[n_index]);

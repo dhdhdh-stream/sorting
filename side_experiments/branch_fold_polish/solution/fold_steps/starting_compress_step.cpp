@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "definitions.h"
+
 using namespace std;
 
 void Fold::starting_compress_step_explore_off_path_activate(
@@ -45,11 +47,11 @@ void Fold::starting_compress_step_explore_off_path_activate(
 	vector<vector<vector<double>>> input_fold_inputs(this->sequence_length);
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (!this->is_existing_actions[f_index]) {
-			fold_input.push_back(flat_vals.begin());
+		if (!this->is_existing[f_index]) {
+			fold_input.push_back(*flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
 				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(flat_vals.begin());
+					input_fold_inputs[i_index].push_back(*flat_vals.begin());
 				}
 			}
 
@@ -144,7 +146,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 
 	double predicted_score_error = target_val - predicted_score;
 
-	scale_factor_error += this->ending_score_update*predicted_score_error;
+	scale_factor_error += history->ending_score_update*predicted_score_error;
 
 	this->curr_end_fold->backprop_errors_with_no_weight_change(
 		local_state_errors,
@@ -155,7 +157,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 		curr_fold_error,
 		history->curr_fold_history);
 
-	local_state_errors = new vector<double>(this->curr_scope_sizes[0], 0.0);
+	local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -189,7 +191,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 			}
 		}
 	}
-	predicted_score -= scale_factor*this->ending_score_update;
+	predicted_score -= scale_factor*history->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size(); f_index--) {
 		if (this->is_existing[f_index]) {
@@ -234,18 +236,20 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
 		if (this->curr_starting_compress_new_size > 0) {
+			vector<double> s_input_output_errors;
+			vector<double> state_output_errors;
 			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
 				local_state_errors,
+				s_input_output_errors,
+				state_output_errors,
 				history->curr_starting_compress_network_history);
 			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+				local_s_input_errors[s_index] += s_input_output_errors[s_index];
 			}
 			local_state_errors.clear();
 			local_state_errors.reserve(this->starting_compress_original_size);
 			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+				local_state_errors.push_back(state_output_errors[s_index]);
 			}
 		} else {
 			// local_state_errors.size() == 0
@@ -291,10 +295,10 @@ void Fold::starting_compress_step_existing_flat_activate(
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (!this->is_existing[f_index]) {
-			fold_input.push_back(flat_vals.begin());
+			fold_input.push_back(*flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
 				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(flat_vals.begin());
+					input_fold_inputs[i_index].push_back(*flat_vals.begin());
 				}
 			}
 
@@ -369,7 +373,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 		FoldHistory* history) {
 	// end_scale_mod passed on
 
-	scale_factor_error += this->ending_score_update*predicted_score_error;
+	scale_factor_error += history->ending_score_update*predicted_score_error;
 
 	this->curr_end_fold->backprop_errors_with_no_weight_change(
 		local_state_errors,
@@ -380,7 +384,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 		curr_fold_error,
 		history->curr_fold_history);
 
-	local_state_errors = new vector<double>(this->curr_scope_sizes[0], 0.0);
+	local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -414,7 +418,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 			}
 		}
 	}
-	predicted_score -= scale_factor*this->ending_score_update;
+	predicted_score -= scale_factor*history->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size(); f_index--) {
 		if (this->is_existing[f_index]) {
@@ -459,18 +463,20 @@ void Fold::starting_compress_step_existing_flat_backprop(
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
 		if (this->curr_starting_compress_new_size > 0) {
+			vector<double> s_input_output_errors;
+			vector<double> state_output_errors;
 			this->curr_starting_compress_network->backprop_small_errors_with_no_weight_change(
 				local_state_errors,
+				s_input_output_errors,
+				state_output_errors,
 				history->curr_starting_compress_network_history);
 			for (int s_index = 0; s_index < (int)local_s_input_errors.size(); s_index++) {
-				local_s_input_errors[s_index] += this->curr_starting_compress_network->s_input_input->errors[s_index];
-				this->curr_starting_compress_network->s_input_input->errors[s_index] = 0.0;
+				local_s_input_errors[s_index] += s_input_output_errors[s_index];
 			}
 			local_state_errors.clear();
 			local_state_errors.reserve(this->starting_compress_original_size);
 			for (int s_index = 0; s_index < this->starting_compress_original_size; s_index++) {
-				local_state_errors.push_back(this->curr_starting_compress_network->state_inputs[0]->errors[s_index]);
-				this->curr_starting_compress_network->state_inputs[0]->errors[s_index] = 0.0;
+				local_state_errors.push_back(state_output_errors[s_index]);
 			}
 		} else {
 			// local_state_errors.size() == 0
@@ -524,10 +530,10 @@ void Fold::starting_compress_step_update_activate(
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (!this->is_existing[f_index]) {
-			fold_input.push_back(flat_vals.begin());
+			fold_input.push_back(*flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
 				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(flat_vals.begin());
+					input_fold_inputs[i_index].push_back(*flat_vals.begin());
 				}
 			}
 
@@ -680,7 +686,7 @@ void Fold::starting_compress_step_update_backprop(
 		history->curr_fold_history);
 
 	next_predicted_score = predicted_score;
-	predicted_score -= scale_factor*this->ending_score_update;
+	predicted_score -= scale_factor*history->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size(); f_index--) {
 		if (this->is_existing[f_index]) {
@@ -698,7 +704,8 @@ void Fold::starting_compress_step_update_backprop(
 
 			scale_factor /= scope_scale_mod;
 
-			this->scope_scale_mod_calcs[f_index]->backprop(scope_scale_factor_error, 0.0002);
+			vector<double> mod_errors{scope_scale_factor_error};
+			this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.0002);
 		}
 	}
 
@@ -744,10 +751,10 @@ void Fold::starting_compress_step_existing_update_activate(
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (!this->is_existing[f_index]) {
-			fold_input.push_back(flat_vals.begin());
+			fold_input.push_back(*flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
 				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(flat_vals.begin());
+					input_fold_inputs[i_index].push_back(*flat_vals.begin());
 				}
 			}
 
@@ -811,9 +818,9 @@ void Fold::starting_compress_step_existing_update_backprop(
 		FoldHistory* history) {
 	// end_scale_mod passed on
 
-	scale_factor_error += this->ending_score_update*predicted_score_error;
+	scale_factor_error += history->ending_score_update*predicted_score_error;
 
-	predicted_score -= scale_factor*this->ending_score_update;
+	predicted_score -= scale_factor*history->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size(); f_index--) {
 		if (this->is_existing[f_index]) {

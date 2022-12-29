@@ -27,10 +27,10 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (!this->is_existing[f_index]) {
-			fold_input.push_back(flat_vals.begin());
+			fold_input.push_back(*flat_vals.begin());
 			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
 				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(flat_vals.begin());
+					input_fold_inputs[i_index].push_back(*flat_vals.begin());
 				}
 			}
 
@@ -116,21 +116,24 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 	double predicted_score_error = target_val - predicted_score;
 	if (this->state_iter <= 300000) {
-		this->end_scale_mod_calc->backprop(scale_factor_error, 0.005);
+		vector<double> mod_errors{scale_factor_error};
+		this->end_scale_mod_calc->backprop(mod_errors, 0.005);
 
 		this->curr_end_fold->backprop(local_state_errors, 0.05);
 
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.05);
 	} else if (this->state_iter <= 400000) {
-		this->end_scale_mod_calc->backprop(scale_factor_error, 0.001);
+		vector<double> mod_errors{scale_factor_error};
+		this->end_scale_mod_calc->backprop(mod_errors, 0.001);
 
 		this->curr_end_fold->backprop(local_state_errors, 0.01);
 
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.01);
 	} else {
-		this->end_scale_mod_calc->backprop(scale_factor_error, 0.0002);
+		vector<double> mod_errors{scale_factor_error};
+		this->end_scale_mod_calc->backprop(mod_errors, 0.0002);
 
 		this->curr_end_fold->backprop(local_state_errors, 0.002);
 
@@ -144,12 +147,12 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
-				scope_input_errors[f_index][i_inidex] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
+				scope_input_errors[f_index][i_index] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
 				this->curr_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 			}
 		}
 	}
-	predicted_score -= scale_factor*this->ending_score_update;
+	predicted_score -= scale_factor*history->ending_score_update;
 
 	for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 		if (this->is_existing[f_index]) {
@@ -171,15 +174,18 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 			scale_factor /= scope_scale_mod;
 
 			if (this->state_iter <= 300000) {
-				this->scope_scale_mod_calcs[f_index]->backprop(scope_scale_factor_error, 0.005);
+				vector<double> mod_errors{scope_scale_factor_error};
+				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.005);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.05);
 			} else if (this->state_iter <= 400000) {
-				this->scope_scale_mod_calcs[f_index]->backprop(scope_scale_factor_error, 0.001);
+				vector<double> mod_errors{scope_scale_factor_error};
+				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.001);
 				
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.01);
 			} else {
-				this->scope_scale_mod_calcs[f_index]->backprop(scope_scale_factor_error, 0.0002);
+				vector<double> mod_errors{scope_scale_factor_error};
+				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.0002);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.002);
 			}
