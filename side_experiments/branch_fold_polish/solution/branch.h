@@ -142,6 +142,7 @@ public:
 	FoldHistory* fold_history;
 
 	BranchHistory(Branch* branch);
+	~BranchHistory();
 };
 
 #endif /* BRANCH_H */

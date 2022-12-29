@@ -750,5 +750,27 @@ void Branch::save(ofstream& output_file) {
 BranchHistory::BranchHistory(Branch* branch) {
 	this->branch = branch;
 
-	// other fields don't need to be initialized
+	this->branch_score_network_history = NULL;
+
+	this->score_network_history = NULL;
+	this->branch_path_history = NULL;
+	this->fold_history = NULL;
+}
+
+BranchHistory::~BranchHistory() {
+	if (this->branch_score_network_history != NULL) {
+		delete this->branch_score_network_history;
+	}
+
+	if (this->score_network_history != NULL) {
+		delete this->score_network_history;
+	}
+
+	if (this->branch_path_history != NULL) {
+		delete this->branch_path_history;
+	}
+
+	if (this->fold_history != NULL) {
+		delete this->fold_history;
+	}
 }

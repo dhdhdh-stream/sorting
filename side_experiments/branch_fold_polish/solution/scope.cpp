@@ -2803,3 +2803,45 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->explore_fold_history = NULL;
 }
+
+ScopeHistory::~ScopeHistory() {
+	for (int a_index = 0; a_index < (int)this->inner_input_network_histories.size(); a_index++) {
+		for (int i_index = 0; i_index < (int)this->inner_input_network_histories[a_index].size(); i_index++) {
+			delete this->inner_input_network_histories[a_index][i_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->scope_histories.size(); a_index++) {
+		if (this->scope_histories[a_index] != NULL) {
+			delete this->scope_histories[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->branch_histories.size(); a_index++) {
+		if (this->branch_histories[a_index] != NULL) {
+			delete this->branch_histories[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->fold_histories.size(); a_index++) {
+		if (this->fold_histories[a_index] != NULL) {
+			delete this->fold_histories[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->score_network_histories.size(); a_index++) {
+		if (this->score_network_histories[a_index] != NULL) {
+			delete this->score_network_histories[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->compress_network_histories.size(); a_index++) {
+		if (this->compress_network_histories[a_index] != NULL) {
+			delete this->compress_network_histories[a_index];
+		}
+	}
+
+	if (this->explore_fold_history != NULL) {
+		delete this->explore_fold_history;
+	}
+}

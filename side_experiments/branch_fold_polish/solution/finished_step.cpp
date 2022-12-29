@@ -1196,5 +1196,37 @@ void FinishedStep::save(ofstream& output_file) {
 FinishedStepHistory::FinishedStepHistory(FinishedStep* finished_step) {
 	this->finished_step = finished_step;
 
-	// other fields don't need to be initialized
+	this->inner_input_network_history = NULL;
+
+	this->scope_history = NULL;
+
+	this->score_network_history = NULL;
+
+	this->compress_network_history = NULL;
+}
+
+FinishedStepHistory::~FinishedStepHistory() {
+	for (int i_index = 0; i_index < (int)this->inner_input_input_network_histories.size(); i_index++) {
+		delete this->inner_input_input_network_histories[i_index];
+	}
+
+	if (this->inner_input_network_history != NULL) {
+		delete this->inner_input_network_history;
+	}
+
+	if (this->scope_history != NULL) {
+		delete this->scope_history;
+	}
+
+	if (this->score_network_history != NULL) {
+		delete this->score_network_history;
+	}
+
+	if (this->compress_network_history != NULL) {
+		delete this->compress_network_history;
+	}
+
+	for (int i_index = 0; i_index < (int)this->input_network_histories.size(); i_index++) {
+		delete this->input_network_histories[i_index];
+	}
 }

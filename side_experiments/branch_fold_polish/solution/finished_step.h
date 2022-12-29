@@ -141,6 +141,7 @@ public:
 	std::vector<FoldNetworkHistory*> input_network_histories;
 
 	FinishedStepHistory(FinishedStep* finished_step);
+	~FinishedStepHistory();
 };
 
 #endif /* FINISHED_STEP_H */

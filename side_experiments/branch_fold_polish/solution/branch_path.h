@@ -170,6 +170,7 @@ public:
 	FoldHistory* explore_fold_history;
 
 	BranchPathHistory(BranchPath* branch_path);
+	~BranchPathHistory();
 };
 
 #endif /* BRANCH_PATH_H */

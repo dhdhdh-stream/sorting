@@ -168,6 +168,7 @@ public:
 	FoldHistory* explore_fold_history;
 
 	ScopeHistory(Scope* scope);
+	~ScopeHistory();
 };
 
 #endif /* SCOPE_H */

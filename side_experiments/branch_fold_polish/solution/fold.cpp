@@ -27,8 +27,11 @@ Fold::Fold(int sequence_length,
 	this->output_size = output_size;
 
 	this->average_misguess = 0.0;
+
+	this->standard_deviation = 0.0;
+
 	this->existing_misguess = existing_misguess;
-	this->average_misguess_standard_deviation = 0.0;
+	this->misguess_improvement = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
@@ -36,9 +39,7 @@ Fold::Fold(int sequence_length,
 												   20);
 
 	this->replace_existing = 0.0;
-	this->replace_existing_standard_deviation = 0.0;
 	this->replace_combined = 0.0;
-	this->replace_combined_standard_deviation = 0.0;
 
 	this->combined_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
@@ -46,7 +47,6 @@ Fold::Fold(int sequence_length,
 												   20);
 
 	this->combined_improvement = 0.0;
-	this->combined_standard_deviation = 0.0;
 
 	this->scope_scale_mod_calcs = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -469,54 +469,64 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	if (this->state_iter == 495000) {
-		this->average_misguess /= 5000;
-		this->replace_existing /= 5000;
-		this->replace_combined /= 5000;
-		this->combined_improvement /= 5000;
+	if (this->state_iter == 500000) {
+		this->standard_deviation = sqrt(this->standard_deviation/9999);
 
-		return EXPLORE_SIGNAL_NONE;
-	} else if (this->state_iter == 500000) {
-		this->combined_standard_deviation =
-			sqrt(this->combined_standard_deviation/4999);
+		this->misguess_improvement /= 10000;
+		cout << "this->misguess_improvement: " << this->misguess_improvement << endl;
+
+		this->replace_existing /= 10000;
+		cout << "this->replace_existing: " << this->replace_existing << endl;
+		this->replace_combined /= 10000;
+		cout << "this->replace_combined: " << this->replace_combined << endl;
+		this->combined_improvement /= 10000;
+		cout << "this->combined_improvement: " << this->combined_improvement << endl;
+
 		double combined_t_value = this->combined_improvement
-			/ (this->combined_standard_deviation / sqrt(5000));
+			/ (standard_deviation / sqrt(10000));
+		cout << "combined_t_value: " << combined_t_value << endl;
 		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
-			this->replace_combined_standard_deviation =
-				sqrt(this->replace_combined_standard_deviation/4999);
 			double replace_combined_t_value = this->replace_combined
-				/ (this->replace_combined_standard_deviation / sqrt(5000));
+				/ (standard_deviation / sqrt(10000));
+			cout << "replace_combined_t_value: " << replace_combined_t_value << endl;
 			if (this->replace_combined > 0.0
 					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
 				flat_to_fold();
 
+				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
 			} else {
 				flat_to_fold();
 
+				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
 		} else {
-			this->replace_existing_standard_deviation =
-				sqrt(this->replace_existing_standard_deviation/4999);
 			double replace_existing_t_value = this->replace_existing
-				/ (this->replace_existing_standard_deviation / sqrt(5000));
+				/ (standard_deviation / sqrt(10000));
+			cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
 
-			this->average_misguess_standard_deviation =
-				sqrt(this->average_misguess_standard_deviation/4999);
-			double average_misguess_t_value = this->average_misguess
-				/ (this->average_misguess_standard_deviation / sqrt(5000));
+			double misguess_improvement_t_value = this->misguess_improvement
+				/ (standard_deviation / sqrt(10000));
+			cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
-					&& (this->average_misguess > 0.0 && average_misguess_t_value > 2.576)) {
+					&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
 				flat_to_fold();
 
+				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
 			} else {
+				cout << "EXPLORE_SIGNAL_CLEAN" << endl;
 				return EXPLORE_SIGNAL_CLEAN;
 			}
 		}
 	} else {
+		if (this->state_iter%10000 == 0) {
+			cout << "this->sum_error: " << this->sum_error << endl;
+			this->sum_error = 0.0;
+		}
+
 		return EXPLORE_SIGNAL_NONE;
 	}
 }
@@ -1247,8 +1257,67 @@ void Fold::save(ofstream& output_file) {
 FoldHistory::FoldHistory(Fold* fold) {
 	this->fold = fold;
 
+	this->curr_starting_compress_network_history = NULL;
+
+	this->curr_input_network_history = NULL;
+
+	this->curr_score_network_history = NULL;
+
+	this->curr_compress_network_history = NULL;
+
 	this->curr_input_fold_histories = vector<FoldNetworkHistory*>(fold->sequence_length, NULL);
 	this->scope_histories = vector<ScopeHistory*>(fold->sequence_length, NULL);
 
-	// other fields don't need to be initialized
+	this->curr_fold_history = NULL;
+	this->curr_end_fold_history = NULL;
+}
+
+FoldHistory::~FoldHistory() {
+	if (this->curr_starting_compress_network_history != NULL) {
+		delete this->curr_starting_compress_network_history;
+	}
+
+	for (int n_index = 0; n_index < (int)this->finished_step_histories.size(); n_index++) {
+		delete this->finished_step_histories[n_index];
+	}
+
+	for (int i_index = 0; i_index < (int)this->inner_input_input_network_histories.size(); i_index++) {
+		delete this->inner_input_input_network_histories[i_index];
+	}
+
+	if (this->curr_input_network_history != NULL) {
+		delete this->curr_input_network_history;
+	}
+
+	if (this->curr_score_network_history != NULL) {
+		delete this->curr_score_network_history;
+	}
+
+	if (this->curr_compress_network_history != NULL) {
+		delete this->curr_compress_network_history;
+	}
+
+	for (int i_index = 0; i_index < (int)this->input_network_histories.size(); i_index++) {
+		delete this->input_network_histories[i_index];
+	}
+
+	for (int f_index = 0; f_index < (int)this->curr_input_fold_histories.size(); f_index++) {
+		if (this->curr_input_fold_histories[f_index] != NULL) {
+			delete this->curr_input_fold_histories[f_index];
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)this->scope_histories.size(); f_index++) {
+		if (this->scope_histories[f_index] != NULL) {
+			delete this->scope_histories[f_index];
+		}
+	}
+
+	if (this->curr_fold_history != NULL) {
+		delete this->curr_fold_history;
+	}
+
+	if (this->curr_end_fold_history != NULL) {
+		delete this->curr_end_fold_history;
+	}
 }
