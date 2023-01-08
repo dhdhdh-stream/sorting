@@ -527,7 +527,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		}
 	} else {
 		if (this->state_iter%10000 == 0) {
+			cout << "this->state_iter: " << this->state_iter << endl;
 			cout << "this->sum_error: " << this->sum_error << endl;
+			cout << endl;
 			this->sum_error = 0.0;
 		}
 
@@ -1096,89 +1098,93 @@ void Fold::fold_increment() {
 
 	if (this->state == STATE_STARTING_COMPRESS) {
 		// TODO: experiment with lowering to 100000
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_INNER_SCOPE_INPUT) {
-		// if (this->state_iter == 50000) {
-		if (this->state_iter == 5) {
+		if (this->state_iter == 50000) {
 			this->new_state_factor = 5;
-		// } else if (this->state_iter == 100000) {
-		} else if (this->state_iter == 10) {
+		} else if (this->state_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_STATE) {
-		// if (this->state_iter == 50000) {
-		if (this->state_iter == 5) {
+		if (this->state_iter == 50000) {
 			this->new_state_factor = 5;
-		// } else if (this->state_iter == 100000) {
-		} else if (this->state_iter == 10) {
+		} else if (this->state_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_SCOPE) {
-		// if (this->state_iter == 50000) {
-		if (this->state_iter == 5) {
+		if (this->state_iter == 50000) {
 			this->new_state_factor = 5;
-		// } else if (this->state_iter == 100000) {
-		} else if (this->state_iter == 10) {
+		} else if (this->state_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}
 	} else {
 		// this->state == STATE_INPUT
-		// if (this->state_iter == 50000) {
-		if (this->state_iter == 5) {
+		if (this->state_iter == 50000) {
 			this->new_state_factor = 5;
-		// } else if (this->state_iter == 100000) {
-		} else if (this->state_iter == 10) {
+		} else if (this->state_iter == 100000) {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 300000) {
-		if (this->state_iter == 30) {
+		if (this->state_iter == 300000) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
 				this->sum_error = 0.0;
 			}
 		}

@@ -1114,6 +1114,8 @@ void Fold::score_step_update_backprop(
 
 	double inner_predicted_score_error = target_val - predicted_score;
 
+	this->sum_error += abs(inner_predicted_score_error);
+
 	vector<double> score_errors{scale_factor*inner_predicted_score_error};
 	this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
 		score_errors,

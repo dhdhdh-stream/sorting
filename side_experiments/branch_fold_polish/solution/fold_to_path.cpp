@@ -50,6 +50,13 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		}
 	}
 
+	cout << "scopes:" << endl;
+	for (int s_index = 0; s_index < (int)scope_starts.size(); s_index++) {
+		cout << "start: " << scope_starts[s_index] << endl;
+		cout << "end: " << scope_ends[s_index] << endl;
+	}
+	cout << endl;
+
 	int scope_num_inputs = 0;
 	int scope_num_outputs;
 
@@ -392,6 +399,11 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 			if (finished_steps[n_index]->compress_new_size > 0) {
 				num_scopes++;
 			}
+
+			if (num_scopes == 0) {
+				// special case outer base layer
+				num_scopes = 1;
+			}
 		}
 
 		if (num_scopes > 1) {
@@ -407,6 +419,13 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 			}
 		}
 	}
+
+	cout << "scopes:" << endl;
+	for (int s_index = 0; s_index < (int)scope_starts.size(); s_index++) {
+		cout << "start: " << scope_starts[s_index] << endl;
+		cout << "end: " << scope_ends[s_index] << endl;
+	}
+	cout << endl;
 
 	sequence_length = 0;
 

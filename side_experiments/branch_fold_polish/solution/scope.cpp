@@ -453,10 +453,8 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 					local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 				}
 			} else {
-				if (this->compress_new_sizes[0] != this->compress_original_sizes[0]) {
-					// can compress down to 0
-					local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
-				}
+				int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+				local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 			}
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
@@ -668,10 +666,8 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 							local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 						}
 					} else {
-						if (this->compress_new_sizes[a_index] != this->compress_original_sizes[a_index]) {
-							// can compress down to 0
-							local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
-						}
+						int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+						local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 					}
 				}
 			}
@@ -851,9 +847,8 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			if (this->compress_new_sizes[0] != this->compress_original_sizes[0]) {
-				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
-			}
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
@@ -982,9 +977,8 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 					}
 				} else {
-					if (this->compress_new_sizes[a_index] != this->compress_original_sizes[a_index]) {
-						local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
-					}
+					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 				}
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
@@ -1696,9 +1690,8 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			if (this->compress_new_sizes[0] != this->compress_original_sizes[0]) {
-				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
-			}
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
@@ -1798,9 +1791,8 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 					}
 				} else {
-					if (this->compress_new_sizes[a_index] != this->compress_original_sizes[a_index]) {
-						local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
-					}
+					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 				}
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
@@ -2148,9 +2140,8 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			if (this->compress_new_sizes[0] != this->compress_original_sizes[0]) {
-				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
-			}
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
@@ -2194,6 +2185,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 			// temp_new_s_input_vals only used as scope_input
 			// scopes formed through folding may have multiple inner_input_networks
 			// reused scopes will have 1 inner_input_network
+			
 			vector<double> temp_new_s_input_vals;
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
 				this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
@@ -2245,9 +2237,8 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 					}
 				} else {
-					if (this->compress_new_sizes[a_index] != this->compress_original_sizes[a_index]) {
-						local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
-					}
+					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 				}
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
@@ -2507,9 +2498,8 @@ void Scope::existing_update_activate(vector<vector<double>>& flat_vals,
 				local_state_vals.push_back(this->compress_networks[0]->output->acti_vals[s_index]);
 			}
 		} else {
-			if (this->compress_new_sizes[0] != this->compress_original_sizes[0]) {
-				local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[0], local_state_vals.end());
-			}
+			int compress_size = this->compress_original_sizes[0] - this->compress_new_sizes[0];
+			local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 		}
 	} else if (this->step_types[0] == STEP_TYPE_BRANCH) {
 		BranchHistory* branch_history = new BranchHistory(this->branches[0]);
@@ -2597,9 +2587,8 @@ void Scope::existing_update_activate(vector<vector<double>>& flat_vals,
 						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
 					}
 				} else {
-					if (this->compress_new_sizes[a_index] != this->compress_original_sizes[a_index]) {
-						local_state_vals.erase(local_state_vals.begin()+this->compress_new_sizes[a_index], local_state_vals.end());
-					}
+					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
+					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
 				}
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {

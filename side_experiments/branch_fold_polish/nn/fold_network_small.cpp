@@ -84,8 +84,7 @@ void FoldNetwork::backprop_small_weights_with_no_error_signal(
 		(int)this->state_inputs.size());
 
 	this->epoch_iter++;
-	// if (this->epoch_iter == 20) {
-	if (this->epoch_iter == 5) {
+	if (this->epoch_iter == 20) {
 		double hidden_max_update = 0.0;
 		this->hidden->subfold_get_max_update(this->subfold_index,
 											 (int)this->state_inputs.size(),

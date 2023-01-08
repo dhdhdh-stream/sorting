@@ -8,8 +8,7 @@ using namespace std;
 void Fold::starting_compress_end() {
 	cout << "starting_compress_end" << endl;
 
-	// if (this->sum_error/10000 < 0.001) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/10000 < 0.001) {
 		this->curr_starting_compress_new_size = this->test_starting_compress_new_size;
 
 		// no change to this->curr_s_input_sizes

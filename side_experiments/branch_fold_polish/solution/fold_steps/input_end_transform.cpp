@@ -8,8 +8,7 @@ using namespace std;
 void Fold::input_end() {
 	cout << "input_end" << endl;
 
-	// if (this->sum_error/10000 < 0.001
-	if (rand()%2 == 0
+	if (this->sum_error/10000 < 0.001
 			|| (this->input_networks.size() > 0
 				&& this->input_sizes.back() >= (this->curr_s_input_sizes[this->input_layer.back()]
 					+ this->curr_scope_sizes[this->input_layer.back()]))) {

@@ -8,8 +8,7 @@ using namespace std;
 void Fold::compress_state_end() {
 	cout << "compress_state_end" << endl;
 
-	// if (this->sum_error/10000 < 0.001) {
-	if (rand()%2) {
+	if (this->sum_error/10000 < 0.001) {
 		if (this->curr_compress_network != NULL) {
 			delete this->curr_compress_network;
 		}
