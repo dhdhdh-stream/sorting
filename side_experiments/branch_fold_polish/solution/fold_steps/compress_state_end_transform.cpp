@@ -6,7 +6,10 @@
 using namespace std;
 
 void Fold::compress_state_end() {
-	if (this->sum_error/10000 < 0.001) {
+	cout << "compress_state_end" << endl;
+
+	// if (this->sum_error/10000 < 0.001) {
+	if (rand()%2) {
 		if (this->curr_compress_network != NULL) {
 			delete this->curr_compress_network;
 		}
@@ -45,7 +48,7 @@ void Fold::compress_state_end() {
 			this->test_compress_new_size = this->curr_compress_new_size-1;
 			// this->test_compress_original_size unchanged
 
-			if (this->test_compress_new_size == 0) {
+			if (this->test_compress_new_size > 0) {
 				this->test_compress_network = new FoldNetwork(this->test_compress_new_size,
 															  this->curr_s_input_sizes[0],
 															  this->curr_scope_sizes,
@@ -100,22 +103,26 @@ void Fold::compress_state_end() {
 		this->test_scope_sizes.back()++;
 
 		if (this->curr_compress_num_layers == 0) {
-			this->curr_s_input_sizes = this->test_s_input_sizes;
-			this->curr_scope_sizes = this->test_scope_sizes;
+			// don't update curr_s_input_sizes and curr_scope_sizes
 
-			if (this->curr_scope_sizes.size() > 1) {
+			// this->curr_scope_sizes.size() > 1
+			if (this->curr_s_input_sizes[0] + this->curr_scope_sizes[0] == 0) {
+				this->curr_score_network->subfold_index++;
+			}
+
+			if (this->curr_score_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
+				add_finished_step();
+			} else {
 				this->test_score_network = new FoldNetwork(this->curr_score_network);
 				this->test_score_network->subfold_index++;
 
-				// this->curr_compress_network = NULL
+				// this->curr_compress_network == NULL
 
 				this->last_state = STATE_COMPRESS_STATE;	// though can also keep as STATE_SCORE
 				this->state = STATE_INPUT;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
 				this->new_state_factor = 25;
-			} else {
-				add_finished_step();
 			}
 		} else {
 			int sum_scope_sizes = 0;

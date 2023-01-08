@@ -58,7 +58,7 @@ void Fold::compress_step_explore_off_path_activate(
 																 scale_factor,
 																 explore_phase,
 																 finished_step_history);
-		history->finished_step_histories[n_index] = finished_step_history;
+		history->finished_step_histories.push_back(finished_step_history);
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
@@ -168,7 +168,14 @@ void Fold::compress_step_explore_off_path_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -405,7 +412,15 @@ void Fold::compress_step_explore_off_path_backprop(
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 			}
@@ -583,7 +598,7 @@ void Fold::compress_step_existing_flat_activate(
 															  predicted_score,
 															  scale_factor,
 															  finished_step_history);
-		history->finished_step_histories[n_index] = finished_step_history;
+		history->finished_step_histories.push_back(finished_step_history);
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
@@ -672,7 +687,14 @@ void Fold::compress_step_existing_flat_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -889,7 +911,15 @@ void Fold::compress_step_existing_flat_backprop(
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 			}
@@ -1062,7 +1092,7 @@ void Fold::compress_step_update_activate(
 													   predicted_score,
 													   scale_factor,
 													   finished_step_history);
-		history->finished_step_histories[n_index] = finished_step_history;
+		history->finished_step_histories.push_back(finished_step_history);
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
@@ -1146,7 +1176,14 @@ void Fold::compress_step_update_activate(
 			test_state_vals.back()[s_index] = this->new_state_factor*this->test_compress_network->output->acti_vals[s_index];
 		}
 	} else {
-		for (int l_index = 0; l_index < this->test_compress_num_layers; l_index++) {
+		for (int l_index = 0; l_index < this->test_compress_num_layers-1; l_index++) {
+			test_s_input_vals.pop_back();
+			test_state_vals.pop_back();
+		}
+		if (test_s_input_vals.size() == 1) {
+			// edge case where set last layer to 0 instead of removing
+			test_state_vals[0].clear();
+		} else {
 			test_s_input_vals.pop_back();
 			test_state_vals.pop_back();
 		}
@@ -1167,7 +1204,14 @@ void Fold::compress_step_update_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -1464,7 +1508,7 @@ void Fold::compress_step_existing_update_activate(
 																predicted_score,
 																scale_factor,
 																finished_step_history);
-		history->finished_step_histories[n_index] = finished_step_history;
+		history->finished_step_histories.push_back(finished_step_history);
 
 		fold_input.push_back(vector<double>());	// empty
 		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
@@ -1541,7 +1585,14 @@ void Fold::compress_step_existing_update_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}

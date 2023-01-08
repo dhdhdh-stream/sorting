@@ -6,6 +6,8 @@
 using namespace std;
 
 void Fold::score_end() {
+	cout << "score_end" << endl;
+
 	int sum_scope_sizes = 0;
 	for (int sc_index = 0; sc_index < (int)this->curr_scope_sizes.size(); sc_index++) {
 		sum_scope_sizes += this->curr_scope_sizes[sc_index];
@@ -22,11 +24,18 @@ void Fold::score_end() {
 
 		// this->curr_s_input_sizes, this->curr_scope_sizes, this->curr_fold no longer needed
 
+		this->curr_compressed_s_input_sizes = vector<int>(this->curr_compress_num_layers);
+		this->curr_compressed_scope_sizes = vector<int>(this->curr_compress_num_layers);
+		for (int sc_index = 0; sc_index < this->curr_compress_num_layers; sc_index++) {
+			this->curr_compressed_s_input_sizes[sc_index] = this->curr_s_input_sizes[sc_index];
+			this->curr_compressed_scope_sizes[sc_index] = this->curr_scope_sizes[sc_index];
+		}
+
 		add_finished_step();
 	} else {
 		this->curr_compress_num_layers = 0;
-		this->curr_compress_new_size = -1;
-		this->curr_compress_original_size = -1;
+		this->curr_compress_new_size = sum_scope_sizes;
+		this->curr_compress_original_size = sum_scope_sizes;
 
 		this->test_compress_num_layers = (int)this->curr_scope_sizes.size();
 		this->test_compress_new_size = sum_scope_sizes-1;

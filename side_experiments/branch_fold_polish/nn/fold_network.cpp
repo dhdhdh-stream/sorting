@@ -185,7 +185,8 @@ void FoldNetwork::backprop(vector<double>& errors,
 	this->hidden->backprop();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 20) {
+	// if (this->epoch_iter == 20) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
@@ -247,7 +248,8 @@ void FoldNetwork::backprop_weights_with_no_error_signal(vector<double>& errors,
 	this->hidden->backprop_weights_with_no_error_signal();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 20) {
+	// if (this->epoch_iter == 20) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->get_max_update(hidden_max_update);
 		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;

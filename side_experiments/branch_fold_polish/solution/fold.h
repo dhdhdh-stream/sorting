@@ -195,7 +195,6 @@ public:
 
 	void save(std::ofstream& output_file);
 
-private:
 	void flat_step_explore_on_path_activate(double existing_score,
 											std::vector<std::vector<double>>& flat_vals,
 											std::vector<double>& local_s_input_vals,

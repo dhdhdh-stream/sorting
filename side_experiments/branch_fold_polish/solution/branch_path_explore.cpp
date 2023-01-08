@@ -188,7 +188,7 @@ void BranchPath::explore_branch() {
 			this->scope_scale_mod.begin()+this->explore_index_inclusive+1,
 			this->scope_scale_mod.begin()+this->explore_end_non_inclusive);
 
-		vector<bool> branch_step_types(this->step_types.begin()+this->explore_index_inclusive,
+		vector<int> branch_step_types(this->step_types.begin()+this->explore_index_inclusive,
 			this->step_types.begin()+this->explore_end_non_inclusive);
 		// set this->step_types[this->explore_index_inclusive] below
 		vector<Branch*> branch_branches(this->branches.begin()+this->explore_index_inclusive,
@@ -343,7 +343,7 @@ void BranchPath::resolve_fold(int a_index) {
 	vector<vector<FoldNetwork*>> new_inner_input_networks;
 	vector<vector<int>> new_inner_input_sizes;
 	vector<double> new_scope_scale_mod;
-	vector<bool> new_step_types;
+	vector<int> new_step_types;
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;

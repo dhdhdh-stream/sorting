@@ -232,14 +232,25 @@ FinishedStep::FinishedStep(ifstream& input_file) {
 }
 
 FinishedStep::~FinishedStep() {
+	if (this->scope != NULL) {
+		delete this->scope;
+	}
+
 	for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
 		delete this->inner_input_input_networks[i_index];
 	}
-	delete this->inner_input_network;
 
-	delete this->score_network;
+	if (this->inner_input_network != NULL) {
+		delete this->inner_input_network;
+	}
 
-	delete this->compress_network;
+	if (this->score_network != NULL) {
+		delete this->score_network;
+	}
+
+	if (this->compress_network != NULL) {
+		delete this->compress_network;
+	}
 
 	for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
 		delete this->input_networks[i_index];
@@ -328,7 +339,14 @@ void FinishedStep::explore_on_path_activate(vector<vector<double>>& flat_vals,
 				state_vals.back()[s_index] = this->compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -460,7 +478,14 @@ void FinishedStep::explore_off_path_activate(vector<vector<double>>& flat_vals,
 				state_vals.back()[s_index] = this->compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -500,7 +525,15 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->compressed_scope_sizes[l_index], 0.0));
 			}
@@ -715,7 +748,14 @@ void FinishedStep::existing_flat_activate(vector<vector<double>>& flat_vals,
 				state_vals.back()[s_index] = this->compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -755,7 +795,15 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->compressed_scope_sizes[l_index], 0.0));
 			}
@@ -956,7 +1004,14 @@ void FinishedStep::update_activate(vector<vector<double>>& flat_vals,
 				state_vals.back()[s_index] = this->compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -1086,7 +1141,14 @@ void FinishedStep::existing_update_activate(vector<vector<double>>& flat_vals,
 				state_vals.back()[s_index] = this->compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}

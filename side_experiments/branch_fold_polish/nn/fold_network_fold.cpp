@@ -82,7 +82,8 @@ void FoldNetwork::backprop_fold_weights_with_no_error_signal(vector<double>& err
 	this->hidden->fold_backprop_weights_with_no_error_signal(this->fold_index);
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 20) {
+	// if (this->epoch_iter == 20) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->fold_get_max_update(this->fold_index,
 										  hidden_max_update);
@@ -130,7 +131,8 @@ void FoldNetwork::backprop_fold_last_state(vector<double>& errors,
 	this->hidden->fold_backprop_last_state(this->fold_index);
 
 	this->epoch_iter++;
-	if (this->epoch_iter == 20) {
+	// if (this->epoch_iter == 20) {
+	if (this->epoch_iter == 5) {
 		double hidden_max_update = 0.0;
 		this->hidden->fold_get_max_update(this->fold_index,
 										  hidden_max_update);

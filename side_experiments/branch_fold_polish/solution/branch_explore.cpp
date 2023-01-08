@@ -15,7 +15,7 @@ void Branch::resolve_fold(int b_index) {
 	vector<vector<FoldNetwork*>> new_inner_input_networks;
 	vector<vector<int>> new_inner_input_sizes;
 	vector<double> new_scope_scale_mod;
-	vector<bool> new_step_types;
+	vector<int> new_step_types;
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;

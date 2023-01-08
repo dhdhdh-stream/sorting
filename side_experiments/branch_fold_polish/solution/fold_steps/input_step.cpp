@@ -185,7 +185,14 @@ void Fold::input_step_explore_off_path_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -422,7 +429,15 @@ void Fold::input_step_explore_off_path_backprop(
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 			}
@@ -722,7 +737,14 @@ void Fold::input_step_existing_flat_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -939,7 +961,15 @@ void Fold::input_step_existing_flat_backprop(
 				}
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			if (state_errors.back().size() == 0) {
+				// edge case where compressed down to 0
+				// s_input_errors unchanged
+				state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+			} else {
+				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+			}
+			for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
 				s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
 				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 			}
@@ -1199,8 +1229,9 @@ void Fold::input_step_update_activate(
 					this->input_networks[i_index]->output->acti_vals[s_index]);
 			}
 		}
-		this->input_networks.back()->activate_small(s_input_vals.back(),
-													state_vals.back());
+		// TODO: correct all input networks
+		this->input_networks.back()->activate_small(s_input_vals[this->input_layer.back()],
+													state_vals[this->input_layer.back()]);
 		for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
 			s_input_vals[this->input_layer.back()+1].push_back(
 				this->new_state_factor*this->input_networks.back()->output->acti_vals[s_index]);
@@ -1303,7 +1334,14 @@ void Fold::input_step_update_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}
@@ -1602,7 +1640,14 @@ void Fold::input_step_existing_update_activate(
 				state_vals.back()[s_index] = this->curr_compress_network->output->acti_vals[s_index];
 			}
 		} else {
-			for (int l_index = 0; l_index < this->curr_compress_num_layers; l_index++) {
+			for (int l_index = 0; l_index < this->curr_compress_num_layers-1; l_index++) {
+				s_input_vals.pop_back();
+				state_vals.pop_back();
+			}
+			if (s_input_vals.size() == 1) {
+				// edge case where set last layer to 0 instead of removing
+				state_vals[0].clear();
+			} else {
 				s_input_vals.pop_back();
 				state_vals.pop_back();
 			}

@@ -49,7 +49,7 @@ public:
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds
 	std::vector<FoldNetwork*> compress_networks;
-	std::vector<int> compress_original_sizes;	// for backprop
+	std::vector<int> compress_original_sizes;
 
 	int explore_index_inclusive;
 	int explore_type;

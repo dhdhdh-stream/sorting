@@ -499,7 +499,6 @@ void Fold::starting_compress_step_update_activate(
 	history->starting_score_update = starting_score;
 	predicted_score += starting_score;	// already scaled
 
-	// this->test_starting_compress_new_size < this->starting_compress_original_size
 	vector<double> test_local_state_vals(this->test_starting_compress_new_size);
 	vector<double> test_local_state_errors(this->test_starting_compress_new_size, 0.0);
 

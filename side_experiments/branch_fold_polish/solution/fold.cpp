@@ -355,6 +355,10 @@ Fold::~Fold() {
 		}
 	}
 
+	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
+		delete this->finished_steps[n_index];
+	}
+
 	if (this->starting_score_network != NULL) {
 		delete this->starting_score_network;
 	}
@@ -842,7 +846,7 @@ void Fold::update_activate(vector<vector<double>>& flat_vals,
 						   double& predicted_score,
 						   double& scale_factor,
 						   FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_update_activate(flat_vals,
 												   starting_score,
@@ -1092,7 +1096,8 @@ void Fold::fold_increment() {
 
 	if (this->state == STATE_STARTING_COMPRESS) {
 		// TODO: experiment with lowering to 100000
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1100,13 +1105,16 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_INNER_SCOPE_INPUT) {
-		if (this->state_iter == 50000) {
+		// if (this->state_iter == 50000) {
+		if (this->state_iter == 5) {
 			this->new_state_factor = 5;
-		} else if (this->state_iter == 100000) {
+		// } else if (this->state_iter == 100000) {
+		} else if (this->state_iter == 10) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1114,7 +1122,8 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1122,13 +1131,16 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_STATE) {
-		if (this->state_iter == 50000) {
+		// if (this->state_iter == 50000) {
+		if (this->state_iter == 5) {
 			this->new_state_factor = 5;
-		} else if (this->state_iter == 100000) {
+		// } else if (this->state_iter == 100000) {
+		} else if (this->state_iter == 10) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1136,13 +1148,16 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_COMPRESS_SCOPE) {
-		if (this->state_iter == 50000) {
+		// if (this->state_iter == 50000) {
+		if (this->state_iter == 5) {
 			this->new_state_factor = 5;
-		} else if (this->state_iter == 100000) {
+		// } else if (this->state_iter == 100000) {
+		} else if (this->state_iter == 10) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1151,13 +1166,16 @@ void Fold::fold_increment() {
 		}
 	} else {
 		// this->state == STATE_INPUT
-		if (this->state_iter == 50000) {
+		// if (this->state_iter == 50000) {
+		if (this->state_iter == 5) {
 			this->new_state_factor = 5;
-		} else if (this->state_iter == 100000) {
+		// } else if (this->state_iter == 100000) {
+		} else if (this->state_iter == 10) {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 300000) {
+		// if (this->state_iter == 300000) {
+		if (this->state_iter == 30) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {

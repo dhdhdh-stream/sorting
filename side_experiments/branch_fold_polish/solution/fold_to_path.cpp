@@ -6,6 +6,8 @@
 
 using namespace std;
 
+// TODO: switch back to original logic, individual steps should work with their layers, and passing score networks outside should also work
+
 Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							  int curr_layer,
 							  vector<int>& outer_input_layer,
@@ -26,12 +28,14 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	int num_scopes = 0;
 	for (int n_index = 0; n_index < (int)finished_steps.size(); n_index++) {
 		num_scopes++;
-		num_scopes -= finished_steps[n_index]->compress_num_layers;
-		if (finished_steps[n_index]->compress_new_size > 0) {
-			num_scopes++;
+		if (finished_steps[n_index]->compress_num_layers > 0) {
+			num_scopes -= finished_steps[n_index]->compress_num_layers;
+			if (finished_steps[n_index]->compress_new_size > 0) {
+				num_scopes++;
+			}
 		}
 
-		if (num_scopes > 1) {	// compare against 1 for construct scope
+		if (num_scopes > 1) {
 			if (curr_start == -1) {
 				curr_start = n_index;
 			}
@@ -81,6 +85,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				scope_sequence_length++;
 				scope_is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 				scope_scopes.push_back(finished_steps[n_index]->scope);
+				finished_steps[n_index]->scope = NULL;	// for garbage collection
 				scope_obs_sizes.push_back(finished_steps[n_index]->obs_size);
 
 				scope_inner_input_networks.push_back(vector<FoldNetwork*>());
@@ -88,6 +93,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				scope_scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
 				if (finished_steps[n_index]->is_inner_scope) {
 					scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
 					scope_inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
 
 					for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
@@ -100,6 +106,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 						outer_input_networks.push_back(finished_steps[n_index]->inner_input_input_networks[i_index]);
 					}
 				}
+				finished_steps[n_index]->inner_input_input_networks.clear();	// for garbage collection
 
 				scope_step_types.push_back(STEP_TYPE_STEP);
 				scope_branches.push_back(NULL);
@@ -114,8 +121,10 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 					outer_input_sizes.push_back(finished_steps[n_index]->input_sizes[i_index]);
 					outer_input_networks.push_back(finished_steps[n_index]->input_networks[i_index]);
 				}
+				finished_steps[n_index]->input_networks.clear();	// for garbage collection
 
 				scope_score_networks.push_back(finished_steps[n_index]->score_network);
+				finished_steps[n_index]->score_network = NULL;	// for garbage collection
 
 				scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);
 				scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
@@ -125,6 +134,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				scope_active_compress.push_back(finished_steps[n_index]->active_compress);
 				scope_compress_new_sizes.push_back(finished_steps[n_index]->compress_new_size);
 				scope_compress_networks.push_back(finished_steps[n_index]->compress_network);
+				finished_steps[n_index]->compress_network = NULL;	// for garbage collection
 				scope_compress_original_sizes.push_back(finished_steps[n_index]->compress_original_size);
 
 				n_index++;
@@ -196,6 +206,19 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 					scope_num_outputs = new_compressed_scope_sizes.back() + new_scope->num_outputs;
 					compressed_scope_sizes = vector<int>(new_compressed_scope_sizes.begin(),
 						new_compressed_scope_sizes.end()-1);
+
+					scope_score_networks.push_back(NULL);
+
+					// doesn't matter
+					scope_average_misguesses.push_back(0.0);
+					scope_average_inner_scope_impacts.push_back(0.0);
+					scope_average_local_impacts.push_back(0.0);
+					scope_average_inner_branch_impacts.push_back(0.0);
+
+					scope_active_compress.push_back(false);
+					scope_compress_new_sizes.push_back(-1);
+					scope_compress_networks.push_back(NULL);
+					scope_compress_original_sizes.push_back(-1);
 				} else {
 					scope_score_networks.push_back(new_outer_score_network);
 
@@ -224,6 +247,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		scope_sequence_length++;
 		scope_is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 		scope_scopes.push_back(finished_steps[n_index]->scope);
+		finished_steps[n_index]->scope = NULL;	// for garbage collection
 		scope_obs_sizes.push_back(finished_steps[n_index]->obs_size);
 
 		scope_inner_input_networks.push_back(vector<FoldNetwork*>());
@@ -231,6 +255,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		scope_scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
 		if (finished_steps[n_index]->is_inner_scope) {
 			scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
 			scope_inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
 
 			for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
@@ -243,12 +268,15 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				outer_input_networks.push_back(finished_steps[n_index]->inner_input_input_networks[i_index]);
 			}
 		}
+		finished_steps[n_index]->inner_input_input_networks.clear();	// for garbage collection
 
 		scope_step_types.push_back(STEP_TYPE_STEP);
 		scope_branches.push_back(NULL);
 		scope_folds.push_back(NULL);
 
 		for (int i_index = 0; i_index < (int)finished_steps[n_index]->input_networks.size(); i_index++) {
+			// note: it might be that for the last step, input networks are only for outer scopes
+
 			if (finished_steps[n_index]->input_layer[i_index] == curr_layer-1) {
 				scope_num_inputs += finished_steps[n_index]->input_sizes[i_index];
 			}
@@ -257,10 +285,12 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			outer_input_sizes.push_back(finished_steps[n_index]->input_sizes[i_index]);
 			outer_input_networks.push_back(finished_steps[n_index]->input_networks[i_index]);
 		}
+		finished_steps[n_index]->input_networks.clear();	// for garbage collection
 
 		if (n_index == (int)finished_steps.size()-1) {
 			scope_score_networks.push_back(NULL);
 			outer_score_network = finished_steps[n_index]->score_network;
+			finished_steps[n_index]->score_network = NULL;	// for garbage collection
 
 			scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);	// starts identical for both inner and outer
 			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
@@ -278,6 +308,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			outer_active_compress = finished_steps[n_index]->active_compress;
 			outer_compress_new_size = finished_steps[n_index]->compress_new_size;
 			outer_compress_network = finished_steps[n_index]->compress_network;
+			finished_steps[n_index]->compress_network = NULL;	// for garbage collection
 			outer_compress_original_size = finished_steps[n_index]->compress_original_size;
 
 			compressed_scope_sizes = finished_steps[n_index]->compressed_scope_sizes;
@@ -287,6 +318,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			compressed_scope_sizes.pop_back();
 		} else {
 			scope_score_networks.push_back(finished_steps[n_index]->score_network);
+			finished_steps[n_index]->score_network = NULL;	// for garbage collection
 
 			scope_average_misguesses.push_back(finished_steps[n_index]->average_misguess);
 			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
@@ -296,6 +328,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			scope_active_compress.push_back(finished_steps[n_index]->active_compress);
 			scope_compress_new_sizes.push_back(finished_steps[n_index]->compress_new_size);
 			scope_compress_networks.push_back(finished_steps[n_index]->compress_network);
+			finished_steps[n_index]->compress_network = NULL;	// for garbage collection
 			scope_compress_original_sizes.push_back(finished_steps[n_index]->compress_original_size);
 		}
 
@@ -335,7 +368,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				  vector<vector<FoldNetwork*>>& inner_input_networks,
 				  vector<vector<int>>& inner_input_sizes,
 				  vector<double>& scope_scale_mod,
-				  vector<bool>& step_types,
+				  vector<int>& step_types,
 				  vector<Branch*>& branches,
 				  vector<Fold*>& folds,
 				  vector<FoldNetwork*>& score_networks,
@@ -351,15 +384,17 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 	vector<int> scope_ends;
 
 	int curr_start = -1;
-	int num_scopes = 0;
+	int num_scopes = 1;
 	for (int n_index = 0; n_index < (int)finished_steps.size(); n_index++) {
 		num_scopes++;
-		num_scopes -= finished_steps[n_index]->compress_num_layers;
-		if (finished_steps[n_index]->compress_new_size > 0) {
-			num_scopes++;
+		if (finished_steps[n_index]->compress_num_layers > 0) {
+			num_scopes -= finished_steps[n_index]->compress_num_layers;
+			if (finished_steps[n_index]->compress_new_size > 0) {
+				num_scopes++;
+			}
 		}
 
-		if (num_scopes > 0) {	// compare against 0 for construct path
+		if (num_scopes > 1) {
 			if (curr_start == -1) {
 				curr_start = n_index;
 			}
@@ -382,6 +417,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				sequence_length++;
 				is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 				scopes.push_back(finished_steps[n_index]->scope);
+				finished_steps[n_index]->scope = NULL;	// for garbage collection
 				obs_sizes.push_back(finished_steps[n_index]->obs_size);
 
 				inner_input_networks.push_back(vector<FoldNetwork*>());
@@ -389,6 +425,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
 				if (finished_steps[n_index]->is_inner_scope) {
 					inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
 					inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
 
 					// finished_steps[n_index]->inner_input_input_networks.size() == 0
@@ -401,6 +438,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				// finished_steps[n_index]->input_networks.size() == 0
 
 				score_networks.push_back(finished_steps[n_index]->score_network);
+				finished_steps[n_index]->score_network = NULL;	// for garbage collection
 
 				average_misguesses.push_back(finished_steps[n_index]->average_misguess);
 				average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
@@ -410,6 +448,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				active_compress.push_back(finished_steps[n_index]->active_compress);
 				compress_new_sizes.push_back(finished_steps[n_index]->compress_new_size);
 				compress_networks.push_back(finished_steps[n_index]->compress_network);
+				finished_steps[n_index]->compress_network = NULL;	// for garbage collection
 				compress_original_sizes.push_back(finished_steps[n_index]->compress_original_size);
 
 				n_index++;
@@ -486,6 +525,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		sequence_length++;
 		is_inner_scope.push_back(finished_steps[n_index]->is_inner_scope);
 		scopes.push_back(finished_steps[n_index]->scope);
+		finished_steps[n_index]->scope = NULL;	// for garbage collection
 		obs_sizes.push_back(finished_steps[n_index]->obs_size);
 
 		inner_input_networks.push_back(vector<FoldNetwork*>());
@@ -493,6 +533,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
 		if (finished_steps[n_index]->is_inner_scope) {
 			inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
 			inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
 
 			// finished_steps[n_index]->inner_input_input_networks.size() == 0
@@ -505,6 +546,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		// finished_steps[n_index]->input_networks.size() == 0
 
 		score_networks.push_back(finished_steps[n_index]->score_network);
+		finished_steps[n_index]->score_network = NULL;	// for garbage collection
 
 		average_misguesses.push_back(finished_steps[n_index]->average_misguess);
 		average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
@@ -514,6 +556,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		active_compress.push_back(finished_steps[n_index]->active_compress);
 		compress_new_sizes.push_back(finished_steps[n_index]->compress_new_size);
 		compress_networks.push_back(finished_steps[n_index]->compress_network);
+		finished_steps[n_index]->compress_network = NULL;	// for garbage collection
 		compress_original_sizes.push_back(finished_steps[n_index]->compress_original_size);
 
 		n_index++;
