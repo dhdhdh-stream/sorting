@@ -6,8 +6,6 @@
 
 using namespace std;
 
-// TODO: switch back to original logic, individual steps should work with their layers, and passing score networks outside should also work
-
 Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							  int curr_layer,
 							  vector<int>& outer_input_layer,

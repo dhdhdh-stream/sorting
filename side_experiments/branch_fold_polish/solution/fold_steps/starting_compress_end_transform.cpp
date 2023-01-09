@@ -6,9 +6,7 @@
 using namespace std;
 
 void Fold::starting_compress_end() {
-	cout << "starting_compress_end" << endl;
-
-	if (this->sum_error/10000 < 0.001) {
+	if (this->sum_error/10000 < 0.01) {
 		this->curr_starting_compress_new_size = this->test_starting_compress_new_size;
 
 		// no change to this->curr_s_input_sizes
@@ -69,6 +67,10 @@ void Fold::starting_compress_end() {
 													   this->curr_scope_sizes,
 													   20);
 
+			cout << "STARTING_COMPRESS success" << endl;
+			cout << "ending STARTING_COMPRESS" << endl;
+			cout << "beginning STATE_SCORE" << endl;
+
 			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
@@ -103,6 +105,10 @@ void Fold::starting_compress_end() {
 			this->test_end_fold = new FoldNetwork(this->curr_end_fold);
 			this->test_end_fold->pop_scope();
 			this->test_end_fold->add_scope(this->test_starting_compress_new_size);
+
+			cout << "STARTING_COMPRESS success" << endl;
+			cout << "ending STARTING_COMPRESS" << endl;
+			cout << "beginning STARTING_COMPRESS" << endl;
 
 			this->last_state = STATE_STARTING_COMPRESS;
 			this->state = STATE_STARTING_COMPRESS;
@@ -155,6 +161,10 @@ void Fold::starting_compress_end() {
 												   this->curr_s_input_sizes[0],
 												   this->curr_scope_sizes,
 												   20);
+
+		cout << "STARTING_COMPRESS fail" << endl;
+		cout << "ending STARTING_COMPRESS" << endl;
+		cout << "beginning STATE_SCORE" << endl;
 
 		this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 		this->state = STATE_SCORE;

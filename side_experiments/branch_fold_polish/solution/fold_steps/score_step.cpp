@@ -1116,11 +1116,25 @@ void Fold::score_step_update_backprop(
 
 	this->sum_error += abs(inner_predicted_score_error);
 
-	vector<double> score_errors{scale_factor*inner_predicted_score_error};
-	this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
-		score_errors,
-		0.001,
-		history->curr_score_network_history);
+	if (this->state_iter <= 110000) {
+		vector<double> score_errors{scale_factor*inner_predicted_score_error};
+		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+			score_errors,
+			0.05,
+			history->curr_score_network_history);
+	} else if (this->state_iter <= 130000) {
+		vector<double> score_errors{scale_factor*inner_predicted_score_error};
+		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+			score_errors,
+			0.01,
+			history->curr_score_network_history);
+	} else {
+		vector<double> score_errors{scale_factor*inner_predicted_score_error};
+		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+			score_errors,
+			0.002,
+			history->curr_score_network_history);
+	}
 	next_predicted_score = predicted_score;
 	predicted_score -= scale_factor*history->score_update;
 

@@ -6,9 +6,7 @@
 using namespace std;
 
 void Fold::compress_state_end() {
-	cout << "compress_state_end" << endl;
-
-	if (this->sum_error/10000 < 0.001) {
+	if (this->sum_error/10000 < 0.01) {
 		if (this->curr_compress_network != NULL) {
 			delete this->curr_compress_network;
 		}
@@ -40,6 +38,10 @@ void Fold::compress_state_end() {
 		if (this->curr_compress_new_size == 0) {
 			this->curr_s_input_sizes = this->test_s_input_sizes;
 			this->curr_scope_sizes = this->test_scope_sizes;
+
+			cout << "COMPRESS_STATE success" << endl;
+			cout << "ending COMPRESS_STATE" << endl;
+			cout << "beginning ADD_STEP" << endl;
 
 			add_finished_step();
 		} else {
@@ -74,6 +76,10 @@ void Fold::compress_state_end() {
 			this->test_end_fold->pop_scope();
 			this->test_end_fold->add_scope(this->test_compress_new_size);
 			// s_input stays the same
+
+			cout << "COMPRESS_STATE success" << endl;
+			cout << "ending COMPRESS_STATE" << endl;
+			cout << "beginning COMPRESS_STATE" << endl;
 
 			this->last_state = STATE_COMPRESS_STATE;
 			this->state = STATE_COMPRESS_STATE;
@@ -110,12 +116,20 @@ void Fold::compress_state_end() {
 			}
 
 			if (this->curr_score_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
+				cout << "COMPRESS_STATE fail" << endl;
+				cout << "ending COMPRESS_STATE" << endl;
+				cout << "beginning ADD_STEP" << endl;
+
 				add_finished_step();
 			} else {
 				this->test_score_network = new FoldNetwork(this->curr_score_network);
 				this->test_score_network->subfold_index++;
 
 				// this->curr_compress_network == NULL
+
+				cout << "COMPRESS_STATE fail" << endl;
+				cout << "ending COMPRESS_STATE" << endl;
+				cout << "beginning STATE_INPUT" << endl;
 
 				this->last_state = STATE_COMPRESS_STATE;	// though can also keep as STATE_SCORE
 				this->state = STATE_INPUT;
@@ -133,6 +147,10 @@ void Fold::compress_state_end() {
 				// skip STATE_COMPRESS_SCOPE and STATE_INPUT
 				this->curr_s_input_sizes = this->test_s_input_sizes;
 				this->curr_scope_sizes = this->test_scope_sizes;
+
+				cout << "COMPRESS_STATE fail" << endl;
+				cout << "ending COMPRESS_STATE" << endl;
+				cout << "beginning ADD_STEP" << endl;
 
 				add_finished_step();
 			} else if (compress_size == sum_scope_sizes) {
@@ -164,6 +182,10 @@ void Fold::compress_state_end() {
 				this->test_end_fold->add_scope(this->test_compressed_scope_sizes[0]);
 
 				this->test_compressed_scope_sizes.erase(this->test_compressed_scope_sizes.begin());
+
+				cout << "COMPRESS_STATE fail" << endl;
+				cout << "ending COMPRESS_STATE" << endl;
+				cout << "beginning COMPRESS_SCOPE" << endl;
 
 				this->last_state = STATE_COMPRESS_STATE;
 				this->state = STATE_COMPRESS_SCOPE;
@@ -209,6 +231,10 @@ void Fold::compress_state_end() {
 				this->test_end_fold->add_scope(this->test_compress_new_size);
 
 				this->test_compressed_scope_sizes.erase(this->test_compressed_scope_sizes.begin());
+
+				cout << "COMPRESS_STATE fail" << endl;
+				cout << "ending COMPRESS_STATE" << endl;
+				cout << "beginning COMPRESS_SCOPE" << endl;
 
 				this->last_state = STATE_COMPRESS_STATE;
 				this->state = STATE_COMPRESS_SCOPE;

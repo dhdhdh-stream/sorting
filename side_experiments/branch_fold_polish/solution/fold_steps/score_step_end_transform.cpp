@@ -6,8 +6,6 @@
 using namespace std;
 
 void Fold::score_end() {
-	cout << "score_end" << endl;
-
 	int sum_scope_sizes = 0;
 	for (int sc_index = 0; sc_index < (int)this->curr_scope_sizes.size(); sc_index++) {
 		sum_scope_sizes += this->curr_scope_sizes[sc_index];
@@ -30,6 +28,9 @@ void Fold::score_end() {
 			this->curr_compressed_s_input_sizes[sc_index] = this->curr_s_input_sizes[sc_index];
 			this->curr_compressed_scope_sizes[sc_index] = this->curr_scope_sizes[sc_index];
 		}
+
+		cout << "ending STATE_SCORE" << endl;
+		cout << "beginning ADD_STEP" << endl;
 
 		add_finished_step();
 	} else {
@@ -91,6 +92,9 @@ void Fold::score_end() {
 		this->test_end_fold->pop_scope();
 		this->test_end_fold->add_scope(this->test_compress_new_size);
 		// s_input stays the same
+
+		cout << "ending STATE_SCORE" << endl;
+		cout << "beginning COMPRESS_STATE" << endl;
 
 		this->last_state = STATE_SCORE;
 		this->state = STATE_COMPRESS_STATE;

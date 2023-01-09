@@ -1229,7 +1229,6 @@ void Fold::input_step_update_activate(
 					this->input_networks[i_index]->output->acti_vals[s_index]);
 			}
 		}
-		// TODO: correct all input networks
 		this->input_networks.back()->activate_small(s_input_vals[this->input_layer.back()],
 													state_vals[this->input_layer.back()]);
 		for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
@@ -1254,7 +1253,7 @@ void Fold::input_step_update_activate(
 	this->sum_error += score_error*score_error;
 	vector<double> score_errors{score_error};
 	if (this->input_networks.size() > 0) {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_score_network->backprop_subfold_new_s_input(
 				score_errors,
 				0.01);
@@ -1269,7 +1268,7 @@ void Fold::input_step_update_activate(
 			this->test_score_network->s_input_input->errors[initial_size+s_index] = 0.0;
 		}
 	} else {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_score_network->backprop_subfold_weights_with_no_error_signal(
 				score_errors,
 				0.01);
@@ -1297,7 +1296,7 @@ void Fold::input_step_update_activate(
 				this->sum_error += compress_errors[s_index]*compress_errors[s_index];
 			}
 			if (this->input_networks.size() > 0) {
-				if (this->state_iter <= 270000) {
+				if (this->state_iter <= 130000) {
 					this->test_compress_network->backprop_subfold_new_s_input(
 						compress_errors,
 						0.01);
@@ -1312,7 +1311,7 @@ void Fold::input_step_update_activate(
 					this->test_compress_network->s_input_input->errors[initial_size+s_index] = 0.0;
 				}
 			} else {
-				if (this->state_iter <= 270000) {
+				if (this->state_iter <= 130000) {
 					this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 						compress_errors,
 						0.01);
@@ -1349,11 +1348,11 @@ void Fold::input_step_update_activate(
 	}
 
 	if (this->input_networks.size() > 0) {
-		if (this->state_iter <= 240000) {
+		if (this->state_iter <= 110000) {
 			this->input_networks.back()->backprop_small_weights_with_no_error_signal(
 				input_errors,
 				0.05);
-		} else if (this->state_iter <= 270000) {
+		} else if (this->state_iter <= 130000) {
 			this->input_networks.back()->backprop_small_weights_with_no_error_signal(
 				input_errors,
 				0.01);

@@ -47,9 +47,9 @@ public:
 
 	double new_state_factor;
 
-	double average_misguess;
+	double average_misguess;	// squared
 
-	double standard_deviation;
+	double squared_standard_deviation;	// squared twice
 
 	double* existing_misguess;	// ref to branch end average_misguess
 	double misguess_improvement;

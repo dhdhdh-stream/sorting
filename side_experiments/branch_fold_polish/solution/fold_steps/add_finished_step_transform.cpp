@@ -6,8 +6,6 @@
 using namespace std;
 
 void Fold::add_finished_step() {
-	cout << "add_finished_step" << endl;
-
 	double scope_scale_mod;
 	if (!this->is_existing[this->finished_steps.size()]) {
 		scope_scale_mod = 0.0;	// doesn't matter
@@ -57,6 +55,9 @@ void Fold::add_finished_step() {
 	this->finished_steps.push_back(new_finished_step);
 
 	if ((int)this->finished_steps.size() == this->sequence_length) {
+		cout << "ending STEP_ADDED" << endl;
+		cout << "STATE_DONE" << endl;
+
 		this->state = STATE_DONE;
 	} else {
 		if (!this->is_existing[this->finished_steps.size()]) {
@@ -82,6 +83,9 @@ void Fold::add_finished_step() {
 													   this->curr_scope_sizes,
 													   20);
 
+			cout << "ending STEP_ADDED" << endl;
+			cout << "beginning STATE_SCORE" << endl;
+
 			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
@@ -93,6 +97,9 @@ void Fold::add_finished_step() {
 			if (this->curr_scope_sizes.size() > 1) {
 				this->test_input_network = new FoldNetwork(this->curr_input_network);
 				this->test_input_network->subfold_index++;
+
+				cout << "ending STEP_ADDED" << endl;
+				cout << "beginning STATE_INNER_SCOPE_INPUT" << endl;
 
 				this->last_state = STATE_STEP_ADDED;
 				this->state = STATE_INNER_SCOPE_INPUT;
@@ -121,6 +128,9 @@ void Fold::add_finished_step() {
 														   this->curr_s_input_sizes[0],
 														   this->curr_scope_sizes,
 														   20);
+
+				cout << "ending STEP_ADDED" << endl;
+				cout << "beginning STATE_SCORE" << endl;
 
 				this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 				this->state = STATE_SCORE;

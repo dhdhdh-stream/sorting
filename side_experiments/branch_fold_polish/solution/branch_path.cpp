@@ -181,18 +181,18 @@ BranchPath::BranchPath(ifstream& input_file) {
 			this->inner_input_sizes.push_back(vector<int>());
 			for (int i_index = 0; i_index < inner_input_networks_size; i_index++) {
 				ifstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + " " + to_string(i_index) + ".txt");
+				inner_input_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
 				this->inner_input_networks[a_index].push_back(new FoldNetwork(inner_input_network_save_file));
 				inner_input_network_save_file.close();
 
 				string inner_input_size_line;
 				getline(input_file, inner_input_size_line);
 				this->inner_input_sizes[a_index].push_back(stoi(inner_input_size_line));
-
-				string scope_scale_mod_line;
-				getline(input_file, scope_scale_mod_line);
-				this->scope_scale_mod.push_back(stof(scope_scale_mod_line));
 			}
+
+			string scope_scale_mod_line;
+			getline(input_file, scope_scale_mod_line);
+			this->scope_scale_mod.push_back(stof(scope_scale_mod_line));
 		} else {
 			this->scopes.push_back(NULL);
 
@@ -222,24 +222,22 @@ BranchPath::BranchPath(ifstream& input_file) {
 				getline(input_file, active_compress_line);
 				this->active_compress.push_back(stoi(active_compress_line));
 
-				if (this->active_compress[a_index]) {
-					string compress_new_size_line;
-					getline(input_file, compress_new_size_line);
-					this->compress_new_sizes.push_back(stoi(compress_new_size_line));
+				string compress_new_size_line;
+				getline(input_file, compress_new_size_line);
+				this->compress_new_sizes.push_back(stoi(compress_new_size_line));
 
+				if (this->active_compress[a_index]) {
 					ifstream compress_network_save_file;
 					compress_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
 					this->compress_networks.push_back(new FoldNetwork(compress_network_save_file));
 					compress_network_save_file.close();
-
-					string compress_original_size_line;
-					getline(input_file, compress_original_size_line);
-					this->compress_original_sizes.push_back(stoi(compress_original_size_line));
 				} else {
-					this->compress_new_sizes.push_back(-1);
 					this->compress_networks.push_back(NULL);
-					this->compress_original_sizes.push_back(-1);
 				}
+
+				string compress_original_size_line;
+				getline(input_file, compress_original_size_line);
+				this->compress_original_sizes.push_back(stoi(compress_original_size_line));
 			} else {
 				this->score_networks.push_back(NULL);
 
@@ -2296,16 +2294,14 @@ void BranchPath::save(ofstream& output_file) {
 				score_network_save_file.close();
 
 				output_file << this->active_compress[a_index] << endl;
+				output_file << this->compress_new_sizes[a_index] << endl;
 				if (this->active_compress[a_index]) {
-					output_file << this->compress_new_sizes[a_index] << endl;
-
 					ofstream compress_network_save_file;
 					compress_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
 					this->compress_networks[a_index]->save(compress_network_save_file);
 					compress_network_save_file.close();
-
-					output_file << this->compress_original_sizes[a_index] << endl;
 				}
+				output_file << this->compress_original_sizes[a_index] << endl;
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			output_file << this->branches[a_index]->id << endl;

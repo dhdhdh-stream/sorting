@@ -1158,7 +1158,7 @@ void Fold::compress_step_update_activate(
 
 	// this->test_compress_num_layers > 0
 	
-	vector<vector<double>> test_s_input_vals = s_input_vals;
+	// vector<vector<double>> test_s_input_vals = s_input_vals;
 	vector<vector<double>> test_state_vals = state_vals;
 	vector<double> test_state_errors(this->test_compress_new_size, 0.0);
 
@@ -1166,7 +1166,7 @@ void Fold::compress_step_update_activate(
 		this->test_compress_network->activate_subfold(local_s_input_vals,
 													  state_vals);
 		for (int l_index = 0; l_index < this->test_compress_num_layers-1; l_index++) {
-			test_s_input_vals.pop_back();
+			// test_s_input_vals.pop_back();
 			test_state_vals.pop_back();
 		}
 		// don't pop last s_input_vals (though doesn't matter here)
@@ -1177,14 +1177,15 @@ void Fold::compress_step_update_activate(
 		}
 	} else {
 		for (int l_index = 0; l_index < this->test_compress_num_layers-1; l_index++) {
-			test_s_input_vals.pop_back();
+			// test_s_input_vals.pop_back();
 			test_state_vals.pop_back();
 		}
-		if (test_s_input_vals.size() == 1) {
+		// if (test_s_input_vals.size() == 1) {
+		if (test_state_vals.size() == 1) {
 			// edge case where set last layer to 0 instead of removing
 			test_state_vals[0].clear();
 		} else {
-			test_s_input_vals.pop_back();
+			// test_s_input_vals.pop_back();
 			test_state_vals.pop_back();
 		}
 	}
@@ -1244,7 +1245,7 @@ void Fold::compress_step_update_activate(
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
 			}
 			if (this->test_compress_new_size > 0) {
-				if (this->state_iter <= 270000) {
+				if (this->state_iter <= 130000) {
 					this->test_input_folds[f_index]->backprop_fold_last_state(input_fold_errors, 0.01);
 				} else {
 					this->test_input_folds[f_index]->backprop_fold_last_state(input_fold_errors, 0.002);
@@ -1254,7 +1255,7 @@ void Fold::compress_step_update_activate(
 					this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
 				}
 			} else {
-				if (this->state_iter <= 270000) {
+				if (this->state_iter <= 130000) {
 					this->test_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(input_fold_errors, 0.01);
 				} else {
 					this->test_input_folds[f_index]->backprop_fold_weights_with_no_error_signal(input_fold_errors, 0.002);
@@ -1307,7 +1308,7 @@ void Fold::compress_step_update_activate(
 	this->sum_error += fold_error*fold_error;
 	vector<double> fold_errors{fold_error};
 	if (this->test_compress_new_size > 0) {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_fold->backprop_fold_last_state(fold_errors, 0.01);
 		} else {
 			this->test_fold->backprop_fold_last_state(fold_errors, 0.002);
@@ -1317,7 +1318,7 @@ void Fold::compress_step_update_activate(
 			this->test_fold->state_inputs.back()->errors[s_index] = 0.0;
 		}
 	} else {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_fold->backprop_fold_weights_with_no_error_signal(fold_errors, 0.01);
 		} else {
 			this->test_fold->backprop_fold_weights_with_no_error_signal(fold_errors, 0.002);
@@ -1341,7 +1342,7 @@ void Fold::compress_step_update_activate(
 		this->sum_error += end_fold_errors[o_index]*end_fold_errors[o_index];
 	}
 	if (this->test_compress_new_size > 0) {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_end_fold->backprop_fold_last_state(end_fold_errors, 0.01);
 		} else {
 			this->test_end_fold->backprop_fold_last_state(end_fold_errors, 0.002);
@@ -1351,7 +1352,7 @@ void Fold::compress_step_update_activate(
 			this->test_end_fold->state_inputs.back()->errors[s_index] = 0.0;
 		}
 	} else {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_end_fold->backprop_fold_weights_with_no_error_signal(end_fold_errors, 0.01);
 		} else {
 			this->test_end_fold->backprop_fold_weights_with_no_error_signal(end_fold_errors, 0.002);
@@ -1365,11 +1366,11 @@ void Fold::compress_step_update_activate(
 	}
 
 	if (this->test_compress_new_size > 0) {
-		if (this->state_iter <= 240000) {
+		if (this->state_iter <= 110000) {
 			this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 				test_state_errors,
 				0.05);
-		} else if (this->state_iter <= 270000) {
+		} else if (this->state_iter <= 130000) {
 			this->test_compress_network->backprop_subfold_weights_with_no_error_signal(
 				test_state_errors,
 				0.01);

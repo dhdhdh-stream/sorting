@@ -38,6 +38,7 @@ public:
 	std::vector<FoldNetwork*> score_networks;
 	// outer solution will hold on to final outer score_network (and no compress needed)
 
+	// TODO: square misguess
 	std::vector<double> average_misguesses;	// track also after branches
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore

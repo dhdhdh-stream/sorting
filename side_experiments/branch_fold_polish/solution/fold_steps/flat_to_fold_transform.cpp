@@ -6,8 +6,6 @@
 using namespace std;
 
 void Fold::flat_to_fold() {
-	cout << "flat_to_fold" << endl;
-
 	this->starting_average_misguess = 0.0;
 	this->starting_average_local_impact = 0.0;
 
@@ -48,6 +46,9 @@ void Fold::flat_to_fold() {
 												   this->curr_scope_sizes,
 												   20);
 
+		cout << "ending FLAT" << endl;
+		cout << "beginning STATE_SCORE" << endl;
+
 		this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 		this->state = STATE_SCORE;
 		this->state_iter = 0;
@@ -83,6 +84,9 @@ void Fold::flat_to_fold() {
 		this->test_end_fold = new FoldNetwork(this->curr_end_fold);
 		this->test_end_fold->pop_scope();
 		this->test_end_fold->add_scope(this->test_starting_compress_new_size);
+
+		cout << "ending FLAT" << endl;
+		cout << "beginning STATE_STARTING_COMPRESS" << endl;
 
 		this->last_state = STATE_STEP_ADDED;
 		this->state = STATE_STARTING_COMPRESS;

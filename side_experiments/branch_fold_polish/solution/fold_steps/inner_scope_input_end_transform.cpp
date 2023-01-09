@@ -6,9 +6,7 @@
 using namespace std;
 
 void Fold::inner_scope_input_end() {
-	cout << "inner_scope_input_end" << endl;
-
-	if (this->sum_error/10000 < 0.001
+	if (this->sum_error/10000 < 0.01
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {
@@ -44,6 +42,10 @@ void Fold::inner_scope_input_end() {
 													   this->curr_scope_sizes,
 													   20);
 
+			cout << "INNER_SCOPE_INPUT success" << endl;
+			cout << "ending INNER_SCOPE_INPUT" << endl;
+			cout << "beginning STATE_SCORE" << endl;
+
 			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
@@ -66,6 +68,10 @@ void Fold::inner_scope_input_end() {
 
 			this->test_input_network->set_s_input_size(this->curr_s_input_sizes[
 				this->test_input_network->subfold_index+1]);
+
+			cout << "INNER_SCOPE_INPUT success" << endl;
+			cout << "ending INNER_SCOPE_INPUT" << endl;
+			cout << "beginning INNER_SCOPE_INPUT" << endl;
 
 			this->last_state = STATE_INNER_SCOPE_INPUT;
 			this->state = STATE_INNER_SCOPE_INPUT;
@@ -95,6 +101,10 @@ void Fold::inner_scope_input_end() {
 		this->curr_s_input_sizes[this->test_input_network->subfold_index+1]++;
 		this->test_input_network->set_s_input_size(this->curr_s_input_sizes[
 			this->test_input_network->subfold_index+1]);
+
+		cout << "INNER_SCOPE_INPUT fail" << endl;
+		cout << "ending INNER_SCOPE_INPUT" << endl;
+		cout << "beginning INNER_SCOPE_INPUT" << endl;
 
 		// no change to last_state
 		this->state = STATE_INNER_SCOPE_INPUT;

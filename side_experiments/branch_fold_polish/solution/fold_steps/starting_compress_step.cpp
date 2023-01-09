@@ -552,7 +552,7 @@ void Fold::starting_compress_step_update_activate(
 					- this->test_input_folds[f_index]->output->acti_vals[i_index];
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
 			}
-			if (this->state_iter <= 270000) {
+			if (this->state_iter <= 130000) {
 				this->test_input_folds[f_index]->backprop(input_fold_errors, 0.01);
 			} else {
 				this->test_input_folds[f_index]->backprop(input_fold_errors, 0.002);
@@ -607,7 +607,7 @@ void Fold::starting_compress_step_update_activate(
 	double fold_error = this->curr_fold->output->acti_vals[0] - this->test_fold->output->acti_vals[0];
 	this->sum_error += fold_error*fold_error;
 	vector<double> fold_errors{fold_error};
-	if (this->state_iter <= 270000) {
+	if (this->state_iter <= 130000) {
 		this->test_fold->backprop(fold_errors, 0.01);
 	} else {
 		this->test_fold->backprop(fold_errors, 0.002);
@@ -633,7 +633,7 @@ void Fold::starting_compress_step_update_activate(
 			- this->test_end_fold->output->acti_vals[o_index];
 		this->sum_error += end_fold_errors[o_index]*end_fold_errors[o_index];
 	}
-	if (this->state_iter <= 270000) {
+	if (this->state_iter <= 130000) {
 		this->test_end_fold->backprop(end_fold_errors, 0.01);
 	} else {
 		this->test_end_fold->backprop(end_fold_errors, 0.002);
@@ -650,11 +650,11 @@ void Fold::starting_compress_step_update_activate(
 	}
 
 	if (this->test_starting_compress_new_size > 0) {
-		if (this->state_iter <= 240000) {
+		if (this->state_iter <= 110000) {
 			this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
 				test_local_state_errors,
 				0.05);
-		} else if (this->state_iter <= 270000) {
+		} else if (this->state_iter <= 130000) {
 			this->test_starting_compress_network->backprop_small_weights_with_no_error_signal(
 				test_local_state_errors,
 				0.01);

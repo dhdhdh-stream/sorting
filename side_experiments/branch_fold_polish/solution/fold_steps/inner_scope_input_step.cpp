@@ -888,7 +888,7 @@ void Fold::inner_scope_input_step_update_activate(
 		this->sum_error += inner_input_errors[i_index]*inner_input_errors[i_index];
 	}
 	if (this->inner_input_input_networks.size() == 0) {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_input_network->backprop_subfold_weights_with_no_error_signal(
 				inner_input_errors,
 				0.01);
@@ -898,7 +898,7 @@ void Fold::inner_scope_input_step_update_activate(
 				0.002);
 		}
 	} else {
-		if (this->state_iter <= 270000) {
+		if (this->state_iter <= 130000) {
 			this->test_input_network->backprop_subfold_new_s_input(
 				inner_input_errors,
 				0.01);
@@ -913,11 +913,11 @@ void Fold::inner_scope_input_step_update_activate(
 			inner_input_input_errors[s_index] = this->test_input_network->s_input_input->errors[initial_size+s_index];
 			this->test_input_network->s_input_input->errors[initial_size+s_index] = 0.0;
 		}
-		if (this->state_iter <= 240000) {
+		if (this->state_iter <= 110000) {
 			this->inner_input_input_networks.back()->backprop_small_weights_with_no_error_signal(
 				inner_input_input_errors,
 				0.05);
-		} else if (this->state_iter <= 270000) {
+		} else if (this->state_iter <= 130000) {
 			this->inner_input_input_networks.back()->backprop_small_weights_with_no_error_signal(
 				inner_input_input_errors,
 				0.01);

@@ -6,9 +6,7 @@
 using namespace std;
 
 void Fold::input_end() {
-	cout << "input_end" << endl;
-
-	if (this->sum_error/10000 < 0.001
+	if (this->sum_error/10000 < 0.01
 			|| (this->input_networks.size() > 0
 				&& this->input_sizes.back() >= (this->curr_s_input_sizes[this->input_layer.back()]
 					+ this->curr_scope_sizes[this->input_layer.back()]))) {
@@ -24,6 +22,10 @@ void Fold::input_end() {
 		}
 
 		if (this->curr_score_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
+			cout << "STATE_INPUT success" << endl;
+			cout << "ending STATE_INPUT" << endl;
+			cout << "beginning ADD_STEP" << endl;
+
 			add_finished_step();
 		} else {
 			this->test_score_network = new FoldNetwork(this->curr_score_network);
@@ -52,6 +54,10 @@ void Fold::input_end() {
 				this->test_compress_network->set_s_input_size(this->curr_s_input_sizes[
 					this->test_score_network->subfold_index+1]);
 			}
+
+			cout << "STATE_INPUT success" << endl;
+			cout << "ending STATE_INPUT" << endl;
+			cout << "beginning STATE_INPUT" << endl;
 
 			this->last_state = STATE_INPUT;
 			this->state = STATE_INPUT;
@@ -91,6 +97,10 @@ void Fold::input_end() {
 			this->test_compress_network->set_s_input_size(this->curr_s_input_sizes[
 				this->test_score_network->subfold_index+1]);
 		}
+
+		cout << "STATE_INPUT fail" << endl;
+		cout << "ending STATE_INPUT" << endl;
+		cout << "beginning STATE_INPUT" << endl;
 
 		// no change to last_state
 		this->state = STATE_INPUT;
