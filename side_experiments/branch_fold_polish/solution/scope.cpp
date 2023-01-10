@@ -20,6 +20,7 @@ Scope::Scope(int num_inputs,
 			 vector<Branch*> branches,
 			 vector<Fold*> folds,
 			 vector<FoldNetwork*> score_networks,
+			 vector<double> average_scores,
 			 vector<double> average_misguesses,
 			 vector<double> average_inner_scope_impacts,
 			 vector<double> average_local_impacts,
@@ -51,6 +52,7 @@ Scope::Scope(int num_inputs,
 
 	this->score_networks = score_networks;
 
+	this->average_scores = average_scores;
 	this->average_misguesses = average_misguesses;
 	this->average_inner_scope_impacts = average_inner_scope_impacts;
 	this->average_local_impacts = average_local_impacts;
@@ -122,6 +124,7 @@ Scope::Scope(Scope* original) {
 		}
 	}
 
+	this->average_scores = original->average_scores;
 	this->average_misguesses = original->average_misguesses;
 	this->average_inner_scope_impacts = original->average_inner_scope_impacts;
 	this->average_local_impacts = original->average_local_impacts;
@@ -301,6 +304,10 @@ Scope::Scope(std::ifstream& input_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		string average_score_line;
+		getline(input_file, average_score_line);
+		this->average_scores.push_back(stof(average_score_line));
+
 		string average_misguess_line;
 		getline(input_file, average_misguess_line);
 		this->average_misguesses.push_back(stof(average_misguess_line));
@@ -2274,17 +2281,17 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 }
 
 void Scope::update_backprop(double& predicted_score,
-							double& next_predicted_score,	// for ending misguess from outside
+							double& next_predicted_score,
 							double target_val,
 							double& scale_factor,
 							ScopeHistory* history) {
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (a_index == this->sequence_length-1) {
-			double misguess = abs(target_val - next_predicted_score);
+			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		} else {
-			double misguess = abs(target_val - predicted_score);
+			double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		}
 
@@ -2300,6 +2307,8 @@ void Scope::update_backprop(double& predicted_score,
 					0.001,
 					history->score_network_histories[a_index]);
 
+				this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*predicted_score;
+
 				next_predicted_score = predicted_score;
 				predicted_score -= scale_factor*history->score_updates[a_index];
 
@@ -2314,6 +2323,8 @@ void Scope::update_backprop(double& predicted_score,
 													 target_val,
 													 scale_factor,
 													 history->branch_histories[a_index]);
+
+			this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*next_predicted_score;
 
 			double starting_predicted_score = predicted_score;
 			this->average_inner_branch_impacts[a_index] = 0.999*this->average_inner_branch_impacts[a_index]
@@ -2367,7 +2378,7 @@ void Scope::update_backprop(double& predicted_score,
 	}
 
 	// start
-	double misguess = abs(target_val - predicted_score);
+	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->average_misguesses[0] = 0.999*this->average_misguesses[0] + 0.001*misguess;
 
 	if (this->step_types[0] == STEP_TYPE_STEP) {
@@ -2380,6 +2391,8 @@ void Scope::update_backprop(double& predicted_score,
 			score_errors,
 			0.001,
 			history->score_network_histories[0]);
+
+		this->average_scores[0] = 0.999*this->average_scores[0] + 0.001*predicted_score;
 
 		next_predicted_score = predicted_score;
 		predicted_score -= scale_factor*history->score_updates[0];
@@ -2394,6 +2407,8 @@ void Scope::update_backprop(double& predicted_score,
 										   target_val,
 										   scale_factor,
 										   history->branch_histories[0]);
+
+		this->average_scores[0] = 0.999*this->average_scores[0] + 0.001*next_predicted_score;
 
 		double starting_predicted_score = predicted_score;
 		this->average_inner_branch_impacts[0] = 0.999*this->average_inner_branch_impacts[0]
@@ -2793,6 +2808,7 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		output_file << this->average_scores[a_index] << endl;
 		output_file << this->average_misguesses[a_index] << endl;
 		output_file << this->average_inner_scope_impacts[a_index] << endl;
 		output_file << this->average_local_impacts[a_index] << endl;

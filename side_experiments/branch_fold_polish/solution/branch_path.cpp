@@ -17,6 +17,7 @@ BranchPath::BranchPath(int sequence_length,
 					   vector<Branch*> branches,
 					   vector<Fold*> folds,
 					   vector<FoldNetwork*> score_networks,
+					   vector<double> average_scores,
 					   vector<double> average_misguesses,
 					   vector<double> average_inner_scope_impacts,
 					   vector<double> average_local_impacts,
@@ -46,6 +47,7 @@ BranchPath::BranchPath(int sequence_length,
 
 	this->score_networks = score_networks;
 
+	this->average_scores = average_scores;
 	this->average_misguesses = average_misguesses;
 	this->average_inner_scope_impacts = average_inner_scope_impacts;
 	this->average_local_impacts = average_local_impacts;
@@ -121,6 +123,7 @@ BranchPath::BranchPath(BranchPath* original) {
 		}
 	}
 
+	this->average_scores = original->average_scores;
 	this->average_misguesses = original->average_misguesses;
 	this->average_inner_scope_impacts = original->average_inner_scope_impacts;
 	this->average_local_impacts = original->average_local_impacts;
@@ -293,6 +296,10 @@ BranchPath::BranchPath(ifstream& input_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		string average_score_line;
+		getline(input_file, average_score_line);
+		this->average_scores.push_back(stof(average_score_line));
+
 		string average_misguess_line;
 		getline(input_file, average_misguess_line);
 		this->average_misguesses.push_back(stof(average_misguess_line));
@@ -1894,10 +1901,10 @@ void BranchPath::update_backprop(double& predicted_score,
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (a_index == this->sequence_length-1 && this->is_scope_end) {
-			double misguess = abs(target_val - next_predicted_score);
+			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		} else {
-			double misguess = abs(target_val - predicted_score);
+			double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		}
 
@@ -1913,6 +1920,8 @@ void BranchPath::update_backprop(double& predicted_score,
 					0.001,
 					history->score_network_histories[a_index]);
 
+				this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*predicted_score;
+
 				next_predicted_score = predicted_score;
 				predicted_score -= scale_factor*history->score_updates[a_index];
 
@@ -1927,6 +1936,8 @@ void BranchPath::update_backprop(double& predicted_score,
 													 target_val,
 													 scale_factor,
 													 history->branch_histories[a_index]);
+
+			this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*next_predicted_score;
 
 			double starting_predicted_score = predicted_score;
 			this->average_inner_branch_impacts[a_index] = 0.999*this->average_inner_branch_impacts[a_index]
@@ -1980,13 +1991,15 @@ void BranchPath::update_backprop(double& predicted_score,
 	}
 
 	// start
-	double misguess = abs(target_val - predicted_score);
+	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->average_misguesses[0] = 0.999*this->average_misguesses[0] + 0.001*misguess;
 
 	if (this->step_types[0] == STEP_TYPE_STEP) {
 		// can't be scope end
 
 		// start step score errors handled in branch
+
+		this->average_scores[0] = 0.999*this->average_scores[0] + 0.001*predicted_score;
 
 		next_predicted_score = predicted_score;
 		// starting score already scaled
@@ -2002,6 +2015,8 @@ void BranchPath::update_backprop(double& predicted_score,
 										   target_val,
 										   scale_factor,
 										   history->branch_histories[0]);
+
+		this->average_scores[0] = 0.999*this->average_scores[0] + 0.001*next_predicted_score;
 
 		double starting_predicted_score = predicted_score;
 		this->average_inner_branch_impacts[0] = 0.999*this->average_inner_branch_impacts[0]
@@ -2327,6 +2342,7 @@ void BranchPath::save(ofstream& output_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		output_file << this->average_scores[a_index] << endl;
 		output_file << this->average_misguesses[a_index] << endl;
 		output_file << this->average_inner_scope_impacts[a_index] << endl;
 		output_file << this->average_local_impacts[a_index] << endl;

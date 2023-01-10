@@ -6,6 +6,7 @@
 using namespace std;
 
 void Fold::flat_to_fold() {
+	this->starting_average_score = 0.0;
 	this->starting_average_misguess = 0.0;
 	this->starting_average_local_impact = 0.0;
 

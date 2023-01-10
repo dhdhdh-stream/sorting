@@ -19,6 +19,7 @@ void Branch::resolve_fold(int b_index) {
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
+	vector<double> new_average_scores;
 	vector<double> new_average_misguesses;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
@@ -39,6 +40,7 @@ void Branch::resolve_fold(int b_index) {
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
+				 new_average_scores,
 				 new_average_misguesses,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
@@ -61,6 +63,7 @@ void Branch::resolve_fold(int b_index) {
 												 new_branches,
 												 new_folds,
 												 new_score_networks,
+												 new_average_scores,
 												 new_average_misguesses,
 												 new_average_inner_scope_impacts,
 												 new_average_local_impacts,

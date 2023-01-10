@@ -97,12 +97,12 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	scale_factor /= end_scale_mod_val;
 	scale_factor_error *= end_scale_mod_val;
 
-	this->average_misguess = 0.999*this->average_misguess + 0.001*abs(target_val - predicted_score);
-
 	if (this->state_iter >= 490000) {
-		this->standard_deviation += (target_val - history->existing_score)*(target_val - history->existing_score);
+		double curr_existing_misguess = (target_val - history->existing_score)*(target_val - history->existing_score);
+		this->existing_misguess_standard_deviation += (*this->existing_average_misguess - curr_existing_misguess)*(*this->existing_average_misguess - curr_existing_misguess);
 
-		this->misguess_improvement += abs(target_val - history->existing_score) - abs(target_val - predicted_score);
+		double curr_new_misguess = (target_val - predicted_score)*(target_val - predicted_score);
+		this->misguess_improvement += curr_existing_misguess - curr_new_misguess;
 	}
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
@@ -217,9 +217,11 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	// end of backprop so no need to modify predicted_score
 
 	if (this->state_iter >= 490000) {
+		this->score_standard_deviation += (*this->existing_average_score - target_val)*(*this->existing_average_score - target_val);
+
+		this->combined_improvement += scale_factor*history->combined_score_update - history->existing_score;
 		this->replace_existing += scale_factor*history->starting_score_update - history->existing_score;
 		this->replace_combined += scale_factor*history->starting_score_update - scale_factor*history->combined_score_update;
-		this->combined_improvement += scale_factor*history->combined_score_update - history->existing_score;
 	}
 
 	double higher_branch_val;

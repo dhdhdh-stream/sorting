@@ -35,6 +35,7 @@ public:
 
 	std::vector<FoldNetwork*> score_networks;
 
+	std::vector<double> average_scores;
 	std::vector<double> average_misguesses;
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;
@@ -63,6 +64,7 @@ public:
 			   std::vector<Branch*> branches,
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
+			   std::vector<double> average_scores,
 			   std::vector<double> average_misguesses,
 			   std::vector<double> average_inner_scope_impacts,
 			   std::vector<double> average_local_impacts,

@@ -708,8 +708,10 @@ void Fold::starting_compress_step_update_backprop(
 		}
 	}
 
-	double misguess = abs(target_val - predicted_score);
+	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->starting_average_misguess = 0.999*this->starting_average_misguess + 0.001*misguess;
+
+	this->starting_average_score = 0.999*this->starting_average_score + 0.001*predicted_score;
 
 	next_predicted_score = predicted_score;
 	predicted_score -= history->starting_score_update;	// already scaled

@@ -41,14 +41,16 @@ int main(int argc, char* argv[]) {
 	vector<Scope*> existing_actions(9, NULL);
 	vector<int> obs_sizes(9, 1);
 
-	double outer_misguess = 0.0;
+	double outer_average_score = 0.0;
+	double outer_average_misguess = 0.0;
 
 	Fold* fold = new Fold(9,
 						  is_existing,
 						  existing_actions,
 						  obs_sizes,
 						  0,
-						  &outer_misguess,
+						  &outer_average_score,
+						  &outer_average_misguess,
 						  0,
 						  0);
 
@@ -72,7 +74,10 @@ int main(int argc, char* argv[]) {
 
 		double target_val = (double)(val_1*((xor_1_1+xor_1_2)%2*2-1) + val_2*((xor_2_1+xor_2_2)%2*2-1));
 
-		outer_misguess = 0.999*outer_misguess + 0.001*(target_val - 0.0);
+		outer_average_score = 0.999*outer_average_score + 0.001*target_val;
+
+		double curr_misguess = (target_val - outer_average_score)*(target_val - outer_average_score);
+		outer_average_misguess = 0.999*outer_average_misguess + 0.001*curr_misguess;
 
 		double outer_score = 0.0;
 
@@ -189,6 +194,7 @@ int main(int argc, char* argv[]) {
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
+	vector<double> new_average_scores;
 	vector<double> new_average_misguesses;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
@@ -210,6 +216,7 @@ int main(int argc, char* argv[]) {
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
+				 new_average_scores,
 				 new_average_misguesses,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
@@ -234,6 +241,7 @@ int main(int argc, char* argv[]) {
 							 new_branches,
 							 new_folds,
 							 new_score_networks,
+							 new_average_scores,
 							 new_average_misguesses,
 							 new_average_inner_scope_impacts,
 							 new_average_local_impacts,

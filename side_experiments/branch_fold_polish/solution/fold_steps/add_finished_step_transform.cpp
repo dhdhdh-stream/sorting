@@ -142,8 +142,6 @@ void Fold::add_finished_step() {
 }
 
 void Fold::restart_from_finished_step() {
-	cout << "restart_from_finished_step" << endl;
-
 	if (this->finished_steps.size() == 0
 			&& this->curr_starting_compress_new_size == this->starting_compress_original_size) {
 		// if no steps have been added yet, always try STARTING_COMPRESS as should be safe either way

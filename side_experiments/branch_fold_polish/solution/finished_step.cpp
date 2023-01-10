@@ -41,6 +41,7 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 
 	this->score_network = score_network;
 
+	this->average_score = 0.0;
 	this->average_misguess = 0.0;
 	this->average_inner_scope_impact = 0.0;
 	this->average_local_impact = 0.0;
@@ -83,6 +84,7 @@ FinishedStep::FinishedStep(FinishedStep* original) {
 
 	this->score_network = new FoldNetwork(original->score_network);
 
+	this->average_score = original->average_score;
 	this->average_misguess = original->average_misguess;
 	this->average_inner_scope_impact = original->average_inner_scope_impact;
 	this->average_local_impact = original->average_local_impact;
@@ -165,6 +167,10 @@ FinishedStep::FinishedStep(ifstream& input_file) {
 	score_network_save_file.open("saves/nns/finished_step_" + to_string(this->id) + "_score.txt");
 	this->score_network = new FoldNetwork(score_network_save_file);
 	score_network_save_file.close();
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
 
 	string average_misguess_line;
 	getline(input_file, average_misguess_line);
@@ -1024,7 +1030,7 @@ void FinishedStep::update_backprop(double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
 								   FinishedStepHistory* history) {
-	double misguess = abs(target_val - predicted_score);
+	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->average_misguess = 0.999*this->average_misguess + 0.001*misguess;
 
 	double predicted_score_error = target_val - predicted_score;
@@ -1034,6 +1040,9 @@ void FinishedStep::update_backprop(double& predicted_score,
 		score_errors,
 		0.001,
 		history->score_network_history);
+
+	this->average_score = 0.999*this->average_score + 0.001*predicted_score;
+
 	next_predicted_score = predicted_score;
 	predicted_score -= scale_factor*history->score_update;
 
@@ -1223,6 +1232,7 @@ void FinishedStep::save(ofstream& output_file) {
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
 
+	output_file << this->average_score << endl;
 	output_file << this->average_misguess << endl;
 	output_file << this->average_inner_scope_impact << endl;
 	output_file << this->average_local_impact << endl;

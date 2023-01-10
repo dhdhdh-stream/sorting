@@ -12,7 +12,8 @@ Fold::Fold(int sequence_length,
 		   vector<Scope*> existing_actions,
 		   vector<int> obs_sizes,
 		   int output_size,
-		   double* existing_misguess,
+		   double* existing_average_score,
+		   double* existing_average_misguess,
 		   int starting_s_input_size,
 		   int starting_state_size) {
 	id_counter_mtx.lock();
@@ -26,27 +27,24 @@ Fold::Fold(int sequence_length,
 	this->obs_sizes = obs_sizes;
 	this->output_size = output_size;
 
-	this->average_misguess = 0.0;
+	this->score_standard_deviation = 0.0;
+	this->existing_misguess_standard_deviation = 0.0;
+	this->existing_average_score = existing_average_score;
+	this->existing_average_misguess = existing_average_misguess;
 
-	this->standard_deviation = 0.0;
-
-	this->existing_misguess = existing_misguess;
 	this->misguess_improvement = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
 												   vector<int>{starting_state_size},
 												   20);
-
-	this->replace_existing = 0.0;
-	this->replace_combined = 0.0;
-
 	this->combined_score_network = new FoldNetwork(1,
 												   starting_s_input_size,
 												   vector<int>{starting_state_size},
 												   20);
-
 	this->combined_improvement = 0.0;
+	this->replace_existing = 0.0;
+	this->replace_combined = 0.0;
 
 	this->scope_scale_mod_calcs = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -140,8 +138,6 @@ Fold::Fold(Fold* original) {
 
 	// no need to set this->state, this->last_state, this->state_iter, this->sum_error
 
-	// this->average_misguess has already been passed on
-
 	// this->starting_score_network, this->combined_score_network has already been passed on
 
 	for (int f_index = 0; f_index < (int)original->finished_steps.size(); f_index++) {
@@ -172,6 +168,7 @@ Fold::Fold(Fold* original) {
 	}
 	this->curr_end_fold = new FoldNetwork(original->curr_end_fold);
 
+	this->starting_average_score = original->starting_average_score;
 	this->starting_average_misguess = original->starting_average_misguess;
 	this->starting_average_local_impact = original->starting_average_local_impact;
 
@@ -250,8 +247,6 @@ Fold::Fold(ifstream& input_file) {
 
 	// no need to set this->state, this->last_state, this->state_iter, this->sum_error
 
-	// this->average_misguess has already been passed on
-
 	// this->starting_score_network, this->combined_score_network has already been passed on
 
 	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
@@ -307,6 +302,10 @@ Fold::Fold(ifstream& input_file) {
 	curr_end_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_end_fold.txt");
 	this->curr_end_fold = new FoldNetwork(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
+
+	string starting_average_score_line;
+	getline(input_file, starting_average_score_line);
+	this->starting_average_score = stof(starting_average_score_line);
 
 	string starting_average_misguess_line;
 	getline(input_file, starting_average_misguess_line);
@@ -474,24 +473,25 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 	// explore_increment
 	this->state_iter++;
 	if (this->state_iter == 500000) {
-		this->standard_deviation = sqrt(this->standard_deviation/9999);
+		this->score_standard_deviation = sqrt(this->score_standard_deviation/9999);
+		this->existing_misguess_standard_deviation = sqrt(this->existing_misguess_standard_deviation/9999);
 
 		this->misguess_improvement /= 10000;
 		cout << "this->misguess_improvement: " << this->misguess_improvement << endl;
 
+		this->combined_improvement /= 10000;
+		cout << "this->combined_improvement: " << this->combined_improvement << endl;
 		this->replace_existing /= 10000;
 		cout << "this->replace_existing: " << this->replace_existing << endl;
 		this->replace_combined /= 10000;
 		cout << "this->replace_combined: " << this->replace_combined << endl;
-		this->combined_improvement /= 10000;
-		cout << "this->combined_improvement: " << this->combined_improvement << endl;
 
 		double combined_t_value = this->combined_improvement
-			/ (standard_deviation / sqrt(10000));
+			/ (this->score_standard_deviation / sqrt(10000));
 		cout << "combined_t_value: " << combined_t_value << endl;
 		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
 			double replace_combined_t_value = this->replace_combined
-				/ (standard_deviation / sqrt(10000));
+				/ (this->score_standard_deviation / sqrt(10000));
 			cout << "replace_combined_t_value: " << replace_combined_t_value << endl;
 			if (this->replace_combined > 0.0
 					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
@@ -507,11 +507,11 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 			}
 		} else {
 			double replace_existing_t_value = this->replace_existing
-				/ (standard_deviation / sqrt(10000));
+				/ (this->score_standard_deviation / sqrt(10000));
 			cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
 
 			double misguess_improvement_t_value = this->misguess_improvement
-				/ (standard_deviation / sqrt(10000));
+				/ (this->existing_misguess_standard_deviation / sqrt(10000));
 			cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
@@ -1224,8 +1224,6 @@ void Fold::save(ofstream& output_file) {
 
 	// no need to save this->state, this->last_state, this->state_iter, this->sum_error
 
-	// this->average_misguess has already been passed on
-
 	// this->starting_score_network, this->combined_score_network has already been passed on
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
@@ -1264,6 +1262,7 @@ void Fold::save(ofstream& output_file) {
 	this->curr_end_fold->save(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
 
+	output_file << this->starting_average_score << endl;
 	output_file << this->starting_average_misguess << endl;
 	output_file << this->starting_average_local_impact << endl;
 

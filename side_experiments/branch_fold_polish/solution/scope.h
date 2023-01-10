@@ -38,14 +38,14 @@ public:
 	std::vector<FoldNetwork*> score_networks;
 	// outer solution will hold on to final outer score_network (and no compress needed)
 
-	// TODO: square misguess
+	std::vector<double> average_scores;	// for calculating score standard deviation
 	std::vector<double> average_misguesses;	// track also after branches
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
 	std::vector<double> average_inner_branch_impacts;
 	// 50% of the time, explore inner -- otherwise, explore local
 	// TODO: compare against parent impact to determine explore weight
-	// TODO: explore when predicted_score drops and hit explore weight
+	// TODO: explore when predicted_score drops and hit explore weight (but once in flat, try everything)
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds
@@ -70,6 +70,7 @@ public:
 		  std::vector<Branch*> branches,
 		  std::vector<Fold*> folds,
 		  std::vector<FoldNetwork*> score_networks,
+		  std::vector<double> average_scores,
 		  std::vector<double> average_misguesses,
 		  std::vector<double> average_inner_scope_impacts,
 		  std::vector<double> average_local_impacts,

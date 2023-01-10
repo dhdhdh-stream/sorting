@@ -44,21 +44,20 @@ public:
 	int last_state;	// for supporting explore_off_path
 	int state_iter;
 	double sum_error;
-
 	double new_state_factor;
 
-	double average_misguess;	// squared
+	double score_standard_deviation;
+	double existing_misguess_standard_deviation;	// squared twice
+	double* existing_average_score;
+	double* existing_average_misguess;	// ref to branch end average_misguess
 
-	double squared_standard_deviation;	// squared twice
-
-	double* existing_misguess;	// ref to branch end average_misguess
 	double misguess_improvement;
 
 	FoldNetwork* starting_score_network;
-	double replace_existing;
-	double replace_combined;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
 	double combined_improvement;
+	double replace_existing;
+	double replace_combined;
 
 	std::vector<Network*> scope_scale_mod_calcs;
 	Network* end_scale_mod_calc;	// drop if replace, passed after flat
@@ -71,6 +70,7 @@ public:
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;	// becomes last compress network
 
+	double starting_average_score;
 	double starting_average_misguess;
 	double starting_average_local_impact;
 
@@ -119,7 +119,8 @@ public:
 		 std::vector<Scope*> existing_actions,
 		 std::vector<int> obs_sizes,
 		 int output_size,
-		 double* existing_misguess,
+		 double* existing_average_score,
+		 double* existing_average_misguess,
 		 int starting_s_input_size,
 		 int starting_state_size);
 	Fold(Fold* original);
