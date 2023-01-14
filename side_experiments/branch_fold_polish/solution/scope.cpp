@@ -28,7 +28,8 @@ Scope::Scope(int num_inputs,
 			 vector<bool> active_compress,
 			 vector<int> compress_new_sizes,
 			 vector<FoldNetwork*> compress_networks,
-			 vector<int> compress_original_sizes) {
+			 vector<int> compress_original_sizes,
+			 bool full_last) {
 	id_counter_mtx.lock();
 	this->id = id_counter;
 	id_counter++;
@@ -62,6 +63,8 @@ Scope::Scope(int num_inputs,
 	this->compress_new_sizes = compress_new_sizes;
 	this->compress_networks = compress_networks;
 	this->compress_original_sizes = compress_original_sizes;
+
+	this->full_last = full_last;
 
 	this->explore_index_inclusive = -1;
 	this->explore_type = EXPLORE_TYPE_NONE;
@@ -142,6 +145,8 @@ Scope::Scope(Scope* original) {
 	}
 	this->compress_original_sizes = original->compress_original_sizes;
 
+	this->full_last = original->full_last;
+
 	// initialize to empty
 	this->explore_index_inclusive = -1;
 	this->explore_type = EXPLORE_TYPE_NONE;
@@ -161,6 +166,10 @@ Scope::Scope(std::ifstream& input_file) {
 	string num_outputs_line;
 	getline(input_file, num_outputs_line);
 	this->num_outputs = stoi(num_outputs_line);
+
+	string full_last_line;
+	getline(input_file, full_last_line);
+	this->full_last = stoi(full_last_line);
 
 	string sequence_length_line;
 	getline(input_file, sequence_length_line);
@@ -223,7 +232,14 @@ Scope::Scope(std::ifstream& input_file) {
 		this->step_types.push_back(stoi(step_type_line));
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index != this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
+				this->score_networks.push_back(NULL);
+
+				this->active_compress.push_back(false);	// doesn't matter
+				this->compress_new_sizes.push_back(-1);
+				this->compress_networks.push_back(NULL);
+				this->compress_original_sizes.push_back(-1);
+			} else {
 				ifstream score_network_save_file;
 				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
@@ -249,13 +265,6 @@ Scope::Scope(std::ifstream& input_file) {
 				string compress_original_size_line;
 				getline(input_file, compress_original_size_line);
 				this->compress_original_sizes.push_back(stoi(compress_original_size_line));
-			} else {
-				this->score_networks.push_back(NULL);
-
-				this->active_compress.push_back(false);	// doesn't matter
-				this->compress_new_sizes.push_back(-1);
-				this->compress_networks.push_back(NULL);
-				this->compress_original_sizes.push_back(-1);
 			}
 
 			this->branches.push_back(NULL);
@@ -379,6 +388,10 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 									 double& scale_factor,
 									 int& explore_phase,
 									 ScopeHistory* history) {
+	if (this->explore_type == EXPLORE_TYPE_NONE) {
+		// TODO: add handling when explore not set yet
+	}
+
 	int a_index = 1;
 
 	// start
@@ -616,7 +629,7 @@ void Scope::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = NULL;
@@ -948,7 +961,7 @@ void Scope::explore_off_path_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				if (explore_phase == EXPLORE_PHASE_FLAT) {
@@ -1077,7 +1090,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			return;
 		} else {
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				if (a_index == this->sequence_length-1) {
+				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// scope end -- do nothing
 				} else {
 					if (this->active_compress[a_index]) {
@@ -1388,7 +1401,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				if (this->active_compress[a_index]) {
@@ -1772,7 +1785,7 @@ void Scope::existing_flat_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
@@ -1846,7 +1859,7 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				if (this->active_compress[a_index]) {
@@ -2220,7 +2233,7 @@ void Scope::update_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
@@ -2296,7 +2309,7 @@ void Scope::update_backprop(double& predicted_score,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				double predicted_score_error = target_val - predicted_score;
@@ -2582,7 +2595,7 @@ void Scope::existing_update_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
@@ -2643,7 +2656,7 @@ void Scope::existing_update_backprop(double& predicted_score,
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
@@ -2737,6 +2750,8 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->num_inputs << endl;
 	output_file << this->num_outputs << endl;
 
+	output_file << this->full_last << endl;
+
 	output_file << this->sequence_length << endl;
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->is_inner_scope[a_index] << endl;
@@ -2768,7 +2783,9 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->step_types[a_index] << endl;
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index != this->sequence_length-1) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
+				// do nothing
+			} else {
 				ofstream score_network_save_file;
 				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 				this->score_networks[a_index]->save(score_network_save_file);

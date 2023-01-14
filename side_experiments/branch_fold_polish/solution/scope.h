@@ -27,6 +27,7 @@ public:
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
+	// TODO: keep scope_scale_mod but remove branch end mod
 	std::vector<double> scope_scale_mod;
 	// mods to bootstrap flat, but score networks after flat to adjust end
 
@@ -52,6 +53,9 @@ public:
 	std::vector<FoldNetwork*> compress_networks;
 	std::vector<int> compress_original_sizes;	// WARN: may not actually match original size due to fold to scope transformation -- use with compress_new_sizes
 
+	bool full_last;
+
+	// TODO: add handling when explore not set yet
 	int explore_index_inclusive;
 	int explore_type;
 	int explore_end_non_inclusive;
@@ -78,7 +82,8 @@ public:
 		  std::vector<bool> active_compress,
 		  std::vector<int> compress_new_sizes,
 		  std::vector<FoldNetwork*> compress_networks,
-		  std::vector<int> compress_original_sizes);
+		  std::vector<int> compress_original_sizes,
+		  bool full_last);
 	Scope(Scope* original);
 	Scope(std::ifstream& input_file);
 	~Scope();

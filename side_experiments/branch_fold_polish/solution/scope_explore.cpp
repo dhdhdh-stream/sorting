@@ -8,6 +8,8 @@
 using namespace std;
 
 void Scope::explore_replace() {
+	cout << "Scope explore_replace" << endl;
+
 	if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_STEP) {
 		// can't be scope end
 
@@ -76,6 +78,7 @@ void Scope::explore_replace() {
 
 	}
 
+	this->sequence_length = this->sequence_length - (this->explore_end_non_inclusive-this->explore_index_inclusive) + 1;
 	this->is_inner_scope.erase(this->is_inner_scope.begin()+this->explore_index_inclusive+1,
 		this->is_inner_scope.begin()+this->explore_end_non_inclusive);
 	this->scopes.erase(this->scopes.begin()+this->explore_index_inclusive+1,
@@ -127,6 +130,8 @@ void Scope::explore_replace() {
 }
 
 void Scope::explore_branch() {
+	cout << "Scope explore_branch" << endl;
+
 	if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH
 			&& this->explore_index_inclusive+1 == this->explore_end_non_inclusive) {
 		// this->branches[this->explore_index_inclusive]->passed_branch_score == false
@@ -237,9 +242,14 @@ void Scope::explore_branch() {
 			this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
 		this->compress_original_sizes[this->explore_index_inclusive] = -1;
 
-		bool is_scope_end = (this->explore_end_non_inclusive == (int)this->scopes.size());
+		bool branch_full_last;
+		if (this->explore_end_non_inclusive == (int)this->scopes.size() && !this->full_last) {
+			branch_full_last = false;
+		} else {
+			branch_full_last = true;
+		}
 
-		BranchPath* new_branch_path = new BranchPath(this->explore_end_non_inclusive-this->explore_index_inclusive-1,
+		BranchPath* new_branch_path = new BranchPath(this->explore_end_non_inclusive-this->explore_index_inclusive,
 													 branch_is_inner_scope,
 													 branch_scopes,
 													 branch_obs_sizes,
@@ -259,7 +269,7 @@ void Scope::explore_branch() {
 													 branch_compress_new_sizes,
 													 branch_compress_networks,
 													 branch_compress_original_sizes,
-													 is_scope_end);
+													 branch_full_last);
 
 		vector<bool> new_is_branch;
 		new_is_branch.push_back(true);
@@ -284,14 +294,14 @@ void Scope::explore_branch() {
 										new_is_branch,
 										new_branches,
 										new_folds,
-										new_end_scale_mods,
-										is_scope_end);
+										new_end_scale_mods);
 		this->explore_fold->combined_score_network = NULL;
 
 		this->step_types[this->explore_index_inclusive] = STEP_TYPE_BRANCH;
 		this->branches[this->explore_index_inclusive] = new_branch;
 	}
 
+	this->sequence_length = this->sequence_length - (this->explore_end_non_inclusive-this->explore_index_inclusive) + 1;
 	this->is_inner_scope.erase(this->is_inner_scope.begin()+this->explore_index_inclusive+1,
 		this->is_inner_scope.begin()+this->explore_end_non_inclusive);
 	this->scopes.erase(this->scopes.begin()+this->explore_index_inclusive+1,
@@ -343,6 +353,8 @@ void Scope::explore_branch() {
 }
 
 void Scope::resolve_fold(int a_index) {
+	cout << "Scope resolve_fold" << endl;
+
 	int new_sequence_length;
 	vector<bool> new_is_inner_scope;
 	vector<Scope*> new_scopes;
@@ -393,7 +405,8 @@ void Scope::resolve_fold(int a_index) {
 	this->average_local_impacts[a_index] = this->folds[a_index]->starting_average_local_impact;
 	// this->average_inner_branch_impacts[a_index] doesn't matter and unchanged
 
-	if (this->folds[a_index]->curr_starting_compress_new_size < this->folds[a_index]->starting_compress_original_size) {
+	if (this->folds[a_index]->curr_starting_compress_new_size < this->folds[a_index]->starting_compress_original_size
+			&& this->folds[a_index]->curr_starting_compress_new_size > 0) {
 		this->active_compress[a_index] = true;
 	} else {
 		this->active_compress[a_index] = false;
@@ -403,6 +416,7 @@ void Scope::resolve_fold(int a_index) {
 	this->folds[a_index]->curr_starting_compress_network = NULL;
 	this->compress_original_sizes[a_index] = this->folds[a_index]->starting_compress_original_size;
 
+	this->sequence_length  = this->sequence_length - 1 + new_sequence_length;
 	this->is_inner_scope.insert(this->is_inner_scope.begin()+a_index+1,
 		new_is_inner_scope.begin(), new_is_inner_scope.end());
 	this->scopes.insert(this->scopes.begin()+a_index+1,

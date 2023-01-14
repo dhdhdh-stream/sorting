@@ -5,6 +5,7 @@
 
 extern std::default_random_engine generator;
 
+extern bool global_debug_flag;
 extern double global_sum_error;
 
 const int STEP_TYPE_STEP = 0;

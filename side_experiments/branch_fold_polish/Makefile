@@ -13,17 +13,25 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: p2 p2_viewer
+all: p3_p1 p3_p1_viewer p3_p2 p3_p2_viewer
 
-p2: ${OBJECTS} p2.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p2.o -o p2 ${LIBS}
+p3_p1: ${OBJECTS} p3_p1.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p3_p1.o -o p3_p1 ${LIBS}
 
-p2_viewer: ${OBJECTS} p2_viewer.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} p2_viewer.o -o p2_viewer ${LIBS}
+p3_p1_viewer: ${OBJECTS} p3_p1_viewer.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p3_p1_viewer.o -o p3_p1_viewer ${LIBS}
 
--include ${DEPENDS} p2.d p2_viewer.d
+p3_p2: ${OBJECTS} p3_p2.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p3_p2.o -o p3_p2 ${LIBS}
+
+p3_p2_viewer: ${OBJECTS} p3_p2_viewer.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} p3_p2_viewer.o -o p3_p2_viewer ${LIBS}
+
+-include ${DEPENDS} p3_p1.d p3_p1_viewer.d p3_p2.d p3_p2_viewer.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	p2.o p2.d p2 \
-	p2_viewer.o p2_viewer.d p2_viewer \
+	p3_p1.o p3_p1.d p3_p1 \
+	p3_p1_viewer.o p3_p1_viewer.d p3_p1_viewer \
+	p3_p2.o p3_p2.d p3_p2 \
+	p3_p2_viewer.o p3_p2_viewer.d p3_p2_viewer

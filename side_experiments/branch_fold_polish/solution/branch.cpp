@@ -12,8 +12,7 @@ Branch::Branch(FoldNetwork* branch_score_network,
 			   vector<bool> is_branch,
 			   vector<BranchPath*> branches,
 			   vector<Fold*> folds,
-			   vector<double> end_scale_mods,
-			   bool is_scope_end) {
+			   vector<double> end_scale_mods) {
 	id_counter_mtx.lock();
 	this->id = id_counter;
 	id_counter++;
@@ -27,8 +26,6 @@ Branch::Branch(FoldNetwork* branch_score_network,
 	this->branches = branches;
 	this->folds = folds;
 	this->end_scale_mods = end_scale_mods;
-
-	this->is_scope_end = is_scope_end;
 }
 
 Branch::Branch(Branch* original) {
@@ -58,8 +55,6 @@ Branch::Branch(Branch* original) {
 			this->folds.push_back(original->folds[b_index]);
 		}
 	}
-
-	this->is_scope_end = original->is_scope_end;
 }
 
 Branch::Branch(ifstream& input_file) {
@@ -120,10 +115,6 @@ Branch::Branch(ifstream& input_file) {
 		getline(input_file, end_scale_mod_line);
 		this->end_scale_mods.push_back(stof(end_scale_mod_line));
 	}
-
-	string is_scope_end_line;
-	getline(input_file, is_scope_end_line);
-	this->is_scope_end = stoi(is_scope_end_line);
 }
 
 Branch::~Branch() {
@@ -743,8 +734,6 @@ void Branch::save(ofstream& output_file) {
 
 		output_file << this->end_scale_mods[b_index] << endl;
 	}
-
-	output_file << this->is_scope_end << endl;
 }
 
 BranchHistory::BranchHistory(Branch* branch) {

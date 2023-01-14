@@ -46,7 +46,7 @@ public:
 	std::vector<FoldNetwork*> compress_networks;
 	std::vector<int> compress_original_sizes;
 
-	bool is_scope_end;
+	bool full_last;
 
 	int explore_index_inclusive;
 	int explore_type;
@@ -73,7 +73,7 @@ public:
 			   std::vector<int> compress_new_sizes,
 			   std::vector<FoldNetwork*> compress_networks,
 			   std::vector<int> compress_original_sizes,
-			   bool is_scope_end);
+			   bool full_last);
 	BranchPath(BranchPath* original);
 	BranchPath(std::ifstream& input_file);
 	~BranchPath();

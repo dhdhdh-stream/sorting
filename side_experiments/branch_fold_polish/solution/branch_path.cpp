@@ -26,7 +26,7 @@ BranchPath::BranchPath(int sequence_length,
 					   vector<int> compress_new_sizes,
 					   vector<FoldNetwork*> compress_networks,
 					   vector<int> compress_original_sizes,
-					   bool is_scope_end) {
+					   bool full_last) {
 	id_counter_mtx.lock();
 	this->id = id_counter;
 	id_counter++;
@@ -63,7 +63,7 @@ BranchPath::BranchPath(int sequence_length,
 	this->compress_networks = compress_networks;
 	this->compress_original_sizes = compress_original_sizes;
 
-	this->is_scope_end = is_scope_end;
+	this->full_last = full_last;
 
 	this->explore_index_inclusive = -1;
 	this->explore_type = EXPLORE_TYPE_NONE;
@@ -141,7 +141,7 @@ BranchPath::BranchPath(BranchPath* original) {
 	}
 	this->compress_original_sizes = original->compress_original_sizes;
 
-	this->is_scope_end = original->is_scope_end;
+	this->full_last = original->full_last;
 
 	// initialize to empty
 	this->explore_index_inclusive = -1;
@@ -158,6 +158,10 @@ BranchPath::BranchPath(ifstream& input_file) {
 	string sequence_length_line;
 	getline(input_file, sequence_length_line);
 	this->sequence_length = stoi(sequence_length_line);
+
+	string full_last_line;
+	getline(input_file, full_last_line);
+	this->full_last = stoi(full_last_line);
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		string is_inner_scope_line;
@@ -215,11 +219,22 @@ BranchPath::BranchPath(ifstream& input_file) {
 		this->step_types.push_back(stoi(step_type_line));
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index != this->sequence_length-1) {
-				ifstream score_network_save_file;
-				score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
-				score_network_save_file.close();
+			if (a_index == this->sequence_length-1 && !this->full_last) {
+				this->score_networks.push_back(NULL);
+
+				this->active_compress.push_back(false);	// doesn't matter
+				this->compress_new_sizes.push_back(-1);
+				this->compress_networks.push_back(NULL);
+				this->compress_original_sizes.push_back(-1);
+			} else {
+				if (a_index != 0) {
+					ifstream score_network_save_file;
+					score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
+					this->score_networks.push_back(new FoldNetwork(score_network_save_file));
+					score_network_save_file.close();
+				} else {
+					this->score_networks.push_back(NULL);
+				}
 
 				string active_compress_line;
 				getline(input_file, active_compress_line);
@@ -241,13 +256,6 @@ BranchPath::BranchPath(ifstream& input_file) {
 				string compress_original_size_line;
 				getline(input_file, compress_original_size_line);
 				this->compress_original_sizes.push_back(stoi(compress_original_size_line));
-			} else {
-				this->score_networks.push_back(NULL);
-
-				this->active_compress.push_back(false);	// doesn't matter
-				this->compress_new_sizes.push_back(-1);
-				this->compress_networks.push_back(NULL);
-				this->compress_original_sizes.push_back(-1);
 			}
 
 			this->branches.push_back(NULL);
@@ -272,10 +280,14 @@ BranchPath::BranchPath(ifstream& input_file) {
 			this->folds.push_back(NULL);
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
-			ifstream score_network_save_file;
-			score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-			this->score_networks.push_back(new FoldNetwork(score_network_save_file));
-			score_network_save_file.close();
+			if (a_index != 0) {
+				ifstream score_network_save_file;
+				score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
+				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
+				score_network_save_file.close();
+			} else {
+				this->score_networks.push_back(NULL);
+			}
 
 			string fold_id_line;
 			getline(input_file, fold_id_line);
@@ -316,10 +328,6 @@ BranchPath::BranchPath(ifstream& input_file) {
 		getline(input_file, average_inner_branch_impact_line);
 		this->average_inner_branch_impacts.push_back(stof(average_inner_branch_impact_line));
 	}
-
-	string is_scope_end_line;
-	getline(input_file, is_scope_end_line);
-	this->is_scope_end = stoi(is_scope_end_line);
 
 	this->explore_index_inclusive = -1;
 	this->explore_type = EXPLORE_TYPE_NONE;
@@ -567,7 +575,7 @@ void BranchPath::explore_on_path_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = NULL;
@@ -856,7 +864,7 @@ void BranchPath::explore_off_path_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				if (explore_phase == EXPLORE_PHASE_FLAT) {
@@ -983,7 +991,7 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 			return;
 		} else {
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				if (a_index == this->sequence_length-1 && this->is_scope_end) {
+				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// scope end for outer scope -- do nothing
 				} else {
 					if (this->active_compress[a_index]) {
@@ -1192,7 +1200,7 @@ void BranchPath::explore_off_path_backprop(vector<double>& local_s_input_errors,
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				if (this->active_compress[a_index]) {
@@ -1482,7 +1490,7 @@ void BranchPath::existing_flat_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
@@ -1554,7 +1562,7 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				if (this->active_compress[a_index]) {
@@ -1834,7 +1842,7 @@ void BranchPath::update_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
@@ -1900,7 +1908,7 @@ void BranchPath::update_backprop(double& predicted_score,
 								 BranchPathHistory* history) {
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
-		if (a_index == this->sequence_length-1 && this->is_scope_end) {
+		if (a_index == this->sequence_length-1 && !this->full_last) {
 			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		} else {
@@ -1909,7 +1917,7 @@ void BranchPath::update_backprop(double& predicted_score,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				double predicted_score_error = target_val - predicted_score;
@@ -2136,7 +2144,7 @@ void BranchPath::existing_update_activate(vector<vector<double>>& flat_vals,
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
@@ -2197,7 +2205,7 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && this->is_scope_end) {
+			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
 				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
@@ -2273,6 +2281,9 @@ void BranchPath::save(ofstream& output_file) {
 	output_file << this->id << endl;
 
 	output_file << this->sequence_length << endl;
+
+	output_file << this->full_last << endl;
+
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->is_inner_scope[a_index] << endl;
 		if (this->is_inner_scope[a_index]) {
@@ -2302,11 +2313,15 @@ void BranchPath::save(ofstream& output_file) {
 		output_file << this->step_types[a_index] << endl;
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index != this->sequence_length-1) {
-				ofstream score_network_save_file;
-				score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-				this->score_networks[a_index]->save(score_network_save_file);
-				score_network_save_file.close();
+			if (a_index == this->sequence_length-1 && !this->full_last) {
+				// do nothing
+			} else {
+				if (a_index != 0) {
+					ofstream score_network_save_file;
+					score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
+					this->score_networks[a_index]->save(score_network_save_file);
+					score_network_save_file.close();
+				}
 
 				output_file << this->active_compress[a_index] << endl;
 				output_file << this->compress_new_sizes[a_index] << endl;
@@ -2327,10 +2342,12 @@ void BranchPath::save(ofstream& output_file) {
 			branch_save_file.close();
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
-			ofstream score_network_save_file;
-			score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-			this->score_networks[a_index]->save(score_network_save_file);
-			score_network_save_file.close();
+			if (a_index != 0) {
+				ofstream score_network_save_file;
+				score_network_save_file.open("saves/nns/branch_path_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
+				this->score_networks[a_index]->save(score_network_save_file);
+				score_network_save_file.close();
+			}
 
 			output_file << this->folds[a_index]->id << endl;
 
@@ -2348,8 +2365,6 @@ void BranchPath::save(ofstream& output_file) {
 		output_file << this->average_local_impacts[a_index] << endl;
 		output_file << this->average_inner_branch_impacts[a_index] << endl;
 	}
-
-	output_file << this->is_scope_end << endl;
 }
 
 BranchPathHistory::BranchPathHistory(BranchPath* branch_path) {

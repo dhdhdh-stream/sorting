@@ -116,6 +116,8 @@ Fold::Fold(int sequence_length,
 	this->curr_compress_network = NULL;
 	this->test_compress_network = NULL;
 
+	this->state = -1;
+	this->last_state = -1;
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 }

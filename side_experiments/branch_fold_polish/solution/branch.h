@@ -22,8 +22,6 @@ public:
 	std::vector<double> end_scale_mods;	// TODO: need to clarify whether fold holds on to this
 	std::vector<Fold*> folds;
 
-	bool is_scope_end;
-
 	// TODO: when exploring, branches will not find flats at once, but whenever one does,
 	// go upwards, and freeze
 	// reference counts flats downwards, and if all fail, move on
@@ -41,8 +39,7 @@ public:
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
 		   std::vector<Fold*> folds,
-		   std::vector<double> end_scale_mods,
-		   bool is_scope_end);
+		   std::vector<double> end_scale_mods);
 	Branch(Branch* original);
 	Branch(std::ifstream& input_file);
 	~Branch();

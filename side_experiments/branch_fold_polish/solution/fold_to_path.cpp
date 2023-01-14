@@ -351,6 +351,8 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		n_index++;
 	}
 
+	cout << "scope_sequence_length: " << scope_sequence_length << endl;
+
 	Scope* scope = new Scope(scope_num_inputs,
 							 scope_num_outputs,
 							 scope_sequence_length,
@@ -372,7 +374,8 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							 scope_active_compress,
 							 scope_compress_new_sizes,
 							 scope_compress_networks,
-							 scope_compress_original_sizes);
+							 scope_compress_original_sizes,
+							 false);
 
 	return scope;
 }
