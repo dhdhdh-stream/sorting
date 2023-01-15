@@ -294,13 +294,10 @@ void Fold::input_step_explore_off_path_backprop(
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history) {
 	// end_scale_mod passed on
 
 	double predicted_score_error = target_val - predicted_score;
-
-	scale_factor_error += history->ending_score_update*predicted_score_error;
 
 	this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
 		local_state_errors,
@@ -366,7 +363,7 @@ void Fold::input_step_explore_off_path_backprop(
 			scale_factor *= scope_scale_mod;
 
 			vector<double> scope_output_errors;
-			double scope_scale_factor_error = 0.0;
+			double scope_scale_factor_error = 0.0;	// unused
 			this->existing_actions[f_index]->existing_flat_backprop(scope_input_errors[f_index],
 																	scope_output_errors,
 																	predicted_score,
@@ -375,9 +372,9 @@ void Fold::input_step_explore_off_path_backprop(
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
 
-			scale_factor_error += scope_scale_mod*scope_scale_factor_error;
-
 			scale_factor /= scope_scale_mod;
+
+			// don't update scope_scale_mod_calcs on explore_off_path
 
 			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
@@ -445,9 +442,6 @@ void Fold::input_step_explore_off_path_backprop(
 	}
 
 	double inner_predicted_score_error = target_val - predicted_score;
-
-	scale_factor_error += history->score_update*inner_predicted_score_error;
-
 	vector<double> score_errors{scale_factor*inner_predicted_score_error};
 	this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
 		score_errors,
@@ -498,17 +492,13 @@ void Fold::input_step_explore_off_path_backprop(
 		scale_factor *= scope_scale_mod;
 
 		vector<double> scope_output_errors;
-		double scope_scale_factor_error = 0.0;
 		this->existing_actions[this->finished_steps.size()]->explore_off_path_backprop(
 			scope_input_errors,
 			scope_output_errors,
 			predicted_score,
 			target_val,
 			scale_factor,
-			scope_scale_factor_error,
 			history->scope_histories[this->finished_steps.size()]);
-
-		scale_factor_error += scope_scale_mod*scope_scale_factor_error;
 
 		scale_factor /= scope_scale_mod;
 
@@ -558,7 +548,6 @@ void Fold::input_step_explore_off_path_backprop(
 																 predicted_score,
 																 target_val,
 																 scale_factor,
-																 scale_factor_error,
 																 history->finished_step_histories[n_index]);
 	}
 
@@ -1458,8 +1447,6 @@ void Fold::input_step_update_backprop(
 																	  scale_factor,
 																	  scope_scale_factor_error,
 																	  history->scope_histories[f_index]);
-
-			scope_scale_factor_error *= scope_scale_mod;
 
 			scale_factor /= scope_scale_mod;
 

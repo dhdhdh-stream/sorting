@@ -99,14 +99,12 @@ public:
 								  double& predicted_score,
 								  double target_val,
 								  double& scale_factor,
-								  double& scale_factor_error,
 								  BranchPathHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
-								   double& scale_factor_error,
 								   BranchPathHistory* history);
 	void existing_flat_activate(std::vector<std::vector<double>>& flat_vals,
 								double starting_score,

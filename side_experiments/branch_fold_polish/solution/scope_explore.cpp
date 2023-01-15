@@ -40,9 +40,6 @@ void Scope::explore_replace() {
 
 	this->folds[this->explore_index_inclusive] = this->explore_fold;
 
-	delete this->explore_fold->end_scale_mod_calc;
-	this->explore_fold->end_scale_mod_calc = NULL;
-
 	this->average_scores[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
 	this->average_misguesses[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
 	// this->average_inner_scope_impacts[this->explore_index_inclusive] unchanged
@@ -145,10 +142,6 @@ void Scope::explore_branch() {
 		this->branches[this->explore_index_inclusive]->is_branch.push_back(false);
 		this->branches[this->explore_index_inclusive]->branches.push_back(NULL);
 		this->branches[this->explore_index_inclusive]->folds.push_back(this->explore_fold);
-		this->branches[this->explore_index_inclusive]->end_scale_mods.push_back(
-			this->explore_fold->end_scale_mod_calc->output->constants[0]);
-		delete this->explore_fold->end_scale_mod_calc;
-		this->explore_fold->end_scale_mod_calc = NULL;
 	} else {
 		vector<FoldNetwork*> new_score_networks;
 		if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH) {
@@ -283,18 +276,11 @@ void Scope::explore_branch() {
 		new_folds.push_back(NULL);
 		new_folds.push_back(this->explore_fold);
 
-		vector<double> new_end_scale_mods;
-		new_end_scale_mods.push_back(1.0);
-		new_end_scale_mods.push_back(this->explore_fold->end_scale_mod_calc->output->constants[0]);
-		delete this->explore_fold->end_scale_mod_calc;
-		this->explore_fold->end_scale_mod_calc = NULL;
-
 		Branch* new_branch = new Branch(this->explore_fold->combined_score_network,
 										new_score_networks,
 										new_is_branch,
 										new_branches,
-										new_folds,
-										new_end_scale_mods);
+										new_folds);
 		this->explore_fold->combined_score_network = NULL;
 
 		this->step_types[this->explore_index_inclusive] = STEP_TYPE_BRANCH;

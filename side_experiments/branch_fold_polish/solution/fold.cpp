@@ -54,8 +54,8 @@ Fold::Fold(int sequence_length,
 		}
 	}
 
-	this->end_scale_mod_calc = new Network(0, 0, 1);
-	this->end_scale_mod_calc->output->constants[0] = 1.0;
+	// this->end_scale_mod_calc = new Network(0, 0, 1);
+	// this->end_scale_mod_calc->output->constants[0] = 1.0;
 
 	this->curr_s_input_sizes.push_back(starting_s_input_size);
 	this->curr_scope_sizes.push_back(starting_state_size);
@@ -374,9 +374,9 @@ Fold::~Fold() {
 			}
 		}
 	}
-	if (this->end_scale_mod_calc != NULL) {
-		delete this->end_scale_mod_calc;
-	}
+	// if (this->end_scale_mod_calc != NULL) {
+	// 	delete this->end_scale_mod_calc;
+	// }
 
 	if (this->curr_fold != NULL) {
 		delete this->curr_fold;
@@ -463,13 +463,11 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
-								   double& scale_factor_error,
 								   FoldHistory* history) {
 	flat_step_explore_on_path_backprop(local_state_errors,
 									   predicted_score,
 									   target_val,
 									   scale_factor,
-									   scale_factor_error,
 									   history);
 
 	// explore_increment
@@ -626,7 +624,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 									 double& predicted_score,
 									 double target_val,
 									 double& scale_factor,
-									 double& scale_factor_error,
 									 FoldHistory* history) {
 	switch (this->last_state) {
 		case STATE_STARTING_COMPRESS:
@@ -635,7 +632,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
-															 scale_factor_error,
 															 history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -644,7 +640,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
-															 scale_factor_error,
 															 history);
 			break;
 		case STATE_SCORE:
@@ -653,7 +648,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 												 predicted_score,
 												 target_val,
 												 scale_factor,
-												 scale_factor_error,
 												 history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -662,7 +656,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 													predicted_score,
 													target_val,
 													scale_factor,
-													scale_factor_error,
 													history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -671,7 +664,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 													predicted_score,
 													target_val,
 													scale_factor,
-													scale_factor_error,
 													history);
 			break;
 		case STATE_INPUT:
@@ -680,7 +672,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 												 predicted_score,
 												 target_val,
 												 scale_factor,
-												 scale_factor_error,
 												 history);
 			break;
 		case STATE_STEP_ADDED:
@@ -689,7 +680,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 													  predicted_score,
 													  target_val,
 													  scale_factor,
-													  scale_factor_error,
 													  history);
 			break;
 	}

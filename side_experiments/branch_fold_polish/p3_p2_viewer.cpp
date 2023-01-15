@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
 		int switch_val = rand()%2;
 		flat_vals.push_back(vector<double>{2*(double)switch_val-1});
 		if (switch_val == 0) {
+			cout << "case #2" << endl;
+
 			int xor_1 = rand()%2;
 			flat_vals.push_back(vector<double>{2*(double)xor_1-1});
 			int xor_2 = rand()%2;
@@ -56,6 +58,8 @@ int main(int argc, char* argv[]) {
 
 			target_val = (double)((xor_1+xor_2)%2);
 		} else {
+			cout << "case #1" << endl;
+
 			flat_vals.push_back(vector<double>{2*(double)(rand()%2)-1});
 			int xor_1 = rand()%2;
 			flat_vals.push_back(vector<double>{2*(double)xor_1-1});

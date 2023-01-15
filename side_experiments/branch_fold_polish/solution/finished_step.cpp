@@ -504,7 +504,6 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 											 double& predicted_score,
 											 double target_val,
 											 double& scale_factor,
-											 double& scale_factor_error,
 											 FinishedStepHistory* history) {
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
@@ -547,8 +546,6 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 	}
 
 	double predicted_score_error = target_val - predicted_score;
-
-	scale_factor_error += history->score_update*predicted_score_error;
 
 	int s_input_index;
 	if (this->compress_num_layers > 0) {
@@ -605,16 +602,12 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 		scale_factor *= this->scope_scale_mod;
 
 		vector<double> scope_output_errors;
-		double scope_scale_factor_error = 0.0;
 		this->scope->explore_off_path_backprop(scope_input_errors,
 											   scope_output_errors,
 											   predicted_score,
 											   target_val,
 											   scale_factor,
-											   scope_scale_factor_error,
 											   history->scope_history);
-
-		scale_factor_error += this->scope_scale_mod*scope_scale_factor_error;
 
 		scale_factor /= this->scope_scale_mod;
 

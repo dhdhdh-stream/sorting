@@ -95,14 +95,11 @@ int main(int argc, char* argv[]) {
 
 		vector<double> outer_state_errors;
 
-		double outer_scale_factor_error = 0.0;	// unused
-
 		int explore_signal = fold->explore_on_path_backprop(
 			outer_state_errors,
 			predicted_score,
 			target_val,
 			scale_factor,
-			outer_scale_factor_error,
 			fold_history);
 		delete fold_history;
 

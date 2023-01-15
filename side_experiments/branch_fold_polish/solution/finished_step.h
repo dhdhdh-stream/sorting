@@ -83,7 +83,6 @@ public:
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
-								   double& scale_factor_error,
 								   FinishedStepHistory* history);
 	void existing_flat_activate(std::vector<std::vector<double>>& flat_vals,
 								std::vector<std::vector<double>>& s_input_vals,

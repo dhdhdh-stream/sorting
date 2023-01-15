@@ -1050,7 +1050,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 									 double& predicted_score,
 									 double target_val,
 									 double& scale_factor,
-									 double& scale_factor_error,
 									 ScopeHistory* history) {
 	// don't need to output local_s_input_errors on path but for explore_off_path_backprop
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
@@ -1072,7 +1071,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				predicted_score,
 				target_val,
 				scale_factor,
-				scale_factor_error,
 				history->explore_fold_history);
 
 			if (explore_signal == EXPLORE_SIGNAL_REPLACE) {
@@ -1113,8 +1111,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 					double predicted_score_error = target_val - predicted_score;
 
-					scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
 					// have to include scale_factor as it can change the sign of the gradient
 					vector<double> score_errors{scale_factor*predicted_score_error};
 					vector<double> score_s_input_output_errors;
@@ -1139,7 +1135,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	  predicted_score,
 																	  target_val,
 																	  scale_factor,
-																	  scale_factor_error,
 																	  history->branch_histories[a_index]);
 
 					return;
@@ -1149,7 +1144,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	   predicted_score,
 																	   target_val,
 																	   scale_factor,
-																	   scale_factor_error,
 																	   history->branch_histories[a_index]);
 				}
 			} else {
@@ -1159,14 +1153,11 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																predicted_score,
 																target_val,
 																scale_factor,
-																scale_factor_error,
 																history->fold_histories[a_index]);
 
 				// predicted_score already modified to before fold value in fold
 				double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 				double score_predicted_score_error = target_val - score_predicted_score;
-
-				scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 				// have to include scale_factor as it can change the sign of the gradient
 				vector<double> score_errors{scale_factor*score_predicted_score_error};
@@ -1199,28 +1190,21 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 				// on_path doesn't need scope_output_errors
 
-				scale_factor_error /= this->scope_scale_mod[a_index];
-
 				this->scopes[a_index]->explore_on_path_backprop(scope_input_errors,
 																predicted_score,
 																target_val,
 																scale_factor,
-																scale_factor_error,
 																history->scope_histories[a_index]);
 
 				return;
 			} else {
 				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
-				double scope_scale_factor_error = 0.0;
 				this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
 																 scope_output_errors,
 																 predicted_score,
 																 target_val,
 																 scale_factor,
-																 scope_scale_factor_error,
 																 history->scope_histories[a_index]);
-
-				scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
 				scale_factor /= this->scope_scale_mod[a_index];
 
@@ -1261,7 +1245,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			predicted_score,
 			target_val,
 			scale_factor,
-			scale_factor_error,
 			history->explore_fold_history);
 
 		if (explore_signal == EXPLORE_SIGNAL_REPLACE) {
@@ -1301,8 +1284,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 			double predicted_score_error = target_val - predicted_score;
 
-			scale_factor_error += history->score_updates[0]*predicted_score_error;
-
 			vector<double> score_errors{scale_factor*predicted_score_error};
 			vector<double> score_s_input_output_errors;
 			vector<double> score_state_output_errors;
@@ -1325,7 +1306,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 															predicted_score,
 															target_val,
 															scale_factor,
-															scale_factor_error,
 															history->branch_histories[0]);
 
 				return;
@@ -1335,7 +1315,6 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 															 predicted_score,
 															 target_val,
 															 scale_factor,
-															 scale_factor_error,
 															 history->branch_histories[0]);
 			}
 		} else {
@@ -1345,14 +1324,11 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 													  predicted_score,
 													  target_val,
 													  scale_factor,
-													  scale_factor_error,
 													  history->fold_histories[0]);
 
 			// predicted_score already modified to before fold value in fold
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[0];
 			double score_predicted_score_error = target_val - score_predicted_score;
-
-			scale_factor_error += history->score_updates[0]*score_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*score_predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1377,13 +1353,10 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 	// this->explore_index_inclusive == 0 && this->explore_type == EXPLORE_TYPE_INNER_SCOPE
 
-	scale_factor_error /= this->scope_scale_mod[0];
-
 	this->scopes[0]->explore_on_path_backprop(local_state_errors,
 											  predicted_score,
 											  target_val,
 											  scale_factor,
-											  scale_factor_error,
 											  history->scope_histories[0]);
 
 	return;
@@ -1394,7 +1367,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 									  double& predicted_score,
 									  double target_val,
 									  double& scale_factor,
-									  double& scale_factor_error,
 									  ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
@@ -1427,8 +1399,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 				double predicted_score_error = target_val - predicted_score;
 
-				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
 				vector<double> score_errors{scale_factor*predicted_score_error};
 				vector<double> score_s_input_output_errors;
 				vector<double> score_state_output_errors;
@@ -1453,7 +1423,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															   predicted_score,
 															   target_val,
 															   scale_factor,
-															   scale_factor_error,
 															   history->branch_histories[a_index]);
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
@@ -1462,14 +1431,11 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															predicted_score,
 															target_val,
 															scale_factor,
-															scale_factor_error,
 															history->fold_histories[a_index]);
 
 			// predicted_score already modified to before fold value in fold
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 			double score_predicted_score_error = target_val - score_predicted_score;
-
-			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*score_predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1500,16 +1466,12 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			scale_factor *= this->scope_scale_mod[a_index];
 
 			vector<double> scope_output_errors;
-			double scope_scale_factor_error = 0.0;
 			this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
 															 scope_output_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
-															 scope_scale_factor_error,
 															 history->scope_histories[a_index]);
-
-			scale_factor_error += this->scope_scale_mod[a_index]*scope_scale_factor_error;
 
 			scale_factor /= this->scope_scale_mod[a_index];
 
@@ -1564,8 +1526,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 		double predicted_score_error = target_val - predicted_score;
 
-		scale_factor_error += history->score_updates[0]*predicted_score_error;
-
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		vector<double> score_s_input_output_errors;
 		vector<double> score_state_output_errors;
@@ -1589,7 +1549,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 													 predicted_score,
 													 target_val,
 													 scale_factor,
-													 scale_factor_error,
 													 history->branch_histories[0]);
 	} else {
 		// this->step_types[0] == STEP_TYPE_FOLD
@@ -1598,14 +1557,11 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 												  predicted_score,
 												  target_val,
 												  scale_factor,
-												  scale_factor_error,
 												  history->fold_histories[0]);
 
 		// predicted_score already modified to before fold value in fold
 		double score_predicted_score = predicted_score + scale_factor*history->score_updates[0];
 		double score_predicted_score_error = target_val - score_predicted_score;
-
-		scale_factor_error += history->score_updates[0]*score_predicted_score_error;
 
 		vector<double> score_errors{scale_factor*score_predicted_score_error};
 		vector<double> score_s_input_output_errors;
@@ -1632,16 +1588,12 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 		scale_factor *= this->scope_scale_mod[0];
 
 		vector<double> scope_output_errors;
-		double scope_scale_factor_error = 0.0;
 		this->scopes[0]->explore_off_path_backprop(local_state_errors,
 												   scope_output_errors,
 												   predicted_score,
 												   target_val,
 												   scale_factor,
-												   scope_scale_factor_error,
 												   history->scope_histories[0]);
-
-		scale_factor_error += this->scope_scale_mod[0]*scope_scale_factor_error;
 
 		scale_factor /= this->scope_scale_mod[0];
 

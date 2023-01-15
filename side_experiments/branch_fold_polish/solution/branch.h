@@ -19,7 +19,6 @@ public:
 	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
-	std::vector<double> end_scale_mods;	// TODO: need to clarify whether fold holds on to this
 	std::vector<Fold*> folds;
 
 	// TODO: when exploring, branches will not find flats at once, but whenever one does,
@@ -38,8 +37,7 @@ public:
 		   std::vector<FoldNetwork*> score_networks,
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
-		   std::vector<Fold*> folds,
-		   std::vector<double> end_scale_mods);
+		   std::vector<Fold*> folds);
 	Branch(Branch* original);
 	Branch(std::ifstream& input_file);
 	~Branch();
@@ -73,14 +71,12 @@ public:
 								  double& predicted_score,
 								  double target_val,
 								  double& scale_factor,
-								  double& scale_factor_error,
 								  BranchHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
-								   double& scale_factor_error,
 								   BranchHistory* history);
 	void existing_flat_activate(std::vector<std::vector<double>>& flat_vals,
 								std::vector<double>& local_s_input_vals,

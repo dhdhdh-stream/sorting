@@ -60,8 +60,6 @@ public:
 	double replace_combined;
 
 	std::vector<Network*> scope_scale_mod_calcs;
-	Network* end_scale_mod_calc;	// drop if replace, passed after flat
-	// only need to modify scale as can't modify average at flat anyways
 
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
@@ -138,7 +136,6 @@ public:
 								 double& predicted_score,
 								 double target_val,
 								 double& scale_factor,
-								 double& scale_factor_error,
 								 FoldHistory* history);
 	void explore_off_path_activate(std::vector<std::vector<double>>& flat_vals,
 								   double starting_score,
@@ -153,7 +150,6 @@ public:
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
-								   double& scale_factor_error,
 								   FoldHistory* history);
 	void existing_flat_activate(std::vector<std::vector<double>>& flat_vals,
 								double starting_score,
@@ -207,7 +203,6 @@ public:
 											double& predicted_score,
 											double target_val,
 											double& scale_factor,
-											double& scale_factor_error,
 											FoldHistory* history);
 
 	void flat_to_fold();
@@ -227,7 +222,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void starting_compress_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -291,7 +285,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -355,7 +348,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void score_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -419,7 +411,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void compress_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -485,7 +476,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void input_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,
@@ -552,7 +542,6 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
-		double& scale_factor_error,
 		FoldHistory* history);
 	void step_added_step_existing_flat_activate(
 		std::vector<std::vector<double>>& flat_vals,

@@ -131,13 +131,10 @@ int main(int argc, char* argv[]) {
 		// }
 
 		vector<double> local_state_errors;
-		double scale_factor_error = 0.0;
-
 		scope->explore_on_path_backprop(local_state_errors,
 										predicted_score,
 										target_val,
 										scale_factor,
-										scale_factor_error,
 										scope_history);
 		delete scope_history;
 

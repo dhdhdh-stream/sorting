@@ -82,21 +82,13 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 	for (int o_index = 0; o_index < this->output_size; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
-
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor *= end_scale_mod_val;
 }
 
 void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors,
 											  double& predicted_score,
 											  double target_val,
 											  double& scale_factor,
-											  double& scale_factor_error,
 											  FoldHistory* history) {
-	double end_scale_mod_val = this->end_scale_mod_calc->output->constants[0];
-	scale_factor /= end_scale_mod_val;
-	scale_factor_error *= end_scale_mod_val;
-
 	if (this->state_iter >= 490000) {
 		double curr_existing_misguess = (target_val - history->existing_score)*(target_val - history->existing_score);
 		this->existing_misguess_standard_deviation += (*this->existing_average_misguess - curr_existing_misguess)*(*this->existing_average_misguess - curr_existing_misguess);
@@ -115,25 +107,16 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	double predicted_score_error = target_val - predicted_score;
 	this->sum_error += abs(predicted_score_error);
 	if (this->state_iter <= 300000) {
-		vector<double> mod_errors{scale_factor_error};
-		this->end_scale_mod_calc->backprop(mod_errors, 0.005);
-
 		this->curr_end_fold->backprop(local_state_errors, 0.05);
 
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.05);
 	} else if (this->state_iter <= 400000) {
-		vector<double> mod_errors{scale_factor_error};
-		this->end_scale_mod_calc->backprop(mod_errors, 0.001);
-
 		this->curr_end_fold->backprop(local_state_errors, 0.01);
 
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop(curr_fold_error, 0.01);
 	} else {
-		vector<double> mod_errors{scale_factor_error};
-		this->end_scale_mod_calc->backprop(mod_errors, 0.0002);
-
 		this->curr_end_fold->backprop(local_state_errors, 0.002);
 
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
@@ -167,8 +150,6 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 																	scale_factor,
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
-
-			scope_scale_factor_error *= scope_scale_mod;
 
 			scale_factor /= scope_scale_mod;
 
