@@ -54,9 +54,6 @@ Fold::Fold(int sequence_length,
 		}
 	}
 
-	// this->end_scale_mod_calc = new Network(0, 0, 1);
-	// this->end_scale_mod_calc->output->constants[0] = 1.0;
-
 	this->curr_s_input_sizes.push_back(starting_s_input_size);
 	this->curr_scope_sizes.push_back(starting_state_size);
 
@@ -350,11 +347,7 @@ Fold::Fold(ifstream& input_file) {
 }
 
 Fold::~Fold() {
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->existing_actions[f_index] != NULL) {
-			delete this->existing_actions[f_index];
-		}
-	}
+	// don't delete existing_actions, as they are only deep copied for FinishedStep
 
 	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
 		delete this->finished_steps[n_index];

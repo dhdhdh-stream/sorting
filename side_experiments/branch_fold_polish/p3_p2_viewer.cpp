@@ -79,22 +79,28 @@ int main(int argc, char* argv[]) {
 		double scale_factor = 1.0;
 
 		ScopeHistory* scope_history = new ScopeHistory(scope);
-		scope->update_activate(flat_vals,
-							   local_s_input_vals,
-							   local_state_vals,
-							   predicted_score,
-							   scale_factor,
-							   scope_history);
+		// scope->update_activate(flat_vals,
+		// 					   local_s_input_vals,
+		// 					   local_state_vals,
+		// 					   predicted_score,
+		// 					   scale_factor,
+		// 					   scope_history);
+		scope->existing_flat_activate(flat_vals,
+									  local_s_input_vals,
+									  local_state_vals,
+									  predicted_score,
+									  scale_factor,
+									  scope_history);
 
 		cout << "predicted_score: " << predicted_score << endl;
 
-		double next_predicted_score = predicted_score;
+		// double next_predicted_score = predicted_score;
 
-		scope->update_backprop(predicted_score,
-							next_predicted_score,
-							target_val,
-							scale_factor,
-							scope_history);
+		// scope->update_backprop(predicted_score,
+		// 					next_predicted_score,
+		// 					target_val,
+		// 					scale_factor,
+		// 					scope_history);
 		delete scope_history;
 	}
 

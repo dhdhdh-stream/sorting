@@ -351,8 +351,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		n_index++;
 	}
 
-	cout << "scope_sequence_length: " << scope_sequence_length << endl;
-
 	Scope* scope = new Scope(scope_num_inputs,
 							 scope_num_outputs,
 							 scope_sequence_length,
