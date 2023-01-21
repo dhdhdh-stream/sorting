@@ -5,11 +5,10 @@
 #include <mutex>
 #include <vector>
 
-#include "abstract_network.h"
 #include "layer.h"
 
 class NetworkHistory;
-class Network : public AbstractNetwork {
+class Network {
 public:
 	Layer* input;
 	Layer* hidden;
@@ -30,13 +29,21 @@ public:
 
 	void activate(std::vector<double>& vals);
 	void activate(std::vector<double>& vals,
-				  std::vector<AbstractNetworkHistory*>& network_historys);
+				  NetworkHistory* history);
 	void backprop(std::vector<double>& errors,
 				  double target_max_update);
+	void backprop(std::vector<double>& errors,
+				  double target_max_update,
+				  NetworkHistory* history);
 
 	void backprop_errors_with_no_weight_change(std::vector<double>& errors);
+	void backprop_errors_with_no_weight_change(std::vector<double>& errors,
+											   NetworkHistory* history);
 	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
 											   double target_max_update);
+	void backprop_weights_with_no_error_signal(std::vector<double>& errors,
+											   double target_max_update,
+											   NetworkHistory* history);
 
 	void save(std::ofstream& output_file);
 
@@ -46,14 +53,16 @@ private:
 				   int output_size);
 };
 
-class NetworkHistory : public AbstractNetworkHistory {
+class NetworkHistory {
 public:
+	Network* network;
+
 	std::vector<double> input_history;
 	std::vector<double> hidden_history;
-	std::vector<double> output_history;
 
 	NetworkHistory(Network* network);
-	void reset_weights() override;
+	void save_weights();
+	void reset_weights();
 };
 
 #endif /* NETWORK_H */

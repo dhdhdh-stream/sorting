@@ -2,29 +2,27 @@
 #define SOLUTION_H
 
 #include <mutex>
+#include <vector>
 
-#include "candidate.h"
-#include "start_scope.h"
+#include "scope.h"
 
 class Solution {
 public:
-	StartScope* start_scope;
+	int id_counter;
+	std::mutex id_counter_mtx;
 
-	double average_score;
+	// TODO: starting stuff
 
-	std::vector<Candidate*> candidates;
-	int explore_iters;
+	// use refs, allow duplicates, choose randomly, so successful actions are naturally chosen more
+	// on reload, start from a copy of every scope
+	std::vector<Scope*> action_dictionary;
 
-	std::mutex display_mtx;
+	// TODO: add raw action dictionary?
 
-	Solution();
-	Solution(std::ifstream& save_file);
-	~Solution();
-
-	void iteration(bool tune,
-				   bool save_for_display);
-
-	void save(std::ofstream& save_file);
+	void new_sequence(int& sequence_length,
+					  std::vector<bool>& is_existing,
+					  std::vector<Scope*>& existing_actions,
+					  std::vector<Action>& actions);
 };
 
 #endif /* SOLUTION_H */

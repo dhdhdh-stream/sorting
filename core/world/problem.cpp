@@ -34,11 +34,11 @@ void Problem::perform_action(Action action) {
 		this->current_world[this->current_pointer] += action.write;
 	}
 
-	if (action.move == LEFT) {
+	if (action.move == ACTION_LEFT) {
 		if (this->current_pointer >= 0) {
 			this->current_pointer--;
 		}
-	} else if (action.move == RIGHT) {
+	} else if (action.move == ACTION_RIGHT) {
 		if (this->current_pointer < (int)this->current_world.size()) {
 			this->current_pointer++;
 		}

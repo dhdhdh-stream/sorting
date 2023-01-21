@@ -73,11 +73,10 @@ void Network::activate(vector<double>& vals) {
 }
 
 void Network::activate(vector<double>& vals,
-					   vector<AbstractNetworkHistory*>& network_historys) {
+					   NetworkHistory* history) {
 	activate(vals);
 
-	NetworkHistory* network_history = new NetworkHistory(this);
-	network_historys.push_back(network_history);
+	history->save_weights();
 }
 
 void Network::backprop(vector<double>& errors,
@@ -117,7 +116,16 @@ void Network::backprop(vector<double>& errors,
 	}
 }
 
-void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors) {
+void Network::backprop(vector<double>& errors,
+					   double target_max_update,
+					   NetworkHistory* history) {
+	history->reset_weights();
+
+	backprop(errors,
+			 target_max_update);
+}
+
+void Network::backprop_errors_with_no_weight_change(vector<double>& errors) {
 	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
@@ -126,7 +134,14 @@ void Network::backprop_errors_with_no_weight_change(std::vector<double>& errors)
 	this->hidden->backprop_errors_with_no_weight_change();
 }
 
-void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
+void Network::backprop_errors_with_no_weight_change(vector<double>& errors,
+													NetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_errors_with_no_weight_change(errors);
+}
+
+void Network::backprop_weights_with_no_error_signal(vector<double>& errors,
 													double target_max_update) {
 	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
 		this->output->errors[e_index] = errors[e_index];
@@ -163,6 +178,15 @@ void Network::backprop_weights_with_no_error_signal(std::vector<double>& errors,
 	}
 }
 
+void Network::backprop_weights_with_no_error_signal(vector<double>& errors,
+													double target_max_update,
+													NetworkHistory* history) {
+	history->reset_weights();
+
+	backprop_weights_with_no_error_signal(errors,
+										  target_max_update);
+}
+
 void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden->acti_vals.size() << endl;
@@ -173,7 +197,9 @@ void Network::save(ofstream& output_file) {
 
 NetworkHistory::NetworkHistory(Network* network) {
 	this->network = network;
+}
 
+void NetworkHistory::save_weights() {
 	this->input_history.reserve(network->input->acti_vals.size());
 	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
 		this->input_history.push_back(network->input->acti_vals[n_index]);
@@ -182,21 +208,13 @@ NetworkHistory::NetworkHistory(Network* network) {
 	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
 		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
 	}
-	this->output_history.reserve(network->output->acti_vals.size());
-	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
-		this->output_history.push_back(network->output->acti_vals[n_index]);
-	}
 }
 
 void NetworkHistory::reset_weights() {
-	Network* network = (Network*)this->network;
-	for (int n_index = 0; n_index < (int)network->input->acti_vals.size(); n_index++) {
-		network->input->acti_vals[n_index] = this->input_history[n_index];
+	for (int n_index = 0; n_index < (int)this->network->input->acti_vals.size(); n_index++) {
+		this->network->input->acti_vals[n_index] = this->input_history[n_index];
 	}
-	for (int n_index = 0; n_index < (int)network->hidden->acti_vals.size(); n_index++) {
-		network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
-	}
-	for (int n_index = 0; n_index < (int)network->output->acti_vals.size(); n_index++) {
-		network->output->acti_vals[n_index] = this->output_history[n_index];
+	for (int n_index = 0; n_index < (int)this->network->hidden->acti_vals.size(); n_index++) {
+		this->network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
 	}
 }

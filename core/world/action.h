@@ -4,11 +4,13 @@
 #include <fstream>
 #include <string>
 
-const int ACTION_START = -1;
+const int ACTION_NONE = -1;
 
-const int ACTION_LEFT = 0;
-const int ACTION_STAY = 1;
-const int ACTION_RIGHT = 2;
+const int ACTION_START = 0;
+
+const int ACTION_LEFT = 1;
+const int ACTION_STAY = 2;
+const int ACTION_RIGHT = 3;
 
 class Action {
 public:

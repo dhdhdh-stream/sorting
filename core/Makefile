@@ -1,16 +1,14 @@
 CXX = g++
-CXXFLAGS = -g -std=c++17 -Wall -Werror -Wconversion -MMD -lboost_system \
-		   -Iexplore \
+CXXFLAGS = -g -std=c++17 -Wall -Werror -Wconversion -MMD \
 		   -Inn \
 		   -Isolution \
-		   -Isolution/candidate \
+		   -Isolution/fold_steps \
 		   -Iutils \
 		   -Iworld
 LIBS = -pthread
-SOURCES = $(wildcard explore/*.cpp) \
-		  $(wildcard nn/*.cpp) \
+SOURCES = $(wildcard nn/*.cpp) \
 		  $(wildcard solution/*.cpp) \
-		  $(wildcard solution/candidate/*.cpp) \
+		  $(wildcard solution/fold_steps/*.cpp) \
 		  $(wildcard utils/*.cpp) \
 		  $(wildcard world/*.cpp)
 HEADERS = ${SOURCES:.cpp=.h}

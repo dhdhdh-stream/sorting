@@ -4,7 +4,7 @@ using namespace std;
 
 Action::Action() {
 	this->write = 0.0;
-	this->move = -1;
+	this->move = ACTION_NONE;
 }
 
 Action::Action(double write, int move) {
@@ -33,12 +33,16 @@ void Action::save(ofstream& save_file) {
 
 string Action::to_string() {
 	std::string move_s;
-	if (this->move == LEFT) {
+	if (this->move == ACTION_START) {
+		move_s = "START";
+	} else if (this->move == ACTION_LEFT) {
 		move_s = "LEFT";
-	} else if (this->move == STAY) {
+	} else if (this->move == ACTION_STAY) {
 		move_s = "STAY";
-	} else {
+	} else if (this->move == ACTION_RIGHT) {
 		move_s = "RIGHT";
+	} else {
+		move_s = "N/A";
 	}
 	
 	return "(" + std::to_string(this->write) + "," + move_s + ")";
