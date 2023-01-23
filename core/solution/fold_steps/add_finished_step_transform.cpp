@@ -15,13 +15,8 @@ void Fold::add_finished_step() {
 		this->scope_scale_mod_calcs[this->finished_steps.size()] = NULL;
 	}
 
-	Scope* new_scope = NULL;
-	if (this->is_existing[this->finished_steps.size()]) {
-		new_scope = new Scope(this->existing_actions[this->finished_steps.size()]);
-	}
-
 	FinishedStep* new_finished_step = new FinishedStep(this->is_existing[this->finished_steps.size()],
-													   new_scope,
+													   this->existing_actions[this->finished_steps.size()],
 													   this->actions[this->finished_steps.size()],
 													   this->inner_input_input_layer,
 													   this->inner_input_input_sizes,

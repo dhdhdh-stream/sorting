@@ -80,8 +80,8 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 								  local_s_input_vals,
 								  local_state_vals);
 	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
+	local_state_vals.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 }

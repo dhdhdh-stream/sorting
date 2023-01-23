@@ -3,7 +3,7 @@
 #include <iostream>
 #include <limits>
 
-#include "definitions.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -147,11 +147,11 @@ Branch::~Branch() {
 void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 											vector<double>& local_state_vals,
 											double& scale_factor,
-											int& explore_phase,
+											ExploreStatus& explore_status,
 											BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		if (!this->passed_branch_score) {
 			FoldNetworkHistory* branch_score_network_history = new FoldNetworkHistory(this->branch_score_network);
 			this->branch_score_network->activate_small(local_s_input_vals,
@@ -202,11 +202,11 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 											 vector<double>& local_state_vals,
 											 double& scale_factor,
-											 int& explore_phase,
+											 ExploreStatus& explore_status,
 											 BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		if (!this->passed_branch_score) {
 			FoldNetworkHistory* branch_score_network_history = new FoldNetworkHistory(this->branch_score_network);
 			this->branch_score_network->activate_small(local_s_input_vals,
@@ -255,7 +255,7 @@ void Branch::explore_on_path_activate(Problem& problem,
 									  vector<double>& local_state_vals,
 									  double& predicted_score,
 									  double& scale_factor,
-									  int& explore_phase,
+									  ExploreStatus& explore_status,
 									  BranchHistory* history) {
 	BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[history->best_index]);
 	this->branches[history->best_index]->explore_on_path_activate(problem,
@@ -264,7 +264,7 @@ void Branch::explore_on_path_activate(Problem& problem,
 																  local_state_vals,
 																  predicted_score,
 																  scale_factor,
-																  explore_phase,
+																  explore_status,
 																  branch_path_history);
 	history->branch_path_history = branch_path_history;
 }
@@ -274,7 +274,7 @@ void Branch::explore_off_path_activate(Problem& problem,
 									   vector<double>& local_state_vals,
 									   double& predicted_score,
 									   double& scale_factor,
-									   int& explore_phase,
+									   ExploreStatus& explore_status,
 									   BranchHistory* history) {
 	if (this->is_branch[history->best_index]) {
 		BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[history->best_index]);
@@ -284,7 +284,7 @@ void Branch::explore_off_path_activate(Problem& problem,
 																	   local_state_vals,
 																	   predicted_score,
 																	   scale_factor,
-																	   explore_phase,
+																	   explore_status,
 																	   branch_path_history);
 		history->branch_path_history = branch_path_history;
 	} else {
@@ -295,7 +295,7 @@ void Branch::explore_off_path_activate(Problem& problem,
 																	local_state_vals,
 																	predicted_score,
 																	scale_factor,
-																	explore_phase,
+																	explore_status,
 																	fold_history);
 		history->fold_history = fold_history;
 	}
@@ -313,6 +313,10 @@ void Branch::explore_on_path_backprop(vector<double>& local_s_input_errors,
 																  target_val,
 																  scale_factor,
 																  history->branch_path_history);
+
+	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
+		this->explore_ref_count--;
+	}
 
 	return;
 }
@@ -669,6 +673,12 @@ void Branch::existing_update_backprop(double& predicted_score,
 	scale_factor_error += score_update*predicted_score_error;
 
 	// score_networks don't update predicted_score
+}
+
+void Branch::explore_set(BranchHistory* history) {
+	this->branches[history->best_index]->explore_set(history->branch_path_history);
+
+	this->explore_ref_count++;
 }
 
 void Branch::save(ofstream& output_file) {

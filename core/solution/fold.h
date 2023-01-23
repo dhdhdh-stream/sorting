@@ -33,12 +33,12 @@ public:
 
 	int num_inputs;
 	int num_outputs;
+	int outer_s_input_size;
 
 	int sequence_length;
 	std::vector<bool> is_existing;
-	std::vector<Scope*> existing_actions;	// shallow copy initialy, deep copy on adding FinishedStep
+	std::vector<Scope*> existing_actions;	// shallow copy initialy, deep copy after flat
 	std::vector<Action> actions;
-	int output_size;	// TODO: remove output_size and starting_state_size
 
 	std::vector<FinishedStep*> finished_steps;
 
@@ -145,7 +145,7 @@ public:
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   int& explore_phase,
+								   ExploreStatus& explore_status,
 								   FoldHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
@@ -216,7 +216,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void starting_compress_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -279,7 +279,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void inner_scope_input_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -342,7 +342,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void score_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -405,7 +405,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void compress_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -470,7 +470,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void input_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -536,7 +536,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history);
 	void step_added_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,

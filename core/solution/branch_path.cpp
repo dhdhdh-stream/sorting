@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-#include "definitions.h"
+#include "globals.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -203,13 +204,13 @@ BranchPath::BranchPath(ifstream& input_file) {
 	getline(input_file, num_outputs_line);
 	this->num_outputs = stoi(num_outputs_line);
 
-	string sequence_length_line;
-	getline(input_file, sequence_length_line);
-	this->sequence_length = stoi(sequence_length_line);
-
 	string full_last_line;
 	getline(input_file, full_last_line);
 	this->full_last = stoi(full_last_line);
+
+	string sequence_length_line;
+	getline(input_file, sequence_length_line);
+	this->sequence_length = stoi(sequence_length_line);
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		string is_inner_scope_line;
@@ -458,10 +459,115 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 										  vector<double>& local_state_vals,	// i.e., combined initially
 										  double& predicted_score,
 										  double& scale_factor,
-										  int& explore_phase,
+										  ExploreStatus& explore_status,
 										  BranchPathHistory* history) {
 	if (this->explore_type == EXPLORE_TYPE_NONE) {
-		// TODO: add handling when explore not set yet
+		double sum_impact = 0.0;
+		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+			if (this->is_inner_scope[a_index]) {
+				sum_impact += this->average_inner_scope_impacts[a_index];
+			}
+
+			if (this->step_types[a_index] == STEP_TYPE_STEP) {
+				sum_impact += this->average_local_impacts[a_index];
+			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+				sum_impact += this->average_inner_branch_impacts[a_index];
+			} else {
+				// this->step_types[a_index] == STEP_TYPE_FOLD
+				// do nothing
+			}
+		}
+
+		double rand_val = randuni()*sum_impact;
+
+		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+			if (this->is_inner_scope[a_index]) {
+				rand_val -= this->average_inner_scope_impacts[a_index];
+				if (rand_val <= 0.0) {
+					if (rand()%2 == 0) {
+						history->explore_type = EXPLORE_TYPE_INNER_SCOPE;
+						history->explore_index_inclusive = a_index;
+						history->explore_end_non_inclusive = -1;
+					} else {
+						history->explore_type = EXPLORE_TYPE_NEW;
+						history->explore_index_inclusive = a_index;
+						history->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
+
+						int new_sequence_length;
+						vector<bool> new_is_existing;
+						vector<Scope*> new_existing_actions;
+						vector<Action> new_actions;
+						solution->new_sequence(new_sequence_length,
+											   new_is_existing,
+											   new_existing_actions,
+											   new_actions);
+
+						history->sequence_length = new_sequence_length;
+						history->is_existing = new_is_existing;
+						history->existing_actions = new_existing_actions;
+						history->actions = new_actions;
+					}
+					break;
+				}
+			}
+
+			if (this->step_types[a_index] == STEP_TYPE_STEP) {
+				rand_val -= this->average_local_impacts[a_index];
+				if (rand_val <= 0.0) {
+					history->explore_type = EXPLORE_TYPE_NEW;
+					history->explore_index_inclusive = a_index;
+					history->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
+
+					int new_sequence_length;
+					vector<bool> new_is_existing;
+					vector<Scope*> new_existing_actions;
+					vector<Action> new_actions;
+					solution->new_sequence(new_sequence_length,
+										   new_is_existing,
+										   new_existing_actions,
+										   new_actions);
+
+					history->sequence_length = new_sequence_length;
+					history->is_existing = new_is_existing;
+					history->existing_actions = new_existing_actions;
+					history->actions = new_actions;
+
+					break;
+				}
+			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+				rand_val -= this->average_inner_branch_impacts[a_index];
+				if (rand_val <= 0.0) {
+					// Note: don't worry about explore after branch as there's either inner scope in-between, or an action performed first
+					if (rand()%2 == 0) {
+						history->explore_type = EXPLORE_TYPE_INNER_BRANCH;
+						history->explore_index_inclusive = a_index;
+						history->explore_end_non_inclusive = -1;
+					} else {
+						history->explore_type = EXPLORE_TYPE_NEW;
+						history->explore_index_inclusive = a_index;
+						history->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
+
+						int new_sequence_length;
+						vector<bool> new_is_existing;
+						vector<Scope*> new_existing_actions;
+						vector<Action> new_actions;
+						solution->new_sequence(new_sequence_length,
+											   new_is_existing,
+											   new_existing_actions,
+											   new_actions);
+
+						history->sequence_length = new_sequence_length;
+						history->is_existing = new_is_existing;
+						history->existing_actions = new_existing_actions;
+						history->actions = new_actions;
+					}
+					break;
+				}
+			} else {
+				// this->step_types[a_index] == STEP_TYPE_FOLD
+				// do nothing
+			}
+		}
 	}
 
 	int a_index = 1;
@@ -484,9 +590,36 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 														 explore_fold_history);
 			history->explore_fold_history = explore_fold_history;
 
-			explore_phase = EXPLORE_PHASE_FLAT;
+			explore_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 			a_index = this->explore_end_non_inclusive;
+		} else if (this->explore_type == EXPLORE_TYPE_NONE
+				&& history->explore_type == EXPLORE_TYPE_NEW
+				&& history->explore_index_inclusive == 0) {
+			explore_status.existing_score = starting_score;
+
+			for (int n_index = 0; n_index < history->sequence_length; n_index++) {
+				if (!history->is_existing[n_index]) {
+					problem.perform_action(history->actions[n_index]);
+				} else {
+					vector<double> scope_input(history->existing_actions[n_index]->num_inputs, 0.0);
+					vector<double> scope_output;	// unused
+					ScopeHistory* scope_history = new ScopeHistory(history->existing_actions[n_index]);
+					history->existing_actions[n_index]->existing_update_activate(
+						problem,
+						scope_input,
+						scope_output,
+						predicted_score,	// won't be relevant after
+						scale_factor,	// won't be relevant after
+						scope_history);
+					delete scope_history;
+				}
+			}
+
+			explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+			local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+			a_index = history->explore_end_non_inclusive;
 		} else {
 			// wait until on branch_path to update predicted_score
 			history->score_updates[0] = starting_score;
@@ -513,13 +646,13 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			this->branches[0]->explore_on_path_activate_score(local_s_input_vals,
 															  local_state_vals,
 															  scale_factor,
-															  explore_phase,
+															  explore_status,
 															  branch_history);
 		} else {
 			this->branches[0]->explore_off_path_activate_score(local_s_input_vals,
 															   local_state_vals,
 															   scale_factor,
-															   explore_phase,
+															   explore_status,
 															   branch_history);
 		}
 
@@ -535,9 +668,38 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 														 explore_fold_history);
 			history->explore_fold_history = explore_fold_history;
 
-			explore_phase = EXPLORE_PHASE_FLAT;
+			explore_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 			a_index = this->explore_end_non_inclusive;
+
+			delete branch_history;
+		} else if (this->explore_type == EXPLORE_TYPE_NONE
+				&& history->explore_type == EXPLORE_TYPE_NEW
+				&& history->explore_index_inclusive == 0) {
+			explore_status.existing_score = branch_history->best_score;
+
+			for (int n_index = 0; n_index < history->sequence_length; n_index++) {
+				if (!history->is_existing[n_index]) {
+					problem.perform_action(history->actions[n_index]);
+				} else {
+					vector<double> scope_input(history->existing_actions[n_index]->num_inputs, 0.0);
+					vector<double> scope_output;	// unused
+					ScopeHistory* scope_history = new ScopeHistory(history->existing_actions[n_index]);
+					history->existing_actions[n_index]->existing_update_activate(
+						problem,
+						scope_input,
+						scope_output,
+						predicted_score,	// won't be relevant after
+						scale_factor,	// won't be relevant after
+						scope_history);
+					delete scope_history;
+				}
+			}
+
+			explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+			local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+			a_index = history->explore_end_non_inclusive;
 
 			delete branch_history;
 		} else {
@@ -548,7 +710,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 															local_state_vals,
 															predicted_score,
 															scale_factor,
-															explore_phase,
+															explore_status,
 															branch_history);
 			} else {
 				this->branches[0]->explore_off_path_activate(problem,
@@ -556,7 +718,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 explore_phase,
+															 explore_status,
 															 branch_history);
 			}
 			history->branch_histories[0] = branch_history;
@@ -565,36 +727,19 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 		// this->step_types[0] == STEP_TYPE_FOLD
 		// starting_score already scaled
 
-		if (this->explore_index_inclusive == 0
-				&& this->explore_type == EXPLORE_TYPE_NEW) {
-			FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
-			this->explore_fold->explore_on_path_activate(starting_score,
-														 problem,
-														 local_s_input_vals,
-														 local_state_vals,
-														 predicted_score,
-														 scale_factor,
-														 explore_fold_history);
-			history->explore_fold_history = explore_fold_history;
+		history->score_updates[0] = starting_score;
+		// predicted_score updated in fold
 
-			explore_phase = EXPLORE_PHASE_FLAT;
-
-			a_index = this->explore_end_non_inclusive;
-		} else {
-			history->score_updates[0] = starting_score;
-			// predicted_score updated in fold
-
-			FoldHistory* fold_history = new FoldHistory(this->folds[0]);
-			this->folds[0]->explore_off_path_activate(problem,
-													  starting_score,
-													  local_s_input_vals,
-													  local_state_vals,
-													  predicted_score,
-													  scale_factor,
-													  explore_phase,
-													  fold_history);
-			history->fold_histories[0] = fold_history;
-		}
+		FoldHistory* fold_history = new FoldHistory(this->folds[0]);
+		this->folds[0]->explore_off_path_activate(problem,
+												  starting_score,
+												  local_s_input_vals,
+												  local_state_vals,
+												  predicted_score,
+												  scale_factor,
+												  explore_status,
+												  fold_history);
+		history->fold_histories[0] = fold_history;
 	}
 
 	// mid
@@ -608,7 +753,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			// reused scopes will have 1 inner_input_network
 			vector<double> temp_new_s_input_vals;
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-				if (explore_phase == EXPLORE_PHASE_FLAT) {
+				if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 					FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_networks[a_index][i_index]);
 					this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
 																				 local_state_vals,
@@ -627,14 +772,17 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			if (this->explore_index_inclusive == a_index
-					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
+			if ((this->explore_index_inclusive == a_index
+						&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE)
+					|| (this->explore_type == EXPLORE_TYPE_NEW
+						&& history->explore_type == EXPLORE_TYPE_NEW
+						&& history->explore_index_inclusive == a_index)) {
 				this->scopes[a_index]->explore_on_path_activate(problem,
 																temp_new_s_input_vals,
 																scope_output,
 																predicted_score,
 																scale_factor,
-																explore_phase,
+																explore_status,
 																scope_history);
 			} else {
 				this->scopes[a_index]->explore_off_path_activate(problem,
@@ -642,7 +790,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 																 scope_output,
 																 predicted_score,
 																 scale_factor,
-																 explore_phase,
+																 explore_status,
 																 scope_history);
 			}
 			history->scope_histories[a_index] = scope_history;
@@ -658,7 +806,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 				// scope end for outer scope -- do nothing
 			} else {
 				FoldNetworkHistory* score_network_history = NULL;
-				if (explore_phase == EXPLORE_PHASE_FLAT) {
+				if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 					score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 					this->score_networks[a_index]->activate_small(local_s_input_vals,
 																  local_state_vals,
@@ -683,9 +831,38 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 																 explore_fold_history);
 					history->explore_fold_history = explore_fold_history;
 
-					explore_phase = EXPLORE_PHASE_FLAT;
+					explore_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 					a_index = this->explore_end_non_inclusive-1;	// account for increment at end
+				} else if (this->explore_type == EXPLORE_TYPE_NONE
+						&& history->explore_type == EXPLORE_TYPE_NEW
+						&& history->explore_index_inclusive == a_index) {
+					// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
+
+					explore_status.existing_score = existing_score;
+
+					for (int n_index = 0; n_index < history->sequence_length; n_index++) {
+						if (!history->is_existing[n_index]) {
+							problem.perform_action(history->actions[n_index]);
+						} else {
+							vector<double> scope_input(history->existing_actions[n_index]->num_inputs, 0.0);
+							vector<double> scope_output;	// unused
+							ScopeHistory* scope_history = new ScopeHistory(history->existing_actions[n_index]);
+							history->existing_actions[n_index]->existing_update_activate(
+								problem,
+								scope_input,
+								scope_output,
+								predicted_score,	// won't be relevant after
+								scale_factor,	// won't be relevant after
+								scope_history);
+							delete scope_history;
+						}
+					}
+
+					explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+					local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+					a_index = history->explore_end_non_inclusive-1;		// account for increment at end
 				} else {
 					history->score_network_histories[a_index] = score_network_history;
 					history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
@@ -693,7 +870,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 					if (this->active_compress[a_index]) {
 						// compress 2 layers, add 1 layer
-						if (explore_phase == EXPLORE_PHASE_FLAT) {
+						if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 							FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
 							this->compress_networks[a_index]->activate_small(local_s_input_vals,
 																			 local_state_vals,
@@ -717,18 +894,21 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			if (this->explore_index_inclusive == a_index
-					&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+			if ((this->explore_index_inclusive == a_index
+						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH)
+					|| (this->explore_type == EXPLORE_TYPE_NONE
+						&& history->explore_type == EXPLORE_TYPE_NEW
+						&& history->explore_index_inclusive == a_index)) {
 				this->branches[a_index]->explore_on_path_activate_score(local_s_input_vals,
 																		local_state_vals,
 																		scale_factor,
-																		explore_phase,
+																		explore_status,
 																		branch_history);
 			} else {
 				this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
 																		 local_state_vals,
 																		 scale_factor,
-																		 explore_phase,
+																		 explore_status,
 																		 branch_history);
 			}
 
@@ -744,9 +924,38 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 															 explore_fold_history);
 				history->explore_fold_history = explore_fold_history;
 
-				explore_phase = EXPLORE_PHASE_FLAT;
+				explore_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
+
+				delete branch_history;
+			} else if (this->explore_type == EXPLORE_TYPE_NONE
+					&& history->explore_type == EXPLORE_TYPE_NEW
+					&& history->explore_index_inclusive == a_index) {
+				explore_status.existing_score = branch_history->best_score;
+
+				for (int n_index = 0; n_index < history->sequence_length; n_index++) {
+					if (!history->is_existing[n_index]) {
+						problem.perform_action(history->actions[n_index]);
+					} else {
+						vector<double> scope_input(history->existing_actions[n_index]->num_inputs, 0.0);
+						vector<double> scope_output;	// unused
+						ScopeHistory* scope_history = new ScopeHistory(history->existing_actions[n_index]);
+						history->existing_actions[n_index]->existing_update_activate(
+							problem,
+							scope_input,
+							scope_output,
+							predicted_score,	// won't be relevant after
+							scale_factor,	// won't be relevant after
+							scope_history);
+						delete scope_history;
+					}
+				}
+
+				explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+				local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+				a_index = history->explore_end_non_inclusive-1;		// account for increment at end
 
 				delete branch_history;
 			} else {
@@ -757,7 +966,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 																	  local_state_vals,
 																	  predicted_score,
 																	  scale_factor,
-																	  explore_phase,
+																	  explore_status,
 																	  branch_history);
 				} else {
 					this->branches[a_index]->explore_off_path_activate(problem,
@@ -765,7 +974,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 																	   local_state_vals,
 																	   predicted_score,
 																	   scale_factor,
-																	   explore_phase,
+																	   explore_status,
 																	   branch_history);
 				}
 				history->branch_histories[a_index] = branch_history;
@@ -773,7 +982,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			FoldNetworkHistory* score_network_history = NULL;
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
 															  local_state_vals,
@@ -784,38 +993,19 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			}
 			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
 
-			if (this->explore_index_inclusive == a_index
-					&& this->explore_type == EXPLORE_TYPE_NEW) {
-				// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
+			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
+			// predicted_score updated in fold
 
-				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
-				this->explore_fold->explore_on_path_activate(existing_score,
-															 problem,
-															 local_s_input_vals,
-															 local_state_vals,
-															 predicted_score,
-															 scale_factor,
-															 explore_fold_history);
-				history->explore_fold_history = explore_fold_history;
-
-				explore_phase = EXPLORE_PHASE_FLAT;
-
-				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
-			} else {
-				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				// predicted_score updated in fold
-
-				FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-				this->folds[a_index]->explore_off_path_activate(problem,
-																existing_score,
-																local_s_input_vals,
-																local_state_vals,
-																predicted_score,
-																scale_factor,
-																explore_phase,
-																fold_history);
-				history->fold_histories[a_index] = fold_history;
-			}
+			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
+			this->folds[a_index]->explore_off_path_activate(problem,
+															existing_score,
+															local_s_input_vals,
+															local_state_vals,
+															predicted_score,
+															scale_factor,
+															explore_status,
+															fold_history);
+			history->fold_histories[a_index] = fold_history;
 		}
 
 		a_index++;
@@ -828,7 +1018,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 										   vector<double>& local_state_vals,	// i.e., combined initially
 										   double& predicted_score,
 										   double& scale_factor,
-										   int& explore_phase,
+										   ExploreStatus& explore_status,
 										   BranchPathHistory* history) {
 	// start
 	if (this->step_types[0] == STEP_TYPE_STEP) {
@@ -841,7 +1031,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 		predicted_score += starting_score;
 
 		if (this->active_compress[0]) {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[0]);
 				this->compress_networks[0]->activate_small(local_s_input_vals,
 														   local_state_vals,
@@ -866,7 +1056,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 		this->branches[0]->explore_off_path_activate_score(local_s_input_vals,
 														   local_state_vals,
 														   scale_factor,
-														   explore_phase,
+														   explore_status,
 														   branch_history);
 
 		this->branches[0]->explore_off_path_activate(problem,
@@ -874,7 +1064,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 													 local_state_vals,
 													 predicted_score,
 													 scale_factor,
-													 explore_phase,
+													 explore_status,
 													 branch_history);
 		history->branch_histories[0] = branch_history;
 	} else {
@@ -891,7 +1081,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 												  local_state_vals,
 												  predicted_score,
 												  scale_factor,
-												  explore_phase,
+												  explore_status,
 												  fold_history);
 		history->fold_histories[0] = fold_history;
 	}
@@ -907,7 +1097,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 			// reused scopes will have 1 inner_input_network
 			vector<double> temp_new_s_input_vals;
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-				if (explore_phase == EXPLORE_PHASE_FLAT) {
+				if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 					FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_networks[a_index][i_index]);
 					this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
 																				 local_state_vals,
@@ -931,7 +1121,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 															 scope_output,
 															 predicted_score,
 															 scale_factor,
-															 explore_phase,
+															 explore_status,
 															 scope_history);
 			history->scope_histories[a_index] = scope_history;
 
@@ -945,7 +1135,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end for outer scope -- do nothing
 			} else {
-				if (explore_phase == EXPLORE_PHASE_FLAT) {
+				if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 					FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 					this->score_networks[a_index]->activate_small(local_s_input_vals,
 																  local_state_vals,
@@ -960,7 +1150,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 
 				if (this->active_compress[a_index]) {
 					// compress 2 layers, add 1 layer
-					if (explore_phase == EXPLORE_PHASE_FLAT) {
+					if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 						FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
 						this->compress_networks[a_index]->activate_small(local_s_input_vals,
 																		 local_state_vals,
@@ -986,7 +1176,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 			this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
 																	 local_state_vals,
 																	 scale_factor,
-																	 explore_phase,
+																	 explore_status,
 																	 branch_history);
 
 			this->branches[a_index]->explore_off_path_activate(problem,
@@ -994,12 +1184,12 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 															   local_state_vals,
 															   predicted_score,
 															   scale_factor,
-															   explore_phase,
+															   explore_status,
 															   branch_history);
 			history->branch_histories[a_index] = branch_history;
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
 															  local_state_vals,
@@ -1020,7 +1210,7 @@ void BranchPath::explore_off_path_activate(Problem& problem,
 															local_state_vals,
 															predicted_score,
 															scale_factor,
-															explore_phase,
+															explore_status,
 															fold_history);
 			history->fold_histories[a_index] = fold_history;
 		}
@@ -1057,8 +1247,8 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 			} else if (explore_signal == EXPLORE_SIGNAL_BRANCH) {
 				explore_branch();
 			} else if (explore_signal == EXPLORE_SIGNAL_CLEAN) {
-				this->explore_index_inclusive = -1;
 				this->explore_type = EXPLORE_TYPE_NONE;
+				this->explore_index_inclusive = -1;
 				this->explore_end_non_inclusive = -1;
 				delete this->explore_fold;
 				this->explore_fold = NULL;
@@ -1114,6 +1304,13 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 																	  target_val,
 																	  scale_factor,
 																	  history->branch_histories[a_index]);
+
+					this->explore_count++;
+					if (this->branches[a_index]->explore_ref_count == 0) {
+						this->explore_type = EXPLORE_TYPE_NONE;
+						this->explore_index_inclusive = -1;
+						this->explore_end_non_inclusive = -1;
+					}
 
 					return;
 				} else {
@@ -1172,6 +1369,13 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 																scale_factor,
 																history->scope_histories[a_index]);
 
+				this->explore_count++;
+				if (this->scopes[a_index]->explore_type == EXPLORE_TYPE_NONE) {
+					this->explore_type = EXPLORE_TYPE_NONE;
+					this->explore_index_inclusive = -1;
+					this->explore_end_non_inclusive = -1;
+				}
+
 				return;
 			} else {
 				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
@@ -1228,8 +1432,8 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 		} else if (explore_signal == EXPLORE_SIGNAL_BRANCH) {
 			explore_branch();
 		} else if (explore_signal == EXPLORE_SIGNAL_CLEAN) {
-			this->explore_index_inclusive = -1;
 			this->explore_type = EXPLORE_TYPE_NONE;
+			this->explore_index_inclusive = -1;
 			this->explore_end_non_inclusive = -1;
 			delete this->explore_fold;
 			this->explore_fold = NULL;
@@ -1245,6 +1449,13 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 													target_val,
 													scale_factor,
 													history->branch_histories[0]);
+
+		this->explore_count++;
+		if (this->branches[0]->explore_ref_count == 0) {
+			this->explore_type = EXPLORE_TYPE_NONE;
+			this->explore_index_inclusive = -1;
+			this->explore_end_non_inclusive = -1;
+		}
 
 		return;
 	}
@@ -2321,16 +2532,72 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 	}
 }
 
+void BranchPath::explore_set(BranchPathHistory* history) {
+	if (history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
+		this->scopes[history->explore_index_inclusive]->explore_set(
+			history->scope_histories[history->explore_index_inclusive]);
+		
+		this->explore_type = EXPLORE_TYPE_INNER_SCOPE;
+		this->explore_index_inclusive = history->explore_index_inclusive;
+		this->explore_end_non_inclusive = -1;
+		this->explore_count = 0;
+	} else if (history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+		this->branches[history->explore_index_inclusive]->explore_set(
+			history->branch_histories[history->explore_index_inclusive]);
+
+		this->explore_type = EXPLORE_TYPE_INNER_BRANCH;
+		this->explore_index_inclusive = history->explore_index_inclusive;
+		this->explore_end_non_inclusive = -1;
+		this->explore_count = 0;
+	} else {
+		// history->explore_type == EXPLORE_TYPE_NEW
+		this->explore_type = EXPLORE_TYPE_NEW;
+		this->explore_index_inclusive = history->explore_index_inclusive;
+		this->explore_end_non_inclusive = history->explore_end_non_inclusive;
+
+		int new_num_inputs = this->starting_state_sizes[history->explore_index_inclusive];
+		if (!this->is_inner_scope[history->explore_index_inclusive]) {
+			// obs_size always 1 for sorting
+			new_num_inputs++;
+		} else {
+			new_num_inputs += this->scopes[history->explore_index_inclusive]->num_outputs;
+		}
+		int new_num_outputs;
+		if (history->explore_end_non_inclusive == this->sequence_length) {
+			new_num_outputs = this->num_outputs;
+		} else {
+			new_num_outputs = this->starting_state_sizes[history->explore_end_non_inclusive];
+		}
+
+		this->explore_fold = new Fold(new_num_inputs,
+									  new_num_outputs,
+									  this->num_inputs,
+									  history->sequence_length,
+									  history->is_existing,
+									  history->existing_actions,
+									  history->actions,
+									  &this->average_scores[history->explore_index_inclusive],
+									  &this->average_misguesses[history->explore_end_non_inclusive-1]);
+
+		for (int s_index = 0; s_index < history->sequence_length; s_index++) {
+			if (!history->is_existing[s_index]) {
+				solution->action_dictionary.push_back(history->actions[s_index]);
+			} else {
+				solution->scope_dictionary.push_back(history->existing_actions[s_index]);
+			}
+		}
+	}
+}
+
 void BranchPath::save(ofstream& output_file) {
 	output_file << this->id << endl;
 
 	output_file << this->num_inputs << endl;
 	output_file << this->num_outputs << endl;
 
-	output_file << this->sequence_length << endl;
-
 	output_file << this->full_last << endl;
 
+	output_file << this->sequence_length << endl;
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->is_inner_scope[a_index] << endl;
 		if (this->is_inner_scope[a_index]) {

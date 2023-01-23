@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "branch_path.h"
+#include "explore_status.h"
 #include "fold.h"
 #include "fold_network.h"
 #include "problem.h"
@@ -48,26 +49,26 @@ public:
 	void explore_on_path_activate_score(std::vector<double>& local_s_input_vals,
 										std::vector<double>& local_state_vals,
 										double& scale_factor,
-										int& explore_phase,
+										ExploreStatus& explore_status,
 										BranchHistory* history);
 	void explore_off_path_activate_score(std::vector<double>& local_s_input_vals,
 										 std::vector<double>& local_state_vals,
 										 double& scale_factor,
-										 int& explore_phase,
+										 ExploreStatus& explore_status,
 										 BranchHistory* history);
 	void explore_on_path_activate(Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
-								  int& explore_phase,
+								  ExploreStatus& explore_status,
 								  BranchHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   std::vector<double>& local_s_input_vals,
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   int& explore_phase,
+								   ExploreStatus& explore_status,
 								   BranchHistory* history);
 	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
 								  std::vector<double>& local_state_errors,
@@ -116,6 +117,8 @@ public:
 								  double& scale_factor,
 								  double& scale_factor_error,
 								  BranchHistory* history);
+
+	void explore_set(BranchHistory* history);
 
 	void resolve_fold(int b_index);
 

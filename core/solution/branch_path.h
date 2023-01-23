@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "branch.h"
+#include "explore_status.h"
 #include "fold.h"
 #include "fold_network.h"
 #include "problem.h"
@@ -58,6 +59,7 @@ public:
 	int explore_index_inclusive;
 	int explore_end_non_inclusive;
 	Fold* explore_fold;
+	int explore_count;	// TODO: reset if too high
 
 	BranchPath(int num_inputs,
 			   int num_outputs,
@@ -92,7 +94,7 @@ public:
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
-								  int& explore_phase,
+								  ExploreStatus& explore_status,
 								  BranchPathHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   double starting_score,
@@ -100,7 +102,7 @@ public:
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   int& explore_phase,
+								   ExploreStatus& explore_status,
 								   BranchPathHistory* history);
 	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
 								  std::vector<double>& local_state_errors,
@@ -153,6 +155,8 @@ public:
 								  double& scale_factor_error,
 								  BranchPathHistory* history);
 
+	void explore_set(BranchPathHistory* history);
+
 	void explore_replace();
 	void explore_branch();
 	void resolve_fold(int a_index);
@@ -176,6 +180,14 @@ public:
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
 	FoldHistory* explore_fold_history;
+
+	int explore_type;
+	int explore_index_inclusive;
+	int explore_end_non_inclusive;
+	int sequence_length;
+	std::vector<bool> is_existing;
+	std::vector<Scope*> existing_actions;
+	std::vector<Action> actions;
 
 	BranchPathHistory(BranchPath* branch_path);
 	~BranchPathHistory();

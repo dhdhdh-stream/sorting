@@ -3,7 +3,8 @@
 #include <iostream>
 #include <boost/algorithm/string/trim.hpp>
 
-#include "definitions.h"
+#include "globals.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -399,7 +400,7 @@ Scope::Scope(std::ifstream& input_file) {
 	this->explore_end_non_inclusive = -1;
 	this->explore_fold = NULL;
 
-	solution->action_dictionary.push_back(this);
+	solution->scope_dictionary.push_back(this);
 }
 
 Scope::~Scope() {
@@ -1186,7 +1187,6 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 									  ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
-	// mid
 	for (int a_index = this->sequence_length-1; a_index >= 0; a_index--) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
@@ -1358,7 +1358,7 @@ void Scope::existing_flat_activate(Problem& problem,
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
 			this->scopes[a_index]->existing_flat_activate(problem,
-														  temp_new_s_input_vals,
+														  scope_input,
 														  scope_output,
 														  predicted_score,
 														  scale_factor,
@@ -1981,6 +1981,14 @@ void Scope::explore_set(ScopeHistory* history) {
 									  history->actions,
 									  &this->average_scores[history->explore_index_inclusive],
 									  &this->average_misguesses[history->explore_end_non_inclusive-1]);
+
+		for (int s_index = 0; s_index < history->sequence_length; s_index++) {
+			if (!history->is_existing[s_index]) {
+				solution->action_dictionary.push_back(history->actions[s_index]);
+			} else {
+				solution->scope_dictionary.push_back(history->existing_actions[s_index]);
+			}
+		}
 	}
 }
 

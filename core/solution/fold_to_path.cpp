@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "definitions.h"
-
 using namespace std;
 
 Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,

@@ -3,21 +3,19 @@
 #include <cmath>
 #include <iostream>
 
-#include "definitions.h"
+#include "globals.h"
 
 using namespace std;
 
 Fold::Fold(int num_inputs,
 		   int num_outputs,
+		   int outer_s_input_size,
 		   int sequence_length,
 		   vector<bool> is_existing,
 		   vector<Scope*> existing_actions,
 		   vector<Action> actions,
-		   int output_size,
 		   double* existing_average_score,
-		   double* existing_average_misguess,
-		   int starting_s_input_size,
-		   int starting_state_size) {
+		   double* existing_average_misguess) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
 	solution->id_counter++;
@@ -30,7 +28,6 @@ Fold::Fold(int num_inputs,
 	this->is_existing = is_existing;
 	this->existing_actions = existing_actions;
 	this->actions = actions;
-	this->output_size = output_size;
 
 	this->score_standard_deviation = 0.0;
 	this->existing_misguess_standard_deviation = 0.0;
@@ -40,12 +37,12 @@ Fold::Fold(int num_inputs,
 	this->misguess_improvement = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
-												   starting_s_input_size,
-												   vector<int>{starting_state_size},
+												   outer_s_input_size,
+												   vector<int>{this->num_inputs},
 												   20);
 	this->combined_score_network = new FoldNetwork(1,
-												   starting_s_input_size,
-												   vector<int>{starting_state_size},
+												   outer_s_input_size,
+												   vector<int>{this->num_inputs},
 												   20);
 	this->combined_improvement = 0.0;
 	this->replace_existing = 0.0;
@@ -59,8 +56,8 @@ Fold::Fold(int num_inputs,
 		}
 	}
 
-	this->curr_s_input_sizes.push_back(starting_s_input_size);
-	this->curr_scope_sizes.push_back(starting_state_size);
+	this->curr_s_input_sizes.push_back(outer_s_input_size);
+	this->curr_scope_sizes.push_back(this->num_inputs);
 
 	vector<int> flat_sizes;
 	vector<vector<int>> input_flat_sizes(this->sequence_length);
@@ -82,27 +79,27 @@ Fold::Fold(int num_inputs,
 
 	this->curr_fold = new FoldNetwork(flat_sizes,
 									  1,
-									  starting_s_input_size,
-									  starting_state_size,
+									  outer_s_input_size,
+									  this->num_inputs,
 									  100);
 	this->curr_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
 															  this->existing_actions[f_index]->num_inputs,
-															  starting_s_input_size,
-															  starting_state_size,
+															  outer_s_input_size,
+															  this->num_inputs,
 															  50);
 		}
 	}
 	this->curr_end_fold = new FoldNetwork(flat_sizes,
-										  this->output_size,
-										  starting_s_input_size,
-										  starting_state_size,
+										  this->num_outputs,
+										  outer_s_input_size,
+										  this->num_inputs,
 										  50);
 
-	this->starting_compress_original_size = starting_state_size;
-	this->curr_starting_compress_new_size = starting_state_size;
+	this->starting_compress_original_size = this->num_inputs;
+	this->curr_starting_compress_new_size = this->num_inputs;
 	this->curr_starting_compress_network = NULL;
 	this->test_starting_compress_network = NULL;
 
@@ -138,7 +135,6 @@ Fold::Fold(Fold* original) {
 	this->is_existing = original->is_existing;
 	this->existing_actions = original->existing_actions;
 	this->actions = original->actions;
-	this->output_size = original->output_size;
 
 	for (int f_index = 0; f_index < (int)original->finished_steps.size(); f_index++) {
 		this->finished_steps.push_back(new FinishedStep(original->finished_steps[f_index]));
@@ -239,10 +235,6 @@ Fold::Fold(ifstream& input_file) {
 
 		this->actions.push_back(Action(input_file));
 	}
-
-	string output_size_line;
-	getline(input_file, output_size_line);
-	this->output_size = stoi(output_size_line);
 
 	string finished_steps_size_line;
 	getline(input_file, finished_steps_size_line);
@@ -548,7 +540,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 									 vector<double>& local_state_vals,
 									 double& predicted_score,
 									 double& scale_factor,
-									 int& explore_phase,
+									 ExploreStatus& explore_status,
 									 FoldHistory* history) {
 	switch (this->last_state) {
 		case STATE_STARTING_COMPRESS:
@@ -558,7 +550,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 explore_phase,
+															 explore_status,
 															 history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -568,7 +560,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 explore_phase,
+															 explore_status,
 															 history);
 			break;
 		case STATE_SCORE:
@@ -578,7 +570,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
-												 explore_phase,
+												 explore_status,
 												 history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -588,7 +580,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													local_state_vals,
 													predicted_score,
 													scale_factor,
-													explore_phase,
+													explore_status,
 													history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -598,7 +590,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													local_state_vals,
 													predicted_score,
 													scale_factor,
-													explore_phase,
+													explore_status,
 													history);
 			break;
 		case STATE_INPUT:
@@ -608,7 +600,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
-												 explore_phase,
+												 explore_status,
 												 history);
 			break;
 		case STATE_STEP_ADDED:
@@ -618,7 +610,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													  local_state_vals,
 													  predicted_score,
 													  scale_factor,
-													  explore_phase,
+													  explore_status,
 													  history);
 			break;
 	}
@@ -1209,8 +1201,6 @@ void Fold::save(ofstream& output_file) {
 
 		this->actions[f_index].save(output_file);
 	}
-
-	output_file << this->output_size << endl;
 
 	output_file << this->finished_steps.size() << endl;
 	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {

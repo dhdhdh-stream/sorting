@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "definitions.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -291,14 +291,14 @@ void FinishedStep::explore_on_path_activate(Problem& problem,
 		scale_factor *= this->scope_scale_mod;
 
 		vector<double> scope_output;
-		int explore_phase = EXPLORE_PHASE_NONE;
+		ExploreStatus explore_status;
 		ScopeHistory* scope_history = new ScopeHistory(this->scope);	// though not important as will not backprop
 		this->scope->explore_off_path_activate(problem,
 											   scope_input,
 											   scope_output,
 											   predicted_score,
 											   scale_factor,
-											   explore_phase,
+											   explore_status,
 											   scope_history);
 		history->scope_history = scope_history;
 
@@ -365,7 +365,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 											 vector<vector<double>>& state_vals,
 											 double& predicted_score,
 											 double& scale_factor,
-											 int& explore_phase,
+											 ExploreStatus& explore_status,
 											 FinishedStepHistory* history) {
 	if (!this->is_inner_scope) {
 		problem.perform_action(this->action);
@@ -373,7 +373,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 		state_vals.push_back(vector<double>{problem.get_observation()});
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* inner_input_input_history = new FoldNetworkHistory(this->inner_input_input_networks[i_index]);
 				this->inner_input_input_networks[i_index]->activate_small(s_input_vals[this->inner_input_input_layer[i_index]],
 																		  state_vals[this->inner_input_input_layer[i_index]],
@@ -389,7 +389,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 			}
 		}
 
-		if (explore_phase == EXPLORE_PHASE_FLAT) {
+		if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_network);
 			this->inner_input_network->activate_small(s_input_vals.back(),
 													  state_vals.back(),
@@ -413,7 +413,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 											   scope_output,
 											   predicted_score,
 											   scale_factor,
-											   explore_phase,
+											   explore_status,
 											   scope_history);
 		history->scope_history = scope_history;
 
@@ -424,7 +424,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 	}
 
 	for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
-		if (explore_phase == EXPLORE_PHASE_FLAT) {
+		if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* input_network_history = new FoldNetworkHistory(this->input_networks[i_index]);
 			this->input_networks[i_index]->activate_small(s_input_vals[this->input_layer[i_index]],
 														  state_vals[this->input_layer[i_index]],
@@ -446,7 +446,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 	} else {
 		s_input_index = (int)s_input_vals.size()-1;
 	}
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
 		this->score_network->activate_subfold(s_input_vals[s_input_index],
 											  state_vals,
@@ -461,7 +461,7 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_network);
 				this->compress_network->activate_subfold(s_input_vals[s_input_index],
 														 state_vals,

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "definitions.h"
+#include "constants.h"
 
 using namespace std;
 
@@ -14,7 +14,7 @@ void Fold::score_step_explore_off_path_activate(
 		vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		int& explore_phase,
+		ExploreStatus& explore_status,
 		FoldHistory* history) {
 	// starting_score_network activated in branch
 	history->starting_score_update = starting_score;
@@ -22,7 +22,7 @@ void Fold::score_step_explore_off_path_activate(
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
 		if (this->curr_starting_compress_new_size > 0) {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
 				this->curr_starting_compress_network->activate_small(local_s_input_vals,
 																	 local_state_vals,
@@ -56,7 +56,7 @@ void Fold::score_step_explore_off_path_activate(
 																 state_vals,
 																 predicted_score,
 																 scale_factor,
-																 explore_phase,
+																 explore_status,
 																 finished_step_history);
 		history->finished_step_histories.push_back(finished_step_history);
 
@@ -74,7 +74,7 @@ void Fold::score_step_explore_off_path_activate(
 		state_vals.push_back(vector<double>{problem.get_observation()});
 	} else {
 		for (int i_index = 0; i_index < (int)this->inner_input_input_networks.size(); i_index++) {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* inner_input_input_network_history = new FoldNetworkHistory(this->inner_input_input_networks[i_index]);
 				this->inner_input_input_networks[i_index]->activate_small(s_input_vals[this->inner_input_input_layer[i_index]],
 																		  state_vals[this->inner_input_input_layer[i_index]],
@@ -90,7 +90,7 @@ void Fold::score_step_explore_off_path_activate(
 			}
 		}
 
-		if (explore_phase == EXPLORE_PHASE_FLAT) {
+		if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 			FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
 			this->curr_input_network->activate_small(s_input_vals.back(),
 													 state_vals.back(),
@@ -116,7 +116,7 @@ void Fold::score_step_explore_off_path_activate(
 			scope_output,
 			predicted_score,
 			scale_factor,
-			explore_phase,
+			explore_status,
 			scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
@@ -132,7 +132,7 @@ void Fold::score_step_explore_off_path_activate(
 		}
 	}
 
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* curr_score_network_history = new FoldNetworkHistory(this->curr_score_network);
 		this->curr_score_network->activate_subfold(local_s_input_vals,
 												   state_vals,
@@ -158,7 +158,7 @@ void Fold::score_step_explore_off_path_activate(
 				}
 			}
 		} else {
-			if (explore_phase == EXPLORE_PHASE_FLAT) {
+			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* curr_input_fold_history = new FoldNetworkHistory(this->curr_input_folds[f_index]);
 				this->curr_input_folds[f_index]->activate_fold(input_fold_inputs[f_index],
 															   local_s_input_vals,
@@ -199,7 +199,7 @@ void Fold::score_step_explore_off_path_activate(
 		}
 	}
 
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* curr_fold_history = new FoldNetworkHistory(this->curr_fold);
 		// TODO: if pointers don't match, then don't backprop
 		this->curr_fold->activate_fold(fold_input,
@@ -215,7 +215,7 @@ void Fold::score_step_explore_off_path_activate(
 	history->ending_score_update = this->curr_fold->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
 
-	if (explore_phase == EXPLORE_PHASE_FLAT) {
+	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* curr_end_fold_history = new FoldNetworkHistory(this->curr_end_fold);
 		this->curr_end_fold->activate_fold(fold_input,
 										   local_s_input_vals,
@@ -228,8 +228,8 @@ void Fold::score_step_explore_off_path_activate(
 										   state_vals);
 	}
 	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
+	local_state_vals.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
@@ -648,8 +648,8 @@ void Fold::score_step_existing_flat_activate(
 									   curr_end_fold_history);
 	history->curr_end_fold_history = curr_end_fold_history;
 	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
+	local_state_vals.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
@@ -1059,8 +1059,8 @@ void Fold::score_step_update_activate(
 									   local_s_input_vals,
 									   state_vals);
 	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
+	local_state_vals.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 
@@ -1324,8 +1324,8 @@ void Fold::score_step_existing_update_activate(
 									   local_s_input_vals,
 									   state_vals);
 	local_state_vals.clear();
-	local_state_vals.reserve(this->output_size);
-	for (int o_index = 0; o_index < this->output_size; o_index++) {
+	local_state_vals.reserve(this->num_outputs);
+	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
 

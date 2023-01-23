@@ -3,7 +3,6 @@
 #include <iostream>
 #include <limits>
 
-#include "definitions.h"
 #include "fold_to_path.h"
 
 using namespace std;

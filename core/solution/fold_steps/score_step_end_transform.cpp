@@ -14,7 +14,7 @@ void Fold::score_end() {
 
 	if ((int)this->finished_steps.size() == this->sequence_length-1) {
 		this->curr_compress_num_layers = (int)this->curr_scope_sizes.size();
-		this->curr_compress_new_size = this->output_size;
+		this->curr_compress_new_size = this->num_outputs;
 		this->curr_compress_original_size = sum_scope_sizes;
 
 		this->curr_compress_network = this->curr_end_fold;

@@ -1,14 +1,5 @@
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
-
-#include <random>
-
-#include "solution.h"
-
-extern std::default_random_engine generator;
-
-extern bool global_debug_flag;
-extern double global_sum_error;
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 const int STEP_TYPE_STEP = 0;
 const int STEP_TYPE_BRANCH = 1;
@@ -30,6 +21,4 @@ const int EXPLORE_SIGNAL_REPLACE = 1;
 const int EXPLORE_SIGNAL_BRANCH = 2;
 const int EXPLORE_SIGNAL_CLEAN = 3;
 
-extern Solution* solution;
-
-#endif /* DEFINITIONS_H */
+#endif /* CONSTANTS_H */

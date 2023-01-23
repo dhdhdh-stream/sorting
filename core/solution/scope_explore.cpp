@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "definitions.h"
 #include "fold_to_path.h"
 
 using namespace std;

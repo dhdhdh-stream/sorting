@@ -1,7 +1,7 @@
 #ifndef EXPLORE_STATUS_H
 #define EXPLORE_STATUS_H
 
-#include "definitions.h"
+#include "constants.h"
 
 class ExploreStatus {
 public:

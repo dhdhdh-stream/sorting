@@ -1,5 +1,7 @@
 #include "action.h"
 
+#include "globals.h"
+
 using namespace std;
 
 Action::Action() {
@@ -20,6 +22,10 @@ Action::Action(ifstream& save_file) {
 	string move_line;
 	getline(save_file, move_line);
 	this->move = stoi(move_line);
+
+	if (this->move != ACTION_NONE && this->move != ACTION_START) {
+		solution->action_dictionary.push_back(Action(this->write, this->move));
+	}
 }
 
 Action::~Action() {

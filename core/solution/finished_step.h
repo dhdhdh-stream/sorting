@@ -77,7 +77,7 @@ public:
 								   std::vector<std::vector<double>>& state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   int& explore_phase,
+								   ExploreStatus& explore_status,
 								   FinishedStepHistory* history);
 	void explore_off_path_backprop(std::vector<std::vector<double>>& s_input_errors,
 								   std::vector<std::vector<double>>& state_errors,

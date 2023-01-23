@@ -6,6 +6,7 @@
 
 #include "action.h"
 #include "branch.h"
+#include "explore_status.h"
 #include "fold.h"
 #include "fold_network.h"
 #include "problem.h"

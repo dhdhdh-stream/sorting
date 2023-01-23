@@ -6,6 +6,12 @@
 using namespace std;
 
 void Fold::flat_to_fold() {
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->is_existing[f_index]) {
+			this->existing_actions[f_index] = new Scope(this->existing_actions[f_index]);
+		}
+	}
+
 	this->starting_average_score = 0.0;
 	this->starting_average_misguess = 0.0;
 	this->starting_average_local_impact = 0.0;
