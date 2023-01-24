@@ -1,5 +1,6 @@
 // TODO: add possibility of empty sequence?
 // TODO: add loops
+// TODO: consider when to deep copy vs. when to reuse
 
 #ifndef FOLD_H
 #define FOLD_H

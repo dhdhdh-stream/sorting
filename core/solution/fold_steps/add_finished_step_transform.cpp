@@ -124,8 +124,6 @@ void Fold::add_finished_step() {
 														   this->curr_s_input_sizes[0],
 														   this->curr_scope_sizes,
 														   20);
-				cout << "diff curr_score_network" << endl;
-				exit(1);
 
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_SCORE" << endl;

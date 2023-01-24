@@ -101,7 +101,8 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				if (finished_steps[n_index]->is_inner_scope) {
 					scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-					scope_inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
+					// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
+					scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
 
 					for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 						if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
@@ -269,7 +270,8 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		if (finished_steps[n_index]->is_inner_scope) {
 			scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-			scope_inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
+			// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
+			scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
 
 			for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 				if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
@@ -458,7 +460,8 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				if (finished_steps[n_index]->is_inner_scope) {
 					inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-					inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
+					// finished_steps[n_index]->scope is already NULL, so use scopes.back()
+					inner_input_sizes.back().push_back(scopes.back()->num_inputs);
 
 					// finished_steps[n_index]->inner_input_input_networks.size() == 0
 				}
@@ -570,7 +573,8 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		if (finished_steps[n_index]->is_inner_scope) {
 			inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-			inner_input_sizes.back().push_back(finished_steps[n_index]->scope->num_inputs);
+			// finished_steps[n_index]->scope is already NULL, so use scopes.back()
+			inner_input_sizes.back().push_back(scopes.back()->num_inputs);
 
 			// finished_steps[n_index]->inner_input_input_networks.size() == 0
 		}

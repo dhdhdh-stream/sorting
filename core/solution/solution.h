@@ -18,6 +18,7 @@ public:
 	// on reload, start from a copy of everything currently in the solution
 	std::vector<Action> action_dictionary;
 	std::vector<Scope*> scope_dictionary;
+	// TODO: deep copy scopes for scope_dictionary refs as original might get deleted?
 
 	Solution();
 	~Solution();

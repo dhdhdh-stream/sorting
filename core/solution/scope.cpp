@@ -112,6 +112,8 @@ Scope::Scope(Scope* original) {
 	this->num_inputs = original->num_inputs;
 	this->num_outputs = original->num_outputs;
 
+	this->full_last = original->full_last;
+
 	this->sequence_length = original->sequence_length;
 	this->is_inner_scope = original->is_inner_scope;
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
@@ -150,7 +152,8 @@ Scope::Scope(Scope* original) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (original->step_types[a_index] == STEP_TYPE_STEP
+		if ((original->step_types[a_index] == STEP_TYPE_STEP
+					&& (a_index != this->sequence_length-1 || this->full_last))
 				|| original->step_types[a_index] == STEP_TYPE_FOLD) {
 			this->score_networks.push_back(new FoldNetwork(original->score_networks[a_index]));
 		} else {
@@ -175,8 +178,6 @@ Scope::Scope(Scope* original) {
 		}
 	}
 	this->compress_original_sizes = original->compress_original_sizes;
-
-	this->full_last = original->full_last;
 
 	this->starting_state_sizes = original->starting_state_sizes;
 
