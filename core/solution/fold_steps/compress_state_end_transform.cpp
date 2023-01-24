@@ -6,7 +6,8 @@
 using namespace std;
 
 void Fold::compress_state_end() {
-	if (this->sum_error/10000 < 0.01) {
+	// if (this->sum_error/10000 < 0.01) {
+	if (rand()%2 == 0) {
 		if (this->curr_compress_network != NULL) {
 			delete this->curr_compress_network;
 		}
@@ -20,7 +21,9 @@ void Fold::compress_state_end() {
 		this->curr_compressed_s_input_sizes = this->test_compressed_s_input_sizes;
 		this->curr_compressed_scope_sizes = this->test_compressed_scope_sizes;
 
-		// update curr_fold without updating curr_scope_sizes
+		this->curr_s_input_sizes = this->test_s_input_sizes;
+		this->curr_scope_sizes = this->test_scope_sizes;
+
 		delete this->curr_fold;
 		this->curr_fold = this->test_fold;
 		this->test_fold = NULL;
@@ -36,9 +39,6 @@ void Fold::compress_state_end() {
 		this->test_end_fold = NULL;
 
 		if (this->curr_compress_new_size == 0) {
-			this->curr_s_input_sizes = this->test_s_input_sizes;
-			this->curr_scope_sizes = this->test_scope_sizes;
-
 			cout << "COMPRESS_STATE success" << endl;
 			cout << "ending COMPRESS_STATE" << endl;
 			cout << "beginning ADD_STEP" << endl;
@@ -50,9 +50,10 @@ void Fold::compress_state_end() {
 			// this->test_compress_original_size unchanged
 
 			if (this->test_compress_new_size > 0) {
+				// copy s_input_sizes and scope_sizes from curr_score_network
 				this->test_compress_network = new FoldNetwork(this->test_compress_new_size,
-															  this->curr_s_input_sizes[0],
-															  this->curr_scope_sizes,
+															  this->curr_score_network->s_input_size,
+															  this->curr_score_network->scope_sizes,
 															  20);
 			}
 
@@ -108,8 +109,6 @@ void Fold::compress_state_end() {
 		this->test_scope_sizes.back()++;
 
 		if (this->curr_compress_num_layers == 0) {
-			// don't update curr_s_input_sizes and curr_scope_sizes
-
 			// this->curr_scope_sizes.size() > 1
 			if (this->curr_s_input_sizes[0] + this->curr_scope_sizes[0] == 0) {
 				this->curr_score_network->subfold_index++;
@@ -140,14 +139,11 @@ void Fold::compress_state_end() {
 		} else {
 			int sum_scope_sizes = 0;
 			for (int sc_index = 0; sc_index < this->curr_compress_num_layers-1; sc_index++) {
-				sum_scope_sizes += this->curr_scope_sizes[this->curr_scope_sizes.size()-1-sc_index];
+				sum_scope_sizes += this->curr_compressed_scope_sizes[this->curr_compressed_scope_sizes.size()-1-sc_index];
 			}
 			int compress_size = this->curr_compress_original_size - this->curr_compress_new_size;
 			if (compress_size > sum_scope_sizes) {
 				// skip STATE_COMPRESS_SCOPE and STATE_INPUT
-				this->curr_s_input_sizes = this->test_s_input_sizes;
-				this->curr_scope_sizes = this->test_scope_sizes;
-
 				cout << "COMPRESS_STATE fail" << endl;
 				cout << "ending COMPRESS_STATE" << endl;
 				cout << "beginning ADD_STEP" << endl;
@@ -207,10 +203,10 @@ void Fold::compress_state_end() {
 				this->test_scope_sizes.push_back(this->test_compressed_scope_sizes[0]);
 				this->test_scope_sizes.push_back(this->test_compress_new_size);
 
-				// use curr_scope_sizes for construction
+				// copy s_input_sizes and scope_sizes from curr_score_network
 				this->test_compress_network = new FoldNetwork(this->test_compress_new_size,
-															  this->curr_s_input_sizes[0],
-															  this->curr_scope_sizes,
+															  this->curr_score_network->s_input_size,
+															  this->curr_score_network->scope_sizes,
 															  20);
 
 				this->test_fold = new FoldNetwork(this->curr_fold);

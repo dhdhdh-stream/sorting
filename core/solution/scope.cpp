@@ -683,7 +683,11 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 					explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-					local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+					if (history->explore_end_non_inclusive == this->sequence_length) {
+						local_state_vals = vector<double>(this->num_outputs, 0.0);
+					} else {
+						local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+					}
 					a_index = history->explore_end_non_inclusive-1;		// account for increment at end
 				} else {
 					history->score_network_histories[a_index] = score_network_history;
@@ -775,7 +779,11 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 				explore_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-				local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+				if (history->explore_end_non_inclusive == this->sequence_length) {
+					local_state_vals = vector<double>(this->num_outputs, 0.0);
+				} else {
+					local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
+				}
 				a_index = history->explore_end_non_inclusive-1;		// account for increment at end
 
 				delete branch_history;
@@ -808,6 +816,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
 															  local_state_vals,
 															  score_network_history);
+				history->score_network_histories[a_index] = score_network_history;
 			} else {
 				this->score_networks[a_index]->activate_small(local_s_input_vals,
 															  local_state_vals);

@@ -354,7 +354,14 @@ Fold::Fold(ifstream& input_file) {
 }
 
 Fold::~Fold() {
-	// don't delete existing_actions, as they are only deep copied for FinishedStep
+	// delete existing_actions if past flat
+	if (this->state != -1) {
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+			if (this->existing_actions[f_index] != NULL) {
+				delete this->existing_actions[f_index];
+			}
+		}
+	}
 
 	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
 		delete this->finished_steps[n_index];
@@ -469,7 +476,8 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	if (this->state_iter == 500000) {
+	// if (this->state_iter == 500000) {
+	if (this->state_iter == 50) {
 		this->score_standard_deviation = sqrt(this->score_standard_deviation/9999);
 		this->existing_misguess_standard_deviation = sqrt(this->existing_misguess_standard_deviation/9999);
 
@@ -486,12 +494,14 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		double combined_t_value = this->combined_improvement
 			/ (this->score_standard_deviation / sqrt(10000));
 		cout << "combined_t_value: " << combined_t_value << endl;
-		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
+		// if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
+		if (rand()%2 == 0) {
 			double replace_combined_t_value = this->replace_combined
 				/ (this->score_standard_deviation / sqrt(10000));
 			cout << "replace_combined_t_value: " << replace_combined_t_value << endl;
-			if (this->replace_combined > 0.0
-					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
+			// if (this->replace_combined > 0.0
+			// 		|| abs(replace_combined_t_value) < 1.960) {	// 95%<
+			if (rand()%2 == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -511,8 +521,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				/ (this->existing_misguess_standard_deviation / sqrt(10000));
 			cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
-					&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
+			// if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
+			// 		&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
+			if (rand()%2 == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -1086,7 +1097,14 @@ void Fold::fold_increment() {
 	this->state_iter++;
 
 	if (this->state == STATE_STARTING_COMPRESS) {
-		if (this->state_iter == 150000) {
+		if (this->state_iter == 30000) {
+			this->new_state_factor = 5;
+		} else if (this->state_iter == 60000) {
+			this->new_state_factor = 1;
+		}
+
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1103,7 +1121,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1114,7 +1133,8 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1131,7 +1151,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1148,7 +1169,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1166,7 +1188,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {

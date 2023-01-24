@@ -32,7 +32,7 @@ void FoldNetwork::activate_small(std::vector<double>& s_input_vals,
 	history->save_weights();
 }
 
-// TODO: reserve memory for s_input_errors, state_errors outside
+// TODO: maybe vector reserve memory for s_input_errors, state_errors outside
 void FoldNetwork::backprop_small_errors_with_no_weight_change(
 		vector<double>& errors,
 		vector<double>& s_input_errors,

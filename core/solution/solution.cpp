@@ -94,7 +94,7 @@ void Solution::new_sequence(int& sequence_length,
 							vector<Scope*>& existing_actions,
 							vector<Action>& actions) {
 	geometric_distribution<int> geo_dist(0.3);
-	sequence_length = geo_dist(generator);
+	sequence_length = 1 + geo_dist(generator);
 	for (int s_index = 0; s_index < sequence_length; s_index++) {
 		if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
 			is_existing.push_back(true);

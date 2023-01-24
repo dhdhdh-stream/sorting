@@ -1,3 +1,4 @@
+// TODO: add possibility of empty sequence?
 // TODO: add loops
 
 #ifndef FOLD_H

@@ -100,5 +100,6 @@ void Fold::flat_to_fold() {
 		this->state = STATE_STARTING_COMPRESS;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
+		this->new_state_factor = 25;
 	}
 }

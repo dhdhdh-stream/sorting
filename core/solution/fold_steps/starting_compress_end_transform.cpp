@@ -6,7 +6,8 @@
 using namespace std;
 
 void Fold::starting_compress_end() {
-	if (this->sum_error/10000 < 0.01) {
+	// if (this->sum_error/10000 < 0.01) {
+	if (rand()%2 == 0) {
 		this->curr_starting_compress_new_size = this->test_starting_compress_new_size;
 
 		// no change to this->curr_s_input_sizes
@@ -119,15 +120,19 @@ void Fold::starting_compress_end() {
 	} else {
 		if (this->test_starting_compress_network != NULL) {
 			delete this->test_starting_compress_network;
+			this->test_starting_compress_network = NULL;
 		}
 
 		delete this->test_fold;
+		this->test_fold = NULL;
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_existing[f_index]) {
 				delete this->test_input_folds[f_index];
+				this->test_input_folds[f_index] = NULL;
 			}
 		}
 		delete this->test_end_fold;
+		this->test_end_fold = NULL;
 
 		// if this->is_existing[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 

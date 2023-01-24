@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
@@ -372,6 +374,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							 scope_compress_networks,
 							 scope_compress_original_sizes,
 							 false);
+	solution->scope_dictionary.push_back(scope);
 
 	return scope;
 }

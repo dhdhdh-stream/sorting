@@ -48,13 +48,19 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 
 	this->compress_num_layers = compress_num_layers;
 	this->compress_new_size = compress_new_size;
+	this->compress_network = compress_network;
+	this->compress_original_size = compress_original_size;
+
 	if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
 		this->active_compress = true;
 	} else {
 		this->active_compress = false;
+		if (this->compress_network != NULL) {
+			// edge case where fold num_output is 0, but need to handle end_fold
+			delete this->compress_network;
+			this->compress_network = NULL;
+		}
 	}
-	this->compress_network = compress_network;
-	this->compress_original_size = compress_original_size;
 
 	this->compressed_s_input_sizes = compressed_s_input_sizes;
 	this->compressed_scope_sizes = compressed_scope_sizes;

@@ -55,7 +55,7 @@ void Scope::explore_replace() {
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == (int)this->scopes.size()-1) {
+			if (a_index == (int)this->scopes.size()-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
 				delete this->score_networks[a_index];
@@ -422,7 +422,7 @@ void Scope::resolve_fold(int a_index) {
 		this->full_last = true;
 	}
 
-	this->sequence_length  = this->sequence_length - 1 + new_sequence_length;
+	this->sequence_length += new_sequence_length;
 	this->is_inner_scope.insert(this->is_inner_scope.begin()+a_index+1,
 		new_is_inner_scope.begin(), new_is_inner_scope.end());
 	this->scopes.insert(this->scopes.begin()+a_index+1,

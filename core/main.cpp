@@ -16,7 +16,8 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1674449097;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -24,7 +25,8 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 
-	while (true) {
+	// while (true) {
+	for (int i = 0; i < 10000; i++) {
 		Problem problem;
 
 		if (rand()%2 == 0) {
@@ -47,11 +49,11 @@ int main(int argc, char* argv[]) {
 
 			double target_val = problem.score_result();
 			if (explore_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
-				if (target_val > explore_status.existing_score) {
+				// if (target_val > explore_status.existing_score) {
+				if (rand()%10 == 0) {
 					solution->root->explore_set(scope_history);
 				}
-			} else {
-				// explore_status.explore_phase == EXPLORE_PHASE_FLAT
+			} else if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				solution->root->explore_on_path_backprop(local_state_errors,
 														 predicted_score,
@@ -59,6 +61,7 @@ int main(int argc, char* argv[]) {
 														 scale_factor,
 														 scope_history);
 			}
+			// if root is entirely replaced, it's possible for explore_phase == EXPLORE_PHASE_NONE
 
 			delete scope_history;
 		} else {

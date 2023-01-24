@@ -268,7 +268,7 @@ void Branch::explore_on_path_activate(Problem& problem,
 																  branch_path_history);
 	history->branch_path_history = branch_path_history;
 }
-
+// TODO: randomize index
 void Branch::explore_off_path_activate(Problem& problem,
 									   vector<double>& local_s_input_vals,
 									   vector<double>& local_state_vals,
