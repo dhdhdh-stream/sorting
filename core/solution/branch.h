@@ -28,13 +28,6 @@ public:
 
 	int explore_ref_count;
 
-	// TODO: for folding a branch with the front, for the other branches' input, add output networks (like the opposite of the input networks currently)
-	// set one full path as primary, and fold completely?
-	// - there will be branches coming off, but can try to match existing
-	//   - during flat (and later during fold), if not taking branch, add state to mark
-	// - if branch travelled, set unhit to blank
-	// so can still be made a simple flat into a simple fold?
-
 	Branch(int num_inputs,
 		   int num_outputs,
 		   FoldNetwork* branch_score_network,

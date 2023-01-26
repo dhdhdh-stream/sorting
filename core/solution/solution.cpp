@@ -68,6 +68,10 @@ void Solution::init() {
 						   starting_compress_networks,
 						   starting_compress_original_sizes,
 						   starting_full_last);
+	this->root->id = -1;
+
+	this->max_depth = 1;
+	this->depth_limit = 11;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -75,26 +79,53 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, id_counter_line);
 	this->id_counter = stoi(id_counter_line);
 
-	// not needed as should always be 0
-	string scope_id_line;
-	getline(input_file, scope_id_line);
-	int scope_id = stoi(scope_id_line);
+	string scope_dictionary_size_line;
+	getline(input_file, scope_dictionary_size_line);
+	int scope_dictionary_size = stoi(scope_dictionary_size_line);
+	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
+		this->scope_dictionary.push_back(Scope());
+	}
+	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
+		ifstream scope_save_file;
+		scope_save_file.open("saves/scope_" + to_string(s_index) + ".txt");
+		this->scope_dictionary[s_index]->load(scope_save_file);
+		scope_save_file.close();
+	}
+
+	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
+		string scope_use_count_line;
+		getline(input_file, scope_use_count_line);
+		this->scope_use_counts.push_back(stoi(scope_use_count_line));
+	}
 
 	ifstream scope_save_file;
-	scope_save_file.open("saves/scope_" + to_string(scope_id) + ".txt");
+	scope_save_file.open("saves/scope_root.txt");
 	this->root = new Scope(scope_save_file);
 	scope_save_file.close();
 
-	// remove root scope from dictionary
-	this->scope_dictionary.pop_back();
+	string max_depth_line;
+	getline(input_file, max_depth_line);
+	this->max_depth = stoi(max_depth_line);
+
+	if (this->max_depth < 50) {
+		this->depth_limit = this->max_depth + 10;
+	} else {
+		this->depth_limit = 1.2*this->depth;
+	}
 }
 
 void Solution::new_sequence(int& sequence_length,
 							vector<bool>& is_existing,
 							vector<Scope*>& existing_actions,
-							vector<Action>& actions) {
-	geometric_distribution<int> geo_dist(0.3);
-	sequence_length = 1 + geo_dist(generator);
+							vector<Action>& actions,
+							bool can_be_empty) {
+	// Note: don't refold, and instead try longer sequences to try to unwind to find deeper connections
+	geometric_distribution<int> geo_dist(0.2);
+	if (can_be_empty) {
+		sequence_length = geo_dist(generator);
+	} else {
+		sequence_length = 1 + geo_dist(generator);
+	}
 	for (int s_index = 0; s_index < sequence_length; s_index++) {
 		if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
 			is_existing.push_back(true);
@@ -124,10 +155,22 @@ void Solution::new_sequence(int& sequence_length,
 void Solution::save(ofstream& output_file) {
 	output_file << this->id_counter << endl;
 
-	output_file << this->root->id << endl;
+	output_file << this->scope_dictionary.size() << endl;
+	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {
+		ofstream scope_save_file;
+		scope_save_file.open("saves/scope_" + to_string(s_index) + ".txt");
+		this->scope_dictionary[s_index]->save(scope_save_file);
+		scope_save_file.close();
+	}
+
+	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {
+		output_file << this->scope_use_counts[s_index] << endl;
+	}
 
 	ofstream scope_save_file;
-	scope_save_file.open("saves/scope_" + to_string(this->root->id) + ".txt");
+	scope_save_file.open("saves/scope_root.txt");
 	this->root->save(scope_save_file);
 	scope_save_file.close();
+
+	output_file << this->max_depth << endl;
 }

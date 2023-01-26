@@ -1,3 +1,5 @@
+// Note: allow recursion, but keep track of scope depth, and if go too low, fail run with bad score
+
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -28,13 +30,14 @@ public:
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
-	std::vector<double> scope_scale_mod;
+	std::vector<Network*> scope_scale_mod;
 
 	std::vector<int> step_types;
 	std::vector<Branch*> branches;
 	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
+	// Note: don't use soft targets even with early exit, as hard targets needed to determine impact
 
 	std::vector<double> average_scores;	// for calculating score standard deviation
 	std::vector<double> average_misguesses;	// track also after branches
@@ -82,23 +85,24 @@ public:
 		  std::vector<FoldNetwork*> compress_networks,
 		  std::vector<int> compress_original_sizes,
 		  bool full_last);
-	Scope(Scope* original);
-	Scope(std::ifstream& input_file);
+	Scope();	// empty constructor for loading
 	~Scope();
+
+	void load(std::ifstream& input_file);
 
 	void explore_on_path_activate(Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
-								  ExploreStatus& explore_status,
+								  RunStatus& run_status,
 								  ScopeHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   std::vector<double>& local_s_input_vals,
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   ExploreStatus& explore_status,
+								   RunStatus& run_status,
 								   ScopeHistory* history);
 	void explore_on_path_backprop(std::vector<double>& local_state_errors,
 								  double& predicted_score,
@@ -116,6 +120,7 @@ public:
 								std::vector<double>& local_state_vals,
 								double& predicted_score,
 								double& scale_factor,
+								RunStatus& run_status,
 								ScopeHistory* history);
 	void existing_flat_backprop(std::vector<double>& local_state_errors,
 								std::vector<double>& local_s_input_errors,
@@ -129,17 +134,20 @@ public:
 						 std::vector<double>& local_state_vals,
 						 double& predicted_score,
 						 double& scale_factor,
+						 RunStatus& run_status,
 						 ScopeHistory* history);
 	void update_backprop(double& predicted_score,
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 ScopeHistory* history);
 	void existing_update_activate(Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  ScopeHistory* history);
 	void existing_update_backprop(double& predicted_score,
 								  double predicted_score_error,
@@ -171,6 +179,10 @@ public:
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 
 	FoldHistory* explore_fold_history;
+
+	// in case of early exit due to scope depth
+	int exit_index;
+	int exit_location;
 
 	int explore_type;
 	int explore_index_inclusive;

@@ -121,6 +121,11 @@ void Scope::explore_replace() {
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
 
+	if (this->explore_fold->state == STATE_DONE) {
+		// sequence length 0 edge case
+		resolve_fold(this->explore_index_inclusive);
+	}
+
 	this->explore_type = EXPLORE_TYPE_NONE;
 	this->explore_index_inclusive = -1;
 	this->explore_end_non_inclusive = -1;
@@ -295,6 +300,11 @@ void Scope::explore_branch() {
 										new_branches,
 										new_folds);
 		this->explore_fold->combined_score_network = NULL;
+
+		if (this->explore_fold->state == STATE_DONE) {
+			// sequence length 0 edge case
+			new_branch->resolve_fold(1);
+		}
 
 		this->step_types[this->explore_index_inclusive] = STEP_TYPE_BRANCH;
 		this->branches[this->explore_index_inclusive] = new_branch;
@@ -498,7 +508,6 @@ void Scope::resolve_fold(int a_index) {
 
 	if (this->explore_type == EXPLORE_TYPE_NEW) {
 		if (this->explore_index_inclusive > a_index) {
-			// TODO: explore_index_inclusive != a_index as local_impact is not set during fold, but examine if good to do so
 			this->explore_index_inclusive += new_sequence_length;
 		}
 		if (this->explore_end_non_inclusive > a_index) {

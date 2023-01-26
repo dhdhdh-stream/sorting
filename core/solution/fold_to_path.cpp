@@ -376,7 +376,9 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							 scope_compress_networks,
 							 scope_compress_original_sizes,
 							 false);
+	scope->id = (int)solution->scope_dictionary.size();
 	solution->scope_dictionary.push_back(scope);
+	solution->scope_use_counts.push_back(1);
 
 	return scope;
 }

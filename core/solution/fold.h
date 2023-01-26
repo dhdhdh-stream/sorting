@@ -1,6 +1,4 @@
-// TODO: add possibility of empty sequence?
 // TODO: add loops
-// TODO: consider when to deep copy vs. when to reuse
 
 #ifndef FOLD_H
 #define FOLD_H
@@ -37,9 +35,9 @@ public:
 	int num_outputs;
 	int outer_s_input_size;
 
-	int sequence_length;
+	int sequence_length;	// can be 0
 	std::vector<bool> is_existing;
-	std::vector<Scope*> existing_actions;	// shallow copy initialy, deep copy after flat
+	std::vector<Scope*> existing_actions;
 	std::vector<Action> actions;
 
 	std::vector<FinishedStep*> finished_steps;
@@ -63,7 +61,7 @@ public:
 	double replace_existing;
 	double replace_combined;
 
-	std::vector<Network*> scope_scale_mod_calcs;
+	std::vector<Network*> scope_scale_mod;
 
 	std::vector<int> curr_s_input_sizes;
 	std::vector<int> curr_scope_sizes;
@@ -125,10 +123,11 @@ public:
 		 std::vector<Action> actions,
 		 double* existing_average_score,
 		 double* existing_average_misguess);
-	Fold(Fold* original);
+	// Fold(Fold* original);
 	Fold(std::ifstream& input_file);
 	~Fold();
 
+	// Note: if early exit, don't worry about backprop, as after flat, run may not hit end anyways -- but update measures
 	void explore_on_path_activate(double existing_score,
 								  Problem& problem,
 								  std::vector<double>& local_s_input_vals,

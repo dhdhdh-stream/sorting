@@ -9,16 +9,20 @@
 
 class Solution {
 public:
-	int id_counter;
+	int id_counter;	// for Branch, BranchPath, Fold, but not for scopes
 	std::mutex id_counter_mtx;
 
 	Scope* root;
 
-	// use refs, allow duplicates, choose randomly, so successful actions are naturally chosen more
+	// allow duplicates, choose randomly, so successful actions are naturally chosen more
 	// on reload, start from a copy of everything currently in the solution
 	std::vector<Action> action_dictionary;
+
 	std::vector<Scope*> scope_dictionary;
-	// TODO: deep copy scopes for scope_dictionary refs as original might get deleted?
+	std::vector<int> scope_use_counts;
+
+	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
+	int depth_limit;
 
 	Solution();
 	~Solution();
