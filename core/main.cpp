@@ -48,22 +48,6 @@ int main(int argc, char* argv[]) {
 													 scope_history);
 
 			if (!run_status.exceeded_depth) {
-				double target_val = problem.score_result();
-				if (explore_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
-					// if (target_val > explore_status.existing_score) {
-					if (rand()%10 == 0) {
-						solution->root->explore_set(scope_history);
-					}
-				} else if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
-					vector<double> local_state_errors;
-					solution->root->explore_on_path_backprop(local_state_errors,
-															 predicted_score,
-															 target_val,
-															 scale_factor,
-															 scope_history);
-				}
-				// if root is entirely replaced, it's possible for explore_phase == EXPLORE_PHASE_NONE
-
 				if (run_status.max_depth > solution->max_depth) {
 					solution->max_depth = run_status.max_depth;
 
@@ -74,6 +58,30 @@ int main(int argc, char* argv[]) {
 					}
 				}
 			}
+
+			double target_val;
+			if (run_status.exceeded_depth) {
+				target_val = -1.0;
+			} else {
+				target_val = problem.score_result();
+			}
+
+			if (explore_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
+				if (!run_status.exceeded_depth) {
+					// if (target_val > explore_status.existing_score) {
+					if (rand()%10 == 0) {
+						solution->root->explore_set(scope_history);
+					}
+				}
+			} else if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+				vector<double> local_state_errors;
+				solution->root->explore_on_path_backprop(local_state_errors,
+														 predicted_score,
+														 target_val,
+														 scale_factor,
+														 scope_history);
+			}
+			// can be EXPLORE_PHASE_NONE if early exit or edge case if root is entirely replaced
 
 			delete scope_history;
 		} else {
@@ -91,7 +99,24 @@ int main(int argc, char* argv[]) {
 											scale_factor,
 											scope_history);
 
-			double target_val = problem.score_result();
+			if (!run_status.exceeded_depth) {
+				if (run_status.max_depth > solution->max_depth) {
+					solution->max_depth = run_status.max_depth;
+
+					if (solution->max_depth < 50) {
+						solution->depth_limit = solution->max_depth + 10;
+					} else {
+						solution->depth_limit = 1.2*solution->depth;
+					}
+				}
+			}
+
+			double target_val;
+			if (run_status.exceeded_depth) {
+				target_val = -1.0;
+			} else {
+				target_val = problem.score_result();
+			}
 
 			double next_predicted_score = predicted_score;
 

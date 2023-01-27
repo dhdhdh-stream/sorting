@@ -123,17 +123,16 @@ public:
 		 std::vector<Action> actions,
 		 double* existing_average_score,
 		 double* existing_average_misguess);
-	// Fold(Fold* original);
 	Fold(std::ifstream& input_file);
 	~Fold();
 
-	// Note: if early exit, don't worry about backprop, as after flat, run may not hit end anyways -- but update measures
 	void explore_on_path_activate(double existing_score,
 								  Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  FoldHistory* history);
 	int explore_on_path_backprop(std::vector<double>& local_state_errors,
 								 double& predicted_score,
@@ -146,7 +145,7 @@ public:
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   ExploreStatus& explore_status,
+								   RunStatus& run_status,
 								   FoldHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
@@ -160,6 +159,7 @@ public:
 								std::vector<double>& local_state_vals,
 								double& predicted_score,
 								double& scale_factor,
+								RunStatus& run_status,
 								FoldHistory* history);
 	void existing_flat_backprop(std::vector<double>& local_s_input_errors,
 								std::vector<double>& local_state_errors,
@@ -174,6 +174,7 @@ public:
 						 std::vector<double>& local_state_vals,
 						 double& predicted_score,
 						 double& scale_factor,
+						 RunStatus& run_status,
 						 FoldHistory* history);
 	void update_backprop(double& predicted_score,
 						 double& next_predicted_score,
@@ -186,6 +187,7 @@ public:
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  FoldHistory* history);
 	void existing_update_backprop(double& predicted_score,
 								  double predicted_score_error,
@@ -201,6 +203,7 @@ public:
 											std::vector<double>& local_state_vals,
 											double& predicted_score,
 											double& scale_factor,
+											RunStatus& run_status,
 											FoldHistory* history);
 	void flat_step_explore_on_path_backprop(std::vector<double>& local_state_errors,
 											double& predicted_score,
@@ -217,7 +220,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void starting_compress_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -233,6 +236,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void starting_compress_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -249,6 +253,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void starting_compress_step_update_backprop(
 		double& predicted_score,
@@ -263,6 +268,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void starting_compress_step_existing_update_backprop(
 		double& predicted_score,
@@ -280,7 +286,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void inner_scope_input_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -296,6 +302,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -312,6 +319,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void inner_scope_input_step_update_backprop(
 		double& predicted_score,
@@ -326,6 +334,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_update_backprop(
 		double& predicted_score,
@@ -343,7 +352,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void score_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -359,6 +368,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void score_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -375,6 +385,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void score_step_update_backprop(
 		double& predicted_score,
@@ -389,6 +400,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void score_step_existing_update_backprop(
 		double& predicted_score,
@@ -406,7 +418,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void compress_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -422,6 +434,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void compress_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -438,6 +451,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void compress_step_update_backprop(
 		double& predicted_score,
@@ -452,6 +466,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void compress_step_existing_update_backprop(
 		double& predicted_score,
@@ -471,7 +486,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void input_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -487,6 +502,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void input_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -503,6 +519,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void input_step_update_backprop(
 		double& predicted_score,
@@ -517,6 +534,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void input_step_existing_update_backprop(
 		double& predicted_score,
@@ -537,7 +555,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void step_added_step_explore_off_path_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -553,6 +571,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void step_added_step_existing_flat_backprop(
 		std::vector<double>& local_s_input_errors,
@@ -569,6 +588,7 @@ public:
 		std::vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history);
 	void step_added_step_existing_update_backprop(
 		double& predicted_score,
@@ -612,6 +632,9 @@ public:
 	FoldNetworkHistory* curr_end_fold_history;
 
 	double ending_score_update;
+
+	// in case of early exit due to scope depth
+	int exit_index;
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();

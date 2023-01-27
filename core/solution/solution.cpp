@@ -92,10 +92,13 @@ void Solution::load(ifstream& input_file) {
 		scope_save_file.close();
 	}
 
+	this->scope_use_sum_count = 0;
 	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
 		string scope_use_count_line;
 		getline(input_file, scope_use_count_line);
 		this->scope_use_counts.push_back(stoi(scope_use_count_line));
+
+		this->scope_use_sum_count += this->scope_use_counts.back();
 	}
 
 	ifstream scope_save_file;
@@ -129,8 +132,14 @@ void Solution::new_sequence(int& sequence_length,
 	for (int s_index = 0; s_index < sequence_length; s_index++) {
 		if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
 			is_existing.push_back(true);
-			int rand_index = rand()%(int)this->scope_dictionary.size();
-			existing_actions.push_back(this->scope_dictionary[rand_index]);
+			int rand_index = rand()%this->scope_use_sum_count;
+			for (int sc_index = 0; sc_index < (int)this->scope_dictionary.size(); sc_index++) {
+				rand_index -= this->scope_use_counts[sc_index];
+				if (rand_index < 0) {
+					existing_actions.push_back(this->scope_dictionary[sc_index]);
+					break;
+				}
+			}
 
 			actions.push_back(Action());
 		} else {

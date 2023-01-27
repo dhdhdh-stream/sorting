@@ -98,7 +98,54 @@ Scope::Scope(int num_inputs,
 	this->explore_fold = NULL;
 }
 
-Scope::Scope(std::ifstream& input_file) {
+Scope::Scope() {
+	// do nothing -- will be initialized by load()
+}
+
+Scope::~Scope() {
+	// scopes owned and deleted by solution
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
+			delete this->inner_input_networks[a_index][i_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->scope_scale_mod[a_index] != NULL) {
+			delete this->scope_scale_mod[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->branches[a_index] != NULL) {
+			delete this->branches[a_index];
+		}
+	}
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->folds[a_index] != NULL) {
+			delete this->folds[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->score_networks[a_index] != NULL) {
+			delete this->score_networks[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->compress_networks[a_index] != NULL) {
+			delete this->compress_networks[a_index];
+		}
+	}
+
+	if (this->explore_fold != NULL) {
+		delete this->explore_fold;
+	}
+}
+
+void Scope::load(std::ifstream& input_file) {
 	string id_line;
 	getline(input_file, id_line);
 	this->id = stoi(id_line);
@@ -285,49 +332,6 @@ Scope::Scope(std::ifstream& input_file) {
 	this->explore_fold = NULL;
 }
 
-Scope::~Scope() {
-	// scopes owned and deleted by solution
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-			delete this->inner_input_networks[a_index][i_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->scope_scale_mod[a_index] != NULL) {
-			delete this->scope_scale_mod[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->branches[a_index] != NULL) {
-			delete this->branches[a_index];
-		}
-	}
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->folds[a_index] != NULL) {
-			delete this->folds[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->score_networks[a_index] != NULL) {
-			delete this->score_networks[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->compress_networks[a_index] != NULL) {
-			delete this->compress_networks[a_index];
-		}
-	}
-
-	if (this->explore_fold != NULL) {
-		delete this->explore_fold;
-	}
-}
-
 void Scope::explore_on_path_activate(Problem& problem,
 									 vector<double>& local_s_input_vals,	// i.e., input
 									 vector<double>& local_state_vals,		// i.e., output
@@ -338,6 +342,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
+		// no need to set history->exit_location as won't backprop
 		return;
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
@@ -535,6 +540,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 			history->scope_histories[a_index] = scope_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
 
@@ -575,11 +582,13 @@ void Scope::explore_on_path_activate(Problem& problem,
 																 explore_fold_history);
 					history->explore_fold_history = explore_fold_history;
 
+					run_status.explore_phase = EXPLORE_PHASE_FLAT;
+
 					if (run_status.exceeded_depth) {
+						history->exit_index = a_index;
+						// no need to set history->exit_location
 						return;
 					}
-
-					run_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 					a_index = this->explore_end_non_inclusive-1;	// account for increment at end
 				} else if (this->explore_type == EXPLORE_TYPE_NONE
@@ -607,6 +616,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 							delete scope_history;
 
 							if (run_status.exceeded_depth) {
+								// don't set exit_index (and don't backprop)
 								return;
 							}
 						}
@@ -681,11 +691,13 @@ void Scope::explore_on_path_activate(Problem& problem,
 															 explore_fold_history);
 				history->explore_fold_history = explore_fold_history;
 
+				run_status.explore_phase = EXPLORE_PHASE_FLAT;
+
 				if (run_status.exceeded_depth) {
+					history->exit_index = a_index;
+					// no need to set history->exit_location
 					return;
 				}
-
-				run_status.explore_phase = EXPLORE_PHASE_FLAT;
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
 
@@ -713,6 +725,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 						delete scope_history;
 
 						if (run_status.exceeded_depth) {
+							// don't set exit_index (and don't backprop)
 							return;
 						}
 					}
@@ -750,6 +763,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 				history->branch_histories[a_index] = branch_history;
 
 				if (run_status.exceeded_depth) {
+					history->exit_index = a_index;
+					history->exit_location = EXIT_LOCATION_BACK;
 					return;
 				}
 			}
@@ -783,6 +798,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 			history->fold_histories[a_index] = fold_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		}
@@ -801,6 +818,7 @@ void Scope::explore_off_path_activate(Problem& problem,
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
+		history->exit_location = EXIT_LOCATION_SPOT;
 		return;
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
@@ -850,6 +868,8 @@ void Scope::explore_off_path_activate(Problem& problem,
 			history->scope_histories[a_index] = scope_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
 
@@ -916,6 +936,8 @@ void Scope::explore_off_path_activate(Problem& problem,
 			history->branch_histories[a_index] = branch_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		} else {
@@ -946,6 +968,8 @@ void Scope::explore_off_path_activate(Problem& problem,
 			history->fold_histories[a_index] = fold_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		}
@@ -957,6 +981,8 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 									 double target_val,
 									 double& scale_factor,
 									 ScopeHistory* history) {
+	// history->exit_location != EXIT_LOCATION_SPOT
+
 	// don't need to output local_s_input_errors on path but for explore_off_path_backprop
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
 
@@ -965,7 +991,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			&& this->explore_type == EXPLORE_TYPE_NEW) {
 		a_index = this->explore_index_inclusive;
 	} else {
-		a_index = this->sequence_length-1;
+		a_index = history->exit_index;
 	}
 
 	while (a_index >= 0) {
@@ -992,7 +1018,9 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 			return;
 		} else {
-			if (this->step_types[a_index] == STEP_TYPE_STEP) {
+			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+				// do nothing
+			} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
 				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// scope end -- do nothing
 				} else {
@@ -1033,6 +1061,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 					predicted_score -= scale_factor*history->score_updates[a_index];
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+				// if early exit, then local_state_errors will be initialized within
 				if (this->explore_index_inclusive == a_index
 						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
 					this->branches[a_index]->explore_on_path_backprop(local_s_input_errors,
@@ -1060,6 +1089,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				}
 			} else {
 				// this->step_types[a_index] == STEP_TYPE_FOLD
+				// if early exit, then local_state_errors will be initialized within
 				this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
 																local_state_errors,
 																predicted_score,
@@ -1091,10 +1121,15 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 			// obs_size always 1 for sorting
 			local_state_errors.pop_back();
 		} else {
-			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
+			vector<double> scope_input_errors;
+			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
+			} else {
+				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+			}
 
 			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
 			scale_factor *= scope_scale_mod_val;
@@ -1167,8 +1202,14 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 									  ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
-	for (int a_index = this->sequence_length-1; a_index >= 0; a_index--) {
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
+	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
@@ -1214,6 +1255,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 				predicted_score -= scale_factor*history->score_updates[a_index];
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			// if early exit, then local_state_errors will be initialized within
 			this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
 															   local_state_errors,
 															   predicted_score,
@@ -1222,6 +1264,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															   history->branch_histories[a_index]);
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
+			// if early exit, then local_state_errors will be initialized within
 			this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
 															local_state_errors,
 															predicted_score,
@@ -1254,10 +1297,15 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			// obs_size always 1 for sorting
 			local_state_errors.pop_back();
 		} else {
-			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
+			vector<double> scope_input_errors;
+			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
+			} else {
+				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+			}
 
 			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
 			scale_factor *= scope_scale_mod_val;
@@ -1314,6 +1362,7 @@ void Scope::existing_flat_activate(Problem& problem,
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
+		history->exit_location = EXIT_LOCATION_SPOT;
 		return;
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
@@ -1358,6 +1407,8 @@ void Scope::existing_flat_activate(Problem& problem,
 			history->scope_histories[a_index] = scope_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
 
@@ -1408,6 +1459,8 @@ void Scope::existing_flat_activate(Problem& problem,
 			history->branch_histories[a_index] = branch_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		} else {
@@ -1433,13 +1486,14 @@ void Scope::existing_flat_activate(Problem& problem,
 			history->fold_histories[a_index] = fold_history;
 
 			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		}
 	}
 }
 
-// TODO: should still backprop with early exit because might help get input correct (to predict bad things happening, which might lead to good things happening)
 void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input_errors
 								   vector<double>& local_s_input_errors,	// output_errors
 								   double& predicted_score,
@@ -1449,8 +1503,14 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 								   ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
-	for (int a_index = this->sequence_length-1; a_index >= 0; a_index--) {
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
+	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
@@ -1538,10 +1598,15 @@ void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input
 			// obs_size always 1 for sorting
 			local_state_errors.pop_back();
 		} else {
-			vector<double> scope_input_errors(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
-			local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-				local_state_errors.end());
+			vector<double> scope_input_errors;
+			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
+			} else {
+				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
+					local_state_errors.end());
+			}
 
 			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
 			scale_factor *= scope_scale_mod_val;
@@ -1602,6 +1667,7 @@ void Scope::update_activate(Problem& problem,
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
+		history->exit_location = EXIT_LOCATION_SPOT;
 		return;
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
@@ -1644,7 +1710,7 @@ void Scope::update_activate(Problem& problem,
 
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_SCOPE;
+				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
 
@@ -1693,7 +1759,7 @@ void Scope::update_activate(Problem& problem,
 
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BRANCH;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		} else {
@@ -1720,7 +1786,7 @@ void Scope::update_activate(Problem& problem,
 
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FOLD;
+				history->exit_location = EXIT_LOCATION_BACK;
 				return;
 			}
 		}
@@ -1733,88 +1799,12 @@ void Scope::update_backprop(double& predicted_score,
 							double& scale_factor,
 							double& scale_factor_error,
 							ScopeHistory* history) {
-	int a_index = this->sequence_length-1;
-	if (history->exit_location == EXIT_LOCATION_BRANCH || history->exit_location == EXIT_LOCATION_FOLD) {
-		if (history->exit_location == EXIT_LOCATION_BRANCH) {
-			this->branches[history->exit_index]->update_backprop(
-				predicted_score,
-				next_predicted_score,
-				target_val,
-				scale_factor,
-				scale_factor_error,
-				history->branch_histories[history->exit_index]);
-
-			this->average_scores[history->exit_index] = 0.999*this->average_scores[history->exit_index] + 0.001*next_predicted_score;
-		} else {
-			// history->exit_location == EXIT_LOCATION_FOLD
-			this->branches[history->exit_index]->update_backprop(
-				predicted_score,
-				next_predicted_score,
-				target_val,
-				scale_factor,
-				scale_factor_error,
-				history->branch_histories[history->exit_index]);
-
-			this->average_scores[history->exit_index] = 0.999*this->average_scores[history->exit_index] + 0.001*next_predicted_score;
-		}
-		// don't update impacts as run does not reach branch end
-		// update average_scores though for standard deviation from branch start
-
-		if (!this->is_inner_scope[history->exit_index]) {
-			// do nothing
-		} else {
-			double ending_predicted_score = predicted_score;
-
-			double scope_scale_mod_val = this->scope_scale_mod[history->exit_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			double scope_scale_factor_error = 0.0;
-			this->scopes[history->exit_index]->update_backprop(
-				predicted_score,
-				next_predicted_score,
-				target_val,
-				scale_factor,
-				scope_scale_factor_error,
-				history->scope_histories[history->exit_index]);
-
-			vector<double> mod_errors{scope_scale_factor_error};
-			this->scope_scale_mod[history->exit_index]->backprop(mod_errors, 0.0002);
-
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-			scale_factor /= scope_scale_mod_val;
-
-			double starting_predicted_score = predicted_score;
-			this->average_inner_scope_impacts[history->exit_index] = 0.999*this->average_inner_scope_impacts[history->exit_index]
-				+ 0.001*abs(ending_predicted_score - starting_predicted_score);
-		}
-
-		a_index = history->exit_index-1;
-	} else if (history->exit_location == EXIT_LOCATION_SCOPE) {
-		double scope_scale_mod_val = this->scope_scale_mod[history->exit_index]->output->constants[0];
-		scale_factor *= scope_scale_mod_val;
-
-		double scope_scale_factor_error = 0.0;
-		this->scopes[history->exit_index]->update_backprop(
-			predicted_score,
-			next_predicted_score,
-			target_val,
-			scale_factor,
-			scope_scale_factor_error,
-			history->scope_histories[history->exit_index]);
-
-		vector<double> mod_errors{scope_scale_factor_error};
-		this->scope_scale_mod[history->exit_index]->backprop(mod_errors, 0.0002);
-		// still update scope_scale_mod to help capture limit exceeded
-
-		scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-		scale_factor /= scope_scale_mod_val;
-
-		a_index = history->exit_index-1;
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
 	}
 
-	while (a_index >= 0) {
+	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
+		// update misguess even after early exit as goal is predict it correctly too
 		if (a_index == this->sequence_length-1) {
 			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
@@ -1823,7 +1813,9 @@ void Scope::update_backprop(double& predicted_score,
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 		}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
@@ -1904,6 +1896,7 @@ void Scope::update_backprop(double& predicted_score,
 												   scope_scale_factor_error,
 												   history->scope_histories[a_index]);
 
+			// update mod even with early exit as might improve predictions/results
 			vector<double> mod_errors{scope_scale_factor_error};
 			this->scope_scale_mod[a_index]->backprop(mod_errors, 0.0002);
 
@@ -1920,13 +1913,22 @@ void Scope::update_backprop(double& predicted_score,
 	}
 }
 
-// don't backprop if early exit for existing_update_activate?
 void Scope::existing_update_activate(Problem& problem,
 									 vector<double>& local_s_input_vals,	// i.e., input
 									 vector<double>& local_state_vals,	// i.e., output
 									 double& predicted_score,
 									 double& scale_factor,
+									 RunStatus& run_status,
 									 ScopeHistory* history) {
+	run_status.curr_depth++;
+	if (run_status.curr_depth > solution->depth_limit) {
+		run_status.exceeded_depth = true;
+		history->exit_location = EXIT_LOCATION_SPOT;
+		return;
+	} else if (run_status.curr_depth > run_status.max_depth) {
+		run_status.max_depth = run_status.curr_depth;
+	}
+
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			problem.perform_action(this->actions[a_index]);
@@ -1960,6 +1962,12 @@ void Scope::existing_update_activate(Problem& problem,
 															scale_factor,
 															scope_history);
 			history->scope_histories[a_index] = scope_history;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_FRONT;
+				return;
+			}
 
 			scale_factor /= scope_scale_mod_val;
 
@@ -1999,6 +2007,12 @@ void Scope::existing_update_activate(Problem& problem,
 															  scale_factor,
 															  branch_history);
 			history->branch_histories[a_index] = branch_history;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
+				return;
+			}
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			this->score_networks[a_index]->activate_small(local_s_input_vals,
@@ -2016,6 +2030,12 @@ void Scope::existing_update_activate(Problem& problem,
 														   scale_factor,
 														   fold_history);
 			history->fold_histories[a_index] = fold_history;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = a_index;
+				history->exit_location = EXIT_LOCATION_BACK;
+				return;
+			}
 		}
 	}
 }
@@ -2025,8 +2045,14 @@ void Scope::existing_update_backprop(double& predicted_score,
 									 double& scale_factor,
 									 double& scale_factor_error,
 									 ScopeHistory* history) {
-	for (int a_index = this->sequence_length-1; a_index >= 0; a_index--) {
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
+	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				// scope end -- do nothing
 			} else {
@@ -2125,6 +2151,7 @@ void Scope::explore_set(ScopeHistory* history) {
 				solution->action_dictionary.push_back(history->actions[s_index]);
 			} else {
 				solution->scope_use_counts[history->existing_actions[s_index]->id]++;
+				solution->scope_use_sum_count++;
 			}
 		}
 	}
@@ -2234,7 +2261,7 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->explore_fold_history = NULL;
 
-	this->exit_index = -1;
+	this->exit_index = scope->sequence_length-1;	// initialize to normal exit
 	this->exit_location = -1;
 }
 
