@@ -22,7 +22,7 @@ public:
 	std::vector<int> inner_input_input_sizes;
 	std::vector<FoldNetwork*> inner_input_input_networks;
 	FoldNetwork* inner_input_network;
-	double scope_scale_mod;
+	Network* scope_scale_mod;
 
 	FoldNetwork* score_network;
 
@@ -51,7 +51,7 @@ public:
 				 std::vector<int> inner_input_input_sizes,
 				 std::vector<FoldNetwork*> inner_input_input_networks,
 				 FoldNetwork* inner_input_network,
-				 double scope_scale_mod,
+				 Network* scope_scale_mod,
 				 FoldNetwork* score_network,
 				 int compress_num_layers,
 				 int compress_new_size,
@@ -62,22 +62,15 @@ public:
 				 std::vector<int> input_layer,
 				 std::vector<int> input_sizes,
 				 std::vector<FoldNetwork*> input_networks);
-	FinishedStep(FinishedStep* original);
 	FinishedStep(std::ifstream& input_file);
 	~FinishedStep();
 
-	void explore_on_path_activate(Problem& problem,
-								  std::vector<std::vector<double>>& s_input_vals,
-								  std::vector<std::vector<double>>& state_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  FinishedStepHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   std::vector<std::vector<double>>& s_input_vals,
 								   std::vector<std::vector<double>>& state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   ExploreStatus& explore_status,
+								   RunStatus& run_status,
 								   FinishedStepHistory* history);
 	void explore_off_path_backprop(std::vector<std::vector<double>>& s_input_errors,
 								   std::vector<std::vector<double>>& state_errors,
@@ -90,6 +83,7 @@ public:
 								std::vector<std::vector<double>>& state_vals,
 								double& predicted_score,
 								double& scale_factor,
+								RunStatus& run_status,
 								FinishedStepHistory* history);
 	void existing_flat_backprop(std::vector<std::vector<double>>& s_input_errors,
 								std::vector<std::vector<double>>& state_errors,
@@ -103,17 +97,20 @@ public:
 						 std::vector<std::vector<double>>& state_vals,
 						 double& predicted_score,
 						 double& scale_factor,
+						 RunStatus& run_status,
 						 FinishedStepHistory* history);
 	void update_backprop(double& predicted_score,
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 FinishedStepHistory* history);
 	void existing_update_activate(Problem& problem,
 								  std::vector<std::vector<double>>& s_input_vals,
 								  std::vector<std::vector<double>>& state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  FinishedStepHistory* history);
 	void existing_update_backprop(double& predicted_score,
 								  double predicted_score_error,
@@ -140,6 +137,8 @@ public:
 	FoldNetworkHistory* compress_network_history;
 
 	std::vector<FoldNetworkHistory*> input_network_histories;
+
+	int exit_location;
 
 	FinishedStepHistory(FinishedStep* finished_step);
 	~FinishedStepHistory();

@@ -180,6 +180,7 @@ public:
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 FoldHistory* history);
 	void existing_update_activate(Problem& problem,
 								  double starting_score,
@@ -260,6 +261,7 @@ public:
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void starting_compress_step_existing_update_activate(
 		Problem& problem,
@@ -326,6 +328,7 @@ public:
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_update_activate(
 		Problem& problem,
@@ -392,6 +395,7 @@ public:
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void score_step_existing_update_activate(
 		Problem& problem,
@@ -458,6 +462,7 @@ public:
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void compress_step_existing_update_activate(
 		Problem& problem,
@@ -526,6 +531,7 @@ public:
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void input_step_existing_update_activate(
 		Problem& problem,

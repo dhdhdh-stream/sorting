@@ -67,11 +67,10 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (explore_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
-				if (!run_status.exceeded_depth) {
-					// if (target_val > explore_status.existing_score) {
-					if (rand()%10 == 0) {
-						solution->root->explore_set(scope_history);
-					}
+				// !run_status.exceeded_depth
+				// if (target_val > explore_status.existing_score) {
+				if (rand()%10 == 0) {
+					solution->root->explore_set(scope_history);
 				}
 			} else if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;

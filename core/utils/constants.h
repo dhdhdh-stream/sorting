@@ -21,6 +21,7 @@ const int EXPLORE_SIGNAL_REPLACE = 1;
 const int EXPLORE_SIGNAL_BRANCH = 2;
 const int EXPLORE_SIGNAL_CLEAN = 3;
 
+const int EXIT_LOCATION_NORMAL = -1;
 const int EXIT_LOCATION_SPOT = 0;
 const int EXIT_LOCATION_FRONT = 1;
 const int EXIT_LOCATION_BACK = 2;

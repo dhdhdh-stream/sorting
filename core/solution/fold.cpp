@@ -121,7 +121,7 @@ Fold::Fold(int num_inputs,
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 }
-// HERE
+
 Fold::Fold(ifstream& input_file) {
 	string id_line;
 	getline(input_file, id_line);
@@ -149,10 +149,7 @@ Fold::Fold(ifstream& input_file) {
 			getline(input_file, scope_id_line);
 			int scope_id = stoi(scope_id_line);
 
-			ifstream scope_save_file;
-			scope_save_file.open("saves/scope_" + to_string(scope_id) + ".txt");
-			this->existing_actions.push_back(new Scope(scope_save_file));
-			scope_save_file.close();
+			this->existing_actions.push_back(solution->scope_dictionary[scope_id]);
 		} else {
 			this->existing_actions.push_back(NULL);
 		}
@@ -192,8 +189,6 @@ Fold::Fold(ifstream& input_file) {
 			this->scope_scale_mod_calcs.push_back(NULL);
 		}
 	}
-
-	// this->end_scale_mod has already been passed on
 
 	string curr_s_input_sizes_size_line;
 	getline(input_file, curr_s_input_sizes_size_line);
@@ -278,14 +273,7 @@ Fold::Fold(ifstream& input_file) {
 }
 
 Fold::~Fold() {
-	// delete existing_actions if past flat
-	if (this->state != -1) {
-		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-			if (this->existing_actions[f_index] != NULL) {
-				delete this->existing_actions[f_index];
-			}
-		}
-	}
+	// existing_actions owned and deleted by solution
 
 	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
 		delete this->finished_steps[n_index];
@@ -377,6 +365,7 @@ void Fold::explore_on_path_activate(double existing_score,
 									vector<double>& local_state_vals,
 									double& predicted_score,
 									double& scale_factor,
+									RunStatus& run_status,
 									FoldHistory* history) {
 	flat_step_explore_on_path_activate(existing_score,
 									   problem,
@@ -384,6 +373,7 @@ void Fold::explore_on_path_activate(double existing_score,
 									   local_state_vals,
 									   predicted_score,
 									   scale_factor,
+									   run_status,
 									   history);
 }
 
@@ -475,7 +465,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 									 vector<double>& local_state_vals,
 									 double& predicted_score,
 									 double& scale_factor,
-									 ExploreStatus& explore_status,
+									 RunStatus& run_status,
 									 FoldHistory* history) {
 	switch (this->last_state) {
 		case STATE_STARTING_COMPRESS:
@@ -485,7 +475,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 explore_status,
+															 run_status,
 															 history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -495,7 +485,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
-															 explore_status,
+															 run_status,
 															 history);
 			break;
 		case STATE_SCORE:
@@ -505,7 +495,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
-												 explore_status,
+												 run_status,
 												 history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -515,7 +505,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													local_state_vals,
 													predicted_score,
 													scale_factor,
-													explore_status,
+													run_status,
 													history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -525,7 +515,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													local_state_vals,
 													predicted_score,
 													scale_factor,
-													explore_status,
+													run_status,
 													history);
 			break;
 		case STATE_INPUT:
@@ -535,7 +525,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
-												 explore_status,
+												 run_status,
 												 history);
 			break;
 		case STATE_STEP_ADDED:
@@ -545,7 +535,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 													  local_state_vals,
 													  predicted_score,
 													  scale_factor,
-													  explore_status,
+													  run_status,
 													  history);
 			break;
 	}
@@ -623,6 +613,7 @@ void Fold::existing_flat_activate(Problem& problem,
 								  vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  FoldHistory* history) {
 	switch (this->last_state) {
 		case STATE_STARTING_COMPRESS:
@@ -632,6 +623,7 @@ void Fold::existing_flat_activate(Problem& problem,
 														  local_state_vals,
 														  predicted_score,
 														  scale_factor,
+														  run_status,
 														  history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -641,6 +633,7 @@ void Fold::existing_flat_activate(Problem& problem,
 														  local_state_vals,
 														  predicted_score,
 														  scale_factor,
+														  run_status,
 														  history);
 			break;
 		case STATE_SCORE:
@@ -650,6 +643,7 @@ void Fold::existing_flat_activate(Problem& problem,
 											  local_state_vals,
 											  predicted_score,
 											  scale_factor,
+											  run_status,
 											  history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -659,6 +653,7 @@ void Fold::existing_flat_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
+												 run_status,
 												 history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -668,6 +663,7 @@ void Fold::existing_flat_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
+												 run_status,
 												 history);
 			break;
 		case STATE_INPUT:
@@ -677,6 +673,7 @@ void Fold::existing_flat_activate(Problem& problem,
 											  local_state_vals,
 											  predicted_score,
 											  scale_factor,
+											  run_status,
 											  history);
 			break;
 		case STATE_STEP_ADDED:
@@ -686,6 +683,7 @@ void Fold::existing_flat_activate(Problem& problem,
 												   local_state_vals,
 												   predicted_score,
 												   scale_factor,
+												   run_status,
 												   history);
 			break;
 	}
@@ -771,6 +769,7 @@ void Fold::update_activate(Problem& problem,
 						   vector<double>& local_state_vals,
 						   double& predicted_score,
 						   double& scale_factor,
+						   RunStatus& run_status,
 						   FoldHistory* history) {
 	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
@@ -780,6 +779,7 @@ void Fold::update_activate(Problem& problem,
 												   local_state_vals,
 												   predicted_score,
 												   scale_factor,
+												   run_status,
 												   history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -789,6 +789,7 @@ void Fold::update_activate(Problem& problem,
 												   local_state_vals,
 												   predicted_score,
 												   scale_factor,
+												   run_status,
 												   history);
 			break;
 		case STATE_SCORE:
@@ -798,6 +799,7 @@ void Fold::update_activate(Problem& problem,
 									   local_state_vals,
 									   predicted_score,
 									   scale_factor,
+									   run_status,
 									   history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -807,6 +809,7 @@ void Fold::update_activate(Problem& problem,
 										  local_state_vals,
 										  predicted_score,
 										  scale_factor,
+										  run_status,
 										  history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -816,6 +819,7 @@ void Fold::update_activate(Problem& problem,
 										  local_state_vals,
 										  predicted_score,
 										  scale_factor,
+										  run_status,
 										  history);
 			break;
 		case STATE_INPUT:
@@ -825,6 +829,7 @@ void Fold::update_activate(Problem& problem,
 									   local_state_vals,
 									   predicted_score,
 									   scale_factor,
+									   run_status,
 									   history);
 			break;
 		// can't be STATE_STEP_ADDED
@@ -835,6 +840,7 @@ void Fold::update_backprop(double& predicted_score,
 						   double& next_predicted_score,
 						   double target_val,
 						   double& scale_factor,
+						   double& scale_factor_error,
 						   FoldHistory* history) {
 	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
@@ -842,6 +848,7 @@ void Fold::update_backprop(double& predicted_score,
 												   next_predicted_score,
 												   target_val,
 												   scale_factor,
+												   scale_factor_error,
 												   history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -849,6 +856,7 @@ void Fold::update_backprop(double& predicted_score,
 												   next_predicted_score,
 												   target_val,
 												   scale_factor,
+												   scale_factor_error,
 												   history);
 			break;
 		case STATE_SCORE:
@@ -856,6 +864,7 @@ void Fold::update_backprop(double& predicted_score,
 									   next_predicted_score,
 									   target_val,
 									   scale_factor,
+									   scale_factor_error,
 									   history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -863,6 +872,7 @@ void Fold::update_backprop(double& predicted_score,
 										  next_predicted_score,
 										  target_val,
 										  scale_factor,
+										  scale_factor_error,
 										  history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -870,6 +880,7 @@ void Fold::update_backprop(double& predicted_score,
 										  next_predicted_score,
 										  target_val,
 										  scale_factor,
+										  scale_factor_error,
 										  history);
 			break;
 		case STATE_INPUT:
@@ -877,6 +888,7 @@ void Fold::update_backprop(double& predicted_score,
 									   next_predicted_score,
 									   target_val,
 									   scale_factor,
+									   scale_factor_error,
 									   history);
 			break;
 		// can't be STATE_STEP_ADDED
@@ -891,6 +903,7 @@ void Fold::existing_update_activate(Problem& problem,
 									vector<double>& local_state_vals,
 									double& predicted_score,
 									double& scale_factor,
+									RunStatus& run_status,
 									FoldHistory* history) {
 	switch (this->last_state) {
 		case STATE_STARTING_COMPRESS:
@@ -900,6 +913,7 @@ void Fold::existing_update_activate(Problem& problem,
 															local_state_vals,
 															predicted_score,
 															scale_factor,
+															run_status,
 															history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -909,6 +923,7 @@ void Fold::existing_update_activate(Problem& problem,
 															local_state_vals,
 															predicted_score,
 															scale_factor,
+															run_status,
 															history);
 			break;
 		case STATE_SCORE:
@@ -918,6 +933,7 @@ void Fold::existing_update_activate(Problem& problem,
 												local_state_vals,
 												predicted_score,
 												scale_factor,
+												run_status,
 												history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -927,6 +943,7 @@ void Fold::existing_update_activate(Problem& problem,
 												   local_state_vals,
 												   predicted_score,
 												   scale_factor,
+												   run_status,
 												   history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -936,6 +953,7 @@ void Fold::existing_update_activate(Problem& problem,
 												   local_state_vals,
 												   predicted_score,
 												   scale_factor,
+												   run_status,
 												   history);
 			break;
 		case STATE_INPUT:
@@ -945,6 +963,7 @@ void Fold::existing_update_activate(Problem& problem,
 												local_state_vals,
 												predicted_score,
 												scale_factor,
+												run_status,
 												history);
 			break;
 		case STATE_STEP_ADDED:
@@ -954,6 +973,7 @@ void Fold::existing_update_activate(Problem& problem,
 													 local_state_vals,
 													 predicted_score,
 													 scale_factor,
+													 run_status,
 													 history);
 			break;
 	}
@@ -1139,11 +1159,6 @@ void Fold::save(ofstream& output_file) {
 
 		if (this->is_existing[f_index]) {
 			output_file << this->existing_actions[f_index]->id << endl;
-
-			ofstream scope_save_file;
-			scope_save_file.open("saves/scope_" + to_string(this->existing_actions[f_index]->id) + ".txt");
-			this->existing_actions[f_index]->save(scope_save_file);
-			scope_save_file.close();
 		}
 
 		this->actions[f_index].save(output_file);
@@ -1229,6 +1244,9 @@ FoldHistory::FoldHistory(Fold* fold) {
 
 	this->curr_fold_history = NULL;
 	this->curr_end_fold_history = NULL;
+
+	this->exit_index = fold->sequence_length-1;
+	this->exit_location = EXIT_LOCATION_NORMAL;
 }
 
 FoldHistory::~FoldHistory() {

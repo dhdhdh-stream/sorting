@@ -342,7 +342,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
-		// no need to set history->exit_location as won't backprop
+		history->exit_location = EXIT_LOCATION_SPOT;	// though doesn't matter, as won't backprop
 		return;
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
@@ -539,13 +539,14 @@ void Scope::explore_on_path_activate(Problem& problem,
 			}
 			history->scope_histories[a_index] = scope_history;
 
+			scale_factor /= scope_scale_mod_val;
+
+			// return after scale_factor restored
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
 				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
-
-			scale_factor /= scope_scale_mod_val;
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -586,7 +587,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 					if (run_status.exceeded_depth) {
 						history->exit_index = a_index;
-						// no need to set history->exit_location
+						history->exit_location = EXIT_LOCATION_BACK;
 						return;
 					}
 
@@ -616,7 +617,9 @@ void Scope::explore_on_path_activate(Problem& problem,
 							delete scope_history;
 
 							if (run_status.exceeded_depth) {
-								// don't set exit_index (and don't backprop)
+								history->exit_index = a_index;
+								history->exit_location = EXIT_LOCATION_BACK;
+								// though setting doesn't matter as won't backprop
 								return;
 							}
 						}
@@ -695,7 +698,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 				if (run_status.exceeded_depth) {
 					history->exit_index = a_index;
-					// no need to set history->exit_location
+					history->exit_location = EXIT_LOCATION_BACK;
 					return;
 				}
 
@@ -725,7 +728,9 @@ void Scope::explore_on_path_activate(Problem& problem,
 						delete scope_history;
 
 						if (run_status.exceeded_depth) {
-							// don't set exit_index (and don't backprop)
+							history->exit_index = a_index;
+							history->exit_location = EXIT_LOCATION_BACK;
+							// though setting doesn't matter as won't backprop
 							return;
 						}
 					}
@@ -867,13 +872,14 @@ void Scope::explore_off_path_activate(Problem& problem,
 															 scope_history);
 			history->scope_histories[a_index] = scope_history;
 
+			scale_factor /= scope_scale_mod_val;
+
+			// return after scale_factor restored
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
 				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
-
-			scale_factor /= scope_scale_mod_val;
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -987,11 +993,15 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
 
 	int a_index;
-	if (this->explore_end_non_inclusive == this->sequence_length
-			&& this->explore_type == EXPLORE_TYPE_NEW) {
-		a_index = this->explore_index_inclusive;
-	} else {
+	if (history->exit_index != EXIT_LOCATION_NORMAL) {
 		a_index = history->exit_index;
+	} else {
+		if (this->explore_end_non_inclusive == this->sequence_length
+				&& this->explore_type == EXPLORE_TYPE_NEW) {
+			a_index = this->explore_index_inclusive;
+		} else {
+			a_index = this->sequence_length-1;
+		}
 	}
 
 	while (a_index >= 0) {
@@ -1406,13 +1416,14 @@ void Scope::existing_flat_activate(Problem& problem,
 														  scope_history);
 			history->scope_histories[a_index] = scope_history;
 
+			scale_factor /= scope_scale_mod_val;
+
+			// return after scale_factor restored
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
 				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
-
-			scale_factor /= scope_scale_mod_val;
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -1708,13 +1719,14 @@ void Scope::update_activate(Problem& problem,
 												   scope_history);
 			history->scope_histories[a_index] = scope_history;
 
+			scale_factor /= scope_scale_mod_val;
+
+			// return after scale_factor restored
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
 				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
-
-			scale_factor /= scope_scale_mod_val;
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -1963,13 +1975,14 @@ void Scope::existing_update_activate(Problem& problem,
 															scope_history);
 			history->scope_histories[a_index] = scope_history;
 
+			scale_factor /= scope_scale_mod_val;
+
+			// return after scale_factor restored
 			if (run_status.exceeded_depth) {
 				history->exit_index = a_index;
 				history->exit_location = EXIT_LOCATION_FRONT;
 				return;
 			}
-
-			scale_factor /= scope_scale_mod_val;
 
 			local_state_vals.insert(local_state_vals.end(),
 				scope_output.begin(), scope_output.end());
@@ -2262,7 +2275,7 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->explore_fold_history = NULL;
 
 	this->exit_index = scope->sequence_length-1;	// initialize to normal exit
-	this->exit_location = -1;
+	this->exit_location = EXIT_LOCATION_NORMAL;
 }
 
 ScopeHistory::~ScopeHistory() {
