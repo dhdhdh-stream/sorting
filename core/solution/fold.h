@@ -86,12 +86,12 @@ public:
 	std::vector<FoldNetwork*> test_input_folds;
 	FoldNetwork* test_end_fold;
 
-	// don't need extra test fields as curr_input_network and test_input_network use different layers
+	// don't need extra test fields as curr_inner_input_network and test_inner_input_network use different layers
 	std::vector<int> inner_input_input_layer;
 	std::vector<int> inner_input_input_sizes;
 	std::vector<FoldNetwork*> inner_input_input_networks;
-	FoldNetwork* curr_input_network;
-	FoldNetwork* test_input_network;
+	FoldNetwork* curr_inner_input_network;
+	FoldNetwork* test_inner_input_network;
 
 	FoldNetwork* curr_score_network;
 	FoldNetwork* test_score_network;
@@ -622,7 +622,7 @@ public:
 	std::vector<FinishedStepHistory*> finished_step_histories;
 
 	std::vector<FoldNetworkHistory*> inner_input_input_network_histories;
-	FoldNetworkHistory* curr_input_network_history;
+	FoldNetworkHistory* curr_inner_input_network_history;
 
 	FoldNetworkHistory* curr_score_network_history;
 	double score_update;

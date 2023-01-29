@@ -11,11 +11,11 @@ void Fold::inner_scope_input_end() {
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {
-		delete this->curr_input_network;
-		this->curr_input_network = this->test_input_network;
-		this->test_input_network = NULL;
+		delete this->curr_inner_input_network;
+		this->curr_inner_input_network = this->test_inner_input_network;
+		this->test_inner_input_network = NULL;
 
-		if (this->curr_input_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
+		if (this->curr_inner_input_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
 			if (!this->is_existing[this->finished_steps.size()]) {
 				this->curr_s_input_sizes.push_back(0);
 				// obs_size always 1 for sorting
@@ -53,23 +53,23 @@ void Fold::inner_scope_input_end() {
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			this->test_input_network = new FoldNetwork(this->curr_input_network);
-			this->test_input_network->subfold_index++;
+			this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
+			this->test_inner_input_network->subfold_index++;
 
 			// start from size 1 if have previous
 			if (this->inner_input_input_networks.size() > 0) {
-				this->inner_input_input_layer.push_back(this->test_input_network->subfold_index);
+				this->inner_input_input_layer.push_back(this->test_inner_input_network->subfold_index);
 				this->inner_input_input_sizes.push_back(1);
 				this->inner_input_input_networks.push_back(new FoldNetwork(1,
-																		   this->curr_s_input_sizes[this->test_input_network->subfold_index],
-																		   vector<int>{this->curr_scope_sizes[this->test_input_network->subfold_index]},
+																		   this->curr_s_input_sizes[this->test_inner_input_network->subfold_index],
+																		   vector<int>{this->curr_scope_sizes[this->test_inner_input_network->subfold_index]},
 																		   20));
 				// add to curr_s_input_sizes permanently 1 at a time
-				this->curr_s_input_sizes[this->test_input_network->subfold_index+1]++;
+				this->curr_s_input_sizes[this->test_inner_input_network->subfold_index+1]++;
 			}
 
-			this->test_input_network->set_s_input_size(this->curr_s_input_sizes[
-				this->test_input_network->subfold_index+1]);
+			this->test_inner_input_network->set_s_input_size(this->curr_s_input_sizes[
+				this->test_inner_input_network->subfold_index+1]);
 
 			cout << "INNER_SCOPE_INPUT success" << endl;
 			cout << "ending INNER_SCOPE_INPUT" << endl;
@@ -82,27 +82,27 @@ void Fold::inner_scope_input_end() {
 			this->new_state_factor = 25;
 		}
 	} else {
-		delete this->test_input_network;
-		this->test_input_network = new FoldNetwork(this->curr_input_network);
-		this->test_input_network->subfold_index++;
+		delete this->test_inner_input_network;
+		this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
+		this->test_inner_input_network->subfold_index++;
 
 		if (this->inner_input_input_layer.size() > 0
-				&& this->inner_input_input_layer.back() == this->test_input_network->subfold_index) {
+				&& this->inner_input_input_layer.back() == this->test_inner_input_network->subfold_index) {
 			this->inner_input_input_sizes.back()++;
 			delete this->inner_input_input_networks.back();
 			this->inner_input_input_networks.pop_back();
 		} else {
-			this->inner_input_input_layer.push_back(this->test_input_network->subfold_index);
+			this->inner_input_input_layer.push_back(this->test_inner_input_network->subfold_index);
 			this->inner_input_input_sizes.push_back(1);
 		}
 		this->inner_input_input_networks.push_back(new FoldNetwork(this->inner_input_input_sizes.back(),
-																   this->curr_s_input_sizes[this->test_input_network->subfold_index],
-																   vector<int>{this->curr_scope_sizes[this->test_input_network->subfold_index]},
+																   this->curr_s_input_sizes[this->test_inner_input_network->subfold_index],
+																   vector<int>{this->curr_scope_sizes[this->test_inner_input_network->subfold_index]},
 																   20));
 		// add to curr_s_input_sizes permanently 1 at a time
-		this->curr_s_input_sizes[this->test_input_network->subfold_index+1]++;
-		this->test_input_network->set_s_input_size(this->curr_s_input_sizes[
-			this->test_input_network->subfold_index+1]);
+		this->curr_s_input_sizes[this->test_inner_input_network->subfold_index+1]++;
+		this->test_inner_input_network->set_s_input_size(this->curr_s_input_sizes[
+			this->test_inner_input_network->subfold_index+1]);
 
 		cout << "INNER_SCOPE_INPUT fail" << endl;
 		cout << "ending INNER_SCOPE_INPUT" << endl;

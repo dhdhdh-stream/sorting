@@ -1920,8 +1920,6 @@ void Scope::update_backprop(double& predicted_score,
 			this->average_inner_scope_impacts[a_index] = 0.999*this->average_inner_scope_impacts[a_index]
 				+ 0.001*abs(ending_predicted_score - starting_predicted_score);
 		}
-
-		a_index--;
 	}
 }
 

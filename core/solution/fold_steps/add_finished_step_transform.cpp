@@ -12,7 +12,7 @@ void Fold::add_finished_step() {
 													   this->inner_input_input_layer,
 													   this->inner_input_input_sizes,
 													   this->inner_input_input_networks,
-													   this->curr_input_network,
+													   this->curr_inner_input_network,
 													   this->scope_scale_mod[this->finished_steps.size()],
 													   this->curr_score_network,
 													   this->curr_compress_num_layers,
@@ -29,7 +29,7 @@ void Fold::add_finished_step() {
 	this->inner_input_input_layer.clear();
 	this->inner_input_input_sizes.clear();
 	this->inner_input_input_networks.clear();
-	this->curr_input_network = NULL;
+	this->curr_inner_input_network = NULL;
 	this->curr_score_network = NULL;
 	this->curr_compress_network = NULL;
 	this->curr_compressed_s_input_sizes.clear();
@@ -78,12 +78,12 @@ void Fold::add_finished_step() {
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			this->curr_input_network = this->curr_input_folds[this->finished_steps.size()];
+			this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
 			this->curr_input_folds[this->finished_steps.size()] = NULL;
 
 			if (this->curr_scope_sizes.size() > 1) {
-				this->test_input_network = new FoldNetwork(this->curr_input_network);
-				this->test_input_network->subfold_index++;
+				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
+				this->test_inner_input_network->subfold_index++;
 
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_INNER_SCOPE_INPUT" << endl;
@@ -163,12 +163,12 @@ void Fold::restart_from_finished_step() {
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			this->curr_input_network = this->curr_input_folds[this->finished_steps.size()];
+			this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
 			this->curr_input_folds[this->finished_steps.size()] = NULL;
 
 			if (this->curr_scope_sizes.size() > 1) {
-				this->test_input_network = new FoldNetwork(this->curr_input_network);
-				this->test_input_network->subfold_index++;
+				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
+				this->test_inner_input_network->subfold_index++;
 
 				this->last_state = STATE_STEP_ADDED;
 				this->state = STATE_INNER_SCOPE_INPUT;

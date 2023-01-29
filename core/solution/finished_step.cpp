@@ -403,6 +403,12 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 				}
 			}
 		}
+
+		for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
+			for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
+				s_input_errors[this->input_layer[i_index]+1].pop_back();
+			}
+		}
 	} else {
 		if (this->compress_num_layers > 0) {
 			if (this->active_compress) {
@@ -701,6 +707,12 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 					s_input_errors.push_back(vector<double>(this->compressed_s_input_sizes[l_index], 0.0));
 					state_errors.push_back(vector<double>(this->compressed_scope_sizes[l_index], 0.0));
 				}
+			}
+		}
+
+		for (int i_index = (int)this->input_networks.size()-1; i_index >= 0; i_index--) {
+			for (int s_index = 0; s_index < this->input_sizes[i_index]; s_index++) {
+				s_input_errors[this->input_layer[i_index]+1].pop_back();
 			}
 		}
 	} else {

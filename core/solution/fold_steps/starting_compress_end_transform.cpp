@@ -37,7 +37,7 @@ void Fold::starting_compress_end() {
 			// if this->existing_actions[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 			if (this->is_existing[0]) {
-				this->curr_input_network = this->curr_input_folds[0];
+				this->curr_inner_input_network = this->curr_input_folds[0];
 				this->curr_input_folds[0] = NULL;
 			}
 
@@ -137,7 +137,7 @@ void Fold::starting_compress_end() {
 		// if this->is_existing[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 		if (this->is_existing[0]) {
-			this->curr_input_network = this->curr_input_folds[0];
+			this->curr_inner_input_network = this->curr_input_folds[0];
 			this->curr_input_folds[0] = NULL;
 		}
 

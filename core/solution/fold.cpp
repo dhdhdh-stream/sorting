@@ -48,11 +48,11 @@ Fold::Fold(int num_inputs,
 	this->replace_existing = 0.0;
 	this->replace_combined = 0.0;
 
-	this->scope_scale_mod_calcs = vector<Network*>(this->sequence_length, NULL);
+	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
-			this->scope_scale_mod_calcs[f_index] = new Network(0, 0, 1);
-			this->scope_scale_mod_calcs[f_index]->output->constants[0] = 1.0;
+			this->scope_scale_mod[f_index] = new Network(0, 0, 1);
+			this->scope_scale_mod[f_index]->output->constants[0] = 1.0;
 		}
 	}
 
@@ -107,7 +107,7 @@ Fold::Fold(int num_inputs,
 	this->test_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	this->test_end_fold = NULL;
 
-	this->curr_input_network = NULL;
+	this->curr_inner_input_network = NULL;
 	this->test_input_network = NULL;
 
 	this->curr_score_network = NULL;
@@ -177,16 +177,16 @@ Fold::Fold(ifstream& input_file) {
 	// this->starting_score_network, this->combined_score_network has already been passed on
 
 	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
-		this->scope_scale_mod_calcs.push_back(NULL);
+		this->scope_scale_mod.push_back(NULL);
 	}
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
-			ifstream scope_scale_mod_calc_save_file;
-			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
-			this->scope_scale_mod_calcs.push_back(new Network(scope_scale_mod_calc_save_file));
-			scope_scale_mod_calc_save_file.close();
+			ifstream scope_scale_mod_save_file;
+			scope_scale_mod_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
+			this->scope_scale_mod.push_back(new Network(scope_scale_mod_save_file));
+			scope_scale_mod_save_file.close();
 		} else {
-			this->scope_scale_mod_calcs.push_back(NULL);
+			this->scope_scale_mod.push_back(NULL);
 		}
 	}
 
@@ -260,7 +260,7 @@ Fold::Fold(ifstream& input_file) {
 	this->test_fold = NULL;
 	this->test_end_fold = NULL;
 
-	this->curr_input_network = NULL;
+	this->curr_inner_input_network = NULL;
 	this->test_input_network = NULL;
 
 	this->curr_score_network = NULL;
@@ -288,8 +288,8 @@ Fold::~Fold() {
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
-			if (this->scope_scale_mod_calcs[f_index] != NULL) {
-				delete this->scope_scale_mod_calcs[f_index];
+			if (this->scope_scale_mod[f_index] != NULL) {
+				delete this->scope_scale_mod[f_index];
 			}
 		}
 	}
@@ -333,8 +333,8 @@ Fold::~Fold() {
 		delete this->inner_input_input_networks[i_index];
 	}
 
-	if (this->curr_input_network != NULL) {
-		delete this->curr_input_network;
+	if (this->curr_inner_input_network != NULL) {
+		delete this->curr_inner_input_network;
 	}
 	if (this->test_input_network != NULL) {
 		delete this->test_input_network;
@@ -1180,10 +1180,10 @@ void Fold::save(ofstream& output_file) {
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
-			ofstream scope_scale_mod_calc_save_file;
-			scope_scale_mod_calc_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
-			this->scope_scale_mod_calcs[f_index]->save(scope_scale_mod_calc_save_file);
-			scope_scale_mod_calc_save_file.close();
+			ofstream scope_scale_mod_save_file;
+			scope_scale_mod_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
+			this->scope_scale_mod[f_index]->save(scope_scale_mod_save_file);
+			scope_scale_mod_save_file.close();
 		}
 	}
 
@@ -1233,7 +1233,7 @@ FoldHistory::FoldHistory(Fold* fold) {
 
 	this->curr_starting_compress_network_history = NULL;
 
-	this->curr_input_network_history = NULL;
+	this->curr_inner_input_network_history = NULL;
 
 	this->curr_score_network_history = NULL;
 
@@ -1262,8 +1262,8 @@ FoldHistory::~FoldHistory() {
 		delete this->inner_input_input_network_histories[i_index];
 	}
 
-	if (this->curr_input_network_history != NULL) {
-		delete this->curr_input_network_history;
+	if (this->curr_inner_input_network_history != NULL) {
+		delete this->curr_inner_input_network_history;
 	}
 
 	if (this->curr_score_network_history != NULL) {

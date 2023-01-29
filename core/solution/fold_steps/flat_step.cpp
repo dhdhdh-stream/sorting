@@ -33,9 +33,9 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 			vector<double> new_obs{problem.get_observation()};
 
 			fold_input.push_back(new_obs);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(new_obs);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(new_obs);
 				}
 			}
 		} else {
@@ -47,8 +47,8 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[f_index]);
@@ -61,7 +61,7 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 																	scope_history);
 			history->scope_histories[f_index] = scope_history;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
 
 			if (run_status.exceeded_depth) {
 				history->exit_index = f_index;
@@ -70,9 +70,9 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 			}
 
 			fold_input.push_back(scope_output);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(scope_output);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(scope_output);
 				}
 			}
 		}
@@ -150,8 +150,8 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 	for (int f_index = history->exit_index; f_index >= 0; f_index--) {
 		if (this->is_existing[f_index]) {
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
@@ -167,17 +167,17 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 			if (this->state_iter <= 300000) {
 				vector<double> mod_errors{scope_scale_factor_error};
-				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.005);
+				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.005);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.05);
 			} else if (this->state_iter <= 400000) {
 				vector<double> mod_errors{scope_scale_factor_error};
-				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.001);
+				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.001);
 				
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.01);
 			} else {
 				vector<double> mod_errors{scope_scale_factor_error};
-				this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.0002);
+				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.002);
 			}

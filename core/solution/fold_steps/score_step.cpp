@@ -14,7 +14,7 @@ void Fold::score_step_explore_off_path_activate(
 		vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
-		ExploreStatus& explore_status,
+		RunStatus& run_status,
 		FoldHistory* history) {
 	// starting_score_network activated in branch
 	history->starting_score_update = starting_score;
@@ -49,21 +49,27 @@ void Fold::score_step_explore_off_path_activate(
 	vector<vector<double>> s_input_vals{local_s_input_vals};
 	vector<vector<double>> state_vals{local_state_vals};
 
-	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
-		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[n_index]);
-		this->finished_steps[n_index]->explore_off_path_activate(problem,
+	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
+		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[f_index]);
+		this->finished_steps[f_index]->explore_off_path_activate(problem,
 																 s_input_vals,
 																 state_vals,
 																 predicted_score,
 																 scale_factor,
-																 explore_status,
+																 run_status,
 																 finished_step_history);
 		history->finished_step_histories.push_back(finished_step_history);
 
+		if (run_status.exceeded_depth) {
+			history->exit_index = f_index;
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
+
 		fold_input.push_back(vector<double>());	// empty
-		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
-				input_fold_inputs[f_index].push_back(vector<double>());	// empty
+		for (int ff_index = (int)this->finished_steps.size()+1; ff_index < this->sequence_length; ff_index++) {
+			if (this->is_existing[ff_index]) {
+				input_fold_inputs[ff_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
@@ -91,22 +97,22 @@ void Fold::score_step_explore_off_path_activate(
 		}
 
 		if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
-			FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-			this->curr_input_network->activate_small(s_input_vals.back(),
+			FoldNetworkHistory* curr_inner_input_network_history = new FoldNetworkHistory(this->curr_inner_input_network);
+			this->curr_inner_input_network->activate_small(s_input_vals.back(),
 													 state_vals.back(),
-													 curr_input_network_history);
-			history->curr_input_network_history = curr_input_network_history;
+													 curr_inner_input_network_history);
+			history->curr_inner_input_network_history = curr_inner_input_network_history;
 		} else {
-			this->curr_input_network->activate_small(s_input_vals.back(),
+			this->curr_inner_input_network->activate_small(s_input_vals.back(),
 													 state_vals.back());
 		}
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
-			scope_input[i_index] = this->curr_input_network->output->acti_vals[i_index];
+			scope_input[i_index] = this->curr_inner_input_network->output->acti_vals[i_index];
 		}
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+		scale_factor *= scope_scale_mod_val;
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
@@ -116,11 +122,17 @@ void Fold::score_step_explore_off_path_activate(
 			scope_output,
 			predicted_score,
 			scale_factor,
-			explore_status,
+			run_status,
 			scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
-		scale_factor /= scope_scale_mod;
+		scale_factor /= scope_scale_mod_val;
+
+		if (run_status.exceeded_depth) {
+			history->exit_index = this->finished_steps.size();
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
 
 		s_input_vals.push_back(scope_input);
 		state_vals.push_back(scope_output);
@@ -152,9 +164,9 @@ void Fold::score_step_explore_off_path_activate(
 			vector<double> new_obs{problem.get_observation()};
 
 			fold_input.push_back(new_obs);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(new_obs);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(new_obs);
 				}
 			}
 		} else {
@@ -175,8 +187,8 @@ void Fold::score_step_explore_off_path_activate(
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[f_index]);
@@ -185,15 +197,22 @@ void Fold::score_step_explore_off_path_activate(
 																	scope_output,
 																	predicted_score,
 																	scale_factor,
+																	run_status,
 																	scope_history);
 			history->scope_histories[f_index] = scope_history;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = f_index;
+				history->exit_location = EXIT_LOCATION_SPOT;
+				return;
+			}
 
 			fold_input.push_back(scope_output);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(scope_output);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(scope_output);
 				}
 			}
 		}
@@ -232,8 +251,6 @@ void Fold::score_step_explore_off_path_activate(
 	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
-
-	// end_scale_mod passed on
 }
 
 void Fold::score_step_explore_off_path_backprop(
@@ -243,19 +260,6 @@ void Fold::score_step_explore_off_path_backprop(
 		double target_val,
 		double& scale_factor,
 		FoldHistory* history) {
-	// end_scale_mod passed on
-
-	double predicted_score_error = target_val - predicted_score;
-
-	this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
-		local_state_errors,
-		history->curr_end_fold_history);
-
-	vector<double> curr_fold_error{scale_factor*predicted_score_error};
-	this->curr_fold->backprop_fold_errors_with_no_weight_change(
-		curr_fold_error,
-		history->curr_fold_history);
-
 	vector<vector<double>> s_input_errors;
 	s_input_errors.reserve(this->curr_s_input_sizes.size());
 	s_input_errors.push_back(local_s_input_errors);
@@ -269,46 +273,60 @@ void Fold::score_step_explore_off_path_backprop(
 	}
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+	// don't include this->finished_steps.size()
+	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			scope_input_errors[f_index] = vector<double>(this->existing_actions[f_index]->num_outputs, 0.0);
 		}
 	}
 
-	for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
-		s_input_errors[0][st_index] += this->curr_end_fold->s_input_input->errors[st_index];
-		this->curr_end_fold->s_input_input->errors[st_index] = 0.0;
+	double predicted_score_error = target_val - predicted_score;
 
-		s_input_errors[0][st_index] += this->curr_fold->s_input_input->errors[st_index];
-		this->curr_fold->s_input_input->errors[st_index] = 0.0;
-	}
-	for (int sc_index = 0; sc_index < (int)state_errors.size(); sc_index++) {
-		for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
-			state_errors[sc_index][st_index] += this->curr_end_fold->state_inputs[sc_index]->errors[st_index];
-			this->curr_end_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
+	if (history->exit_location == EXIT_LOCATION_NORMAL) {
+		this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
+			local_state_errors,
+			history->curr_end_fold_history);
 
-			state_errors[sc_index][st_index] += this->curr_fold->state_inputs[sc_index]->errors[st_index];
-			this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
+		vector<double> curr_fold_error{scale_factor*predicted_score_error};
+		this->curr_fold->backprop_fold_errors_with_no_weight_change(
+			curr_fold_error,
+			history->curr_fold_history);
+
+		for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
+			s_input_errors[0][st_index] += this->curr_end_fold->s_input_input->errors[st_index];
+			this->curr_end_fold->s_input_input->errors[st_index] = 0.0;
+
+			s_input_errors[0][st_index] += this->curr_fold->s_input_input->errors[st_index];
+			this->curr_fold->s_input_input->errors[st_index] = 0.0;
 		}
-	}
-	// don't include this->finished_steps.size()
-	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
-			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
-				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
-				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+		for (int sc_index = 0; sc_index < (int)state_errors.size(); sc_index++) {
+			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
+				state_errors[sc_index][st_index] += this->curr_end_fold->state_inputs[sc_index]->errors[st_index];
+				this->curr_end_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 
-				scope_input_errors[f_index][i_index] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
-				this->curr_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+				state_errors[sc_index][st_index] += this->curr_fold->state_inputs[sc_index]->errors[st_index];
+				this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 			}
 		}
-	}
-	predicted_score -= scale_factor*history->ending_score_update;
+		// don't include this->finished_steps.size()
+		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			if (this->is_existing[f_index]) {
+				for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
+					scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
+					this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
-	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
+					scope_input_errors[f_index][i_index] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
+					this->curr_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+				}
+			}
+		}
+		predicted_score -= scale_factor*history->ending_score_update;
+	}
+
+	for (int f_index = history->exit_index; f_index >= (int)this->finished_steps.size()+1; f_index--) {
 		if (this->is_existing[f_index]) {
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;	// unused
@@ -320,9 +338,9 @@ void Fold::score_step_explore_off_path_backprop(
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
 
-			// don't update scope_scale_mod_calcs on explore_off_path
+			// don't update scope_scale_mod on explore_off_path
 
 			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
@@ -349,93 +367,147 @@ void Fold::score_step_explore_off_path_backprop(
 		}
 	}
 
-	double inner_predicted_score_error = target_val - predicted_score;
-	vector<double> score_errors{scale_factor*inner_predicted_score_error};
-	this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
-		score_errors,
-		history->curr_score_network_history);
-	for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-		s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
-		this->curr_score_network->s_input_input->errors[s_index] = 0.0;
-	}
-	for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-		for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-			state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
-			this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
-		}
-	}
-	predicted_score -= scale_factor*history->score_update;
-
-	if (!this->is_existing[this->finished_steps.size()]) {
+	if (history->exit_index < this->finished_steps.size()) {
 		s_input_errors.pop_back();
 		state_errors.pop_back();
-	} else {
-		vector<double> existing_scope_output_errors = s_input_errors.back();
-		s_input_errors.pop_back();
-		vector<double> scope_input_errors = state_errors.back();
-		state_errors.pop_back();
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
-
-		vector<double> scope_output_errors;
-		this->existing_actions[this->finished_steps.size()]->explore_off_path_backprop(
-			scope_input_errors,
-			scope_output_errors,
-			predicted_score,
-			target_val,
-			scale_factor,
-			history->scope_histories[this->finished_steps.size()]);
-
-		scale_factor /= scope_scale_mod;
-
-		for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
-			scope_output_errors[s_index] += existing_scope_output_errors[s_index];
-		}
-
-		vector<double> curr_input_s_input_output_errors;
-		vector<double> curr_input_state_output_errors;
-		this->curr_input_network->backprop_small_errors_with_no_weight_change(
-			scope_output_errors,
-			curr_input_s_input_output_errors,
-			curr_input_state_output_errors,
-			history->curr_input_network_history);
-		for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
-			s_input_errors.back()[s_index] += curr_input_s_input_output_errors[s_index];
-		}
-		for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
-			state_errors.back()[s_index] += curr_input_state_output_errors[s_index];
-		}
-
+		// will be empty if !this->is_inner_scope
 		for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
-			vector<double> inner_input_input_errors(this->inner_input_input_sizes[i_index]);
 			for (int s_index = 0; s_index < this->inner_input_input_sizes[i_index]; s_index++) {
-				inner_input_input_errors[this->inner_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->inner_input_input_layer[i_index]+1].back();
 				s_input_errors[this->inner_input_input_layer[i_index]+1].pop_back();
 			}
-			vector<double> s_input_output_errors;
-			vector<double> state_output_errors;
-			this->inner_input_input_networks[i_index]->backprop_small_errors_with_no_weight_change(
-				inner_input_input_errors,
-				s_input_output_errors,
-				state_output_errors,
-				history->inner_input_input_network_histories[i_index]);
-			for (int s_index = 0; s_index < (int)s_input_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
-				s_input_errors[this->inner_input_input_layer[i_index]][s_index] += s_input_output_errors[s_index];
+		}
+	} else {
+		double inner_predicted_score_error = target_val - predicted_score;
+		vector<double> score_errors{scale_factor*inner_predicted_score_error};
+		this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
+			score_errors,
+			history->curr_score_network_history);
+		for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+			s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+			this->curr_score_network->s_input_input->errors[s_index] = 0.0;
+		}
+		for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+			for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+				state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+				this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 			}
-			for (int s_index = 0; s_index < (int)state_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
-				state_errors[this->inner_input_input_layer[i_index]][s_index] += state_output_errors[s_index];
+		}
+		predicted_score -= scale_factor*history->score_update;
+
+		if (!this->is_existing[this->finished_steps.size()]) {
+			s_input_errors.pop_back();
+			state_errors.pop_back();
+		} else {
+			vector<double> existing_scope_output_errors = s_input_errors.back();
+			s_input_errors.pop_back();
+			vector<double> scope_input_errors = state_errors.back();
+			state_errors.pop_back();
+
+			double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
+
+			vector<double> scope_output_errors;
+			this->existing_actions[this->finished_steps.size()]->explore_off_path_backprop(
+				scope_input_errors,
+				scope_output_errors,
+				predicted_score,
+				target_val,
+				scale_factor,
+				history->scope_histories[this->finished_steps.size()]);
+
+			scale_factor /= scope_scale_mod_val;
+
+			for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
+				scope_output_errors[s_index] += existing_scope_output_errors[s_index];
+			}
+
+			vector<double> curr_input_s_input_output_errors;
+			vector<double> curr_input_state_output_errors;
+			this->curr_inner_input_network->backprop_small_errors_with_no_weight_change(
+				scope_output_errors,
+				curr_input_s_input_output_errors,
+				curr_input_state_output_errors,
+				history->curr_inner_input_network_history);
+			for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
+				s_input_errors.back()[s_index] += curr_input_s_input_output_errors[s_index];
+			}
+			for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
+				state_errors.back()[s_index] += curr_input_state_output_errors[s_index];
+			}
+
+			for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				vector<double> inner_input_input_errors(this->inner_input_input_sizes[i_index]);
+				for (int s_index = 0; s_index < this->inner_input_input_sizes[i_index]; s_index++) {
+					inner_input_input_errors[this->inner_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->inner_input_input_layer[i_index]+1].back();
+					s_input_errors[this->inner_input_input_layer[i_index]+1].pop_back();
+				}
+				vector<double> s_input_output_errors;
+				vector<double> state_output_errors;
+				this->inner_input_input_networks[i_index]->backprop_small_errors_with_no_weight_change(
+					inner_input_input_errors,
+					s_input_output_errors,
+					state_output_errors,
+					history->inner_input_input_network_histories[i_index]);
+				for (int s_index = 0; s_index < (int)s_input_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
+					s_input_errors[this->inner_input_input_layer[i_index]][s_index] += s_input_output_errors[s_index];
+				}
+				for (int s_index = 0; s_index < (int)state_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
+					state_errors[this->inner_input_input_layer[i_index]][s_index] += state_output_errors[s_index];
+				}
 			}
 		}
 	}
 
-	for (int n_index = (int)this->finished_steps.size()-1; n_index >= 0; n_index--) {
-		this->finished_steps[n_index]->explore_off_path_backprop(s_input_errors,
-																 state_errors,
-																 predicted_score,
-																 target_val,
-																 scale_factor,
-																 history->finished_step_histories[n_index]);
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			if (this->finished_steps[f_index]->compress_num_layers > 0) {
+				if (this->finished_steps[f_index]->active_compress) {
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->finished_steps[f_index]->compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[l_index], 0.0));
+					}
+				} else {
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->finished_steps[f_index]->compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[l_index], 0.0));
+					}
+				}
+			}
+
+			for (int i_index = (int)this->finished_steps[f_index]->input_networks.size()-1; i_index >= 0; i_index--) {
+				for (int s_index = 0; s_index < this->finished_steps[f_index]->input_sizes[i_index]; s_index++) {
+					s_input_errors[this->finished_steps[f_index]->input_layer[i_index]+1].pop_back();
+				}
+			}
+
+			s_input_errors.pop_back();
+			state_errors.pop_back();
+
+			for (int i_index = (int)this->finished_steps[f_index]->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				for (int s_index = 0; s_index < this->finished_steps[f_index]->inner_input_input_sizes[i_index]; s_index++) {
+					s_input_errors[this->finished_steps[f_index]->inner_input_input_layer[i_index]+1].pop_back();
+				}
+			}
+		} else {
+			this->finished_steps[f_index]->explore_off_path_backprop(s_input_errors,
+																	 state_errors,
+																	 predicted_score,
+																	 target_val,
+																	 scale_factor,
+																	 history->finished_step_histories[f_index]);
+		}
 	}
 
 	// s_input_errors and state_errors should now have size 1
@@ -475,6 +547,7 @@ void Fold::score_step_existing_flat_activate(
 		vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history) {
 	// starting_score_network activated in branch
 	history->starting_score_update = starting_score;
@@ -504,20 +577,27 @@ void Fold::score_step_existing_flat_activate(
 	vector<vector<double>> s_input_vals{local_s_input_vals};
 	vector<vector<double>> state_vals{local_state_vals};
 
-	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
-		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[n_index]);
-		this->finished_steps[n_index]->existing_flat_activate(problem,
+	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
+		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[f_index]);
+		this->finished_steps[f_index]->existing_flat_activate(problem,
 															  s_input_vals,
 															  state_vals,
 															  predicted_score,
 															  scale_factor,
+															  run_status,
 															  finished_step_history);
 		history->finished_step_histories.push_back(finished_step_history);
 
+		if (run_status.exceeded_depth) {
+			history->exit_index = f_index;
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
+
 		fold_input.push_back(vector<double>());	// empty
-		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
-				input_fold_inputs[f_index].push_back(vector<double>());	// empty
+		for (int ff_index = (int)this->finished_steps.size()+1; ff_index < this->sequence_length; ff_index++) {
+			if (this->is_existing[ff_index]) {
+				input_fold_inputs[ff_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
@@ -539,18 +619,18 @@ void Fold::score_step_existing_flat_activate(
 			}
 		}
 
-		FoldNetworkHistory* curr_input_network_history = new FoldNetworkHistory(this->curr_input_network);
-		this->curr_input_network->activate_small(s_input_vals.back(),
+		FoldNetworkHistory* curr_inner_input_network_history = new FoldNetworkHistory(this->curr_inner_input_network);
+		this->curr_inner_input_network->activate_small(s_input_vals.back(),
 												 state_vals.back(),
-												 curr_input_network_history);
-		history->curr_input_network_history = curr_input_network_history;
+												 curr_inner_input_network_history);
+		history->curr_inner_input_network_history = curr_inner_input_network_history;
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int i_index = 0; i_index < this->existing_actions[this->finished_steps.size()]->num_inputs; i_index++) {
-			scope_input[i_index] = this->curr_input_network->output->acti_vals[i_index];
+			scope_input[i_index] = this->curr_inner_input_network->output->acti_vals[i_index];
 		}
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+		scale_factor *= scope_scale_mod_val;
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
@@ -560,10 +640,17 @@ void Fold::score_step_existing_flat_activate(
 			scope_output,
 			predicted_score,
 			scale_factor,
+			run_status,
 			scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
-		scale_factor /= scope_scale_mod;
+		scale_factor /= scope_scale_mod_val;
+
+		if (run_status.exceeded_depth) {
+			history->exit_index = this->finished_steps.size();
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
 
 		s_input_vals.push_back(scope_input);
 		state_vals.push_back(scope_output);
@@ -590,9 +677,9 @@ void Fold::score_step_existing_flat_activate(
 			vector<double> new_obs{problem.get_observation()};
 
 			fold_input.push_back(new_obs);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(new_obs);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(new_obs);
 				}
 			}
 		} else {
@@ -607,8 +694,8 @@ void Fold::score_step_existing_flat_activate(
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[f_index]);
@@ -617,15 +704,22 @@ void Fold::score_step_existing_flat_activate(
 																	scope_output,
 																	predicted_score,
 																	scale_factor,
+																	run_status,
 																	scope_history);
 			history->scope_histories[f_index] = scope_history;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = f_index;
+				history->exit_location = EXIT_LOCATION_SPOT;
+				return;
+			}
 
 			fold_input.push_back(scope_output);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(scope_output);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(scope_output);
 				}
 			}
 		}
@@ -652,8 +746,6 @@ void Fold::score_step_existing_flat_activate(
 	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
-
-	// end_scale_mod passed on
 }
 
 void Fold::score_step_existing_flat_backprop(
@@ -664,19 +756,6 @@ void Fold::score_step_existing_flat_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	// end_scale_mod passed on
-
-	scale_factor_error += history->ending_score_update*predicted_score_error;
-
-	this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
-		local_state_errors,
-		history->curr_end_fold_history);
-
-	vector<double> curr_fold_error{scale_factor*predicted_score_error};
-	this->curr_fold->backprop_fold_errors_with_no_weight_change(
-		curr_fold_error,
-		history->curr_fold_history);
-
 	vector<vector<double>> s_input_errors;
 	s_input_errors.reserve(this->curr_s_input_sizes.size());
 	s_input_errors.push_back(local_s_input_errors);
@@ -690,46 +769,60 @@ void Fold::score_step_existing_flat_backprop(
 	}
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+	// don't include this->finished_steps.size()
+	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
 			scope_input_errors[f_index] = vector<double>(this->existing_actions[f_index]->num_outputs, 0.0);
 		}
 	}
 
-	for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
-		s_input_errors[0][st_index] += this->curr_end_fold->s_input_input->errors[st_index];
-		this->curr_end_fold->s_input_input->errors[st_index] = 0.0;
+	if (history->exit_location == EXIT_LOCATION_NORMAL) {
+		scale_factor_error += history->ending_score_update*predicted_score_error;
 
-		s_input_errors[0][st_index] += this->curr_fold->s_input_input->errors[st_index];
-		this->curr_fold->s_input_input->errors[st_index] = 0.0;
-	}
-	for (int sc_index = 0; sc_index < (int)state_errors.size(); sc_index++) {
-		for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
-			state_errors[sc_index][st_index] += this->curr_end_fold->state_inputs[sc_index]->errors[st_index];
-			this->curr_end_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
+		this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
+			local_state_errors,
+			history->curr_end_fold_history);
 
-			state_errors[sc_index][st_index] += this->curr_fold->state_inputs[sc_index]->errors[st_index];
-			this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
+		vector<double> curr_fold_error{scale_factor*predicted_score_error};
+		this->curr_fold->backprop_fold_errors_with_no_weight_change(
+			curr_fold_error,
+			history->curr_fold_history);
+
+		for (int st_index = 0; st_index < (int)s_input_errors[0].size(); st_index++) {
+			s_input_errors[0][st_index] += this->curr_end_fold->s_input_input->errors[st_index];
+			this->curr_end_fold->s_input_input->errors[st_index] = 0.0;
+
+			s_input_errors[0][st_index] += this->curr_fold->s_input_input->errors[st_index];
+			this->curr_fold->s_input_input->errors[st_index] = 0.0;
 		}
-	}
-	// don't include this->finished_steps.size()
-	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
-			for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
-				scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
-				this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+		for (int sc_index = 0; sc_index < (int)state_errors.size(); sc_index++) {
+			for (int st_index = 0; st_index < (int)state_errors[sc_index].size(); st_index++) {
+				state_errors[sc_index][st_index] += this->curr_end_fold->state_inputs[sc_index]->errors[st_index];
+				this->curr_end_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 
-				scope_input_errors[f_index][i_index] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
-				this->curr_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+				state_errors[sc_index][st_index] += this->curr_fold->state_inputs[sc_index]->errors[st_index];
+				this->curr_fold->state_inputs[sc_index]->errors[st_index] = 0.0;
 			}
 		}
-	}
-	predicted_score -= scale_factor*history->ending_score_update;
+		// don't include this->finished_steps.size()
+		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
+			if (this->is_existing[f_index]) {
+				for (int i_index = 0; i_index < this->existing_actions[f_index]->num_outputs; i_index++) {
+					scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
+					this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
-	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
+					scope_input_errors[f_index][i_index] += this->curr_fold->flat_inputs[f_index]->errors[i_index];
+					this->curr_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
+				}
+			}
+		}
+		predicted_score -= scale_factor*history->ending_score_update;
+	}
+
+	for (int f_index = history->exit_index; f_index >= (int)this->finished_steps.size()+1; f_index--) {
 		if (this->is_existing[f_index]) {
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
@@ -741,9 +834,9 @@ void Fold::score_step_existing_flat_backprop(
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
 
-			scale_factor_error += scope_scale_mod*scope_scale_factor_error;
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
 
 			this->curr_input_folds[f_index]->backprop_fold_errors_with_no_weight_change(
 				scope_output_errors,
@@ -770,99 +863,153 @@ void Fold::score_step_existing_flat_backprop(
 		}
 	}
 
-	scale_factor_error += history->score_update*predicted_score_error;
-
-	vector<double> score_errors{scale_factor*predicted_score_error};
-	this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
-		score_errors,
-		history->curr_score_network_history);
-	for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-		s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
-		this->curr_score_network->s_input_input->errors[s_index] = 0.0;
-	}
-	for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-		for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-			state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
-			this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
-		}
-	}
-	predicted_score -= scale_factor*history->score_update;
-
-	if (!this->is_existing[this->finished_steps.size()]) {
+	if (history->exit_index < this->finished_steps.size()) {
 		s_input_errors.pop_back();
 		state_errors.pop_back();
-	} else {
-		vector<double> existing_scope_output_errors = s_input_errors.back();
-		s_input_errors.pop_back();
-		vector<double> scope_input_errors = state_errors.back();
-		state_errors.pop_back();
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
-
-		vector<double> scope_output_errors;
-		double scope_scale_factor_error = 0.0;
-		this->existing_actions[this->finished_steps.size()]->existing_flat_backprop(
-			scope_input_errors,
-			scope_output_errors,
-			predicted_score,
-			predicted_score_error,
-			scale_factor,
-			scope_scale_factor_error,
-			history->scope_histories[this->finished_steps.size()]);
-
-		scale_factor_error += scope_scale_mod*scope_scale_factor_error;
-
-		scale_factor /= scope_scale_mod;
-
-		for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
-			scope_output_errors[s_index] += existing_scope_output_errors[s_index];
-		}
-
-		vector<double> curr_input_s_input_output_errors;
-		vector<double> curr_input_state_output_errors;
-		this->curr_input_network->backprop_small_errors_with_no_weight_change(
-			scope_output_errors,
-			curr_input_s_input_output_errors,
-			curr_input_state_output_errors,
-			history->curr_input_network_history);
-		for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
-			s_input_errors.back()[s_index] += curr_input_s_input_output_errors[s_index];
-		}
-		for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
-			state_errors.back()[s_index] += curr_input_state_output_errors[s_index];
-		}
-
+		// will be empty if !this->is_inner_scope
 		for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
-			vector<double> inner_input_input_errors(this->inner_input_input_sizes[i_index]);
 			for (int s_index = 0; s_index < this->inner_input_input_sizes[i_index]; s_index++) {
-				inner_input_input_errors[this->inner_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->inner_input_input_layer[i_index]+1].back();
 				s_input_errors[this->inner_input_input_layer[i_index]+1].pop_back();
 			}
-			vector<double> s_input_output_errors;
-			vector<double> state_output_errors;
-			this->inner_input_input_networks[i_index]->backprop_small_errors_with_no_weight_change(
-				inner_input_input_errors,
-				s_input_output_errors,
-				state_output_errors,
-				history->inner_input_input_network_histories[i_index]);
-			for (int s_index = 0; s_index < (int)s_input_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
-				s_input_errors[this->inner_input_input_layer[i_index]][s_index] += s_input_output_errors[s_index];
+		}
+	} else {
+		scale_factor_error += history->score_update*predicted_score_error;
+
+		vector<double> score_errors{scale_factor*predicted_score_error};
+		this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
+			score_errors,
+			history->curr_score_network_history);
+		for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+			s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+			this->curr_score_network->s_input_input->errors[s_index] = 0.0;
+		}
+		for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+			for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+				state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+				this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
 			}
-			for (int s_index = 0; s_index < (int)state_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
-				state_errors[this->inner_input_input_layer[i_index]][s_index] += state_output_errors[s_index];
+		}
+		predicted_score -= scale_factor*history->score_update;
+
+		if (!this->is_existing[this->finished_steps.size()]) {
+			s_input_errors.pop_back();
+			state_errors.pop_back();
+		} else {
+			vector<double> existing_scope_output_errors = s_input_errors.back();
+			s_input_errors.pop_back();
+			vector<double> scope_input_errors = state_errors.back();
+			state_errors.pop_back();
+
+			double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
+
+			vector<double> scope_output_errors;
+			double scope_scale_factor_error = 0.0;
+			this->existing_actions[this->finished_steps.size()]->existing_flat_backprop(
+				scope_input_errors,
+				scope_output_errors,
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[this->finished_steps.size()]);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+
+			scale_factor /= scope_scale_mod_val;
+
+			for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
+				scope_output_errors[s_index] += existing_scope_output_errors[s_index];
+			}
+
+			vector<double> curr_input_s_input_output_errors;
+			vector<double> curr_input_state_output_errors;
+			this->curr_inner_input_network->backprop_small_errors_with_no_weight_change(
+				scope_output_errors,
+				curr_input_s_input_output_errors,
+				curr_input_state_output_errors,
+				history->curr_inner_input_network_history);
+			for (int s_index = 0; s_index < (int)s_input_errors.back().size(); s_index++) {
+				s_input_errors.back()[s_index] += curr_input_s_input_output_errors[s_index];
+			}
+			for (int s_index = 0; s_index < (int)state_errors.back().size(); s_index++) {
+				state_errors.back()[s_index] += curr_input_state_output_errors[s_index];
+			}
+
+			for (int i_index = (int)this->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				vector<double> inner_input_input_errors(this->inner_input_input_sizes[i_index]);
+				for (int s_index = 0; s_index < this->inner_input_input_sizes[i_index]; s_index++) {
+					inner_input_input_errors[this->inner_input_input_sizes[i_index]-1-s_index] = s_input_errors[this->inner_input_input_layer[i_index]+1].back();
+					s_input_errors[this->inner_input_input_layer[i_index]+1].pop_back();
+				}
+				vector<double> s_input_output_errors;
+				vector<double> state_output_errors;
+				this->inner_input_input_networks[i_index]->backprop_small_errors_with_no_weight_change(
+					inner_input_input_errors,
+					s_input_output_errors,
+					state_output_errors,
+					history->inner_input_input_network_histories[i_index]);
+				for (int s_index = 0; s_index < (int)s_input_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
+					s_input_errors[this->inner_input_input_layer[i_index]][s_index] += s_input_output_errors[s_index];
+				}
+				for (int s_index = 0; s_index < (int)state_errors[this->inner_input_input_layer[i_index]].size(); s_index++) {
+					state_errors[this->inner_input_input_layer[i_index]][s_index] += state_output_errors[s_index];
+				}
 			}
 		}
 	}
 
-	for (int n_index = (int)this->finished_steps.size()-1; n_index >= 0; n_index--) {
-		this->finished_steps[n_index]->existing_flat_backprop(s_input_errors,
-															  state_errors,
-															  predicted_score,
-															  predicted_score_error,
-															  scale_factor,
-															  scale_factor_error,
-															  history->finished_step_histories[n_index]);
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			if (this->finished_steps[f_index]->compress_num_layers > 0) {
+				if (this->finished_steps[f_index]->active_compress) {
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->finished_steps[f_index]->compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[l_index], 0.0));
+					}
+				} else {
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->finished_steps[f_index]->compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->finished_steps[f_index]->compressed_scope_sizes[l_index], 0.0));
+					}
+				}
+			}
+
+			for (int i_index = (int)this->finished_steps[f_index]->input_networks.size()-1; i_index >= 0; i_index--) {
+				for (int s_index = 0; s_index < this->finished_steps[f_index]->input_sizes[i_index]; s_index++) {
+					s_input_errors[this->finished_steps[f_index]->input_layer[i_index]+1].pop_back();
+				}
+			}
+
+			s_input_errors.pop_back();
+			state_errors.pop_back();
+
+			for (int i_index = (int)this->finished_steps[f_index]->inner_input_input_networks.size()-1; i_index >= 0; i_index--) {
+				for (int s_index = 0; s_index < this->finished_steps[f_index]->inner_input_input_sizes[i_index]; s_index++) {
+					s_input_errors[this->finished_steps[f_index]->inner_input_input_layer[i_index]+1].pop_back();
+				}
+			}
+		} else {
+			this->finished_steps[f_index]->existing_flat_backprop(s_input_errors,
+																  state_errors,
+																  predicted_score,
+																  predicted_score_error,
+																  scale_factor,
+																  scale_factor_error,
+																  history->finished_step_histories[f_index]);
+		}
 	}
 
 	// s_input_errors and state_errors should now have size 1
@@ -902,6 +1049,7 @@ void Fold::score_step_update_activate(
 		vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history) {
 	// starting_score_network activated in branch
 	history->starting_score_update = starting_score;
@@ -928,20 +1076,27 @@ void Fold::score_step_update_activate(
 	vector<vector<double>> s_input_vals{local_s_input_vals};
 	vector<vector<double>> state_vals{local_state_vals};
 
-	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
-		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[n_index]);
-		this->finished_steps[n_index]->update_activate(problem,
+	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
+		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[f_index]);
+		this->finished_steps[f_index]->update_activate(problem,
 													   s_input_vals,
 													   state_vals,
 													   predicted_score,
 													   scale_factor,
+													   run_status,
 													   finished_step_history);
 		history->finished_step_histories.push_back(finished_step_history);
 
+		if (run_status.exceeded_depth) {
+			history->exit_index = f_index;
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
+
 		fold_input.push_back(vector<double>());	// empty
-		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
-				input_fold_inputs[f_index].push_back(vector<double>());	// empty
+		for (int ff_index = (int)this->finished_steps.size()+1; ff_index < this->sequence_length; ff_index++) {
+			if (this->is_existing[ff_index]) {
+				input_fold_inputs[ff_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
@@ -960,15 +1115,15 @@ void Fold::score_step_update_activate(
 			}
 		}
 
-		this->curr_input_network->activate_small(s_input_vals.back(),
+		this->curr_inner_input_network->activate_small(s_input_vals.back(),
 												 state_vals.back());
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
-			scope_input[s_index] = this->curr_input_network->output->acti_vals[s_index];
+			scope_input[s_index] = this->curr_inner_input_network->output->acti_vals[s_index];
 		}
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+		scale_factor *= scope_scale_mod_val;
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
@@ -977,10 +1132,17 @@ void Fold::score_step_update_activate(
 																			 scope_output,
 																			 predicted_score,
 																			 scale_factor,
+																			 run_status,
 																			 scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
-		scale_factor /= scope_scale_mod;
+		scale_factor /= scope_scale_mod_val;
+
+		if (run_status.exceeded_depth) {
+			history->exit_index = this->finished_steps.size();
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
 
 		s_input_vals.push_back(scope_input);
 		state_vals.push_back(scope_output);
@@ -1007,9 +1169,9 @@ void Fold::score_step_update_activate(
 			vector<double> new_obs{problem.get_observation()};
 
 			fold_input.push_back(new_obs);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(new_obs);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(new_obs);
 				}
 			}
 		} else {
@@ -1021,8 +1183,8 @@ void Fold::score_step_update_activate(
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[f_index]);
@@ -1031,15 +1193,22 @@ void Fold::score_step_update_activate(
 																	  scope_output,
 																	  predicted_score,
 																	  scale_factor,
+																	  run_status,
 																	  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = f_index;
+				history->exit_location = EXIT_LOCATION_SPOT;
+				break;
+			}
 
 			fold_input.push_back(scope_output);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(scope_output);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(scope_output);
 				}
 			}
 		}
@@ -1063,8 +1232,6 @@ void Fold::score_step_update_activate(
 	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
-
-	// end_scale_mod passed on
 }
 
 void Fold::score_step_update_backprop(
@@ -1072,24 +1239,27 @@ void Fold::score_step_update_backprop(
 		double& next_predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history) {
-	// end_scale_mod passed on
-
 	double predicted_score_error = target_val - predicted_score;
 
-	vector<double> curr_fold_error{scale_factor*predicted_score_error};
-	this->curr_fold->backprop_fold_weights_with_no_error_signal(
-		curr_fold_error,
-		0.001,
-		history->curr_fold_history);
+	if (history->exit_location == EXIT_LOCATION_NORMAL) {
+		scale_factor_error += history->ending_score_update*predicted_score_error;
 
-	next_predicted_score = predicted_score;
-	predicted_score -= scale_factor*history->ending_score_update;
+		vector<double> curr_fold_error{scale_factor*predicted_score_error};
+		this->curr_fold->backprop_fold_weights_with_no_error_signal(
+			curr_fold_error,
+			0.001,
+			history->curr_fold_history);
 
-	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
+		next_predicted_score = predicted_score;
+		predicted_score -= scale_factor*history->ending_score_update;
+	}
+
+	for (int f_index = history->exit_index; f_index >= (int)this->finished_steps.size()+1; f_index--) {
 		if (this->is_existing[f_index]) {
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			double scope_scale_factor_error = 0.0;
 			this->existing_actions[f_index]->existing_update_backprop(predicted_score,
@@ -1098,61 +1268,81 @@ void Fold::score_step_update_backprop(
 																	  scope_scale_factor_error,
 																	  history->scope_histories[f_index]);
 
-			scale_factor /= scope_scale_mod;
-
 			vector<double> mod_errors{scope_scale_factor_error};
-			this->scope_scale_mod_calcs[f_index]->backprop(mod_errors, 0.0002);
+			this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+
+			scale_factor /= scope_scale_mod_val;
 		}
 	}
 
-	double inner_predicted_score_error = target_val - predicted_score;
-
-	this->sum_error += abs(inner_predicted_score_error);
-
-	if (this->state_iter <= 110000) {
-		vector<double> score_errors{scale_factor*inner_predicted_score_error};
-		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
-			score_errors,
-			0.05,
-			history->curr_score_network_history);
-	} else if (this->state_iter <= 130000) {
-		vector<double> score_errors{scale_factor*inner_predicted_score_error};
-		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
-			score_errors,
-			0.01,
-			history->curr_score_network_history);
-	} else {
-		vector<double> score_errors{scale_factor*inner_predicted_score_error};
-		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
-			score_errors,
-			0.002,
-			history->curr_score_network_history);
-	}
-	next_predicted_score = predicted_score;
-	predicted_score -= scale_factor*history->score_update;
-
-	if (!this->is_existing[this->finished_steps.size()]) {
+	if (history->exit_index < this->finished_steps.size()) {
 		// do nothing
 	} else {
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		double inner_predicted_score_error = target_val - predicted_score;
 
-		this->existing_actions[this->finished_steps.size()]->update_backprop(
-			predicted_score,
-			next_predicted_score,
-			target_val,
-			scale_factor,
-			history->scope_histories[this->finished_steps.size()]);
+		scale_factor_error += history->score_update*inner_predicted_score_error;
 
-		scale_factor /= scope_scale_mod;
+		this->sum_error += abs(inner_predicted_score_error);
+
+		if (this->state_iter <= 110000) {
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
+			this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+				score_errors,
+				0.05,
+				history->curr_score_network_history);
+		} else if (this->state_iter <= 130000) {
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
+			this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+				score_errors,
+				0.01,
+				history->curr_score_network_history);
+		} else {
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
+			this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+				score_errors,
+				0.002,
+				history->curr_score_network_history);
+		}
+		next_predicted_score = predicted_score;
+		predicted_score -= scale_factor*history->score_update;
+
+		if (!this->is_existing[this->finished_steps.size()]) {
+			// do nothing
+		} else {
+			double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
+
+			double scope_scale_factor_error = 0.0;
+			this->existing_actions[this->finished_steps.size()]->update_backprop(
+				predicted_score,
+				next_predicted_score,
+				target_val,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[this->finished_steps.size()]);
+
+			vector<double> mod_errors{scope_scale_factor_error};
+			this->scope_scale_mod[this->finished_steps.size()]->backprop(mod_errors, 0.0002);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+
+			scale_factor /= scope_scale_mod_val;
+		}
 	}
 
-	for (int n_index = (int)this->finished_steps.size()-1; n_index >= 0; n_index--) {
-		this->finished_steps[n_index]->update_backprop(predicted_score,
-													   next_predicted_score,
-													   target_val,
-													   scale_factor,
-													   history->finished_step_histories[n_index]);
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			// do nothing
+		} else {
+			this->finished_steps[f_index]->update_backprop(predicted_score,
+														   next_predicted_score,
+														   target_val,
+														   scale_factor,
+														   scale_factor_error,
+														   history->finished_step_histories[f_index]);
+		}
 	}
 
 	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
@@ -1174,6 +1364,7 @@ void Fold::score_step_existing_update_activate(
 		vector<double>& local_state_vals,
 		double& predicted_score,
 		double& scale_factor,
+		RunStatus& run_status,
 		FoldHistory* history) {
 	// starting_score_network activated in branch
 	history->starting_score_update = starting_score;
@@ -1200,20 +1391,27 @@ void Fold::score_step_existing_update_activate(
 	vector<vector<double>> s_input_vals{local_s_input_vals};
 	vector<vector<double>> state_vals{local_state_vals};
 
-	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
-		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[n_index]);
-		this->finished_steps[n_index]->existing_update_activate(problem,
+	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
+		FinishedStepHistory* finished_step_history = new FinishedStepHistory(this->finished_steps[f_index]);
+		this->finished_steps[f_index]->existing_update_activate(problem,
 																s_input_vals,
 																state_vals,
 																predicted_score,
 																scale_factor,
+																run_status,
 																finished_step_history);
 		history->finished_step_histories.push_back(finished_step_history);
 
+		if (run_status.exceeded_depth) {
+			history->exit_index = f_index;
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
+
 		fold_input.push_back(vector<double>());	// empty
-		for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
-				input_fold_inputs[f_index].push_back(vector<double>());	// empty
+		for (int ff_index = (int)this->finished_steps.size()+1; ff_index < this->sequence_length; ff_index++) {
+			if (this->is_existing[ff_index]) {
+				input_fold_inputs[ff_index].push_back(vector<double>());	// empty
 			}
 		}
 	}
@@ -1232,15 +1430,15 @@ void Fold::score_step_existing_update_activate(
 			}
 		}
 
-		this->curr_input_network->activate_small(s_input_vals.back(),
+		this->curr_inner_input_network->activate_small(s_input_vals.back(),
 												 state_vals.back());
 		vector<double> scope_input(this->existing_actions[this->finished_steps.size()]->num_inputs);
 		for (int s_index = 0; s_index < this->existing_actions[this->finished_steps.size()]->num_inputs; s_index++) {
-			scope_input[s_index] = this->curr_input_network->output->acti_vals[s_index];
+			scope_input[s_index] = this->curr_inner_input_network->output->acti_vals[s_index];
 		}
 
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+		scale_factor *= scope_scale_mod_val;
 
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[this->finished_steps.size()]);
@@ -1249,10 +1447,17 @@ void Fold::score_step_existing_update_activate(
 																					  scope_output,
 																					  predicted_score,
 																					  scale_factor,
+																					  run_status,
 																					  scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
-		scale_factor /= scope_scale_mod;
+		scale_factor /= scope_scale_mod_val;
+
+		if (run_status.exceeded_depth) {
+			history->exit_index = this->finished_steps.size();
+			history->exit_location = EXIT_LOCATION_SPOT;
+			return;
+		}
 
 		s_input_vals.push_back(scope_input);
 		state_vals.push_back(scope_output);
@@ -1276,9 +1481,9 @@ void Fold::score_step_existing_update_activate(
 			vector<double> new_obs{problem.get_observation()};
 
 			fold_input.push_back(new_obs);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(new_obs);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(new_obs);
 				}
 			}
 		} else {
@@ -1290,8 +1495,8 @@ void Fold::score_step_existing_update_activate(
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->existing_actions[f_index]);
@@ -1300,15 +1505,22 @@ void Fold::score_step_existing_update_activate(
 																	  scope_output,
 																	  predicted_score,
 																	  scale_factor,
+																	  run_status,
 																	  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
+
+			if (run_status.exceeded_depth) {
+				history->exit_index = f_index;
+				history->exit_location = EXIT_LOCATION_SPOT;
+				return;
+			}
 
 			fold_input.push_back(scope_output);
-			for (int i_index = f_index+1; i_index < this->sequence_length; i_index++) {
-				if (this->is_existing[i_index]) {
-					input_fold_inputs[i_index].push_back(scope_output);
+			for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
+				if (this->is_existing[ff_index]) {
+					input_fold_inputs[ff_index].push_back(scope_output);
 				}
 			}
 		}
@@ -1328,8 +1540,6 @@ void Fold::score_step_existing_update_activate(
 	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
-
-	// end_scale_mod passed on
 }
 
 void Fold::score_step_existing_update_backprop(
@@ -1338,16 +1548,16 @@ void Fold::score_step_existing_update_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	// end_scale_mod passed on
+	if (history->exit_location == EXIT_LOCATION_NORMAL) {
+		scale_factor_error += history->ending_score_update*predicted_score_error;
 
-	scale_factor_error += history->ending_score_update*predicted_score_error;
+		predicted_score -= scale_factor*history->ending_score_update;
+	}
 
-	predicted_score -= scale_factor*history->ending_score_update;
-
-	for (int f_index = this->sequence_length-1; f_index >= (int)this->finished_steps.size()+1; f_index--) {
+	for (int f_index = history->exit_index; f_index >= (int)this->finished_steps.size()+1; f_index--) {
 		if (this->is_existing[f_index]) {
-			double scope_scale_mod = this->scope_scale_mod_calcs[f_index]->output->constants[0];
-			scale_factor *= scope_scale_mod;
+			double scope_scale_mod_val = this->scope_scale_mod[f_index]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
 			double scope_scale_factor_error = 0.0;
 			this->existing_actions[f_index]->existing_update_backprop(predicted_score,
@@ -1356,41 +1566,49 @@ void Fold::score_step_existing_update_backprop(
 																	  scope_scale_factor_error,
 																	  history->scope_histories[f_index]);
 
-			scale_factor_error += scope_scale_mod*scope_scale_factor_error;
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
 		}
 	}
 
-	scale_factor_error += history->score_update*predicted_score_error;
-
-	predicted_score -= scale_factor*history->score_update;
-
-	if (!this->is_existing[this->finished_steps.size()]) {
+	if (history->exit_index < this->finished_steps.size()) {
 		// do nothing
 	} else {
-		double scope_scale_mod = this->scope_scale_mod_calcs[this->finished_steps.size()]->output->constants[0];
-		scale_factor *= scope_scale_mod;
+		scale_factor_error += history->score_update*predicted_score_error;
 
-		double scope_scale_factor_error = 0.0;
-		this->existing_actions[this->finished_steps.size()]->existing_update_backprop(
-			predicted_score,
-			predicted_score_error,
-			scale_factor,
-			scope_scale_factor_error,
-			history->scope_histories[this->finished_steps.size()]);
+		predicted_score -= scale_factor*history->score_update;
 
-		scale_factor_error += scope_scale_mod*scope_scale_factor_error;
+		if (!this->is_existing[this->finished_steps.size()]) {
+			// do nothing
+		} else {
+			double scope_scale_mod_val = this->scope_scale_mod[this->finished_steps.size()]->output->constants[0];
+			scale_factor *= scope_scale_mod_val;
 
-		scale_factor /= scope_scale_mod;
+			double scope_scale_factor_error = 0.0;
+			this->existing_actions[this->finished_steps.size()]->existing_update_backprop(
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[this->finished_steps.size()]);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+
+			scale_factor /= scope_scale_mod_val;
+		}
 	}
 
-	for (int n_index = (int)this->finished_steps.size()-1; n_index >= 0; n_index--) {
-		this->finished_steps[n_index]->existing_update_backprop(predicted_score,
-																predicted_score_error,
-																scale_factor,
-																scale_factor_error,
-																history->finished_step_histories[n_index]);
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			// do nothing
+		} else {
+			this->finished_steps[f_index]->existing_update_backprop(predicted_score,
+																	predicted_score_error,
+																	scale_factor,
+																	scale_factor_error,
+																	history->finished_step_histories[f_index]);
+		}
 	}
 
 	predicted_score -= history->starting_score_update;	// already scaled
