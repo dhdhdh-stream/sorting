@@ -34,7 +34,8 @@ public:
 	void new_sequence(int& sequence_length,
 					  std::vector<bool>& is_existing,
 					  std::vector<Scope*>& existing_actions,
-					  std::vector<Action>& actions);
+					  std::vector<Action>& actions,
+					  bool can_be_empty);
 
 	void save(std::ofstream& output_file);
 };

@@ -16,7 +16,7 @@ void Branch::resolve_fold(int b_index) {
 	vector<Action> new_actions;
 	vector<vector<FoldNetwork*>> new_inner_input_networks;
 	vector<vector<int>> new_inner_input_sizes;
-	vector<double> new_scope_scale_mod;
+	vector<Network*> new_scope_scale_mod;
 	vector<int> new_step_types;
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
@@ -61,7 +61,7 @@ void Branch::resolve_fold(int b_index) {
 
 	new_inner_input_networks.insert(new_inner_input_networks.begin(), vector<FoldNetwork*>());
 	new_inner_input_sizes.insert(new_inner_input_sizes.begin(), vector<int>());
-	new_scope_scale_mod.insert(new_scope_scale_mod.begin(), 1.0);
+	new_scope_scale_mod.insert(new_scope_scale_mod.begin(), NULL);
 
 	new_step_types.insert(new_step_types.begin(), STEP_TYPE_STEP);
 	new_branches.insert(new_branches.begin(), NULL);

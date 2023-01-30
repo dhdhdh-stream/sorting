@@ -147,11 +147,11 @@ Branch::~Branch() {
 void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 											vector<double>& local_state_vals,
 											double& scale_factor,
-											ExploreStatus& explore_status,
+											RunStatus& run_status,
 											BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		if (!this->passed_branch_score) {
 			FoldNetworkHistory* branch_score_network_history = new FoldNetworkHistory(this->branch_score_network);
 			this->branch_score_network->activate_small(local_s_input_vals,
@@ -202,11 +202,11 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 											 vector<double>& local_state_vals,
 											 double& scale_factor,
-											 ExploreStatus& explore_status,
+											 RunStatus& run_status,
 											 BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		if (!this->passed_branch_score) {
 			FoldNetworkHistory* branch_score_network_history = new FoldNetworkHistory(this->branch_score_network);
 			this->branch_score_network->activate_small(local_s_input_vals,
@@ -255,7 +255,7 @@ void Branch::explore_on_path_activate(Problem& problem,
 									  vector<double>& local_state_vals,
 									  double& predicted_score,
 									  double& scale_factor,
-									  ExploreStatus& explore_status,
+									  RunStatus& run_status,
 									  BranchHistory* history) {
 	BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[history->best_index]);
 	this->branches[history->best_index]->explore_on_path_activate(problem,
@@ -264,17 +264,17 @@ void Branch::explore_on_path_activate(Problem& problem,
 																  local_state_vals,
 																  predicted_score,
 																  scale_factor,
-																  explore_status,
+																  run_status,
 																  branch_path_history);
 	history->branch_path_history = branch_path_history;
 }
-// TODO: randomize index
+
 void Branch::explore_off_path_activate(Problem& problem,
 									   vector<double>& local_s_input_vals,
 									   vector<double>& local_state_vals,
 									   double& predicted_score,
 									   double& scale_factor,
-									   ExploreStatus& explore_status,
+									   RunStatus& run_status,
 									   BranchHistory* history) {
 	if (this->is_branch[history->best_index]) {
 		BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[history->best_index]);
@@ -284,7 +284,7 @@ void Branch::explore_off_path_activate(Problem& problem,
 																	   local_state_vals,
 																	   predicted_score,
 																	   scale_factor,
-																	   explore_status,
+																	   run_status,
 																	   branch_path_history);
 		history->branch_path_history = branch_path_history;
 	} else {
@@ -295,7 +295,7 @@ void Branch::explore_off_path_activate(Problem& problem,
 																	local_state_vals,
 																	predicted_score,
 																	scale_factor,
-																	explore_status,
+																	run_status,
 																	fold_history);
 		history->fold_history = fold_history;
 	}
@@ -317,8 +317,6 @@ void Branch::explore_on_path_backprop(vector<double>& local_s_input_errors,
 	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
 		this->explore_ref_count--;
 	}
-
-	return;
 }
 
 void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
@@ -391,6 +389,7 @@ void Branch::existing_flat_activate(Problem& problem,
 									vector<double>& local_state_vals,
 									double& predicted_score,
 									double& scale_factor,
+									RunStatus& run_status,
 									BranchHistory* history) {
 	// don't activate branch_score as will not backprop it
 
@@ -427,6 +426,7 @@ void Branch::existing_flat_activate(Problem& problem,
 														   local_state_vals,
 														   predicted_score,
 														   scale_factor,
+														   run_status,
 														   branch_path_history);
 		history->branch_path_history = branch_path_history;
 	} else {
@@ -437,6 +437,7 @@ void Branch::existing_flat_activate(Problem& problem,
 														local_state_vals,
 														predicted_score,
 														scale_factor,
+														run_status,
 														fold_history);
 		history->fold_history = fold_history;
 	}
@@ -498,6 +499,7 @@ void Branch::update_activate(Problem& problem,
 							 vector<double>& local_state_vals,
 							 double& predicted_score,
 							 double& scale_factor,
+							 RunStatus& run_status,
 							 BranchHistory* history) {
 	if (!this->passed_branch_score) {
 		FoldNetworkHistory* branch_score_network_history = new FoldNetworkHistory(this->branch_score_network);
@@ -541,6 +543,7 @@ void Branch::update_activate(Problem& problem,
 													local_state_vals,
 													predicted_score,
 													scale_factor,
+													run_status,
 													branch_path_history);
 		history->branch_path_history = branch_path_history;
 	} else {
@@ -551,6 +554,7 @@ void Branch::update_activate(Problem& problem,
 												 local_state_vals,
 												 predicted_score,
 												 scale_factor,
+												 run_status,
 												 fold_history);
 		history->fold_history = fold_history;
 	}
@@ -560,18 +564,21 @@ void Branch::update_backprop(double& predicted_score,
 							 double& next_predicted_score,
 							 double target_val,
 							 double& scale_factor,
+							 double& scale_factor_error,
 							 BranchHistory* history) {
 	if (this->is_branch[history->best_index]) {
 		this->branches[history->best_index]->update_backprop(predicted_score,
 															 next_predicted_score,
 															 target_val,
 															 scale_factor,
+															 scale_factor_error,
 															 history->branch_path_history);
 	} else {
 		this->folds[history->best_index]->update_backprop(predicted_score,
 														  next_predicted_score,
 														  target_val,
 														  scale_factor,
+														  scale_factor_error,
 														  history->fold_history);
 
 		if (this->folds[history->best_index]->state == STATE_DONE) {
@@ -582,6 +589,9 @@ void Branch::update_backprop(double& predicted_score,
 	// predicted_score already modified to before branch value in branch_path
 	double score_predicted_score = predicted_score + history->best_score;
 	double score_predicted_score_error = target_val - score_predicted_score;
+
+	double score_update = history->best_score/scale_factor;
+	scale_factor_error += score_update*score_predicted_score_error;
 
 	vector<double> score_errors{scale_factor*score_predicted_score_error};
 	this->score_networks[history->best_index]->backprop_small_weights_with_no_error_signal(
@@ -594,6 +604,8 @@ void Branch::update_backprop(double& predicted_score,
 	if (!this->passed_branch_score) {
 		double branch_score_predicted_score = predicted_score + scale_factor*history->branch_score_update;
 		double branch_score_predicted_score_error = target_val - branch_score_predicted_score;
+
+		scale_factor_error += history->branch_score_update*branch_score_predicted_score_error;
 
 		vector<double> branch_score_errors{scale_factor*branch_score_predicted_score_error};
 		this->branch_score_network->backprop_small_weights_with_no_error_signal(
@@ -608,6 +620,7 @@ void Branch::existing_update_activate(Problem& problem,
 									  vector<double>& local_state_vals,	// i.e., output
 									  double& predicted_score,
 									  double& scale_factor,
+									  RunStatus& run_status,
 									  BranchHistory* history) {
 	// don't activate branch_score as will not backprop it
 
@@ -634,6 +647,7 @@ void Branch::existing_update_activate(Problem& problem,
 															 local_state_vals,
 															 predicted_score,
 															 scale_factor,
+															 run_status,
 															 branch_path_history);
 		history->branch_path_history = branch_path_history;
 	} else {
@@ -644,6 +658,7 @@ void Branch::existing_update_activate(Problem& problem,
 														  local_state_vals,
 														  predicted_score,
 														  scale_factor,
+														  run_status,
 														  fold_history);
 		history->fold_history = fold_history;
 	}

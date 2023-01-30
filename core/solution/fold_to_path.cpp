@@ -66,7 +66,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 	vector<vector<FoldNetwork*>> scope_inner_input_networks;
 	vector<vector<int>> scope_inner_input_sizes;
-	vector<double> scope_scope_scale_mod;
+	vector<Network*> scope_scope_scale_mod;
 
 	vector<int> scope_step_types;	// initially STEP_TYPE_STEP
 	vector<Branch*> scope_branches;	// initially NULL
@@ -185,7 +185,8 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 				scope_inner_input_networks.push_back(vector<FoldNetwork*>());
 				scope_inner_input_sizes.push_back(vector<int>());
-				scope_scope_scale_mod.push_back(1.0);
+				scope_scope_scale_mod.push_back(new Network(0, 0, 1));
+				scope_scope_scale_mod.back()->output->constants[0] = 1.0;
 				for (int i_index = 0; i_index < (int)new_outer_input_networks.size(); i_index++) {
 					if (new_outer_input_layer[i_index] == curr_layer) {
 						scope_inner_input_networks.back().push_back(new_outer_input_networks[i_index]);
@@ -390,7 +391,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				  vector<Action>& actions,
 				  vector<vector<FoldNetwork*>>& inner_input_networks,
 				  vector<vector<int>>& inner_input_sizes,
-				  vector<double>& scope_scale_mod,
+				  vector<Network*>& scope_scale_mod,
 				  vector<int>& step_types,
 				  vector<Branch*>& branches,
 				  vector<Fold*>& folds,
@@ -528,7 +529,8 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 
 				inner_input_networks.push_back(vector<FoldNetwork*>());
 				inner_input_sizes.push_back(vector<int>());
-				scope_scale_mod.push_back(1.0);
+				scope_scale_mod.push_back(new Network(0, 0, 1));
+				scope_scale_mod.back()->output->constants[0] = 1.0;
 				for (int i_index = 0; i_index < (int)new_outer_input_networks.size(); i_index++) {
 					// new_outer_input_layer[i_index] == 0
 					inner_input_networks.back().push_back(new_outer_input_networks[i_index]);

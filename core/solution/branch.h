@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "branch_path.h"
-#include "explore_status.h"
 #include "fold.h"
 #include "fold_network.h"
 #include "problem.h"
+#include "run_status.h"
 
 class BranchPath;
 class Branch {
@@ -42,26 +42,26 @@ public:
 	void explore_on_path_activate_score(std::vector<double>& local_s_input_vals,
 										std::vector<double>& local_state_vals,
 										double& scale_factor,
-										ExploreStatus& explore_status,
+										RunStatus& run_status,
 										BranchHistory* history);
 	void explore_off_path_activate_score(std::vector<double>& local_s_input_vals,
 										 std::vector<double>& local_state_vals,
 										 double& scale_factor,
-										 ExploreStatus& explore_status,
+										 RunStatus& run_status,
 										 BranchHistory* history);
 	void explore_on_path_activate(Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
-								  ExploreStatus& explore_status,
+								  RunStatus& run_status,
 								  BranchHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   std::vector<double>& local_s_input_vals,
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   ExploreStatus& explore_status,
+								   RunStatus& run_status,
 								   BranchHistory* history);
 	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
 								  std::vector<double>& local_state_errors,
@@ -80,6 +80,7 @@ public:
 								std::vector<double>& local_state_vals,
 								double& predicted_score,
 								double& scale_factor,
+								RunStatus& run_status,
 								BranchHistory* history);
 	void existing_flat_backprop(std::vector<double>& local_s_input_errors,
 								std::vector<double>& local_state_errors,
@@ -93,17 +94,20 @@ public:
 						 std::vector<double>& local_state_vals,
 						 double& predicted_score,
 						 double& scale_factor,
+						 RunStatus& run_status,
 						 BranchHistory* history);
 	void update_backprop(double& predicted_score,
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 BranchHistory* history);
 	void existing_update_activate(Problem& problem,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  BranchHistory* history);
 	void existing_update_backprop(double& predicted_score,
 								  double predicted_score_error,

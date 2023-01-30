@@ -5,7 +5,9 @@
 #include <vector>
 
 #include "fold_network.h"
+#include "network.h"
 #include "problem.h"
+#include "run_status.h"
 #include "scope.h"
 
 class FinishedStepHistory;

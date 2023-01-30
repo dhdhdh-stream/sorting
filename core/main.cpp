@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 					if (solution->max_depth < 50) {
 						solution->depth_limit = solution->max_depth + 10;
 					} else {
-						solution->depth_limit = 1.2*solution->depth;
+						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 					}
 				}
 			}
@@ -66,13 +66,13 @@ int main(int argc, char* argv[]) {
 				target_val = problem.score_result();
 			}
 
-			if (explore_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
+			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
 				// !run_status.exceeded_depth
 				// if (target_val > explore_status.existing_score) {
 				if (rand()%10 == 0) {
 					solution->root->explore_set(scope_history);
 				}
-			} else if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				solution->root->explore_on_path_backprop(local_state_errors,
 														 predicted_score,
@@ -90,12 +90,15 @@ int main(int argc, char* argv[]) {
 			double predicted_score = 0.0;
 			double scale_factor = 1.0;
 
+			RunStatus run_status;
+
 			ScopeHistory* scope_history = new ScopeHistory(solution->root);
 			solution->root->update_activate(problem,
 											local_s_input_vals,
 											local_state_vals,
 											predicted_score,
 											scale_factor,
+											run_status,
 											scope_history);
 
 			if (!run_status.exceeded_depth) {
@@ -105,7 +108,7 @@ int main(int argc, char* argv[]) {
 					if (solution->max_depth < 50) {
 						solution->depth_limit = solution->max_depth + 10;
 					} else {
-						solution->depth_limit = 1.2*solution->depth;
+						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 					}
 				}
 			}
@@ -119,10 +122,12 @@ int main(int argc, char* argv[]) {
 
 			double next_predicted_score = predicted_score;
 
+			double scale_factor_error = 0.0;	// unused
 			solution->root->update_backprop(predicted_score,
 											next_predicted_score,
 											target_val,
 											scale_factor,
+											scale_factor_error,
 											scope_history);
 			delete scope_history;
 		}

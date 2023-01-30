@@ -114,8 +114,9 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		}
 	}
 
+	double predicted_score_error = target_val - predicted_score;
+
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
-		double predicted_score_error = target_val - predicted_score;
 		this->sum_error += abs(predicted_score_error);
 		if (this->state_iter <= 300000) {
 			this->curr_end_fold->backprop(local_state_errors, 0.05);
@@ -163,7 +164,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
 
-			scale_factor /= scope_scale_mod;
+			scale_factor /= scope_scale_mod_val;
 
 			if (this->state_iter <= 300000) {
 				vector<double> mod_errors{scope_scale_factor_error};

@@ -108,7 +108,7 @@ Fold::Fold(int num_inputs,
 	this->test_end_fold = NULL;
 
 	this->curr_inner_input_network = NULL;
-	this->test_input_network = NULL;
+	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
 	this->test_score_network = NULL;
@@ -261,7 +261,7 @@ Fold::Fold(ifstream& input_file) {
 	this->test_end_fold = NULL;
 
 	this->curr_inner_input_network = NULL;
-	this->test_input_network = NULL;
+	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
 	this->test_score_network = NULL;
@@ -336,8 +336,8 @@ Fold::~Fold() {
 	if (this->curr_inner_input_network != NULL) {
 		delete this->curr_inner_input_network;
 	}
-	if (this->test_input_network != NULL) {
-		delete this->test_input_network;
+	if (this->test_inner_input_network != NULL) {
+		delete this->test_inner_input_network;
 	}
 
 	if (this->curr_score_network != NULL) {

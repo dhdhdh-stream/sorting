@@ -22,7 +22,7 @@ void Fold::starting_compress_step_explore_off_path_activate(
 
 	if (this->curr_starting_compress_new_size < this->starting_compress_original_size) {
 		if (this->curr_starting_compress_new_size > 0) {
-			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* curr_starting_compress_network_history = new FoldNetworkHistory(this->curr_starting_compress_network);
 				this->curr_starting_compress_network->activate_small(local_s_input_vals,
 																	 local_state_vals,
@@ -59,7 +59,7 @@ void Fold::starting_compress_step_explore_off_path_activate(
 				}
 			}
 		} else {
-			if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				FoldNetworkHistory* curr_input_fold_history = new FoldNetworkHistory(this->curr_input_folds[f_index]);
 				this->curr_input_folds[f_index]->activate(input_fold_inputs[f_index],
 														  local_s_input_vals,
@@ -107,7 +107,7 @@ void Fold::starting_compress_step_explore_off_path_activate(
 		}
 	}
 
-	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* curr_fold_history = new FoldNetworkHistory(this->curr_fold);
 		this->curr_fold->activate(fold_input,
 								  local_s_input_vals,
@@ -122,7 +122,7 @@ void Fold::starting_compress_step_explore_off_path_activate(
 	history->ending_score_update = this->curr_fold->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_fold->output->acti_vals[0];
 
-	if (explore_status.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* curr_end_fold_history = new FoldNetworkHistory(this->curr_end_fold);
 		this->curr_end_fold->activate(fold_input,
 									  local_s_input_vals,

@@ -683,8 +683,11 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 			if (this->explore_index_inclusive == a_index
 					&& this->explore_type == EXPLORE_TYPE_NEW) {
+				double existing_score = branch_history->best_score;
+				delete branch_history;
+
 				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
-				this->explore_fold->explore_on_path_activate(branch_history->best_score,
+				this->explore_fold->explore_on_path_activate(existing_score,
 															 problem,
 															 local_s_input_vals,
 															 local_state_vals,
@@ -703,12 +706,11 @@ void Scope::explore_on_path_activate(Problem& problem,
 				}
 
 				a_index = this->explore_end_non_inclusive-1;	// account for increment at end
-
-				delete branch_history;
 			} else if (this->explore_type == EXPLORE_TYPE_NONE
 					&& history->explore_type == EXPLORE_TYPE_NEW
 					&& history->explore_index_inclusive == a_index) {
 				run_status.existing_score = branch_history->best_score;
+				delete branch_history;
 
 				for (int n_index = 0; n_index < history->sequence_length; n_index++) {
 					if (!history->is_existing[n_index]) {
@@ -744,8 +746,6 @@ void Scope::explore_on_path_activate(Problem& problem,
 					local_state_vals = vector<double>(this->starting_state_sizes[history->explore_end_non_inclusive], 0.0);
 				}
 				a_index = history->explore_end_non_inclusive-1;		// account for increment at end
-
-				delete branch_history;
 			} else {
 				if (this->explore_index_inclusive == a_index
 						&& this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
@@ -1970,6 +1970,7 @@ void Scope::existing_update_activate(Problem& problem,
 															scope_output,
 															predicted_score,
 															scale_factor,
+															run_status,
 															scope_history);
 			history->scope_histories[a_index] = scope_history;
 
@@ -2016,6 +2017,7 @@ void Scope::existing_update_activate(Problem& problem,
 															  local_state_vals,
 															  predicted_score,
 															  scale_factor,
+															  run_status,
 															  branch_history);
 			history->branch_histories[a_index] = branch_history;
 
@@ -2039,6 +2041,7 @@ void Scope::existing_update_activate(Problem& problem,
 														   local_state_vals,
 														   predicted_score,
 														   scale_factor,
+														   run_status,
 														   fold_history);
 			history->fold_histories[a_index] = fold_history;
 

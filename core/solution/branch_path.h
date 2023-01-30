@@ -7,10 +7,11 @@
 #include <vector>
 
 #include "branch.h"
-#include "explore_status.h"
 #include "fold.h"
 #include "fold_network.h"
+#include "network.h"
 #include "problem.h"
+#include "run_status.h"
 #include "scope.h"
 
 class Branch;
@@ -32,7 +33,7 @@ public:
 
 	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
 	std::vector<std::vector<int>> inner_input_sizes;
-	std::vector<double> scope_scale_mod;
+	std::vector<Network*> scope_scale_mod;
 
 	std::vector<int> step_types;
 	std::vector<Branch*> branches;
@@ -69,7 +70,7 @@ public:
 			   std::vector<Action> actions,
 			   std::vector<std::vector<FoldNetwork*>> inner_input_networks,
 			   std::vector<std::vector<int>> inner_input_sizes,
-			   std::vector<double> scope_scale_mod,
+			   std::vector<Network*> scope_scale_mod,
 			   std::vector<int> step_types,
 			   std::vector<Branch*> branches,
 			   std::vector<Fold*> folds,
@@ -84,7 +85,6 @@ public:
 			   std::vector<FoldNetwork*> compress_networks,
 			   std::vector<int> compress_original_sizes,
 			   bool full_last);
-	BranchPath(BranchPath* original);
 	BranchPath(std::ifstream& input_file);
 	~BranchPath();
 
@@ -94,7 +94,7 @@ public:
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
-								  ExploreStatus& explore_status,
+								  RunStatus& run_status,
 								  BranchPathHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   double starting_score,
@@ -102,7 +102,7 @@ public:
 								   std::vector<double>& local_state_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   ExploreStatus& explore_status,
+								   RunStatus& run_status,
 								   BranchPathHistory* history);
 	void explore_on_path_backprop(std::vector<double>& local_s_input_errors,
 								  std::vector<double>& local_state_errors,
@@ -122,6 +122,7 @@ public:
 								std::vector<double>& local_state_vals,
 								double& predicted_score,
 								double& scale_factor,
+								RunStatus& run_status,
 								BranchPathHistory* history);
 	void existing_flat_backprop(std::vector<double>& local_s_input_errors,
 								std::vector<double>& local_state_errors,
@@ -136,11 +137,13 @@ public:
 						 std::vector<double>& local_state_vals,
 						 double& predicted_score,
 						 double& scale_factor,
+						 RunStatus& run_status,
 						 BranchPathHistory* history);
 	void update_backprop(double& predicted_score,
 						 double& next_predicted_score,
 						 double target_val,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 BranchPathHistory* history);
 	void existing_update_activate(Problem& problem,
 								  double starting_score,
@@ -148,6 +151,7 @@ public:
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
 								  double& scale_factor,
+								  RunStatus& run_status,
 								  BranchPathHistory* history);
 	void existing_update_backprop(double& predicted_score,
 								  double predicted_score_error,
@@ -180,6 +184,9 @@ public:
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
 	FoldHistory* explore_fold_history;
+
+	int exit_index;
+	int exit_location;
 
 	int explore_type;
 	int explore_index_inclusive;

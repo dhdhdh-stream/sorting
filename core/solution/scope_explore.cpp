@@ -50,8 +50,9 @@ void Scope::explore_replace() {
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
 				delete this->inner_input_networks[a_index][i_index];
 			}
+			delete this->scope_scale_mod[a_index];
 
-			delete this->scopes[a_index];
+			// scopes owned and deleted by solution
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
@@ -195,8 +196,8 @@ void Scope::explore_branch() {
 		branch_inner_input_sizes.insert(branch_inner_input_sizes.end(),
 			this->inner_input_sizes.begin()+this->explore_index_inclusive+1,
 			this->inner_input_sizes.begin()+this->explore_end_non_inclusive);
-		vector<double> branch_scope_scale_mod;
-		branch_scope_scale_mod.push_back(0.0);	// start doesn't matter
+		vector<Network*> branch_scope_scale_mod;
+		branch_scope_scale_mod.push_back(NULL);	// start doesn't matter
 		branch_scope_scale_mod.insert(branch_scope_scale_mod.end(),
 			this->scope_scale_mod.begin()+this->explore_index_inclusive+1,
 			this->scope_scale_mod.begin()+this->explore_end_non_inclusive);
@@ -373,7 +374,7 @@ void Scope::resolve_fold(int a_index) {
 	vector<Action> new_actions;
 	vector<vector<FoldNetwork*>> new_inner_input_networks;
 	vector<vector<int>> new_inner_input_sizes;
-	vector<double> new_scope_scale_mod;
+	vector<Network*> new_scope_scale_mod;
 	vector<int> new_step_types;
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;

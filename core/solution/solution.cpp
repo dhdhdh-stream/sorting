@@ -25,7 +25,7 @@ void Solution::init() {
 	vector<Action> starting_actions{Action(ACTION_START, 0.0)};
 	vector<vector<FoldNetwork*>> starting_inner_input_networks{vector<FoldNetwork*>()};
 	vector<vector<int>> starting_inner_input_sizes{vector<int>()};
-	vector<double> starting_scope_scale_mod{0.0};	// doesn't matter
+	vector<Network*> starting_scope_scale_mod{NULL};
 	vector<int> starting_step_types{STEP_TYPE_STEP};
 	vector<Branch*> starting_branches{NULL};
 	vector<Fold*> starting_folds{NULL};
@@ -83,7 +83,7 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, scope_dictionary_size_line);
 	int scope_dictionary_size = stoi(scope_dictionary_size_line);
 	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
-		this->scope_dictionary.push_back(Scope());
+		this->scope_dictionary.push_back(new Scope());
 	}
 	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
 		ifstream scope_save_file;
@@ -101,9 +101,10 @@ void Solution::load(ifstream& input_file) {
 		this->scope_use_sum_count += this->scope_use_counts.back();
 	}
 
+	this->root = new Scope();
 	ifstream scope_save_file;
 	scope_save_file.open("saves/scope_root.txt");
-	this->root = new Scope(scope_save_file);
+	this->root->load(scope_save_file);
 	scope_save_file.close();
 
 	string max_depth_line;
@@ -113,7 +114,7 @@ void Solution::load(ifstream& input_file) {
 	if (this->max_depth < 50) {
 		this->depth_limit = this->max_depth + 10;
 	} else {
-		this->depth_limit = 1.2*this->depth;
+		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
 }
 

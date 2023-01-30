@@ -10,6 +10,7 @@
 #include "fold_network.h"
 #include "network.h"
 #include "problem.h"
+#include "run_status.h"
 #include "scope.h"
 
 const int STATE_STARTING_COMPRESS = 0;
@@ -641,6 +642,7 @@ public:
 
 	// in case of early exit due to scope depth
 	int exit_index;
+	int exit_location;
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();
