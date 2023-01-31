@@ -1,5 +1,6 @@
 #include "solution.h"
 
+#include <iostream>
 #include <random>
 
 #include "globals.h"
@@ -12,6 +13,10 @@ Solution::Solution() {
 
 Solution::~Solution() {
 	delete this->root;
+
+	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {
+		delete this->scope_dictionary[s_index];
+	}
 }
 
 void Solution::init() {
@@ -69,6 +74,8 @@ void Solution::init() {
 						   starting_compress_original_sizes,
 						   starting_full_last);
 	this->root->id = -1;
+
+	this->scope_use_sum_count = 0;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;

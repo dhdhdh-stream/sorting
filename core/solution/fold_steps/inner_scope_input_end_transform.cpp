@@ -11,6 +11,10 @@ void Fold::inner_scope_input_end() {
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {
+		if (this->curr_input_folds[this->finished_steps.size()] != NULL) {
+			// this->curr_inner_input_network == this->curr_input_folds[this->finished_steps.size()];
+			this->curr_input_folds[this->finished_steps.size()] = NULL;
+		}
 		delete this->curr_inner_input_network;
 		this->curr_inner_input_network = this->test_inner_input_network;
 		this->test_inner_input_network = NULL;

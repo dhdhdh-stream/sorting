@@ -197,6 +197,8 @@ public:
 								  double& scale_factor_error,
 								  FoldHistory* history);
 
+	void update_increment(FoldHistory* history);
+
 	void save(std::ofstream& output_file);
 
 	void flat_step_explore_on_path_activate(double existing_score,
@@ -604,6 +606,11 @@ public:
 		double& scale_factor_error,
 		FoldHistory* history);
 
+	void inner_scope_input_step_update_increment(FoldHistory* history);
+	void score_step_update_increment(FoldHistory* history);
+	void compress_step_update_increment(FoldHistory* history);
+	void input_step_update_increment(FoldHistory* history);
+
 	void fold_increment();
 };
 
@@ -643,6 +650,8 @@ public:
 	// in case of early exit due to scope depth
 	int exit_index;
 	int exit_location;
+
+	int state;	// to check if update_increment still valid
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();

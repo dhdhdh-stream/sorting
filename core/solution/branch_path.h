@@ -160,6 +160,7 @@ public:
 								  BranchPathHistory* history);
 
 	void explore_set(BranchPathHistory* history);
+	void update_increment(BranchPathHistory* history);
 
 	void explore_replace();
 	void explore_branch();

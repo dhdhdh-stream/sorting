@@ -1510,3 +1510,22 @@ void Fold::inner_scope_input_step_existing_update_backprop(
 
 	predicted_score -= history->starting_score_update;	// already scaled
 }
+
+void Fold::inner_scope_input_step_update_increment(FoldHistory* history) {
+	if (history->exit_index < (int)this->finished_steps.size()) {
+		// do nothing
+	} else {
+		this->existing_actions[this->finished_steps.size()]->update_increment(
+			history->scope_histories[this->finished_steps.size()]);
+	}
+
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			// do nothing
+		} else {
+			if (this->state == history->state) {
+				this->finished_steps[f_index]->update_increment(history->finished_step_histories[f_index]);
+			}
+		}
+	}
+}

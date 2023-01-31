@@ -116,6 +116,7 @@ public:
 								  BranchHistory* history);
 
 	void explore_set(BranchHistory* history);
+	void update_increment(BranchHistory* history);
 
 	void resolve_fold(int b_index);
 

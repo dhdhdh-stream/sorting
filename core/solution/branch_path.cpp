@@ -1279,7 +1279,7 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 										  double& scale_factor,
 										  BranchPathHistory* history) {
 	int a_index;
-	if (history->exit_index != EXIT_LOCATION_NORMAL) {
+	if (history->exit_location != EXIT_LOCATION_NORMAL) {
 		a_index = history->exit_index;
 	} else {
 		if (this->explore_end_non_inclusive == this->sequence_length
@@ -1928,7 +1928,7 @@ void BranchPath::existing_flat_backprop(vector<double>& local_s_input_errors,
 										double& scale_factor_error,
 										BranchPathHistory* history) {
 	// mid
-	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
+	for (int a_index = history->exit_index; a_index >= 1; a_index--) {
 		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
 			// do nothing
 		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
@@ -2319,7 +2319,7 @@ void BranchPath::update_backprop(double& predicted_score,
 								 double& scale_factor_error,
 								 BranchPathHistory* history) {
 	// mid
-	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
+	for (int a_index = history->exit_index; a_index >= 1; a_index--) {
 		if (a_index == this->sequence_length-1 && !this->full_last) {
 			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
@@ -2389,10 +2389,6 @@ void BranchPath::update_backprop(double& predicted_score,
 				history->score_network_histories[a_index]);
 
 			// local_impact kept track of as starting impact in fold
-
-			if (this->folds[a_index]->state == STATE_DONE) {
-				resolve_fold(a_index);
-			}
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -2470,10 +2466,6 @@ void BranchPath::update_backprop(double& predicted_score,
 		// predicted_score already modified to before fold value in fold
 
 		// local_impact kept track of as starting impact in fold
-
-		if (this->folds[0]->state == STATE_DONE) {
-			resolve_fold(0);
-		}
 	}
 }
 
@@ -2666,7 +2658,7 @@ void BranchPath::existing_update_backprop(double& predicted_score,
 										  double& scale_factor_error,
 										  BranchPathHistory* history) {
 	// mid
-	for (int a_index = this->sequence_length-1; a_index >= 1; a_index--) {
+	for (int a_index = history->exit_index; a_index >= 1; a_index--) {
 		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
 			// do nothing
 		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
@@ -2796,6 +2788,52 @@ void BranchPath::explore_set(BranchPathHistory* history) {
 			} else {
 				solution->scope_use_counts[history->existing_actions[s_index]->id]++;
 				solution->scope_use_sum_count++;
+			}
+		}
+	}
+}
+
+void BranchPath::update_increment(BranchPathHistory* history) {
+	// mid
+	for (int a_index = history->exit_index; a_index >= 1; a_index--) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			if (history->branch_histories[a_index]->branch == this->branches[a_index]) {
+				this->branches[a_index]->update_increment(history->branch_histories[a_index]);
+			}
+		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
+			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
+				this->folds[a_index]->update_increment(history->fold_histories[a_index]);
+			}
+
+			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
+				if (this->folds[a_index]->state == STATE_DONE) {
+					resolve_fold(a_index);
+				}
+			}
+		}
+
+		if (this->is_inner_scope[a_index]) {
+			if (history->scope_histories[a_index]->scope == this->scopes[a_index]) {
+				this->scopes[a_index]->update_increment(history->scope_histories[a_index]);
+			}
+		}
+	}
+
+	// start
+	if (this->step_types[0] == STEP_TYPE_BRANCH) {
+		if (history->branch_histories[0]->branch == this->branches[0]) {
+			this->branches[0]->update_increment(history->branch_histories[0]);
+		}
+	} else if (this->step_types[0] == STEP_TYPE_FOLD) {
+		if (history->fold_histories[0]->fold == this->folds[0]) {
+			this->folds[0]->update_increment(history->fold_histories[0]);
+		}
+
+		if (history->fold_histories[0]->fold == this->folds[0]) {
+			if (this->folds[0]->state == STATE_DONE) {
+				resolve_fold(0);
 			}
 		}
 	}

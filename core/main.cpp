@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	// int seed = (unsigned)time(NULL);
-	int seed = 1674449097;
+	int seed = 1675147141;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -129,6 +129,9 @@ int main(int argc, char* argv[]) {
 											scale_factor,
 											scale_factor_error,
 											scope_history);
+
+			solution->root->update_increment(scope_history);
+
 			delete scope_history;
 		}
 	}

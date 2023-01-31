@@ -157,6 +157,7 @@ public:
 								  ScopeHistory* history);
 
 	void explore_set(ScopeHistory* history);
+	void update_increment(ScopeHistory* history);
 
 	void explore_replace();
 	void explore_branch();

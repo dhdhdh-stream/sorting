@@ -98,11 +98,21 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				scope_inner_input_networks.push_back(vector<FoldNetwork*>());
 				scope_inner_input_sizes.push_back(vector<int>());
 				scope_scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
+				finished_steps[n_index]->scope_scale_mod = NULL;	// for garbage collection
 				if (finished_steps[n_index]->is_inner_scope) {
-					scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+					if (n_index == 0) {
+						// edge case starting step
+						scope_num_inputs += scope_scopes.back()->num_inputs;
+
+						outer_input_layer.push_back(curr_layer-1);
+						outer_input_sizes.push_back(scope_scopes.back()->num_inputs);
+						outer_input_networks.push_back(finished_steps[n_index]->inner_input_network);
+					} else {
+						scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+						// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
+						scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
+					}
 					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-					// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
-					scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
 
 					for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 						if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
@@ -268,11 +278,21 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		scope_inner_input_networks.push_back(vector<FoldNetwork*>());
 		scope_inner_input_sizes.push_back(vector<int>());
 		scope_scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
+		finished_steps[n_index]->scope_scale_mod = NULL;	// for garbage collection
 		if (finished_steps[n_index]->is_inner_scope) {
-			scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+			if (n_index == 0) {
+				// edge case starting step
+				scope_num_inputs += scope_scopes.back()->num_inputs;
+
+				outer_input_layer.push_back(curr_layer-1);
+				outer_input_sizes.push_back(scope_scopes.back()->num_inputs);
+				outer_input_networks.push_back(finished_steps[n_index]->inner_input_network);
+			} else {
+				scope_inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
+				// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
+				scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
+			}
 			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
-			// finished_steps[n_index]->scope is already NULL, so use scope_scopes.back()
-			scope_inner_input_sizes.back().push_back(scope_scopes.back()->num_inputs);
 
 			for (int i_index = 0; i_index < (int)finished_steps[n_index]->inner_input_input_networks.size(); i_index++) {
 				if (finished_steps[n_index]->inner_input_input_layer[i_index] == curr_layer-1) {
@@ -354,6 +374,15 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		n_index++;
 	}
 
+	if (scope_sequence_length > 0 && scope_is_inner_scope[0]) {
+		if (scope_num_inputs < scope_scopes[0]->num_inputs) {
+			cout << "size mismatch" << endl;
+			cout << "scope_num_inputs: " << scope_num_inputs << endl;
+			cout << "scope_scopes[0]->num_inputs: " << scope_scopes[0]->num_inputs << endl;
+			exit(1);
+		}
+	}
+
 	Scope* scope = new Scope(scope_num_inputs,
 							 scope_num_outputs,
 							 scope_sequence_length,
@@ -380,6 +409,7 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	scope->id = (int)solution->scope_dictionary.size();
 	solution->scope_dictionary.push_back(scope);
 	solution->scope_use_counts.push_back(1);
+	solution->scope_use_sum_count++;
 
 	return scope;
 }
@@ -460,6 +490,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				inner_input_networks.push_back(vector<FoldNetwork*>());
 				inner_input_sizes.push_back(vector<int>());
 				scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
+				finished_steps[n_index]->scope_scale_mod = NULL;	// for garbage collection
 				if (finished_steps[n_index]->is_inner_scope) {
 					inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 					finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection
@@ -574,6 +605,7 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 		inner_input_networks.push_back(vector<FoldNetwork*>());
 		inner_input_sizes.push_back(vector<int>());
 		scope_scale_mod.push_back(finished_steps[n_index]->scope_scale_mod);
+		finished_steps[n_index]->scope_scale_mod = NULL;	// for garbage collection
 		if (finished_steps[n_index]->is_inner_scope) {
 			inner_input_networks.back().push_back(finished_steps[n_index]->inner_input_network);
 			finished_steps[n_index]->inner_input_network = NULL;	// for garbage collection

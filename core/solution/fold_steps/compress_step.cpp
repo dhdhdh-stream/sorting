@@ -442,62 +442,89 @@ void Fold::compress_step_explore_off_path_backprop(
 			}
 		}
 	} else {
-		if (this->curr_compress_num_layers > 0) {
-			if (this->curr_compress_new_size > 0) {
-				this->curr_compress_network->backprop_subfold_errors_with_no_weight_change(
-					state_errors.back(),
-					history->curr_compress_network_history);
-
-				// don't pop last_s_input_errors
-				state_errors.pop_back();
-				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
-				for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
-				}
-
-				for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-					s_input_errors[0][s_index] += this->curr_compress_network->s_input_input->errors[s_index];
-					this->curr_compress_network->s_input_input->errors[s_index] = 0.0;
-				}
-				for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-					for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-						state_errors[l_index][s_index] += this->curr_compress_network->state_inputs[l_index]->errors[s_index];
-						this->curr_compress_network->state_inputs[l_index]->errors[s_index] = 0.0;
+		if (history->exit_index == (int)this->finished_steps.size()) {
+			if (this->curr_compress_num_layers > 0) {
+				if (this->curr_compress_new_size > 0) {
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
+				} else {
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 					}
 				}
-			} else {
-				if (state_errors.back().size() == 0) {
-					// edge case where compressed down to 0
-					// s_input_errors unchanged
-					state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
-				} else {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
-				}
-				for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
-				}
 			}
-		}
+		} else {
+			if (this->curr_compress_num_layers > 0) {
+				if (this->curr_compress_new_size > 0) {
+					this->curr_compress_network->backprop_subfold_errors_with_no_weight_change(
+						state_errors.back(),
+						history->curr_compress_network_history);
 
-		double inner_predicted_score_error = target_val - predicted_score;
-		vector<double> score_errors{scale_factor*inner_predicted_score_error};
-		this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
-			score_errors,
-			history->curr_score_network_history);
-		for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-			s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
-			this->curr_score_network->s_input_input->errors[s_index] = 0.0;
-		}
-		for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-			for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-				state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
-				this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
+
+					for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+						s_input_errors[0][s_index] += this->curr_compress_network->s_input_input->errors[s_index];
+						this->curr_compress_network->s_input_input->errors[s_index] = 0.0;
+					}
+					for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+						for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+							state_errors[l_index][s_index] += this->curr_compress_network->state_inputs[l_index]->errors[s_index];
+							this->curr_compress_network->state_inputs[l_index]->errors[s_index] = 0.0;
+						}
+					}
+				} else {
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
+				}
 			}
+
+			double inner_predicted_score_error = target_val - predicted_score;
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
+			this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
+				score_errors,
+				history->curr_score_network_history);
+			for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+				s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+				this->curr_score_network->s_input_input->errors[s_index] = 0.0;
+			}
+			for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+				for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+					state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+					this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+				}
+			}
+			predicted_score -= scale_factor*history->score_update;
 		}
-		predicted_score -= scale_factor*history->score_update;
 
 		if (!this->is_existing[this->finished_steps.size()]) {
 			s_input_errors.pop_back();
@@ -1037,63 +1064,90 @@ void Fold::compress_step_existing_flat_backprop(
 			}
 		}
 	} else {
-		if (this->curr_compress_num_layers > 0) {
-			if (this->curr_compress_new_size > 0) {
-				this->curr_compress_network->backprop_subfold_errors_with_no_weight_change(
-					state_errors.back(),
-					history->curr_compress_network_history);
-
-				// don't pop last_s_input_errors
-				state_errors.pop_back();
-				state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
-				for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
-				}
-
-				for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-					s_input_errors[0][s_index] += this->curr_compress_network->s_input_input->errors[s_index];
-					this->curr_compress_network->s_input_input->errors[s_index] = 0.0;
-				}
-				for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-					for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-						state_errors[l_index][s_index] += this->curr_compress_network->state_inputs[l_index]->errors[s_index];
-						this->curr_compress_network->state_inputs[l_index]->errors[s_index] = 0.0;
+		if (history->exit_index == (int)this->finished_steps.size()) {
+			if (this->curr_compress_num_layers > 0) {
+				if (this->curr_compress_new_size > 0) {
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
+				} else {
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
 					}
 				}
-			} else {
-				if (state_errors.back().size() == 0) {
-					// edge case where compressed down to 0
-					// s_input_errors unchanged
-					state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+			}
+		} else {
+			if (this->curr_compress_num_layers > 0) {
+				if (this->curr_compress_new_size > 0) {
+					this->curr_compress_network->backprop_subfold_errors_with_no_weight_change(
+						state_errors.back(),
+						history->curr_compress_network_history);
+
+					// don't pop last_s_input_errors
+					state_errors.pop_back();
+					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0], 0.0));
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
+
+					for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+						s_input_errors[0][s_index] += this->curr_compress_network->s_input_input->errors[s_index];
+						this->curr_compress_network->s_input_input->errors[s_index] = 0.0;
+					}
+					for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+						for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+							state_errors[l_index][s_index] += this->curr_compress_network->state_inputs[l_index]->errors[s_index];
+							this->curr_compress_network->state_inputs[l_index]->errors[s_index] = 0.0;
+						}
+					}
 				} else {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
-				}
-				for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
-					s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
-					state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					if (state_errors.back().size() == 0) {
+						// edge case where compressed down to 0
+						// s_input_errors unchanged
+						state_errors.back() = vector<double>(this->curr_compressed_scope_sizes[0], 0.0);
+					} else {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[0]));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[0]));
+					}
+					for (int l_index = 1; l_index < this->curr_compress_num_layers; l_index++) {
+						s_input_errors.push_back(vector<double>(this->curr_compressed_s_input_sizes[l_index], 0.0));
+						state_errors.push_back(vector<double>(this->curr_compressed_scope_sizes[l_index], 0.0));
+					}
 				}
 			}
-		}
 
-		scale_factor_error += history->score_update*predicted_score_error;
+			scale_factor_error += history->score_update*predicted_score_error;
 
-		vector<double> score_errors{scale_factor*predicted_score_error};
-		this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
-			score_errors,
-			history->curr_score_network_history);
-		for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
-			s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
-			this->curr_score_network->s_input_input->errors[s_index] = 0.0;
-		}
-		for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
-			for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
-				state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
-				this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+			vector<double> score_errors{scale_factor*predicted_score_error};
+			this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
+				score_errors,
+				history->curr_score_network_history);
+			for (int s_index = 0; s_index < (int)s_input_errors[0].size(); s_index++) {
+				s_input_errors[0][s_index] += this->curr_score_network->s_input_input->errors[s_index];
+				this->curr_score_network->s_input_input->errors[s_index] = 0.0;
 			}
+			for (int l_index = 0; l_index < (int)state_errors.size(); l_index++) {
+				for (int s_index = 0; s_index < (int)state_errors[l_index].size(); s_index++) {
+					state_errors[l_index][s_index] += this->curr_score_network->state_inputs[l_index]->errors[s_index];
+					this->curr_score_network->state_inputs[l_index]->errors[s_index] = 0.0;
+				}
+			}
+			predicted_score -= scale_factor*history->score_update;
 		}
-		predicted_score -= scale_factor*history->score_update;
 
 		if (!this->is_existing[this->finished_steps.size()]) {
 			s_input_errors.pop_back();
@@ -1644,17 +1698,21 @@ void Fold::compress_step_update_backprop(
 	if (history->exit_index < (int)this->finished_steps.size()) {
 		// do nothing
 	} else {
-		double inner_predicted_score_error = target_val - predicted_score;
+		if (history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
+			double inner_predicted_score_error = target_val - predicted_score;
 
-		scale_factor_error += history->score_update*inner_predicted_score_error;
+			scale_factor_error += history->score_update*inner_predicted_score_error;
 
-		vector<double> score_errors{scale_factor*inner_predicted_score_error};
-		this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
-			score_errors,
-			0.001,
-			history->curr_score_network_history);
-		next_predicted_score = predicted_score;
-		predicted_score -= scale_factor*history->score_update;
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
+			this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
+				score_errors,
+				0.001,
+				history->curr_score_network_history);
+			next_predicted_score = predicted_score;
+			predicted_score -= scale_factor*history->score_update;
+		}
 
 		if (!this->is_existing[this->finished_steps.size()]) {
 			// do nothing
@@ -1953,9 +2011,11 @@ void Fold::compress_step_existing_update_backprop(
 	if (history->exit_index < (int)this->finished_steps.size()) {
 		// do nothing
 	} else {
-		scale_factor_error += history->score_update*predicted_score_error;
+		if (history->exit_index == (int)this->finished_steps.size()) {
+			scale_factor_error += history->score_update*predicted_score_error;
 
-		predicted_score -= scale_factor*history->score_update;
+			predicted_score -= scale_factor*history->score_update;
+		}
 
 		if (!this->is_existing[this->finished_steps.size()]) {
 			// do nothing
@@ -1990,4 +2050,27 @@ void Fold::compress_step_existing_update_backprop(
 	}
 
 	predicted_score -= history->starting_score_update;	// already scaled
+}
+
+void Fold::compress_step_update_increment(FoldHistory* history) {
+	if (history->exit_index < (int)this->finished_steps.size()) {
+		// do nothing
+	} else {
+		if (!this->is_existing[this->finished_steps.size()]) {
+			// do nothing
+		} else {
+			this->existing_actions[this->finished_steps.size()]->update_increment(
+				history->scope_histories[this->finished_steps.size()]);
+		}
+	}
+
+	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
+		if (history->exit_index < f_index) {
+			// do nothing
+		} else {
+			if (this->state == history->state) {
+				this->finished_steps[f_index]->update_increment(history->finished_step_histories[f_index]);
+			}
+		}
+	}
 }

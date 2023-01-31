@@ -993,7 +993,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 	vector<double> local_s_input_errors(this->num_inputs, 0.0);
 
 	int a_index;
-	if (history->exit_index != EXIT_LOCATION_NORMAL) {
+	if (history->exit_location != EXIT_LOCATION_NORMAL) {
 		a_index = history->exit_index;
 	} else {
 		if (this->explore_end_non_inclusive == this->sequence_length
@@ -1386,7 +1386,7 @@ void Scope::existing_flat_activate(Problem& problem,
 			vector<double> scope_input;
 			if (a_index == 0) {
 				// for start, if inner scope, scope_input is first local_s_input_vals
-				vector<double> scope_input(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
+				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
 			} else {
 				// scopes formed through folding may have multiple inner_input_networks
 				// reused scopes will have 1 inner_input_network
@@ -1886,10 +1886,6 @@ void Scope::update_backprop(double& predicted_score,
 				history->score_network_histories[a_index]);
 
 			// local_impact kept track of as starting impact in fold
-
-			if (this->folds[a_index]->state == STATE_DONE) {
-				resolve_fold(a_index);
-			}
 		}
 
 		if (!this->is_inner_scope[a_index]) {
@@ -2166,6 +2162,41 @@ void Scope::explore_set(ScopeHistory* history) {
 			} else {
 				solution->scope_use_counts[history->existing_actions[s_index]->id]++;
 				solution->scope_use_sum_count++;
+			}
+		}
+	}
+}
+
+// may miss updates due to structural updates, but should not be significant
+void Scope::update_increment(ScopeHistory* history) {
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
+	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
+		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
+			// do nothing
+		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			// check for equality in case previous update_increment updated structure
+			if (history->branch_histories[a_index]->branch == this->branches[a_index]) {
+				this->branches[a_index]->update_increment(history->branch_histories[a_index]);
+			}
+		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
+			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
+				this->folds[a_index]->update_increment(history->fold_histories[a_index]);
+			}
+
+			// re-check because might have updated
+			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
+				if (this->folds[a_index]->state == STATE_DONE) {
+					resolve_fold(a_index);
+				}
+			}
+		}
+
+		if (this->is_inner_scope[a_index]) {
+			if (history->scope_histories[a_index]->scope == this->scopes[a_index]) {
+				this->scopes[a_index]->update_increment(history->scope_histories[a_index]);
 			}
 		}
 	}

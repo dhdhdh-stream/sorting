@@ -12,8 +12,14 @@ void Fold::flat_to_fold() {
 
 	if (this->sequence_length == 0) {
 		this->curr_starting_compress_new_size = this->num_outputs;
-		this->curr_starting_compress_network = this->curr_end_fold;
-		this->curr_end_fold = NULL;
+		if (this->num_outputs == 0) {
+			// handle edge case here before added to solution
+			delete this->curr_end_fold;
+			this->curr_end_fold = NULL;
+		} else {
+			this->curr_starting_compress_network = this->curr_end_fold;
+			this->curr_end_fold = NULL;
+		}
 
 		cout << "ending FLAT" << endl;
 		cout << "DONE" << endl;

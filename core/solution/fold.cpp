@@ -893,8 +893,6 @@ void Fold::update_backprop(double& predicted_score,
 			break;
 		// can't be STATE_STEP_ADDED
 	}
-
-	fold_increment();
 }
 
 void Fold::existing_update_activate(Problem& problem,
@@ -1034,6 +1032,32 @@ void Fold::existing_update_backprop(double& predicted_score,
 													 scale_factor_error,
 													 history);
 			break;
+	}
+}
+
+void Fold::update_increment(FoldHistory* history) {
+	if (this->state == history->state) {
+		switch (this->state) {
+			// do nothing for STATE_STARTING_COMPRESS
+			case STATE_INNER_SCOPE_INPUT:
+				inner_scope_input_step_update_increment(history);
+				break;
+			case STATE_SCORE:
+				score_step_update_increment(history);
+				break;
+			case STATE_COMPRESS_STATE:
+				compress_step_update_increment(history);
+				break;
+			case STATE_COMPRESS_SCOPE:
+				compress_step_update_increment(history);
+				break;
+			case STATE_INPUT:
+				input_step_update_increment(history);
+				break;
+			// can't be STATE_STEP_ADDED
+		}
+
+		fold_increment();
 	}
 }
 
@@ -1247,6 +1271,8 @@ FoldHistory::FoldHistory(Fold* fold) {
 
 	this->exit_index = fold->sequence_length-1;
 	this->exit_location = EXIT_LOCATION_NORMAL;
+
+	this->state = fold->state;
 }
 
 FoldHistory::~FoldHistory() {

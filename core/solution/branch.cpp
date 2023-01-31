@@ -580,10 +580,6 @@ void Branch::update_backprop(double& predicted_score,
 														  scale_factor,
 														  scale_factor_error,
 														  history->fold_history);
-
-		if (this->folds[history->best_index]->state == STATE_DONE) {
-			resolve_fold(history->best_index);
-		}
 	}
 
 	// predicted_score already modified to before branch value in branch_path
@@ -694,6 +690,24 @@ void Branch::explore_set(BranchHistory* history) {
 	this->branches[history->best_index]->explore_set(history->branch_path_history);
 
 	this->explore_ref_count++;
+}
+
+void Branch::update_increment(BranchHistory* history) {
+	if (this->is_branch[history->best_index]) {
+		if (history->branch_path_history->branch_path == this->branches[history->best_index]) {
+			this->branches[history->best_index]->update_increment(history->branch_path_history);
+		}
+	} else {
+		if (history->fold_history->fold == this->folds[history->best_index]) {
+			this->folds[history->best_index]->update_increment(history->fold_history);
+		}
+
+		if (history->fold_history->fold == this->folds[history->best_index]) {
+			if (this->folds[history->best_index]->state == STATE_DONE) {
+				resolve_fold(history->best_index);
+			}
+		}
+	}
 }
 
 void Branch::save(ofstream& output_file) {

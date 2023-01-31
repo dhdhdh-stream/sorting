@@ -1166,6 +1166,14 @@ void FinishedStep::existing_update_backprop(double& predicted_score,
 	}
 }
 
+void FinishedStep::update_increment(FinishedStepHistory* history) {
+	if (!this->is_inner_scope) {
+		// do nothing
+	} else {
+		this->scope->update_increment(history->scope_history);
+	}
+}
+
 void FinishedStep::save(ofstream& output_file) {
 	output_file << this->id << endl;
 
