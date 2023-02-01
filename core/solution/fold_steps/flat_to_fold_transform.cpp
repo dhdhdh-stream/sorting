@@ -67,7 +67,6 @@ void Fold::flat_to_fold() {
 			cout << "ending FLAT" << endl;
 			cout << "beginning STATE_SCORE" << endl;
 
-			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -106,7 +105,6 @@ void Fold::flat_to_fold() {
 			cout << "ending FLAT" << endl;
 			cout << "beginning STATE_STARTING_COMPRESS" << endl;
 
-			this->last_state = STATE_STEP_ADDED;
 			this->state = STATE_STARTING_COMPRESS;
 			this->state_iter = 0;
 			this->sum_error = 0.0;

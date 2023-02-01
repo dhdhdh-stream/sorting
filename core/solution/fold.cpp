@@ -117,7 +117,6 @@ Fold::Fold(int num_inputs,
 	this->test_compress_network = NULL;
 
 	this->state = -1;
-	this->last_state = -1;
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 }
@@ -467,7 +466,7 @@ void Fold::explore_off_path_activate(Problem& problem,
 									 double& scale_factor,
 									 RunStatus& run_status,
 									 FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_explore_off_path_activate(problem,
 															 starting_score,
@@ -528,16 +527,6 @@ void Fold::explore_off_path_activate(Problem& problem,
 												 run_status,
 												 history);
 			break;
-		case STATE_STEP_ADDED:
-			step_added_step_explore_off_path_activate(problem,
-													  starting_score,
-													  local_s_input_vals,
-													  local_state_vals,
-													  predicted_score,
-													  scale_factor,
-													  run_status,
-													  history);
-			break;
 	}
 }
 
@@ -547,7 +536,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 									 double target_val,
 									 double& scale_factor,
 									 FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_explore_off_path_backprop(local_s_input_errors,
 															 local_state_errors,
@@ -596,14 +585,6 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 												 scale_factor,
 												 history);
 			break;
-		case STATE_STEP_ADDED:
-			step_added_step_explore_off_path_backprop(local_s_input_errors,
-													  local_state_errors,
-													  predicted_score,
-													  target_val,
-													  scale_factor,
-													  history);
-			break;
 	}
 }
 
@@ -615,7 +596,7 @@ void Fold::existing_flat_activate(Problem& problem,
 								  double& scale_factor,
 								  RunStatus& run_status,
 								  FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_existing_flat_activate(problem,
 														  starting_score,
@@ -676,16 +657,6 @@ void Fold::existing_flat_activate(Problem& problem,
 											  run_status,
 											  history);
 			break;
-		case STATE_STEP_ADDED:
-			step_added_step_existing_flat_activate(problem,
-												   starting_score,
-												   local_s_input_vals,
-												   local_state_vals,
-												   predicted_score,
-												   scale_factor,
-												   run_status,
-												   history);
-			break;
 	}
 }
 
@@ -696,7 +667,7 @@ void Fold::existing_flat_backprop(vector<double>& local_s_input_errors,
 								  double& scale_factor,
 								  double& scale_factor_error,
 								  FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_existing_flat_backprop(local_s_input_errors,
 														  local_state_errors,
@@ -750,15 +721,6 @@ void Fold::existing_flat_backprop(vector<double>& local_s_input_errors,
 											  scale_factor,
 											  scale_factor_error,
 											  history);
-			break;
-		case STATE_STEP_ADDED:
-			step_added_step_existing_flat_backprop(local_s_input_errors,
-												   local_state_errors,
-												   predicted_score,
-												   predicted_score_error,
-												   scale_factor,
-												   scale_factor_error,
-												   history);
 			break;
 	}
 }
@@ -832,7 +794,6 @@ void Fold::update_activate(Problem& problem,
 									   run_status,
 									   history);
 			break;
-		// can't be STATE_STEP_ADDED
 	}
 }
 
@@ -891,7 +852,6 @@ void Fold::update_backprop(double& predicted_score,
 									   scale_factor_error,
 									   history);
 			break;
-		// can't be STATE_STEP_ADDED
 	}
 }
 
@@ -903,7 +863,7 @@ void Fold::existing_update_activate(Problem& problem,
 									double& scale_factor,
 									RunStatus& run_status,
 									FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_existing_update_activate(problem,
 															starting_score,
@@ -964,16 +924,6 @@ void Fold::existing_update_activate(Problem& problem,
 												run_status,
 												history);
 			break;
-		case STATE_STEP_ADDED:
-			step_added_step_existing_update_activate(problem,
-													 starting_score,
-													 local_s_input_vals,
-													 local_state_vals,
-													 predicted_score,
-													 scale_factor,
-													 run_status,
-													 history);
-			break;
 	}
 }
 
@@ -982,7 +932,7 @@ void Fold::existing_update_backprop(double& predicted_score,
 									double& scale_factor,
 									double& scale_factor_error,
 									FoldHistory* history) {
-	switch (this->last_state) {
+	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_existing_update_backprop(predicted_score,
 															predicted_score_error,
@@ -1025,13 +975,6 @@ void Fold::existing_update_backprop(double& predicted_score,
 												scale_factor_error,
 												history);
 			break;
-		case STATE_STEP_ADDED:
-			step_added_step_existing_update_backprop(predicted_score,
-													 predicted_score_error,
-													 scale_factor,
-													 scale_factor_error,
-													 history);
-			break;
 	}
 }
 
@@ -1054,7 +997,6 @@ void Fold::update_increment(FoldHistory* history) {
 			case STATE_INPUT:
 				input_step_update_increment(history);
 				break;
-			// can't be STATE_STEP_ADDED
 		}
 
 		fold_increment();

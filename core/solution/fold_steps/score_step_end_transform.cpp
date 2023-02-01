@@ -96,7 +96,6 @@ void Fold::score_end() {
 		cout << "ending STATE_SCORE" << endl;
 		cout << "beginning COMPRESS_STATE" << endl;
 
-		this->last_state = STATE_SCORE;
 		this->state = STATE_COMPRESS_STATE;
 		this->state_iter = 0;
 		this->sum_error = 0.0;

@@ -73,30 +73,25 @@ void Fold::add_finished_step() {
 			cout << "ending STEP_ADDED" << endl;
 			cout << "beginning STATE_SCORE" << endl;
 
-			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			if (this->curr_scope_sizes.size() > 1) {
-				this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
-				// don't set this->curr_input_folds[this->finished_steps.size()] to NULL yet for step_added_step
+			this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
+			this->curr_input_folds[this->finished_steps.size()] = NULL;
 
+			if (this->curr_scope_sizes.size() > 1) {
 				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
 				this->test_inner_input_network->subfold_index++;
 
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_INNER_SCOPE_INPUT" << endl;
 
-				this->last_state = STATE_STEP_ADDED;
 				this->state = STATE_INNER_SCOPE_INPUT;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
 				this->new_state_factor = 25;
 			} else {
-				this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
-				this->curr_input_folds[this->finished_steps.size()] = NULL;
-
 				this->curr_s_input_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_inputs);
 				this->curr_scope_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_outputs);
 
@@ -122,7 +117,6 @@ void Fold::add_finished_step() {
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_SCORE" << endl;
 
-				this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 				this->state = STATE_SCORE;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
@@ -161,27 +155,22 @@ void Fold::restart_from_finished_step() {
 													   this->curr_scope_sizes,
 													   20);
 
-			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			if (this->curr_scope_sizes.size() > 1) {
-				this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
-				// don't set this->curr_input_folds[this->finished_steps.size()] to NULL yet for step_added_step
+			this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
+			this->curr_input_folds[this->finished_steps.size()] = NULL;
 
+			if (this->curr_scope_sizes.size() > 1) {
 				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
 				this->test_inner_input_network->subfold_index++;
 
-				this->last_state = STATE_STEP_ADDED;
 				this->state = STATE_INNER_SCOPE_INPUT;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
 				this->new_state_factor = 25;
 			} else {
-				this->curr_inner_input_network = this->curr_input_folds[this->finished_steps.size()];
-				this->curr_input_folds[this->finished_steps.size()] = NULL;
-
 				this->curr_s_input_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_inputs);
 				this->curr_scope_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_outputs);
 
@@ -204,7 +193,6 @@ void Fold::restart_from_finished_step() {
 														   this->curr_scope_sizes,
 														   20);
 
-				this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 				this->state = STATE_SCORE;
 				this->state_iter = 0;
 				this->sum_error = 0.0;

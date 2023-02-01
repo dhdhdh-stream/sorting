@@ -11,10 +11,6 @@ void Fold::inner_scope_input_end() {
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {
-		if (this->curr_input_folds[this->finished_steps.size()] != NULL) {
-			// this->curr_inner_input_network == this->curr_input_folds[this->finished_steps.size()];
-			this->curr_input_folds[this->finished_steps.size()] = NULL;
-		}
 		delete this->curr_inner_input_network;
 		this->curr_inner_input_network = this->test_inner_input_network;
 		this->test_inner_input_network = NULL;
@@ -25,7 +21,7 @@ void Fold::inner_scope_input_end() {
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(0);
+				this->curr_s_input_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_inputs);
 				this->curr_scope_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_outputs);
 			}
 
@@ -52,7 +48,6 @@ void Fold::inner_scope_input_end() {
 			cout << "ending INNER_SCOPE_INPUT" << endl;
 			cout << "beginning STATE_SCORE" << endl;
 
-			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -79,7 +74,6 @@ void Fold::inner_scope_input_end() {
 			cout << "ending INNER_SCOPE_INPUT" << endl;
 			cout << "beginning INNER_SCOPE_INPUT" << endl;
 
-			this->last_state = STATE_INNER_SCOPE_INPUT;
 			this->state = STATE_INNER_SCOPE_INPUT;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -112,7 +106,6 @@ void Fold::inner_scope_input_end() {
 		cout << "ending INNER_SCOPE_INPUT" << endl;
 		cout << "beginning INNER_SCOPE_INPUT" << endl;
 
-		// no change to last_state
 		this->state = STATE_INNER_SCOPE_INPUT;
 		this->state_iter = 0;
 		this->sum_error = 0.0;

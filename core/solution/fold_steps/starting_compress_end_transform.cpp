@@ -73,7 +73,6 @@ void Fold::starting_compress_end() {
 			cout << "ending STARTING_COMPRESS" << endl;
 			cout << "beginning STATE_SCORE" << endl;
 
-			this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -112,7 +111,6 @@ void Fold::starting_compress_end() {
 			cout << "ending STARTING_COMPRESS" << endl;
 			cout << "beginning STARTING_COMPRESS" << endl;
 
-			this->last_state = STATE_STARTING_COMPRESS;
 			this->state = STATE_STARTING_COMPRESS;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -173,7 +171,6 @@ void Fold::starting_compress_end() {
 		cout << "ending STARTING_COMPRESS" << endl;
 		cout << "beginning STATE_SCORE" << endl;
 
-		this->last_state = STATE_SCORE;	// for STATE_SCORE, also set last_state to STATE_SCORE
 		this->state = STATE_SCORE;
 		this->state_iter = 0;
 		this->sum_error = 0.0;

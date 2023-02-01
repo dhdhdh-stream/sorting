@@ -21,9 +21,8 @@ const int STATE_SCORE = 2;	// adjust fold meanwhile as well
 const int STATE_COMPRESS_STATE = 3;
 const int STATE_COMPRESS_SCOPE = 4;
 const int STATE_INPUT = 5;
-const int STATE_STEP_ADDED = 6;	// for last_state bookkeeping
 
-const int STATE_DONE = 7;
+const int STATE_DONE = 6;
 
 class FinishedStep;
 class FoldHistory;
@@ -44,7 +43,6 @@ public:
 	std::vector<FinishedStep*> finished_steps;
 
 	int state;
-	int last_state;	// for supporting explore_off_path
 	int state_iter;
 	double sum_error;
 	double new_state_factor;
@@ -556,55 +554,6 @@ public:
 
 	void add_finished_step();
 	void restart_from_finished_step();
-
-	void step_added_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void step_added_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		FoldHistory* history);
-	void step_added_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void step_added_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void step_added_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void step_added_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
 
 	void inner_scope_input_step_update_increment(FoldHistory* history);
 	void score_step_update_increment(FoldHistory* history);

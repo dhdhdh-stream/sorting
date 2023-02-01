@@ -75,7 +75,7 @@ void Branch::resolve_fold(int b_index) {
 	new_average_local_impacts.insert(new_average_local_impacts.begin(), this->folds[b_index]->starting_average_local_impact);
 	new_average_inner_branch_impacts.insert(new_average_inner_branch_impacts.begin(), 0.0);	// doesn't matter
 
-	if (this->folds[b_index]->curr_starting_compress_new_size < this->folds[b_index]->starting_compress_original_size
+	if (this->folds[b_index]->curr_starting_compress_new_size != this->folds[b_index]->starting_compress_original_size
 			&& this->folds[b_index]->curr_starting_compress_new_size > 0) {
 		new_active_compress.insert(new_active_compress.begin(), true);
 	} else {

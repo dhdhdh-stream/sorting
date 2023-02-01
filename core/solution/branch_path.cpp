@@ -357,13 +357,16 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 		double sum_impact = 0.0;
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				sum_impact += this->average_inner_scope_impacts[a_index];
+				// sum_impact += this->average_inner_scope_impacts[a_index];
+				sum_impact += 1.0;
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				sum_impact += this->average_local_impacts[a_index];
+				// sum_impact += this->average_local_impacts[a_index];
+				sum_impact += 1.0;
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				sum_impact += this->average_inner_branch_impacts[a_index];
+				// sum_impact += this->average_inner_branch_impacts[a_index];
+				sum_impact += 1.0;
 			} else {
 				// this->step_types[a_index] == STEP_TYPE_FOLD
 				// do nothing
@@ -374,7 +377,8 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				rand_val -= this->average_inner_scope_impacts[a_index];
+				// rand_val -= this->average_inner_scope_impacts[a_index];
+				rand_val -= 1.0;
 				if (rand_val <= 0.0) {
 					if (rand()%2 == 0) {
 						history->explore_type = EXPLORE_TYPE_INNER_SCOPE;
@@ -412,7 +416,8 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				rand_val -= this->average_local_impacts[a_index];
+				// rand_val -= this->average_local_impacts[a_index];
+				rand_val -= 1.0;
 				if (rand_val <= 0.0) {
 					history->explore_type = EXPLORE_TYPE_NEW;
 					history->explore_index_inclusive = a_index;
@@ -443,7 +448,8 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 					break;
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				rand_val -= this->average_inner_branch_impacts[a_index];
+				// rand_val -= this->average_inner_branch_impacts[a_index];
+				rand_val -= 1.0;
 				if (rand_val <= 0.0) {
 					// Note: don't worry about explore after branch as there's either inner scope in-between, or an action performed first
 					if (rand()%2 == 0) {

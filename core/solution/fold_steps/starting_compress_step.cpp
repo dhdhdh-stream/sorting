@@ -148,8 +148,6 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 		double target_val,
 		double& scale_factor,
 		FoldHistory* history) {
-	local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
-
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
@@ -168,6 +166,8 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 		this->curr_fold->backprop_errors_with_no_weight_change(
 			curr_fold_error,
 			history->curr_fold_history);
+
+		local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 
 		for (int st_index = 0; st_index < (int)local_s_input_errors.size(); st_index++) {
 			local_s_input_errors[st_index] += this->curr_end_fold->s_input_input->errors[st_index];
@@ -383,8 +383,6 @@ void Fold::starting_compress_step_existing_flat_backprop(
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
-	local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
-
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_existing[f_index]) {
@@ -403,6 +401,8 @@ void Fold::starting_compress_step_existing_flat_backprop(
 		this->curr_fold->backprop_errors_with_no_weight_change(
 			curr_fold_error,
 			history->curr_fold_history);
+
+		local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 
 		for (int st_index = 0; st_index < (int)local_s_input_errors.size(); st_index++) {
 			local_s_input_errors[st_index] += this->curr_end_fold->s_input_input->errors[st_index];

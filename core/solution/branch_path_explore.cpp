@@ -420,7 +420,7 @@ void BranchPath::resolve_fold(int a_index) {
 	this->average_local_impacts[a_index] = this->folds[a_index]->starting_average_local_impact;
 	// this->average_inner_branch_impacts[a_index] doesn't matter and unchanged
 
-	if (this->folds[a_index]->curr_starting_compress_new_size < this->folds[a_index]->starting_compress_original_size
+	if (this->folds[a_index]->curr_starting_compress_new_size != this->folds[a_index]->starting_compress_original_size
 			&& this->folds[a_index]->curr_starting_compress_new_size > 0) {
 		this->active_compress[a_index] = true;
 	} else {

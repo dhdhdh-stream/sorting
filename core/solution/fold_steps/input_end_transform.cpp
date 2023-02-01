@@ -60,7 +60,6 @@ void Fold::input_end() {
 			cout << "ending STATE_INPUT" << endl;
 			cout << "beginning STATE_INPUT" << endl;
 
-			this->last_state = STATE_INPUT;
 			this->state = STATE_INPUT;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -103,7 +102,6 @@ void Fold::input_end() {
 		cout << "ending STATE_INPUT" << endl;
 		cout << "beginning STATE_INPUT" << endl;
 
-		// no change to last_state
 		this->state = STATE_INPUT;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
