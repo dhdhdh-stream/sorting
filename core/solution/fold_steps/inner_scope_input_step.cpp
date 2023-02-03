@@ -1147,7 +1147,7 @@ void Fold::inner_scope_input_step_update_activate(
 			if (run_status.exceeded_depth) {
 				history->exit_index = f_index;
 				history->exit_location = EXIT_LOCATION_SPOT;
-				break;
+				return;
 			}
 
 			fold_input.push_back(scope_output);
@@ -1511,20 +1511,27 @@ void Fold::inner_scope_input_step_existing_update_backprop(
 	predicted_score -= history->starting_score_update;	// already scaled
 }
 
-void Fold::inner_scope_input_step_update_increment(FoldHistory* history) {
+void Fold::inner_scope_input_step_update_increment(FoldHistory* history,
+												   vector<Fold*>& folds_to_delete) {
 	if (history->exit_index < (int)this->finished_steps.size()) {
 		// do nothing
 	} else {
 		this->existing_actions[this->finished_steps.size()]->update_increment(
-			history->scope_histories[this->finished_steps.size()]);
+			history->scope_histories[this->finished_steps.size()],
+			folds_to_delete);
+		if (this->state != history->state) {
+			return;
+		}
 	}
 
 	for (int f_index = (int)this->finished_steps.size()-1; f_index >= 0; f_index--) {
 		if (history->exit_index < f_index) {
 			// do nothing
 		} else {
-			if (this->state == history->state) {
-				this->finished_steps[f_index]->update_increment(history->finished_step_histories[f_index]);
+			this->finished_steps[f_index]->update_increment(history->finished_step_histories[f_index],
+															folds_to_delete);
+			if (this->state != history->state) {
+				return;
 			}
 		}
 	}

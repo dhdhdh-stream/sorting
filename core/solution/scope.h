@@ -1,5 +1,3 @@
-// Note: allow recursion, but keep track of scope depth, and if go too low, fail run with bad score
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -157,11 +155,14 @@ public:
 								  ScopeHistory* history);
 
 	void explore_set(ScopeHistory* history);
-	void update_increment(ScopeHistory* history);
+	// TODO: clean up update_increment logic
+	void update_increment(ScopeHistory* history,
+						  std::vector<Fold*>& folds_to_delete);
 
 	void explore_replace();
 	void explore_branch();
-	void resolve_fold(int a_index);
+	void resolve_fold(int a_index,
+					  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
 };
@@ -193,6 +194,9 @@ public:
 	std::vector<bool> is_existing;
 	std::vector<Scope*> existing_actions;
 	std::vector<Action> actions;
+
+	// temp
+	int starting_explore_phase;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

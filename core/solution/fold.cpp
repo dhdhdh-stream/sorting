@@ -978,27 +978,36 @@ void Fold::existing_update_backprop(double& predicted_score,
 	}
 }
 
-void Fold::update_increment(FoldHistory* history) {
+void Fold::update_increment(FoldHistory* history,
+							vector<Fold*>& folds_to_delete) {
 	if (this->state == history->state) {
 		switch (this->state) {
 			// do nothing for STATE_STARTING_COMPRESS
 			case STATE_INNER_SCOPE_INPUT:
-				inner_scope_input_step_update_increment(history);
+				inner_scope_input_step_update_increment(history,
+														folds_to_delete);
 				break;
 			case STATE_SCORE:
-				score_step_update_increment(history);
+				score_step_update_increment(history,
+											folds_to_delete);
 				break;
 			case STATE_COMPRESS_STATE:
-				compress_step_update_increment(history);
+				compress_step_update_increment(history,
+											   folds_to_delete);
 				break;
 			case STATE_COMPRESS_SCOPE:
-				compress_step_update_increment(history);
+				compress_step_update_increment(history,
+											   folds_to_delete);
 				break;
 			case STATE_INPUT:
-				input_step_update_increment(history);
+				input_step_update_increment(history,
+											folds_to_delete);
 				break;
 		}
+	}
 
+	// re-check because might have updated
+	if (this->state == history->state) {
 		fold_increment();
 	}
 }

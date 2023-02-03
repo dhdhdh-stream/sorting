@@ -124,7 +124,10 @@ void Scope::explore_replace() {
 
 	if (this->explore_fold->state == STATE_DONE) {
 		// sequence length 0 edge case
-		resolve_fold(this->explore_index_inclusive);
+		vector<Fold*> folds_to_delete;
+		resolve_fold(this->explore_index_inclusive,
+					 folds_to_delete);
+		delete folds_to_delete[0];
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
@@ -304,7 +307,9 @@ void Scope::explore_branch() {
 
 		if (this->explore_fold->state == STATE_DONE) {
 			// sequence length 0 edge case
-			new_branch->resolve_fold(1);
+			vector<Fold*> folds_to_delete;
+			new_branch->resolve_fold(1, folds_to_delete);
+			delete folds_to_delete[0];
 		}
 
 		this->step_types[this->explore_index_inclusive] = STEP_TYPE_BRANCH;
@@ -365,7 +370,8 @@ void Scope::explore_branch() {
 	this->explore_fold = NULL;
 }
 
-void Scope::resolve_fold(int a_index) {
+void Scope::resolve_fold(int a_index,
+						 vector<Fold*>& folds_to_delete) {
 	cout << "Scope resolve_fold" << endl;
 
 	int new_sequence_length;
@@ -516,7 +522,7 @@ void Scope::resolve_fold(int a_index) {
 		}
 	}
 
-	delete this->folds[a_index];
+	folds_to_delete.push_back(this->folds[a_index]);
 	this->folds[a_index] = NULL;
 	this->step_types[a_index] = STEP_TYPE_STEP;
 }

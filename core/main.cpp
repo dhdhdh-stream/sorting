@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	// int seed = (unsigned)time(NULL);
-	int seed = 1675147141;
+	int seed = 1675399808;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -130,7 +130,12 @@ int main(int argc, char* argv[]) {
 											scale_factor_error,
 											scope_history);
 
-			solution->root->update_increment(scope_history);
+			vector<Fold*> folds_to_delete;
+			solution->root->update_increment(scope_history,
+											 folds_to_delete);
+			for (int f_index = 0; f_index < (int)folds_to_delete.size(); f_index++) {
+				delete folds_to_delete[f_index];
+			}
 
 			delete scope_history;
 		}

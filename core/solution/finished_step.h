@@ -11,6 +11,7 @@
 #include "scope.h"
 
 class FinishedStepHistory;
+class Fold;
 class Scope;
 class FinishedStep {
 public:
@@ -120,7 +121,8 @@ public:
 								  double& scale_factor_error,
 								  FinishedStepHistory* history);
 
-	void update_increment(FinishedStepHistory* history);
+	void update_increment(FinishedStepHistory* history,
+						  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
 };

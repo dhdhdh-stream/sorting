@@ -160,11 +160,13 @@ public:
 								  BranchPathHistory* history);
 
 	void explore_set(BranchPathHistory* history);
-	void update_increment(BranchPathHistory* history);
+	void update_increment(BranchPathHistory* history,
+						  std::vector<Fold*>& folds_to_delete);
 
 	void explore_replace();
 	void explore_branch();
-	void resolve_fold(int a_index);
+	void resolve_fold(int a_index,
+					  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
 };

@@ -315,11 +315,14 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 		}
 	}
 
-	int s_input_index;
-	if (this->compress_num_layers > 0) {
-		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
-	} else {
-		s_input_index = (int)s_input_vals.size()-1;
+	// TODO: can just use this->score_network->subfold_index, but using full logic for now for clarity
+	int s_input_index = (int)s_input_vals.size()-this->compress_num_layers-1;
+	if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+		s_input_index += 1;
+	}
+	if (s_input_index < 0) {
+		// edge case where fully compressed
+		s_input_index = 0;
 	}
 	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
@@ -452,11 +455,13 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 
 		double predicted_score_error = target_val - predicted_score;
 
-		int s_input_index;
-		if (this->compress_num_layers > 0) {
-			s_input_index = (int)s_input_errors.size()-this->compress_num_layers;
-		} else {
-			s_input_index = (int)s_input_errors.size()-1;
+		int s_input_index = (int)s_input_errors.size()-this->compress_num_layers-1;
+		if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+			s_input_index += 1;
+		}
+		if (s_input_index < 0) {
+			// edge case where fully compressed
+			s_input_index = 0;
 		}
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		this->score_network->backprop_subfold_errors_with_no_weight_change(
@@ -630,11 +635,13 @@ void FinishedStep::existing_flat_activate(Problem& problem,
 		}
 	}
 
-	int s_input_index;
-	if (this->compress_num_layers > 0) {
-		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
-	} else {
-		s_input_index = (int)s_input_vals.size()-1;
+	int s_input_index = (int)s_input_vals.size()-this->compress_num_layers-1;
+	if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+		s_input_index += 1;
+	}
+	if (s_input_index < 0) {
+		// edge case where fully compressed
+		s_input_index = 0;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
@@ -758,11 +765,13 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 
 		scale_factor_error += history->score_update*predicted_score_error;
 
-		int s_input_index;
-		if (this->compress_num_layers > 0) {
-			s_input_index = (int)s_input_errors.size()-this->compress_num_layers;
-		} else {
-			s_input_index = (int)s_input_errors.size()-1;
+		int s_input_index = (int)s_input_errors.size()-this->compress_num_layers-1;
+		if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+			s_input_index += 1;
+		}
+		if (s_input_index < 0) {
+			// edge case where fully compressed
+			s_input_index = 0;
 		}
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		this->score_network->backprop_subfold_errors_with_no_weight_change(
@@ -931,11 +940,13 @@ void FinishedStep::update_activate(Problem& problem,
 		}
 	}
 
-	int s_input_index;
-	if (this->compress_num_layers > 0) {
-		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
-	} else {
-		s_input_index = (int)s_input_vals.size()-1;
+	int s_input_index = (int)s_input_vals.size()-this->compress_num_layers-1;
+	if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+		s_input_index += 1;
+	}
+	if (s_input_index < 0) {
+		// edge case where fully compressed
+		s_input_index = 0;
 	}
 	FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_network);
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
@@ -1095,11 +1106,13 @@ void FinishedStep::existing_update_activate(Problem& problem,
 		}
 	}
 
-	int s_input_index;
-	if (this->compress_num_layers > 0) {
-		s_input_index = (int)s_input_vals.size()-this->compress_num_layers;
-	} else {
-		s_input_index = (int)s_input_vals.size()-1;
+	int s_input_index = (int)s_input_vals.size()-this->compress_num_layers-1;
+	if (this->compress_num_layers > 0 && this->compress_new_size > 0) {
+		s_input_index += 1;
+	}
+	if (s_input_index < 0) {
+		// edge case where fully compressed
+		s_input_index = 0;
 	}
 	this->score_network->activate_subfold(s_input_vals[s_input_index],
 										  state_vals);
@@ -1166,11 +1179,13 @@ void FinishedStep::existing_update_backprop(double& predicted_score,
 	}
 }
 
-void FinishedStep::update_increment(FinishedStepHistory* history) {
+void FinishedStep::update_increment(FinishedStepHistory* history,
+									vector<Fold*>& folds_to_delete) {
 	if (!this->is_inner_scope) {
 		// do nothing
 	} else {
-		this->scope->update_increment(history->scope_history);
+		this->scope->update_increment(history->scope_history,
+									  folds_to_delete);
 	}
 }
 

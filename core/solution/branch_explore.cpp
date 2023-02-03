@@ -7,7 +7,8 @@
 
 using namespace std;
 
-void Branch::resolve_fold(int b_index) {
+void Branch::resolve_fold(int b_index,
+						  vector<Fold*>& folds_to_delete) {
 	cout << "Branch resolve_fold" << endl;
 
 	int new_sequence_length;
@@ -113,6 +114,6 @@ void Branch::resolve_fold(int b_index) {
 	this->is_branch[b_index] = true;
 	this->branches[b_index] = new_branch_path;
 
-	delete this->folds[b_index];
+	folds_to_delete.push_back(this->folds[b_index]);
 	this->folds[b_index] = NULL;
 }

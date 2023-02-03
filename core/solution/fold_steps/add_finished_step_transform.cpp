@@ -83,6 +83,8 @@ void Fold::add_finished_step() {
 			if (this->curr_scope_sizes.size() > 1) {
 				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
 				this->test_inner_input_network->subfold_index++;
+				this->test_inner_input_network->set_s_input_size(this->curr_s_input_sizes[
+					this->test_inner_input_network->subfold_index+1]);
 
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_INNER_SCOPE_INPUT" << endl;
@@ -165,6 +167,8 @@ void Fold::restart_from_finished_step() {
 			if (this->curr_scope_sizes.size() > 1) {
 				this->test_inner_input_network = new FoldNetwork(this->curr_inner_input_network);
 				this->test_inner_input_network->subfold_index++;
+				this->test_inner_input_network->set_s_input_size(this->curr_s_input_sizes[
+					this->test_inner_input_network->subfold_index+1]);
 
 				this->state = STATE_INNER_SCOPE_INPUT;
 				this->state_iter = 0;

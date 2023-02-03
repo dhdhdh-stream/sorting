@@ -687,24 +687,30 @@ void Branch::existing_update_backprop(double& predicted_score,
 }
 
 void Branch::explore_set(BranchHistory* history) {
-	this->branches[history->best_index]->explore_set(history->branch_path_history);
+	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
+		this->explore_ref_count++;
+	}
 
-	this->explore_ref_count++;
+	this->branches[history->best_index]->explore_set(history->branch_path_history);
 }
 
-void Branch::update_increment(BranchHistory* history) {
+void Branch::update_increment(BranchHistory* history,
+							  vector<Fold*>& folds_to_delete) {
 	if (this->is_branch[history->best_index]) {
 		if (history->branch_path_history->branch_path == this->branches[history->best_index]) {
-			this->branches[history->best_index]->update_increment(history->branch_path_history);
+			this->branches[history->best_index]->update_increment(history->branch_path_history,
+																  folds_to_delete);
 		}
 	} else {
 		if (history->fold_history->fold == this->folds[history->best_index]) {
-			this->folds[history->best_index]->update_increment(history->fold_history);
+			this->folds[history->best_index]->update_increment(history->fold_history,
+															   folds_to_delete);
 		}
 
 		if (history->fold_history->fold == this->folds[history->best_index]) {
 			if (this->folds[history->best_index]->state == STATE_DONE) {
-				resolve_fold(history->best_index);
+				resolve_fold(history->best_index,
+							 folds_to_delete);
 			}
 		}
 	}

@@ -835,6 +835,9 @@ void Scope::explore_off_path_activate(Problem& problem,
 		run_status.max_depth = run_status.curr_depth;
 	}
 
+	// temp
+	history->starting_explore_phase = run_status.explore_phase;
+
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		if (!this->is_inner_scope[a_index]) {
 			problem.perform_action(this->actions[a_index]);
@@ -1252,6 +1255,23 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 				double predicted_score_error = target_val - predicted_score;
 
+				if (history->score_network_histories[a_index] == NULL) {
+					cout << "HERE" << endl;
+					cout << "history->exit_index: " << history->exit_index << endl;
+					cout << "history->exit_location: " << history->exit_location << endl;
+					cout << "this->sequence_length: " << this->sequence_length << endl;
+					cout << "this->score_networks[a_index]: " << this->score_networks[a_index] << endl;
+					cout << "a_index: " << a_index << endl;
+					if (this->full_last) {
+						cout << "is full last" << endl;
+					} else {
+						cout << "not full last" << endl;
+					}
+					cout << "history->starting_explore_phase: " << history->starting_explore_phase << endl;
+					cout << "this->explore_type: " << this->explore_type << endl;
+					cout << "this->explore_index_inclusive: " << this->explore_index_inclusive << endl;
+				}
+
 				vector<double> score_errors{scale_factor*predicted_score_error};
 				vector<double> score_s_input_output_errors;
 				vector<double> score_state_output_errors;
@@ -1325,6 +1345,20 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
 			scale_factor *= scope_scale_mod_val;
+
+			if (history->scope_histories[a_index]->score_network_histories[0] == NULL) {
+				cout << "HERE HERE" << endl;
+				cout << "history->exit_index: " << history->exit_index << endl;
+				cout << "history->exit_location: " << history->exit_location << endl;
+				cout << "a_index: " << a_index << endl;
+				cout << "this->step_types[a_index]: " << this->step_types[a_index] << endl;
+				cout << "history->score_network_histories[a_index]: " << history->score_network_histories[a_index] << endl;
+				cout << "history->starting_explore_phase: " << history->starting_explore_phase << endl;
+				cout << "this->explore_type: " << this->explore_type << endl;
+				cout << "this->explore_index_inclusive: " << this->explore_index_inclusive << endl;
+			}
+
+			// TODO: when reusing scopes, they can have previous explore indexes set, need to rethink explore rules
 
 			vector<double> scope_output_errors;
 			this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
@@ -2116,65 +2150,75 @@ void Scope::existing_update_backprop(double& predicted_score,
 }
 
 void Scope::explore_set(ScopeHistory* history) {
-	if (history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-		this->scopes[history->explore_index_inclusive]->explore_set(
-			history->scope_histories[history->explore_index_inclusive]);
-		
-		this->explore_type = EXPLORE_TYPE_INNER_SCOPE;
-		this->explore_index_inclusive = history->explore_index_inclusive;
-		this->explore_end_non_inclusive = -1;
-		this->explore_count = 0;
-	} else if (history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-		this->branches[history->explore_index_inclusive]->explore_set(
-			history->branch_histories[history->explore_index_inclusive]);
+	if (this->explore_type == EXPLORE_TYPE_NONE) {
+		if (history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
+			this->scopes[history->explore_index_inclusive]->explore_set(
+				history->scope_histories[history->explore_index_inclusive]);
+			
+			this->explore_type = EXPLORE_TYPE_INNER_SCOPE;
+			this->explore_index_inclusive = history->explore_index_inclusive;
+			this->explore_end_non_inclusive = -1;
+			this->explore_count = 0;
+		} else if (history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+			this->branches[history->explore_index_inclusive]->explore_set(
+				history->branch_histories[history->explore_index_inclusive]);
 
-		this->explore_type = EXPLORE_TYPE_INNER_BRANCH;
-		this->explore_index_inclusive = history->explore_index_inclusive;
-		this->explore_end_non_inclusive = -1;
-		this->explore_count = 0;
-	} else {
-		// history->explore_type == EXPLORE_TYPE_NEW
-		this->explore_type = EXPLORE_TYPE_NEW;
-		this->explore_index_inclusive = history->explore_index_inclusive;
-		this->explore_end_non_inclusive = history->explore_end_non_inclusive;
-
-		int new_num_inputs = this->starting_state_sizes[history->explore_index_inclusive];
-		if (!this->is_inner_scope[history->explore_index_inclusive]) {
-			// obs_size always 1 for sorting
-			new_num_inputs++;
+			this->explore_type = EXPLORE_TYPE_INNER_BRANCH;
+			this->explore_index_inclusive = history->explore_index_inclusive;
+			this->explore_end_non_inclusive = -1;
+			this->explore_count = 0;
 		} else {
-			new_num_inputs += this->scopes[history->explore_index_inclusive]->num_outputs;
-		}
-		int new_num_outputs;
-		if (history->explore_end_non_inclusive == this->sequence_length) {
-			new_num_outputs = this->num_outputs;
-		} else {
-			new_num_outputs = this->starting_state_sizes[history->explore_end_non_inclusive];
-		}
+			// history->explore_type == EXPLORE_TYPE_NEW
+			this->explore_type = EXPLORE_TYPE_NEW;
+			this->explore_index_inclusive = history->explore_index_inclusive;
+			this->explore_end_non_inclusive = history->explore_end_non_inclusive;
 
-		this->explore_fold = new Fold(new_num_inputs,
-									  new_num_outputs,
-									  this->num_inputs,
-									  history->sequence_length,
-									  history->is_existing,
-									  history->existing_actions,
-									  history->actions,
-									  &this->average_scores[history->explore_index_inclusive],
-									  &this->average_misguesses[history->explore_end_non_inclusive-1]);
-
-		for (int s_index = 0; s_index < history->sequence_length; s_index++) {
-			if (!history->is_existing[s_index]) {
-				solution->action_dictionary.push_back(history->actions[s_index]);
+			int new_num_inputs = this->starting_state_sizes[history->explore_index_inclusive];
+			if (!this->is_inner_scope[history->explore_index_inclusive]) {
+				// obs_size always 1 for sorting
+				new_num_inputs++;
 			} else {
-				solution->scope_use_counts[history->existing_actions[s_index]->id]++;
-				solution->scope_use_sum_count++;
+				new_num_inputs += this->scopes[history->explore_index_inclusive]->num_outputs;
+			}
+			int new_num_outputs;
+			if (history->explore_end_non_inclusive == this->sequence_length) {
+				new_num_outputs = this->num_outputs;
+			} else {
+				new_num_outputs = this->starting_state_sizes[history->explore_end_non_inclusive];
+			}
+
+			this->explore_fold = new Fold(new_num_inputs,
+										  new_num_outputs,
+										  this->num_inputs,
+										  history->sequence_length,
+										  history->is_existing,
+										  history->existing_actions,
+										  history->actions,
+										  &this->average_scores[history->explore_index_inclusive],
+										  &this->average_misguesses[history->explore_end_non_inclusive-1]);
+
+			for (int s_index = 0; s_index < history->sequence_length; s_index++) {
+				if (!history->is_existing[s_index]) {
+					solution->action_dictionary.push_back(history->actions[s_index]);
+				} else {
+					solution->scope_use_counts[history->existing_actions[s_index]->id]++;
+					solution->scope_use_sum_count++;
+				}
 			}
 		}
+	} else if (this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
+		this->scopes[this->explore_index_inclusive]->explore_set(
+			history->scope_histories[this->explore_index_inclusive]);
+	} else if (this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
+		this->branches[this->explore_index_inclusive]->explore_set(
+			history->branch_histories[this->explore_index_inclusive]);
 	}
+	// this->explore_type != EXPLORE_TYPE_NEW
 }
 
 // may miss updates due to structural updates, but should not be significant
-void Scope::update_increment(ScopeHistory* history) {
+void Scope::update_increment(ScopeHistory* history,
+							 vector<Fold*>& folds_to_delete) {
 	if (history->exit_location == EXIT_LOCATION_SPOT) {
 		return;
 	}
@@ -2185,24 +2229,28 @@ void Scope::update_increment(ScopeHistory* history) {
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			// check for equality in case previous update_increment updated structure
 			if (history->branch_histories[a_index]->branch == this->branches[a_index]) {
-				this->branches[a_index]->update_increment(history->branch_histories[a_index]);
+				this->branches[a_index]->update_increment(history->branch_histories[a_index],
+														  folds_to_delete);
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
 			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
-				this->folds[a_index]->update_increment(history->fold_histories[a_index]);
+				this->folds[a_index]->update_increment(history->fold_histories[a_index],
+													   folds_to_delete);
 			}
 
 			// re-check because might have updated
 			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
 				if (this->folds[a_index]->state == STATE_DONE) {
-					resolve_fold(a_index);
+					resolve_fold(a_index,
+								 folds_to_delete);
 				}
 			}
 		}
 
 		if (this->is_inner_scope[a_index]) {
 			if (history->scope_histories[a_index]->scope == this->scopes[a_index]) {
-				this->scopes[a_index]->update_increment(history->scope_histories[a_index]);
+				this->scopes[a_index]->update_increment(history->scope_histories[a_index],
+														folds_to_delete);
 			}
 		}
 	}
@@ -2314,6 +2362,9 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->exit_index = scope->sequence_length-1;	// initialize to normal exit
 	this->exit_location = EXIT_LOCATION_NORMAL;
+
+	// temp
+	this->starting_explore_phase = -10;
 }
 
 ScopeHistory::~ScopeHistory() {

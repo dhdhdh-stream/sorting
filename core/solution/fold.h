@@ -195,7 +195,8 @@ public:
 								  double& scale_factor_error,
 								  FoldHistory* history);
 
-	void update_increment(FoldHistory* history);
+	void update_increment(FoldHistory* history,
+						  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
 
@@ -555,10 +556,14 @@ public:
 	void add_finished_step();
 	void restart_from_finished_step();
 
-	void inner_scope_input_step_update_increment(FoldHistory* history);
-	void score_step_update_increment(FoldHistory* history);
-	void compress_step_update_increment(FoldHistory* history);
-	void input_step_update_increment(FoldHistory* history);
+	void inner_scope_input_step_update_increment(FoldHistory* history,
+												 std::vector<Fold*>& folds_to_delete);
+	void score_step_update_increment(FoldHistory* history,
+									 std::vector<Fold*>& folds_to_delete);
+	void compress_step_update_increment(FoldHistory* history,
+										std::vector<Fold*>& folds_to_delete);
+	void input_step_update_increment(FoldHistory* history,
+									 std::vector<Fold*>& folds_to_delete);
 
 	void fold_increment();
 };
