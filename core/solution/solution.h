@@ -22,6 +22,8 @@ public:
 	std::vector<int> scope_use_counts;
 	int scope_use_sum_count;
 
+	// TODO: use percentages or MCTS for dictionaries
+
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 

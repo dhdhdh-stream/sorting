@@ -66,12 +66,11 @@ int main(int argc, char* argv[]) {
 				target_val = problem.score_result();
 			}
 
-			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
+			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE
+					// && target_val > explore_status.existing_score) {
+					&& rand()%10 == 0) {
 				// !run_status.exceeded_depth
-				// if (target_val > explore_status.existing_score) {
-				if (rand()%10 == 0) {
-					solution->root->explore_set(scope_history);
-				}
+				solution->root->explore_set(scope_history);
 			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				solution->root->explore_on_path_backprop(local_state_errors,
@@ -79,8 +78,9 @@ int main(int argc, char* argv[]) {
 														 target_val,
 														 scale_factor,
 														 scope_history);
+			} else {
+				solution->root->explore_clear(scope_history);
 			}
-			// can be EXPLORE_PHASE_NONE if early exit or edge case if root is entirely replaced
 
 			delete scope_history;
 		} else {

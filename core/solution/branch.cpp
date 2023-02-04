@@ -694,6 +694,10 @@ void Branch::explore_set(BranchHistory* history) {
 	this->branches[history->best_index]->explore_set(history->branch_path_history);
 }
 
+void Branch::explore_clear(BranchHistory* history) {
+	this->branches[history->best_index]->explore_clear(history->branch_path_history);
+}
+
 void Branch::update_increment(BranchHistory* history,
 							  vector<Fold*>& folds_to_delete) {
 	if (this->is_branch[history->best_index]) {

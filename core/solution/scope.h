@@ -56,8 +56,15 @@ public:
 	std::vector<int> starting_state_sizes;
 
 	int explore_type;
+	bool explore_is_try;
 	int explore_index_inclusive;
 	int explore_end_non_inclusive;
+
+	int explore_sequence_length;
+	std::vector<bool> explore_is_existing;
+	std::vector<Scope*> explore_existing_actions;
+	std::vector<Action> explore_actions;
+
 	Fold* explore_fold;
 	int explore_count;	// TODO: reset if too high
 
@@ -155,6 +162,7 @@ public:
 								  ScopeHistory* history);
 
 	void explore_set(ScopeHistory* history);
+	void explore_clear(ScopeHistory* history);
 	// TODO: clean up update_increment logic
 	void update_increment(ScopeHistory* history,
 						  std::vector<Fold*>& folds_to_delete);
@@ -186,17 +194,6 @@ public:
 	// in case of early exit due to scope depth
 	int exit_index;
 	int exit_location;
-
-	int explore_type;
-	int explore_index_inclusive;
-	int explore_end_non_inclusive;
-	int sequence_length;
-	std::vector<bool> is_existing;
-	std::vector<Scope*> existing_actions;
-	std::vector<Action> actions;
-
-	// temp
-	int starting_explore_phase;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

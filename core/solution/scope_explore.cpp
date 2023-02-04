@@ -131,8 +131,6 @@ void Scope::explore_replace() {
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
-	this->explore_index_inclusive = -1;
-	this->explore_end_non_inclusive = -1;
 	this->explore_fold = NULL;
 }
 
@@ -365,8 +363,6 @@ void Scope::explore_branch() {
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
 
 	this->explore_type = EXPLORE_TYPE_NONE;
-	this->explore_index_inclusive = -1;
-	this->explore_end_non_inclusive = -1;
 	this->explore_fold = NULL;
 }
 
