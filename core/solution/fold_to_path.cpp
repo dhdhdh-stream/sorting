@@ -374,15 +374,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		n_index++;
 	}
 
-	if (scope_sequence_length > 0 && scope_is_inner_scope[0]) {
-		if (scope_num_inputs < scope_scopes[0]->num_inputs) {
-			cout << "size mismatch" << endl;
-			cout << "scope_num_inputs: " << scope_num_inputs << endl;
-			cout << "scope_scopes[0]->num_inputs: " << scope_scopes[0]->num_inputs << endl;
-			exit(1);
-		}
-	}
-
 	Scope* scope = new Scope(scope_num_inputs,
 							 scope_num_outputs,
 							 scope_sequence_length,

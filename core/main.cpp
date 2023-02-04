@@ -16,8 +16,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1675399808;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -27,6 +26,10 @@ int main(int argc, char* argv[]) {
 
 	// while (true) {
 	for (int i = 0; i < 10000; i++) {
+		if (i%100 == 0) {
+			cout << i << endl;
+		}
+
 		Problem problem;
 
 		if (rand()%2 == 0) {

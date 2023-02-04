@@ -353,8 +353,12 @@ void Scope::explore_on_path_activate(Problem& problem,
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				// sum_impact += this->average_local_impacts[a_index];
-				sum_impact += 1.0;
+				if (a_index == this->sequence_length-1 && !this->full_last) {
+					// do nothing
+				} else {
+					// sum_impact += this->average_local_impacts[a_index];
+					sum_impact += 1.0;
+				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 				// sum_impact += this->average_inner_branch_impacts[a_index];
 				sum_impact += 1.0;
@@ -400,28 +404,32 @@ void Scope::explore_on_path_activate(Problem& problem,
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				// rand_val -= this->average_local_impacts[a_index];
-				rand_val -= 1.0;
-				if (rand_val <= 0.0) {
-					this->explore_type = EXPLORE_TYPE_NEW;
-					this->explore_is_try = true;
-					this->explore_index_inclusive = a_index;
-					this->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
+				if (a_index == this->sequence_length-1 && !this->full_last) {
+					// do nothing
+				} else {
+					// rand_val -= this->average_local_impacts[a_index];
+					rand_val -= 1.0;
+					if (rand_val <= 0.0) {
+						this->explore_type = EXPLORE_TYPE_NEW;
+						this->explore_is_try = true;
+						this->explore_index_inclusive = a_index;
+						this->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
 
-					bool can_be_empty;
-					if (this->explore_end_non_inclusive > this->explore_index_inclusive+1) {
-						can_be_empty = true;
-					} else {
-						can_be_empty = false;
+						bool can_be_empty;
+						if (this->explore_end_non_inclusive > this->explore_index_inclusive+1) {
+							can_be_empty = true;
+						} else {
+							can_be_empty = false;
+						}
+
+						solution->new_sequence(this->explore_sequence_length,
+											   this->explore_is_existing,
+											   this->explore_existing_actions,
+											   this->explore_actions,
+											   can_be_empty);
+
+						break;
 					}
-
-					solution->new_sequence(this->explore_sequence_length,
-										   this->explore_is_existing,
-										   this->explore_existing_actions,
-										   this->explore_actions,
-										   can_be_empty);
-
-					break;
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 				// rand_val -= this->average_inner_branch_impacts[a_index];
@@ -571,8 +579,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 								if (run_status.exceeded_depth) {
 									history->exit_index = a_index;
-									history->exit_location = EXIT_LOCATION_BACK;
-									// though setting doesn't matter as won't backprop
+									history->exit_location = EXIT_LOCATION_SPOT;
 									return;
 								}
 							}
@@ -680,8 +687,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 							if (run_status.exceeded_depth) {
 								history->exit_index = a_index;
-								history->exit_location = EXIT_LOCATION_BACK;
-								// though setting doesn't matter as won't backprop
+								history->exit_location = EXIT_LOCATION_SPOT;
 								return;
 							}
 						}
@@ -2139,6 +2145,11 @@ void Scope::explore_set(ScopeHistory* history) {
 }
 
 void Scope::explore_clear(ScopeHistory* history) {
+	if (history == NULL		// might have exited off_path
+			|| history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
 	if (this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 		this->scopes[this->explore_index_inclusive]->explore_clear(
 			history->scope_histories[this->explore_index_inclusive]);

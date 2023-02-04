@@ -9,6 +9,7 @@ using namespace std;
 
 BranchPath::BranchPath(int num_inputs,
 					   int num_outputs,
+					   int outer_s_input_size,
 					   int sequence_length,
 					   vector<bool> is_inner_scope,
 					   vector<Scope*> scopes,
@@ -37,6 +38,7 @@ BranchPath::BranchPath(int num_inputs,
 
 	this->num_inputs = num_inputs;
 	this->num_outputs = num_outputs;
+	this->outer_s_input_size = outer_s_input_size;
 
 	this->sequence_length = sequence_length;
 	this->is_inner_scope = is_inner_scope;
@@ -71,15 +73,18 @@ BranchPath::BranchPath(int num_inputs,
 
 	this->full_last = full_last;
 
-	int state_size = 0;
+	// differs from scope
+	int state_size = this->num_inputs;
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		this->starting_state_sizes.push_back(state_size);
 
-		if (!this->is_inner_scope[a_index]) {
-			// obs_size always 1 for sorting
-			state_size++;
-		} else {
-			state_size += this->scopes[a_index]->num_outputs;
+		if (a_index != 0) {
+			if (!this->is_inner_scope[a_index]) {
+				// obs_size always 1 for sorting
+				state_size++;
+			} else {
+				state_size += this->scopes[a_index]->num_outputs;
+			}
 		}
 
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
@@ -119,6 +124,10 @@ BranchPath::BranchPath(ifstream& input_file) {
 	string num_outputs_line;
 	getline(input_file, num_outputs_line);
 	this->num_outputs = stoi(num_outputs_line);
+
+	string outer_s_input_size_line;
+	getline(input_file, outer_s_input_size_line);
+	this->outer_s_input_size = stoi(outer_s_input_size_line);
 
 	string full_last_line;
 	getline(input_file, full_last_line);
@@ -362,8 +371,12 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				// sum_impact += this->average_local_impacts[a_index];
-				sum_impact += 1.0;
+				if (a_index == this->sequence_length-1 && !this->full_last) {
+					// do nothing
+				} else {
+					// sum_impact += this->average_local_impacts[a_index];
+					sum_impact += 1.0;
+				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 				// sum_impact += this->average_inner_branch_impacts[a_index];
 				sum_impact += 1.0;
@@ -409,28 +422,32 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				// rand_val -= this->average_local_impacts[a_index];
-				rand_val -= 1.0;
-				if (rand_val <= 0.0) {
-					this->explore_type = EXPLORE_TYPE_NEW;
-					this->explore_is_try = true;
-					this->explore_index_inclusive = a_index;
-					this->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
+				if (a_index == this->sequence_length-1 && !this->full_last) {
+					// do nothing
+				} else {
+					// rand_val -= this->average_local_impacts[a_index];
+					rand_val -= 1.0;
+					if (rand_val <= 0.0) {
+						this->explore_type = EXPLORE_TYPE_NEW;
+						this->explore_is_try = true;
+						this->explore_index_inclusive = a_index;
+						this->explore_end_non_inclusive = a_index + 1 + rand()%(this->sequence_length - a_index);
 
-					bool can_be_empty;
-					if (this->explore_end_non_inclusive > this->explore_index_inclusive+1) {
-						can_be_empty = true;
-					} else {
-						can_be_empty = false;
+						bool can_be_empty;
+						if (this->explore_end_non_inclusive > this->explore_index_inclusive+1) {
+							can_be_empty = true;
+						} else {
+							can_be_empty = false;
+						}
+
+						solution->new_sequence(this->explore_sequence_length,
+											   this->explore_is_existing,
+											   this->explore_existing_actions,
+											   this->explore_actions,
+											   can_be_empty);
+
+						break;
 					}
-
-					solution->new_sequence(this->explore_sequence_length,
-										   this->explore_is_existing,
-										   this->explore_existing_actions,
-										   this->explore_actions,
-										   can_be_empty);
-
-					break;
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 				// rand_val -= this->average_inner_branch_impacts[a_index];
@@ -502,8 +519,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 						if (run_status.exceeded_depth) {
 							history->exit_index = 0;
-							history->exit_location = EXIT_LOCATION_BACK;
-							// though setting doesn't matter as won't backprop
+							history->exit_location = EXIT_LOCATION_SPOT;
 							return;
 						}
 					}
@@ -600,8 +616,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 						if (run_status.exceeded_depth) {
 							history->exit_index = 0;
-							history->exit_location = EXIT_LOCATION_BACK;
-							// though setting doesn't matter as won't backprop
+							history->exit_location = EXIT_LOCATION_SPOT;
 							return;
 						}
 					}
@@ -796,8 +811,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 								if (run_status.exceeded_depth) {
 									history->exit_index = a_index;
-									history->exit_location = EXIT_LOCATION_BACK;
-									// though setting doesn't matter as won't backprop
+									history->exit_location = EXIT_LOCATION_SPOT;
 									return;
 								}
 							}
@@ -906,8 +920,7 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 
 							if (run_status.exceeded_depth) {
 								history->exit_index = a_index;
-								history->exit_location = EXIT_LOCATION_BACK;
-								// though setting doesn't matter as won't backprop
+								history->exit_location = EXIT_LOCATION_SPOT;
 								return;
 							}
 						}
@@ -2722,11 +2735,13 @@ void BranchPath::explore_set(BranchPathHistory* history) {
 	} else {
 		// history->explore_type == EXPLORE_TYPE_NEW
 		int new_num_inputs = this->starting_state_sizes[this->explore_index_inclusive];
-		if (!this->is_inner_scope[this->explore_index_inclusive]) {
-			// obs_size always 1 for sorting
-			new_num_inputs++;
-		} else {
-			new_num_inputs += this->scopes[this->explore_index_inclusive]->num_outputs;
+		if (this->explore_index_inclusive != 0) {
+			if (!this->is_inner_scope[this->explore_index_inclusive]) {
+				// obs_size always 1 for sorting
+				new_num_inputs++;
+			} else {
+				new_num_inputs += this->scopes[this->explore_index_inclusive]->num_outputs;
+			}
 		}
 		int new_num_outputs;
 		if (this->explore_end_non_inclusive == this->sequence_length) {
@@ -2737,7 +2752,7 @@ void BranchPath::explore_set(BranchPathHistory* history) {
 
 		this->explore_fold = new Fold(new_num_inputs,
 									  new_num_outputs,
-									  this->num_inputs,
+									  this->outer_s_input_size,	// differs from scope
 									  this->explore_sequence_length,
 									  this->explore_is_existing,
 									  this->explore_existing_actions,
@@ -2762,6 +2777,10 @@ void BranchPath::explore_set(BranchPathHistory* history) {
 }
 
 void BranchPath::explore_clear(BranchPathHistory* history) {
+	if (history->exit_location == EXIT_LOCATION_SPOT) {
+		return;
+	}
+
 	if (this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 		this->scopes[this->explore_index_inclusive]->explore_clear(
 			history->scope_histories[this->explore_index_inclusive]);
@@ -2843,6 +2862,7 @@ void BranchPath::save(ofstream& output_file) {
 
 	output_file << this->num_inputs << endl;
 	output_file << this->num_outputs << endl;
+	output_file << this->outer_s_input_size << endl;
 
 	output_file << this->full_last << endl;
 

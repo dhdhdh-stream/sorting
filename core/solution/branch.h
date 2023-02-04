@@ -17,6 +17,7 @@ public:
 
 	int num_inputs;
 	int num_outputs;
+	int outer_s_input_size;
 
 	FoldNetwork* branch_score_network;
 	bool passed_branch_score;	// if branch_score_network taken by outer branch
@@ -30,12 +31,12 @@ public:
 
 	Branch(int num_inputs,
 		   int num_outputs,
+		   int outer_s_input_size,
 		   FoldNetwork* branch_score_network,
 		   std::vector<FoldNetwork*> score_networks,
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
 		   std::vector<Fold*> folds);
-	Branch(Branch* original);
 	Branch(std::ifstream& input_file);
 	~Branch();
 

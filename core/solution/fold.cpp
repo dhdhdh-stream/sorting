@@ -23,6 +23,7 @@ Fold::Fold(int num_inputs,
 
 	this->num_inputs = num_inputs;
 	this->num_outputs = num_outputs;
+	this->outer_s_input_size = outer_s_input_size;
 
 	this->sequence_length = sequence_length;
 	this->is_existing = is_existing;
@@ -37,11 +38,11 @@ Fold::Fold(int num_inputs,
 	this->misguess_improvement = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
-												   outer_s_input_size,
+												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
 	this->combined_score_network = new FoldNetwork(1,
-												   outer_s_input_size,
+												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
 	this->combined_improvement = 0.0;
@@ -56,7 +57,7 @@ Fold::Fold(int num_inputs,
 		}
 	}
 
-	this->curr_s_input_sizes.push_back(outer_s_input_size);
+	this->curr_s_input_sizes.push_back(this->outer_s_input_size);
 	this->curr_scope_sizes.push_back(this->num_inputs);
 
 	vector<int> flat_sizes;
@@ -79,7 +80,7 @@ Fold::Fold(int num_inputs,
 
 	this->curr_fold = new FoldNetwork(flat_sizes,
 									  1,
-									  outer_s_input_size,
+									  this->outer_s_input_size,
 									  this->num_inputs,
 									  100);
 	this->curr_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
@@ -87,14 +88,14 @@ Fold::Fold(int num_inputs,
 		if (this->is_existing[f_index]) {
 			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
 															  this->existing_actions[f_index]->num_inputs,
-															  outer_s_input_size,
+															  this->outer_s_input_size,
 															  this->num_inputs,
 															  50);
 		}
 	}
 	this->curr_end_fold = new FoldNetwork(flat_sizes,
 										  this->num_outputs,
-										  outer_s_input_size,
+										  this->outer_s_input_size,
 										  this->num_inputs,
 										  50);
 
@@ -133,6 +134,10 @@ Fold::Fold(ifstream& input_file) {
 	string num_outputs_line;
 	getline(input_file, num_outputs_line);
 	this->num_outputs = stoi(num_outputs_line);
+
+	string outer_s_input_size_line;
+	getline(input_file, outer_s_input_size_line);
+	this->outer_s_input_size = stoi(outer_s_input_size_line);
 
 	string sequence_length_line;
 	getline(input_file, sequence_length_line);
@@ -1126,6 +1131,7 @@ void Fold::save(ofstream& output_file) {
 
 	output_file << this->num_inputs << endl;
 	output_file << this->num_outputs << endl;
+	output_file << this->outer_s_input_size << endl;
 
 	output_file << this->sequence_length << endl;
 

@@ -195,6 +195,8 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 			}
 		}
 		predicted_score -= scale_factor*history->ending_score_update;
+	} else {
+		local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 	}
 
 	for (int f_index = history->exit_index; f_index >= 0; f_index--) {
@@ -430,6 +432,8 @@ void Fold::starting_compress_step_existing_flat_backprop(
 			}
 		}
 		predicted_score -= scale_factor*history->ending_score_update;
+	} else {
+		local_state_errors = vector<double>(this->curr_scope_sizes[0], 0.0);
 	}
 
 	for (int f_index = history->exit_index; f_index >= 0; f_index--) {

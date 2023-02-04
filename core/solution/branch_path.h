@@ -1,5 +1,3 @@
-// Note: BranchPath fields are similar to Scope, but methods are different
-
 #ifndef BRANCH_PATH_H
 #define BRANCH_PATH_H
 
@@ -25,6 +23,7 @@ public:
 
 	int num_inputs;
 	int num_outputs;
+	int outer_s_input_size;
 
 	int sequence_length;
 	// don't special case starting step in fields
@@ -72,6 +71,7 @@ public:
 
 	BranchPath(int num_inputs,
 			   int num_outputs,
+			   int outer_s_input_size,
 			   int sequence_length,
 			   std::vector<bool> is_inner_scope,
 			   std::vector<Scope*> scopes,

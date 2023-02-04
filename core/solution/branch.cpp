@@ -9,6 +9,7 @@ using namespace std;
 
 Branch::Branch(int num_inputs,
 			   int num_outputs,
+			   int outer_s_input_size,
 			   FoldNetwork* branch_score_network,
 			   vector<FoldNetwork*> score_networks,
 			   vector<bool> is_branch,
@@ -21,6 +22,7 @@ Branch::Branch(int num_inputs,
 
 	this->num_inputs = num_inputs;
 	this->num_outputs = num_outputs;
+	this->outer_s_input_size = outer_s_input_size;
 
 	this->branch_score_network = branch_score_network;
 	this->passed_branch_score = false;
@@ -29,37 +31,8 @@ Branch::Branch(int num_inputs,
 	this->is_branch = is_branch;
 	this->branches = branches;
 	this->folds = folds;
-}
 
-Branch::Branch(Branch* original) {
-	solution->id_counter_mtx.lock();
-	this->id = solution->id_counter;
-	solution->id_counter++;
-	solution->id_counter_mtx.unlock();
-
-	this->num_inputs = original->num_inputs;
-	this->num_outputs = original->num_outputs;
-
-	this->passed_branch_score = original->passed_branch_score;
-	if (!this->passed_branch_score) {
-		this->branch_score_network = new FoldNetwork(original->branch_score_network);
-	} else {
-		this->branch_score_network = NULL;
-	}
-
-	this->passed_branch_score = original->passed_branch_score;
-
-	this->is_branch = original->is_branch;
-	for (int b_index = 0; (int)original->branches.size(); b_index++) {
-		this->score_networks.push_back(new FoldNetwork(original->score_networks[b_index]));
-		if (this->is_branch[b_index]) {
-			this->branches.push_back(original->branches[b_index]);
-			this->folds.push_back(NULL);
-		} else {
-			this->branches.push_back(NULL);
-			this->folds.push_back(original->folds[b_index]);
-		}
-	}
+	this->explore_ref_count = 0;
 }
 
 Branch::Branch(ifstream& input_file) {
@@ -74,6 +47,10 @@ Branch::Branch(ifstream& input_file) {
 	string num_outputs_line;
 	getline(input_file, num_outputs_line);
 	this->num_outputs = stoi(num_outputs_line);
+
+	string outer_s_input_size_line;
+	getline(input_file, outer_s_input_size_line);
+	this->outer_s_input_size = stoi(outer_s_input_size_line);
 
 	string passed_branch_score_line;
 	getline(input_file, passed_branch_score_line);
@@ -124,6 +101,9 @@ Branch::Branch(ifstream& input_file) {
 			this->branches.push_back(NULL);
 		}
 	}
+
+	// explores cleared on reload
+	this->explore_ref_count = 0;
 }
 
 Branch::~Branch() {
@@ -169,7 +149,8 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 															  local_state_vals,
 															  curr_history);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				if (curr_score > best_score) {
+				// if (curr_score > best_score) {
+				if (rand()%(b_index+1) == 0) {
 					best_score = curr_score;
 					best_index = b_index;
 					if (best_history != NULL) {
@@ -188,7 +169,8 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 				this->score_networks[b_index]->activate_small(local_s_input_vals,
 															  local_state_vals);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				if (curr_score > best_score) {
+				// if (curr_score > best_score) {
+				if (rand()%(b_index+1) == 0) {
 					best_score = curr_score;
 					best_index = b_index;
 				}
@@ -223,7 +205,8 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														  local_state_vals,
 														  curr_history);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			if (curr_score > best_score) {
+			// if (curr_score > best_score) {
+			if (rand()%(b_index+1) == 0) {
 				best_score = curr_score;
 				best_index = b_index;
 				if (best_history != NULL) {
@@ -240,7 +223,8 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 			this->score_networks[b_index]->activate_small(local_s_input_vals,
 														  local_state_vals);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			if (curr_score > best_score) {
+			// if (curr_score > best_score) {
+			if (rand()%(b_index+1) == 0) {
 				best_score = curr_score;
 				best_index = b_index;
 			}
@@ -402,7 +386,8 @@ void Branch::existing_flat_activate(Problem& problem,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+		// if (curr_score > best_score) {
+		if (rand()%(b_index+1) == 0) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -519,7 +504,8 @@ void Branch::update_activate(Problem& problem,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+		// if (curr_score > best_score) {
+		if (rand()%(b_index+1) == 0) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -626,7 +612,8 @@ void Branch::existing_update_activate(Problem& problem,
 		this->score_networks[b_index]->activate_small(local_s_input_vals,
 													  local_state_vals);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+		// if (curr_score > best_score) {
+		if (rand()%(b_index+1) == 0) {
 			best_score = curr_score;
 			best_index = b_index;
 		}
@@ -695,13 +682,17 @@ void Branch::explore_set(BranchHistory* history) {
 }
 
 void Branch::explore_clear(BranchHistory* history) {
+	if (history == NULL) {		// might have exited off_path
+		return;
+	}
+
 	this->branches[history->best_index]->explore_clear(history->branch_path_history);
 }
 
 void Branch::update_increment(BranchHistory* history,
 							  vector<Fold*>& folds_to_delete) {
 	if (this->is_branch[history->best_index]) {
-		if (history->branch_path_history->branch_path == this->branches[history->best_index]) {
+		if (history->branch_path_history != NULL) {	// might be new is_branch from resolved fold
 			this->branches[history->best_index]->update_increment(history->branch_path_history,
 																  folds_to_delete);
 		}
@@ -725,6 +716,7 @@ void Branch::save(ofstream& output_file) {
 
 	output_file << this->num_inputs << endl;
 	output_file << this->num_outputs << endl;
+	output_file << this->outer_s_input_size << endl;
 
 	output_file << this->passed_branch_score << endl;
 	if (!this->passed_branch_score) {

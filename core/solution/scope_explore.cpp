@@ -164,6 +164,12 @@ void Scope::explore_branch() {
 		this->explore_fold->starting_score_network = NULL;
 
 		int new_num_inputs = this->starting_state_sizes[this->explore_index_inclusive];
+		if (!this->is_inner_scope[this->explore_index_inclusive]) {
+			// obs_size always 1 for sorting
+			new_num_inputs++;
+		} else {
+			new_num_inputs += this->scopes[this->explore_index_inclusive]->num_outputs;
+		}
 		int new_num_outputs;
 		if (this->explore_end_non_inclusive == this->sequence_length) {
 			new_num_outputs = this->num_outputs;
@@ -260,6 +266,7 @@ void Scope::explore_branch() {
 
 		BranchPath* new_branch_path = new BranchPath(new_num_inputs,
 													 new_num_outputs,
+													 this->num_inputs,
 													 this->explore_end_non_inclusive-this->explore_index_inclusive,
 													 branch_is_inner_scope,
 													 branch_scopes,
@@ -296,6 +303,7 @@ void Scope::explore_branch() {
 
 		Branch* new_branch = new Branch(new_num_inputs,
 										new_num_outputs,
+										this->num_inputs,
 										this->explore_fold->combined_score_network,
 										new_score_networks,
 										new_is_branch,
@@ -509,13 +517,11 @@ void Scope::resolve_fold(int a_index,
 	this->starting_state_sizes.insert(this->starting_state_sizes.begin()+a_index+1,
 		new_starting_state_sizes.begin(), new_starting_state_sizes.end());
 
-	if (this->explore_type == EXPLORE_TYPE_NEW) {
-		if (this->explore_index_inclusive > a_index) {
-			this->explore_index_inclusive += new_sequence_length;
-		}
-		if (this->explore_end_non_inclusive > a_index) {
-			this->explore_end_non_inclusive += new_sequence_length;
-		}
+	if (this->explore_index_inclusive > a_index) {
+		this->explore_index_inclusive += new_sequence_length;
+	}
+	if (this->explore_end_non_inclusive > a_index) {
+		this->explore_end_non_inclusive += new_sequence_length;
 	}
 
 	folds_to_delete.push_back(this->folds[a_index]);

@@ -89,6 +89,7 @@ void Branch::resolve_fold(int b_index,
 
 	BranchPath* new_branch_path = new BranchPath(this->num_inputs,
 												 this->num_outputs,
+												 this->outer_s_input_size,
 												 new_sequence_length,
 												 new_is_inner_scope,
 												 new_scopes,

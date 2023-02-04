@@ -2012,6 +2012,8 @@ void Fold::compress_step_existing_update_backprop(
 		// do nothing
 	} else {
 		if (history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
 			scale_factor_error += history->score_update*predicted_score_error;
 
 			predicted_score -= scale_factor*history->score_update;
