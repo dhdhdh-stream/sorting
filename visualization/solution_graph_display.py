@@ -1,153 +1,178 @@
 import pydot
 
-LEFT = 0
-STAY = 1
-RIGHT = 2
+ACTION_START = -1
+ACTION_LEFT = 0
+ACTION_STAY = 1
+ACTION_RIGHT = 2
 
-NODE_TYPE_EMPTY = 0;
-NODE_TYPE_ACTION = 1;
-NODE_TYPE_START_SCOPE = 2;
-NODE_TYPE_JUMP_SCOPE = 3;
+STEP_TYPE_STEP = 0
+STEP_TYPE_BRANCH = 1
+STEP_TYPE_FOLD = 2
 
-def pretty_print_action(action):
-	result = '('
-	result += "{:.2f}".format(action[0])
-	result += ', '
-	if action[1] == 0:
-		result += 'LEFT'
-	elif action[1] == 1:
-		result += 'STAY'
-	else:
-		result += 'RIGHT'
-	result += ')'
-	return result
+def parse_scope(file):
+	curr_id = int(file.readline())
 
-graph = pydot.Dot(graph_type='digraph', strict=True)
+	sequence_length = int(file.readline())
 
-def parse_node(file, node_type):
-	if node_type == NODE_TYPE_EMPTY:
-		return [NODE_TYPE_EMPTY]
-	elif node_type == NODE_TYPE_ACTION:
-		write = float(file.readline())
-		move = int(file.readline())
-		return [NODE_TYPE_ACTION, [write, move]]
-	else:
-		# node_type == NODE_TYPE_JUMP_SCOPE
-		top_path_size = int(file.readline())
-		top_path = []
-		for n_index in range(top_path_size):
-			path_node_type = int(file.readline())
-			path_node = parse_node(file, path_node_type)
-			top_path.append(path_node)
-		num_child = int(file.readline())
-		child_paths = []
-		for c_index in range(num_child):
-			child_path_size = int(file.readline())
-			child_path = []
-			for n_index in range(child_path_size):
-				path_node_type = int(file.readline())
-				path_node = parse_node(file, path_node_type)
-				child_path.append(path_node)
-			child_paths.append(child_path)
-		return [NODE_TYPE_JUMP_SCOPE, top_path, child_paths]
+	scope = [curr_id,
+			 [[-1,		# 0: is_inner_scope
+			   -1,		# 1: scope_id
+			   None,	# 2: scope
+			   None,	# 3: action
+			   -1,		# 4: step_type
+			   None,	# 5: branch
+			   None,	# 6: fold
+			   0.0,		# 7: average_score
+			   0.0,		# 8: average_misguess
+			   0.0,		# 9: average_inner_scope_impact
+			   0.0,		# 10: average_local_impact
+			   0.0,		# 11: average_inner_branch_impact
+			  ] for _ in range(sequence_length)]]
 
-start_scope_path = []
-with open('../solution.txt') as file:
-	path_size = int(file.readline())
-	for n_index in range(path_size):
-		path_node_type = int(file.readline())
-		path_node = parse_node(file, path_node_type)
-		start_scope_path.append(path_node)
+	for a_index in range(sequence_length):
+		is_inner_scope = int(file.readline())
+		scope[1][a_index][0] = is_inner_scope
 
-global_node_index = 0
+		if is_inner_scope == 1:
+			scope_id = int(file.readline())
+			scope[1][a_index][1] = scope_id
 
-def build_graph(node):
-	global global_node_index
-
-	if node[0] == NODE_TYPE_EMPTY:
-		node_index = global_node_index
-		global_node_index += 1
-		display_node = pydot.Node(node_index, label='E')
-		graph.add_node(display_node)
-		return node_index, node_index
-	elif node[0] == NODE_TYPE_ACTION:
-		node_index = global_node_index
-		global_node_index += 1
-		display_node = pydot.Node(node_index, label=pretty_print_action(node[1]))
-		graph.add_node(display_node)
-		return node_index, node_index
-	else:
-		# node[0] == NODE_TYPE_JUMP_SCOPE
-		start_node_index = global_node_index
-		global_node_index += 1
-		if_node_index = global_node_index
-		global_node_index += 1
-		end_node_index = global_node_index
-		global_node_index += 1
-		start_display_node = pydot.Node(start_node_index, label='S')
-		graph.add_node(start_display_node)
-		if_display_node = pydot.Node(if_node_index, label='I')
-		graph.add_node(if_display_node)
-		end_display_node = pydot.Node(end_node_index, label='E')
-		graph.add_node(end_display_node)
-
-		if len(node[1]) == 0:
-			edge = pydot.Edge(start_node_index, if_node_index)
-			graph.add_edge(edge)
+			if scope_id > curr_id:
+				new_scope = parse_scope(file)
+				scope[1][a_index][2] = new_scope
 		else:
-			curr_path_node_start_index, curr_path_node_end_index = build_graph(node[1][0])
-			edge = pydot.Edge(start_node_index, curr_path_node_start_index)
-			graph.add_edge(edge)
-			for n_index in range(1, len(node[1])):
-				next_path_node_start_index, next_path_node_end_index = build_graph(node[1][n_index])
-				edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
-				graph.add_edge(edge)
-				curr_path_node_start_index = next_path_node_start_index
-				curr_path_node_end_index = next_path_node_end_index
-			edge = pydot.Edge(curr_path_node_end_index, if_node_index)
-			graph.add_edge(edge)
+			write = float(file.readline())
+			move = int(file.readline())
+			scope[1][a_index][3] = [write, move]
 
-		for c_index in range(len(node[2])):
-			if len(node[2][c_index]) == 0:
-				edge = pydot.Edge(if_node_index, end_node_index)
-				graph.add_edge(edge)
-			else:
-				curr_path_node_start_index, curr_path_node_end_index = build_graph(node[2][c_index][0])
-				edge = pydot.Edge(if_node_index, curr_path_node_start_index)
-				graph.add_edge(edge)
-				for n_index in range(1, len(node[2][c_index])):
-					next_path_node_start_index, next_path_node_end_index = build_graph(node[2][c_index][n_index])
-					edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
-					graph.add_edge(edge)
-					curr_path_node_start_index = next_path_node_start_index
-					curr_path_node_end_index = next_path_node_end_index
-				edge = pydot.Edge(curr_path_node_end_index, end_node_index)
-				graph.add_edge(edge)
+	for a_index in range(sequence_length):
+		step_type = int(file.readline())
+		scope[1][a_index][4] = step_type
 
-		return start_node_index, end_node_index
+		if step_type == STEP_TYPE_BRANCH:
+			new_branch = parse_branch(file, curr_id)
+			scope[1][a_index][5] = new_branch
+		elif step_type == STEP_TYPE_FOLD:
+			new_fold = parse_fold(file)
+			scope[1][a_index][6] = new_fold
 
-overall_start_index = global_node_index
-global_node_index += 1
-overall_end_index = global_node_index
-global_node_index += 1
-overall_start_node = pydot.Node(overall_start_index, label='S')
-graph.add_node(overall_start_node)
-overall_end_node = pydot.Node(overall_end_index, label='E')
-graph.add_node(overall_end_node)
-if len(start_scope_path) == 0:
-	edge = pydot.Edge(overall_start_index, overall_end_index)
-	graph.add_edge(edge)
-else:
-	curr_path_node_start_index, curr_path_node_end_index = build_graph(start_scope_path[0])
-	edge = pydot.Edge(overall_start_index, curr_path_node_start_index)
-	graph.add_edge(edge)
-	for n_index in range(1, len(start_scope_path)):
-		next_path_node_start_index, next_path_node_end_index = build_graph(start_scope_path[n_index])
-		edge = pydot.Edge(curr_path_node_end_index, next_path_node_start_index)
-		graph.add_edge(edge)
-		curr_path_node_start_index = next_path_node_start_index
-		curr_path_node_end_index = next_path_node_end_index
-	edge = pydot.Edge(curr_path_node_end_index, overall_end_index)
-	graph.add_edge(edge)
+	for a_index in range(sequence_length):
+		average_score = float(file.readline())
+		scope[1][a_index][7] = average_score
+		average_misguess = float(file.readline())
+		scope[1][a_index][8] = average_misguess
+		average_inner_scope_impact = float(file.readline())
+		scope[1][a_index][9] = average_inner_scope_impact
+		average_local_impact = float(file.readline())
+		scope[1][a_index][10] = average_local_impact
+		average_inner_branch_impact = float(file.readline())
+		scope[1][a_index][11] = average_inner_branch_impact
 
-graph.write_png('solution.png')
+	return scope
+
+def parse_branch(file, curr_scope_id):
+	num_branches = int(file.readline())
+
+	branch = [[-1,		# 0: is_branch
+			   None,	# 1: branch_path
+			   None,	# 2: fold
+			  ] for _ in range(num_branches)]
+
+	for b_index in range(num_branches):
+		is_branch = int(file.readline())
+		branch[b_index][0] = is_branch
+
+		if is_branch == 1:
+			new_branch_path = parse_branch_path(file, curr_scope_id)
+			branch[b_index][1] = new_branch_path
+		else:
+			new_fold = parse_fold(file)
+			branch[b_index][2] = new_fold
+
+	return branch
+
+def parse_branch_path(file, curr_scope_id):
+	sequence_length = int(file.readline())
+
+	branch_path = [[-1,		# 0: is_inner_scope
+					-1,		# 1: scope_id
+					None,	# 2: scope
+					None,	# 3: action
+					-1,		# 4: step_type
+					None,	# 5: branch
+					None,	# 6: fold
+					0.0,	# 7: average_score
+					0.0,	# 8: average_misguess
+					0.0,	# 9: average_inner_scope_impact
+					0.0,	# 10: average_local_impact
+					0.0,	# 11: average_inner_branch_impact
+				   ] for _ in range(sequence_length)]
+
+	for a_index in range(sequence_length):
+		is_inner_scope = int(file.readline())
+		branch_path[a_index][0] = is_inner_scope
+
+		if is_inner_scope == 1:
+			scope_id = int(file.readline())
+			branch_path[a_index][1] = scope_id
+
+			if scope_id > curr_scope_id:
+				new_scope = parse_scope(file)
+				branch_path[a_index][2] = new_scope
+		else:
+			write = float(file.readline())
+			move = int(file.readline())
+			branch_path[a_index][3] = [write, move]
+
+	for a_index in range(sequence_length):
+		step_type = int(file.readline)
+		branch_path[a_index][4] = step_type
+
+		if step_type == STEP_TYPE_BRANCH:
+			new_branch = parse_branch(file, curr_id)
+			branch_path[a_index][5] = new_branch
+		elif step_type == STEP_TYPE_FOLD:
+			new_fold = parse_fold(file)
+			branch_path[a_index][6] = new_fold
+
+	for a_index in range(sequence_length):
+		average_score = float(file.readline())
+		branch_path[a_index][7] = average_score
+		average_misguess = float(file.readline())
+		branch_path[a_index][8] = average_misguess
+		average_inner_scope_impact = float(file.readline())
+		branch_path[a_index][9] = average_inner_scope_impact
+		average_local_impact = float(file.readline())
+		branch_path[a_index][10] = average_local_impact
+		average_inner_branch_impact = float(file.readline())
+		branch_path[a_index][11] = average_inner_branch_impact
+
+	return branch_path
+
+def parse_fold(file):
+	sequence_length = int(file.readline())
+
+	fold = [[-1,	# 0: is_inner_scope
+			 -1,	# 1: scope_id
+			 None,	# 2: action
+			] for _ in range(sequence_length)]
+
+	for f_index in range(sequence_length):
+		is_inner_scope = int(file.readline())
+		fold[f_index][0] = is_inner_scope
+
+		if is_inner_scope == 1:
+			scope_id = int(file.readline())
+			fold[f_index][1] = scope_id
+		else:
+			write = float(file.readline())
+			move = int(file.readline())
+			fold[f_index][2] = [write, move]
+
+	return fold
+
+file = open('../display.txt')
+root = parse_scope(file)
+file.close()
+
+print(root)

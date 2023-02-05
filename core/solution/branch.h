@@ -125,6 +125,8 @@ public:
 					  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file,
+						  int curr_scope_id);
 };
 
 class BranchPathHistory;

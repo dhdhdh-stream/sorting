@@ -24,12 +24,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 
-	// while (true) {
-	for (int i = 0; i < 10000; i++) {
-		if (i%100 == 0) {
-			cout << i << endl;
-		}
-
+	while (true) {
 		Problem problem;
 
 		if (rand()%2 == 0) {
@@ -69,11 +64,21 @@ int main(int argc, char* argv[]) {
 				target_val = problem.score_result();
 			}
 
-			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE
-					// && target_val > explore_status.existing_score) {
-					&& rand()%10 == 0) {
+			bool explore_success = false;
+			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
 				// !run_status.exceeded_depth
-				solution->root->explore_set(scope_history);
+				if (target_val > run_status.existing_score) {
+					double score_standard_deviation = sqrt(run_status.score_variance);
+					double t_value = (target_val-run_status.existing_score) / score_standard_deviation;
+					if (t_value > 1.0) {	// >75%
+						cout << "EXPLORE_SET" << endl;
+						cout << "target_val: " << target_val << endl;
+						cout << "run_status.existing_score: " << run_status.existing_score << endl;
+						cout << "t_value: " << t_value << endl;
+						solution->root->explore_set(scope_history);
+						explore_success = true;
+					}
+				}
 			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				solution->root->explore_on_path_backprop(local_state_errors,
@@ -81,7 +86,10 @@ int main(int argc, char* argv[]) {
 														 target_val,
 														 scale_factor,
 														 scope_history);
-			} else {
+				explore_success = true;
+			}
+
+			if (!explore_success) {
 				solution->root->explore_clear(scope_history);
 			}
 

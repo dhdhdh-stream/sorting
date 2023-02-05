@@ -378,7 +378,10 @@ void Fold::score_step_explore_off_path_backprop(
 			}
 		}
 	} else {
-		if (history->exit_index != (int)this->finished_steps.size()) {
+		if (history->exit_location != EXIT_LOCATION_NORMAL
+				&& history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
 			vector<double> score_errors{scale_factor*inner_predicted_score_error};
 			this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
@@ -876,7 +879,10 @@ void Fold::score_step_existing_flat_backprop(
 			}
 		}
 	} else {
-		if (history->exit_index != (int)this->finished_steps.size()) {
+		if (history->exit_location != EXIT_LOCATION_NORMAL
+				&& history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
 			scale_factor_error += history->score_update*predicted_score_error;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
@@ -1284,7 +1290,10 @@ void Fold::score_step_update_backprop(
 	if (history->exit_index < (int)this->finished_steps.size()) {
 		// do nothing
 	} else {
-		if (history->exit_index != (int)this->finished_steps.size()) {
+		if (history->exit_location != EXIT_LOCATION_NORMAL
+				&& history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
 
 			scale_factor_error += history->score_update*inner_predicted_score_error;
@@ -1353,8 +1362,12 @@ void Fold::score_step_update_backprop(
 
 	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->starting_average_misguess = 0.999*this->starting_average_misguess + 0.001*misguess;
+	double misguess_variance = (this->starting_average_misguess-misguess)*(this->starting_average_misguess-misguess);
+	this->starting_misguess_variance = 0.999*this->starting_misguess_variance + 0.001*misguess_variance;
 
-	this->starting_average_score = 0.999*this->starting_average_score + 0.001*predicted_score;
+	this->starting_average_score = 0.999*this->starting_average_score + 0.001*target_val;
+	double score_variance = (this->starting_average_score-target_val)*(this->starting_average_score-target_val);
+	this->starting_score_variance = 0.999*this->starting_score_variance + 0.001*score_variance;
 
 	next_predicted_score = predicted_score;
 	predicted_score -= history->starting_score_update;	// already scaled
@@ -1581,7 +1594,10 @@ void Fold::score_step_existing_update_backprop(
 	if (history->exit_index < (int)this->finished_steps.size()) {
 		// do nothing
 	} else {
-		if (history->exit_index != (int)this->finished_steps.size()) {
+		if (history->exit_location != EXIT_LOCATION_NORMAL
+				&& history->exit_index == (int)this->finished_steps.size()) {
+			// do nothing
+		} else {
 			scale_factor_error += history->score_update*predicted_score_error;
 
 			predicted_score -= scale_factor*history->score_update;

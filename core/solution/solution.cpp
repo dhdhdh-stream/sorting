@@ -27,7 +27,7 @@ void Solution::init() {
 	int starting_sequence_length = 1;
 	vector<bool> starting_is_inner_scope{false};
 	vector<Scope*> starting_scopes{NULL};
-	vector<Action> starting_actions{Action(ACTION_START, 0.0)};
+	vector<Action> starting_actions{Action(0.0, ACTION_START)};
 	vector<vector<FoldNetwork*>> starting_inner_input_networks{vector<FoldNetwork*>()};
 	vector<vector<int>> starting_inner_input_sizes{vector<int>()};
 	vector<Network*> starting_scope_scale_mod{NULL};
@@ -41,7 +41,9 @@ void Solution::init() {
 		20);
 	vector<FoldNetwork*> starting_score_networks{starting_score_network};
 	vector<double> starting_average_scores{0.0};
+	vector<double> starting_score_variances{0.0};
 	vector<double> starting_average_misguesses{0.0};
+	vector<double> starting_misguess_variances{0.0};
 	vector<double> starting_average_inner_scope_impacts{0.0};
 	vector<double> starting_average_local_impacts{0.0};
 	vector<double> starting_average_inner_branch_impacts{0.0};
@@ -64,7 +66,9 @@ void Solution::init() {
 						   starting_folds,
 						   starting_score_networks,
 						   starting_average_scores,
+						   starting_score_variances,
 						   starting_average_misguesses,
+						   starting_misguess_variances,
 						   starting_average_inner_scope_impacts,
 						   starting_average_local_impacts,
 						   starting_average_inner_branch_impacts,
@@ -167,6 +171,8 @@ void Solution::new_sequence(int& sequence_length,
 			existing_actions.push_back(NULL);
 		}
 	}
+
+	// TODO: pretty print (when recursing, stop if index smaller than current)
 }
 
 void Solution::save(ofstream& output_file) {

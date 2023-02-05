@@ -47,18 +47,16 @@ public:
 	double sum_error;
 	double new_state_factor;
 
-	double score_standard_deviation;
-	double existing_misguess_standard_deviation;	// squared twice
-	double* existing_average_score;
-	double* existing_average_misguess;	// ref to branch end average_misguess
-
-	double misguess_improvement;
+	double* existing_score_variance;
+	double* existing_misguess_variance;
 
 	FoldNetwork* starting_score_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
 	double combined_improvement;
 	double replace_existing;
 	double replace_combined;
+
+	double misguess_improvement;
 
 	std::vector<Network*> scope_scale_mod;
 
@@ -70,7 +68,9 @@ public:
 	FoldNetwork* curr_end_fold;	// becomes last compress network
 
 	double starting_average_score;
+	double starting_score_variance;
 	double starting_average_misguess;
+	double starting_misguess_variance;
 	double starting_average_local_impact;
 
 	int curr_starting_compress_new_size;
@@ -120,8 +120,8 @@ public:
 		 std::vector<bool> is_existing,
 		 std::vector<Scope*> existing_actions,
 		 std::vector<Action> actions,
-		 double* existing_average_score,
-		 double* existing_average_misguess);
+		 double* existing_score_variance,
+		 double* existing_misguess_variance);
 	Fold(std::ifstream& input_file);
 	~Fold();
 
@@ -199,6 +199,7 @@ public:
 						  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 
 	void flat_step_explore_on_path_activate(double existing_score,
 											Problem& problem,

@@ -42,7 +42,9 @@ public:
 	std::vector<FoldNetwork*> score_networks;
 
 	std::vector<double> average_scores;
+	std::vector<double> score_variances;
 	std::vector<double> average_misguesses;
+	std::vector<double> misguess_variances;
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;
 	std::vector<double> average_inner_branch_impacts;
@@ -84,7 +86,9 @@ public:
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
 			   std::vector<double> average_scores,
+			   std::vector<double> score_variances,
 			   std::vector<double> average_misguesses,
+			   std::vector<double> misguess_variances,
 			   std::vector<double> average_inner_scope_impacts,
 			   std::vector<double> average_local_impacts,
 			   std::vector<double> average_inner_branch_impacts,
@@ -178,6 +182,8 @@ public:
 					  std::vector<Fold*>& folds_to_delete);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file,
+						  int curr_scope_id);
 };
 
 class BranchHistory;

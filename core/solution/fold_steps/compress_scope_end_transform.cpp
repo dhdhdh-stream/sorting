@@ -6,8 +6,7 @@
 using namespace std;
 
 void Fold::compress_scope_end() {
-	// if (this->sum_error/10000 < 0.01) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/10000 < 0.01) {
 		delete this->curr_compress_network;	// can't be NULL
 		this->curr_compress_network = this->test_compress_network;	// can be NULL
 		this->test_compress_network = NULL;

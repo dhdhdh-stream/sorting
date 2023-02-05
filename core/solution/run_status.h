@@ -11,6 +11,7 @@ public:
 
 	int explore_phase;
 	double existing_score;
+	double score_variance;
 
 	RunStatus() {
 		this->curr_depth = 0;
@@ -18,7 +19,6 @@ public:
 		this->exceeded_depth = false;
 
 		this->explore_phase = EXPLORE_TYPE_NONE;
-		// setting this->existing_score doesn't matter
 	}
 };
 

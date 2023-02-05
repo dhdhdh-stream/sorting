@@ -6,8 +6,7 @@
 using namespace std;
 
 void Fold::inner_scope_input_end() {
-	// if (this->sum_error/10000 < 0.01
-	if (rand()%2 == 0
+	if (this->sum_error/10000 < 0.01
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {

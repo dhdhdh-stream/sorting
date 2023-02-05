@@ -42,7 +42,9 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 	this->score_network = score_network;
 
 	this->average_score = 0.0;
+	this->score_variance = 0.0;
 	this->average_misguess = 0.0;
+	this->misguess_variance = 0.0;
 	this->average_inner_scope_impact = 0.0;
 	this->average_local_impact = 0.0;
 
@@ -134,9 +136,17 @@ FinishedStep::FinishedStep(ifstream& input_file) {
 	getline(input_file, average_score_line);
 	this->average_score = stof(average_score_line);
 
+	string score_variance_line;
+	getline(input_file, score_variance_line);
+	this->score_variance = stof(score_variance_line);
+
 	string average_misguess_line;
 	getline(input_file, average_misguess_line);
 	this->average_misguess = stof(average_misguess_line);
+
+	string misguess_variance_line;
+	getline(input_file, misguess_variance_line);
+	this->misguess_variance = stof(misguess_variance_line);
 
 	string average_inner_scope_impact_line;
 	getline(input_file, average_inner_scope_impact_line);
@@ -994,6 +1004,8 @@ void FinishedStep::update_backprop(double& predicted_score,
 								   FinishedStepHistory* history) {
 	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->average_misguess = 0.999*this->average_misguess + 0.001*misguess;
+	double curr_misguess_variance = (this->average_misguess - misguess)*(this->average_misguess - misguess);
+	this->misguess_variance = 0.999*this->misguess_variance + 0.001*curr_misguess_variance;
 
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
 		double predicted_score_error = target_val - predicted_score;
@@ -1006,7 +1018,9 @@ void FinishedStep::update_backprop(double& predicted_score,
 			0.001,
 			history->score_network_history);
 
-		this->average_score = 0.999*this->average_score + 0.001*predicted_score;
+		this->average_score = 0.999*this->average_score + 0.001*target_val;
+		double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+		this->score_variance = 0.999*this->score_variance + 0.001*curr_score_variance;
 
 		next_predicted_score = predicted_score;
 		predicted_score -= scale_factor*history->score_update;
@@ -1229,7 +1243,9 @@ void FinishedStep::save(ofstream& output_file) {
 	score_network_save_file.close();
 
 	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
 	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
 	output_file << this->average_inner_scope_impact << endl;
 	output_file << this->average_local_impact << endl;
 

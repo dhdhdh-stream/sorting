@@ -14,8 +14,8 @@ Fold::Fold(int num_inputs,
 		   vector<bool> is_existing,
 		   vector<Scope*> existing_actions,
 		   vector<Action> actions,
-		   double* existing_average_score,
-		   double* existing_average_misguess) {
+		   double* existing_score_variance,
+		   double* existing_misguess_variance) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
 	solution->id_counter++;
@@ -30,12 +30,8 @@ Fold::Fold(int num_inputs,
 	this->existing_actions = existing_actions;
 	this->actions = actions;
 
-	this->score_standard_deviation = 0.0;
-	this->existing_misguess_standard_deviation = 0.0;
-	this->existing_average_score = existing_average_score;
-	this->existing_average_misguess = existing_average_misguess;
-
-	this->misguess_improvement = 0.0;
+	this->existing_score_variance = existing_score_variance;
+	this->existing_misguess_variance = existing_misguess_variance;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   this->outer_s_input_size,
@@ -48,6 +44,8 @@ Fold::Fold(int num_inputs,
 	this->combined_improvement = 0.0;
 	this->replace_existing = 0.0;
 	this->replace_combined = 0.0;
+
+	this->misguess_improvement = 0.0;
 
 	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -154,11 +152,13 @@ Fold::Fold(ifstream& input_file) {
 			int scope_id = stoi(scope_id_line);
 
 			this->existing_actions.push_back(solution->scope_dictionary[scope_id]);
+
+			this->actions.push_back(Action());
 		} else {
 			this->existing_actions.push_back(NULL);
-		}
 
-		this->actions.push_back(Action(input_file));
+			this->actions.push_back(Action(input_file));
+		}
 	}
 
 	string finished_steps_size_line;
@@ -236,9 +236,17 @@ Fold::Fold(ifstream& input_file) {
 	getline(input_file, starting_average_score_line);
 	this->starting_average_score = stof(starting_average_score_line);
 
+	string starting_score_variance_line;
+	getline(input_file, starting_score_variance_line);
+	this->starting_score_variance = stof(starting_score_variance_line);
+
 	string starting_average_misguess_line;
 	getline(input_file, starting_average_misguess_line);
 	this->starting_average_misguess = stof(starting_average_misguess_line);
+
+	string starting_misguess_variance_line;
+	getline(input_file, starting_misguess_variance_line);
+	this->starting_misguess_variance = stof(starting_misguess_variance_line);
 
 	string starting_average_local_impact_line;
 	getline(input_file, starting_average_local_impact_line);
@@ -394,13 +402,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	// if (this->state_iter == 500000) {
-	if (this->state_iter == 50) {
-		this->score_standard_deviation = sqrt(this->score_standard_deviation/9999);
-		this->existing_misguess_standard_deviation = sqrt(this->existing_misguess_standard_deviation/9999);
-
-		this->misguess_improvement /= 10000;
-		cout << "this->misguess_improvement: " << this->misguess_improvement << endl;
+	if (this->state_iter == 500000) {
+		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
 
 		this->combined_improvement /= 10000;
 		cout << "this->combined_improvement: " << this->combined_improvement << endl;
@@ -409,17 +413,18 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		this->replace_combined /= 10000;
 		cout << "this->replace_combined: " << this->replace_combined << endl;
 
+		this->misguess_improvement /= 10000;
+		cout << "this->misguess_improvement: " << this->misguess_improvement << endl;
+
 		double combined_t_value = this->combined_improvement
-			/ (this->score_standard_deviation / sqrt(10000));
+			/ (score_standard_deviation / sqrt(10000));
 		cout << "combined_t_value: " << combined_t_value << endl;
-		// if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// > 99%
-		if (rand()%2 == 0) {
+		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// >99%
 			double replace_combined_t_value = this->replace_combined
-				/ (this->score_standard_deviation / sqrt(10000));
+				/ (score_standard_deviation / sqrt(10000));
 			cout << "replace_combined_t_value: " << replace_combined_t_value << endl;
-			// if (this->replace_combined > 0.0
-			// 		|| abs(replace_combined_t_value) < 1.960) {	// 95%<
-			if (rand()%2 == 0) {
+			if (this->replace_combined > 0.0
+					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -432,16 +437,15 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 			}
 		} else {
 			double replace_existing_t_value = this->replace_existing
-				/ (this->score_standard_deviation / sqrt(10000));
+				/ (score_standard_deviation / sqrt(10000));
 			cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
 
 			double misguess_improvement_t_value = this->misguess_improvement
-				/ (this->existing_misguess_standard_deviation / sqrt(10000));
+				/ (misguess_standard_deviation / sqrt(10000));
 			cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-			// if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
-			// 		&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
-			if (rand()%2 == 0) {
+			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
+					&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -1027,8 +1031,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1045,8 +1048,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1057,8 +1059,7 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1075,8 +1076,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1093,8 +1093,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1112,8 +1111,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1140,9 +1138,9 @@ void Fold::save(ofstream& output_file) {
 
 		if (this->is_existing[f_index]) {
 			output_file << this->existing_actions[f_index]->id << endl;
+		} else {
+			this->actions[f_index].save(output_file);
 		}
-
-		this->actions[f_index].save(output_file);
 	}
 
 	output_file << this->finished_steps.size() << endl;
@@ -1167,8 +1165,6 @@ void Fold::save(ofstream& output_file) {
 			scope_scale_mod_save_file.close();
 		}
 	}
-
-	// this->end_scale_mod has already been passed on
 
 	output_file << this->curr_s_input_sizes.size() << endl;
 	for (int l_index = 0; l_index < (int)this->curr_s_input_sizes.size(); l_index++) {
@@ -1196,7 +1192,9 @@ void Fold::save(ofstream& output_file) {
 	curr_end_fold_save_file.close();
 
 	output_file << this->starting_average_score << endl;
+	output_file << this->starting_score_variance << endl;
 	output_file << this->starting_average_misguess << endl;
+	output_file << this->starting_misguess_variance << endl;
 	output_file << this->starting_average_local_impact << endl;
 
 	output_file << this->curr_starting_compress_new_size << endl;
@@ -1206,6 +1204,30 @@ void Fold::save(ofstream& output_file) {
 		curr_starting_compress_network_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_starting_compress.txt");
 		this->curr_starting_compress_network->save(curr_starting_compress_network_save_file);
 		curr_starting_compress_network_save_file.close();
+	}
+}
+
+void Fold::save_for_display(ofstream& output_file) {
+	output_file << this->sequence_length << endl;
+
+	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
+		output_file << this->finished_steps[f_index]->is_inner_scope << endl;
+
+		if (this->finished_steps[f_index]->is_inner_scope) {
+			output_file << this->finished_steps[f_index]->scope->id << endl;
+		} else {
+			this->finished_steps[f_index]->action.save(output_file);
+		}
+	}
+
+	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
+		output_file << this->is_existing[f_index] << endl;
+
+		if (this->is_existing[f_index]) {
+			output_file << this->existing_actions[f_index]->id << endl;
+		} else {
+			this->actions[f_index].save(output_file);
+		}
 	}
 }
 

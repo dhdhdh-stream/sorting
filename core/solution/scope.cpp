@@ -22,7 +22,9 @@ Scope::Scope(int num_inputs,
 			 vector<Fold*> folds,
 			 vector<FoldNetwork*> score_networks,
 			 vector<double> average_scores,
+			 vector<double> score_variances,
 			 vector<double> average_misguesses,
+			 vector<double> misguess_variances,
 			 vector<double> average_inner_scope_impacts,
 			 vector<double> average_local_impacts,
 			 vector<double> average_inner_branch_impacts,
@@ -50,7 +52,9 @@ Scope::Scope(int num_inputs,
 	this->score_networks = score_networks;
 
 	this->average_scores = average_scores;
+	this->score_variances = score_variances;
 	this->average_misguesses = average_misguesses;
+	this->misguess_variances = misguess_variances;
 	this->average_inner_scope_impacts = average_inner_scope_impacts;
 	this->average_local_impacts = average_local_impacts;
 	this->average_inner_branch_impacts = average_inner_branch_impacts;
@@ -301,9 +305,17 @@ void Scope::load(std::ifstream& input_file) {
 		getline(input_file, average_score_line);
 		this->average_scores.push_back(stof(average_score_line));
 
+		string score_variance_line;
+		getline(input_file, score_variance_line);
+		this->score_variances.push_back(stof(score_variance_line));
+
 		string average_misguess_line;
 		getline(input_file, average_misguess_line);
 		this->average_misguesses.push_back(stof(average_misguess_line));
+
+		string misguess_variance_line;
+		getline(input_file, misguess_variance_line);
+		this->misguess_variances.push_back(stof(misguess_variance_line));
 
 		string average_inner_scope_impact_line;
 		getline(input_file, average_inner_scope_impact_line);
@@ -348,20 +360,17 @@ void Scope::explore_on_path_activate(Problem& problem,
 		double sum_impact = 0.0;
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				// sum_impact += this->average_inner_scope_impacts[a_index];
-				sum_impact += 1.0;
+				sum_impact += this->average_inner_scope_impacts[a_index];
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
 				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// do nothing
 				} else {
-					// sum_impact += this->average_local_impacts[a_index];
-					sum_impact += 1.0;
+					sum_impact += this->average_local_impacts[a_index];
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				// sum_impact += this->average_inner_branch_impacts[a_index];
-				sum_impact += 1.0;
+				sum_impact += this->average_inner_branch_impacts[a_index];
 			} else {
 				// this->step_types[a_index] == STEP_TYPE_FOLD
 				// do nothing
@@ -372,8 +381,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				// rand_val -= this->average_inner_scope_impacts[a_index];
-				rand_val -= 1.0;
+				rand_val -= this->average_inner_scope_impacts[a_index];
 				if (rand_val <= 0.0) {
 					if (rand()%2 == 0) {
 						this->explore_type = EXPLORE_TYPE_INNER_SCOPE;
@@ -407,8 +415,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// do nothing
 				} else {
-					// rand_val -= this->average_local_impacts[a_index];
-					rand_val -= 1.0;
+					rand_val -= this->average_local_impacts[a_index];
 					if (rand_val <= 0.0) {
 						this->explore_type = EXPLORE_TYPE_NEW;
 						this->explore_is_try = true;
@@ -432,8 +439,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 					}
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				// rand_val -= this->average_inner_branch_impacts[a_index];
-				rand_val -= 1.0;
+				rand_val -= this->average_inner_branch_impacts[a_index];
 				if (rand_val <= 0.0) {
 					// Note: don't worry about explore after branch as there's either inner scope in-between, or an action performed first
 					if (rand()%2 == 0) {
@@ -559,6 +565,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 						// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
 
 						run_status.existing_score = existing_score;
+						run_status.score_variance = this->score_variances[a_index];
 
 						for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
 							if (!this->explore_is_existing[n_index]) {
@@ -667,6 +674,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 				if (this->explore_is_try) {
 					run_status.existing_score = branch_history->best_score;
 					delete branch_history;
+					run_status.score_variance = this->score_variances[a_index];
 
 					for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
 						if (!this->explore_is_existing[n_index]) {
@@ -1796,9 +1804,15 @@ void Scope::update_backprop(double& predicted_score,
 		if (a_index == this->sequence_length-1) {
 			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+
+			double misguess_variance = (this->average_misguesses[a_index]-misguess)*(this->average_misguesses[a_index]-misguess);
+			this->misguess_variances[a_index] = 0.999*this->misguess_variances[a_index] + 0.001*misguess_variance;
 		} else {
 			double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
+
+			double misguess_variance = (this->average_misguesses[a_index]-misguess)*(this->average_misguesses[a_index]-misguess);
+			this->misguess_variances[a_index] = 0.999*this->misguess_variances[a_index] + 0.001*misguess_variance;
 		}
 
 		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
@@ -1817,7 +1831,9 @@ void Scope::update_backprop(double& predicted_score,
 					0.001,
 					history->score_network_histories[a_index]);
 
-				this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*predicted_score;
+				this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*target_val;
+				double score_variance = (this->average_scores[a_index]-target_val)*(this->average_scores[a_index]-target_val);
+				this->score_variances[a_index] = 0.999*this->score_variances[a_index] + 0.001*score_variance;
 
 				next_predicted_score = predicted_score;
 				predicted_score -= scale_factor*history->score_updates[a_index];
@@ -1835,7 +1851,9 @@ void Scope::update_backprop(double& predicted_score,
 													 scale_factor_error,
 													 history->branch_histories[a_index]);
 
-			this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*next_predicted_score;
+			this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*target_val;
+			double score_variance = (this->average_scores[a_index]-target_val)*(this->average_scores[a_index]-target_val);
+			this->score_variances[a_index] = 0.999*this->score_variances[a_index] + 0.001*score_variance;
 
 			double starting_predicted_score = predicted_score;
 			this->average_inner_branch_impacts[a_index] = 0.999*this->average_inner_branch_impacts[a_index]
@@ -2125,8 +2143,8 @@ void Scope::explore_set(ScopeHistory* history) {
 									  this->explore_is_existing,
 									  this->explore_existing_actions,
 									  this->explore_actions,
-									  &this->average_scores[this->explore_index_inclusive],
-									  &this->average_misguesses[this->explore_end_non_inclusive-1]);
+									  &this->score_variances[this->explore_index_inclusive],
+									  &this->misguess_variances[this->explore_end_non_inclusive-1]);
 
 		for (int s_index = 0; s_index < this->explore_sequence_length; s_index++) {
 			if (!this->explore_is_existing[s_index]) {
@@ -2294,7 +2312,9 @@ void Scope::save(ofstream& output_file) {
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->average_scores[a_index] << endl;
+		output_file << this->score_variances[a_index] << endl;
 		output_file << this->average_misguesses[a_index] << endl;
+		output_file << this->misguess_variances[a_index] << endl;
 		output_file << this->average_inner_scope_impacts[a_index] << endl;
 		output_file << this->average_local_impacts[a_index] << endl;
 		output_file << this->average_inner_branch_impacts[a_index] << endl;
@@ -2302,6 +2322,43 @@ void Scope::save(ofstream& output_file) {
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->starting_state_sizes[a_index] << endl;
+	}
+}
+
+void Scope::save_for_display(ofstream& output_file) {
+	output_file << this->id << endl;
+
+	output_file << this->sequence_length << endl;
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		output_file << this->is_inner_scope[a_index] << endl;
+		if (this->is_inner_scope[a_index]) {
+			output_file << this->scopes[a_index]->id << endl;
+
+			if (this->scopes[a_index]->id > this->id) {
+				this->scopes[a_index]->save_for_display(output_file);
+			}
+		} else {
+			this->actions[a_index].save(output_file);
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		output_file << this->step_types[a_index] << endl;
+
+		if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
+			this->branches[a_index]->save_for_display(output_file,
+													  this->id);
+		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
+			this->folds[a_index]->save_for_display(output_file);
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		output_file << this->average_scores[a_index] << endl;
+		output_file << this->average_misguesses[a_index] << endl;
+		output_file << this->average_inner_scope_impacts[a_index] << endl;
+		output_file << this->average_local_impacts[a_index] << endl;
+		output_file << this->average_inner_branch_impacts[a_index] << endl;
 	}
 }
 

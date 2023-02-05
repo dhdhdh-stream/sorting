@@ -30,7 +30,9 @@ public:
 	FoldNetwork* score_network;
 
 	double average_score;
+	double score_variance;
 	double average_misguess;
+	double misguess_variance;
 	double average_inner_scope_impact;
 	double average_local_impact;
 

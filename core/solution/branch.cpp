@@ -149,8 +149,7 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 															  local_state_vals,
 															  curr_history);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				// if (curr_score > best_score) {
-				if (rand()%(b_index+1) == 0) {
+				if (curr_score > best_score) {
 					best_score = curr_score;
 					best_index = b_index;
 					if (best_history != NULL) {
@@ -169,8 +168,7 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 				this->score_networks[b_index]->activate_small(local_s_input_vals,
 															  local_state_vals);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				// if (curr_score > best_score) {
-				if (rand()%(b_index+1) == 0) {
+				if (curr_score > best_score) {
 					best_score = curr_score;
 					best_index = b_index;
 				}
@@ -205,8 +203,7 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														  local_state_vals,
 														  curr_history);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			// if (curr_score > best_score) {
-			if (rand()%(b_index+1) == 0) {
+			if (curr_score > best_score) {
 				best_score = curr_score;
 				best_index = b_index;
 				if (best_history != NULL) {
@@ -223,8 +220,7 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 			this->score_networks[b_index]->activate_small(local_s_input_vals,
 														  local_state_vals);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			// if (curr_score > best_score) {
-			if (rand()%(b_index+1) == 0) {
+			if (curr_score > best_score) {
 				best_score = curr_score;
 				best_index = b_index;
 			}
@@ -386,8 +382,7 @@ void Branch::existing_flat_activate(Problem& problem,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		// if (curr_score > best_score) {
-		if (rand()%(b_index+1) == 0) {
+		if (curr_score > best_score) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -504,8 +499,7 @@ void Branch::update_activate(Problem& problem,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		// if (curr_score > best_score) {
-		if (rand()%(b_index+1) == 0) {
+		if (curr_score > best_score) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -612,8 +606,7 @@ void Branch::existing_update_activate(Problem& problem,
 		this->score_networks[b_index]->activate_small(local_s_input_vals,
 													  local_state_vals);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		// if (curr_score > best_score) {
-		if (rand()%(b_index+1) == 0) {
+		if (curr_score > best_score) {
 			best_score = curr_score;
 			best_index = b_index;
 		}
@@ -749,6 +742,21 @@ void Branch::save(ofstream& output_file) {
 			fold_save_file.open("saves/fold_" + to_string(this->folds[b_index]->id) + ".txt");
 			this->folds[b_index]->save(fold_save_file);
 			fold_save_file.close();
+		}
+	}
+}
+
+void Branch::save_for_display(ofstream& output_file,
+							  int curr_scope_id) {
+	output_file << this->branches.size() << endl;
+	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
+		output_file << this->is_branch[b_index] << endl;
+
+		if (this->is_branch[b_index]) {
+			this->branches[b_index]->save_for_display(output_file,
+													  curr_scope_id);
+		} else {
+			this->folds[b_index]->save_for_display(output_file);
 		}
 	}
 }

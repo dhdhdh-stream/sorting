@@ -1260,8 +1260,12 @@ void Fold::inner_scope_input_step_update_backprop(
 
 	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->starting_average_misguess = 0.999*this->starting_average_misguess + 0.001*misguess;
+	double misguess_variance = (this->starting_average_misguess-misguess)*(this->starting_average_misguess-misguess);
+	this->starting_misguess_variance = 0.999*this->starting_misguess_variance + 0.001*misguess_variance;
 
-	this->starting_average_score = 0.999*this->starting_average_score + 0.001*predicted_score;
+	this->starting_average_score = 0.999*this->starting_average_score + 0.001*target_val;
+	double score_variance = (this->starting_average_score-target_val)*(this->starting_average_score-target_val);
+	this->starting_score_variance = 0.999*this->starting_score_variance + 0.001*score_variance;
 
 	next_predicted_score = predicted_score;
 	// starting score_network updated in branch
