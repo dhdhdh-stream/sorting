@@ -47,16 +47,21 @@ public:
 	double sum_error;
 	double new_state_factor;
 
+	int existing_sequence_length;
 	double* existing_score_variance;
+	double* existing_misguess;
 	double* existing_misguess_variance;
 
 	FoldNetwork* starting_score_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
-	double combined_improvement;
-	double replace_existing;
-	double replace_combined;
+	Network* end_scale_mod;
 
-	double misguess_improvement;
+	int existing_noticably_better;
+	int new_noticably_better;
+
+	double replace_existing;
+
+	double new_misguess;
 
 	std::vector<Network*> scope_scale_mod;
 
@@ -120,7 +125,9 @@ public:
 		 std::vector<bool> is_existing,
 		 std::vector<Scope*> existing_actions,
 		 std::vector<Action> actions,
+		 int existing_sequence_length,
 		 double* existing_score_variance,
+		 double* existing_misguess,
 		 double* existing_misguess_variance);
 	Fold(std::ifstream& input_file);
 	~Fold();

@@ -125,7 +125,7 @@ def parse_branch_path(file, curr_scope_id):
 			branch_path[a_index][3] = [write, move]
 
 	for a_index in range(sequence_length):
-		step_type = int(file.readline)
+		step_type = int(file.readline())
 		branch_path[a_index][4] = step_type
 
 		if step_type == STEP_TYPE_BRANCH:

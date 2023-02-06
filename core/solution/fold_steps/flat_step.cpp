@@ -99,10 +99,9 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 											  double target_val,
 											  double& scale_factor,
 											  FoldHistory* history) {
-	if (this->state_iter >= 490000) {
-		double curr_existing_misguess = (target_val - history->existing_score)*(target_val - history->existing_score);
-		double curr_new_misguess = (target_val - predicted_score)*(target_val - predicted_score);
-		this->misguess_improvement += curr_existing_misguess - curr_new_misguess;
+	if (this->state_iter >= 450000) {
+		this->new_misguess += (target_val - predicted_score)*(target_val - predicted_score);
+		// TODO: misguess should be based on final_value?
 	}
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
@@ -208,10 +207,16 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 	// end of backprop so no need to modify predicted_score
 
-	if (this->state_iter >= 490000) {
-		this->combined_improvement += scale_factor*history->combined_score_update - history->existing_score;
+	if (this->state_iter >= 450000) {
+		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		double t_value = (history->existing_score - scale_factor*history->starting_score_update) / score_standard_deviation;
+		if (t_value > 1.0) {	// >75%
+			this->existing_noticably_better++;
+		} else if (t_value < -1.0) {	// >75%
+			this->new_noticably_better++;
+		}
+
 		this->replace_existing += scale_factor*history->starting_score_update - history->existing_score;
-		this->replace_combined += scale_factor*history->starting_score_update - scale_factor*history->combined_score_update;
 	}
 
 	double higher_branch_val;

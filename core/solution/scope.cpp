@@ -1801,7 +1801,7 @@ void Scope::update_backprop(double& predicted_score,
 
 	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
 		// update misguess even after early exit as goal is predict it correctly too
-		if (a_index == this->sequence_length-1) {
+		if (a_index == this->sequence_length-1 && !this->full_last) {
 			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
 			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
 
@@ -2143,17 +2143,20 @@ void Scope::explore_set(ScopeHistory* history) {
 									  this->explore_is_existing,
 									  this->explore_existing_actions,
 									  this->explore_actions,
+									  this->explore_end_non_inclusive-this->explore_index_inclusive-1,
 									  &this->score_variances[this->explore_index_inclusive],
+									  &this->average_misguesses[this->explore_end_non_inclusive-1],
 									  &this->misguess_variances[this->explore_end_non_inclusive-1]);
 
+		cout << "new_sequence:";
 		for (int s_index = 0; s_index < this->explore_sequence_length; s_index++) {
 			if (!this->explore_is_existing[s_index]) {
-				solution->action_dictionary.push_back(this->explore_actions[s_index]);
+				cout << " " << this->explore_actions[s_index].to_string();
 			} else {
-				solution->scope_use_counts[this->explore_existing_actions[s_index]->id]++;
-				solution->scope_use_sum_count++;
+				cout << " S_" << this->explore_existing_actions[s_index]->id;
 			}
 		}
+		cout << endl;
 
 		this->explore_is_try = false;
 		this->explore_is_existing.clear();

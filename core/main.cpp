@@ -24,10 +24,11 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 
+	int iter_index = 0;
 	while (true) {
 		Problem problem;
 
-		if (rand()%2 == 0) {
+		if (iter_index > 200000 && rand()%2 == 0) {
 			vector<double> local_s_input_vals;
 			vector<double> local_state_vals;
 
@@ -150,6 +151,8 @@ int main(int argc, char* argv[]) {
 
 			delete scope_history;
 		}
+
+		iter_index++;
 	}
 
 	delete solution;

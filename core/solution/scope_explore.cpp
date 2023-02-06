@@ -129,6 +129,15 @@ void Scope::explore_replace() {
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
 
+	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
+		if (!this->explore_fold->is_existing[s_index]) {
+			solution->action_dictionary.push_back(this->explore_fold->actions[s_index]);
+		} else {
+			solution->scope_use_counts[this->explore_fold->existing_actions[s_index]->id]++;
+			solution->scope_use_sum_count++;
+		}
+	}
+
 	if (this->explore_fold->state == STATE_DONE) {
 		// sequence length 0 edge case
 		vector<Fold*> folds_to_delete;
@@ -388,6 +397,15 @@ void Scope::explore_branch() {
 
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
+
+	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
+		if (!this->explore_fold->is_existing[s_index]) {
+			solution->action_dictionary.push_back(this->explore_fold->actions[s_index]);
+		} else {
+			solution->scope_use_counts[this->explore_fold->existing_actions[s_index]->id]++;
+			solution->scope_use_sum_count++;
+		}
+	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
 	this->explore_fold = NULL;

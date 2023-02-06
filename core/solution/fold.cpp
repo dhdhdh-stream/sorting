@@ -14,7 +14,9 @@ Fold::Fold(int num_inputs,
 		   vector<bool> is_existing,
 		   vector<Scope*> existing_actions,
 		   vector<Action> actions,
+		   int existing_sequence_length,
 		   double* existing_score_variance,
+		   double* existing_misguess,
 		   double* existing_misguess_variance) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
@@ -30,7 +32,9 @@ Fold::Fold(int num_inputs,
 	this->existing_actions = existing_actions;
 	this->actions = actions;
 
+	this->existing_sequence_length = existing_sequence_length;
 	this->existing_score_variance = existing_score_variance;
+	this->existing_misguess = existing_misguess;
 	this->existing_misguess_variance = existing_misguess_variance;
 
 	this->starting_score_network = new FoldNetwork(1,
@@ -41,11 +45,13 @@ Fold::Fold(int num_inputs,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
-	this->combined_improvement = 0.0;
-	this->replace_existing = 0.0;
-	this->replace_combined = 0.0;
+	
+	this->existing_noticably_better = 0;
+	this->new_noticably_better = 0;
 
-	this->misguess_improvement = 0.0;
+	this->replace_existing = 0.0;
+
+	this->new_misguess = 0.0;
 
 	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -406,25 +412,27 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		double score_standard_deviation = sqrt(*this->existing_score_variance);
 		double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
 
-		this->combined_improvement /= 10000;
-		cout << "this->combined_improvement: " << this->combined_improvement << endl;
-		this->replace_existing /= 10000;
+		this->replace_existing /= 50000;
 		cout << "this->replace_existing: " << this->replace_existing << endl;
-		this->replace_combined /= 10000;
-		cout << "this->replace_combined: " << this->replace_combined << endl;
 
-		this->misguess_improvement /= 10000;
-		cout << "this->misguess_improvement: " << this->misguess_improvement << endl;
+		this->new_misguess /= 50000;
+		double misguess_improvement = *this->existing_misguess - this->new_misguess;
+		cout << "this->existing_misguess: " << *this->existing_misguess << endl;
+		cout << "this->new_misguess: " << this->new_misguess << endl;
 
-		double combined_t_value = this->combined_improvement
-			/ (score_standard_deviation / sqrt(10000));
-		cout << "combined_t_value: " << combined_t_value << endl;
-		if (this->combined_improvement > 0.0 && combined_t_value > 2.576) {	// >99%
-			double replace_combined_t_value = this->replace_combined
-				/ (score_standard_deviation / sqrt(10000));
-			cout << "replace_combined_t_value: " << replace_combined_t_value << endl;
-			if (this->replace_combined > 0.0
-					|| abs(replace_combined_t_value) < 1.960) {	// 95%<
+		double replace_existing_t_value = this->replace_existing
+			/ (score_standard_deviation / sqrt(50000));
+		cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
+
+		double misguess_improvement_t_value = misguess_improvement
+			/ (misguess_standard_deviation / sqrt(50000));
+		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
+		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
+		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
+		if (this->new_noticably_better > 0) {
+			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.645)	// 90%<
+					&& this->existing_noticably_better == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -435,17 +443,15 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
-		} else {
-			double replace_existing_t_value = this->replace_existing
-				/ (score_standard_deviation / sqrt(10000));
-			cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
+		} else if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.645)	// 90%<
+				&& this->existing_noticably_better == 0) {
+			if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
+				flat_to_fold();
 
-			double misguess_improvement_t_value = this->misguess_improvement
-				/ (misguess_standard_deviation / sqrt(10000));
-			cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
-
-			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.960)	// 95%<
-					&& (this->misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576)) {
+				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
+				return EXPLORE_SIGNAL_REPLACE;
+			} else if (this->sequence_length < this->existing_sequence_length
+					&& (misguess_improvement > 0.0 || abs(misguess_improvement) < 1.645)) {	// 90%<
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -454,6 +460,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_CLEAN" << endl;
 				return EXPLORE_SIGNAL_CLEAN;
 			}
+		} else {
+			cout << "EXPLORE_SIGNAL_CLEAN" << endl;
+			return EXPLORE_SIGNAL_CLEAN;
 		}
 	} else {
 		if (this->state_iter%10000 == 0) {
