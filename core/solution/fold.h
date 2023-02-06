@@ -48,9 +48,8 @@ public:
 	double new_state_factor;
 
 	int existing_sequence_length;
-	double* existing_score_variance;
-	double* existing_misguess;
-	double* existing_misguess_variance;
+	double* existing_average_score;
+	double* existing_average_misguess;
 
 	FoldNetwork* starting_score_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
@@ -59,9 +58,10 @@ public:
 	int existing_noticably_better;
 	int new_noticably_better;
 
-	double replace_existing;
-
-	double new_misguess;
+	double average_score;
+	double score_variance;
+	double average_misguess;
+	double misguess_variance;
 
 	std::vector<Network*> scope_scale_mod;
 
@@ -72,10 +72,6 @@ public:
 	std::vector<FoldNetwork*> curr_input_folds;
 	FoldNetwork* curr_end_fold;	// becomes last compress network
 
-	double starting_average_score;
-	double starting_score_variance;
-	double starting_average_misguess;
-	double starting_misguess_variance;
 	double starting_average_local_impact;
 
 	int curr_starting_compress_new_size;
@@ -126,9 +122,8 @@ public:
 		 std::vector<Scope*> existing_actions,
 		 std::vector<Action> actions,
 		 int existing_sequence_length,
-		 double* existing_score_variance,
-		 double* existing_misguess,
-		 double* existing_misguess_variance);
+		 double* existing_average_score,
+		 double* existing_average_misguess);
 	Fold(std::ifstream& input_file);
 	~Fold();
 
@@ -143,7 +138,9 @@ public:
 	int explore_on_path_backprop(std::vector<double>& local_state_errors,
 								 double& predicted_score,
 								 double target_val,
+								 double final_misguess,
 								 double& scale_factor,
+								 double& scale_factor_error,
 								 FoldHistory* history);
 	void explore_off_path_activate(Problem& problem,
 								   double starting_score,
@@ -158,6 +155,7 @@ public:
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
+								   double& scale_factor_error,
 								   FoldHistory* history);
 	void existing_flat_activate(Problem& problem,
 								double starting_score,
@@ -183,8 +181,8 @@ public:
 						 RunStatus& run_status,
 						 FoldHistory* history);
 	void update_backprop(double& predicted_score,
-						 double& next_predicted_score,
 						 double target_val,
+						 double final_misguess,
 						 double& scale_factor,
 						 double& scale_factor_error,
 						 FoldHistory* history);
@@ -219,7 +217,9 @@ public:
 	void flat_step_explore_on_path_backprop(std::vector<double>& local_state_errors,
 											double& predicted_score,
 											double target_val,
+											double final_misguess,
 											double& scale_factor,
+											double& scale_factor_error,
 											FoldHistory* history);
 
 	void flat_to_fold();
@@ -239,6 +239,7 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void starting_compress_step_existing_flat_activate(
 		Problem& problem,
@@ -268,8 +269,8 @@ public:
 		FoldHistory* history);
 	void starting_compress_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history);
@@ -306,6 +307,7 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void inner_scope_input_step_existing_flat_activate(
 		Problem& problem,
@@ -335,8 +337,8 @@ public:
 		FoldHistory* history);
 	void inner_scope_input_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history);
@@ -373,6 +375,7 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void score_step_existing_flat_activate(
 		Problem& problem,
@@ -402,8 +405,8 @@ public:
 		FoldHistory* history);
 	void score_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history);
@@ -440,6 +443,7 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void compress_step_existing_flat_activate(
 		Problem& problem,
@@ -469,8 +473,8 @@ public:
 		FoldHistory* history);
 	void compress_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history);
@@ -509,6 +513,7 @@ public:
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history);
 	void input_step_existing_flat_activate(
 		Problem& problem,
@@ -538,8 +543,8 @@ public:
 		FoldHistory* history);
 	void input_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history);

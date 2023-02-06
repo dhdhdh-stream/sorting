@@ -6,10 +6,9 @@
 using namespace std;
 
 void Fold::flat_to_fold() {
-	this->starting_average_score = 0.0;
-	this->starting_score_variance = 0.0;
-	this->starting_average_misguess = 0.0;
-	this->starting_misguess_variance = 0.0;
+	delete this->end_scale_mod;	// delete as only used to help measure flat misguess
+	this->end_scale_mod = NULL;
+
 	this->starting_average_local_impact = 0.0;
 
 	if (this->sequence_length == 0) {

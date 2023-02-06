@@ -40,10 +40,6 @@ void Solution::init() {
 		vector<int>{1},
 		20);
 	vector<FoldNetwork*> starting_score_networks{starting_score_network};
-	vector<double> starting_average_scores{0.0};
-	vector<double> starting_score_variances{0.0};
-	vector<double> starting_average_misguesses{0.0};
-	vector<double> starting_misguess_variances{0.0};
 	vector<double> starting_average_inner_scope_impacts{0.0};
 	vector<double> starting_average_local_impacts{0.0};
 	vector<double> starting_average_inner_branch_impacts{0.0};
@@ -65,13 +61,13 @@ void Solution::init() {
 						   starting_branches,
 						   starting_folds,
 						   starting_score_networks,
-						   starting_average_scores,
-						   starting_score_variances,
-						   starting_average_misguesses,
-						   starting_misguess_variances,
 						   starting_average_inner_scope_impacts,
 						   starting_average_local_impacts,
 						   starting_average_inner_branch_impacts,
+						   0.0,
+						   0.0,
+						   0.0,
+						   0.0,
 						   starting_active_compress,
 						   starting_compress_new_sizes,
 						   starting_compress_networks,

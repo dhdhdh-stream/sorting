@@ -21,13 +21,13 @@ Scope::Scope(int num_inputs,
 			 vector<Branch*> branches,
 			 vector<Fold*> folds,
 			 vector<FoldNetwork*> score_networks,
-			 vector<double> average_scores,
-			 vector<double> score_variances,
-			 vector<double> average_misguesses,
-			 vector<double> misguess_variances,
 			 vector<double> average_inner_scope_impacts,
 			 vector<double> average_local_impacts,
 			 vector<double> average_inner_branch_impacts,
+			 double average_score,
+			 double score_variance,
+			 double average_misguess,
+			 double misguess_variance,
 			 vector<bool> active_compress,
 			 vector<int> compress_new_sizes,
 			 vector<FoldNetwork*> compress_networks,
@@ -51,13 +51,14 @@ Scope::Scope(int num_inputs,
 
 	this->score_networks = score_networks;
 
-	this->average_scores = average_scores;
-	this->score_variances = score_variances;
-	this->average_misguesses = average_misguesses;
-	this->misguess_variances = misguess_variances;
 	this->average_inner_scope_impacts = average_inner_scope_impacts;
 	this->average_local_impacts = average_local_impacts;
 	this->average_inner_branch_impacts = average_inner_branch_impacts;
+
+	this->average_score = average_score;
+	this->score_variance = score_variance;
+	this->average_misguess = average_misguess;
+	this->misguess_variance = misguess_variance;
 
 	this->active_compress = active_compress;
 	this->compress_new_sizes = compress_new_sizes;
@@ -301,22 +302,6 @@ void Scope::load(std::ifstream& input_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		string average_score_line;
-		getline(input_file, average_score_line);
-		this->average_scores.push_back(stof(average_score_line));
-
-		string score_variance_line;
-		getline(input_file, score_variance_line);
-		this->score_variances.push_back(stof(score_variance_line));
-
-		string average_misguess_line;
-		getline(input_file, average_misguess_line);
-		this->average_misguesses.push_back(stof(average_misguess_line));
-
-		string misguess_variance_line;
-		getline(input_file, misguess_variance_line);
-		this->misguess_variances.push_back(stof(misguess_variance_line));
-
 		string average_inner_scope_impact_line;
 		getline(input_file, average_inner_scope_impact_line);
 		this->average_inner_scope_impacts.push_back(stof(average_inner_scope_impact_line));
@@ -329,6 +314,22 @@ void Scope::load(std::ifstream& input_file) {
 		getline(input_file, average_inner_branch_impact_line);
 		this->average_inner_branch_impacts.push_back(stof(average_inner_branch_impact_line));
 	}
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
+
+	string score_variance_line;
+	getline(input_file, score_variance_line);
+	this->score_variance = stof(score_variance_line);
+
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
+
+	string misguess_variance_line;
+	getline(input_file, misguess_variance_line);
+	this->misguess_variance = stof(misguess_variance_line);
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		string starting_state_size_line;
@@ -565,7 +566,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 						// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
 
 						run_status.existing_score = existing_score;
-						run_status.score_variance = this->score_variances[a_index];
+						run_status.score_variance = this->score_variance;
 
 						for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
 							if (!this->explore_is_existing[n_index]) {
@@ -674,7 +675,7 @@ void Scope::explore_on_path_activate(Problem& problem,
 				if (this->explore_is_try) {
 					run_status.existing_score = branch_history->best_score;
 					delete branch_history;
-					run_status.score_variance = this->score_variances[a_index];
+					run_status.score_variance = this->score_variance;
 
 					for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
 						if (!this->explore_is_existing[n_index]) {
@@ -973,7 +974,9 @@ void Scope::explore_off_path_activate(Problem& problem,
 void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e., input_errors
 									 double& predicted_score,
 									 double target_val,
+									 double final_misguess,
 									 double& scale_factor,
+									 double& scale_factor_error,
 									 ScopeHistory* history) {
 	this->explore_is_try = false;
 
@@ -1001,7 +1004,9 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				local_state_errors,
 				predicted_score,
 				target_val,
+				final_misguess,
 				scale_factor,
+				scale_factor_error,
 				history->explore_fold_history);
 
 			if (explore_signal == EXPLORE_SIGNAL_REPLACE) {
@@ -1042,6 +1047,8 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 					double predicted_score_error = target_val - predicted_score;
 
+					scale_factor_error += history->score_updates[a_index]*predicted_score_error;
+
 					// have to include scale_factor as it can change the sign of the gradient
 					vector<double> score_errors{scale_factor*predicted_score_error};
 					vector<double> score_s_input_output_errors;
@@ -1066,7 +1073,9 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	  local_state_errors,
 																	  predicted_score,
 																	  target_val,
+																	  final_misguess,
 																	  scale_factor,
+																	  scale_factor_error,
 																	  history->branch_histories[a_index]);
 
 					this->explore_count++;
@@ -1081,6 +1090,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																	   predicted_score,
 																	   target_val,
 																	   scale_factor,
+																	   scale_factor_error,
 																	   history->branch_histories[a_index]);
 				}
 			} else {
@@ -1091,11 +1101,14 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 																predicted_score,
 																target_val,
 																scale_factor,
+																scale_factor_error,
 																history->fold_histories[a_index]);
 
 				// predicted_score already modified to before fold value in fold
 				double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 				double score_predicted_score_error = target_val - score_predicted_score;
+
+				scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 				// have to include scale_factor as it can change the sign of the gradient
 				vector<double> score_errors{scale_factor*score_predicted_score_error};
@@ -1134,10 +1147,14 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 					&& this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 				// on_path doesn't need scope_output_errors
 
+				scale_factor_error /= scope_scale_mod_val;
+
 				this->scopes[a_index]->explore_on_path_backprop(scope_input_errors,
 																predicted_score,
 																target_val,
+																final_misguess,
 																scale_factor,
+																scale_factor_error,
 																history->scope_histories[a_index]);
 
 				this->explore_count++;
@@ -1147,13 +1164,17 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 				return;
 			} else {
-				vector<double> scope_output_errors;	// i.e., temp_new_s_input_errors
+				vector<double> scope_output_errors;
+				double scope_scale_factor_error = 0.0;
 				this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
 																 scope_output_errors,
 																 predicted_score,
 																 target_val,
 																 scale_factor,
+																 scope_scale_factor_error,
 																 history->scope_histories[a_index]);
+
+				scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
 				scale_factor /= scope_scale_mod_val;
 
@@ -1193,6 +1214,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 									  double& predicted_score,
 									  double target_val,
 									  double& scale_factor,
+									  double& scale_factor_error,
 									  ScopeHistory* history) {
 	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
 
@@ -1230,6 +1252,8 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 
 				double predicted_score_error = target_val - predicted_score;
 
+				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
+
 				vector<double> score_errors{scale_factor*predicted_score_error};
 				vector<double> score_s_input_output_errors;
 				vector<double> score_state_output_errors;
@@ -1255,6 +1279,7 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															   predicted_score,
 															   target_val,
 															   scale_factor,
+															   scale_factor_error,
 															   history->branch_histories[a_index]);
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
@@ -1264,11 +1289,14 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 															predicted_score,
 															target_val,
 															scale_factor,
+															scale_factor_error,
 															history->fold_histories[a_index]);
 
 			// predicted_score already modified to before fold value in fold
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 			double score_predicted_score_error = target_val - score_predicted_score;
+
+			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*score_predicted_score_error};
 			vector<double> score_s_input_output_errors;
@@ -1305,12 +1333,16 @@ void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
+			double scope_scale_factor_error = 0.0;
 			this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
 															 scope_output_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
+															 scope_scale_factor_error,
 															 history->scope_histories[a_index]);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
 			scale_factor /= scope_scale_mod_val;
 
@@ -1790,8 +1822,8 @@ void Scope::update_activate(Problem& problem,
 }
 
 void Scope::update_backprop(double& predicted_score,
-							double& next_predicted_score,
 							double target_val,
+							double final_misguess,
 							double& scale_factor,
 							double& scale_factor_error,
 							ScopeHistory* history) {
@@ -1799,22 +1831,16 @@ void Scope::update_backprop(double& predicted_score,
 		return;
 	}
 
+	// update misguess even after early exit as goal is predict it correctly too
+	this->average_misguess = 0.999*this->average_misguess + 0.001*final_misguess;
+	double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
+	this->misguess_variance = 0.999*this->misguess_variance + 0.001*curr_misguess_variance;
+
+	this->average_score = 0.999*this->average_score + 0.001*target_val;
+	double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+	this->score_variance = 0.999*this->score_variance + 0.001*curr_score_variance;
+
 	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		// update misguess even after early exit as goal is predict it correctly too
-		if (a_index == this->sequence_length-1 && !this->full_last) {
-			double misguess = (target_val - next_predicted_score)*(target_val - next_predicted_score);
-			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
-
-			double misguess_variance = (this->average_misguesses[a_index]-misguess)*(this->average_misguesses[a_index]-misguess);
-			this->misguess_variances[a_index] = 0.999*this->misguess_variances[a_index] + 0.001*misguess_variance;
-		} else {
-			double misguess = (target_val - predicted_score)*(target_val - predicted_score);
-			this->average_misguesses[a_index] = 0.999*this->average_misguesses[a_index] + 0.001*misguess;
-
-			double misguess_variance = (this->average_misguesses[a_index]-misguess)*(this->average_misguesses[a_index]-misguess);
-			this->misguess_variances[a_index] = 0.999*this->misguess_variances[a_index] + 0.001*misguess_variance;
-		}
-
 		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
 			// do nothing
 		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
@@ -1831,11 +1857,6 @@ void Scope::update_backprop(double& predicted_score,
 					0.001,
 					history->score_network_histories[a_index]);
 
-				this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*target_val;
-				double score_variance = (this->average_scores[a_index]-target_val)*(this->average_scores[a_index]-target_val);
-				this->score_variances[a_index] = 0.999*this->score_variances[a_index] + 0.001*score_variance;
-
-				next_predicted_score = predicted_score;
 				predicted_score -= scale_factor*history->score_updates[a_index];
 
 				this->average_local_impacts[a_index] = 0.999*this->average_local_impacts[a_index]
@@ -1845,15 +1866,11 @@ void Scope::update_backprop(double& predicted_score,
 			double ending_predicted_score = predicted_score;
 
 			this->branches[a_index]->update_backprop(predicted_score,
-													 next_predicted_score,
 													 target_val,
+													 final_misguess,
 													 scale_factor,
 													 scale_factor_error,
 													 history->branch_histories[a_index]);
-
-			this->average_scores[a_index] = 0.999*this->average_scores[a_index] + 0.001*target_val;
-			double score_variance = (this->average_scores[a_index]-target_val)*(this->average_scores[a_index]-target_val);
-			this->score_variances[a_index] = 0.999*this->score_variances[a_index] + 0.001*score_variance;
 
 			double starting_predicted_score = predicted_score;
 			this->average_inner_branch_impacts[a_index] = 0.999*this->average_inner_branch_impacts[a_index]
@@ -1861,8 +1878,8 @@ void Scope::update_backprop(double& predicted_score,
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			this->folds[a_index]->update_backprop(predicted_score,
-												  next_predicted_score,
 												  target_val,
+												  final_misguess,
 												  scale_factor,
 												  scale_factor_error,
 												  history->fold_histories[a_index]);
@@ -1892,8 +1909,8 @@ void Scope::update_backprop(double& predicted_score,
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[a_index]->update_backprop(predicted_score,
-												   next_predicted_score,
 												   target_val,
+												   final_misguess,
 												   scale_factor,
 												   scope_scale_factor_error,
 												   history->scope_histories[a_index]);
@@ -2144,9 +2161,8 @@ void Scope::explore_set(ScopeHistory* history) {
 									  this->explore_existing_actions,
 									  this->explore_actions,
 									  this->explore_end_non_inclusive-this->explore_index_inclusive-1,
-									  &this->score_variances[this->explore_index_inclusive],
-									  &this->average_misguesses[this->explore_end_non_inclusive-1],
-									  &this->misguess_variances[this->explore_end_non_inclusive-1]);
+									  &this->average_score,
+									  &this->average_misguess);
 
 		cout << "new_sequence:";
 		for (int s_index = 0; s_index < this->explore_sequence_length; s_index++) {
@@ -2314,14 +2330,15 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->average_scores[a_index] << endl;
-		output_file << this->score_variances[a_index] << endl;
-		output_file << this->average_misguesses[a_index] << endl;
-		output_file << this->misguess_variances[a_index] << endl;
 		output_file << this->average_inner_scope_impacts[a_index] << endl;
 		output_file << this->average_local_impacts[a_index] << endl;
 		output_file << this->average_inner_branch_impacts[a_index] << endl;
 	}
+
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		output_file << this->starting_state_sizes[a_index] << endl;
@@ -2357,8 +2374,6 @@ void Scope::save_for_display(ofstream& output_file) {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->average_scores[a_index] << endl;
-		output_file << this->average_misguesses[a_index] << endl;
 		output_file << this->average_inner_scope_impacts[a_index] << endl;
 		output_file << this->average_local_impacts[a_index] << endl;
 		output_file << this->average_inner_branch_impacts[a_index] << endl;

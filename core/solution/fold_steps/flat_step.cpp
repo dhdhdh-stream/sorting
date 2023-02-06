@@ -92,16 +92,36 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 	for (int o_index = 0; o_index < this->num_outputs; o_index++) {
 		local_state_vals.push_back(this->curr_end_fold->output->acti_vals[o_index]);
 	}
+
+	double end_scale_mod_val = this->end_scale_mod->output->constants[0];
+	scale_factor *= end_scale_mod_val;
 }
 
 void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors,
 											  double& predicted_score,
 											  double target_val,
+											  double final_misguess,
 											  double& scale_factor,
+											  double& scale_factor_error,
 											  FoldHistory* history) {
-	if (this->state_iter >= 450000) {
-		this->new_misguess += (target_val - predicted_score)*(target_val - predicted_score);
-		// TODO: misguess should be based on final_value?
+	this->average_misguess = 0.999*this->average_misguess + 0.001*final_misguess;
+	double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
+	this->misguess_variance = 0.999*this->misguess_variance + 0.001*curr_misguess_variance;
+
+	this->average_score = 0.999*this->average_score + 0.001*target_val;
+	double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+	this->score_variance = 0.999*this->score_variance + 0.001*curr_score_variance;
+
+	double end_scale_mod_val = this->end_scale_mod->output->constants[0];
+	scale_factor /= end_scale_mod_val;
+
+	vector<double> end_scale_mod_errors{scale_factor_error};
+	if (this->state_iter <= 300000) {
+		this->end_scale_mod->backprop(end_scale_mod_errors, 0.005);
+	} else if (this->state_iter <= 400000) {
+		this->end_scale_mod->backprop(end_scale_mod_errors, 0.001);
+	} else {
+		this->end_scale_mod->backprop(end_scale_mod_errors, 0.0002);
 	}
 
 	vector<vector<double>> scope_input_errors(this->sequence_length);
@@ -163,18 +183,16 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 			scale_factor /= scope_scale_mod_val;
 
+			vector<double> mod_errors{scope_scale_factor_error};
 			if (this->state_iter <= 300000) {
-				vector<double> mod_errors{scope_scale_factor_error};
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.005);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.05);
 			} else if (this->state_iter <= 400000) {
-				vector<double> mod_errors{scope_scale_factor_error};
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.001);
 				
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.01);
 			} else {
-				vector<double> mod_errors{scope_scale_factor_error};
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.002);
@@ -208,15 +226,13 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	// end of backprop so no need to modify predicted_score
 
 	if (this->state_iter >= 450000) {
-		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		double score_standard_deviation = sqrt(this->score_variance);
 		double t_value = (history->existing_score - scale_factor*history->starting_score_update) / score_standard_deviation;
 		if (t_value > 1.0) {	// >75%
 			this->existing_noticably_better++;
 		} else if (t_value < -1.0) {	// >75%
 			this->new_noticably_better++;
 		}
-
-		this->replace_existing += scale_factor*history->starting_score_update - history->existing_score;
 	}
 
 	double higher_branch_val;

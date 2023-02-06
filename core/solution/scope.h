@@ -38,14 +38,14 @@ public:
 	std::vector<FoldNetwork*> score_networks;
 	// Note: don't use soft targets even with early exit, as hard targets needed to determine impact
 
-	std::vector<double> average_scores;
-	std::vector<double> score_variances;
-	std::vector<double> average_misguesses;	// track also after branches
-	std::vector<double> misguess_variances;
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
 	std::vector<double> average_inner_branch_impacts;
-	// explore when explore is better than expected
+
+	double average_score;
+	double score_variance;
+	double average_misguess;
+	double misguess_variance;
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds
@@ -83,13 +83,13 @@ public:
 		  std::vector<Branch*> branches,
 		  std::vector<Fold*> folds,
 		  std::vector<FoldNetwork*> score_networks,
-		  std::vector<double> average_scores,
-		  std::vector<double> score_variances,
-		  std::vector<double> average_misguesses,
-		  std::vector<double> misguess_variances,
 		  std::vector<double> average_inner_scope_impacts,
 		  std::vector<double> average_local_impacts,
 		  std::vector<double> average_inner_branch_impacts,
+		  double average_score,
+		  double score_variance,
+		  double average_misguess,
+		  double misguess_variance,
 		  std::vector<bool> active_compress,
 		  std::vector<int> compress_new_sizes,
 		  std::vector<FoldNetwork*> compress_networks,
@@ -117,6 +117,7 @@ public:
 	void explore_on_path_backprop(std::vector<double>& local_state_errors,
 								  double& predicted_score,
 								  double target_val,
+								  double final_misguess,
 								  double& scale_factor,
 								  double& scale_factor_error,
 								  ScopeHistory* history);
@@ -149,7 +150,6 @@ public:
 						 RunStatus& run_status,
 						 ScopeHistory* history);
 	void update_backprop(double& predicted_score,
-						 double& next_predicted_score,
 						 double target_val,
 						 double final_misguess,
 						 double& scale_factor,

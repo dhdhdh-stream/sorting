@@ -40,10 +40,6 @@ void Scope::explore_replace() {
 
 	this->folds[this->explore_index_inclusive] = this->explore_fold;
 
-	this->average_scores[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
-	this->score_variances[this->explore_index_inclusive] = 0.0;
-	this->average_misguesses[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
-	this->misguess_variances[this->explore_index_inclusive] = 0.0;
 	// this->average_inner_scope_impacts[this->explore_index_inclusive] unchanged
 	this->average_local_impacts[this->explore_index_inclusive] = 0.0;	// no longer matters
 	this->average_inner_branch_impacts[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
@@ -102,14 +98,6 @@ void Scope::explore_replace() {
 	this->score_networks.erase(this->score_networks.begin()+this->explore_index_inclusive+1,
 		this->score_networks.begin()+this->explore_end_non_inclusive);
 
-	this->average_scores.erase(this->average_scores.begin()+this->explore_index_inclusive+1,
-		this->average_scores.begin()+this->explore_end_non_inclusive);
-	this->score_variances.erase(this->score_variances.begin()+this->explore_index_inclusive+1,
-		this->score_variances.begin()+this->explore_end_non_inclusive);
-	this->average_misguesses.erase(this->average_misguesses.begin()+this->explore_index_inclusive+1,
-		this->average_misguesses.begin()+this->explore_end_non_inclusive);
-	this->misguess_variances.erase(this->misguess_variances.begin()+this->explore_index_inclusive+1,
-		this->misguess_variances.begin()+this->explore_end_non_inclusive);
 	this->average_inner_scope_impacts.erase(this->average_inner_scope_impacts.begin()+this->explore_index_inclusive+1,
 		this->average_inner_scope_impacts.begin()+this->explore_end_non_inclusive);
 	this->average_local_impacts.erase(this->average_local_impacts.begin()+this->explore_index_inclusive+1,
@@ -241,18 +229,6 @@ void Scope::explore_branch() {
 			this->score_networks.begin()+this->explore_index_inclusive+1,
 			this->score_networks.begin()+this->explore_end_non_inclusive);
 
-		vector<double> branch_average_scores(this->average_scores.begin()+this->explore_index_inclusive,
-			this->average_scores.begin()+this->explore_end_non_inclusive);
-		this->average_scores[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
-		vector<double> branch_score_variances(this->score_variances.begin()+this->explore_index_inclusive,
-			this->score_variances.begin()+this->explore_end_non_inclusive);
-		this->score_variances[this->explore_index_inclusive] = 0.0;
-		vector<double> branch_average_misguesses(this->average_misguesses.begin()+this->explore_index_inclusive,
-			this->average_misguesses.begin()+this->explore_end_non_inclusive);
-		this->average_misguesses[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
-		vector<double> branch_misguess_variances(this->misguess_variances.begin()+this->explore_index_inclusive,
-			this->misguess_variances.begin()+this->explore_end_non_inclusive);
-		this->misguess_variances[this->explore_index_inclusive] = 0.0;
 		vector<double> branch_average_inner_scope_impacts;
 		branch_average_inner_scope_impacts.push_back(0.0);	// start doesn't matter
 		branch_average_inner_scope_impacts.insert(branch_average_inner_scope_impacts.end(),
@@ -300,13 +276,13 @@ void Scope::explore_branch() {
 													 branch_branches,
 													 branch_folds,
 													 branch_score_networks,
-													 branch_average_scores,
-													 branch_score_variances,
-													 branch_average_misguesses,
-													 branch_misguess_variances,
 													 branch_average_inner_scope_impacts,
 													 branch_average_local_impacts,
 													 branch_average_inner_branch_impacts,
+													 this->average_score,
+													 this->score_variance,
+													 this->average_misguess,
+													 this->misguess_variance,
 													 branch_active_compress,
 													 branch_compress_new_sizes,
 													 branch_compress_networks,
@@ -371,14 +347,6 @@ void Scope::explore_branch() {
 	this->score_networks.erase(this->score_networks.begin()+this->explore_index_inclusive+1,
 		this->score_networks.begin()+this->explore_end_non_inclusive);
 
-	this->average_scores.erase(this->average_scores.begin()+this->explore_index_inclusive+1,
-		this->average_scores.begin()+this->explore_end_non_inclusive);
-	this->score_variances.erase(this->score_variances.begin()+this->explore_index_inclusive+1,
-		this->score_variances.begin()+this->explore_end_non_inclusive);
-	this->average_misguesses.erase(this->average_misguesses.begin()+this->explore_index_inclusive+1,
-		this->average_misguesses.begin()+this->explore_end_non_inclusive);
-	this->misguess_variances.erase(this->misguess_variances.begin()+this->explore_index_inclusive+1,
-		this->misguess_variances.begin()+this->explore_end_non_inclusive);
 	this->average_inner_scope_impacts.erase(this->average_inner_scope_impacts.begin()+this->explore_index_inclusive+1,
 		this->average_inner_scope_impacts.begin()+this->explore_end_non_inclusive);
 	this->average_local_impacts.erase(this->average_local_impacts.begin()+this->explore_index_inclusive+1,
@@ -426,10 +394,6 @@ void Scope::resolve_fold(int a_index,
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
-	vector<double> new_average_scores;
-	vector<double> new_score_variances;
-	vector<double> new_average_misguesses;
-	vector<double> new_misguess_variances;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
 	vector<double> new_average_inner_branch_impacts;
@@ -438,6 +402,10 @@ void Scope::resolve_fold(int a_index,
 	vector<FoldNetwork*> new_compress_networks;
 	vector<int> new_compress_original_sizes;
 	fold_to_path(this->folds[a_index]->finished_steps,
+				 this->folds[a_index]->average_score,
+				 this->folds[a_index]->score_variance,
+				 this->folds[a_index]->average_misguess,
+				 this->folds[a_index]->misguess_variance,
 				 new_sequence_length,
 				 new_is_inner_scope,
 				 new_scopes,
@@ -449,10 +417,6 @@ void Scope::resolve_fold(int a_index,
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
-				 new_average_scores,
-				 new_score_variances,
-				 new_average_misguesses,
-				 new_misguess_variances,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
 				 new_average_inner_branch_impacts,
@@ -463,10 +427,6 @@ void Scope::resolve_fold(int a_index,
 
 	// this->score_networks[a_index] already set correctly
 
-	this->average_scores[a_index] = this->folds[a_index]->starting_average_score;
-	this->score_variances[a_index] = this->folds[a_index]->starting_score_variance;
-	this->average_misguesses[a_index] = this->folds[a_index]->starting_average_misguess;
-	this->misguess_variances[a_index] = this->folds[a_index]->starting_misguess_variance;
 	// this->average_inner_scope_impacts[a_index] unchanged
 	this->average_local_impacts[a_index] = this->folds[a_index]->starting_average_local_impact;
 	// this->average_inner_branch_impacts[a_index] doesn't matter and unchanged
@@ -511,14 +471,6 @@ void Scope::resolve_fold(int a_index,
 	this->score_networks.insert(this->score_networks.begin()+a_index+1,
 		new_score_networks.begin(), new_score_networks.end());
 
-	this->average_scores.insert(this->average_scores.begin()+a_index+1,
-		new_average_scores.begin(), new_average_scores.end());
-	this->score_variances.insert(this->score_variances.begin()+a_index+1,
-		new_score_variances.begin(), new_score_variances.end());
-	this->average_misguesses.insert(this->average_misguesses.begin()+a_index+1,
-		new_average_misguesses.begin(), new_average_misguesses.end());
-	this->misguess_variances.insert(this->misguess_variances.begin()+a_index+1,
-		new_misguess_variances.begin(), new_misguess_variances.end());
 	this->average_inner_scope_impacts.insert(this->average_inner_scope_impacts.begin()+a_index+1,
 		new_average_inner_scope_impacts.begin(), new_average_inner_scope_impacts.end());
 	this->average_local_impacts.insert(this->average_local_impacts.begin()+a_index+1,

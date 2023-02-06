@@ -41,13 +41,14 @@ public:
 
 	std::vector<FoldNetwork*> score_networks;
 
-	std::vector<double> average_scores;
-	std::vector<double> score_variances;
-	std::vector<double> average_misguesses;
-	std::vector<double> misguess_variances;
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;
 	std::vector<double> average_inner_branch_impacts;
+
+	double average_score;
+	double score_variance;
+	double average_misguess;
+	double misguess_variance;
 
 	std::vector<bool> active_compress;
 	std::vector<int> compress_new_sizes;
@@ -85,13 +86,13 @@ public:
 			   std::vector<Branch*> branches,
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
-			   std::vector<double> average_scores,
-			   std::vector<double> score_variances,
-			   std::vector<double> average_misguesses,
-			   std::vector<double> misguess_variances,
 			   std::vector<double> average_inner_scope_impacts,
 			   std::vector<double> average_local_impacts,
 			   std::vector<double> average_inner_branch_impacts,
+			   double average_score,
+			   double score_variance,
+			   double average_misguess,
+			   double misguess_variance,
 			   std::vector<bool> active_compress,
 			   std::vector<int> compress_new_sizes,
 			   std::vector<FoldNetwork*> compress_networks,
@@ -120,13 +121,16 @@ public:
 								  std::vector<double>& local_state_errors,
 								  double& predicted_score,
 								  double target_val,
+								  double final_misguess,
 								  double& scale_factor,
+								  double& scale_factor_error,
 								  BranchPathHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
+								   double& scale_factor_error,
 								   BranchPathHistory* history);
 	void existing_flat_activate(Problem& problem,
 								double starting_score,
@@ -152,8 +156,8 @@ public:
 						 RunStatus& run_status,
 						 BranchPathHistory* history);
 	void update_backprop(double& predicted_score,
-						 double& next_predicted_score,
 						 double target_val,
+						 double final_misguess,
 						 double& scale_factor,
 						 double& scale_factor_error,
 						 BranchPathHistory* history);

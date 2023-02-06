@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
 			} else {
 				target_val = problem.score_result();
 			}
+			double final_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 
 			bool explore_success = false;
 			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
@@ -82,10 +83,13 @@ int main(int argc, char* argv[]) {
 				}
 			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
+				double scale_factor_error = 0.0;
 				solution->root->explore_on_path_backprop(local_state_errors,
 														 predicted_score,
 														 target_val,
+														 final_misguess,
 														 scale_factor,
+														 scale_factor_error,
 														 scope_history);
 				explore_success = true;
 			}
@@ -131,13 +135,12 @@ int main(int argc, char* argv[]) {
 			} else {
 				target_val = problem.score_result();
 			}
-
-			double next_predicted_score = predicted_score;
+			double final_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 
 			double scale_factor_error = 0.0;	// unused
 			solution->root->update_backprop(predicted_score,
-											next_predicted_score,
 											target_val,
+											final_misguess,
 											scale_factor,
 											scale_factor_error,
 											scope_history);

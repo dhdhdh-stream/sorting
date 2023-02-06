@@ -29,10 +29,6 @@ public:
 
 	FoldNetwork* score_network;
 
-	double average_score;
-	double score_variance;
-	double average_misguess;
-	double misguess_variance;
 	double average_inner_scope_impact;
 	double average_local_impact;
 
@@ -82,6 +78,7 @@ public:
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
+								   double& scale_factor_error,
 								   FinishedStepHistory* history);
 	void existing_flat_activate(Problem& problem,
 								std::vector<std::vector<double>>& s_input_vals,
@@ -105,8 +102,8 @@ public:
 						 RunStatus& run_status,
 						 FinishedStepHistory* history);
 	void update_backprop(double& predicted_score,
-						 double& next_predicted_score,
 						 double target_val,
+						 double final_misguess,
 						 double& scale_factor,
 						 double& scale_factor_error,
 						 FinishedStepHistory* history);

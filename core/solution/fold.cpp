@@ -15,9 +15,8 @@ Fold::Fold(int num_inputs,
 		   vector<Scope*> existing_actions,
 		   vector<Action> actions,
 		   int existing_sequence_length,
-		   double* existing_score_variance,
-		   double* existing_misguess,
-		   double* existing_misguess_variance) {
+		   double* existing_average_score,
+		   double* existing_average_misguess) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
 	solution->id_counter++;
@@ -33,9 +32,8 @@ Fold::Fold(int num_inputs,
 	this->actions = actions;
 
 	this->existing_sequence_length = existing_sequence_length;
-	this->existing_score_variance = existing_score_variance;
-	this->existing_misguess = existing_misguess;
-	this->existing_misguess_variance = existing_misguess_variance;
+	this->existing_average_score = existing_average_score;
+	this->existing_average_misguess = existing_average_misguess;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   this->outer_s_input_size,
@@ -45,13 +43,16 @@ Fold::Fold(int num_inputs,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
+	this->end_scale_mod = new Network(0, 0, 1);
+	this->end_scale_mod->output->constants[0] = 1.0;
 	
 	this->existing_noticably_better = 0;
 	this->new_noticably_better = 0;
 
-	this->replace_existing = 0.0;
-
-	this->new_misguess = 0.0;
+	this->average_score = 0.0;
+	this->score_variance = 0.0;
+	this->average_misguess = 0.0;
+	this->misguess_variance = 0.0;
 
 	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -238,21 +239,21 @@ Fold::Fold(ifstream& input_file) {
 	this->curr_end_fold = new FoldNetwork(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
 
-	string starting_average_score_line;
-	getline(input_file, starting_average_score_line);
-	this->starting_average_score = stof(starting_average_score_line);
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
 
-	string starting_score_variance_line;
-	getline(input_file, starting_score_variance_line);
-	this->starting_score_variance = stof(starting_score_variance_line);
+	string score_variance_line;
+	getline(input_file, score_variance_line);
+	this->score_variance = stof(score_variance_line);
 
-	string starting_average_misguess_line;
-	getline(input_file, starting_average_misguess_line);
-	this->starting_average_misguess = stof(starting_average_misguess_line);
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
 
-	string starting_misguess_variance_line;
-	getline(input_file, starting_misguess_variance_line);
-	this->starting_misguess_variance = stof(starting_misguess_variance_line);
+	string misguess_variance_line;
+	getline(input_file, misguess_variance_line);
+	this->misguess_variance = stof(misguess_variance_line);
 
 	string starting_average_local_impact_line;
 	getline(input_file, starting_average_local_impact_line);
@@ -302,6 +303,9 @@ Fold::~Fold() {
 	}
 	if (this->combined_score_network != NULL) {
 		delete this->combined_score_network;
+	}
+	if (this->end_scale_mod != NULL) {
+		delete this->end_scale_mod;
 	}
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -398,31 +402,35 @@ void Fold::explore_on_path_activate(double existing_score,
 int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
+								   double final_misguess,
 								   double& scale_factor,
+								   double& scale_factor_error,
 								   FoldHistory* history) {
 	flat_step_explore_on_path_backprop(local_state_errors,
 									   predicted_score,
 									   target_val,
+									   final_misguess,
 									   scale_factor,
+									   scale_factor_error,
 									   history);
 
 	// explore_increment
 	this->state_iter++;
 	if (this->state_iter == 500000) {
-		double score_standard_deviation = sqrt(*this->existing_score_variance);
-		double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
+		double score_standard_deviation = sqrt(this->score_variance);
+		double misguess_standard_deviation = sqrt(this->misguess_variance);
 
-		this->replace_existing /= 50000;
-		cout << "this->replace_existing: " << this->replace_existing << endl;
+		double replace_improvement = this->average_score - *this->existing_average_score;
+		cout << "this->average_score: " << this->average_score << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
 
-		this->new_misguess /= 50000;
-		double misguess_improvement = *this->existing_misguess - this->new_misguess;
-		cout << "this->existing_misguess: " << *this->existing_misguess << endl;
-		cout << "this->new_misguess: " << this->new_misguess << endl;
+		double misguess_improvement = *this->existing_average_misguess - this->average_misguess;
+		cout << "this->average_misguess: " << this->average_misguess << endl;
+		cout << "this->existing_average_misguess: " << *this->existing_average_misguess << endl;
 
-		double replace_existing_t_value = this->replace_existing
+		double replace_improvement_t_value = replace_improvement
 			/ (score_standard_deviation / sqrt(50000));
-		cout << "replace_existing_t_value: " << replace_existing_t_value << endl;
+		cout << "replace_improvement_t_value: " << replace_improvement_t_value << endl;
 
 		double misguess_improvement_t_value = misguess_improvement
 			/ (misguess_standard_deviation / sqrt(50000));
@@ -431,7 +439,7 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
 		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
 		if (this->new_noticably_better > 0) {
-			if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.645)	// 90%<
+			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
 					&& this->existing_noticably_better == 0) {
 				flat_to_fold();
 
@@ -443,7 +451,7 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
-		} else if ((this->replace_existing > 0.0 || abs(replace_existing_t_value) < 1.645)	// 90%<
+		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
 				&& this->existing_noticably_better == 0) {
 			if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
 				flat_to_fold();
@@ -553,6 +561,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 									 double& predicted_score,
 									 double target_val,
 									 double& scale_factor,
+									 double& scale_factor_error,
 									 FoldHistory* history) {
 	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
@@ -561,6 +570,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
+															 scale_factor_error,
 															 history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
@@ -569,6 +579,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 															 predicted_score,
 															 target_val,
 															 scale_factor,
+															 scale_factor_error,
 															 history);
 			break;
 		case STATE_SCORE:
@@ -577,6 +588,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 												 predicted_score,
 												 target_val,
 												 scale_factor,
+												 scale_factor_error,
 												 history);
 			break;
 		case STATE_COMPRESS_STATE:
@@ -585,6 +597,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 													predicted_score,
 													target_val,
 													scale_factor,
+													scale_factor_error,
 													history);
 			break;
 		case STATE_COMPRESS_SCOPE:
@@ -593,6 +606,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 													predicted_score,
 													target_val,
 													scale_factor,
+													scale_factor_error,
 													history);
 			break;
 		case STATE_INPUT:
@@ -601,6 +615,7 @@ void Fold::explore_off_path_backprop(vector<double>& local_s_input_errors,
 												 predicted_score,
 												 target_val,
 												 scale_factor,
+												 scale_factor_error,
 												 history);
 			break;
 	}
@@ -816,56 +831,56 @@ void Fold::update_activate(Problem& problem,
 }
 
 void Fold::update_backprop(double& predicted_score,
-						   double& next_predicted_score,
 						   double target_val,
+						   double final_misguess,
 						   double& scale_factor,
 						   double& scale_factor_error,
 						   FoldHistory* history) {
 	switch (this->state) {
 		case STATE_STARTING_COMPRESS:
 			starting_compress_step_update_backprop(predicted_score,
-												   next_predicted_score,
 												   target_val,
+												   final_misguess,
 												   scale_factor,
 												   scale_factor_error,
 												   history);
 			break;
 		case STATE_INNER_SCOPE_INPUT:
 			inner_scope_input_step_update_backprop(predicted_score,
-												   next_predicted_score,
 												   target_val,
+												   final_misguess,
 												   scale_factor,
 												   scale_factor_error,
 												   history);
 			break;
 		case STATE_SCORE:
 			score_step_update_backprop(predicted_score,
-									   next_predicted_score,
 									   target_val,
+									   final_misguess,
 									   scale_factor,
 									   scale_factor_error,
 									   history);
 			break;
 		case STATE_COMPRESS_STATE:
 			compress_step_update_backprop(predicted_score,
-										  next_predicted_score,
 										  target_val,
+										  final_misguess,
 										  scale_factor,
 										  scale_factor_error,
 										  history);
 			break;
 		case STATE_COMPRESS_SCOPE:
 			compress_step_update_backprop(predicted_score,
-										  next_predicted_score,
 										  target_val,
+										  final_misguess,
 										  scale_factor,
 										  scale_factor_error,
 										  history);
 			break;
 		case STATE_INPUT:
 			input_step_update_backprop(predicted_score,
-									   next_predicted_score,
 									   target_val,
+									   final_misguess,
 									   scale_factor,
 									   scale_factor_error,
 									   history);
@@ -1200,10 +1215,11 @@ void Fold::save(ofstream& output_file) {
 	this->curr_end_fold->save(curr_end_fold_save_file);
 	curr_end_fold_save_file.close();
 
-	output_file << this->starting_average_score << endl;
-	output_file << this->starting_score_variance << endl;
-	output_file << this->starting_average_misguess << endl;
-	output_file << this->starting_misguess_variance << endl;
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
+
 	output_file << this->starting_average_local_impact << endl;
 
 	output_file << this->curr_starting_compress_new_size << endl;

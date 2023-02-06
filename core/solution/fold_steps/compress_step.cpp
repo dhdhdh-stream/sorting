@@ -296,6 +296,7 @@ void Fold::compress_step_explore_off_path_backprop(
 		double& predicted_score,
 		double target_val,
 		double& scale_factor,
+		double& scale_factor_error,
 		FoldHistory* history) {
 	vector<vector<double>> s_input_errors;
 	s_input_errors.reserve(this->curr_s_input_sizes.size());
@@ -320,6 +321,8 @@ void Fold::compress_step_explore_off_path_backprop(
 	double predicted_score_error = target_val - predicted_score;
 
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
+		scale_factor_error += history->ending_score_update*predicted_score_error;
+
 		this->curr_end_fold->backprop_fold_errors_with_no_weight_change(
 			local_state_errors,
 			history->curr_end_fold_history);
@@ -366,7 +369,7 @@ void Fold::compress_step_explore_off_path_backprop(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
-			double scope_scale_factor_error = 0.0;	// unused
+			double scope_scale_factor_error = 0.0;
 			this->existing_actions[f_index]->existing_flat_backprop(scope_input_errors[f_index],
 																	scope_output_errors,
 																	predicted_score,
@@ -374,6 +377,8 @@ void Fold::compress_step_explore_off_path_backprop(
 																	scale_factor,
 																	scope_scale_factor_error,
 																	history->scope_histories[f_index]);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
 			scale_factor /= scope_scale_mod_val;
 
@@ -509,6 +514,9 @@ void Fold::compress_step_explore_off_path_backprop(
 			}
 
 			double inner_predicted_score_error = target_val - predicted_score;
+
+			scale_factor_error += history->score_update*inner_predicted_score_error;
+
 			vector<double> score_errors{scale_factor*inner_predicted_score_error};
 			this->curr_score_network->backprop_subfold_errors_with_no_weight_change(
 				score_errors,
@@ -539,13 +547,17 @@ void Fold::compress_step_explore_off_path_backprop(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output_errors;
+			double scope_scale_factor_error = 0.0;
 			this->existing_actions[this->finished_steps.size()]->explore_off_path_backprop(
 				scope_input_errors,
 				scope_output_errors,
 				predicted_score,
 				target_val,
 				scale_factor,
+				scope_scale_factor_error,
 				history->scope_histories[this->finished_steps.size()]);
+
+			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
 			scale_factor /= scope_scale_mod_val;
 
@@ -637,6 +649,7 @@ void Fold::compress_step_explore_off_path_backprop(
 																	 predicted_score,
 																	 target_val,
 																	 scale_factor,
+																	 scale_factor_error,
 																	 history->finished_step_histories[f_index]);
 		}
 	}
@@ -1654,11 +1667,19 @@ void Fold::compress_step_update_activate(
 
 void Fold::compress_step_update_backprop(
 		double& predicted_score,
-		double& next_predicted_score,
 		double target_val,
+		double final_misguess,
 		double& scale_factor,
 		double& scale_factor_error,
 		FoldHistory* history) {
+	this->average_misguess = 0.999*this->average_misguess + 0.001*final_misguess;
+	double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
+	this->misguess_variance = 0.999*this->misguess_variance + 0.001*curr_misguess_variance;
+
+	this->average_score = 0.999*this->average_score + 0.001*target_val;
+	double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+	this->score_variance = 0.999*this->score_variance + 0.001*curr_score_variance;
+
 	double predicted_score_error = target_val - predicted_score;
 
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
@@ -1670,7 +1691,6 @@ void Fold::compress_step_update_backprop(
 			0.001,
 			history->curr_fold_history);
 
-		next_predicted_score = predicted_score;
 		predicted_score -= scale_factor*history->ending_score_update;
 	}
 
@@ -1710,7 +1730,6 @@ void Fold::compress_step_update_backprop(
 				score_errors,
 				0.001,
 				history->curr_score_network_history);
-			next_predicted_score = predicted_score;
 			predicted_score -= scale_factor*history->score_update;
 		}
 
@@ -1723,8 +1742,8 @@ void Fold::compress_step_update_backprop(
 			double scope_scale_factor_error = 0.0;
 			this->existing_actions[this->finished_steps.size()]->update_backprop(
 				predicted_score,
-				next_predicted_score,
 				target_val,
+				final_misguess,
 				scale_factor,
 				scope_scale_factor_error,
 				history->scope_histories[this->finished_steps.size()]);
@@ -1743,24 +1762,14 @@ void Fold::compress_step_update_backprop(
 			// do nothing
 		} else {
 			this->finished_steps[f_index]->update_backprop(predicted_score,
-														   next_predicted_score,
 														   target_val,
+														   final_misguess,
 														   scale_factor,
 														   scale_factor_error,
 														   history->finished_step_histories[f_index]);
 		}
 	}
 
-	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
-	this->starting_average_misguess = 0.999*this->starting_average_misguess + 0.001*misguess;
-	double misguess_variance = (this->starting_average_misguess-misguess)*(this->starting_average_misguess-misguess);
-	this->starting_misguess_variance = 0.999*this->starting_misguess_variance + 0.001*misguess_variance;
-
-	this->starting_average_score = 0.999*this->starting_average_score + 0.001*target_val;
-	double score_variance = (this->starting_average_score-target_val)*(this->starting_average_score-target_val);
-	this->starting_score_variance = 0.999*this->starting_score_variance + 0.001*score_variance;
-
-	next_predicted_score = predicted_score;
 	predicted_score -= history->starting_score_update;	// already scaled
 
 	this->starting_average_local_impact = 0.999*this->starting_average_local_impact

@@ -23,10 +23,6 @@ void Branch::resolve_fold(int b_index,
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
-	vector<double> new_average_scores;
-	vector<double> new_score_variances;
-	vector<double> new_average_misguesses;
-	vector<double> new_misguess_variances;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
 	vector<double> new_average_inner_branch_impacts;
@@ -35,6 +31,10 @@ void Branch::resolve_fold(int b_index,
 	vector<FoldNetwork*> new_compress_networks;
 	vector<int> new_compress_original_sizes;
 	fold_to_path(this->folds[b_index]->finished_steps,
+				 this->folds[b_index]->average_score,
+				 this->folds[b_index]->score_variance,
+				 this->folds[b_index]->average_misguess,
+				 this->folds[b_index]->misguess_variance,
 				 new_sequence_length,
 				 new_is_inner_scope,
 				 new_scopes,
@@ -46,10 +46,6 @@ void Branch::resolve_fold(int b_index,
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
-				 new_average_scores,
-				 new_score_variances,
-				 new_average_misguesses,
-				 new_misguess_variances,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
 				 new_average_inner_branch_impacts,
@@ -75,10 +71,6 @@ void Branch::resolve_fold(int b_index,
 
 	new_score_networks.insert(new_score_networks.begin(), NULL);
 
-	new_average_scores.insert(new_average_scores.begin(), this->folds[b_index]->starting_average_score);
-	new_score_variances.insert(new_score_variances.begin(), this->folds[b_index]->starting_score_variance);
-	new_average_misguesses.insert(new_average_misguesses.begin(), this->folds[b_index]->starting_average_misguess);
-	new_misguess_variances.insert(new_misguess_variances.begin(), this->folds[b_index]->starting_misguess_variance);
 	new_average_inner_scope_impacts.insert(new_average_inner_scope_impacts.begin(), 0.0);	// doesn't matter
 	new_average_local_impacts.insert(new_average_local_impacts.begin(), this->folds[b_index]->starting_average_local_impact);
 	new_average_inner_branch_impacts.insert(new_average_inner_branch_impacts.begin(), 0.0);	// doesn't matter
@@ -108,13 +100,13 @@ void Branch::resolve_fold(int b_index,
 												 new_branches,
 												 new_folds,
 												 new_score_networks,
-												 new_average_scores,
-												 new_score_variances,
-												 new_average_misguesses,
-												 new_misguess_variances,
 												 new_average_inner_scope_impacts,
 												 new_average_local_impacts,
 												 new_average_inner_branch_impacts,
+												 this->folds[b_index]->average_score,
+												 this->folds[b_index]->score_variance,
+												 this->folds[b_index]->average_misguess,
+												 this->folds[b_index]->misguess_variance,
 												 new_active_compress,
 												 new_compress_new_sizes,
 												 new_compress_networks,

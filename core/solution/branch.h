@@ -68,13 +68,16 @@ public:
 								  std::vector<double>& local_state_errors,
 								  double& predicted_score,
 								  double target_val,
+								  double final_misguess,
 								  double& scale_factor,
+								  double& scale_factor_error,
 								  BranchHistory* history);
 	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
 								   std::vector<double>& local_state_errors,
 								   double& predicted_score,
 								   double target_val,
 								   double& scale_factor,
+								   double& scale_factor_error,
 								   BranchHistory* history);
 	void existing_flat_activate(Problem& problem,
 								std::vector<double>& local_s_input_vals,
@@ -98,8 +101,8 @@ public:
 						 RunStatus& run_status,
 						 BranchHistory* history);
 	void update_backprop(double& predicted_score,
-						 double& next_predicted_score,
 						 double target_val,
+						 double final_misguess,
 						 double& scale_factor,
 						 double& scale_factor_error,
 						 BranchHistory* history);
