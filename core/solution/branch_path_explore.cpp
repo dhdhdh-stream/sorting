@@ -72,7 +72,6 @@ void BranchPath::explore_replace() {
 
 			delete this->folds[a_index];
 		}
-
 	}
 
 	this->sequence_length = this->sequence_length - (this->explore_end_non_inclusive-this->explore_index_inclusive) + 1;
@@ -119,15 +118,6 @@ void BranchPath::explore_replace() {
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
 
-	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
-		if (!this->explore_fold->is_existing[s_index]) {
-			solution->action_dictionary.push_back(this->explore_fold->actions[s_index]);
-		} else {
-			solution->scope_use_counts[this->explore_fold->existing_actions[s_index]->id]++;
-			solution->scope_use_sum_count++;
-		}
-	}
-
 	if (this->explore_fold->state == STATE_DONE) {
 		// sequence length 0 edge case
 		vector<Fold*> folds_to_delete;
@@ -156,6 +146,7 @@ void BranchPath::explore_branch() {
 		this->branches[this->explore_index_inclusive]->is_branch.push_back(false);
 		this->branches[this->explore_index_inclusive]->branches.push_back(NULL);
 		this->branches[this->explore_index_inclusive]->folds.push_back(this->explore_fold);
+		this->branches[this->explore_index_inclusive]->num_travelled.push_back(0);
 	} else {
 		vector<FoldNetwork*> new_score_networks;
 		if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH) {
@@ -305,6 +296,10 @@ void BranchPath::explore_branch() {
 		new_folds.push_back(NULL);
 		new_folds.push_back(this->explore_fold);
 
+		vector<int> new_num_travelled;
+		new_num_travelled.push_back(100000);
+		new_num_travelled.push_back(0);
+
 		Branch* new_branch = new Branch(new_num_inputs,
 										new_num_outputs,
 										this->outer_s_input_size,	// differs from scope
@@ -312,7 +307,8 @@ void BranchPath::explore_branch() {
 										new_score_networks,
 										new_is_branch,
 										new_branches,
-										new_folds);
+										new_folds,
+										new_num_travelled);
 		this->explore_fold->combined_score_network = NULL;
 
 		if (this->explore_fold->state == STATE_DONE) {
@@ -369,15 +365,6 @@ void BranchPath::explore_branch() {
 
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
-
-	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
-		if (!this->explore_fold->is_existing[s_index]) {
-			solution->action_dictionary.push_back(this->explore_fold->actions[s_index]);
-		} else {
-			solution->scope_use_counts[this->explore_fold->existing_actions[s_index]->id]++;
-			solution->scope_use_sum_count++;
-		}
-	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
 	this->explore_fold = NULL;

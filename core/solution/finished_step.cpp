@@ -1002,8 +1002,8 @@ void FinishedStep::update_backprop(double& predicted_score,
 
 		predicted_score -= scale_factor*history->score_update;
 
-		this->average_local_impact = 0.999*this->average_local_impact
-			+ 0.001*abs(scale_factor*history->score_update);
+		this->average_local_impact = 0.9999*this->average_local_impact
+			+ 0.0001*abs(scale_factor*history->score_update);
 	}
 
 	if (!this->is_inner_scope) {
@@ -1030,8 +1030,8 @@ void FinishedStep::update_backprop(double& predicted_score,
 		scale_factor /= scope_scale_mod_val;
 
 		double starting_predicted_score = predicted_score;
-		this->average_inner_scope_impact = 0.999*this->average_inner_scope_impact
-			+ 0.001*abs(ending_predicted_score - starting_predicted_score);
+		this->average_inner_scope_impact = 0.9999*this->average_inner_scope_impact
+			+ 0.0001*abs(ending_predicted_score - starting_predicted_score);
 	}
 }
 

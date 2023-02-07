@@ -26,6 +26,8 @@ public:
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
 	std::vector<Fold*> folds;
+	std::vector<int> num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
+	// TODO: track when last travelled, and delete unused
 
 	int explore_ref_count;
 
@@ -36,7 +38,8 @@ public:
 		   std::vector<FoldNetwork*> score_networks,
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
-		   std::vector<Fold*> folds);
+		   std::vector<Fold*> folds,
+		   std::vector<int> num_travelled);
 	Branch(std::ifstream& input_file);
 	~Branch();
 

@@ -14,15 +14,13 @@ public:
 
 	Scope* root;
 
-	// allow duplicates, choose randomly, so successful actions are naturally chosen more
-	// on reload, start from a copy of everything currently in the solution
 	std::vector<Action> action_dictionary;
+	std::vector<int> action_last_success;
 
 	std::vector<Scope*> scope_dictionary;
-	std::vector<int> scope_use_counts;
-	int scope_use_sum_count;
+	std::vector<int> scope_last_success;
 
-	// TODO: use percentages or MCTS for dictionaries
+	int new_sequence_index;
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
@@ -34,10 +32,17 @@ public:
 	void load(std::ifstream& input_file);
 
 	void new_sequence(int& sequence_length,
-					  std::vector<bool>& is_existing,
-					  std::vector<Scope*>& existing_actions,
-					  std::vector<Action>& actions,
+					  std::vector<int>& new_sequence_types,
+					  std::vector<int>& existing_scope_ids,
+					  std::vector<int>& existing_action_ids,
+					  std::vector<Action>& new_actions,
 					  bool can_be_empty);
+	void new_sequence_success(int sequence_length,
+							  std::vector<int>& new_sequence_types,
+							  std::vector<int>& existing_scope_ids,
+							  std::vector<int>& existing_action_ids,
+							  std::vector<Action>& new_actions);
+	void new_sequence_iter();
 
 	void save(std::ofstream& output_file);
 };

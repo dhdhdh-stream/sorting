@@ -403,9 +403,10 @@ void Scope::explore_on_path_activate(Problem& problem,
 						}
 
 						solution->new_sequence(this->explore_sequence_length,
-											   this->explore_is_existing,
-											   this->explore_existing_actions,
-											   this->explore_actions,
+											   this->explore_new_sequence_types,
+											   this->explore_existing_scope_ids,
+											   this->explore_existing_action_ids,
+											   this->explore_new_actions,
 											   can_be_empty);
 					}
 					break;
@@ -431,9 +432,10 @@ void Scope::explore_on_path_activate(Problem& problem,
 						}
 
 						solution->new_sequence(this->explore_sequence_length,
-											   this->explore_is_existing,
-											   this->explore_existing_actions,
-											   this->explore_actions,
+											   this->explore_new_sequence_types,
+											   this->explore_existing_scope_ids,
+											   this->explore_existing_action_ids,
+											   this->explore_new_actions,
 											   can_be_empty);
 
 						break;
@@ -462,9 +464,10 @@ void Scope::explore_on_path_activate(Problem& problem,
 						}
 
 						solution->new_sequence(this->explore_sequence_length,
-											   this->explore_is_existing,
-											   this->explore_existing_actions,
-											   this->explore_actions,
+											   this->explore_new_sequence_types,
+											   this->explore_existing_scope_ids,
+											   this->explore_existing_action_ids,
+											   this->explore_new_actions,
 											   can_be_empty);
 					}
 					break;
@@ -568,14 +571,15 @@ void Scope::explore_on_path_activate(Problem& problem,
 						run_status.existing_score = existing_score;
 						run_status.score_variance = this->score_variance;
 
+						run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
 						for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
-							if (!this->explore_is_existing[n_index]) {
-								problem.perform_action(this->explore_actions[n_index]);
-							} else {
-								vector<double> scope_input(this->explore_existing_actions[n_index]->num_inputs, 0.0);
+							if (this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
+								Scope* explore_scope = solution->scope_dictionary[this->explore_existing_scope_ids[n_index]];
+								vector<double> scope_input(explore_scope->num_inputs, 0.0);
 								vector<double> scope_output;	// unused
-								ScopeHistory* scope_history = new ScopeHistory(this->explore_existing_actions[n_index]);
-								this->explore_existing_actions[n_index]->existing_update_activate(
+								ScopeHistory* scope_history = new ScopeHistory(explore_scope);
+								explore_scope->existing_update_activate(
 									problem,
 									scope_input,
 									scope_output,
@@ -590,10 +594,13 @@ void Scope::explore_on_path_activate(Problem& problem,
 									history->exit_location = EXIT_LOCATION_SPOT;
 									return;
 								}
+							} else if (this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_EXISTING_ACTION) {
+								problem.perform_action(solution->action_dictionary[this->explore_existing_action_ids[n_index]]);
+							} else {
+								// this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_NEW_ACTION
+								problem.perform_action(this->explore_new_actions[n_index]);
 							}
 						}
-
-						run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
 						if (this->explore_end_non_inclusive == this->sequence_length) {
 							local_state_vals = vector<double>(this->num_outputs, 0.0);
@@ -603,6 +610,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 						a_index = this->explore_end_non_inclusive-1;		// account for increment at end
 					} else {
 						// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
+
+						run_status.explore_location = this;
 
 						FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
 						this->explore_fold->explore_on_path_activate(existing_score,
@@ -677,14 +686,15 @@ void Scope::explore_on_path_activate(Problem& problem,
 					delete branch_history;
 					run_status.score_variance = this->score_variance;
 
+					run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
+
 					for (int n_index = 0; n_index < this->explore_sequence_length; n_index++) {
-						if (!this->explore_is_existing[n_index]) {
-							problem.perform_action(this->explore_actions[n_index]);
-						} else {
-							vector<double> scope_input(this->explore_existing_actions[n_index]->num_inputs, 0.0);
+						if (this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
+							Scope* explore_scope = solution->scope_dictionary[this->explore_existing_scope_ids[n_index]];
+							vector<double> scope_input(explore_scope->num_inputs, 0.0);
 							vector<double> scope_output;	// unused
-							ScopeHistory* scope_history = new ScopeHistory(this->explore_existing_actions[n_index]);
-							this->explore_existing_actions[n_index]->existing_update_activate(
+							ScopeHistory* scope_history = new ScopeHistory(explore_scope);
+							explore_scope->existing_update_activate(
 								problem,
 								scope_input,
 								scope_output,
@@ -699,10 +709,13 @@ void Scope::explore_on_path_activate(Problem& problem,
 								history->exit_location = EXIT_LOCATION_SPOT;
 								return;
 							}
+						} else if (this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_EXISTING_ACTION) {
+							problem.perform_action(solution->action_dictionary[this->explore_existing_action_ids[n_index]]);
+						} else {
+							// this->explore_new_sequence_types[n_index] == NEW_SEQUENCE_TYPE_NEW_ACTION
+							problem.perform_action(this->explore_new_actions[n_index]);
 						}
 					}
-
-					run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
 					if (this->explore_end_non_inclusive == this->sequence_length) {
 						local_state_vals = vector<double>(this->num_outputs, 0.0);
@@ -713,6 +726,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 				} else {
 					double existing_score = branch_history->best_score;
 					delete branch_history;
+
+					run_status.explore_location = this;
 
 					FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
 					this->explore_fold->explore_on_path_activate(existing_score,
@@ -1385,6 +1400,10 @@ void Scope::existing_flat_activate(Problem& problem,
 								   double& scale_factor,
 								   RunStatus& run_status,
 								   ScopeHistory* history) {
+	if (this == run_status.explore_location) {
+		run_status.is_recursive = true;
+	}
+
 	run_status.curr_depth++;
 	if (run_status.curr_depth > solution->depth_limit) {
 		run_status.exceeded_depth = true;
@@ -1832,13 +1851,13 @@ void Scope::update_backprop(double& predicted_score,
 	}
 
 	// update misguess even after early exit as goal is predict it correctly too
-	this->average_misguess = 0.999*this->average_misguess + 0.001*final_misguess;
+	this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
 	double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
-	this->misguess_variance = 0.999*this->misguess_variance + 0.001*curr_misguess_variance;
+	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
-	this->average_score = 0.999*this->average_score + 0.001*target_val;
+	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
 	double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
-	this->score_variance = 0.999*this->score_variance + 0.001*curr_score_variance;
+	this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
 
 	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
 		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
@@ -1859,8 +1878,8 @@ void Scope::update_backprop(double& predicted_score,
 
 				predicted_score -= scale_factor*history->score_updates[a_index];
 
-				this->average_local_impacts[a_index] = 0.999*this->average_local_impacts[a_index]
-					+ 0.001*abs(scale_factor*history->score_updates[a_index]);
+				this->average_local_impacts[a_index] = 0.9999*this->average_local_impacts[a_index]
+					+ 0.0001*abs(scale_factor*history->score_updates[a_index]);
 			}
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			double ending_predicted_score = predicted_score;
@@ -1873,8 +1892,8 @@ void Scope::update_backprop(double& predicted_score,
 													 history->branch_histories[a_index]);
 
 			double starting_predicted_score = predicted_score;
-			this->average_inner_branch_impacts[a_index] = 0.999*this->average_inner_branch_impacts[a_index]
-				+ 0.001*abs(ending_predicted_score - starting_predicted_score);
+			this->average_inner_branch_impacts[a_index] = 0.9999*this->average_inner_branch_impacts[a_index]
+				+ 0.0001*abs(ending_predicted_score - starting_predicted_score);
 		} else {
 			// this->step_types[a_index] == STEP_TYPE_FOLD
 			this->folds[a_index]->update_backprop(predicted_score,
@@ -1924,8 +1943,8 @@ void Scope::update_backprop(double& predicted_score,
 			scale_factor /= scope_scale_mod_val;
 
 			double starting_predicted_score = predicted_score;
-			this->average_inner_scope_impacts[a_index] = 0.999*this->average_inner_scope_impacts[a_index]
-				+ 0.001*abs(ending_predicted_score - starting_predicted_score);
+			this->average_inner_scope_impacts[a_index] = 0.9999*this->average_inner_scope_impacts[a_index]
+				+ 0.0001*abs(ending_predicted_score - starting_predicted_score);
 		}
 	}
 }
@@ -2139,6 +2158,26 @@ void Scope::explore_set(ScopeHistory* history) {
 		}
 	} else {
 		// history->explore_type == EXPLORE_TYPE_NEW
+		vector<bool> new_is_inner_scope;
+		vector<Scope*> new_scopes;
+		vector<Action> new_actions;
+		for (int s_index = 0; s_index < this->explore_sequence_length; s_index++) {
+			if (this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
+				new_is_inner_scope.push_back(true);
+				new_scopes.push_back(solution->scope_dictionary[this->explore_existing_scope_ids[s_index]]);
+				new_actions.push_back(Action());
+			} else if (this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_ACTION) {
+				new_is_inner_scope.push_back(false);
+				new_scopes.push_back(NULL);
+				new_actions.push_back(solution->action_dictionary[this->explore_existing_action_ids[s_index]]);
+			} else {
+				// this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_NEW_ACTION
+				new_is_inner_scope.push_back(false);
+				new_scopes.push_back(NULL);
+				new_actions.push_back(this->explore_new_actions[s_index]);
+			}
+		}
+
 		int new_num_inputs = this->starting_state_sizes[this->explore_index_inclusive];
 		if (!this->is_inner_scope[this->explore_index_inclusive]) {
 			// obs_size always 1 for sorting
@@ -2157,27 +2196,37 @@ void Scope::explore_set(ScopeHistory* history) {
 									  new_num_outputs,
 									  this->num_inputs,
 									  this->explore_sequence_length,
-									  this->explore_is_existing,
-									  this->explore_existing_actions,
-									  this->explore_actions,
+									  new_is_inner_scope,
+									  new_scopes,
+									  new_actions,
 									  this->explore_end_non_inclusive-this->explore_index_inclusive-1,
 									  &this->average_score,
 									  &this->average_misguess);
 
+		solution->new_sequence_success(this->explore_sequence_length,
+									   this->explore_new_sequence_types,
+									   this->explore_existing_scope_ids,
+									   this->explore_existing_action_ids,
+									   this->explore_new_actions);
+
 		cout << "new_sequence:";
 		for (int s_index = 0; s_index < this->explore_sequence_length; s_index++) {
-			if (!this->explore_is_existing[s_index]) {
-				cout << " " << this->explore_actions[s_index].to_string();
+			if (this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
+				cout << " S_" << this->explore_existing_scope_ids[s_index];
+			} else if (this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_ACTION) {
+				cout << " " << solution->action_dictionary[this->explore_existing_action_ids[s_index]].to_string();
 			} else {
-				cout << " S_" << this->explore_existing_actions[s_index]->id;
+				// this->explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_NEW_ACTION
+				cout << " " << this->explore_new_actions[s_index].to_string();
 			}
 		}
 		cout << endl;
 
 		this->explore_is_try = false;
-		this->explore_is_existing.clear();
-		this->explore_existing_actions.clear();
-		this->explore_actions.clear();
+		this->explore_new_sequence_types.clear();
+		this->explore_existing_scope_ids.clear();
+		this->explore_existing_action_ids.clear();
+		this->explore_new_actions.clear();
 	}
 }
 
@@ -2205,9 +2254,10 @@ void Scope::explore_clear(ScopeHistory* history) {
 	} else {
 		// history->explore_type == EXPLORE_TYPE_NEW
 		this->explore_type = EXPLORE_TYPE_NONE;
-		this->explore_is_existing.clear();
-		this->explore_existing_actions.clear();
-		this->explore_actions.clear();
+		this->explore_new_sequence_types.clear();
+		this->explore_existing_scope_ids.clear();
+		this->explore_existing_action_ids.clear();
+		this->explore_new_actions.clear();
 	}
 }
 

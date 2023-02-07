@@ -11,8 +11,8 @@ Fold::Fold(int num_inputs,
 		   int num_outputs,
 		   int outer_s_input_size,
 		   int sequence_length,
-		   vector<bool> is_existing,
-		   vector<Scope*> existing_actions,
+		   vector<bool> is_inner_scope,
+		   vector<Scope*> scopes,
 		   vector<Action> actions,
 		   int existing_sequence_length,
 		   double* existing_average_score,
@@ -27,8 +27,8 @@ Fold::Fold(int num_inputs,
 	this->outer_s_input_size = outer_s_input_size;
 
 	this->sequence_length = sequence_length;
-	this->is_existing = is_existing;
-	this->existing_actions = existing_actions;
+	this->is_inner_scope = is_inner_scope;
+	this->scopes = scopes;
 	this->actions = actions;
 
 	this->existing_sequence_length = existing_sequence_length;
@@ -48,6 +48,7 @@ Fold::Fold(int num_inputs,
 	
 	this->existing_noticably_better = 0;
 	this->new_noticably_better = 0;
+	this->is_recursive = 0;
 
 	this->average_score = 0.0;
 	this->score_variance = 0.0;
@@ -56,7 +57,7 @@ Fold::Fold(int num_inputs,
 
 	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			this->scope_scale_mod[f_index] = new Network(0, 0, 1);
 			this->scope_scale_mod[f_index]->output->constants[0] = 1.0;
 		}
@@ -69,15 +70,15 @@ Fold::Fold(int num_inputs,
 	vector<vector<int>> input_flat_sizes(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		int flat_size;
-		if (!this->is_existing[f_index]) {
+		if (!this->is_inner_scope[f_index]) {
 			// obs_size always 1 for sorting
 			flat_size = 1;
 		} else {
-			flat_size = this->existing_actions[f_index]->num_outputs;
+			flat_size = this->scopes[f_index]->num_outputs;
 		}
 		flat_sizes.push_back(flat_size);
 		for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
-			if (this->is_existing[ff_index]) {
+			if (this->is_inner_scope[ff_index]) {
 				input_flat_sizes[ff_index].push_back(flat_size);
 			}
 		}
@@ -90,9 +91,9 @@ Fold::Fold(int num_inputs,
 									  100);
 	this->curr_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
-															  this->existing_actions[f_index]->num_inputs,
+															  this->scopes[f_index]->num_inputs,
 															  this->outer_s_input_size,
 															  this->num_inputs,
 															  50);
@@ -149,20 +150,20 @@ Fold::Fold(ifstream& input_file) {
 	this->sequence_length = stoi(sequence_length_line);
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		string is_existing_line;
-		getline(input_file, is_existing_line);
-		this->is_existing.push_back(stoi(is_existing_line));
+		string is_inner_scope_line;
+		getline(input_file, is_inner_scope_line);
+		this->is_inner_scope.push_back(stoi(is_inner_scope_line));
 
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			string scope_id_line;
 			getline(input_file, scope_id_line);
 			int scope_id = stoi(scope_id_line);
 
-			this->existing_actions.push_back(solution->scope_dictionary[scope_id]);
+			this->scopes.push_back(solution->scope_dictionary[scope_id]);
 
 			this->actions.push_back(Action());
 		} else {
-			this->existing_actions.push_back(NULL);
+			this->scopes.push_back(NULL);
 
 			this->actions.push_back(Action(input_file));
 		}
@@ -191,7 +192,7 @@ Fold::Fold(ifstream& input_file) {
 		this->scope_scale_mod.push_back(NULL);
 	}
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			ifstream scope_scale_mod_save_file;
 			scope_scale_mod_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
 			this->scope_scale_mod.push_back(new Network(scope_scale_mod_save_file));
@@ -224,7 +225,7 @@ Fold::Fold(ifstream& input_file) {
 		this->curr_input_folds.push_back(NULL);
 	}
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			ifstream curr_input_fold_save_file;
 			curr_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
 			this->curr_input_folds.push_back(new FoldNetwork(curr_input_fold_save_file));
@@ -292,7 +293,7 @@ Fold::Fold(ifstream& input_file) {
 }
 
 Fold::~Fold() {
-	// existing_actions owned and deleted by solution
+	// scopes owned and deleted by solution
 
 	for (int n_index = 0; n_index < (int)this->finished_steps.size(); n_index++) {
 		delete this->finished_steps[n_index];
@@ -309,7 +310,7 @@ Fold::~Fold() {
 	}
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			if (this->scope_scale_mod[f_index] != NULL) {
 				delete this->scope_scale_mod[f_index];
 			}
@@ -320,7 +321,7 @@ Fold::~Fold() {
 		delete this->curr_fold;
 	}
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			if (this->curr_input_folds[f_index] != NULL) {
 				delete this->curr_input_folds[f_index];
 			}
@@ -341,7 +342,7 @@ Fold::~Fold() {
 		delete this->test_fold;
 	}
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			if (this->test_input_folds[f_index] != NULL) {
 				delete this->test_input_folds[f_index];
 			}
@@ -422,7 +423,7 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 		double replace_improvement = this->average_score - *this->existing_average_score;
 		cout << "this->average_score: " << this->average_score << endl;
-		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << "this->existing_average_score: " << *this->existing_average_score << endl;
 
 		double misguess_improvement = *this->existing_average_misguess - this->average_misguess;
 		cout << "this->average_misguess: " << this->average_misguess << endl;
@@ -438,9 +439,12 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
 		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
+		
+		// if recursion, only take if score better for now (and no replace)
 		if (this->new_noticably_better > 0) {
 			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-					&& this->existing_noticably_better == 0) {
+					&& this->existing_noticably_better == 0
+					&& this->is_recursive == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -452,14 +456,15 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				return EXPLORE_SIGNAL_BRANCH;
 			}
 		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-				&& this->existing_noticably_better == 0) {
+				&& this->existing_noticably_better == 0
+				&& this->is_recursive == 0) {
 			if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
 			} else if (this->sequence_length < this->existing_sequence_length
-					&& (misguess_improvement > 0.0 || abs(misguess_improvement) < 1.645)) {	// 90%<
+					&& (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -1158,10 +1163,10 @@ void Fold::save(ofstream& output_file) {
 	output_file << this->sequence_length << endl;
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		output_file << this->is_existing[f_index] << endl;
+		output_file << this->is_inner_scope[f_index] << endl;
 
-		if (this->is_existing[f_index]) {
-			output_file << this->existing_actions[f_index]->id << endl;
+		if (this->is_inner_scope[f_index]) {
+			output_file << this->scopes[f_index]->id << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}
@@ -1182,7 +1187,7 @@ void Fold::save(ofstream& output_file) {
 	// this->starting_score_network, this->combined_score_network has already been passed on
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			ofstream scope_scale_mod_save_file;
 			scope_scale_mod_save_file.open("saves/nns/fold_" + to_string(this->id) + "_scope_scale_mod_" + to_string(f_index) + ".txt");
 			this->scope_scale_mod[f_index]->save(scope_scale_mod_save_file);
@@ -1202,7 +1207,7 @@ void Fold::save(ofstream& output_file) {
 	curr_fold_save_file.close();
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
-		if (this->is_existing[f_index]) {
+		if (this->is_inner_scope[f_index]) {
 			ofstream curr_input_fold_save_file;
 			curr_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
 			this->curr_input_folds[f_index]->save(curr_input_fold_save_file);
@@ -1246,10 +1251,10 @@ void Fold::save_for_display(ofstream& output_file) {
 	}
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
-		output_file << this->is_existing[f_index] << endl;
+		output_file << this->is_inner_scope[f_index] << endl;
 
-		if (this->is_existing[f_index]) {
-			output_file << this->existing_actions[f_index]->id << endl;
+		if (this->is_inner_scope[f_index]) {
+			output_file << this->scopes[f_index]->id << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}

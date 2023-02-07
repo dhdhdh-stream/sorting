@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "globals.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -14,7 +15,8 @@ Branch::Branch(int num_inputs,
 			   vector<FoldNetwork*> score_networks,
 			   vector<bool> is_branch,
 			   vector<BranchPath*> branches,
-			   vector<Fold*> folds) {
+			   vector<Fold*> folds,
+			   vector<int> num_travelled) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
 	solution->id_counter++;
@@ -31,6 +33,7 @@ Branch::Branch(int num_inputs,
 	this->is_branch = is_branch;
 	this->branches = branches;
 	this->folds = folds;
+	this->num_travelled = num_travelled;
 
 	this->explore_ref_count = 0;
 }
@@ -100,6 +103,10 @@ Branch::Branch(ifstream& input_file) {
 
 			this->branches.push_back(NULL);
 		}
+
+		string num_travelled_line;
+		getline(input_file, num_travelled_line);
+		this->num_travelled.push_back(stoi(num_travelled_line));
 	}
 
 	// explores cleared on reload
@@ -149,7 +156,15 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 															  local_state_vals,
 															  curr_history);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				if (curr_score > best_score) {
+
+				bool branch_avail = true;
+				if (this->num_travelled[b_index] < 100000) {
+					if (randuni() < (double)this->num_travelled[b_index]/100000) {
+						branch_avail = false;
+					}
+				}
+
+				if (curr_score > best_score && branch_avail) {
 					best_score = curr_score;
 					best_index = b_index;
 					if (best_history != NULL) {
@@ -168,7 +183,15 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 				this->score_networks[b_index]->activate_small(local_s_input_vals,
 															  local_state_vals);
 				double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-				if (curr_score > best_score) {
+
+				bool branch_avail = true;
+				if (this->num_travelled[b_index] < 100000) {
+					if (randuni() < (double)this->num_travelled[b_index]/100000) {
+						branch_avail = false;
+					}
+				}
+
+				if (curr_score > best_score && branch_avail) {
 					best_score = curr_score;
 					best_index = b_index;
 				}
@@ -203,7 +226,15 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														  local_state_vals,
 														  curr_history);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			if (curr_score > best_score) {
+
+			bool branch_avail = true;
+			if (this->num_travelled[b_index] < 100000) {
+				if (randuni() < (double)this->num_travelled[b_index]/100000) {
+					branch_avail = false;
+				}
+			}
+
+			if (curr_score > best_score && branch_avail) {
 				best_score = curr_score;
 				best_index = b_index;
 				if (best_history != NULL) {
@@ -220,7 +251,15 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 			this->score_networks[b_index]->activate_small(local_s_input_vals,
 														  local_state_vals);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-			if (curr_score > best_score) {
+
+			bool branch_avail = true;
+			if (this->num_travelled[b_index] < 100000) {
+				if (randuni() < (double)this->num_travelled[b_index]/100000) {
+					branch_avail = false;
+				}
+			}
+
+			if (curr_score > best_score && branch_avail) {
 				best_score = curr_score;
 				best_index = b_index;
 			}
@@ -392,7 +431,15 @@ void Branch::existing_flat_activate(Problem& problem,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+
+		bool branch_avail = true;
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
+
+		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -503,13 +550,23 @@ void Branch::update_activate(Problem& problem,
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
 	FoldNetworkHistory* best_history = NULL;
+	double best_full_score = numeric_limits<double>::lowest();
+	int best_full_index = -1;
 	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
 		FoldNetworkHistory* curr_history = new FoldNetworkHistory(this->score_networks[b_index]);
 		this->score_networks[b_index]->activate_small(local_s_input_vals,
 													  local_state_vals,
 													  curr_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+
+		bool branch_avail = true;
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
+
+		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
 			best_index = b_index;
 			if (best_history != NULL) {
@@ -519,8 +576,17 @@ void Branch::update_activate(Problem& problem,
 		} else {
 			delete curr_history;
 		}
+
+		if (curr_score > best_full_score) {
+			best_full_score = curr_score;
+			best_full_index = b_index;
+		}
 	}
 	history->score_network_history = best_history;
+
+	if (this->num_travelled[best_full_index] < 100000) {
+		this->num_travelled[best_full_index]++;
+	}
 
 	history->best_score = best_score;
 	history->best_index = best_index;
@@ -616,7 +682,15 @@ void Branch::existing_update_activate(Problem& problem,
 		this->score_networks[b_index]->activate_small(local_s_input_vals,
 													  local_state_vals);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
-		if (curr_score > best_score) {
+
+		bool branch_avail = true;
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
+
+		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
 			best_index = b_index;
 		}
@@ -753,6 +827,8 @@ void Branch::save(ofstream& output_file) {
 			this->folds[b_index]->save(fold_save_file);
 			fold_save_file.close();
 		}
+
+		output_file << this->num_travelled[b_index] << endl;
 	}
 }
 

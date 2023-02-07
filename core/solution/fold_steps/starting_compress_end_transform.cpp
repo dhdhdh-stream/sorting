@@ -22,7 +22,7 @@ void Fold::starting_compress_end() {
 		this->curr_fold = this->test_fold;
 		this->test_fold = NULL;
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
+			if (this->is_inner_scope[f_index]) {
 				delete this->curr_input_folds[f_index];
 				this->curr_input_folds[f_index] = this->test_input_folds[f_index];
 				this->test_input_folds[f_index] = NULL;
@@ -33,27 +33,27 @@ void Fold::starting_compress_end() {
 		this->test_end_fold = NULL;
 
 		if (this->curr_starting_compress_new_size == 0) {
-			// if this->existing_actions[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
+			// if this->scopes[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
-			if (this->is_existing[0]) {
+			if (this->is_inner_scope[0]) {
 				this->curr_inner_input_network = this->curr_input_folds[0];
 				this->curr_input_folds[0] = NULL;
 			}
 
-			if (!this->is_existing[0]) {
+			if (!this->is_inner_scope[0]) {
 				this->curr_s_input_sizes.push_back(0);
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(this->existing_actions[0]->num_inputs);
-				this->curr_scope_sizes.push_back(this->existing_actions[0]->num_outputs);
+				this->curr_s_input_sizes.push_back(this->scopes[0]->num_inputs);
+				this->curr_scope_sizes.push_back(this->scopes[0]->num_outputs);
 			}
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
 			this->curr_fold->migrate_weights();
 			for (int f_index = 1; f_index < this->sequence_length; f_index++) {
-				if (this->is_existing[f_index]) {
+				if (this->is_inner_scope[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
 					this->curr_input_folds[f_index]->migrate_weights();
@@ -96,7 +96,7 @@ void Fold::starting_compress_end() {
 			// this->test_starting_compress_new_size can be 0
 			this->test_fold->add_scope(this->test_starting_compress_new_size);
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-				if (this->is_existing[f_index]) {
+				if (this->is_inner_scope[f_index]) {
 					this->test_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
 					this->test_input_folds[f_index]->pop_scope();
 					this->test_input_folds[f_index]->add_scope(this->test_starting_compress_new_size);
@@ -123,7 +123,7 @@ void Fold::starting_compress_end() {
 		delete this->test_fold;
 		this->test_fold = NULL;
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
+			if (this->is_inner_scope[f_index]) {
 				delete this->test_input_folds[f_index];
 				this->test_input_folds[f_index] = NULL;
 			}
@@ -131,27 +131,27 @@ void Fold::starting_compress_end() {
 		delete this->test_end_fold;
 		this->test_end_fold = NULL;
 
-		// if this->is_existing[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
+		// if this->is_inner_scope[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
-		if (this->is_existing[0]) {
+		if (this->is_inner_scope[0]) {
 			this->curr_inner_input_network = this->curr_input_folds[0];
 			this->curr_input_folds[0] = NULL;
 		}
 
-		if (!this->is_existing[0]) {
+		if (!this->is_inner_scope[0]) {
 			this->curr_s_input_sizes.push_back(0);
 			// obs_size always 1 for sorting
 			this->curr_scope_sizes.push_back(1);
 		} else {
-			this->curr_s_input_sizes.push_back(this->existing_actions[0]->num_inputs);
-			this->curr_scope_sizes.push_back(this->existing_actions[0]->num_outputs);
+			this->curr_s_input_sizes.push_back(this->scopes[0]->num_inputs);
+			this->curr_scope_sizes.push_back(this->scopes[0]->num_outputs);
 		}
 
 		this->curr_fold->add_scope(this->curr_scope_sizes.back());
 		this->curr_fold->fold_index++;
 		this->curr_fold->migrate_weights();
 		for (int f_index = 1; f_index < this->sequence_length; f_index++) {
-			if (this->is_existing[f_index]) {
+			if (this->is_inner_scope[f_index]) {
 				this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 				this->curr_input_folds[f_index]->fold_index++;
 				this->curr_input_folds[f_index]->migrate_weights();

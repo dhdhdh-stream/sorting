@@ -22,11 +22,9 @@ def parse_scope(file):
 			   -1,		# 4: step_type
 			   None,	# 5: branch
 			   None,	# 6: fold
-			   0.0,		# 7: average_score
-			   0.0,		# 8: average_misguess
-			   0.0,		# 9: average_inner_scope_impact
-			   0.0,		# 10: average_local_impact
-			   0.0,		# 11: average_inner_branch_impact
+			   0.0,		# 7: average_inner_scope_impact
+			   0.0,		# 8: average_local_impact
+			   0.0,		# 9: average_inner_branch_impact
 			  ] for _ in range(sequence_length)]]
 
 	for a_index in range(sequence_length):
@@ -57,16 +55,12 @@ def parse_scope(file):
 			scope[1][a_index][6] = new_fold
 
 	for a_index in range(sequence_length):
-		average_score = float(file.readline())
-		scope[1][a_index][7] = average_score
-		average_misguess = float(file.readline())
-		scope[1][a_index][8] = average_misguess
 		average_inner_scope_impact = float(file.readline())
-		scope[1][a_index][9] = average_inner_scope_impact
+		scope[1][a_index][7] = average_inner_scope_impact
 		average_local_impact = float(file.readline())
-		scope[1][a_index][10] = average_local_impact
+		scope[1][a_index][8] = average_local_impact
 		average_inner_branch_impact = float(file.readline())
-		scope[1][a_index][11] = average_inner_branch_impact
+		scope[1][a_index][9] = average_inner_branch_impact
 
 	return scope
 
@@ -101,11 +95,9 @@ def parse_branch_path(file, curr_scope_id):
 					-1,		# 4: step_type
 					None,	# 5: branch
 					None,	# 6: fold
-					0.0,	# 7: average_score
-					0.0,	# 8: average_misguess
-					0.0,	# 9: average_inner_scope_impact
-					0.0,	# 10: average_local_impact
-					0.0,	# 11: average_inner_branch_impact
+					0.0,	# 7: average_inner_scope_impact
+					0.0,	# 8: average_local_impact
+					0.0,	# 9: average_inner_branch_impact
 				   ] for _ in range(sequence_length)]
 
 	for a_index in range(sequence_length):
@@ -136,16 +128,12 @@ def parse_branch_path(file, curr_scope_id):
 			branch_path[a_index][6] = new_fold
 
 	for a_index in range(sequence_length):
-		average_score = float(file.readline())
-		branch_path[a_index][7] = average_score
-		average_misguess = float(file.readline())
-		branch_path[a_index][8] = average_misguess
 		average_inner_scope_impact = float(file.readline())
-		branch_path[a_index][9] = average_inner_scope_impact
+		branch_path[a_index][7] = average_inner_scope_impact
 		average_local_impact = float(file.readline())
-		branch_path[a_index][10] = average_local_impact
+		branch_path[a_index][8] = average_local_impact
 		average_inner_branch_impact = float(file.readline())
-		branch_path[a_index][11] = average_inner_branch_impact
+		branch_path[a_index][9] = average_inner_branch_impact
 
 	return branch_path
 
@@ -176,3 +164,177 @@ root = parse_scope(file)
 file.close()
 
 print(root)
+
+def pretty_print_action(action):
+	result = '('
+	result += "{:.2f}".format(action[0])
+	result += ', '
+	if action[1] == 0:
+		result += 'LEFT'
+	elif action[1] == 1:
+		result += 'STAY'
+	else:
+		result += 'RIGHT'
+	result += ')'
+	return result
+
+graph = pydot.Dot(graph_type='digraph', strict=True)
+
+global_node_index = 0
+
+def build_scope(scope,
+				start_node_index):
+	global global_node_index
+
+	curr_node_index = start_node_index
+
+	for step in scope[1]:
+		if step[0] == 1:
+			if step[1] > scope[0]:
+				end_node_index = build_scope(step[2],
+											 curr_node_index)
+				curr_node_index = end_node_index
+			else:
+				new_node_index = global_node_index
+				global_node_index += 1
+				new_node = pydot.Node(new_node_index, label='S'+step[1])
+				graph.add_node(new_node)
+
+				new_edge = pydot.Edge(curr_node_index, new_node_index)
+				graph.add_edge(new_edge)
+
+				curr_node_index = new_node_index
+		else:
+			new_node_index = global_node_index
+			global_node_index += 1
+			new_node = pydot.Node(new_node_index, label=pretty_print_action(step[3]))
+			graph.add_node(new_node)
+
+			new_edge = pydot.Edge(curr_node_index, new_node_index)
+			graph.add_edge(new_edge)
+
+			curr_node_index = new_node_index
+
+		if step[4] == STEP_TYPE_BRANCH:
+			end_node_index = build_branch(step[5],
+										  scope[0],
+										  curr_node_index)
+			curr_node_index = end_node_index
+		elif step[5] == STEP_TYPE_FOLD:
+			end_node_index = build_fold(step[6],
+										curr_node_index)
+			curr_node_index = end_node_index
+
+	return curr_node_index
+
+def build_branch(branch,
+				 curr_scope_id,
+				 start_node_index):
+	global global_node_index
+
+	merge_node_index = global_node_index
+	global_node_index += 1
+	merge_node = pydot.Node(merge_node_index)
+	graph.add_node(merge_node)
+
+	for b in branch:
+		if b[0] == 1:
+			end_node_index = build_branch_path(b[1],
+											   curr_scope_id,
+											   start_node_index)
+
+			new_edge = pydot.Edge(end_node_index, merge_node_index)
+			graph.add_edge(new_edge)
+		else:
+			end_node_index = build_fold(b[2],
+										start_node_index)
+
+			new_edge = pydot.Edge(end_node_index, merge_node_index)
+			graph.add_edge(new_edge)
+
+	return merge_node_index
+
+def build_branch_path(branch_path,
+					  curr_scope_id,
+					  start_node_index):
+	global global_node_index
+
+	curr_node_index = start_node_index
+
+	for step in branch_path:
+		if step[0] == 1:
+			if step[1] > curr_scope_id:
+				end_node_index = build_scope(step[2],
+											 curr_node_index)
+				curr_node_index = end_node_index
+			else:
+				new_node_index = global_node_index
+				global_node_index += 1
+				new_node = pydot.Node(new_node_index, label='S'+step[1])
+				graph.add_node(new_node)
+
+				new_edge = pydot.Edge(curr_node_index, new_node_index)
+				graph.add_edge(new_edge)
+
+				curr_node_index = new_node_index
+		else:
+			new_node_index = global_node_index
+			global_node_index += 1
+			new_node = pydot.Node(new_node_index, label=pretty_print_action(step[3]))
+			graph.add_node(new_node)
+
+			new_edge = pydot.Edge(curr_node_index, new_node_index)
+			graph.add_edge(new_edge)
+
+			curr_node_index = new_node_index
+
+		if step[4] == STEP_TYPE_BRANCH:
+			end_node_index = build_branch(step[5],
+										  curr_scope_id,
+										  curr_node_index)
+			curr_node_index = end_node_index
+		elif step[5] == STEP_TYPE_FOLD:
+			end_node_index = build_fold(step[6],
+										curr_node_index)
+			curr_node_index = end_node_index
+
+	return curr_node_index
+
+def build_fold(fold,
+			   start_node_index):
+	global global_node_index
+
+	curr_node_index = start_node_index
+
+	for step in fold:
+		if step[0] == 1:
+			new_node_index = global_node_index
+			global_node_index += 1
+			new_node = pydot.Node(new_node_index, label='S'+step[1])
+			graph.add_node(new_node)
+
+			new_edge = pydot.Edge(curr_node_index, new_node_index)
+			graph.add_edge(new_edge)
+
+			curr_node_index = new_node_index
+		else:
+			new_node_index = global_node_index
+			global_node_index += 1
+			new_node = pydot.Node(new_node_index, label=pretty_print_action(step[3]))
+			graph.add_node(new_node)
+
+			new_edge = pydot.Edge(curr_node_index, new_node_index)
+			graph.add_edge(new_edge)
+
+			curr_node_index = new_node_index
+
+	return curr_node_index
+
+root_node_index = global_node_index
+global_node_index += 1
+root_node = pydot.Node(root_node_index, labl='START')
+graph.add_node(root_node)
+
+build_scope(root, root_node_index)
+
+graph.write_png('solution.png')

@@ -36,8 +36,8 @@ public:
 	int outer_s_input_size;
 
 	int sequence_length;	// can be 0
-	std::vector<bool> is_existing;
-	std::vector<Scope*> existing_actions;
+	std::vector<bool> is_inner_scope;
+	std::vector<Scope*> scopes;
 	std::vector<Action> actions;
 
 	std::vector<FinishedStep*> finished_steps;
@@ -57,6 +57,7 @@ public:
 
 	int existing_noticably_better;
 	int new_noticably_better;
+	int is_recursive;
 
 	double average_score;
 	double score_variance;
@@ -118,8 +119,8 @@ public:
 		 int num_outputs,
 		 int outer_s_input_size,
 		 int sequence_length,
-		 std::vector<bool> is_existing,
-		 std::vector<Scope*> existing_actions,
+		 std::vector<bool> is_inner_scope,
+		 std::vector<Scope*> scopes,
 		 std::vector<Action> actions,
 		 int existing_sequence_length,
 		 double* existing_average_score,

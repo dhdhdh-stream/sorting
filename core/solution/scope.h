@@ -63,9 +63,10 @@ public:
 	int explore_end_non_inclusive;
 
 	int explore_sequence_length;
-	std::vector<bool> explore_is_existing;
-	std::vector<Scope*> explore_existing_actions;
-	std::vector<Action> explore_actions;
+	std::vector<int> explore_new_sequence_types;
+	std::vector<int> explore_existing_scope_ids;
+	std::vector<int> explore_existing_action_ids;
+	std::vector<Action> explore_new_actions;
 
 	Fold* explore_fold;
 	int explore_count;	// TODO: reset if too high

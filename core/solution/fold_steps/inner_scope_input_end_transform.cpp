@@ -15,20 +15,20 @@ void Fold::inner_scope_input_end() {
 		this->test_inner_input_network = NULL;
 
 		if (this->curr_inner_input_network->subfold_index == (int)this->curr_scope_sizes.size()-2) {
-			if (!this->is_existing[this->finished_steps.size()]) {
+			if (!this->is_inner_scope[this->finished_steps.size()]) {
 				this->curr_s_input_sizes.push_back(0);
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_inputs);
-				this->curr_scope_sizes.push_back(this->existing_actions[this->finished_steps.size()]->num_outputs);
+				this->curr_s_input_sizes.push_back(this->scopes[this->finished_steps.size()]->num_inputs);
+				this->curr_scope_sizes.push_back(this->scopes[this->finished_steps.size()]->num_outputs);
 			}
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
 			this->curr_fold->fold_index++;
 			this->curr_fold->migrate_weights();
 			for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
-				if (this->is_existing[f_index]) {
+				if (this->is_inner_scope[f_index]) {
 					this->curr_input_folds[f_index]->add_scope(this->curr_scope_sizes.back());
 					this->curr_input_folds[f_index]->fold_index++;
 					this->curr_input_folds[f_index]->migrate_weights();

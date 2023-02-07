@@ -68,19 +68,18 @@ int main(int argc, char* argv[]) {
 
 			bool explore_success = false;
 			if (run_status.explore_phase == EXPLORE_PHASE_EXPLORE) {
-				// !run_status.exceeded_depth
-				if (target_val > run_status.existing_score) {
-					double score_standard_deviation = sqrt(run_status.score_variance);
-					double t_value = (target_val-run_status.existing_score) / score_standard_deviation;
-					if (t_value > 1.0) {	// >75%
-						cout << "EXPLORE_SET" << endl;
-						cout << "target_val: " << target_val << endl;
-						cout << "run_status.existing_score: " << run_status.existing_score << endl;
-						cout << "t_value: " << t_value << endl;
-						solution->root->explore_set(scope_history);
-						explore_success = true;
-					}
+				double score_standard_deviation = sqrt(run_status.score_variance);
+				double t_value = (target_val-run_status.existing_score) / score_standard_deviation;
+				if (target_val > run_status.existing_score && t_value > 1.0) {	// >75%
+					cout << "EXPLORE_SET" << endl;
+					cout << "target_val: " << target_val << endl;
+					cout << "run_status.existing_score: " << run_status.existing_score << endl;
+					cout << "t_value: " << t_value << endl;
+					solution->root->explore_set(scope_history);
+					explore_success = true;
 				}
+
+				solution->new_sequence_iter();
 			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				double scale_factor_error = 0.0;
