@@ -122,7 +122,8 @@ public:
 								  double& scale_factor_error,
 								  BranchHistory* history);
 
-	void explore_set(BranchHistory* history);
+	void explore_set(double surprise,
+					 BranchHistory* history);
 	void explore_clear(BranchHistory* history);
 	void update_increment(BranchHistory* history,
 						  std::vector<Fold*>& folds_to_delete);

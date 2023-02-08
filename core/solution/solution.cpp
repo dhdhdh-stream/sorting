@@ -205,7 +205,7 @@ void Solution::new_sequence_success(int sequence_length,
 void Solution::new_sequence_iter() {
 	int a_index = 0;
 	while (a_index < (int)this->action_dictionary.size()) {
-		if (this->new_sequence_index - this->action_last_success[a_index] > 100000) {
+		if (this->new_sequence_index - this->action_last_success[a_index] > 1000000) {
 			this->action_dictionary.erase(this->action_dictionary.begin()+a_index);
 			this->action_last_success.erase(this->action_last_success.begin()+a_index);
 		} else {

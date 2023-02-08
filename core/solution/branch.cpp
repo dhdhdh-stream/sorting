@@ -750,12 +750,14 @@ void Branch::existing_update_backprop(double& predicted_score,
 	// score_networks don't update predicted_score
 }
 
-void Branch::explore_set(BranchHistory* history) {
+void Branch::explore_set(double surprise,
+						 BranchHistory* history) {
 	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
 		this->explore_ref_count++;
 	}
 
-	this->branches[history->best_index]->explore_set(history->branch_path_history);
+	this->branches[history->best_index]->explore_set(surprise,
+													 history->branch_path_history);
 }
 
 void Branch::explore_clear(BranchHistory* history) {

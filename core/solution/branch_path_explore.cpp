@@ -127,6 +127,12 @@ void BranchPath::explore_replace() {
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
+	this->explore_curr_try = 0;
+	this->explore_target_tries = 1;
+	for (int i = 0; i < rand()%7; i++) {
+		this->explore_target_tries *= 10;
+	}
+	this->best_explore_surprise = 0.0;
 	this->explore_fold = NULL;
 }
 
@@ -367,6 +373,12 @@ void BranchPath::explore_branch() {
 		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
 
 	this->explore_type = EXPLORE_TYPE_NONE;
+	this->explore_curr_try = 0;
+	this->explore_target_tries = 1;
+	for (int i = 0; i < rand()%7; i++) {
+		this->explore_target_tries *= 10;
+	}
+	this->best_explore_surprise = 0.0;
 	this->explore_fold = NULL;
 }
 

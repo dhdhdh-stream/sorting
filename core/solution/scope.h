@@ -62,11 +62,22 @@ public:
 	int explore_index_inclusive;
 	int explore_end_non_inclusive;
 
-	int explore_sequence_length;
-	std::vector<int> explore_new_sequence_types;
-	std::vector<int> explore_existing_scope_ids;
-	std::vector<int> explore_existing_action_ids;
-	std::vector<Action> explore_new_actions;
+	int explore_curr_try;
+	int explore_target_tries;
+	double best_explore_surprise;
+	int best_explore_index_inclusive;
+	int best_explore_end_non_inclusive;
+	int best_explore_sequence_length;
+	std::vector<int> best_explore_new_sequence_types;
+	std::vector<int> best_explore_existing_scope_ids;
+	std::vector<int> best_explore_existing_action_ids;
+	std::vector<Action> best_explore_new_actions;
+
+	int curr_explore_sequence_length;
+	std::vector<int> curr_explore_new_sequence_types;
+	std::vector<int> curr_explore_existing_scope_ids;
+	std::vector<int> curr_explore_existing_action_ids;
+	std::vector<Action> curr_explore_new_actions;
 
 	Fold* explore_fold;
 	int explore_count;	// TODO: reset if too high
@@ -169,7 +180,8 @@ public:
 								  double& scale_factor_error,
 								  ScopeHistory* history);
 
-	void explore_set(ScopeHistory* history);
+	void explore_set(double surprise,
+					 ScopeHistory* history);
 	void explore_clear(ScopeHistory* history);
 	// TODO: clean up update_increment logic
 	void update_increment(ScopeHistory* history,
