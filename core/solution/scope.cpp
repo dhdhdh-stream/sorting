@@ -8,31 +8,78 @@
 
 using namespace std;
 
-Scope::Scope(int num_inputs,
-			 int num_outputs,
-			 int sequence_length,
-			 vector<bool> is_inner_scope,
-			 vector<Scope*> scopes,
-			 vector<Action> actions,
-			 vector<vector<FoldNetwork*>> inner_input_networks,
-			 vector<vector<int>> inner_input_sizes,
-			 vector<Network*> scope_scale_mod,
-			 vector<int> step_types,
-			 vector<Branch*> branches,
-			 vector<Fold*> folds,
-			 vector<FoldNetwork*> score_networks,
-			 vector<double> average_inner_scope_impacts,
-			 vector<double> average_local_impacts,
-			 vector<double> average_inner_branch_impacts,
-			 double average_score,
-			 double score_variance,
-			 double average_misguess,
-			 double misguess_variance,
-			 vector<bool> active_compress,
-			 vector<int> compress_new_sizes,
-			 vector<FoldNetwork*> compress_networks,
-			 vector<int> compress_original_sizes,
-			 bool full_last) {
+Scope::Scope() {
+	// do nothing
+}
+
+Scope::~Scope() {
+	// scopes owned and deleted by solution
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
+			delete this->inner_input_networks[a_index][i_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->scope_scale_mod[a_index] != NULL) {
+			delete this->scope_scale_mod[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->branches[a_index] != NULL) {
+			delete this->branches[a_index];
+		}
+	}
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->folds[a_index] != NULL) {
+			delete this->folds[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->score_networks[a_index] != NULL) {
+			delete this->score_networks[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->compress_networks[a_index] != NULL) {
+			delete this->compress_networks[a_index];
+		}
+	}
+
+	if (this->explore_fold != NULL) {
+		delete this->explore_fold;
+	}
+}
+
+void Scope::initialize(int num_inputs,
+					   int num_outputs,
+					   int sequence_length,
+					   vector<bool> is_inner_scope,
+					   vector<Scope*> scopes,
+					   vector<Action> actions,
+					   vector<vector<FoldNetwork*>> inner_input_networks,
+					   vector<vector<int>> inner_input_sizes,
+					   vector<Network*> scope_scale_mod,
+					   vector<int> step_types,
+					   vector<Branch*> branches,
+					   vector<Fold*> folds,
+					   vector<FoldNetwork*> score_networks,
+					   vector<double> average_inner_scope_impacts,
+					   vector<double> average_local_impacts,
+					   vector<double> average_inner_branch_impacts,
+					   double average_score,
+					   double score_variance,
+					   double average_misguess,
+					   double misguess_variance,
+					   vector<bool> active_compress,
+					   vector<int> compress_new_sizes,
+					   vector<FoldNetwork*> compress_networks,
+					   vector<int> compress_original_sizes,
+					   bool full_last) {
 	this->num_inputs = num_inputs;
 	this->num_outputs = num_outputs;
 
@@ -99,53 +146,6 @@ Scope::Scope(int num_inputs,
 
 	this->explore_type = EXPLORE_TYPE_NONE;
 	this->explore_fold = NULL;
-}
-
-Scope::Scope() {
-	// do nothing -- will be initialized by load()
-}
-
-Scope::~Scope() {
-	// scopes owned and deleted by solution
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-			delete this->inner_input_networks[a_index][i_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->scope_scale_mod[a_index] != NULL) {
-			delete this->scope_scale_mod[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->branches[a_index] != NULL) {
-			delete this->branches[a_index];
-		}
-	}
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->folds[a_index] != NULL) {
-			delete this->folds[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->score_networks[a_index] != NULL) {
-			delete this->score_networks[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->compress_networks[a_index] != NULL) {
-			delete this->compress_networks[a_index];
-		}
-	}
-
-	if (this->explore_fold != NULL) {
-		delete this->explore_fold;
-	}
 }
 
 void Scope::load(std::ifstream& input_file) {
@@ -356,6 +356,12 @@ void Scope::explore_on_path_activate(Problem& problem,
 	} else if (run_status.curr_depth > run_status.max_depth) {
 		run_status.max_depth = run_status.curr_depth;
 	}
+
+	// TODO: need to account for important factor is something not paid attention to yet in observations
+	// TODO: need to explore from every observation and need to be able to break scope?
+	// TODO: or need to be good about adding factors?
+	// TODO: or randomly try to flat different selections/combinations of observations
+	// TODO: and if something needs like an 8-way XOR, then not learnable?
 
 	if (this->explore_type == EXPLORE_TYPE_NONE) {
 		double sum_impact = 0.0;

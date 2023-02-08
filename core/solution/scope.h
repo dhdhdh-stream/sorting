@@ -71,34 +71,34 @@ public:
 	Fold* explore_fold;
 	int explore_count;	// TODO: reset if too high
 
-	Scope(int num_inputs,
-		  int num_outputs,
-		  int sequence_length,
-		  std::vector<bool> is_inner_scope,
-		  std::vector<Scope*> scopes,
-		  std::vector<Action> actions,
-		  std::vector<std::vector<FoldNetwork*>> inner_input_networks,
-		  std::vector<std::vector<int>> inner_input_sizes,
-		  std::vector<Network*> scope_scale_mod,
-		  std::vector<int> step_types,
-		  std::vector<Branch*> branches,
-		  std::vector<Fold*> folds,
-		  std::vector<FoldNetwork*> score_networks,
-		  std::vector<double> average_inner_scope_impacts,
-		  std::vector<double> average_local_impacts,
-		  std::vector<double> average_inner_branch_impacts,
-		  double average_score,
-		  double score_variance,
-		  double average_misguess,
-		  double misguess_variance,
-		  std::vector<bool> active_compress,
-		  std::vector<int> compress_new_sizes,
-		  std::vector<FoldNetwork*> compress_networks,
-		  std::vector<int> compress_original_sizes,
-		  bool full_last);
-	Scope();	// empty constructor for loading
+	Scope();
 	~Scope();
 
+	void initialize(int num_inputs,
+					int num_outputs,
+					int sequence_length,
+					std::vector<bool> is_inner_scope,
+					std::vector<Scope*> scopes,
+					std::vector<Action> actions,
+					std::vector<std::vector<FoldNetwork*>> inner_input_networks,
+					std::vector<std::vector<int>> inner_input_sizes,
+					std::vector<Network*> scope_scale_mod,
+					std::vector<int> step_types,
+					std::vector<Branch*> branches,
+					std::vector<Fold*> folds,
+					std::vector<FoldNetwork*> score_networks,
+					std::vector<double> average_inner_scope_impacts,
+					std::vector<double> average_local_impacts,
+					std::vector<double> average_inner_branch_impacts,
+					double average_score,
+					double score_variance,
+					double average_misguess,
+					double misguess_variance,
+					std::vector<bool> active_compress,
+					std::vector<int> compress_new_sizes,
+					std::vector<FoldNetwork*> compress_networks,
+					std::vector<int> compress_original_sizes,
+					bool full_last);
 	void load(std::ifstream& input_file);
 
 	void explore_on_path_activate(Problem& problem,

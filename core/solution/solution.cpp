@@ -22,6 +22,7 @@ Solution::~Solution() {
 void Solution::init() {
 	this->id_counter = 0;
 
+	this->root = new Scope();
 	int starting_num_inputs = 0;
 	int starting_num_outputs = 0;
 	int starting_sequence_length = 1;
@@ -48,7 +49,7 @@ void Solution::init() {
 	vector<FoldNetwork*> starting_compress_networks{NULL};
 	vector<int> starting_compress_original_sizes{1};
 	bool starting_full_last = true;
-	this->root = new Scope(starting_num_inputs,
+	this->root->initialize(starting_num_inputs,
 						   starting_num_outputs,
 						   starting_sequence_length,
 						   starting_is_inner_scope,
@@ -204,7 +205,7 @@ void Solution::new_sequence_success(int sequence_length,
 void Solution::new_sequence_iter() {
 	int a_index = 0;
 	while (a_index < (int)this->action_dictionary.size()) {
-		if (this->new_sequence_index - this->action_last_success[a_index] > 1000) {
+		if (this->new_sequence_index - this->action_last_success[a_index] > 100000) {
 			this->action_dictionary.erase(this->action_dictionary.begin()+a_index);
 			this->action_last_success.erase(this->action_last_success.begin()+a_index);
 		} else {

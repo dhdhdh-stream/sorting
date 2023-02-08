@@ -429,12 +429,14 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		cout << "this->average_misguess: " << this->average_misguess << endl;
 		cout << "this->existing_average_misguess: " << *this->existing_average_misguess << endl;
 
+		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
+
 		double replace_improvement_t_value = replace_improvement
-			/ (score_standard_deviation / sqrt(50000));
+			/ (score_standard_deviation / sqrt(20000));
 		cout << "replace_improvement_t_value: " << replace_improvement_t_value << endl;
 
 		double misguess_improvement_t_value = misguess_improvement
-			/ (misguess_standard_deviation / sqrt(50000));
+			/ (misguess_standard_deviation / sqrt(20000));
 		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;

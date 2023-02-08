@@ -22,6 +22,11 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							  FoldNetwork*& outer_compress_network,
 							  int& outer_compress_original_size,
 							  vector<int>& compressed_scope_sizes) {
+	Scope* scope = new Scope();
+	scope->id = (int)solution->scope_dictionary.size();
+	solution->scope_dictionary.push_back(scope);
+	solution->scope_last_success.push_back(solution->new_sequence_index);
+
 	vector<int> scope_starts;
 	vector<int> scope_ends;
 
@@ -360,34 +365,31 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		n_index++;
 	}
 
-	Scope* scope = new Scope(scope_num_inputs,
-							 scope_num_outputs,
-							 scope_sequence_length,
-							 scope_is_inner_scope,
-							 scope_scopes,
-							 scope_actions,
-							 scope_inner_input_networks,
-							 scope_inner_input_sizes,
-							 scope_scope_scale_mod,
-							 scope_step_types,
-							 scope_branches,
-							 scope_folds,
-							 scope_score_networks,
-							 scope_average_inner_scope_impacts,
-							 scope_average_local_impacts,
-							 scope_average_inner_branch_impacts,
-							 average_score,
-							 score_variance,
-							 average_misguess,
-							 misguess_variance,
-							 scope_active_compress,
-							 scope_compress_new_sizes,
-							 scope_compress_networks,
-							 scope_compress_original_sizes,
-							 false);
-	scope->id = (int)solution->scope_dictionary.size();
-	solution->scope_dictionary.push_back(scope);
-	solution->scope_last_success.push_back(solution->new_sequence_index);
+	scope->initialize(scope_num_inputs,
+					  scope_num_outputs,
+					  scope_sequence_length,
+					  scope_is_inner_scope,
+					  scope_scopes,
+					  scope_actions,
+					  scope_inner_input_networks,
+					  scope_inner_input_sizes,
+					  scope_scope_scale_mod,
+					  scope_step_types,
+					  scope_branches,
+					  scope_folds,
+					  scope_score_networks,
+					  scope_average_inner_scope_impacts,
+					  scope_average_local_impacts,
+					  scope_average_inner_branch_impacts,
+					  average_score,
+					  score_variance,
+					  average_misguess,
+					  misguess_variance,
+					  scope_active_compress,
+					  scope_compress_new_sizes,
+					  scope_compress_networks,
+					  scope_compress_original_sizes,
+					  false);
 
 	return scope;
 }

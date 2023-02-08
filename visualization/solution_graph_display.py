@@ -188,6 +188,16 @@ def build_scope(scope,
 
 	curr_node_index = start_node_index
 
+	scope_start_node_index = global_node_index
+	global_node_index += 1
+	scope_start_node = pydot.Node(scope_start_node_index, label='S'+str(scope[0])+' START')
+	graph.add_node(scope_start_node)
+
+	new_edge = pydot.Edge(curr_node_index, scope_start_node_index)
+	graph.add_edge(new_edge)
+
+	curr_node_index = scope_start_node_index
+
 	for step in scope[1]:
 		if step[0] == 1:
 			if step[1] > scope[0]:
@@ -197,7 +207,7 @@ def build_scope(scope,
 			else:
 				new_node_index = global_node_index
 				global_node_index += 1
-				new_node = pydot.Node(new_node_index, label='S'+step[1])
+				new_node = pydot.Node(new_node_index, label='S'+str(step[1]))
 				graph.add_node(new_node)
 
 				new_edge = pydot.Edge(curr_node_index, new_node_index)
@@ -225,6 +235,16 @@ def build_scope(scope,
 										curr_node_index)
 			curr_node_index = end_node_index
 
+	scope_end_node_index = global_node_index
+	global_node_index += 1
+	scope_end_node = pydot.Node(scope_end_node_index, label='S'+str(scope[0])+' END')
+	graph.add_node(scope_end_node)
+
+	new_edge = pydot.Edge(curr_node_index, scope_end_node_index)
+	graph.add_edge(new_edge)
+
+	curr_node_index = scope_end_node_index
+
 	return curr_node_index
 
 def build_branch(branch,
@@ -234,7 +254,7 @@ def build_branch(branch,
 
 	merge_node_index = global_node_index
 	global_node_index += 1
-	merge_node = pydot.Node(merge_node_index)
+	merge_node = pydot.Node(merge_node_index, label='')
 	graph.add_node(merge_node)
 
 	for b in branch:
@@ -270,7 +290,7 @@ def build_branch_path(branch_path,
 			else:
 				new_node_index = global_node_index
 				global_node_index += 1
-				new_node = pydot.Node(new_node_index, label='S'+step[1])
+				new_node = pydot.Node(new_node_index, label='S'+str(step[1]))
 				graph.add_node(new_node)
 
 				new_edge = pydot.Edge(curr_node_index, new_node_index)
@@ -310,7 +330,7 @@ def build_fold(fold,
 		if step[0] == 1:
 			new_node_index = global_node_index
 			global_node_index += 1
-			new_node = pydot.Node(new_node_index, label='S'+step[1])
+			new_node = pydot.Node(new_node_index, label='S'+str(step[1]))
 			graph.add_node(new_node)
 
 			new_edge = pydot.Edge(curr_node_index, new_node_index)
@@ -332,7 +352,7 @@ def build_fold(fold,
 
 root_node_index = global_node_index
 global_node_index += 1
-root_node = pydot.Node(root_node_index, labl='START')
+root_node = pydot.Node(root_node_index, label='START')
 graph.add_node(root_node)
 
 build_scope(root, root_node_index)
