@@ -28,6 +28,7 @@ public:
 	Network* scope_scale_mod;
 
 	FoldNetwork* score_network;
+	FoldNetwork* confidence_network; 
 
 	double average_inner_scope_impact;
 	double average_local_impact;
@@ -54,6 +55,7 @@ public:
 				 FoldNetwork* inner_input_network,
 				 Network* scope_scale_mod,
 				 FoldNetwork* score_network,
+				 FoldNetwork* confidence_network,
 				 int compress_num_layers,
 				 int compress_new_size,
 				 FoldNetwork* compress_network,
@@ -138,6 +140,8 @@ public:
 
 	FoldNetworkHistory* score_network_history;
 	double score_update;
+	FoldNetworkHistory* confidence_network_history;
+	double confidence_network_output;
 
 	FoldNetworkHistory* compress_network_history;
 

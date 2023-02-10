@@ -13,15 +13,24 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 											  double& scale_factor,
 											  RunStatus& run_status,
 											  FoldHistory* history) {
+	history->existing_score = existing_score;
+
 	this->starting_score_network->activate_small(local_s_input_vals,
 												 local_state_vals);
 	history->starting_score_update = this->starting_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->starting_score_network->output->acti_vals[0];
 
-	history->existing_score = existing_score;
+	this->starting_confidence_network->activate_small(local_s_input_vals,
+													  local_state_vals);
+	history->starting_confidence_network_output = this->starting_confidence_network->output->acti_vals[0];
+
 	this->combined_score_network->activate_small(local_s_input_vals,
 												 local_state_vals);
 	history->combined_score_update = this->combined_score_network->output->acti_vals[0];
+
+	this->combined_confidence_network->activate_small(local_s_input_vals,
+													  local_state_vals);
+	history->combined_confidence_network_output = this->combined_confidence_network->output->acti_vals[0];
 
 	vector<vector<double>> fold_input;
 	vector<vector<vector<double>>> input_fold_inputs(this->sequence_length);
@@ -213,6 +222,23 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 
 	double starting_predicted_score_error = target_val - predicted_score;
+	
+	double starting_confidence_error = abs(starting_predicted_score_error) - abs(scale_factor)*history->starting_confidence_network_output;
+	vector<double> starting_confidence_errors{abs(scale_factor)*starting_confidence_error};
+	if (this->state_iter <= 300000) {
+		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
+			starting_confidence_errors,
+			0.05);
+	} else if (this->state_iter <= 400000) {
+		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
+			starting_confidence_errors,
+			0.01);
+	} else {
+		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
+			starting_confidence_errors,
+			0.002);
+	}
+
 	vector<double> starting_score_errors{scale_factor*starting_predicted_score_error};
 	if (this->state_iter <= 300000) {
 		this->starting_score_network->backprop_small_weights_with_no_error_signal(
@@ -246,6 +272,23 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		higher_branch_val = scale_factor*history->starting_score_update;
 	}
 	double combined_score_error = higher_branch_val - scale_factor*history->combined_score_update;
+	
+	double combined_confidence_error = combined_score_error - abs(scale_factor)*history->combined_confidence_network_output;
+	vector<double> combined_confidence_errors{abs(scale_factor)*combined_confidence_error};
+	if (this->state_iter <= 300000) {
+		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
+			combined_confidence_errors,
+			0.05);
+	} else if (this->state_iter <= 400000) {
+		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
+			combined_confidence_errors,
+			0.01);
+	} else {
+		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
+			combined_confidence_errors,
+			0.002);
+	}
+
 	vector<double> combined_score_errors{scale_factor*combined_score_error};
 	if (this->state_iter <= 300000) {
 		this->combined_score_network->backprop_small_weights_with_no_error_signal(

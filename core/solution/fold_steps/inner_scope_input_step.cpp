@@ -174,12 +174,12 @@ void Fold::inner_scope_input_step_explore_off_path_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -315,12 +315,12 @@ void Fold::inner_scope_input_step_explore_off_path_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -643,12 +643,12 @@ void Fold::inner_scope_input_step_existing_flat_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -770,12 +770,12 @@ void Fold::inner_scope_input_step_existing_flat_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -1093,12 +1093,12 @@ void Fold::inner_scope_input_step_update_activate(
 	vector<double> scope_output;
 	ScopeHistory* scope_history = new ScopeHistory(this->scopes[this->finished_steps.size()]);
 	this->scopes[this->finished_steps.size()]->update_activate(problem,
-																		 scope_input,
-																		 scope_output,
-																		 predicted_score,
-																		 scale_factor,
-																		 run_status,
-																		 scope_history);
+															   scope_input,
+															   scope_output,
+															   predicted_score,
+															   scale_factor,
+															   run_status,
+															   scope_history);
 	history->scope_histories[this->finished_steps.size()] = scope_history;
 
 	scale_factor /= scope_scale_mod_val;
@@ -1144,12 +1144,12 @@ void Fold::inner_scope_input_step_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1225,10 +1225,10 @@ void Fold::inner_scope_input_step_update_backprop(
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[f_index]);
 
 			vector<double> mod_errors{scope_scale_factor_error};
 			this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
@@ -1416,12 +1416,12 @@ void Fold::inner_scope_input_step_existing_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1476,10 +1476,10 @@ void Fold::inner_scope_input_step_existing_update_backprop(
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 

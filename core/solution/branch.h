@@ -19,10 +19,12 @@ public:
 	int num_outputs;
 	int outer_s_input_size;
 
-	FoldNetwork* branch_score_network;
-	bool passed_branch_score;	// if branch_score_network taken by outer branch
+	FoldNetwork* combined_score_network;
+	FoldNetwork* combined_confidence_network;
+	bool passed_combined;	// if combined taken by outer branch
 
 	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
+	std::vector<FoldNetwork*> confidence_networks;
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
 	std::vector<Fold*> folds;
@@ -34,8 +36,11 @@ public:
 	Branch(int num_inputs,
 		   int num_outputs,
 		   int outer_s_input_size,
-		   FoldNetwork* branch_score_network,
+		   FoldNetwork* combined_score_network,
+		   FoldNetwork* combined_confidence_network,
+		   bool passed_combined,
 		   std::vector<FoldNetwork*> score_networks,
+		   std::vector<FoldNetwork*> confidence_networks,
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
 		   std::vector<Fold*> folds,
@@ -122,7 +127,9 @@ public:
 								  double& scale_factor_error,
 								  BranchHistory* history);
 
-	void explore_set(double surprise,
+	void explore_set(double target_val,
+					 double existing_score,
+					 double predicted_misguess,
 					 BranchHistory* history);
 	void explore_clear(BranchHistory* history);
 	void update_increment(BranchHistory* history,
@@ -143,11 +150,15 @@ public:
 
 	double best_score;	// scaled
 	int best_index;
+	double best_predicted_misguess;	// scaled
 
-	FoldNetworkHistory* branch_score_network_history;
-	double branch_score_update;
+	FoldNetworkHistory* combined_score_network_history;
+	double combined_score_network_output;
+	FoldNetworkHistory* combined_confidence_network_history;
+	double combined_confidence_network_output;
 
 	FoldNetworkHistory* score_network_history;
+	FoldNetworkHistory* confidence_network_history;
 	BranchPathHistory* branch_path_history;
 	FoldHistory* fold_history;
 

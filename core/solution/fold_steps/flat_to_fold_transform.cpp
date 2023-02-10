@@ -9,6 +9,16 @@ void Fold::flat_to_fold() {
 	delete this->end_scale_mod;	// delete as only used to help measure flat misguess
 	this->end_scale_mod = NULL;
 
+	this->checkpoint_s_input_sizes = this->curr_s_input_sizes;
+	this->checkpoint_scope_sizes = this->curr_scope_sizes;
+	this->checkpoint_fold = new FoldNetwork(this->curr_fold);
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->is_inner_scope[f_index] && this->curr_input_folds[f_index] != NULL) {
+			this->checkpoint_input_folds[f_index] = new FoldNetwork(this->curr_input_folds[f_index]);
+		}
+	}
+	this->checkpoint_end_fold = new FoldNetwork(this->curr_end_fold);
+
 	this->starting_average_local_impact = 0.0;
 
 	if (this->sequence_length == 0) {
@@ -33,8 +43,8 @@ void Fold::flat_to_fold() {
 			// if this->scopes[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 			if (this->is_inner_scope[0]) {
-				this->curr_inner_input_network = this->curr_input_folds[0];
-				this->curr_input_folds[0] = NULL;
+				// don't move/delete this->curr_input_folds[0] for saving/loading
+				this->curr_inner_input_network = new FoldNetwork(this->curr_input_folds[0]);
 			}
 
 			if (!this->is_inner_scope[0]) {
@@ -64,6 +74,10 @@ void Fold::flat_to_fold() {
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
 													   20);
+			this->curr_confidence_network = new FoldNetwork(1,
+															this->curr_s_input_sizes[0],
+															this->curr_scope_sizes,
+															20);
 
 			cout << "ending FLAT" << endl;
 			cout << "beginning STATE_SCORE" << endl;

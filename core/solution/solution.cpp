@@ -41,6 +41,12 @@ void Solution::init() {
 		vector<int>{1},
 		20);
 	vector<FoldNetwork*> starting_score_networks{starting_score_network};
+	FoldNetwork* starting_confidence_network = new FoldNetwork(
+		1,
+		0,
+		vector<int>{1},
+		20);
+	vector<FoldNetwork*> starting_confidence_networks{starting_confidence_network};
 	vector<double> starting_average_inner_scope_impacts{0.0};
 	vector<double> starting_average_local_impacts{0.0};
 	vector<double> starting_average_inner_branch_impacts{0.0};
@@ -62,6 +68,7 @@ void Solution::init() {
 						   starting_branches,
 						   starting_folds,
 						   starting_score_networks,
+						   starting_confidence_networks,
 						   starting_average_inner_scope_impacts,
 						   starting_average_local_impacts,
 						   starting_average_inner_branch_impacts,
@@ -161,7 +168,8 @@ void Solution::new_sequence(int& sequence_length,
 			existing_action_ids.push_back(-1);
 			new_actions.push_back(Action());
 		} else {
-			if (this->action_dictionary.size() > 0 && rand()%2 == 0) {
+			// if (this->action_dictionary.size() > 0 && rand()%2 == 0) {
+			if (false) {
 				new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_ACTION);
 				existing_action_ids.push_back(rand()%(int)this->action_dictionary.size());
 

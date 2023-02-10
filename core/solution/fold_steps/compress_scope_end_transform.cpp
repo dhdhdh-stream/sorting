@@ -6,7 +6,8 @@
 using namespace std;
 
 void Fold::compress_scope_end() {
-	if (this->sum_error/10000 < 0.01) {
+	// if (this->sum_error/10000 < 0.01) {
+	if (rand()%2 == 0) {
 		delete this->curr_compress_network;	// can't be NULL
 		this->curr_compress_network = this->test_compress_network;	// can be NULL
 		this->test_compress_network = NULL;
@@ -53,6 +54,11 @@ void Fold::compress_scope_end() {
 				this->test_score_network->subfold_index++;
 				// Note: there may be existing s_input from existing_action input_folds
 				this->test_score_network->set_s_input_size(this->curr_s_input_sizes[
+					this->test_score_network->subfold_index+1]);
+
+				this->test_confidence_network = new FoldNetwork(this->curr_confidence_network);
+				this->test_confidence_network->subfold_index++;
+				this->test_confidence_network->set_s_input_size(this->curr_s_input_sizes[
 					this->test_score_network->subfold_index+1]);
 
 				if (this->curr_compress_num_layers > 0 && this->curr_compress_new_size > 0) {
@@ -187,6 +193,11 @@ void Fold::compress_scope_end() {
 			this->test_score_network = new FoldNetwork(this->curr_score_network);
 			this->test_score_network->subfold_index++;
 			this->test_score_network->set_s_input_size(this->curr_s_input_sizes[
+				this->test_score_network->subfold_index+1]);
+
+			this->test_confidence_network = new FoldNetwork(this->curr_confidence_network);
+			this->test_confidence_network->subfold_index++;
+			this->test_confidence_network->set_s_input_size(this->curr_s_input_sizes[
 				this->test_score_network->subfold_index+1]);
 
 			this->test_compress_network = new FoldNetwork(this->curr_compress_network);

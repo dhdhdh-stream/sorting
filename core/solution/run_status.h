@@ -11,7 +11,7 @@ public:
 
 	int explore_phase;
 	double existing_score;
-	double score_variance;
+	double predicted_misguess;
 
 	// to detect recursive calls for flat -- not fullproof but should be effective enough
 	void* explore_location;

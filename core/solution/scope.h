@@ -37,6 +37,7 @@ public:
 
 	std::vector<FoldNetwork*> score_networks;
 	// Note: don't use soft targets even with early exit, as hard targets needed to determine impact
+	std::vector<FoldNetwork*> confidence_networks;
 
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
@@ -98,6 +99,7 @@ public:
 					std::vector<Branch*> branches,
 					std::vector<Fold*> folds,
 					std::vector<FoldNetwork*> score_networks,
+					std::vector<FoldNetwork*> confidence_networks,
 					std::vector<double> average_inner_scope_impacts,
 					std::vector<double> average_local_impacts,
 					std::vector<double> average_inner_branch_impacts,
@@ -180,7 +182,9 @@ public:
 								  double& scale_factor_error,
 								  ScopeHistory* history);
 
-	void explore_set(double surprise,
+	void explore_set(double target_val,
+					 double existing_score,
+					 double predicted_misguess,
 					 ScopeHistory* history);
 	void explore_clear(ScopeHistory* history);
 	// TODO: clean up update_increment logic
@@ -207,7 +211,9 @@ public:
 	std::vector<BranchHistory*> branch_histories;
 	std::vector<FoldHistory*> fold_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
+	std::vector<FoldNetworkHistory*> confidence_network_histories;
 	std::vector<double> score_updates;
+	std::vector<double> confidence_network_outputs;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 
 	FoldHistory* explore_fold_history;

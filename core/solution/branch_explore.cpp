@@ -23,6 +23,7 @@ void Branch::resolve_fold(int b_index,
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
+	vector<FoldNetwork*> new_confidence_networks;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
 	vector<double> new_average_inner_branch_impacts;
@@ -46,6 +47,7 @@ void Branch::resolve_fold(int b_index,
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
+				 new_confidence_networks,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
 				 new_average_inner_branch_impacts,
@@ -54,7 +56,7 @@ void Branch::resolve_fold(int b_index,
 				 new_compress_networks,
 				 new_compress_original_sizes);
 
-	// this->score_networks[b_index] already set correctly
+	// this->score_networks[b_index] and this->confidence_networks[b_index] already set correctly
 
 	new_sequence_length++;
 	new_is_inner_scope.insert(new_is_inner_scope.begin(), false);
@@ -70,6 +72,7 @@ void Branch::resolve_fold(int b_index,
 	new_folds.insert(new_folds.begin(), NULL);
 
 	new_score_networks.insert(new_score_networks.begin(), NULL);
+	new_confidence_networks.insert(new_confidence_networks.begin(), NULL);
 
 	new_average_inner_scope_impacts.insert(new_average_inner_scope_impacts.begin(), 0.0);	// doesn't matter
 	new_average_local_impacts.insert(new_average_local_impacts.begin(), this->folds[b_index]->starting_average_local_impact);
@@ -100,6 +103,7 @@ void Branch::resolve_fold(int b_index,
 												 new_branches,
 												 new_folds,
 												 new_score_networks,
+												 new_confidence_networks,
 												 new_average_inner_scope_impacts,
 												 new_average_local_impacts,
 												 new_average_inner_branch_impacts,
@@ -112,6 +116,8 @@ void Branch::resolve_fold(int b_index,
 												 new_compress_networks,
 												 new_compress_original_sizes,
 												 true);	// last networks matter for folds
+	new_branch_path->parent = this;
+	new_branch_path->parent_index = b_index;
 
 	this->is_branch[b_index] = true;
 	this->branches[b_index] = new_branch_path;

@@ -45,6 +45,12 @@ Scope::~Scope() {
 	}
 
 	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->confidence_networks[a_index] != NULL) {
+			delete this->confidence_networks[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 		if (this->compress_networks[a_index] != NULL) {
 			delete this->compress_networks[a_index];
 		}
@@ -68,6 +74,7 @@ void Scope::initialize(int num_inputs,
 					   vector<Branch*> branches,
 					   vector<Fold*> folds,
 					   vector<FoldNetwork*> score_networks,
+					   vector<FoldNetwork*> confidence_networks,
 					   vector<double> average_inner_scope_impacts,
 					   vector<double> average_local_impacts,
 					   vector<double> average_inner_branch_impacts,
@@ -97,6 +104,7 @@ void Scope::initialize(int num_inputs,
 	this->folds = folds;
 
 	this->score_networks = score_networks;
+	this->confidence_networks = confidence_networks;
 
 	this->average_inner_scope_impacts = average_inner_scope_impacts;
 	this->average_local_impacts = average_local_impacts;
@@ -145,9 +153,12 @@ void Scope::initialize(int num_inputs,
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
+	this->explore_is_try = true;
 	this->explore_curr_try = 0;
 	this->explore_target_tries = 1;
-	for (int i = 0; i < rand()%7; i++) {
+	// int rand_scale = rand()%5;
+	int rand_scale = 1;
+	for (int i = 0; i < rand_scale; i++) {
 		this->explore_target_tries *= 10;
 	}
 	this->best_explore_surprise = 0.0;
@@ -229,6 +240,7 @@ void Scope::load(std::ifstream& input_file) {
 		if (this->step_types[a_index] == STEP_TYPE_STEP) {
 			if (a_index == this->sequence_length-1 && !this->full_last) {
 				this->score_networks.push_back(NULL);
+				this->confidence_networks.push_back(NULL);
 
 				this->active_compress.push_back(false);	// doesn't matter
 				this->compress_new_sizes.push_back(-1);
@@ -239,6 +251,11 @@ void Scope::load(std::ifstream& input_file) {
 				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
 				score_network_save_file.close();
+
+				ifstream confidence_network_save_file;
+				confidence_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_confidence_" + to_string(a_index) + ".txt");
+				this->confidence_networks.push_back(new FoldNetwork(confidence_network_save_file));
+				confidence_network_save_file.close();
 
 				string active_compress_line;
 				getline(input_file, active_compress_line);
@@ -266,6 +283,7 @@ void Scope::load(std::ifstream& input_file) {
 			this->folds.push_back(NULL);
 		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
 			this->score_networks.push_back(NULL);
+			this->confidence_networks.push_back(NULL);
 
 			string branch_id_line;
 			getline(input_file, branch_id_line);
@@ -288,6 +306,11 @@ void Scope::load(std::ifstream& input_file) {
 			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 			this->score_networks.push_back(new FoldNetwork(score_network_save_file));
 			score_network_save_file.close();
+
+			ifstream confidence_network_save_file;
+			confidence_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_confidence_" + to_string(a_index) + ".txt");
+			this->confidence_networks.push_back(new FoldNetwork(confidence_network_save_file));
+			confidence_network_save_file.close();
 
 			string fold_id_line;
 			getline(input_file, fold_id_line);
@@ -344,9 +367,12 @@ void Scope::load(std::ifstream& input_file) {
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
+	this->explore_is_try = true;
 	this->explore_curr_try = 0;
 	this->explore_target_tries = 1;
-	for (int i = 0; i < rand()%7; i++) {
+	// int rand_scale = rand()%5;
+	int rand_scale = 1;
+	for (int i = 0; i < rand_scale; i++) {
 		this->explore_target_tries *= 10;
 	}
 	this->best_explore_surprise = 0.0;
@@ -378,17 +404,20 @@ void Scope::explore_on_path_activate(Problem& problem,
 		double sum_impact = 0.0;
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				sum_impact += this->average_inner_scope_impacts[a_index];
+				// sum_impact += this->average_inner_scope_impacts[a_index];
+				sum_impact += 1.0;
 			}
 
 			if (this->step_types[a_index] == STEP_TYPE_STEP) {
 				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// do nothing
 				} else {
-					sum_impact += this->average_local_impacts[a_index];
+					// sum_impact += this->average_local_impacts[a_index];
+					sum_impact += 1.0;
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				sum_impact += this->average_inner_branch_impacts[a_index];
+				// sum_impact += this->average_inner_branch_impacts[a_index];
+				sum_impact += 1.0;
 			} else {
 				// this->step_types[a_index] == STEP_TYPE_FOLD
 				// do nothing
@@ -399,7 +428,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 
 		for (int a_index = 0; a_index < this->sequence_length; a_index++) {
 			if (this->is_inner_scope[a_index]) {
-				rand_val -= this->average_inner_scope_impacts[a_index];
+				// rand_val -= this->average_inner_scope_impacts[a_index];
+				rand_val -= 1.0;
 				if (rand_val <= 0.0) {
 					if (rand()%2 == 0) {
 						this->explore_type = EXPLORE_TYPE_INNER_SCOPE;
@@ -434,7 +464,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 				if (a_index == this->sequence_length-1 && !this->full_last) {
 					// do nothing
 				} else {
-					rand_val -= this->average_local_impacts[a_index];
+					// rand_val -= this->average_local_impacts[a_index];
+					rand_val -= 1.0;
 					if (rand_val <= 0.0) {
 						this->explore_type = EXPLORE_TYPE_NEW;
 						this->explore_is_try = true;
@@ -459,7 +490,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 					}
 				}
 			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				rand_val -= this->average_inner_branch_impacts[a_index];
+				// rand_val -= this->average_inner_branch_impacts[a_index];
+				rand_val -= 1.0;
 				if (rand_val <= 0.0) {
 					// Note: don't worry about explore after branch as there's either inner scope in-between, or an action performed first
 					if (rand()%2 == 0) {
@@ -585,8 +617,13 @@ void Scope::explore_on_path_activate(Problem& problem,
 					if (this->explore_is_try) {
 						// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
 
+						// don't worry about backpropping confidence
+						this->confidence_networks[a_index]->activate_small(local_s_input_vals,
+																		   local_state_vals);
+						double predicted_misguess = abs(scale_factor)*this->confidence_networks[a_index]->output->acti_vals[0];
+
 						run_status.existing_score = existing_score;
-						run_status.score_variance = this->score_variance;
+						run_status.predicted_misguess = predicted_misguess;
 
 						run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
@@ -700,8 +737,8 @@ void Scope::explore_on_path_activate(Problem& problem,
 					&& this->explore_type == EXPLORE_TYPE_NEW) {
 				if (this->explore_is_try) {
 					run_status.existing_score = branch_history->best_score;
+					run_status.predicted_misguess = branch_history->best_predicted_misguess;
 					delete branch_history;
-					run_status.score_variance = this->score_variance;
 
 					run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
 
@@ -1047,6 +1084,15 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 				explore_branch();
 			} else if (explore_signal == EXPLORE_SIGNAL_CLEAN) {
 				this->explore_type = EXPLORE_TYPE_NONE;
+				this->explore_is_try = true;
+				this->explore_curr_try = 0;
+				this->explore_target_tries = 1;
+				// int rand_scale = rand()%5;
+				int rand_scale = 1;
+				for (int i = 0; i < rand_scale; i++) {
+					this->explore_target_tries *= 10;
+				}
+				this->best_explore_surprise = 0.0;
 				delete this->explore_fold;
 				this->explore_fold = NULL;
 			}
@@ -1796,6 +1842,13 @@ void Scope::update_activate(Problem& problem,
 				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
 				predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
 
+				FoldNetworkHistory* confidence_network_history = new FoldNetworkHistory(this->confidence_networks[a_index]);
+				this->confidence_networks[a_index]->activate_small(local_s_input_vals,
+																   local_state_vals,
+																   confidence_network_history);
+				history->confidence_network_histories[a_index] = confidence_network_history;
+				history->confidence_network_outputs[a_index] = this->confidence_networks[a_index]->output->acti_vals[0];
+
 				if (this->active_compress[a_index]) {
 					this->compress_networks[a_index]->activate_small(local_s_input_vals,
 																	 local_state_vals);
@@ -1836,6 +1889,13 @@ void Scope::update_activate(Problem& problem,
 			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
 			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
 			// predicted_score updated in fold
+
+			FoldNetworkHistory* confidence_network_history = new FoldNetworkHistory(this->confidence_networks[a_index]);
+			this->confidence_networks[a_index]->activate_small(local_s_input_vals,
+															   local_state_vals,
+															   confidence_network_history);
+			history->confidence_network_histories[a_index] = confidence_network_history;
+			history->confidence_network_outputs[a_index] = this->confidence_networks[a_index]->output->acti_vals[0];
 
 			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
 			this->folds[a_index]->update_activate(problem,
@@ -1885,6 +1945,13 @@ void Scope::update_backprop(double& predicted_score,
 			} else {
 				double predicted_score_error = target_val - predicted_score;
 
+				double confidence_error = abs(predicted_score_error) - abs(scale_factor)*history->confidence_network_outputs[a_index];
+				vector<double> confidence_errors{abs(scale_factor)*confidence_error};
+				this->confidence_networks[a_index]->backprop_small_weights_with_no_error_signal(
+					confidence_errors,
+					0.001,
+					history->confidence_network_histories[a_index]);
+
 				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
 
 				vector<double> score_errors{scale_factor*predicted_score_error};
@@ -1923,6 +1990,13 @@ void Scope::update_backprop(double& predicted_score,
 			// predicted_score already modified to before fold value in fold
 			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
 			double score_predicted_score_error = target_val - score_predicted_score;
+
+			double confidence_error = abs(score_predicted_score_error) - abs(scale_factor)*history->confidence_network_outputs[a_index];
+			vector<double> confidence_errors{abs(scale_factor)*confidence_error};
+			this->confidence_networks[a_index]->backprop_small_weights_with_no_error_signal(
+				confidence_errors,
+				0.001,
+				history->confidence_network_histories[a_index]);
 
 			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
 
@@ -2156,11 +2230,15 @@ void Scope::existing_update_backprop(double& predicted_score,
 	}
 }
 
-void Scope::explore_set(double surprise,
+void Scope::explore_set(double target_val,
+						double existing_score,
+						double predicted_misguess,
 						ScopeHistory* history) {
 	if (this->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
 		this->scopes[this->explore_index_inclusive]->explore_set(
-			surprise,
+			target_val,
+			existing_score,
+			predicted_misguess,
 			history->scope_histories[this->explore_index_inclusive]);
 
 		if (this->explore_is_try) {
@@ -2169,7 +2247,9 @@ void Scope::explore_set(double surprise,
 		}
 	} else if (this->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
 		this->branches[this->explore_index_inclusive]->explore_set(
-			surprise,
+			target_val,
+			existing_score,
+			predicted_misguess,
 			history->branch_histories[this->explore_index_inclusive]);
 
 		if (this->explore_is_try) {
@@ -2178,8 +2258,12 @@ void Scope::explore_set(double surprise,
 		}
 	} else {
 		// history->explore_type == EXPLORE_TYPE_NEW
-		if (surprise > this->best_explore_surprise) {
-			this->best_explore_surprise = surprise;
+		// if (predicted_misguess <= 0.0
+		// 		|| (target_val-existing_score)/predicted_misguess > this->best_explore_surprise) {
+		if (true) {
+			this->best_explore_surprise = (target_val-existing_score)/predicted_misguess;
+			this->best_explore_index_inclusive = this->explore_index_inclusive;
+			this->best_explore_end_non_inclusive = this->explore_end_non_inclusive;
 			this->best_explore_sequence_length = this->curr_explore_sequence_length;
 			this->best_explore_new_sequence_types = this->curr_explore_new_sequence_types;
 			this->best_explore_existing_scope_ids = this->curr_explore_existing_scope_ids;
@@ -2193,7 +2277,8 @@ void Scope::explore_set(double surprise,
 		this->curr_explore_new_actions.clear();
 
 		this->explore_curr_try++;
-		if (this->explore_curr_try >= this->explore_target_tries) {
+		if (predicted_misguess <= 0.0
+				|| this->explore_curr_try >= this->explore_target_tries) {
 			vector<bool> new_is_inner_scope;
 			vector<Scope*> new_scopes;
 			vector<Action> new_actions;
@@ -2247,6 +2332,7 @@ void Scope::explore_set(double surprise,
 
 			cout << "EXPLORE_SET" << endl;
 			cout << "this->best_explore_surprise: " << this->best_explore_surprise << endl;
+			cout << "this->explore_curr_try: " << this->explore_curr_try << endl;
 			cout << "new_sequence:";
 			for (int s_index = 0; s_index < this->best_explore_sequence_length; s_index++) {
 				if (this->best_explore_new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
@@ -2292,11 +2378,13 @@ void Scope::explore_clear(ScopeHistory* history) {
 		}
 	} else {
 		// history->explore_type == EXPLORE_TYPE_NEW
-		this->explore_type = EXPLORE_TYPE_NONE;
-		this->curr_explore_new_sequence_types.clear();
-		this->curr_explore_existing_scope_ids.clear();
-		this->curr_explore_existing_action_ids.clear();
-		this->curr_explore_new_actions.clear();
+		if (this->explore_is_try) {
+			this->explore_type = EXPLORE_TYPE_NONE;
+			this->curr_explore_new_sequence_types.clear();
+			this->curr_explore_existing_scope_ids.clear();
+			this->curr_explore_existing_action_ids.clear();
+			this->curr_explore_new_actions.clear();
+		}
 	}
 }
 
@@ -2385,6 +2473,11 @@ void Scope::save(ofstream& output_file) {
 				this->score_networks[a_index]->save(score_network_save_file);
 				score_network_save_file.close();
 
+				ofstream confidence_network_save_file;
+				confidence_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_confidence_" + to_string(a_index) + ".txt");
+				this->confidence_networks[a_index]->save(confidence_network_save_file);
+				confidence_network_save_file.close();
+
 				output_file << this->active_compress[a_index] << endl;
 				output_file << this->compress_new_sizes[a_index] << endl;
 				if (this->active_compress[a_index]) {
@@ -2408,6 +2501,11 @@ void Scope::save(ofstream& output_file) {
 			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
 			this->score_networks[a_index]->save(score_network_save_file);
 			score_network_save_file.close();
+
+			ofstream confidence_network_save_file;
+			confidence_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_confidence_" + to_string(a_index) + ".txt");
+			this->confidence_networks[a_index]->save(confidence_network_save_file);
+			confidence_network_save_file.close();
 
 			output_file << this->folds[a_index]->id << endl;
 
@@ -2477,7 +2575,9 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->branch_histories = vector<BranchHistory*>(scope->sequence_length, NULL);
 	this->fold_histories = vector<FoldHistory*>(scope->sequence_length, NULL);
 	this->score_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
+	this->confidence_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
 	this->score_updates = vector<double>(scope->sequence_length, 0.0);
+	this->confidence_network_outputs = vector<double>(scope->sequence_length, 0.0);
 	this->compress_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
 
 	this->explore_fold_history = NULL;
@@ -2514,6 +2614,12 @@ ScopeHistory::~ScopeHistory() {
 	for (int a_index = 0; a_index < (int)this->score_network_histories.size(); a_index++) {
 		if (this->score_network_histories[a_index] != NULL) {
 			delete this->score_network_histories[a_index];
+		}
+	}
+
+	for (int a_index = 0; a_index < (int)this->confidence_network_histories.size(); a_index++) {
+		if (this->confidence_network_histories[a_index] != NULL) {
+			delete this->confidence_network_histories[a_index];
 		}
 	}
 

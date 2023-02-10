@@ -52,7 +52,9 @@ public:
 	double* existing_average_misguess;
 
 	FoldNetwork* starting_score_network;
+	FoldNetwork* starting_confidence_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
+	FoldNetwork* combined_confidence_network;
 	Network* end_scale_mod;
 
 	int existing_noticably_better;
@@ -95,7 +97,9 @@ public:
 	FoldNetwork* test_inner_input_network;
 
 	FoldNetwork* curr_score_network;
+	FoldNetwork* curr_confidence_network;
 	FoldNetwork* test_score_network;
+	FoldNetwork* test_confidence_network;
 
 	FoldNetwork* curr_compress_network;
 	int curr_compress_num_layers;
@@ -114,6 +118,13 @@ public:
 	std::vector<int> input_layer;
 	std::vector<int> input_sizes;
 	std::vector<FoldNetwork*> input_networks;
+
+	// for saving/loading
+	std::vector<int> checkpoint_s_input_sizes;
+	std::vector<int> checkpoint_scope_sizes;
+	FoldNetwork* checkpoint_fold;
+	std::vector<FoldNetwork*> checkpoint_input_folds;
+	FoldNetwork* checkpoint_end_fold;
 
 	Fold(int num_inputs,
 		 int num_outputs,
@@ -591,7 +602,9 @@ public:
 	double existing_score;
 
 	double starting_score_update;
+	double starting_confidence_network_output;
 	double combined_score_update;
+	double combined_confidence_network_output;
 
 	FoldNetworkHistory* curr_starting_compress_network_history;
 
@@ -602,6 +615,8 @@ public:
 
 	FoldNetworkHistory* curr_score_network_history;
 	double score_update;
+	FoldNetworkHistory* curr_confidence_network_history;
+	double confidence_network_output;
 
 	FoldNetworkHistory* curr_compress_network_history;
 

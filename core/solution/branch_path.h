@@ -25,6 +25,9 @@ public:
 	int num_outputs;
 	int outer_s_input_size;
 
+	Branch* parent;
+	int parent_index;
+
 	int sequence_length;
 	// don't special case starting step in fields
 	std::vector<bool> is_inner_scope;
@@ -40,6 +43,7 @@ public:
 	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
+	std::vector<FoldNetwork*> confidence_networks;
 
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;
@@ -98,6 +102,7 @@ public:
 			   std::vector<Branch*> branches,
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
+			   std::vector<FoldNetwork*> confidence_networks,
 			   std::vector<double> average_inner_scope_impacts,
 			   std::vector<double> average_local_impacts,
 			   std::vector<double> average_inner_branch_impacts,
@@ -115,6 +120,7 @@ public:
 
 	void explore_on_path_activate(Problem& problem,
 								  double starting_score,
+								  double starting_predicted_misguess,
 								  std::vector<double>& local_s_input_vals,
 								  std::vector<double>& local_state_vals,
 								  double& predicted_score,
@@ -187,7 +193,9 @@ public:
 								  double& scale_factor_error,
 								  BranchPathHistory* history);
 
-	void explore_set(double surprise,
+	void explore_set(double target_val,
+					 double existing_score,
+					 double predicted_misguess,
 					 BranchPathHistory* history);
 	void explore_clear(BranchPathHistory* history);
 	void update_increment(BranchPathHistory* history,
@@ -215,7 +223,9 @@ public:
 	std::vector<BranchHistory*> branch_histories;
 	std::vector<FoldHistory*> fold_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
+	std::vector<FoldNetworkHistory*> confidence_network_histories;
 	std::vector<double> score_updates;
+	std::vector<double> confidence_network_outputs;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
 	FoldHistory* explore_fold_history;

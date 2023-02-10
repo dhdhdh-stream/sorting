@@ -6,7 +6,8 @@
 using namespace std;
 
 void Fold::compress_state_end() {
-	if (this->sum_error/10000 < 0.01) {
+	// if (this->sum_error/10000 < 0.01) {
+	if (rand()%2 == 0) {
 		if (this->curr_compress_network != NULL) {
 			delete this->curr_compress_network;
 		}
@@ -118,6 +119,11 @@ void Fold::compress_state_end() {
 				this->test_score_network = new FoldNetwork(this->curr_score_network);
 				this->test_score_network->subfold_index++;
 				this->test_score_network->set_s_input_size(this->curr_s_input_sizes[
+					this->test_score_network->subfold_index+1]);
+
+				this->test_confidence_network = new FoldNetwork(this->curr_confidence_network);
+				this->test_confidence_network->subfold_index++;
+				this->test_confidence_network->set_s_input_size(this->curr_s_input_sizes[
 					this->test_score_network->subfold_index+1]);
 
 				// this->curr_compress_network == NULL

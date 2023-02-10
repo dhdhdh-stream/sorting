@@ -39,10 +39,18 @@ Fold::Fold(int num_inputs,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
+	this->starting_confidence_network = new FoldNetwork(1,
+														this->outer_s_input_size,
+														vector<int>{this->num_inputs},
+														20);
 	this->combined_score_network = new FoldNetwork(1,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
 												   20);
+	this->combined_confidence_network = new FoldNetwork(1,
+														this->outer_s_input_size,
+														vector<int>{this->num_inputs},
+														20);
 	this->end_scale_mod = new Network(0, 0, 1);
 	this->end_scale_mod->output->constants[0] = 1.0;
 	
@@ -118,10 +126,16 @@ Fold::Fold(int num_inputs,
 	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
+	this->curr_confidence_network = NULL;
 	this->test_score_network = NULL;
+	this->test_confidence_network = NULL;
 
 	this->curr_compress_network = NULL;
 	this->test_compress_network = NULL;
+
+	this->checkpoint_fold = NULL;
+	this->checkpoint_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
+	this->checkpoint_end_fold = NULL;
 
 	this->state = -1;
 	this->state_iter = 0;
@@ -186,7 +200,11 @@ Fold::Fold(ifstream& input_file) {
 
 	// no need to set this->state, this->last_state, this->state_iter, this->sum_error
 
-	// this->starting_score_network, this->combined_score_network has already been passed on
+	this->starting_score_network = NULL;
+	this->starting_confidence_network = NULL;
+	this->combined_score_network = NULL;
+	this->combined_confidence_network = NULL;
+	this->end_scale_mod = NULL;
 
 	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
 		this->scope_scale_mod.push_back(NULL);
@@ -268,26 +286,36 @@ Fold::Fold(ifstream& input_file) {
 	getline(input_file, starting_compress_original_size_line);
 	this->starting_compress_original_size = stoi(starting_compress_original_size_line);
 
-	if (this->curr_starting_compress_new_size != this->starting_compress_original_size) {
+	if (this->curr_starting_compress_new_size < this->starting_compress_original_size
+			&& this->curr_starting_compress_new_size > 0) {
 		ifstream curr_starting_compress_network_save_file;
 		curr_starting_compress_network_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_starting_compress.txt");
 		this->curr_starting_compress_network = new FoldNetwork(curr_starting_compress_network_save_file);
 		curr_starting_compress_network_save_file.close();
+	} else {
+		this->curr_starting_compress_network = NULL;
 	}
 
 	this->test_starting_compress_network = NULL;
 
 	this->test_fold = NULL;
+	this->test_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
 	this->test_end_fold = NULL;
 
 	this->curr_inner_input_network = NULL;
 	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
+	this->curr_confidence_network = NULL;
 	this->test_score_network = NULL;
+	this->test_confidence_network = NULL;
 
 	this->curr_compress_network = NULL;
 	this->test_compress_network = NULL;
+
+	this->checkpoint_fold = NULL;
+	this->checkpoint_input_folds = vector<FoldNetwork*>(this->sequence_length, NULL);
+	this->checkpoint_end_fold = NULL;
 
 	restart_from_finished_step();
 }
@@ -302,8 +330,14 @@ Fold::~Fold() {
 	if (this->starting_score_network != NULL) {
 		delete this->starting_score_network;
 	}
+	if (this->starting_confidence_network != NULL) {
+		delete this->starting_confidence_network;
+	}
 	if (this->combined_score_network != NULL) {
 		delete this->combined_score_network;
+	}
+	if (this->combined_confidence_network != NULL) {
+		delete this->combined_confidence_network;
 	}
 	if (this->end_scale_mod != NULL) {
 		delete this->end_scale_mod;
@@ -366,8 +400,14 @@ Fold::~Fold() {
 	if (this->curr_score_network != NULL) {
 		delete this->curr_score_network;
 	}
+	if (this->curr_confidence_network != NULL) {
+		delete this->curr_confidence_network;
+	}
 	if (this->test_score_network != NULL) {
 		delete this->test_score_network;
+	}
+	if (this->test_confidence_network != NULL) {
+		delete this->test_confidence_network;
 	}
 
 	if (this->curr_compress_network != NULL) {
@@ -379,6 +419,20 @@ Fold::~Fold() {
 
 	for (int i_index = 0; i_index < (int)this->input_networks.size(); i_index++) {
 		delete this->input_networks[i_index];
+	}
+
+	if (this->checkpoint_fold != NULL) {
+		delete this->checkpoint_fold;
+	}
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->is_inner_scope[f_index]) {
+			if (this->checkpoint_input_folds[f_index] != NULL) {
+				delete this->checkpoint_input_folds[f_index];
+			}
+		}
+	}
+	if (this->checkpoint_end_fold != NULL) {
+		delete this->checkpoint_end_fold;
 	}
 }
 
@@ -417,7 +471,8 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	if (this->state_iter == 500000) {
+	// if (this->state_iter == 500000) {
+	if (this->state_iter == 50) {
 		double score_standard_deviation = sqrt(this->score_variance);
 		double misguess_standard_deviation = sqrt(this->misguess_variance);
 
@@ -443,10 +498,12 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
 		
 		// if recursion, only take if score better for now (and no replace)
-		if (this->new_noticably_better > 0) {
-			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-					&& this->existing_noticably_better == 0
-					&& this->is_recursive == 0) {
+		// if (this->new_noticably_better > 0) {
+		if (rand()%2 == 0) {
+			// if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+			// 		&& this->existing_noticably_better == 0
+			// 		&& this->is_recursive == 0) {
+			if (rand()%2 == 0 && this->is_recursive == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -457,16 +514,19 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
-		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-				&& this->existing_noticably_better == 0
-				&& this->is_recursive == 0) {
-			if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
+		// } else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+		// 		&& this->existing_noticably_better == 0
+		// 		&& this->is_recursive == 0) {
+		} else if (rand()%2 == 0 && this->is_recursive == 0) {
+			// if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
+			if (rand()%3 == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
-			} else if (this->sequence_length < this->existing_sequence_length
-					&& (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
+			// } else if (this->sequence_length < this->existing_sequence_length
+			// 		&& (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
+			} else if (rand()%3 == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -1062,7 +1122,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1079,7 +1140,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1090,7 +1152,8 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1107,7 +1170,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1124,7 +1188,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1142,7 +1207,8 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1197,30 +1263,30 @@ void Fold::save(ofstream& output_file) {
 		}
 	}
 
-	output_file << this->curr_s_input_sizes.size() << endl;
-	for (int l_index = 0; l_index < (int)this->curr_s_input_sizes.size(); l_index++) {
-		output_file << this->curr_s_input_sizes[l_index] << endl;
-		output_file << this->curr_scope_sizes[l_index] << endl;
+	output_file << this->checkpoint_s_input_sizes.size() << endl;
+	for (int l_index = 0; l_index < (int)this->checkpoint_s_input_sizes.size(); l_index++) {
+		output_file << this->checkpoint_s_input_sizes[l_index] << endl;
+		output_file << this->checkpoint_scope_sizes[l_index] << endl;
 	}
 
-	ofstream curr_fold_save_file;
-	curr_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_fold.txt");
-	this->curr_fold->save(curr_fold_save_file);
-	curr_fold_save_file.close();
+	ofstream checkpoint_fold_save_file;
+	checkpoint_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_fold.txt");
+	this->checkpoint_fold->save(checkpoint_fold_save_file);
+	checkpoint_fold_save_file.close();
 
 	for (int f_index = (int)this->finished_steps.size(); f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
-			ofstream curr_input_fold_save_file;
-			curr_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
-			this->curr_input_folds[f_index]->save(curr_input_fold_save_file);
-			curr_input_fold_save_file.close();
+			ofstream checkpoint_input_fold_save_file;
+			checkpoint_input_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_input_fold_" + to_string(f_index) + ".txt");
+			this->checkpoint_input_folds[f_index]->save(checkpoint_input_fold_save_file);
+			checkpoint_input_fold_save_file.close();
 		}
 	}
 
-	ofstream curr_end_fold_save_file;
-	curr_end_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_end_fold.txt");
-	this->curr_end_fold->save(curr_end_fold_save_file);
-	curr_end_fold_save_file.close();
+	ofstream checkpoint_end_fold_save_file;
+	checkpoint_end_fold_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_end_fold.txt");
+	this->checkpoint_end_fold->save(checkpoint_end_fold_save_file);
+	checkpoint_end_fold_save_file.close();
 
 	output_file << this->average_score << endl;
 	output_file << this->score_variance << endl;
@@ -1231,7 +1297,8 @@ void Fold::save(ofstream& output_file) {
 
 	output_file << this->curr_starting_compress_new_size << endl;
 	output_file << this->starting_compress_original_size << endl;
-	if (this->curr_starting_compress_new_size != this->starting_compress_original_size) {
+	if (this->curr_starting_compress_new_size < this->starting_compress_original_size
+			&& this->curr_starting_compress_new_size > 0) {
 		ofstream curr_starting_compress_network_save_file;
 		curr_starting_compress_network_save_file.open("saves/nns/fold_" + to_string(this->id) + "_curr_starting_compress.txt");
 		this->curr_starting_compress_network->save(curr_starting_compress_network_save_file);
@@ -1271,6 +1338,7 @@ FoldHistory::FoldHistory(Fold* fold) {
 	this->curr_inner_input_network_history = NULL;
 
 	this->curr_score_network_history = NULL;
+	this->curr_confidence_network_history = NULL;
 
 	this->curr_compress_network_history = NULL;
 
@@ -1305,6 +1373,9 @@ FoldHistory::~FoldHistory() {
 
 	if (this->curr_score_network_history != NULL) {
 		delete this->curr_score_network_history;
+	}
+	if (this->curr_confidence_network_history != NULL) {
+		delete this->curr_confidence_network_history;
 	}
 
 	if (this->curr_compress_network_history != NULL) {

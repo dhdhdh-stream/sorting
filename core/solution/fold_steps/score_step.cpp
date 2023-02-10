@@ -157,6 +157,8 @@ void Fold::score_step_explore_off_path_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
+	// don't worry about confidence
+
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (!this->is_inner_scope[f_index]) {
 			problem.perform_action(this->actions[f_index]);
@@ -193,12 +195,12 @@ void Fold::score_step_explore_off_path_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -334,12 +336,12 @@ void Fold::score_step_explore_off_path_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -388,6 +390,8 @@ void Fold::score_step_explore_off_path_backprop(
 			// do nothing
 		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
+
+			// don't worry about confidence
 
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
@@ -688,6 +692,8 @@ void Fold::score_step_existing_flat_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
+	// don't worry about confidence
+
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (!this->is_inner_scope[f_index]) {
 			problem.perform_action(this->actions[f_index]);
@@ -718,12 +724,12 @@ void Fold::score_step_existing_flat_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -845,12 +851,12 @@ void Fold::score_step_existing_flat_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -896,6 +902,8 @@ void Fold::score_step_existing_flat_backprop(
 				&& history->exit_index == (int)this->finished_steps.size()) {
 			// do nothing
 		} else {
+			// don't worry about confidence
+
 			scale_factor_error += history->score_update*predicted_score_error;
 
 			vector<double> score_errors{scale_factor*predicted_score_error};
@@ -1177,6 +1185,19 @@ void Fold::score_step_update_activate(
 		}
 	}
 
+	if ((int)state_vals[0].size() != this->curr_scope_sizes[0]) {
+		cout << "HERE" << endl;
+		cout << "this->curr_scope_sizes:" << endl;
+		for (int s_index = 0; s_index < (int)this->curr_scope_sizes.size(); s_index++) {
+			cout << s_index << ": " << this->curr_scope_sizes[s_index] << endl;
+		}
+		cout << "state_vals:" << endl;
+		for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+			cout << s_index << ": " << state_vals[s_index].size() << endl;
+		}
+		cout << "this->finished_steps.size(): " << this->finished_steps.size() << endl;
+		cout << "this->curr_starting_compress_new_size: " << this->curr_starting_compress_new_size << endl;
+	}
 	FoldNetworkHistory* curr_score_network_history = new FoldNetworkHistory(this->curr_score_network);
 	this->curr_score_network->activate_subfold(local_s_input_vals,
 											   state_vals,
@@ -1184,6 +1205,13 @@ void Fold::score_step_update_activate(
 	history->curr_score_network_history = curr_score_network_history;
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
+
+	FoldNetworkHistory* curr_confidence_network_history = new FoldNetworkHistory(this->curr_confidence_network);
+	this->curr_confidence_network->activate_subfold(local_s_input_vals,
+													state_vals,
+													curr_confidence_network_history);
+	history->curr_confidence_network_history = curr_confidence_network_history;
+	history->confidence_network_output = this->curr_confidence_network->output->acti_vals[0];
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (!this->is_inner_scope[f_index]) {
@@ -1212,12 +1240,12 @@ void Fold::score_step_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1293,10 +1321,10 @@ void Fold::score_step_update_backprop(
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[f_index]);
 
 			vector<double> mod_errors{scope_scale_factor_error};
 			this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
@@ -1316,24 +1344,41 @@ void Fold::score_step_update_backprop(
 		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
 
+			double confidence_error = abs(inner_predicted_score_error) - abs(scale_factor)*history->confidence_network_output;
+			vector<double> confidence_errors{abs(scale_factor)*confidence_error};
+			if (this->state_iter <= 110000) {
+				this->curr_confidence_network->backprop_subfold_weights_with_no_error_signal(
+					confidence_errors,
+					0.05,
+					history->curr_confidence_network_history);
+			} else if (this->state_iter <= 130000) {
+				this->curr_confidence_network->backprop_subfold_weights_with_no_error_signal(
+					confidence_errors,
+					0.01,
+					history->curr_confidence_network_history);
+			} else {
+				this->curr_confidence_network->backprop_subfold_weights_with_no_error_signal(
+					confidence_errors,
+					0.002,
+					history->curr_confidence_network_history);
+			}
+
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
 			this->sum_error += abs(inner_predicted_score_error);
 
+			vector<double> score_errors{scale_factor*inner_predicted_score_error};
 			if (this->state_iter <= 110000) {
-				vector<double> score_errors{scale_factor*inner_predicted_score_error};
 				this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
 					score_errors,
 					0.05,
 					history->curr_score_network_history);
 			} else if (this->state_iter <= 130000) {
-				vector<double> score_errors{scale_factor*inner_predicted_score_error};
 				this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
 					score_errors,
 					0.01,
 					history->curr_score_network_history);
 			} else {
-				vector<double> score_errors{scale_factor*inner_predicted_score_error};
 				this->curr_score_network->backprop_subfold_weights_with_no_error_signal(
 					score_errors,
 					0.002,
@@ -1471,12 +1516,12 @@ void Fold::score_step_existing_update_activate(
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->scopes[this->finished_steps.size()]);
 		this->scopes[this->finished_steps.size()]->existing_update_activate(problem,
-																					  scope_input,
-																					  scope_output,
-																					  predicted_score,
-																					  scale_factor,
-																					  run_status,
-																					  scope_history);
+																			scope_input,
+																			scope_output,
+																			predicted_score,
+																			scale_factor,
+																			run_status,
+																			scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
 		scale_factor /= scope_scale_mod_val;
@@ -1501,6 +1546,8 @@ void Fold::score_step_existing_update_activate(
 											   state_vals);
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
+
+	// don't worry about confidence
 
 	for (int f_index = (int)this->finished_steps.size()+1; f_index < this->sequence_length; f_index++) {
 		if (!this->is_inner_scope[f_index]) {
@@ -1529,12 +1576,12 @@ void Fold::score_step_existing_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1589,10 +1636,10 @@ void Fold::score_step_existing_update_backprop(
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 

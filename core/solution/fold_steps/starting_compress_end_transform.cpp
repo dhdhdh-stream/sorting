@@ -6,7 +6,8 @@
 using namespace std;
 
 void Fold::starting_compress_end() {
-	if (this->sum_error/10000 < 0.01) {
+	// if (this->sum_error/10000 < 0.01) {
+	if (rand()%2 == 0) {
 		this->curr_starting_compress_new_size = this->test_starting_compress_new_size;
 
 		// no change to this->curr_s_input_sizes
@@ -36,8 +37,8 @@ void Fold::starting_compress_end() {
 			// if this->scopes[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 			if (this->is_inner_scope[0]) {
-				this->curr_inner_input_network = this->curr_input_folds[0];
-				this->curr_input_folds[0] = NULL;
+				// don't move/delete this->curr_input_folds[0] for saving/loading
+				this->curr_inner_input_network = new FoldNetwork(this->curr_input_folds[0]);
 			}
 
 			if (!this->is_inner_scope[0]) {
@@ -67,6 +68,10 @@ void Fold::starting_compress_end() {
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
 													   20);
+			this->curr_confidence_network = new FoldNetwork(1,
+															this->curr_s_input_sizes[0],
+															this->curr_scope_sizes,
+															20);
 
 			cout << "STARTING_COMPRESS success" << endl;
 			cout << "ending STARTING_COMPRESS" << endl;
@@ -134,8 +139,8 @@ void Fold::starting_compress_end() {
 		// if this->is_inner_scope[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 		if (this->is_inner_scope[0]) {
-			this->curr_inner_input_network = this->curr_input_folds[0];
-			this->curr_input_folds[0] = NULL;
+			// don't move/delete this->curr_input_folds[0] for saving/loading
+			this->curr_inner_input_network = new FoldNetwork(this->curr_input_folds[0]);
 		}
 
 		if (!this->is_inner_scope[0]) {
@@ -165,6 +170,10 @@ void Fold::starting_compress_end() {
 												   this->curr_s_input_sizes[0],
 												   this->curr_scope_sizes,
 												   20);
+		this->curr_confidence_network = new FoldNetwork(1,
+														this->curr_s_input_sizes[0],
+														this->curr_scope_sizes,
+														20);
 
 		cout << "STARTING_COMPRESS fail" << endl;
 		cout << "ending STARTING_COMPRESS" << endl;

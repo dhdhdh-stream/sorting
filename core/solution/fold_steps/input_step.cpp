@@ -174,6 +174,8 @@ void Fold::input_step_explore_off_path_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
+	// don't worry about confidence
+
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
 			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
@@ -247,12 +249,12 @@ void Fold::input_step_explore_off_path_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -388,12 +390,12 @@ void Fold::input_step_explore_off_path_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -541,7 +543,9 @@ void Fold::input_step_explore_off_path_backprop(
 			}
 
 			double inner_predicted_score_error = target_val - predicted_score;
-			
+
+			// don't worry about confidence
+
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*inner_predicted_score_error};
@@ -874,6 +878,8 @@ void Fold::input_step_existing_flat_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
+	// don't worry about confidence
+
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
 			FoldNetworkHistory* curr_compress_network_history = new FoldNetworkHistory(this->curr_compress_network);
@@ -936,12 +942,12 @@ void Fold::input_step_existing_flat_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+														  scope_input,
+														  scope_output,
+														  predicted_score,
+														  scale_factor,
+														  run_status,
+														  scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1063,12 +1069,12 @@ void Fold::input_step_existing_flat_backprop(
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+														  scope_output_errors,
+														  predicted_score,
+														  predicted_score_error,
+														  scale_factor,
+														  scope_scale_factor_error,
+														  history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -1212,6 +1218,8 @@ void Fold::input_step_existing_flat_backprop(
 					}
 				}
 			}
+
+			// don't worry about confidence
 
 			scale_factor_error += history->score_update*predicted_score_error;
 
@@ -1490,12 +1498,12 @@ void Fold::input_step_update_activate(
 		vector<double> scope_output;
 		ScopeHistory* scope_history = new ScopeHistory(this->scopes[this->finished_steps.size()]);
 		this->scopes[this->finished_steps.size()]->update_activate(problem,
-																			 scope_input,
-																			 scope_output,
-																			 predicted_score,
-																			 scale_factor,
-																			 run_status,
-																			 scope_history);
+																   scope_input,
+																   scope_output,
+																   predicted_score,
+																   scale_factor,
+																   run_status,
+																   scope_history);
 		history->scope_histories[this->finished_steps.size()] = scope_history;
 
 		scale_factor /= scope_scale_mod_val;
@@ -1578,6 +1586,46 @@ void Fold::input_step_update_activate(
 	}
 
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
+
+	FoldNetworkHistory* confidence_network_history = new FoldNetworkHistory(this->curr_confidence_network);
+	this->curr_confidence_network->activate_subfold(s_input_vals[this->curr_confidence_network->subfold_index+1],
+													state_vals,
+													confidence_network_history);
+	history->curr_confidence_network_history = confidence_network_history;
+	history->confidence_network_output =this->curr_confidence_network->output->acti_vals[0];
+
+	this->test_confidence_network->activate_subfold(s_input_vals[this->test_confidence_network->subfold_index+1],
+													state_vals);
+
+	double confidence_error = this->curr_confidence_network->output->acti_vals[0] - this->test_confidence_network->output->acti_vals[0];
+	this->sum_error += confidence_error*confidence_error;
+	vector<double> confidence_errors{confidence_error};
+	if (this->input_networks.size() > 0) {
+		if (this->state_iter <= 130000) {
+			this->test_confidence_network->backprop_subfold_new_s_input(
+				confidence_errors,
+				0.01);
+		} else {
+			this->test_confidence_network->backprop_subfold_new_s_input(
+				confidence_errors,
+				0.002);
+		}
+		int initial_size = (int)this->test_confidence_network->s_input_input->errors.size() - this->input_sizes.back();
+		for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
+			input_errors[s_index] = this->test_confidence_network->s_input_input->errors[initial_size+s_index];
+			this->test_confidence_network->s_input_input->errors[initial_size+s_index] = 0.0;
+		}
+	} else {
+		if (this->state_iter <= 130000) {
+			this->test_confidence_network->backprop_subfold_weights_with_no_error_signal(
+				confidence_errors,
+				0.01);
+		} else {
+			this->test_confidence_network->backprop_subfold_weights_with_no_error_signal(
+				confidence_errors,
+				0.002);
+		}
+	}
 
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
@@ -1688,12 +1736,12 @@ void Fold::input_step_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -1790,6 +1838,13 @@ void Fold::input_step_update_backprop(
 			// do nothing
 		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
+
+			double confidence_error = abs(inner_predicted_score_error) - abs(scale_factor)*history->confidence_network_output;
+			vector<double> confidence_errors{abs(scale_factor)*confidence_error};
+			this->curr_confidence_network->backprop_subfold_weights_with_no_error_signal(
+				confidence_errors,
+				0.001,
+				history->curr_confidence_network_history);
 
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
@@ -1971,6 +2026,8 @@ void Fold::input_step_existing_update_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
+	// don't worry about confidence
+
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
 			this->curr_compress_network->activate_subfold(s_input_vals[this->curr_compress_network->subfold_index+1],
@@ -2027,12 +2084,12 @@ void Fold::input_step_existing_update_activate(
 			vector<double> scope_output;
 			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
 			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+															scope_input,
+															scope_output,
+															predicted_score,
+															scale_factor,
+															run_status,
+															scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -2087,10 +2144,10 @@ void Fold::input_step_existing_update_backprop(
 
 			double scope_scale_factor_error = 0.0;
 			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+															predicted_score_error,
+															scale_factor,
+															scope_scale_factor_error,
+															history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
