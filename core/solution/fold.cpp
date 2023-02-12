@@ -16,7 +16,13 @@ Fold::Fold(int num_inputs,
 		   vector<Action> actions,
 		   int existing_sequence_length,
 		   double* existing_average_score,
-		   double* existing_average_misguess) {
+		   double* existing_score_variance,
+		   double* existing_average_misguess,
+		   double* existing_misguess_variance,
+		   std::vector<double> seed_local_s_input_vals,
+		   std::vector<double> seed_local_state_vals,
+		   double seed_start_score,
+		   double seed_target_val) {
 	solution->id_counter_mtx.lock();
 	this->id = solution->id_counter;
 	solution->id_counter++;
@@ -33,24 +39,20 @@ Fold::Fold(int num_inputs,
 
 	this->existing_sequence_length = existing_sequence_length;
 	this->existing_average_score = existing_average_score;
+	this->existing_score_variance = existing_score_variance;
 	this->existing_average_misguess = existing_average_misguess;
+	this->existing_misguess_variance = existing_misguess_variance;
+	this->existing_average_predicted_score = 0.0;
+	this->existing_predicted_score_variance = 0.0;
 
 	this->starting_score_network = new FoldNetwork(1,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
-												   20);
-	this->starting_confidence_network = new FoldNetwork(1,
-														this->outer_s_input_size,
-														vector<int>{this->num_inputs},
-														20);
+												   50);
 	this->combined_score_network = new FoldNetwork(1,
 												   this->outer_s_input_size,
 												   vector<int>{this->num_inputs},
-												   20);
-	this->combined_confidence_network = new FoldNetwork(1,
-														this->outer_s_input_size,
-														vector<int>{this->num_inputs},
-														20);
+												   50);
 	this->end_scale_mod = new Network(0, 0, 1);
 	this->end_scale_mod->output->constants[0] = 1.0;
 	
@@ -62,6 +64,11 @@ Fold::Fold(int num_inputs,
 	this->score_variance = 0.0;
 	this->average_misguess = 0.0;
 	this->misguess_variance = 0.0;
+
+	this->seed_local_s_input_vals = seed_local_s_input_vals;
+	this->seed_local_state_vals = seed_local_state_vals;
+	this->seed_start_score = seed_start_score;
+	this->seed_target_val = seed_target_val;
 
 	this->scope_scale_mod = vector<Network*>(this->sequence_length, NULL);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -126,9 +133,7 @@ Fold::Fold(int num_inputs,
 	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
-	this->curr_confidence_network = NULL;
 	this->test_score_network = NULL;
-	this->test_confidence_network = NULL;
 
 	this->curr_compress_network = NULL;
 	this->test_compress_network = NULL;
@@ -201,9 +206,7 @@ Fold::Fold(ifstream& input_file) {
 	// no need to set this->state, this->last_state, this->state_iter, this->sum_error
 
 	this->starting_score_network = NULL;
-	this->starting_confidence_network = NULL;
 	this->combined_score_network = NULL;
-	this->combined_confidence_network = NULL;
 	this->end_scale_mod = NULL;
 
 	for (int f_index = 0; f_index < (int)this->finished_steps.size(); f_index++) {
@@ -306,9 +309,7 @@ Fold::Fold(ifstream& input_file) {
 	this->test_inner_input_network = NULL;
 
 	this->curr_score_network = NULL;
-	this->curr_confidence_network = NULL;
 	this->test_score_network = NULL;
-	this->test_confidence_network = NULL;
 
 	this->curr_compress_network = NULL;
 	this->test_compress_network = NULL;
@@ -330,14 +331,8 @@ Fold::~Fold() {
 	if (this->starting_score_network != NULL) {
 		delete this->starting_score_network;
 	}
-	if (this->starting_confidence_network != NULL) {
-		delete this->starting_confidence_network;
-	}
 	if (this->combined_score_network != NULL) {
 		delete this->combined_score_network;
-	}
-	if (this->combined_confidence_network != NULL) {
-		delete this->combined_confidence_network;
 	}
 	if (this->end_scale_mod != NULL) {
 		delete this->end_scale_mod;
@@ -400,14 +395,8 @@ Fold::~Fold() {
 	if (this->curr_score_network != NULL) {
 		delete this->curr_score_network;
 	}
-	if (this->curr_confidence_network != NULL) {
-		delete this->curr_confidence_network;
-	}
 	if (this->test_score_network != NULL) {
 		delete this->test_score_network;
-	}
-	if (this->test_confidence_network != NULL) {
-		delete this->test_confidence_network;
 	}
 
 	if (this->curr_compress_network != NULL) {
@@ -471,10 +460,9 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 	// explore_increment
 	this->state_iter++;
-	// if (this->state_iter == 500000) {
-	if (this->state_iter == 50) {
-		double score_standard_deviation = sqrt(this->score_variance);
-		double misguess_standard_deviation = sqrt(this->misguess_variance);
+	if (this->state_iter == 500000) {
+		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
 
 		double replace_improvement = this->average_score - *this->existing_average_score;
 		cout << "this->average_score: " << this->average_score << endl;
@@ -496,14 +484,15 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 
 		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
 		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
-		
+
+		// TODO: if a sequence has lower misguess, could be valuable to keep even with lower score and build from it instead?
+		// TODO: but will take analysis to determine if it has any spots which are better, so might not be worth?
+
 		// if recursion, only take if score better for now (and no replace)
-		// if (this->new_noticably_better > 0) {
-		if (rand()%2 == 0) {
-			// if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-			// 		&& this->existing_noticably_better == 0
-			// 		&& this->is_recursive == 0) {
-			if (rand()%2 == 0 && this->is_recursive == 0) {
+		if (this->new_noticably_better > 0) {
+			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+					&& this->existing_noticably_better == 0
+					&& this->is_recursive == 0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -514,19 +503,17 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
-		// } else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
-		// 		&& this->existing_noticably_better == 0
-		// 		&& this->is_recursive == 0) {
-		} else if (rand()%2 == 0 && this->is_recursive == 0) {
-			// if (misguess_improvement > 0.0 && misguess_improvement_t_value > 2.576) {
-			if (rand()%3 == 0) {
+		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+				&& this->existing_noticably_better == 0
+				&& this->is_recursive == 0) {
+			if (misguess_improvement_t_value > 2.576) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
-			// } else if (this->sequence_length < this->existing_sequence_length
-			// 		&& (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
-			} else if (rand()%3 == 0) {
+			} else if (this->sequence_length < this->existing_sequence_length
+					// && (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
+					&& misguess_improvement >= 0.0) {
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
@@ -1122,8 +1109,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			starting_compress_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1140,8 +1126,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			inner_scope_input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1152,8 +1137,7 @@ void Fold::fold_increment() {
 			}
 		}
 	} else if (this->state == STATE_SCORE) {
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			score_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1170,8 +1154,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			compress_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1188,8 +1171,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			compress_scope_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1207,8 +1189,7 @@ void Fold::fold_increment() {
 			this->new_state_factor = 1;
 		}
 
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			input_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -1338,7 +1319,6 @@ FoldHistory::FoldHistory(Fold* fold) {
 	this->curr_inner_input_network_history = NULL;
 
 	this->curr_score_network_history = NULL;
-	this->curr_confidence_network_history = NULL;
 
 	this->curr_compress_network_history = NULL;
 
@@ -1373,9 +1353,6 @@ FoldHistory::~FoldHistory() {
 
 	if (this->curr_score_network_history != NULL) {
 		delete this->curr_score_network_history;
-	}
-	if (this->curr_confidence_network_history != NULL) {
-		delete this->curr_confidence_network_history;
 	}
 
 	if (this->curr_compress_network_history != NULL) {

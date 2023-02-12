@@ -12,10 +12,8 @@ Branch::Branch(int num_inputs,
 			   int num_outputs,
 			   int outer_s_input_size,
 			   FoldNetwork* combined_score_network,
-			   FoldNetwork* combined_confidence_network,
 			   bool passed_combined,
 			   vector<FoldNetwork*> score_networks,
-			   vector<FoldNetwork*> confidence_networks,
 			   vector<bool> is_branch,
 			   vector<BranchPath*> branches,
 			   vector<Fold*> folds,
@@ -30,11 +28,9 @@ Branch::Branch(int num_inputs,
 	this->outer_s_input_size = outer_s_input_size;
 
 	this->combined_score_network = combined_score_network;
-	this->combined_confidence_network = combined_confidence_network;
 	this->passed_combined = passed_combined;
 
 	this->score_networks = score_networks;
-	this->confidence_networks = confidence_networks;
 	this->is_branch = is_branch;
 	this->branches = branches;
 	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
@@ -75,14 +71,8 @@ Branch::Branch(ifstream& input_file) {
 		combined_score_network_save_file.open("saves/branch_" + to_string(this->id) + "_combined_score.txt");
 		this->combined_score_network = new FoldNetwork(combined_score_network_save_file);
 		combined_score_network_save_file.close();
-
-		ifstream combined_confidence_network_save_file;
-		combined_confidence_network_save_file.open("saves/branch_" + to_string(this->id) + "_combined_confidence.txt");
-		this->combined_confidence_network = new FoldNetwork(combined_confidence_network_save_file);
-		combined_confidence_network_save_file.close();
 	} else {
 		this->combined_score_network = NULL;
-		this->combined_confidence_network = NULL;
 	}
 
 	string branches_size_line;
@@ -94,11 +84,6 @@ Branch::Branch(ifstream& input_file) {
 		score_network_save_file.open("saves/branch_" + to_string(this->id) + "_score_" + to_string(b_index) + ".txt");
 		this->score_networks.push_back(new FoldNetwork(score_network_save_file));
 		score_network_save_file.close();
-
-		ifstream confidence_network_save_file;
-		confidence_network_save_file.open("saves/branch_" + to_string(this->id) + "_confidence_" + to_string(b_index) + ".txt");
-		this->confidence_networks.push_back(new FoldNetwork(confidence_network_save_file));
-		confidence_network_save_file.close();
 
 		string is_branch_line;
 		getline(input_file, is_branch_line);
@@ -144,13 +129,8 @@ Branch::~Branch() {
 		delete this->combined_score_network;
 	}
 
-	if (this->combined_confidence_network != NULL) {
-		delete this->combined_confidence_network;
-	}
-
 	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
 		delete this->score_networks[b_index];
-		delete this->confidence_networks[b_index];
 
 		if (this->branches[b_index] != NULL) {
 			delete this->branches[b_index];
@@ -169,34 +149,27 @@ void Branch::explore_on_path_activate_score(vector<double>& local_s_input_vals,
 											BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	double best_predicted_misguess = 0.0;
 	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
 		if (this->is_branch[b_index]) {
 			this->score_networks[b_index]->activate_small(local_s_input_vals,
 														  local_state_vals);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
-			this->confidence_networks[b_index]->activate_small(local_s_input_vals,
-															   local_state_vals);
-			double curr_predicted_misguess = abs(scale_factor)*this->confidence_networks[b_index]->output->acti_vals[0];
-
 			bool branch_avail = true;
-			// if (this->num_travelled[b_index] < 100000) {
-			// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-			// 		branch_avail = false;
-			// 	}
-			// }
+			if (this->num_travelled[b_index] < 100000) {
+				if (randuni() < (double)this->num_travelled[b_index]/100000) {
+					branch_avail = false;
+				}
+			}
 
 			if (curr_score > best_score && branch_avail) {
 				best_score = curr_score;
 				best_index = b_index;
-				best_predicted_misguess = curr_predicted_misguess;
 			}
 		}
 	}
 	history->best_score = best_score;
 	history->best_index = best_index;
-	history->best_predicted_misguess = best_predicted_misguess;
 }
 
 void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
@@ -206,7 +179,6 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 											 BranchHistory* history) {
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	double best_predicted_misguess = 0.0;
 	if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 		if (!this->passed_combined) {
 			FoldNetworkHistory* combined_score_network_history = new FoldNetworkHistory(this->combined_score_network);
@@ -215,8 +187,6 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														 combined_score_network_history);
 			history->combined_score_network_history = combined_score_network_history;
 			history->combined_score_network_output = this->combined_score_network->output->acti_vals[0];
-
-			// don't worry about confidence
 		}
 
 		FoldNetworkHistory* best_history = NULL;
@@ -227,22 +197,16 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														  curr_history);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
-			// don't worry about backpropping confidence
-			this->confidence_networks[b_index]->activate_small(local_s_input_vals,
-															   local_state_vals);
-			double curr_predicted_misguess = abs(scale_factor)*this->confidence_networks[b_index]->output->acti_vals[0];
-
 			bool branch_avail = true;
-			// if (this->num_travelled[b_index] < 100000) {
-			// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-			// 		branch_avail = false;
-			// 	}
-			// }
+			if (this->num_travelled[b_index] < 100000) {
+				if (randuni() < (double)this->num_travelled[b_index]/100000) {
+					branch_avail = false;
+				}
+			}
 
 			if (curr_score > best_score && branch_avail) {
 				best_score = curr_score;
 				best_index = b_index;
-				best_predicted_misguess = curr_predicted_misguess;
 				if (best_history != NULL) {
 					delete best_history;
 				}
@@ -258,27 +222,21 @@ void Branch::explore_off_path_activate_score(vector<double>& local_s_input_vals,
 														  local_state_vals);
 			double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
-			this->confidence_networks[b_index]->activate_small(local_s_input_vals,
-															   local_state_vals);
-			double curr_predicted_misguess = abs(scale_factor)*this->confidence_networks[b_index]->output->acti_vals[0];
-
 			bool branch_avail = true;
-			// if (this->num_travelled[b_index] < 100000) {
-			// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-			// 		branch_avail = false;
-			// 	}
-			// }
+			if (this->num_travelled[b_index] < 100000) {
+				if (randuni() < (double)this->num_travelled[b_index]/100000) {
+					branch_avail = false;
+				}
+			}
 
 			if (curr_score > best_score && branch_avail) {
 				best_score = curr_score;
 				best_index = b_index;
-				best_predicted_misguess = curr_predicted_misguess;
 			}
 		}
 	}
 	history->best_score = best_score;
 	history->best_index = best_index;
-	history->best_predicted_misguess = best_predicted_misguess;
 }
 
 void Branch::explore_on_path_activate(Problem& problem,
@@ -384,8 +342,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 	double score_predicted_score = predicted_score + history->best_score;
 	double score_predicted_score_error = target_val - score_predicted_score;
 
-	// don't worry about confidence
-
 	double score_update = history->best_score/scale_factor;
 	scale_factor_error += score_update*score_predicted_score_error;
 
@@ -410,8 +366,6 @@ void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
 	if (!this->passed_combined) {
 		double combined_score_predicted_score = predicted_score + scale_factor*history->combined_score_network_output;
 		double combined_score_predicted_score_error = target_val - combined_score_predicted_score;
-
-		// don't worry about confidence
 
 		vector<double> combined_score_errors{scale_factor*combined_score_predicted_score_error};
 		vector<double> combined_score_s_input_output_errors;
@@ -450,11 +404,11 @@ void Branch::existing_flat_activate(Problem& problem,
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
 		bool branch_avail = true;
-		// if (this->num_travelled[b_index] < 100000) {
-		// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-		// 		branch_avail = false;
-		// 	}
-		// }
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
 
 		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
@@ -562,20 +516,11 @@ void Branch::update_activate(Problem& problem,
 													 combined_score_network_history);
 		history->combined_score_network_history = combined_score_network_history;
 		history->combined_score_network_output = this->combined_score_network->output->acti_vals[0];
-
-		FoldNetworkHistory* combined_confidence_network_history = new FoldNetworkHistory(this->combined_confidence_network);
-		this->combined_confidence_network->activate_small(local_s_input_vals,
-														  local_state_vals,
-														  combined_confidence_network_history);
-		history->combined_confidence_network_history = combined_confidence_network_history;
-		history->combined_confidence_network_output = this->combined_confidence_network->output->acti_vals[0];
 	}
 
 	double best_score = numeric_limits<double>::lowest();
 	int best_index = -1;
-	double best_predicted_misguess = 0.0;
 	FoldNetworkHistory* best_score_history = NULL;
-	FoldNetworkHistory* best_confidence_history = NULL;
 	double best_full_score = numeric_limits<double>::lowest();
 	int best_full_index = -1;
 	for (int b_index = 0; b_index < (int)this->branches.size(); b_index++) {
@@ -585,34 +530,22 @@ void Branch::update_activate(Problem& problem,
 													  curr_score_history);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
-		FoldNetworkHistory* curr_confidence_history = new FoldNetworkHistory(this->confidence_networks[b_index]);
-		this->confidence_networks[b_index]->activate_small(local_s_input_vals,
-														   local_state_vals,
-														   curr_confidence_history);
-		double curr_predicted_misguess = abs(scale_factor)*this->confidence_networks[b_index]->output->acti_vals[0];
-
 		bool branch_avail = true;
-		// if (this->num_travelled[b_index] < 100000) {
-		// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-		// 		branch_avail = false;
-		// 	}
-		// }
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
 
 		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
 			best_index = b_index;
-			best_predicted_misguess = curr_predicted_misguess;
 			if (best_score_history != NULL) {
 				delete best_score_history;
 			}
 			best_score_history = curr_score_history;
-			if (best_confidence_history != NULL) {
-				delete best_confidence_history;
-			}
-			best_confidence_history = curr_confidence_history;
 		} else {
 			delete curr_score_history;
-			delete curr_confidence_history;
 		}
 
 		if (curr_score > best_full_score) {
@@ -621,7 +554,6 @@ void Branch::update_activate(Problem& problem,
 		}
 	}
 	history->score_network_history = best_score_history;
-	history->confidence_network_history = best_confidence_history;
 
 	if (this->num_travelled[best_full_index] < 100000) {
 		this->num_travelled[best_full_index]++;
@@ -629,7 +561,6 @@ void Branch::update_activate(Problem& problem,
 
 	history->best_score = best_score;
 	history->best_index = best_index;
-	history->best_predicted_misguess = best_predicted_misguess;
 
 	if (this->is_branch[best_index]) {
 		BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[best_index]);
@@ -682,13 +613,6 @@ void Branch::update_backprop(double& predicted_score,
 	double score_predicted_score = predicted_score + history->best_score;
 	double score_predicted_score_error = target_val - score_predicted_score;
 
-	double confidence_error = abs(score_predicted_score_error) - history->best_predicted_misguess;
-	vector<double> confidence_errors{abs(scale_factor)*confidence_error};
-	this->confidence_networks[history->best_index]->backprop_small_weights_with_no_error_signal(
-		confidence_errors,
-		0.001,
-		history->confidence_network_history);
-
 	double score_update = history->best_score/scale_factor;
 	scale_factor_error += score_update*score_predicted_score_error;
 
@@ -703,13 +627,6 @@ void Branch::update_backprop(double& predicted_score,
 	if (!this->passed_combined) {
 		double combined_score_predicted_score = predicted_score + scale_factor*history->combined_score_network_output;
 		double combined_score_predicted_score_error = target_val - combined_score_predicted_score;
-
-		double combined_confidence_error = abs(combined_score_predicted_score_error) - abs(scale_factor)*history->combined_confidence_network_output;
-		vector<double> combined_confidence_errors{abs(scale_factor)*combined_confidence_error};
-		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
-			combined_confidence_errors,
-			0.001,
-			history->combined_confidence_network_history);
 
 		scale_factor_error += history->combined_score_network_output*combined_score_predicted_score_error;
 
@@ -737,14 +654,12 @@ void Branch::existing_update_activate(Problem& problem,
 													  local_state_vals);
 		double curr_score = scale_factor*this->score_networks[b_index]->output->acti_vals[0];
 
-		// don't worry about confidence
-
 		bool branch_avail = true;
-		// if (this->num_travelled[b_index] < 100000) {
-		// 	if (randuni() < (double)this->num_travelled[b_index]/100000) {
-		// 		branch_avail = false;
-		// 	}
-		// }
+		if (this->num_travelled[b_index] < 100000) {
+			if (randuni() < (double)this->num_travelled[b_index]/100000) {
+				branch_avail = false;
+			}
+		}
 
 		if (curr_score > best_score && branch_avail) {
 			best_score = curr_score;
@@ -808,7 +723,6 @@ void Branch::existing_update_backprop(double& predicted_score,
 
 void Branch::explore_set(double target_val,
 						 double existing_score,
-						 double predicted_misguess,
 						 BranchHistory* history) {
 	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
 		this->explore_ref_count++;
@@ -816,16 +730,7 @@ void Branch::explore_set(double target_val,
 
 	this->branches[history->best_index]->explore_set(target_val,
 													 existing_score,
-													 predicted_misguess,
 													 history->branch_path_history);
-}
-
-void Branch::explore_clear(BranchHistory* history) {
-	if (history == NULL) {		// might have exited off_path
-		return;
-	}
-
-	this->branches[history->best_index]->explore_clear(history->branch_path_history);
 }
 
 void Branch::update_increment(BranchHistory* history,
@@ -863,11 +768,6 @@ void Branch::save(ofstream& output_file) {
 		combined_score_network_save_file.open("saves/branch_" + to_string(this->id) + "_combined_score.txt");
 		this->combined_score_network->save(combined_score_network_save_file);
 		combined_score_network_save_file.close();
-
-		ofstream combined_confidence_network_save_file;
-		combined_confidence_network_save_file.open("saves/branch_" + to_string(this->id) + "_combined_confidence.txt");
-		this->combined_confidence_network->save(combined_confidence_network_save_file);
-		combined_confidence_network_save_file.close();
 	}
 
 	output_file << this->branches.size() << endl;
@@ -876,11 +776,6 @@ void Branch::save(ofstream& output_file) {
 		score_network_save_file.open("saves/branch_" + to_string(this->id) + "_score_" + to_string(b_index) + ".txt");
 		this->score_networks[b_index]->save(score_network_save_file);
 		score_network_save_file.close();
-
-		ofstream confidence_network_save_file;
-		confidence_network_save_file.open("saves/branch_" + to_string(this->id) + "_confidence_" + to_string(b_index) + ".txt");
-		this->confidence_networks[b_index]->save(confidence_network_save_file);
-		confidence_network_save_file.close();
 
 		output_file << this->is_branch[b_index] << endl;
 
@@ -923,10 +818,8 @@ BranchHistory::BranchHistory(Branch* branch) {
 	this->branch = branch;
 
 	this->combined_score_network_history = NULL;
-	this->combined_confidence_network_history = NULL;
 
 	this->score_network_history = NULL;
-	this->confidence_network_history = NULL;
 	this->branch_path_history = NULL;
 	this->fold_history = NULL;
 }
@@ -936,16 +829,8 @@ BranchHistory::~BranchHistory() {
 		delete this->combined_score_network_history;
 	}
 
-	if (this->combined_confidence_network_history != NULL) {
-		delete this->combined_confidence_network_history;
-	}
-
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
-	}
-
-	if (this->confidence_network_history != NULL) {
-		delete this->confidence_network_history;
 	}
 
 	if (this->branch_path_history != NULL) {

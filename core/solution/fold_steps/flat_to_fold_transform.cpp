@@ -73,11 +73,7 @@ void Fold::flat_to_fold() {
 			this->curr_score_network = new FoldNetwork(1,
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
-													   20);
-			this->curr_confidence_network = new FoldNetwork(1,
-															this->curr_s_input_sizes[0],
-															this->curr_scope_sizes,
-															20);
+													   50);
 
 			cout << "ending FLAT" << endl;
 			cout << "beginning STATE_SCORE" << endl;
@@ -99,7 +95,7 @@ void Fold::flat_to_fold() {
 					this->test_starting_compress_new_size,
 					this->curr_s_input_sizes[0],	// i.e., starting_s_input_size
 					vector<int>{this->starting_compress_original_size},
-					20);
+					50);
 			}
 
 			this->test_fold = new FoldNetwork(this->curr_fold);

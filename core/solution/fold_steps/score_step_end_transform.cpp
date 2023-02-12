@@ -46,7 +46,7 @@ void Fold::score_end() {
 			this->test_compress_network = new FoldNetwork(this->test_compress_new_size,
 														  this->curr_s_input_sizes[0],
 														  this->curr_scope_sizes,
-														  20);
+														  50);
 		}
 
 		this->test_s_input_sizes = this->curr_s_input_sizes;

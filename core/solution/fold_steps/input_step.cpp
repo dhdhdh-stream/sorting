@@ -174,8 +174,6 @@ void Fold::input_step_explore_off_path_activate(
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
-	// don't worry about confidence
-
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
 			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
@@ -544,8 +542,6 @@ void Fold::input_step_explore_off_path_backprop(
 
 			double inner_predicted_score_error = target_val - predicted_score;
 
-			// don't worry about confidence
-
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*inner_predicted_score_error};
@@ -877,8 +873,6 @@ void Fold::input_step_existing_flat_activate(
 	history->curr_score_network_history = curr_score_network_history;
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
-
-	// don't worry about confidence
 
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
@@ -1218,8 +1212,6 @@ void Fold::input_step_existing_flat_backprop(
 					}
 				}
 			}
-
-			// don't worry about confidence
 
 			scale_factor_error += history->score_update*predicted_score_error;
 
@@ -1587,46 +1579,6 @@ void Fold::input_step_update_activate(
 
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
 
-	FoldNetworkHistory* confidence_network_history = new FoldNetworkHistory(this->curr_confidence_network);
-	this->curr_confidence_network->activate_subfold(s_input_vals[this->curr_confidence_network->subfold_index+1],
-													state_vals,
-													confidence_network_history);
-	history->curr_confidence_network_history = confidence_network_history;
-	history->confidence_network_output =this->curr_confidence_network->output->acti_vals[0];
-
-	this->test_confidence_network->activate_subfold(s_input_vals[this->test_confidence_network->subfold_index+1],
-													state_vals);
-
-	double confidence_error = this->curr_confidence_network->output->acti_vals[0] - this->test_confidence_network->output->acti_vals[0];
-	this->sum_error += confidence_error*confidence_error;
-	vector<double> confidence_errors{confidence_error};
-	if (this->input_networks.size() > 0) {
-		if (this->state_iter <= 130000) {
-			this->test_confidence_network->backprop_subfold_new_s_input(
-				confidence_errors,
-				0.01);
-		} else {
-			this->test_confidence_network->backprop_subfold_new_s_input(
-				confidence_errors,
-				0.002);
-		}
-		int initial_size = (int)this->test_confidence_network->s_input_input->errors.size() - this->input_sizes.back();
-		for (int s_index = 0; s_index < this->input_sizes.back(); s_index++) {
-			input_errors[s_index] = this->test_confidence_network->s_input_input->errors[initial_size+s_index];
-			this->test_confidence_network->s_input_input->errors[initial_size+s_index] = 0.0;
-		}
-	} else {
-		if (this->state_iter <= 130000) {
-			this->test_confidence_network->backprop_subfold_weights_with_no_error_signal(
-				confidence_errors,
-				0.01);
-		} else {
-			this->test_confidence_network->backprop_subfold_weights_with_no_error_signal(
-				confidence_errors,
-				0.002);
-		}
-	}
-
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {
 			this->curr_compress_network->activate_subfold(s_input_vals[this->curr_compress_network->subfold_index+1],
@@ -1839,13 +1791,6 @@ void Fold::input_step_update_backprop(
 		} else {
 			double inner_predicted_score_error = target_val - predicted_score;
 
-			double confidence_error = abs(inner_predicted_score_error) - abs(scale_factor)*history->confidence_network_output;
-			vector<double> confidence_errors{abs(scale_factor)*confidence_error};
-			this->curr_confidence_network->backprop_subfold_weights_with_no_error_signal(
-				confidence_errors,
-				0.001,
-				history->curr_confidence_network_history);
-
 			scale_factor_error += history->score_update*inner_predicted_score_error;
 
 			vector<double> score_errors{scale_factor*inner_predicted_score_error};
@@ -2025,8 +1970,6 @@ void Fold::input_step_existing_update_activate(
 											   state_vals);
 	history->score_update = this->curr_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->curr_score_network->output->acti_vals[0];
-
-	// don't worry about confidence
 
 	if (this->curr_compress_num_layers > 0) {
 		if (this->curr_compress_new_size > 0) {

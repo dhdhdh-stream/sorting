@@ -16,7 +16,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 							  vector<int>& outer_input_sizes,
 							  vector<FoldNetwork*>& outer_input_networks,
 							  FoldNetwork*& outer_score_network,
-							  FoldNetwork*& outer_confidence_network,
 							  double& outer_average_local_impact,
 							  bool& outer_active_compress,
 							  int& outer_compress_new_size,
@@ -81,7 +80,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	vector<Fold*> scope_folds;		// initially NULL
 
 	vector<FoldNetwork*> scope_score_networks;
-	vector<FoldNetwork*> scope_confidence_networks;
 
 	vector<double> scope_average_inner_scope_impacts;
 	vector<double> scope_average_local_impacts;
@@ -150,8 +148,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 				scope_score_networks.push_back(finished_steps[n_index]->score_network);
 				finished_steps[n_index]->score_network = NULL;	// for garbage collection
-				scope_confidence_networks.push_back(finished_steps[n_index]->confidence_network);
-				finished_steps[n_index]->confidence_network = NULL;
 
 				scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 				scope_average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
@@ -172,7 +168,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 				vector<int> new_outer_input_sizes;
 				vector<FoldNetwork*> new_outer_input_networks;
 				FoldNetwork* new_outer_score_network;
-				FoldNetwork* new_outer_confidence_network;
 				double new_outer_average_local_impact;
 				bool new_outer_active_compress;
 				int new_outer_compress_new_size;
@@ -189,7 +184,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 														  new_outer_input_sizes,
 														  new_outer_input_networks,
 														  new_outer_score_network,
-														  new_outer_confidence_network,
 														  new_outer_average_local_impact,
 														  new_outer_active_compress,
 														  new_outer_compress_new_size,
@@ -227,7 +221,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 
 				if (scope_ends[s_index] == (int)finished_steps.size()-1) {
 					outer_score_network = new_outer_score_network;
-					outer_confidence_network = new_outer_confidence_network;
 					outer_average_local_impact = new_outer_average_local_impact;
 					outer_active_compress = new_outer_active_compress;
 					outer_compress_new_size = new_outer_compress_new_size;
@@ -239,7 +232,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 						new_compressed_scope_sizes.end()-1);
 
 					scope_score_networks.push_back(NULL);
-					scope_confidence_networks.push_back(NULL);
 
 					// doesn't matter
 					scope_average_inner_scope_impacts.push_back(0.0);
@@ -252,7 +244,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 					scope_compress_original_sizes.push_back(-1);
 				} else {
 					scope_score_networks.push_back(new_outer_score_network);
-					scope_confidence_networks.push_back(new_outer_confidence_network);
 
 					scope_average_inner_scope_impacts.push_back(0.0);	// initialize to 0 (can't simply sum values within as may not be independent)
 					scope_average_local_impacts.push_back(new_outer_average_local_impact);
@@ -333,9 +324,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 			scope_score_networks.push_back(NULL);
 			outer_score_network = finished_steps[n_index]->score_network;
 			finished_steps[n_index]->score_network = NULL;	// for garbage collection
-			scope_confidence_networks.push_back(NULL);
-			outer_confidence_network = finished_steps[n_index]->confidence_network;
-			finished_steps[n_index]->confidence_network = NULL;
 
 			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 			scope_average_local_impacts.push_back(0.0);	// doesn't matter
@@ -362,8 +350,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 		} else {
 			scope_score_networks.push_back(finished_steps[n_index]->score_network);
 			finished_steps[n_index]->score_network = NULL;	// for garbage collection
-			scope_confidence_networks.push_back(finished_steps[n_index]->confidence_network);
-			finished_steps[n_index]->confidence_network = NULL;
 
 			scope_average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 			scope_average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
@@ -392,7 +378,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 					  scope_branches,
 					  scope_folds,
 					  scope_score_networks,
-					  scope_confidence_networks,
 					  scope_average_inner_scope_impacts,
 					  scope_average_local_impacts,
 					  scope_average_inner_branch_impacts,
@@ -425,7 +410,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				  vector<Branch*>& branches,
 				  vector<Fold*>& folds,
 				  vector<FoldNetwork*>& score_networks,
-				  vector<FoldNetwork*>& confidence_networks,
 				  vector<double>& average_inner_scope_impacts,
 				  vector<double>& average_local_impacts,
 				  vector<double>& average_inner_branch_impacts,
@@ -506,8 +490,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 
 				score_networks.push_back(finished_steps[n_index]->score_network);
 				finished_steps[n_index]->score_network = NULL;	// for garbage collection
-				confidence_networks.push_back(finished_steps[n_index]->confidence_network);
-				finished_steps[n_index]->confidence_network = NULL;
 
 				average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 				average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);
@@ -528,7 +510,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				vector<int> new_outer_input_sizes;
 				vector<FoldNetwork*> new_outer_input_networks;
 				FoldNetwork* new_outer_score_network;
-				FoldNetwork* new_outer_confidence_network;
 				double new_outer_average_local_impact;
 				bool new_outer_active_compress;
 				int new_outer_compress_new_size;
@@ -545,7 +526,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 														  new_outer_input_sizes,
 														  new_outer_input_networks,
 														  new_outer_score_network,
-														  new_outer_confidence_network,
 														  new_outer_average_local_impact,
 														  new_outer_active_compress,
 														  new_outer_compress_new_size,
@@ -573,7 +553,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 				folds.push_back(NULL);
 
 				score_networks.push_back(new_outer_score_network);
-				confidence_networks.push_back(new_outer_confidence_network);
 
 				average_inner_scope_impacts.push_back(0.0);	// initialize to 0 (can't simply sum values within as may not be independent)
 				average_local_impacts.push_back(new_outer_average_local_impact);
@@ -622,8 +601,6 @@ void fold_to_path(vector<FinishedStep*> finished_steps,
 
 		score_networks.push_back(finished_steps[n_index]->score_network);
 		finished_steps[n_index]->score_network = NULL;	// for garbage collection
-		confidence_networks.push_back(finished_steps[n_index]->confidence_network);
-		finished_steps[n_index]->confidence_network = NULL;
 
 		average_inner_scope_impacts.push_back(finished_steps[n_index]->average_inner_scope_impact);
 		average_local_impacts.push_back(finished_steps[n_index]->average_local_impact);

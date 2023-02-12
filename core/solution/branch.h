@@ -20,11 +20,9 @@ public:
 	int outer_s_input_size;
 
 	FoldNetwork* combined_score_network;
-	FoldNetwork* combined_confidence_network;
 	bool passed_combined;	// if combined taken by outer branch
 
 	std::vector<FoldNetwork*> score_networks;	// don't update predicted_score until on branch_path
-	std::vector<FoldNetwork*> confidence_networks;
 	std::vector<bool> is_branch;
 	std::vector<BranchPath*> branches;
 	std::vector<Fold*> folds;
@@ -37,10 +35,8 @@ public:
 		   int num_outputs,
 		   int outer_s_input_size,
 		   FoldNetwork* combined_score_network,
-		   FoldNetwork* combined_confidence_network,
 		   bool passed_combined,
 		   std::vector<FoldNetwork*> score_networks,
-		   std::vector<FoldNetwork*> confidence_networks,
 		   std::vector<bool> is_branch,
 		   std::vector<BranchPath*> branches,
 		   std::vector<Fold*> folds,
@@ -129,9 +125,7 @@ public:
 
 	void explore_set(double target_val,
 					 double existing_score,
-					 double predicted_misguess,
 					 BranchHistory* history);
-	void explore_clear(BranchHistory* history);
 	void update_increment(BranchHistory* history,
 						  std::vector<Fold*>& folds_to_delete);
 
@@ -154,11 +148,8 @@ public:
 
 	FoldNetworkHistory* combined_score_network_history;
 	double combined_score_network_output;
-	FoldNetworkHistory* combined_confidence_network_history;
-	double combined_confidence_network_output;
 
 	FoldNetworkHistory* score_network_history;
-	FoldNetworkHistory* confidence_network_history;
 	BranchPathHistory* branch_path_history;
 	FoldHistory* fold_history;
 

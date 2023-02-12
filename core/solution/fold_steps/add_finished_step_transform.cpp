@@ -15,7 +15,6 @@ void Fold::add_finished_step() {
 													   this->curr_inner_input_network,
 													   this->scope_scale_mod[this->finished_steps.size()],
 													   this->curr_score_network,
-													   this->curr_confidence_network,
 													   this->curr_compress_num_layers,
 													   this->curr_compress_new_size,
 													   this->curr_compress_network,
@@ -32,7 +31,6 @@ void Fold::add_finished_step() {
 	this->inner_input_input_networks.clear();
 	this->curr_inner_input_network = NULL;
 	this->curr_score_network = NULL;
-	this->curr_confidence_network = NULL;
 	this->curr_compress_network = NULL;
 	this->curr_compressed_s_input_sizes.clear();
 	this->curr_compressed_scope_sizes.clear();
@@ -83,11 +81,7 @@ void Fold::add_finished_step() {
 			this->curr_score_network = new FoldNetwork(1,
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
-													   20);
-			this->curr_confidence_network = new FoldNetwork(1,
-															this->curr_s_input_sizes[0],
-															this->curr_scope_sizes,
-															20);
+													   50);
 
 			cout << "ending STEP_ADDED" << endl;
 			cout << "beginning STATE_SCORE" << endl;
@@ -133,11 +127,7 @@ void Fold::add_finished_step() {
 				this->curr_score_network = new FoldNetwork(1,
 														   this->curr_s_input_sizes[0],
 														   this->curr_scope_sizes,
-														   20);
-				this->curr_confidence_network = new FoldNetwork(1,
-																this->curr_s_input_sizes[0],
-																this->curr_scope_sizes,
-																20);
+														   50);
 
 				cout << "ending STEP_ADDED" << endl;
 				cout << "beginning STATE_SCORE" << endl;
@@ -198,11 +188,7 @@ void Fold::restart_from_finished_step() {
 			this->curr_score_network = new FoldNetwork(1,
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
-													   20);
-			this->curr_confidence_network = new FoldNetwork(1,
-															this->curr_s_input_sizes[0],
-															this->curr_scope_sizes,
-															20);
+													   50);
 
 			this->state = STATE_SCORE;
 			this->state_iter = 0;
@@ -242,11 +228,7 @@ void Fold::restart_from_finished_step() {
 				this->curr_score_network = new FoldNetwork(1,
 														   this->curr_s_input_sizes[0],
 														   this->curr_scope_sizes,
-														   20);
-				this->curr_confidence_network = new FoldNetwork(1,
-																this->curr_s_input_sizes[0],
-																this->curr_scope_sizes,
-																20);
+														   50);
 
 				this->state = STATE_SCORE;
 				this->state_iter = 0;

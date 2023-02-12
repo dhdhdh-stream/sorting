@@ -13,6 +13,10 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 											  double& scale_factor,
 											  RunStatus& run_status,
 											  FoldHistory* history) {
+	this->existing_average_predicted_score = 0.9999*this->existing_average_predicted_score + 0.0001*existing_score;
+	double curr_existing_prediced_score_variance = (this->existing_average_predicted_score - existing_score)*(this->existing_average_predicted_score - existing_score);
+	this->existing_predicted_score_variance = 0.9999*this->existing_predicted_score_variance + 0.0001*curr_existing_prediced_score_variance;
+
 	history->existing_score = existing_score;
 
 	this->starting_score_network->activate_small(local_s_input_vals,
@@ -20,17 +24,18 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 	history->starting_score_update = this->starting_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->starting_score_network->output->acti_vals[0];
 
-	this->starting_confidence_network->activate_small(local_s_input_vals,
-													  local_state_vals);
-	history->starting_confidence_network_output = this->starting_confidence_network->output->acti_vals[0];
+	// if (this->state_iter > 490000) {
+	// 	if (scale_factor*this->starting_score_network->output->acti_vals[0] > existing_score) {
+	// 		cout << local_state_vals[0] << " " << local_state_vals[1] << endl;
+	// 		cout << "new: " << scale_factor*this->starting_score_network->output->acti_vals[0] << endl;
+	// 		cout << "existing: " << existing_score << endl;
+	// 		cout << endl;
+	// 	}
+	// }
 
 	this->combined_score_network->activate_small(local_s_input_vals,
 												 local_state_vals);
 	history->combined_score_update = this->combined_score_network->output->acti_vals[0];
-
-	this->combined_confidence_network->activate_small(local_s_input_vals,
-													  local_state_vals);
-	history->combined_confidence_network_output = this->combined_confidence_network->output->acti_vals[0];
 
 	vector<vector<double>> fold_input;
 	vector<vector<vector<double>>> input_fold_inputs(this->sequence_length);
@@ -129,7 +134,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	scale_factor /= end_scale_mod_val;
 
 	vector<double> end_scale_mod_errors{scale_factor_error};
-	if (this->state_iter <= 300000) {
+	if (this->state_iter <= 100000) {
 		this->end_scale_mod->backprop(end_scale_mod_errors, 0.005);
 	} else if (this->state_iter <= 400000) {
 		this->end_scale_mod->backprop(end_scale_mod_errors, 0.001);
@@ -146,23 +151,24 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 	double predicted_score_error = target_val - predicted_score;
 
+	// TODO: add normalization for inputs and look for numbers that work well in general
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
 		this->sum_error += abs(predicted_score_error);
-		if (this->state_iter <= 300000) {
-			this->curr_end_fold->backprop(local_state_errors, 0.05);
+		if (this->state_iter <= 100000) {
+			this->curr_end_fold->backprop(local_state_errors, 0.1);
 
 			vector<double> curr_fold_error{scale_factor*predicted_score_error};
-			this->curr_fold->backprop(curr_fold_error, 0.05);
+			this->curr_fold->backprop(curr_fold_error, 0.1);
 		} else if (this->state_iter <= 400000) {
-			this->curr_end_fold->backprop(local_state_errors, 0.01);
+			this->curr_end_fold->backprop(local_state_errors, 0.02);
 
 			vector<double> curr_fold_error{scale_factor*predicted_score_error};
-			this->curr_fold->backprop(curr_fold_error, 0.01);
+			this->curr_fold->backprop(curr_fold_error, 0.02);
 		} else {
-			this->curr_end_fold->backprop(local_state_errors, 0.002);
+			this->curr_end_fold->backprop(local_state_errors, 0.004);
 
 			vector<double> curr_fold_error{scale_factor*predicted_score_error};
-			this->curr_fold->backprop(curr_fold_error, 0.002);
+			this->curr_fold->backprop(curr_fold_error, 0.004);
 		}
 		// don't need to worry about s_input_errors and state_errors
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -197,13 +203,13 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 			scale_factor /= scope_scale_mod_val;
 
 			vector<double> mod_errors{scope_scale_factor_error};
-			if (this->state_iter <= 300000) {
+			if (this->state_iter <= 100000) {
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.005);
 
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.05);
 			} else if (this->state_iter <= 400000) {
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.001);
-				
+
 				this->curr_input_folds[f_index]->backprop(scope_output_errors, 0.01);
 			} else {
 				this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
@@ -222,41 +228,43 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 
 	double starting_predicted_score_error = target_val - predicted_score;
-	
-	double starting_confidence_error = abs(starting_predicted_score_error) - abs(scale_factor)*history->starting_confidence_network_output;
-	vector<double> starting_confidence_errors{abs(scale_factor)*starting_confidence_error};
-	if (this->state_iter <= 300000) {
-		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
-			starting_confidence_errors,
-			0.05);
-	} else if (this->state_iter <= 400000) {
-		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
-			starting_confidence_errors,
-			0.01);
-	} else {
-		this->starting_confidence_network->backprop_small_weights_with_no_error_signal(
-			starting_confidence_errors,
-			0.002);
-	}
-
 	vector<double> starting_score_errors{scale_factor*starting_predicted_score_error};
-	if (this->state_iter <= 300000) {
+	if (this->state_iter <= 100000) {
 		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
-			0.05);
+			0.1);
 	} else if (this->state_iter <= 400000) {
 		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
-			0.01);
+			0.02);
 	} else {
 		this->starting_score_network->backprop_small_weights_with_no_error_signal(
 			starting_score_errors,
-			0.002);
+			0.004);
 	}
 	// end of backprop so no need to modify predicted_score
 
-	if (this->state_iter >= 450000) {
-		double score_standard_deviation = sqrt(this->score_variance);
+	// occasionally train on seed to better recognize what let to this fold
+	if (this->state_iter < 200000 && rand()%20 == 0) {
+		this->starting_score_network->activate_small(this->seed_local_s_input_vals,
+													 this->seed_local_state_vals);
+		double starting_predicted_score_error = this->seed_target_val - 
+			(this->seed_start_score + scale_factor*this->starting_score_network->output->acti_vals[0]);
+		vector<double> starting_score_errors{scale_factor*starting_predicted_score_error};
+		if (this->state_iter <= 100000) {
+			this->starting_score_network->backprop_small_weights_with_no_error_signal(
+				starting_score_errors,
+				0.1);
+		} else {
+			this->starting_score_network->backprop_small_weights_with_no_error_signal(
+				starting_score_errors,
+				0.02);
+		}
+	}
+
+	if (this->state_iter >= 490000) {
+		// Note: use predicted_score_variance (as opposed to score_variance for surprise) to measure difference between predicted scores
+		double score_standard_deviation = sqrt(this->existing_predicted_score_variance);
 		double t_value = (history->existing_score - scale_factor*history->starting_score_update) / score_standard_deviation;
 		if (t_value > 1.0) {	// >75%
 			this->existing_noticably_better++;
@@ -272,35 +280,19 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		higher_branch_val = scale_factor*history->starting_score_update;
 	}
 	double combined_score_error = higher_branch_val - scale_factor*history->combined_score_update;
-	
-	double combined_confidence_error = combined_score_error - abs(scale_factor)*history->combined_confidence_network_output;
-	vector<double> combined_confidence_errors{abs(scale_factor)*combined_confidence_error};
-	if (this->state_iter <= 300000) {
-		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
-			combined_confidence_errors,
-			0.05);
-	} else if (this->state_iter <= 400000) {
-		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
-			combined_confidence_errors,
-			0.01);
-	} else {
-		this->combined_confidence_network->backprop_small_weights_with_no_error_signal(
-			combined_confidence_errors,
-			0.002);
-	}
 
 	vector<double> combined_score_errors{scale_factor*combined_score_error};
-	if (this->state_iter <= 300000) {
+	if (this->state_iter <= 100000) {
 		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
-			0.05);
+			0.1);
 	} else if (this->state_iter <= 400000) {
 		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
-			0.01);
+			0.02);
 	} else {
 		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
-			0.002);
+			0.004);
 	}
 }

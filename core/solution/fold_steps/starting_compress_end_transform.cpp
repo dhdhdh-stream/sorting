@@ -6,8 +6,7 @@
 using namespace std;
 
 void Fold::starting_compress_end() {
-	// if (this->sum_error/10000 < 0.01) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/10000 < 0.01) {
 		this->curr_starting_compress_new_size = this->test_starting_compress_new_size;
 
 		// no change to this->curr_s_input_sizes
@@ -67,11 +66,7 @@ void Fold::starting_compress_end() {
 			this->curr_score_network = new FoldNetwork(1,
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
-													   20);
-			this->curr_confidence_network = new FoldNetwork(1,
-															this->curr_s_input_sizes[0],
-															this->curr_scope_sizes,
-															20);
+													   50);
 
 			cout << "STARTING_COMPRESS success" << endl;
 			cout << "ending STARTING_COMPRESS" << endl;
@@ -93,7 +88,7 @@ void Fold::starting_compress_end() {
 					this->test_starting_compress_new_size,
 					this->curr_s_input_sizes[0],	// i.e., starting_s_input_size
 					vector<int>{this->starting_compress_original_size},
-					20);
+					50);
 			}
 
 			this->test_fold = new FoldNetwork(this->curr_fold);
@@ -169,11 +164,7 @@ void Fold::starting_compress_end() {
 		this->curr_score_network = new FoldNetwork(1,
 												   this->curr_s_input_sizes[0],
 												   this->curr_scope_sizes,
-												   20);
-		this->curr_confidence_network = new FoldNetwork(1,
-														this->curr_s_input_sizes[0],
-														this->curr_scope_sizes,
-														20);
+												   50);
 
 		cout << "STARTING_COMPRESS fail" << endl;
 		cout << "ending STARTING_COMPRESS" << endl;

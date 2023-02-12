@@ -16,8 +16,6 @@ void BranchPath::explore_replace() {
 		if (this->explore_index_inclusive != 0) {
 			delete this->score_networks[this->explore_index_inclusive];
 			this->score_networks[this->explore_index_inclusive] = NULL;
-			delete this->confidence_networks[this->explore_index_inclusive];
-			this->confidence_networks[this->explore_index_inclusive] = NULL;
 		}
 
 		if (this->active_compress[this->explore_index_inclusive]) {
@@ -35,18 +33,12 @@ void BranchPath::explore_replace() {
 	if (this->explore_index_inclusive == 0) {
 		delete this->parent->score_networks[this->parent_index];
 		this->parent->score_networks[this->parent_index] = this->explore_fold->starting_score_network;
-		delete this->parent->confidence_networks[this->parent_index];
-		this->parent->confidence_networks[this->parent_index] = this->explore_fold->starting_confidence_network;
 	} else {
 		this->score_networks[this->explore_index_inclusive] = this->explore_fold->starting_score_network;
-		this->confidence_networks[this->explore_index_inclusive] = this->explore_fold->starting_confidence_network;
 	}
 	this->explore_fold->starting_score_network = NULL;
-	this->explore_fold->starting_confidence_network = NULL;
 	delete this->explore_fold->combined_score_network;
 	this->explore_fold->combined_score_network = NULL;
-	delete this->explore_fold->combined_confidence_network;
-	this->explore_fold->combined_confidence_network = NULL;
 
 	this->folds[this->explore_index_inclusive] = this->explore_fold;
 
@@ -54,7 +46,7 @@ void BranchPath::explore_replace() {
 	this->average_local_impacts[this->explore_index_inclusive] = 0.0;	// no longer matters
 	this->average_inner_branch_impacts[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
 
-	for (int a_index = this->explore_index_inclusive+1; a_index < this->explore_end_non_inclusive; a_index++) {
+	for (int a_index = this->explore_index_inclusive+1; a_index < this->best_explore_end_non_inclusive; a_index++) {
 		if (this->is_inner_scope[a_index]) {
 			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
 				delete this->inner_input_networks[a_index][i_index];
@@ -69,7 +61,6 @@ void BranchPath::explore_replace() {
 				// scope end -- do nothing
 			} else {
 				delete this->score_networks[a_index];
-				delete this->confidence_networks[a_index];
 
 				if (this->active_compress[a_index]) {
 					delete this->compress_networks[a_index];
@@ -79,57 +70,54 @@ void BranchPath::explore_replace() {
 			delete this->branches[a_index];
 		} else {
 			delete this->score_networks[a_index];
-			delete this->confidence_networks[a_index];
 
 			delete this->folds[a_index];
 		}
 	}
 
-	this->sequence_length = this->sequence_length - (this->explore_end_non_inclusive-this->explore_index_inclusive) + 1;
+	this->sequence_length = this->sequence_length - (this->best_explore_end_non_inclusive-this->explore_index_inclusive) + 1;
 	this->is_inner_scope.erase(this->is_inner_scope.begin()+this->explore_index_inclusive+1,
-		this->is_inner_scope.begin()+this->explore_end_non_inclusive);
+		this->is_inner_scope.begin()+this->best_explore_end_non_inclusive);
 	this->scopes.erase(this->scopes.begin()+this->explore_index_inclusive+1,
-		this->scopes.begin()+this->explore_end_non_inclusive);
+		this->scopes.begin()+this->best_explore_end_non_inclusive);
 	this->actions.erase(this->actions.begin()+this->explore_index_inclusive+1,
-		this->actions.begin()+this->explore_end_non_inclusive);
+		this->actions.begin()+this->best_explore_end_non_inclusive);
 
 	this->inner_input_networks.erase(this->inner_input_networks.begin()+this->explore_index_inclusive+1,
-		this->inner_input_networks.begin()+this->explore_end_non_inclusive);
+		this->inner_input_networks.begin()+this->best_explore_end_non_inclusive);
 	this->inner_input_sizes.erase(this->inner_input_sizes.begin()+this->explore_index_inclusive+1,
-		this->inner_input_sizes.begin()+this->explore_end_non_inclusive);
+		this->inner_input_sizes.begin()+this->best_explore_end_non_inclusive);
 	this->scope_scale_mod.erase(this->scope_scale_mod.begin()+this->explore_index_inclusive+1,
-		this->scope_scale_mod.begin()+this->explore_end_non_inclusive);
+		this->scope_scale_mod.begin()+this->best_explore_end_non_inclusive);
 
 	this->step_types.erase(this->step_types.begin()+this->explore_index_inclusive+1,
-		this->step_types.begin()+this->explore_end_non_inclusive);
+		this->step_types.begin()+this->best_explore_end_non_inclusive);
 	this->branches.erase(this->branches.begin()+this->explore_index_inclusive+1,
-		this->branches.begin()+this->explore_end_non_inclusive);
+		this->branches.begin()+this->best_explore_end_non_inclusive);
 	this->folds.erase(this->folds.begin()+this->explore_index_inclusive+1,
-		this->folds.begin()+this->explore_end_non_inclusive);
+		this->folds.begin()+this->best_explore_end_non_inclusive);
 
 	this->score_networks.erase(this->score_networks.begin()+this->explore_index_inclusive+1,
-		this->score_networks.begin()+this->explore_end_non_inclusive);
-	this->confidence_networks.erase(this->confidence_networks.begin()+this->explore_index_inclusive+1,
-		this->confidence_networks.begin()+this->explore_end_non_inclusive);
+		this->score_networks.begin()+this->best_explore_end_non_inclusive);
 
 	this->average_inner_scope_impacts.erase(this->average_inner_scope_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_inner_scope_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_inner_scope_impacts.begin()+this->best_explore_end_non_inclusive);
 	this->average_local_impacts.erase(this->average_local_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_local_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_local_impacts.begin()+this->best_explore_end_non_inclusive);
 	this->average_inner_branch_impacts.erase(this->average_inner_branch_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_inner_branch_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_inner_branch_impacts.begin()+this->best_explore_end_non_inclusive);
 
 	this->active_compress.erase(this->active_compress.begin()+this->explore_index_inclusive+1,
-		this->active_compress.begin()+this->explore_end_non_inclusive);
+		this->active_compress.begin()+this->best_explore_end_non_inclusive);
 	this->compress_new_sizes.erase(this->compress_new_sizes.begin()+this->explore_index_inclusive+1,
-		this->compress_new_sizes.begin()+this->explore_end_non_inclusive);
+		this->compress_new_sizes.begin()+this->best_explore_end_non_inclusive);
 	this->compress_networks.erase(this->compress_networks.begin()+this->explore_index_inclusive+1,
-		this->compress_networks.begin()+this->explore_end_non_inclusive);
+		this->compress_networks.begin()+this->best_explore_end_non_inclusive);
 	this->compress_original_sizes.erase(this->compress_original_sizes.begin()+this->explore_index_inclusive+1,
-		this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
+		this->compress_original_sizes.begin()+this->best_explore_end_non_inclusive);
 
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
-		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
+		this->starting_state_sizes.begin()+this->best_explore_end_non_inclusive);
 
 	if (this->explore_fold->state == STATE_DONE) {
 		// sequence length 0 edge case
@@ -140,14 +128,6 @@ void BranchPath::explore_replace() {
 	}
 
 	this->explore_type = EXPLORE_TYPE_NONE;
-	this->explore_is_try = true;
-	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%5;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
-	this->best_explore_surprise = 0.0;
 	this->explore_fold = NULL;
 }
 
@@ -155,21 +135,15 @@ void BranchPath::explore_branch() {
 	cout << "BranchPath explore_branch" << endl;
 
 	if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH
-			&& this->explore_index_inclusive+1 == this->explore_end_non_inclusive) {
+			&& this->explore_index_inclusive+1 == this->best_explore_end_non_inclusive) {
 		// this->branches[this->explore_index_inclusive]->passed_branch_score == false
 		delete this->branches[this->explore_index_inclusive]->combined_score_network;
 		this->branches[this->explore_index_inclusive]->combined_score_network = this->explore_fold->combined_score_network;
 		this->explore_fold->combined_score_network = NULL;
-		delete this->branches[this->explore_index_inclusive]->combined_confidence_network;
-		this->branches[this->explore_index_inclusive]->combined_confidence_network = this->explore_fold->combined_confidence_network;
-		this->explore_fold->combined_confidence_network = NULL;
 
 		this->branches[this->explore_index_inclusive]->score_networks.push_back(
 			this->explore_fold->starting_score_network);
 		this->explore_fold->starting_score_network = NULL;
-		this->branches[this->explore_index_inclusive]->confidence_networks.push_back(
-			this->explore_fold->starting_confidence_network);
-		this->explore_fold->starting_confidence_network = NULL;
 		this->branches[this->explore_index_inclusive]->is_branch.push_back(false);
 		this->branches[this->explore_index_inclusive]->branches.push_back(NULL);
 		this->branches[this->explore_index_inclusive]->folds.push_back(this->explore_fold);
@@ -185,93 +159,88 @@ void BranchPath::explore_branch() {
 			}
 		}
 		int new_num_outputs;
-		if (this->explore_end_non_inclusive == this->sequence_length) {
+		if (this->best_explore_end_non_inclusive == this->sequence_length) {
 			new_num_outputs = this->num_outputs;
 		} else {
-			new_num_outputs = this->starting_state_sizes[this->explore_end_non_inclusive];
+			new_num_outputs = this->starting_state_sizes[this->best_explore_end_non_inclusive];
 		}
 
 		vector<bool> branch_is_inner_scope;
 		branch_is_inner_scope.push_back(false);	// start doesn't matter
 		branch_is_inner_scope.insert(branch_is_inner_scope.end(),
 			this->is_inner_scope.begin()+this->explore_index_inclusive+1,
-			this->is_inner_scope.begin()+this->explore_end_non_inclusive);
+			this->is_inner_scope.begin()+this->best_explore_end_non_inclusive);
 		vector<Scope*> branch_scopes;
 		branch_scopes.push_back(NULL);	// start doesn't matter
 		branch_scopes.insert(branch_scopes.end(),
 			this->scopes.begin()+this->explore_index_inclusive+1,
-			this->scopes.begin()+this->explore_end_non_inclusive);
+			this->scopes.begin()+this->best_explore_end_non_inclusive);
 		vector<Action> branch_actions;
 		branch_actions.push_back(Action());	// start doesn't matter
 		branch_actions.insert(branch_actions.end(),
 			this->actions.begin()+this->explore_index_inclusive+1,
-			this->actions.begin()+this->explore_end_non_inclusive);
+			this->actions.begin()+this->best_explore_end_non_inclusive);
 
 		vector<vector<FoldNetwork*>> branch_inner_input_networks;
 		branch_inner_input_networks.push_back(vector<FoldNetwork*>());	// start doesn't matter
 		branch_inner_input_networks.insert(branch_inner_input_networks.end(),
 			this->inner_input_networks.begin()+this->explore_index_inclusive+1,
-			this->inner_input_networks.begin()+this->explore_end_non_inclusive);
+			this->inner_input_networks.begin()+this->best_explore_end_non_inclusive);
 		vector<vector<int>> branch_inner_input_sizes;
 		branch_inner_input_sizes.push_back(vector<int>());	// start doesn't matter
 		branch_inner_input_sizes.insert(branch_inner_input_sizes.end(),
 			this->inner_input_sizes.begin()+this->explore_index_inclusive+1,
-			this->inner_input_sizes.begin()+this->explore_end_non_inclusive);
+			this->inner_input_sizes.begin()+this->best_explore_end_non_inclusive);
 		vector<Network*> branch_scope_scale_mod;
 		branch_scope_scale_mod.push_back(NULL);	// start doesn't matter
 		branch_scope_scale_mod.insert(branch_scope_scale_mod.end(),
 			this->scope_scale_mod.begin()+this->explore_index_inclusive+1,
-			this->scope_scale_mod.begin()+this->explore_end_non_inclusive);
+			this->scope_scale_mod.begin()+this->best_explore_end_non_inclusive);
 
 		vector<int> branch_step_types(this->step_types.begin()+this->explore_index_inclusive,
-			this->step_types.begin()+this->explore_end_non_inclusive);
+			this->step_types.begin()+this->best_explore_end_non_inclusive);
 		// set this->step_types[this->explore_index_inclusive] below
 		vector<Branch*> branch_branches(this->branches.begin()+this->explore_index_inclusive,
-			this->branches.begin()+this->explore_end_non_inclusive);
+			this->branches.begin()+this->best_explore_end_non_inclusive);
 		// set this->branches[this->explore_index_inclusive] below
 		vector<Fold*> branch_folds(this->folds.begin()+this->explore_index_inclusive,
-			this->folds.begin()+this->explore_end_non_inclusive);
+			this->folds.begin()+this->best_explore_end_non_inclusive);
 		this->folds[this->explore_index_inclusive] = NULL;
 
 		vector<FoldNetwork*> branch_score_networks;
 		branch_score_networks.push_back(NULL);	// start doesn't matter
 		branch_score_networks.insert(branch_score_networks.end(),
 			this->score_networks.begin()+this->explore_index_inclusive+1,
-			this->score_networks.begin()+this->explore_end_non_inclusive);
-		vector<FoldNetwork*> branch_confidence_networks;
-		branch_confidence_networks.push_back(NULL);
-		branch_confidence_networks.insert(branch_confidence_networks.end(),
-			this->confidence_networks.begin()+this->explore_index_inclusive+1,
-			this->confidence_networks.begin()+this->explore_end_non_inclusive);
+			this->score_networks.begin()+this->best_explore_end_non_inclusive);
 
 		vector<double> branch_average_inner_scope_impacts;
 		branch_average_inner_scope_impacts.push_back(0.0);	// start doesn't matter
 		branch_average_inner_scope_impacts.insert(branch_average_inner_scope_impacts.end(),
 			this->average_inner_scope_impacts.begin()+this->explore_index_inclusive+1,
-			this->average_inner_scope_impacts.begin()+this->explore_end_non_inclusive);
+			this->average_inner_scope_impacts.begin()+this->best_explore_end_non_inclusive);
 		// this->average_inner_scope_impacts[this->explore_index_inclusive] unchanged
 		vector<double> branch_average_local_impacts(this->average_local_impacts.begin()+this->explore_index_inclusive,
-			this->average_local_impacts.begin()+this->explore_end_non_inclusive);
+			this->average_local_impacts.begin()+this->best_explore_end_non_inclusive);
 		this->average_local_impacts[this->explore_index_inclusive] = 0.0;	// no longer matters
 		vector<double> branch_average_inner_branch_impacts(this->average_inner_branch_impacts.begin()+this->explore_index_inclusive,
-			this->average_inner_branch_impacts.begin()+this->explore_end_non_inclusive);
+			this->average_inner_branch_impacts.begin()+this->best_explore_end_non_inclusive);
 		this->average_inner_branch_impacts[this->explore_index_inclusive] = 0.0;	// initialize to 0.0
 
 		vector<bool> branch_active_compress(this->active_compress.begin()+this->explore_index_inclusive,
-			this->active_compress.begin()+this->explore_end_non_inclusive);
+			this->active_compress.begin()+this->best_explore_end_non_inclusive);
 		this->active_compress[this->explore_index_inclusive] = false;
 		vector<int> branch_compress_new_sizes(this->compress_new_sizes.begin()+this->explore_index_inclusive,
-			this->compress_new_sizes.begin()+this->explore_end_non_inclusive);
+			this->compress_new_sizes.begin()+this->best_explore_end_non_inclusive);
 		this->compress_new_sizes[this->explore_index_inclusive] = -1;
 		vector<FoldNetwork*> branch_compress_networks(this->compress_networks.begin()+this->explore_index_inclusive,
-			this->compress_networks.begin()+this->explore_end_non_inclusive);
+			this->compress_networks.begin()+this->best_explore_end_non_inclusive);
 		this->compress_networks[this->explore_index_inclusive] = NULL;
 		vector<int> branch_compress_original_sizes(this->compress_original_sizes.begin()+this->explore_index_inclusive,
-			this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
+			this->compress_original_sizes.begin()+this->best_explore_end_non_inclusive);
 		this->compress_original_sizes[this->explore_index_inclusive] = -1;
 
 		bool branch_full_last;
-		if (this->explore_end_non_inclusive == (int)this->scopes.size() && !this->full_last) {
+		if (this->best_explore_end_non_inclusive == (int)this->scopes.size() && !this->full_last) {
 			branch_full_last = false;
 		} else {
 			branch_full_last = true;
@@ -280,7 +249,7 @@ void BranchPath::explore_branch() {
 		BranchPath* new_branch_path = new BranchPath(new_num_inputs,
 													 new_num_outputs,
 													 this->outer_s_input_size,	// differs from scope
-													 this->explore_end_non_inclusive-this->explore_index_inclusive,
+													 this->best_explore_end_non_inclusive-this->explore_index_inclusive,
 													 branch_is_inner_scope,
 													 branch_scopes,
 													 branch_actions,
@@ -291,7 +260,6 @@ void BranchPath::explore_branch() {
 													 branch_branches,
 													 branch_folds,
 													 branch_score_networks,
-													 branch_confidence_networks,
 													 branch_average_inner_scope_impacts,
 													 branch_average_local_impacts,
 													 branch_average_inner_branch_impacts,
@@ -306,50 +274,34 @@ void BranchPath::explore_branch() {
 													 branch_full_last);
 
 		FoldNetwork* new_combined_score_network;
-		FoldNetwork* new_combined_confidence_network;
 		bool new_passed_combined;
 		vector<FoldNetwork*> new_score_networks;
-		vector<FoldNetwork*> new_confidence_networks;
 		if (this->explore_index_inclusive == 0) {
 			new_score_networks.push_back(this->parent->score_networks[this->parent_index]);
-			new_confidence_networks.push_back(this->parent->confidence_networks[this->parent_index]);
 
 			this->parent->score_networks[this->parent_index] = this->explore_fold->combined_score_network;
 			this->explore_fold->combined_score_network = NULL;
-			this->parent->confidence_networks[this->parent_index] = this->explore_fold->combined_confidence_network;
-			this->explore_fold->combined_confidence_network = NULL;
 
 			new_combined_score_network = NULL;
-			new_combined_confidence_network = NULL;
 			new_passed_combined = true;
 		} else if (this->step_types[this->explore_index_inclusive] == STEP_TYPE_BRANCH) {
 			new_combined_score_network = this->explore_fold->combined_score_network;
 			this->explore_fold->combined_score_network = NULL;
-			new_combined_confidence_network = this->explore_fold->combined_confidence_network;
-			this->explore_fold->combined_confidence_network = NULL;
 			new_passed_combined = false;
 
 			new_score_networks.push_back(this->branches[this->explore_index_inclusive]->combined_score_network);
 			this->branches[this->explore_index_inclusive]->combined_score_network = NULL;
-			new_confidence_networks.push_back(this->branches[this->explore_index_inclusive]->combined_confidence_network);
-			this->branches[this->explore_index_inclusive]->combined_confidence_network = NULL;
 			this->branches[this->explore_index_inclusive]->passed_combined = true;
 		} else {
 			new_combined_score_network = this->explore_fold->combined_score_network;
 			this->explore_fold->combined_score_network = NULL;
-			new_combined_confidence_network = this->explore_fold->combined_confidence_network;
-			this->explore_fold->combined_confidence_network = NULL;
 			new_passed_combined = false;
 
 			new_score_networks.push_back(this->score_networks[this->explore_index_inclusive]);
 			this->score_networks[this->explore_index_inclusive] = NULL;
-			new_confidence_networks.push_back(this->confidence_networks[this->explore_index_inclusive]);
-			this->confidence_networks[this->explore_index_inclusive] = NULL;
 		}
 		new_score_networks.push_back(this->explore_fold->starting_score_network);
 		this->explore_fold->starting_score_network = NULL;
-		new_confidence_networks.push_back(this->explore_fold->starting_confidence_network);
-		this->explore_fold->starting_confidence_network = NULL;
 
 		vector<bool> new_is_branch;
 		new_is_branch.push_back(true);
@@ -371,10 +323,8 @@ void BranchPath::explore_branch() {
 										new_num_outputs,
 										this->outer_s_input_size,	// differs from scope
 										new_combined_score_network,
-										new_combined_confidence_network,
 										new_passed_combined,
 										new_score_networks,
-										new_confidence_networks,
 										new_is_branch,
 										new_branches,
 										new_folds,
@@ -391,61 +341,51 @@ void BranchPath::explore_branch() {
 		this->branches[this->explore_index_inclusive] = new_branch;
 	}
 
-	this->sequence_length = this->sequence_length - (this->explore_end_non_inclusive-this->explore_index_inclusive) + 1;
+	this->sequence_length = this->sequence_length - (this->best_explore_end_non_inclusive-this->explore_index_inclusive) + 1;
 	this->is_inner_scope.erase(this->is_inner_scope.begin()+this->explore_index_inclusive+1,
-		this->is_inner_scope.begin()+this->explore_end_non_inclusive);
+		this->is_inner_scope.begin()+this->best_explore_end_non_inclusive);
 	this->scopes.erase(this->scopes.begin()+this->explore_index_inclusive+1,
-		this->scopes.begin()+this->explore_end_non_inclusive);
+		this->scopes.begin()+this->best_explore_end_non_inclusive);
 	this->actions.erase(this->actions.begin()+this->explore_index_inclusive+1,
-		this->actions.begin()+this->explore_end_non_inclusive);
+		this->actions.begin()+this->best_explore_end_non_inclusive);
 
 	this->inner_input_networks.erase(this->inner_input_networks.begin()+this->explore_index_inclusive+1,
-		this->inner_input_networks.begin()+this->explore_end_non_inclusive);
+		this->inner_input_networks.begin()+this->best_explore_end_non_inclusive);
 	this->inner_input_sizes.erase(this->inner_input_sizes.begin()+this->explore_index_inclusive+1,
-		this->inner_input_sizes.begin()+this->explore_end_non_inclusive);
+		this->inner_input_sizes.begin()+this->best_explore_end_non_inclusive);
 	this->scope_scale_mod.erase(this->scope_scale_mod.begin()+this->explore_index_inclusive+1,
-		this->scope_scale_mod.begin()+this->explore_end_non_inclusive);
+		this->scope_scale_mod.begin()+this->best_explore_end_non_inclusive);
 
 	this->step_types.erase(this->step_types.begin()+this->explore_index_inclusive+1,
-		this->step_types.begin()+this->explore_end_non_inclusive);
+		this->step_types.begin()+this->best_explore_end_non_inclusive);
 	this->branches.erase(this->branches.begin()+this->explore_index_inclusive+1,
-		this->branches.begin()+this->explore_end_non_inclusive);
+		this->branches.begin()+this->best_explore_end_non_inclusive);
 	this->folds.erase(this->folds.begin()+this->explore_index_inclusive+1,
-		this->folds.begin()+this->explore_end_non_inclusive);
+		this->folds.begin()+this->best_explore_end_non_inclusive);
 
 	this->score_networks.erase(this->score_networks.begin()+this->explore_index_inclusive+1,
-		this->score_networks.begin()+this->explore_end_non_inclusive);
-	this->confidence_networks.erase(this->confidence_networks.begin()+this->explore_index_inclusive+1,
-		this->confidence_networks.begin()+this->explore_end_non_inclusive);
+		this->score_networks.begin()+this->best_explore_end_non_inclusive);
 
 	this->average_inner_scope_impacts.erase(this->average_inner_scope_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_inner_scope_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_inner_scope_impacts.begin()+this->best_explore_end_non_inclusive);
 	this->average_local_impacts.erase(this->average_local_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_local_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_local_impacts.begin()+this->best_explore_end_non_inclusive);
 	this->average_inner_branch_impacts.erase(this->average_inner_branch_impacts.begin()+this->explore_index_inclusive+1,
-		this->average_inner_branch_impacts.begin()+this->explore_end_non_inclusive);
+		this->average_inner_branch_impacts.begin()+this->best_explore_end_non_inclusive);
 
 	this->active_compress.erase(this->active_compress.begin()+this->explore_index_inclusive+1,
-		this->active_compress.begin()+this->explore_end_non_inclusive);
+		this->active_compress.begin()+this->best_explore_end_non_inclusive);
 	this->compress_new_sizes.erase(this->compress_new_sizes.begin()+this->explore_index_inclusive+1,
-		this->compress_new_sizes.begin()+this->explore_end_non_inclusive);
+		this->compress_new_sizes.begin()+this->best_explore_end_non_inclusive);
 	this->compress_networks.erase(this->compress_networks.begin()+this->explore_index_inclusive+1,
-		this->compress_networks.begin()+this->explore_end_non_inclusive);
+		this->compress_networks.begin()+this->best_explore_end_non_inclusive);
 	this->compress_original_sizes.erase(this->compress_original_sizes.begin()+this->explore_index_inclusive+1,
-		this->compress_original_sizes.begin()+this->explore_end_non_inclusive);
+		this->compress_original_sizes.begin()+this->best_explore_end_non_inclusive);
 
 	this->starting_state_sizes.erase(this->starting_state_sizes.begin()+this->explore_index_inclusive+1,
-		this->starting_state_sizes.begin()+this->explore_end_non_inclusive);
+		this->starting_state_sizes.begin()+this->best_explore_end_non_inclusive);
 
 	this->explore_type = EXPLORE_TYPE_NONE;
-	this->explore_is_try = true;
-	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%5;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
-	this->best_explore_surprise = 0.0;
 	this->explore_fold = NULL;
 }
 
@@ -464,7 +404,6 @@ void BranchPath::resolve_fold(int a_index,
 	vector<Branch*> new_branches;
 	vector<Fold*> new_folds;
 	vector<FoldNetwork*> new_score_networks;
-	vector<FoldNetwork*> new_confidence_networks;
 	vector<double> new_average_inner_scope_impacts;
 	vector<double> new_average_local_impacts;
 	vector<double> new_average_inner_branch_impacts;
@@ -488,7 +427,6 @@ void BranchPath::resolve_fold(int a_index,
 				 new_branches,
 				 new_folds,
 				 new_score_networks,
-				 new_confidence_networks,
 				 new_average_inner_scope_impacts,
 				 new_average_local_impacts,
 				 new_average_inner_branch_impacts,
@@ -497,7 +435,7 @@ void BranchPath::resolve_fold(int a_index,
 				 new_compress_networks,
 				 new_compress_original_sizes);
 
-	// this->score_networks[a_index] and this->confidence_networks[a_index] already set correctly
+	// this->score_networks[a_index] already set correctly
 
 	// this->average_inner_scope_impacts[a_index] unchanged
 	this->average_local_impacts[a_index] = this->folds[a_index]->starting_average_local_impact;
@@ -542,8 +480,6 @@ void BranchPath::resolve_fold(int a_index,
 
 	this->score_networks.insert(this->score_networks.begin()+a_index+1,
 		new_score_networks.begin(), new_score_networks.end());
-	this->confidence_networks.insert(this->confidence_networks.begin()+a_index+1,
-		new_confidence_networks.begin(), new_confidence_networks.end());
 
 	this->average_inner_scope_impacts.insert(this->average_inner_scope_impacts.begin()+a_index+1,
 		new_average_inner_scope_impacts.begin(), new_average_inner_scope_impacts.end());
@@ -590,18 +526,26 @@ void BranchPath::resolve_fold(int a_index,
 	this->starting_state_sizes.insert(this->starting_state_sizes.begin()+a_index+1,
 		new_starting_state_sizes.begin(), new_starting_state_sizes.end());
 
-	if (this->explore_type != EXIT_LOCATION_NORMAL) {
+	if (this->explore_type != EXPLORE_TYPE_NONE) {
 		if (this->explore_index_inclusive > a_index) {
 			this->explore_index_inclusive += new_sequence_length;
 		}
-		if (this->explore_end_non_inclusive > a_index) {
-			this->explore_end_non_inclusive += new_sequence_length;
+		if (this->explore_type == EXPLORE_TYPE_EXPLORE
+				|| this->explore_type == EXPLORE_TYPE_FLAT) {
+			if (this->best_explore_end_non_inclusive > a_index) {
+				this->best_explore_end_non_inclusive += new_sequence_length;
+			}
 		}
 	}
 
 	folds_to_delete.push_back(this->folds[a_index]);
 	this->folds[a_index] = NULL;
 	this->step_types[a_index] = STEP_TYPE_STEP;
+
+	// ofstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->save(solution_save_file);
+	// solution_save_file.close();
 
 	ofstream display_file;
 	display_file.open("../display.txt");

@@ -43,7 +43,6 @@ public:
 	std::vector<Fold*> folds;
 
 	std::vector<FoldNetwork*> score_networks;
-	std::vector<FoldNetwork*> confidence_networks;
 
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;
@@ -64,26 +63,31 @@ public:
 	std::vector<int> starting_state_sizes;
 
 	int explore_type;
-	bool explore_is_try;
 	int explore_index_inclusive;
-	int explore_end_non_inclusive;
 
 	int explore_curr_try;
 	int explore_target_tries;
 	double best_explore_surprise;
-	int best_explore_index_inclusive;
 	int best_explore_end_non_inclusive;
 	int best_explore_sequence_length;
 	std::vector<int> best_explore_new_sequence_types;
 	std::vector<int> best_explore_existing_scope_ids;
 	std::vector<int> best_explore_existing_action_ids;
 	std::vector<Action> best_explore_new_actions;
+	std::vector<double> best_seed_local_s_input_vals;
+	std::vector<double> best_seed_local_state_vals;
+	double best_seed_start_score;
+	double best_seed_target_val;
 
+	int curr_explore_end_non_inclusive;
 	int curr_explore_sequence_length;
 	std::vector<int> curr_explore_new_sequence_types;
 	std::vector<int> curr_explore_existing_scope_ids;
 	std::vector<int> curr_explore_existing_action_ids;
 	std::vector<Action> curr_explore_new_actions;
+	std::vector<double> curr_seed_local_s_input_vals;
+	std::vector<double> curr_seed_local_state_vals;
+	double curr_seed_start_score;
 
 	Fold* explore_fold;
 	int explore_count;	// TODO: reset if too high
@@ -102,7 +106,6 @@ public:
 			   std::vector<Branch*> branches,
 			   std::vector<Fold*> folds,
 			   std::vector<FoldNetwork*> score_networks,
-			   std::vector<FoldNetwork*> confidence_networks,
 			   std::vector<double> average_inner_scope_impacts,
 			   std::vector<double> average_local_impacts,
 			   std::vector<double> average_inner_branch_impacts,
@@ -195,9 +198,7 @@ public:
 
 	void explore_set(double target_val,
 					 double existing_score,
-					 double predicted_misguess,
 					 BranchPathHistory* history);
-	void explore_clear(BranchPathHistory* history);
 	void update_increment(BranchPathHistory* history,
 						  std::vector<Fold*>& folds_to_delete);
 
@@ -223,9 +224,7 @@ public:
 	std::vector<BranchHistory*> branch_histories;
 	std::vector<FoldHistory*> fold_histories;
 	std::vector<FoldNetworkHistory*> score_network_histories;
-	std::vector<FoldNetworkHistory*> confidence_network_histories;
 	std::vector<double> score_updates;
-	std::vector<double> confidence_network_outputs;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
 	
 	FoldHistory* explore_fold_history;

@@ -41,12 +41,6 @@ void Solution::init() {
 		vector<int>{1},
 		20);
 	vector<FoldNetwork*> starting_score_networks{starting_score_network};
-	FoldNetwork* starting_confidence_network = new FoldNetwork(
-		1,
-		0,
-		vector<int>{1},
-		20);
-	vector<FoldNetwork*> starting_confidence_networks{starting_confidence_network};
 	vector<double> starting_average_inner_scope_impacts{0.0};
 	vector<double> starting_average_local_impacts{0.0};
 	vector<double> starting_average_inner_branch_impacts{0.0};
@@ -68,7 +62,6 @@ void Solution::init() {
 						   starting_branches,
 						   starting_folds,
 						   starting_score_networks,
-						   starting_confidence_networks,
 						   starting_average_inner_scope_impacts,
 						   starting_average_local_impacts,
 						   starting_average_inner_branch_impacts,
@@ -154,42 +147,67 @@ void Solution::new_sequence(int& sequence_length,
 							vector<Action>& new_actions,
 							bool can_be_empty) {
 	// Note: don't refold, and instead try longer sequences to try to unwind to find deeper connections
-	geometric_distribution<int> geo_dist(0.2);
-	if (can_be_empty) {
-		sequence_length = geo_dist(generator);
-	} else {
-		sequence_length = 1 + geo_dist(generator);
-	}
-	for (int s_index = 0; s_index < sequence_length; s_index++) {
-		if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
-			new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_SCOPE);
-			existing_scope_ids.push_back(rand()%(int)this->scope_dictionary.size());
+	// geometric_distribution<int> geo_dist(0.2);
+	// if (can_be_empty) {
+	// 	sequence_length = geo_dist(generator);
+	// 	if (sequence_length == 0) {
+	// 		if (rand()%10 != 0) {
+	// 			sequence_length++;
+	// 		}
+	// 	}
+	// } else {
+	// 	sequence_length = 1 + geo_dist(generator);
+	// }
+	// for (int s_index = 0; s_index < sequence_length; s_index++) {
+	// 	// if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
+	// 	if (false) {
+	// 		new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_SCOPE);
+	// 		existing_scope_ids.push_back(rand()%(int)this->scope_dictionary.size());
 
-			existing_action_ids.push_back(-1);
-			new_actions.push_back(Action());
-		} else {
-			// if (this->action_dictionary.size() > 0 && rand()%2 == 0) {
-			if (false) {
-				new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_ACTION);
-				existing_action_ids.push_back(rand()%(int)this->action_dictionary.size());
+	// 		existing_action_ids.push_back(-1);
+	// 		new_actions.push_back(Action());
+	// 	} else {
+	// 		// if (this->action_dictionary.size() > 0 && rand()%2 == 0) {
+	// 		if (false) {
+	// 			new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_ACTION);
+	// 			existing_action_ids.push_back(rand()%(int)this->action_dictionary.size());
 
-				existing_scope_ids.push_back(-1);
-				new_actions.push_back(Action());
-			} else {
-				new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
+	// 			existing_scope_ids.push_back(-1);
+	// 			new_actions.push_back(Action());
+	// 		} else {
+	// 			new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
 
-				normal_distribution<double> norm_dist(0.0, 1.0);
-				double write = norm_dist(generator);
+	// 			normal_distribution<double> norm_dist(0.0, 1.0);
+	// 			double write = norm_dist(generator);
 
-				int move = rand()%3;
+	// 			int move = rand()%3;
 
-				new_actions.push_back(Action(write, move));
+	// 			new_actions.push_back(Action(write, move));
 
-				existing_scope_ids.push_back(-1);
-				existing_action_ids.push_back(-1);
-			}
-		}
-	}
+	// 			existing_scope_ids.push_back(-1);
+	// 			existing_action_ids.push_back(-1);
+	// 		}
+	// 	}
+	// }
+
+	// sequence_length = 1;
+
+	// new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
+	// new_actions.push_back(Action(0.0, ACTION_RIGHT));
+	// existing_scope_ids.push_back(-1);
+	// existing_action_ids.push_back(-1);
+
+	sequence_length = 2;
+
+	new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
+	new_actions.push_back(Action(1.0, ACTION_LEFT));
+	existing_scope_ids.push_back(-1);
+	existing_action_ids.push_back(-1);
+
+	new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
+	new_actions.push_back(Action(-1.0, ACTION_RIGHT));
+	existing_scope_ids.push_back(-1);
+	existing_action_ids.push_back(-1);
 }
 
 void Solution::new_sequence_success(int sequence_length,

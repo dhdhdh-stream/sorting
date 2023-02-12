@@ -49,12 +49,19 @@ public:
 
 	int existing_sequence_length;
 	double* existing_average_score;
+	double* existing_score_variance;
 	double* existing_average_misguess;
+	double* existing_misguess_variance;
+	double existing_average_predicted_score;
+	double existing_predicted_score_variance;
+
+	std::vector<double> seed_local_s_input_vals;
+	std::vector<double> seed_local_state_vals;
+	double seed_start_score;
+	double seed_target_val;
 
 	FoldNetwork* starting_score_network;
-	FoldNetwork* starting_confidence_network;
 	FoldNetwork* combined_score_network;	// replace existing if already branch
-	FoldNetwork* combined_confidence_network;
 	Network* end_scale_mod;
 
 	int existing_noticably_better;
@@ -97,9 +104,7 @@ public:
 	FoldNetwork* test_inner_input_network;
 
 	FoldNetwork* curr_score_network;
-	FoldNetwork* curr_confidence_network;
 	FoldNetwork* test_score_network;
-	FoldNetwork* test_confidence_network;
 
 	FoldNetwork* curr_compress_network;
 	int curr_compress_num_layers;
@@ -135,7 +140,13 @@ public:
 		 std::vector<Action> actions,
 		 int existing_sequence_length,
 		 double* existing_average_score,
-		 double* existing_average_misguess);
+		 double* existing_score_variance,
+		 double* existing_average_misguess,
+		 double* existing_misguess_variance,
+		 std::vector<double> seed_local_s_input_vals,
+		 std::vector<double> seed_local_state_vals,
+		 double seed_start_score,
+		 double seed_target_val);
 	Fold(std::ifstream& input_file);
 	~Fold();
 
@@ -602,9 +613,7 @@ public:
 	double existing_score;
 
 	double starting_score_update;
-	double starting_confidence_network_output;
 	double combined_score_update;
-	double combined_confidence_network_output;
 
 	FoldNetworkHistory* curr_starting_compress_network_history;
 
@@ -615,8 +624,6 @@ public:
 
 	FoldNetworkHistory* curr_score_network_history;
 	double score_update;
-	FoldNetworkHistory* curr_confidence_network_history;
-	double confidence_network_output;
 
 	FoldNetworkHistory* curr_compress_network_history;
 

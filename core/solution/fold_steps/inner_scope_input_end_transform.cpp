@@ -6,8 +6,7 @@
 using namespace std;
 
 void Fold::inner_scope_input_end() {
-	// if (this->sum_error/10000 < 0.01
-	if (rand()%2 == 0
+	if (this->sum_error/10000 < 0.01
 			|| (this->inner_input_input_networks.size() > 0
 				&& this->inner_input_input_sizes.back() == (this->curr_s_input_sizes[this->inner_input_input_layer.back()]
 					+ this->curr_scope_sizes[this->inner_input_input_layer.back()]))) {
@@ -42,11 +41,7 @@ void Fold::inner_scope_input_end() {
 			this->curr_score_network = new FoldNetwork(1,
 													   this->curr_s_input_sizes[0],
 													   this->curr_scope_sizes,
-													   20);
-			this->curr_confidence_network = new FoldNetwork(1,
-															this->curr_s_input_sizes[0],
-															this->curr_scope_sizes,
-															20);
+													   50);
 
 			cout << "INNER_SCOPE_INPUT success" << endl;
 			cout << "ending INNER_SCOPE_INPUT" << endl;
@@ -66,7 +61,7 @@ void Fold::inner_scope_input_end() {
 				this->inner_input_input_networks.push_back(new FoldNetwork(1,
 																		   this->curr_s_input_sizes[this->test_inner_input_network->subfold_index],
 																		   vector<int>{this->curr_scope_sizes[this->test_inner_input_network->subfold_index]},
-																		   20));
+																		   50));
 				// add to curr_s_input_sizes permanently 1 at a time
 				this->curr_s_input_sizes[this->test_inner_input_network->subfold_index+1]++;
 			}
@@ -100,7 +95,7 @@ void Fold::inner_scope_input_end() {
 		this->inner_input_input_networks.push_back(new FoldNetwork(this->inner_input_input_sizes.back(),
 																   this->curr_s_input_sizes[this->test_inner_input_network->subfold_index],
 																   vector<int>{this->curr_scope_sizes[this->test_inner_input_network->subfold_index]},
-																   20));
+																   50));
 		// add to curr_s_input_sizes permanently 1 at a time
 		this->curr_s_input_sizes[this->test_inner_input_network->subfold_index+1]++;
 		this->test_inner_input_network->set_s_input_size(this->curr_s_input_sizes[

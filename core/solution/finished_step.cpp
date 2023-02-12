@@ -15,7 +15,6 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 						   FoldNetwork* inner_input_network,
 						   Network* scope_scale_mod,
 						   FoldNetwork* score_network,
-						   FoldNetwork* confidence_network,
 						   int compress_num_layers,
 						   int compress_new_size,
 						   FoldNetwork* compress_network,
@@ -41,7 +40,6 @@ FinishedStep::FinishedStep(bool is_inner_scope,
 	this->scope_scale_mod = scope_scale_mod;
 
 	this->score_network = score_network;
-	this->confidence_network = confidence_network;
 
 	this->average_inner_scope_impact = 0.0;
 	this->average_local_impact = 0.0;
@@ -130,11 +128,6 @@ FinishedStep::FinishedStep(ifstream& input_file) {
 	this->score_network = new FoldNetwork(score_network_save_file);
 	score_network_save_file.close();
 
-	ifstream confidence_network_save_file;
-	confidence_network_save_file.open("saves/nns/finished_step_" + to_string(this->id) + "_confidence.txt");
-	this->confidence_network = new FoldNetwork(confidence_network_save_file);
-	confidence_network_save_file.close();
-
 	string average_inner_scope_impact_line;
 	getline(input_file, average_inner_scope_impact_line);
 	this->average_inner_scope_impact = stof(average_inner_scope_impact_line);
@@ -215,10 +208,6 @@ FinishedStep::~FinishedStep() {
 
 	if (this->score_network != NULL) {
 		delete this->score_network;
-	}
-
-	if (this->confidence_network != NULL) {
-		delete this->confidence_network;
 	}
 
 	if (this->compress_network != NULL) {
@@ -338,8 +327,6 @@ void FinishedStep::explore_off_path_activate(Problem& problem,
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
-	// don't worry about confidence
-
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
 			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
@@ -458,8 +445,6 @@ void FinishedStep::explore_off_path_backprop(vector<vector<double>>& s_input_err
 		}
 
 		double predicted_score_error = target_val - predicted_score;
-
-		// don't worry about confidence
 
 		scale_factor_error += history->score_update*predicted_score_error;
 
@@ -663,8 +648,6 @@ void FinishedStep::existing_flat_activate(Problem& problem,
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
-	// don't worry about confidence
-
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
 			FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_network);
@@ -776,8 +759,6 @@ void FinishedStep::existing_flat_backprop(vector<vector<double>>& s_input_errors
 				}
 			}
 		}
-
-		// don't worry about confidence
 
 		scale_factor_error += history->score_update*predicted_score_error;
 
@@ -972,13 +953,6 @@ void FinishedStep::update_activate(Problem& problem,
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
-	FoldNetworkHistory* confidence_network_history = new FoldNetworkHistory(this->confidence_network);
-	this->confidence_network->activate_subfold(s_input_vals[s_input_index],
-											   state_vals,
-											   confidence_network_history);
-	history->confidence_network_history = confidence_network_history;
-	history->confidence_network_output = this->confidence_network->output->acti_vals[0];
-
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
 			this->compress_network->activate_subfold(s_input_vals[s_input_index],
@@ -1017,13 +991,6 @@ void FinishedStep::update_backprop(double& predicted_score,
 								   FinishedStepHistory* history) {
 	if (history->exit_location == EXIT_LOCATION_NORMAL) {
 		double predicted_score_error = target_val - predicted_score;
-
-		double confidence_error = abs(predicted_score_error) - abs(scale_factor)*history->confidence_network_output;
-		vector<double> confidence_errors{abs(scale_factor)*confidence_error};
-		this->confidence_network->backprop_subfold_weights_with_no_error_signal(
-			confidence_errors,
-			0.001,
-			history->confidence_network_history);
 
 		scale_factor_error += history->score_update*predicted_score_error;
 
@@ -1143,8 +1110,6 @@ void FinishedStep::existing_update_activate(Problem& problem,
 	history->score_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
-	// don't worry about confidence
-
 	if (this->compress_num_layers > 0) {
 		if (this->active_compress) {
 			this->compress_network->activate_subfold(s_input_vals[s_input_index],
@@ -1254,11 +1219,6 @@ void FinishedStep::save(ofstream& output_file) {
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
 
-	ofstream confidence_network_save_file;
-	confidence_network_save_file.open("saves/nns/finished_step_" + to_string(this->id) + "_confidence.txt");
-	this->confidence_network->save(confidence_network_save_file);
-	confidence_network_save_file.close();
-
 	output_file << this->average_inner_scope_impact << endl;
 	output_file << this->average_local_impact << endl;
 
@@ -1298,7 +1258,6 @@ FinishedStepHistory::FinishedStepHistory(FinishedStep* finished_step) {
 	this->scope_history = NULL;
 
 	this->score_network_history = NULL;
-	this->confidence_network_history = NULL;
 
 	this->compress_network_history = NULL;
 
@@ -1320,10 +1279,6 @@ FinishedStepHistory::~FinishedStepHistory() {
 
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
-	}
-
-	if (this->confidence_network_history != NULL) {
-		delete this->confidence_network_history;
 	}
 
 	if (this->compress_network_history != NULL) {

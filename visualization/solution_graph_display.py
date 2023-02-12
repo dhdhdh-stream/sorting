@@ -169,11 +169,13 @@ def pretty_print_action(action):
 	result = '('
 	result += "{:.2f}".format(action[0])
 	result += ', '
-	if action[1] == 0:
+	if action[1] == -1:
+		result += 'START'
+	elif action[1] == 0:
 		result += 'LEFT'
 	elif action[1] == 1:
 		result += 'STAY'
-	else:
+	elif action[1] == 2:
 		result += 'RIGHT'
 	result += ')'
 	return result
@@ -340,7 +342,7 @@ def build_fold(fold,
 		else:
 			new_node_index = global_node_index
 			global_node_index += 1
-			new_node = pydot.Node(new_node_index, label=pretty_print_action(step[3]))
+			new_node = pydot.Node(new_node_index, label=pretty_print_action(step[2]))
 			graph.add_node(new_node)
 
 			new_edge = pydot.Edge(curr_node_index, new_node_index)
