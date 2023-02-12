@@ -28,7 +28,7 @@ void Solution::init() {
 	int starting_sequence_length = 1;
 	vector<bool> starting_is_inner_scope{false};
 	vector<Scope*> starting_scopes{NULL};
-	vector<Action> starting_actions{Action(0.0, ACTION_START)};
+	vector<Action> starting_actions{Action(ACTION_START)};
 	vector<vector<FoldNetwork*>> starting_inner_input_networks{vector<FoldNetwork*>()};
 	vector<vector<int>> starting_inner_input_sizes{vector<int>()};
 	vector<Network*> starting_scope_scale_mod{NULL};
@@ -76,8 +76,6 @@ void Solution::init() {
 						   starting_full_last);
 	this->root->id = -1;
 
-	this->new_sequence_index = 0;
-
 	this->max_depth = 1;
 	this->depth_limit = 11;
 }
@@ -86,19 +84,6 @@ void Solution::load(ifstream& input_file) {
 	string id_counter_line;
 	getline(input_file, id_counter_line);
 	this->id_counter = stoi(id_counter_line);
-
-	string action_dictionary_size_line;
-	getline(input_file, action_dictionary_size_line);
-	int action_dictionary_size = stoi(action_dictionary_size_line);
-	for (int a_index = 0; a_index < action_dictionary_size; a_index++) {
-		this->action_dictionary.push_back(Action(input_file));
-	}
-
-	for (int a_index = 0; a_index < action_dictionary_size; a_index++) {
-		string action_last_success_line;
-		getline(input_file, action_last_success_line);
-		this->action_last_success.push_back(stoi(action_last_success_line));
-	}
 
 	string scope_dictionary_size_line;
 	getline(input_file, scope_dictionary_size_line);
@@ -113,21 +98,11 @@ void Solution::load(ifstream& input_file) {
 		scope_save_file.close();
 	}
 
-	for (int s_index = 0; s_index < scope_dictionary_size; s_index++) {
-		string scope_last_success_line;
-		getline(input_file, scope_last_success_line);
-		this->scope_last_success.push_back(stoi(scope_last_success_line));
-	}
-
 	this->root = new Scope();
 	ifstream scope_save_file;
 	scope_save_file.open("saves/scope_root.txt");
 	this->root->load(scope_save_file);
 	scope_save_file.close();
-
-	string new_sequence_index_line;
-	getline(input_file, new_sequence_index_line);
-	this->new_sequence_index = stoi(new_sequence_index_line);
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -141,118 +116,40 @@ void Solution::load(ifstream& input_file) {
 }
 
 void Solution::new_sequence(int& sequence_length,
-							vector<int>& new_sequence_types,
+							vector<bool>& is_inner_scope,
 							vector<int>& existing_scope_ids,
-							vector<int>& existing_action_ids,
-							vector<Action>& new_actions,
+							vector<Action>& actions,
 							bool can_be_empty) {
 	// Note: don't refold, and instead try longer sequences to try to unwind to find deeper connections
-	// geometric_distribution<int> geo_dist(0.2);
-	// if (can_be_empty) {
-	// 	sequence_length = geo_dist(generator);
-	// 	if (sequence_length == 0) {
-	// 		if (rand()%10 != 0) {
-	// 			sequence_length++;
-	// 		}
-	// 	}
-	// } else {
-	// 	sequence_length = 1 + geo_dist(generator);
-	// }
-	// for (int s_index = 0; s_index < sequence_length; s_index++) {
-	// 	// if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
-	// 	if (false) {
-	// 		new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_SCOPE);
-	// 		existing_scope_ids.push_back(rand()%(int)this->scope_dictionary.size());
-
-	// 		existing_action_ids.push_back(-1);
-	// 		new_actions.push_back(Action());
-	// 	} else {
-	// 		// if (this->action_dictionary.size() > 0 && rand()%2 == 0) {
-	// 		if (false) {
-	// 			new_sequence_types.push_back(NEW_SEQUENCE_TYPE_EXISTING_ACTION);
-	// 			existing_action_ids.push_back(rand()%(int)this->action_dictionary.size());
-
-	// 			existing_scope_ids.push_back(-1);
-	// 			new_actions.push_back(Action());
-	// 		} else {
-	// 			new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
-
-	// 			normal_distribution<double> norm_dist(0.0, 1.0);
-	// 			double write = norm_dist(generator);
-
-	// 			int move = rand()%3;
-
-	// 			new_actions.push_back(Action(write, move));
-
-	// 			existing_scope_ids.push_back(-1);
-	// 			existing_action_ids.push_back(-1);
-	// 		}
-	// 	}
-	// }
-
-	// sequence_length = 1;
-
-	// new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
-	// new_actions.push_back(Action(0.0, ACTION_RIGHT));
-	// existing_scope_ids.push_back(-1);
-	// existing_action_ids.push_back(-1);
-
-	sequence_length = 2;
-
-	new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
-	new_actions.push_back(Action(1.0, ACTION_LEFT));
-	existing_scope_ids.push_back(-1);
-	existing_action_ids.push_back(-1);
-
-	new_sequence_types.push_back(NEW_SEQUENCE_TYPE_NEW_ACTION);
-	new_actions.push_back(Action(-1.0, ACTION_RIGHT));
-	existing_scope_ids.push_back(-1);
-	existing_action_ids.push_back(-1);
-}
-
-void Solution::new_sequence_success(int sequence_length,
-									vector<int>& new_sequence_types,
-									vector<int>& existing_scope_ids,
-									vector<int>& existing_action_ids,
-									vector<Action>& new_actions) {
+	geometric_distribution<int> geo_dist(0.2);
+	if (can_be_empty) {
+		sequence_length = geo_dist(generator);
+		if (sequence_length == 0) {
+			if (rand()%10 != 0) {
+				sequence_length++;
+			}
+		}
+	} else {
+		sequence_length = 1 + geo_dist(generator);
+	}
 	for (int s_index = 0; s_index < sequence_length; s_index++) {
-		if (new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_SCOPE) {
-			this->scope_last_success[existing_scope_ids[s_index]] = this->new_sequence_index;
-		} else if (new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_EXISTING_ACTION) {
-			this->action_last_success[existing_action_ids[s_index]] = this->new_sequence_index;
+		if (this->scope_dictionary.size() > 0 && rand()%2 == 0) {
+			is_inner_scope.push_back(true);
+			existing_scope_ids.push_back(rand()%(int)this->scope_dictionary.size());
+
+			actions.push_back(Action());
 		} else {
-			// new_sequence_types[s_index] == NEW_SEQUENCE_TYPE_NEW_ACTION
-			this->action_dictionary.push_back(new_actions[s_index]);
-			this->action_last_success.push_back(this->new_sequence_index);
+			is_inner_scope.push_back(false);
+			int move = rand()%3;
+			actions.push_back(Action(move));
+
+			existing_scope_ids.push_back(-1);
 		}
 	}
-}
-
-void Solution::new_sequence_iter() {
-	int a_index = 0;
-	while (a_index < (int)this->action_dictionary.size()) {
-		if (this->new_sequence_index - this->action_last_success[a_index] > 1000000) {
-			this->action_dictionary.erase(this->action_dictionary.begin()+a_index);
-			this->action_last_success.erase(this->action_last_success.begin()+a_index);
-		} else {
-			a_index++;
-		}
-	}
-
-	this->new_sequence_index++;
 }
 
 void Solution::save(ofstream& output_file) {
 	output_file << this->id_counter << endl;
-
-	output_file << this->action_dictionary.size() << endl;
-	for (int a_index = 0; a_index < (int)this->action_dictionary.size(); a_index++) {
-		this->action_dictionary[a_index].save(output_file);
-	}
-
-	for (int a_index = 0; a_index < (int)this->action_dictionary.size(); a_index++) {
-		output_file << this->action_last_success[a_index] << endl;
-	}
 
 	output_file << this->scope_dictionary.size() << endl;
 	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {
@@ -262,16 +159,10 @@ void Solution::save(ofstream& output_file) {
 		scope_save_file.close();
 	}
 
-	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {
-		output_file << this->scope_last_success[s_index] << endl;
-	}
-
 	ofstream scope_save_file;
 	scope_save_file.open("saves/scope_root.txt");
 	this->root->save(scope_save_file);
 	scope_save_file.close();
-
-	output_file << this->new_sequence_index << endl;
 
 	output_file << this->max_depth << endl;
 }

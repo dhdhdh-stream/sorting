@@ -37,7 +37,7 @@ public:
 
 	int sequence_length;	// can be 0
 	std::vector<bool> is_inner_scope;
-	std::vector<Scope*> scopes;
+	std::vector<int> existing_scope_ids;
 	std::vector<Action> actions;
 
 	std::vector<FinishedStep*> finished_steps;
@@ -136,7 +136,7 @@ public:
 		 int outer_s_input_size,
 		 int sequence_length,
 		 std::vector<bool> is_inner_scope,
-		 std::vector<Scope*> scopes,
+		 std::vector<int> existing_scope_ids,
 		 std::vector<Action> actions,
 		 int existing_sequence_length,
 		 double* existing_average_score,

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -71,8 +72,8 @@ void Fold::starting_compress_step_explore_off_path_activate(
 														  local_s_input_vals,
 														  local_state_vals);
 			}
-			vector<double> scope_input(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> scope_input(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
@@ -80,14 +81,15 @@ void Fold::starting_compress_step_explore_off_path_activate(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
-			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scope_dictionary[this->existing_scope_ids[f_index]]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_activate(
+				problem,
+				scope_input,
+				scope_output,
+				predicted_score,
+				scale_factor,
+				run_status,
+				scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -152,7 +154,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
-			scope_input_errors[f_index] = vector<double>(this->scopes[f_index]->num_outputs, 0.0);
+			scope_input_errors[f_index] = vector<double>(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs, 0.0);
 		}
 	}
 
@@ -188,7 +190,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 		}
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_inner_scope[f_index]) {
-				for (int i_index = 0; i_index < this->scopes[f_index]->num_outputs; i_index++) {
+				for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs; i_index++) {
 					scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 					this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
@@ -209,13 +211,14 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
-			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_backprop(
+				scope_input_errors[f_index],
+				scope_output_errors,
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -236,7 +239,7 @@ void Fold::starting_compress_step_explore_off_path_backprop(
 			}
 			for (int ff_index = f_index-1; ff_index >= 0; ff_index--) {
 				if (this->is_inner_scope[ff_index]) {
-					for (int i_index = 0; i_index < this->scopes[ff_index]->num_outputs; i_index++) {
+					for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[ff_index]]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 					}
@@ -324,8 +327,8 @@ void Fold::starting_compress_step_existing_flat_activate(
 													  local_state_vals,
 													  curr_input_fold_history);
 			history->curr_input_fold_histories[f_index] = curr_input_fold_history;
-			vector<double> scope_input(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> scope_input(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
@@ -333,14 +336,15 @@ void Fold::starting_compress_step_existing_flat_activate(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
-			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scope_dictionary[this->existing_scope_ids[f_index]]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_activate(
+				problem,
+				scope_input,
+				scope_output,
+				predicted_score,
+				scale_factor,
+				run_status,
+				scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -393,7 +397,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
-			scope_input_errors[f_index] = vector<double>(this->scopes[f_index]->num_outputs, 0.0);
+			scope_input_errors[f_index] = vector<double>(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs, 0.0);
 		}
 	}
 
@@ -427,7 +431,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 		}
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_inner_scope[f_index]) {
-				for (int i_index = 0; i_index < this->scopes[f_index]->num_outputs; i_index++) {
+				for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs; i_index++) {
 					scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 					this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
@@ -448,13 +452,14 @@ void Fold::starting_compress_step_existing_flat_backprop(
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
-			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_backprop(
+				scope_input_errors[f_index],
+				scope_output_errors,
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 
@@ -473,7 +478,7 @@ void Fold::starting_compress_step_existing_flat_backprop(
 			}
 			for (int ff_index = f_index-1; ff_index >= 0; ff_index--) {
 				if (this->is_inner_scope[ff_index]) {
-					for (int i_index = 0; i_index < this->scopes[ff_index]->num_outputs; i_index++) {
+					for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[ff_index]]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 					}
@@ -570,8 +575,8 @@ void Fold::starting_compress_step_update_activate(
 													  local_s_input_vals,
 													  test_local_state_vals);
 
-			vector<double> input_fold_errors(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> input_fold_errors(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				input_fold_errors[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index]
 					- this->test_input_folds[f_index]->output->acti_vals[i_index];
 				this->sum_error += input_fold_errors[i_index]*input_fold_errors[i_index];
@@ -586,8 +591,8 @@ void Fold::starting_compress_step_update_activate(
 				this->test_input_folds[f_index]->state_inputs.back()->errors[s_index] = 0.0;
 			}
 
-			vector<double> scope_input(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> scope_input(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
@@ -595,14 +600,15 @@ void Fold::starting_compress_step_update_activate(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
-			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scope_dictionary[this->existing_scope_ids[f_index]]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_update_activate(
+				problem,
+				scope_input,
+				scope_output,
+				predicted_score,
+				scale_factor,
+				run_status,
+				scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -722,7 +728,7 @@ void Fold::starting_compress_step_update_backprop(
 		vector<double> curr_fold_error{scale_factor*predicted_score_error};
 		this->curr_fold->backprop_weights_with_no_error_signal(
 			curr_fold_error,
-			0.001,
+			0.002,
 			history->curr_fold_history);
 
 		predicted_score -= scale_factor*history->ending_score_update;
@@ -734,11 +740,12 @@ void Fold::starting_compress_step_update_backprop(
 			scale_factor *= scope_scale_mod_val;
 
 			double scope_scale_factor_error = 0.0;
-			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_update_backprop(
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[f_index]);
 
 			vector<double> mod_errors{scope_scale_factor_error};
 			this->scope_scale_mod[f_index]->backprop(mod_errors, 0.0002);
@@ -802,8 +809,8 @@ void Fold::starting_compress_step_existing_update_activate(
 			this->curr_input_folds[f_index]->activate(input_fold_inputs[f_index],
 													  local_s_input_vals,
 													  local_state_vals);
-			vector<double> scope_input(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> scope_input(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
@@ -811,14 +818,15 @@ void Fold::starting_compress_step_existing_update_activate(
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
-			this->scopes[f_index]->existing_update_activate(problem,
-																	  scope_input,
-																	  scope_output,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scope_dictionary[this->existing_scope_ids[f_index]]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_update_activate(
+				problem,
+				scope_input,
+				scope_output,
+				predicted_score,
+				scale_factor,
+				run_status,
+				scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -872,11 +880,12 @@ void Fold::starting_compress_step_existing_update_backprop(
 			scale_factor *= scope_scale_mod_val;
 
 			double scope_scale_factor_error = 0.0;
-			this->scopes[f_index]->existing_update_backprop(predicted_score,
-																	  predicted_score_error,
-																	  scale_factor,
-																	  scope_scale_factor_error,
-																	  history->scope_histories[f_index]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_update_backprop(
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[f_index]);
 
 			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
 

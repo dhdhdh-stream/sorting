@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::inner_scope_input_end() {
@@ -20,8 +22,8 @@ void Fold::inner_scope_input_end() {
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(this->scopes[this->finished_steps.size()]->num_inputs);
-				this->curr_scope_sizes.push_back(this->scopes[this->finished_steps.size()]->num_outputs);
+				this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_inputs);
+				this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_outputs);
 			}
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());

@@ -619,7 +619,7 @@ void Branch::update_backprop(double& predicted_score,
 	vector<double> score_errors{scale_factor*score_predicted_score_error};
 	this->score_networks[history->best_index]->backprop_small_weights_with_no_error_signal(
 		score_errors,
-		0.001,
+		0.002,
 		history->score_network_history);
 
 	// score_networks don't update predicted_score
@@ -633,7 +633,7 @@ void Branch::update_backprop(double& predicted_score,
 		vector<double> combined_score_errors{scale_factor*combined_score_predicted_score_error};
 		this->combined_score_network->backprop_small_weights_with_no_error_signal(
 			combined_score_errors,
-			0.001,
+			0.002,
 			history->combined_score_network_history);
 	}
 }

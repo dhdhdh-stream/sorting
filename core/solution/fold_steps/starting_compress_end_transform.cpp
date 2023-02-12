@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::starting_compress_end() {
@@ -33,7 +35,7 @@ void Fold::starting_compress_end() {
 		this->test_end_fold = NULL;
 
 		if (this->curr_starting_compress_new_size == 0) {
-			// if this->scopes[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
+			// if this->is_inner_scope[0] == true, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 			if (this->is_inner_scope[0]) {
 				// don't move/delete this->curr_input_folds[0] for saving/loading
@@ -45,8 +47,8 @@ void Fold::starting_compress_end() {
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(this->scopes[0]->num_inputs);
-				this->curr_scope_sizes.push_back(this->scopes[0]->num_outputs);
+				this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_inputs);
+				this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_outputs);
 			}
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());
@@ -143,8 +145,8 @@ void Fold::starting_compress_end() {
 			// obs_size always 1 for sorting
 			this->curr_scope_sizes.push_back(1);
 		} else {
-			this->curr_s_input_sizes.push_back(this->scopes[0]->num_inputs);
-			this->curr_scope_sizes.push_back(this->scopes[0]->num_outputs);
+			this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_inputs);
+			this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_outputs);
 		}
 
 		this->curr_fold->add_scope(this->curr_scope_sizes.back());

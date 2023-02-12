@@ -997,7 +997,7 @@ void FinishedStep::update_backprop(double& predicted_score,
 		vector<double> score_errors{scale_factor*predicted_score_error};
 		this->score_network->backprop_subfold_weights_with_no_error_signal(
 			score_errors,
-			0.001,
+			0.002,
 			history->score_network_history);
 
 		predicted_score -= scale_factor*history->score_update;

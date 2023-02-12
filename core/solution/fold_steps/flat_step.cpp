@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::flat_step_explore_on_path_activate(double existing_score,
@@ -23,15 +25,6 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 												 local_state_vals);
 	history->starting_score_update = this->starting_score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->starting_score_network->output->acti_vals[0];
-
-	// if (this->state_iter > 490000) {
-	// 	if (scale_factor*this->starting_score_network->output->acti_vals[0] > existing_score) {
-	// 		cout << local_state_vals[0] << " " << local_state_vals[1] << endl;
-	// 		cout << "new: " << scale_factor*this->starting_score_network->output->acti_vals[0] << endl;
-	// 		cout << "existing: " << existing_score << endl;
-	// 		cout << endl;
-	// 	}
-	// }
 
 	this->combined_score_network->activate_small(local_s_input_vals,
 												 local_state_vals);
@@ -56,8 +49,8 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 			this->curr_input_folds[f_index]->activate(input_fold_inputs[f_index],
 													  local_s_input_vals,
 													  local_state_vals);
-			vector<double> scope_input(this->scopes[f_index]->num_inputs);
-			for (int i_index = 0; i_index < this->scopes[f_index]->num_inputs; i_index++) {
+			vector<double> scope_input(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs);
+			for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs; i_index++) {
 				scope_input[i_index] = this->curr_input_folds[f_index]->output->acti_vals[i_index];
 			}
 
@@ -65,14 +58,15 @@ void Fold::flat_step_explore_on_path_activate(double existing_score,
 			scale_factor *= scope_scale_mod_val;
 
 			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[f_index]);
-			this->scopes[f_index]->existing_flat_activate(problem,
-																	scope_input,
-																	scope_output,
-																	predicted_score,
-																	scale_factor,
-																	run_status,
-																	scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scope_dictionary[this->existing_scope_ids[f_index]]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_activate(
+				problem,
+				scope_input,
+				scope_output,
+				predicted_score,
+				scale_factor,
+				run_status,
+				scope_history);
 			history->scope_histories[f_index] = scope_history;
 
 			scale_factor /= scope_scale_mod_val;
@@ -145,7 +139,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	vector<vector<double>> scope_input_errors(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
-			scope_input_errors[f_index] = vector<double>(this->scopes[f_index]->num_outputs, 0.0);
+			scope_input_errors[f_index] = vector<double>(solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs, 0.0);
 		}
 	}
 
@@ -173,7 +167,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 		// don't need to worry about s_input_errors and state_errors
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_inner_scope[f_index]) {
-				for (int i_index = 0; i_index < this->scopes[f_index]->num_outputs; i_index++) {
+				for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs; i_index++) {
 					scope_input_errors[f_index][i_index] += this->curr_end_fold->flat_inputs[f_index]->errors[i_index];
 					this->curr_end_fold->flat_inputs[f_index]->errors[i_index] = 0.0;
 
@@ -192,13 +186,14 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 			vector<double> scope_output_errors;
 			double scope_scale_factor_error = 0.0;
-			this->scopes[f_index]->existing_flat_backprop(scope_input_errors[f_index],
-																	scope_output_errors,
-																	predicted_score,
-																	predicted_score_error,
-																	scale_factor,
-																	scope_scale_factor_error,
-																	history->scope_histories[f_index]);
+			solution->scope_dictionary[this->existing_scope_ids[f_index]]->existing_flat_backprop(
+				scope_input_errors[f_index],
+				scope_output_errors,
+				predicted_score,
+				predicted_score_error,
+				scale_factor,
+				scope_scale_factor_error,
+				history->scope_histories[f_index]);
 
 			scale_factor /= scope_scale_mod_val;
 
@@ -218,7 +213,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 			}
 			for (int ff_index = f_index-1; ff_index >= 0; ff_index--) {
 				if (this->is_inner_scope[ff_index]) {
-					for (int i_index = 0; i_index < this->scopes[ff_index]->num_outputs; i_index++) {
+					for (int i_index = 0; i_index < solution->scope_dictionary[this->existing_scope_ids[ff_index]]->num_outputs; i_index++) {
 						scope_input_errors[ff_index][i_index] += this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index];
 						this->curr_input_folds[f_index]->flat_inputs[ff_index]->errors[i_index] = 0.0;
 					}
@@ -244,7 +239,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 	}
 	// end of backprop so no need to modify predicted_score
 
-	// occasionally train on seed to better recognize what let to this fold
+	// occasionally train on seed to better recognize what led to this fold
 	if (this->state_iter < 200000 && rand()%20 == 0) {
 		this->starting_score_network->activate_small(this->seed_local_s_input_vals,
 													 this->seed_local_state_vals);

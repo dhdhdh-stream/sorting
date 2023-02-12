@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::flat_to_fold() {
@@ -40,7 +42,7 @@ void Fold::flat_to_fold() {
 		if (this->starting_compress_original_size == 0) {
 			// outer start edge case
 
-			// if this->scopes[0] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
+			// if solution->scope_dictionary[this->existing_scope_ids[0]] != NULL, this->curr_scope_sizes.size() == 1, so skip STATE_INNER_SCOPE_INPUT
 
 			if (this->is_inner_scope[0]) {
 				// don't move/delete this->curr_input_folds[0] for saving/loading
@@ -52,8 +54,8 @@ void Fold::flat_to_fold() {
 				// obs_size always 1 for sorting
 				this->curr_scope_sizes.push_back(1);
 			} else {
-				this->curr_s_input_sizes.push_back(this->scopes[0]->num_inputs);
-				this->curr_scope_sizes.push_back(this->scopes[0]->num_outputs);
+				this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_inputs);
+				this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[0]]->num_outputs);
 			}
 
 			this->curr_fold->add_scope(this->curr_scope_sizes.back());

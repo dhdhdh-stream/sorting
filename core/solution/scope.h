@@ -37,6 +37,7 @@ public:
 
 	std::vector<FoldNetwork*> score_networks;
 	// Note: don't use soft targets even with early exit, as hard targets needed to determine impact
+	// TODO: perhaps add confidence if results have greater range
 
 	std::vector<double> average_inner_scope_impacts;
 	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
@@ -65,10 +66,9 @@ public:
 	double best_explore_surprise;
 	int best_explore_end_non_inclusive;
 	int best_explore_sequence_length;
-	std::vector<int> best_explore_new_sequence_types;
+	std::vector<bool> best_explore_is_inner_scope;
 	std::vector<int> best_explore_existing_scope_ids;
-	std::vector<int> best_explore_existing_action_ids;
-	std::vector<Action> best_explore_new_actions;
+	std::vector<Action> best_explore_actions;
 	std::vector<double> best_seed_local_s_input_vals;
 	std::vector<double> best_seed_local_state_vals;
 	double best_seed_start_score;
@@ -76,10 +76,9 @@ public:
 
 	int curr_explore_end_non_inclusive;
 	int curr_explore_sequence_length;
-	std::vector<int> curr_explore_new_sequence_types;
+	std::vector<bool> curr_explore_is_inner_scope;
 	std::vector<int> curr_explore_existing_scope_ids;
-	std::vector<int> curr_explore_existing_action_ids;
-	std::vector<Action> curr_explore_new_actions;
+	std::vector<Action> curr_explore_actions;
 	std::vector<double> curr_seed_local_s_input_vals;
 	std::vector<double> curr_seed_local_state_vals;
 	double curr_seed_start_score;
@@ -188,7 +187,6 @@ public:
 	void explore_set(double target_val,
 					 double existing_score,
 					 ScopeHistory* history);
-	// TODO: clean up update_increment logic
 	void update_increment(ScopeHistory* history,
 						  std::vector<Fold*>& folds_to_delete);
 

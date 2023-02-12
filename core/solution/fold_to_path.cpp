@@ -25,7 +25,6 @@ Scope* construct_scope_helper(vector<FinishedStep*> finished_steps,
 	Scope* scope = new Scope();
 	scope->id = (int)solution->scope_dictionary.size();
 	solution->scope_dictionary.push_back(scope);
-	solution->scope_last_success.push_back(solution->new_sequence_index);
 
 	vector<int> scope_starts;
 	vector<int> scope_ends;

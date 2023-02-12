@@ -14,13 +14,9 @@ public:
 
 	Scope* root;
 
-	std::vector<Action> action_dictionary;
-	std::vector<int> action_last_success;
-
 	std::vector<Scope*> scope_dictionary;
-	std::vector<int> scope_last_success;
-
-	int new_sequence_index;
+	// TODO: try MCTS with fading
+	// TODO: the stat that is important is whether added to solution
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
@@ -32,17 +28,10 @@ public:
 	void load(std::ifstream& input_file);
 
 	void new_sequence(int& sequence_length,
-					  std::vector<int>& new_sequence_types,
+					  std::vector<bool>& is_inner_scope,
 					  std::vector<int>& existing_scope_ids,
-					  std::vector<int>& existing_action_ids,
-					  std::vector<Action>& new_actions,
+					  std::vector<Action>& actions,
 					  bool can_be_empty);
-	void new_sequence_success(int sequence_length,
-							  std::vector<int>& new_sequence_types,
-							  std::vector<int>& existing_scope_ids,
-							  std::vector<int>& existing_action_ids,
-							  std::vector<Action>& new_actions);
-	void new_sequence_iter();
 
 	void save(std::ofstream& output_file);
 };

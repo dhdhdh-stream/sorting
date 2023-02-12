@@ -12,7 +12,7 @@ Fold::Fold(int num_inputs,
 		   int outer_s_input_size,
 		   int sequence_length,
 		   vector<bool> is_inner_scope,
-		   vector<Scope*> scopes,
+		   vector<int> existing_scope_ids,
 		   vector<Action> actions,
 		   int existing_sequence_length,
 		   double* existing_average_score,
@@ -34,7 +34,7 @@ Fold::Fold(int num_inputs,
 
 	this->sequence_length = sequence_length;
 	this->is_inner_scope = is_inner_scope;
-	this->scopes = scopes;
+	this->existing_scope_ids = existing_scope_ids;
 	this->actions = actions;
 
 	this->existing_sequence_length = existing_sequence_length;
@@ -89,7 +89,7 @@ Fold::Fold(int num_inputs,
 			// obs_size always 1 for sorting
 			flat_size = 1;
 		} else {
-			flat_size = this->scopes[f_index]->num_outputs;
+			flat_size = solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_outputs;
 		}
 		flat_sizes.push_back(flat_size);
 		for (int ff_index = f_index+1; ff_index < this->sequence_length; ff_index++) {
@@ -108,7 +108,7 @@ Fold::Fold(int num_inputs,
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
 			this->curr_input_folds[f_index] = new FoldNetwork(input_flat_sizes[f_index],
-															  this->scopes[f_index]->num_inputs,
+															  solution->scope_dictionary[this->existing_scope_ids[f_index]]->num_inputs,
 															  this->outer_s_input_size,
 															  this->num_inputs,
 															  50);
@@ -176,13 +176,11 @@ Fold::Fold(ifstream& input_file) {
 		if (this->is_inner_scope[f_index]) {
 			string scope_id_line;
 			getline(input_file, scope_id_line);
-			int scope_id = stoi(scope_id_line);
-
-			this->scopes.push_back(solution->scope_dictionary[scope_id]);
+			this->existing_scope_ids.push_back(stoi(scope_id_line));
 
 			this->actions.push_back(Action());
 		} else {
-			this->scopes.push_back(NULL);
+			this->existing_scope_ids.push_back(-1);
 
 			this->actions.push_back(Action(input_file));
 		}
@@ -1215,7 +1213,7 @@ void Fold::save(ofstream& output_file) {
 		output_file << this->is_inner_scope[f_index] << endl;
 
 		if (this->is_inner_scope[f_index]) {
-			output_file << this->scopes[f_index]->id << endl;
+			output_file << this->existing_scope_ids[f_index] << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}
@@ -1304,7 +1302,7 @@ void Fold::save_for_display(ofstream& output_file) {
 		output_file << this->is_inner_scope[f_index] << endl;
 
 		if (this->is_inner_scope[f_index]) {
-			output_file << this->scopes[f_index]->id << endl;
+			output_file << this->existing_scope_ids[f_index] << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}

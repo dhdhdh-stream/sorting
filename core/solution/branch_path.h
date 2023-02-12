@@ -70,10 +70,9 @@ public:
 	double best_explore_surprise;
 	int best_explore_end_non_inclusive;
 	int best_explore_sequence_length;
-	std::vector<int> best_explore_new_sequence_types;
+	std::vector<bool> best_explore_is_inner_scope;
 	std::vector<int> best_explore_existing_scope_ids;
-	std::vector<int> best_explore_existing_action_ids;
-	std::vector<Action> best_explore_new_actions;
+	std::vector<Action> best_explore_actions;
 	std::vector<double> best_seed_local_s_input_vals;
 	std::vector<double> best_seed_local_state_vals;
 	double best_seed_start_score;
@@ -81,10 +80,9 @@ public:
 
 	int curr_explore_end_non_inclusive;
 	int curr_explore_sequence_length;
-	std::vector<int> curr_explore_new_sequence_types;
+	std::vector<bool> curr_explore_is_inner_scope;
 	std::vector<int> curr_explore_existing_scope_ids;
-	std::vector<int> curr_explore_existing_action_ids;
-	std::vector<Action> curr_explore_new_actions;
+	std::vector<Action> curr_explore_actions;
 	std::vector<double> curr_seed_local_s_input_vals;
 	std::vector<double> curr_seed_local_state_vals;
 	double curr_seed_start_score;

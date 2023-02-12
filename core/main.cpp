@@ -22,19 +22,17 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->init();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->load(solution_save_file);
+	// solution_save_file.close();
 
 	int iter_index = 0;
 	while (true) {
-	// for (int i = 0; i < 1000000; i++) {
 		Problem problem;
 
 		if (iter_index > 200000 && rand()%2 == 0) {
-		// if (false) {
 			vector<double> local_s_input_vals;
 			vector<double> local_state_vals;
 
@@ -79,8 +77,6 @@ int main(int argc, char* argv[]) {
 												run_status.existing_score,
 												scope_history);
 				}
-
-				solution->new_sequence_iter();
 			} else if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
 				vector<double> local_state_errors;
 				double scale_factor_error = 0.0;
@@ -152,13 +148,6 @@ int main(int argc, char* argv[]) {
 
 		iter_index++;
 	}
-
-	// {
-	// 	ofstream solution_save_file;
-	// 	solution_save_file.open("saves/solution.txt");
-	// 	solution->save(solution_save_file);
-	// 	solution_save_file.close();
-	// }
 
 	delete solution;
 

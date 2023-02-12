@@ -3,11 +3,13 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::add_finished_step() {
 	FinishedStep* new_finished_step = new FinishedStep(this->is_inner_scope[this->finished_steps.size()],
-													   this->scopes[this->finished_steps.size()],
+													   solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]],
 													   this->actions[this->finished_steps.size()],
 													   this->inner_input_input_layer,
 													   this->inner_input_input_sizes,
@@ -107,8 +109,8 @@ void Fold::add_finished_step() {
 				this->sum_error = 0.0;
 				this->new_state_factor = 25;
 			} else {
-				this->curr_s_input_sizes.push_back(this->scopes[this->finished_steps.size()]->num_inputs);
-				this->curr_scope_sizes.push_back(this->scopes[this->finished_steps.size()]->num_outputs);
+				this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_inputs);
+				this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_outputs);
 
 				this->curr_fold->add_scope(this->curr_scope_sizes.back());
 				this->curr_fold->fold_index++;
@@ -208,8 +210,8 @@ void Fold::restart_from_finished_step() {
 				this->sum_error = 0.0;
 				this->new_state_factor = 25;
 			} else {
-				this->curr_s_input_sizes.push_back(this->scopes[this->finished_steps.size()]->num_inputs);
-				this->curr_scope_sizes.push_back(this->scopes[this->finished_steps.size()]->num_outputs);
+				this->curr_s_input_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_inputs);
+				this->curr_scope_sizes.push_back(solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]]->num_outputs);
 
 				this->curr_fold->add_scope(this->curr_scope_sizes.back());
 				this->curr_fold->fold_index++;

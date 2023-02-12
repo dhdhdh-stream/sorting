@@ -9,16 +9,15 @@ const int ACTION_NONE = -2;
 const int ACTION_START = -1;
 
 const int ACTION_LEFT = 0;
-const int ACTION_STAY = 1;
-const int ACTION_RIGHT = 2;
+const int ACTION_RIGHT = 1;
+const int ACTION_SWAP = 2;
 
 class Action {
 public:
-	double write;
 	int move;
 
 	Action();	// empty constructor for convenience
-	Action(double write, int move);
+	Action(int move);
 	Action(std::ifstream& save_file);
 	~Action();
 
