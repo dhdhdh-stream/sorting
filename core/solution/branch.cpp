@@ -41,8 +41,6 @@ Branch::Branch(int num_inputs,
 	}
 	this->folds = folds;
 	this->num_travelled = num_travelled;
-
-	this->explore_ref_count = 0;
 }
 
 Branch::Branch(ifstream& input_file) {
@@ -119,9 +117,6 @@ Branch::Branch(ifstream& input_file) {
 		getline(input_file, num_travelled_line);
 		this->num_travelled.push_back(stoi(num_travelled_line));
 	}
-
-	// explores cleared on reload
-	this->explore_ref_count = 0;
 }
 
 Branch::~Branch() {
@@ -249,7 +244,6 @@ void Branch::explore_on_path_activate(Problem& problem,
 	BranchPathHistory* branch_path_history = new BranchPathHistory(this->branches[history->best_index]);
 	this->branches[history->best_index]->explore_on_path_activate(problem,
 																  history->best_score,
-																  history->best_predicted_misguess,
 																  local_s_input_vals,
 																  local_state_vals,
 																  predicted_score,
@@ -307,10 +301,6 @@ void Branch::explore_on_path_backprop(vector<double>& local_s_input_errors,
 																  scale_factor,
 																  scale_factor_error,
 																  history->branch_path_history);
-
-	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
-		this->explore_ref_count--;
-	}
 }
 
 void Branch::explore_off_path_backprop(vector<double>& local_s_input_errors,
@@ -724,10 +714,6 @@ void Branch::existing_update_backprop(double& predicted_score,
 void Branch::explore_set(double target_val,
 						 double existing_score,
 						 BranchHistory* history) {
-	if (this->branches[history->best_index]->explore_type == EXPLORE_TYPE_NONE) {
-		this->explore_ref_count++;
-	}
-
 	this->branches[history->best_index]->explore_set(target_val,
 													 existing_score,
 													 history->branch_path_history);

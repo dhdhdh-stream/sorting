@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 			vector<double> local_s_input_vals;
 			vector<double> local_state_vals;
 
-			double predicted_score = 0.0;
+			double predicted_score = solution->average_score;
 			double scale_factor = 1.0;
 
 			RunStatus run_status;
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 			vector<double> local_s_input_vals;
 			vector<double> local_state_vals;
 
-			double predicted_score = 0.0;
+			double predicted_score = solution->average_score;
 			double scale_factor = 1.0;
 
 			RunStatus run_status;
@@ -127,6 +127,8 @@ int main(int argc, char* argv[]) {
 				target_val = problem.score_result();
 			}
 			double final_misguess = (target_val - predicted_score)*(target_val - predicted_score);
+
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 
 			double scale_factor_error = 0.0;	// unused
 			solution->root->update_backprop(predicted_score,

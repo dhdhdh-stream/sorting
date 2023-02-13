@@ -237,7 +237,7 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 			starting_score_errors,
 			0.004);
 	}
-	// end of backprop so no need to modify predicted_score
+	predicted_score -= scale_factor*history->starting_score_update;
 
 	// occasionally train on seed to better recognize what led to this fold
 	if (this->state_iter < 200000 && rand()%20 == 0) {
@@ -265,8 +265,13 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 			this->existing_noticably_better++;
 		} else if (t_value < -1.0) {	// >75%
 			this->new_noticably_better++;
+
+			double existing_predicted_score = predicted_score + history->existing_score;
+			this->new_noticably_better_improvement += target_val - existing_predicted_score;
 		}
 	}
+
+	// end of backprop so no need to modify predicted_score
 
 	double higher_branch_val;
 	if (history->existing_score > this->starting_score_network->output->acti_vals[0]) {

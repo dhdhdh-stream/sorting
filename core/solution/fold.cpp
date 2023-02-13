@@ -58,6 +58,7 @@ Fold::Fold(int num_inputs,
 	
 	this->existing_noticably_better = 0;
 	this->new_noticably_better = 0;
+	this->new_noticably_better_improvement = 0.0;
 	this->is_recursive = 0;
 
 	this->average_score = 0.0;
@@ -483,12 +484,21 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 		cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
 		cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
 
+		double new_noticably_better_improvement_t_value;
+		if (this->new_noticably_better > 0) {
+			this->new_noticably_better_improvement /= this->new_noticably_better;
+			new_noticably_better_improvement_t_value = this->new_noticably_better_improvement
+				/ (score_standard_deviation / sqrt(this->new_noticably_better));
+			cout << "new_noticably_better_improvement_t_value: " << new_noticably_better_improvement_t_value << endl;
+		}
+
 		// TODO: if a sequence has lower misguess, could be valuable to keep even with lower score and build from it instead?
 		// TODO: but will take analysis to determine if it has any spots which are better, so might not be worth?
 
-		// if recursion, only take if score better for now (and no replace)
-		if (this->new_noticably_better > 0) {
-			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+		// Note: if recursion, only take if score better (and no replace)
+		if (this->new_noticably_better > 0 && 
+				(new_noticably_better_improvement_t_value > 2.326)) {	// >99%
+			if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 0.842)	// 80%<
 					&& this->existing_noticably_better == 0
 					&& this->is_recursive == 0) {
 				flat_to_fold();
@@ -501,17 +511,16 @@ int Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				cout << "EXPLORE_SIGNAL_BRANCH" << endl;
 				return EXPLORE_SIGNAL_BRANCH;
 			}
-		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 1.645)	// 90%<
+		} else if ((replace_improvement_t_value > 0.0 || abs(replace_improvement_t_value) < 0.842)	// 80%<
 				&& this->existing_noticably_better == 0
 				&& this->is_recursive == 0) {
-			if (misguess_improvement_t_value > 2.576) {
+			if (misguess_improvement_t_value > 2.326) {	// >99%
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;
 				return EXPLORE_SIGNAL_REPLACE;
 			} else if (this->sequence_length < this->existing_sequence_length
-					// && (misguess_improvement > 0.0 || abs(misguess_improvement_t_value) < 1.645)) {	// 90%<
-					&& misguess_improvement >= 0.0) {
+					&& misguess_improvement >= 0.0) {	// stricter condition for when replacing based on sequence length
 				flat_to_fold();
 
 				cout << "EXPLORE_SIGNAL_REPLACE" << endl;

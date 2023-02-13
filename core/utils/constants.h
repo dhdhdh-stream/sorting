@@ -5,12 +5,9 @@ const int STEP_TYPE_STEP = 0;
 const int STEP_TYPE_BRANCH = 1;
 const int STEP_TYPE_FOLD = 2;
 
-const int EXPLORE_TYPE_NONE = -1;
 const int EXPLORE_TYPE_INNER_SCOPE = 0;
 const int EXPLORE_TYPE_INNER_BRANCH = 1;
-// can't explore within a fold (that hasn't been fully processed)
-const int EXPLORE_TYPE_EXPLORE = 2;
-const int EXPLORE_TYPE_FLAT = 3;
+const int EXPLORE_TYPE_LOCAL = 2;
 
 const int EXPLORE_PHASE_NONE = 0;
 const int EXPLORE_PHASE_EXPLORE = 1;

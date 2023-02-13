@@ -22,6 +22,7 @@ Solution::~Solution() {
 void Solution::init() {
 	this->id_counter = 0;
 
+	this->average_score = 0.0;
 	this->root = new Scope();
 	int starting_num_inputs = 0;
 	int starting_num_outputs = 0;
@@ -84,6 +85,10 @@ void Solution::load(ifstream& input_file) {
 	string id_counter_line;
 	getline(input_file, id_counter_line);
 	this->id_counter = stoi(id_counter_line);
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
 
 	string scope_dictionary_size_line;
 	getline(input_file, scope_dictionary_size_line);
@@ -150,6 +155,8 @@ void Solution::new_sequence(int& sequence_length,
 
 void Solution::save(ofstream& output_file) {
 	output_file << this->id_counter << endl;
+
+	output_file << this->average_score << endl;
 
 	output_file << this->scope_dictionary.size() << endl;
 	for (int s_index = 0; s_index < (int)this->scope_dictionary.size(); s_index++) {

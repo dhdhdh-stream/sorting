@@ -29,8 +29,6 @@ public:
 	std::vector<int> num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
 	// TODO: track when last travelled, and delete unused
 
-	int explore_ref_count;
-
 	Branch(int num_inputs,
 		   int num_outputs,
 		   int outer_s_input_size,
@@ -144,7 +142,6 @@ public:
 
 	double best_score;	// scaled
 	int best_index;
-	double best_predicted_misguess;	// scaled
 
 	FoldNetworkHistory* combined_score_network_history;
 	double combined_score_network_output;

@@ -8,8 +8,12 @@
 using namespace std;
 
 void Fold::add_finished_step() {
+	Scope* new_scope;
+	if (this->is_inner_scope[this->finished_steps.size()]) {
+		new_scope = solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]];
+	}
 	FinishedStep* new_finished_step = new FinishedStep(this->is_inner_scope[this->finished_steps.size()],
-													   solution->scope_dictionary[this->existing_scope_ids[this->finished_steps.size()]],
+													   new_scope,
 													   this->actions[this->finished_steps.size()],
 													   this->inner_input_input_layer,
 													   this->inner_input_input_sizes,

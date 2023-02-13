@@ -66,6 +66,7 @@ public:
 
 	int existing_noticably_better;
 	int new_noticably_better;
+	double new_noticably_better_improvement;
 	int is_recursive;
 
 	double average_score;

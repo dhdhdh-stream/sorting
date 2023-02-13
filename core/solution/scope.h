@@ -58,12 +58,10 @@ public:
 	// to help construct folds
 	std::vector<int> starting_state_sizes;
 
-	int explore_type;
-	int explore_index_inclusive;
-
 	int explore_curr_try;
 	int explore_target_tries;
 	double best_explore_surprise;
+	int best_explore_index_inclusive;
 	int best_explore_end_non_inclusive;
 	int best_explore_sequence_length;
 	std::vector<bool> best_explore_is_inner_scope;
@@ -74,6 +72,9 @@ public:
 	double best_seed_start_score;
 	double best_seed_target_val;
 
+	Fold* explore_fold;
+
+	// initialized at most once per run
 	int curr_explore_end_non_inclusive;
 	int curr_explore_sequence_length;
 	std::vector<bool> curr_explore_is_inner_scope;
@@ -82,9 +83,6 @@ public:
 	std::vector<double> curr_seed_local_s_input_vals;
 	std::vector<double> curr_seed_local_state_vals;
 	double curr_seed_start_score;
-
-	Fold* explore_fold;
-	int explore_count;	// TODO: reset if too high
 
 	Scope();
 	~Scope();
@@ -212,6 +210,9 @@ public:
 	std::vector<FoldNetworkHistory*> score_network_histories;
 	std::vector<double> score_updates;
 	std::vector<FoldNetworkHistory*> compress_network_histories;
+
+	int explore_type;
+	int explore_index_inclusive;
 
 	FoldHistory* explore_fold_history;
 

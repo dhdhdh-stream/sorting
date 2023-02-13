@@ -22,7 +22,7 @@ public:
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		this->explore_phase = EXPLORE_TYPE_NONE;
+		this->explore_phase = EXPLORE_PHASE_NONE;
 
 		this->explore_location = NULL;
 		this->is_recursive = false;

@@ -39,9 +39,8 @@ def parse_scope(file):
 				new_scope = parse_scope(file)
 				scope[1][a_index][2] = new_scope
 		else:
-			write = float(file.readline())
 			move = int(file.readline())
-			scope[1][a_index][3] = [write, move]
+			scope[1][a_index][3] = [move]
 
 	for a_index in range(sequence_length):
 		step_type = int(file.readline())
@@ -112,16 +111,15 @@ def parse_branch_path(file, curr_scope_id):
 				new_scope = parse_scope(file)
 				branch_path[a_index][2] = new_scope
 		else:
-			write = float(file.readline())
 			move = int(file.readline())
-			branch_path[a_index][3] = [write, move]
+			branch_path[a_index][3] = [move]
 
 	for a_index in range(sequence_length):
 		step_type = int(file.readline())
 		branch_path[a_index][4] = step_type
 
 		if step_type == STEP_TYPE_BRANCH:
-			new_branch = parse_branch(file, curr_id)
+			new_branch = parse_branch(file, curr_scope_id)
 			branch_path[a_index][5] = new_branch
 		elif step_type == STEP_TYPE_FOLD:
 			new_fold = parse_fold(file)
@@ -153,9 +151,8 @@ def parse_fold(file):
 			scope_id = int(file.readline())
 			fold[f_index][1] = scope_id
 		else:
-			write = float(file.readline())
 			move = int(file.readline())
-			fold[f_index][2] = [write, move]
+			fold[f_index][2] = [move]
 
 	return fold
 
@@ -166,18 +163,15 @@ file.close()
 print(root)
 
 def pretty_print_action(action):
-	result = '('
-	result += "{:.2f}".format(action[0])
-	result += ', '
-	if action[1] == -1:
-		result += 'START'
-	elif action[1] == 0:
-		result += 'LEFT'
-	elif action[1] == 1:
-		result += 'STAY'
-	elif action[1] == 2:
-		result += 'RIGHT'
-	result += ')'
+	result = ''
+	if action[0] == -1:
+		result = 'START'
+	elif action[0] == 0:
+		result = 'LEFT'
+	elif action[0] == 1:
+		result = 'RIGHT'
+	elif action[0] == 2:
+		result = 'SWAP'
 	return result
 
 graph = pydot.Dot(graph_type='digraph', strict=True)
