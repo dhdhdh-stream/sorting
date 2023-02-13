@@ -9,6 +9,15 @@ using namespace std;
 
 void Scope::explore_replace() {
 	cout << "Scope explore_replace" << endl;
+	cout << "new_fold:";
+	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
+		if (this->explore_fold->is_inner_scope[s_index]) {
+			cout << " S_" << this->explore_fold->existing_scope_ids[s_index];
+		} else {
+			cout << " " << this->explore_fold->actions[s_index].to_string();
+		}
+	}
+	cout << endl;
 
 	if (this->step_types[this->best_explore_index_inclusive] == STEP_TYPE_STEP) {
 		// can't be scope end
@@ -132,6 +141,15 @@ void Scope::explore_replace() {
 
 void Scope::explore_branch() {
 	cout << "Scope explore_branch" << endl;
+	cout << "new_fold:";
+	for (int s_index = 0; s_index < this->explore_fold->sequence_length; s_index++) {
+		if (this->explore_fold->is_inner_scope[s_index]) {
+			cout << " S_" << this->explore_fold->existing_scope_ids[s_index];
+		} else {
+			cout << " " << this->explore_fold->actions[s_index].to_string();
+		}
+	}
+	cout << endl;
 
 	if (this->step_types[this->best_explore_index_inclusive] == STEP_TYPE_BRANCH
 			&& this->best_explore_index_inclusive+1 == this->best_explore_end_non_inclusive) {
@@ -527,9 +545,4 @@ void Scope::resolve_fold(int a_index,
 	// solution_save_file.open("saves/solution.txt");
 	// solution->save(solution_save_file);
 	// solution_save_file.close();
-
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->root->save_for_display(display_file);
-	display_file.close();
 }

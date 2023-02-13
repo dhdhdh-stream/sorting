@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 	// solution_save_file.close();
 
 	int iter_index = 0;
+	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
 	while (true) {
 		Problem problem;
 
@@ -149,6 +150,18 @@ int main(int argc, char* argv[]) {
 		}
 
 		iter_index++;
+		if (iter_index%10000 == 0) {
+			chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
+			chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
+			if (time_span.count() > 120.0) {
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->root->save_for_display(display_file);
+				display_file.close();
+
+				display_previous_time = curr_time;
+			}
+		}
 	}
 
 	delete solution;

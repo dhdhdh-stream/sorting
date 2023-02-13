@@ -259,8 +259,8 @@ void Fold::flat_step_explore_on_path_backprop(vector<double>& local_state_errors
 
 	if (this->state_iter >= 490000) {
 		// Note: use predicted_score_variance (as opposed to score_variance for surprise) to measure difference between predicted scores
-		double score_standard_deviation = sqrt(this->existing_predicted_score_variance);
-		double t_value = (history->existing_score - scale_factor*history->starting_score_update) / score_standard_deviation;
+		double predicted_score_standard_deviation = sqrt(this->existing_predicted_score_variance);
+		double t_value = (history->existing_score - scale_factor*history->starting_score_update) / predicted_score_standard_deviation;
 		if (t_value > 1.0) {	// >75%
 			this->existing_noticably_better++;
 		} else if (t_value < -1.0) {	// >75%

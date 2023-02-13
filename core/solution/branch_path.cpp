@@ -446,7 +446,9 @@ void BranchPath::explore_on_path_activate(Problem& problem,
 	}
 
 	if (history->explore_type == EXPLORE_TYPE_LOCAL) {
-		if (this->explore_fold == NULL) {
+		if (this->explore_fold != NULL) {
+			history->explore_index_inclusive = -1;
+		} else {
 			this->curr_explore_end_non_inclusive = history->explore_index_inclusive + 1
 				+ rand()%(this->sequence_length - history->explore_index_inclusive);
 
@@ -1295,7 +1297,7 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 	// mid
 	while (a_index >= 1) {
 		if (history->explore_type == EXPLORE_TYPE_LOCAL
-				&& history->explore_index_inclusive == a_index) {
+				&& this->best_explore_index_inclusive == a_index) {
 			int explore_signal = this->explore_fold->explore_on_path_backprop(
 				local_state_errors,
 				predicted_score,
@@ -1495,7 +1497,7 @@ void BranchPath::explore_on_path_backprop(vector<double>& local_s_input_errors,	
 
 	// start
 	if (history->explore_type == EXPLORE_TYPE_LOCAL
-			&& history->explore_index_inclusive == 0) {
+			&& this->best_explore_index_inclusive == 0) {
 		int explore_signal = this->explore_fold->explore_on_path_backprop(
 			local_state_errors,
 			predicted_score,

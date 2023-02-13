@@ -447,7 +447,9 @@ void Scope::explore_on_path_activate(Problem& problem,
 	}
 
 	if (history->explore_type == EXPLORE_TYPE_LOCAL) { 
-		if (this->explore_fold == NULL) {
+		if (this->explore_fold != NULL) {
+			history->explore_index_inclusive = -1;
+		} else {
 			this->curr_explore_end_non_inclusive = history->explore_index_inclusive + 1
 				+ rand()%(this->sequence_length - history->explore_index_inclusive);
 
@@ -1004,7 +1006,7 @@ void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e.
 
 	while (a_index >= 0) {
 		if (history->explore_type == EXPLORE_TYPE_LOCAL
-				&& history->explore_index_inclusive == a_index) {
+				&& this->best_explore_index_inclusive == a_index) {
 			int explore_signal = this->explore_fold->explore_on_path_backprop(
 				local_state_errors,
 				predicted_score,
