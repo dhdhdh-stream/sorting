@@ -11,17 +11,19 @@
 
 #include "network.h"
 
-const int STATE_FLAT = 0;	// with 1 state
+const int STATE_EXPLORE = 0;	// with 1 state
 
-const int STATE_FLAT_DONE = 1;
+const int STATE_EXPLORE_DONE = 1;
 
-const int STATE_FOLD_ADD_STATE = 2;
+const int STATE_ADD_STATE = 2;	// don't add to solution yet because still changing
 
-const int STATE_FOLD_REMOVE_NETWORK = 3;
-const int STATE_FOLD_REMOVE_STATE = 4;
-const int STATE_FOLD_CLEAR_STATE = 5;
+const int STATE_ADD_DONE = 3;
 
-const int STATE_FOLD_DONE = 6;
+const int STATE_REMOVE_NETWORK = 4;
+const int STATE_REMOVE_STATE = 5;
+const int STATE_CLEAR_STATE = 6;
+
+const int STATE_DONE = 7;
 
 class Fold {
 public:
@@ -34,6 +36,8 @@ public:
 	double curr_average_misguess;
 	double curr_misguess_variance;
 
+	std::vector<double> curr_step_impacts;
+
 	int test_num_states;
 	std::vector<std::vector<Network*>> test_state_networks;
 	std::vector<Network*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
@@ -41,12 +45,14 @@ public:
 	double test_average_misguess;
 	double test_misguess_variance;
 
+	std::vector<double> test_step_impacts;
+
 	int state;
 	int state_iter;
 	double sum_error;
 
-	int fold_step_index;
-	int fold_state_index;
+	int clean_step_index;
+	int clean_state_index;
 
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
@@ -60,34 +66,30 @@ public:
 	Fold(int sequence_length);
 	~Fold();
 
-	void flat_activate(std::vector<std::vector<double>>& flat_vals,
-					   double& predicted_score);
-	void flat_backprop(double target_val,
-					   double final_misguess,
-					   double& predicted_score);
-	void flat_increment();
+	void explore_activate(std::vector<std::vector<double>>& flat_vals,
+						  double& predicted_score);
+	void explore_backprop(double target_val,
+						  double final_misguess,
+						  double& predicted_score);
+	void explore_increment();
 
-	void flat_to_fold();
+	void explore_to_add();
 
-	void fold_activate(std::vector<std::vector<double>>& flat_vals,
-					   double& predicted_score);
-	void fold_backprop(double target_val,
-					   double final_misguess,
-					   double& predicted_score);
+	void add_activate(std::vector<std::vector<double>>& flat_vals,
+					  double& predicted_score);
+	void add_backprop(double target_val,
+					  double final_misguess,
+					  double& predicted_score);
+	void add_increment();
 
-	void fold_add_activate(std::vector<std::vector<double>>& flat_vals,
-						   double& predicted_score);
-	void fold_add_backprop(double target_val,
-						   double final_misguess,
-						   double& predicted_score);
-	void fold_add_increment();
+	void add_to_clean();
 
-	void fold_clean_activate(std::vector<std::vector<double>>& flat_vals,
-							 double& predicted_score);
-	void fold_clean_backprop(double target_val,
-							 double final_misguess,
-							 double& predicted_score);
-	void fold_clean_increment();
+	void clean_activate(std::vector<std::vector<double>>& flat_vals,
+						double& predicted_score);
+	void clean_backprop(double target_val,
+						double final_misguess,
+						double& predicted_score);
+	void clean_increment();
 };
 
 #endif /* FOLD_H */
