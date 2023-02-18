@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
 	Fold fold(8);
 
-	for (int iter = 0; iter < 1000000; iter++) {
+	while (true) {
 		bool is_seed;
 		if (rand()%10 == 0) {
 			is_seed = true;
@@ -74,22 +74,23 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		fold.activate(flat_vals);
-		fold.backprop(target_val);
+		double predicted_score = 0.0;
+		fold.flat_activate(flat_vals,
+						   predicted_score);
+		
+		double final_misguess = target_val - predicted_score;
+		fold.flat_backprop(target_val,
+						   final_misguess,
+						   predicted_score);
 
-		if (iter%10000 == 0) {
-			cout << iter << endl;
-			cout << "sum_error: " << fold.sum_error << endl;
-			fold.sum_error = 0.0;
-			cout << "target_val: " << target_val << endl;
-			cout << "output: " << fold.outer_network->output->acti_vals[0] << endl;
-			cout << endl;
+		if (fold.state == STATE_FLAT_DONE) {
+			break;
 		}
 	}
 
-	fold.add_state();
+	fold.flat_to_fold();
 
-	for (int iter = 0; iter < 1000000; iter++) {
+	while (true) {
 		bool is_seed;
 		if (rand()%10 == 0) {
 			is_seed = true;
@@ -136,16 +137,17 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		fold.activate(flat_vals);
-		fold.backprop(target_val);
+		double predicted_score = 0.0;
+		fold.fold_activate(flat_vals,
+						   predicted_score);
+		
+		double final_misguess = target_val - predicted_score;
+		fold.fold_backprop(target_val,
+						   final_misguess,
+						   predicted_score);
 
-		if (iter%10000 == 0) {
-			cout << iter << endl;
-			cout << "sum_error: " << fold.sum_error << endl;
-			fold.sum_error = 0.0;
-			cout << "target_val: " << target_val << endl;
-			cout << "output: " << fold.outer_network->output->acti_vals[0] << endl;
-			cout << endl;
+		if (fold.state == STATE_FOLD_DONE) {
+			break;
 		}
 	}
 

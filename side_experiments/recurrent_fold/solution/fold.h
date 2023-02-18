@@ -1,5 +1,3 @@
-// TODO: even if can't compress, can still split by testing if clearing to 0 works
-
 // TODO: while training, add like a 5% probability for input to be 0.0
 // pass separate set of state and store separate set of history
 // zero 1 thing per run, and randomly select forward, and if later selected, clear previous
@@ -13,11 +11,17 @@
 
 #include "network.h"
 
-const int STATE_REMOVE_NETWORK = 0;
-const int STATE_REMOVE_STATE = 1;
-const int STATE_CLEAR_STATE = 2;
+const int STATE_FLAT = 0;	// with 1 state
 
-const int STATE_DONE = 3;
+const int STATE_FLAT_DONE = 1;
+
+const int STATE_FOLD_ADD_STATE = 2;
+
+const int STATE_FOLD_REMOVE_NETWORK = 3;
+const int STATE_FOLD_REMOVE_STATE = 4;
+const int STATE_FOLD_CLEAR_STATE = 5;
+
+const int STATE_FOLD_DONE = 6;
 
 class Fold {
 public:
@@ -27,9 +31,15 @@ public:
 	std::vector<std::vector<Network*>> curr_state_networks;
 	std::vector<Network*> curr_score_networks;	// TODO: worry about trimming inputs only when constructing scope
 
+	double curr_average_misguess;
+	double curr_misguess_variance;
+
 	int test_num_states;
 	std::vector<std::vector<Network*>> test_state_networks;
 	std::vector<Network*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
+
+	double test_average_misguess;
+	double test_misguess_variance;
 
 	int state;
 	int state_iter;
@@ -50,10 +60,34 @@ public:
 	Fold(int sequence_length);
 	~Fold();
 
-	void activate(std::vector<std::vector<double>>& flat_vals);
-	void backprop(double target_val);
+	void flat_activate(std::vector<std::vector<double>>& flat_vals,
+					   double& predicted_score);
+	void flat_backprop(double target_val,
+					   double final_misguess,
+					   double& predicted_score);
+	void flat_increment();
 
-	void add_state();
+	void flat_to_fold();
+
+	void fold_activate(std::vector<std::vector<double>>& flat_vals,
+					   double& predicted_score);
+	void fold_backprop(double target_val,
+					   double final_misguess,
+					   double& predicted_score);
+
+	void fold_add_activate(std::vector<std::vector<double>>& flat_vals,
+						   double& predicted_score);
+	void fold_add_backprop(double target_val,
+						   double final_misguess,
+						   double& predicted_score);
+	void fold_add_increment();
+
+	void fold_clean_activate(std::vector<std::vector<double>>& flat_vals,
+							 double& predicted_score);
+	void fold_clean_backprop(double target_val,
+							 double final_misguess,
+							 double& predicted_score);
+	void fold_clean_increment();
 };
 
 #endif /* FOLD_H */
