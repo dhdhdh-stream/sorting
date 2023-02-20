@@ -540,6 +540,7 @@ void Fold::clean_increment() {
 					if (this->clean_step_index == 0) {
 						// do nothing -- this->curr_num_states_cleared[0] = 0
 					} else {
+						// just a small optimization that doesn't impact results
 						this->curr_num_states_cleared[this->clean_step_index] = this->curr_num_states_cleared[this->clean_step_index-1];
 						for (int s_index = 0; s_index < this->curr_num_states_cleared[this->clean_step_index]; s_index++) {
 							if (!this->curr_state_networks_not_needed[this->clean_step_index][s_index]) {

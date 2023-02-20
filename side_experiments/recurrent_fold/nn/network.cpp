@@ -198,6 +198,14 @@ void Network::add_input() {
 	this->hidden->hidden_add_input();
 }
 
+void Network::remove_input(int index) {
+	this->input_size--;
+	this->input->acti_vals.pop_back();
+	this->input->errors.pop_back();
+
+	this->hidden->hidden_remove_input(index);
+}
+
 void Network::save(ofstream& output_file) {
 	output_file << this->input_size << endl;
 	output_file << this->hidden_size << endl;

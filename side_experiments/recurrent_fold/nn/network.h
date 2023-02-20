@@ -49,6 +49,7 @@ public:
 											   NetworkHistory* history);
 
 	void add_input();
+	void remove_input(int index);
 
 	void save(std::ofstream& output_file);
 

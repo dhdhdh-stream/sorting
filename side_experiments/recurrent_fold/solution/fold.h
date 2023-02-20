@@ -27,7 +27,13 @@ const int STATE_DONE = 7;
 
 class Fold {
 public:
+	int num_input_states;
+
 	int sequence_length;
+
+	Network* starting_score_network;
+	Network* combined_score_network;
+	Network* end_scale_mod;
 
 	int curr_num_states;
 	std::vector<std::vector<Network*>> curr_state_networks;
@@ -54,9 +60,12 @@ public:
 	int clean_step_index;
 	int clean_state_index;
 
+	// TODO: remove back to front? Or might not matter because trimming makes the order not matter?
+	// intuitively, removing back to front matches the idea of scopes more, so go with that
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
 
+	// TODO: remove back to front?
 	std::vector<std::vector<bool>> curr_state_not_needed_locally;
 	std::vector<std::vector<bool>> test_state_not_needed_locally;
 

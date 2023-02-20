@@ -42,6 +42,7 @@ public:
 	void backprop_weights_with_no_error_signal();
 
 	void hidden_add_input();
+	void hidden_remove_input(int index);
 };
 
 #endif /* LAYER_H */
