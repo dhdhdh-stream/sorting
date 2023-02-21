@@ -7,11 +7,11 @@ Scope::Scope(int num_input_states,
 			 bool is_loop,
 			 Network* continue_network,
 			 Network* halt_network,
-			 std::vector<Network*> score_networks,
-			 std::vector<bool> is_fold,
-			 std::vector<ScopePath*> branches,
-			 std::vector<Fold*> folds,
-			 std::vector<int> num_travelled) {
+			 vector<Network*> score_networks,
+			 vector<bool> is_fold,
+			 vector<ScopePath*> branches,
+			 vector<Fold*> folds,
+			 vector<int> num_travelled) {
 	this->num_input_states = num_input_states;
 	this->num_local_states = num_local_states;
 	this->is_loop = is_loop;
@@ -44,6 +44,25 @@ Scope::~Scope() {
 
 		if (this->folds[b_index] != NULL) {
 			delete this->folds[b_index];
+		}
+	}
+}
+
+void Scope::activate(vector<double>& input_vals,
+					 vector<vector<double>>& flat_vals,
+					 double& predicted_score) {
+	if (is_loop) {
+		// while (true) {
+		// 	vector<double> local_state_vals(this->num_local_states, 0.0);
+
+		// }
+	} else {
+		if (this->branches.size() == 1) {
+			this->branches[0]->activate(input_vals,
+										flat_vals,
+										predicted_score);
+		} else {
+
 		}
 	}
 }

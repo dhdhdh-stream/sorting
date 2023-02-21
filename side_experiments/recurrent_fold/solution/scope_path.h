@@ -15,8 +15,8 @@ public:
 	std::vector<bool> is_inner_scope;
 	std::vector<Scope*> scopes;
 
-	// if inner_scope expanded so there's no matching index, then pass NULL
-	// copy val on start if not NULL, and copy val back on end
+	// if inner_scope expanded so there's no matching index, then pass 0.0
+	// copy val on start, and copy val back on end
 	std::vector<std::vector<bool>> inner_input_is_local;
 	std::vector<std::vector<int>> inner_input_indexes;
 	// std::vector<Network*> scope_scale_mod;
@@ -46,6 +46,10 @@ public:
 			  std::vector<bool> has_score_network,
 			  std::vector<Network*> score_networks);
 	~ScopePath();
+
+	void activate(std::vector<double>& input_vals,
+				  std::vector<std::vector<double>>& flat_vals,
+				  double& predicted_score);
 };
 
 #endif /* SCOPE_PATH_H */

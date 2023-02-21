@@ -190,22 +190,6 @@ void Network::backprop_weights_with_no_error_signal(vector<double>& errors,
 										  target_max_update);
 }
 
-void Network::add_input() {
-	this->input_size++;
-	this->input->acti_vals.push_back(0.0);
-	this->input->errors.push_back(0.0);
-
-	this->hidden->hidden_add_input();
-}
-
-void Network::remove_input(int index) {
-	this->input_size--;
-	this->input->acti_vals.pop_back();
-	this->input->errors.pop_back();
-
-	this->hidden->hidden_remove_input(index);
-}
-
 void Network::save(ofstream& output_file) {
 	output_file << this->input_size << endl;
 	output_file << this->hidden_size << endl;
