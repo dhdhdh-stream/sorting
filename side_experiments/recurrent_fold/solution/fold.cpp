@@ -320,7 +320,7 @@ void Fold::add_to_clean() {
 		this->test_num_states_cleared.push_back(0);
 	}
 
-	this->test_state_networks_not_needed[0][0] = true;
+	this->test_state_networks_not_needed[0][this->curr_num_states-1] = true;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		for (int s_index = 0; s_index < this->curr_num_states; s_index++) {
 			if (!this->test_state_networks_not_needed[f_index][s_index]) {
@@ -515,9 +515,9 @@ void Fold::clean_increment() {
 		bool next_step_done = false;
 		while (!next_step_done) {
 			if (this->state == STATE_REMOVE_NETWORK) {
-				if (this->clean_state_index == this->curr_num_states-1) {
+				if (this->clean_state_index == 0) {
 					this->state = STATE_REMOVE_STATE;
-					this->clean_state_index = 0;
+					this->clean_state_index = this->curr_num_states-1;
 
 					if (this->curr_state_networks_not_needed[this->clean_step_index][this->clean_state_index]) {
 						cout << "STATE_REMOVE_STATE " << this->clean_step_index << " " << this->clean_state_index << endl;
@@ -526,7 +526,7 @@ void Fold::clean_increment() {
 						this->test_state_not_needed_locally[this->clean_step_index][this->clean_state_index] = true;
 					}
 				} else {
-					this->clean_state_index++;
+					this->clean_state_index--;
 
 					cout << "STATE_REMOVE_NETWORK " << this->clean_step_index << " " << this->clean_state_index << endl;
 
@@ -534,7 +534,7 @@ void Fold::clean_increment() {
 					this->test_state_networks_not_needed[this->clean_step_index][this->clean_state_index] = true;
 				}
 			} else if (this->state == STATE_REMOVE_STATE) {
-				if (this->clean_state_index == this->curr_num_states-1) {
+				if (this->clean_state_index == 0) {
 					this->state = STATE_CLEAR_STATE;
 
 					if (this->clean_step_index == 0) {
@@ -561,7 +561,7 @@ void Fold::clean_increment() {
 						this->test_num_states_cleared[this->clean_step_index]++;
 					}
 				} else {
-					this->clean_state_index++;
+					this->clean_state_index--;
 
 					if (this->curr_state_networks_not_needed[this->clean_step_index][this->clean_state_index]) {
 						cout << "STATE_REMOVE_STATE " << this->clean_step_index << " " << this->clean_state_index << endl;
@@ -582,12 +582,12 @@ void Fold::clean_increment() {
 						this->state = STATE_REMOVE_NETWORK;
 
 						this->clean_step_index++;
-						this->clean_state_index = 0;
+						this->clean_state_index = this->curr_num_states-1;
 
 						cout << "STATE_REMOVE_NETWORK " << this->clean_step_index << " " << this->clean_state_index << endl;
 
 						next_step_done = true;
-						this->test_state_networks_not_needed[this->clean_step_index][0] = true;
+						this->test_state_networks_not_needed[this->clean_step_index][this->clean_state_index] = true;
 					}
 				} else {
 					// TODO: potentially speed up by checking both previous num_states_cleared and state_networks_not_needed

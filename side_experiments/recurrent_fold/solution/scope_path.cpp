@@ -1,5 +1,7 @@
 #include "scope_path.h"
 
+#include <iostream>
+
 using namespace std;
 
 ScopePath::ScopePath(int num_input_states,

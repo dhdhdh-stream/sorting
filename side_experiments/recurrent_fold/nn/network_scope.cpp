@@ -27,10 +27,17 @@ void Network::scope_activate(vector<double>& obs,
 		input_index++;
 	}
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+		if (input_index >= this->input_size) {
+			// state networks only process first this->input_size states
+			break;
+		}
 		this->input->acti_vals[input_index] = input_vals[i_index];
 		input_index++;
 	}
 	for (int l_index = 0; l_index < (int)local_state_vals.size(); l_index++) {
+		if (input_index >= this->input_size) {
+			break;
+		}
 		this->input->acti_vals[input_index] = local_state_vals[l_index];
 		input_index++;
 	}

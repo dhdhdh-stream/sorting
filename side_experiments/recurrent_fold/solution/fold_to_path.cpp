@@ -1,5 +1,7 @@
 #include "fold_to_path.h"
 
+#include <iostream>
+
 #include "scope.h"
 
 using namespace std;
@@ -162,11 +164,11 @@ ScopePath* fold_to_path(Fold* fold) {
 		for (int a_index = 0; a_index < new_sequence_length; a_index++) {
 			if (is_inner_scope[n_index][a_index]) {
 				// inner scope already initialized
-				new_scopes.push_back(scopes[scope_indexes[a_index]]);
+				new_scopes.push_back(scopes[inner_scope_indexes[n_index][a_index]]);
 				new_inner_input_is_local.push_back(vector<bool>());
 				new_inner_input_indexes.push_back(vector<int>());
-				for (int i_index = 0; i_index < scopes[scope_indexes[a_index]]->num_input_states; i_index++) {
-					int original_index = input_index_reverse_mappings[scope_indexes[a_index]][i_index];
+				for (int i_index = 0; i_index < scopes[inner_scope_indexes[n_index][a_index]]->num_input_states; i_index++) {
+					int original_index = input_index_reverse_mappings[inner_scope_indexes[n_index][a_index]][i_index];
 					if (original_index > parent_layer) {
 						new_inner_input_is_local[a_index].push_back(true);
 					} else {
@@ -184,7 +186,7 @@ ScopePath* fold_to_path(Fold* fold) {
 				new_has_score_network.push_back(false);
 				new_score_networks.push_back(NULL);
 
-				f_index = scope_inclusive_ends[scope_indexes[a_index]];
+				f_index = scope_inclusive_ends[inner_scope_indexes[n_index][a_index]];
 			} else {
 				new_state_network_target_is_local.push_back(vector<bool>());
 				new_state_network_target_indexes.push_back(vector<int>());
@@ -199,9 +201,11 @@ ScopePath* fold_to_path(Fold* fold) {
 						new_state_network_target_indexes[a_index].push_back(state_index_mapping[s_index]);
 
 						new_state_networks[a_index].push_back(fold->curr_state_networks[f_index][s_index]);
+						fold->curr_state_networks[f_index][s_index] = NULL;
 						for (int ss_index = s_index; ss_index >= 0; ss_index--) {
 							if (!used_states[ss_index]) {
-								new_state_networks[a_index].back()->remove_input(ss_index);
+								// TODO: need to offset by observation size
+								new_state_networks[a_index].back()->remove_input(1+ss_index);
 							}
 						}
 					}
@@ -209,6 +213,7 @@ ScopePath* fold_to_path(Fold* fold) {
 
 				new_has_score_network.push_back(true);
 				new_score_networks.push_back(fold->curr_score_networks[f_index]);
+				fold->curr_score_networks[f_index] = NULL;
 				for (int s_index = fold->curr_num_states-1; s_index >= 0; s_index--) {
 					if (!used_states[s_index]) {
 						new_score_networks[a_index]->remove_input(s_index);
@@ -253,6 +258,7 @@ ScopePath* fold_to_path(Fold* fold) {
 
 	if (scope_inclusive_starts.back() == 0 && scope_inclusive_ends.back() == fold->sequence_length-1) {
 		ScopePath* result = scopes.back()->branches[0];
+		scopes.back()->branches[0] = NULL;
 		delete scopes.back();
 		return result;
 	} else {

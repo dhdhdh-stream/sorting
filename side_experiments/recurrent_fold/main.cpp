@@ -15,6 +15,8 @@
 #include <random>
 
 #include "fold.h"
+#include "fold_to_path.h"
+#include "scope_path.h"
 
 using namespace std;
 
@@ -183,6 +185,49 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 	}
+
+	ScopePath* scope_path = fold_to_path(&fold);
+	for (int i = 0; i < 10; i++) {
+		vector<vector<double>> flat_vals;
+		double target_val = 0.0;
+
+		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+		int xor_val_1_1 = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
+		int xor_val_1_2 = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+		int xor_val_2_1 = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+		int xor_val_2_2 = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+
+		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
+			target_val += 1.0;
+		} else {
+			target_val -= 1.0;
+		}
+		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
+			target_val += 1.0;
+		} else {
+			target_val -= 1.0;
+		}
+
+		double predicted_score = 0.0;
+
+		vector<double> input_vals;	// empty
+		scope_path->activate(input_vals,
+							 flat_vals,
+							 predicted_score);
+
+		cout << "target_val: " << target_val << endl;
+		cout << "predicted_score: " << predicted_score << endl;
+		cout << endl;
+	}
+
+	delete scope_path;
 
 	cout << "Done" << endl;
 }
