@@ -27,6 +27,8 @@ int main(int argc, char* argv[]) {
 	srand(seed);
 	cout << "Seed: " << seed << endl;
 
+	// TODO: start by separately going through explore cycles
+
 	Fold fold(8);
 
 	while (true) {

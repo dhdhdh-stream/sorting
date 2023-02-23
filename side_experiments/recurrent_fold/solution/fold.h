@@ -25,17 +25,28 @@ const int STATE_CLEAR_STATE = 6;
 
 const int STATE_DONE = 7;
 
+class FoldOuterStateScopeHelper {
+public:
+
+};
+
 class Fold {
 public:
 	int num_input_states;
 
 	int sequence_length;
 
+	int curr_num_outer_states;
+	std::map<int, std::map<int, std::vector<Network*>>> curr_outer_state_networks;
+
+	int test_num_outer_states;
+	std::map<int, std::map<int, std::vector<Network*>>> test_outer_state_networks;
+
 	Network* starting_score_network;
 	Network* combined_score_network;
 	Network* end_scale_mod;
 
-	int curr_num_states;
+	int curr_num_local_states;
 	std::vector<std::vector<Network*>> curr_state_networks;
 	std::vector<Network*> curr_score_networks;	// TODO: worry about trimming inputs only when constructing scope
 
@@ -44,7 +55,7 @@ public:
 
 	std::vector<double> curr_step_impacts;
 
-	int test_num_states;
+	int test_num_local_states;
 	std::vector<std::vector<Network*>> test_state_networks;
 	std::vector<Network*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
 
@@ -60,21 +71,23 @@ public:
 	int clean_step_index;
 	int clean_state_index;
 
-	// TODO: remove back to front? Or might not matter because trimming makes the order not matter?
-	// intuitively, removing back to front matches the idea of scopes more, so go with that
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
 
-	// TODO: remove back to front?
 	std::vector<std::vector<bool>> curr_state_not_needed_locally;
 	std::vector<std::vector<bool>> test_state_not_needed_locally;
 
 	std::vector<int> curr_num_states_cleared;
 	std::vector<int> test_num_states_cleared;
 
-	Fold(int sequence_length);
+	// for explore input, keep track of outer scope nearest distance, and try removing back to front
+
+	Fold(int num_input_states,
+		 int sequence_length);
 	~Fold();
 
+	// TODO: split between activate_score and activate_sequence
+	// TODO: use outer inputs for sequence, but inner inputs for score?
 	void explore_activate(std::vector<std::vector<double>>& flat_vals,
 						  double& predicted_score);
 	void explore_backprop(double target_val,

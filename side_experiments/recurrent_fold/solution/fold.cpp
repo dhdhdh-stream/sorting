@@ -40,6 +40,29 @@ Fold::~Fold() {
 	}
 }
 
+ExploreScopeHelper::~ExploreScopeHelper() {
+	for (map<int, Network*>::iterator it = this->state_networks.begin();
+			it != this->state_networks.end(); it++) {
+		delete it->second;
+		// TODO: if transferring networks, remove entry from map
+	}
+}
+
+Network* ExploreScopeHelper::get_network(int node_index) {
+	map<int, Network*>::iterator it = this->state_networks.find(node_index);
+	if (it != this->state_networks.end()) {
+		return it->second;
+	} else {
+		int input_size = 1	// obs_size
+			+ solution->scope_dictionary[this->scope_id]->num_input_states
+			+ solution->scope_dictionary[this->scope_id]->num_local_states
+			+ 1;	// explore_state
+		Network* new_network = new Network(input_size, 20, 1);
+		this->state_networks.insert({node_index, new_network});
+		return new_network;
+	}
+}
+
 void Fold::explore_activate(vector<vector<double>>& flat_vals,
 							double& predicted_score) {
 	vector<double> state_vals(this->curr_num_states, 0.0);
