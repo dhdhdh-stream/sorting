@@ -9,6 +9,7 @@ const int NODE_TYPE_FOLD = 3;
 class AbstractNode {
 public:
 	Scope* parent;
+	int id;
 
 	int type;
 

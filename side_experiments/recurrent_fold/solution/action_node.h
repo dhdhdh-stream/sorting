@@ -14,12 +14,14 @@ public:
 
 	// TODO: don't explore if explore weight is below some threshold?
 
-	// TODO: to make sure balanced, pick context depth in advance, and try existing fold, or brand new explore, but don't try fold of less length
-	std::vector<std::vector<int>> explore_scope_context;
-	std::vector<std::vector<int>> explore_node_context;
+	// TODO: add batch surprise and seeding
+
+	std::vector<int> explore_scope_context;
+	std::vector<int> explore_node_context;
+	// if doesn't match context, pass explore weight on
 	// TODO: explore_action_sequences
-	std::vector<int> explore_next_indexes;	// next within outermost scope_context
-	std::vector<Fold*> explore_folds;
+	int explore_next_indexes;	// next within outermost scope_context
+	Fold* explore_fold;
 
 	ActionNode(Scope* parent,
 			   std::vector<bool> state_network_target_is_local,
@@ -33,14 +35,17 @@ public:
 						 std::vector<double>& local_state_vals,
 						 std::vector<std::vector<double>>& flat_vals,
 						 double& predicted_score,
-						 std::vector<int> scope_context,
-						 std::vector<int> node_context,
-						 RunStatus& run_status,
-						 std::vector<AbstractNodeHistory*>& node_history);
+						 std::vector<int>& scope_context,
+						 std::vector<int>& node_context,
+						 std::vector<int>& context_iter,
+						 RunHelper& run_helper);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
+	std::vector<double> input_vals_snapshot;
+	std::vector<double> local_state_vals_snapshot;
+
 	std::vector<NetworkHistory*> state_network_histories;
 	NetworkHistory* score_network_history;
 

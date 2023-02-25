@@ -63,6 +63,42 @@ Network* ExploreScopeHelper::get_network(int node_index) {
 	}
 }
 
+void Fold::explore_score_activate(std::vector<double>& input_vals,
+								  std::vector<double>& local_state_vals,
+								  std::vector<std::vector<double>>& flat_vals,
+								  double& predicted_score,
+								  vector<int>& scope_context,
+								  vector<int>& node_context,
+								  vector<int>& context_iter,
+								  RunHelper& run_helper) {
+	double new_outer_state = 0.0;
+
+	int starting_iter = context_iter[context_iter.size() - this->scope_context.size()];
+	for (int n_index = starting_iter; n_index < (int)run_helper.node_history.size(); n_index++) {
+		if (run_helper.node_history[n_index]->node->type == NODE_TYPE_ACTION) {
+			int scope_id = run_helper.node_history[n_index]->node->parent->id;
+			map<int, vector<Network*>>::iterator it = this->curr_outer_state_networks.find(scope_id);
+			if (it == this->curr_outer_state_networks.end()) {
+				it = this->curr_outer_state_networks.insert({scope_id, vector<Network*>()}).first;
+			}
+
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)run_helper.node_history[n_index];
+			if (action_node_history->node->id >= it.second.size()) {
+				int size_diff = solution->scope_dictionary[scope_id]->nodes.size() - it.second.size();
+				it.second.insert(it.second.begin(), size_diff, NULL);
+			}
+
+			if (it.second[action_node_history->node->id] == NULL) {
+				int input_size = 1	// obs_size
+					+ 
+				it.second[action_node_history->node->id] = new Network();
+			}
+
+			it.second[action_node_history->node->id];
+		}
+	}
+}
+
 void Fold::explore_activate(vector<vector<double>>& flat_vals,
 							double& predicted_score) {
 	vector<double> state_vals(this->curr_num_states, 0.0);
@@ -136,6 +172,7 @@ void Fold::explore_backprop(double target_val,
 void Fold::explore_increment() {
 	this->state_iter++;
 
+	// Note: distant to-do -- eventually, swap to using seeds instead of new problem instances every time
 	if (this->state_iter == 500000) {
 		cout << "STATE_EXPLORE_DONE" << endl;
 		this->state = STATE_EXPLORE_DONE;

@@ -8,6 +8,16 @@ class Scope {
 public:
 	int id;
 
+	// if input expanded somewhere else, initially 0.0
+	// these uninitialized inputs are like a call for information
+	// can search for outer input that matches
+	// so can add input context by context
+	// don't have to add all at once
+
+	// TODO: make explore input context based as well
+
+	// within that context, can support loops, branches, etc. but has to be single ancestor
+
 	int num_input_states;	// also becomes output
 	int num_local_states;
 
@@ -31,8 +41,6 @@ public:
 	void activate(std::vector<double>& input_vals,
 				  std::vector<std::vector<double>>& flat_vals,
 				  double& predicted_score,
-				  int& early_exit_count,
-				  int& early_exit_index,
 				  int& early_exit_count,
 				  Fold*& early_exit_fold,
 				  int& early_exit_index);

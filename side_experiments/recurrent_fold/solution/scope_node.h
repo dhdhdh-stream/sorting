@@ -14,7 +14,7 @@ public:
 	int next_node_index;	// TODO: set when adding to Scope?
 	// may go elsewhere due to early exit, but no need to track (and don't explore branch there)
 
-	// TODO: explore after inner scope too
+	// TODO: don't explore inner unless sufficient weight
 
 	ScopeNode(Scope* parent,
 			  Scope* inner_scope,
