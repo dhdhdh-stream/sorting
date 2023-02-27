@@ -13,6 +13,8 @@ public:
 	std::vector<int> num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
 	// TODO: track when last travelled, and delete unused
 
+	// TODO: adjust explore weight scale factor based on the branch
+
 	// Note: for explore with loops, don't have to worry about timing, as explore weight will randomize it naturally
 
 	// explore input initialized from start of solution

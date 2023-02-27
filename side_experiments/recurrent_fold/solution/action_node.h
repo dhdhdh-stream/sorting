@@ -5,10 +5,9 @@ class ActionNode : public AbstractNode {
 public:
 	std::vector<bool> state_network_target_is_local;
 	std::vector<int> state_network_target_indexes;
-	std::vector<Network*> state_networks;
+	std::vector<StateNetwork*> state_networks;
 
-	bool has_score_network;
-	Network* score_network;
+	ScoreNetwork* score_network;
 
 	int next_node_index;	// TODO: set when adding to Scope?
 
@@ -16,11 +15,12 @@ public:
 
 	// TODO: add batch surprise and seeding
 
+	// TODO: context also has to have enough representation
 	std::vector<int> explore_scope_context;
 	std::vector<int> explore_node_context;
 	// if doesn't match context, pass explore weight on
 	// TODO: explore_action_sequences
-	int explore_next_indexes;	// next within outermost scope_context
+	int explore_next_index;	// next within outermost scope_context
 	Fold* explore_fold;
 
 	ActionNode(Scope* parent,
@@ -43,9 +43,6 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<double> input_vals_snapshot;
-	std::vector<double> local_state_vals_snapshot;
-
 	std::vector<NetworkHistory*> state_network_histories;
 	NetworkHistory* score_network_history;
 

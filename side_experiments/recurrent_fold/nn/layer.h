@@ -41,8 +41,14 @@ public:
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
 
-	void hidden_add_input();
-	void hidden_remove_input(int index);
+	void state_hidden_backprop_new_state();
+	void state_hidden_update_state_sizes(int input_state_size_increase,
+										 int local_state_size_increase);
+	void state_hidden_new_weights_to_local();
+	void state_hidden_new_weights_to_input();
+	void state_hidden_split_new(int split_index);
+	void state_hidden_remove_input(int index);
+	void state_hidden_remove_local(int index);
 };
 
 #endif /* LAYER_H */

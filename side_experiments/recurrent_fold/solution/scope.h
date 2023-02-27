@@ -30,6 +30,10 @@ public:
 
 	// if trying entire sequences, then don't need to worry about exploring at start of scope
 
+	// TODO: explore weight has to be proportional, rather than based directly on size of score?
+	// branches change explore weight?
+	// add explore weight scale factor
+
 	Scope(int num_input_states,
 		  int num_local_states,
 		  bool is_loop,
@@ -38,14 +42,34 @@ public:
 		  std::vector<AbstractNode*> nodes);
 	~Scope();
 
-	void activate(std::vector<double>& input_vals,
-				  std::vector<std::vector<double>>& flat_vals,
-				  double& predicted_score,
-				  int& early_exit_count,
-				  Fold*& early_exit_fold,
-				  int& early_exit_index);
+	void explore_activate(std::vector<double>& input_vals,
+						  std::vector<double>& local_state_vals,
+						  std::vector<std::vector<double>>& flat_vals,
+						  double& predicted_score,
+						  double& scale_factor,
+						  std::vector<int>& scope_context,
+						  std::vector<int>& node_context,
+						  std::vector<int>& context_iter,
+						  std::vector<ContextHistory*>& context_history,
+						  int& exit_depth,
+						  Fold*& explore_fold,
+						  int& exit_index,
+						  FoldHistory*& explore_fold_history,
+						  RunHelper& run_helper);
 
-	// TODO: leave explore for scope activate so implementation is cleaner
+	void existing_explore_activate(std::vector<double>& input_vals,
+								   std::vector<std::vector<double>>& flat_vals,
+								   double& predicted_score,
+								   double& scale_factor,
+								   RunHelper& run_helper,
+								   ScopeHistory* scope_history);
+};
+
+class ScopeHistory {
+public:
+	std::vector<AbstractNodeHistory*> node_histories;	// i.e. pre_explore_node_history
+	std::vector<AbstractNodeHistory*> post_explore_node_histories;
+
 };
 
 #endif /* SCOPE_H */

@@ -9,7 +9,7 @@ public:
 	double average_score;
 	Scope* root;
 
-	std::vector<Scope*> scope_dictionary;
+	std::vector<Scope*> scopes;
 	// TODO: try MCTS with fading
 	// TODO: the stat that is important is whether added to solution
 
