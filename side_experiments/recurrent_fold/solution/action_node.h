@@ -9,7 +9,7 @@ public:
 
 	ScoreNetwork* score_network;
 
-	int next_node_index;	// TODO: set when adding to Scope?
+	int next_node_id;	// TODO: set when adding to Scope?
 
 	// TODO: don't explore if explore weight is below some threshold?
 
@@ -20,7 +20,8 @@ public:
 	std::vector<int> explore_node_context;
 	// if doesn't match context, pass explore weight on
 	// TODO: explore_action_sequences
-	int explore_next_index;	// next within outermost scope_context
+	int explore_exit_depth;
+	int explore_next_node_id;
 	Fold* explore_fold;
 
 	ActionNode(Scope* parent,

@@ -18,7 +18,7 @@ public:
 
 	ScoreNetwork* score_network;
 
-	int next_node_index;	// TODO: set when adding to Scope?
+	int next_node_id;	// TODO: set when adding to Scope?
 	// may go elsewhere due to early exit, but no need to track (and don't explore branch there)
 
 	// TODO: don't explore inner unless sufficient weight

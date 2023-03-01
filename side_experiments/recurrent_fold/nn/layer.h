@@ -41,14 +41,19 @@ public:
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
 
-	void state_hidden_backprop_new_state();
-	void state_hidden_update_state_sizes(int input_state_size_increase,
-										 int local_state_size_increase);
-	void state_hidden_new_weights_to_local();
-	void state_hidden_new_weights_to_input();
+	void state_hidden_backprop_new_outer_state();
+	void state_hidden_add_new_inner();
+	void state_hidden_remove_new_outer();
+	void state_hidden_add_new_outer();
+	void state_hidden_update_state_sizes(int local_state_size_increase,
+										 int input_state_size_increase);
+	void state_hidden_new_outer_weights_to_local();
+	void state_hidden_new_outer_weights_to_input();
 	void state_hidden_split_new(int split_index);
-	void state_hidden_remove_input(int index);
 	void state_hidden_remove_local(int index);
+	void state_hidden_remove_input(int index);
+	void state_hidden_add_local();
+	void state_hidden_add_input();
 };
 
 #endif /* LAYER_H */

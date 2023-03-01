@@ -28,10 +28,12 @@ ActionNode::~ActionNode() {
 	}
 }
 
-int ActionNode::activate(vector<double>& input_vals,
-						 vector<double>& local_state_vals,
-						 vector<vector<double>>& flat_vals,
-						 double& predicted_score) {
+void ActionNode::activate(vector<double>& local_state_vals,
+						  vector<double>& input_vals,
+						  vector<vector<double>>& flat_vals,
+						  double& predicted_score,
+						  double& scale_factor,
+						  ActionNodeHistory* history) {
 	vector<double> obs = *flat_vals.begin();
 
 	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
@@ -52,6 +54,4 @@ int ActionNode::activate(vector<double>& input_vals,
 											local_state_vals);
 		predicted_score += this->score_network->output->acti_vals[0];
 	}
-
-	return this->next_node_index;
 }

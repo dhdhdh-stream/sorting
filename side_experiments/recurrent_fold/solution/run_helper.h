@@ -21,8 +21,6 @@ public:
 	double existing_score;
 	double score_variance;
 
-	Fold* explore_fold;
-	FoldHistory* explore_fold_history;
 };
 
 #endif /* RUN_HELPER_H */

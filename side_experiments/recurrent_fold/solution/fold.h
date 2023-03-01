@@ -4,17 +4,6 @@
 // probably add like loop fold that can still add state
 // state used to setup halt and continue networks
 
-// state networks take input from all
-// ordering:
-// - local inner input
-// (inner activate)
-// - local
-// - inputs (already populated for 1st step)
-
-// then, when removing networks/state, remove front to back?
-// may not lead to perfect compressions, but should be good enough
-// works for continuing existing scope too
-
 #ifndef FOLD_H
 #define FOLD_H
 
@@ -24,16 +13,20 @@ const int STATE_EXPLORE = 0;	// with 1 new outer, 1 new local
 
 const int STATE_EXPLORE_DONE = 1;
 
-const int STATE_ADD_STATE = 2;	// don't add to solution yet because still changing
+// TODO: consider adding input even if sequence isn't good enough
 
-const int STATE_ADD_DONE = 3;
+const int STATE_ADD_INNER_STATE = 2;
+const int STATE_REMOVE_OUTER_STATE = 3;
+const int STATE_ADD_OUTER_STATE = 4;
 
-// TODO: add remove new, so can continue existing scope?
-const int STATE_REMOVE_NETWORK = 4;
-const int STATE_REMOVE_STATE = 5;
-const int STATE_CLEAR_STATE = 6;
+const int STATE_REMOVE_OUTER_SCOPE = 5;
+const int STATE_REMOVE_OUTER_NETWORK = 6;
+// TODO: remove front-to-back
+const int STATE_REMOVE_INNER_NETWORK = 7;
+const int STATE_REMOVE_INNER_STATE = 8;
+const int STATE_CLEAR_INNER_STATE = 9;
 
-const int STATE_DONE = 7;
+const int STATE_DONE = 10;
 
 class OuterStateHelper {
 public:
@@ -48,7 +41,8 @@ public:
 	vector<int> scope_context;	// gives inner and outer scope IDs
 	vector<int> node_context;
 
-	std::map<int, std::vector<StateNetwork*>> curr_outer_state_networks;
+	int curr_num_new_outer_states;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
 	StateNetwork* curr_starting_score_network;
 
 	std::vector<int> curr_outer_node_id;
@@ -56,12 +50,13 @@ public:
 	OuterStateHelper* outer_state_helper;
 	std::map<int, bool> scopes_checked;
 
-	std::map<int, std::vector<StateNetwork*>> test_outer_state_networks;
+	int test_num_new_outer_states;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
 	StateNetwork* test_starting_score_network;
 
 	// keep fixed even if parent scope updates
-	int num_input_states;
 	int num_local_states;
+	int num_input_states;
 
 	int sequence_length;
 	std::vector<bool> is_inner_scope;
@@ -69,18 +64,19 @@ public:
 
 	int sum_inner_inputs;
 	std::vector<int> inner_input_start_indexes;
+	std::vector<int> num_inner_inputs;	// keep track here fixed even as scope updates
+	// TODO: inner and ending scale_mods
 
-	int curr_num_new_local_states;	// in addition to new_outer_state -- starts at 0
+	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
-	// TODO: inner and ending scale_mods
 
 	double curr_average_misguess;
 	double curr_misguess_variance;
 
 	std::vector<double> curr_step_impacts;
 
-	int test_num_new_local_states;
+	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
 	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
 
@@ -109,28 +105,30 @@ public:
 		 int sequence_length);
 	~Fold();
 
-	// TODO: use outer inputs for sequence, but inner inputs for score?
-	void explore_score_activate(std::vector<double>& input_vals,
-								std::vector<double>& local_state_vals,
+	void explore_score_activate(std::vector<double>& local_state_vals,
+								std::vector<double>& input_vals,
 								double& predicted_score,
 								double& scale_factor,
 								std::vector<int>& context_iter,
-								RunHelper& run_helper);
-	void explore_sequence_activate(std::vector<double>& input_vals,
-								   std::vector<double>& local_state_vals,
+								std::vector<ContextHistory*> context_histories;
+								RunHelper& run_helper,
+								FoldHistory* history);
+	void explore_sequence_activate(std::vector<double>& local_state_vals,
+								   std::vector<double>& input_vals,
 								   std::vector<std::vector<double>>& flat_vals,
 								   double& predicted_score,
 								   double& scale_factor,
-								   double& new_outer_state_val,
-								   RunHelper& run_helper);
-	void explore_backprop(double target_val,
+								   RunHelper& run_helper,
+								   FoldHistory* history);
+	void explore_backprop(std::vector<double>& local_state_errors,
+						  std::vector<double>& input_errors,
+						  double target_val,
 						  double final_misguess,
-						  double& predicted_score);
+						  double& predicted_score,
+						  FoldHistory* history);
 	void explore_increment();
 
 	void explore_to_add();
-
-	// TODO: add input if effective even if fold isn't good enough
 
 	void add_activate(std::vector<std::vector<double>>& flat_vals,
 					  double& predicted_score);
@@ -151,14 +149,17 @@ public:
 
 class FoldHistory {
 public:
-	double outer_state_val;	// initialize to 0.0
+	Fold* fold;
 
-	std::vector<StateNetworkHistory*> outer_state_network_histories;
+	// to help track between score and sequence
+	std::vector<double> new_outer_state_vals;
+
+	std::vector<std::vector<StateNetworkHistory*>> outer_state_network_histories;
 	double starting_score_update;
 	StateNetworkHistory* starting_score_network_history;
 
 	std::vector<std::vector<StateNetworkHistory*>> state_network_histories;
-	std::vector<ScopeHistory*> inner_scope_histories;	// initialize
+	std::vector<ScopeHistory*> inner_scope_histories;
 	std::vector<double> score_network_updates;
 	std::vector<StateNetworkHistory*> score_network_histories;
 };

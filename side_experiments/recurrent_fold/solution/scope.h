@@ -67,9 +67,9 @@ public:
 
 class ScopeHistory {
 public:
-	std::vector<AbstractNodeHistory*> node_histories;	// i.e. pre_explore_node_history
-	std::vector<AbstractNodeHistory*> post_explore_node_histories;
+	std::vector<AbstractNodeHistory*> node_histories;
 
+	int explore_index;	// based off node_histories
 };
 
 #endif /* SCOPE_H */

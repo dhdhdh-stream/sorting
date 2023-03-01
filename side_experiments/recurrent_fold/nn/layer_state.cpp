@@ -31,75 +31,130 @@ void Layer::state_hidden_backprop_new_state() {
 	}
 }
 
-void Layer::state_hidden_update_state_sizes(int input_state_size_increase,
-											int local_state_size_increase) {
+void Layer::state_hidden_add_new_inner() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int i_index = 0; i_index < input_state_size_increase; i_index++) {
+		this->weights[n_index][3].push_back((randuni()-0.5)*0.02);
+		this->weight_updates[n_index][3].push_back(0.0);
+	}
+}
+
+void Layer::state_hidden_remove_new_outer() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][4].clear();
+		this->weight_updates[n_index][4].clear();
+	}
+}
+
+void Layer::state_hidden_add_new_outer() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][4].push_back((randuni()-0.5)*0.02);
+		this->weight_updates[n_index][4].push_back(0.0);
+	}
+}
+
+void Layer::state_hidden_update_state_sizes(int local_state_size_increase,
+											int input_state_size_increase) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		for (int l_index = 0; l_index < local_state_size_increase; l_index++) {
 			this->weights[n_index][1].push_back(0.0);
 			this->weight_updates[n_index][1].push_back(0.0);
 		}
 
-		for (int l_index = 0; l_index < local_state_size_increase; l_index++) {
+		for (int i_index = 0; i_index < input_state_size_increase; i_index++) {
 			this->weights[n_index][2].push_back(0.0);
 			this->weight_updates[n_index][2].push_back(0.0);
 		}
 	}
 }
 
-void Layer::state_hidden_new_weights_to_local() {
+void Layer::state_hidden_new_outer_weights_to_local() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][2].push_back(this->weights[n_index][3][0]);
-		this->weights[n_index][3].clear();
+		int new_outer_state_size = (int)this->input_layers[4]->acti_vals.size();
+		for (int o_index = 0; o_index < new_outer_state_size; o_index++) {
+			this->weights[n_index][1].push_back(this->weights[n_index][4][o_index]);
+			this->weight_updates[n_index][1].push_back(0.0);
+		}
 
-		this->weight_updates[n_index][2].push_back(0.0);
-		this->weight_updates[n_index][3].clear();
+		this->weights[n_index][4].clear();
+		this->weight_updates[n_index][4].clear();
 	}
 }
 
-void Layer::state_hidden_new_weights_to_input() {
+void Layer::state_hidden_new_outer_weights_to_input() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][1].push_back(this->weights[n_index][3][0]);
-		this->weights[n_index][3].clear();
+		int new_outer_state_size = (int)this->input_layers[4]->acti_vals.size();
+		for (int o_index = 0; o_index < new_outer_state_size; o_index++) {
+			this->weights[n_index][2].push_back(this->weights[n_index][4][o_index]);
+			this->weight_updates[n_index][2].push_back(0.0);
+		}
 
-		this->weight_updates[n_index][1].push_back(0.0);
-		this->weight_updates[n_index][3].clear();
+		this->weights[n_index][4].clear();
+		this->weight_updates[n_index][4].clear();
 	}
 }
 
 void Layer::state_hidden_split_new(int split_index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		int original_local_state_size = (int)this->input_layers[2]->acti_vals.size();
-		for (int ln_index = 0; ln_index < original_local_state_size; ln_index++) {
-			this->weights[n_index][1].push_back(this->weights[n_index][2][ln_index]);
-			this->weight_updates[n_index][1].push_back(0.0);
+		// move new_outer to input_state back
+		int new_outer_state_size = (int)this->input_layers[4]->acti_vals.size();
+		for (int o_index = 0; o_index < new_outer_state_size; o_index++) {
+			this->weights[n_index][2].push_back(this->weights[n_index][4][o_index]);
+			this->weight_updates[n_index][2].push_back(0.0);
 		}
-		this->weights[n_index][2].clear();
-		this->weight_updates[n_index][2].clear();
+		this->weights[n_index][4].clear();
+		this->weight_updates[n_index][4].clear();
 
-		int original_new_state_size = (int)this->input_layers[3]->acti_vals.size();
+		// for 2nd half new_inner and original local_state to input_state, insert back-to-front
+		int original_local_state_size = (int)this->input_layers[1]->acti_vals.size();
+		for (int ln_index = original_local_state_size-1; ln_index >= 0; ln_index--) {
+			this->weights[n_index][2].insert(this->weights[n_index][2].begin(),
+				this->weights[n_index][1][ln_index]);
+			this->weight_updates[n_index][2].insert(this->weight_updates[n_index][2].begin(), 0.0);
+		}
+		this->weights[n_index][1].clear();
+		this->weight_updates[n_index][1].clear();
+
+		int new_inner_state_size = (int)this->input_layers[3]->acti_vals.size();
+		for (int ln_index = new_inner_state_size-1; ln_index >= split_index; ln_index--) {
+			this->weights[n_index][2].insert(this->weights[n_index][2].begin(),
+				this->weights[n_index][3][ln_index]);
+			this->weight_updates[n_index][2].insert(this->weight_updates[n_index][2].begin(), 0.0);
+		}
+
+		// move remaining new_inner to local_state
 		for (int ln_index = 0; ln_index < split_index; ln_index++) {
 			this->weights[n_index][1].push_back(this->weights[n_index][3][ln_index]);
 			this->weight_updates[n_index][1].push_back(0.0);
-		}
-		for (int ln_index = split_index; ln_index < original_new_state_size; ln_index++) {
-			this->weights[n_index][2].push_back(this->weights[n_index][3][ln_index]);
-			this->weight_updates[n_index][2].push_back(0.0);
 		}
 		this->weights[n_index][3].clear();
 		this->weight_updates[n_index][3].clear();
 	}
 }
 
-void Layer::state_hidden_remove_input(int index) {
+void Layer::state_hidden_remove_local(int index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index][1].erase(this->weights[n_index][1].begin()+index);
 		this->weight_updates[n_index][1].erase(this->weight_updates[n_index][1].begin()+index);
 	}
 }
 
-void Layer::state_hidden_remove_local(int index) {
+void Layer::state_hidden_remove_input(int index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index][2].erase(this->weights[n_index][2].begin()+index);
 		this->weight_updates[n_index][2].erase(this->weight_updates[n_index][2].begin()+index);
+	}
+}
+
+void Layer::state_hidden_add_local() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][1].push_back(0.0);
+		this->weight_updates[n_index][1].push_back(0.0);
+	}
+}
+
+void Layer::state_hidden_add_input() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][2].push_back(0.0);
+		this->weight_updates[n_index][2].push_back(0.0);
 	}
 }
