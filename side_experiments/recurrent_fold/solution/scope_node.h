@@ -7,7 +7,7 @@ public:
 	std::vector<int> pre_state_network_target_indexes;
 	std::vector<StateNetwork*> pre_state_networks;
 
-	Scope* inner_scope;
+	int inner_scope_id;
 	std::vector<bool> inner_input_is_local;
 	std::vector<int> inner_input_indexes;
 	// std::vector<Network*> scope_scale_mod;

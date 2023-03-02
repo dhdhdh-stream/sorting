@@ -18,8 +18,8 @@ public:
 
 	// within that context, can support loops, branches, etc. but has to be single ancestor
 
-	int num_input_states;	// also becomes output
 	int num_local_states;
+	int num_input_states;	// also becomes output
 
 	bool is_loop;
 	Network* continue_network;

@@ -19,40 +19,39 @@ const int STATE_ADD_INNER_STATE = 2;
 const int STATE_REMOVE_OUTER_STATE = 3;
 const int STATE_ADD_OUTER_STATE = 4;
 
-const int STATE_REMOVE_OUTER_SCOPE = 5;
-const int STATE_REMOVE_OUTER_NETWORK = 6;
+const int STATE_REMOVE_OUTER_CONTEXT = 5;
+const int STATE_REMOVE_OUTER_SCOPE = 6;
+const int STATE_REMOVE_OUTER_NETWORK = 7;
 // TODO: remove front-to-back
-const int STATE_REMOVE_INNER_NETWORK = 7;
-const int STATE_REMOVE_INNER_STATE = 8;
-const int STATE_CLEAR_INNER_STATE = 9;
+const int STATE_REMOVE_INNER_NETWORK = 8;
+const int STATE_REMOVE_INNER_STATE = 9;
+const int STATE_CLEAR_INNER_STATE = 10;
 
-const int STATE_DONE = 10;
-
-class OuterStateHelper {
-public:
-	int scope_id;
-	// expand size as needed for scope updates
-	std::vector<bool> inner_needed;
-	std::vector<OuterStateHelper*> inner_helpers;
-};
+const int STATE_DONE = 11;
 
 class Fold {
 public:
-	vector<int> scope_context;	// gives inner and outer scope IDs
+	vector<int> scope_context;
 	vector<int> node_context;
 
 	int curr_num_new_outer_states;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
 	StateNetwork* curr_starting_score_network;
 
-	std::vector<int> curr_outer_node_id;
-	// no matter the actual topology, simply iterate through node IDs
-	OuterStateHelper* outer_state_helper;
-	std::map<int, bool> scopes_checked;
-
 	int test_num_new_outer_states;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
 	StateNetwork* test_starting_score_network;
+
+	// TODO: if checking if outer context needed, try changing starting context iter
+	// then use only scopes in curr_outer_scopes_needed
+	int clean_outer_context_index;
+	std::vector<int> clean_outer_index;
+	std::map<int, bool> curr_outer_scopes_needed;
+	std::map<int, bool> test_outer_scopes_needed;
+	// TODO: outer activate logic needs to be tied closely to these
+	// need to follow the context in and out
+	// actually, don't even think about scope structure
+	// just remove scope-by-scope, and figure out what needs to be passed where later
 
 	// keep fixed even if parent scope updates
 	int num_local_states;
@@ -71,6 +70,8 @@ public:
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
 
+	double curr_average_score;
+	double curr_score_variance;
 	double curr_average_misguess;
 	double curr_misguess_variance;
 
@@ -80,8 +81,12 @@ public:
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
 	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
 
+	double test_average_score;
+	double test_score_variance;
 	double test_average_misguess;
 	double test_misguess_variance;
+
+	// TODO: compare against existing score/variance as well
 
 	std::vector<double> test_step_impacts;
 
@@ -89,8 +94,8 @@ public:
 	int state_iter;
 	double sum_error;
 
-	int clean_step_index;
-	int clean_state_index;
+	int clean_inner_step_index;
+	int clean_inner_state_index;
 
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;

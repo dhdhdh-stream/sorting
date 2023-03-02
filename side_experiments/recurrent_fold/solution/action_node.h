@@ -11,6 +11,12 @@ public:
 
 	int next_node_id;	// TODO: set when adding to Scope?
 
+	// keep track of average score/variance at every node
+	double average_score;
+	double score_variance;
+	double average_misguess;
+	double misguess_variance;
+
 	// TODO: don't explore if explore weight is below some threshold?
 
 	// TODO: add batch surprise and seeding
