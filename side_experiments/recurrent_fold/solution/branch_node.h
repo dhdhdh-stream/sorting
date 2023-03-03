@@ -18,6 +18,8 @@ public:
 	// Note: for explore with loops, don't have to worry about timing, as explore weight will randomize it naturally
 
 	// explore input initialized from start of solution
+
+	// can be pass through, though only if context matches
 };
 
 #endif /* BRANCH_NODE_H */

@@ -6,6 +6,9 @@ const int NODE_TYPE_INNER_SCOPE = 1;
 const int NODE_TYPE_BRANCH = 2;
 const int NODE_TYPE_FOLD_SCORE = 3;
 const int NODE_TYPE_FOLD_SEQUENCE = 4;
+const int NODE_TYPE_PASS_THROUGH = 5;
+
+// TODO: instead of deleting nodes, potentially add empty nodes
 
 class AbstractNode {
 public:

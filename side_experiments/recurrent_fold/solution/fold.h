@@ -15,19 +15,23 @@ const int STATE_EXPLORE_DONE = 1;
 
 // TODO: consider adding input even if sequence isn't good enough
 
+// freeze outer states scopes/nodes, use only if in outer_state_networks
+
 const int STATE_ADD_INNER_STATE = 2;
-const int STATE_REMOVE_OUTER_STATE = 3;
-const int STATE_ADD_OUTER_STATE = 4;
+const int STATE_ADD_OUTER_STATE = 3;
 
-const int STATE_REMOVE_OUTER_CONTEXT = 5;
-const int STATE_REMOVE_OUTER_SCOPE = 6;
-const int STATE_REMOVE_OUTER_NETWORK = 7;
+const int STATE_ADD_DONE = 4;
+
+const int STATE_REMOVE_OUTER_SCOPE = 5;
+// don't worry about removing outer states individually as will have no impact on scopes anyways
+const int STATE_REMOVE_OUTER_NETWORK = 6;
+
 // TODO: remove front-to-back
-const int STATE_REMOVE_INNER_NETWORK = 8;
-const int STATE_REMOVE_INNER_STATE = 9;
-const int STATE_CLEAR_INNER_STATE = 10;
+const int STATE_REMOVE_INNER_NETWORK = 7;
+const int STATE_REMOVE_INNER_STATE = 8;
+const int STATE_CLEAR_INNER_STATE = 9;
 
-const int STATE_DONE = 11;
+const int STATE_DONE = 10;
 
 class Fold {
 public:
@@ -42,16 +46,14 @@ public:
 	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
 	StateNetwork* test_starting_score_network;
 
-	// TODO: if checking if outer context needed, try changing starting context iter
-	// then use only scopes in curr_outer_scopes_needed
-	int clean_outer_context_index;
-	std::vector<int> clean_outer_index;
-	std::map<int, bool> curr_outer_scopes_needed;
-	std::map<int, bool> test_outer_scopes_needed;
-	// TODO: outer activate logic needs to be tied closely to these
-	// need to follow the context in and out
-	// actually, don't even think about scope structure
-	// just remove scope-by-scope, and figure out what needs to be passed where later
+	int clean_outer_scope_index;
+	std::set<int> outer_scopes_needed;
+	std::map<int, bool> outer_scopes_checked;	// true if needed
+
+	int clean_outer_node_index;
+	int clean outer_state_index;
+	std::map<int, std::vector<std::vector<bool>>> curr_outer_state_networks_not_needed;
+	std::map<int, std::vector<std::vector<bool>>> test_outer_state_networks_not_needed;
 
 	// keep fixed even if parent scope updates
 	int num_local_states;

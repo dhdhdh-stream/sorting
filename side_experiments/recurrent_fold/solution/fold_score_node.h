@@ -2,6 +2,9 @@
 // runs new outer state networks on outer scope
 // call score_activate
 
+// when replacing fold nodes, swap in place so indexes are preserved
+// if is replace, can just pass through for now
+
 #ifndef FOLD_SCORE_NODE_H
 #define FOLD_SCORE_NODE_H
 
