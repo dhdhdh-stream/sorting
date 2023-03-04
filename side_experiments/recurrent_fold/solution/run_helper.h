@@ -21,6 +21,10 @@ public:
 	double existing_score;
 	double score_variance;
 
+	// to detect recursive calls for flat -- not fullproof but should be effective enough
+	void* explore_location;
+	bool is_recursive;
+
 };
 
 #endif /* RUN_HELPER_H */

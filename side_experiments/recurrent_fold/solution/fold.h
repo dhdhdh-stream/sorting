@@ -9,34 +9,57 @@
 
 #include "network.h"
 
-const int STATE_EXPLORE = 0;	// with 1 new outer, 1 new local
+const int FOLD_STATE_EXPLORE = 0;	// with 1 new outer, 1 new local
 
-const int STATE_EXPLORE_DONE = 1;
+const int FOLD_STATE_EXPLORE_FAIL = 1;
 
-// TODO: consider adding input even if sequence isn't good enough
+// TODO: consider adding input even if explore fail
+
+const int FOLD_STATE_ADD_INNER_STATE = 2;
+const int FOLD_STATE_ADD_OUTER_STATE = 3;
+
+const int FOLD_STATE_EXPLORE_DONE = 4;
 
 // freeze outer states scopes/nodes, use only if in outer_state_networks
 
-const int STATE_ADD_INNER_STATE = 2;
-const int STATE_ADD_OUTER_STATE = 3;
+const int FOLD_STATE_REMOVE_OUTER_SCOPE = 5;
+// don't worry about removing outer states individually as will have no impact on scopes
+const int FOLD_STATE_REMOVE_OUTER_NETWORK = 6;
 
-const int STATE_ADD_DONE = 4;
+const int FOLD_STATE_REMOVE_INNER_NETWORK = 7;
+const int FOLD_STATE_REMOVE_INNER_STATE = 8;
+const int FOLD_STATE_CLEAR_INNER_STATE = 9;
 
-const int STATE_REMOVE_OUTER_SCOPE = 5;
-// don't worry about removing outer states individually as will have no impact on scopes anyways
-const int STATE_REMOVE_OUTER_NETWORK = 6;
+const int FOLD_STATE_DONE = 10;
 
-// TODO: remove front-to-back
-const int STATE_REMOVE_INNER_NETWORK = 7;
-const int STATE_REMOVE_INNER_STATE = 8;
-const int STATE_CLEAR_INNER_STATE = 9;
-
-const int STATE_DONE = 10;
+const int FOLD_RESULT_FAIL = 0;
+const int FOLD_RESULT_BRANCH = 1;
+const int FOLD_RESULT_REPLACE = 2;
 
 class Fold {
 public:
-	vector<int> scope_context;
-	vector<int> node_context;
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+	int exit_depth;		// 0 is local
+
+	int sequence_length;
+	std::vector<bool> is_inner_scope;
+	std::vector<int> existing_scope_ids;
+
+	// keep fixed even if parent scope updates
+	int num_score_local_states;
+	int num_score_input_states;
+	int num_sequence_local_states;
+	int num_sequence_input_states;
+
+	int sum_inner_inputs;
+	std::vector<int> inner_input_start_indexes;
+	std::vector<int> num_inner_inputs;	// keep track here fixed even if scope updates
+	// TODO: inner and ending scale_mods
+
+	int state;
+	int state_iter;
+	double sum_error;
 
 	int curr_num_new_outer_states;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
@@ -46,38 +69,28 @@ public:
 	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
 	StateNetwork* test_starting_score_network;
 
-	int clean_outer_scope_index;
-	std::set<int> outer_scopes_needed;
-	std::map<int, bool> outer_scopes_checked;	// true if needed
-
-	int clean_outer_node_index;
-	int clean outer_state_index;
-	std::map<int, std::vector<std::vector<bool>>> curr_outer_state_networks_not_needed;
-	std::map<int, std::vector<std::vector<bool>>> test_outer_state_networks_not_needed;
-
-	// keep fixed even if parent scope updates
-	int num_local_states;
-	int num_input_states;
-
-	int sequence_length;
-	std::vector<bool> is_inner_scope;
-	std::vector<int> existing_scope_ids;
-
-	int sum_inner_inputs;
-	std::vector<int> inner_input_start_indexes;
-	std::vector<int> num_inner_inputs;	// keep track here fixed even as scope updates
-	// TODO: inner and ending scale_mods
-
 	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
+
+	int existing_sequence_length;
+	double* existing_average_score;
+	double* existing_score_variance;
+	double* existing_predicted_score_variance;
+	double* existing_average_misguess;
+	double* existing_misguess_variance;
+
+	int new_noticably_better;
+	int existing_noticably_better;
+
+	int is_recursive;
+
+	int explore_result;
 
 	double curr_average_score;
 	double curr_score_variance;
 	double curr_average_misguess;
 	double curr_misguess_variance;
-
-	std::vector<double> curr_step_impacts;
 
 	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
@@ -88,13 +101,14 @@ public:
 	double test_average_misguess;
 	double test_misguess_variance;
 
-	// TODO: compare against existing score/variance as well
+	int clean_outer_scope_index;
+	std::set<int> outer_scopes_needed;
+	std::map<int, bool> outer_scopes_checked;	// true if needed
 
-	std::vector<double> test_step_impacts;
-
-	int state;
-	int state_iter;
-	double sum_error;
+	int clean_outer_node_index;
+	int clean outer_state_index;
+	std::map<int, std::vector<std::vector<bool>>> curr_outer_state_networks_not_needed;
+	std::map<int, std::vector<std::vector<bool>>> test_outer_state_networks_not_needed;
 
 	int clean_inner_step_index;
 	int clean_inner_state_index;
@@ -108,8 +122,22 @@ public:
 	std::vector<int> curr_num_states_cleared;
 	std::vector<int> test_num_states_cleared;
 
-	Fold(int num_input_states,
-		 int sequence_length);
+	std::vector<double> step_impacts;
+
+	// TODO: add seeding
+
+	Fold(std::vector<int> scope_context,
+		 std::vector<int> node_context,
+		 int exit_depth,
+		 int sequence_length,
+		 std::vector<bool> is_inner_scope,
+		 std::vector<int> existing_scope_ids,
+		 int existing_sequence_length,
+		 double* existing_average_score,
+		 double* existing_score_variance,
+		 double* existing_predicted_score_variance,
+		 double* existing_average_misguess,
+		 double* existing_misguess_variance);
 	~Fold();
 
 	void explore_score_activate(std::vector<double>& local_state_vals,
@@ -160,6 +188,7 @@ public:
 
 	// to help track between score and sequence
 	std::vector<double> new_outer_state_vals;
+	std::vector<double> test_new_outer_state_vals;
 
 	std::vector<std::vector<StateNetworkHistory*>> outer_state_network_histories;
 	double starting_score_update;

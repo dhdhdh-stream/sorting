@@ -22,7 +22,8 @@ void Fold::clear_inner_state_end() {
 		this->test_num_states_cleared[this->clean_inner_step_index]++;
 		if (this->test_num_states_cleared[this->clean_inner_step_index] > this->curr_num_new_inner_states) {
 			this->clean_inner_step_index++;
-			if (this->clean_inner_step_index >= this->sequence_length) {
+			// TODO: only clear to inner state
+			if (this->clean_inner_step_index >= this->sum_inner_inputs+this->curr_num_new_inner_states) {
 				this->state = STATE_DONE;
 			} else {
 				this->clean_inner_state_index = 0;
@@ -85,7 +86,7 @@ void Fold::clear_inner_state_end() {
 		}
 
 		this->clean_inner_step_index++;
-		if (this->clean_inner_step_index >= this->sequence_length) {
+		if (this->clean_inner_step_index >= this->sum_inner_inputs+this->curr_num_new_inner_states) {
 			this->state = STATE_DONE;
 		} else {
 			this->clean_inner_state_index = 0;

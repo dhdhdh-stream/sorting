@@ -3,8 +3,51 @@
 using namespace std;
 
 void Fold::add_inner_state_end() {
-	// TODO: check for score increase or misguess improvement
-	if (/* SUCCESS */) {
+	double score_standard_deviation = sqrt(this->curr_score_variance);
+	cout << "score_standard_deviation: " << score_standard_deviation << endl;
+
+	cout << "this->curr_average_score: " << this->curr_average_score << endl;
+	cout << "this->test_average_score: " << this->test_average_score << endl;
+
+	double score_improvement = this->test_average_score - this->curr_average_score;
+	cout << "score_improvement: " << score_improvement << endl;
+
+	double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+
+	cout << "this->curr_average_misguess: " << this->curr_average_misguess << endl;
+	cout << "this->test_average_misguess: " << this->test_average_misguess << endl;
+
+	double misguess_improvement = this->curr_average_misguess - this->test_average_misguess;
+	cout << "misguess_improvement: " << misguess_improvement << endl;
+
+	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
+
+	double score_improvement_t_value = score_improvement
+		/ (score_standard_deviation / sqrt(20000));
+	cout << "score_improvement_t_value: " << score_improvement_t_value << endl;
+
+	double misguess_improvement_t_value = misguess_improvement
+		/ (misguess_standard_deviation / sqrt(20000));
+	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
+	if (score_improvement_t_value > 2.326 || misguess_improvement_t_value > 2.326) {	// >99%
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
+				it != this->curr_outer_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					delete it->second[n_index][s_index];
+				}
+			}
+		}
+		// no change to num_new_outer_states
+		this->curr_outer_state_networks = this->test_outer_state_networks;
+		this->test_outer_state_networks.clear();
+
+		delete this->curr_starting_score_network;
+		this->curr_starting_score_network = this->test_starting_score_network;
+		this->test_starting_score_network = NULL;
+
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
 				delete this->curr_state_networks[f_index][s_index];
@@ -16,7 +59,19 @@ void Fold::add_inner_state_end() {
 		this->curr_state_networks = this->test_state_networks;
 		this->curr_score_networks = this->test_score_networks;
 
-		// don't special case outer
+		// no change to num_new_outer_states
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
+				it != this->curr_outer_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					this->test_outer_state_networks[it->first][n_index].push_back(
+						new StateNetwork(it->second[n_index][s_index]));
+				}
+			}
+		}
+
+		this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
 
 		this->test_num_new_inner_states = this->curr_num_new_inner_states+1;
 		int curr_total_num_states = this->sum_inner_inputs
@@ -63,6 +118,19 @@ void Fold::add_inner_state_end() {
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	} else {
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
+				it != this->test_outer_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < it->second[n_index].size(); s_index++) {
+					delete it->second[n_index][s_index];
+				}
+			}
+		}
+		this->test_outer_state_networks.clear();
+
+		delete this->test_starting_score_network;
+		this->test_starting_score_network = NULL;
+
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
 				delete this->test_state_networks[f_index][s_index];
