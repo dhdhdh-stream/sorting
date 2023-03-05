@@ -3,8 +3,7 @@
 using namespace std;
 
 void Fold::remove_outer_scope_end() {
-	// TODO: check that score networks work the same
-	if (/* SUCCESS */) {
+	if (this->sum_error/(this->sequence_length+1) / 10000 < 0.01) {
 		map<int, vector<vector<StateNetwork*>>>::iterator previous_it = this->curr_outer_state_networks.begin();
 		for (int i_index = 0; i_index < this->clean_outer_scope_index; i_index++) {
 			previous_it++;
@@ -106,8 +105,8 @@ void Fold::remove_outer_scope_end() {
 					// initialize clean
 					int curr_total_num_states = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states
-						+ this->num_local_states
-						+ this->num_input_states
+						+ this->num_sequence_local_states
+						+ this->num_sequence_input_states
 						+ this->curr_num_new_outer_states;
 
 					this->clean_inner_step_index = 0;
@@ -206,8 +205,8 @@ void Fold::remove_outer_scope_end() {
 
 				int curr_total_num_states = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
-					+ this->num_local_states
-					+ this->num_input_states
+					+ this->num_sequence_local_states
+					+ this->num_sequence_input_states
 					+ this->curr_num_new_outer_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					for (int s_index = 0; s_index < curr_total_num_states; s_index++) {

@@ -42,6 +42,11 @@ StateNetwork::StateNetwork(int obs_size,
 	this->hidden_size = hidden_size;
 
 	construct();
+
+	this->local_state_zeroed = vector<bool>(this->local_state_size, false);
+	this->input_state_zeroed = vector<bool>(this->input_state_size, false);
+	this->new_inner_state_zeroed = vector<bool>(this->new_inner_state_size, false);
+	this->new_outer_state_zeroed = vector<bool>(this->new_outer_state_size, false);
 }
 
 StateNetwork::StateNetwork(StateNetwork* original) {
@@ -53,6 +58,11 @@ StateNetwork::StateNetwork(StateNetwork* original) {
 	this->hidden_size = original->hidden_size;
 
 	construct();
+
+	this->local_state_zeroed = original->local_state_zeroed;
+	this->input_state_zeroed = original->input_state_zeroed;
+	this->new_inner_state_zeroed = original->new_inner_state_zeroed;
+	this->new_outer_state_zeroed = original->new_outer_state_zeroed;
 
 	this->hidden->copy_weights_from(original->hidden);
 	this->output->copy_weights_from(original->output);
@@ -84,6 +94,27 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 	this->hidden_size = stoi(hidden_size_line);
 
 	construct();
+
+	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
+		string zeroed_line;
+		getline(input_file, zeroed_line);
+		this->local_state_zeroed.push_back(stoi(zeroed_line));
+	}
+	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
+		string zeroed_line;
+		getline(input_file, zeroed_line);
+		this->input_state_zeroed.push_back(stoi(zeroed_line));
+	}
+	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
+		string zeroed_line;
+		getline(input_file, zeroed_line);
+		this->new_inner_state_zeroed.push_back(stoi(zeroed_line));
+	}
+	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
+		string zeroed_line;
+		getline(input_file, zeroed_line);
+		this->new_outer_state_zeroed.push_back(stoi(zeroed_line));
+	}
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
@@ -340,16 +371,24 @@ void StateNetwork::new_sequence_activate(double obs_val,
 										 vector<double>& new_outer_state_vals) {
 	this->obs_input->acti_vals[0] = obs_val;
 	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
-		this->new_inner_state_input->acti_vals[i_index] = new_inner_state_vals[i_index];
+		if (!this->new_inner_state_zeroed[i_index]) {
+			this->new_inner_state_input->acti_vals[i_index] = new_inner_state_vals[i_index];
+		}
 	}
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
-		this->local_state_input->acti_vals[l_index] = local_state_vals[l_index];
+		if (!this->local_state_zeroed[l_index]) {
+			this->local_state_input->acti_vals[l_index] = local_state_vals[l_index];
+		}
 	}
 	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
-		this->input_state_input->acti_vals[i_index] = input_state_vals[i_index];
+		if (!this->input_state_zeroed[i_index]) {
+			this->input_state_input->acti_vals[i_index] = input_state_vals[i_index];
+		}
 	}
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
-		this->new_outer_state_input->acti_vals[o_index] = new_outer_state_vals[o_index];
+		if (!this->new_outer_state_zeroed[o_index]) {
+			this->new_outer_state_input->acti_vals[o_index] = new_outer_state_vals[o_index];
+		}
 	}
 
 	this->hidden->activate();
@@ -376,16 +415,24 @@ void StateNetwork::new_sequence_activate(vector<double>& new_inner_state_vals,
 										 vector<double>& input_state_vals,
 										 vector<double>& new_outer_state_vals) {
 	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
-		this->new_inner_state_input->acti_vals[i_index] = new_inner_state_vals[i_index];
+		if (!this->new_inner_state_zeroed[i_index]) {
+			this->new_inner_state_input->acti_vals[i_index] = new_inner_state_vals[i_index];
+		}
 	}
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
-		this->local_state_input->acti_vals[l_index] = local_state_vals[l_index];
+		if (!this->local_state_zeroed[l_index]) {
+			this->local_state_input->acti_vals[l_index] = local_state_vals[l_index];
+		}
 	}
 	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
-		this->input_state_input->acti_vals[i_index] = input_state_vals[i_index];
+		if (!this->input_state_zeroed[i_index]) {
+			this->input_state_input->acti_vals[i_index] = input_state_vals[i_index];
+		}
 	}
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
-		this->new_outer_state_input->acti_vals[o_index] = new_outer_state_vals[o_index];
+		if (!this->new_outer_state_zeroed[o_index]) {
+			this->new_outer_state_input->acti_vals[o_index] = new_outer_state_vals[o_index];
+		}
 	}
 
 	this->hidden->activate();
@@ -416,20 +463,28 @@ void StateNetwork::new_sequence_backprop(double output_error,
 	this->hidden->backprop();
 
 	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
-		new_inner_state_errors[i_index] += this->new_inner_state_input->errors[i_index];
-		this->new_inner_state_input->errors[i_index] = 0.0;
+		if (!this->new_inner_state_zeroed[i_index]) {
+			new_inner_state_errors[i_index] += this->new_inner_state_input->errors[i_index];
+			this->new_inner_state_input->errors[i_index] = 0.0;
+		}
 	}
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
-		local_state_errors[l_index] += this->local_state_input->errors[l_index];
-		this->local_state_input->errors[l_index] = 0.0;
+		if (!this->local_state_zeroed[l_index]) {
+			local_state_errors[l_index] += this->local_state_input->errors[l_index];
+			this->local_state_input->errors[l_index] = 0.0;
+		}
 	}
 	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
-		input_state_errors[i_index] += this->input_state_input->errors[i_index];
-		this->input_state_input->errors[i_index] = 0.0;
+		if (!this->input_state_zeroed[i_index]) {
+			input_state_errors[i_index] += this->input_state_input->errors[i_index];
+			this->input_state_input->errors[i_index] = 0.0;
+		}
 	}
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
-		new_outer_state_errors[o_index] += this->new_outer_state_input->errors[o_index];
-		this->new_outer_state_input->errors[o_index] = 0.0;
+		if (!this->new_outer_state_zeroed[o_index]) {
+			new_outer_state_errors[o_index] += this->new_outer_state_input->errors[o_index];
+			this->new_outer_state_input->errors[o_index] = 0.0;
+		}
 	}
 
 	this->epoch_iter++;
@@ -481,14 +536,8 @@ void StateNetwork::add_new_inner() {
 	this->new_inner_state_size++;
 	this->new_inner_state_input->acti_vals.push_back(0.0);
 	this->new_inner_state_input->errors.push_back(0.0);
-}
 
-void StateNetwork::remove_new_outer() {
-	this->hidden->state_hidden_remove_new_outer();
-
-	this->new_outer_state_size = 0;
-	this->new_outer_state_input->acti_vals.clear();
-	this->new_outer_state_input->errors.clear();
+	this->new_inner_state_zeroed.push_back(false);
 }
 
 void StateNetwork::add_new_outer() {
@@ -497,6 +546,39 @@ void StateNetwork::add_new_outer() {
 	this->new_outer_state_size++;
 	this->new_outer_state_input->acti_vals.push_back(0.0);
 	this->new_outer_state_input->errors.push_back(0.0);
+
+	this->new_outer_state_zeroed.push_back(false);
+}
+
+void StateNetwork::zero_state(int index) {
+	if (index < this->new_inner_state_size) {
+		this->new_inner_state_zeroed[index] = true;
+		this->new_inner_state_input->acti_vals[index] = 0.0;
+		this->new_inner_state_input->errors[index] = 0.0;
+		this->hidden->state_hidden_zero_new_input(index);
+	} else {
+		index -= this->new_inner_state_size;
+		if (index < this->local_state_size) {
+			this->local_state_zeroed[index] = true;
+			this->local_state_input->acti_vals[index] = 0.0;
+			this->local_state_input->errors[index] = 0.0;
+			this->hidden->state_hidden_zero_local(index);
+		} else {
+			index -= this->local_state_size;
+			if (index < this->input_state_size) {
+				this->input_state_zeroed[index] = true;
+				this->input_state_input->acti_vals[index] = 0.0;
+				this->input_state_input->errors[index] = 0.0;
+				this->hidden->state_hidden_zero_input(index);
+			} else {
+				index -= this->input_state_size;
+				this->new_outer_state_zeroed[index] = true;
+				this->new_outer_state_input->acti_vals[index] = 0.0;
+				this->new_outer_state_input->errors[index] = 0.0;
+				this->hidden->state_hidden_zero_new_output(index);
+			}
+		}
+	}
 }
 
 void StateNetwork::update_state_sizes(int new_local_state_size,
@@ -505,6 +587,9 @@ void StateNetwork::update_state_sizes(int new_local_state_size,
 	for (int l_index = 0; l_index < local_state_size_increase; l_index++) {
 		this->local_state_input->acti_vals.push_back(0.0);
 		this->local_state_input->errors.push_back(0.0);
+
+		// not needed, but match for now
+		this->local_state_zeroed.push_back(false);
 	}
 	this->local_state_size = new_local_state_size;
 
@@ -512,6 +597,8 @@ void StateNetwork::update_state_sizes(int new_local_state_size,
 	for (int i_index = 0; i_index < input_state_size_increase; i_index++) {
 		this->input_state_input->acti_vals.push_back(0.0);
 		this->input_state_input->errors.push_back(0.0);
+
+		this->outer_state_zeroed.push_back(false);
 	}
 	this->input_state_size = new_input_state_size;
 
@@ -526,11 +613,14 @@ void StateNetwork::new_outer_to_local() {
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
 		this->local_state_input->acti_vals.push_back(0.0);
 		this->local_state_input->errors.push_back(0.0);
+
+		this->local_state_zeroed.push_back(false);
 	}
 
 	this->new_outer_state_size = 0;
 	this->new_outer_state_input->acti_vals.clear();
 	this->new_outer_state_input->errors.clear();
+	this->new_outer_state_zeroed.clear();
 }
 
 void StateNetwork::new_outer_to_input() {
@@ -540,15 +630,18 @@ void StateNetwork::new_outer_to_input() {
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
 		this->input_state_input->acti_vals.push_back(0.0);
 		this->input_state_input->errors.push_back(0.0);
+
+		this->input_state_zeroed.push_back(false);
 	}
 
 	this->new_outer_state_size = 0;
 	this->new_outer_state_input->acti_vals.clear();
 	this->new_outer_state_input->errors.clear();
+	this->new_outer_state_zeroed.clear();
 }
 
 void StateNetwork::split_new_inner(int split_index) {
-	this->hidden->state_hidden_split_new(split_index);
+	this->hidden->state_hidden_split_new_inner(split_index);
 
 	this->input_state_size = (this->new_inner_state_size - split_index)
 		+ this->local_state_size
@@ -556,26 +649,34 @@ void StateNetwork::split_new_inner(int split_index) {
 		+ this->new_outer_state_size;
 	this->input_state_input->acti_vals.clear();
 	this->input_state_input->errors.clear();
+	this->input_state_zeroed.clear();
 	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
 		this->input_state_input->acti_vals.push_back(0.0);
 		this->input_state_input->errors.push_back(0.0);
+
+		this->input_state_zeroed.push_back(false);
 	}
 
 	this->local_state_size = split_index;
 	this->local_state_input->acti_vals.clear();
 	this->local_state_input->errors.clear();
+	this->local_state_zeroed.clear();
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
 		this->local_state_input->acti_vals.push_back(0.0);
 		this->local_state_input->errors.push_back(0.0);
+
+		this->local_state_zeroed.push_back(false);
 	}
 
 	this->new_inner_state_size = 0;
 	this->new_inner_state_input->acti_vals.clear();
 	this->new_inner_state_input->errors.clear();
+	this->new_inner_state_zeroed.clear();
 
 	this->new_outer_state_size = 0;
 	this->new_outer_state_input->acti_vals.clear();
 	this->new_outer_state_input->errors.clear();
+	this->new_outer_state_zeroed.clear();
 }
 
 void StateNetwork::remove_local(int index) {
@@ -584,6 +685,7 @@ void StateNetwork::remove_local(int index) {
 	this->local_state_size--;
 	this->local_state_input->acti_vals.pop_back();
 	this->local_state_input->errors.pop_back();
+	this->local_state_zeroed.pop_back();
 }
 
 void StateNetwork::remove_input(int index) {
@@ -592,6 +694,7 @@ void StateNetwork::remove_input(int index) {
 	this->input_state_size--;
 	this->input_state_input->acti_vals.pop_back();
 	this->input_state_input->errors.pop_back();
+	this->input_state_zeroed.pop_back();
 }
 
 void StateNetwork::add_local() {
@@ -600,6 +703,7 @@ void StateNetwork::add_local() {
 	this->local_state_size++;
 	this->local_state_input->acti_vals.push_back(0.0);
 	this->local_state_input->errors.push_back(0.0);
+	this->local_state_zeroed.push_back(false);
 }
 
 void StateNetwork::add_input() {
@@ -608,6 +712,7 @@ void StateNetwork::add_input() {
 	this->input_state_size++;
 	this->input_state_input->acti_vals.push_back(0.0);
 	this->input_state_input->errors.push_back(0.0);
+	this->input_state_zeroed.push_back(false);
 }
 
 void StateNetwork::save(ofstream& output_file) {
@@ -617,6 +722,20 @@ void StateNetwork::save(ofstream& output_file) {
 	output_file << this->new_inner_state_size << endl;
 	output_file << this->new_outer_state_size << endl;
 	output_file << this->hidden_size << endl;
+	
+	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
+		output_file << this->local_state_zeroed[l_index] << endl;
+	}
+	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
+		output_file << this->input_state_zeroed[i_index] << endl;
+	}
+	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
+		output_file << this->new_inner_state_zeroed[i_index] << endl;
+	}
+	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
+		output_file << this->new_outer_state_zeroed[o_index] << endl;
+	}
+
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
 }

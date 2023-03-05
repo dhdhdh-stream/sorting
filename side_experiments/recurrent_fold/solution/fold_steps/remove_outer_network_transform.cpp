@@ -3,7 +3,7 @@
 using namespace std;
 
 void Fold::remove_outer_network_end() {
-	// TODO: check that outer state stays the same
+	// TODO: check that score networks work the same
 	if (/* SUCCESS */) {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
@@ -40,8 +40,8 @@ void Fold::remove_outer_network_end() {
 			// initialize clean
 			int curr_total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
-				+ this->num_local_states
-				+ this->num_input_states
+				+ this->num_sequence_local_states
+				+ this->num_sequence_input_states
 				+ this->curr_num_new_outer_states;
 
 			this->clean_inner_step_index = 0;

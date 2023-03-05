@@ -22,6 +22,11 @@ public:
 
 	Layer* output;	// size always 1
 
+	std::vector<bool> local_state_zeroed;
+	std::vector<bool> input_state_zeroed;
+	std::vector<bool> new_inner_state_zeroed;
+	std::vector<bool> new_outer_state_zeroed;
+
 	int epoch_iter;
 	double hidden_average_max_update;
 	double output_average_max_update;
@@ -124,8 +129,9 @@ public:
 							   StateNetworkHistory* history);
 
 	void add_new_inner();
-	void remove_new_outer();
 	void add_new_outer();
+
+	void zero_state(int index);
 
 	// when permanently adding to Scope, update as might have been incremented
 	void update_state_sizes(int new_local_state_size,	// before new update

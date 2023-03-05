@@ -33,8 +33,8 @@ void Fold::clear_inner_state_end() {
 
 				int curr_total_num_states = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
-					+ this->num_local_states
-					+ this->num_input_states
+					+ this->num_sequence_local_states
+					+ this->num_sequence_input_states
 					+ this->curr_num_new_outer_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
@@ -55,8 +55,8 @@ void Fold::clear_inner_state_end() {
 		} else {
 			int total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
-				+ this->num_local_states
-				+ this->num_input_states
+				+ this->num_sequence_local_states
+				+ this->num_sequence_input_states
 				+ this->curr_num_new_outer_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				for (int s_index = 0; s_index < total_num_states; s_index++) {
@@ -96,8 +96,8 @@ void Fold::clear_inner_state_end() {
 
 			int curr_total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
-				+ this->num_local_states
-				+ this->num_input_states
+				+ this->num_sequence_local_states
+				+ this->num_sequence_input_states
 				+ this->curr_num_new_outer_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				for (int s_index = 0; s_index < curr_total_num_states; s_index++) {

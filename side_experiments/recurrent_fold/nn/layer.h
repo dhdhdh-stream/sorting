@@ -43,13 +43,16 @@ public:
 
 	void state_hidden_backprop_new_outer_state();
 	void state_hidden_add_new_inner();
-	void state_hidden_remove_new_outer();
 	void state_hidden_add_new_outer();
+	void state_hidden_zero_new_input(int index);
+	void state_hidden_zero_local(int index);
+	void state_hidden_zero_input(int index);
+	void state_hidden_zero_new_outer(int index);
 	void state_hidden_update_state_sizes(int local_state_size_increase,
 										 int input_state_size_increase);
 	void state_hidden_new_outer_weights_to_local();
 	void state_hidden_new_outer_weights_to_input();
-	void state_hidden_split_new(int split_index);
+	void state_hidden_split_new_inner(int split_index);
 	void state_hidden_remove_local(int index);
 	void state_hidden_remove_input(int index);
 	void state_hidden_add_local();

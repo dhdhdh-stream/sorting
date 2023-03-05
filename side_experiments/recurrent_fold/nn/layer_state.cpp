@@ -38,17 +38,38 @@ void Layer::state_hidden_add_new_inner() {
 	}
 }
 
-void Layer::state_hidden_remove_new_outer() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][4].clear();
-		this->weight_updates[n_index][4].clear();
-	}
-}
-
 void Layer::state_hidden_add_new_outer() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index][4].push_back((randuni()-0.5)*0.02);
 		this->weight_updates[n_index][4].push_back(0.0);
+	}
+}
+
+void Layer::state_hidden_zero_new_input(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][3][index] = 0.0;
+		this->weight_updates[n_index][3][index] = 0.0;
+	}
+}
+
+void Layer::state_hidden_zero_local(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][1][index] = 0.0;
+		this->weight_updates[n_index][1][index] = 0.0;
+	}
+}
+
+void Layer::state_hidden_zero_input(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][2][index] = 0.0;
+		this->weight_updates[n_index][2][index] = 0.0;
+	}
+}
+
+void Layer::state_hidden_zero_new_outer(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][4][index] = 0.0;
+		this->weight_updates[n_index][4][index] = 0.0;
 	}
 }
 
@@ -93,7 +114,7 @@ void Layer::state_hidden_new_outer_weights_to_input() {
 	}
 }
 
-void Layer::state_hidden_split_new(int split_index) {
+void Layer::state_hidden_split_new_inner(int split_index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		// move new_outer to input_state back
 		int new_outer_state_size = (int)this->input_layers[4]->acti_vals.size();

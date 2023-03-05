@@ -3,8 +3,35 @@
 using namespace std;
 
 void Fold::add_outer_state_end() {
-	// TODO: check for score increase or misguess improvement
-	if (/* SUCCESS */) {
+	double score_standard_deviation = sqrt(this->curr_score_variance);
+	cout << "score_standard_deviation: " << score_standard_deviation << endl;
+
+	cout << "this->curr_average_score: " << this->curr_average_score << endl;
+	cout << "this->test_average_score: " << this->test_average_score << endl;
+
+	double score_improvement = this->test_average_score - this->curr_average_score;
+	cout << "score_improvement: " << score_improvement << endl;
+
+	double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+
+	cout << "this->curr_average_misguess: " << this->curr_average_misguess << endl;
+	cout << "this->test_average_misguess: " << this->test_average_misguess << endl;
+
+	double misguess_improvement = this->curr_average_misguess - this->test_average_misguess;
+	cout << "misguess_improvement: " << misguess_improvement << endl;
+
+	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
+
+	double score_improvement_t_value = score_improvement
+		/ (score_standard_deviation / sqrt(20000));
+	cout << "score_improvement_t_value: " << score_improvement_t_value << endl;
+
+	double misguess_improvement_t_value = misguess_improvement
+		/ (misguess_standard_deviation / sqrt(20000));
+	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
+	if (score_improvement_t_value > 2.326 || misguess_improvement_t_value > 2.326) {	// >99%
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -63,8 +90,8 @@ void Fold::add_outer_state_end() {
 		// no change to num_new_inner_states
 		int curr_total_num_states = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
-			+ this->num_local_states
-			+ this->num_input_states
+			+ this->num_sequence_local_states
+			+ this->num_sequence_input_states
 			+ this->curr_num_new_outer_states;
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
@@ -75,15 +102,15 @@ void Fold::add_outer_state_end() {
 
 			if (this->is_inner_scope[f_index]) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
-																			  this->num_local_states,
-																			  this->num_input_states,
+																			  this->num_sequence_local_states,
+																			  this->num_sequence_input_states,
 																			  this->sum_inner_inputs+this->curr_num_new_inner_states,
 																			  this->test_num_new_outer_states,
 																			  20));
 			} else {
 				this->test_state_networks[f_index].push_back(new StateNetwork(1,
-																			  this->num_local_states,
-																			  this->num_input_states,
+																			  this->num_sequence_local_states,
+																			  this->num_sequence_input_states,
 																			  this->sum_inner_inputs+this->curr_num_new_inner_states,
 																			  this->test_num_new_outer_states,
 																			  20));

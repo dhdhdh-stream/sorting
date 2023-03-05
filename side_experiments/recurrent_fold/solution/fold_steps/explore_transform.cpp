@@ -85,8 +85,8 @@ void Fold::explore_end() {
 		this->test_num_new_inner_states = this->curr_num_new_inner_states+1;
 		int curr_total_num_states = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
-			+ this->num_local_states
-			+ this->num_input_states
+			+ this->num_sequence_local_states
+			+ this->num_sequence_input_states
 			+ this->curr_num_new_outer_states;
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
@@ -96,15 +96,15 @@ void Fold::explore_end() {
 			}
 			if (this->is_inner_scope[f_index]) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
-																			  this->num_local_states,
-																			  this->num_input_states,
+																			  this->num_sequence_local_states,
+																			  this->num_sequence_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->curr_num_new_outer_states,
 																			  20));
 			} else {
 				this->test_state_networks[f_index].push_back(new StateNetwork(1,
-																			  this->num_local_states,
-																			  this->num_input_states,
+																			  this->num_sequence_local_states,
+																			  this->num_sequence_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->curr_num_new_outer_states,
 																			  20));

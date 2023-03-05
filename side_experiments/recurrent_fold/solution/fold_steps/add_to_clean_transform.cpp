@@ -7,8 +7,8 @@ void Fold::add_to_clean() {
 		// initialize clean
 		int curr_total_num_states = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
-			+ this->num_local_states
-			+ this->num_input_states
+			+ this->num_sequence_local_states
+			+ this->num_sequence_input_states
 			+ this->curr_num_new_outer_states;
 
 		this->clean_inner_step_index = 0;
@@ -66,8 +66,8 @@ void Fold::add_to_clean() {
 
 		int curr_total_num_states = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
-			+ this->num_local_states
-			+ this->num_input_states
+			+ this->num_sequence_local_states
+			+ this->num_sequence_input_states
 			+ this->curr_num_new_outer_states;
 		// test_state_networks/test_score_networks already sized
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
