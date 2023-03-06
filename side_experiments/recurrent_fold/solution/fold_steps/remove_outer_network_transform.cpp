@@ -3,8 +3,7 @@
 using namespace std;
 
 void Fold::remove_outer_network_end() {
-	// TODO: check that score networks work the same
-	if (/* SUCCESS */) {
+	if (this->sum_error/10000 < 0.01) {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {

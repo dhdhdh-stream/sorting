@@ -3,8 +3,7 @@
 using namespace std;
 
 void Fold::clear_inner_state_end() {
-	// TODO: check that score networks work the same
-	if (/* SUCCESS */) {
+	if (this->sum_error/this->sequence_length / 10000 < 0.01) {
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
 				if (this->curr_state_networks[f_index][s_index] != NULL) {
@@ -20,10 +19,9 @@ void Fold::clear_inner_state_end() {
 		this->curr_num_states_cleared = this->test_num_states_cleared;
 
 		this->test_num_states_cleared[this->clean_inner_step_index]++;
-		if (this->test_num_states_cleared[this->clean_inner_step_index] > this->curr_num_new_inner_states) {
+		if (this->test_num_states_cleared[this->clean_inner_step_index] > this->sum_inner_inputs+this->curr_num_new_inner_states) {
 			this->clean_inner_step_index++;
-			// TODO: only clear to inner state
-			if (this->clean_inner_step_index >= this->sum_inner_inputs+this->curr_num_new_inner_states) {
+			if (this->clean_inner_step_index >= this->sequence_length) {
 				this->state = STATE_DONE;
 			} else {
 				this->clean_inner_state_index = 0;
@@ -86,7 +84,7 @@ void Fold::clear_inner_state_end() {
 		}
 
 		this->clean_inner_step_index++;
-		if (this->clean_inner_step_index >= this->sum_inner_inputs+this->curr_num_new_inner_states) {
+		if (this->clean_inner_step_index >= this->sequence_length) {
 			this->state = STATE_DONE;
 		} else {
 			this->clean_inner_state_index = 0;

@@ -3,8 +3,7 @@
 using namespace std;
 
 void Fold::remove_inner_network_end() {
-	// TODO: check that score networks work the same
-	if (/* SUCCESS */) {
+	if (this->sum_error/this->sequence_length / 10000 < 0.01) {
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
 				if (this->curr_state_networks[f_index][s_index] != NULL) {

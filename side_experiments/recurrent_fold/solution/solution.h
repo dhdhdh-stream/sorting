@@ -20,6 +20,8 @@ public:
 
 	// if trying entire sequences, then don't need to worry about exploring at start of scope
 
+	// when removing, instead of changing indexes, perhaps just swap in blank placeholders
+
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 

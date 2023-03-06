@@ -90,7 +90,18 @@ void Fold::explore_on_path_sequence_activate(vector<double>& local_state_vals,
 											 FoldHistory* history) {
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_vals = history->new_outer_state_vals;
-	
+
+	int num_total_states = this->sum_inner_inputs
+		+ this->test_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->test_num_new_outer_states;
+	history->state_network_histories = vector<vector<StateNetworkHistory*>>(
+		this->sequence_length, vector<StateNetworkHistory*>(num_total_states, NULL));
+	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
+	history->score_network_updates = vector<double>(this->sequence_length);
+	history->score_network_histories = vector<StateNetworkHistory*>(this->sequence_length, NULL);
+
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
 			for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {

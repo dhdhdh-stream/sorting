@@ -131,13 +131,34 @@ void Fold::update_score_activate(vector<double>& local_state_vals,
 												 run_helper,
 												 history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-
+		remove_outer_network_update_score_activate(local_state_vals,
+												   input_vals,
+												   context_iter,
+												   context_histories,
+												   run_helper,
+												   history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-
+		clean_update_score_activate(local_state_vals,
+									input_vals,
+									context_iter,
+									context_histories,
+									run_helper,
+									history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-
+		clean_update_score_activate(local_state_vals,
+									input_vals,
+									context_iter,
+									context_histories,
+									run_helper,
+									history);
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
+		clean_update_score_activate(local_state_vals,
+									input_vals,
+									context_iter,
+									context_histories,
+									run_helper,
+									history);
 	}
 }
 
@@ -157,13 +178,38 @@ void Fold::update_sequence_activate(vector<double>& local_state_vals,
 													run_helper,
 													history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-
+		remove_outer_network_update_sequence_activate(local_state_vals,
+													  input_vals,
+													  flat_vals,
+													  predicted_score,
+													  scale_factor,
+													  run_helper,
+													  history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-
+		clean_update_sequence_activate(local_state_vals,
+									   input_vals,
+									   flat_vals,
+									   predicted_score,
+									   scale_factor,
+									   run_helper,
+									   history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-
+		clean_update_sequence_activate(local_state_vals,
+									   input_vals,
+									   flat_vals,
+									   predicted_score,
+									   scale_factor,
+									   run_helper,
+									   history);
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
+		clean_update_sequence_activate(local_state_vals,
+									   input_vals,
+									   flat_vals,
+									   predicted_score,
+									   scale_factor,
+									   run_helper,
+									   history);
 	}
 }
 
@@ -172,21 +218,11 @@ void Fold::update_backprop(double target_val,
 						   double& predicted_score,
 						   double& scale_factor,
 						   FoldHistory* history) {
-	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		remove_outer_scope_update_backprop(target_val,
-										   final_misguess,
-										   predicted_score,
-										   scale_factor,
-										   history);
-	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-
-	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-
-	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-
-	} else {
-		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-	}
+	clean_update_backprop(target_val,
+						  final_misguess,
+						  predicted_score,
+						  scale_factor,
+						  history);
 
 	update_increment();
 }
@@ -206,28 +242,94 @@ void Fold::update_increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-
+		if (this->state_iter == 150000) {
+			remove_outer_network_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+				this->sum_error = 0.0;
+			}
+		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-
+		if (this->state_iter == 150000) {
+			remove_inner_network_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+				this->sum_error = 0.0;
+			}
+		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-
+		if (this->state_iter == 150000) {
+			remove_inner_state_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+				this->sum_error = 0.0;
+			}
+		}
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
+		if (this->state_iter == 150000) {
+			clear_inner_state_end();
+		} else {
+			if (this->state_iter%10000 == 0) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+				this->sum_error = 0.0;
+			}
+		}
 	}
 }
 
 FoldHistory::FoldHistory(Fold* fold) {
 	this->fold = fold;
 
-	// TODO: special case curr vs. test
-	int num_total_states = fold->sum_inner_inputs
-		+ fold->curr_num_new_inner_states
-		+ fold->num_sequence_local_states
-		+ fold->num_sequence_input_states
-		+ fold->curr_num_new_outer_states;
-	this->state_network_histories = vector<vector<StateNetworkHistory*>>(
-		fold->sequence_length, vector<StateNetworkHistory*>(num_total_states, NULL));
-	this->inner_scope_histories = vector<ScopeHistory*>(fold->sequence_length, NULL);
-	this->score_network_updates = vector<double>(fold->sequence_length);
-	this->score_network_histories = vector<StateNetworkHistory*>(fold->sequence_length, NULL);
+	this->starting_score_network_history = NULL;
+	this->test_starting_score_network_history = NULL;
+}
+
+FoldHistory::~FoldHistory() {
+	for (int n_index = 0; n_index < this->outer_state_network_histories.size(); n_index++) {
+		for (int o_index = 0; o_index < (int)this->outer_state_network_histories[n_index].size(); o_index++) {
+			if (this->outer_state_network_histories[n_index][o_index] != NULL) {
+				delete this->outer_state_network_histories[n_index][o_index];
+			}
+		}
+	}
+
+	for (int n_index = 0; n_index < this->test_outer_state_network_histories.size(); n_index++) {
+		for (int o_index = 0; o_index < (int)this->test_outer_state_network_histories[n_index].size(); o_index++) {
+			if (this->test_outer_state_network_histories[n_index][o_index] != NULL) {
+				delete this->test_outer_state_network_histories[n_index][o_index];
+			}
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)this->state_network_histories.size(); f_index++) {
+		for (int s_index = 0; s_index < (int)this->state_network_histories[f_index].size(); s_index++) {
+			if (this->state_network_histories[f_index][s_index] != NULL) {
+				delete this->state_network_histories[f_index][s_index];
+			}
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)this->inner_scope_histories.size(); f_index++) {
+		if (this->inner_scope_histories[f_index] != NULL) {
+			delete this->inner_scope_histories[f_index];
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)this->score_network_histories.size(); f_index++) {
+		if (this->score_network_histories[f_index] != NULL) {
+			delete this->score_network_histories[f_index];
+		}
+	}
 }
