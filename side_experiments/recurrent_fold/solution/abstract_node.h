@@ -10,9 +10,6 @@ const int NODE_TYPE_PASS_THROUGH = 5;
 
 class AbstractNode {
 public:
-	Scope* parent;
-	int id;	// index in parent->nodes
-
 	int type;
 
 	~AbstractNode() {};

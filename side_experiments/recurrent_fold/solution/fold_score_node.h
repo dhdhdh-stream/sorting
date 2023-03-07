@@ -9,6 +9,10 @@
 // means less processing
 // downside is the impact on predicted_score, and potential reuse
 
+// Note: don't backprop outer input errors into their scopes
+// potentially scopes that haven't been initialized yet
+// too complicated, and not significant?
+
 #ifndef FOLD_SCORE_NODE_H
 #define FOLD_SCORE_NODE_H
 

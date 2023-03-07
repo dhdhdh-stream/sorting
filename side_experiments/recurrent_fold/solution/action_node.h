@@ -7,24 +7,21 @@ public:
 	std::vector<int> state_network_target_indexes;
 	std::vector<StateNetwork*> state_networks;
 
-	ScoreNetwork* score_network;
+	StateNetwork* score_network;
 
 	int next_node_id;	// TODO: set when adding to Scope?
 
-	// keep track of average score/variance at every node
 	double average_score;
 	double score_variance;
 	double average_misguess;
 	double misguess_variance;
 
-	// TODO: don't explore if explore weight is below some threshold?
+	double average_impact;
 
 	// TODO: add batch surprise and seeding
 
-	// TODO: context also has to have enough representation
 	std::vector<int> explore_scope_context;
 	std::vector<int> explore_node_context;
-	// if doesn't match context, pass explore weight on
 	// TODO: explore_action_sequences
 	int explore_exit_depth;
 	int explore_next_node_id;
@@ -33,27 +30,53 @@ public:
 	ActionNode(Scope* parent,
 			   std::vector<bool> state_network_target_is_local,
 			   std::vector<int> state_network_target_indexes,
-			   std::vector<Network*> state_networks,
-			   bool has_score_network,
-			   Network* score_network);
+			   std::vector<StateNetwork*> state_networks,
+			   StateNetwork* score_network);
 	~ActionNode();
 
-	int explore_activate(std::vector<double>& input_vals,
-						 std::vector<double>& local_state_vals,
+	void explore_on_path_activate(std::vector<double>& local_state_vals,
+								  std::vector<double>& input_vals,
+								  std::vector<std::vector<double>>& flat_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  RunHelper& run_helper,
+								  ActionNodeHistory* history);
+	void explore_on_path_backprop(std::vector<double>& local_state_errors,
+								  std::vector<double>& input_errors,
+								  double target_val,
+								  double& predicted_score,
+								  double& scale_factor,
+								  ActionNodeHistory* history);
+
+
+
+	void update_activate(std::vector<double>& local_state_vals,
+						 std::vector<double>& input_vals,
 						 std::vector<std::vector<double>>& flat_vals,
 						 double& predicted_score,
-						 std::vector<int>& scope_context,
-						 std::vector<int>& node_context,
-						 std::vector<int>& context_iter,
-						 RunHelper& run_helper);
+						 double& scale_factor,
+						 double& sum_impact,
+						 double& explore_weight_scale_factor,
+						 ActionNodeHistory* history);
+	void update_backprop(double target_val,
+						 double final_misguess,
+						 double& predicted_score,
+						 double& scale_factor,
+						 double sum_impact_error,
+						 double& explore_weight_scale_factor_error,
+						 ActionNodeHistory* history);
+
+
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<NetworkHistory*> state_network_histories;
-	NetworkHistory* score_network_history;
+	std::vector<StateNetworkHistory*> state_network_histories;
+	StateNetworkHistory* score_network_history;
+	double score_network_update;
 
-
+	ActionNodeHistory(ActionNode* node);
+	~ActionNodeHistory();
 };
 
 #endif /* ACTION_NODE_H */

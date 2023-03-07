@@ -20,6 +20,8 @@ public:
 
 	// if trying entire sequences, then don't need to worry about exploring at start of scope
 
+	ExploreWeight* starting_explore_weight;
+
 	// TODO: explore weight has to be proportional, rather than based directly on size of score?
 	// branches change explore weight?
 	// add explore weight scale factor
@@ -39,27 +41,47 @@ public:
 								  std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
 								  std::vector<int>& context_iter,
-								  std::vector<ContextHistory*>& context_history,
-								  int& exit_depth,
-								  Fold*& explore_fold,
-								  int& exit_index,
-								  FoldHistory*& explore_fold_history,
-								  RunHelper& run_helper);
-	void explore_on_path_backprop();
+								  std::vector<ContextHistory*>& context_histories,
+								  int& early_exit_depth,
+								  int& early_exit_node_id,
+								  FoldHistory*& early_exit_fold_history,
+								  int& explore_exit_depth,
+								  int& explore_exit_node_id,
+								  FoldHistory*& explore_exit_fold_history,
+								  RunHelper& run_helper,
+								  ScopeHistory* history);
+	void explore_on_path_backprop(std::vector<double>& input_errors,
+								  double target_val,
+								  double final_misguess,
+								  double& predicted_score,
+								  double& scale_factor,
+								  RunHelper& run_helper,
+								  ScopeHistory* history);
 
 	void explore_off_path_activate();
 	void explore_off_path_backprop();
 
-	void existing_explore_activate(std::vector<double>& input_vals,
-								   std::vector<std::vector<double>>& flat_vals,
-								   double& predicted_score,
-								   double& scale_factor,
-								   RunHelper& run_helper,
-								   ScopeHistory* scope_history);
+	void existing_explore_activate();
 	void existing_explore_backprop();
 
-	void update_activate();
-	void update_backprop();
+	void update_activate(std::vector<double>& input_vals,
+						 std::vector<std::vector<double>>& flat_vals,
+						 double& predicted_score,
+						 double& scale_factor,
+						 std::vector<int>& scope_context,
+						 std::vector<int>& node_context,
+						 std::vector<int>& context_iter,
+						 std::vector<ContextHistory*>& context_history,
+						 int& early_exit_depth,
+						 int& early_exit_node_id,
+						 FoldHistory*& early_exit_fold_history,
+						 RunHelper& run_helper,
+						 ScopeHistory* history);
+	void update_backprop(double target_val,
+						 double final_misguess,
+						 double& predicted_score,
+						 double& scale_factor,
+						 ScopeHistory* history);
 
 	void existing_update_activate();
 	void existing_update_backprop();
@@ -72,6 +94,9 @@ public:
 	std::vector<AbstractNodeHistory*> node_histories;
 
 	bool is_explore_sequence;
+
+	double sum_impact;
+	double ending_explore_weight_scale_factor;
 };
 
 #endif /* SCOPE_H */
