@@ -2,12 +2,30 @@
 
 using namespace std;
 
-FoldScoreNode::FoldScoreNode() {
+FoldScoreNode::FoldScoreNode(StateNetwork* existing_score_network,
+							 int existing_next_node_id,
+							 Fold* fold,
+							 vector<int> fold_scope_context,
+							 vector<int> fold_node_context,
+							 int fold_exit_depth,
+							 int fold_next_node_id) {
+	this->type = NODE_TYPE_FOLD_SCORE
 
+	this->existing_score_network = existing_score_network;
+	this->existing_next_node_id = existing_next_node_id;
+	this->fold = fold;
+	this->fold_scope_context = fold_scope_context;
+	this->fold_node_context = fold_node_context;
+	this->fold_exit_depth = fold_exit_depth;
+	this->fold_next_node_id = fold_next_node_id;
 }
 
 FoldScoreNode::~FoldScoreNode() {
+	if (this->existing_score_network != NULL) {
+		delete this->existing_score_network;
+	}
 
+	// delete fold if needed in FoldSequenceNode
 }
 
 void FoldScoreNode::explore_on_path_activate(vector<double>& local_state_vals,

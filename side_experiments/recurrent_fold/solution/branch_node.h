@@ -1,25 +1,64 @@
+/**
+ * Branch size always 2.
+ * (So essentially saying there's no continuous generalization, with that effect instead achieved through loops.)
+ */
+
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
-class BranchNode {
+class BranchNode : public AbstractNode {
 public:
-	Network* combined_score_network;	// takes context specific branches into account
+	std::vector<int> branch_scope_context;
+	std::vector<int> branch_node_context;
+	bool branch_is_pass_through;
+	StateNetwork* branch_score_network;
+	// Note: eventually, ideally, right branch will have score 0.0 while other will be negative
+	int branch_exit_depth;
+	int branch_next_node_id;
+	int branch_num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
 
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
-	std::vector<Network*> score_networks;
-	// Note: eventually, ideally, right branch will have score 0.0 while others will be negative
-	std::vector<int> next_indexes;	// index for ending scope
-	std::vector<int> num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
-	// TODO: track when last travelled, and delete unused
+	StateNetwork* original_score_network;
+	int original_next_node_id;
 
-	// TODO: adjust explore weight scale factor based on the branch
+	BranchNode(std::vector<int> branch_scope_context,
+			   std::vector<int> branch_node_context,
+			   bool branch_is_pass_through,
+			   StateNetwork* branch_score_network,
+			   int branch_exit_depth,
+			   int branch_next_node_id,
+			   int branch_num_travelled,
+			   StateNetwork* original_score_network,
+			   int original_next_node_id);
+	~BranchNode();
 
-	// Note: for explore with loops, don't have to worry about timing, as explore weight will randomize it naturally
+	void activate(std::vector<double>& local_state_vals,
+				  std::vector<double>& input_vals,
+				  std::vector<std::vector<double>>& flat_vals,
+				  double& predicted_score,
+				  double& scale_factor
+				  std::vector<int>& scope_context,
+				  std::vector<int>& node_context,
+				  int& exit_depth,
+				  int& exit_node_id,
+				  BranchNodeHistory* history);
+	void backprop(std::vector<double>& local_state_errors,
+				  std::vector<double>& input_errors,
+				  double target_val,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  BranchNodeHistory* history);
 
-	// explore input initialized from start of solution
+};
 
-	// can be pass through, though only if context matches
+class BranchNodeHistory : public AbstractNodeHistory {
+public:
+	bool is_branch;
+	StateNetworkHistory* score_network_history;
+	double score_network_update;
+
+	BranchNodeHistory(BranchNode* node);
+	~BranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

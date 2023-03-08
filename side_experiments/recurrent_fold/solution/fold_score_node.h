@@ -1,18 +1,3 @@
-// TODO: is similar to branch node
-// runs new outer state networks on outer scope
-// call score_activate
-
-// when replacing fold nodes, swap in place so indexes are preserved
-// if is replace, can just pass through for now
-
-// TODO: actually, maybe keep outer score networks here, and don't add them outside
-// means less processing
-// downside is the impact on predicted_score, and potential reuse
-
-// Note: don't backprop outer input errors into their scopes
-// potentially scopes that haven't been initialized yet
-// too complicated, and not significant?
-
 #ifndef FOLD_SCORE_NODE_H
 #define FOLD_SCORE_NODE_H
 
@@ -23,11 +8,35 @@ public:
 
 	Fold* fold;
 
-	vector<int> fold_scope_context;
-	vector<int> fold_node_context;
+	std::vector<int> fold_scope_context;
+	std::vector<int> fold_node_context;
 	int fold_exit_depth;
 	int fold_next_node_id;
 
+	FoldScoreNode(StateNetwork* existing_score_network,
+				  int existing_next_node_id,
+				  Fold* fold,
+				  std::vector<int> fold_scope_context,
+				  std::vector<int> fold_node_context,
+				  int fold_exit_depth,
+				  int fold_next_node_id);
+	~FoldScoreNode();
+
+	void activate(std::vector<double>& local_state_vals,
+				  std::vector<double>& input_vals,
+				  double& predicted_score,
+				  double& scale_factor,
+				  std::vector<int>& scope_context,
+				  std::vector<int>& node_context,
+				  std::vector<int>& context_iter,
+				  std::vector<ContextHistory*>& context_histories,
+				  int& exit_depth,
+				  int& exit_node_id,
+				  FoldHistory*& fold_history,
+				  RunHelper& run_helper);
+
 };
+
+// FoldHistory saved and processed by FoldSequenceNode
 
 #endif /* FOLD_SCORE_NODE_H */

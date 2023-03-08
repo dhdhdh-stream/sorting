@@ -17,6 +17,7 @@ public:
 	double misguess_variance;
 
 	double average_impact;
+	double average_sum_impact;
 
 	// TODO: add batch surprise and seeding
 
@@ -27,45 +28,28 @@ public:
 	int explore_next_node_id;
 	Fold* explore_fold;
 
-	ActionNode(Scope* parent,
-			   std::vector<bool> state_network_target_is_local,
+	ActionNode(std::vector<bool> state_network_target_is_local,
 			   std::vector<int> state_network_target_indexes,
 			   std::vector<StateNetwork*> state_networks,
 			   StateNetwork* score_network);
 	~ActionNode();
 
-	void explore_on_path_activate(std::vector<double>& local_state_vals,
-								  std::vector<double>& input_vals,
-								  std::vector<std::vector<double>>& flat_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  RunHelper& run_helper,
-								  ActionNodeHistory* history);
-	void explore_on_path_backprop(std::vector<double>& local_state_errors,
-								  std::vector<double>& input_errors,
-								  double target_val,
-								  double& predicted_score,
-								  double& scale_factor,
-								  ActionNodeHistory* history);
-
-
-
-	void update_activate(std::vector<double>& local_state_vals,
-						 std::vector<double>& input_vals,
-						 std::vector<std::vector<double>>& flat_vals,
-						 double& predicted_score,
-						 double& scale_factor,
-						 double& sum_impact,
-						 double& explore_weight_scale_factor,
-						 ActionNodeHistory* history);
-	void update_backprop(double target_val,
-						 double final_misguess,
-						 double& predicted_score,
-						 double& scale_factor,
-						 double sum_impact_error,
-						 double& explore_weight_scale_factor_error,
-						 ActionNodeHistory* history);
-
+	void activate(std::vector<double>& local_state_vals,
+				  std::vector<double>& input_vals,
+				  std::vector<std::vector<double>>& flat_vals,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  ActionNodeHistory* history);
+	void backprop(std::vector<double>& local_state_errors,
+				  std::vector<double>& input_errors,
+				  double target_val,
+				  double final_misguess,
+				  double final_sum_impact,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  ActionNodeHistory* history);
 
 };
 

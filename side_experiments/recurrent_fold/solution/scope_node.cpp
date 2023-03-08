@@ -41,28 +41,39 @@ ScopeNode::~ScopeNode() {
 	delete this->score_network;
 }
 
-void ScopeNode::explore_on_path_activate(vector<double>& local_state_vals,
-										 vector<double>& input_vals,
-										 vector<vector<double>>& flat_vals,
-										 double& predicted_score,
-										 double& scale_factor,
-										 vector<int>& scope_context,
-										 vector<int>& node_context,
-										 vector<int>& context_iter,
-										 vector<ContextHistory*>& context_histories,
-										 int& early_exit_depth,
-										 int& early_exit_node_id,
-										 FoldHistory*& early_exit_fold_history,
-										 int& explore_exit_depth,
-										 int& explore_exit_node_id,
-										 FoldHistory*& explore_exit_fold_history,
-										 RunHelper& run_helper,
-										 ScopeNodeHistory* history) {
-	// don't save history, as won't backprop
-	for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
-		this->pre_state_networks[s_index]->activate(local_state_vals,
-													input_vals);
-		local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+void ScopeNode::activate(vector<double>& local_state_vals,
+						 vector<double>& input_vals,
+						 vector<vector<double>>& flat_vals,
+						 double& predicted_score,
+						 double& scale_factor,
+						 double& sum_impact,
+						 vector<int>& scope_context,
+						 vector<int>& node_context,
+						 vector<int>& context_iter,
+						 vector<ContextHistory*>& context_histories,
+						 int& early_exit_depth,
+						 int& early_exit_node_id,
+						 FoldHistory*& early_exit_fold_history,
+						 int& explore_exit_depth,
+						 int& explore_exit_node_id,
+						 FoldHistory*& explore_exit_fold_history,
+						 RunHelper& run_helper,
+						 ScopeNodeHistory* history) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
+			StateNetworkHistory* network_history = new StateNetworkHistory(this->pre_state_networks[s_index]);
+			this->pre_state_networks[s_index]->activate(local_state_vals,
+														input_vals,
+														network_history);
+			history->pre_state_network_histories.push_back(network_history);
+			local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+		}
+	} else {
+		for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
+			this->pre_state_networks[s_index]->activate(local_state_vals,
+														input_vals);
+			local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+		}
 	}
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
@@ -79,22 +90,23 @@ void ScopeNode::explore_on_path_activate(vector<double>& local_state_vals,
 		scope_input_vals.push_back(0.0);
 	}
 	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-	inner_scope->explore_on_path_activate(scope_input_vals,
-										  flat_vals,
-										  predicted_score,
-										  scale_factor,
-										  scope_context,
-										  node_context,
-										  context_iter,
-										  context_histories,
-										  early_exit_depth,
-										  early_exit_node_id,
-										  early_exit_fold_history,
-										  explore_exit_depth,
-										  explore_exit_node_id,
-										  explore_exit_fold_history,
-										  run_helper,
-										  inner_scope_history);
+	inner_scope->activate(scope_input_vals,
+						  flat_vals,
+						  predicted_score,
+						  scale_factor,
+						  sum_impact,
+						  scope_context,
+						  node_context,
+						  context_iter,
+						  context_histories,
+						  early_exit_depth,
+						  early_exit_node_id,
+						  early_exit_fold_history,
+						  explore_exit_depth,
+						  explore_exit_node_id,
+						  explore_exit_fold_history,
+						  run_helper,
+						  inner_scope_history);
 	history->inner_scope_history = inner_scope_history;
 	// even if early exit, set state_vals
 	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
@@ -106,18 +118,30 @@ void ScopeNode::explore_on_path_activate(vector<double>& local_state_vals,
 	}
 
 	if (early_exit_depth == -1 && explore_exit_depth == -1) {
-		history->is_early_exit = false;
+		history->inner_is_early_exit = false;
 
-		for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
-			StateNetworkHistory* network_history = new StateNetworkHistory(this->post_state_networks[s_index]);
-			this->post_state_networks[s_index]->activate(local_state_vals,
-														 input_vals,
-														 network_history);
-			history->post_state_network_histories.push_back(network_history);
-			if (this->post_state_network_target_is_local[s_index]) {
-				local_state_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
-			} else {
-				input_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
+		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+			for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
+				StateNetworkHistory* network_history = new StateNetworkHistory(this->post_state_networks[s_index]);
+				this->post_state_networks[s_index]->activate(local_state_vals,
+															 input_vals,
+															 network_history);
+				history->post_state_network_histories.push_back(network_history);
+				if (this->post_state_network_target_is_local[s_index]) {
+					local_state_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
+				} else {
+					input_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
+				}
+			}
+		} else {
+			for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
+				this->post_state_networks[s_index]->activate(local_state_vals,
+															 input_vals);
+				if (this->post_state_network_target_is_local[s_index]) {
+					local_state_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
+				} else {
+					input_vals[this->post_state_network_target_indexes[s_index]] += this->post_state_networks[s_index]->output->acti_vals[0];
+				}
 			}
 		}
 
@@ -129,65 +153,113 @@ void ScopeNode::explore_on_path_activate(vector<double>& local_state_vals,
 		history->score_network_update = this->score_network->output->acti_vals[0];
 		predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 	} else {
-		history->is_early_exit = true;
+		history->inner_is_early_exit = true;
 	}
 }
 
-void ScopeNode::explore_on_path_backprop(vector<double>& local_state_errors,
-										 vector<double>& input_errors,
-										 double target_val,
-										 double final_misguess,
-										 double& predicted_score,
-										 double& scale_factor,
-										 RunHelper& run_helper,
-										 ScopeNodeHistory* history) {
-	if (!history->is_early_exit) {
-		this->score_network->backprop_errors_with_no_weight_change(
-		target_val - predicted_score,
-		local_state_errors,
-		input_errors,
-		history->score_network_history);
+void ScopeNode::backprop(vector<double>& local_state_errors,
+						 vector<double>& input_errors,
+						 double target_val,
+						 double final_misguess,
+						 double final_sum_impact,
+						 double& predicted_score,
+						 double& scale_factor,
+						 RunHelper& run_helper,
+						 ActionNodeHistory* history) {
+	if (!history->inner_is_early_exit) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+			this->score_network->backprop_errors_with_no_weight_change(
+				target_val - predicted_score,
+				local_state_errors,
+				input_errors,
+				history->score_network_history);
 
-		predicted_score -= scale_factor*history->score_network_update;
+			predicted_score -= scale_factor*history->score_network_update;
 
-		for (int s_index = (int)this->post_state_networks.size()-1; s_index >= 0; s_index--) {
-			if (this->post_state_network_target_is_local[s_index]) {
-				this->post_state_networks[s_index]->backprop_errors_with_no_weight_change(
-					local_state_errors[this->post_state_network_target_indexes[s_index]],
-					local_state_errors,
-					input_errors,
-					history->post_state_network_histories[s_index]);
-			} else {
-				this->post_state_networks[s_index]->backprop_errors_with_no_weight_change(
-					input_errors[this->post_state_network_target_indexes[s_index]],
-					local_state_errors,
-					input_errors,
-					history->post_state_network_histories[s_index]);
+			for (int s_index = (int)this->post_state_networks.size()-1; s_index >= 0; s_index--) {
+				if (this->post_state_network_target_is_local[s_index]) {
+					this->post_state_networks[s_index]->backprop_errors_with_no_weight_change(
+						local_state_errors[this->post_state_network_target_indexes[s_index]],
+						local_state_errors,
+						input_errors,
+						history->post_state_network_histories[s_index]);
+				} else {
+					this->post_state_networks[s_index]->backprop_errors_with_no_weight_change(
+						input_errors[this->post_state_network_target_indexes[s_index]],
+						local_state_errors,
+						input_errors,
+						history->post_state_network_histories[s_index]);
+				}
 			}
+		} else {
+			// run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+			this->average_score = 0.9999*this->average_score + 0.0001*target_val;
+			double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+			this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
+
+			this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
+			double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
+			this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
+
+			this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
+			this->average_sum_impact = 0.9999*this->average_sum_impact + 0.0001*final_sum_impact;
+
+			this->score_network->backprop_weights_with_no_error_signal(
+				target_val - predicted_score,
+				0.002,
+				history->score_network_history);
+
+			predicted_score -= scale_factor*history->score_network_update;
 		}
 	}
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 	vector<double> scope_input_errors;
-	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
-		if (this->inner_input_is_local[i_index]) {
-			scope_input_errors.push_back(local_state_errors[this->inner_input_indexes[i_index]]);
-		} else {
-			scope_input_errors.push_back(input_errors[this->inner_input_indexes[i_index]]);
+	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
+			if (this->inner_input_is_local[i_index]) {
+				scope_input_errors.push_back(local_state_errors[this->inner_input_indexes[i_index]]);
+			} else {
+				scope_input_errors.push_back(input_errors[this->inner_input_indexes[i_index]]);
+			}
+		}
+		for (int i_index = (int)this->inner_input_is_local.size(); i_index < inner_scope->num_input_states; i_index++) {
+			scope_input_errors.push_back(0.0);
 		}
 	}
-	for (int i_index = (int)this->inner_input_is_local.size(); i_index < inner_scope->num_input_states; i_index++) {
-		scope_input_errors.push_back(0.0);
-	}
-	inner_scope->explore_on_path_backprop(scope_input_errors,
-										  target_val,
-										  final_misguess,
-										  predicted_score,
-										  scale_factor,
-										  run_helper,
-										  history->inner_scope_history);
+	inner_scope->backprop(scope_input_errors,
+						  target_val,
+						  final_misguess,
+						  final_sum_impact,
+						  predicted_score,
+						  scale_factor,
+						  run_helper,
+						  history->inner_scope_history);
+	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
+			if (this->inner_input_is_local[i_index]) {
+				local_state_errors[this->inner_input_indexes[i_index]] = scope_input_errors[i_index];
+			} else {
+				input_errors[this->inner_input_indexes[i_index]] = scope_input_errors[i_index];
+			}
+		}
 
-	// no further backprop after
+		for (int s_index = (int)this->pre_state_networks.size()-1; s_index >= 0; s_index--) {
+			if (this->pre_state_network_target_is_local[s_index]) {
+				this->pre_state_networks[s_index]->backprop_errors_with_no_weight_change(
+					local_state_errors[this->pre_state_network_target_indexes[s_index]],
+					local_state_errors,
+					input_errors,
+					history->pre_state_network_histories[s_index]);
+			} else {
+				this->pre_state_networks[s_index]->backprop_errors_with_no_weight_change(
+					input_errors[this->pre_state_network_target_indexes[s_index]],
+					local_state_errors,
+					input_errors,
+					history->pre_state_network_histories[s_index]);
+			}
+		}
+	}
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
