@@ -8,14 +8,18 @@ public:
 
 	Fold* fold;
 
+	bool fold_is_pass_through;
 	std::vector<int> fold_scope_context;
 	std::vector<int> fold_node_context;
+	int fold_num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
+
 	int fold_exit_depth;
 	int fold_next_node_id;
 
 	FoldScoreNode(StateNetwork* existing_score_network,
 				  int existing_next_node_id,
 				  Fold* fold,
+				  bool fold_is_pass_through,
 				  std::vector<int> fold_scope_context,
 				  std::vector<int> fold_node_context,
 				  int fold_exit_depth,
@@ -32,11 +36,29 @@ public:
 				  std::vector<ContextHistory*>& context_histories,
 				  int& exit_depth,
 				  int& exit_node_id,
-				  FoldHistory*& fold_history,
-				  RunHelper& run_helper);
+				  FoldHistory*& exit_fold_history,
+				  RunHelper& run_helper,
+				  FoldScoreNodeHistory* history);
+	void backprop(std::vector<double>& local_state_errors,
+				  std::vector<double>& input_errors,
+				  double target_val,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  FoldScoreNodeHistory* history);
 
 };
 
-// FoldHistory saved and processed by FoldSequenceNode
+class FoldScoreNodeHistory : public AbstractNodeHistory {
+public:
+	bool is_existing;
+	StateNetworkHistory* existing_score_network_history;
+	double existing_score_network_update;
+
+	// FoldHistory saved and processed by FoldSequenceNode
+
+	FoldScoreNodeHistory(FoldScoreNode* node);
+	~FoldScoreNodeHistory();
+}
 
 #endif /* FOLD_SCORE_NODE_H */

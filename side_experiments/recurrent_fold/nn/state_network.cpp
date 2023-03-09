@@ -316,7 +316,8 @@ void StateNetwork::new_outer_activate(vector<double>& local_state_vals,
 }
 
 void StateNetwork::new_outer_backprop(double output_error,
-									  vector<double>& new_outer_state_errors) {
+									  vector<double>& new_outer_state_errors,
+									  double target_max_update) {
 	this->output->errors[0] = output_error;
 
 	this->output->backprop();
@@ -357,11 +358,13 @@ void StateNetwork::new_outer_backprop(double output_error,
 
 void StateNetwork::new_outer_backprop(double output_error,
 									  vector<double>& new_outer_state_errors,
+									  double target_max_update,
 									  StateNetworkHistory* history) {
 	history->reset_weights();
 
 	new_outer_backprop(output_error,
-					   new_outer_state_errors);
+					   new_outer_state_errors,
+					   target_max_update);
 }
 
 void StateNetwork::new_sequence_activate(double obs_val,
@@ -456,7 +459,8 @@ void StateNetwork::new_sequence_backprop(double output_error,
 										 vector<double>& new_inner_state_errors,
 										 vector<double>& local_state_errors,
 										 vector<double>& input_state_errors,
-										 vector<double>& new_outer_state_errors) {
+										 vector<double>& new_outer_state_errors,
+										 double target_max_update) {
 	this->output->errors[0] = output_error;
 
 	this->output->backprop();
@@ -520,6 +524,7 @@ void StateNetwork::new_sequence_backprop(double output_error,
 										 vector<double>& local_state_errors,
 										 vector<double>& input_state_errors,
 										 vector<double>& new_outer_state_errors,
+										 double target_max_update,
 										 StateNetworkHistory* history) {
 	history->reset_weights();
 
@@ -527,7 +532,62 @@ void StateNetwork::new_sequence_backprop(double output_error,
 						  new_inner_state_errors,
 						  local_state_errors,
 						  input_state_errors,
-						  new_outer_state_errors);
+						  new_outer_state_errors,
+						  target_max_update);
+}
+
+void StateNetwork::new_sequence_backprop_errors_with_no_weight_change(
+		double output_error,
+		vector<double>& new_inner_state_errors,
+		vector<double>& local_state_errors,
+		vector<double>& input_state_errors,
+		vector<double>& new_outer_state_errors) {
+	this->output->errors[0] = output_error;
+
+	this->output->backprop();
+	this->hidden->backprop();
+
+	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
+		if (!this->new_inner_state_zeroed[i_index]) {
+			new_inner_state_errors[i_index] += this->new_inner_state_input->errors[i_index];
+			this->new_inner_state_input->errors[i_index] = 0.0;
+		}
+	}
+	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
+		if (!this->local_state_zeroed[l_index]) {
+			local_state_errors[l_index] += this->local_state_input->errors[l_index];
+			this->local_state_input->errors[l_index] = 0.0;
+		}
+	}
+	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
+		if (!this->input_state_zeroed[i_index]) {
+			input_state_errors[i_index] += this->input_state_input->errors[i_index];
+			this->input_state_input->errors[i_index] = 0.0;
+		}
+	}
+	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
+		if (!this->new_outer_state_zeroed[o_index]) {
+			new_outer_state_errors[o_index] += this->new_outer_state_input->errors[o_index];
+			this->new_outer_state_input->errors[o_index] = 0.0;
+		}
+	}
+}
+
+void StateNetwork::new_sequence_backprop_errors_with_no_weight_change(
+		double output_error,
+		vector<double>& new_inner_state_errors,
+		vector<double>& local_state_errors,
+		vector<double>& input_state_errors,
+		vector<double>& new_outer_state_errors,
+		StateNetworkHistory* history) {
+	history->reset_weights();
+
+	new_sequence_backprop_errors_with_no_weight_change(
+		output_error,
+		new_inner_state_errors,
+		local_state_errors,
+		input_state_errors,
+		new_outer_state_errors);
 }
 
 void StateNetwork::add_new_inner() {

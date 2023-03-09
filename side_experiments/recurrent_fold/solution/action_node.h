@@ -13,11 +13,12 @@ public:
 
 	double average_score;
 	double score_variance;
+	double predicted_score_variance;
 	double average_misguess;
 	double misguess_variance;
 
 	double average_impact;
-	double average_sum_impact;
+	double average_sum_impact;	// TODO: need to switch to sum of remaining impact
 
 	// TODO: add batch surprise and seeding
 

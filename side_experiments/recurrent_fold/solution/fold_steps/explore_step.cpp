@@ -6,15 +6,14 @@
 
 using namespace std;
 
-void Fold::explore_on_path_score_activate(
-		vector<double>& local_state_vals,
-		vector<double>& input_vals,
-		double& predicted_score,
-		double& scale_factor,
-		vector<int>& context_iter,
-		vector<ContextHistory*> context_histories,
-		RunHelper& run_helper,
-		FoldHistory* history) {
+void Fold::explore_score_activate(vector<double>& local_state_vals,
+								  vector<double>& input_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  vector<int>& context_iter,
+								  vector<ContextHistory*> context_histories,
+								  RunHelper& run_helper,
+								  FoldHistory* history) {
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
 
 	int starting_iter = context_iter[context_iter.size() - this->scope_context.size()];
@@ -51,7 +50,7 @@ void Fold::explore_on_path_score_activate(
 				new_outer_state_vals,
 				state_network_history);
 			history->outer_state_network_histories.back().push_back(state_network_history);
-			history->new_outer_state_vals[s_index] += it->second[context_histories[n_index]->node_id][s_index]->output->acti_vals[0];
+			new_outer_state_vals[s_index] += it->second[context_histories[n_index]->node_id][s_index]->output->acti_vals[0];
 		}
 	}
 
@@ -81,13 +80,13 @@ void Fold::explore_on_path_score_activate(
 	predicted_score += scale_factor*this->test_starting_score_network->output->acti_vals[0];
 }
 
-void Fold::explore_on_path_sequence_activate(vector<double>& local_state_vals,
-											 vector<double>& input_vals,
-											 vector<vector<double>>& flat_vals,
-											 double& predicted_score,
-											 double& scale_factor,
-											 RunHelper& run_helper,
-											 FoldHistory* history) {
+void Fold::explore_sequence_activate(vector<double>& local_state_vals,
+									 vector<double>& input_vals,
+									 vector<vector<double>>& flat_vals,
+									 double& predicted_score,
+									 double& scale_factor,
+									 RunHelper& run_helper,
+									 FoldHistory* history) {
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_vals = history->new_outer_state_vals;
 
@@ -123,14 +122,40 @@ void Fold::explore_on_path_sequence_activate(vector<double>& local_state_vals,
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
 			inner_input_vals.insert(inner_input_vals.end(), num_input_states_diff, 0.0);
+
+			// unused
+			double inner_sum_impact = 0.0;
+			vector<int> inner_scope_context;
+			vector<int> inner_node_context;
+			vector<int> inner_context_iter;
+			vector<ContextHistory*> inner_context_histories;
+			int inner_early_exit_depth;
+			int inner_early_exit_node_id;
+			FoldHistory* inner_early_exit_fold_history;
+			int inner_explore_exit_depth;
+			int inner_explore_exit_node_id;
+			FoldHistory* inner_explore_exit_fold_history;
+
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
-			inner_scope->existing_explore_activate(inner_input_vals,
-												   flat_vals,
-												   predicted_score,
-												   scale_factor,
-												   run_helper,
-												   scope_history);
+			inner_scope->activate(inner_input_vals,
+								  flat_vals,
+								  predicted_score,
+								  scale_factor,
+								  inner_sum_impact,
+								  inner_scope_context,
+								  inner_node_context,
+								  inner_context_iter,
+								  inner_context_histories,
+								  inner_early_exit_depth,
+								  inner_early_exit_node_id,
+								  inner_early_exit_fold_history,
+								  inner_explore_exit_depth,
+								  inner_explore_exit_node_id,
+								  inner_explore_exit_fold_history,
+								  run_helper,
+								  scope_history);
 			history->inner_scope_histories[f_index] = scope_history;
+
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
 			}
@@ -283,13 +308,14 @@ void Fold::explore_on_path_sequence_activate(vector<double>& local_state_vals,
 	}
 }
 
-void Fold::explore_on_path_backprop(vector<double>& local_state_errors,
-									vector<double>& input_errors,
-									double target_val,
-									double final_misguess,
-									double& predicted_score,
-									double& scale_factor,
-									FoldHistory* history) {
+void Fold::explore_backprop(vector<double>& local_state_errors,
+							vector<double>& input_errors,
+							double target_val,
+							double final_misguess,
+							double& predicted_score,
+							double& scale_factor,
+							RunHelper& run_helper,
+							FoldHistory* history) {
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
 	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
 	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
@@ -384,11 +410,20 @@ void Fold::explore_on_path_backprop(vector<double>& local_state_errors,
 				new_inner_state_errors.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
 			inner_input_errors.insert(inner_input_errors.end(), num_input_states_diff, 0.0);
-			inner_scope->existing_explore_backprop(inner_input_errors,
-												   target_val,
-												   predicted_score,
-												   scale_factor,
-												   history->inner_scope_histories[f_index]);
+			
+			// unused
+			double inner_final_misguess;
+			double inner_final_sum_impact;
+
+			inner_scope->backprop(inner_input_errors,
+								  target_val,
+								  inner_final_misguess,
+								  inner_final_sum_impact,
+								  predicted_score,
+								  scale_factor,
+								  run_helper,
+								  history->inner_scope_histories[f_index]);
+
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_errors[i_index];
 			}

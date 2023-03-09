@@ -3,7 +3,7 @@
 using namespace std;
 
 void Fold::clear_inner_state_end() {
-	if (this->sum_error/this->sequence_length / 10000 < 0.01) {
+	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
 				if (this->curr_state_networks[f_index][s_index] != NULL) {
@@ -48,6 +48,7 @@ void Fold::clear_inner_state_end() {
 
 				this->state = STATE_REMOVE_INNER_NETWORK;
 				this->state_iter = 0;
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		} else {
@@ -70,6 +71,7 @@ void Fold::clear_inner_state_end() {
 
 			this->state = STATE_CLEAR_INNER_STATE;
 			this->state_iter = 0;
+			this->sub_state_iter = 0;
 			this->sum_error = 0.0;
 		}
 	} else {
@@ -111,6 +113,7 @@ void Fold::clear_inner_state_end() {
 
 			this->state = STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;
+			this->sub_state_iter = 0;
 			this->sum_error = 0.0;
 		}
 	}

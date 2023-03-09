@@ -38,14 +38,6 @@ void BranchNode::activate(vector<double>& local_state_vals,
 						  int& exit_depth,
 						  int& exit_node_id,
 						  BranchNodeHistory* history) {
-	bool branch_avail = true;
-	if (this->branch_num_travelled < 100000) {
-		if (randuni() > (double)this->branch_num_travelled/100000) {
-			branch_avail = false;
-		}
-		this->branch_num_travelled++;
-	}
-
 	bool matches_context = true;
 	if (this->branch_scope_context.size() > scope_context.size()) {
 		matches_context = false;
@@ -59,18 +51,19 @@ void BranchNode::activate(vector<double>& local_state_vals,
 		}
 	}
 
-	if (branch_avail && matches_context) {
+	if (matches_context) {
 		StateNetworkHistory* branch_network_history = new StateNetworkHistory(this->branch_score_network);
 		this->branch_score_network->activate(local_state_vals,
 											 input_vals,
 											 branch_network_history);
+		double branch_score = scale_factor*this->branch_score_network->output->acti_vals[0];
 
 		if (this->branch_is_pass_through) {
 			history->is_branch = true;
 			history->score_network_history = branch_network_history;
 			history->score_network_update = this->branch_score_network->output->acti_vals[0];
 
-			predicted_score += scale_factor*this->branch_score_network->output->acti_vals[0];
+			predicted_score += branch_score;
 
 			exit_depth = this->branch_exit_depth;
 			exit_node_id = this->branch_next_node_id;
@@ -79,11 +72,11 @@ void BranchNode::activate(vector<double>& local_state_vals,
 			this->original_score_network->activate(local_state_vals,
 												   input_vals,
 												   original_network_history);
-
-			double branch_score = scale_factor*this->branch_score_network->output->acti_vals[0];
 			double original_score = scale_factor*this->original_score_network->output->acti_vals[0];
 
 			if (branch_score > original_score) {
+				delete original_network_history;
+
 				history->is_branch = true;
 				history->score_network_history = branch_network_history;
 				history->score_network_update = this->branch_score_network->output->acti_vals[0];
@@ -93,6 +86,8 @@ void BranchNode::activate(vector<double>& local_state_vals,
 				exit_depth = this->branch_exit_depth;
 				exit_node_id = this->branch_next_node_id;
 			} else {
+				delete branch_network_history;
+
 				history->is_branch = false;
 				history->score_network_history = original_network_history;
 				history->score_network_update = this->original_score_network->output->acti_vals[0];

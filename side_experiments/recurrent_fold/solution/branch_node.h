@@ -15,7 +15,6 @@ public:
 	// Note: eventually, ideally, right branch will have score 0.0 while other will be negative
 	int branch_exit_depth;
 	int branch_next_node_id;
-	int branch_num_travelled;	// if there's recursion, scores may be inaccurate, so ease in to new branch
 
 	StateNetwork* original_score_network;
 	int original_next_node_id;

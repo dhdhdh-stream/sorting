@@ -117,48 +117,48 @@ Fold::~Fold() {
 	// do nothing
 }
 
-void Fold::update_score_activate(vector<double>& local_state_vals,
-								 vector<double>& input_vals,
-								 vector<int>& context_iter,
-								 vector<ContextHistory*> context_histories,
-								 RunHelper& run_helper,
-								 FoldHistory* history) {
+void Fold::score_activate(vector<double>& local_state_vals,
+						  vector<double>& input_vals,
+						  vector<int>& context_iter,
+						  vector<ContextHistory*> context_histories,
+						  RunHelper& run_helper,
+						  FoldHistory* history) {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		remove_outer_scope_update_score_activate(local_state_vals,
-												 input_vals,
-												 context_iter,
-												 context_histories,
-												 run_helper,
-												 history);
+		remove_outer_scope_score_activate(local_state_vals,
+										  input_vals,
+										  context_iter,
+										  context_histories,
+										  run_helper,
+										  history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		remove_outer_network_update_score_activate(local_state_vals,
-												   input_vals,
-												   context_iter,
-												   context_histories,
-												   run_helper,
-												   history);
+		remove_outer_network_score_activate(local_state_vals,
+											input_vals,
+											context_iter,
+											context_histories,
+											run_helper,
+											history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		clean_update_score_activate(local_state_vals,
-									input_vals,
-									context_iter,
-									context_histories,
-									run_helper,
-									history);
+		clean_score_activate(local_state_vals,
+							 input_vals,
+							 context_iter,
+							 context_histories,
+							 run_helper,
+							 history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		clean_update_score_activate(local_state_vals,
-									input_vals,
-									context_iter,
-									context_histories,
-									run_helper,
-									history);
+		clean_score_activate(local_state_vals,
+							 input_vals,
+							 context_iter,
+							 context_histories,
+							 run_helper,
+							 history);
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		clean_update_score_activate(local_state_vals,
-									input_vals,
-									context_iter,
-									context_histories,
-									run_helper,
-									history);
+		clean_score_activate(local_state_vals,
+							 input_vals,
+							 context_iter,
+							 context_histories,
+							 run_helper,
+							 history);
 	}
 }
 
@@ -167,122 +167,123 @@ void Fold::update_sequence_activate(vector<double>& local_state_vals,
 									vector<vector<double>>& flat_vals,
 									double& predicted_score,
 									double& scale_factor,
+									double& sum_impact,
 									RunHelper& run_helper,
 									FoldHistory* history) {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		remove_outer_scope_update_sequence_activate(local_state_vals,
-													input_vals,
-													flat_vals,
-													predicted_score,
-													scale_factor,
-													run_helper,
-													history);
+		remove_outer_scope_sequence_activate(local_state_vals,
+											 input_vals,
+											 flat_vals,
+											 predicted_score,
+											 scale_factor,
+											 sum_impact,
+											 run_helper,
+											 history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		remove_outer_network_update_sequence_activate(local_state_vals,
-													  input_vals,
-													  flat_vals,
-													  predicted_score,
-													  scale_factor,
-													  run_helper,
-													  history);
+		remove_outer_network_sequence_activate(local_state_vals,
+											   input_vals,
+											   flat_vals,
+											   predicted_score,
+											   scale_factor,
+											   sum_impact,
+											   run_helper,
+											   history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		clean_update_sequence_activate(local_state_vals,
-									   input_vals,
-									   flat_vals,
-									   predicted_score,
-									   scale_factor,
-									   run_helper,
-									   history);
+		clean_sequence_activate(local_state_vals,
+								input_vals,
+								flat_vals,
+								predicted_score,
+								scale_factor,
+								sum_impact,
+								run_helper,
+								history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		clean_update_sequence_activate(local_state_vals,
-									   input_vals,
-									   flat_vals,
-									   predicted_score,
-									   scale_factor,
-									   run_helper,
-									   history);
+		clean_sequence_activate(local_state_vals,
+								input_vals,
+								flat_vals,
+								predicted_score,
+								scale_factor,
+								sum_impact,
+								run_helper,
+								history);
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		clean_update_sequence_activate(local_state_vals,
-									   input_vals,
-									   flat_vals,
-									   predicted_score,
-									   scale_factor,
-									   run_helper,
-									   history);
+		clean_sequence_activate(local_state_vals,
+								input_vals,
+								flat_vals,
+								predicted_score,
+								scale_factor,
+								sum_impact,
+								run_helper,
+								history);
 	}
 }
 
-void Fold::update_backprop(double target_val,
-						   double final_misguess,
-						   double& predicted_score,
-						   double& scale_factor,
-						   FoldHistory* history) {
-	clean_update_backprop(target_val,
-						  final_misguess,
-						  predicted_score,
-						  scale_factor,
-						  history);
-
-	update_increment();
-}
-
-void Fold::update_increment() {
-	this->state_iter++;
-
+void Fold::increment() {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		if (this->state_iter == 150000) {
+		if (this->state_iter > 150000) {
 			remove_outer_scope_end();
 		} else {
-			if (this->state_iter%10000 == 0) {
+			// may skip print if incremented multiple times in a run
+			if (this->sub_state_iter > 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
+
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		if (this->state_iter == 150000) {
+		if (this->state_iter > 150000) {
 			remove_outer_network_end();
 		} else {
-			if (this->state_iter%10000 == 0) {
+			if (this->sub_state_iter > 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
+
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		if (this->state_iter == 150000) {
+		if (this->state_iter > 150000) {
 			remove_inner_network_end();
 		} else {
-			if (this->state_iter%10000 == 0) {
+			if (this->sub_state_iter > 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
+
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		if (this->state_iter == 150000) {
+		if (this->state_iter > 150000) {
 			remove_inner_state_end();
 		} else {
-			if (this->state_iter%10000 == 0) {
+			if (this->sub_state_iter > 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
+
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		if (this->state_iter == 150000) {
+		if (this->state_iter > 150000) {
 			clear_inner_state_end();
 		} else {
-			if (this->state_iter%10000 == 0) {
+			if (this->sub_state_iter > 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
+
+				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}

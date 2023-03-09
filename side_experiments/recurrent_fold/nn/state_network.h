@@ -127,6 +127,19 @@ public:
 							   std::vector<double>& new_outer_state_errors,
 							   double target_max_update,
 							   StateNetworkHistory* history);
+	void new_sequence_backprop_errors_with_no_weight_change(
+		double output_error,
+		std::vector<double>& new_inner_state_errors,
+		std::vector<double>& local_state_errors,
+		std::vector<double>& input_state_errors,
+		std::vector<double>& new_outer_state_errors);
+	void new_sequence_backprop_errors_with_no_weight_change(
+		double output_error,
+		std::vector<double>& new_inner_state_errors,
+		std::vector<double>& local_state_errors,
+		std::vector<double>& input_state_errors,
+		std::vector<double>& new_outer_state_errors,
+		StateNetworkHistory* history);
 
 	void add_new_inner();
 	void add_new_outer();

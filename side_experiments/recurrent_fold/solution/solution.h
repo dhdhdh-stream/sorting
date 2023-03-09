@@ -3,9 +3,6 @@
 
 class Solution {
 public:
-	int id_counter;	// for Branch, BranchPath, Fold, but not for scopes
-	std::mutex id_counter_mtx;
-
 	double average_score;
 	Scope* root;
 

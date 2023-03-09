@@ -107,6 +107,8 @@ void ActionNode::backprop(vector<double>& local_state_errors,
 		this->average_score = 0.9999*this->average_score + 0.0001*target_val;
 		double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
 		this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
+		double curr_predicted_score_variance = (this->average_score - predicted_score)*(this->average_score - predicted_score);
+		this->predicted_score_variance = 0.9999*this->predicted_score_variance + 0.0001*curr_predicted_score_variance;
 
 		this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
 		double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
