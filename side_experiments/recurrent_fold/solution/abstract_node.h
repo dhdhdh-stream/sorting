@@ -19,6 +19,8 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 
+	int scope_index;	// index within parent scope, used when replacing
+
 	~AbstractNodeHistory() {};
 };
 

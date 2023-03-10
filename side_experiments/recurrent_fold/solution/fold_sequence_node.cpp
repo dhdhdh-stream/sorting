@@ -11,9 +11,7 @@ FoldSequenceNode::FoldSequenceNode(Fold* fold,
 }
 
 FoldSequenceNode::~FoldSequenceNode() {
-	if (this->fold != NULL) {
-		delete this->fold;
-	}
+	// delete fold if needed in FoldScoreNode
 }
 
 void FoldSequenceNode::activate(FoldHistory* fold_history,
@@ -57,8 +55,10 @@ void FoldSequenceNode::backprop(vector<double>& local_state_errors,
 						 history->fold_history);
 }
 
-FoldSequenceNodeHistory::FoldSequenceNodeHistory(FoldSequenceNode* node) {
+FoldSequenceNodeHistory::FoldSequenceNodeHistory(FoldSequenceNode* node,
+												 int scope_index) {
 	this->node = node;
+	this->scope_index = scope_index;
 }
 
 FoldSequenceNodeHistory::~FoldSequenceNodeHistory() {

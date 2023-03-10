@@ -1,16 +1,6 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
-class ContextHistory {
-public:
-	int scope_id;
-	int node_id;
-
-	double obs_snapshot;
-	std::vector<double> input_vals_snapshot;
-	std::vector<double> local_state_vals_snapshot;
-};
-
 class RunHelper {
 public:
 	int curr_depth;

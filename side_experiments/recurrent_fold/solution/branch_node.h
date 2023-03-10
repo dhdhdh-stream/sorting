@@ -56,7 +56,8 @@ public:
 	StateNetworkHistory* score_network_history;
 	double score_network_update;
 
-	BranchNodeHistory(BranchNode* node);
+	BranchNodeHistory(BranchNode* node,
+					  int scope_index);
 	~BranchNodeHistory();
 };
 

@@ -53,6 +53,10 @@ void Fold::remove_outer_scope_score_activate(vector<double>& local_state_vals,
 				}
 			}
 		}
+
+		// TODO: need to figure out scope contexts needed
+		// probably remove context_history, and just process node_history?
+		// or just store linearly
 	}
 
 	StateNetworkHistory* starting_score_network_history = new StateNetworkHistory(this->curr_starting_score_network);

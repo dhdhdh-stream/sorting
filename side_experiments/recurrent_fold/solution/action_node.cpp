@@ -126,8 +126,10 @@ void ActionNode::backprop(vector<double>& local_state_errors,
 	}
 }
 
-ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
+ActionNodeHistory::ActionNodeHistory(ActionNode* node,
+									 int scope_index) {
 	this->node = node;
+	this->scope_index = scope_index;
 }
 
 ActionNodeHistory::~ActionNodeHistory() {

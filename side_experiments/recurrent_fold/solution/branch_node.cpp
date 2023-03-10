@@ -154,8 +154,10 @@ void BranchNode::backprop(vector<double>& local_state_errors,
 	predicted_score -= scale_factor*history->score_network_update;
 }
 
-BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
+BranchNodeHistory::BranchNodeHistory(BranchNode* node,
+									 int scope_index) {
 	this->node = node;
+	this->scope_index = scope_index;
 }
 
 BranchNodeHistory::~BranchNodeHistory() {

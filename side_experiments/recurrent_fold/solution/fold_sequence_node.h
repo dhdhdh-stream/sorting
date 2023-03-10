@@ -36,7 +36,8 @@ class FoldSequenceNodeHistory : public AbstractNodeHistory {
 public:
 	FoldHistory* fold_history;
 
-	FoldSequenceNodeHistory(FoldSequenceNode* node);
+	FoldSequenceNodeHistory(FoldSequenceNode* node,
+							int scope_index);
 	~FoldSequenceNodeHistory();
 };
 

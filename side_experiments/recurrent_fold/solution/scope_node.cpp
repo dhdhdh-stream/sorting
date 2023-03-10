@@ -66,13 +66,21 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 														input_vals,
 														network_history);
 			history->pre_state_network_histories.push_back(network_history);
-			local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			if (this->pre_state_network_target_is_local[s_index]) {
+				local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			} else {
+				input_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			}
 		}
 	} else {
 		for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
 			this->pre_state_networks[s_index]->activate(local_state_vals,
 														input_vals);
-			local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			if (this->pre_state_network_target_is_local[s_index]) {
+				local_state_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			} else {
+				input_vals[this->pre_state_network_target_indexes[s_index]] += this->pre_state_networks[s_index]->output->acti_vals[0];
+			}
 		}
 	}
 
@@ -264,8 +272,10 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 	}
 }
 
-ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
+ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node,
+								   int scope_index) {
 	this->node = node;
+	this->scope_index = scope_index;
 
 	this->score_network_history = NULL;	// may not trigger
 }

@@ -4,8 +4,9 @@
 #include <vector>
 
 #include "fold.h"
-#include "scope_path.h"
 
-ScopePath* fold_to_path(Fold* fold);
+void fold_to_nodes(Scope* parent_scope,
+				   Fold* fold,
+				   std::vector<AbstractNode*>& new_outer_nodes);
 
 #endif /* FOLD_TO_PATH_H */

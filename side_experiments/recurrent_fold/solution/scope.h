@@ -18,8 +18,8 @@ public:
 	std::vector<AbstractNode*> nodes;
 	// TODO: for now, on explore replace, update connection, but leave original nodes as is, but think about garbage collection
 
-	Scope(int num_input_states,
-		  int num_local_states,
+	Scope(int num_local_states,
+		  int num_input_states,
 		  bool is_loop,
 		  Network* continue_network,
 		  Network* halt_network,
@@ -63,6 +63,8 @@ public:
 	int explore_index;
 	FoldHistory* explore_fold_history;
 
+	ScopeHistory(Scope* scope);
+	~ScopeHistory();
 };
 
 #endif /* SCOPE_H */

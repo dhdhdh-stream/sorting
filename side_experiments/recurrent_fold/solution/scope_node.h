@@ -3,7 +3,7 @@
 
 class ScopeNode : public AbstractNode {
 public:
-	// if any, pre_state_network target always is local
+	std::vector<bool> pre_state_network_target_is_local;
 	std::vector<int> pre_state_network_target_indexes;
 	std::vector<StateNetwork*> pre_state_networks;
 
@@ -92,7 +92,8 @@ public:
 	StateNetworkHistory* score_network_history;
 	double score_network_update;
 
-	ScopeNodeHistory(ScopeNode* node);
+	ScopeNodeHistory(ScopeNode* node,
+					 int scope_index);
 	~ScopeNodeHistory();
 };
 

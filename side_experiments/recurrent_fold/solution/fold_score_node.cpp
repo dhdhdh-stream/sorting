@@ -31,7 +31,9 @@ FoldScoreNode::~FoldScoreNode() {
 		delete this->existing_score_network;
 	}
 
-	// delete fold if needed in FoldSequenceNode
+	if (this->fold != NULL) {
+		delete this->fold;
+	}
 }
 
 void FoldScoreNode::activate(vector<double>& local_state_vals,
@@ -163,8 +165,10 @@ void FoldScoreNode::backprop(vector<double>& local_state_errors,
 	}
 }
 
-FoldScoreNodeHistory::FoldScoreNodeHistory(FoldScoreNode* node) {
+FoldScoreNodeHistory::FoldScoreNodeHistory(FoldScoreNode* node,
+										   int scope_index) {
 	this->node = node;
+	this->scope_index = scope_index;
 
 	this->existing_score_network_history = NULL;
 }

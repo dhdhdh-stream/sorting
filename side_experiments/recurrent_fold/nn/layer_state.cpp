@@ -98,6 +98,10 @@ void Layer::state_hidden_new_outer_weights_to_local() {
 
 		this->weights[n_index][4].clear();
 		this->weight_updates[n_index][4].clear();
+
+		// also clear new_inner in case empty step in sequence
+		this->weights[n_index][3].clear();
+		this->weight_updates[n_index][3].clear();
 	}
 }
 
@@ -111,6 +115,10 @@ void Layer::state_hidden_new_outer_weights_to_input() {
 
 		this->weights[n_index][4].clear();
 		this->weight_updates[n_index][4].clear();
+
+		// also clear new_inner in case empty step in sequence
+		this->weights[n_index][3].clear();
+		this->weight_updates[n_index][3].clear();
 	}
 }
 

@@ -105,6 +105,8 @@ public:
 
 	int clean_outer_scope_index;
 	std::set<int> outer_scopes_needed;
+	// TODO: add outer_nodes_needed
+	// probably set+pair?
 	std::map<int, bool> outer_scopes_checked;	// true if needed
 
 	int clean_outer_node_index;

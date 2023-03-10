@@ -57,7 +57,8 @@ public:
 
 	// FoldHistory saved and processed by FoldSequenceNode
 
-	FoldScoreNodeHistory(FoldScoreNode* node);
+	FoldScoreNodeHistory(FoldScoreNode* node,
+						 int scope_index);
 	~FoldScoreNodeHistory();
 }
 

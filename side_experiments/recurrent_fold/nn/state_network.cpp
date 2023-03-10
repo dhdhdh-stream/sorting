@@ -681,6 +681,12 @@ void StateNetwork::new_outer_to_local() {
 	this->new_outer_state_input->acti_vals.clear();
 	this->new_outer_state_input->errors.clear();
 	this->new_outer_state_zeroed.clear();
+
+	// also clear new_inner in case empty step in sequence
+	this->new_inner_state_size = 0;
+	this->new_inner_state_input->acti_vals.clear();
+	this->new_inner_state_input->errors.clear();
+	this->new_inner_state_zeroed.clear();
 }
 
 void StateNetwork::new_outer_to_input() {
@@ -698,6 +704,12 @@ void StateNetwork::new_outer_to_input() {
 	this->new_outer_state_input->acti_vals.clear();
 	this->new_outer_state_input->errors.clear();
 	this->new_outer_state_zeroed.clear();
+
+	// also clear new_inner in case empty step in sequence
+	this->new_inner_state_size = 0;
+	this->new_inner_state_input->acti_vals.clear();
+	this->new_inner_state_input->errors.clear();
+	this->new_inner_state_zeroed.clear();
 }
 
 void StateNetwork::split_new_inner(int split_index) {
@@ -834,10 +846,11 @@ void StateNetworkHistory::reset_weights() {
 	if (this->network->obs_size > 0) {
 		this->network->obs_input->acti_vals[0] = this->obs_input_history;
 	}
-	for (int n_index = 0; n_index < this->network->local_state_size; n_index++) {
+	// state_sizes may have increased, so use history size
+	for (int n_index = 0; n_index < (int)this->local_state_input_history.size(); n_index++) {
 		this->network->local_state_input->acti_vals[n_index] = this->local_state_input_history[n_index];
 	}
-	for (int n_index = 0; n_index < this->network->input_state_size; n_index++) {
+	for (int n_index = 0; n_index < (int)this->input_state_input_history.size(); n_index++) {
 		this->network->input_state_input->acti_vals[n_index] = this->input_state_input_history[n_index];
 	}
 	for (int n_index = 0; n_index < this->network->new_inner_state_size; n_index++) {

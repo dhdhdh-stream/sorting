@@ -14,6 +14,23 @@ Scope::Scope(int num_input_states,
 	this->continue_network = continue_network;
 	this->halt_network = halt_network;
 	this->nodes = nodes;
+
+	for (int n_index = 0; n_index < this->nodes.size()-1; n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			action_node->next_node_id = n_index+1;
+		} else {
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+			scope_node->next_node_id = n_index+1;
+		}
+	}
+	if (this->nodes.back()->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)this->nodes.back();
+		action_node->next_node_id = -1;
+	} else {
+		ScopeNode* scope_node = (ScopeNode*)this->nodes.back();
+		scope_node->next_node_id = -1;
+	}
 }
 
 Scope::~Scope() {
@@ -367,8 +384,17 @@ void Scope::backprop(vector<double>& input_errors,
 		local_state_errors = vector<double>(this->num_local_states, 0.0);
 	}
 
-	for (int n_index = scope_history->node_histories.size()-1; n_index >= 0; n_index--) {
-		if (history->explore_index == n_index) {
+	for (int h_index = scope_history->node_histories.size()-1; h_index >= 0; h_index--) {
+		if (this->nodes[scope_history->node_histories[h_index]->scope_index]
+				!= scope_history->node_histories[h_index]->node) {
+			// node replaced, mainly for fold nodes
+
+			// skip processing history, should only have minor temporary impact
+
+			continue;
+		}
+
+		if (history->explore_index == h_index) {
 			Fold* fold = history->explore_fold_history->fold;
 			fold->explore_backprop(local_state_errors,
 								   input_errors,
@@ -378,12 +404,20 @@ void Scope::backprop(vector<double>& input_errors,
 								   scale_factor,
 								   history->explore_fold_history);
 
+			if (fold->state == FOLD_STATE_EXPLORE_FAIL) {
+				// clean
+			}
+
+			if (fold->state == FOLD_STATE_EXPLORE_DONE) {
+				// add fold nodes
+			}
+
 			run_helper.explore_phase == EXPLORE_PHASE_FLAT_BACKPROP_DONE;
 			break;
 		}
 
-		if (scope_history->node_histories[n_index]->node->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)history->node_histories[n_index]->node;
+		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)history->node_histories[h_index]->node;
 			action_node->backprop(local_state_errors,
 								  input_errors,
 								  target_val,
@@ -392,9 +426,9 @@ void Scope::backprop(vector<double>& input_errors,
 								  predicted_score,
 								  scale_factor,
 								  run_helper,
-								  history->node_histories[n_index]);
-		} else if (scope_history->node_histories[n_index]->node->type == NODE_TYPE_INNER_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)history->node_histories[n_index]->node;
+								  history->node_histories[h_index]);
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)history->node_histories[h_index]->node;
 			scope_node->backprop(local_state_errors,
 								 input_errors,
 								 target_val,
@@ -403,32 +437,44 @@ void Scope::backprop(vector<double>& input_errors,
 								 predicted_score,
 								 scale_factor,
 								 run_helper,
-								 history->node_histories[n_index]);
+								 history->node_histories[h_index]);
 
 			if (run_helper.explore_phase == EXPLORE_PHASE_FLAT_BACKPROP_DONE) {
 				break;
 			}
-		} else if (scope_history->node_histories[n_index]->node->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)history->node_histories[n_index]->node;
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)history->node_histories[h_index]->node;
 			branch_node->backprop(local_state_errors,
 								  input_errors,
 								  target_val,
 								  predicted_score,
 								  scale_factor,
 								  run_helper,
-								  history->node_histories[n_index]);
-		} else if (scope_history->node_histories[n_index]->node->type == NODE_TYPE_FOLD_SCORE) {
-			FoldScoreNode* fold_score_node = (FoldScoreNode*)history->node_histories[n_index]->node;
+								  history->node_histories[h_index]);
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_FOLD_SCORE) {
+			FoldScoreNode* fold_score_node = (FoldScoreNode*)history->node_histories[h_index]->node;
 			fold_score_node->backprop(local_state_errors,
 									  input_errors,
 									  target_val,
 									  predicted_score,
 									  scale_factor,
 									  run_helper,
-									  history->node_histories[n_index]);
+									  history->node_histories[h_index]);
+
+			if (fold_score_node->fold->state == FOLD_STATE_DONE) {
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold_score_node->fold->curr_outer_state_networks.begin();
+						it != fold_score_node->fold->curr_outer_state_networks.end(); it++) {
+					int scope_id = it->first;
+					
+				}
+
+				// replace with new branch node
+
+				// delete fold_score_node along with fold
+			}
 		} else {
-			// scope_history->node_histories[n_index]->node->type == NODE_TYPE_FOLD_SEQUENCE
-			FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[n_index]->node;
+			// scope_history->node_histories[h_index]->node->type == NODE_TYPE_FOLD_SEQUENCE
+			FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[h_index]->node;
 			fold_sequence_node->backprop(local_state_errors,
 										 input_errors,
 										 target_val,
@@ -437,9 +483,39 @@ void Scope::backprop(vector<double>& input_errors,
 										 predicted_score,
 										 scale_factor,
 										 run_helper,
-										 history->node_histories[n_index]);
+										 history->node_histories[h_index]);
+
+			if (fold_sequence_node->fold->state == FOLD_STATE_DONE) {
+				vector<AbstractNode*> new_nodes;
+				fold_to_nodes(this,
+							  fold_sequence_node->fold,
+							  new_nodes);
+
+				int starting_new_node_id = this->nodes.size();
+				for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
+					if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+						action_node->next_node_id = this->nodes.size()+1;
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+						scope_node->next_node_id = this->nodes.size()+1;
+					}
+					this->nodes.push_back(new_nodes[n_index]);
+				}
+				if (new_nodes.back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)new_nodes.back();
+					action_node->next_node_id = fold_sequence_node->next_node_id;
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
+					scope_node->next_node_id = fold_sequence_node->next_node_id;
+				}
+				this->nodes.push_back(new_nodes.back());
+
+				PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
+				delete this->nodes[scope_history->node_histories[h_index]->scope_index];
+				this->nodes[scope_history->node_histories[h_index]->scope_index] = new_pass_through_node;
+			}
 		}
-		// can't be NODE_TYPE_FOLD_SCORE or NODE_TYPE_PASS_THROUGH
 	}
 }
 
@@ -448,4 +524,14 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->explore_index = -1;
 	this->explore_fold_history = NULL;
+}
+
+ScopeHistory::~ScopeHistory() {
+	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
+		delete this->node_histories[h_index];
+	}
+
+	if (this->explore_fold_history != NULL) {
+		delete this->explore_fold_history;
+	}
 }

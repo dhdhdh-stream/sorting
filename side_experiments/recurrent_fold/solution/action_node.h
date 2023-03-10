@@ -60,7 +60,8 @@ public:
 	StateNetworkHistory* score_network_history;
 	double score_network_update;
 
-	ActionNodeHistory(ActionNode* node);
+	ActionNodeHistory(ActionNode* node,
+					  int scope_index);
 	~ActionNodeHistory();
 };
 
