@@ -3,7 +3,9 @@
 
 #include <vector>
 
+#include "abstract_node.h"
 #include "fold.h"
+#include "scope.h"
 
 void fold_to_nodes(Scope* parent_scope,
 				   Fold* fold,

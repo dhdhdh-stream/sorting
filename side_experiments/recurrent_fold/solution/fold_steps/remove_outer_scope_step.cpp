@@ -1,5 +1,10 @@
 #include "fold.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void Fold::remove_outer_scope_score_activate_helper(
@@ -33,7 +38,7 @@ void Fold::remove_outer_scope_score_activate_helper(
 		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
 			if (it != this->curr_outer_state_networks.end()) {
 				int node_id = scope_history->node_histories[h_index]->scope_index;
-				if (node_id < it->second.size()
+				if (node_id < (int)it->second.size()
 						&& it->second[node_id].size() > 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
 					for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
@@ -53,7 +58,7 @@ void Fold::remove_outer_scope_score_activate_helper(
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 				if (test_it != this->test_outer_state_networks.end()) {
 					int node_id = scope_history->node_histories[h_index]->scope_index;
-					if (node_id < test_it->second.size()
+					if (node_id < (int)test_it->second.size()
 							&& test_it->second[node_id].size() > 0) {
 						history->test_outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
@@ -141,13 +146,14 @@ void Fold::remove_outer_scope_score_activate(vector<double>& local_state_vals,
 	// modify predicted_score if path taken outside
 }
 
-void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_state_vals,
-													   vector<double>& input_vals,
-													   vector<vector<double>>& flat_vals,
-													   double& predicted_score,
-													   double& scale_factor,
-													   RunHelper& run_helper,
-													   FoldHistory* history) {
+void Fold::remove_outer_scope_sequence_activate(vector<double>& local_state_vals,
+												vector<double>& input_vals,
+												vector<vector<double>>& flat_vals,
+												double& predicted_score,
+												double& scale_factor,
+												double& sum_impact,
+												RunHelper& run_helper,
+												FoldHistory* history) {
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_vals = history->new_outer_state_vals;
 
@@ -212,10 +218,11 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 
+			vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
+				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
+			inner_input_vals_snapshots[f_index] = inner_input_vals;
+
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-				vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
-					new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
-				inner_input_vals_snapshots[f_index] = inner_input_vals;
 				vector<double> test_inner_input_vals(test_new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 					test_new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 				test_inner_input_vals_snapshots[f_index] = test_inner_input_vals;
@@ -392,11 +399,13 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 				}
 			}
 		} else {
+			double obs = (*flat_vals.begin())[0];
+
 			for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 					this->curr_state_networks[f_index][i_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -405,7 +414,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 					history->state_network_histories[f_index][i_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][i_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -415,7 +424,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 
 				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 					this->test_state_networks[f_index][i_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						test_new_inner_state_vals,
 						test_local_state_vals,
 						test_input_vals,
@@ -430,7 +439,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -439,7 +448,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -449,7 +458,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 
 				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 					this->test_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						test_new_inner_state_vals,
 						test_local_state_vals,
 						test_input_vals,
@@ -465,7 +474,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -474,7 +483,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -484,7 +493,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 
 				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 					this->test_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						test_new_inner_state_vals,
 						test_local_state_vals,
 						test_input_vals,
@@ -501,7 +510,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -510,7 +519,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -520,7 +529,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 
 				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 					this->test_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						test_new_inner_state_vals,
 						test_local_state_vals,
 						test_input_vals,
@@ -574,7 +583,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 		}
 
 		for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
-			double test_score_network_error = this->score_network_updates[f_index]
+			double test_score_network_error = history->score_network_updates[f_index]
 				- this->test_score_networks[f_index]->output->acti_vals[0];
 			this->sum_error += abs(test_score_network_error);
 			this->test_score_networks[f_index]->new_sequence_backprop(
@@ -582,7 +591,8 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 				test_new_inner_state_errors,
 				test_local_state_errors,
 				test_input_errors,
-				test_new_outer_state_errors);
+				test_new_outer_state_errors,
+				target_max_update);
 
 			if (this->is_inner_scope[f_index]) {
 				for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
@@ -639,7 +649,7 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 					double inner_input_error = inner_input_vals_snapshots[f_index][i_index]
 						- test_inner_input_vals_snapshots[f_index][i_index];
 					this->sum_error += abs(inner_input_error);
-					new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_error;
+					test_new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_error;
 					// set instead of sum as not connected
 				}
 
@@ -704,14 +714,14 @@ void Fold::remove_outer_scope_update_sequence_activate(vector<double>& local_sta
 			}
 		}
 
-		double test_starting_score_network_error = this->starting_score_update - this->test_starting_score_update;
+		double test_starting_score_network_error = history->starting_score_update - history->test_starting_score_update;
 		this->sum_error += abs(test_starting_score_network_error);
 		this->test_starting_score_network->new_outer_backprop(
 			test_starting_score_network_error,
 			test_new_outer_state_errors,
 			target_max_update);
 
-		for (int n_index = history->test_outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
+		for (int n_index = (int)history->test_outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
 			for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
 				StateNetwork* state_network = history->test_outer_state_network_histories[n_index][o_index]->network;
 				state_network->new_outer_backprop(

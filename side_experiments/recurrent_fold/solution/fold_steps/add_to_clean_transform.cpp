@@ -39,7 +39,7 @@ void Fold::add_to_clean() {
 			this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 		}
 
-		this->state = STATE_REMOVE_INNER_NETWORK;
+		this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 		this->state_iter = 0;
 		this->sub_state_iter = 0;
 		this->sum_error = 0.0;
@@ -74,7 +74,7 @@ void Fold::add_to_clean() {
 			this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 		}
 
-		this->state = STATE_REMOVE_OUTER_SCOPE;
+		this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
 		this->state_iter = 0;
 		this->sub_state_iter = 0;
 		this->sum_error = 0.0;

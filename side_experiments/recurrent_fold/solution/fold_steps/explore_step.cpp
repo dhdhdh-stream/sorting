@@ -4,6 +4,13 @@
 
 #include "fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "action_node.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void Fold::explore_score_activate_helper(vector<double>& new_outer_state_vals,
@@ -18,11 +25,11 @@ void Fold::explore_score_activate_helper(vector<double>& new_outer_state_vals,
 
 	map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.find(scope_id);
 	if (it == this->test_outer_state_networks.end()) {
-		it = this->test_outer_state_networks.insert({scope_id, vector<vector<Network*>>()}).first;
+		it = this->test_outer_state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
 	}
 
-	int size_diff = scope_history->scope->nodes.size() - it->second.size();
-	it->second.insert(it->second.begin(), size_diff, vector<Network*>());
+	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
+	it->second.insert(it->second.begin(), size_diff, vector<StateNetwork*>());
 
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
 		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
@@ -100,7 +107,7 @@ void Fold::explore_score_activate(vector<double>& local_state_vals,
 
 	if (this->state == FOLD_STATE_EXPLORE && this->state_iter >= 490000) {
 		// Note: use predicted_score_variance (as opposed to score_variance for surprise) to measure difference between predicted scores
-		double predicted_score_standard_deviation = sqrt(this->existing_predicted_score_variance);
+		double predicted_score_standard_deviation = sqrt(*this->existing_predicted_score_variance);
 		double t_value = scale_factor*this->test_starting_score_network->output->acti_vals[0] / predicted_score_standard_deviation;
 		if (t_value > 1.0) {	// >75%
 			this->new_noticably_better++;
@@ -254,10 +261,12 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 				new_outer_state_vals[o_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
 			}
 		} else {
+			double obs = (*flat_vals.begin())[0];
+
 			for (int i_index = 0; i_index < this->sum_inner_inputs + this->test_num_new_inner_states; i_index++) {
 				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
 				this->test_state_networks[f_index][i_index]->new_sequence_activate(
-					*flat_vals.begin(),
+					obs,
 					new_inner_state_vals,
 					local_state_vals,
 					input_vals,
@@ -273,7 +282,7 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 					+ l_index;
 				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][state_index]);
 				this->test_state_networks[f_index][state_index]->new_sequence_activate(
-					*flat_vals.begin(),
+					obs,
 					new_inner_state_vals,
 					local_state_vals,
 					input_vals,
@@ -290,7 +299,7 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 					+ i_index;
 				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][state_index]);
 				this->test_state_networks[f_index][state_index]->new_sequence_activate(
-					*flat_vals.begin(),
+					obs,
 					new_inner_state_vals,
 					local_state_vals,
 					input_vals,
@@ -308,7 +317,7 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 					+ o_index;
 				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][state_index]);
 				this->test_state_networks[f_index][state_index]->new_sequence_activate(
-					*flat_vals.begin(),
+					obs,
 					new_inner_state_vals,
 					local_state_vals,
 					input_vals,
@@ -443,8 +452,8 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 			inner_input_errors.insert(inner_input_errors.end(), num_input_states_diff, 0.0);
 			
 			// unused
-			double inner_final_misguess;
-			double inner_final_sum_impact;
+			double inner_final_misguess = 0.0;
+			double inner_final_sum_impact = 0.0;
 
 			inner_scope->backprop(inner_input_errors,
 								  target_val,
@@ -533,7 +542,7 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 
 	predicted_score -= scale_factor*history->starting_score_update;
 
-	for (int n_index = history->outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
+	for (int n_index = (int)history->outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
 		for (int o_index = this->test_num_new_outer_states-1; o_index >= 0; o_index--) {
 			StateNetwork* state_network = history->outer_state_network_histories[n_index][o_index]->network;
 			state_network->new_outer_backprop(

@@ -1,5 +1,8 @@
 #include "scope_node.h"
 
+#include "constants.h"
+#include "globals.h"
+
 using namespace std;
 
 ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
@@ -150,9 +153,9 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 		}
 
 		StateNetworkHistory* score_network_history = new StateNetworkHistory(this->score_network);
-		this->score_network->scope_activate(local_state_vals,
-											input_vals,
-											score_network_history);
+		this->score_network->activate(local_state_vals,
+									  input_vals,
+									  score_network_history);
 		history->score_network_history = score_network_history;
 		history->score_network_update = this->score_network->output->acti_vals[0];
 		predicted_score += scale_factor*this->score_network->output->acti_vals[0];
@@ -169,7 +172,7 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 						 double& predicted_score,
 						 double& scale_factor,
 						 RunHelper& run_helper,
-						 ActionNodeHistory* history) {
+						 ScopeNodeHistory* history) {
 	if (!history->inner_is_early_exit) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 			this->score_network->backprop_errors_with_no_weight_change(

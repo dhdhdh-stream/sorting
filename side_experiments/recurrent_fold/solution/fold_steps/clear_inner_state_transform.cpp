@@ -22,7 +22,7 @@ void Fold::clear_inner_state_end() {
 		if (this->test_num_states_cleared[this->clean_inner_step_index] > this->sum_inner_inputs+this->curr_num_new_inner_states) {
 			this->clean_inner_step_index++;
 			if (this->clean_inner_step_index >= this->sequence_length) {
-				this->state = STATE_DONE;
+				this->state = FOLD_STATE_DONE;
 			} else {
 				this->clean_inner_state_index = 0;
 
@@ -46,7 +46,7 @@ void Fold::clear_inner_state_end() {
 					this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 				}
 
-				this->state = STATE_REMOVE_INNER_NETWORK;
+				this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
@@ -69,7 +69,7 @@ void Fold::clear_inner_state_end() {
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
 
-			this->state = STATE_CLEAR_INNER_STATE;
+			this->state = FOLD_STATE_CLEAR_INNER_STATE;
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 			this->sum_error = 0.0;
@@ -87,7 +87,7 @@ void Fold::clear_inner_state_end() {
 
 		this->clean_inner_step_index++;
 		if (this->clean_inner_step_index >= this->sequence_length) {
-			this->state = STATE_DONE;
+			this->state = FOLD_STATE_DONE;
 		} else {
 			this->clean_inner_state_index = 0;
 
@@ -111,7 +111,7 @@ void Fold::clear_inner_state_end() {
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
 
-			this->state = STATE_REMOVE_INNER_NETWORK;
+			this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 			this->sum_error = 0.0;

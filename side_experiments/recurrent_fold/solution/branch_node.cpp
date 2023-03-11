@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include "constants.h"
+
 using namespace std;
 
 BranchNode::BranchNode(vector<int> branch_scope_context,
@@ -30,7 +32,7 @@ BranchNode::~BranchNode() {
 void BranchNode::activate(vector<double>& local_state_vals,
 						  vector<double>& input_vals,
 						  double& predicted_score,
-						  double& scale_factor
+						  double& scale_factor,
 						  vector<int>& scope_context,
 						  vector<int>& node_context,
 						  int& exit_depth,

@@ -1,5 +1,10 @@
 #include "fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 void Fold::add_inner_state_end() {
@@ -114,14 +119,14 @@ void Fold::add_inner_state_end() {
 			this->test_score_networks[f_index]->add_new_inner();
 		}
 
-		this->state = STATE_ADD_INNER_STATE;
+		this->state = FOLD_STATE_ADD_INNER_STATE;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	} else {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-				for (int s_index = 0; s_index < it->second[n_index].size(); s_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
 					delete it->second[n_index][s_index];
 				}
 			}
@@ -204,7 +209,7 @@ void Fold::add_inner_state_end() {
 			this->test_score_networks[f_index]->add_new_outer();
 		}
 
-		this->state = STATE_ADD_OUTER_STATE;
+		this->state = FOLD_STATE_ADD_OUTER_STATE;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	}

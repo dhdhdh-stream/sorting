@@ -1,5 +1,7 @@
 #include "action_node.h"
 
+#include "constants.h"
+
 using namespace std;
 
 ActionNode::ActionNode(vector<bool> state_network_target_is_local,
@@ -29,7 +31,7 @@ void ActionNode::activate(vector<double>& local_state_vals,
 						  double& scale_factor,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
-	double obs = *flat_vals.begin()[0];
+	double obs = (*flat_vals.begin())[0];
 
 	history->obs_snapshot = obs;
 

@@ -1,9 +1,14 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
-#include "fold.h"
-#include "network.h"
+#include <vector>
 
+#include "abstract_node.h"
+#include "fold.h"
+#include "state_network.h"
+
+class FoldHistory;
+class ScopeHistory;
 class Scope {
 public:
 	int id;
@@ -12,8 +17,8 @@ public:
 	int num_input_states;	// also becomes output
 
 	bool is_loop;
-	Network* continue_network;
-	Network* halt_network;
+	StateNetwork* continue_network;
+	StateNetwork* halt_network;
 
 	std::vector<AbstractNode*> nodes;
 	// TODO: for now, on explore replace, update connection, but leave original nodes as is, but think about garbage collection
@@ -21,8 +26,8 @@ public:
 	Scope(int num_local_states,
 		  int num_input_states,
 		  bool is_loop,
-		  Network* continue_network,
-		  Network* halt_network,
+		  StateNetwork* continue_network,
+		  StateNetwork* halt_network,
 		  std::vector<AbstractNode*> nodes);
 	~Scope();
 

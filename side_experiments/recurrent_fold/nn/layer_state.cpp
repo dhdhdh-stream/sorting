@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void Layer::state_hidden_backprop_new_state() {
+void Layer::state_hidden_backprop_new_outer_state() {
 	// this->type == LEAKY_LAYER
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		if (this->acti_vals[n_index] < 0.0) {

@@ -2,10 +2,12 @@
 
 #include <iostream>
 
+#include "utilities.h"
+
 using namespace std;
 
 Scale::Scale() {
-	this->weight = randunit()*0.01;
+	this->weight = randuni()*0.01;
 	this->weight_update = 0.0;
 
 	this->epoch_iter = 0;
@@ -33,7 +35,7 @@ void Scale::backprop(double error,
 		double update_size = abs(this->weight_update);
 		this->average_update_size = 0.999*this->average_update_size + 0.001*update_size;
 		if (this->weight_update != 0.0) {
-			double learning_rate = (0.3*target_max_update)/this->average_update;
+			double learning_rate = (0.3*target_max_update)/this->average_update_size;
 			if (learning_rate*update_size > target_max_update) {
 				learning_rate = target_max_update/update_size;
 			}

@@ -6,6 +6,13 @@
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
+#include <vector>
+
+#include "abstract_node.h"
+#include "run_helper.h"
+#include "state_network.h"
+
+class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
 	std::vector<int> branch_scope_context;
@@ -31,9 +38,8 @@ public:
 
 	void activate(std::vector<double>& local_state_vals,
 				  std::vector<double>& input_vals,
-				  std::vector<std::vector<double>>& flat_vals,
 				  double& predicted_score,
-				  double& scale_factor
+				  double& scale_factor,
 				  std::vector<int>& scope_context,
 				  std::vector<int>& node_context,
 				  int& exit_depth,

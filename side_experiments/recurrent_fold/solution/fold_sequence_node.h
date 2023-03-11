@@ -1,6 +1,13 @@
 #ifndef FOLD_SEQUENCE_NODE_H
 #define FOLD_SEQUENCE_NODE_H
 
+#include <vector>
+
+#include "abstract_node.h"
+#include "fold.h"
+#include "run_helper.h"
+
+class FoldSequenceNodeHistory;
 class FoldSequenceNode : public AbstractNode {
 public:
 	Fold* fold;

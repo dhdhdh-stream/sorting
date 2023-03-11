@@ -1,5 +1,10 @@
 #include "fold.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void Fold::remove_outer_network_score_activate_helper(
@@ -25,7 +30,7 @@ void Fold::remove_outer_network_score_activate_helper(
 		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
 			if (it != this->curr_outer_state_networks.end()) {
 				int node_id = scope_history->node_histories[h_index]->scope_index;
-				if (node_id < it->second.size()
+				if (node_id < (int)it->second.size()
 						&& it->second[node_id].size() > 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
 					for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
@@ -47,7 +52,7 @@ void Fold::remove_outer_network_score_activate_helper(
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 				if (test_it != this->test_outer_state_networks.end()) {
 					int node_id = scope_history->node_histories[h_index]->scope_index;
-					if (node_id < test_it->second.size()
+					if (node_id < (int)test_it->second.size()
 							&& test_it->second[node_id].size() > 0) {
 						history->test_outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
@@ -127,7 +132,7 @@ void Fold::remove_outer_network_score_activate(
 		} else {
 			target_max_update = 0.002;
 		}
-		for (int n_index = history->test_outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
+		for (int n_index = (int)history->test_outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
 			for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
 				if (history->test_outer_state_network_histories[n_index][o_index] != NULL) {
 					StateNetwork* state_network = history->test_outer_state_network_histories[n_index][o_index]->network;
@@ -164,6 +169,7 @@ void Fold::remove_outer_network_sequence_activate(
 		vector<vector<double>>& flat_vals,
 		double& predicted_score,
 		double& scale_factor,
+		double& sum_impact,
 		RunHelper& run_helper,
 		FoldHistory* history) {
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
@@ -270,6 +276,7 @@ void Fold::remove_outer_network_sequence_activate(
 					+ this->curr_num_new_inner_states
 					+ l_index;
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 						new_inner_state_vals,
 						local_state_vals,
@@ -334,11 +341,13 @@ void Fold::remove_outer_network_sequence_activate(
 				new_outer_state_vals[o_index] += this->curr_state_networks[f_index][state_index]->output->acti_vals[0];
 			}
 		} else {
+			double obs = (*flat_vals.begin())[0];
+
 			for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 					this->curr_state_networks[f_index][i_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -347,7 +356,7 @@ void Fold::remove_outer_network_sequence_activate(
 					history->state_network_histories[f_index][i_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][i_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -362,7 +371,7 @@ void Fold::remove_outer_network_sequence_activate(
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -371,7 +380,7 @@ void Fold::remove_outer_network_sequence_activate(
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -387,7 +396,7 @@ void Fold::remove_outer_network_sequence_activate(
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -396,7 +405,7 @@ void Fold::remove_outer_network_sequence_activate(
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -413,7 +422,7 @@ void Fold::remove_outer_network_sequence_activate(
 				if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,
@@ -422,7 +431,7 @@ void Fold::remove_outer_network_sequence_activate(
 					history->state_network_histories[f_index][state_index] = state_network_history;
 				} else {
 					this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-						*flat_vals.begin(),
+						obs,
 						new_inner_state_vals,
 						local_state_vals,
 						input_vals,

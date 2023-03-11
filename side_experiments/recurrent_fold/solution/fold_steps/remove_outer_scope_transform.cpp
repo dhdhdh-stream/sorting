@@ -40,7 +40,7 @@ void Fold::remove_outer_scope_end() {
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				if (it->second[n_index].size() != 0) {
-					for (int s_index = 0; s_index < (int)it->second[n_index].size()) {
+					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
 						delete it->second[n_index][s_index];
 					}
 				}
@@ -80,7 +80,7 @@ void Fold::remove_outer_scope_end() {
 			this->test_outer_state_networks_not_needed = this->curr_outer_state_networks_not_needed;
 
 			while (true) {
-				map<int, vector<vector<StateNetwork*>>>::iterator clean_network_it = this->test_outer_state_networks_not_needed.begin();
+				map<int, vector<vector<bool>>>::iterator clean_network_it = this->test_outer_state_networks_not_needed.begin();
 				for (int i_index = 0; i_index < this->clean_outer_scope_index; i_index++) {
 					clean_network_it++;
 				}
@@ -112,7 +112,7 @@ void Fold::remove_outer_scope_end() {
 						this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 					}
 
-					this->state = STATE_REMOVE_INNER_NETWORK;
+					this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 					this->state_iter = 0;
 					this->sub_state_iter = 0;
 					this->sum_error = 0.0;
@@ -135,12 +135,14 @@ void Fold::remove_outer_scope_end() {
 				for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 						it != this->curr_outer_state_networks.end(); it++) {
 					this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
-					for (int s_index = 0; s_index < (int)it->second.size(); s_index++) {
-						if (this->test_outer_state_networks_not_needed[it->first][n_index][s_index]) {
-							this->test_outer_state_networks[it->first][n_index].push_back(NULL);
-						} else {
-							this->test_outer_state_networks[it->first][n_index].push_back(
-								new StateNetwork(it->second[n_index][s_index]));
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+							if (this->test_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+								this->test_outer_state_networks[it->first][n_index].push_back(NULL);
+							} else {
+								this->test_outer_state_networks[it->first][n_index].push_back(
+									new StateNetwork(it->second[n_index][s_index]));
+							}
 						}
 					}
 				}
@@ -149,7 +151,7 @@ void Fold::remove_outer_scope_end() {
 
 				// don't special case inner
 
-				this->state = STATE_REMOVE_OUTER_NETWORK;
+				this->state = FOLD_STATE_REMOVE_OUTER_NETWORK;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
@@ -159,7 +161,7 @@ void Fold::remove_outer_scope_end() {
 
 			break;
 		} else {
-			map<int, bool>::iterator needed_it = this->curr_outer_scopes_needed.find(scope_it->first);
+			set<int>::iterator needed_it = this->curr_outer_scopes_needed.find(scope_it->first);
 			if (needed_it != this->curr_outer_scopes_needed.end()) {
 				this->clean_outer_scope_index++;
 				scope_it++;
@@ -199,7 +201,7 @@ void Fold::remove_outer_scope_end() {
 					this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 				}
 
-				this->state = STATE_REMOVE_OUTER_SCOPE;
+				this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 				this->sum_error = 0.0;

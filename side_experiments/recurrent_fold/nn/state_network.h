@@ -1,6 +1,12 @@
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 
+#include <fstream>
+#include <vector>
+
+#include "layer.h"
+
+class StateNetworkHistory;
 class StateNetwork {
 public:
 	int obs_size;	// can be 0
@@ -113,7 +119,7 @@ public:
 							   std::vector<double>& local_state_vals,
 							   std::vector<double>& input_state_vals,
 							   std::vector<double>& new_outer_state_vals,
-							   ScoreNetworkHistory* history);
+							   StateNetworkHistory* history);
 	void new_sequence_backprop(double output_error,
 							   std::vector<double>& new_inner_state_errors,
 							   std::vector<double>& local_state_errors,

@@ -1,6 +1,15 @@
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 
+#include <vector>
+
+#include "abstract_node.h"
+#include "fold.h"
+#include "run_helper.h"
+#include "scope.h"
+#include "state_network.h"
+
+class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	std::vector<bool> pre_state_network_target_is_local;

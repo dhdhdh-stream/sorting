@@ -188,11 +188,11 @@ void StateNetwork::backprop_errors_with_no_weight_change(
 	this->hidden->backprop();
 
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
-		this->local_state_errors[l_index] += this->local_state_input->errors[l_index];
+		local_state_errors[l_index] += this->local_state_input->errors[l_index];
 		this->local_state_input->errors[l_index] = 0.0;
 	}
 	for (int i_index = 0; i_index < this->input_state_size; i_index++) {
-		this->input_state_errors[i_index] += this->input_state_input->errors[i_index];
+		input_state_errors[i_index] += this->input_state_input->errors[i_index];
 		this->input_state_input->errors[i_index] = 0.0;
 	}
 }
@@ -635,7 +635,7 @@ void StateNetwork::zero_state(int index) {
 				this->new_outer_state_zeroed[index] = true;
 				this->new_outer_state_input->acti_vals[index] = 0.0;
 				this->new_outer_state_input->errors[index] = 0.0;
-				this->hidden->state_hidden_zero_new_output(index);
+				this->hidden->state_hidden_zero_new_outer(index);
 			}
 		}
 	}
@@ -658,7 +658,7 @@ void StateNetwork::update_state_sizes(int new_local_state_size,
 		this->input_state_input->acti_vals.push_back(0.0);
 		this->input_state_input->errors.push_back(0.0);
 
-		this->outer_state_zeroed.push_back(false);
+		this->input_state_zeroed.push_back(false);
 	}
 	this->input_state_size = new_input_state_size;
 

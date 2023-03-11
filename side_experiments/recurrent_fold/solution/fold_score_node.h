@@ -1,6 +1,14 @@
 #ifndef FOLD_SCORE_NODE_H
 #define FOLD_SCORE_NODE_H
 
+#include <vector>
+
+#include "abstract_node.h"
+#include "fold.h"
+#include "scope.h"
+#include "state_network.h"
+
+class FoldScoreNodeHistory;
 class FoldScoreNode : public AbstractNode {
 public:
 	StateNetwork* existing_score_network;
@@ -59,6 +67,6 @@ public:
 	FoldScoreNodeHistory(FoldScoreNode* node,
 						 int scope_index);
 	~FoldScoreNodeHistory();
-}
+};
 
 #endif /* FOLD_SCORE_NODE_H */

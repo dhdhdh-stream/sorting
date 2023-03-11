@@ -1,6 +1,14 @@
 #ifndef ACTION_NODE_H
 #define ACTION_NODE_H
 
+#include <vector>
+
+#include "abstract_node.h"
+#include "fold.h"
+#include "run_helper.h"
+#include "state_network.h"
+
+class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
 	std::vector<bool> state_network_target_is_local;

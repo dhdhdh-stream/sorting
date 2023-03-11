@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-#include "scope.h"
+#include "action_node.h"
+#include "globals.h"
+#include "scope_node.h"
 
 using namespace std;
 
@@ -206,8 +208,8 @@ void fold_to_nodes(Scope* parent_scope,
 				f_index = scope_inclusive_ends[inner_scope_indexes[n_index][a_index]];
 			} else {
 				if (fold->is_inner_scope[f_index]) {
-					vector<double> pre_state_network_target_is_local;
-					vector<double> pre_state_network_target_indexes;
+					vector<bool> pre_state_network_target_is_local;
+					vector<int> pre_state_network_target_indexes;
 					vector<StateNetwork*> pre_state_networks;
 					for (int s_index = 0; s_index < fold->inner_input_start_indexes[f_index] + fold->num_inner_inputs[f_index]; s_index++) {
 						if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
@@ -226,7 +228,7 @@ void fold_to_nodes(Scope* parent_scope,
 									if (ss_index < parent_lowest_layer) {
 										state_network->remove_local(state_index_mapping[ss_index]);
 									} else {
-										state_network->remove_input(state_index_mapping[ss_index])
+										state_network->remove_input(state_index_mapping[ss_index]);
 									}
 								}
 							}
@@ -247,11 +249,11 @@ void fold_to_nodes(Scope* parent_scope,
 							inner_input_is_local.push_back(false);
 						}
 						inner_input_indexes.push_back(state_index_mapping[s_index]);
-						inner_input_target_indexes.push_back(inner_input_target_indexes.size());	// 0 to num_inner_inputs
+						inner_input_target_indexes.push_back((int)inner_input_target_indexes.size());	// 0 to num_inner_inputs
 					}
 
-					vector<double> post_state_network_target_is_local;
-					vector<double> post_state_network_target_indexes;
+					vector<bool> post_state_network_target_is_local;
+					vector<int> post_state_network_target_indexes;
 					vector<StateNetwork*> post_state_networks;
 					for (int s_index = fold->inner_input_start_indexes[f_index] + fold->num_inner_inputs[f_index]; s_index < total_num_states; s_index++) {
 						if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
@@ -270,7 +272,7 @@ void fold_to_nodes(Scope* parent_scope,
 									if (ss_index < parent_lowest_layer) {
 										state_network->remove_local(state_index_mapping[ss_index]);
 									} else {
-										state_network->remove_input(state_index_mapping[ss_index])
+										state_network->remove_input(state_index_mapping[ss_index]);
 									}
 								}
 							}
@@ -285,7 +287,7 @@ void fold_to_nodes(Scope* parent_scope,
 							if (ss_index < parent_lowest_layer) {
 								score_network->remove_local(state_index_mapping[ss_index]);
 							} else {
-								score_network->remove_input(state_index_mapping[ss_index])
+								score_network->remove_input(state_index_mapping[ss_index]);
 							}
 						}
 					}
@@ -303,8 +305,8 @@ void fold_to_nodes(Scope* parent_scope,
 													score_network);
 					new_nodes.push_back(node);
 				} else {
-					vector<double> state_network_target_is_local;
-					vector<double> state_network_target_indexes;
+					vector<bool> state_network_target_is_local;
+					vector<int> state_network_target_indexes;
 					vector<StateNetwork*> state_networks;
 					for (int s_index = 0; s_index < total_num_states; s_index++) {
 						if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
@@ -323,7 +325,7 @@ void fold_to_nodes(Scope* parent_scope,
 									if (ss_index < parent_lowest_layer) {
 										state_network->remove_local(state_index_mapping[ss_index]);
 									} else {
-										state_network->remove_input(state_index_mapping[ss_index])
+										state_network->remove_input(state_index_mapping[ss_index]);
 									}
 								}
 							}
@@ -338,7 +340,7 @@ void fold_to_nodes(Scope* parent_scope,
 							if (ss_index < parent_lowest_layer) {
 								score_network->remove_local(state_index_mapping[ss_index]);
 							} else {
-								score_network->remove_input(state_index_mapping[ss_index])
+								score_network->remove_input(state_index_mapping[ss_index]);
 							}
 						}
 					}
@@ -361,7 +363,7 @@ void fold_to_nodes(Scope* parent_scope,
 									 NULL,
 									 new_nodes);
 		solution->scopes.push_back(new_scope);
-		int new_scope_id = solution->scopes.size()-1;
+		int new_scope_id = (int)solution->scopes.size()-1;
 		new_scope->id = new_scope_id;
 
 		new_scope_ids.push_back(new_scope_id);
@@ -373,12 +375,12 @@ void fold_to_nodes(Scope* parent_scope,
 		if (scope_indexes[f_index] == -1) {
 			// fold->is_inner_scope[f_index] == false
 
-			vector<double> state_network_target_is_local;
-			vector<double> state_network_target_indexes;
+			vector<bool> state_network_target_is_local;
+			vector<int> state_network_target_indexes;
 			vector<StateNetwork*> state_networks;
 			for (int s_index = 0; s_index < total_num_states; s_index++) {
 				if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
-					if (s_index < fold->sum_inner_inputs + fold->curr_num_new_inner_states + fold->num_sequence_local_states; s_index++) {
+					if (s_index < fold->sum_inner_inputs + fold->curr_num_new_inner_states + fold->num_sequence_local_states) {
 						state_network_target_is_local.push_back(true);
 						state_network_target_indexes.push_back(s_index
 							- (fold->sum_inner_inputs+fold->curr_num_new_inner_states));

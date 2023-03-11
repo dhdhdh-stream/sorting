@@ -1,5 +1,8 @@
 #include "fold.h"
 
+#include <cmath>
+#include <iostream>
+
 using namespace std;
 
 void Fold::explore_end() {
@@ -126,7 +129,7 @@ void Fold::explore_end() {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-				for (int s_index = 0; s_index < it->second[n_index].size(); s_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
 					delete it->second[n_index][s_index];
 				}
 			}

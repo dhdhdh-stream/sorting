@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 Fold::Fold(vector<int> scope_context,
@@ -70,7 +72,6 @@ Fold::Fold(vector<int> scope_context,
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->test_state_networks.push_back(vector<StateNetwork*>());
 		if (this->is_inner_scope[f_index]) {
-			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 			for (int s_index = 0; s_index < total_num_states; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
 																			  this->num_sequence_local_states,
@@ -108,7 +109,7 @@ Fold::Fold(vector<int> scope_context,
 	this->test_average_misguess = 0.0;
 	this->test_misguess_variance = 0.0;
 
-	this->state = STATE_EXPLORE;
+	this->state = FOLD_STATE_EXPLORE;
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 }
@@ -119,7 +120,7 @@ Fold::~Fold() {
 
 void Fold::score_activate(vector<double>& local_state_vals,
 						  vector<double>& input_vals,
-						  vector<ScopeHistory*> context_histories,
+						  vector<ScopeHistory*>& context_histories,
 						  RunHelper& run_helper,
 						  FoldHistory* history) {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
@@ -156,14 +157,14 @@ void Fold::score_activate(vector<double>& local_state_vals,
 	}
 }
 
-void Fold::update_sequence_activate(vector<double>& local_state_vals,
-									vector<double>& input_vals,
-									vector<vector<double>>& flat_vals,
-									double& predicted_score,
-									double& scale_factor,
-									double& sum_impact,
-									RunHelper& run_helper,
-									FoldHistory* history) {
+void Fold::sequence_activate(vector<double>& local_state_vals,
+							 vector<double>& input_vals,
+							 vector<vector<double>>& flat_vals,
+							 double& predicted_score,
+							 double& scale_factor,
+							 double& sum_impact,
+							 RunHelper& run_helper,
+							 FoldHistory* history) {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_sequence_activate(local_state_vals,
 											 input_vals,
@@ -292,7 +293,7 @@ FoldHistory::FoldHistory(Fold* fold) {
 }
 
 FoldHistory::~FoldHistory() {
-	for (int n_index = 0; n_index < this->outer_state_network_histories.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->outer_state_network_histories.size(); n_index++) {
 		for (int o_index = 0; o_index < (int)this->outer_state_network_histories[n_index].size(); o_index++) {
 			if (this->outer_state_network_histories[n_index][o_index] != NULL) {
 				delete this->outer_state_network_histories[n_index][o_index];
@@ -304,7 +305,7 @@ FoldHistory::~FoldHistory() {
 		delete this->starting_score_network_history;
 	}
 
-	for (int n_index = 0; n_index < this->test_outer_state_network_histories.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->test_outer_state_network_histories.size(); n_index++) {
 		for (int o_index = 0; o_index < (int)this->test_outer_state_network_histories[n_index].size(); o_index++) {
 			if (this->test_outer_state_network_histories[n_index][o_index] != NULL) {
 				delete this->test_outer_state_network_histories[n_index][o_index];

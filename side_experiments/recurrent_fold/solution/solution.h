@@ -1,6 +1,10 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
+#include <vector>
+
+#include "scope.h"
+
 class Solution {
 public:
 	double average_score;
@@ -13,10 +17,8 @@ public:
 	int depth_limit;
 
 	Solution();
+	// Solution(std::ifstream& input_file);
 	~Solution();
-
-	void init();
-	void load(std::ifstream& input_file);
 
 	// TODO: to find sequences, travel through solution
 	// void new_sequence(int& sequence_length,
@@ -25,7 +27,7 @@ public:
 	// 				  std::vector<Action>& actions,
 	// 				  bool can_be_empty);
 
-	void save(std::ofstream& output_file);
+	// void save(std::ofstream& output_file);
 };
 
 #endif /* SOLUTION_H */
