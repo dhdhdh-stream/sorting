@@ -10,6 +10,7 @@ public:
 	int inner_scope_id;
 	std::vector<bool> inner_input_is_local;
 	std::vector<int> inner_input_indexes;
+	std::vector<int> inner_input_target_indexes;
 	// Scale* scope_scale_mod;
 
 	std::vector<bool> post_state_network_target_is_local;
@@ -45,6 +46,7 @@ public:
 			  int inner_scope_id,
 			  std::vector<bool> inner_input_is_local,
 			  std::vector<int> inner_input_indexes,
+			  std::vector<int> inner_input_target_indexes,
 			  std::vector<bool> post_state_network_target_is_local,
 			  std::vector<int> post_state_network_target_indexes,
 			  std::vector<StateNetwork*> post_state_networks,
@@ -59,8 +61,7 @@ public:
 				  double& sum_impact,
 				  std::vector<int>& scope_context,
 				  std::vector<int>& node_context,
-				  std::vector<int>& context_iter,
-				  std::vector<ContextHistory*>& context_histories,
+				  std::vector<ScopeHistory*>& context_histories,
 				  int& early_exit_depth,
 				  int& early_exit_node_id,
 				  FoldHistory*& early_exit_fold_history,

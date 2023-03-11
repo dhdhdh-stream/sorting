@@ -166,8 +166,8 @@ public:
 
 	// for outer score
 	// (outer state doesn't need to be updated)
-	void add_local();
-	void add_input();
+	void add_local(int size);
+	void add_input(int size);
 
 	void save(std::ofstream& output_file);
 

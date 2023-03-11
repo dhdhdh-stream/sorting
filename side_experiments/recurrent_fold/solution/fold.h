@@ -104,10 +104,10 @@ public:
 	double test_misguess_variance;
 
 	int clean_outer_scope_index;
-	std::set<int> outer_scopes_needed;
-	// TODO: add outer_nodes_needed
-	// probably set+pair?
-	std::map<int, bool> outer_scopes_checked;	// true if needed
+	std::set<int> curr_outer_scopes_needed;
+	sdt::set<std::pair<int, int>> curr_outer_contexts_needed;
+	std::set<int> reverse_test_outer_scopes_needed;
+	std::set<std::pair<int, int>> reverse_test_outer_contexts_needed;
 
 	int clean_outer_node_index;
 	int clean outer_state_index;
@@ -144,12 +144,17 @@ public:
 		 double* existing_misguess_variance);
 	~Fold();
 
+	void explore_score_activate_helper(std::vector<double>& new_outer_state_vals,
+									   ScopeHistory* scope_history,
+									   std::vector<int>& curr_scope_context,
+									   std::vector<int>& curr_node_context,
+									   RunHelper& run_helper,
+									   FoldHistory* history);
 	void explore_score_activate(std::vector<double>& local_state_vals,
 								std::vector<double>& input_vals,
 								double& predicted_score,
 								double& scale_factor,
-								std::vector<int>& context_iter,
-								std::vector<ContextHistory*> context_histories;
+								std::vector<ScopeHistory*>& context_histories;
 								RunHelper& run_helper,
 								FoldHistory* history);
 	void explore_sequence_activate(std::vector<double>& local_state_vals,
@@ -175,8 +180,7 @@ public:
 
 	void score_activate(std::vector<double>& local_state_vals,
 						std::vector<double>& input_vals,
-						std::vector<int>& context_iter,
-						std::vector<ContextHistory*> context_histories;
+						std::vector<ScopeHistory*>& context_histories;
 						RunHelper& run_helper,
 						FoldHistory* history);
 	void sequence_activate(std::vector<double>& local_state_vals,
@@ -200,10 +204,16 @@ public:
 
 	void add_to_clean();
 
+	void remove_outer_scope_score_activate_helper(std::vector<double>& new_outer_state_vals,
+												  std::vector<double>& test_new_outer_state_vals,
+												  ScopeHistory* scope_history,
+												  std::vector<int>& curr_scope_context,
+												  std::vector<int>& curr_node_context,
+												  RunHelper& run_helper,
+												  FoldHistory* history);
 	void remove_outer_scope_score_activate(std::vector<double>& local_state_vals,
 										   std::vector<double>& input_vals,
-										   std::vector<int>& context_iter,
-										   std::vector<ContextHistory*> context_histories;
+										   std::vector<ScopeHistory*>& context_histories;
 										   RunHelper& run_helper,
 										   FoldHistory* history);
 	void remove_outer_scope_sequence_activate(std::vector<double>& local_state_vals,
@@ -217,10 +227,16 @@ public:
 
 	void remove_outer_scope_end();
 
+	void remove_outer_network_score_activate_helper(std::vector<double>& new_outer_state_vals,
+													std::vector<double>& test_new_outer_state_vals,
+													ScopeHistory* scope_history,
+													std::vector<int>& curr_scope_context,
+													std::vector<int>& curr_node_context,
+													RunHelper& run_helper,
+													FoldHistory* history);
 	void remove_outer_network_score_activate(std::vector<double>& local_state_vals,
 											 std::vector<double>& input_vals,
-											 std::vector<int>& context_iter,
-											 std::vector<ContextHistory*> context_histories;
+											 std::vector<ScopeHistory*>& context_histories;
 											 RunHelper& run_helper,
 											 FoldHistory* history);
 	void remove_outer_network_sequence_activate(std::vector<double>& local_state_vals,
@@ -234,10 +250,15 @@ public:
 
 	void remove_outer_network_end();
 
+	void clean_score_activate_helper(std::vector<double>& new_outer_state_vals,
+									 ScopeHistory* scope_history,
+									 std::vector<int>& curr_scope_context,
+									 std::vector<int>& curr_node_context,
+									 RunHelper& run_helper,
+									 FoldHistory* history);
 	void clean_score_activate(std::vector<double>& local_state_vals,
 							  std::vector<double>& input_vals,
-							  std::vector<int>& context_iter,
-							  std::vector<ContextHistory*> context_histories;
+							  std::vector<ScopeHistory*> context_histories;
 							  RunHelper& run_helper,
 							  FoldHistory* history);
 	void clean_sequence_activate(std::vector<double>& local_state_vals,

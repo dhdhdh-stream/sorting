@@ -8,7 +8,6 @@ BranchNode::BranchNode(vector<int> branch_scope_context,
 					   StateNetwork* branch_score_network,
 					   int branch_exit_depth,
 					   int branch_next_node_id,
-					   int branch_num_travelled,
 					   StateNetwork* original_score_network,
 					   int original_next_node_id) {
 	this->type = NODE_TYPE_BRANCH;
@@ -19,7 +18,6 @@ BranchNode::BranchNode(vector<int> branch_scope_context,
 	this->branch_score_network = branch_score_network;
 	this->branch_exit_depth = branch_exit_depth;
 	this->branch_next_node_id = branch_next_node_id;
-	this->branch_num_travelled = branch_num_travelled;
 	this->original_score_network = original_score_network;
 	this->original_next_node_id = original_next_node_id;
 }
@@ -42,11 +40,16 @@ void BranchNode::activate(vector<double>& local_state_vals,
 	if (this->branch_scope_context.size() > scope_context.size()) {
 		matches_context = false;
 	} else {
-		for (int c_index = 0; c_index < (int)this->branch_scope_context.size(); c_index++) {
-			if (this->branch_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-					|| this->branch_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-				matches_context = false;
-				break;
+		// special case first scope context
+		if (this->branch_scope_context[0] != scope_context.back()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 1; c_index < (int)this->branch_scope_context.size(); c_index++) {
+				if (this->branch_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+						|| this->branch_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+					matches_context = false;
+					break;
+				}
 			}
 		}
 	}

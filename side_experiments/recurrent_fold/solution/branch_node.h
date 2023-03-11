@@ -25,7 +25,6 @@ public:
 			   StateNetwork* branch_score_network,
 			   int branch_exit_depth,
 			   int branch_next_node_id,
-			   int branch_num_travelled,
 			   StateNetwork* original_score_network,
 			   int original_next_node_id);
 	~BranchNode();

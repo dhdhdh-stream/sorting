@@ -29,7 +29,9 @@ void ActionNode::activate(vector<double>& local_state_vals,
 						  double& scale_factor,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
-	vector<double> obs = *flat_vals.begin();
+	double obs = *flat_vals.begin()[0];
+
+	history->obs_snapshot = obs;
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
@@ -67,6 +69,9 @@ void ActionNode::activate(vector<double>& local_state_vals,
 	history->score_network_history = network_history;
 	history->score_network_update = this->score_network->output->acti_vals[0];
 	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
+
+	history->ending_local_state_snapshot = local_state_vals;
+	history->ending_input_state_snapshot = input_vals;
 }
 
 void ActionNode::backprop(vector<double>& local_state_errors,

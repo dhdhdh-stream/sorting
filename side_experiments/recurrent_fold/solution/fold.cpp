@@ -119,35 +119,30 @@ Fold::~Fold() {
 
 void Fold::score_activate(vector<double>& local_state_vals,
 						  vector<double>& input_vals,
-						  vector<int>& context_iter,
-						  vector<ContextHistory*> context_histories,
+						  vector<ScopeHistory*> context_histories,
 						  RunHelper& run_helper,
 						  FoldHistory* history) {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_score_activate(local_state_vals,
 										  input_vals,
-										  context_iter,
 										  context_histories,
 										  run_helper,
 										  history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
 		remove_outer_network_score_activate(local_state_vals,
 											input_vals,
-											context_iter,
 											context_histories,
 											run_helper,
 											history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		clean_score_activate(local_state_vals,
 							 input_vals,
-							 context_iter,
 							 context_histories,
 							 run_helper,
 							 history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
 		clean_score_activate(local_state_vals,
 							 input_vals,
-							 context_iter,
 							 context_histories,
 							 run_helper,
 							 history);
@@ -155,7 +150,6 @@ void Fold::score_activate(vector<double>& local_state_vals,
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
 		clean_score_activate(local_state_vals,
 							 input_vals,
-							 context_iter,
 							 context_histories,
 							 run_helper,
 							 history);
@@ -306,12 +300,20 @@ FoldHistory::~FoldHistory() {
 		}
 	}
 
+	if (this->starting_score_network_history != NULL) {
+		delete this->starting_score_network_history;
+	}
+
 	for (int n_index = 0; n_index < this->test_outer_state_network_histories.size(); n_index++) {
 		for (int o_index = 0; o_index < (int)this->test_outer_state_network_histories[n_index].size(); o_index++) {
 			if (this->test_outer_state_network_histories[n_index][o_index] != NULL) {
 				delete this->test_outer_state_network_histories[n_index][o_index];
 			}
 		}
+	}
+
+	if (this->test_starting_score_network_history != NULL) {
+		delete this->test_starting_score_network_history;
 	}
 
 	for (int f_index = 0; f_index < (int)this->state_network_histories.size(); f_index++) {

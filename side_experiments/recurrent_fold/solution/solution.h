@@ -4,25 +4,28 @@
 class Solution {
 public:
 	double average_score;
-	Scope* root;
+	Scope* root;	// starts with ACTION_START
 
 	std::vector<Scope*> scopes;
-	// TODO: try MCTS with fading
-	// TODO: the stat that is important is whether added to solution
-
-	// TODO: when exploring, don't try just scopes, but full existing sequences
-	// Scopes are mainly there to preserve decision making when there are branches
-	// they also partition sequences for explore ends
-	// but yeah, for the start, can try existing sequences
-
-	// if trying entire sequences, then don't need to worry about exploring at start of scope
-
-	// when removing, instead of changing indexes, perhaps just swap in blank placeholders
+	// TODO: when cleaning, instead of changing indexes, swap in blank placeholders
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
-	
+	Solution();
+	~Solution();
+
+	void init();
+	void load(std::ifstream& input_file);
+
+	// TODO: to find sequences, travel through solution
+	// void new_sequence(int& sequence_length,
+	// 				  std::vector<bool>& is_inner_scope,
+	// 				  std::vector<int>& existing_scope_ids,
+	// 				  std::vector<Action>& actions,
+	// 				  bool can_be_empty);
+
+	void save(std::ofstream& output_file);
 };
 
 #endif /* SOLUTION_H */

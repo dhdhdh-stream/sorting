@@ -2,36 +2,75 @@
 
 using namespace std;
 
+void Fold::clean_score_activate_helper(vector<double>& new_outer_state_vals,
+									   ScopeHistory* scope_history,
+									   vector<int>& curr_scope_context,
+									   vector<int>& curr_node_context,
+									   RunHelper& run_helper,
+									   FoldHistory* history) {
+	int scope_id = scope_history->scope->id;
+	curr_scope_context.push_back(scope_id);
+	curr_node_context.push_back(-1);
+
+	map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.find(scope_id);
+
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
+			if (it != this->curr_outer_state_networks.end()) {
+				int node_id = scope_history->node_histories[h_index]->scope_index;
+				if (node_id < it->second.size()
+						&& it->second[node_id].size() > 0) {
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
+					for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
+						if (!this->curr_outer_state_networks_not_needed[scope_id][node_id][s_index]) {
+							it->second[node_id][s_index]->new_outer_activate(
+								action_node_history->obs_snapshot,
+								action_node_history->ending_local_state_snapshot,
+								action_node_history->ending_input_state_snapshot,
+								new_outer_state_vals);
+							new_outer_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+						}
+					}
+					// Note: don't save history as don't backprop outer errors into their scopes
+					//   - too complicated as those scopes/errors won't be initialized
+					//   - won't lead to ideal results, but would just need to wait until fold completes
+				}
+			}
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
+
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+			clean_score_activate_helper(new_outer_state_vals,
+										scope_node_history->inner_scope_history,
+										curr_scope_context,
+										curr_node_context,
+										run_helper,
+										history);
+
+			curr_node_context.back() = -1;
+		}
+	}
+
+	curr_scope_context.pop_back();
+	curr_node_context.pop_back();
+}
+
 void Fold::clean_score_activate(vector<double>& local_state_vals,
 								vector<double>& input_vals,
-								vector<int>& context_iter,
-								vector<ContextHistory*> context_histories,
+								vector<ScopeHistory*> context_histories,
 								RunHelper& run_helper,
 								FoldHistory* history) {
 	vector<double> new_outer_state_vals(this->curr_num_new_outer_states, 0.0);
 
-	int starting_iter = context_iter[context_iter.size() - this->scope_context.size()];
-	for (int n_index = starting_iter; n_index < (int)context_histories.size(); n_index++) {
-		map<int, vector<vector<StateNetwork*>>>::iterator curr_it = this->curr_outer_state_networks.find(context_histories[n_index]->scope_id);
-		if (curr_it != this->curr_outer_state_networks.end()) {
-			if (context_histories[n_index]->node_id < curr_it->second.size()) {
-				for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
-					if (!this->curr_outer_state_networks_not_needed[
-							context_histories[n_index]->scope_id][context_histories[n_index]->node_id][s_index]) {
-						curr_it->second[context_histories[n_index]->node_id][s_index]->new_outer_activate(
-							context_histories[n_index]->obs_snapshot,
-							context_histories[n_index]->local_state_vals_snapshot,
-							context_histories[n_index]->input_vals_snapshot,
-							new_outer_state_vals);
-						new_outer_state_vals[s_index] += curr_it->second[context_histories[n_index]->node_id][s_index]->output->acti_vals[0];
-					}
-				}
-			}
-		}
-	}
-	// Note: don't save history as don't backprop outer errors into their scopes
-	//   - too complicated as those scopes/errors won't be initialized
-	//   - won't lead to ideal results, but would just need to wait until fold completes
+	ScopeHistory* scope_history = context_histories[context_histories.size() - this->scope_context.size()];
+	vector<int> curr_scope_context;
+	vector<int> curr_node_context;
+	clean_score_activate_helper(new_outer_state_vals,
+								scope_history,
+								curr_scope_context,
+								curr_node_context,
+								run_helper,
+								history);
 
 	StateNetworkHistory* starting_score_network_history = new StateNetworkHistory(this->curr_starting_score_network);
 	this->curr_starting_score_network->new_outer_activate(
@@ -138,8 +177,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 			// unused
 			vector<int> inner_scope_context;
 			vector<int> inner_node_context;
-			vector<int> inner_context_iter;
-			vector<ContextHistory*> inner_context_histories;
+			vector<ScopeHistory*> inner_context_histories;
 			int inner_early_exit_depth;
 			int inner_early_exit_node_id;
 			FoldHistory* inner_early_exit_fold_history;
@@ -155,7 +193,6 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 								  sum_impact,	// track impact in inner to simplify backprop
 								  inner_scope_context,
 								  inner_node_context,
-								  inner_context_iter,
 								  inner_context_histories,
 								  inner_early_exit_depth,
 								  inner_early_exit_node_id,

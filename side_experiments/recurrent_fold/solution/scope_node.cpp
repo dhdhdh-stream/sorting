@@ -8,6 +8,7 @@ ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
 					 int inner_scope_id,
 					 vector<bool> inner_input_is_local,
 					 vector<int> inner_input_indexes,
+					 vector<int> inner_input_target_indexes,
 					 vector<bool> post_state_network_target_is_local,
 					 vector<int> post_state_network_target_indexes,
 					 vector<StateNetwork*> post_state_networks,
@@ -21,6 +22,7 @@ ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
 	this->inner_scope_id = inner_scope_id;
 	this->inner_input_is_local = inner_input_is_local;
 	this->inner_input_indexes = inner_input_indexes;
+	this->inner_input_target_indexes = inner_input_target_indexes;
 
 	this->post_state_network_target_is_local = post_state_network_target_is_local;
 	this->post_state_network_target_indexes = post_state_network_target_indexes;
@@ -49,8 +51,7 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 						 double& sum_impact,
 						 vector<int>& scope_context,
 						 vector<int>& node_context,
-						 vector<int>& context_iter,
-						 vector<ContextHistory*>& context_histories,
+						 vector<ScopeHistory*>& context_histories,
 						 int& early_exit_depth,
 						 int& early_exit_node_id,
 						 FoldHistory*& early_exit_fold_history,
@@ -85,17 +86,13 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 	}
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
-	vector<double> scope_input_vals;
+	vector<double> scope_input_vals(inner_scope->num_input_states, 0.0);
 	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 		if (this->inner_input_is_local[i_index]) {
-			scope_input_vals.push_back(local_state_vals[this->inner_input_indexes[i_index]]);
+			scope_input_vals[this->inner_input_target_indexes[i_index]] = local_state_vals[this->inner_input_indexes[i_index]];
 		} else {
-			scope_input_vals.push_back(input_vals[this->inner_input_indexes[i_index]]);
+			scope_input_vals[this->inner_input_target_indexes[i_index]] = input_vals[this->inner_input_indexes[i_index]];
 		}
-	}
-	// if inner_scope expanded so there's no matching index, pass 0.0
-	for (int i_index = (int)this->inner_input_is_local.size(); i_index < inner_scope->num_input_states; i_index++) {
-		scope_input_vals.push_back(0.0);
 	}
 	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
 	inner_scope->activate(scope_input_vals,
@@ -105,7 +102,6 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 						  sum_impact,
 						  scope_context,
 						  node_context,
-						  context_iter,
 						  context_histories,
 						  early_exit_depth,
 						  early_exit_node_id,
@@ -119,9 +115,9 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 	// even if early exit, set state_vals
 	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 		if (this->inner_input_is_local[i_index]) {
-			local_state_vals[this->inner_input_indexes[i_index]] += scope_input_vals[i_index];
+			local_state_vals[this->inner_input_indexes[i_index]] += scope_input_vals[this->inner_input_target_indexes[i_index]];
 		} else {
-			input_vals[this->inner_input_indexes[i_index]] += scope_input_vals[i_index];
+			input_vals[this->inner_input_indexes[i_index]] += scope_input_vals[this->inner_input_target_indexes[i_index]];
 		}
 	}
 
@@ -226,15 +222,13 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 	vector<double> scope_input_errors;
 	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		scope_input_errors = vector<double>(inner_scope->num_input_states, 0.0);
 		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 			if (this->inner_input_is_local[i_index]) {
-				scope_input_errors.push_back(local_state_errors[this->inner_input_indexes[i_index]]);
+				scope_input_errors[this->inner_input_target_indexes[i_index]] = local_state_errors[this->inner_input_indexes[i_index]];
 			} else {
-				scope_input_errors.push_back(input_errors[this->inner_input_indexes[i_index]]);
+				scope_input_errors[this->inner_input_target_indexes[i_index]] = input_errors[this->inner_input_indexes[i_index]];
 			}
-		}
-		for (int i_index = (int)this->inner_input_is_local.size(); i_index < inner_scope->num_input_states; i_index++) {
-			scope_input_errors.push_back(0.0);
 		}
 	}
 	inner_scope->backprop(scope_input_errors,
@@ -248,9 +242,9 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
 		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 			if (this->inner_input_is_local[i_index]) {
-				local_state_errors[this->inner_input_indexes[i_index]] = scope_input_errors[i_index];
+				local_state_errors[this->inner_input_indexes[i_index]] = scope_input_errors[this->inner_input_target_indexes[i_index]];
 			} else {
-				input_errors[this->inner_input_indexes[i_index]] = scope_input_errors[i_index];
+				input_errors[this->inner_input_indexes[i_index]] = scope_input_errors[this->inner_input_target_indexes[i_index]];
 			}
 		}
 

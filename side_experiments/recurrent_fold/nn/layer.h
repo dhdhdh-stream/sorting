@@ -55,8 +55,8 @@ public:
 	void state_hidden_split_new_inner(int split_index);
 	void state_hidden_remove_local(int index);
 	void state_hidden_remove_input(int index);
-	void state_hidden_add_local();
-	void state_hidden_add_input();
+	void state_hidden_add_local(int size);
+	void state_hidden_add_input(int size);
 };
 
 #endif /* LAYER_H */

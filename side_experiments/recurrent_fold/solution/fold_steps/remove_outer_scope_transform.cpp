@@ -4,14 +4,6 @@ using namespace std;
 
 void Fold::remove_outer_scope_end() {
 	if (this->sum_error/(this->sequence_length+1) / this->sub_state_iter < 0.01) {
-		map<int, vector<vector<StateNetwork*>>>::iterator previous_it = this->curr_outer_state_networks.begin();
-		for (int i_index = 0; i_index < this->clean_outer_scope_index; i_index++) {
-			previous_it++;
-		}
-		int clean_outer_scope_scope_id = previous_it->first;
-		this->outer_scopes_checked.insert({clean_outer_scope_scope_id, false});
-		this->outer_scopes_needed.clear();
-
 		// don't increment clean_outer_scope_index as entry removed from outer_state_networks
 
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
@@ -39,17 +31,8 @@ void Fold::remove_outer_scope_end() {
 		this->curr_state_networks = this->test_state_networks;
 		this->curr_score_networks = this->test_score_networks;
 	} else {
-		map<int, vector<vector<StateNetwork*>>>::iterator previous_it = this->curr_outer_state_networks.begin();
-		for (int i_index = 0; i_index < this->clean_outer_scope_index; i_index++) {
-			previous_it++;
-		}
-		int clean_outer_scope_scope_id = previous_it->first;
-		this->outer_scopes_checked.insert({clean_outer_scope_scope_id, true});
-		for (set<int>::iterator needed_it = this->outer_scopes_needed.begin();
-				needed_it != this->outer_scopes_needed.end(); needed_it++) {
-			this->outer_scopes_checked.insert({*needed_it, true});
-		}
-		this->outer_scopes_needed.clear();
+		this->curr_outer_scopes_needed = this->reverse_test_outer_scopes_needed;
+		this->curr_outer_contexts_needed = this->reverse_test_outer_contexts_needed;
 
 		this->clean_outer_scope_index++;
 
@@ -176,12 +159,16 @@ void Fold::remove_outer_scope_end() {
 
 			break;
 		} else {
-			map<int, bool>::iterator checked_it = this->outer_scopes_checked.find(scope_it->first);
-			if (checked_it != this->outer_scopes_checked.end()) {
+			map<int, bool>::iterator needed_it = this->curr_outer_scopes_needed.find(scope_it->first);
+			if (needed_it != this->curr_outer_scopes_needed.end()) {
 				this->clean_outer_scope_index++;
 				scope_it++;
 				// continue
 			} else {
+				this->reverse_test_outer_scopes_needed = this->curr_outer_scopes_needed;
+				this->reverse_test_outer_contexts_needed = this->curr_outer_contexts_needed;
+				this->reverse_test_outer_scopes_needed.insert(scope_it->first);
+
 				for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 						it != this->curr_outer_state_networks.end(); it++) {
 					if (it->first != scope_it->first) {

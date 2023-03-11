@@ -33,8 +33,7 @@ public:
 				  double& sum_impact,
 				  std::vector<int>& scope_context,
 				  std::vector<int>& node_context,
-				  std::vector<int>& context_iter,
-				  std::vector<ContextHistory*>& context_histories,
+				  std::vector<ScopeHistory*>& context_histories,
 				  int& early_exit_depth,
 				  int& early_exit_node_id,
 				  FoldHistory*& early_exit_fold_history,
@@ -51,6 +50,9 @@ public:
 				  double& scale_factor,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
+
+	void new_outer_to_local(int new_outer_size);
+	void new_outer_to_input(int new_outer_size);
 
 };
 

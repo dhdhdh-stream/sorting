@@ -769,22 +769,26 @@ void StateNetwork::remove_input(int index) {
 	this->input_state_zeroed.pop_back();
 }
 
-void StateNetwork::add_local() {
-	this->hidden->state_hidden_add_local();
+void StateNetwork::add_local(int size) {
+	this->hidden->state_hidden_add_local(size);
 
-	this->local_state_size++;
-	this->local_state_input->acti_vals.push_back(0.0);
-	this->local_state_input->errors.push_back(0.0);
-	this->local_state_zeroed.push_back(false);
+	this->local_state_size += size;
+	for (int s_index = 0; s_index < size; s_index++) {
+		this->local_state_input->acti_vals.push_back(0.0);
+		this->local_state_input->errors.push_back(0.0);
+		this->local_state_zeroed.push_back(false);
+	}
 }
 
-void StateNetwork::add_input() {
-	this->hidden->state_hidden_add_input();
+void StateNetwork::add_input(int size) {
+	this->hidden->state_hidden_add_input(size);
 
-	this->input_state_size++;
-	this->input_state_input->acti_vals.push_back(0.0);
-	this->input_state_input->errors.push_back(0.0);
-	this->input_state_zeroed.push_back(false);
+	this->input_state_size += size;
+	for (int s_index = 0; s_index < size; s_index++) {
+		this->input_state_input->acti_vals.push_back(0.0);
+		this->input_state_input->errors.push_back(0.0);
+		this->input_state_zeroed.push_back(false);
+	}
 }
 
 void StateNetwork::save(ofstream& output_file) {

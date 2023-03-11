@@ -6,53 +6,86 @@
 
 using namespace std;
 
-void Fold::explore_score_activate(vector<double>& local_state_vals,
-								  vector<double>& input_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  vector<int>& context_iter,
-								  vector<ContextHistory*> context_histories,
-								  RunHelper& run_helper,
-								  FoldHistory* history) {
-	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
+void Fold::explore_score_activate_helper(vector<double>& new_outer_state_vals,
+										 ScopeHistory* scope_history,
+										 vector<int>& curr_scope_context,
+										 vector<int>& curr_node_context,
+										 RunHelper& run_helper,
+										 FoldHistory* history) {
+	int scope_id = scope_history->scope->id;
+	curr_scope_context.push_back(scope_id);
+	curr_node_context.push_back(-1);
 
-	int starting_iter = context_iter[context_iter.size() - this->scope_context.size()];
-	for (int n_index = starting_iter; n_index < (int)context_histories.size(); n_index++) {
-		map<int, vector<vector<Network*>>>::iterator it = this->test_outer_state_networks.find(context_histories[n_index]->scope_id);
-		if (it == this->test_outer_state_networks.end()) {
-			it = this->test_outer_state_networks.insert({context_histories[n_index]->scope_id, vector<vector<Network*>>()}).first;
-		}
+	map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.find(scope_id);
+	if (it == this->test_outer_state_networks.end()) {
+		it = this->test_outer_state_networks.insert({scope_id, vector<vector<Network*>>()}).first;
+	}
 
-		if (context_histories[n_index]->node_id >= it->second.size()) {
-			int size_diff = solution->scopes[context_histories[n_index]->scope_id]->nodes.size() - it->second.size();
-			it->second.insert(it->second.begin(), size_diff, vector<Network*>());
-		}
+	int size_diff = scope_history->scope->nodes.size() - it->second.size();
+	it->second.insert(it->second.begin(), size_diff, vector<Network*>());
 
-		if (it->second[context_histories[n_index]->node_id].size() == 0) {
-			for (int s_index = 0; s_index < this->test_num_new_outer_states; s_index++) {
-				it->second[context_histories[n_index]->node_id].push_back(new StateNetwork(
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
+			int node_id = scope_history->node_histories[h_index]->scope_index;
+			if (it->second[node_id].size() == 0) {
+				it->second[node_id].push_back(new StateNetwork(
 					1,
-					solution->scopes[context_histories[n_index]->scope_id]->num_local_states,
-					solution->scopes[context_histories[n_index]->scope_id]->num_input_states,
+					scope_history->scope->num_local_states,
+					scope_history->scope->num_input_states,
 					0,
 					this->test_num_new_outer_states,
 					20));
 			}
-		}
+			history->outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
+			for (int s_index = 0; s_index < this->test_num_new_outer_states; s_index++) {
+				StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
+				it->second[node_id][s_index]->new_outer_activate(
+					action_node_history->obs_snapshot,
+					action_node_history->ending_local_state_snapshot,
+					action_node_history->ending_input_state_snapshot,
+					new_outer_state_vals,
+					state_network_history);
+				history->outer_state_network_histories.back().push_back(state_network_history);
+				new_outer_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+			}
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
 
-		history->outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
-		for (int s_index = 0; s_index < this->test_num_new_outer_states; s_index++) {
-			StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[context_histories[n_index]->node_id][s_index]);
-			it->second[context_histories[n_index]->node_id][s_index]->new_outer_activate(
-				context_histories[n_index]->obs_snapshot,
-				context_histories[n_index]->local_state_vals_snapshot,
-				context_histories[n_index]->input_vals_snapshot,
-				new_outer_state_vals,
-				state_network_history);
-			history->outer_state_network_histories.back().push_back(state_network_history);
-			new_outer_state_vals[s_index] += it->second[context_histories[n_index]->node_id][s_index]->output->acti_vals[0];
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+			explore_score_activate_helper(new_outer_state_vals,
+										  scope_node_history->inner_scope_history,
+										  curr_scope_context,
+										  curr_node_context,
+										  run_helper,
+										  history);
+
+			curr_node_context.back() = -1;
 		}
 	}
+
+	curr_scope_context.pop_back();
+	curr_node_context.pop_back();
+}
+
+void Fold::explore_score_activate(vector<double>& local_state_vals,
+								  vector<double>& input_vals,
+								  double& predicted_score,
+								  double& scale_factor,
+								  vector<ScopeHistory*>& context_histories,
+								  RunHelper& run_helper,
+								  FoldHistory* history) {
+	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
+
+	ScopeHistory* scope_history = context_histories[context_histories.size() - this->scope_context.size()];
+	vector<int> curr_scope_context;
+	vector<int> curr_node_context;
+	explore_score_activate_helper(new_outer_state_vals,
+								  scope_history,
+								  curr_scope_context,
+								  curr_node_context,
+								  run_helper,
+								  history);
 
 	StateNetworkHistory* starting_score_network_history = new StateNetworkHistory(this->test_starting_score_network);
 	this->test_starting_score_network->new_outer_activate(
@@ -127,8 +160,7 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 			double inner_sum_impact = 0.0;
 			vector<int> inner_scope_context;
 			vector<int> inner_node_context;
-			vector<int> inner_context_iter;
-			vector<ContextHistory*> inner_context_histories;
+			vector<ScopeHistory*> inner_context_histories;
 			int inner_early_exit_depth;
 			int inner_early_exit_node_id;
 			FoldHistory* inner_early_exit_fold_history;
@@ -144,7 +176,6 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 								  inner_sum_impact,
 								  inner_scope_context,
 								  inner_node_context,
-								  inner_context_iter,
 								  inner_context_histories,
 								  inner_early_exit_depth,
 								  inner_early_exit_node_id,

@@ -42,12 +42,12 @@ void FoldScoreNode::activate(vector<double>& local_state_vals,
 							 double& scale_factor,
 							 vector<int>& scope_context,
 							 vector<int>& node_context,
-							 vector<int>& context_iter,
-							 vector<ContextHistory*>& context_histories,
+							 vector<ScopeHistory*>& context_histories,
 							 int& exit_depth,
 							 int& exit_node_id,
 							 FoldHistory*& exit_fold_history,
-							 RunHelper& run_helper) {
+							 RunHelper& run_helper,
+							 FoldScoreNodeHistory* history) {
 	bool fold_avail = true;
 	if (this->fold_num_travelled < 100000) {
 		if (randuni() > (double)this->fold_num_travelled/100000) {
@@ -60,19 +60,24 @@ void FoldScoreNode::activate(vector<double>& local_state_vals,
 	if (this->fold_scope_context.size() > scope_context.size()) {
 		matches_context = false;
 	} else {
-		for (int c_index = 0; c_index < (int)this->fold_scope_context.size(); c_index++) {
-			if (this->fold_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-					|| this->fold_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-				matches_context = false;
-				break;
+		// special case first scope context
+		if (this->fold_scope_context[0] != scope_context.back()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 1; c_index < (int)this->fold_scope_context.size(); c_index++) {
+				if (this->fold_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+						|| this->fold_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+					matches_context = false;
+					break;
+				}
 			}
 		}
 	}
+
 	if (fold_avail && matches_context) {
 		FoldHistory* fold_history = new FoldHistory(this->fold);
 		this->fold->score_activate(local_state_vals,
 								   input_vals,
-								   context_iter,
 								   context_histories,
 								   run_helper,
 								   fold_history);

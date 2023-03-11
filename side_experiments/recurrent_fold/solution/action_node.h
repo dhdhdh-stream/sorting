@@ -60,6 +60,10 @@ public:
 	StateNetworkHistory* score_network_history;
 	double score_network_update;
 
+	double obs_snapshot;
+	std::vector<double> ending_local_state_snapshot;
+	std::vector<double> ending_input_state_snapshot;
+
 	ActionNodeHistory(ActionNode* node,
 					  int scope_index);
 	~ActionNodeHistory();

@@ -174,16 +174,20 @@ void Layer::state_hidden_remove_input(int index) {
 	}
 }
 
-void Layer::state_hidden_add_local() {
+void Layer::state_hidden_add_local(int size) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][1].push_back(0.0);
-		this->weight_updates[n_index][1].push_back(0.0);
+		for (int s_index = 0; s_index < size; s_index++) {
+			this->weights[n_index][1].push_back(0.0);
+			this->weight_updates[n_index][1].push_back(0.0);
+		}
 	}
 }
 
-void Layer::state_hidden_add_input() {
+void Layer::state_hidden_add_input(int size) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][2].push_back(0.0);
-		this->weight_updates[n_index][2].push_back(0.0);
+		for (int s_index = 0; s_index < size; s_index++) {
+			this->weights[n_index][2].push_back(0.0);
+			this->weight_updates[n_index][2].push_back(0.0);
+		}
 	}
 }
