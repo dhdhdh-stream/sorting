@@ -610,6 +610,15 @@ void StateNetwork::add_new_outer() {
 	this->new_outer_state_zeroed.push_back(false);
 }
 
+void StateNetwork::remove_new_outer() {
+	this->hidden->state_hidden_remove_new_outer();
+
+	this->new_outer_state_size = 0;
+	this->new_outer_state_input->acti_vals.clear();
+	this->new_outer_state_input->errors.clear();
+	this->new_outer_state_zeroed.clear();
+}
+
 void StateNetwork::zero_state(int index) {
 	if (index < this->new_inner_state_size) {
 		this->new_inner_state_zeroed[index] = true;

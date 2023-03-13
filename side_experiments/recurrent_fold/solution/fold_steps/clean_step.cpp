@@ -728,6 +728,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 
 		this->state_iter++;
 		this->sub_state_iter++;
+		history->state_iter_snapshot = this->state_iter;
 	}
 }
 
@@ -908,37 +909,41 @@ void Fold::backprop(vector<double>& local_state_errors,
 		//   - ideally, prior score network should already account for fold
 		//   - even if doesn't lead to ideal results, would just need to wait until fold completes
 	} else {
-		for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
-			this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(
+		if (history->state_iter_snapshot <= this->state_iter) {
+			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
+				this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(
+					target_val - predicted_score,
+					0.002,
+					history->score_network_histories[f_index]);
+
+				predicted_score -= scale_factor*history->score_network_updates[f_index];
+
+				if (this->is_inner_scope[f_index]) {
+					Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
+					
+					// unused
+					vector<double> inner_input_errors;
+
+					// TODO: calc scale_factor_error
+					inner_scope->backprop(inner_input_errors,
+										  target_val,
+										  final_misguess,
+										  final_sum_impact,
+										  predicted_score,
+										  scale_factor,
+										  run_helper,
+										  history->inner_scope_histories[f_index]);
+				}
+			}
+
+			this->curr_starting_score_network->backprop_weights_with_no_error_signal(
 				target_val - predicted_score,
 				0.002,
-				history->score_network_histories[f_index]);
+				history->starting_score_network_history);
 
-			predicted_score -= scale_factor*history->score_network_updates[f_index];
+			predicted_score -= scale_factor*history->starting_score_update;
 
-			if (this->is_inner_scope[f_index]) {
-				Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-				
-				// unused
-				vector<double> inner_input_errors;
-
-				// TODO: calc scale_factor_error
-				inner_scope->backprop(inner_input_errors,
-									  target_val,
-									  final_misguess,
-									  final_sum_impact,
-									  predicted_score,
-									  scale_factor,
-									  run_helper,
-									  history->inner_scope_histories[f_index]);
-			}
+			increment();
 		}
-
-		this->curr_starting_score_network->backprop_weights_with_no_error_signal(
-			target_val - predicted_score,
-			0.002,
-			history->starting_score_network_history);
-
-		predicted_score -= scale_factor*history->starting_score_update;
 	}
 }

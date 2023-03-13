@@ -1,5 +1,7 @@
 #include "fold_sequence_node.h"
 
+#include <iostream>
+
 using namespace std;
 
 FoldSequenceNode::FoldSequenceNode(Fold* fold,

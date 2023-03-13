@@ -1,9 +1,12 @@
 #include "fold.h"
 
+#include <iostream>
+
 using namespace std;
 
 void Fold::clear_inner_state_end() {
-	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
+	// if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
+	if (rand()%2 == 0) {
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
 				if (this->curr_state_networks[f_index][s_index] != NULL) {
@@ -18,10 +21,12 @@ void Fold::clear_inner_state_end() {
 
 		this->curr_num_states_cleared = this->test_num_states_cleared;
 
-		this->test_num_states_cleared[this->clean_inner_step_index]++;
-		if (this->test_num_states_cleared[this->clean_inner_step_index] > this->sum_inner_inputs+this->curr_num_new_inner_states) {
+		if (this->test_num_states_cleared[this->clean_inner_step_index] >= this->sum_inner_inputs+this->curr_num_new_inner_states) {
 			this->clean_inner_step_index++;
 			if (this->clean_inner_step_index >= this->sequence_length) {
+				cout << "ending CLEAR_INNER_STATE" << endl;
+				cout << "DONE" << endl;
+
 				this->state = FOLD_STATE_DONE;
 			} else {
 				this->clean_inner_state_index = 0;
@@ -46,12 +51,17 @@ void Fold::clear_inner_state_end() {
 					this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 				}
 
+				cout << "ending CLEAR_INNER_STATE" << endl;
+				cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
+
 				this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 				this->sum_error = 0.0;
 			}
 		} else {
+			this->test_num_states_cleared[this->clean_inner_step_index]++;
+
 			int total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_local_states
@@ -68,6 +78,9 @@ void Fold::clear_inner_state_end() {
 
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
+
+			cout << "ending CLEAR_INNER_STATE" << endl;
+			cout << "starting CLEAR_INNER_STATE " << this->clean_inner_step_index << " " << this->test_num_states_cleared[this->clean_inner_step_index] << endl;
 
 			this->state = FOLD_STATE_CLEAR_INNER_STATE;
 			this->state_iter = 0;
@@ -87,6 +100,9 @@ void Fold::clear_inner_state_end() {
 
 		this->clean_inner_step_index++;
 		if (this->clean_inner_step_index >= this->sequence_length) {
+			cout << "ending CLEAR_INNER_STATE" << endl;
+			cout << "DONE" << endl;
+
 			this->state = FOLD_STATE_DONE;
 		} else {
 			this->clean_inner_state_index = 0;
@@ -110,6 +126,9 @@ void Fold::clear_inner_state_end() {
 
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
+
+			cout << "ending CLEAR_INNER_STATE" << endl;
+			cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
 			this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;

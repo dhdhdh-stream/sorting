@@ -12,7 +12,7 @@ class AbstractNode {
 public:
 	int type;
 
-	~AbstractNode() {};
+	virtual ~AbstractNode() {};
 };
 
 class AbstractNodeHistory {
@@ -21,7 +21,7 @@ public:
 
 	int scope_index;	// index within parent scope
 
-	~AbstractNodeHistory() {};
+	virtual ~AbstractNodeHistory() {};
 };
 
 #endif /* ABSTRACT_NODE_H */

@@ -150,6 +150,8 @@ public:
 	void add_new_inner();
 	void add_new_outer();
 
+	void remove_new_outer();
+
 	void zero_state(int index);
 
 	// when permanently adding to Scope, update as might have been incremented

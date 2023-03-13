@@ -1,9 +1,12 @@
 #include "fold.h"
 
+#include <iostream>
+
 using namespace std;
 
 void Fold::remove_outer_network_end() {
-	if (this->sum_error/this->sub_state_iter < 0.01) {
+	// if (this->sum_error/this->sub_state_iter < 0.01) {
+	if (rand()%2 == 0) {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -63,6 +66,9 @@ void Fold::remove_outer_network_end() {
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
 
+			cout << "ending REMOVE_OUTER_NETWORK" << endl;
+			cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
+
 			this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
@@ -87,6 +93,7 @@ void Fold::remove_outer_network_end() {
 				it != this->curr_outer_state_networks.end(); it++) {
 			this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				this->test_outer_state_networks[it->first].push_back(vector<StateNetwork*>());
 				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
 					if (this->test_outer_state_networks_not_needed[it->first][n_index][s_index]) {
 						this->test_outer_state_networks[it->first][n_index].push_back(NULL);
@@ -101,6 +108,9 @@ void Fold::remove_outer_network_end() {
 		// don't special case starting_score_network
 
 		// don't special case inner
+
+		cout << "ending REMOVE_OUTER_NETWORK" << endl;
+		cout << "starting REMOVE_OUTER_NETWORK " << this->clean_outer_scope_index << " " << this->clean_outer_node_index << " " << this->clean_outer_state_index << endl;
 
 		this->state = FOLD_STATE_REMOVE_OUTER_NETWORK;
 		this->state_iter = 0;

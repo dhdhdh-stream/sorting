@@ -147,6 +147,7 @@ void Fold::remove_outer_network_score_activate(
 
 		this->state_iter++;
 		this->sub_state_iter++;
+		history->state_iter_snapshot = this->state_iter;
 	}
 
 	StateNetworkHistory* starting_score_network_history = new StateNetworkHistory(this->curr_starting_score_network);

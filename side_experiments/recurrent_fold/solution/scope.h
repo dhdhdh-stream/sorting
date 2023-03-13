@@ -59,6 +59,14 @@ public:
 	void new_outer_to_local(int new_outer_size);
 	void new_outer_to_input(int new_outer_size);
 
+	void backprop_explore_fold_helper(std::vector<double>& local_state_errors,
+									  std::vector<double>& input_errors,
+									  double target_val,
+									  double final_misguess,
+									  double& predicted_score,
+									  double& scale_factor,
+									  RunHelper& run_helper,
+									  ScopeHistory* history);
 };
 
 class ScopeHistory {

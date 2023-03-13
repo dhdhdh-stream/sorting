@@ -15,6 +15,14 @@ public:
 	void* explore_location;
 	bool is_recursive;
 
+	RunHelper() {
+		this->curr_depth = 0;
+		this->max_depth = 0;
+		this->exceeded_depth = false;
+
+		this->explore_location = NULL;
+		this->is_recursive = false;
+	};
 };
 
 #endif /* RUN_HELPER_H */

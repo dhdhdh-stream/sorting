@@ -8,9 +8,9 @@
 class Solution {
 public:
 	double average_score;
-	Scope* root;	// starts with ACTION_START
 
 	std::vector<Scope*> scopes;
+	// scopes[0] is root, starts with ACTION_START, don't include in explore
 	// TODO: when cleaning, instead of changing indexes, swap in blank placeholders
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth

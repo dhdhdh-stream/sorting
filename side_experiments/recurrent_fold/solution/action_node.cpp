@@ -1,5 +1,7 @@
 #include "action_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 
 using namespace std;
@@ -14,6 +16,19 @@ ActionNode::ActionNode(vector<bool> state_network_target_is_local,
 	this->state_network_target_indexes = state_network_target_indexes;
 	this->state_networks = state_networks;
 	this->score_network = score_network;
+
+	// simply initialize to 0.0
+	this->average_score = 0.0;
+	this->score_variance = 0.0;
+	this->predicted_score_variance = 0.0;
+	this->average_misguess = 0.0;
+	this->misguess_variance = 0.0;
+	this->average_impact = 0.0;
+	this->average_sum_impact = 0.0;
+
+	this->explore_exit_depth = -1;
+	this->explore_next_node_id = -1;
+	this->explore_fold = NULL;
 }
 
 ActionNode::~ActionNode() {

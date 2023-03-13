@@ -734,6 +734,7 @@ void Fold::remove_outer_scope_sequence_activate(vector<double>& local_state_vals
 
 		this->state_iter++;
 		this->sub_state_iter++;
+		history->state_iter_snapshot = this->state_iter;
 	}
 }
 

@@ -35,13 +35,15 @@ void Fold::explore_score_activate_helper(vector<double>& new_outer_state_vals,
 		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
 			int node_id = scope_history->node_histories[h_index]->scope_index;
 			if (it->second[node_id].size() == 0) {
-				it->second[node_id].push_back(new StateNetwork(
-					1,
-					scope_history->scope->num_local_states,
-					scope_history->scope->num_input_states,
-					0,
-					this->test_num_new_outer_states,
-					20));
+				for (int s_index = 0; s_index < this->test_num_new_outer_states; s_index++) {
+					it->second[node_id].push_back(new StateNetwork(
+						1,
+						scope_history->scope->num_local_states,
+						scope_history->scope->num_input_states,
+						0,
+						this->test_num_new_outer_states,
+						20));
+				}
 			}
 			history->outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
@@ -560,7 +562,8 @@ void Fold::explore_increment() {
 	this->state_iter++;
 
 	if (this->state == FOLD_STATE_EXPLORE) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			explore_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -571,7 +574,8 @@ void Fold::explore_increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_ADD_INNER_STATE) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			add_inner_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -583,7 +587,8 @@ void Fold::explore_increment() {
 		}
 	} else {
 		// this->state == FOLD_STATE_ADD_OUTER_STATE
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			add_outer_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {

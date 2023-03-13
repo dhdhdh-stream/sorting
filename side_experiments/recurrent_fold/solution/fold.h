@@ -47,7 +47,7 @@ class ScopeHistory;
 class Fold {
 public:
 	std::vector<int> scope_context;
-	std::vector<int> node_context;
+	std::vector<int> node_context;	// store explore node index in node_context[0]
 	int exit_depth;		// 0 is local
 
 	int sequence_length;
@@ -303,6 +303,8 @@ public:
 	std::vector<ScopeHistory*> inner_scope_histories;
 	std::vector<double> score_network_updates;
 	std::vector<StateNetworkHistory*> score_network_histories;
+
+	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();

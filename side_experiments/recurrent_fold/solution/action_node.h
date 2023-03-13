@@ -26,7 +26,7 @@ public:
 	double misguess_variance;
 
 	double average_impact;
-	double average_sum_impact;	// TODO: need to switch to sum of remaining impact
+	double average_sum_impact;
 
 	// TODO: add batch surprise and seeding
 

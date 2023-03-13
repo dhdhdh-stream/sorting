@@ -54,7 +54,8 @@ Fold::Fold(vector<int> scope_context,
 		}
 	}
 
-	this->test_num_new_outer_states = 1;
+	this->curr_num_new_outer_states = 1;
+	this->test_num_new_outer_states = this->curr_num_new_outer_states;
 	// test_outer_state_networks starts empty
 	this->test_starting_score_network = new StateNetwork(1,
 														 this->num_score_local_states,
@@ -63,7 +64,8 @@ Fold::Fold(vector<int> scope_context,
 														 this->test_num_new_outer_states,
 														 20);
 
-	this->test_num_new_inner_states = 1;
+	this->curr_num_new_inner_states = 1;
+	this->test_num_new_inner_states = this->curr_num_new_inner_states;
 	int total_num_states = this->sum_inner_inputs
 		+ this->test_num_new_inner_states
 		+ this->num_sequence_local_states
@@ -216,7 +218,8 @@ void Fold::sequence_activate(vector<double>& local_state_vals,
 
 void Fold::increment() {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		if (this->state_iter > 150000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
 			remove_outer_scope_end();
 		} else {
 			// may skip print if incremented multiple times in a run
@@ -230,7 +233,8 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		if (this->state_iter > 150000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
 			remove_outer_network_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -243,7 +247,8 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		if (this->state_iter > 150000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
 			remove_inner_network_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -256,7 +261,8 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		if (this->state_iter > 150000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
 			remove_inner_state_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -270,7 +276,8 @@ void Fold::increment() {
 		}
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		if (this->state_iter > 150000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
 			clear_inner_state_end();
 		} else {
 			if (this->sub_state_iter > 10000) {

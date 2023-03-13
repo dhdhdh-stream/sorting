@@ -36,7 +36,8 @@ void Fold::add_outer_state_end() {
 		/ (misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (score_improvement_t_value > 2.326 || misguess_improvement_t_value > 2.326) {	// >99%
+	// if (score_improvement_t_value > 2.326 || misguess_improvement_t_value > 2.326) {	// >99%
+	if (rand()%2 == 0) {
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -72,7 +73,7 @@ void Fold::add_outer_state_end() {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				this->test_outer_state_networks[it->first].push_back(vector<StateNetwork*>());
 				if (it->second[n_index].size() != 0) {
-					for (int s_index = 0; s_index < (int)it->second.size(); s_index++) {
+					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
 						this->test_outer_state_networks[it->first][n_index].push_back(
 							new StateNetwork(it->second[n_index][s_index]));
 						this->test_outer_state_networks[it->first][n_index][s_index]->add_new_outer();
@@ -125,6 +126,9 @@ void Fold::add_outer_state_end() {
 			this->test_score_networks[f_index]->add_new_outer();
 		}
 
+		cout << "ending ADD_OUTER_STATE" << endl;
+		cout << "starting ADD_OUTER_STATE " << this->test_num_new_outer_states << endl;
+
 		this->state = FOLD_STATE_ADD_OUTER_STATE;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
@@ -149,6 +153,11 @@ void Fold::add_outer_state_end() {
 
 			delete this->test_score_networks[f_index];
 		}
+		this->test_state_networks.clear();
+		this->test_score_networks.clear();
+
+		cout << "ending ADD_OUTER_STATE" << endl;
+		cout << "EXPLORE_DONE" << endl;
 
 		this->state = FOLD_STATE_EXPLORE_DONE;
 	}
