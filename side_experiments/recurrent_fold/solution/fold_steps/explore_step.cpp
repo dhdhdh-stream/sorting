@@ -111,9 +111,13 @@ void Fold::explore_score_activate(vector<double>& local_state_vals,
 		// Note: use predicted_score_variance (as opposed to score_variance for surprise) to measure difference between predicted scores
 		double predicted_score_standard_deviation = sqrt(*this->existing_predicted_score_variance);
 		double t_value = scale_factor*this->test_starting_score_network->output->acti_vals[0] / predicted_score_standard_deviation;
-		if (t_value > 1.0) {	// >75%
+		// if (t_value > 1.0) {	// >75%
+		if (t_value > 31.82) {	// >99%
+			cout << scale_factor*this->test_starting_score_network->output->acti_vals[0] << endl;
 			this->new_noticably_better++;
-		} else if (t_value < -1.0) {	// >75%
+		// } else if (t_value < -1.0) {	// >75%
+		} else if (t_value < -31.82) {	// >99%
+			cout << scale_factor*this->test_starting_score_network->output->acti_vals[0] << endl;
 			this->existing_noticably_better++;
 		}
 	}
@@ -359,12 +363,7 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 							RunHelper& run_helper,
 							FoldHistory* history) {
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
-	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
-	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
-
 	this->test_average_misguess = 0.9999*this->test_average_misguess + 0.0001*final_misguess;
-	double misguess_variance = (this->test_average_misguess - final_misguess)*(this->test_average_misguess - final_misguess);
-	this->test_misguess_variance = 0.9999*this->test_misguess_variance + 0.0001*misguess_variance;
 
 	this->sum_error += abs(target_val-predicted_score);
 
@@ -562,8 +561,7 @@ void Fold::explore_increment() {
 	this->state_iter++;
 
 	if (this->state == FOLD_STATE_EXPLORE) {
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			explore_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -574,8 +572,7 @@ void Fold::explore_increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_ADD_INNER_STATE) {
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			add_inner_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
@@ -587,8 +584,7 @@ void Fold::explore_increment() {
 		}
 	} else {
 		// this->state == FOLD_STATE_ADD_OUTER_STATE
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			add_outer_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {

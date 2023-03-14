@@ -29,13 +29,13 @@ void Fold::explore_end() {
 
 	cout << "this->new_noticably_better: " << this->new_noticably_better << endl;
 	cout << "this->existing_noticably_better: " << this->existing_noticably_better << endl;
+	double predicted_score_standard_deviation = sqrt(*this->existing_predicted_score_variance);
+	cout << "predicted_score_standard_deviation: " << predicted_score_standard_deviation << endl;
 
-	// if (this->new_noticably_better > 0) {
-	if (true) {
-		// if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 0.842)	// 80%<
-		// 		&& this->existing_noticably_better == 0
-		// 		&& this->is_recursive == 0) {
-		if (rand()%2 == 0) {
+	if (this->new_noticably_better > 0) {
+		if ((replace_improvement > 0.0 || abs(replace_improvement_t_value) < 0.842)	// 80%<
+				&& this->existing_noticably_better == 0
+				&& this->is_recursive == 0) {
 			cout << "FOLD_RESULT_REPLACE" << endl;
 			this->explore_result = FOLD_RESULT_REPLACE;
 		} else {
@@ -72,9 +72,9 @@ void Fold::explore_end() {
 		this->curr_score_networks = this->test_score_networks;
 
 		this->curr_average_score = this->test_average_score;
-		this->curr_score_variance = this->test_score_variance;
+		this->test_average_score = 0.0;
 		this->curr_average_misguess = this->test_average_misguess;
-		this->curr_misguess_variance = this->test_misguess_variance;
+		this->test_average_misguess = 0.0;
 
 		// no change to num_new_outer_states
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();

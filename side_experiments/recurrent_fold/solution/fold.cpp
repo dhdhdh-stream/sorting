@@ -107,9 +107,7 @@ Fold::Fold(vector<int> scope_context,
 	this->is_recursive = 0;
 
 	this->test_average_score = 0.0;
-	this->test_score_variance = 0.0;
 	this->test_average_misguess = 0.0;
-	this->test_misguess_variance = 0.0;
 
 	this->state = FOLD_STATE_EXPLORE;
 	this->state_iter = 0;
@@ -218,8 +216,7 @@ void Fold::sequence_activate(vector<double>& local_state_vals,
 
 void Fold::increment() {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
+		if (this->state_iter > 150000) {
 			remove_outer_scope_end();
 		} else {
 			// may skip print if incremented multiple times in a run
@@ -233,8 +230,7 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
+		if (this->state_iter > 150000) {
 			remove_outer_network_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -247,8 +243,7 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
+		if (this->state_iter > 150000) {
 			remove_inner_network_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -261,8 +256,7 @@ void Fold::increment() {
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
+		if (this->state_iter > 150000) {
 			remove_inner_state_end();
 		} else {
 			if (this->sub_state_iter > 10000) {
@@ -276,8 +270,7 @@ void Fold::increment() {
 		}
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
+		if (this->state_iter > 150000) {
 			clear_inner_state_end();
 		} else {
 			if (this->sub_state_iter > 10000) {

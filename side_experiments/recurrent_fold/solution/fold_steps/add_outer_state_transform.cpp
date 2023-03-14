@@ -8,7 +8,7 @@
 using namespace std;
 
 void Fold::add_outer_state_end() {
-	double score_standard_deviation = sqrt(this->curr_score_variance);
+	double score_standard_deviation = sqrt(*this->existing_score_variance);
 	cout << "score_standard_deviation: " << score_standard_deviation << endl;
 
 	cout << "this->curr_average_score: " << this->curr_average_score << endl;
@@ -17,7 +17,7 @@ void Fold::add_outer_state_end() {
 	double score_improvement = this->test_average_score - this->curr_average_score;
 	cout << "score_improvement: " << score_improvement << endl;
 
-	double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
+	double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 
 	cout << "this->curr_average_misguess: " << this->curr_average_misguess << endl;
@@ -36,8 +36,8 @@ void Fold::add_outer_state_end() {
 		/ (misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	// if (score_improvement_t_value > 2.326 || misguess_improvement_t_value > 2.326) {	// >99%
-	if (rand()%2 == 0) {
+	// be reserved with additions by comparing improvements against existing
+	if (score_improvement_t_value > 0.842 || misguess_improvement_t_value > 0.842) {	// >80%
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -64,6 +64,11 @@ void Fold::add_outer_state_end() {
 		// no change to this->curr_num_new_inner_states
 		this->curr_state_networks = this->test_state_networks;
 		this->curr_score_networks = this->test_score_networks;
+
+		this->curr_average_score = this->test_average_score;
+		this->test_average_score = 0.0;
+		this->curr_average_misguess = this->test_average_misguess;
+		this->test_average_misguess = 0.0;
 
 		this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();

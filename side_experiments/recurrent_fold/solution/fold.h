@@ -97,19 +97,16 @@ public:
 
 	int explore_result;
 
+	// use existing variances
 	double curr_average_score;
-	double curr_score_variance;
 	double curr_average_misguess;
-	double curr_misguess_variance;
 
 	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
 	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
 
 	double test_average_score;
-	double test_score_variance;
 	double test_average_misguess;
-	double test_misguess_variance;
 
 	int clean_outer_scope_index;
 	std::set<int> curr_outer_scopes_needed;

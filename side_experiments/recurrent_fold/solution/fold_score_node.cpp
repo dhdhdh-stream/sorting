@@ -54,12 +54,12 @@ void FoldScoreNode::activate(vector<double>& local_state_vals,
 							 RunHelper& run_helper,
 							 FoldScoreNodeHistory* history) {
 	bool fold_avail = true;
-	// if (this->fold_num_travelled < 100000) {
-	// 	if (randuni() > (double)this->fold_num_travelled/100000) {
-	// 		fold_avail = false;
-	// 	}
-	// 	this->fold_num_travelled++;
-	// }
+	if (this->fold_num_travelled < 100000) {
+		if (randuni() > (double)this->fold_num_travelled/100000) {
+			fold_avail = false;
+		}
+		this->fold_num_travelled++;
+	}
 
 	bool matches_context = true;
 	if (this->fold_scope_context.size() > scope_context.size()) {
@@ -103,8 +103,7 @@ void FoldScoreNode::activate(vector<double>& local_state_vals,
 												   existing_network_history);
 			double existing_score = scale_factor*this->existing_score_network->output->acti_vals[0];
 
-			// if (fold_score > existing_score) {
-			if (rand()%2 == 0) {
+			if (fold_score > existing_score) {
 				delete existing_network_history;
 
 				history->is_existing = false;

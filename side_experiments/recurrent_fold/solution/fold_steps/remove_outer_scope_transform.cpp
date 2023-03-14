@@ -5,8 +5,10 @@
 using namespace std;
 
 void Fold::remove_outer_scope_end() {
-	// if (this->sum_error/(this->sequence_length+1) / this->sub_state_iter < 0.01) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/(this->sequence_length+1) / this->sub_state_iter < 0.01) {
+		cout << "REMOVE_OUTER_SCOPE success" << endl;
+		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_state_iter << endl;
+
 		// don't increment clean_outer_scope_index as entry removed from outer_state_networks
 
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
@@ -34,6 +36,9 @@ void Fold::remove_outer_scope_end() {
 		this->curr_state_networks = this->test_state_networks;
 		this->curr_score_networks = this->test_score_networks;
 	} else {
+		cout << "REMOVE_OUTER_SCOPE fail" << endl;
+		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_state_iter << endl;
+
 		this->curr_outer_scopes_needed = this->reverse_test_outer_scopes_needed;
 		this->curr_outer_contexts_needed = this->reverse_test_outer_contexts_needed;
 

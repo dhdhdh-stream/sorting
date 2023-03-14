@@ -5,8 +5,10 @@
 using namespace std;
 
 void Fold::remove_outer_network_end() {
-	// if (this->sum_error/this->sub_state_iter < 0.01) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/this->sub_state_iter < 0.01) {
+		cout << "REMOVE_OUTER_NETWORK success" << endl;
+		cout << "score: " << this->sum_error/this->sub_state_iter << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -20,6 +22,9 @@ void Fold::remove_outer_network_end() {
 
 		this->curr_outer_state_networks_not_needed = this->test_outer_state_networks_not_needed;
 	} else {
+		cout << "REMOVE_OUTER_NETWORK fail" << endl;
+		cout << "score: " << this->sum_error/this->sub_state_iter << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
