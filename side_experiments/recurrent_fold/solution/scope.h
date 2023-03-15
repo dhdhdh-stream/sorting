@@ -29,6 +29,7 @@ public:
 		  StateNetwork* continue_network,
 		  StateNetwork* halt_network,
 		  std::vector<AbstractNode*> nodes);
+	Scope(std::ifstream& input_file);
 	~Scope();
 
 	void activate(std::vector<double>& input_vals,
@@ -55,6 +56,8 @@ public:
 				  double& scale_factor,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
+
+	void save(std::ofstream& output_file);
 
 	void new_outer_to_local(int new_outer_size);
 	void new_outer_to_input(int new_outer_size);

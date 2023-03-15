@@ -10,12 +10,12 @@
 class FoldSequenceNodeHistory;
 class FoldSequenceNode : public AbstractNode {
 public:
-	Fold* fold;
-
 	int next_node_id;
 
-	FoldSequenceNode(Fold* fold,
-					 int next_node_id);
+	FoldSequenceNode(int next_node_id);
+	FoldSequenceNode(std::ifstream& input_file,
+					 int scope_id,
+					 int scope_index);
 	~FoldSequenceNode();
 
 	void activate(FoldHistory* fold_history,
@@ -37,6 +37,9 @@ public:
 				  RunHelper& run_helper,
 				  FoldSequenceNodeHistory* history);
 
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 };
 
 class FoldSequenceNodeHistory : public AbstractNodeHistory {

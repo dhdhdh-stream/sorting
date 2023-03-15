@@ -31,6 +31,71 @@ ActionNode::ActionNode(vector<bool> state_network_target_is_local,
 	this->explore_fold = NULL;
 }
 
+ActionNode::ActionNode(ifstream& input_file,
+					   int scope_id,
+					   int scope_index) {
+	this->type = NODE_TYPE_ACTION;
+
+	string state_networks_size_line;
+	getline(input_file, state_networks_size_line);
+	int state_networks_size = stoi(state_networks_size_line);
+	for (int s_index = 0; s_index < state_networks_size; s_index++) {
+		string target_is_local_line;
+		getline(input_file, target_is_local_line);
+		this->state_network_target_is_local.push_back(stoi(target_is_local_line));
+
+		string target_index_line;
+		getline(input_file, target_index_line);
+		this->state_network_target_indexes.push_back(stoi(target_index_line));
+
+		ifstream state_network_save_file;
+		state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(s_index) + ".txt");
+		this->state_networks.push_back(new StateNetwork(state_network_save_file));
+		state_network_save_file.close();
+	}
+
+	ifstream score_network_save_file;
+	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
+	this->score_network = new StateNetwork(score_network_save_file);
+	score_network_save_file.close();
+
+	string next_node_id_line;
+	getline(input_file, next_node_id_line);
+	this->next_node_id = stoi(next_node_id_line);
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
+
+	string score_variance_line;
+	getline(input_file, score_variance_line);
+	this->score_variance = stof(score_variance_line);
+
+	string predicted_score_variance_line;
+	getline(input_file, predicted_score_variance_line);
+	this->predicted_score_variance = stof(predicted_score_variance_line);
+
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
+
+	string misguess_variance_line;
+	getline(input_file, misguess_variance_line);
+	this->misguess_variance = stof(misguess_variance_line);
+
+	string average_impact_line;
+	getline(input_file, average_impact_line);
+	this->average_impact = stof(average_impact_line);
+
+	string average_sum_impact_line;
+	getline(input_file, average_sum_impact_line);
+	this->average_sum_impact = stof(average_sum_impact_line);
+
+	this->explore_exit_depth = -1;
+	this->explore_next_node_id = -1;
+	this->explore_fold = NULL;
+}
+
 ActionNode::~ActionNode() {
 	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
 		delete this->state_networks[s_index];
@@ -146,6 +211,37 @@ void ActionNode::backprop(vector<double>& local_state_errors,
 
 		predicted_score -= scale_factor*history->score_network_update;
 	}
+}
+
+void ActionNode::save(ofstream& output_file,
+					  int scope_id,
+					  int scope_index) {
+	output_file << this->state_networks.size() << endl;
+	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
+		output_file << this->state_network_target_is_local[s_index] << endl;
+		output_file << this->state_network_target_indexes[s_index] << endl;
+
+		ofstream state_network_save_file;
+		state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(s_index) + ".txt");
+		this->state_networks[s_index]->save(state_network_save_file);
+		state_network_save_file.close();
+	}
+
+	ofstream score_network_save_file;
+	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
+	this->score_network->save(score_network_save_file);
+	score_network_save_file.close();
+
+	output_file << this->next_node_id << endl;
+
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->predicted_score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
+
+	output_file << this->average_impact << endl;
+	output_file << this->average_sum_impact << endl;
 }
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node,

@@ -1,6 +1,8 @@
 #ifndef ABSTRACT_NODE_H
 #define ABSTRACT_NODE_H
 
+#include <fstream>
+
 const int NODE_TYPE_ACTION = 0;
 const int NODE_TYPE_INNER_SCOPE = 1;
 const int NODE_TYPE_BRANCH = 2;
@@ -13,6 +15,9 @@ public:
 	int type;
 
 	virtual ~AbstractNode() {};
+	virtual void save(std::ofstream& output_file,
+					  int scope_id,
+					  int scope_index) = 0;
 };
 
 class AbstractNodeHistory {

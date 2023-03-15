@@ -47,6 +47,106 @@ ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
 	this->explore_fold = NULL;
 }
 
+ScopeNode::ScopeNode(ifstream& input_file,
+					 int scope_id,
+					 int scope_index) {
+	this->type = NODE_TYPE_INNER_SCOPE;
+
+	string pre_state_networks_size_line;
+	getline(input_file, pre_state_networks_size_line);
+	int pre_state_networks_size = stoi(pre_state_networks_size_line);
+	for (int s_index = 0; s_index < pre_state_networks_size; s_index++) {
+		string target_is_local_line;
+		getline(input_file, target_is_local_line);
+		this->pre_state_network_target_is_local.push_back(stoi(target_is_local_line));
+
+		string target_index_line;
+		getline(input_file, target_index_line);
+		this->pre_state_network_target_indexes.push_back(stoi(target_index_line));
+
+		ifstream pre_state_network_save_file;
+		pre_state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_pre_state_" + to_string(s_index) + ".txt");
+		this->pre_state_networks.push_back(new StateNetwork(pre_state_network_save_file));
+		pre_state_network_save_file.close();
+	}
+
+	string inner_scope_id_line;
+	getline(input_file, inner_scope_id_line);
+	this->inner_scope_id = stoi(inner_scope_id_line);
+
+	string inner_input_size_line;
+	getline(input_file, inner_input_size_line);
+	int inner_input_size = stoi(inner_input_size_line);
+	for (int i_index = 0; i_index < inner_input_size; i_index++) {
+		string input_is_local_line;
+		getline(input_file, input_is_local_line);
+		this->inner_input_is_local.push_back(stoi(input_is_local_line));
+
+		string input_index_line;
+		getline(input_file, input_index_line);
+		this->inner_input_indexes.push_back(stoi(input_index_line));
+
+		string input_target_indexes_line;
+		getline(input_file, input_target_indexes_line);
+		this->inner_input_target_indexes.push_back(stoi(input_target_indexes_line));
+	}
+
+	string post_state_networks_size_line;
+	getline(input_file, post_state_networks_size_line);
+	int post_state_networks_size = stoi(post_state_networks_size_line);
+	for (int s_index = 0; s_index < post_state_networks_size; s_index++) {
+		string target_is_local_line;
+		getline(input_file, target_is_local_line);
+		this->post_state_network_target_is_local.push_back(stoi(target_is_local_line));
+
+		string target_index_line;
+		getline(input_file, target_index_line);
+		this->post_state_network_target_indexes.push_back(stoi(target_index_line));
+
+		ifstream post_state_network_save_file;
+		post_state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_post_state_" + to_string(s_index) + ".txt");
+		this->post_state_networks.push_back(new StateNetwork(post_state_network_save_file));
+		post_state_network_save_file.close();
+	}
+
+	ifstream score_network_save_file;
+	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
+	this->score_network = new StateNetwork(score_network_save_file);
+	score_network_save_file.close();
+
+	string next_node_id_line;
+	getline(input_file, next_node_id_line);
+	this->next_node_id = stoi(next_node_id_line);
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stof(average_score_line);
+
+	string predicted_score_variance_line;
+	getline(input_file, predicted_score_variance_line);
+	this->predicted_score_variance = stof(predicted_score_variance_line);
+
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stof(average_misguess_line);
+
+	string misguess_variance_line;
+	getline(input_file, misguess_variance_line);
+	this->misguess_variance = stof(misguess_variance_line);
+
+	string average_impact_line;
+	getline(input_file, average_impact_line);
+	this->average_impact = stof(average_impact_line);
+
+	string average_sum_impact_line;
+	getline(input_file, average_sum_impact_line);
+	this->average_sum_impact = stof(average_sum_impact_line);
+
+	this->explore_exit_depth = -1;
+	this->explore_next_node_id = -1;
+	this->explore_fold = NULL;
+}
+
 ScopeNode::~ScopeNode() {
 	for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
 		delete this->pre_state_networks[s_index];
@@ -280,6 +380,57 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 			}
 		}
 	}
+}
+
+void ScopeNode::save(ofstream& output_file,
+					 int scope_id,
+					 int scope_index) {
+	output_file << this->pre_state_networks.size() << endl;
+	for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
+		output_file << this->pre_state_network_target_is_local[s_index] << endl;
+		output_file << this->pre_state_network_target_indexes[s_index] << endl;
+
+		ofstream pre_state_network_save_file;
+		pre_state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_pre_state_" + to_string(s_index) + ".txt");
+		this->pre_state_networks[s_index]->save(pre_state_network_save_file);
+		pre_state_network_save_file.close();
+	}
+
+	output_file << this->inner_scope_id << endl;
+
+	output_file << this->inner_input_is_local.size() << endl;
+	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
+		output_file << this->inner_input_is_local[i_index] << endl;
+		output_file << this->inner_input_indexes[i_index] << endl;
+		output_file << this->inner_input_target_indexes[i_index] << endl;
+	}
+
+	output_file << this->post_state_networks.size() << endl;
+	for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
+		output_file << this->post_state_network_target_is_local[s_index] << endl;
+		output_file << this->post_state_network_target_indexes[s_index] << endl;
+
+		ofstream post_state_network_save_file;
+		post_state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_post_state_" + to_string(s_index) + ".txt");
+		this->post_state_networks[s_index]->save(post_state_network_save_file);
+		post_state_network_save_file.close();
+	}
+
+	ofstream score_network_save_file;
+	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
+	this->score_network->save(score_network_save_file);
+	score_network_save_file.close();
+
+	output_file << this->next_node_id << endl;
+
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->predicted_score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
+
+	output_file << this->average_impact << endl;
+	output_file << this->average_sum_impact << endl;
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node,

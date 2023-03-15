@@ -185,3 +185,39 @@ void Fold::remove_inner_network_end() {
 		this->sum_error = 0.0;
 	}
 }
+
+void Fold::remove_inner_network_from_load() {
+	this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
+	this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
+	this->test_num_states_cleared = this->curr_num_states_cleared;
+
+	this->test_state_networks_not_needed[this->clean_inner_step_index][this->clean_inner_state_index] = true;
+
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
+
+	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(total_num_states));
+	this->test_score_networks = vector<StateNetwork*>(this->sequence_length);
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			if (!this->test_state_networks_not_needed[f_index][s_index]) {
+				this->test_state_networks[f_index][s_index] = new StateNetwork(this->curr_state_networks[f_index][s_index]);
+			} else {
+				this->test_state_networks[f_index][s_index] = NULL;
+			}
+		}
+
+		this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
+	}
+
+	cout << "ending REMOVE_INNER_NETWORK" << endl;
+	cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
+
+	this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
+	this->state_iter = 0;
+	this->sub_state_iter = 0;
+	this->sum_error = 0.0;
+}

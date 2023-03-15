@@ -109,9 +109,259 @@ Fold::Fold(vector<int> scope_context,
 	this->test_average_score = 0.0;
 	this->test_average_misguess = 0.0;
 
+	// initialize for saving/loading
+	this->clean_outer_scope_index = -1;
+	this->clean_outer_node_index = -1;
+	this->clean_outer_state_index = -1;
+	this->clean_inner_step_index = -1;
+	this->clean_inner_state_index = -1;
+
 	this->state = FOLD_STATE_EXPLORE;
 	this->state_iter = 0;
 	this->sum_error = 0.0;
+}
+
+Fold::Fold(ifstream& input_file,
+		   int scope_id,
+		   int scope_index) {
+	string context_size_line;
+	getline(input_file, context_size_line);
+	int context_size = stoi(context_size_line);
+	for (int c_index = 0; c_index < context_size; c_index++) {
+		string scope_context_line;
+		getline(input_file, scope_context_line);
+		this->scope_context.push_back(stoi(scope_context_line));
+
+		string node_context_line;
+		getline(input_file, node_context_line);
+		this->node_context.push_back(stoi(node_context_line));
+	}
+
+	string exit_depth_line;
+	getline(input_file, exit_depth_line);
+	this->exit_depth = stoi(exit_depth_line);
+
+	string sequence_length_line;
+	getline(input_file, sequence_length_line);
+	this->sequence_length = stoi(sequence_length_line);
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		string is_inner_scope_line;
+		getline(input_file, is_inner_scope_line);
+		this->is_inner_scope.push_back(stoi(is_inner_scope_line));
+
+		string existing_scope_id_line;
+		getline(input_file, existing_scope_id_line);
+		this->existing_scope_ids.push_back(stoi(existing_scope_id_line));
+	}
+
+	string num_score_local_states_line;
+	getline(input_file, num_score_local_states_line);
+	this->num_score_local_states = stoi(num_score_local_states_line);
+
+	string num_score_input_states_line;
+	getline(input_file, num_score_input_states_line);
+	this->num_score_input_states = stoi(num_score_input_states_line);
+
+	string num_sequence_local_states_line;
+	getline(input_file, num_sequence_local_states_line);
+	this->num_sequence_local_states = stoi(num_sequence_local_states_line);
+
+	string num_sequence_input_states_line;
+	getline(input_file, num_sequence_input_states_line);
+	this->num_sequence_input_states = stoi(num_sequence_input_states_line);
+
+	this->sum_inner_inputs = 0;
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->is_inner_scope[f_index]) {
+			string num_inner_input_line;
+			getline(input_file, num_inner_input_line);
+			this->num_inner_inputs.push_back(stoi(num_inner_input_line));
+
+			this->inner_input_start_indexes.push_back(this->sum_inner_inputs);
+			this->sum_inner_inputs += this->num_inner_inputs.back();
+		} else {
+			this->inner_input_start_indexes.push_back(-1);
+			this->num_inner_inputs.push_back(-1);
+		}
+	}
+
+	string state_line;
+	getline(input_file, state_line);
+	this->state = stoi(state_line);
+
+	string num_new_outer_states_line;
+	getline(input_file, num_new_outer_states_line);
+	this->curr_num_new_outer_states = stoi(num_new_outer_states_line);
+
+	string outer_state_networks_not_needed_size_line;
+	getline(input_file, outer_state_networks_not_needed_size_line);
+	int outer_state_networks_not_needed_size = stoi(outer_state_networks_not_needed_size_line);
+	for (int s_index = 0; s_index < outer_state_networks_not_needed_size; s_index++) {
+		string outer_scope_id_line;
+		getline(input_file, outer_scope_id_line);
+		int outer_scope_id = stoi(outer_scope_id_line);
+
+		this->curr_outer_state_networks_not_needed.insert({outer_scope_id, vector<vector<bool>>()});
+
+		string num_nodes_line;
+		getline(input_file, num_nodes_line);
+		int num_nodes = stoi(num_nodes_line);
+		for (int n_index = 0; n_index < num_nodes; n_index++) {
+			this->curr_outer_state_networks_not_needed[outer_scope_id].push_back(vector<bool>());
+
+			string num_states_line;
+			getline(input_file, num_states_line);
+			int num_states = stoi(num_states_line);
+			for (int s_index = 0; s_index < num_states; s_index++) {
+				string is_not_needed_line;
+				getline(input_file, is_not_needed_line);
+				this->curr_outer_state_networks_not_needed[outer_scope_id].back().push_back(stoi(is_not_needed_line));
+			}
+		}
+	}
+
+	string outer_state_networks_size_line;
+	getline(input_file, outer_state_networks_size_line);
+	int outer_state_networks_size = stoi(outer_state_networks_size_line);
+	for (int s_index = 0; s_index < outer_state_networks_size; s_index++) {
+		string outer_scope_id_line;
+		getline(input_file, outer_scope_id_line);
+		int outer_scope_id = stoi(outer_scope_id_line);
+
+		this->curr_outer_state_networks.insert({outer_scope_id, vector<vector<StateNetwork*>>()});
+
+		string num_nodes_line;
+		getline(input_file, num_nodes_line);
+		int num_nodes = stoi(num_nodes_line);
+		for (int n_index = 0; n_index < num_nodes; n_index++) {
+			this->curr_outer_state_networks[outer_scope_id].push_back(vector<StateNetwork*>());
+
+			string num_states_line;
+			getline(input_file, num_states_line);
+			int num_states = stoi(num_states_line);
+			for (int s_index = 0; s_index < num_states; s_index++) {
+				if (this->curr_outer_state_networks_not_needed.size() > 0	// may not be initialized
+						&& this->curr_outer_state_networks_not_needed[outer_scope_id][n_index][s_index]) {
+					this->curr_outer_state_networks[outer_scope_id].back().push_back(NULL);
+				} else {
+					ifstream outer_state_network_save_file;
+					outer_state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_outer_state_" + to_string(outer_scope_id) + "_" + to_string(n_index) + "_" + to_string(s_index) + ".txt");
+					this->curr_outer_state_networks[outer_scope_id].back().push_back(new StateNetwork(outer_state_network_save_file));
+					outer_state_network_save_file.close();
+				}
+			}
+		}
+	}
+
+	ifstream curr_starting_score_network_save_file;
+	curr_starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
+	this->curr_starting_score_network = new StateNetwork(curr_starting_score_network_save_file);
+	curr_starting_score_network_save_file.close();
+
+	string clean_outer_scope_index_line;
+	getline(input_file, clean_outer_scope_index_line);
+	this->clean_outer_scope_index = stoi(clean_outer_scope_index_line);
+
+	string outer_scopes_needed_size_line;
+	getline(input_file, outer_scopes_needed_size_line);
+	int outer_scopes_needed_size = stoi(outer_scopes_needed_size_line);
+	for (int s_index = 0; s_index < outer_scopes_needed_size; s_index++) {
+		string outer_scope_id_line;
+		getline(input_file, outer_scope_id_line);
+		this->curr_outer_scopes_needed.insert(stoi(outer_scope_id_line));
+	}
+
+	string outer_contexts_needed_size_line;
+	getline(input_file, outer_contexts_needed_size_line);
+	int outer_contexts_needed_size = stoi(outer_contexts_needed_size_line);
+	for (int c_index = 0; c_index < outer_contexts_needed_size; c_index++) {
+		string outer_scope_id_line;
+		getline(input_file, outer_scope_id_line);
+		int outer_scope_id = stoi(outer_scope_id_line);
+
+		string outer_node_id_line;
+		getline(input_file, outer_node_id_line);
+		int outer_node_id = stoi(outer_node_id_line);
+
+		this->curr_outer_contexts_needed.insert({outer_scope_id, outer_node_id});
+	}
+
+	string clean_outer_node_index_line;
+	getline(input_file, clean_outer_node_index_line);
+	this->clean_outer_node_index = stoi(clean_outer_node_index_line);
+
+	string clean_outer_state_index_line;
+	getline(input_file, clean_outer_state_index_line);
+	this->clean_outer_state_index = stoi(clean_outer_state_index_line);
+
+	string num_new_inner_states_line;
+	getline(input_file, num_new_inner_states_line);
+	this->curr_num_new_inner_states = stoi(num_new_inner_states_line);
+
+	string clean_inner_step_index_line;
+	getline(input_file, clean_inner_step_index_line);
+	this->clean_inner_step_index = stoi(clean_inner_step_index_line);
+
+	string clean_inner_state_index_line;
+	getline(input_file, clean_inner_state_index_line);
+	this->clean_inner_state_index = stoi(clean_inner_state_index_line);
+
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
+
+	this->curr_state_networks_not_needed = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			string is_not_needed_line;
+			getline(input_file, is_not_needed_line);
+			this->curr_state_networks_not_needed[f_index][s_index] = stoi(is_not_needed_line);
+		}
+	}
+
+	this->curr_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(total_num_states, NULL));
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			if (!this->curr_state_networks_not_needed[f_index][s_index]) {
+				ifstream state_network_save_file;
+				state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(f_index) + "_" + to_string(s_index) + ".txt");
+				this->curr_state_networks[f_index][s_index] = new StateNetwork(state_network_save_file);
+				state_network_save_file.close();
+			}
+		}
+	}
+
+	this->curr_state_not_needed_locally = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			string is_not_needed_line;
+			getline(input_file, is_not_needed_line);
+			this->curr_state_not_needed_locally[f_index][s_index] = stoi(is_not_needed_line);
+		}
+	}
+
+	this->curr_num_states_cleared = vector<int>(this->sequence_length);
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		string num_states_cleared_line;
+		getline(input_file, num_states_cleared_line);
+		this->curr_num_states_cleared[f_index] = stoi(num_states_cleared_line);
+	}
+
+	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
+		remove_outer_scope_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
+		remove_outer_network_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
+		remove_inner_network_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
+		remove_inner_state_from_load();
+	} else {
+		// this->state == FOLD_STATE_CLEAR_INNER_STATE
+		clear_inner_state_from_load();
+	}
 }
 
 Fold::~Fold() {
@@ -282,6 +532,135 @@ void Fold::increment() {
 				this->sum_error = 0.0;
 			}
 		}
+	}
+}
+
+void Fold::save(ofstream& output_file,
+				int scope_id,
+				int scope_index) {
+	output_file << this->scope_context.size() << endl;
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		output_file << this->scope_context[c_index] << endl;
+		output_file << this->node_context[c_index] << endl;
+	}
+	output_file << this->exit_depth << endl;
+
+	output_file << this->sequence_length << endl;
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		output_file << this->is_inner_scope[f_index] << endl;
+		output_file << this->existing_scope_ids[f_index] << endl;
+	}
+
+	output_file << this->num_score_local_states << endl;
+	output_file << this->num_score_input_states << endl;
+	output_file << this->num_sequence_local_states << endl;
+	output_file << this->num_sequence_input_states << endl;
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		if (this->is_inner_scope[f_index]) {
+			output_file << this->num_inner_inputs[f_index] << endl;
+		}
+	}
+
+	output_file << this->state << endl;
+
+	output_file << this->curr_num_new_outer_states << endl;
+
+	output_file << this->curr_outer_state_networks_not_needed.size() << endl;
+	for (map<int, vector<vector<bool>>>::iterator it = this->curr_outer_state_networks_not_needed.begin();
+			it != this->curr_outer_state_networks_not_needed.end(); it++) {
+		output_file << it->first << endl;
+
+		output_file << it->second.size() << endl;
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			output_file << it->second[n_index].size() << endl;
+			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+				cout << it->second[n_index][s_index] << endl;
+			}
+		}
+	}
+
+	output_file << this->curr_outer_state_networks.size() << endl;
+	for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
+			it != this->curr_outer_state_networks.end(); it++) {
+		output_file << it->first << endl;
+
+		output_file << it->second.size() << endl;
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			output_file << it->second[n_index].size() << endl;
+			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+				if (this->curr_outer_state_networks_not_needed.size() > 0	// may not be initialized
+						&& this->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+					// do nothing
+				} else {
+					ofstream outer_state_network_save_file;
+					outer_state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_outer_state_" + to_string(it->first) + "_" + to_string(n_index) + "_" + to_string(s_index) + ".txt");
+					it->second[n_index][s_index]->save(outer_state_network_save_file);
+					outer_state_network_save_file.close();
+				}
+			}
+		}
+	}
+
+	ofstream curr_starting_score_network_save_file;
+	curr_starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
+	this->curr_starting_score_network->save(curr_starting_score_network_save_file);
+	curr_starting_score_network_save_file.close();
+
+	output_file << this->clean_outer_scope_index << endl;
+
+	output_file << this->curr_outer_scopes_needed.size() << endl;
+	for (set<int>::iterator it = this->curr_outer_scopes_needed.begin();
+			it != this->curr_outer_scopes_needed.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->curr_outer_contexts_needed.size() << endl;
+	for (set<pair<int, int>>::iterator it = this->curr_outer_contexts_needed.begin();
+			it != this->curr_outer_contexts_needed.end(); it++) {
+		output_file << (*it).first << endl;
+		output_file << (*it).second << endl;
+	}
+
+	output_file << this->clean_outer_node_index << endl;
+	output_file << this->clean_outer_state_index << endl;
+
+	output_file << this->curr_num_new_inner_states << endl;
+
+	output_file << this->clean_inner_step_index << endl;
+	output_file << this->clean_inner_state_index << endl;
+
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			output_file << this->curr_state_networks_not_needed[f_index][s_index] << endl;
+		}
+	}
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			if (!this->curr_state_networks_not_needed[f_index][s_index]) {
+				ofstream state_network_save_file;
+				state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(f_index) + "_" + to_string(s_index) + ".txt");
+				this->curr_state_networks[f_index][s_index]->save(state_network_save_file);
+				state_network_save_file.close();
+			}
+		}
+	}
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < total_num_states; s_index++) {
+			output_file << this->curr_state_not_needed_locally[f_index][s_index] << endl;
+		}
+	}
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		output_file << this->curr_num_states_cleared[f_index] << endl;
 	}
 }
 

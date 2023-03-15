@@ -255,3 +255,55 @@ void Fold::remove_outer_scope_end() {
 		}
 	}
 }
+
+void Fold::remove_outer_scope_from_load() {
+	map<int, vector<vector<StateNetwork*>>>::iterator scope_it = this->curr_outer_state_networks.begin();
+	for (int i_index = 0; i_index < this->clean_outer_scope_index; i_index++) {
+		scope_it++;
+	}
+
+	this->reverse_test_outer_scopes_needed = this->curr_outer_scopes_needed;
+	this->reverse_test_outer_contexts_needed = this->curr_outer_contexts_needed;
+	this->reverse_test_outer_scopes_needed.insert(scope_it->first);
+
+	for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
+			it != this->curr_outer_state_networks.end(); it++) {
+		if (it->first != scope_it->first) {
+			this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				this->test_outer_state_networks[it->first].push_back(vector<StateNetwork*>());
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					this->test_outer_state_networks[it->first][n_index].push_back(
+						new StateNetwork(it->second[n_index][s_index]));
+				}
+			}
+		}
+	}
+
+	this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
+
+	int curr_total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
+
+	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(curr_total_num_states));
+	this->test_score_networks = vector<StateNetwork*>(this->sequence_length);
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+			this->test_state_networks[f_index][s_index] = new StateNetwork(
+				this->curr_state_networks[f_index][s_index]);
+		}
+
+		this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
+	}
+
+	cout << "ending REMOVE_OUTER_SCOPE" << endl;
+	cout << "starting REMOVE_OUTER_SCOPE " << this->clean_outer_scope_index << endl;
+
+	this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
+	this->state_iter = 0;
+	this->sub_state_iter = 0;
+	this->sum_error = 0.0;
+}

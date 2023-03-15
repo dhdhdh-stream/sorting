@@ -131,8 +131,6 @@ public:
 	std::vector<int> curr_num_states_cleared;
 	std::vector<int> test_num_states_cleared;
 
-	std::vector<double> step_impacts;
-
 	// TODO: add seeding
 
 	Fold(std::vector<int> scope_context,
@@ -147,6 +145,9 @@ public:
 		 double* existing_predicted_score_variance,
 		 double* existing_average_misguess,
 		 double* existing_misguess_variance);
+	Fold(std::ifstream& input_file,
+		 int scope_id,
+		 int scope_index);
 	~Fold();
 
 	void explore_score_activate_helper(std::vector<double>& new_outer_state_vals,
@@ -278,6 +279,16 @@ public:
 	void remove_inner_network_end();
 	void remove_inner_state_end();
 	void clear_inner_state_end();
+
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
+
+	void remove_outer_scope_from_load();
+	void remove_outer_network_from_load();
+	void remove_inner_network_from_load();
+	void remove_inner_state_from_load();
+	void clear_inner_state_from_load();
 };
 
 class FoldHistory {

@@ -41,6 +41,9 @@ public:
 			   std::vector<int> state_network_target_indexes,
 			   std::vector<StateNetwork*> state_networks,
 			   StateNetwork* score_network);
+	ActionNode(std::ifstream& input_file,
+			   int scope_id,
+			   int scope_index);
 	~ActionNode();
 
 	void activate(std::vector<double>& local_state_vals,
@@ -60,6 +63,9 @@ public:
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {

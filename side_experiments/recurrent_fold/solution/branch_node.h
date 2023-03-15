@@ -34,6 +34,9 @@ public:
 			   int branch_next_node_id,
 			   StateNetwork* original_score_network,
 			   int original_next_node_id);
+	BranchNode(std::ifstream& input_file,
+			   int scope_id,
+			   int scope_index);
 	~BranchNode();
 
 	void activate(std::vector<double>& local_state_vals,
@@ -53,6 +56,9 @@ public:
 				  RunHelper& run_helper,
 				  BranchNodeHistory* history);
 
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {

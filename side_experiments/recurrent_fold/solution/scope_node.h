@@ -60,6 +60,9 @@ public:
 			  std::vector<int> post_state_network_target_indexes,
 			  std::vector<StateNetwork*> post_state_networks,
 			  StateNetwork* score_network);
+	ScopeNode(std::ifstream& input_file,
+			  int scope_id,
+			  int scope_index);
 	~ScopeNode();
 
 	void activate(std::vector<double>& local_state_vals,
@@ -89,6 +92,9 @@ public:
 				  RunHelper& run_helper,
 				  ScopeNodeHistory* history);
 
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 };
 
 class ScopeNodeHistory : public AbstractNodeHistory {

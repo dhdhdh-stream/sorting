@@ -32,6 +32,9 @@ public:
 				  std::vector<int> fold_node_context,
 				  int fold_exit_depth,
 				  int fold_next_node_id);
+	FoldScoreNode(std::ifstream& input_file,
+				  int scope_id,
+				  int scope_index);
 	~FoldScoreNode();
 
 	void activate(std::vector<double>& local_state_vals,
@@ -54,6 +57,9 @@ public:
 				  RunHelper& run_helper,
 				  FoldScoreNodeHistory* history);
 
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 };
 
 class FoldScoreNodeHistory : public AbstractNodeHistory {

@@ -24,6 +24,51 @@ BranchNode::BranchNode(vector<int> branch_scope_context,
 	this->original_next_node_id = original_next_node_id;
 }
 
+BranchNode::BranchNode(ifstream& input_file,
+					   int scope_id,
+					   int scope_index) {
+	this->type = NODE_TYPE_BRANCH;
+
+	string context_size_line;
+	getline(input_file, context_size_line);
+	int context_size = stoi(context_size_line);
+	for (int c_index = 0; c_index < context_size; c_index++) {
+		string scope_context_line;
+		getline(input_file, scope_context_line);
+		this->branch_scope_context.push_back(stoi(scope_context_line));
+
+		string node_context_line;
+		getline(input_file, node_context_line);
+		this->branch_node_context.push_back(stoi(node_context_line));
+	}
+
+	string is_pass_through_line;
+	getline(input_file, is_pass_through_line);
+	this->branch_is_pass_through = stoi(is_pass_through_line);
+
+	ifstream branch_score_network_save_file;
+	branch_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_branch_score.txt");
+	this->branch_score_network = new StateNetwork(branch_score_network_save_file);
+	branch_score_network_save_file.close();
+
+	string branch_exit_depth_line;
+	getline(input_file, branch_exit_depth_line);
+	this->branch_exit_depth = stoi(branch_exit_depth_line);
+
+	string branch_next_node_id_line;
+	getline(input_file, branch_next_node_id_line);
+	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	ifstream original_score_network_save_file;
+	original_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_original_score.txt");
+	this->original_score_network = new StateNetwork(original_score_network_save_file);
+	original_score_network_save_file.close();
+
+	string original_next_node_id_line;
+	getline(input_file, original_next_node_id_line);
+	this->original_next_node_id = stoi(original_next_node_id_line);
+}
+
 BranchNode::~BranchNode() {
 	delete this->branch_score_network;
 	delete this->original_score_network;
@@ -157,6 +202,32 @@ void BranchNode::backprop(vector<double>& local_state_errors,
 	}
 
 	predicted_score -= scale_factor*history->score_network_update;
+}
+
+void BranchNode::save(ofstream& output_file,
+					  int scope_id,
+					  int scope_index) {
+	output_file << this->branch_scope_context.size() << endl;
+	for (int c_index = 0; c_index < (int)this->branch_scope_context.size(); c_index++) {
+		output_file << this->branch_scope_context[c_index] << endl;
+		output_file << this->branch_node_context[c_index] << endl;
+	}
+	output_file << this->branch_is_pass_through << endl;
+
+	ofstream branch_score_network_save_file;
+	branch_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_branch_score.txt");
+	this->branch_score_network->save(branch_score_network_save_file);
+	branch_score_network_save_file.close();
+
+	output_file << this->branch_exit_depth << endl;
+	output_file << this->branch_next_node_id << endl;
+
+	ofstream original_score_network_save_file;
+	original_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_original_score.txt");
+	this->original_score_network->save(original_score_network_save_file);
+	original_score_network_save_file.close();
+
+	output_file << this->original_next_node_id << endl;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node,

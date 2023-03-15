@@ -31,6 +31,57 @@ FoldScoreNode::FoldScoreNode(StateNetwork* existing_score_network,
 	this->fold_next_node_id = fold_next_node_id;
 }
 
+FoldScoreNode::FoldScoreNode(ifstream& input_file,
+							 int scope_id,
+							 int scope_index) {
+	this->type = NODE_TYPE_FOLD_SCORE;
+
+	ifstream existing_score_network_save_file;
+	existing_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_existing_score.txt");
+	this->existing_score_network = new StateNetwork(existing_score_network_save_file);
+	existing_score_network_save_file.close();
+
+	string existing_next_node_id_line;
+	getline(input_file, existing_next_node_id_line);
+	this->existing_next_node_id = stoi(existing_next_node_id_line);
+
+	ifstream fold_save_file;
+	fold_save_file.open("saves/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + ".txt");
+	this->fold = new Fold(fold_save_file,
+						  scope_id,
+						  scope_index);
+	fold_save_file.close();
+
+	string is_pass_through_line;
+	getline(input_file, is_pass_through_line);
+	this->fold_is_pass_through = stoi(is_pass_through_line);
+
+	string context_size_line;
+	getline(input_file, context_size_line);
+	int context_size = stoi(context_size_line);
+	for (int c_index = 0; c_index < context_size; c_index++) {
+		string scope_context_line;
+		getline(input_file, scope_context_line);
+		this->fold_scope_context.push_back(stoi(scope_context_line));
+
+		string node_context_line;
+		getline(input_file, node_context_line);
+		this->fold_node_context.push_back(stoi(node_context_line));
+	}
+
+	string num_travelled_line;
+	getline(input_file, num_travelled_line);
+	this->fold_num_travelled = stoi(num_travelled_line);
+
+	string fold_exit_depth_line;
+	getline(input_file, fold_exit_depth_line);
+	this->fold_exit_depth = stoi(fold_exit_depth_line);
+
+	string fold_next_node_id_line;
+	getline(input_file, fold_next_node_id_line);
+	this->fold_next_node_id = stoi(fold_next_node_id_line);
+}
+
 FoldScoreNode::~FoldScoreNode() {
 	if (this->existing_score_network != NULL) {
 		delete this->existing_score_network;
@@ -173,6 +224,35 @@ void FoldScoreNode::backprop(vector<double>& local_state_errors,
 			predicted_score -= scale_factor*history->existing_score_network_update;
 		}
 	}
+}
+
+void FoldScoreNode::save(ofstream& output_file,
+						 int scope_id,
+						 int scope_index) {
+	ofstream existing_score_network_save_file;
+	existing_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_existing_score.txt");
+	this->existing_score_network->save(existing_score_network_save_file);
+	existing_score_network_save_file.close();
+
+	output_file << this->existing_next_node_id << endl;
+
+	ofstream fold_save_file;
+	fold_save_file.open("saves/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + ".txt");
+	this->fold->save(fold_save_file,
+					 scope_id,
+					 scope_index);
+	fold_save_file.close();
+
+	output_file << this->fold_is_pass_through << endl;
+	output_file << this->fold_scope_context.size() << endl;
+	for (int c_index = 0; c_index < (int)this->fold_scope_context.size(); c_index++) {
+		output_file << this->fold_scope_context[c_index] << endl;
+		output_file << this->fold_node_context[c_index] << endl;
+	}
+	output_file << this->fold_num_travelled << endl;
+
+	output_file << this->fold_exit_depth << endl;
+	output_file << this->fold_next_node_id << endl;
 }
 
 FoldScoreNodeHistory::FoldScoreNodeHistory(FoldScoreNode* node,

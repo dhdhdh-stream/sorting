@@ -17,7 +17,7 @@ public:
 	int depth_limit;
 
 	Solution();
-	// Solution(std::ifstream& input_file);
+	Solution(std::ifstream& input_file);
 	~Solution();
 
 	// TODO: to find sequences, travel through solution
@@ -27,7 +27,7 @@ public:
 	// 				  std::vector<Action>& actions,
 	// 				  bool can_be_empty);
 
-	// void save(std::ofstream& output_file);
+	void save(std::ofstream& output_file);
 };
 
 #endif /* SOLUTION_H */

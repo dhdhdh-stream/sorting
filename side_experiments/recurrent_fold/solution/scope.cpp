@@ -46,6 +46,67 @@ Scope::Scope(int num_local_states,
 	}
 }
 
+Scope::Scope(ifstream& input_file) {
+	string id_line;
+	getline(input_file, id_line);
+	this->id = stoi(id_line);
+
+	string num_local_states_line;
+	getline(input_file, num_local_states_line);
+	this->num_local_states = stoi(num_local_states_line);
+
+	string num_input_states_line;
+	getline(input_file, num_input_states_line);
+	this->num_input_states = stoi(num_input_states_line);
+
+	// TODO: loops
+
+	string num_nodes_line;
+	getline(input_file, num_nodes_line);
+	int num_nodes = stoi(num_nodes_line);
+	for (int n_index = 0; n_index < num_nodes; n_index++) {
+		string node_type_line;
+		getline(input_file, node_type_line);
+		int node_type = stoi(node_type_line);
+
+		ifstream node_save_file;
+		node_save_file.open("saves/node_" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		if (node_type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = new ActionNode(node_save_file,
+													 this->id,
+													 n_index);
+			this->nodes.push_back(action_node);
+		} else if (node_type == NODE_TYPE_INNER_SCOPE) {
+			ScopeNode* scope_node = new ScopeNode(node_save_file,
+												  this->id,
+												  n_index);
+			this->nodes.push_back(scope_node);
+		} else if (node_type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = new BranchNode(node_save_file,
+													 this->id,
+													 n_index);
+			this->nodes.push_back(branch_node);
+		} else if (node_type == NODE_TYPE_FOLD_SCORE) {
+			FoldScoreNode* fold_score_node = new FoldScoreNode(node_save_file,
+															   this->id,
+															   n_index);
+			this->nodes.push_back(fold_score_node);
+		} else if (node_type == NODE_TYPE_FOLD_SEQUENCE) {
+			FoldSequenceNode* fold_sequence_node = new FoldSequenceNode(node_save_file,
+																		this->id,
+																		n_index);
+			this->nodes.push_back(fold_sequence_node);
+		} else {
+			// node_type == NODE_TYPE_PASS_THROUGH
+			PassThroughNode* pass_through_node = new PassThroughNode(node_save_file,
+																	 this->id,
+																	 n_index);
+			this->nodes.push_back(pass_through_node);
+		}
+		node_save_file.close();
+	}
+}
+
 Scope::~Scope() {
 	if (this->continue_network != NULL) {
 		delete this->continue_network;
@@ -588,10 +649,11 @@ void Scope::backprop(vector<double>& input_errors,
 										 run_helper,
 										 (FoldSequenceNodeHistory*)history->node_histories[h_index]);
 
-			if (fold_sequence_node->fold->state == FOLD_STATE_DONE) {
+			Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[h_index])->fold_history->fold;
+			if (fold->state == FOLD_STATE_DONE) {
 				vector<AbstractNode*> new_nodes;
 				fold_to_nodes(this,
-							  fold_sequence_node->fold,
+							  fold,
 							  new_nodes);
 
 				int starting_new_node_id = (int)this->nodes.size();
@@ -683,8 +745,7 @@ void Scope::backprop_explore_fold_helper(vector<double>& local_state_errors,
 		if (score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)score_scope->nodes[fold->node_context[0]];
 
-			FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(fold,
-																			action_node->explore_next_node_id);
+			FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(action_node->explore_next_node_id);
 			this->nodes.push_back(new_fold_sequence_node);
 			int fold_sequence_node_id = (int)this->nodes.size()-1;
 
@@ -710,8 +771,7 @@ void Scope::backprop_explore_fold_helper(vector<double>& local_state_errors,
 			// score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
 			ScopeNode* scope_node = (ScopeNode*)score_scope->nodes[fold->node_context[0]];
 
-			FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(fold,
-																			scope_node->explore_next_node_id);
+			FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(scope_node->explore_next_node_id);
 			this->nodes.push_back(new_fold_sequence_node);
 			int fold_sequence_node_id = (int)this->nodes.size()-1;
 
@@ -794,6 +854,27 @@ void Scope::new_outer_to_input(int new_outer_size) {
 			FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[n_index];
 			fold_score_node->existing_score_network->add_input(new_outer_size);
 		}
+	}
+}
+
+void Scope::save(ofstream& output_file) {
+	output_file << this->id << endl;
+
+	output_file << this->num_local_states << endl;
+	output_file << this->num_input_states << endl;
+
+	// TODO: loops
+
+	output_file << this->nodes.size() << endl;
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		output_file << this->nodes[n_index]->type << endl;
+
+		ofstream node_save_file;
+		node_save_file.open("saves/node_" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		this->nodes[n_index]->save(node_save_file,
+								   this->id,
+								   n_index);
+		node_save_file.close();
 	}
 }
 
