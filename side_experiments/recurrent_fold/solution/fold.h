@@ -83,30 +83,31 @@ public:
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
 
-	int existing_sequence_length;
-	double* existing_average_score;
-	double* existing_score_variance;
-	double* existing_predicted_score_variance;
-	double* existing_average_misguess;
-	double* existing_misguess_variance;
-
-	int new_noticably_better;
-	int existing_noticably_better;
-
-	int is_recursive;
-
-	int explore_result;
-
-	// use existing variances
-	double curr_average_score;
-	double curr_average_misguess;
-
 	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
 	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
 
-	double test_average_score;
-	double test_average_misguess;
+	int existing_sequence_length;
+	double* existing_average_score;
+	double* existing_score_variance;
+	double* existing_average_misguess;
+	double* existing_misguess_variance;
+
+	double curr_branch_average_score;
+	double curr_existing_average_improvement;
+	double curr_replace_average_score;
+	double curr_replace_average_misguess;
+	double curr_replace_misguess_variance;
+
+	double test_branch_average_score;
+	double test_existing_average_improvement;
+	double test_replace_average_score;
+	double test_replace_average_misguess;
+	double test_replace_misguess_variance;
+
+	int is_recursive;
+
+	int explore_result;
 
 	int clean_outer_scope_index;
 	std::set<int> curr_outer_scopes_needed;
@@ -142,7 +143,6 @@ public:
 		 int existing_sequence_length,
 		 double* existing_average_score,
 		 double* existing_score_variance,
-		 double* existing_predicted_score_variance,
 		 double* existing_average_misguess,
 		 double* existing_misguess_variance);
 	Fold(std::ifstream& input_file,

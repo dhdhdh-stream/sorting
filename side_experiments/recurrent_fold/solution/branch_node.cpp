@@ -1,6 +1,7 @@
 #include "branch_node.h"
 
 #include "constants.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -135,6 +136,8 @@ void BranchNode::activate(vector<double>& local_state_vals,
 
 				exit_depth = this->branch_exit_depth;
 				exit_node_id = this->branch_next_node_id;
+
+				global_debug_flag = true;
 			} else {
 				delete branch_network_history;
 

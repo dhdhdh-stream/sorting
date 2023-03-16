@@ -13,7 +13,9 @@ void Fold::remove_outer_network_end() {
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
-					delete it->second[n_index][s_index];
+					if (!this->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+						delete it->second[n_index][s_index];
+					}
 				}
 			}
 		}
@@ -29,11 +31,15 @@ void Fold::remove_outer_network_end() {
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
-					delete it->second[n_index][s_index];
+					if (!this->test_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+						delete it->second[n_index][s_index];
+					}
 				}
 			}
 		}
 		this->test_outer_state_networks.clear();
+
+		this->test_outer_state_networks_not_needed = this->curr_outer_state_networks_not_needed;
 	}
 
 	this->clean_outer_state_index++;

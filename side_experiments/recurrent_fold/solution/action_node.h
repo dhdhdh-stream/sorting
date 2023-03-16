@@ -21,7 +21,6 @@ public:
 
 	double average_score;
 	double score_variance;
-	double predicted_score_variance;
 	double average_misguess;
 	double misguess_variance;
 

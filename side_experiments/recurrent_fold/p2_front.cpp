@@ -1,11 +1,11 @@
 /**
  * 0: blank
- * 1: 1st xor
- * 2: 1st xor
+ * 1: 1st val
+ * 2: 2nd val
  * 3: blank
- * 4: 2nd xor
+ * 4: switch
  * 5: blank
- * 6: 2nd xor
+ * 6: shared val
  * 7: blank
  */
 
@@ -49,7 +49,6 @@ int main(int argc, char* argv[]) {
 						  0,
 						  &starting_node->average_score,
 						  &starting_node->score_variance,
-						  &starting_node->predicted_score_variance,
 						  &starting_node->average_misguess,
 						  &starting_node->misguess_variance);
 	starting_node->explore_scope_context = vector<int>{0};
@@ -65,27 +64,26 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
 
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
+		if (switch_val == 0) {
+			if ((first_val+shared_val)%2 == 0) {
+				target_val = 1.0;
+			} else {
+				target_val = 0.0;
+			}
 		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
+			target_val = -1.0;
 		}
 
 		vector<double> input_vals;
@@ -128,6 +126,7 @@ int main(int argc, char* argv[]) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;
@@ -155,27 +154,26 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
 
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
+		if (switch_val == 0) {
+			if ((first_val+shared_val)%2 == 0) {
+				target_val = 1.0;
+			} else {
+				target_val = 0.0;
+			}
 		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
+			target_val = -1.0;
 		}
 
 		vector<double> input_vals;
@@ -218,6 +216,7 @@ int main(int argc, char* argv[]) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;
@@ -245,27 +244,26 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
 
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
+		if (switch_val == 0) {
+			if ((first_val+shared_val)%2 == 0) {
+				target_val = 1.0;
+			} else {
+				target_val = 0.0;
+			}
 		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
+			target_val = -1.0;
 		}
 
 		vector<double> input_vals;
@@ -308,6 +306,10 @@ int main(int argc, char* argv[]) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			cout << "target_val: " << target_val << endl;
+			cout << "predicted_score: " << predicted_score << endl;
+
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;
@@ -345,27 +347,26 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
 
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
+		if (switch_val == 0) {
+			if ((first_val+shared_val)%2 == 0) {
+				target_val = 1.0;
+			} else {
+				target_val = 0.0;
+			}
 		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
+			target_val = -1.0;
 		}
 
 		vector<double> input_vals;
@@ -408,6 +409,10 @@ int main(int argc, char* argv[]) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			cout << "target_val: " << target_val << endl;
+			cout << "predicted_score: " << predicted_score << endl;
+
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;

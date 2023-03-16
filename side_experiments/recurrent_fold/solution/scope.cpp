@@ -60,6 +60,24 @@ Scope::Scope(ifstream& input_file) {
 	this->num_input_states = stoi(num_input_states_line);
 
 	// TODO: loops
+	string is_loop_line;
+	getline(input_file, is_loop_line);
+	this->is_loop = stoi(is_loop_line);
+
+	if (this->is_loop) {
+		ifstream continue_network_save_file;
+		continue_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue.txt");
+		this->continue_network = new StateNetwork(continue_network_save_file);
+		continue_network_save_file.close();
+
+		ifstream halt_network_save_file;
+		halt_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt.txt");
+		this->halt_network = new StateNetwork(halt_network_save_file);
+		halt_network_save_file.close();
+	} else {
+		this->continue_network = NULL;
+		this->halt_network = NULL;
+	}
 
 	string num_nodes_line;
 	getline(input_file, num_nodes_line);
@@ -223,6 +241,7 @@ void Scope::activate(vector<double>& input_vals,
 							history->explore_index = (int)history->node_histories.size();
 
 							curr_node_id = action_node->explore_next_node_id;
+							continue;
 						} else {
 							explore_exit_depth = action_node->explore_exit_depth;
 							explore_exit_node_id = action_node->explore_next_node_id;
@@ -350,6 +369,7 @@ void Scope::activate(vector<double>& input_vals,
 								history->explore_index = (int)history->node_histories.size();
 
 								curr_node_id = scope_node->explore_next_node_id;
+								continue;
 							} else {
 								explore_exit_depth = scope_node->explore_exit_depth;
 								explore_exit_node_id = scope_node->explore_next_node_id;
@@ -594,11 +614,13 @@ void Scope::backprop(vector<double>& input_errors,
 					branch_score_network->new_outer_to_input();
 				}
 
+				// for now, always add new_outer to starting_scope_id
+				// TODO: find good way to remove need to do so
+				solution->scopes[starting_scope_id]->new_outer_to_local(new_outer_state_size);
+
 				for (set<int>::iterator it = fold_score_node->fold->curr_outer_scopes_needed.begin();
 						it != fold_score_node->fold->curr_outer_scopes_needed.end(); it++) {
-					if (*it == starting_scope_id) {
-						solution->scopes[*it]->new_outer_to_local(new_outer_state_size);
-					} else {
+					if (*it != starting_scope_id) {
 						solution->scopes[*it]->new_outer_to_input(new_outer_state_size);
 					}
 				}
@@ -863,7 +885,19 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->num_local_states << endl;
 	output_file << this->num_input_states << endl;
 
-	// TODO: loops
+	output_file << this->is_loop << endl;
+
+	if (this->is_loop) {
+		ofstream continue_network_save_file;
+		continue_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue.txt");
+		this->continue_network->save(continue_network_save_file);
+		continue_network_save_file.close();
+
+		ofstream halt_network_save_file;
+		halt_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt.txt");
+		this->halt_network->save(halt_network_save_file);
+		halt_network_save_file.close();
+	}
 
 	output_file << this->nodes.size() << endl;
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {

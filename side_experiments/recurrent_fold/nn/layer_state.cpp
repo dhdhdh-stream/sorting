@@ -45,13 +45,6 @@ void Layer::state_hidden_add_new_outer() {
 	}
 }
 
-void Layer::state_hidden_remove_new_outer() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][4].clear();
-		this->weight_updates[n_index][4].clear();
-	}
-}
-
 void Layer::state_hidden_zero_new_input(int index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index][3][index] = 0.0;

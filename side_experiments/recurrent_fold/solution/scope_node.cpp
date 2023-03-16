@@ -36,7 +36,6 @@ ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
 	// simply initialize to 0.0
 	this->average_score = 0.0;
 	this->score_variance = 0.0;
-	this->predicted_score_variance = 0.0;
 	this->average_misguess = 0.0;
 	this->misguess_variance = 0.0;
 	this->average_impact = 0.0;
@@ -120,27 +119,23 @@ ScopeNode::ScopeNode(ifstream& input_file,
 
 	string average_score_line;
 	getline(input_file, average_score_line);
-	this->average_score = stof(average_score_line);
-
-	string predicted_score_variance_line;
-	getline(input_file, predicted_score_variance_line);
-	this->predicted_score_variance = stof(predicted_score_variance_line);
+	this->average_score = stod(average_score_line);
 
 	string average_misguess_line;
 	getline(input_file, average_misguess_line);
-	this->average_misguess = stof(average_misguess_line);
+	this->average_misguess = stod(average_misguess_line);
 
 	string misguess_variance_line;
 	getline(input_file, misguess_variance_line);
-	this->misguess_variance = stof(misguess_variance_line);
+	this->misguess_variance = stod(misguess_variance_line);
 
 	string average_impact_line;
 	getline(input_file, average_impact_line);
-	this->average_impact = stof(average_impact_line);
+	this->average_impact = stod(average_impact_line);
 
 	string average_sum_impact_line;
 	getline(input_file, average_sum_impact_line);
-	this->average_sum_impact = stof(average_sum_impact_line);
+	this->average_sum_impact = stod(average_sum_impact_line);
 
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
@@ -316,8 +311,6 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 			this->average_score = 0.9999*this->average_score + 0.0001*target_val;
 			double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
 			this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
-			double curr_predicted_score_variance = (this->average_score - predicted_score)*(this->average_score - predicted_score);
-			this->predicted_score_variance = 0.9999*this->predicted_score_variance + 0.0001*curr_predicted_score_variance;
 
 			this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
 			double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
@@ -425,7 +418,6 @@ void ScopeNode::save(ofstream& output_file,
 
 	output_file << this->average_score << endl;
 	output_file << this->score_variance << endl;
-	output_file << this->predicted_score_variance << endl;
 	output_file << this->average_misguess << endl;
 	output_file << this->misguess_variance << endl;
 

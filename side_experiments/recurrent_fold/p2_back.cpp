@@ -1,11 +1,11 @@
 /**
  * 0: blank
- * 1: 1st xor
- * 2: 1st xor
+ * 1: 1st val
+ * 2: 2nd val
  * 3: blank
- * 4: 2nd xor
+ * 4: switch
  * 5: blank
- * 6: 2nd xor
+ * 6: shared val
  * 7: blank
  */
 
@@ -36,26 +36,28 @@ int main(int argc, char* argv[]) {
 	srand(seed);
 	cout << "Seed: " << seed << endl;
 
-	solution = new Solution();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution = new Solution(solution_save_file);
+	solution_save_file.close();
 
-	ActionNode* starting_node = (ActionNode*)solution->scopes[0]->nodes[0];
+	ActionNode* starting_node = (ActionNode*)solution->scopes[0]->nodes[7];
 
 	Fold* fold = new Fold(vector<int>{0},
-						  vector<int>{0},
+						  vector<int>{7},
 						  0,
-						  8,
-						  vector<bool>(8, false),
-						  vector<int>(8, -1),
+						  2,
+						  vector<bool>(2, false),
+						  vector<int>(2, -1),
 						  0,
 						  &starting_node->average_score,
 						  &starting_node->score_variance,
-						  &starting_node->predicted_score_variance,
 						  &starting_node->average_misguess,
 						  &starting_node->misguess_variance);
 	starting_node->explore_scope_context = vector<int>{0};
-	starting_node->explore_node_context = vector<int>{0};
+	starting_node->explore_node_context = vector<int>{7};
 	starting_node->explore_exit_depth = 0;
-	starting_node->explore_next_node_id = -1;
+	starting_node->explore_next_node_id = 10;
 	starting_node->explore_fold = fold;
 
 	while (true) {
@@ -65,28 +67,17 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
 
 		vector<double> input_vals;
 		double predicted_score = solution->average_score;
@@ -127,7 +118,40 @@ int main(int argc, char* argv[]) {
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+			if (switch_val == 1) {
+				if ((second_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
+
+			double final_misguess = abs(target_val - predicted_score);
+
+			vector<double> input_errors;
+			solution->scopes[0]->backprop(input_errors,
+										  target_val,
+										  final_misguess,
+										  sum_impact,
+										  predicted_score,
+										  scale_factor,
+										  run_helper,
+										  root_history);
 		} else {
+			if (switch_val == 0) {
+				if ((first_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
+
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;
@@ -155,28 +179,17 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
 
 		vector<double> input_vals;
 		double predicted_score = solution->average_score;
@@ -198,6 +211,9 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+
+		global_debug_flag = false;
+
 		solution->scopes[0]->activate(input_vals,
 									  flat_vals,
 									  predicted_score,
@@ -215,9 +231,32 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
+		if (global_debug_flag) {
+			if (switch_val == 1) {
+				if ((second_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
+		} else {
+			if (switch_val == 0) {
+				if ((first_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
+		}
+
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;
@@ -233,40 +272,29 @@ int main(int argc, char* argv[]) {
 
 		delete root_history;
 
-		if (solution->scopes[0]->nodes[1]->type != NODE_TYPE_FOLD_SEQUENCE) {
+		if (solution->scopes[0]->nodes[11]->type != NODE_TYPE_FOLD_SEQUENCE) {
 			break;
 		}
 	}
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 20; i++) {
 		vector<vector<double>> flat_vals;
 		double target_val = 0.0;
 
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
 
 		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
+		int first_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+		int second_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
+		int switch_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
+		int shared_val = rand()%2;
+		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
 		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
 
 		vector<double> input_vals;
 		double predicted_score = solution->average_score;
@@ -288,6 +316,9 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+
+		global_debug_flag = false;
+
 		solution->scopes[0]->activate(input_vals,
 									  flat_vals,
 									  predicted_score,
@@ -305,109 +336,36 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
-		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
-			// add fold
+		if (global_debug_flag) {
+			if (switch_val == 1) {
+				if ((second_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
 		} else {
-			double final_misguess = abs(target_val - predicted_score);
-
-			vector<double> input_errors;
-			solution->scopes[0]->backprop(input_errors,
-										  target_val,
-										  final_misguess,
-										  sum_impact,
-										  predicted_score,
-										  scale_factor,
-										  run_helper,
-										  root_history);
+			if (switch_val == 0) {
+				if ((first_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
 		}
 
-		delete root_history;
-	}
-
-	ofstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->save(solution_save_file);
-	solution_save_file.close();
-
-	delete solution;
-
-	{
-		ifstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution = new Solution(solution_save_file);
-		solution_save_file.close();
-	}
-
-	for (int i = 0; i < 10; i++) {
-		vector<vector<double>> flat_vals;
-		double target_val = 0.0;
-
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
-
-		flat_vals.push_back(flat_vals[0]);
-		int xor_val_1_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_1*2-1)});
-		int xor_val_1_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_1_2*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_1 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_1*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int xor_val_2_2 = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(xor_val_2_2*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-
-		if ((xor_val_1_1+xor_val_1_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
-		if ((xor_val_2_1+xor_val_2_2)%2 == 0) {
-			target_val += 1.0;
-		} else {
-			target_val -= 1.0;
-		}
-
-		vector<double> input_vals;
-		double predicted_score = solution->average_score;
-		double scale_factor = 1.0;
-		double sum_impact = 0.0;
-		vector<int> scope_context;
-		vector<int> node_context;
-		vector<ScopeHistory*> context_histories;
-		int early_exit_depth;
-		int early_exit_node_id;
-		FoldHistory* early_exit_fold_history;
-		int explore_exit_depth;
-		int explore_exit_node_id;
-		FoldHistory* explore_exit_fold_history;
-		RunHelper run_helper;
-		if (rand()%3 == 0) {
-			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-		} else {
-			run_helper.explore_phase = EXPLORE_PHASE_NONE;
-		}
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		solution->scopes[0]->activate(input_vals,
-									  flat_vals,
-									  predicted_score,
-									  scale_factor,
-									  sum_impact,
-									  scope_context,
-									  node_context,
-									  context_histories,
-									  early_exit_depth,
-									  early_exit_node_id,
-									  early_exit_fold_history,
-									  explore_exit_depth,
-									  explore_exit_node_id,
-									  explore_exit_fold_history,
-									  run_helper,
-									  root_history);
+		cout << "switch_val: " << switch_val << endl;
+		cout << "target_val: " << target_val << endl;
+		cout << "predicted_score: " << predicted_score << endl;
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
 		} else {
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 			double final_misguess = abs(target_val - predicted_score);
 
 			vector<double> input_errors;

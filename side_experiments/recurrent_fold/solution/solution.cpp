@@ -33,7 +33,7 @@ Solution::Solution() {
 Solution::Solution(ifstream& input_file) {
 	string average_score_line;
 	getline(input_file, average_score_line);
-	this->average_score = stof(average_score_line);
+	this->average_score = stod(average_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);

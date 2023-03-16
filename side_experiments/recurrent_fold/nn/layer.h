@@ -44,7 +44,6 @@ public:
 	void state_hidden_backprop_new_outer_state();
 	void state_hidden_add_new_inner();
 	void state_hidden_add_new_outer();
-	void state_hidden_remove_new_outer();
 	void state_hidden_zero_new_input(int index);
 	void state_hidden_zero_local(int index);
 	void state_hidden_zero_input(int index);

@@ -70,12 +70,12 @@ void Layer::load_weights_from(ifstream& input_file) {
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
 				string item;
 				getline(stream, item, ',');
-				this->weights[n_index][l_index][ln_index] = stof(item);
+				this->weights[n_index][l_index][ln_index] = stod(item);
 			}
 		}
 		string line;
 		getline(input_file, line);
-		this->constants[n_index] = stof(line);
+		this->constants[n_index] = stod(line);
 	}
 }
 

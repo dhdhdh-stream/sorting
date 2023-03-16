@@ -107,21 +107,6 @@ void Fold::explore_score_activate(vector<double>& local_state_vals,
 
 	history->new_outer_state_vals = new_outer_state_vals;
 
-	if (this->state == FOLD_STATE_EXPLORE && this->state_iter >= 490000) {
-		// Note: use predicted_score_variance (as opposed to score_variance for surprise) to measure difference between predicted scores
-		double predicted_score_standard_deviation = sqrt(*this->existing_predicted_score_variance);
-		double t_value = scale_factor*this->test_starting_score_network->output->acti_vals[0] / predicted_score_standard_deviation;
-		// if (t_value > 1.0) {	// >75%
-		if (t_value > 31.82) {	// >99%
-			cout << scale_factor*this->test_starting_score_network->output->acti_vals[0] << endl;
-			this->new_noticably_better++;
-		// } else if (t_value < -1.0) {	// >75%
-		} else if (t_value < -31.82) {	// >99%
-			cout << scale_factor*this->test_starting_score_network->output->acti_vals[0] << endl;
-			this->existing_noticably_better++;
-		}
-	}
-
 	// modify predicted_score in score_activate for explore
 	predicted_score += scale_factor*this->test_starting_score_network->output->acti_vals[0];
 }
@@ -362,8 +347,10 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 							double& scale_factor,
 							RunHelper& run_helper,
 							FoldHistory* history) {
-	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
-	this->test_average_misguess = 0.9999*this->test_average_misguess + 0.0001*final_misguess;
+	this->test_replace_average_score = 0.9999*this->test_replace_average_score + 0.0001*target_val;
+	this->test_replace_average_misguess = 0.9999*this->test_replace_average_misguess + 0.0001*final_misguess;
+	double curr_misguess_variance = (this->test_replace_average_misguess - final_misguess)*(this->test_replace_average_misguess - final_misguess);
+	this->test_replace_misguess_variance = 0.9999*this->test_replace_misguess_variance + 0.0001*curr_misguess_variance;
 
 	this->sum_error += abs(target_val-predicted_score);
 
@@ -542,6 +529,15 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 		history->starting_score_network_history);
 
 	predicted_score -= scale_factor*history->starting_score_update;
+
+	if (scale_factor*history->starting_score_update > 0.0) {
+		this->test_branch_average_score = 0.9999*this->test_branch_average_score + 0.0001*target_val;
+	} else {
+		this->test_branch_average_score = 0.9999*this->test_branch_average_score + 0.0001*predicted_score;
+
+		double existing_improvement = predicted_score - target_val;
+		this->test_existing_average_improvement = 0.9999*this->test_existing_average_improvement + 0.0001*existing_improvement;
+	}
 
 	for (int n_index = (int)history->outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
 		for (int o_index = this->test_num_new_outer_states-1; o_index >= 0; o_index--) {

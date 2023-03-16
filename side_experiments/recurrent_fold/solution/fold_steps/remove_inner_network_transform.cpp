@@ -112,9 +112,9 @@ void Fold::remove_inner_network_end() {
 					this->state_iter = 0;
 					this->sub_state_iter = 0;
 					this->sum_error = 0.0;
-
-					break;
 				}
+
+				break;
 			}
 
 			if (!this->curr_state_networks_not_needed[this->clean_inner_step_index][this->clean_inner_state_index]) {

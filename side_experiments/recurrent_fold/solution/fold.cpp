@@ -16,7 +16,6 @@ Fold::Fold(vector<int> scope_context,
 		   int existing_sequence_length,
 		   double* existing_average_score,
 		   double* existing_score_variance,
-		   double* existing_predicted_score_variance,
 		   double* existing_average_misguess,
 		   double* existing_misguess_variance) {
 	this->scope_context = scope_context;
@@ -30,7 +29,6 @@ Fold::Fold(vector<int> scope_context,
 	this->existing_sequence_length = existing_sequence_length;
 	this->existing_average_score = existing_average_score;
 	this->existing_score_variance = existing_score_variance;
-	this->existing_predicted_score_variance = existing_predicted_score_variance;
 	this->existing_average_misguess = existing_average_misguess;
 	this->existing_misguess_variance = existing_misguess_variance;
 
@@ -101,13 +99,13 @@ Fold::Fold(vector<int> scope_context,
 															 20));
 	}
 
-	this->new_noticably_better = 0;
-	this->existing_noticably_better = 0;
-
 	this->is_recursive = 0;
 
-	this->test_average_score = 0.0;
-	this->test_average_misguess = 0.0;
+	this->test_branch_average_score = 0.0;
+	this->test_existing_average_improvement = 0.0;
+	this->test_replace_average_score = 0.0;
+	this->test_replace_average_misguess = 0.0;
+	this->test_replace_misguess_variance = 0.0;
 
 	// initialize for saving/loading
 	this->clean_outer_scope_index = -1;

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "globals.h"
 #include "utilities.h"
 
 using namespace std;
@@ -164,6 +165,8 @@ void FoldScoreNode::activate(vector<double>& local_state_vals,
 				exit_depth = this->fold_exit_depth;
 				exit_node_id = this->fold_next_node_id;
 				exit_fold_history = fold_history;
+
+				global_debug_flag = true;
 			} else {
 				delete fold_history;
 
