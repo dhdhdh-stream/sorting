@@ -119,8 +119,7 @@ void fold_to_nodes(Scope* parent_scope,
 	int total_num_states = fold->sum_inner_inputs
 		+ fold->curr_num_new_inner_states
 		+ fold->num_sequence_local_states
-		+ fold->num_sequence_input_states
-		+ fold->curr_num_new_outer_states;
+		+ fold->num_sequence_input_states;
 
 	vector<int> new_scope_ids;
 	vector<vector<int>> input_index_reverse_mappings;

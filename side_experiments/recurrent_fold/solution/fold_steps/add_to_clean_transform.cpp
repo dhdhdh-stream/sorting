@@ -5,14 +5,11 @@
 using namespace std;
 
 void Fold::add_to_clean() {
-	// TODO: find good way of handling this->curr_outer_state_networks.size() == 0 edge case
-
 	// initialize clean
 	int curr_total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
-		+ this->curr_num_new_outer_states;
+		+ this->num_sequence_input_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->curr_state_networks_not_needed.push_back(vector<bool>(curr_total_num_states, false));
 		this->curr_state_not_needed_locally.push_back(vector<bool>(curr_total_num_states, false));
@@ -20,6 +17,16 @@ void Fold::add_to_clean() {
 	}
 
 	if (this->curr_outer_state_networks.size() == 0) {
+		this->curr_num_new_outer_states = 0;
+		this->curr_starting_score_network->remove_new_outer();
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+				this->curr_state_networks[f_index][s_index]->remove_new_outer();
+			}
+
+			this->curr_score_networks[f_index]->remove_new_outer();
+		}
+
 		// initialize inner clean
 		this->clean_inner_step_index = 0;
 		this->clean_inner_state_index = 0;

@@ -37,13 +37,12 @@ void Fold::clear_inner_state_end() {
 				this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
 				this->test_state_networks_not_needed[this->clean_inner_step_index][0] = true;
 
-				int curr_total_num_states = this->sum_inner_inputs
+				int total_num_states = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
 					+ this->num_sequence_local_states
-					+ this->num_sequence_input_states
-					+ this->curr_num_new_outer_states;
+					+ this->num_sequence_input_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-					for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+					for (int s_index = 0; s_index < total_num_states; s_index++) {
 						if (!this->test_state_networks_not_needed[f_index][s_index]) {
 							this->test_state_networks[f_index][s_index] = new StateNetwork(this->curr_state_networks[f_index][s_index]);
 						} else {
@@ -68,8 +67,7 @@ void Fold::clear_inner_state_end() {
 			int total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_local_states
-				+ this->num_sequence_input_states
-				+ this->curr_num_new_outer_states;
+				+ this->num_sequence_input_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				for (int s_index = 0; s_index < total_num_states; s_index++) {
 					if (!this->curr_state_networks_not_needed[f_index][s_index]) {
@@ -119,8 +117,7 @@ void Fold::clear_inner_state_end() {
 			int curr_total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_local_states
-				+ this->num_sequence_input_states
-				+ this->curr_num_new_outer_states;
+				+ this->num_sequence_input_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
 					if (!this->test_state_networks_not_needed[f_index][s_index]) {
@@ -154,8 +151,7 @@ void Fold::clear_inner_state_from_load() {
 	int total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
-		+ this->curr_num_new_outer_states;
+		+ this->num_sequence_input_states;
 
 	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(total_num_states));
 	this->test_score_networks = vector<StateNetwork*>(this->sequence_length);

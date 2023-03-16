@@ -67,8 +67,7 @@ Fold::Fold(vector<int> scope_context,
 	int total_num_states = this->sum_inner_inputs
 		+ this->test_num_new_inner_states
 		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
-		+ this->test_num_new_outer_states;
+		+ this->num_sequence_input_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->test_state_networks.push_back(vector<StateNetwork*>());
 		if (this->is_inner_scope[f_index]) {
@@ -308,8 +307,7 @@ Fold::Fold(ifstream& input_file,
 	int total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
-		+ this->curr_num_new_outer_states;
+		+ this->num_sequence_input_states;
 
 	this->curr_state_networks_not_needed = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -631,8 +629,7 @@ void Fold::save(ofstream& output_file,
 	int total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
-		+ this->curr_num_new_outer_states;
+		+ this->num_sequence_input_states;
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		for (int s_index = 0; s_index < total_num_states; s_index++) {

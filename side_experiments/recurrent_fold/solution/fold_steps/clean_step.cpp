@@ -121,8 +121,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 		int num_total_states = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
 			+ this->num_sequence_local_states
-			+ this->num_sequence_input_states
-			+ this->curr_num_new_outer_states;
+			+ this->num_sequence_input_states;
 		history->state_network_histories = vector<vector<StateNetworkHistory*>>(
 			this->sequence_length, vector<StateNetworkHistory*>(num_total_states, NULL));
 	}
@@ -326,43 +325,6 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					}
 				}
 			}
-			for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
-				int state_index = this->sum_inner_inputs
-					+ this->curr_num_new_inner_states
-					+ this->num_sequence_local_states
-					+ this->num_sequence_input_states
-					+ o_index;
-				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
-						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-							new_inner_state_vals,
-							local_state_vals,
-							input_vals,
-							new_outer_state_vals,
-							state_network_history);
-						history->state_network_histories[f_index][state_index] = state_network_history;
-					} else {
-						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-							new_inner_state_vals,
-							local_state_vals,
-							input_vals,
-							new_outer_state_vals);
-					}
-					new_outer_state_vals[o_index] += this->curr_state_networks[f_index][state_index]->output->acti_vals[0];
-				}
-
-				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-					if (!this->test_state_networks_not_needed[f_index][state_index]) {
-						this->test_state_networks[f_index][state_index]->new_sequence_activate(
-							test_new_inner_state_vals,
-							test_local_state_vals,
-							test_input_vals,
-							test_new_outer_state_vals);
-						test_new_outer_state_vals[o_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
-					}
-				}
-			}
 		} else {
 			double obs = (*flat_vals.begin())[0];
 
@@ -478,46 +440,6 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					}
 				}
 			}
-			for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
-				int state_index = this->sum_inner_inputs
-					+ this->curr_num_new_inner_states
-					+ this->num_sequence_local_states
-					+ this->num_sequence_input_states
-					+ o_index;
-				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
-						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-							obs,
-							new_inner_state_vals,
-							local_state_vals,
-							input_vals,
-							new_outer_state_vals,
-							state_network_history);
-						history->state_network_histories[f_index][state_index] = state_network_history;
-					} else {
-						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
-							obs,
-							new_inner_state_vals,
-							local_state_vals,
-							input_vals,
-							new_outer_state_vals);
-					}
-					new_outer_state_vals[o_index] += this->curr_state_networks[f_index][state_index]->output->acti_vals[0];
-				}
-
-				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-					if (!this->test_state_networks_not_needed[f_index][state_index]) {
-						this->test_state_networks[f_index][state_index]->new_sequence_activate(
-							obs,
-							test_new_inner_state_vals,
-							test_local_state_vals,
-							test_input_vals,
-							test_new_outer_state_vals);
-						test_new_outer_state_vals[o_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
-					}
-				}
-			}
 
 			flat_vals.erase(flat_vals.begin());
 		}
@@ -589,22 +511,6 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 				target_max_update);
 
 			if (this->is_inner_scope[f_index]) {
-				for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
-					int state_index = this->sum_inner_inputs
-						+ this->curr_num_new_inner_states
-						+ this->num_sequence_local_states
-						+ this->num_sequence_input_states
-						+ o_index;
-					if (!this->test_state_networks_not_needed[f_index][state_index]) {
-						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
-							test_new_outer_state_errors[o_index],
-							test_new_inner_state_errors,
-							test_local_state_errors,
-							test_input_errors,
-							test_new_outer_state_errors,
-							target_max_update);
-					}
-				}
 				for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
 					int state_index = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states
@@ -667,22 +573,6 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					}
 				}
 			} else {
-				for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
-					int state_index = this->sum_inner_inputs
-						+ this->curr_num_new_inner_states
-						+ this->num_sequence_local_states
-						+ this->num_sequence_input_states
-						+ o_index;
-					if (!this->test_state_networks_not_needed[f_index][state_index]) {
-						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
-							test_new_outer_state_errors[o_index],
-							test_new_inner_state_errors,
-							test_local_state_errors,
-							test_input_errors,
-							test_new_outer_state_errors,
-							target_max_update);
-					}
-				}
 				for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
 					int state_index = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states
@@ -757,22 +647,6 @@ void Fold::backprop(vector<double>& local_state_errors,
 			predicted_score -= scale_factor*history->score_network_updates[f_index];
 
 			if (this->is_inner_scope[f_index]) {
-				for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
-					int state_index = this->sum_inner_inputs
-						+ this->curr_num_new_inner_states
-						+ this->num_sequence_local_states
-						+ this->num_sequence_input_states
-						+ o_index;
-					if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-						this->curr_state_networks[f_index][state_index]->new_sequence_backprop_errors_with_no_weight_change(
-							new_outer_state_errors[o_index],
-							new_inner_state_errors,
-							local_state_errors,
-							input_errors,
-							new_outer_state_errors,
-							history->state_network_histories[f_index][state_index]);
-					}
-				}
 				for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
 					int state_index = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states
@@ -846,22 +720,6 @@ void Fold::backprop(vector<double>& local_state_errors,
 					}
 				}
 			} else {
-				for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
-					int state_index = this->sum_inner_inputs
-						+ this->curr_num_new_inner_states
-						+ this->num_sequence_local_states
-						+ this->num_sequence_input_states
-						+ o_index;
-					if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-						this->curr_state_networks[f_index][state_index]->new_sequence_backprop_errors_with_no_weight_change(
-							new_outer_state_errors[o_index],
-							new_inner_state_errors,
-							local_state_errors,
-							input_errors,
-							new_outer_state_errors,
-							history->state_network_histories[f_index][state_index]);
-					}
-				}
 				for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
 					int state_index = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 void Fold::explore_end() {
@@ -74,7 +76,9 @@ void Fold::explore_end() {
 		this->test_starting_score_network = NULL;
 
 		this->curr_state_networks = this->test_state_networks;
+		this->test_state_networks.clear();
 		this->curr_score_networks = this->test_score_networks;
+		this->test_score_networks.clear();
 
 		this->curr_branch_average_score = this->test_branch_average_score;
 		this->test_branch_average_score = 0.0;
@@ -88,72 +92,62 @@ void Fold::explore_end() {
 		this->test_replace_misguess_variance = 0.0;
 
 		if (this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
-			// no change to num_new_outer_states
+			this->explore_added_state = false;
+
+			this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 					it != this->curr_outer_state_networks.end(); it++) {
+				Scope* outer_scope = solution->scopes[it->first];
 				this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
 				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					this->test_outer_state_networks[it->first].push_back(vector<StateNetwork*>());
-					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index].size() != 0) {
+						// this->curr_num_new_outer_states = 1
 						this->test_outer_state_networks[it->first][n_index].push_back(
-							new StateNetwork(it->second[n_index][s_index]));
+							new StateNetwork(it->second[n_index][0]));
+						this->test_outer_state_networks[it->first][n_index][0]->add_new_outer();
+						// state networks track their needs, so robust against scope updates
+
+						this->test_outer_state_networks[it->first][n_index].push_back(
+							new StateNetwork(1,
+											 outer_scope->num_local_states,
+											 outer_scope->num_input_states,
+											 0,
+											 this->test_num_new_outer_states,
+											 20));
 					}
 				}
 			}
 
 			this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
+			this->test_starting_score_network->add_new_outer();
 
-			this->test_num_new_inner_states = this->curr_num_new_inner_states+1;
+			this->test_num_new_inner_states = this->curr_num_new_inner_states;
 			int curr_total_num_states = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_local_states
-				+ this->num_sequence_input_states
-				+ this->curr_num_new_outer_states;
+				+ this->num_sequence_input_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-				for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
-					this->test_state_networks[f_index][i_index] = new StateNetwork(
-						this->curr_state_networks[f_index][i_index]);
-					this->test_state_networks[f_index][i_index]->add_new_inner();
-				}
-				if (this->is_inner_scope[f_index]) {
-					this->test_state_networks[f_index].insert(
-						this->test_state_networks[f_index].begin()+this->sum_inner_inputs+this->curr_num_new_inner_states,
-						new StateNetwork(0,
-										 this->num_sequence_local_states,
-										 this->num_sequence_input_states,
-										 this->sum_inner_inputs+this->test_num_new_inner_states,
-										 this->curr_num_new_outer_states,
-										 20));
-				} else {
-					this->test_state_networks[f_index].insert(
-						this->test_state_networks[f_index].begin()+this->sum_inner_inputs+this->curr_num_new_inner_states,
-						new StateNetwork(1,
-										 this->num_sequence_local_states,
-										 this->num_sequence_input_states,
-										 this->sum_inner_inputs+this->test_num_new_inner_states,
-										 this->curr_num_new_outer_states,
-										 20));
-				}
-				for (int s_index = this->sum_inner_inputs+this->curr_num_new_inner_states; s_index < curr_total_num_states; s_index++) {
-					this->test_state_networks[f_index][s_index+1] = new StateNetwork(
-						this->curr_state_networks[f_index][s_index]);
-					this->test_state_networks[f_index][s_index+1]->add_new_inner();
+				// this->test_state_networks cleared above
+				this->test_state_networks.push_back(vector<StateNetwork*>());
+
+				for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+					this->test_state_networks[f_index].push_back(new StateNetwork(
+						this->curr_state_networks[f_index][s_index]));
+					this->test_state_networks[f_index][s_index]->add_new_outer();
 				}
 
-				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
-				this->test_score_networks[f_index]->add_new_inner();
+				// this->test_score_networks cleared above
+				this->test_score_networks.push_back(new StateNetwork(this->curr_score_networks[f_index]));
+				this->test_score_networks[f_index]->add_new_outer();
 			}
 
-			cout << "starting ADD_INNER_STATE " << this->test_num_new_inner_states << endl;
+			cout << "starting ADD_OUTER_STATE " << this->test_num_new_outer_states << endl;
 
-			this->state = FOLD_STATE_ADD_INNER_STATE;
+			this->state = FOLD_STATE_ADD_OUTER_STATE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
-			// clear for add_to_clean
-			this->test_state_networks.clear();
-			this->test_score_networks.clear();
-
 			cout << "EXPLORE_DONE" << endl;
 
 			this->state = FOLD_STATE_EXPLORE_DONE;

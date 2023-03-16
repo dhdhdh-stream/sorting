@@ -21,8 +21,8 @@ const int FOLD_STATE_EXPLORE_FAIL = 1;
 
 // TODO: consider adding input even if explore fail
 
-const int FOLD_STATE_ADD_INNER_STATE = 2;
-const int FOLD_STATE_ADD_OUTER_STATE = 3;
+const int FOLD_STATE_ADD_OUTER_STATE = 2;
+const int FOLD_STATE_ADD_INNER_STATE = 3;
 
 const int FOLD_STATE_EXPLORE_DONE = 4;
 
@@ -71,6 +71,7 @@ public:
 	double sum_error;
 
 	int curr_num_new_outer_states;
+	// for new outer state, for inner, use as input, but don't modify
 	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
 	StateNetwork* curr_starting_score_network;
 	// no starting state networks as ideally, state should already capture everything relevant
@@ -108,6 +109,8 @@ public:
 	int is_recursive;
 
 	int explore_result;
+
+	bool explore_added_state;
 
 	int clean_outer_scope_index;
 	std::set<int> curr_outer_scopes_needed;
