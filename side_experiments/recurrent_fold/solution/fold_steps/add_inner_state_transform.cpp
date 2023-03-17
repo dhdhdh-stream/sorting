@@ -33,6 +33,9 @@ void Fold::add_inner_state_end() {
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 	if (misguess_improvement_t_value > 1.282) {	// >90%
+		cout << "ADD_INNER_STATE success" << endl;
+		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -75,6 +78,9 @@ void Fold::add_inner_state_end() {
 
 		this->explore_added_state = true;
 	} else {
+		cout << "ADD_INNER_STATE fail" << endl;
+		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -132,7 +138,7 @@ void Fold::add_inner_state_end() {
 		this->test_starting_score_network->add_new_outer();
 
 		this->test_num_new_inner_states = this->curr_num_new_inner_states;
-		int curr_total_num_states = this->sum_inner_inputs
+		int num_inner_networks = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
 			+ this->num_sequence_local_states
 			+ this->num_sequence_input_states;
@@ -140,7 +146,7 @@ void Fold::add_inner_state_end() {
 			// this->test_state_networks cleared above
 			this->test_state_networks.push_back(vector<StateNetwork*>());
 
-			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(
 					this->curr_state_networks[f_index][s_index]));
 				this->test_state_networks[f_index][s_index]->add_new_outer();

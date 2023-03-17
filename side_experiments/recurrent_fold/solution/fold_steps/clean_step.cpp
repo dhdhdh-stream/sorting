@@ -636,6 +636,10 @@ void Fold::backprop(vector<double>& local_state_errors,
 		vector<double> new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
 
 		for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
+			for (int i_index = 0; i_index < this->curr_num_states_cleared[f_index]; i_index++) {
+				new_inner_state_errors[i_index] = 0.0;
+			}
+
 			this->curr_score_networks[f_index]->new_sequence_backprop_errors_with_no_weight_change(
 				target_val - predicted_score,
 				new_inner_state_errors,
@@ -767,6 +771,9 @@ void Fold::backprop(vector<double>& local_state_errors,
 		//   - ideally, prior score network should already account for fold
 		//   - even if doesn't lead to ideal results, would just need to wait until fold completes
 	} else {
+		// temporary
+		this->test_replace_average_misguess = 0.9999*this->test_replace_average_misguess + 0.0001*final_misguess;
+
 		if (history->state_iter_snapshot <= this->state_iter) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 				this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(

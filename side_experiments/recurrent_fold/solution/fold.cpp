@@ -64,14 +64,14 @@ Fold::Fold(vector<int> scope_context,
 
 	this->curr_num_new_inner_states = 1;
 	this->test_num_new_inner_states = this->curr_num_new_inner_states;
-	int total_num_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->test_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->test_state_networks.push_back(vector<StateNetwork*>());
 		if (this->is_inner_scope[f_index]) {
-			for (int s_index = 0; s_index < total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
 																			  this->num_sequence_local_states,
 																			  this->num_sequence_input_states,
@@ -80,7 +80,7 @@ Fold::Fold(vector<int> scope_context,
 																			  20));
 			}
 		} else {
-			for (int s_index = 0; s_index < total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(1,
 																			  this->num_sequence_local_states,
 																			  this->num_sequence_input_states,
@@ -304,23 +304,29 @@ Fold::Fold(ifstream& input_file,
 	getline(input_file, clean_inner_state_index_line);
 	this->clean_inner_state_index = stoi(clean_inner_state_index_line);
 
-	int total_num_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
 
-	this->curr_state_networks_not_needed = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
+	this->curr_state_networks_not_needed = vector<vector<bool>>(this->sequence_length, vector<bool>(num_inner_networks));
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
+		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			string is_not_needed_line;
 			getline(input_file, is_not_needed_line);
 			this->curr_state_networks_not_needed[f_index][s_index] = stoi(is_not_needed_line);
 		}
 	}
+	this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
 
-	this->curr_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(total_num_states, NULL));
+	this->curr_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(num_inner_networks, NULL));
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
+		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			if (!this->curr_state_networks_not_needed[f_index][s_index]) {
 				ifstream state_network_save_file;
 				state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(f_index) + "_" + to_string(s_index) + ".txt");
@@ -338,6 +344,7 @@ Fold::Fold(ifstream& input_file,
 			this->curr_state_not_needed_locally[f_index][s_index] = stoi(is_not_needed_line);
 		}
 	}
+	this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
 
 	this->curr_num_states_cleared = vector<int>(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -345,6 +352,7 @@ Fold::Fold(ifstream& input_file,
 		getline(input_file, num_states_cleared_line);
 		this->curr_num_states_cleared[f_index] = stoi(num_states_cleared_line);
 	}
+	this->test_num_states_cleared = this->curr_num_states_cleared;
 
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_from_load();
@@ -463,10 +471,12 @@ void Fold::sequence_activate(vector<double>& local_state_vals,
 void Fold::increment() {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		if (this->state_iter > 150000) {
-			remove_outer_scope_end();
+			if (this->sub_state_iter >= 10000) {
+				remove_outer_scope_end();
+			}
 		} else {
 			// may skip print if incremented multiple times in a run
-			if (this->sub_state_iter > 10000) {
+			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
@@ -477,9 +487,11 @@ void Fold::increment() {
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
 		if (this->state_iter > 150000) {
-			remove_outer_network_end();
+			if (this->sub_state_iter >= 10000) {
+				remove_outer_network_end();
+			}
 		} else {
-			if (this->sub_state_iter > 10000) {
+			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
@@ -490,9 +502,11 @@ void Fold::increment() {
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		if (this->state_iter > 150000) {
-			remove_inner_network_end();
+			if (this->sub_state_iter >= 10000) {
+				remove_inner_network_end();
+			}
 		} else {
-			if (this->sub_state_iter > 10000) {
+			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
@@ -503,9 +517,11 @@ void Fold::increment() {
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
 		if (this->state_iter > 150000) {
-			remove_inner_state_end();
+			if (this->sub_state_iter >= 10000) {
+				remove_inner_state_end();
+			}
 		} else {
-			if (this->sub_state_iter > 10000) {
+			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
@@ -517,9 +533,11 @@ void Fold::increment() {
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
 		if (this->state_iter > 150000) {
-			clear_inner_state_end();
+			if (this->sub_state_iter >= 10000) {
+				clear_inner_state_end();
+			}
 		} else {
-			if (this->sub_state_iter > 10000) {
+			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
@@ -626,19 +644,24 @@ void Fold::save(ofstream& output_file,
 	output_file << this->clean_inner_step_index << endl;
 	output_file << this->clean_inner_state_index << endl;
 
-	int total_num_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
+		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			output_file << this->curr_state_networks_not_needed[f_index][s_index] << endl;
 		}
 	}
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
+		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			if (!this->curr_state_networks_not_needed[f_index][s_index]) {
 				ofstream state_network_save_file;
 				state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(f_index) + "_" + to_string(s_index) + ".txt");

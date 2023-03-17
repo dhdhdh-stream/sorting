@@ -116,10 +116,15 @@ void fold_to_nodes(Scope* parent_scope,
 		}
 	}
 
-	int total_num_states = fold->sum_inner_inputs
+	int num_inner_networks = fold->sum_inner_inputs
 		+ fold->curr_num_new_inner_states
 		+ fold->num_sequence_local_states
 		+ fold->num_sequence_input_states;
+	int total_num_states = fold->sum_inner_inputs
+		+ fold->curr_num_new_inner_states
+		+ fold->num_sequence_local_states
+		+ fold->num_sequence_input_states
+		+ fold->curr_num_new_outer_states;
 
 	vector<int> new_scope_ids;
 	vector<vector<int>> input_index_reverse_mappings;
@@ -307,7 +312,7 @@ void fold_to_nodes(Scope* parent_scope,
 					vector<bool> state_network_target_is_local;
 					vector<int> state_network_target_indexes;
 					vector<StateNetwork*> state_networks;
-					for (int s_index = 0; s_index < total_num_states; s_index++) {
+					for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 						if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
 							if (s_index < parent_lowest_layer) {
 								state_network_target_is_local.push_back(true);
@@ -377,7 +382,7 @@ void fold_to_nodes(Scope* parent_scope,
 			vector<bool> state_network_target_is_local;
 			vector<int> state_network_target_indexes;
 			vector<StateNetwork*> state_networks;
-			for (int s_index = 0; s_index < total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
 					int target_index = s_index - (fold->sum_inner_inputs + fold->curr_num_new_inner_states);
 					if (target_index < fold->num_sequence_local_states) {

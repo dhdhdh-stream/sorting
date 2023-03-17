@@ -41,10 +41,10 @@ int main(int argc, char* argv[]) {
 	solution = new Solution(solution_save_file);
 	solution_save_file.close();
 
-	ActionNode* starting_node = (ActionNode*)solution->scopes[0]->nodes[7];
+	ActionNode* starting_node = (ActionNode*)solution->scopes[1]->nodes[3];
 
-	Fold* fold = new Fold(vector<int>{0},
-						  vector<int>{7},
+	Fold* fold = new Fold(vector<int>{1},
+						  vector<int>{3},
 						  0,
 						  2,
 						  vector<bool>(2, false),
@@ -54,30 +54,51 @@ int main(int argc, char* argv[]) {
 						  &starting_node->score_variance,
 						  &starting_node->average_misguess,
 						  &starting_node->misguess_variance);
-	starting_node->explore_scope_context = vector<int>{0};
-	starting_node->explore_node_context = vector<int>{7};
+	starting_node->explore_scope_context = vector<int>{1};
+	starting_node->explore_node_context = vector<int>{3};
 	starting_node->explore_exit_depth = 0;
-	starting_node->explore_next_node_id = 10;
+	starting_node->explore_next_node_id = -1;
 	starting_node->explore_fold = fold;
 
 	while (true) {
 		vector<vector<double>> flat_vals;
 		double target_val = 0.0;
 
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
+		int first_val;
+		int second_val;
+		int switch_val;
+		int shared_val;
+		if (rand()%5 == 0 && fold->state_iter < 200000) {
+			flat_vals.push_back(vector<double>{0.0});	// extra for ACTION_START
 
-		flat_vals.push_back(flat_vals[0]);
-		int first_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
-		int second_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int switch_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int shared_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			flat_vals.push_back(flat_vals[0]);
+			first_val = 0;
+			flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+			second_val = 0;
+			flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
+			switch_val = 1;
+			flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
+			shared_val = 0;
+			flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
+		} else {
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
+
+			flat_vals.push_back(flat_vals[0]);
+			first_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+			second_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			switch_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			shared_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+		}
 
 		vector<double> input_vals;
 		double predicted_score = solution->average_score;
@@ -272,7 +293,7 @@ int main(int argc, char* argv[]) {
 
 		delete root_history;
 
-		if (solution->scopes[0]->nodes[11]->type != NODE_TYPE_FOLD_SEQUENCE) {
+		if (solution->scopes[1]->nodes[6]->type != NODE_TYPE_FOLD_SEQUENCE) {
 			break;
 		}
 	}

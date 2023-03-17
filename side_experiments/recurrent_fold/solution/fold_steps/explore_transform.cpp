@@ -123,7 +123,7 @@ void Fold::explore_end() {
 			this->test_starting_score_network->add_new_outer();
 
 			this->test_num_new_inner_states = this->curr_num_new_inner_states;
-			int curr_total_num_states = this->sum_inner_inputs
+			int num_inner_networks = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_local_states
 				+ this->num_sequence_input_states;
@@ -131,7 +131,7 @@ void Fold::explore_end() {
 				// this->test_state_networks cleared above
 				this->test_state_networks.push_back(vector<StateNetwork*>());
 
-				for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+				for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 					this->test_state_networks[f_index].push_back(new StateNetwork(
 						this->curr_state_networks[f_index][s_index]));
 					this->test_state_networks[f_index][s_index]->add_new_outer();

@@ -33,6 +33,9 @@ void Fold::add_outer_state_end() {
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 	if (misguess_improvement_t_value > 1.282) {	// >90%
+		cout << "ADD_OUTER_STATE success" << endl;
+		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -75,6 +78,9 @@ void Fold::add_outer_state_end() {
 
 		this->explore_added_state = true;
 	} else {
+		cout << "ADD_OUTER_STATE fail" << endl;
+		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -100,7 +106,7 @@ void Fold::add_outer_state_end() {
 	}
 
 	if (this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
-		// no change to num_new_outer_states
+		this->test_num_new_outer_states = this->curr_num_new_outer_states;
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {
 			this->test_outer_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
@@ -116,7 +122,7 @@ void Fold::add_outer_state_end() {
 		this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
 
 		this->test_num_new_inner_states = this->curr_num_new_inner_states+1;
-		int curr_total_num_states = this->sum_inner_inputs
+		int num_inner_networks = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
 			+ this->num_sequence_local_states
 			+ this->num_sequence_input_states;
@@ -143,7 +149,7 @@ void Fold::add_outer_state_end() {
 																			  this->curr_num_new_outer_states,
 																			  20));
 			}
-			for (int s_index = this->sum_inner_inputs+this->curr_num_new_inner_states; s_index < curr_total_num_states; s_index++) {
+			for (int s_index = this->sum_inner_inputs+this->curr_num_new_inner_states; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(
 					this->curr_state_networks[f_index][s_index]));
 				this->test_state_networks[f_index][s_index+1]->add_new_inner();

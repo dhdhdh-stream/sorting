@@ -93,7 +93,7 @@ void Fold::remove_outer_scope_end() {
 					clean_network_it++;
 				}
 				if (clean_network_it == this->test_outer_state_networks_not_needed.end()) {
-					int total_num_states = this->sum_inner_inputs
+					int num_inner_networks = this->sum_inner_inputs
 						+ this->curr_num_new_inner_states
 						+ this->num_sequence_local_states
 						+ this->num_sequence_input_states;
@@ -102,7 +102,7 @@ void Fold::remove_outer_scope_end() {
 						this->curr_num_new_outer_states = 0;
 						this->curr_starting_score_network->remove_new_outer();
 						for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-							for (int s_index = 0; s_index < total_num_states; s_index++) {
+							for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 								this->curr_state_networks[f_index][s_index]->remove_new_outer();
 							}
 
@@ -121,7 +121,7 @@ void Fold::remove_outer_scope_end() {
 					this->test_state_networks_not_needed[0][0] = true;
 
 					for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-						for (int s_index = 0; s_index < total_num_states; s_index++) {
+						for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 							if (!this->test_state_networks_not_needed[f_index][s_index]) {
 								this->test_state_networks[f_index][s_index] = new StateNetwork(this->curr_state_networks[f_index][s_index]);
 							} else {
@@ -214,12 +214,12 @@ void Fold::remove_outer_scope_end() {
 
 				this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
 
-				int curr_total_num_states = this->sum_inner_inputs
+				int num_inner_networks = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
 					+ this->num_sequence_local_states
 					+ this->num_sequence_input_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-					for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+					for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 						this->test_state_networks[f_index][s_index] = new StateNetwork(
 							this->curr_state_networks[f_index][s_index]);
 					}
@@ -267,15 +267,15 @@ void Fold::remove_outer_scope_from_load() {
 
 	this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
 
-	int curr_total_num_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
 
-	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(curr_total_num_states));
+	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(num_inner_networks));
 	this->test_score_networks = vector<StateNetwork*>(this->sequence_length);
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			this->test_state_networks[f_index][s_index] = new StateNetwork(
 				this->curr_state_networks[f_index][s_index]);
 		}

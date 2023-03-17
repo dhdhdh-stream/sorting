@@ -6,21 +6,30 @@ using namespace std;
 
 void Fold::add_to_clean() {
 	// initialize clean
-	int curr_total_num_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
+	int total_num_states = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_local_states
+		+ this->num_sequence_input_states
+		+ this->curr_num_new_outer_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		this->curr_state_networks_not_needed.push_back(vector<bool>(curr_total_num_states, false));
-		this->curr_state_not_needed_locally.push_back(vector<bool>(curr_total_num_states, false));
+		this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
+		this->curr_state_not_needed_locally.push_back(vector<bool>(total_num_states, false));
 		this->curr_num_states_cleared.push_back(0);
+
+		this->test_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
+		this->test_state_not_needed_locally.push_back(vector<bool>(total_num_states, false));
+		this->test_num_states_cleared.push_back(0);
 	}
 
 	if (this->curr_outer_state_networks.size() == 0) {
 		this->curr_num_new_outer_states = 0;
 		this->curr_starting_score_network->remove_new_outer();
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->curr_state_networks[f_index][s_index]->remove_new_outer();
 			}
 
@@ -40,7 +49,7 @@ void Fold::add_to_clean() {
 		// test_state_networks/test_score_networks previously cleared
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			this->test_state_networks.push_back(vector<StateNetwork*>());
-			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				if (!this->test_state_networks_not_needed[f_index][s_index]) {
 					this->test_state_networks[f_index].push_back(new StateNetwork(this->curr_state_networks[f_index][s_index]));
 				} else {
@@ -83,7 +92,7 @@ void Fold::add_to_clean() {
 		// test_state_networks/test_score_networks previously cleared
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			this->test_state_networks.push_back(vector<StateNetwork*>());
-			for (int s_index = 0; s_index < curr_total_num_states; s_index++) {
+			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(
 					this->curr_state_networks[f_index][s_index]));
 			}

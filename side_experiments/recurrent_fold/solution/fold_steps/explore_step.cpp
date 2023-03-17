@@ -321,23 +321,22 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 	vector<double> new_inner_state_errors(this->sum_inner_inputs+this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_errors(this->test_num_new_outer_states, 0.0);
 
-	double target_max_update;
-	if (this->state_iter <= 100000) {
-		target_max_update = 0.05;
-	} else if (this->state_iter <= 400000) {
-		target_max_update = 0.01;
-	} else {
-		target_max_update = 0.002;
-	}
-
 	for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
+		double score_network_target_max_update;
+		if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+			score_network_target_max_update = 0.05;
+		} else if (this->state_iter <= 400000) {
+			score_network_target_max_update = 0.01;
+		} else {
+			score_network_target_max_update = 0.002;
+		}
 		this->test_score_networks[f_index]->new_sequence_backprop(
 			target_val - predicted_score,
 			new_inner_state_errors,
 			local_state_errors,
 			input_errors,
 			new_outer_state_errors,
-			target_max_update,
+			score_network_target_max_update,
 			history->score_network_histories[f_index]);
 
 		predicted_score -= scale_factor*history->score_network_updates[f_index];
@@ -348,37 +347,62 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 					+ this->test_num_new_inner_states
 					+ this->num_sequence_local_states
 					+ i_index;
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 					input_errors[i_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][state_index]);
 			}
 			for (int l_index = this->num_sequence_local_states-1; l_index >= 0; l_index--) {
 				int state_index = this->sum_inner_inputs
 					+ this->test_num_new_inner_states
 					+ l_index;
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 					local_state_errors[l_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][state_index]);
 			}
 			for (int i_index = this->sum_inner_inputs+this->test_num_new_inner_states-1;
 					i_index >= this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index--) {
+				double state_network_target_max_update;
+				if ((this->state == FOLD_STATE_EXPLORE || (this->state == FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
+						&& this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 					new_inner_state_errors[i_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][i_index]);
 			}
 
@@ -406,13 +430,21 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 			}
 
 			for (int i_index = this->inner_input_start_indexes[f_index]+this->num_inner_inputs[f_index]-1; i_index >= 0; i_index--) {
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 					new_inner_state_errors[i_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][i_index]);
 			}
 		} else {
@@ -421,45 +453,78 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 					+ this->test_num_new_inner_states
 					+ this->num_sequence_local_states
 					+ i_index;
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 					input_errors[i_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][state_index]);
 			}
 			for (int l_index = this->num_sequence_local_states-1; l_index >= 0; l_index--) {
 				int state_index = this->sum_inner_inputs
 					+ this->test_num_new_inner_states
 					+ l_index;
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 					local_state_errors[l_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][state_index]);
 			}
 			for (int i_index = this->sum_inner_inputs+this->test_num_new_inner_states-1; i_index >= 0; i_index--) {
+				double state_network_target_max_update;
+				if ((this->state == FOLD_STATE_EXPLORE || (this->state == FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
+						&& this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
+				}
 				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 					new_inner_state_errors[i_index],
 					new_inner_state_errors,
 					local_state_errors,
 					input_errors,
 					new_outer_state_errors,
-					target_max_update,
+					state_network_target_max_update,
 					history->state_network_histories[f_index][i_index]);
 			}
 		}
 	}
 
+	double starting_score_network_target_max_update;
+	if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+		starting_score_network_target_max_update = 0.05;
+	} else if (this->state_iter <= 400000) {
+		starting_score_network_target_max_update = 0.01;
+	} else {
+		starting_score_network_target_max_update = 0.002;
+	}
 	this->test_starting_score_network->new_outer_backprop(
 		target_val - predicted_score,
 		new_outer_state_errors,
-		target_max_update,
+		starting_score_network_target_max_update,
 		history->starting_score_network_history);
 
 	predicted_score -= scale_factor*history->starting_score_update;
@@ -476,10 +541,19 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 	for (int n_index = (int)history->outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
 		for (int o_index = this->test_num_new_outer_states-1; o_index >= 0; o_index--) {
 			StateNetwork* state_network = history->outer_state_network_histories[n_index][o_index]->network;
+			double state_network_target_max_update;
+			if ((this->state == FOLD_STATE_EXPLORE || (this->state == FOLD_STATE_ADD_OUTER_STATE && o_index == this->test_num_new_outer_states-1))
+					&& this->state_iter <= 100000) {
+				state_network_target_max_update = 0.05;
+			} else if (this->state_iter <= 400000) {
+				state_network_target_max_update = 0.01;
+			} else {
+				state_network_target_max_update = 0.002;
+			}
 			state_network->new_outer_backprop(
 				new_outer_state_errors[o_index],
 				new_outer_state_errors,
-				target_max_update,
+				state_network_target_max_update,
 				history->outer_state_network_histories[n_index][o_index]);
 		}
 	}

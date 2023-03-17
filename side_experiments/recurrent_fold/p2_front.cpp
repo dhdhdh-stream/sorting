@@ -61,29 +61,56 @@ int main(int argc, char* argv[]) {
 		vector<vector<double>> flat_vals;
 		double target_val = 0.0;
 
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
+		if (rand()%5 == 0 && fold->state_iter < 200000) {
+			flat_vals.push_back(vector<double>{0.0});	// extra for ACTION_START
 
-		flat_vals.push_back(flat_vals[0]);
-		int first_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
-		int second_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int switch_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
-		int shared_val = rand()%2;
-		flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
-		flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			flat_vals.push_back(flat_vals[0]);
+			int first_val = 0;
+			flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+			int second_val = 0;
+			flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
+			int switch_val = 0;
+			flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
+			int shared_val = 0;
+			flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
+			flat_vals.push_back(vector<double>{0.0});
 
-		if (switch_val == 0) {
-			if ((first_val+shared_val)%2 == 0) {
-				target_val = 1.0;
+			if (switch_val == 0) {
+				if ((first_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
 			} else {
-				target_val = 0.0;
+				target_val = -1.0;
 			}
 		} else {
-			target_val = -1.0;
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});	// extra for ACTION_START
+
+			flat_vals.push_back(flat_vals[0]);
+			int first_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(first_val*2-1)});
+			int second_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(second_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			int switch_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(switch_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+			int shared_val = rand()%2;
+			flat_vals.push_back(vector<double>{(double)(shared_val*2-1)});
+			flat_vals.push_back(vector<double>{(double)(rand()%2*2-1)});
+
+			if (switch_val == 0) {
+				if ((first_val+shared_val)%2 == 0) {
+					target_val = 1.0;
+				} else {
+					target_val = 0.0;
+				}
+			} else {
+				target_val = -1.0;
+			}
 		}
 
 		vector<double> input_vals;
