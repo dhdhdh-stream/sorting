@@ -17,8 +17,13 @@ public:
 	int num_input_states;	// also becomes output
 
 	bool is_loop;
-	StateNetwork* continue_network;
-	StateNetwork* halt_network;
+	std::vector<bool> starting_state_network_target_is_local;
+	std::vector<int> starting_state_network_target_indexes;
+	std::vector<StateNetwork*> starting_state_networks;
+	StateNetwork* continue_score_network;
+	StateNetwork* continue_misguess_network;
+	StateNetwork* halt_score_network;
+	StateNetwork* halt_misguess_network;
 
 	std::vector<AbstractNode*> nodes;
 	// TODO: for now, on explore replace, update connection, but leave original nodes as is, but think about garbage collection

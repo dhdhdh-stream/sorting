@@ -733,4 +733,24 @@ FoldHistory::~FoldHistory() {
 			delete this->score_network_histories[f_index];
 		}
 	}
+
+	for (int f_index = 0; f_index < (int)this->inner_state_network_histories.size(); f_index++) {
+		for (int n_index = 0; n_index < (int)this->inner_state_network_histories[f_index].size(); n_index++) {
+			for (int s_index = 0; s_index < (int)this->inner_state_network_histories[f_index][n_index].size(); s_index++) {
+				if (this->inner_state_network_histories[f_index][n_index][s_index] != NULL) {
+					delete this->inner_state_network_histories[f_index][n_index][s_index];
+				}
+			}
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)this->test_inner_state_network_histories.size(); f_index++) {
+		for (int n_index = 0; n_index < (int)this->test_inner_state_network_histories[f_index].size(); n_index++) {
+			for (int s_index = 0; s_index < (int)this->test_inner_state_network_histories[f_index][n_index].size(); s_index++) {
+				if (this->test_inner_state_network_histories[f_index][n_index][s_index] != NULL) {
+					delete this->test_inner_state_network_histories[f_index][n_index][s_index];
+				}
+			}
+		}
+	}
 }

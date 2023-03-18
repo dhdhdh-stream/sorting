@@ -5,8 +5,6 @@
 using namespace std;
 
 void Fold::clear_inner_state_end() {
-	cout << "this->test_replace_average_misguess: " << this->test_replace_average_misguess << endl;
-
 	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
 		cout << "CLEAR_INNER_STATE success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;

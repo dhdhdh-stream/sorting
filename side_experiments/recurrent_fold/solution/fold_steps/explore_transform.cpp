@@ -79,6 +79,8 @@ void Fold::explore_end() {
 		this->test_state_networks.clear();
 		this->curr_score_networks = this->test_score_networks;
 		this->test_score_networks.clear();
+		this->curr_inner_state_networks = this->test_inner_state_networks;
+		this->test_inner_state_networks.clear();
 
 		this->curr_branch_average_score = this->test_branch_average_score;
 		this->test_branch_average_score = 0.0;
@@ -141,6 +143,18 @@ void Fold::explore_end() {
 				this->test_score_networks.push_back(new StateNetwork(this->curr_score_networks[f_index]));
 				this->test_score_networks[f_index]->add_new_outer();
 			}
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+					it != this->curr_inner_state_networks.end(); it++) {
+				Scope* inner_scope = solution->scopes[it->first];
+				this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() != 0) {
+						// this->curr_num_new_inner_states = 1
+						this->test_inner_state_networks[it->first][n_index].push_back(
+							new StateNetwork(it->second[n_index][0]));
+					}
+				}
+			}
 
 			cout << "starting ADD_OUTER_STATE " << this->test_num_new_outer_states << endl;
 
@@ -173,6 +187,16 @@ void Fold::explore_end() {
 
 			delete this->test_score_networks[f_index];
 		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_inner_state_networks.begin();
+				it != this->test_inner_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					delete it->second[n_index][s_index];
+				}
+			}
+		}
+		this->test_inner_state_networks.clear();
 
 		this->state = FOLD_STATE_EXPLORE_FAIL;
 	}

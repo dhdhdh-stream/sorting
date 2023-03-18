@@ -25,6 +25,7 @@ void Fold::add_to_clean() {
 		this->test_num_states_cleared.push_back(0);
 	}
 
+	// Note: don't adjust context even if outer state not needed, as trained within specific context
 	if (this->curr_outer_state_networks.size() == 0) {
 		this->curr_num_new_outer_states = 0;
 		this->curr_starting_score_network->remove_new_outer();

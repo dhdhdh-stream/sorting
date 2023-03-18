@@ -1,9 +1,5 @@
 // TODO: zero train by tracking separate set of state, selecting 1 per run randomly forward
 
-// TODO: for loops, because needs lots of 0, 1, 2, so only loop from existing?
-// probably add like loop fold that can still add state
-// state used to setup halt and continue networks
-
 #ifndef FOLD_H
 #define FOLD_H
 
@@ -19,8 +15,6 @@ const int FOLD_STATE_EXPLORE = 0;	// with 1 new outer, 1 new local
 
 const int FOLD_STATE_EXPLORE_FAIL = 1;
 
-// TODO: consider adding input even if explore fail
-
 const int FOLD_STATE_ADD_OUTER_STATE = 2;
 const int FOLD_STATE_ADD_INNER_STATE = 3;
 
@@ -30,13 +24,16 @@ const int FOLD_STATE_EXPLORE_DONE = 4;
 
 const int FOLD_STATE_REMOVE_OUTER_SCOPE = 5;
 // don't worry about removing outer states individually as will have no impact on scopes
-const int FOLD_STATE_REMOVE_OUTER_NETWORK = 6;
+const int FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK = 6;
 
-const int FOLD_STATE_REMOVE_INNER_NETWORK = 7;
-const int FOLD_STATE_REMOVE_INNER_STATE = 8;
-const int FOLD_STATE_CLEAR_INNER_STATE = 9;
+const int FOLD_STATE_REMOVE_INNER_SCOPE = 7;
+const int FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK = 8;
 
-const int FOLD_STATE_DONE = 10;
+const int FOLD_STATE_REMOVE_INNER_NETWORK = 9;
+const int FOLD_STATE_REMOVE_INNER_STATE = 10;
+const int FOLD_STATE_CLEAR_INNER_STATE = 11;
+
+const int FOLD_STATE_DONE = 12;
 
 const int FOLD_RESULT_FAIL = 0;
 const int FOLD_RESULT_BRANCH = 1;
@@ -83,10 +80,12 @@ public:
 	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_inner_state_networks;
 
 	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;
 	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
+	std::map<int, std::vector<std::vector<StateNetwork*>>> test_inner_state_networks;
 
 	int existing_sequence_length;
 	double* existing_average_score;
@@ -123,8 +122,20 @@ public:
 	std::map<int, std::vector<std::vector<bool>>> curr_outer_state_networks_not_needed;
 	std::map<int, std::vector<std::vector<bool>>> test_outer_state_networks_not_needed;
 
-	int clean_inner_step_index;
+	int clean_inner_scope_index;
+	std::set<int> curr_inner_scopes_needed;
+	std::set<std::pair<int, int>> curr_inner_contexts_needed;
+	std::set<int> reverse_test_inner_scopes_needed;
+	std::set<std::pair<int, int>> reverse_test_inner_contexts_needed;
+
+	int clean_inner_node_index;
 	int clean_inner_state_index;
+	std::map<int, std::vector<std::vector<bool>>> curr_inner_state_networks_not_needed;
+	std::map<int, std::vector<std::vector<bool>>> test_inner_state_networks_not_needed;
+	std::vector<std::vector<bool>> curr_state_networks_needed_inner;
+	std::vector<std::vector<bool>> test_state_networks_needed_inner;
+
+	int clean_inner_step_index;
 
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
@@ -314,6 +325,9 @@ public:
 	std::vector<ScopeHistory*> inner_scope_histories;
 	std::vector<double> score_network_updates;
 	std::vector<StateNetworkHistory*> score_network_histories;
+
+	std::vector<std::vector<std::vector<StateNetworkHistory*>>> inner_state_network_histories;
+	std::vector<std::vector<std::vector<StateNetworkHistory*>>> test_inner_state_network_histories;
 
 	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 

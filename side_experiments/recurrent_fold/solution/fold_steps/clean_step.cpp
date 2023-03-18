@@ -771,9 +771,6 @@ void Fold::backprop(vector<double>& local_state_errors,
 		//   - ideally, prior score network should already account for fold
 		//   - even if doesn't lead to ideal results, would just need to wait until fold completes
 	} else {
-		// temporary
-		this->test_replace_average_misguess = 0.9999*this->test_replace_average_misguess + 0.0001*final_misguess;
-
 		if (history->state_iter_snapshot <= this->state_iter) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 				this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(

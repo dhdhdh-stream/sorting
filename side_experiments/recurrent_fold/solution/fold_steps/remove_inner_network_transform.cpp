@@ -5,8 +5,6 @@
 using namespace std;
 
 void Fold::remove_inner_network_end() {
-	cout << "this->test_replace_average_misguess: " << this->test_replace_average_misguess << endl;
-
 	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
 		cout << "REMOVE_INNER_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;
