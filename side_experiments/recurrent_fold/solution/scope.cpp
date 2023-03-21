@@ -18,14 +18,18 @@ using namespace std;
 Scope::Scope(int num_local_states,
 			 int num_input_states,
 			 bool is_loop,
-			 StateNetwork* continue_network,
-			 StateNetwork* halt_network,
+			 StateNetwork* continue_score_network,
+			 StateNetwork* continue_misguess_network,
+			 StateNetwork* halt_score_network,
+			 StateNetwork* halt_misguess_network,
 			 vector<AbstractNode*> nodes) {
 	this->num_local_states = num_local_states;
 	this->num_input_states = num_input_states;
 	this->is_loop = is_loop;
-	this->continue_network = continue_network;
-	this->halt_network = halt_network;
+	this->continue_score_network = continue_score_network;
+	this->continue_misguess_network = continue_misguess_network;
+	this->halt_score_network = halt_score_network;
+	this->halt_misguess_network = halt_misguess_network;
 	this->nodes = nodes;
 
 	for (int n_index = 0; n_index < (int)this->nodes.size()-1; n_index++) {
@@ -59,24 +63,35 @@ Scope::Scope(ifstream& input_file) {
 	getline(input_file, num_input_states_line);
 	this->num_input_states = stoi(num_input_states_line);
 
-	// TODO: loops
 	string is_loop_line;
 	getline(input_file, is_loop_line);
 	this->is_loop = stoi(is_loop_line);
 
 	if (this->is_loop) {
-		ifstream continue_network_save_file;
-		continue_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue.txt");
-		this->continue_network = new StateNetwork(continue_network_save_file);
-		continue_network_save_file.close();
+		ifstream continue_score_network_save_file;
+		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
+		this->continue_score_network = new StateNetwork(continue_score_network_save_file);
+		continue_score_network_save_file.close();
 
-		ifstream halt_network_save_file;
-		halt_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt.txt");
-		this->halt_network = new StateNetwork(halt_network_save_file);
-		halt_network_save_file.close();
+		ifstream continue_misguess_network_save_file;
+		continue_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_misguess.txt");
+		this->continue_misguess_network = new StateNetwork(continue_misguess_network_save_file);
+		continue_misguess_network_save_file.close();
+
+		ifstream halt_score_network_save_file;
+		halt_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_score.txt");
+		this->halt_score_network = new StateNetwork(halt_score_network_save_file);
+		halt_score_network_save_file.close();
+
+		ifstream halt_misguess_network_save_file;
+		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
+		this->halt_misguess_network = new StateNetwork(halt_misguess_network_save_file);
+		halt_misguess_network_save_file.close();
 	} else {
-		this->continue_network = NULL;
-		this->halt_network = NULL;
+		this->continue_score_network = NULL;
+		this->continue_misguess_network = NULL;
+		this->halt_score_network = NULL;
+		this->halt_misguess_network = NULL;
 	}
 
 	string num_nodes_line;
@@ -126,12 +141,20 @@ Scope::Scope(ifstream& input_file) {
 }
 
 Scope::~Scope() {
-	if (this->continue_network != NULL) {
-		delete this->continue_network;
+	if (this->continue_score_network != NULL) {
+		delete this->continue_score_network;
 	}
 
-	if (this->halt_network != NULL) {
-		delete this->halt_network;
+	if (this->continue_misguess_network != NULL) {
+		delete this->continue_misguess_network;
+	}
+
+	if (this->halt_score_network != NULL) {
+		delete this->halt_score_network;
+	}
+
+	if (this->halt_misguess_network != NULL) {
+		delete this->halt_misguess_network;
 	}
 
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
@@ -614,8 +637,7 @@ void Scope::backprop(vector<double>& input_errors,
 					branch_score_network->new_outer_to_input();
 				}
 
-				// for now, always add new_outer to starting_scope_id
-				// TODO: find good way to remove need to do so
+				// new_outer_state_size may be 0
 				solution->scopes[starting_scope_id]->new_outer_to_local(new_outer_state_size);
 
 				for (set<int>::iterator it = fold_score_node->fold->curr_outer_scopes_needed.begin();
@@ -673,6 +695,44 @@ void Scope::backprop(vector<double>& input_errors,
 
 			Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[h_index])->fold_history->fold;
 			if (fold->state == FOLD_STATE_DONE) {
+				// update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
+						it != fold->curr_inner_state_networks.end(); it++) {
+					Scope* scope = solution->scopes[it->first];
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						if (it->second[n_index].size() > 0) {
+							ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+							for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+								if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+									action_node->state_network_target_is_local.push_back(false);
+									action_node->state_network_target_indexes.push_back(scope->num_input_states+i_index);
+									action_node->state_networks.push_back(it->second[n_index][i_index]);
+									action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
+																						   scope->num_input_states);
+									action_node->state_networks.back()->new_outer_to_input();
+								}
+							}
+						}
+					}
+				}
+
+				for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
+						it != fold->curr_inner_scopes_needed.end(); it++) {
+					solution->scopes[*it]->new_outer_to_input(fold->curr_num_new_inner_states);
+				}
+
+				for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
+						it != fold->curr_inner_contexts_needed.end(); it++) {
+					ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+					Scope* outer_scope = solution->scopes[(*it).first];
+					Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+					for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+						scope_node->inner_input_is_local.push_back(false);
+						scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+						scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+					}
+				}
+
 				vector<AbstractNode*> new_nodes;
 				fold_to_nodes(this,
 							  fold,
@@ -888,15 +948,25 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->is_loop << endl;
 
 	if (this->is_loop) {
-		ofstream continue_network_save_file;
-		continue_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue.txt");
-		this->continue_network->save(continue_network_save_file);
-		continue_network_save_file.close();
+		ofstream continue_score_network_save_file;
+		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
+		this->continue_score_network->save(continue_score_network_save_file);
+		continue_score_network_save_file.close();
 
-		ofstream halt_network_save_file;
-		halt_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt.txt");
-		this->halt_network->save(halt_network_save_file);
-		halt_network_save_file.close();
+		ofstream continue_misguess_network_save_file;
+		continue_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_misguess.txt");
+		this->continue_misguess_network->save(continue_misguess_network_save_file);
+		continue_misguess_network_save_file.close();
+
+		ofstream halt_score_network_save_file;
+		halt_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_score.txt");
+		this->halt_score_network->save(halt_score_network_save_file);
+		halt_score_network_save_file.close();
+
+		ofstream halt_misguess_network_save_file;
+		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
+		this->halt_misguess_network->save(halt_misguess_network_save_file);
+		halt_misguess_network_save_file.close();
 	}
 
 	output_file << this->nodes.size() << endl;

@@ -166,6 +166,7 @@ void Fold::explore_inner_scope_activate_helper(vector<double>& new_state_vals,	/
 												curr_scope_context,
 												curr_node_context,
 												run_helper,
+												step_index,
 												history);
 
 			curr_node_context.back() = -1;
@@ -489,7 +490,7 @@ void Fold::explore_backprop(vector<double>& local_state_errors,
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-			
+
 			vector<double> new_state_errors;
 			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
 				new_state_errors.push_back(new_inner_state_errors[this->sum_inner_inputs+i_index]);

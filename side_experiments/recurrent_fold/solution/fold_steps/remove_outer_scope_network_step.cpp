@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void Fold::remove_outer_network_score_activate_helper(
+void Fold::remove_outer_scope_network_score_activate_helper(
 		vector<double>& new_outer_state_vals,
 		vector<double>& test_new_outer_state_vals,
 		ScopeHistory* scope_history,
@@ -78,13 +78,14 @@ void Fold::remove_outer_network_score_activate_helper(
 			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
 
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-			remove_outer_network_score_activate_helper(new_outer_state_vals,
-													   test_new_outer_state_vals,
-													   scope_node_history->inner_scope_history,
-													   curr_scope_context,
-													   curr_node_context,
-													   run_helper,
-													   history);
+			remove_outer_scope_network_score_activate_helper(
+				new_outer_state_vals,
+				test_new_outer_state_vals,
+				scope_node_history->inner_scope_history,
+				curr_scope_context,
+				curr_node_context,
+				run_helper,
+				history);
 
 			curr_node_context.back() = -1;
 		}
@@ -94,7 +95,7 @@ void Fold::remove_outer_network_score_activate_helper(
 	curr_node_context.pop_back();
 }
 
-void Fold::remove_outer_network_score_activate(
+void Fold::remove_outer_scope_network_score_activate(
 		vector<double>& local_state_vals,
 		vector<double>& input_vals,
 		vector<ScopeHistory*>& context_histories,
@@ -110,13 +111,14 @@ void Fold::remove_outer_network_score_activate(
 	ScopeHistory* scope_history = context_histories[context_histories.size() - this->scope_context.size()];
 	vector<int> curr_scope_context;
 	vector<int> curr_node_context;
-	remove_outer_network_score_activate_helper(new_outer_state_vals,
-											   test_new_outer_state_vals,
-											   scope_history,
-											   curr_scope_context,
-											   curr_node_context,
-											   run_helper,
-											   history);
+	remove_outer_scope_network_score_activate_helper(
+		new_outer_state_vals,
+		test_new_outer_state_vals,
+		scope_history,
+		curr_scope_context,
+		curr_node_context,
+		run_helper,
+		history);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		vector<double> test_new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
@@ -164,7 +166,74 @@ void Fold::remove_outer_network_score_activate(
 	// modify predicted_score if path taken outside
 }
 
-void Fold::remove_outer_network_sequence_activate(
+void Fold::remove_outer_scope_network_inner_scope_activate_helper(
+		vector<double>& new_state_vals,
+		ScopeHistory* scope_history,
+		vector<int>& curr_scope_context,
+		vector<int>& curr_node_context,
+		RunHelper& run_helper,
+		int step_index,
+		FoldHistory* history) {
+	int scope_id = scope_history->scope->id;
+	curr_scope_context.push_back(scope_id);
+	curr_node_context.push_back(-1);
+
+	map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.find(scope_id);
+
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
+			if (it != this->curr_inner_state_networks.end()) {
+				int node_id = scope_history->node_histories[h_index]->scope_index;
+				if (node_id < (int)it->second.size()
+						&& it->second[node_id].size() > 0) {
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
+					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						history->inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
+						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
+							StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
+							it->second[node_id][s_index]->new_outer_activate(
+								action_node_history->obs_snapshot,
+								action_node_history->ending_local_state_snapshot,
+								action_node_history->ending_input_state_snapshot,
+								new_state_vals,
+								state_network_history);
+							history->inner_state_network_histories[step_index].back().push_back(state_network_history);
+							new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+						}
+					} else {
+						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
+							it->second[node_id][s_index]->new_outer_activate(
+								action_node_history->obs_snapshot,
+								action_node_history->ending_local_state_snapshot,
+								action_node_history->ending_input_state_snapshot,
+								new_state_vals);
+							new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+						}
+					}
+				}
+			}
+		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
+
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
+			remove_outer_scope_network_inner_scope_activate_helper(
+				new_state_vals,
+				scope_node_history->inner_scope_history,
+				curr_scope_context,
+				curr_node_context,
+				run_helper,
+				step_index,
+				history);
+
+			curr_node_context.back() = -1;
+		}
+	}
+
+	curr_scope_context.pop_back();
+	curr_node_context.pop_back();
+}
+
+void Fold::remove_outer_scope_network_sequence_activate(
 		vector<double>& local_state_vals,
 		vector<double>& input_vals,
 		vector<vector<double>>& flat_vals,
@@ -248,6 +317,22 @@ void Fold::remove_outer_network_sequence_activate(
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
+			}
+
+			vector<double> new_state_vals;
+			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
+				new_state_vals.push_back(new_inner_state_vals[this->sum_inner_inputs+i_index]);
+			}
+			remove_outer_scope_network_inner_scope_activate_helper(
+				new_state_vals,
+				scope_history,
+				inner_scope_context,	// empty again
+				inner_node_context,		// empty again
+				run_helper,
+				f_index,
+				history);
+			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
+				new_inner_state_vals[this->sum_inner_inputs+i_index] = new_state_vals[i_index];
 			}
 
 			// update back state so have chance to compress front after
@@ -406,4 +491,4 @@ void Fold::remove_outer_network_sequence_activate(
 	}
 }
 
-// FOLD_STATE_REMOVE_OUTER_NETWORK backprop generic
+// FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK backprop generic

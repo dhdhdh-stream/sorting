@@ -256,6 +256,22 @@ void fold_to_nodes(Scope* parent_scope,
 						inner_input_target_indexes.push_back((int)inner_input_target_indexes.size());	// 0 to num_inner_inputs
 					}
 
+					// inner scopes already updated
+					if (fold->curr_inner_scopes_needed.find(inner_scope_id) != fold->curr_inner_scopes_needed.end()) {
+						Scope* inner_scope = solution->scopes[inner_scope_id];
+						for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+							if (!fold->curr_state_not_needed_locally[f_index][fold->sum_inner_inputs+i_index]) {
+								if (fold->sum_inner_inputs+i_index < parent_lowest_layer) {
+									inner_input_is_local.push_back(true);
+								} else {
+									inner_input_is_local.push_back(false);
+								}
+								inner_input_indexes.push_back(state_index_mapping[fold->sum_inner_inputs+i_index]);
+								inner_input_target_indexes.push_back(inner_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+							}
+						}
+					}
+
 					vector<bool> post_state_network_target_is_local;
 					vector<int> post_state_network_target_indexes;
 					vector<StateNetwork*> post_state_networks;
@@ -363,6 +379,8 @@ void fold_to_nodes(Scope* parent_scope,
 		Scope* new_scope = new Scope(new_num_local_states,
 									 new_num_input_states,
 									 false,
+									 NULL,
+									 NULL,
 									 NULL,
 									 NULL,
 									 new_nodes);

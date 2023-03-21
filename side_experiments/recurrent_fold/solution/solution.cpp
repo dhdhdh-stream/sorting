@@ -23,6 +23,8 @@ Solution::Solution() {
 									 false,
 									 NULL,
 									 NULL,
+									 NULL,
+									 NULL,
 									 vector<AbstractNode*>{starting_node}));
 	this->scopes[0]->id = 0;
 

@@ -26,13 +26,14 @@ public:
 	StateNetwork* halt_misguess_network;
 
 	std::vector<AbstractNode*> nodes;
-	// TODO: for now, on explore replace, update connection, but leave original nodes as is, but think about garbage collection
 
 	Scope(int num_local_states,
 		  int num_input_states,
 		  bool is_loop,
-		  StateNetwork* continue_network,
-		  StateNetwork* halt_network,
+		  StateNetwork* continue_score_network,
+		  StateNetwork* continue_misguess_network,
+		  StateNetwork* halt_score_network,
+		  StateNetwork* halt_misguess_network,
 		  std::vector<AbstractNode*> nodes);
 	Scope(std::ifstream& input_file);
 	~Scope();

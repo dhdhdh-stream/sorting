@@ -132,8 +132,6 @@ public:
 	int clean_inner_state_index;
 	std::map<int, std::vector<std::vector<bool>>> curr_inner_state_networks_not_needed;
 	std::map<int, std::vector<std::vector<bool>>> test_inner_state_networks_not_needed;
-	std::vector<std::vector<bool>> curr_state_networks_needed_inner;
-	std::vector<std::vector<bool>> test_state_networks_needed_inner;
 
 	int clean_inner_step_index;
 
@@ -177,6 +175,13 @@ public:
 								std::vector<ScopeHistory*>& context_histories,
 								RunHelper& run_helper,
 								FoldHistory* history);
+	void explore_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+											 ScopeHistory* scope_history,
+											 std::vector<int>& curr_scope_context,
+											 std::vector<int>& curr_node_context,
+											 RunHelper& run_helper,
+											 int step_index,
+											 FoldHistory* history);
 	void explore_sequence_activate(std::vector<double>& local_state_vals,
 								   std::vector<double>& input_vals,
 								   std::vector<std::vector<double>>& flat_vals,
@@ -236,6 +241,14 @@ public:
 										   std::vector<ScopeHistory*>& context_histories,
 										   RunHelper& run_helper,
 										   FoldHistory* history);
+	void remove_outer_scope_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+														std::vector<double>& test_new_state_vals,
+														ScopeHistory* scope_history,
+														std::vector<int>& curr_scope_context,
+														std::vector<int>& curr_node_context,
+														RunHelper& run_helper,
+														int step_index,
+														FoldHistory* history);
 	void remove_outer_scope_sequence_activate(std::vector<double>& local_state_vals,
 											  std::vector<double>& input_vals,
 											  std::vector<std::vector<double>>& flat_vals,
@@ -247,28 +260,79 @@ public:
 
 	void remove_outer_scope_end();
 
-	void remove_outer_network_score_activate_helper(std::vector<double>& new_outer_state_vals,
-													std::vector<double>& test_new_outer_state_vals,
-													ScopeHistory* scope_history,
-													std::vector<int>& curr_scope_context,
-													std::vector<int>& curr_node_context,
-													RunHelper& run_helper,
-													FoldHistory* history);
-	void remove_outer_network_score_activate(std::vector<double>& local_state_vals,
-											 std::vector<double>& input_vals,
-											 std::vector<ScopeHistory*>& context_histories,
-											 RunHelper& run_helper,
-											 FoldHistory* history);
-	void remove_outer_network_sequence_activate(std::vector<double>& local_state_vals,
-												std::vector<double>& input_vals,
-												std::vector<std::vector<double>>& flat_vals,
-												double& predicted_score,
-												double& scale_factor,
-												double& sum_impact,
-												RunHelper& run_helper,
-												FoldHistory* history);
+	void remove_outer_scope_network_score_activate_helper(
+		std::vector<double>& new_outer_state_vals,
+		std::vector<double>& test_new_outer_state_vals,
+		ScopeHistory* scope_history,
+		std::vector<int>& curr_scope_context,
+		std::vector<int>& curr_node_context,
+		RunHelper& run_helper,
+		FoldHistory* history);
+	void remove_outer_scope_network_score_activate(
+		std::vector<double>& local_state_vals,
+		std::vector<double>& input_vals,
+		std::vector<ScopeHistory*>& context_histories,
+		RunHelper& run_helper,
+		FoldHistory* history);
+	void remove_outer_scope_network_inner_scope_activate_helper(
+		std::vector<double>& new_state_vals,
+		ScopeHistory* scope_history,
+		std::vector<int>& curr_scope_context,
+		std::vector<int>& curr_node_context,
+		RunHelper& run_helper,
+		int step_index,
+		FoldHistory* history);
+	void remove_outer_scope_network_sequence_activate(
+		std::vector<double>& local_state_vals,
+		std::vector<double>& input_vals,
+		std::vector<std::vector<double>>& flat_vals,
+		double& predicted_score,
+		double& scale_factor,
+		double& sum_impact,
+		RunHelper& run_helper,
+		FoldHistory* history);
 
-	void remove_outer_network_end();
+	void remove_outer_scope_network_end();
+
+	void remove_inner_scope_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+														std::vector<double>& test_new_state_vals,
+														ScopeHistory* scope_history,
+														std::vector<int>& curr_scope_context,
+														std::vector<int>& curr_node_context,
+														RunHelper& run_helper,
+														int step_index,
+														FoldHistory* history);
+	void remove_inner_scope_sequence_activate(std::vector<double>& local_state_vals,
+											  std::vector<double>& input_vals,
+											  std::vector<std::vector<double>>& flat_vals,
+											  double& predicted_score,
+											  double& scale_factor,
+											  double& sum_impact,
+											  RunHelper& run_helper,
+											  FoldHistory* history);
+
+	void remove_inner_scope_end();
+
+	void remove_inner_scope_network_inner_scope_activate_helper(
+		std::vector<double>& new_state_vals,
+		std::vector<double>& test_new_state_vals,
+		ScopeHistory* scope_history,
+		std::vector<int>& curr_scope_context,
+		std::vector<int>& curr_node_context,
+		RunHelper& run_helper,
+		int step_index,
+		FoldHistory* history);
+	void remove_inner_scope_network_sequence_activate(
+		std::vector<double>& local_state_vals,
+		std::vector<double>& input_vals,
+		std::vector<std::vector<double>>& flat_vals,
+		double& predicted_score,
+		double& scale_factor,
+		double& sum_impact,
+		RunHelper& run_helper,
+		FoldHistory* history);
+
+	void remove_inner_scope_network_end();
 
 	void clean_score_activate_helper(std::vector<double>& new_outer_state_vals,
 									 ScopeHistory* scope_history,
@@ -281,6 +345,14 @@ public:
 							  std::vector<ScopeHistory*> context_histories,
 							  RunHelper& run_helper,
 							  FoldHistory* history);
+	void clean_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+										   std::vector<double>& test_new_state_vals,
+										   ScopeHistory* scope_history,
+										   std::vector<int>& curr_scope_context,
+										   std::vector<int>& curr_node_context,
+										   RunHelper& run_helper,
+										   int step_index,
+										   FoldHistory* history);
 	void clean_sequence_activate(std::vector<double>& local_state_vals,
 								 std::vector<double>& input_vals,
 								 std::vector<std::vector<double>>& flat_vals,
@@ -299,7 +371,9 @@ public:
 			  int scope_index);
 
 	void remove_outer_scope_from_load();
-	void remove_outer_network_from_load();
+	void remove_outer_scope_network_from_load();
+	void remove_inner_scope_from_load();
+	void remove_inner_scope_network_from_load();
 	void remove_inner_network_from_load();
 	void remove_inner_state_from_load();
 	void clear_inner_state_from_load();

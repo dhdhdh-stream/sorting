@@ -296,13 +296,105 @@ Fold::Fold(ifstream& input_file,
 	getline(input_file, num_new_inner_states_line);
 	this->curr_num_new_inner_states = stoi(num_new_inner_states_line);
 
-	string clean_inner_step_index_line;
-	getline(input_file, clean_inner_step_index_line);
-	this->clean_inner_step_index = stoi(clean_inner_step_index_line);
+	string inner_state_networks_not_needed_size_line;
+	getline(input_file, inner_state_networks_not_needed_size_line);
+	int inner_state_networks_not_needed_size = stoi(inner_state_networks_not_needed_size_line);
+	for (int s_index = 0; s_index < inner_state_networks_not_needed_size; s_index++) {
+		string inner_scope_id_line;
+		getline(input_file, inner_scope_id_line);
+		int inner_scope_id = stoi(inner_scope_id_line);
+
+		this->curr_inner_state_networks_not_needed.insert({inner_scope_id, vector<vector<bool>>()});
+
+		string num_nodes_line;
+		getline(input_file, num_nodes_line);
+		int num_nodes = stoi(num_nodes_line);
+		for (int n_index = 0; n_index < num_nodes; n_index++) {
+			this->curr_inner_state_networks_not_needed[inner_scope_id].push_back(vector<bool>());
+
+			string num_states_line;
+			getline(input_file, num_states_line);
+			int num_states = stoi(num_states_line);
+			for (int s_index = 0; s_index < num_states; s_index++) {
+				string is_not_needed_line;
+				getline(input_file, is_not_needed_line);
+				this->curr_inner_state_networks_not_needed[inner_scope_id].back().push_back(stoi(is_not_needed_line));
+			}
+		}
+	}
+
+	string inner_state_networks_size_line;
+	getline(input_file, inner_state_networks_size_line);
+	int inner_state_networks_size = stoi(inner_state_networks_size_line);
+	for (int s_index = 0; s_index < inner_state_networks_size; s_index++) {
+		string inner_scope_id_line;
+		getline(input_file, inner_scope_id_line);
+		int inner_scope_id = stoi(inner_scope_id_line);
+
+		this->curr_inner_state_networks.insert({inner_scope_id, vector<vector<StateNetwork*>>()});
+
+		string num_nodes_line;
+		getline(input_file, num_nodes_line);
+		int num_nodes = stoi(num_nodes_line);
+		for (int n_index = 0; n_index < num_nodes; n_index++) {
+			this->curr_inner_state_networks[inner_scope_id].push_back(vector<StateNetwork*>());
+
+			string num_states_line;
+			getline(input_file, num_states_line);
+			int num_states = stoi(num_states_line);
+			for (int s_index = 0; s_index < num_states; s_index++) {
+				if (this->curr_inner_state_networks_not_needed.size() > 0	// may not be initialized
+						&& this->curr_inner_state_networks_not_needed[inner_scope_id][n_index][s_index]) {
+					this->curr_inner_state_networks[inner_scope_id].back().push_back(NULL);
+				} else {
+					ifstream inner_state_network_save_file;
+					inner_state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_inner_state_" + to_string(inner_scope_id) + "_" + to_string(n_index) + "_" + to_string(s_index) + ".txt");
+					this->curr_inner_state_networks[inner_scope_id].back().push_back(new StateNetwork(inner_state_network_save_file));
+					inner_state_network_save_file.close();
+				}
+			}
+		}
+	}
+
+	string clean_inner_scope_index_line;
+	getline(input_file, clean_inner_scope_index_line);
+	this->clean_inner_scope_index = stoi(clean_inner_scope_index_line);
+
+	string inner_scopes_needed_size_line;
+	getline(input_file, inner_scopes_needed_size_line);
+	int inner_scopes_needed_size = stoi(inner_scopes_needed_size_line);
+	for (int s_index = 0; s_index < inner_scopes_needed_size; s_index++) {
+		string inner_scope_id_line;
+		getline(input_file, inner_scope_id_line);
+		this->curr_inner_scopes_needed.insert(stoi(inner_scope_id_line));
+	}
+
+	string inner_contexts_needed_size_line;
+	getline(input_file, inner_contexts_needed_size_line);
+	int inner_contexts_needed_size = stoi(inner_contexts_needed_size_line);
+	for (int c_index = 0; c_index < inner_contexts_needed_size; c_index++) {
+		string inner_scope_id_line;
+		getline(input_file, inner_scope_id_line);
+		int inner_scope_id = stoi(inner_scope_id_line);
+
+		string inner_node_id_line;
+		getline(input_file, inner_node_id_line);
+		int inner_node_id = stoi(inner_node_id_line);
+
+		this->curr_inner_contexts_needed.insert({inner_scope_id, inner_node_id});
+	}
+
+	string clean_inner_node_index_line;
+	getline(input_file, clean_inner_node_index_line);
+	this->clean_inner_node_index = stoi(clean_inner_node_index_line);
 
 	string clean_inner_state_index_line;
 	getline(input_file, clean_inner_state_index_line);
 	this->clean_inner_state_index = stoi(clean_inner_state_index_line);
+
+	string clean_inner_step_index_line;
+	getline(input_file, clean_inner_step_index_line);
+	this->clean_inner_step_index = stoi(clean_inner_step_index_line);
 
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
@@ -356,8 +448,12 @@ Fold::Fold(ifstream& input_file,
 
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_from_load();
-	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		remove_outer_network_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
+		remove_outer_scope_network_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
+		remove_inner_scope_from_load();
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
+		remove_inner_scope_network_from_load();
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		remove_inner_network_from_load();
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
@@ -383,12 +479,24 @@ void Fold::score_activate(vector<double>& local_state_vals,
 										  context_histories,
 										  run_helper,
 										  history);
-	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		remove_outer_network_score_activate(local_state_vals,
-											input_vals,
-											context_histories,
-											run_helper,
-											history);
+	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
+		remove_outer_scope_network_score_activate(local_state_vals,
+												  input_vals,
+												  context_histories,
+												  run_helper,
+												  history);
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
+		clean_score_activate(local_state_vals,
+							 input_vals,
+							 context_histories,
+							 run_helper,
+							 history);
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
+		clean_score_activate(local_state_vals,
+							 input_vals,
+							 context_histories,
+							 run_helper,
+							 history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		clean_score_activate(local_state_vals,
 							 input_vals,
@@ -428,15 +536,33 @@ void Fold::sequence_activate(vector<double>& local_state_vals,
 											 sum_impact,
 											 run_helper,
 											 history);
-	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
-		remove_outer_network_sequence_activate(local_state_vals,
-											   input_vals,
-											   flat_vals,
-											   predicted_score,
-											   scale_factor,
-											   sum_impact,
-											   run_helper,
-											   history);
+	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
+		remove_outer_scope_network_sequence_activate(local_state_vals,
+													 input_vals,
+													 flat_vals,
+													 predicted_score,
+													 scale_factor,
+													 sum_impact,
+													 run_helper,
+													 history);
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
+		remove_inner_scope_sequence_activate(local_state_vals,
+											 input_vals,
+											 flat_vals,
+											 predicted_score,
+											 scale_factor,
+											 sum_impact,
+											 run_helper,
+											 history);
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
+		remove_inner_scope_network_sequence_activate(local_state_vals,
+													 input_vals,
+													 flat_vals,
+													 predicted_score,
+													 scale_factor,
+													 sum_impact,
+													 run_helper,
+													 history);
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		clean_sequence_activate(local_state_vals,
 								input_vals,
@@ -485,10 +611,40 @@ void Fold::increment() {
 				this->sum_error = 0.0;
 			}
 		}
-	} else if (this->state == FOLD_STATE_REMOVE_OUTER_NETWORK) {
+	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
 		if (this->state_iter > 150000) {
 			if (this->sub_state_iter >= 10000) {
-				remove_outer_network_end();
+				remove_outer_scope_network_end();
+			}
+		} else {
+			if (this->sub_state_iter >= 10000) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+
+				this->sub_state_iter = 0;
+				this->sum_error = 0.0;
+			}
+		}
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
+		if (this->state_iter > 150000) {
+			if (this->sub_state_iter >= 10000) {
+				remove_inner_scope_end();
+			}
+		} else {
+			if (this->sub_state_iter >= 10000) {
+				cout << "this->state_iter: " << this->state_iter << endl;
+				cout << "this->sum_error: " << this->sum_error << endl;
+				cout << endl;
+
+				this->sub_state_iter = 0;
+				this->sum_error = 0.0;
+			}
+		}
+	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
+		if (this->state_iter > 150000) {
+			if (this->sub_state_iter >= 10000) {
+				remove_inner_scope_network_end();
 			}
 		} else {
 			if (this->sub_state_iter >= 10000) {
@@ -641,8 +797,61 @@ void Fold::save(ofstream& output_file,
 
 	output_file << this->curr_num_new_inner_states << endl;
 
-	output_file << this->clean_inner_step_index << endl;
+	output_file << this->curr_inner_state_networks_not_needed.size() << endl;
+	for (map<int, vector<vector<bool>>>::iterator it = this->curr_inner_state_networks_not_needed.begin();
+			it != this->curr_inner_state_networks_not_needed.end(); it++) {
+		output_file << it->first << endl;
+
+		output_file << it->second.size() << endl;
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			output_file << it->second[n_index].size() << endl;
+			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+				cout << it->second[n_index][s_index] << endl;
+			}
+		}
+	}
+
+	output_file << this->curr_inner_state_networks.size() << endl;
+	for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+			it != this->curr_inner_state_networks.end(); it++) {
+		output_file << it->first << endl;
+
+		output_file << it->second.size() << endl;
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			output_file << it->second[n_index].size() << endl;
+			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+				if (this->curr_inner_state_networks_not_needed.size() > 0	// may not be initialized
+						&& this->curr_inner_state_networks_not_needed[it->first][n_index][s_index]) {
+					// do nothing
+				} else {
+					ofstream inner_state_network_save_file;
+					inner_state_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_inner_state_" + to_string(it->first) + "_" + to_string(n_index) + "_" + to_string(s_index) + ".txt");
+					it->second[n_index][s_index]->save(inner_state_network_save_file);
+					inner_state_network_save_file.close();
+				}
+			}
+		}
+	}
+
+	output_file << this->clean_inner_scope_index << endl;
+
+	output_file << this->curr_inner_scopes_needed.size() << endl;
+	for (set<int>::iterator it = this->curr_inner_scopes_needed.begin();
+			it != this->curr_inner_scopes_needed.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->curr_inner_contexts_needed.size() << endl;
+	for (set<pair<int, int>>::iterator it = this->curr_inner_contexts_needed.begin();
+			it != this->curr_inner_contexts_needed.end(); it++) {
+		output_file << (*it).first << endl;
+		output_file << (*it).second << endl;
+	}
+
+	output_file << this->clean_inner_node_index << endl;
 	output_file << this->clean_inner_state_index << endl;
+
+	output_file << this->clean_inner_step_index << endl;
 
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states

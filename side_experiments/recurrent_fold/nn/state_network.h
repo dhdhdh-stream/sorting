@@ -99,6 +99,13 @@ public:
 							std::vector<double>& new_outer_state_errors,
 							double target_max_update,
 							StateNetworkHistory* history);
+	void new_outer_backprop_errors_with_no_weight_change(
+		double output_error,
+		std::vector<double>& new_outer_state_errors);
+	void new_outer_backprop_errors_with_no_weight_change(
+		double output_error,
+		std::vector<double>& new_outer_state_errors,
+		StateNetworkHistory* history);
 
 	void new_sequence_activate(double obs_val,
 							   std::vector<double>& new_inner_state_vals,

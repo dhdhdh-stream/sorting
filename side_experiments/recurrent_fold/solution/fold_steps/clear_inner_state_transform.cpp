@@ -18,8 +18,20 @@ void Fold::clear_inner_state_end() {
 
 			delete this->curr_score_networks[f_index];
 		}
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+				it != this->curr_inner_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
 		this->curr_state_networks = this->test_state_networks;
 		this->curr_score_networks = this->test_score_networks;
+		this->curr_inner_state_networks = this->test_inner_state_networks;
+		this->test_inner_state_networks.clear();
 
 		this->curr_num_states_cleared = this->test_num_states_cleared;
 
@@ -52,6 +64,22 @@ void Fold::clear_inner_state_end() {
 					this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 				}
 
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+						it != this->curr_inner_state_networks.end(); it++) {
+					this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
+						for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+							if (this->curr_inner_state_networks_not_needed[it->first][n_index][s_index]) {
+								this->test_inner_state_networks[it->first][n_index].push_back(NULL);
+							} else {
+								this->test_inner_state_networks[it->first][n_index].push_back(
+									new StateNetwork(it->second[n_index][s_index]));
+							}
+						}
+					}
+				}
+
 				cout << "ending CLEAR_INNER_STATE" << endl;
 				cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
@@ -79,6 +107,22 @@ void Fold::clear_inner_state_end() {
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 			}
 
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+					it != this->curr_inner_state_networks.end(); it++) {
+				this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
+					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+						if (this->curr_inner_state_networks_not_needed[it->first][n_index][s_index]) {
+							this->test_inner_state_networks[it->first][n_index].push_back(NULL);
+						} else {
+							this->test_inner_state_networks[it->first][n_index].push_back(
+								new StateNetwork(it->second[n_index][s_index]));
+						}
+					}
+				}
+			}
+
 			cout << "ending CLEAR_INNER_STATE" << endl;
 			cout << "starting CLEAR_INNER_STATE " << this->clean_inner_step_index << " " << this->test_num_states_cleared[this->clean_inner_step_index] << endl;
 
@@ -100,6 +144,18 @@ void Fold::clear_inner_state_end() {
 
 			delete this->test_score_networks[f_index];
 		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_inner_state_networks.begin();
+				it != this->test_inner_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
+		this->test_inner_state_networks.clear();
 
 		this->test_num_states_cleared = this->curr_num_states_cleared;
 
@@ -128,6 +184,22 @@ void Fold::clear_inner_state_end() {
 				}
 
 				this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
+			}
+
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+					it != this->curr_inner_state_networks.end(); it++) {
+				this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
+					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+						if (this->curr_inner_state_networks_not_needed[it->first][n_index][s_index]) {
+							this->test_inner_state_networks[it->first][n_index].push_back(NULL);
+						} else {
+							this->test_inner_state_networks[it->first][n_index].push_back(
+								new StateNetwork(it->second[n_index][s_index]));
+						}
+					}
+				}
 			}
 
 			cout << "ending CLEAR_INNER_STATE" << endl;
@@ -166,7 +238,22 @@ void Fold::clear_inner_state_from_load() {
 		this->test_score_networks[f_index] = new StateNetwork(this->curr_score_networks[f_index]);
 	}
 
-	cout << "ending CLEAR_INNER_STATE" << endl;
+	for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+			it != this->curr_inner_state_networks.end(); it++) {
+		this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
+			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+				if (this->curr_inner_state_networks_not_needed[it->first][n_index][s_index]) {
+					this->test_inner_state_networks[it->first][n_index].push_back(NULL);
+				} else {
+					this->test_inner_state_networks[it->first][n_index].push_back(
+						new StateNetwork(it->second[n_index][s_index]));
+				}
+			}
+		}
+	}
+
 	cout << "starting CLEAR_INNER_STATE " << this->clean_inner_step_index << " " << this->test_num_states_cleared[this->clean_inner_step_index] << endl;
 
 	this->state = FOLD_STATE_CLEAR_INNER_STATE;

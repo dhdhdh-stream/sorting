@@ -184,8 +184,8 @@ void StateNetwork::backprop_errors_with_no_weight_change(
 		vector<double>& input_state_errors) {
 	this->output->errors[0] = output_error;
 
-	this->output->backprop();
-	this->hidden->backprop();
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->backprop_errors_with_no_weight_change();
 
 	for (int l_index = 0; l_index < this->local_state_size; l_index++) {
 		local_state_errors[l_index] += this->local_state_input->errors[l_index];
@@ -321,7 +321,7 @@ void StateNetwork::new_outer_backprop(double output_error,
 	this->output->errors[0] = output_error;
 
 	this->output->backprop();
-	this->hidden->state_hidden_backprop_new_outer_state();
+	this->hidden->backprop();
 
 	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
 		new_outer_state_errors[o_index] += this->new_outer_state_input->errors[o_index];
@@ -365,6 +365,31 @@ void StateNetwork::new_outer_backprop(double output_error,
 	new_outer_backprop(output_error,
 					   new_outer_state_errors,
 					   target_max_update);
+}
+
+void StateNetwork::new_outer_backprop_errors_with_no_weight_change(
+		double output_error,
+		vector<double>& new_outer_state_errors) {
+	this->output->errors[0] = output_error;
+
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->backprop_errors_with_no_weight_change();
+
+	for (int o_index = 0; o_index < this->new_outer_state_size; o_index++) {
+		new_outer_state_errors[o_index] += this->new_outer_state_input->errors[o_index];
+		this->new_outer_state_input->errors[o_index] = 0.0;
+	}
+}
+
+void StateNetwork::new_outer_backprop_errors_with_no_weight_change(
+		double output_error,
+		vector<double>& new_outer_state_errors,
+		StateNetworkHistory* history) {
+	history->reset_weights();
+
+	new_outer_backprop_errors_with_no_weight_change(
+		output_error,
+		new_outer_state_errors);
 }
 
 void StateNetwork::new_sequence_activate(double obs_val,
@@ -544,8 +569,8 @@ void StateNetwork::new_sequence_backprop_errors_with_no_weight_change(
 		vector<double>& new_outer_state_errors) {
 	this->output->errors[0] = output_error;
 
-	this->output->backprop();
-	this->hidden->backprop();
+	this->output->backprop_errors_with_no_weight_change();
+	this->hidden->backprop_errors_with_no_weight_change();
 
 	for (int i_index = 0; i_index < this->new_inner_state_size; i_index++) {
 		if (!this->new_inner_state_zeroed[i_index]) {

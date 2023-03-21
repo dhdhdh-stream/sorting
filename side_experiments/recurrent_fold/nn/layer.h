@@ -41,7 +41,6 @@ public:
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
 
-	void state_hidden_backprop_new_outer_state();
 	void state_hidden_add_new_inner();
 	void state_hidden_add_new_outer();
 	void state_hidden_remove_new_outer();

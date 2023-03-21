@@ -145,9 +145,9 @@ void Fold::explore_end() {
 			}
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
 					it != this->curr_inner_state_networks.end(); it++) {
-				Scope* inner_scope = solution->scopes[it->first];
 				this->test_inner_state_networks.insert({it->first, vector<vector<StateNetwork*>>()});
 				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
 					if (it->second[n_index].size() != 0) {
 						// this->curr_num_new_inner_states = 1
 						this->test_inner_state_networks[it->first][n_index].push_back(
