@@ -24,6 +24,7 @@ public:
 	StateNetwork* continue_misguess_network;
 	StateNetwork* halt_score_network;
 	StateNetwork* halt_misguess_network;
+	// Note: eventually, ideally, right choice will have score 0.0 while other will be negative
 
 	std::vector<AbstractNode*> nodes;
 

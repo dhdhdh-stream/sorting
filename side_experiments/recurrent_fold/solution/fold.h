@@ -73,14 +73,14 @@ public:
 	StateNetwork* curr_starting_score_network;
 	// no starting state networks as ideally, state should already capture everything relevant
 
-	int test_num_new_outer_states;
-	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
-	StateNetwork* test_starting_score_network;
-
 	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
 	std::vector<std::vector<StateNetwork*>> curr_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_inner_state_networks;
+
+	int test_num_new_outer_states;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
+	StateNetwork* test_starting_score_network;
 
 	int test_num_new_inner_states;
 	std::vector<std::vector<StateNetwork*>> test_state_networks;

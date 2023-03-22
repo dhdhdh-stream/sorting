@@ -28,7 +28,7 @@ public:
 
 	StateNetwork* score_network;
 
-	int next_node_id;	// TODO: set when adding to Scope?
+	int next_node_id;
 	// may go elsewhere due to early exit, but handled from inner
 
 	double average_score;
