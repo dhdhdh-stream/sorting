@@ -239,8 +239,7 @@ void Scope::activate(vector<double>& input_vals,
 						}
 					}
 					if (matches_context) {
-						run_helper.explore_phase = EXPLORE_PHASE_FLAT;
-
+						// explore_phase set in fold
 						FoldHistory* fold_history = new FoldHistory(action_node->explore_fold);
 						action_node->explore_fold->explore_score_activate(
 							local_state_vals,
@@ -273,7 +272,8 @@ void Scope::activate(vector<double>& input_vals,
 						}
 					}
 				} else {
-					// new explore
+					run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+
 				}
 			}
 

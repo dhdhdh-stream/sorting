@@ -64,7 +64,7 @@ public:
 
 	int state;
 	int state_iter;
-	int sub_state_iter;
+	int sub_iter;
 	double sum_error;
 
 	int curr_num_new_outer_states;

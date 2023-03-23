@@ -84,6 +84,8 @@ void Fold::explore_score_activate(vector<double>& local_state_vals,
 								  vector<ScopeHistory*>& context_histories,
 								  RunHelper& run_helper,
 								  FoldHistory* history) {
+	run_helper.explore_phase = EXPLORE_PHASE_LEARN;
+
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
 
 	ScopeHistory* scope_history = context_histories[context_histories.size() - this->scope_context.size()];
@@ -187,12 +189,12 @@ void Fold::explore_sequence_activate(vector<double>& local_state_vals,
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_vals = history->new_outer_state_vals;
 
-	int num_total_states = this->sum_inner_inputs
+	int num_inner_networks = this->sum_inner_inputs
 		+ this->test_num_new_inner_states
 		+ this->num_sequence_local_states
 		+ this->num_sequence_input_states;
 	history->state_network_histories = vector<vector<StateNetworkHistory*>>(
-		this->sequence_length, vector<StateNetworkHistory*>(num_total_states, NULL));
+		this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL));
 	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
 	history->score_network_updates = vector<double>(this->sequence_length);
 	history->score_network_histories = vector<StateNetworkHistory*>(this->sequence_length, NULL);
@@ -686,9 +688,9 @@ void Fold::explore_increment() {
 				this->sum_error = 0.0;
 			}
 		}
-	} else if (this->state == FOLD_STATE_ADD_INNER_STATE) {
+	} else if (this->state == FOLD_STATE_ADD_OUTER_STATE) {
 		if (this->state_iter == 500000) {
-			add_inner_state_end();
+			add_outer_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
 				cout << "this->state_iter: " << this->state_iter << endl;
@@ -698,9 +700,9 @@ void Fold::explore_increment() {
 			}
 		}
 	} else {
-		// this->state == FOLD_STATE_ADD_OUTER_STATE
+		// this->state == FOLD_STATE_ADD_INNER_STATE
 		if (this->state_iter == 500000) {
-			add_outer_state_end();
+			add_inner_state_end();
 		} else {
 			if (this->state_iter%10000 == 0) {
 				cout << "this->state_iter: " << this->state_iter << endl;

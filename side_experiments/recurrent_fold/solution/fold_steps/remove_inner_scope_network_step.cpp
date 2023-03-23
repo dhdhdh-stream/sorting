@@ -143,12 +143,12 @@ void Fold::remove_inner_scope_network_sequence_activate(
 	}
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-		int num_total_states = this->sum_inner_inputs
+		int num_inner_networks = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
 			+ this->num_sequence_local_states
 			+ this->num_sequence_input_states;
 		history->state_network_histories = vector<vector<StateNetworkHistory*>>(
-			this->sequence_length, vector<StateNetworkHistory*>(num_total_states, NULL));
+			this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL));
 	}
 	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
 	history->score_network_updates = vector<double>(this->sequence_length);
