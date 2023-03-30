@@ -485,8 +485,8 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			input_vals,
 			new_outer_state_vals,
 			score_network_history);
-		history->score_network_updates[f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 		history->score_network_histories[f_index] = score_network_history;
+		history->score_network_updates[f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 		predicted_score += scale_factor*this->curr_score_networks[f_index]->output->acti_vals[0];
 	}
 }

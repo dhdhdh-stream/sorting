@@ -272,9 +272,10 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 
 			vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
-			inner_input_vals_snapshots[f_index] = inner_input_vals;
 
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+				inner_input_vals_snapshots[f_index] = inner_input_vals;
+
 				vector<double> test_inner_input_vals(test_new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 					test_new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 				test_inner_input_vals_snapshots[f_index] = test_inner_input_vals;
@@ -594,8 +595,8 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 			input_vals,
 			new_outer_state_vals,
 			score_network_history);
-		history->score_network_updates[f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 		history->score_network_histories[f_index] = score_network_history;
+		history->score_network_updates[f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 		predicted_score += scale_factor*this->curr_score_networks[f_index]->output->acti_vals[0];
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {

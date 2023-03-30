@@ -69,6 +69,7 @@ public:
 
 	std::vector<StateNetwork*> curr_starting_state_networks;
 	// only for new_inner_state as parent state already initialized correctly (due to exploring from 1 iter)
+	// don't try to remove any for now
 
 	StateNetwork* curr_continue_score_network;
 	StateNetwork* curr_continue_misguess_network;
@@ -187,9 +188,7 @@ public:
 	std::vector<std::vector<ScopeHistory*>> inner_scope_histories;
 	std::vector<std::vector<double>> score_network_updates;
 	std::vector<std::vector<StateNetworkHistory*>> score_network_histories;
-
 	std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>> inner_state_network_histories;
-	std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>> test_inner_state_network_histories;
 
 	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 

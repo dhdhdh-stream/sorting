@@ -158,6 +158,7 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 
+	history->starting_state_network_histories = vector<StateNetworkHistory>(this->sum_inner_inputs + this->test_num_new_inner_states);
 	for (int i_index = 0; i_index < this->sum_inner_inputs + this->test_num_new_inner_states; i_index++) {
 		StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_starting_state_networks[i_index]);
 		this->test_starting_state_networks[i_index]->new_sequence_activate(
@@ -668,7 +669,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 			} else {
 				score_network_target_max_update = 0.002;
 			}
-			this->continue_score_network->new_sequence_backprop(
+			this->test_continue_score_network->new_sequence_backprop(
 				target_val - predicted_score,
 				new_inner_state_errors,
 				local_state_errors,
@@ -687,7 +688,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 			} else {
 				misguess_network_target_max_update = 0.002;
 			}
-			this->continue_misguess_network->new_sequence_backprop(
+			this->test_continue_misguess_network->new_sequence_backprop(
 				final_misguess - history->continue_misguess_val[iter_index],
 				new_inner_state_errors,
 				local_state_errors,
@@ -704,7 +705,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 			} else {
 				score_network_target_max_update = 0.002;
 			}
-			this->halt_score_network->new_sequence_backprop(
+			this->test_halt_score_network->new_sequence_backprop(
 				target_val - predicted_score,
 				new_inner_state_errors,
 				local_state_errors,
@@ -723,7 +724,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 			} else {
 				misguess_network_target_max_update = 0.002;
 			}
-			this->halt_misguess_network->new_sequence_backprop(
+			this->test_halt_misguess_network->new_sequence_backprop(
 				final_misguess - history->halt_misguess_val,
 				new_inner_state_errors,
 				local_state_errors,

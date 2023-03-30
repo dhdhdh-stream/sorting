@@ -428,6 +428,14 @@ Fold::Fold(ifstream& input_file,
 		}
 	}
 
+	this->curr_score_networks = vector<StateNetwork*>(this->sequence_length);
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		ifstream score_network_save_file;
+		score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_score_" + to_string(f_index) + ".txt");
+		this->curr_score_networks[f_index] = new StateNetwork(score_network_save_file);
+		score_network_save_file.close();
+	}
+
 	this->curr_state_not_needed_locally = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		for (int s_index = 0; s_index < total_num_states; s_index++) {
@@ -878,6 +886,13 @@ void Fold::save(ofstream& output_file,
 				state_network_save_file.close();
 			}
 		}
+	}
+
+	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+		ofstream score_network_save_file;
+		score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_score_" + to_string(f_index) + ".txt");
+		this->curr_score_networks[f_index]->save(score_network_save_file);
+		score_network_save_file.close();
 	}
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {

@@ -125,35 +125,10 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 
 		new_inner_state_vals[i_index] += this->test_starting_state_networks[i_index]->output->acti_vals[0];
 	}
-	for (int l_index = 0; l_index < this->num_local_states; l_index++) {
-		int state_index = this->sum_inner_inputs
-			+ this->test_num_new_inner_states
-			+ l_index;
-		this->test_starting_state_networks[state_index]->new_sequence_activate(
-			new_inner_state_vals,
-			local_state_vals,
-			input_vals,
-			new_outer_state_vals);
-
-		local_state_vals[l_index] += this->test_starting_state_networks[state_index]->output->acti_vals[0];
-	}
-	for (int i_index = 0; i_index < this->num_input_states; i_index++) {
-		int state_index = this->sum_inner_inputs
-			+ this->test_num_new_inner_states
-			+ this->num_local_states
-			+ i_index;
-		this->test_starting_state_networks[state_index]->new_sequence_activate(
-			new_inner_state_vals,
-			local_state_vals,
-			input_vals,
-			new_outer_state_vals);
-
-		input_vals[i_index] += this->test_starting_state_networks[state_index]->output->acti_vals[0];
-	}
 
 	int iter_index = 0;
 	while (true) {
-		if (iter_index > 8) {
+		if (iter_index > 7) {
 			// cap number of iters for now
 			break;
 		}

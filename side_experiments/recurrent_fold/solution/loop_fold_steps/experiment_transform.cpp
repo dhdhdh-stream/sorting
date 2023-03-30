@@ -97,26 +97,26 @@ void LoopFold::experiment_end() {
 			}
 
 			this->test_num_new_inner_states = this->curr_num_new_inner_states;
-			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
+			for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
 				// this->test_starting_state_networks cleared above
 				this->test_starting_state_networks.push_back(new StateNetwork(
 					this->curr_starting_state_networks[i_index]));
 				this->test_starting_state_networks[i_index]->add_new_outer();
 			}
 
-			this->test_continue_score_network = this->curr_continue_score_network;
+			this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
 			this->test_continue_score_network->add_new_outer();
-			this->test_continue_misguess_network = this->curr_continue_misguess_network;
+			this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
 			this->test_continue_misguess_network->add_new_outer();
-			this->test_halt_score_network = this->curr_halt_score_network;
+			this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
 			this->test_halt_score_network->add_new_outer();
-			this->test_halt_misguess_network = this->curr_halt_misguess_network;
+			this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
 			this->test_halt_misguess_network->add_new_outer();
 
 			int num_inner_networks = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
-				+ this->num_sequence_local_states
-				+ this->num_sequence_input_states;
+				+ this->num_local_states
+				+ this->num_input_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				// this->test_state_networks cleared above
 				this->test_state_networks.push_back(vector<StateNetwork*>());
