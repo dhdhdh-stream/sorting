@@ -1,4 +1,4 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include "action_node.h"
 #include "constants.h"
@@ -7,14 +7,14 @@
 
 using namespace std;
 
-void Fold::remove_outer_scope_network_outer_scope_activate_helper(
+void LoopFold::remove_outer_scope_network_outer_scope_activate_helper(
 		vector<double>& new_outer_state_vals,
 		vector<double>& test_new_outer_state_vals,
 		ScopeHistory* scope_history,
 		vector<int>& curr_scope_context,
 		vector<int>& curr_node_context,
 		RunHelper& run_helper,
-		FoldHistory* history) {
+		LoopFoldHistory* history) {
 	int scope_id = scope_history->scope->id;
 	curr_scope_context.push_back(scope_id);
 	curr_node_context.push_back(-1);
@@ -95,7 +95,7 @@ void Fold::remove_outer_scope_network_outer_scope_activate_helper(
 	curr_node_context.pop_back();
 }
 
-void Fold::remove_outer_scope_network_inner_scope_activate_helper(
+void LoopFold::remove_outer_scope_network_inner_scope_activate_helper(
 		vector<double>& new_state_vals,
 		ScopeHistory* scope_history,
 		vector<int>& curr_scope_context,
@@ -103,7 +103,7 @@ void Fold::remove_outer_scope_network_inner_scope_activate_helper(
 		RunHelper& run_helper,
 		int iter_index,
 		int step_index,
-		FoldHistory* history) {
+		LoopFoldHistory* history) {
 	int scope_id = scope_history->scope->id;
 	curr_scope_context.push_back(scope_id);
 	curr_node_context.push_back(-1);
@@ -164,7 +164,7 @@ void Fold::remove_outer_scope_network_inner_scope_activate_helper(
 	curr_node_context.pop_back();
 }
 
-void Fold::remove_outer_scope_network_activate(
+void LoopFold::remove_outer_scope_network_activate(
 		vector<double>& local_state_vals,
 		vector<double>& input_vals,
 		vector<vector<double>>& flat_vals,
@@ -172,7 +172,7 @@ void Fold::remove_outer_scope_network_activate(
 		double& scale_factor,
 		double& sum_impact,
 		RunHelper& run_helper,
-		FoldHistory* history) {
+		LoopFoldHistory* history) {
 	vector<double> new_outer_state_vals(this->curr_num_new_outer_states, 0.0);
 
 	vector<double> test_new_outer_state_vals;

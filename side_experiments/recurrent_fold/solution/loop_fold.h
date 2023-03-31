@@ -162,6 +162,7 @@ public:
 			 int scope_index);
 	~LoopFold();
 
+	// HERE
 };
 
 class LoopFoldHistory {

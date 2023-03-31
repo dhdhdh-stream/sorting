@@ -7,97 +7,9 @@
 
 using namespace std;
 
-void LoopFold::remove_outer_scope_outer_scope_activate_helper(
-		vector<double>& new_outer_state_vals,
-		vector<double>& test_new_outer_state_vals,
-		ScopeHistory* scope_history,
-		vector<int>& curr_scope_context,
-		vector<int>& curr_node_context,
-		RunHelper& run_helper,
-		LoopFoldHistory* history) {
-	int scope_id = scope_history->scope->id;
-	curr_scope_context.push_back(scope_id);
-	curr_node_context.push_back(-1);
+// FOLD_STATE_REMOVE_INNER_SCOPE outer scope activate generic
 
-	map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.find(scope_id);
-
-	map<int, vector<vector<StateNetwork*>>>::iterator test_it;
-	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-		test_it = this->test_outer_state_networks.find(scope_id);
-
-		set<int>::iterator needed_it = this->reverse_test_outer_scopes_needed.find(scope_id);
-		if (needed_it != this->reverse_test_outer_scopes_needed.end()) {
-			for (int c_index = 0; c_index < (int)curr_scope_context.size()-1; c_index++) {
-				this->reverse_test_outer_scopes_needed.insert(curr_scope_context[c_index]);
-				this->reverse_test_outer_contexts_needed.insert(make_pair(curr_scope_context[c_index], curr_node_context[c_index]));
-			}
-		}
-	}
-
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
-			if (it != this->curr_outer_state_networks.end()) {
-				int node_id = scope_history->node_histories[h_index]->scope_index;
-				if (node_id < (int)it->second.size()
-						&& it->second[node_id].size() > 0) {
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
-					for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
-						it->second[node_id][s_index]->new_outer_activate(
-							action_node_history->obs_snapshot,
-							action_node_history->ending_local_state_snapshot,
-							action_node_history->ending_input_state_snapshot,
-							new_outer_state_vals);
-						new_outer_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
-					}
-					// Note: don't save history as don't backprop outer errors into their scopes
-					//   - too complicated as those scopes/errors won't be initialized
-					//   - won't lead to ideal results, but would just need to wait until fold completes
-				}
-			}
-
-			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-				if (test_it != this->test_outer_state_networks.end()) {
-					int node_id = scope_history->node_histories[h_index]->scope_index;
-					if (node_id < (int)test_it->second.size()
-							&& test_it->second[node_id].size() > 0) {
-						history->test_outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
-						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
-						for (int s_index = 0; s_index < this->curr_num_new_outer_states; s_index++) {
-							StateNetworkHistory* state_network_history = new StateNetworkHistory(test_it->second[node_id][s_index]);
-							test_it->second[node_id][s_index]->new_outer_activate(
-								action_node_history->obs_snapshot,
-								action_node_history->ending_local_state_snapshot,
-								action_node_history->ending_input_state_snapshot,
-								test_new_outer_state_vals,
-								state_network_history);
-							history->test_outer_state_network_histories.back().push_back(state_network_history);
-							test_new_outer_state_vals[s_index] += test_it->second[node_id][s_index]->output->acti_vals[0];
-						}
-					}
-				}
-			}
-		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
-			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
-
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-			remove_outer_scope_outer_scope_activate_helper(
-				new_outer_state_vals,
-				test_new_outer_state_vals,
-				scope_node_history->inner_scope_history,
-				curr_scope_context,
-				curr_node_context,
-				run_helper,
-				history);
-
-			curr_node_context.back() = -1;
-		}
-	}
-
-	curr_scope_context.pop_back();
-	curr_node_context.pop_back();
-}
-
-void LoopFold::remove_outer_scope_inner_scope_activate_helper(
+void LoopFold::remove_inner_scope_inner_scope_activate_helper(
 		vector<double>& new_state_vals,
 		ScopeHistory* scope_history,
 		vector<int>& curr_scope_context,
@@ -117,6 +29,14 @@ void LoopFold::remove_outer_scope_inner_scope_activate_helper(
 	map<int, vector<vector<StateNetwork*>>>::iterator test_it;
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		test_it = this->test_inner_state_networks.find(scope_id);
+
+		set<int>::iterator needed_it = this->reverse_test_inner_scopes_needed.find(scope_id);
+		if (needed_it != this->reverse_test_inner_scopes_needed.end()) {
+			for (int c_index = 0; c_index < (int)curr_scope_context.size()-1; c_index++) {
+				this->reverse_test_inner_scopes_needed.insert(curr_scope_context[c_index]);
+				this->reverse_test_inner_contexts_needed.insert(make_pair(curr_scope_context[c_index], curr_node_context[c_index]));
+			}
+		}
 	}
 
 	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
@@ -177,7 +97,7 @@ void LoopFold::remove_outer_scope_inner_scope_activate_helper(
 			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
 
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-			remove_outer_scope_inner_scope_activate_helper(new_state_vals,
+			remove_inner_scope_inner_scope_activate_helper(new_state_vals,
 														   scope_node_history->inner_scope_history,
 														   curr_scope_context,
 														   curr_node_context,
@@ -196,41 +116,37 @@ void LoopFold::remove_outer_scope_inner_scope_activate_helper(
 	curr_node_context.pop_back();
 }
 
-void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
-										   vector<double>& input_vals,
-										   vector<vector<double>>& flat_vals,
-										   double& predicted_score,
-										   double& scale_factor,
-										   double& sum_impact,
-										   RunHelper& run_helper,
-										   LoopFoldHistory* history) {
+void Fold::remove_inner_scope_activate(vector<double>& local_state_vals,
+									   vector<double>& input_vals,
+									   vector<vector<double>>& flat_vals,
+									   double& predicted_score,
+									   double& scale_factor,
+									   double& sum_impact,
+									   RunHelper& run_helper,
+									   LoopFoldHistory* history) {
 	vector<double> new_outer_state_vals(this->curr_num_new_outer_states, 0.0);
-
-	vector<double> test_new_outer_state_vals;
-	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-		test_new_outer_state_vals = vector<double>(this->curr_num_new_outer_states, 0.0);
-	}
 
 	ScopeHistory* scope_history = context_histories[context_histories.size() - this->scope_context.size()];
 	vector<int> curr_scope_context;
 	vector<int> curr_node_context;
-	remove_outer_scope_outer_scope_activate_helper(new_outer_state_vals,
-												   test_new_outer_state_vals,
-												   scope_history,
-												   curr_scope_context,
-												   curr_node_context,
-												   run_helper,
-												   history);
+	clean_outer_scope_activate_helper(new_outer_state_vals,
+									  scope_history,
+									  curr_scope_context,
+									  curr_node_context,
+									  run_helper,
+									  history);
 
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
 
 	vector<double> test_new_inner_state_vals;
 	vector<double> test_local_state_vals;
 	vector<double> test_input_vals;
+	vector<double> test_new_outer_state_vals;
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		test_new_inner_state_vals = vector<double>(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
 		test_local_state_vals = local_state_vals;
 		test_input_vals = input_vals;
+		test_new_outer_state_vals = new_outer_state_vals;
 	}
 
 	history->starting_state_network_histories = vector<StateNetworkHistory>(this->sum_inner_inputs + this->curr_num_new_inner_states);
@@ -593,7 +509,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_new_state_vals.push_back(test_new_inner_state_vals[this->sum_inner_inputs+i_index]);
 						}
 					}
-					remove_outer_scope_inner_scope_activate_helper(
+					remove_inner_scope_inner_scope_activate_helper(
 						new_state_vals,
 						scope_history,
 						inner_scope_context,
@@ -1062,17 +978,6 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 				test_starting_state_network_histories[i_index]);
 		}
 
-		for (int n_index = (int)history->test_outer_state_network_histories.size()-1; n_index >= 0; n_index--) {
-			for (int o_index = this->curr_num_new_outer_states-1; o_index >= 0; o_index--) {
-				StateNetwork* state_network = history->test_outer_state_network_histories[n_index][o_index]->network;
-				state_network->new_outer_backprop(
-					test_new_outer_state_errors[o_index],
-					test_new_outer_state_errors,
-					target_max_update,
-					history->test_outer_state_network_histories[n_index][o_index]);
-			}
-		}
-
 		for (int i_index = 0; i_index < (int)test_starting_state_network_histories.size(); i_index++) {
 			delete test_starting_state_network_histories[i_index];
 		}
@@ -1145,4 +1050,4 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 	}
 }
 
-// LOOP_FOLD_STATE_REMOVE_OUTER_NETWORK backprop generic
+// LOOP_FOLD_STATE_REMOVE_INNER_SCOPE backprop generic

@@ -1,19 +1,19 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include <iostream>
 
 using namespace std;
 
-void Fold::add_to_clean() {
+void LoopFold::add_to_clean() {
 	// initialize clean
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
-		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states;
+		+ this->num_local_states
+		+ this->num_input_states;
 	int total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
-		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states
+		+ this->num_local_states
+		+ this->num_input_states
 		+ this->curr_num_new_outer_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));

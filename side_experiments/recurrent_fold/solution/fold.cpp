@@ -55,7 +55,7 @@ Fold::Fold(vector<int> scope_context,
 	this->curr_num_new_outer_states = 1;
 	this->test_num_new_outer_states = this->curr_num_new_outer_states;
 	// test_outer_state_networks starts empty
-	this->test_starting_score_network = new StateNetwork(1,
+	this->test_starting_score_network = new StateNetwork(0,
 														 this->num_score_local_states,
 														 this->num_score_input_states,
 														 0,
@@ -251,10 +251,10 @@ Fold::Fold(ifstream& input_file,
 		}
 	}
 
-	ifstream curr_starting_score_network_save_file;
-	curr_starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
-	this->curr_starting_score_network = new StateNetwork(curr_starting_score_network_save_file);
-	curr_starting_score_network_save_file.close();
+	ifstream starting_score_network_save_file;
+	starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
+	this->curr_starting_score_network = new StateNetwork(starting_score_network_save_file);
+	starting_score_network_save_file.close();
 
 	string clean_outer_scope_index_line;
 	getline(input_file, clean_outer_scope_index_line);
@@ -609,7 +609,6 @@ void Fold::increment() {
 				remove_outer_scope_end();
 			}
 		} else {
-			// may skip print if incremented multiple times in a run
 			if (this->sub_state_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
@@ -780,10 +779,10 @@ void Fold::save(ofstream& output_file,
 		}
 	}
 
-	ofstream curr_starting_score_network_save_file;
-	curr_starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
-	this->curr_starting_score_network->save(curr_starting_score_network_save_file);
-	curr_starting_score_network_save_file.close();
+	ofstream starting_score_network_save_file;
+	starting_score_network_save_file.open("saves/nns/fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_starting_score.txt");
+	this->curr_starting_score_network->save(starting_score_network_save_file);
+	starting_score_network_save_file.close();
 
 	output_file << this->clean_outer_scope_index << endl;
 

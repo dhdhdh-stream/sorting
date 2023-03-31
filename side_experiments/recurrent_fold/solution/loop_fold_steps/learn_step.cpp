@@ -7,7 +7,7 @@ void LoopFold::learn_outer_scope_activate_helper(vector<double>& new_outer_state
 												 vector<int>& curr_scope_context,
 												 vector<int>& curr_node_context,
 												 RunHelper& run_helper,
-												 FoldHistory* history) {
+												 LoopFoldHistory* history) {
 	int scope_id = scope_history->scope->id;
 	curr_scope_context.push_back(scope_id);
 	curr_node_context.push_back(-1);
@@ -73,7 +73,7 @@ void LoopFold::learn_inner_scope_activate_helper(vector<double>& new_state_vals,
 												 RunHelper& run_helper,
 												 int iter_index,
 												 int step_index,
-												 FoldHistory* history) {
+												 LoopFoldHistory* history) {
 	int scope_id = scope_history->scope->id;
 	curr_scope_context.push_back(scope_id);
 	curr_node_context.push_back(-1);
@@ -141,7 +141,7 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 							  double& scale_factor,
 							  vector<ScopeHistory*>& context_histories,
 							  RunHelper& run_help,
-							  FoldHistory* history) {
+							  LoopFoldHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_LEARN;
 
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
@@ -425,7 +425,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 							  double& predicted_score,
 							  double& scale_factor,
 							  RunHelper& run_helper,
-							  FoldHistory* history) {
+							  LoopFoldHistory* history) {
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
 	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
 	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
@@ -457,7 +457,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 				score_network_target_max_update,
 				history->score_network_histories[iter_index][f_index]);
 
-			predicted_score -= scale_factor*history->score_network_updates[f_index];
+			predicted_score -= scale_factor*history->score_network_updates[iter_index][f_index];
 
 			if (this->is_inner_scope[f_index]) {
 				for (int i_index = this->num_input_states-1; i_index >= 0; i_index--) {

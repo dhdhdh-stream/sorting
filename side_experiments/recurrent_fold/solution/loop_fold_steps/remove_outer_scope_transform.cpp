@@ -1,4 +1,4 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include <iostream>
 
@@ -333,8 +333,8 @@ void LoopFold::remove_outer_scope_end() {
 
 				int num_inner_networks = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
-					+ this->num_sequence_local_states
-					+ this->num_sequence_input_states;
+					+ this->num_local_states
+					+ this->num_input_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 						this->test_state_networks[f_index][s_index] = new StateNetwork(
@@ -407,8 +407,8 @@ void LoopFold::remove_outer_scope_from_load() {
 
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
-		+ this->num_sequence_local_states
-		+ this->num_sequence_input_states;
+		+ this->num_local_states
+		+ this->num_input_states;
 
 	this->test_state_networks = vector<vector<StateNetwork*>>(this->sequence_length, vector<StateNetwork*>(num_inner_networks));
 	this->test_score_networks = vector<StateNetwork*>(this->sequence_length);

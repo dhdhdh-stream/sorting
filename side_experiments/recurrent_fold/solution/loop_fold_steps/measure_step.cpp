@@ -100,7 +100,7 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 								double& predicted_score,
 								double& scale_factor,
 								RunHelper& run_helper,
-								FoldHistory* history) {
+								LoopFoldHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_MEASURE;
 
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
@@ -355,7 +355,7 @@ void LoopFold::measure_backprop(vector<double>& local_state_errors,
 								double& predicted_score,
 								double& scale_factor,
 								RunHelper& run_helper,
-								FoldHistory* history) {
+								LoopFoldHistory* history) {
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
 	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
 	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
