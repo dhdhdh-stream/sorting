@@ -29,85 +29,87 @@ void Fold::remove_inner_scope_network_inner_scope_activate_helper(
 		test_it = this->test_inner_state_networks.find(scope_id);
 	}
 
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_ACTION) {
-			if (it != this->curr_inner_state_networks.end()) {
-				int node_id = scope_history->node_histories[h_index]->scope_index;
-				if (node_id < (int)it->second.size()
-						&& it->second[node_id].size() > 0) {
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-						history->inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
-						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-							if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
-								StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
-								it->second[node_id][s_index]->new_outer_activate(
-									action_node_history->obs_snapshot,
-									action_node_history->ending_local_state_snapshot,
-									action_node_history->ending_input_state_snapshot,
-									new_state_vals,
-									state_network_history);
-								history->inner_state_network_histories[step_index].back().push_back(state_network_history);
-								new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
-							} else {
-								history->inner_state_network_histories[step_index].back().push_back(NULL);
+	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
+		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
+			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
+				if (it != this->curr_inner_state_networks.end()) {
+					int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+					if (node_id < (int)it->second.size()
+							&& it->second[node_id].size() > 0) {
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+							history->inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
+							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
+								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
+									StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
+									it->second[node_id][s_index]->new_outer_activate(
+										action_node_history->obs_snapshot,
+										action_node_history->ending_local_state_snapshot,
+										action_node_history->ending_input_state_snapshot,
+										new_state_vals,
+										state_network_history);
+									history->inner_state_network_histories[step_index].back().push_back(state_network_history);
+									new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+								} else {
+									history->inner_state_network_histories[step_index].back().push_back(NULL);
+								}
 							}
-						}
-					} else {
-						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-							if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
-								it->second[node_id][s_index]->new_outer_activate(
-									action_node_history->obs_snapshot,
-									action_node_history->ending_local_state_snapshot,
-									action_node_history->ending_input_state_snapshot,
-									new_state_vals);
-								new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
-							}
-						}
-					}
-				}
-			}
-
-			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-				if (test_it != this->test_inner_state_networks.end()) {
-					int node_id = scope_history->node_histories[h_index]->scope_index;
-					if (node_id < (int)test_it->second.size()
-							&& test_it->second[node_id].size() > 0) {
-						history->test_inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
-						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[h_index];
-						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-							if (!this->test_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
-								StateNetworkHistory* state_network_history = new StateNetworkHistory(test_it->second[node_id][s_index]);
-								test_it->second[node_id][s_index]->new_outer_activate(
-									action_node_history->obs_snapshot,
-									action_node_history->ending_local_state_snapshot,
-									action_node_history->ending_input_state_snapshot,
-									test_new_state_vals,
-									state_network_history);
-								history->test_inner_state_network_histories[step_index].back().push_back(state_network_history);
-								test_new_state_vals[s_index] += test_it->second[node_id][s_index]->output->acti_vals[0];
-							} else {
-								history->test_inner_state_network_histories[step_index].back().push_back(NULL);
+						} else {
+							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
+								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
+									it->second[node_id][s_index]->new_outer_activate(
+										action_node_history->obs_snapshot,
+										action_node_history->ending_local_state_snapshot,
+										action_node_history->ending_input_state_snapshot,
+										new_state_vals);
+									new_state_vals[s_index] += it->second[node_id][s_index]->output->acti_vals[0];
+								}
 							}
 						}
 					}
 				}
+
+				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+					if (test_it != this->test_inner_state_networks.end()) {
+						int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+						if (node_id < (int)test_it->second.size()
+								&& test_it->second[node_id].size() > 0) {
+							history->test_inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
+							ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
+								if (!this->test_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
+									StateNetworkHistory* state_network_history = new StateNetworkHistory(test_it->second[node_id][s_index]);
+									test_it->second[node_id][s_index]->new_outer_activate(
+										action_node_history->obs_snapshot,
+										action_node_history->ending_local_state_snapshot,
+										action_node_history->ending_input_state_snapshot,
+										test_new_state_vals,
+										state_network_history);
+									history->test_inner_state_network_histories[step_index].back().push_back(state_network_history);
+									test_new_state_vals[s_index] += test_it->second[node_id][s_index]->output->acti_vals[0];
+								} else {
+									history->test_inner_state_network_histories[step_index].back().push_back(NULL);
+								}
+							}
+						}
+					}
+				}
+			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+				curr_node_context.back() = scope_history->node_histories[i_index][h_index]->scope_index;
+
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+				remove_inner_scope_network_inner_scope_activate_helper(
+					new_state_vals,
+					test_new_state_vals,
+					scope_node_history->inner_scope_history,
+					curr_scope_context,
+					curr_node_context,
+					run_helper,
+					step_index,
+					history);
+
+				curr_node_context.back() = -1;
 			}
-		} else if (scope_history->node_histories[h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
-			curr_node_context.back() = scope_history->node_histories[h_index]->scope_index;
-
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[h_index];
-			remove_inner_scope_network_inner_scope_activate_helper(
-				new_state_vals,
-				test_new_state_vals,
-				scope_node_history->inner_scope_history,
-				curr_scope_context,
-				curr_node_context,
-				run_helper,
-				step_index,
-				history);
-
-			curr_node_context.back() = -1;
 		}
 	}
 

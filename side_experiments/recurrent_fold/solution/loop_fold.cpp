@@ -560,10 +560,10 @@ void LoopFold::experiment_backprop(vector<double>& local_state_errors,
 						 history);
 	}
 
-	explore_increment();
+	experiment_increment();
 }
 
-void LoopFold::explore_increment() {
+void LoopFold::experiment_increment() {
 	this->state_iter++;
 
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
@@ -583,7 +583,7 @@ void LoopFold::explore_increment() {
 	} else if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
 		if (this->state_iter == 10000) {
-			explore_end();
+			experiment_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
