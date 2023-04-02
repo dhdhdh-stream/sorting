@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void LoopFold::measure_outer_scope_activate_helper(vector<double>& new_outer_state_vals,
@@ -103,9 +108,10 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 								vector<vector<double>>& flat_vals,
 								double& predicted_score,
 								double& scale_factor,
+								vector<ScopeHistory*>& context_histories,
 								RunHelper& run_helper,
 								LoopFoldHistory* history) {
-	run_helper.explore_phase = EXPLORE_PHASE_MEASURE;
+	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_MEASURE;
 
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
 
@@ -152,7 +158,7 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 		double score_diff = scale_factor*this->test_continue_score_network->output->acti_vals[0]
 			- scale_factor*this->test_halt_score_network->output->acti_vals[0];
 		// fold variance not representative yet, so use existing variance for now
-		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		double score_standard_deviation = abs(scale_factor)*sqrt(*this->existing_score_variance);
 		double score_diff_t_value = score_diff / score_standard_deviation;
 		if (score_diff_t_value > 1.0) {	// >75%
 			// continue
@@ -193,7 +199,7 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 			}
 		}
 
-		for (int f_index = f_index < this->sequence_length; f_index++) {
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_inner_scope[f_index]) {
 				for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {
 					this->test_state_networks[f_index][i_index]->new_sequence_activate(

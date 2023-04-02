@@ -171,7 +171,7 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 						 FoldHistory*& explore_exit_fold_history,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		for (int s_index = 0; s_index < (int)this->pre_state_networks.size(); s_index++) {
 			StateNetworkHistory* network_history = new StateNetworkHistory(this->pre_state_networks[s_index]);
 			this->pre_state_networks[s_index]->activate(local_state_vals,
@@ -235,7 +235,7 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 	if (early_exit_depth == -1 && explore_exit_depth == -1) {
 		history->inner_is_early_exit = false;
 
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 			for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
 				StateNetworkHistory* network_history = new StateNetworkHistory(this->post_state_networks[s_index]);
 				this->post_state_networks[s_index]->activate(local_state_vals,
@@ -282,7 +282,7 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
 	if (!history->inner_is_early_exit) {
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 			this->score_network->backprop_errors_with_no_weight_change(
 				target_val - predicted_score,
 				local_state_errors,
@@ -306,8 +306,7 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 						history->post_state_network_histories[s_index]);
 				}
 			}
-		} else {
-			// run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 			this->average_score = 0.9999*this->average_score + 0.0001*target_val;
 			double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
 			this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
@@ -330,7 +329,7 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 	vector<double> scope_input_errors;
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		scope_input_errors = vector<double>(inner_scope->num_input_states, 0.0);
 		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 			if (this->inner_input_is_local[i_index]) {
@@ -348,7 +347,7 @@ void ScopeNode::backprop(vector<double>& local_state_errors,
 						  scale_factor,
 						  run_helper,
 						  history->inner_scope_history);
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 			if (this->inner_input_is_local[i_index]) {
 				local_state_errors[this->inner_input_indexes[i_index]] = scope_input_errors[this->inner_input_target_indexes[i_index]];

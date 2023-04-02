@@ -5,9 +5,9 @@
 using namespace std;
 
 void Fold::remove_inner_scope_network_end() {
-	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
+	if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
 		cout << "REMOVE_INNER_SCOPE_NETWORK success" << endl;
-		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
@@ -36,7 +36,7 @@ void Fold::remove_inner_scope_network_end() {
 		this->curr_inner_state_networks_not_needed = this->test_inner_state_networks_not_needed;
 	} else {
 		cout << "REMOVE_INNER_SCOPE_NETWORK fail" << endl;
-		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
@@ -118,7 +118,7 @@ void Fold::remove_inner_scope_network_end() {
 
 			this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->sub_iter = 0;
 			this->sum_error = 0.0;
 
 			break;
@@ -170,7 +170,7 @@ void Fold::remove_inner_scope_network_end() {
 
 		this->state = FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK;
 		this->state_iter = 0;
-		this->sub_state_iter = 0;
+		this->sub_iter = 0;
 		this->sum_error = 0.0;
 
 		break;
@@ -222,6 +222,6 @@ void Fold::remove_inner_scope_network_from_load() {
 
 	this->state = FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK;
 	this->state_iter = 0;
-	this->sub_state_iter = 0;
+	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

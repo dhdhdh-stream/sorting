@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 void LoopFold::add_inner_state_end() {
@@ -147,7 +152,7 @@ void LoopFold::add_inner_state_end() {
 	}
 
 	if (this->explore_added_state
-			&& this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+			&& this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
 		this->explore_added_state = false;
 
 		this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
@@ -231,8 +236,8 @@ void LoopFold::add_inner_state_end() {
 		this->sum_error = 0.0;
 	} else {
 		cout << "ending ADD_INNER_STATE" << endl;
-		cout << "EXPLORE_DONE" << endl;
+		cout << "EXPERIMENT_DONE" << endl;
 
-		this->state = LOOP_FOLD_STATE_EXPLORE_DONE;
+		this->state = LOOP_FOLD_STATE_EXPERIMENT_DONE;
 	}
 }

@@ -40,6 +40,7 @@ const int LOOP_FOLD_STATE_DONE = 13;
 const int LOOP_FOLD_SUB_STATE_LEARN = 0;
 const int LOOP_FOLD_SUB_STATE_MEASURE = 1;
 
+class LoopFoldHistory;
 class LoopFold {
 public:
 	std::vector<int> scope_context;
@@ -242,6 +243,8 @@ public:
 	void add_outer_state_end();
 	void add_inner_state_end();
 
+	void add_to_clean();
+
 	void activate(std::vector<double>& local_state_vals,
 				  std::vector<double>& input_vals,
 				  std::vector<std::vector<double>>& flat_vals,
@@ -345,6 +348,7 @@ public:
 		std::vector<int>& curr_scope_context,
 		std::vector<int>& curr_node_context,
 		RunHelper& run_helper,
+		int iter_index,
 		int step_index,
 		LoopFoldHistory* history,
 		std::vector<double>& test_new_state_vals,
@@ -419,7 +423,7 @@ public:
 
 	std::vector<double> continue_score_network_updates;
 	std::vector<StateNetworkHistory*> continue_score_network_histories;
-	std::vector<double> continue_misguess_val;
+	std::vector<double> continue_misguess_vals;
 	std::vector<StateNetworkHistory*> continue_misguess_network_histories;
 	double halt_score_network_update;
 	StateNetworkHistory* halt_score_network_history;

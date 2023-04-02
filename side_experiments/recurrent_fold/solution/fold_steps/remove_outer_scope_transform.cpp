@@ -5,9 +5,9 @@
 using namespace std;
 
 void Fold::remove_outer_scope_end() {
-	if (this->sum_error/(this->sequence_length+1) / this->sub_state_iter < 0.01) {
+	if (this->sum_error/(this->sequence_length+1) / this->sub_iter < 0.01) {
 		cout << "REMOVE_OUTER_SCOPE success" << endl;
-		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_iter << endl;
 
 		// don't increment clean_outer_scope_index as entry removed from outer_state_networks
 
@@ -47,7 +47,7 @@ void Fold::remove_outer_scope_end() {
 		this->test_inner_state_networks.clear();
 	} else {
 		cout << "REMOVE_OUTER_SCOPE fail" << endl;
-		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_iter << endl;
 
 		this->curr_outer_scopes_needed = this->reverse_test_outer_scopes_needed;
 		this->curr_outer_contexts_needed = this->reverse_test_outer_contexts_needed;
@@ -159,7 +159,7 @@ void Fold::remove_outer_scope_end() {
 
 						this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
 						this->state_iter = 0;
-						this->sub_state_iter = 0;
+						this->sub_iter = 0;
 						this->sum_error = 0.0;
 					} else {
 						this->clean_inner_scope_index = 0;
@@ -195,7 +195,7 @@ void Fold::remove_outer_scope_end() {
 
 						this->state = FOLD_STATE_REMOVE_INNER_SCOPE;
 						this->state_iter = 0;
-						this->sub_state_iter = 0;
+						this->sub_iter = 0;
 						this->sum_error = 0.0;
 					}
 
@@ -239,7 +239,7 @@ void Fold::remove_outer_scope_end() {
 
 				this->state = FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
 				this->state_iter = 0;
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 
 				break;
@@ -303,7 +303,7 @@ void Fold::remove_outer_scope_end() {
 
 				this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
 				this->state_iter = 0;
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 
 				break;
@@ -370,6 +370,6 @@ void Fold::remove_outer_scope_from_load() {
 
 	this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
 	this->state_iter = 0;
-	this->sub_state_iter = 0;
+	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

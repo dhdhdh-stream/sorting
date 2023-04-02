@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "scope_node.h"
 
@@ -86,7 +87,7 @@ void Fold::explore_score_activate(vector<double>& local_state_vals,
 								  vector<ScopeHistory*>& context_histories,
 								  RunHelper& run_helper,
 								  FoldHistory* history) {
-	run_helper.explore_phase = EXPLORE_PHASE_LEARN;
+	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_LEARN;
 
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
 

@@ -86,7 +86,7 @@ void LoopFold::add_to_clean() {
 
 			this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->sub_iter = 0;
 			this->sum_error = 0.0;
 		} else {
 			this->clean_inner_scope_index = 0;
@@ -135,7 +135,7 @@ void LoopFold::add_to_clean() {
 
 			this->state = LOOP_FOLD_STATE_REMOVE_INNER_SCOPE;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->sub_iter = 0;
 			this->sum_error = 0.0;
 		}
 	} else {
@@ -197,7 +197,7 @@ void LoopFold::add_to_clean() {
 
 		this->state = LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE;
 		this->state_iter = 0;
-		this->sub_state_iter = 0;
+		this->sub_iter = 0;
 		this->sum_error = 0.0;
 	}
 }

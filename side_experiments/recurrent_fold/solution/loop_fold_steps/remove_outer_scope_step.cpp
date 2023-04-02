@@ -129,7 +129,7 @@ void LoopFold::remove_outer_scope_inner_scope_activate_helper(
 					if (node_id < (int)it->second.size()
 							&& it->second[node_id].size() > 0) {
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							history->inner_state_network_histories[iter_index][step_index].push_back(vector<StateNetworkHistory*>());
 							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
 								StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
@@ -238,9 +238,9 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 		test_input_vals = input_vals;
 	}
 
-	history->starting_state_network_histories = vector<StateNetworkHistory>(this->sum_inner_inputs + this->curr_num_new_inner_states);
+	history->starting_state_network_histories = vector<StateNetworkHistory*>(this->sum_inner_inputs + this->curr_num_new_inner_states);
 	for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 			StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_starting_state_networks[i_index]);
 			this->curr_starting_state_networks[i_index]->new_sequence_activate(
 				new_inner_state_vals,
@@ -295,73 +295,37 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 
 	int iter_index = 0;
 	while (true) {
-		StateNetworkHistory* continue_score_network_history;
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-			continue_score_network_history = new StateNetworkHistory(this->curr_continue_score_network);
-			this->curr_continue_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				continue_score_network_history);
-		} else {
-			this->curr_continue_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals);
-		}
+		StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->curr_continue_score_network);
+		this->curr_continue_score_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			continue_score_network_history);
 
-		StateNetworkHistory* continue_misguess_network_history;
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-			continue_misguess_network_history = new StateNetworkHistory(this->curr_continue_misguess_network);
-			this->curr_continue_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				continue_misguess_network_history);
-		} else {
-			this->curr_continue_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals);
-		}
+		StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->curr_continue_misguess_network);
+		this->curr_continue_misguess_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			continue_misguess_network_history);
 
-		StateNetworkHistory* halt_score_network_history;
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-			halt_score_network_history = new StateNetworkHistory(this->curr_halt_score_network);
-			this->curr_halt_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				halt_score_network_history);
-		} else {
-			this->curr_halt_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals);
-		}
+		StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->curr_halt_score_network);
+		this->curr_halt_score_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			halt_score_network_history);
 
-		StateNetworkHistory* halt_misguess_network_history;
-		if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-			halt_misguess_network_history = new StateNetworkHistory(this->curr_halt_misguess_network);
-			this->curr_halt_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				halt_misguess_network_history);
-		} else {
-			this->curr_halt_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals);
-		}
+		StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->curr_halt_misguess_network);
+		this->curr_halt_misguess_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			halt_misguess_network_history);
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 			StateNetworkHistory* test_continue_score_network_history = new StateNetworkHistory(this->test_continue_score_network);
@@ -416,7 +380,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 		} else {
 			double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
 				- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
-			double score_standard_deviation = sqrt(this->curr_score_variance);
+			double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
 			double score_diff_t_value = score_diff / score_standard_deviation;
 			if (score_diff_t_value > 1.0) {	// >75%
 				is_halt = false;
@@ -439,16 +403,14 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 		}
 
 		if (is_halt) {
-			if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-				history->halt_score_network_update = this->curr_halt_score_network->output->acti_vals[0];
-				history->halt_score_network_history = halt_score_network_history;
+			history->halt_score_network_update = this->curr_halt_score_network->output->acti_vals[0];
+			history->halt_score_network_history = halt_score_network_history;
 
-				history->halt_misguess_val = this->curr_halt_misguess_network->output->acti_vals[0];
-				history->halt_misguess_network_history = halt_misguess_network_history;
+			history->halt_misguess_val = this->curr_halt_misguess_network->output->acti_vals[0];
+			history->halt_misguess_network_history = halt_misguess_network_history;
 
-				delete continue_score_network_history;
-				delete continue_misguess_network_history;
-			}
+			delete continue_score_network_history;
+			delete continue_misguess_network_history;
 
 			predicted_score += scale_factor*this->curr_halt_score_network->output->acti_vals[0];
 
@@ -456,16 +418,14 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 			
 			break;
 		} else {
-			if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
-				history->continue_score_network_updates.push_back(this->curr_continue_score_network->output->acti_vals[0]);
-				history->continue_score_network_histories.push_back(continue_score_network_history);
+			history->continue_score_network_updates.push_back(this->curr_continue_score_network->output->acti_vals[0]);
+			history->continue_score_network_histories.push_back(continue_score_network_history);
 
-				history->continue_misguess_val.push_back(this->curr_continue_misguess_network->output->acti_vals[0]);
-				history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+			history->continue_misguess_vals.push_back(this->curr_continue_misguess_network->output->acti_vals[0]);
+			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
 
-				delete halt_score_network_history;
-				delete halt_misguess_network_history;
-			}
+			delete halt_score_network_history;
+			delete halt_misguess_network_history;
 
 			predicted_score += scale_factor*this->curr_continue_score_network->output->acti_vals[0];
 
@@ -478,7 +438,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 			history->score_network_updates.push_back(vector<double>(this->sequence_length));
 			history->score_network_histories.push_back(vector<StateNetworkHistory*>(this->sequence_length, NULL));
 
-			if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 				history->state_network_histories.push_back(vector<vector<StateNetworkHistory*>>(
 					this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL)));
 				history->inner_state_network_histories.push_back(vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length, vector<vector<StateNetworkHistory*>>()));
@@ -496,10 +456,10 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 				test_inner_state_network_histories.push_back(vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length, vector<vector<StateNetworkHistory*>>()));
 			}
 
-			for (int f_index = f_index < this->sequence_length; f_index++) {
+			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				if (this->is_inner_scope[f_index]) {
 					for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 							this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 								new_inner_state_vals,
@@ -619,7 +579,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 
 					for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
 							i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 							this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 								new_inner_state_vals,
@@ -649,11 +609,11 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 						}
 					}
-					for (int l_index = 0; l_index < this->num_sequence_local_states; l_index++) {
+					for (int l_index = 0; l_index < this->num_local_states; l_index++) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
 							+ l_index;
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 							this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 								new_inner_state_vals,
@@ -683,12 +643,12 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_local_state_vals[l_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
 						}
 					}
-					for (int i_index = 0; i_index < this->num_sequence_input_states; i_index++) {
+					for (int i_index = 0; i_index < this->num_input_states; i_index++) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
-							+ this->num_sequence_local_states
+							+ this->num_local_states
 							+ i_index;
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 							this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 								new_inner_state_vals,
@@ -722,7 +682,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 					double obs = (*flat_vals.begin())[0];
 
 					for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 							this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 								obs,
@@ -755,11 +715,11 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 						}
 					}
-					for (int l_index = 0; l_index < this->num_sequence_local_states; l_index++) {
+					for (int l_index = 0; l_index < this->num_local_states; l_index++) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
 							+ l_index;
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 							this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 								obs,
@@ -792,12 +752,12 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_local_state_vals[l_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
 						}
 					}
-					for (int i_index = 0; i_index < this->num_sequence_input_states; i_index++) {
+					for (int i_index = 0; i_index < this->num_input_states; i_index++) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
-							+ this->num_sequence_local_states
+							+ this->num_local_states
 							+ i_index;
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 							this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 								obs,
@@ -864,13 +824,13 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		vector<double> test_new_inner_state_errors(this->sum_inner_inputs+this->curr_num_new_inner_states, 0.0);
-		vector<double> test_local_state_errors(this->num_sequence_local_states);
-		for (int l_index = 0; l_index < this->num_sequence_local_states; l_index++) {
+		vector<double> test_local_state_errors(this->num_local_states);
+		for (int l_index = 0; l_index < this->num_local_states; l_index++) {
 			test_local_state_errors[l_index] = local_state_vals[l_index] - test_local_state_vals[l_index];
 			this->sum_error += abs(test_local_state_errors[l_index]);
 		}
-		vector<double> test_input_errors(this->num_sequence_input_states);
-		for (int i_index = 0; i_index < this->num_sequence_input_states; i_index++) {
+		vector<double> test_input_errors(this->num_input_states);
+		for (int i_index = 0; i_index < this->num_input_states; i_index++) {
 			test_input_errors[i_index] = input_vals[i_index] - test_input_vals[i_index];
 			this->sum_error += abs(test_input_errors[i_index]);
 		}
@@ -898,10 +858,10 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 					test_score_network_histories[iter_index][f_index]);
 
 				if (this->is_inner_scope[f_index]) {
-					for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
+					for (int i_index = this->num_input_states-1; i_index >= 0; i_index--) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
-							+ this->num_sequence_local_states
+							+ this->num_local_states
 							+ i_index;
 						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 							test_input_errors[i_index],
@@ -912,7 +872,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							target_max_update,
 							test_state_network_histories[iter_index][f_index][state_index]);
 					}
-					for (int l_index = this->num_sequence_local_states-1; l_index >= 0; l_index--) {
+					for (int l_index = this->num_local_states-1; l_index >= 0; l_index--) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
 							+ l_index;
@@ -943,7 +903,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 					}
 					for (int n_index = (int)test_inner_state_network_histories[iter_index][f_index].size()-1; n_index >= 0; n_index--) {
 						for (int i_index = this->curr_num_new_inner_states-1; i_index >= 0; i_index--) {
-							StateNetwork* state_network = history->test_inner_state_network_histories[iter_index][f_index][n_index][i_index]->network;
+							StateNetwork* state_network = test_inner_state_network_histories[iter_index][f_index][n_index][i_index]->network;
 							state_network->new_outer_backprop(
 								test_new_state_errors[i_index],
 								test_new_state_errors,
@@ -974,10 +934,10 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							test_state_network_histories[iter_index][f_index][i_index]);
 					}
 				} else {
-					for (int i_index = this->num_sequence_input_states-1; i_index >= 0; i_index--) {
+					for (int i_index = this->num_input_states-1; i_index >= 0; i_index--) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
-							+ this->num_sequence_local_states
+							+ this->num_local_states
 							+ i_index;
 						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 							test_input_errors[i_index],
@@ -988,7 +948,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 							target_max_update,
 							test_state_network_histories[iter_index][f_index][state_index]);
 					}
-					for (int l_index = this->num_sequence_local_states-1; l_index >= 0; l_index--) {
+					for (int l_index = this->num_local_states-1; l_index >= 0; l_index--) {
 						int state_index = this->sum_inner_inputs
 							+ this->curr_num_new_inner_states
 							+ l_index;
@@ -1144,7 +1104,7 @@ void LoopFold::remove_outer_scope_activate(vector<double>& local_state_vals,
 		}
 
 		this->state_iter++;
-		this->sub_state_iter++;
+		this->sub_iter++;
 		history->state_iter_snapshot = this->state_iter;
 	}
 }

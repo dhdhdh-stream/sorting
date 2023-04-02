@@ -605,107 +605,107 @@ void Fold::sequence_activate(vector<double>& local_state_vals,
 void Fold::increment() {
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_state_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else {
 		// this->state == FOLD_STATE_CLEAR_INNER_STATE
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				clear_inner_state_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}

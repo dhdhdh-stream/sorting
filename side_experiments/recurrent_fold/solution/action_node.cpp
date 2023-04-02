@@ -110,7 +110,7 @@ void ActionNode::activate(vector<double>& local_state_vals,
 
 	history->obs_snapshot = obs;
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
 			StateNetworkHistory* network_history = new StateNetworkHistory(this->state_networks[s_index]);
 			this->state_networks[s_index]->activate(obs,
@@ -160,7 +160,7 @@ void ActionNode::backprop(vector<double>& local_state_errors,
 						  double& scale_factor,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		this->score_network->backprop_errors_with_no_weight_change(
 			target_val - predicted_score,
 			local_state_errors,
@@ -184,8 +184,7 @@ void ActionNode::backprop(vector<double>& local_state_errors,
 					history->state_network_histories[s_index]);
 			}
 		}
-	} else {
-		// run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 		this->average_score = 0.9999*this->average_score + 0.0001*target_val;
 		double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
 		this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;

@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 LoopFold::LoopFold(vector<int> scope_context,
@@ -90,8 +95,8 @@ LoopFold::LoopFold(vector<int> scope_context,
 		if (this->is_inner_scope[f_index]) {
 			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
-																			  this->num_sequence_local_states,
-																			  this->num_sequence_input_states,
+																			  this->num_local_states,
+																			  this->num_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->test_num_new_outer_states,
 																			  20));
@@ -99,8 +104,8 @@ LoopFold::LoopFold(vector<int> scope_context,
 		} else {
 			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(1,
-																			  this->num_sequence_local_states,
-																			  this->num_sequence_input_states,
+																			  this->num_local_states,
+																			  this->num_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->test_num_new_outer_states,
 																			  20));
@@ -108,8 +113,8 @@ LoopFold::LoopFold(vector<int> scope_context,
 		}
 
 		this->test_score_networks.push_back(new StateNetwork(0,
-															 this->num_sequence_local_states,
-															 this->num_sequence_input_states,
+															 this->num_local_states,
+															 this->num_input_states,
 															 this->sum_inner_inputs+this->test_num_new_inner_states,
 															 this->test_num_new_outer_states,
 															 20));
@@ -539,7 +544,7 @@ void LoopFold::experiment_backprop(vector<double>& local_state_errors,
 								   double& scale_factor,
 								   RunHelper& run_helper,
 								   LoopFoldHistory* history) {
-	if (this->sub_state == LOOP_FOLD_STATE_LEARN) {
+	if (this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
 		learn_backprop(local_state_errors,
 					   input_errors,
 					   target_val,
@@ -549,7 +554,7 @@ void LoopFold::experiment_backprop(vector<double>& local_state_errors,
 					   run_helper,
 					   history);
 	} else {
-		// this->sub_state == LOOP_FOLD_STATE_MEASURE
+		// this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE
 		measure_backprop(local_state_errors,
 						 input_errors,
 						 target_val,
@@ -633,7 +638,7 @@ void LoopFold::activate(vector<double>& local_state_vals,
 						double& scale_factor,
 						double& sum_impact,
 						vector<ScopeHistory*>& context_histories,
-						RunHelper& run_help,
+						RunHelper& run_helper,
 						LoopFoldHistory* history) {
 	if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_activate(local_state_vals,
@@ -712,107 +717,107 @@ void LoopFold::activate(vector<double>& local_state_vals,
 void LoopFold::increment() {
 	if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_network_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_STATE) {
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_state_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_CLEAR_INNER_STATE
 		if (this->state_iter > 150000) {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				clear_inner_state_end();
 			}
 		} else {
-			if (this->sub_state_iter >= 10000) {
+			if (this->sub_iter >= 10000) {
 				cout << "this->state_iter: " << this->state_iter << endl;
 				cout << "this->sum_error: " << this->sum_error << endl;
 				cout << endl;
 
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
 		}

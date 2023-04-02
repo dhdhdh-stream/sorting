@@ -22,6 +22,10 @@ public:
 	StateNetwork* continue_misguess_network;
 	StateNetwork* halt_score_network;
 	StateNetwork* halt_misguess_network;
+	double average_score;
+	double score_variance;
+	double average_misguess;
+	double misguess_variance;
 	int furthest_successful_halt;
 
 	std::vector<AbstractNode*> nodes;
@@ -63,7 +67,7 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void handle_node_activate_helper(int iter_index,
+	bool handle_node_activate_helper(int iter_index,
 									 int& curr_node_id,
 									 FoldHistory*& curr_fold_history,
 									 std::vector<double>& local_state_vals,
@@ -119,7 +123,7 @@ public:
 
 	std::vector<double> continue_score_network_updates;
 	std::vector<StateNetworkHistory*> continue_score_network_histories;
-	std::vector<double> continue_misguess_val;
+	std::vector<double> continue_misguess_vals;
 	std::vector<StateNetworkHistory*> continue_misguess_network_histories;
 	double halt_score_network_update;
 	StateNetworkHistory* halt_score_network_history;

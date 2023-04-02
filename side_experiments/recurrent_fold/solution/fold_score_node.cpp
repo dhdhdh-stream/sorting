@@ -206,7 +206,7 @@ void FoldScoreNode::backprop(vector<double>& local_state_errors,
 							 double& scale_factor,
 							 RunHelper& run_helper,
 							 FoldScoreNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		if (history->is_existing) {
 			this->existing_score_network->backprop_errors_with_no_weight_change(
 				target_val - predicted_score,
@@ -216,8 +216,7 @@ void FoldScoreNode::backprop(vector<double>& local_state_errors,
 
 			predicted_score -= scale_factor*history->existing_score_network_update;
 		}
-	} else {
-		// run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 		if (history->is_existing) {
 			this->existing_score_network->backprop_weights_with_no_error_signal(
 				target_val - predicted_score,

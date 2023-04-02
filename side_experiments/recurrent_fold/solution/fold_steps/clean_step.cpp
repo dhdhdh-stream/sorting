@@ -120,7 +120,7 @@ void Fold::clean_inner_scope_activate_helper(vector<double>& new_state_vals,
 					if (node_id < (int)it->second.size()
 							&& it->second[node_id].size() > 0) {
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-						if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							history->inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
 							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
 								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
@@ -225,7 +225,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 		test_inner_input_vals_snapshots = vector<vector<double>>(this->sequence_length);
 	}
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		int num_inner_networks = this->sum_inner_inputs
 			+ this->curr_num_new_inner_states
 			+ this->num_sequence_local_states
@@ -241,7 +241,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 		if (this->is_inner_scope[f_index]) {
 			for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {
 				if (!this->curr_state_networks_not_needed[f_index][i_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 						this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 							new_inner_state_vals,
@@ -372,7 +372,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 			for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
 					i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
 				if (!this->curr_state_networks_not_needed[f_index][i_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 						this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 							new_inner_state_vals,
@@ -407,7 +407,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					+ this->curr_num_new_inner_states
 					+ l_index;
 				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 							new_inner_state_vals,
@@ -443,7 +443,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					+ this->num_sequence_local_states
 					+ i_index;
 				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 							new_inner_state_vals,
@@ -478,7 +478,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 
 			for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
 				if (!this->curr_state_networks_not_needed[f_index][i_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][i_index]);
 						this->curr_state_networks[f_index][i_index]->new_sequence_activate(
 							obs,
@@ -516,7 +516,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					+ this->curr_num_new_inner_states
 					+ l_index;
 				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 							obs,
@@ -555,7 +555,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 					+ this->num_sequence_local_states
 					+ i_index;
 				if (!this->curr_state_networks_not_needed[f_index][state_index]) {
-					if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 						StateNetworkHistory* state_network_history = new StateNetworkHistory(this->curr_state_networks[f_index][state_index]);
 						this->curr_state_networks[f_index][state_index]->new_sequence_activate(
 							obs,
@@ -791,7 +791,7 @@ void Fold::clean_sequence_activate(vector<double>& local_state_vals,
 		}
 
 		this->state_iter++;
-		this->sub_state_iter++;
+		this->sub_iter++;
 		history->state_iter_snapshot = this->state_iter;
 	}
 }
@@ -805,7 +805,7 @@ void Fold::backprop(vector<double>& local_state_errors,
 					double& scale_factor,
 					RunHelper& run_helper,
 					FoldHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		vector<double> new_inner_state_errors(this->sum_inner_inputs+this->curr_num_new_inner_states, 0.0);
 		vector<double> new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
 
@@ -970,7 +970,7 @@ void Fold::backprop(vector<double>& local_state_errors,
 		// Note: don't backprop curr_starting_score_network for simplicity
 		//   - ideally, prior score network should already account for fold
 		//   - even if doesn't lead to ideal results, would just need to wait until fold completes
-	} else {
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 		if (history->state_iter_snapshot <= this->state_iter) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 				this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(

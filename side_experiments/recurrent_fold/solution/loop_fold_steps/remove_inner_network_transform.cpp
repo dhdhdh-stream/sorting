@@ -5,9 +5,9 @@
 using namespace std;
 
 void LoopFold::remove_inner_network_end() {
-	if (this->sum_error/this->sequence_length / this->sub_state_iter < 0.01) {
+	if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
 		cout << "REMOVE_INNER_NETWORK success" << endl;
-		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 
 		for (int i_index = 0; i_index < (int)this->curr_starting_state_networks.size(); i_index++) {
 			delete this->curr_starting_state_networks[i_index];
@@ -54,7 +54,7 @@ void LoopFold::remove_inner_network_end() {
 		this->curr_state_networks_not_needed = this->test_state_networks_not_needed;
 	} else {
 		cout << "REMOVE_INNER_NETWORK fail" << endl;
-		cout << "score: " << this->sum_error/this->sequence_length / this->sub_state_iter << endl;
+		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 
 		for (int i_index = 0; i_index < (int)this->test_starting_state_networks.size(); i_index++) {
 			delete this->test_starting_state_networks[i_index];
@@ -156,7 +156,7 @@ void LoopFold::remove_inner_network_end() {
 
 				this->state = LOOP_FOLD_STATE_CLEAR_INNER_STATE;
 				this->state_iter = 0;
-				this->sub_state_iter = 0;
+				this->sub_iter = 0;
 				this->sum_error = 0.0;
 
 				break;
@@ -230,7 +230,7 @@ void LoopFold::remove_inner_network_end() {
 
 			this->state = LOOP_FOLD_STATE_REMOVE_INNER_STATE;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->sub_iter = 0;
 			this->sum_error = 0.0;
 
 			break;
@@ -281,7 +281,7 @@ void LoopFold::remove_inner_network_end() {
 
 		this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
 		this->state_iter = 0;
-		this->sub_state_iter = 0;
+		this->sub_iter = 0;
 		this->sum_error = 0.0;
 	}
 }
@@ -342,6 +342,6 @@ void LoopFold::remove_inner_network_from_load() {
 
 	this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
 	this->state_iter = 0;
-	this->sub_state_iter = 0;
+	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

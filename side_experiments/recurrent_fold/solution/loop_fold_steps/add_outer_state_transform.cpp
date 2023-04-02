@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 void LoopFold::add_outer_state_end() {
@@ -197,15 +202,15 @@ void LoopFold::add_outer_state_end() {
 			}
 			if (this->is_inner_scope[f_index]) {
 				this->test_state_networks[f_index].push_back(new StateNetwork(0,
-																			  this->num_sequence_local_states,
-																			  this->num_sequence_input_states,
+																			  this->num_local_states,
+																			  this->num_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->curr_num_new_outer_states,
 																			  20));
 			} else {
 				this->test_state_networks[f_index].push_back(new StateNetwork(1,
-																			  this->num_sequence_local_states,
-																			  this->num_sequence_input_states,
+																			  this->num_local_states,
+																			  this->num_input_states,
 																			  this->sum_inner_inputs+this->test_num_new_inner_states,
 																			  this->curr_num_new_outer_states,
 																			  20));
@@ -253,8 +258,8 @@ void LoopFold::add_outer_state_end() {
 		this->sum_error = 0.0;
 	} else {
 		cout << "ending ADD_OUTER_STATE" << endl;
-		cout << "EXPLORE_DONE" << endl;
+		cout << "EXPERIMENT_DONE" << endl;
 
-		this->state = LOOP_FOLD_STATE_EXPLORE_DONE;
+		this->state = LOOP_FOLD_STATE_EXPERIMENT_DONE;
 	}
 }

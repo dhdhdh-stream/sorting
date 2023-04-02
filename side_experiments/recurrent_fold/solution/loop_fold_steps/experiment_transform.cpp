@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 void LoopFold::experiment_end() {

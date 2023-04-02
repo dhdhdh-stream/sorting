@@ -175,7 +175,7 @@ void BranchNode::backprop(vector<double>& local_state_errors,
 						  double& scale_factor,
 						  RunHelper& run_helper,
 						  BranchNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		if (history->is_branch) {
 			this->branch_score_network->backprop_errors_with_no_weight_change(
 				target_val - predicted_score,
@@ -189,8 +189,7 @@ void BranchNode::backprop(vector<double>& local_state_errors,
 				input_errors,
 				history->score_network_history);
 		}
-	} else {
-		// run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 		if (history->is_branch) {
 			this->branch_score_network->backprop_weights_with_no_error_signal(
 				target_val - predicted_score,

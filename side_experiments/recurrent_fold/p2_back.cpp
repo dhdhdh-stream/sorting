@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
 			// add fold
-		} else if (run_helper.explore_phase == EXPLORE_PHASE_FLAT) {
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 			if (switch_val == 1) {
 				if ((second_val+shared_val)%2 == 0) {
 					target_val = 1.0;
@@ -162,6 +162,8 @@ int main(int argc, char* argv[]) {
 										  run_helper,
 										  root_history);
 		} else {
+			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
+
 			if (switch_val == 0) {
 				if ((first_val+shared_val)%2 == 0) {
 					target_val = 1.0;

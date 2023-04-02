@@ -1,5 +1,10 @@
 #include "loop_fold.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void LoopFold::learn_outer_scope_activate_helper(vector<double>& new_outer_state_vals,
@@ -144,9 +149,9 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 							  double& predicted_score,
 							  double& scale_factor,
 							  vector<ScopeHistory*>& context_histories,
-							  RunHelper& run_help,
+							  RunHelper& run_helper,
 							  LoopFoldHistory* history) {
-	run_helper.explore_phase = EXPLORE_PHASE_LEARN;
+	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_LEARN;
 
 	vector<double> new_outer_state_vals(this->test_num_new_outer_states, 0.0);
 
@@ -162,7 +167,7 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 
-	history->starting_state_network_histories = vector<StateNetworkHistory>(this->sum_inner_inputs + this->test_num_new_inner_states);
+	history->starting_state_network_histories = vector<StateNetworkHistory*>(this->sum_inner_inputs + this->test_num_new_inner_states);
 	for (int i_index = 0; i_index < this->sum_inner_inputs + this->test_num_new_inner_states; i_index++) {
 		StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_starting_state_networks[i_index]);
 		this->test_starting_state_networks[i_index]->new_sequence_activate(
@@ -201,7 +206,7 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 				input_vals,
 				new_outer_state_vals,
 				continue_misguess_network_history);
-			history->continue_misguess_val.push_back(this->test_continue_misguess_network->output->acti_vals[0]);
+			history->continue_misguess_vals.push_back(this->test_continue_misguess_network->output->acti_vals[0]);
 			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
 		} else {
 			StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->test_halt_score_network);
@@ -238,7 +243,7 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 		history->score_network_histories.push_back(vector<StateNetworkHistory*>(this->sequence_length, NULL));
 		history->inner_state_network_histories.push_back(vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length, vector<vector<StateNetworkHistory*>>()));
 
-		for (int f_index = f_index < this->sequence_length; f_index++) {
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			if (this->is_inner_scope[f_index]) {
 				for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
@@ -693,7 +698,7 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 				misguess_network_target_max_update = 0.002;
 			}
 			this->test_continue_misguess_network->new_sequence_backprop(
-				final_misguess - history->continue_misguess_val[iter_index],
+				final_misguess - history->continue_misguess_vals[iter_index],
 				new_inner_state_errors,
 				local_state_errors,
 				input_errors,
