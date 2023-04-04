@@ -8,7 +8,8 @@ const int NODE_TYPE_INNER_SCOPE = 1;
 const int NODE_TYPE_BRANCH = 2;
 const int NODE_TYPE_FOLD_SCORE = 3;
 const int NODE_TYPE_FOLD_SEQUENCE = 4;
-const int NODE_TYPE_PASS_THROUGH = 5;
+const int NODE_TYPE_LOOP_FOLD = 5;
+const int NODE_TYPE_PASS_THROUGH = 6;
 
 class AbstractNode {
 public:

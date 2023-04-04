@@ -275,7 +275,7 @@ void fold_to_nodes(Scope* parent_scope,
 					vector<bool> post_state_network_target_is_local;
 					vector<int> post_state_network_target_indexes;
 					vector<StateNetwork*> post_state_networks;
-					for (int s_index = fold->inner_input_start_indexes[f_index] + fold->num_inner_inputs[f_index]; s_index < total_num_states; s_index++) {
+					for (int s_index = fold->inner_input_start_indexes[f_index] + fold->num_inner_inputs[f_index]; s_index < num_inner_networks; s_index++) {
 						if (!fold->curr_state_networks_not_needed[f_index][s_index]) {
 							if (s_index < parent_lowest_layer) {
 								post_state_network_target_is_local.push_back(true);

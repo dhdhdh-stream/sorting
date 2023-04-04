@@ -10,19 +10,10 @@ void LoopFold::add_to_clean() {
 		+ this->curr_num_new_inner_states
 		+ this->num_local_states
 		+ this->num_input_states;
-	int total_num_states = this->sum_inner_inputs
-		+ this->curr_num_new_inner_states
-		+ this->num_local_states
-		+ this->num_input_states
-		+ this->curr_num_new_outer_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
-		this->curr_state_not_needed_locally.push_back(vector<bool>(total_num_states, false));
-		this->curr_num_states_cleared.push_back(0);
 
 		this->test_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
-		this->test_state_not_needed_locally.push_back(vector<bool>(total_num_states, false));
-		this->test_num_states_cleared.push_back(0);
 	}
 
 	// Note: don't adjust context even if outer state not needed, as trained within specific context
@@ -50,8 +41,6 @@ void LoopFold::add_to_clean() {
 			this->clean_inner_state_index = 0;
 
 			this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
-			this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
-			this->test_num_states_cleared = this->curr_num_states_cleared;
 
 			this->test_state_networks_not_needed[0][0] = true;
 

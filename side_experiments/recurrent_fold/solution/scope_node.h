@@ -5,6 +5,7 @@
 
 #include "abstract_node.h"
 #include "fold.h"
+#include "loop_fold.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "state_network.h"
@@ -47,6 +48,7 @@ public:
 	int explore_exit_depth;
 	int explore_next_node_id;
 	Fold* explore_fold;
+	LoopFold* explore_loop_fold;
 
 	ScopeNode(std::vector<bool> pre_state_network_target_is_local,
 			  std::vector<int> pre_state_network_target_indexes,

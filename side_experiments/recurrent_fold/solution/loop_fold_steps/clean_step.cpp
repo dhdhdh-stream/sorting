@@ -811,15 +811,6 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 					test_score_network_histories[iter_index][f_index] = test_score_network_history;
 					test_score_network_updates[iter_index][f_index] = this->test_score_networks[f_index]->output->acti_vals[0];
 				}
-
-				for (int i_index = 0; i_index < this->curr_num_states_cleared[f_index]; i_index++) {
-					new_inner_state_vals[i_index] = 0.0;
-				}
-				if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-					for (int i_index = 0; i_index < this->test_num_states_cleared[f_index]; i_index++) {
-						test_new_inner_state_vals[i_index] = 0.0;
-					}
-				}
 			}
 		}
 
@@ -849,10 +840,6 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
-				for (int i_index = 0; i_index < this->test_num_states_cleared[f_index]; i_index++) {
-					test_new_inner_state_errors[i_index] = 0.0;
-				}
-
 				double test_score_network_error = history->score_network_updates[iter_index][f_index]
 					- test_score_network_updates[iter_index][f_index];
 				this->sum_error += abs(test_score_network_error);
@@ -913,11 +900,7 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 
 					vector<double> test_new_state_errors;
 					for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-						if (this->test_state_not_needed_locally[f_index][this->sum_inner_inputs+i_index]) {
-							test_new_state_errors.push_back(0.0);
-						} else {
-							test_new_state_errors.push_back(test_new_inner_state_errors[this->sum_inner_inputs+i_index]);
-						}
+						test_new_state_errors.push_back(test_new_inner_state_errors[this->sum_inner_inputs+i_index]);
 					}
 					for (int n_index = (int)test_inner_state_network_histories[iter_index][f_index].size()-1; n_index >= 0; n_index--) {
 						for (int i_index = this->curr_num_new_inner_states-1; i_index >= 0; i_index--) {
@@ -932,9 +915,7 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 						}
 					}
 					for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-						if (!this->test_state_not_needed_locally[f_index][this->sum_inner_inputs+i_index]) {
-							test_new_inner_state_errors[this->sum_inner_inputs+i_index] = test_new_state_errors[i_index];
-						}
+						test_new_inner_state_errors[this->sum_inner_inputs+i_index] = test_new_state_errors[i_index];
 					}
 
 					for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
@@ -1143,10 +1124,6 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
-				for (int i_index = 0; i_index < this->curr_num_states_cleared[f_index]; i_index++) {
-					new_inner_state_errors[i_index] = 0.0;
-				}
-
 				this->curr_score_networks[f_index]->new_sequence_backprop_errors_with_no_weight_change(
 					target_val - predicted_score,
 					new_inner_state_errors,
@@ -1204,11 +1181,7 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 
 					vector<double> new_state_errors;
 					for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-						if (this->curr_state_not_needed_locally[f_index][this->sum_inner_inputs+i_index]) {
-							new_state_errors.push_back(0.0);
-						} else {
-							new_state_errors.push_back(new_inner_state_errors[this->sum_inner_inputs+i_index]);
-						}
+						new_state_errors.push_back(new_inner_state_errors[this->sum_inner_inputs+i_index]);
 					}
 					for (int n_index = (int)history->inner_state_network_histories[iter_index][f_index].size()-1; n_index >= 0; n_index--) {
 						for (int i_index = this->curr_num_new_inner_states-1; i_index >= 0; i_index--) {
@@ -1222,9 +1195,7 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 						}
 					}
 					for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-						if (!this->curr_state_not_needed_locally[f_index][this->sum_inner_inputs+i_index]) {
-							new_inner_state_errors[this->sum_inner_inputs+i_index] = new_state_errors[i_index];
-						}
+						new_inner_state_errors[this->sum_inner_inputs+i_index] = new_state_errors[i_index];
 					}
 
 					vector<double> inner_input_errors(new_inner_state_errors.begin() + this->inner_input_start_indexes[f_index],

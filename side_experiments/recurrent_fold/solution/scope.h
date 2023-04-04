@@ -5,9 +5,11 @@
 
 #include "abstract_node.h"
 #include "fold.h"
+#include "loop_fold.h"
 #include "state_network.h"
 
 class FoldHistory;
+class LoopFoldHistory;
 class ScopeHistory;
 class Scope {
 public:
@@ -135,6 +137,7 @@ public:
 	int explore_iter_index;
 	int explore_node_index;
 	FoldHistory* explore_fold_history;
+	LoopFoldHistory* explore_loop_fold_history;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

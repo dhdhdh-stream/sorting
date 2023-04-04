@@ -3,6 +3,9 @@
  * - explore after 1 iteration
  *   - so LoopFold/Scope can still loop 0 times, but will effectively start from 1
  *     - if Scope is later reused though, can have 0 iterations
+ * 
+ * - assume all newly added state needed for continue/halt networks
+ *   - so no need to remove or clear inner state
  */
 
 #ifndef LOOP_FOLD_H
@@ -32,15 +35,14 @@ const int LOOP_FOLD_STATE_REMOVE_INNER_SCOPE = 8;
 const int LOOP_FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK = 9;
 
 const int LOOP_FOLD_STATE_REMOVE_INNER_NETWORK = 10;
-const int LOOP_FOLD_STATE_REMOVE_INNER_STATE = 11;
-const int LOOP_FOLD_STATE_CLEAR_INNER_STATE = 12;
 
-const int LOOP_FOLD_STATE_DONE = 13;
+const int LOOP_FOLD_STATE_DONE = 11;
 
 const int LOOP_FOLD_SUB_STATE_LEARN = 0;
 const int LOOP_FOLD_SUB_STATE_MEASURE = 1;
 
 class LoopFoldHistory;
+class ScopeHistory;
 class LoopFold {
 public:
 	std::vector<int> scope_context;
@@ -141,12 +143,6 @@ public:
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
 
-	std::vector<std::vector<bool>> curr_state_not_needed_locally;
-	std::vector<std::vector<bool>> test_state_not_needed_locally;
-
-	std::vector<int> curr_num_states_cleared;
-	std::vector<int> test_num_states_cleared;
-
 	// TODO: add seeding
 
 	LoopFold(std::vector<int> scope_context,
@@ -169,7 +165,7 @@ public:
 							 double& predicted_score,
 							 double& scale_factor,
 							 std::vector<ScopeHistory*>& context_histories,
-							 RunHelper& run_help,
+							 RunHelper& run_helper,
 							 LoopFoldHistory* history);
 	void experiment_backprop(std::vector<double>& local_state_errors,
 							 std::vector<double>& input_errors,
@@ -201,7 +197,7 @@ public:
 						double& predicted_score,
 						double& scale_factor,
 						std::vector<ScopeHistory*>& context_histories,
-						RunHelper& run_help,
+						RunHelper& run_helper,
 						LoopFoldHistory* history);
 	void learn_backprop(std::vector<double>& local_state_errors,
 						std::vector<double>& input_errors,
@@ -228,7 +224,7 @@ public:
 						  double& predicted_score,
 						  double& scale_factor,
 						  std::vector<ScopeHistory*>& context_histories,
-						  RunHelper& run_help,
+						  RunHelper& run_helper,
 						  LoopFoldHistory* history);
 	void measure_backprop(std::vector<double>& local_state_errors,
 						  std::vector<double>& input_errors,
@@ -252,7 +248,7 @@ public:
 				  double& scale_factor,
 				  double& sum_impact,
 				  std::vector<ScopeHistory*>& context_histories,
-				  RunHelper& run_help,
+				  RunHelper& run_helper,
 				  LoopFoldHistory* history);
 	void backprop(std::vector<double>& local_state_errors,
 				  std::vector<double>& input_errors,
@@ -291,7 +287,7 @@ public:
 									 double& scale_factor,
 									 double& sum_impact,
 									 std::vector<ScopeHistory*>& context_histories,
-									 RunHelper& run_help,
+									 RunHelper& run_helper,
 									 LoopFoldHistory* history);
 
 	void remove_outer_scope_network_outer_scope_activate_helper(
@@ -318,7 +314,7 @@ public:
 											 double& scale_factor,
 											 double& sum_impact,
 											 std::vector<ScopeHistory*>& context_histories,
-											 RunHelper& run_help,
+											 RunHelper& run_helper,
 											 LoopFoldHistory* history);
 
 	void remove_inner_scope_inner_scope_activate_helper(
@@ -339,7 +335,7 @@ public:
 									 double& scale_factor,
 									 double& sum_impact,
 									 std::vector<ScopeHistory*>& context_histories,
-									 RunHelper& run_help,
+									 RunHelper& run_helper,
 									 LoopFoldHistory* history);
 
 	void remove_inner_scope_network_inner_scope_activate_helper(
@@ -360,7 +356,7 @@ public:
 											 double& scale_factor,
 											 double& sum_impact,
 											 std::vector<ScopeHistory*>& context_histories,
-											 RunHelper& run_help,
+											 RunHelper& run_helper,
 											 LoopFoldHistory* history);
 
 	void clean_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
@@ -386,7 +382,7 @@ public:
 						double& scale_factor,
 						double& sum_impact,
 						std::vector<ScopeHistory*>& context_histories,
-						RunHelper& run_help,
+						RunHelper& run_helper,
 						LoopFoldHistory* history);
 
 	void remove_outer_scope_end();
@@ -394,16 +390,12 @@ public:
 	void remove_inner_scope_end();
 	void remove_inner_scope_network_end();
 	void remove_inner_network_end();
-	void remove_inner_state_end();
-	void clear_inner_state_end();
 
 	void remove_outer_scope_from_load();
 	void remove_outer_scope_network_from_load();
 	void remove_inner_scope_from_load();
 	void remove_inner_scope_network_from_load();
 	void remove_inner_network_from_load();
-	void remove_inner_state_from_load();
-	void clear_inner_state_from_load();
 
 	void save(std::ofstream& output_file,
 			  int scope_id,

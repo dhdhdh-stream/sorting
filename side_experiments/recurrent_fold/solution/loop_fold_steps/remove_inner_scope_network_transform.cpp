@@ -107,8 +107,6 @@ void LoopFold::remove_inner_scope_network_end() {
 			this->clean_inner_state_index = 0;
 
 			this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
-			this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
-			this->test_num_states_cleared = this->curr_num_states_cleared;
 
 			this->test_state_networks_not_needed[0][0] = true;
 

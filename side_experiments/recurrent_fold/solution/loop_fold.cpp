@@ -430,11 +430,6 @@ LoopFold::LoopFold(ifstream& input_file,
 		+ this->curr_num_new_inner_states
 		+ this->num_local_states
 		+ this->num_input_states;
-	int total_num_states = this->sum_inner_inputs
-		+ this->curr_num_new_inner_states
-		+ this->num_local_states
-		+ this->num_input_states
-		+ this->curr_num_new_outer_states;
 
 	this->curr_state_networks_not_needed = vector<vector<bool>>(this->sequence_length, vector<bool>(num_inner_networks));
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
@@ -466,24 +461,6 @@ LoopFold::LoopFold(ifstream& input_file,
 		score_network_save_file.close();
 	}
 
-	this->curr_state_not_needed_locally = vector<vector<bool>>(this->sequence_length, vector<bool>(total_num_states));
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
-			string is_not_needed_line;
-			getline(input_file, is_not_needed_line);
-			this->curr_state_not_needed_locally[f_index][s_index] = stoi(is_not_needed_line);
-		}
-	}
-	this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
-
-	this->curr_num_states_cleared = vector<int>(this->sequence_length);
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		string num_states_cleared_line;
-		getline(input_file, num_states_cleared_line);
-		this->curr_num_states_cleared[f_index] = stoi(num_states_cleared_line);
-	}
-	this->test_num_states_cleared = this->curr_num_states_cleared;
-
 	if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE) {
 		remove_outer_scope_from_load();
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
@@ -492,13 +469,9 @@ LoopFold::LoopFold(ifstream& input_file,
 		remove_inner_scope_from_load();
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
 		remove_inner_scope_network_from_load();
-	} else if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
-		remove_inner_network_from_load();
-	} else if (this->state == FOLD_STATE_REMOVE_INNER_STATE) {
-		remove_inner_state_from_load();
 	} else {
-		// this->state == FOLD_STATE_CLEAR_INNER_STATE
-		clear_inner_state_from_load();
+		// this->state == FOLD_STATE_REMOVE_INNER_NETWORK
+		remove_inner_network_from_load();
 	}
 }
 
@@ -680,28 +653,8 @@ void LoopFold::activate(vector<double>& local_state_vals,
 											context_histories,
 											run_helper,
 											history);
-	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK) {
-		clean_activate(local_state_vals,
-					   input_vals,
-					   flat_vals,
-					   predicted_score,
-					   scale_factor,
-					   sum_impact,
-					   context_histories,
-					   run_helper,
-					   history);
-	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_STATE) {
-		clean_activate(local_state_vals,
-					   input_vals,
-					   flat_vals,
-					   predicted_score,
-					   scale_factor,
-					   sum_impact,
-					   context_histories,
-					   run_helper,
-					   history);
 	} else {
-		// this->state == LOOP_FOLD_STATE_CLEAR_INNER_STATE
+		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK
 		clean_activate(local_state_vals,
 					   input_vals,
 					   flat_vals,
@@ -775,41 +728,11 @@ void LoopFold::increment() {
 				this->sum_error = 0.0;
 			}
 		}
-	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK) {
+	} else {
+		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK
 		if (this->state_iter > 150000) {
 			if (this->sub_iter >= 10000) {
 				remove_inner_network_end();
-			}
-		} else {
-			if (this->sub_iter >= 10000) {
-				cout << "this->state_iter: " << this->state_iter << endl;
-				cout << "this->sum_error: " << this->sum_error << endl;
-				cout << endl;
-
-				this->sub_iter = 0;
-				this->sum_error = 0.0;
-			}
-		}
-	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_STATE) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
-				remove_inner_state_end();
-			}
-		} else {
-			if (this->sub_iter >= 10000) {
-				cout << "this->state_iter: " << this->state_iter << endl;
-				cout << "this->sum_error: " << this->sum_error << endl;
-				cout << endl;
-
-				this->sub_iter = 0;
-				this->sum_error = 0.0;
-			}
-		}
-	} else {
-		// this->state == LOOP_FOLD_STATE_CLEAR_INNER_STATE
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
-				clear_inner_state_end();
 			}
 		} else {
 			if (this->sub_iter >= 10000) {
@@ -995,11 +918,6 @@ void LoopFold::save(ofstream& output_file,
 		+ this->curr_num_new_inner_states
 		+ this->num_local_states
 		+ this->num_input_states;
-	int total_num_states = this->sum_inner_inputs
-		+ this->curr_num_new_inner_states
-		+ this->num_local_states
-		+ this->num_input_states
-		+ this->curr_num_new_outer_states;
 
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
@@ -1023,16 +941,6 @@ void LoopFold::save(ofstream& output_file,
 		score_network_save_file.open("saves/nns/loop_fold_" + to_string(scope_id) + "_" + to_string(scope_index) + "_score_" + to_string(f_index) + ".txt");
 		this->curr_score_networks[f_index]->save(score_network_save_file);
 		score_network_save_file.close();
-	}
-
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		for (int s_index = 0; s_index < total_num_states; s_index++) {
-			output_file << this->curr_state_not_needed_locally[f_index][s_index] << endl;
-		}
-	}
-
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		output_file << this->curr_num_states_cleared[f_index] << endl;
 	}
 }
 
