@@ -28,6 +28,7 @@ ActionNode::ActionNode(vector<bool> state_network_target_is_local,
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
 	this->explore_fold = NULL;
+	this->explore_loop_fold = NULL;
 }
 
 ActionNode::ActionNode(ifstream& input_file,
@@ -89,6 +90,7 @@ ActionNode::ActionNode(ifstream& input_file,
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
 	this->explore_fold = NULL;
+	this->explore_loop_fold = NULL;
 }
 
 ActionNode::~ActionNode() {
@@ -97,6 +99,14 @@ ActionNode::~ActionNode() {
 	}
 
 	delete this->score_network;
+
+	if (this->explore_fold != NULL) {
+		delete this->explore_fold;
+	}
+
+	if (this->explore_loop_fold != NULL) {
+		delete this->explore_loop_fold;
+	}
 }
 
 void ActionNode::activate(vector<double>& local_state_vals,

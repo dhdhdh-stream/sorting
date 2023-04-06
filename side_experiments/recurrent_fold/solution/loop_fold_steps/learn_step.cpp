@@ -1,5 +1,7 @@
 #include "loop_fold.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -181,8 +183,11 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 		new_inner_state_vals[i_index] += this->test_starting_state_networks[i_index]->output->acti_vals[0];
 	}
 
-	geometric_distribution<int> distribution(0.5);
+	geometric_distribution<int> distribution(0.4);
 	int loop_iters = distribution(generator);
+	if (loop_iters > 5) {
+		loop_iters = 5;
+	}
 	history->num_loop_iters = loop_iters;
 
 	for (int iter_index = 0; iter_index < loop_iters; iter_index++) {

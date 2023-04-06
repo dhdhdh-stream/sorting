@@ -1,5 +1,7 @@
 #include "loop_fold.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"

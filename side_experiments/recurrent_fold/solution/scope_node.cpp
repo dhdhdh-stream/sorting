@@ -44,6 +44,7 @@ ScopeNode::ScopeNode(vector<bool> pre_state_network_target_is_local,
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
 	this->explore_fold = NULL;
+	this->explore_loop_fold = NULL;
 }
 
 ScopeNode::ScopeNode(ifstream& input_file,
@@ -121,6 +122,10 @@ ScopeNode::ScopeNode(ifstream& input_file,
 	getline(input_file, average_score_line);
 	this->average_score = stod(average_score_line);
 
+	string score_variance_line;
+	getline(input_file, score_variance_line);
+	this->score_variance = stod(score_variance_line);
+
 	string average_misguess_line;
 	getline(input_file, average_misguess_line);
 	this->average_misguess = stod(average_misguess_line);
@@ -140,6 +145,7 @@ ScopeNode::ScopeNode(ifstream& input_file,
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
 	this->explore_fold = NULL;
+	this->explore_loop_fold = NULL;
 }
 
 ScopeNode::~ScopeNode() {
@@ -152,6 +158,14 @@ ScopeNode::~ScopeNode() {
 	}
 
 	delete this->score_network;
+
+	if (this->explore_fold != NULL) {
+		delete this->explore_fold;
+	}
+
+	if (this->explore_loop_fold != NULL) {
+		delete this->explore_loop_fold;
+	}
 }
 
 void ScopeNode::activate(vector<double>& local_state_vals,

@@ -32,7 +32,8 @@ void LoopFold::add_inner_state_end() {
 	}
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (misguess_improvement_t_value > 1.282) {	// >90%
+	// if (misguess_improvement_t_value > 1.282) {	// >90%
+	if (rand()%2 == 0) {
 		cout << "ADD_INNER_STATE success" << endl;
 		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
@@ -151,8 +152,9 @@ void LoopFold::add_inner_state_end() {
 		this->test_inner_state_networks.clear();
 	}
 
-	if (this->explore_added_state
-			&& this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+	// if (this->explore_added_state
+	// 		&& this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+	if (this->explore_added_state) {
 		this->explore_added_state = false;
 
 		this->test_num_new_outer_states = this->curr_num_new_outer_states+1;

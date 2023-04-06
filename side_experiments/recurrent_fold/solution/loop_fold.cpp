@@ -546,7 +546,8 @@ void LoopFold::experiment_increment() {
 
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -560,12 +561,14 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			experiment_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -579,12 +582,14 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			add_outer_state_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -598,7 +603,8 @@ void LoopFold::experiment_increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_ADD_INNER_STATE && this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			add_inner_state_end();
 		}
 	}
@@ -669,8 +675,10 @@ void LoopFold::activate(vector<double>& local_state_vals,
 
 void LoopFold::increment() {
 	if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (true) {
 				remove_outer_scope_end();
 			}
 		} else {
@@ -684,8 +692,10 @@ void LoopFold::increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (true) {
 				remove_outer_scope_network_end();
 			}
 		} else {
@@ -699,8 +709,10 @@ void LoopFold::increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (true) {
 				remove_inner_scope_end();
 			}
 		} else {
@@ -714,8 +726,10 @@ void LoopFold::increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (true) {
 				remove_inner_scope_network_end();
 			}
 		} else {
@@ -730,8 +744,10 @@ void LoopFold::increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (true) {
 				remove_inner_network_end();
 			}
 		} else {

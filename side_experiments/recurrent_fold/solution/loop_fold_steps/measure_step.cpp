@@ -246,7 +246,6 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 									  inner_explore_exit_fold_history,
 									  run_helper,
 									  scope_history);
-				history->inner_scope_histories[iter_index][f_index] = scope_history;
 
 				for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 					new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
@@ -264,6 +263,8 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 				for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
 					new_inner_state_vals[this->sum_inner_inputs+i_index] = new_state_vals[i_index];
 				}
+
+				delete scope_history;
 
 				// update back state so have chance to compress front after
 				for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];

@@ -482,7 +482,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							run_helper,
 							fold_history);
 						history->explore_iter_index = iter_index;
-						history->explore_node_index = (int)history->node_histories.size();
+						history->explore_node_index = (int)history->node_histories[iter_index].size();
 
 						curr_node_id = action_node->explore_next_node_id;
 						return false;
@@ -525,13 +525,13 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					history->explore_loop_fold_history = loop_fold_history;
 
 					history->explore_iter_index = iter_index;
-					history->explore_node_index = (int)history->node_histories.size();
+					history->explore_node_index = (int)history->node_histories[iter_index].size();
 
 					// explore_next_node_id is just action_node->next_node_id
 				}
 			} else {
 				// new explore
-				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+				// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
 
 			}
@@ -584,7 +584,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					run_helper,
 					inner_explore_exit_fold_history);
 				history->explore_iter_index = iter_index;
-				history->explore_node_index = (int)history->node_histories.size();
+				history->explore_node_index = (int)history->node_histories[iter_index].size();
 
 				curr_node_id = inner_explore_exit_node_id;
 			} else {
@@ -606,9 +606,10 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		} else {
 			sum_impact += scope_node->average_impact;
 
-			if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-					&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
-					&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+			// if (run_helper.explore_phase == EXPLORE_PHASE_NONE
+			// 		&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
+			// 		&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+			if (run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 				if (scope_node->explore_fold != NULL) {
 					bool matches_context = true;
 					if (scope_node->explore_scope_context.size() > scope_context.size()) {
@@ -650,7 +651,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 								run_helper,
 								fold_history);
 							history->explore_iter_index = iter_index;
-							history->explore_node_index = (int)history->node_histories.size();
+							history->explore_node_index = (int)history->node_histories[iter_index].size();
 
 							curr_node_id = scope_node->explore_next_node_id;
 							return false;
@@ -693,13 +694,13 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						history->explore_loop_fold_history = loop_fold_history;
 
 						history->explore_iter_index = iter_index;
-						history->explore_node_index = (int)history->node_histories.size();
+						history->explore_node_index = (int)history->node_histories[iter_index].size();
 
 						// explore_next_node_id is just scope_node->next_node_id
 					}
 				} else {
 					// new explore
-					run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+					// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
 
 				}
