@@ -1,5 +1,7 @@
 #include "loop_fold.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -197,6 +199,14 @@ void LoopFold::remove_outer_scope_network_activate(
 		run_helper,
 		history);
 
+	// temp
+	if (global_debug_flag) {
+		cout << "outer_state_vals:" << endl;
+		for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
+			cout << o_index << ": " << new_outer_state_vals[o_index] << endl;
+		}
+	}
+
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		vector<double> test_new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
 		for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
@@ -252,6 +262,14 @@ void LoopFold::remove_outer_scope_network_activate(
 		new_inner_state_vals[i_index] += this->curr_starting_state_networks[i_index]->output->acti_vals[0];
 	}
 
+	// temp
+	if (global_debug_flag) {
+		cout << "starting inner_state_vals:" << endl;
+		for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
+			cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
+		}
+	}
+
 	int iter_index = 0;
 	while (true) {
 		StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->curr_continue_score_network);
@@ -294,23 +312,26 @@ void LoopFold::remove_outer_scope_network_activate(
 			double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
 				- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
 			double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
-			double score_diff_t_value = score_diff / score_standard_deviation;
-			if (score_diff_t_value > 1.0) {	// >75%
+			// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+			double score_diff_t_value = score_diff
+				/ (score_standard_deviation / sqrt(2500));
+			if (score_diff_t_value > 2.326) {
 				is_halt = false;
-			} else if (score_diff_t_value < -1.0) {
+			} else if (score_diff_t_value < -2.326) {
 				is_halt = true;
 			} else {
 				double misguess_diff = this->curr_continue_misguess_network->output->acti_vals[0]
 					- this->curr_halt_misguess_network->output->acti_vals[0];
 				double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
-				double misguess_diff_t_value = misguess_diff / misguess_standard_deviation;
-				if (misguess_diff_t_value < -1.0) {
+				double misguess_diff_t_value = misguess_diff
+					/ (misguess_standard_deviation / sqrt(2500));
+				if (misguess_diff_t_value < -2.326) {
 					is_halt = false;
-				} else if (misguess_diff_t_value > 1.0) {
+				} else if (misguess_diff_t_value > 2.326) {
 					is_halt = true;
 				} else {
-					// halt if no strong signal either way
-					is_halt = true;
+					// continue if no strong signal either way
+					is_halt = false;
 				}
 			}
 		}
@@ -589,6 +610,14 @@ void LoopFold::remove_outer_scope_network_activate(
 				history->score_network_histories[iter_index][f_index] = score_network_history;
 				history->score_network_updates[iter_index][f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 				predicted_score += scale_factor*this->curr_score_networks[f_index]->output->acti_vals[0];
+			}
+		}
+
+		// temp
+		if (global_debug_flag) {
+			cout << iter_index << " inner_state_vals:" << endl;
+			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
+				cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
 			}
 		}
 

@@ -1,5 +1,7 @@
 #include "loop_fold_to_scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "globals.h"
 #include "scope_node.h"
@@ -170,13 +172,17 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 	halt_misguess_network->split_new_inner(loop_fold->sum_inner_inputs+loop_fold->curr_num_new_inner_states);
 
 	Scope* new_scope = new Scope(loop_fold->sum_inner_inputs+loop_fold->curr_num_new_inner_states,
-								 loop_fold->num_local_states+loop_fold->num_input_states,
+								 loop_fold->num_local_states+loop_fold->num_input_states+loop_fold->curr_num_new_outer_states,
 								 true,
 								 starting_state_networks,
 								 continue_score_network,
 								 continue_misguess_network,
 								 halt_score_network,
 								 halt_misguess_network,
+								 loop_fold->curr_average_score,
+								 loop_fold->curr_score_variance,
+								 loop_fold->curr_average_misguess,
+								 loop_fold->curr_misguess_variance,
 								 new_nodes);
 	solution->scopes.push_back(new_scope);
 	new_scope_id = (int)solution->scopes.size()-1;

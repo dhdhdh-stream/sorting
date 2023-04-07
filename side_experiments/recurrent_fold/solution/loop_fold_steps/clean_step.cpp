@@ -195,6 +195,14 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 									  run_helper,
 									  history);
 
+	// temp
+	if (global_debug_flag) {
+		cout << "outer_state_vals:" << endl;
+		for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
+			cout << o_index << ": " << new_outer_state_vals[o_index] << endl;
+		}
+	}
+
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
 
 	vector<double> test_new_inner_state_vals;
@@ -227,6 +235,14 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 				new_outer_state_vals);
 		}
 		new_inner_state_vals[i_index] += this->curr_starting_state_networks[i_index]->output->acti_vals[0];
+	}
+
+	// temp
+	if (global_debug_flag) {
+		cout << "starting inner_state_vals:" << endl;
+		for (int i_index = 0; i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {
+			cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
+		}
 	}
 
 	vector<StateNetworkHistory*> test_starting_state_network_histories(this->sum_inner_inputs + this->curr_num_new_inner_states);
@@ -297,6 +313,7 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 			new_outer_state_vals,
 			halt_misguess_network_history);
 
+		// Note: test histories will have an extra iteration for ending
 		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 			StateNetworkHistory* test_continue_score_network_history = new StateNetworkHistory(this->test_continue_score_network);
 			this->test_continue_score_network->new_sequence_activate(
@@ -351,23 +368,26 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 			double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
 				- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
 			double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
-			double score_diff_t_value = score_diff / score_standard_deviation;
-			if (score_diff_t_value > 1.0) {	// >75%
+			// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+			double score_diff_t_value = score_diff
+				/ (score_standard_deviation / sqrt(2500));
+			if (score_diff_t_value > 2.326) {
 				is_halt = false;
-			} else if (score_diff_t_value < -1.0) {
+			} else if (score_diff_t_value < -2.326) {
 				is_halt = true;
 			} else {
 				double misguess_diff = this->curr_continue_misguess_network->output->acti_vals[0]
 					- this->curr_halt_misguess_network->output->acti_vals[0];
 				double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
-				double misguess_diff_t_value = misguess_diff / misguess_standard_deviation;
-				if (misguess_diff_t_value < -1.0) {
+				double misguess_diff_t_value = misguess_diff
+					/ (misguess_standard_deviation / sqrt(2500));
+				if (misguess_diff_t_value < -2.326) {
 					is_halt = false;
-				} else if (misguess_diff_t_value > 1.0) {
+				} else if (misguess_diff_t_value > 2.326) {
 					is_halt = true;
 				} else {
-					// halt if no strong signal either way
-					is_halt = true;
+					// continue if no strong signal either way
+					is_halt = false;
 				}
 			}
 		}
@@ -816,6 +836,14 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 			}
 		}
 
+		// temp
+		if (global_debug_flag) {
+			cout << iter_index << " inner_state_vals:" << endl;
+			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
+				cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
+			}
+		}
+
 		iter_index++;
 	}
 
@@ -839,6 +867,47 @@ void LoopFold::clean_activate(vector<double>& local_state_vals,
 		} else {
 			target_max_update = 0.002;
 		}
+
+		// ending
+		this->sum_error += abs(test_continue_score_diff.back());
+		this->test_continue_score_network->new_sequence_backprop(
+			test_continue_score_diff.back(),
+			test_new_inner_state_errors,
+			test_local_state_errors,
+			test_input_errors,
+			test_new_outer_state_errors,
+			target_max_update,
+			test_continue_score_network_histories.back());
+
+		this->sum_error += abs(test_continue_misguess_diff.back());
+		this->test_continue_misguess_network->new_sequence_backprop(
+			test_continue_misguess_diff.back(),
+			test_new_inner_state_errors,
+			test_local_state_errors,
+			test_input_errors,
+			test_new_outer_state_errors,
+			target_max_update,
+			test_continue_misguess_network_histories.back());
+
+		this->sum_error += abs(test_halt_score_diff.back());
+		this->test_halt_score_network->new_sequence_backprop(
+			test_halt_score_diff.back(),
+			test_new_inner_state_errors,
+			test_local_state_errors,
+			test_input_errors,
+			test_new_outer_state_errors,
+			target_max_update,
+			test_halt_score_network_histories.back());
+
+		this->sum_error += abs(test_halt_misguess_diff.back());
+		this->test_halt_misguess_network->new_sequence_backprop(
+			test_halt_misguess_diff.back(),
+			test_new_inner_state_errors,
+			test_local_state_errors,
+			test_input_errors,
+			test_new_outer_state_errors,
+			target_max_update,
+			test_halt_misguess_network_histories.back());
 
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
@@ -1120,9 +1189,32 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 						double& scale_factor,
 						RunHelper& run_helper,
 						LoopFoldHistory* history) {
+	// temp
+	if (global_debug_flag) {
+		cout << "history->num_loop_iters: " << history->num_loop_iters << endl;
+	}
+
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		vector<double> new_inner_state_errors(this->sum_inner_inputs+this->curr_num_new_inner_states, 0.0);
 		vector<double> new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
+
+		this->curr_halt_score_network->new_sequence_backprop_errors_with_no_weight_change(
+			target_val - predicted_score,
+			new_inner_state_errors,
+			local_state_errors,
+			input_errors,
+			new_outer_state_errors,
+			history->halt_score_network_history);
+
+		predicted_score -= scale_factor*history->halt_score_network_update;
+
+		this->curr_halt_misguess_network->new_sequence_backprop_errors_with_no_weight_change(
+			final_misguess - history->halt_misguess_val,
+			new_inner_state_errors,
+			local_state_errors,
+			input_errors,
+			new_outer_state_errors,
+			history->halt_misguess_network_history);
 
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
@@ -1273,43 +1365,23 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 				}
 			}
 
-			if (iter_index != history->num_loop_iters-1) {
-				this->curr_continue_score_network->new_sequence_backprop_errors_with_no_weight_change(
-					target_val - predicted_score,
-					new_inner_state_errors,
-					local_state_errors,
-					input_errors,
-					new_outer_state_errors,
-					history->continue_score_network_histories[iter_index]);
+			this->curr_continue_score_network->new_sequence_backprop_errors_with_no_weight_change(
+				target_val - predicted_score,
+				new_inner_state_errors,
+				local_state_errors,
+				input_errors,
+				new_outer_state_errors,
+				history->continue_score_network_histories[iter_index]);
 
-				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
+			predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
 
-				this->curr_continue_misguess_network->new_sequence_backprop_errors_with_no_weight_change(
-					final_misguess - history->continue_misguess_vals[iter_index],
-					new_inner_state_errors,
-					local_state_errors,
-					input_errors,
-					new_outer_state_errors,
-					history->continue_misguess_network_histories[iter_index]);
-			} else {
-				this->curr_halt_score_network->new_sequence_backprop_errors_with_no_weight_change(
-					target_val - predicted_score,
-					new_inner_state_errors,
-					local_state_errors,
-					input_errors,
-					new_outer_state_errors,
-					history->halt_score_network_history);
-
-				predicted_score -= scale_factor*history->halt_score_network_update;
-
-				this->curr_halt_misguess_network->new_sequence_backprop_errors_with_no_weight_change(
-					final_misguess - history->halt_misguess_val,
-					new_inner_state_errors,
-					local_state_errors,
-					input_errors,
-					new_outer_state_errors,
-					history->halt_misguess_network_history);
-			}
+			this->curr_continue_misguess_network->new_sequence_backprop_errors_with_no_weight_change(
+				final_misguess - history->continue_misguess_vals[iter_index],
+				new_inner_state_errors,
+				local_state_errors,
+				input_errors,
+				new_outer_state_errors,
+				history->continue_misguess_network_histories[iter_index]);
 		}
 
 		for (int i_index = this->sum_inner_inputs+this->curr_num_new_inner_states-1; i_index >= 0; i_index--) {
@@ -1322,7 +1394,26 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 				history->starting_state_network_histories[i_index]);
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+		this->curr_average_score = 0.9999*this->curr_average_score + 0.0001*target_val;
+		double score_variance = (this->curr_average_score - target_val)*(this->curr_average_score - target_val);
+		this->curr_score_variance = 0.9999*this->curr_score_variance + 0.0001*score_variance;
+		this->curr_average_misguess = 0.9999*this->curr_average_misguess + 0.0001*final_misguess;
+		double misguess_variance = (this->curr_average_misguess - final_misguess)*(this->curr_average_misguess - final_misguess);
+		this->curr_misguess_variance = 0.9999*this->curr_misguess_variance + 0.0001*misguess_variance;
+
 		if (history->state_iter_snapshot <= this->state_iter) {
+			this->curr_halt_score_network->backprop_weights_with_no_error_signal(
+				target_val - predicted_score,
+				0.002,
+				history->halt_score_network_history);
+
+			predicted_score -= scale_factor*history->halt_score_network_update;
+
+			this->curr_halt_misguess_network->backprop_weights_with_no_error_signal(
+				final_misguess - history->halt_misguess_val,
+				0.002,
+				history->halt_misguess_network_history);
+
 			for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 				for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 					this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(
@@ -1350,31 +1441,17 @@ void LoopFold::backprop(vector<double>& local_state_errors,
 					}
 				}
 
-				if (iter_index != history->num_loop_iters-1) {
-					this->curr_continue_score_network->backprop_weights_with_no_error_signal(
-						target_val - predicted_score,
-						0.002,
-						history->continue_score_network_histories[iter_index]);
+				this->curr_continue_score_network->backprop_weights_with_no_error_signal(
+					target_val - predicted_score,
+					0.002,
+					history->continue_score_network_histories[iter_index]);
 
-					predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
+				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
 
-					this->curr_continue_misguess_network->backprop_weights_with_no_error_signal(
-						final_misguess - history->continue_misguess_vals[iter_index],
-						0.002,
-						history->continue_misguess_network_histories[iter_index]);
-				} else {
-					this->curr_halt_score_network->backprop_weights_with_no_error_signal(
-						target_val - predicted_score,
-						0.002,
-						history->halt_score_network_history);
-
-					predicted_score -= scale_factor*history->halt_score_network_update;
-
-					this->curr_halt_misguess_network->backprop_weights_with_no_error_signal(
-						final_misguess - history->halt_misguess_val,
-						0.002,
-						history->halt_misguess_network_history);
-				}
+				this->curr_continue_misguess_network->backprop_weights_with_no_error_signal(
+					final_misguess - history->continue_misguess_vals[iter_index],
+					0.002,
+					history->continue_misguess_network_histories[iter_index]);
 			}
 
 			increment();

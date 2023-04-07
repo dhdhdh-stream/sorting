@@ -1,5 +1,7 @@
 #include "loop_fold.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -159,11 +161,13 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 			- scale_factor*this->test_halt_score_network->output->acti_vals[0];
 		// fold variance not representative yet, so use existing variance for now
 		double score_standard_deviation = abs(scale_factor)*sqrt(*this->existing_score_variance);
-		double score_diff_t_value = score_diff / score_standard_deviation;
-		if (score_diff_t_value > 1.0) {	// >75%
+		// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+		double score_diff_t_value = score_diff
+			/ (score_standard_deviation / sqrt(2500));
+		if (score_diff_t_value > 2.326) {
 			// continue
 			predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
-		} else if (score_diff_t_value < -1.0) {
+		} else if (score_diff_t_value < -2.326) {
 			// halt
 			predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
 			break;
@@ -184,18 +188,18 @@ void LoopFold::measure_activate(vector<double>& local_state_vals,
 				- this->test_halt_misguess_network->output->acti_vals[0];
 			// fold variance not representative yet, so use existing variance for now
 			double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
-			double misguess_diff_t_value = misguess_diff / misguess_standard_deviation;
-			if (misguess_diff_t_value < -1.0) {
+			double misguess_diff_t_value = misguess_diff
+				/ (misguess_standard_deviation / sqrt(2500));
+			if (misguess_diff_t_value < -2.326) {
 				// continue
 				predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
-			} else if (misguess_diff_t_value > 1.0) {
+			} else if (misguess_diff_t_value > 2.326) {
 				// halt
 				predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
 				break;
 			} else {
-				// halt if no strong signal either way
-				predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
-				break;
+				// continue if no strong signal either way
+				predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
 			}
 		}
 

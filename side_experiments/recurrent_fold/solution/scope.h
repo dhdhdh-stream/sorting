@@ -40,6 +40,10 @@ public:
 		  StateNetwork* continue_misguess_network,
 		  StateNetwork* halt_score_network,
 		  StateNetwork* halt_misguess_network,
+		  double average_score,
+		  double score_variance,
+		  double average_misguess,
+		  double misguess_variance,
 		  std::vector<AbstractNode*> nodes);
 	Scope(std::ifstream& input_file);
 	~Scope();

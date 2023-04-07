@@ -384,6 +384,10 @@ void fold_to_nodes(Scope* parent_scope,
 									 NULL,
 									 NULL,
 									 NULL,
+									 0.0,
+									 0.0,
+									 0.0,
+									 0.0,
 									 new_nodes);
 		solution->scopes.push_back(new_scope);
 		int new_scope_id = (int)solution->scopes.size()-1;

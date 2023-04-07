@@ -191,51 +191,27 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 	history->num_loop_iters = loop_iters;
 
 	for (int iter_index = 0; iter_index < loop_iters; iter_index++) {
-		if (iter_index != loop_iters-1) {
-			StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->test_continue_score_network);
-			this->test_continue_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				continue_score_network_history);
-			history->continue_score_network_updates.push_back(this->test_continue_score_network->output->acti_vals[0]);
-			history->continue_score_network_histories.push_back(continue_score_network_history);
+		StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->test_continue_score_network);
+		this->test_continue_score_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			continue_score_network_history);
+		history->continue_score_network_updates.push_back(this->test_continue_score_network->output->acti_vals[0]);
+		history->continue_score_network_histories.push_back(continue_score_network_history);
 
-			predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
+		predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
 
-			StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->test_continue_misguess_network);
-			this->test_continue_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				continue_misguess_network_history);
-			history->continue_misguess_vals.push_back(this->test_continue_misguess_network->output->acti_vals[0]);
-			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
-		} else {
-			StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->test_halt_score_network);
-			this->test_halt_score_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				halt_score_network_history);
-			history->halt_score_network_update = this->test_halt_score_network->output->acti_vals[0];
-			history->halt_score_network_history = halt_score_network_history;
-
-			predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
-
-			StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->test_halt_misguess_network);
-			this->test_halt_misguess_network->new_sequence_activate(
-				new_inner_state_vals,
-				local_state_vals,
-				input_vals,
-				new_outer_state_vals,
-				halt_misguess_network_history);
-			history->halt_misguess_val = this->test_halt_misguess_network->output->acti_vals[0];
-			history->halt_misguess_network_history = halt_misguess_network_history;
-		}
+		StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->test_continue_misguess_network);
+		this->test_continue_misguess_network->new_sequence_activate(
+			new_inner_state_vals,
+			local_state_vals,
+			input_vals,
+			new_outer_state_vals,
+			continue_misguess_network_history);
+		history->continue_misguess_vals.push_back(this->test_continue_misguess_network->output->acti_vals[0]);
+		history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
 
 		int num_inner_networks = this->sum_inner_inputs
 			+ this->test_num_new_inner_states
@@ -430,6 +406,28 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 			predicted_score += scale_factor*this->test_score_networks[f_index]->output->acti_vals[0];
 		}
 	}
+
+	StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->test_halt_score_network);
+	this->test_halt_score_network->new_sequence_activate(
+		new_inner_state_vals,
+		local_state_vals,
+		input_vals,
+		new_outer_state_vals,
+		halt_score_network_history);
+	history->halt_score_network_update = this->test_halt_score_network->output->acti_vals[0];
+	history->halt_score_network_history = halt_score_network_history;
+
+	predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
+
+	StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->test_halt_misguess_network);
+	this->test_halt_misguess_network->new_sequence_activate(
+		new_inner_state_vals,
+		local_state_vals,
+		input_vals,
+		new_outer_state_vals,
+		halt_misguess_network_history);
+	history->halt_misguess_val = this->test_halt_misguess_network->output->acti_vals[0];
+	history->halt_misguess_network_history = halt_misguess_network_history;
 }
 
 void LoopFold::learn_backprop(vector<double>& local_state_errors,
@@ -451,6 +449,42 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 
 	vector<double> new_inner_state_errors(this->sum_inner_inputs+this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_errors(this->test_num_new_outer_states, 0.0);
+
+	double halt_score_network_target_max_update;
+	if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+		halt_score_network_target_max_update = 0.05;
+	} else if (this->state_iter <= 400000) {
+		halt_score_network_target_max_update = 0.01;
+	} else {
+		halt_score_network_target_max_update = 0.002;
+	}
+	this->test_halt_score_network->new_sequence_backprop(
+		target_val - predicted_score,
+		new_inner_state_errors,
+		local_state_errors,
+		input_errors,
+		new_outer_state_errors,
+		halt_score_network_target_max_update,
+		history->halt_score_network_history);
+
+	predicted_score -= scale_factor*history->halt_score_network_update;
+
+	double halt_misguess_network_target_max_update;
+	if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+		halt_misguess_network_target_max_update = 0.05;
+	} else if (this->state_iter <= 400000) {
+		halt_misguess_network_target_max_update = 0.01;
+	} else {
+		halt_misguess_network_target_max_update = 0.002;
+	}
+	this->test_halt_misguess_network->new_sequence_backprop(
+		final_misguess - history->halt_misguess_val,
+		new_inner_state_errors,
+		local_state_errors,
+		input_errors,
+		new_outer_state_errors,
+		halt_misguess_network_target_max_update,
+		history->halt_misguess_network_history);
 
 	for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 		for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
@@ -674,79 +708,41 @@ void LoopFold::learn_backprop(vector<double>& local_state_errors,
 			}
 		}
 
-		if (iter_index != history->num_loop_iters-1) {
-			double score_network_target_max_update;
-			if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
-				score_network_target_max_update = 0.05;
-			} else if (this->state_iter <= 400000) {
-				score_network_target_max_update = 0.01;
-			} else {
-				score_network_target_max_update = 0.002;
-			}
-			this->test_continue_score_network->new_sequence_backprop(
-				target_val - predicted_score,
-				new_inner_state_errors,
-				local_state_errors,
-				input_errors,
-				new_outer_state_errors,
-				score_network_target_max_update,
-				history->continue_score_network_histories[iter_index]);
-
-			predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
-
-			double misguess_network_target_max_update;
-			if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
-				misguess_network_target_max_update = 0.05;
-			} else if (this->state_iter <= 400000) {
-				misguess_network_target_max_update = 0.01;
-			} else {
-				misguess_network_target_max_update = 0.002;
-			}
-			this->test_continue_misguess_network->new_sequence_backprop(
-				final_misguess - history->continue_misguess_vals[iter_index],
-				new_inner_state_errors,
-				local_state_errors,
-				input_errors,
-				new_outer_state_errors,
-				misguess_network_target_max_update,
-				history->continue_misguess_network_histories[iter_index]);
+		double continue_score_network_target_max_update;
+		if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+			continue_score_network_target_max_update = 0.05;
+		} else if (this->state_iter <= 400000) {
+			continue_score_network_target_max_update = 0.01;
 		} else {
-			double score_network_target_max_update;
-			if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
-				score_network_target_max_update = 0.05;
-			} else if (this->state_iter <= 400000) {
-				score_network_target_max_update = 0.01;
-			} else {
-				score_network_target_max_update = 0.002;
-			}
-			this->test_halt_score_network->new_sequence_backprop(
-				target_val - predicted_score,
-				new_inner_state_errors,
-				local_state_errors,
-				input_errors,
-				new_outer_state_errors,
-				score_network_target_max_update,
-				history->halt_score_network_history);
-
-			predicted_score -= scale_factor*history->halt_score_network_update;
-
-			double misguess_network_target_max_update;
-			if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
-				misguess_network_target_max_update = 0.05;
-			} else if (this->state_iter <= 400000) {
-				misguess_network_target_max_update = 0.01;
-			} else {
-				misguess_network_target_max_update = 0.002;
-			}
-			this->test_halt_misguess_network->new_sequence_backprop(
-				final_misguess - history->halt_misguess_val,
-				new_inner_state_errors,
-				local_state_errors,
-				input_errors,
-				new_outer_state_errors,
-				misguess_network_target_max_update,
-				history->halt_misguess_network_history);
+			continue_score_network_target_max_update = 0.002;
 		}
+		this->test_continue_score_network->new_sequence_backprop(
+			target_val - predicted_score,
+			new_inner_state_errors,
+			local_state_errors,
+			input_errors,
+			new_outer_state_errors,
+			continue_score_network_target_max_update,
+			history->continue_score_network_histories[iter_index]);
+
+		predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
+
+		double continue_misguess_network_target_max_update;
+		if (this->state == FOLD_STATE_EXPLORE && this->state_iter <= 100000) {
+			continue_misguess_network_target_max_update = 0.05;
+		} else if (this->state_iter <= 400000) {
+			continue_misguess_network_target_max_update = 0.01;
+		} else {
+			continue_misguess_network_target_max_update = 0.002;
+		}
+		this->test_continue_misguess_network->new_sequence_backprop(
+			final_misguess - history->continue_misguess_vals[iter_index],
+			new_inner_state_errors,
+			local_state_errors,
+			input_errors,
+			new_outer_state_errors,
+			continue_misguess_network_target_max_update,
+			history->continue_misguess_network_histories[iter_index]);
 	}
 
 	for (int i_index = this->sum_inner_inputs+this->test_num_new_inner_states-1; i_index >= 0; i_index--) {

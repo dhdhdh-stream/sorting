@@ -6,6 +6,13 @@
  * 
  * - assume all newly added state needed for continue/halt networks
  *   - so no need to remove or clear inner state
+ * 
+ * - keep looping until clear signal to halt
+ *   - this is because may be difficult to train to look ahead, when initially forcing number of iterations
+ *     - negative signals from continuing can cancel out the target positive signals?
+ *   - if leads to issues, then loop will simply not be added
+ *     - and otherwise, can find loops that would otherwise be difficult to find
+ *   - though might also not matter too much?
  */
 
 #ifndef LOOP_FOLD_H

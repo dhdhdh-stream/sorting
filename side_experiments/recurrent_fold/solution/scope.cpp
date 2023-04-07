@@ -25,6 +25,10 @@ Scope::Scope(int num_local_states,
 			 StateNetwork* continue_misguess_network,
 			 StateNetwork* halt_score_network,
 			 StateNetwork* halt_misguess_network,
+			 double average_score,
+			 double score_variance,
+			 double average_misguess,
+			 double misguess_variance,
 			 vector<AbstractNode*> nodes) {
 	this->num_local_states = num_local_states;
 	this->num_input_states = num_input_states;
@@ -34,6 +38,10 @@ Scope::Scope(int num_local_states,
 	this->continue_misguess_network = continue_misguess_network;
 	this->halt_score_network = halt_score_network;
 	this->halt_misguess_network = halt_misguess_network;
+	this->average_score = average_score;
+	this->score_variance = score_variance;
+	this->average_misguess = average_misguess;
+	this->misguess_variance = misguess_variance;
 	this->nodes = nodes;
 
 	for (int n_index = 0; n_index < (int)this->nodes.size()-1; n_index++) {
@@ -52,6 +60,8 @@ Scope::Scope(int num_local_states,
 		ScopeNode* scope_node = (ScopeNode*)this->nodes.back();
 		scope_node->next_node_id = -1;
 	}
+
+	this->furthest_successful_halt = 5;	// simply initializing to 5 for now
 }
 
 Scope::Scope(ifstream& input_file) {
@@ -101,6 +111,22 @@ Scope::Scope(ifstream& input_file) {
 		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
 		this->halt_misguess_network = new StateNetwork(halt_misguess_network_save_file);
 		halt_misguess_network_save_file.close();
+
+		string average_score_line;
+		getline(input_file, average_score_line);
+		this->average_score = stod(average_score_line);
+
+		string score_variance_line;
+		getline(input_file, score_variance_line);
+		this->score_variance = stod(score_variance_line);
+
+		string average_misguess_line;
+		getline(input_file, average_misguess_line);
+		this->average_misguess = stod(average_misguess_line);
+
+		string misguess_variance_line;
+		getline(input_file, misguess_variance_line);
+		this->misguess_variance = stod(misguess_variance_line);
 	} else {
 		this->continue_score_network = NULL;
 		this->continue_misguess_network = NULL;
@@ -217,6 +243,12 @@ void Scope::activate(vector<double>& input_vals,
 	explore_exit_depth = -1;
 
 	if (is_loop) {
+		// temp
+		cout << "starting input_vals:" << endl;
+		for (int i_index = 0; i_index < this->num_input_states; i_index++) {
+			cout << i_index << ": " << input_vals[i_index] << endl;
+		}
+
 		for (int l_index = 0; l_index < (int)this->starting_state_networks.size(); l_index++) {
 			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 				StateNetworkHistory* network_history = new StateNetworkHistory(this->starting_state_networks[l_index]);
@@ -229,6 +261,12 @@ void Scope::activate(vector<double>& input_vals,
 																 input_vals);
 			}
 			local_state_vals[l_index] += this->starting_state_networks[l_index]->output->acti_vals[0];
+		}
+
+		// temp
+		cout << "starting local_state_vals:" << endl;
+		for (int l_index = 0; l_index < this->num_local_states; l_index++) {
+			cout << l_index << ": " << local_state_vals[l_index] << endl;
 		}
 
 		int iter_index = 0;
@@ -260,10 +298,19 @@ void Scope::activate(vector<double>& input_vals,
 				double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
 					- scale_factor*this->halt_score_network->output->acti_vals[0];
 				double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
-				double score_diff_t_value = score_diff / score_standard_deviation;
-				if (score_diff_t_value > 1.0) {	// >75%
+				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+				double score_diff_t_value = score_diff
+					/ (score_standard_deviation / sqrt(2500));
+
+				cout << "iter_index: " << iter_index << endl;
+				cout << "this->continue_score_network->output->acti_vals[0]: " << this->continue_score_network->output->acti_vals[0] << endl;
+				cout << "this->halt_score_network->output->acti_vals[0]: " << this->halt_score_network->output->acti_vals[0] << endl;
+				cout << "score_standard_deviation: " << score_standard_deviation << endl;
+				cout << "score_diff_t_value: " << score_diff_t_value << endl;
+
+				if (score_diff_t_value > 2.326) {
 					is_halt = false;
-				} else if (score_diff_t_value < -1.0) {
+				} else if (score_diff_t_value < -2.326) {
 					is_halt = true;
 
 					if (iter_index > this->furthest_successful_halt) {
@@ -273,18 +320,19 @@ void Scope::activate(vector<double>& input_vals,
 					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
 						- this->halt_misguess_network->output->acti_vals[0];
 					double misguess_standard_deviation = sqrt(this->misguess_variance);
-					double misguess_diff_t_value = misguess_diff / misguess_standard_deviation;
-					if (misguess_diff_t_value < -1.0) {
+					double misguess_diff_t_value = misguess_diff
+						/ (misguess_standard_deviation / sqrt(2500));
+					if (misguess_diff_t_value < -2.326) {
 						is_halt = false;
-					} else if (misguess_diff_t_value > 1.0) {
+					} else if (misguess_diff_t_value > 2.326) {
 						is_halt = true;
 
 						if (iter_index > this->furthest_successful_halt) {
 							this->furthest_successful_halt = iter_index;
 						}
 					} else {
-						// halt if no strong signal either way
-						is_halt = true;
+						// continue if no strong signal either way
+						is_halt = false;
 					}
 				}
 			}
@@ -355,6 +403,12 @@ void Scope::activate(vector<double>& input_vals,
 				if (is_early_exit) {
 					break;
 				}
+			}
+
+			// temp
+			cout << iter_index << " local_state_vals:" << endl;
+			for (int l_index = 0; l_index < this->num_local_states; l_index++) {
+				cout << l_index << ": " << local_state_vals[l_index] << endl;
 			}
 
 			iter_index++;
@@ -1270,41 +1324,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 				}
 			}
 
-			int new_scope_id;
-			loop_fold_to_scope(loop_fold,
-							   new_scope_id);
-
-			vector<bool> new_inner_input_is_local;
-			vector<int> new_inner_input_indexes;
-			vector<int> new_inner_input_target_indexes;
-			for (int l_index = 0; l_index < loop_fold->num_local_states; l_index++) {
-				new_inner_input_is_local.push_back(true);
-				new_inner_input_indexes.push_back(l_index);
-				new_inner_input_target_indexes.push_back(l_index);
-			}
-			for (int i_index = 0; i_index < loop_fold->num_input_states; i_index++) {
-				new_inner_input_is_local.push_back(false);
-				new_inner_input_indexes.push_back(i_index);
-				new_inner_input_target_indexes.push_back(loop_fold->num_local_states+i_index);
-			}
-			StateNetwork* new_score_network = new StateNetwork(0,
-															   this->num_local_states,
-															   this->num_input_states,
-															   0,
-															   0,
-															   20);
-			ScopeNode* new_scope_node = new ScopeNode(vector<bool>(),
-													  vector<int>(),
-													  vector<StateNetwork*>(),
-													  new_scope_id,
-													  new_inner_input_is_local,
-													  new_inner_input_indexes,
-													  new_inner_input_target_indexes,
-													  vector<bool>(),
-													  vector<int>(),
-													  vector<StateNetwork*>(),
-													  new_score_network);
-
 			// outer
 			int outer_scope_id = loop_fold->scope_context.back();
 
@@ -1354,6 +1373,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
 				Scope* outer_scope = solution->scopes[(*it).first];
 				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				// TODO: issue here if outer_scope_id also needs to be an inner_scope
 				if ((*it).first == outer_scope_id) {
 					for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
 						scope_node->inner_input_is_local.push_back(true);
@@ -1368,6 +1388,54 @@ void Scope::handle_node_backprop_helper(int iter_index,
 					}
 				}
 			}
+
+			int new_scope_id;
+			loop_fold_to_scope(loop_fold,
+							   new_scope_id);
+
+			vector<bool> new_inner_input_is_local;
+			vector<int> new_inner_input_indexes;
+			vector<int> new_inner_input_target_indexes;
+			for (int l_index = 0; l_index < loop_fold->num_local_states; l_index++) {
+				new_inner_input_is_local.push_back(true);
+				new_inner_input_indexes.push_back(l_index);
+				new_inner_input_target_indexes.push_back(l_index);
+			}
+			for (int i_index = 0; i_index < loop_fold->num_input_states; i_index++) {
+				new_inner_input_is_local.push_back(false);
+				new_inner_input_indexes.push_back(i_index);
+				new_inner_input_target_indexes.push_back(loop_fold->num_local_states+i_index);
+			}
+			for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
+				if (this->id == outer_scope_id) {
+					new_inner_input_is_local.push_back(true);
+					new_inner_input_indexes.push_back(this->num_local_states-loop_fold->curr_num_new_outer_states+o_index);
+					new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
+				} else {
+					new_inner_input_is_local.push_back(false);
+					new_inner_input_indexes.push_back(this->num_input_states-loop_fold->curr_num_new_outer_states+o_index);
+					new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
+
+				}
+			}
+			StateNetwork* new_score_network = new StateNetwork(0,
+															   this->num_local_states,
+															   this->num_input_states,
+															   0,
+															   0,
+															   20);
+			ScopeNode* new_scope_node = new ScopeNode(vector<bool>(),
+													  vector<int>(),
+													  vector<StateNetwork*>(),
+													  new_scope_id,
+													  new_inner_input_is_local,
+													  new_inner_input_indexes,
+													  new_inner_input_target_indexes,
+													  vector<bool>(),
+													  vector<int>(),
+													  vector<StateNetwork*>(),
+													  new_score_network);
+			new_scope_node->next_node_id = loop_fold_node->next_node_id;
 
 			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
 			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
@@ -1662,6 +1730,11 @@ void Scope::save(ofstream& output_file) {
 		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
 		this->halt_misguess_network->save(halt_misguess_network_save_file);
 		halt_misguess_network_save_file.close();
+
+		output_file << this->average_score << endl;
+		output_file << this->score_variance << endl;
+		output_file << this->average_misguess << endl;
+		output_file << this->misguess_variance << endl;
 	}
 
 	output_file << this->nodes.size() << endl;
@@ -1680,6 +1753,9 @@ void Scope::save(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
+	this->halt_score_network_history = NULL;
+	this->halt_misguess_network_history = NULL;
+
 	this->explore_iter_index = -1;
 	this->explore_node_index = -1;
 	this->explore_fold_history = NULL;
@@ -1691,6 +1767,22 @@ ScopeHistory::~ScopeHistory() {
 		for (int h_index = 0; h_index < (int)this->node_histories[iter_index].size(); h_index++) {
 			delete this->node_histories[iter_index][h_index];
 		}
+	}
+
+	for (int iter_index = 0; iter_index < (int)this->continue_score_network_histories.size(); iter_index++) {
+		delete this->continue_score_network_histories[iter_index];
+	}
+
+	for (int iter_index = 0; iter_index < (int)this->continue_misguess_network_histories.size(); iter_index++) {
+		delete this->continue_misguess_network_histories[iter_index];
+	}
+
+	if (this->halt_score_network_history != NULL) {
+		delete this->halt_score_network_history;
+	}
+
+	if (this->halt_misguess_network_history != NULL) {
+		delete this->halt_misguess_network_history;
 	}
 
 	if (this->explore_fold_history != NULL) {
