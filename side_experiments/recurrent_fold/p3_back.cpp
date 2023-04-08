@@ -28,8 +28,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1680835117;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	cout << "Seed: " << seed << endl;
 
@@ -208,11 +207,6 @@ int main(int argc, char* argv[]) {
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		}
-		// temp
-		if (loop_fold->state_iter%10000 == 0) {
-			global_debug_flag = true;
-			cout << "halt_val: " << halt_val << endl;
-		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(input_vals,
 									  flat_vals,
@@ -256,9 +250,6 @@ int main(int argc, char* argv[]) {
 										  run_helper,
 										  root_history);
 		}
-
-		// temp
-		global_debug_flag = false;
 
 		delete root_history;
 

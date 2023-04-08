@@ -8,9 +8,6 @@
 using namespace std;
 
 void LoopFold::add_inner_state_end() {
-	// temp
-	cout << "this->curr_average_score: " << this->curr_average_score << endl;
-
 	// could lead to change in scores, but don't worry about for now
 
 	cout << "this->curr_average_misguess: " << this->curr_average_misguess << endl;

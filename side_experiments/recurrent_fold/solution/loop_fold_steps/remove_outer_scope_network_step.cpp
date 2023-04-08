@@ -199,14 +199,6 @@ void LoopFold::remove_outer_scope_network_activate(
 		run_helper,
 		history);
 
-	// temp
-	if (global_debug_flag) {
-		cout << "outer_state_vals:" << endl;
-		for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
-			cout << o_index << ": " << new_outer_state_vals[o_index] << endl;
-		}
-	}
-
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		vector<double> test_new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
 		for (int o_index = 0; o_index < this->curr_num_new_outer_states; o_index++) {
@@ -260,14 +252,6 @@ void LoopFold::remove_outer_scope_network_activate(
 				new_outer_state_vals);
 		}
 		new_inner_state_vals[i_index] += this->curr_starting_state_networks[i_index]->output->acti_vals[0];
-	}
-
-	// temp
-	if (global_debug_flag) {
-		cout << "starting inner_state_vals:" << endl;
-		for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-			cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
-		}
 	}
 
 	int iter_index = 0;
@@ -610,14 +594,6 @@ void LoopFold::remove_outer_scope_network_activate(
 				history->score_network_histories[iter_index][f_index] = score_network_history;
 				history->score_network_updates[iter_index][f_index] = this->curr_score_networks[f_index]->output->acti_vals[0];
 				predicted_score += scale_factor*this->curr_score_networks[f_index]->output->acti_vals[0];
-			}
-		}
-
-		// temp
-		if (global_debug_flag) {
-			cout << iter_index << " inner_state_vals:" << endl;
-			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
-				cout << i_index << ": " << new_inner_state_vals[i_index] << endl;
 			}
 		}
 

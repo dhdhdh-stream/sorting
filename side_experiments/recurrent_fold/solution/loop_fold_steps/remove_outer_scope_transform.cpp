@@ -5,9 +5,6 @@
 using namespace std;
 
 void LoopFold::remove_outer_scope_end() {
-	// temp
-	cout << "this->curr_average_score: " << this->curr_average_score << endl;
-
 	if (this->sum_error/(this->sequence_length+1) / this->sub_iter < 0.05) {
 		cout << "REMOVE_OUTER_SCOPE success" << endl;
 		cout << "score: " << this->sum_error/(this->sequence_length+1) / this->sub_iter << endl;

@@ -38,13 +38,22 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 				inner_input_target_indexes.push_back((int)inner_input_target_indexes.size());	// 0 to num_inner_inputs
 			}
 
-			// inner scopes already updated
+			// inner scopes already updated with both new inner and potentially new outer
+			// TODO: may not be new outer
 			if (loop_fold->curr_inner_scopes_needed.find(inner_scope_id) != loop_fold->curr_inner_scopes_needed.end()) {
-				Scope* inner_scope = solution->scopes[inner_scope_id];
-				for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
-					inner_input_is_local.push_back(true);
-					inner_input_indexes.push_back(loop_fold->sum_inner_inputs+i_index);
-					inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_inner_states+i_index);
+				if (loop_fold->curr_outer_scopes_needed.find(inner_scope_id) != loop_fold->curr_outer_scopes_needed.end()) {
+
+				} else {
+					Scope* inner_scope = solution->scopes[inner_scope_id];
+					for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+						inner_input_is_local.push_back(true);
+						inner_input_indexes.push_back(loop_fold->sum_inner_inputs+i_index);
+						inner_input_target_indexes.push_back(inner_scope->num_input_states
+							- loop_fold->curr_num_new_outer_states
+							- loop_fold->curr_num_new_inner_states
+							+ i_index);
+						// TODO: check logic elsewhere
+					}
 				}
 			}
 

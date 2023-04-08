@@ -5,11 +5,7 @@
 using namespace std;
 
 void LoopFold::remove_inner_network_end() {
-	// temp
-	cout << "this->curr_average_score: " << this->curr_average_score << endl;
-
-	// if (this->sum_error/this->sequence_length / this->sub_iter < 0.05) {
-	if (false) {
+	if (this->sum_error/this->sequence_length / this->sub_iter < 0.05) {
 		cout << "REMOVE_INNER_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 

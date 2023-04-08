@@ -185,8 +185,8 @@ void LoopFold::learn_activate(vector<double>& local_state_vals,
 
 	geometric_distribution<int> distribution(0.4);
 	int loop_iters = distribution(generator);
-	if (loop_iters > 5) {
-		loop_iters = 5;
+	if (loop_iters > 6) {
+		loop_iters = 6;
 	}
 	history->num_loop_iters = loop_iters;
 

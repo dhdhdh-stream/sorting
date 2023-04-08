@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 
@@ -240,9 +242,9 @@ void ScopeNode::activate(vector<double>& local_state_vals,
 	// even if early exit, set state_vals
 	for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
 		if (this->inner_input_is_local[i_index]) {
-			local_state_vals[this->inner_input_indexes[i_index]] += scope_input_vals[this->inner_input_target_indexes[i_index]];
+			local_state_vals[this->inner_input_indexes[i_index]] = scope_input_vals[this->inner_input_target_indexes[i_index]];
 		} else {
-			input_vals[this->inner_input_indexes[i_index]] += scope_input_vals[this->inner_input_target_indexes[i_index]];
+			input_vals[this->inner_input_indexes[i_index]] = scope_input_vals[this->inner_input_target_indexes[i_index]];
 		}
 	}
 

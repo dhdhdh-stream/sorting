@@ -243,12 +243,6 @@ void Scope::activate(vector<double>& input_vals,
 	explore_exit_depth = -1;
 
 	if (is_loop) {
-		// temp
-		cout << "starting input_vals:" << endl;
-		for (int i_index = 0; i_index < this->num_input_states; i_index++) {
-			cout << i_index << ": " << input_vals[i_index] << endl;
-		}
-
 		for (int l_index = 0; l_index < (int)this->starting_state_networks.size(); l_index++) {
 			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 				StateNetworkHistory* network_history = new StateNetworkHistory(this->starting_state_networks[l_index]);
@@ -261,12 +255,6 @@ void Scope::activate(vector<double>& input_vals,
 																 input_vals);
 			}
 			local_state_vals[l_index] += this->starting_state_networks[l_index]->output->acti_vals[0];
-		}
-
-		// temp
-		cout << "starting local_state_vals:" << endl;
-		for (int l_index = 0; l_index < this->num_local_states; l_index++) {
-			cout << l_index << ": " << local_state_vals[l_index] << endl;
 		}
 
 		int iter_index = 0;
@@ -301,13 +289,6 @@ void Scope::activate(vector<double>& input_vals,
 				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
 				double score_diff_t_value = score_diff
 					/ (score_standard_deviation / sqrt(2500));
-
-				cout << "iter_index: " << iter_index << endl;
-				cout << "this->continue_score_network->output->acti_vals[0]: " << this->continue_score_network->output->acti_vals[0] << endl;
-				cout << "this->halt_score_network->output->acti_vals[0]: " << this->halt_score_network->output->acti_vals[0] << endl;
-				cout << "score_standard_deviation: " << score_standard_deviation << endl;
-				cout << "score_diff_t_value: " << score_diff_t_value << endl;
-
 				if (score_diff_t_value > 2.326) {
 					is_halt = false;
 				} else if (score_diff_t_value < -2.326) {
@@ -403,12 +384,6 @@ void Scope::activate(vector<double>& input_vals,
 				if (is_early_exit) {
 					break;
 				}
-			}
-
-			// temp
-			cout << iter_index << " local_state_vals:" << endl;
-			for (int l_index = 0; l_index < this->num_local_states; l_index++) {
-				cout << l_index << ": " << local_state_vals[l_index] << endl;
 			}
 
 			iter_index++;
@@ -1374,6 +1349,8 @@ void Scope::handle_node_backprop_helper(int iter_index,
 				Scope* outer_scope = solution->scopes[(*it).first];
 				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
 				// TODO: issue here if outer_scope_id also needs to be an inner_scope
+				// TODO: actually, input and recursion don't mix
+				//       - if there is recursion, then need to create and track objects
 				if ((*it).first == outer_scope_id) {
 					for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
 						scope_node->inner_input_is_local.push_back(true);
