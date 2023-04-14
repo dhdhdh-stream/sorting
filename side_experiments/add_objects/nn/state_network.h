@@ -17,8 +17,8 @@ public:
 
 	int new_inner_state_size;
 	Layer* new_inner_state_input;
-	int new_outer_state_size;
-	Layer* new_outer_state_input;
+	int new_outer_state_size;		// also new_external_state_size
+	Layer* new_outer_state_input;	// also new_external_state_input
 
 	int hidden_size;
 	Layer* hidden;
@@ -65,81 +65,69 @@ public:
 		double target_max_update,
 		StateNetworkHistory* history);
 
-	void new_outer_activate(double obs_val,
-							std::vector<double>& local_state_vals,
-							std::vector<double>& input_state_vals,
-							std::vector<double>& new_outer_state_vals);
-	void new_outer_activate(double obs_val,
-							std::vector<double>& local_state_vals,
-							std::vector<double>& input_state_vals,
-							std::vector<double>& new_outer_state_vals,
-							StateNetworkHistory* history);
-	void new_outer_activate(std::vector<double>& local_state_vals,
-							std::vector<double>& input_state_vals,
-							std::vector<double>& new_outer_state_vals);
-	void new_outer_activate(std::vector<double>& local_state_vals,
-							std::vector<double>& input_state_vals,
-							std::vector<double>& new_outer_state_vals,
-							StateNetworkHistory* history);
-	void new_outer_backprop(double output_error,
-							std::vector<double>& new_outer_state_errors,
-							double target_max_update);
-	void new_outer_backprop(double output_error,
-							std::vector<double>& new_outer_state_errors,
-							double target_max_update,
-							StateNetworkHistory* history);
-	void new_outer_backprop_errors_with_no_weight_change(
+	void new_external_activate(double obs_val,
+							   std::vector<double>& state_vals,
+							   std::vector<double>& new_external_state_vals);
+	void new_external_activate(double obs_val,
+							   std::vector<double>& state_vals,
+							   std::vector<double>& new_external_state_vals,
+							   StateNetworkHistory* history);
+	void new_external_activate(std::vector<double>& state_vals,
+							   std::vector<double>& new_external_state_vals);
+	void new_external_activate(std::vector<double>& state_vals,
+							   std::vector<double>& new_external_state_vals,
+							   StateNetworkHistory* history);
+	void new_external_backprop(double output_error,
+							   std::vector<double>& new_external_state_errors,
+							   double target_max_update);
+	void new_external_backprop(double output_error,
+							   std::vector<double>& new_external_state_errors,
+							   double target_max_update,
+							   StateNetworkHistory* history);
+	void new_external_backprop_errors_with_no_weight_change(
 		double output_error,
-		std::vector<double>& new_outer_state_errors);
-	void new_outer_backprop_errors_with_no_weight_change(
+		std::vector<double>& new_external_state_errors);
+	void new_external_backprop_errors_with_no_weight_change(
 		double output_error,
-		std::vector<double>& new_outer_state_errors,
+		std::vector<double>& new_external_state_errors,
 		StateNetworkHistory* history);
 
 	void new_sequence_activate(double obs_val,
 							   std::vector<double>& new_inner_state_vals,
-							   std::vector<double>& local_state_vals,
-							   std::vector<double>& input_state_vals,
+							   std::vector<double>& state_vals,
 							   std::vector<double>& new_outer_state_vals);
 	void new_sequence_activate(double obs_val,
 							   std::vector<double>& new_inner_state_vals,
-							   std::vector<double>& local_state_vals,
-							   std::vector<double>& input_state_vals,
+							   std::vector<double>& state_vals,
 							   std::vector<double>& new_outer_state_vals,
 							   StateNetworkHistory* history);
 	void new_sequence_activate(std::vector<double>& new_inner_state_vals,
-							   std::vector<double>& local_state_vals,
-							   std::vector<double>& input_state_vals,
+							   std::vector<double>& state_vals,
 							   std::vector<double>& new_outer_state_vals);
 	void new_sequence_activate(std::vector<double>& new_inner_state_vals,
-							   std::vector<double>& local_state_vals,
-							   std::vector<double>& input_state_vals,
+							   std::vector<double>& state_vals,
 							   std::vector<double>& new_outer_state_vals,
 							   StateNetworkHistory* history);
 	void new_sequence_backprop(double output_error,
 							   std::vector<double>& new_inner_state_errors,
-							   std::vector<double>& local_state_errors,
-							   std::vector<double>& input_state_errors,
+							   std::vector<double>& state_errors,
 							   std::vector<double>& new_outer_state_errors,
 							   double target_max_update);
 	void new_sequence_backprop(double output_error,
 							   std::vector<double>& new_inner_state_errors,
-							   std::vector<double>& local_state_errors,
-							   std::vector<double>& input_state_errors,
+							   std::vector<double>& state_errors,
 							   std::vector<double>& new_outer_state_errors,
 							   double target_max_update,
 							   StateNetworkHistory* history);
 	void new_sequence_backprop_errors_with_no_weight_change(
 		double output_error,
 		std::vector<double>& new_inner_state_errors,
-		std::vector<double>& local_state_errors,
-		std::vector<double>& input_state_errors,
+		std::vector<double>& state_errors,
 		std::vector<double>& new_outer_state_errors);
 	void new_sequence_backprop_errors_with_no_weight_change(
 		double output_error,
 		std::vector<double>& new_inner_state_errors,
-		std::vector<double>& local_state_errors,
-		std::vector<double>& input_state_errors,
+		std::vector<double>& state_errors,
 		std::vector<double>& new_outer_state_errors,
 		StateNetworkHistory* history);
 
@@ -151,27 +139,18 @@ public:
 	void zero_state(int index);
 
 	// when permanently adding to Scope, update as might have been incremented
-	void update_state_sizes(int new_local_state_size,	// before new update
-							int new_input_state_size);
+	void update_state_size(int new_state_size);	// before new update
 
-	void new_outer_to_local();
-	void new_outer_to_input();
+	void new_external_to_state();
 
-	// when readjusting, input ordering is:
-	// - 2nd half new local
-	// - old local
-	// - old input
-	// - new_outer
-	void split_new_inner(int split_index);	// also moves new_outer
+	void new_sequence_finalize();
 
-	void remove_local(int index);
-	void remove_input(int index);
+	void remove_state(int index);
 	// move then remove unneeded
 
-	// for outer score
-	// (outer state doesn't need to be updated)
-	void add_local(int size);
-	void add_input(int size);
+	// for external score
+	// (external state doesn't need to be updated)
+	void add_state(int size);
 
 	void save(std::ofstream& output_file);
 
@@ -184,8 +163,7 @@ public:
 	StateNetwork* network;
 
 	double obs_input_history;
-	std::vector<double> local_state_input_history;
-	std::vector<double> input_state_input_history;
+	std::vector<double> state_input_history;
 	std::vector<double> new_inner_state_input_history;
 	std::vector<double> new_outer_state_input_history;
 	std::vector<double> hidden_history;

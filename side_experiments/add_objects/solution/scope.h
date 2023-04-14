@@ -15,7 +15,7 @@ class Scope {
 public:
 	int id;
 
-	int num_states;	// Note: don't use global state/object IDs. instead pass through states, but can pass by reference. and whether original or new is modified determined by fold, so can have best of either variant
+	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
 	bool is_loop;
@@ -80,8 +80,8 @@ public:
 	bool handle_node_activate_helper(int iter_index,
 									 int& curr_node_id,
 									 FoldHistory*& curr_fold_history,
-									 std::vector<double>& local_state_vals,
-									 std::vector<double>& input_vals,
+									 std::vector<double>& state_vals,
+									 std::vector<bool>& states_initialized,
 									 std::vector<std::vector<double>>& flat_vals,
 									 double& predicted_score,
 									 double& scale_factor,
@@ -99,8 +99,8 @@ public:
 									 ScopeHistory* history);
 	void handle_node_backprop_helper(int iter_index,
 									 int h_index,
-									 std::vector<double>& local_state_errors,
-									 std::vector<double>& input_errors,
+									 std::vector<double>& state_errors,
+									 std::vector<bool>& states_initialized,
 									 double target_val,
 									 double final_misguess,
 									 double final_sum_impact,
@@ -108,8 +108,7 @@ public:
 									 double& scale_factor,
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
-	void backprop_explore_fold_helper(std::vector<double>& local_state_errors,
-									  std::vector<double>& input_errors,
+	void backprop_explore_fold_helper(std::vector<double>& state_errors,
 									  double target_val,
 									  double final_misguess,
 									  double& predicted_score,
@@ -117,8 +116,8 @@ public:
 									  RunHelper& run_helper,
 									  ScopeHistory* history);
 
-	void new_outer_to_local(int new_outer_size);
-	void new_outer_to_input(int new_outer_size);
+	void add_new_state(int new_state_size,
+					   bool initialized_locally);
 
 	void save(std::ofstream& output_file);
 };

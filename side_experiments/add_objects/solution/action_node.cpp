@@ -231,7 +231,9 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node,
 
 ActionNodeHistory::~ActionNodeHistory() {
 	for (int s_index = 0; s_index < (int)this->state_network_histories.size(); s_index++) {
-		delete this->state_network_histories[s_index];
+		if (this->state_network_histories[s_index] != NULL) {
+			delete this->state_network_histories[s_index];
+		}
 	}
 
 	delete this->score_network_history;

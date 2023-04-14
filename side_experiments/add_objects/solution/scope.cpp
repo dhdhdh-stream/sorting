@@ -1596,77 +1596,45 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE;
 }
 
-// void Scope::new_outer_to_local(int new_outer_size) {
-// 	this->num_local_states += new_outer_size;
+void Scope::add_new_state(int new_state_size,
+						  bool initialized_locally) {
+	this->num_states += new_state_size;
+	for (int s_index = 0; s_index < new_state_size; s_index++) {
+		this->is_initialized_locally.push_back(initialized_locally);
+	}
 
-// 	if (is_loop) {
-// 		this->continue_score_network->add_local(new_outer_size);
-// 		this->continue_misguess_network->add_local(new_outer_size);
-// 		this->halt_score_network->add_local(new_outer_size);
-// 		this->halt_misguess_network->add_local(new_outer_size);
-// 	}
+	if (is_loop) {
+		this->continue_score_network->add_state(new_state_size);
+		this->continue_misguess_network->add_state(new_state_size);
+		this->halt_score_network->add_state(new_state_size);
+		this->halt_misguess_network->add_state(new_state_size);
+	}
 
-// 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-// 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
-// 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
-// 			if (action_node->score_network->local_state_size == this->num_local_states) {
-// 				// new node added from fold_seqeuence
-// 			} else {
-// 				action_node->score_network->add_local(new_outer_size);
-// 			}
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_INNER_SCOPE) {
-// 			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
-// 			if (scope_node->score_network->local_state_size == this->num_local_states) {
-// 				// new node added from fold_seqeuence
-// 			} else {
-// 				scope_node->score_network->add_local(new_outer_size);
-// 			}
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
-// 			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
-// 			branch_node->branch_score_network->add_local(new_outer_size);
-// 			branch_node->original_score_network->add_local(new_outer_size);
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_FOLD_SCORE) {
-// 			FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[n_index];
-// 			fold_score_node->existing_score_network->add_local(new_outer_size);
-// 		}
-// 	}
-// }
-
-// void Scope::new_outer_to_input(int new_outer_size) {
-// 	this->num_input_states += new_outer_size;
-
-// 	if (is_loop) {
-// 		this->continue_score_network->add_input(new_outer_size);
-// 		this->continue_misguess_network->add_input(new_outer_size);
-// 		this->halt_score_network->add_input(new_outer_size);
-// 		this->halt_misguess_network->add_input(new_outer_size);
-// 	}
-
-// 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-// 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
-// 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
-// 			if (action_node->score_network->input_state_size == this->num_input_states) {
-// 				// new node added from fold_seqeuence
-// 			} else {
-// 				action_node->score_network->add_input(new_outer_size);
-// 			}
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_INNER_SCOPE) {
-// 			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
-// 			if (scope_node->score_network->input_state_size == this->num_input_states) {
-// 				// new node added from fold_seqeuence
-// 			} else {
-// 				scope_node->score_network->add_input(new_outer_size);
-// 			}
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
-// 			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
-// 			branch_node->branch_score_network->add_input(new_outer_size);
-// 			branch_node->original_score_network->add_input(new_outer_size);
-// 		} else if (this->nodes[n_index]->type == NODE_TYPE_FOLD_SCORE) {
-// 			FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[n_index];
-// 			fold_score_node->existing_score_network->add_input(new_outer_size);
-// 		}
-// 	}
-// }
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			if (action_node->score_network->state_size == this->num_states) {
+				// new node added from fold_seqeuence
+			} else {
+				action_node->score_network->add_state(new_state_size);
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_INNER_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+			if (scope_node->score_network->state_size == this->num_states) {
+				// new node added from fold_seqeuence
+			} else {
+				scope_node->score_network->add_state(new_state_size);
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+			branch_node->branch_score_network->add_state(new_state_size);
+			branch_node->original_score_network->add_state(new_state_size);
+		} else if (this->nodes[n_index]->type == NODE_TYPE_FOLD_SCORE) {
+			FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[n_index];
+			fold_score_node->existing_score_network->add_state(new_state_size);
+		}
+	}
+}
 
 void Scope::save(ofstream& output_file) {
 	output_file << this->id << endl;
