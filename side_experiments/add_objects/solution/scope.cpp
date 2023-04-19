@@ -178,10 +178,10 @@ Scope::Scope(ifstream& input_file) {
 																		n_index);
 			this->nodes.push_back(fold_sequence_node);
 		} else if (node_type == NODE_TYPE_LOOP_FOLD) {
-			LoopFoldNode* loop_fold_node = new LoopFoldNode(node_save_file,
-															this->id,
-															n_index);
-			this->nodes.push_back(loop_fold_node);
+			// LoopFoldNode* loop_fold_node = new LoopFoldNode(node_save_file,
+			// 												this->id,
+			// 												n_index);
+			// this->nodes.push_back(loop_fold_node);
 		} else {
 			// node_type == NODE_TYPE_PASS_THROUGH
 			PassThroughNode* pass_through_node = new PassThroughNode(node_save_file,
@@ -536,40 +536,40 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					}
 				}
 			} else if (action_node->explore_loop_fold != NULL) {
-				bool matches_context = true;
-				if (action_node->explore_scope_context.size() > scope_context.size()) {
-					matches_context = false;
-				} else {
-					// special case first scope context
-					if (action_node->explore_scope_context[0] != scope_context.back()) {
-						matches_context = false;
-					} else {
-						for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
-							if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-									|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-								matches_context = false;
-								break;
-							}
-						}
-					}
-				}
-				if (matches_context) {
-					// explore_phase set in fold
-					LoopFoldHistory* loop_fold_history = new LoopFoldHistory(action_node->explore_loop_fold);
-					action_node->explore_loop_fold->experiment_activate(state_vals,
-																		flat_vals,
-																		predicted_score,
-																		scale_factor,
-																		context_histories,
-																		run_helper,
-																		loop_fold_history);
-					history->explore_loop_fold_history = loop_fold_history;
+				// bool matches_context = true;
+				// if (action_node->explore_scope_context.size() > scope_context.size()) {
+				// 	matches_context = false;
+				// } else {
+				// 	// special case first scope context
+				// 	if (action_node->explore_scope_context[0] != scope_context.back()) {
+				// 		matches_context = false;
+				// 	} else {
+				// 		for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
+				// 			if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+				// 					|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+				// 				matches_context = false;
+				// 				break;
+				// 			}
+				// 		}
+				// 	}
+				// }
+				// if (matches_context) {
+				// 	// explore_phase set in fold
+				// 	LoopFoldHistory* loop_fold_history = new LoopFoldHistory(action_node->explore_loop_fold);
+				// 	action_node->explore_loop_fold->experiment_activate(state_vals,
+				// 														flat_vals,
+				// 														predicted_score,
+				// 														scale_factor,
+				// 														context_histories,
+				// 														run_helper,
+				// 														loop_fold_history);
+				// 	history->explore_loop_fold_history = loop_fold_history;
 
-					history->explore_iter_index = iter_index;
-					history->explore_node_index = (int)history->node_histories[iter_index].size();
+				// 	history->explore_iter_index = iter_index;
+				// 	history->explore_node_index = (int)history->node_histories[iter_index].size();
 
-					// explore_next_node_id is just action_node->next_node_id
-				}
+				// 	// explore_next_node_id is just action_node->next_node_id
+				// }
 			} else {
 				// new explore
 				// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
@@ -701,40 +701,40 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						}
 					}
 				} else if (scope_node->explore_loop_fold != NULL) {
-					bool matches_context = true;
-					if (scope_node->explore_scope_context.size() > scope_context.size()) {
-						matches_context = false;
-					} else {
-						// special case first scope context
-						if (scope_node->explore_scope_context[0] != scope_context.back()) {
-							matches_context = false;
-						} else {
-							for (int c_index = 1; c_index < (int)scope_node->explore_scope_context.size(); c_index++) {
-								if (scope_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-										|| scope_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-									matches_context = false;
-									break;
-								}
-							}
-						}
-					}
-					if (matches_context) {
-						// explore_phase set in fold
-						LoopFoldHistory* loop_fold_history = new LoopFoldHistory(scope_node->explore_loop_fold);
-						scope_node->explore_loop_fold->experiment_activate(state_vals,
-																		   flat_vals,
-																		   predicted_score,
-																		   scale_factor,
-																		   context_histories,
-																		   run_helper,
-																		   loop_fold_history);
-						history->explore_loop_fold_history = loop_fold_history;
+					// bool matches_context = true;
+					// if (scope_node->explore_scope_context.size() > scope_context.size()) {
+					// 	matches_context = false;
+					// } else {
+					// 	// special case first scope context
+					// 	if (scope_node->explore_scope_context[0] != scope_context.back()) {
+					// 		matches_context = false;
+					// 	} else {
+					// 		for (int c_index = 1; c_index < (int)scope_node->explore_scope_context.size(); c_index++) {
+					// 			if (scope_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+					// 					|| scope_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+					// 				matches_context = false;
+					// 				break;
+					// 			}
+					// 		}
+					// 	}
+					// }
+					// if (matches_context) {
+					// 	// explore_phase set in fold
+					// 	LoopFoldHistory* loop_fold_history = new LoopFoldHistory(scope_node->explore_loop_fold);
+					// 	scope_node->explore_loop_fold->experiment_activate(state_vals,
+					// 													   flat_vals,
+					// 													   predicted_score,
+					// 													   scale_factor,
+					// 													   context_histories,
+					// 													   run_helper,
+					// 													   loop_fold_history);
+					// 	history->explore_loop_fold_history = loop_fold_history;
 
-						history->explore_iter_index = iter_index;
-						history->explore_node_index = (int)history->node_histories[iter_index].size();
+					// 	history->explore_iter_index = iter_index;
+					// 	history->explore_node_index = (int)history->node_histories[iter_index].size();
 
-						// explore_next_node_id is just scope_node->next_node_id
-					}
+					// 	// explore_next_node_id is just scope_node->next_node_id
+					// }
 				} else {
 					// new explore
 					// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
@@ -820,23 +820,23 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		curr_node_id = fold_sequence_node->next_node_id;
 		curr_fold_history = NULL;
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_LOOP_FOLD) {
-		LoopFoldNode* loop_fold_node = (LoopFoldNode*)this->nodes[curr_node_id];
+		// LoopFoldNode* loop_fold_node = (LoopFoldNode*)this->nodes[curr_node_id];
 
-		LoopFoldNodeHistory* node_history = new LoopFoldNodeHistory(loop_fold_node,
-																	curr_node_id);
-		loop_fold_node->activate(state_vals,	// converted to fold local state_vals in fold
-								 flat_vals,
-								 predicted_score,
-								 scale_factor,
-								 sum_impact,
-								 scope_context,
-								 node_context,
-								 context_histories,
-								 run_helper,
-								 node_history);
-		history->node_histories[iter_index].push_back(node_history);
+		// LoopFoldNodeHistory* node_history = new LoopFoldNodeHistory(loop_fold_node,
+		// 															curr_node_id);
+		// loop_fold_node->activate(state_vals,	// converted to fold local state_vals in fold
+		// 						 flat_vals,
+		// 						 predicted_score,
+		// 						 scale_factor,
+		// 						 sum_impact,
+		// 						 scope_context,
+		// 						 node_context,
+		// 						 context_histories,
+		// 						 run_helper,
+		// 						 node_history);
+		// history->node_histories[iter_index].push_back(node_history);
 
-		curr_node_id = loop_fold_node->next_node_id;
+		// curr_node_id = loop_fold_node->next_node_id;
 	} else {
 		// this->nodes[curr_node_id]->type == NODE_TYPE_PASS_THROUGH
 		PassThroughNode* pass_through_node = (PassThroughNode*)this->nodes[curr_node_id];
@@ -1080,93 +1080,69 @@ void Scope::handle_node_backprop_helper(int iter_index,
 								  (FoldScoreNodeHistory*)history->node_histories[iter_index][h_index]);
 
 		if (fold_score_node->fold->state == FOLD_STATE_DONE) {
-			// int new_outer_state_size = fold_score_node->fold->curr_num_new_outer_states;
+			int new_outer_state_size = fold_score_node->fold->curr_num_new_outer_states;
 
-			// int starting_scope_id = fold_score_node->fold->scope_context.back();
+			int starting_scope_id = fold_score_node->fold->scope_context.back();
 
-			// // add networks and update_state_sizes before updating scopes
-			// for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold_score_node->fold->curr_outer_state_networks.begin();
-			// 		it != fold_score_node->fold->curr_outer_state_networks.end(); it++) {
-			// 	Scope* scope = solution->scopes[it->first];
-			// 	for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-			// 		if (it->second[n_index].size() > 0) {
-			// 			ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-			// 			for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
-			// 				if (!fold_score_node->fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
-			// 					if (it->first == starting_scope_id) {
-			// 						action_node->state_network_target_is_local.push_back(true);
-			// 						action_node->state_network_target_indexes.push_back(scope->num_local_states+s_index);
-			// 						action_node->state_networks.push_back(it->second[n_index][s_index]);
+			// add networks and update_state_sizes before updating scopes
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold_score_node->fold->curr_outer_state_networks.begin();
+					it != fold_score_node->fold->curr_outer_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
+							if (!fold_score_node->fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+s_index);
+								action_node->state_networks.push_back(it->second[n_index][s_index]);
 
-			// 						action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																			   scope->num_input_states);
-			// 						action_node->state_networks.back()->new_outer_to_local();
-			// 					} else {
-			// 						action_node->state_network_target_is_local.push_back(false);
-			// 						action_node->state_network_target_indexes.push_back(scope->num_input_states+s_index);
-			// 						action_node->state_networks.push_back(it->second[n_index][s_index]);
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
+				}
+			}
 
-			// 						action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																			   scope->num_input_states);
-			// 						action_node->state_networks.back()->new_outer_to_input();
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+			StateNetwork* branch_score_network = fold_score_node->fold->curr_starting_score_network;
+			branch_score_network->update_state_size(this->num_states);
+			branch_score_network->new_external_to_state();
 
-			// StateNetwork* branch_score_network = fold_score_node->fold->curr_starting_score_network;
-			// branch_score_network->update_state_sizes(this->num_local_states,
-			// 										 this->num_input_states);
-			// if (this->id == starting_scope_id) {
-			// 	branch_score_network->new_outer_to_local();
-			// } else {
-			// 	branch_score_network->new_outer_to_input();
-			// }
+			// new_outer_state_size may be 0
+			solution->scopes[starting_scope_id]->add_new_state(new_outer_state_size,
+															   true);
 
-			// // new_outer_state_size may be 0
-			// solution->scopes[starting_scope_id]->new_outer_to_local(new_outer_state_size);
+			for (set<int>::iterator it = fold_score_node->fold->curr_outer_scopes_needed.begin();
+					it != fold_score_node->fold->curr_outer_scopes_needed.end(); it++) {
+				if (*it != starting_scope_id) {
+					solution->scopes[*it]->add_new_state(new_outer_state_size,
+														 false);
+				}
+			}
 
-			// for (set<int>::iterator it = fold_score_node->fold->curr_outer_scopes_needed.begin();
-			// 		it != fold_score_node->fold->curr_outer_scopes_needed.end(); it++) {
-			// 	if (*it != starting_scope_id) {
-			// 		solution->scopes[*it]->new_outer_to_input(new_outer_state_size);
-			// 	}
-			// }
+			for (set<pair<int, int>>::iterator it = fold_score_node->fold->curr_outer_contexts_needed.begin();
+					it != fold_score_node->fold->curr_outer_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-new_outer_state_size+s_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-new_outer_state_size+s_index);
+				}
+			}
 
-			// for (set<pair<int, int>>::iterator it = fold_score_node->fold->curr_outer_contexts_needed.begin();
-			// 		it != fold_score_node->fold->curr_outer_contexts_needed.end(); it++) {
-			// 	ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-			// 	Scope* outer_scope = solution->scopes[(*it).first];
-			// 	Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-			// 	if ((*it).first == starting_scope_id) {
-			// 		for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
-			// 			scope_node->inner_input_is_local.push_back(true);
-			// 			scope_node->inner_input_indexes.push_back(outer_scope->num_local_states-new_outer_state_size+s_index);
-			// 			scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-new_outer_state_size+s_index);
-			// 		}
-			// 	} else {
-			// 		for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
-			// 			scope_node->inner_input_is_local.push_back(false);
-			// 			scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-new_outer_state_size+s_index);
-			// 			scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-new_outer_state_size+s_index);
-			// 		}
-			// 	}
-			// }
-
-			// BranchNode* new_branch_node = new BranchNode(fold_score_node->fold_scope_context,
-			// 											 fold_score_node->fold_node_context,
-			// 											 fold_score_node->fold_is_pass_through,
-			// 											 branch_score_network,
-			// 											 fold_score_node->fold_exit_depth,
-			// 											 fold_score_node->fold_next_node_id,
-			// 											 fold_score_node->existing_score_network,
-			// 											 fold_score_node->existing_next_node_id);
-			// fold_score_node->existing_score_network = NULL;		// for garbage collection
-			// delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
-			// this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_branch_node;
-			// // delete fold_score_node along with fold
+			BranchNode* new_branch_node = new BranchNode(fold_score_node->fold_scope_context,
+														 fold_score_node->fold_node_context,
+														 fold_score_node->fold_is_pass_through,
+														 branch_score_network,
+														 fold_score_node->fold_exit_depth,
+														 fold_score_node->fold_next_node_id,
+														 fold_score_node->existing_score_network,
+														 fold_score_node->existing_next_node_id);
+			fold_score_node->existing_score_network = NULL;		// for garbage collection
+			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_branch_node;
+			// delete fold_score_node along with fold
 		}
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SEQUENCE) {
 		FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[iter_index][h_index]->node;
@@ -1181,244 +1157,242 @@ void Scope::handle_node_backprop_helper(int iter_index,
 
 		Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index])->fold_history->fold;
 		if (fold->state == FOLD_STATE_DONE) {
-			// // update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
-			// for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
-			// 		it != fold->curr_inner_state_networks.end(); it++) {
-			// 	Scope* scope = solution->scopes[it->first];
-			// 	for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-			// 		if (it->second[n_index].size() > 0) {
-			// 			ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-			// 			for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
-			// 				if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
-			// 					action_node->state_network_target_is_local.push_back(false);
-			// 					action_node->state_network_target_indexes.push_back(scope->num_input_states+i_index);
-			// 					action_node->state_networks.push_back(it->second[n_index][i_index]);
-			// 					action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																		   scope->num_input_states);
-			// 					action_node->state_networks.back()->new_outer_to_input();
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+			// update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
+					it != fold->curr_inner_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+							if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
+								action_node->state_networks.push_back(it->second[n_index][i_index]);
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
+				}
+			}
 
-			// for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
-			// 		it != fold->curr_inner_scopes_needed.end(); it++) {
-			// 	solution->scopes[*it]->new_outer_to_input(fold->curr_num_new_inner_states);
-			// }
+			for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
+					it != fold->curr_inner_scopes_needed.end(); it++) {
+				solution->scopes[*it]->add_new_state(fold->curr_num_new_inner_states,
+													 false);
+			}
 
-			// for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
-			// 		it != fold->curr_inner_contexts_needed.end(); it++) {
-			// 	ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-			// 	Scope* outer_scope = solution->scopes[(*it).first];
-			// 	Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-			// 	for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
-			// 		scope_node->inner_input_is_local.push_back(false);
-			// 		scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
-			// 		scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
-			// 	}
-			// }
+			for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
+					it != fold->curr_inner_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+				}
+			}
 
-			// vector<AbstractNode*> new_nodes;
-			// fold_to_nodes(this,
-			// 			  fold,
-			// 			  new_nodes);
+			vector<AbstractNode*> new_nodes;
+			fold_to_nodes(this,
+						  fold,
+						  new_nodes);
 
-			// int starting_new_node_id = (int)this->nodes.size();
-			// for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
-			// 	if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
-			// 		ActionNode* action_node = (ActionNode*)new_nodes[n_index];
-			// 		action_node->next_node_id = (int)this->nodes.size()+1;
-			// 	} else {
-			// 		ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
-			// 		scope_node->next_node_id = (int)this->nodes.size()+1;
-			// 	}
-			// 	this->nodes.push_back(new_nodes[n_index]);
-			// }
-			// if (new_nodes.back()->type == NODE_TYPE_ACTION) {
-			// 	ActionNode* action_node = (ActionNode*)new_nodes.back();
-			// 	action_node->next_node_id = fold_sequence_node->next_node_id;
-			// } else {
-			// 	ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
-			// 	scope_node->next_node_id = fold_sequence_node->next_node_id;
-			// }
-			// this->nodes.push_back(new_nodes.back());
+			int starting_new_node_id = (int)this->nodes.size();
+			for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
+				if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+					action_node->next_node_id = (int)this->nodes.size()+1;
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+					scope_node->next_node_id = (int)this->nodes.size()+1;
+				}
+				this->nodes.push_back(new_nodes[n_index]);
+			}
+			if (new_nodes.back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)new_nodes.back();
+				action_node->next_node_id = fold_sequence_node->next_node_id;
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
+				scope_node->next_node_id = fold_sequence_node->next_node_id;
+			}
+			this->nodes.push_back(new_nodes.back());
 
-			// PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
-			// delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
-			// this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
+			PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
+			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
 		}
 	} else {
-		// history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_LOOP_FOLD
-		LoopFoldNode* loop_fold_node = (LoopFoldNode*)history->node_histories[iter_index][h_index]->node;
-		loop_fold_node->backprop(state_errors,
-								 target_val,
-								 final_misguess,
-								 final_sum_impact,
-								 predicted_score,
-								 scale_factor,
-								 run_helper,
-								 (LoopFoldNodeHistory*)history->node_histories[iter_index][h_index]);
+		// // history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_LOOP_FOLD
+		// LoopFoldNode* loop_fold_node = (LoopFoldNode*)history->node_histories[iter_index][h_index]->node;
+		// loop_fold_node->backprop(state_errors,
+		// 						 target_val,
+		// 						 final_misguess,
+		// 						 final_sum_impact,
+		// 						 predicted_score,
+		// 						 scale_factor,
+		// 						 run_helper,
+		// 						 (LoopFoldNodeHistory*)history->node_histories[iter_index][h_index]);
 
-		LoopFold* loop_fold = loop_fold_node->loop_fold;
-		if (loop_fold->state == LOOP_FOLD_STATE_DONE) {
-			// // input
-			// for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_inner_state_networks.begin();
-			// 		it != loop_fold->curr_inner_state_networks.end(); it++) {
-			// 	Scope* scope = solution->scopes[it->first];
-			// 	for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-			// 		if (it->second[n_index].size() > 0) {
-			// 			ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-			// 			for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
-			// 				if (!loop_fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
-			// 					action_node->state_network_target_is_local.push_back(false);
-			// 					action_node->state_network_target_indexes.push_back(scope->num_input_states+i_index);
-			// 					action_node->state_networks.push_back(it->second[n_index][i_index]);
-			// 					action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																		   scope->num_input_states);
-			// 					action_node->state_networks.back()->new_outer_to_input();
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+		// LoopFold* loop_fold = loop_fold_node->loop_fold;
+		// if (loop_fold->state == LOOP_FOLD_STATE_DONE) {
+		// 	// input
+		// 	for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_inner_state_networks.begin();
+		// 			it != loop_fold->curr_inner_state_networks.end(); it++) {
+		// 		Scope* scope = solution->scopes[it->first];
+		// 		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+		// 			if (it->second[n_index].size() > 0) {
+		// 				ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+		// 				for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+		// 					if (!loop_fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+		// 						action_node->state_network_target_is_local.push_back(false);
+		// 						action_node->state_network_target_indexes.push_back(scope->num_input_states+i_index);
+		// 						action_node->state_networks.push_back(it->second[n_index][i_index]);
+		// 						action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
+		// 																			   scope->num_input_states);
+		// 						action_node->state_networks.back()->new_outer_to_input();
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	}
 
-			// for (set<int>::iterator it = loop_fold->curr_inner_scopes_needed.begin();
-			// 		it != loop_fold->curr_inner_scopes_needed.end(); it++) {
-			// 	solution->scopes[*it]->new_outer_to_input(loop_fold->curr_num_new_inner_states);
-			// }
+		// 	for (set<int>::iterator it = loop_fold->curr_inner_scopes_needed.begin();
+		// 			it != loop_fold->curr_inner_scopes_needed.end(); it++) {
+		// 		solution->scopes[*it]->new_outer_to_input(loop_fold->curr_num_new_inner_states);
+		// 	}
 
-			// for (set<pair<int, int>>::iterator it = loop_fold->curr_inner_contexts_needed.begin();
-			// 		it != loop_fold->curr_inner_contexts_needed.end(); it++) {
-			// 	ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-			// 	Scope* outer_scope = solution->scopes[(*it).first];
-			// 	Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-			// 	for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
-			// 		scope_node->inner_input_is_local.push_back(false);
-			// 		scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-loop_fold->curr_num_new_inner_states+i_index);
-			// 		scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_inner_states+i_index);
-			// 	}
-			// }
+		// 	for (set<pair<int, int>>::iterator it = loop_fold->curr_inner_contexts_needed.begin();
+		// 			it != loop_fold->curr_inner_contexts_needed.end(); it++) {
+		// 		ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+		// 		Scope* outer_scope = solution->scopes[(*it).first];
+		// 		Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+		// 		for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+		// 			scope_node->inner_input_is_local.push_back(false);
+		// 			scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-loop_fold->curr_num_new_inner_states+i_index);
+		// 			scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_inner_states+i_index);
+		// 		}
+		// 	}
 
-			// // outer
-			// int outer_scope_id = loop_fold->scope_context.back();
+		// 	// outer
+		// 	int outer_scope_id = loop_fold->scope_context.back();
 
-			// for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_outer_state_networks.begin();
-			// 		it != loop_fold->curr_outer_state_networks.end(); it++) {
-			// 	Scope* scope = solution->scopes[it->first];
-			// 	for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-			// 		if (it->second[n_index].size() > 0) {
-			// 			ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-			// 			for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
-			// 				if (!loop_fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
-			// 					if (it->first == outer_scope_id) {
-			// 						action_node->state_network_target_is_local.push_back(true);
-			// 						action_node->state_network_target_indexes.push_back(scope->num_local_states+s_index);
-			// 						action_node->state_networks.push_back(it->second[n_index][s_index]);
+		// 	for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_outer_state_networks.begin();
+		// 			it != loop_fold->curr_outer_state_networks.end(); it++) {
+		// 		Scope* scope = solution->scopes[it->first];
+		// 		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+		// 			if (it->second[n_index].size() > 0) {
+		// 				ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+		// 				for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+		// 					if (!loop_fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+		// 						if (it->first == outer_scope_id) {
+		// 							action_node->state_network_target_is_local.push_back(true);
+		// 							action_node->state_network_target_indexes.push_back(scope->num_local_states+s_index);
+		// 							action_node->state_networks.push_back(it->second[n_index][s_index]);
 
-			// 						action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																			   scope->num_input_states);
-			// 						action_node->state_networks.back()->new_outer_to_local();
-			// 					} else {
-			// 						action_node->state_network_target_is_local.push_back(false);
-			// 						action_node->state_network_target_indexes.push_back(scope->num_input_states+s_index);
-			// 						action_node->state_networks.push_back(it->second[n_index][s_index]);
+		// 							action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
+		// 																				   scope->num_input_states);
+		// 							action_node->state_networks.back()->new_outer_to_local();
+		// 						} else {
+		// 							action_node->state_network_target_is_local.push_back(false);
+		// 							action_node->state_network_target_indexes.push_back(scope->num_input_states+s_index);
+		// 							action_node->state_networks.push_back(it->second[n_index][s_index]);
 
-			// 						action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
-			// 																			   scope->num_input_states);
-			// 						action_node->state_networks.back()->new_outer_to_input();
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
+		// 							action_node->state_networks.back()->update_state_sizes(scope->num_local_states,
+		// 																				   scope->num_input_states);
+		// 							action_node->state_networks.back()->new_outer_to_input();
+		// 						}
+		// 					}
+		// 				}
+		// 			}
+		// 		}
+		// 	}
 
-			// // new_outer_state_size may be 0
-			// solution->scopes[outer_scope_id]->new_outer_to_local(loop_fold->curr_num_new_outer_states);
+		// 	// new_outer_state_size may be 0
+		// 	solution->scopes[outer_scope_id]->new_outer_to_local(loop_fold->curr_num_new_outer_states);
 
-			// for (set<int>::iterator it = loop_fold->curr_outer_scopes_needed.begin();
-			// 		it != loop_fold->curr_outer_scopes_needed.end(); it++) {
-			// 	if (*it != outer_scope_id) {
-			// 		solution->scopes[*it]->new_outer_to_input(loop_fold->curr_num_new_outer_states);
-			// 	}
-			// }
+		// 	for (set<int>::iterator it = loop_fold->curr_outer_scopes_needed.begin();
+		// 			it != loop_fold->curr_outer_scopes_needed.end(); it++) {
+		// 		if (*it != outer_scope_id) {
+		// 			solution->scopes[*it]->new_outer_to_input(loop_fold->curr_num_new_outer_states);
+		// 		}
+		// 	}
 
-			// for (set<pair<int, int>>::iterator it = loop_fold->curr_outer_contexts_needed.begin();
-			// 		it != loop_fold->curr_outer_contexts_needed.end(); it++) {
-			// 	ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-			// 	Scope* outer_scope = solution->scopes[(*it).first];
-			// 	Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-			// 	// TODO: issue here if outer_scope_id also needs to be an inner_scope
-			// 	// TODO: actually, input and recursion don't mix
-			// 	//       - if there is recursion, then need to create and track objects
-			// 	if ((*it).first == outer_scope_id) {
-			// 		for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
-			// 			scope_node->inner_input_is_local.push_back(true);
-			// 			scope_node->inner_input_indexes.push_back(outer_scope->num_local_states-loop_fold->curr_num_new_outer_states+s_index);
-			// 			scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
-			// 		}
-			// 	} else {
-			// 		for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
-			// 			scope_node->inner_input_is_local.push_back(false);
-			// 			scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
-			// 			scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
-			// 		}
-			// 	}
-			// }
+		// 	for (set<pair<int, int>>::iterator it = loop_fold->curr_outer_contexts_needed.begin();
+		// 			it != loop_fold->curr_outer_contexts_needed.end(); it++) {
+		// 		ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+		// 		Scope* outer_scope = solution->scopes[(*it).first];
+		// 		Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+		// 		// TODO: issue here if outer_scope_id also needs to be an inner_scope
+		// 		// TODO: actually, input and recursion don't mix
+		// 		//       - if there is recursion, then need to create and track objects
+		// 		if ((*it).first == outer_scope_id) {
+		// 			for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+		// 				scope_node->inner_input_is_local.push_back(true);
+		// 				scope_node->inner_input_indexes.push_back(outer_scope->num_local_states-loop_fold->curr_num_new_outer_states+s_index);
+		// 				scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
+		// 			}
+		// 		} else {
+		// 			for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+		// 				scope_node->inner_input_is_local.push_back(false);
+		// 				scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
+		// 				scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-loop_fold->curr_num_new_outer_states+s_index);
+		// 			}
+		// 		}
+		// 	}
 
-			// int new_scope_id;
-			// loop_fold_to_scope(loop_fold,
-			// 				   new_scope_id);
+		// 	int new_scope_id;
+		// 	loop_fold_to_scope(loop_fold,
+		// 					   new_scope_id);
 
-			// vector<bool> new_inner_input_is_local;
-			// vector<int> new_inner_input_indexes;
-			// vector<int> new_inner_input_target_indexes;
-			// for (int l_index = 0; l_index < loop_fold->num_local_states; l_index++) {
-			// 	new_inner_input_is_local.push_back(true);
-			// 	new_inner_input_indexes.push_back(l_index);
-			// 	new_inner_input_target_indexes.push_back(l_index);
-			// }
-			// for (int i_index = 0; i_index < loop_fold->num_input_states; i_index++) {
-			// 	new_inner_input_is_local.push_back(false);
-			// 	new_inner_input_indexes.push_back(i_index);
-			// 	new_inner_input_target_indexes.push_back(loop_fold->num_local_states+i_index);
-			// }
-			// for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
-			// 	if (this->id == outer_scope_id) {
-			// 		new_inner_input_is_local.push_back(true);
-			// 		new_inner_input_indexes.push_back(this->num_local_states-loop_fold->curr_num_new_outer_states+o_index);
-			// 		new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
-			// 	} else {
-			// 		new_inner_input_is_local.push_back(false);
-			// 		new_inner_input_indexes.push_back(this->num_input_states-loop_fold->curr_num_new_outer_states+o_index);
-			// 		new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
+		// 	vector<bool> new_inner_input_is_local;
+		// 	vector<int> new_inner_input_indexes;
+		// 	vector<int> new_inner_input_target_indexes;
+		// 	for (int l_index = 0; l_index < loop_fold->num_local_states; l_index++) {
+		// 		new_inner_input_is_local.push_back(true);
+		// 		new_inner_input_indexes.push_back(l_index);
+		// 		new_inner_input_target_indexes.push_back(l_index);
+		// 	}
+		// 	for (int i_index = 0; i_index < loop_fold->num_input_states; i_index++) {
+		// 		new_inner_input_is_local.push_back(false);
+		// 		new_inner_input_indexes.push_back(i_index);
+		// 		new_inner_input_target_indexes.push_back(loop_fold->num_local_states+i_index);
+		// 	}
+		// 	for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
+		// 		if (this->id == outer_scope_id) {
+		// 			new_inner_input_is_local.push_back(true);
+		// 			new_inner_input_indexes.push_back(this->num_local_states-loop_fold->curr_num_new_outer_states+o_index);
+		// 			new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
+		// 		} else {
+		// 			new_inner_input_is_local.push_back(false);
+		// 			new_inner_input_indexes.push_back(this->num_input_states-loop_fold->curr_num_new_outer_states+o_index);
+		// 			new_inner_input_target_indexes.push_back(loop_fold->num_local_states+loop_fold->num_input_states+o_index);
 
-			// 	}
-			// }
-			// StateNetwork* new_score_network = new StateNetwork(0,
-			// 												   this->num_local_states,
-			// 												   this->num_input_states,
-			// 												   0,
-			// 												   0,
-			// 												   20);
-			// ScopeNode* new_scope_node = new ScopeNode(vector<bool>(),
-			// 										  vector<int>(),
-			// 										  vector<StateNetwork*>(),
-			// 										  new_scope_id,
-			// 										  new_inner_input_is_local,
-			// 										  new_inner_input_indexes,
-			// 										  new_inner_input_target_indexes,
-			// 										  vector<bool>(),
-			// 										  vector<int>(),
-			// 										  vector<StateNetwork*>(),
-			// 										  new_score_network);
-			// new_scope_node->next_node_id = loop_fold_node->next_node_id;
+		// 		}
+		// 	}
+		// 	StateNetwork* new_score_network = new StateNetwork(0,
+		// 													   this->num_local_states,
+		// 													   this->num_input_states,
+		// 													   0,
+		// 													   0,
+		// 													   20);
+		// 	ScopeNode* new_scope_node = new ScopeNode(vector<bool>(),
+		// 											  vector<int>(),
+		// 											  vector<StateNetwork*>(),
+		// 											  new_scope_id,
+		// 											  new_inner_input_is_local,
+		// 											  new_inner_input_indexes,
+		// 											  new_inner_input_target_indexes,
+		// 											  vector<bool>(),
+		// 											  vector<int>(),
+		// 											  vector<StateNetwork*>(),
+		// 											  new_score_network);
+		// 	new_scope_node->next_node_id = loop_fold_node->next_node_id;
 
-			// delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
-			// this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
-			// // delete loop_fold_node along with loop_fold
-		}
+		// 	delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+		// 	this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
+		// 	// delete loop_fold_node along with loop_fold
+		// }
 	}
 }
 
@@ -1532,65 +1506,65 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 			}
 		}
 	} else {
-		// history->explore_loop_fold_history != NULL
-		LoopFold* loop_fold = history->explore_loop_fold_history->loop_fold;
-		loop_fold->experiment_backprop(state_errors,	// converted to fold local state_errors in fold
-									   target_val,
-									   final_misguess,
-									   predicted_score,
-									   scale_factor,
-									   run_helper,
-									   history->explore_loop_fold_history);
+		// // history->explore_loop_fold_history != NULL
+		// LoopFold* loop_fold = history->explore_loop_fold_history->loop_fold;
+		// loop_fold->experiment_backprop(state_errors,	// converted to fold local state_errors in fold
+		// 							   target_val,
+		// 							   final_misguess,
+		// 							   predicted_score,
+		// 							   scale_factor,
+		// 							   run_helper,
+		// 							   history->explore_loop_fold_history);
 
-		if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_FAIL) {
-			if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
-				action_node->explore_scope_context.clear();
-				action_node->explore_node_context.clear();
-				delete action_node->explore_loop_fold;
-				action_node->explore_loop_fold = NULL;
-			} else {
-				// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
-				ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
-				scope_node->explore_scope_context.clear();
-				scope_node->explore_node_context.clear();
-				delete scope_node->explore_loop_fold;
-				scope_node->explore_loop_fold = NULL;
-			}
-		} else if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_DONE) {
-			loop_fold->add_to_clean();
+		// if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_FAIL) {
+		// 	if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+		// 		ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
+		// 		action_node->explore_scope_context.clear();
+		// 		action_node->explore_node_context.clear();
+		// 		delete action_node->explore_loop_fold;
+		// 		action_node->explore_loop_fold = NULL;
+		// 	} else {
+		// 		// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+		// 		ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
+		// 		scope_node->explore_scope_context.clear();
+		// 		scope_node->explore_node_context.clear();
+		// 		delete scope_node->explore_loop_fold;
+		// 		scope_node->explore_loop_fold = NULL;
+		// 	}
+		// } else if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_DONE) {
+		// 	loop_fold->add_to_clean();
 
-			if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
+		// 	if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+		// 		ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
 
-				LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
-																	action_node->explore_scope_context,
-																	action_node->explore_node_context,
-																	action_node->next_node_id);
-				this->nodes.push_back(new_loop_fold_node);
-				int new_node_id = (int)this->nodes.size()-1;
-				action_node->next_node_id = new_node_id;
+		// 		LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
+		// 															action_node->explore_scope_context,
+		// 															action_node->explore_node_context,
+		// 															action_node->next_node_id);
+		// 		this->nodes.push_back(new_loop_fold_node);
+		// 		int new_node_id = (int)this->nodes.size()-1;
+		// 		action_node->next_node_id = new_node_id;
 
-				action_node->explore_scope_context.clear();
-				action_node->explore_node_context.clear();
-				action_node->explore_loop_fold = NULL;
-			} else {
-				// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
-				ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
+		// 		action_node->explore_scope_context.clear();
+		// 		action_node->explore_node_context.clear();
+		// 		action_node->explore_loop_fold = NULL;
+		// 	} else {
+		// 		// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+		// 		ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
 
-				LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
-																	scope_node->explore_scope_context,
-																	scope_node->explore_node_context,
-																	scope_node->next_node_id);
-				this->nodes.push_back(new_loop_fold_node);
-				int new_node_id = (int)this->nodes.size()-1;
-				scope_node->next_node_id = new_node_id;
+		// 		LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
+		// 															scope_node->explore_scope_context,
+		// 															scope_node->explore_node_context,
+		// 															scope_node->next_node_id);
+		// 		this->nodes.push_back(new_loop_fold_node);
+		// 		int new_node_id = (int)this->nodes.size()-1;
+		// 		scope_node->next_node_id = new_node_id;
 
-				scope_node->explore_scope_context.clear();
-				scope_node->explore_node_context.clear();
-				scope_node->explore_loop_fold = NULL;
-			}
-		}
+		// 		scope_node->explore_scope_context.clear();
+		// 		scope_node->explore_node_context.clear();
+		// 		scope_node->explore_loop_fold = NULL;
+		// 	}
+		// }
 	}
 
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE;

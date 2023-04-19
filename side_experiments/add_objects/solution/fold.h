@@ -115,6 +115,8 @@ public:
 
 	bool experiment_added_state;
 
+	int remove_inner_input_index;
+
 	int clean_outer_scope_index;
 	std::set<int> curr_outer_scopes_needed;
 	std::set<std::pair<int, int>> curr_outer_contexts_needed;
@@ -167,6 +169,8 @@ public:
 	~Fold();
 
 	void score_activate(std::vector<double>& state_vals,
+						double& predicted_score,
+						double& scale_factor,
 						std::vector<ScopeHistory*>& context_histories,
 						RunHelper& run_helper,
 						FoldHistory* history);
@@ -228,6 +232,43 @@ public:
 	void experiment_end();
 	void add_inner_state_end();
 	void add_outer_state_end();
+
+	void remove_inner_input_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+														ScopeHistory* scope_history,
+														std::vector<int>& curr_scope_context,
+														std::vector<int>& curr_node_context,
+														RunHelper& run_helper,
+														FoldHistory* history);
+	void remove_inner_input_score_activate(std::vector<double>& state_vals,
+										   double& predicted_score,
+										   double& scale_factor,
+										   std::vector<ScopeHistory*>& context_histories,
+										   RunHelper& run_helper,
+										   FoldHistory* history);
+	void remove_inner_input_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+														ScopeHistory* scope_history,
+														std::vector<int>& curr_scope_context,
+														std::vector<int>& curr_node_context,
+														RunHelper& run_helper,
+														int step_index,
+														FoldHistory* history);
+	void remove_inner_input_sequence_activate(std::vector<double>& state_vals,
+											  std::vector<bool>& states_initialized,
+											  std::vector<std::vector<double>>& flat_vals,
+											  double& predicted_score,
+											  double& scale_factor,
+											  RunHelper& run_helper,
+											  FoldHistory* history);
+	void remove_inner_input_backprop(std::vector<double>& state_errors,
+									 std::vector<bool>& states_initialized,
+									 double target_val,
+									 double final_misguess,
+									 double& predicted_score,
+									 double& scale_factor,
+									 RunHelper& run_helper,
+									 FoldHistory* history);
+
+	void remove_inner_input_end();
 
 	void add_to_clean();
 
@@ -324,6 +365,15 @@ public:
 								 double& sum_impact,
 								 RunHelper& run_helper,
 								 FoldHistory* history);
+	void clean_backprop(std::vector<double>& state_errors,
+						std::vector<bool>& states_initialized,
+						double target_val,
+						double final_misguess,
+						double final_sum_impact,
+						double& predicted_score,
+						double& scale_factor,
+						RunHelper& run_helper,
+						FoldHistory* history);
 
 	void remove_inner_scope_end();
 	void remove_inner_scope_network_end();

@@ -197,18 +197,16 @@ void Fold::experiment_sequence_activate(vector<double>& state_vals,
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		if (this->is_inner_scope[f_index]) {
 			for (int i_index = 0; i_index < this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index++) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
-					// don't check obs for is_inner_scope
-					this->test_state_networks[f_index][i_index]->new_sequence_activate(
-						new_inner_state_vals,
-						state_vals,
-						new_outer_state_vals,
-						state_network_history);
-					history->state_network_histories[f_index][i_index] = state_network_history;
+				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
+				// don't check obs for is_inner_scope
+				this->test_state_networks[f_index][i_index]->new_sequence_activate(
+					new_inner_state_vals,
+					state_vals,
+					new_outer_state_vals,
+					state_network_history);
+				history->state_network_histories[f_index][i_index] = state_network_history;
 
-					new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
-				}
+				new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
@@ -218,8 +216,7 @@ void Fold::experiment_sequence_activate(vector<double>& state_vals,
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 			inner_input_vals.insert(inner_input_vals.end(), num_input_states_diff, 0.0);
 
-			vector<bool> inner_inputs_initialized(this->test_inner_inputs_needed.begin() + this->inner_input_start_indexes[f_index],
-				this->test_inner_inputs_needed.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
+			vector<bool> inner_inputs_initialized(this->num_inner_inputs[f_index], true);
 			inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 			// unused
@@ -255,9 +252,7 @@ void Fold::experiment_sequence_activate(vector<double>& state_vals,
 			history->inner_scope_histories[f_index] = scope_history;
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
-				if (this->test_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {
-					new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
-				}
+				new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
 			}
 
 			vector<double> new_state_vals(new_inner_state_vals.begin()+this->sum_inner_inputs,
@@ -276,17 +271,15 @@ void Fold::experiment_sequence_activate(vector<double>& state_vals,
 			// update back state so have chance to compress front after
 			for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
 					i_index < this->sum_inner_inputs; i_index++) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
-					this->test_state_networks[f_index][i_index]->new_sequence_activate(
-						new_inner_state_vals,
-						state_vals,
-						new_outer_state_vals,
-						state_network_history);
-					history->state_network_histories[f_index][i_index] = state_network_history;
+				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
+				this->test_state_networks[f_index][i_index]->new_sequence_activate(
+					new_inner_state_vals,
+					state_vals,
+					new_outer_state_vals,
+					state_network_history);
+				history->state_network_histories[f_index][i_index] = state_network_history;
 
-					new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
-				}
+				new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 			}
 			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
 				int state_index = this->sum_inner_inputs
@@ -321,18 +314,16 @@ void Fold::experiment_sequence_activate(vector<double>& state_vals,
 			double obs = (*flat_vals.begin())[0];
 
 			for (int i_index = 0; i_index < this->sum_inner_inputs; i_index++) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
-					this->test_state_networks[f_index][i_index]->new_sequence_activate(
-						obs,
-						new_inner_state_vals,
-						state_vals,
-						new_outer_state_vals,
-						state_network_history);
-					history->state_network_histories[f_index][i_index] = state_network_history;
+				StateNetworkHistory* state_network_history = new StateNetworkHistory(this->test_state_networks[f_index][i_index]);
+				this->test_state_networks[f_index][i_index]->new_sequence_activate(
+					obs,
+					new_inner_state_vals,
+					state_vals,
+					new_outer_state_vals,
+					state_network_history);
+				history->state_network_histories[f_index][i_index] = state_network_history;
 
-					new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
-				}
+				new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 			}
 			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
 				int state_index = this->sum_inner_inputs
@@ -467,24 +458,22 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 			}
 			for (int i_index = this->sum_inner_inputs-1;
 					i_index >= this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]; i_index--) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					double state_network_target_max_update;
-					if ((this->state == FOLD_STATE_EXPERIMENT || (this->state == FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
-							&& this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
-						state_network_target_max_update = 0.01;
-					} else {
-						state_network_target_max_update = 0.002;
-					}
-					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
-						new_inner_state_errors[i_index],
-						new_inner_state_errors,
-						state_errors,
-						new_outer_state_errors,
-						state_network_target_max_update,
-						history->state_network_histories[f_index][i_index]);
+				double state_network_target_max_update;
+				if ((this->state == FOLD_STATE_EXPERIMENT || (this->state == FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
+						&& this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
 				}
+				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
+					new_inner_state_errors[i_index],
+					new_inner_state_errors,
+					state_errors,
+					new_outer_state_errors,
+					state_network_target_max_update,
+					history->state_network_histories[f_index][i_index]);
 			}
 
 			vector<double> new_state_errors(new_inner_state_errors.begin()+this->sum_inner_inputs,
@@ -519,8 +508,7 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 				new_inner_state_errors.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 			inner_input_errors.insert(inner_input_errors.end(), num_input_states_diff, 0.0);
 
-			vector<bool> inner_inputs_initialized(this->test_inner_inputs_needed.begin() + this->inner_input_start_indexes[f_index],
-				this->test_inner_inputs_needed.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
+			vector<bool> inner_inputs_initialized(this->num_inner_inputs[f_index], true);
 			inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 			// unused
@@ -538,29 +526,25 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 								  history->inner_scope_histories[f_index]);
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
-				if (this->test_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {
-					new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_errors[i_index];
-				}
+				new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_errors[i_index];
 			}
 
 			for (int i_index = this->inner_input_start_indexes[f_index]+this->num_inner_inputs[f_index]-1; i_index >= 0; i_index--) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					double state_network_target_max_update;
-					if (this->state == FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
-						state_network_target_max_update = 0.01;
-					} else {
-						state_network_target_max_update = 0.002;
-					}
-					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
-						new_inner_state_errors[i_index],
-						new_inner_state_errors,
-						state_errors,
-						new_outer_state_errors,
-						state_network_target_max_update,
-						history->state_network_histories[f_index][i_index]);
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
 				}
+				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
+					new_inner_state_errors[i_index],
+					new_inner_state_errors,
+					state_errors,
+					new_outer_state_errors,
+					state_network_target_max_update,
+					history->state_network_histories[f_index][i_index]);
 			}
 		} else {
 			for (int s_index = this->num_sequence_states-1; s_index >= 0; s_index--) {
@@ -606,23 +590,21 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 					history->state_network_histories[f_index][state_index]);
 			}
 			for (int i_index = this->sum_inner_inputs-1; i_index >= 0; i_index--) {
-				if (this->test_inner_inputs_needed[i_index]) {
-					double state_network_target_max_update;
-					if (this->state == FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
-						state_network_target_max_update = 0.01;
-					} else {
-						state_network_target_max_update = 0.002;
-					}
-					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
-						new_inner_state_errors[i_index],
-						new_inner_state_errors,
-						state_errors,
-						new_outer_state_errors,
-						state_network_target_max_update,
-						history->state_network_histories[f_index][i_index]);
+				double state_network_target_max_update;
+				if (this->state == FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
+					state_network_target_max_update = 0.05;
+				} else if (this->state_iter <= 400000) {
+					state_network_target_max_update = 0.01;
+				} else {
+					state_network_target_max_update = 0.002;
 				}
+				this->test_state_networks[f_index][i_index]->new_sequence_backprop(
+					new_inner_state_errors[i_index],
+					new_inner_state_errors,
+					state_errors,
+					new_outer_state_errors,
+					state_network_target_max_update,
+					history->state_network_histories[f_index][i_index]);
 			}
 		}
 	}
