@@ -18,7 +18,7 @@ void Fold::clean_transform_helper() {
 	}
 }
 
-void Fold::remove_inner_network_transform_helper() {
+bool Fold::remove_inner_network_transform_helper() {
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_states;
@@ -76,7 +76,7 @@ void Fold::remove_inner_network_transform_helper() {
 	return true;
 }
 
-void Fold::remove_inner_state_transform_helper() {
+bool Fold::remove_inner_state_transform_helper() {
 	int total_num_states = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_sequence_states
@@ -115,6 +115,9 @@ void Fold::remove_inner_state_transform_helper() {
 
 	this->test_state_not_needed_locally[this->clean_inner_step_index][this->clean_inner_state_index] = true;
 
+	int num_inner_networks = this->sum_inner_inputs
+		+ this->curr_num_new_inner_states
+		+ this->num_sequence_states;
 	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 		for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 			if (!this->curr_state_networks_not_needed[f_index][s_index]) {
@@ -160,7 +163,7 @@ void Fold::remove_inner_state_transform_helper() {
 	return true;
 }
 
-void Fold::clear_inner_state_transform_helper() {
+bool Fold::clear_inner_state_transform_helper() {
 	// check if can clear even if just modified, as modification could just be used for score or later state
 
 	if (this->clean_inner_state_index >= this->sum_inner_inputs+this->curr_num_new_inner_states) {

@@ -240,7 +240,7 @@ void StateNetwork::new_external_activate(double obs_val,
 										 StateNetworkHistory* history) {
 	new_external_activate(obs_val,
 						  state_vals,
-						  new_outer_state_vals);
+						  new_external_state_vals);
 
 	history->save_weights();
 }

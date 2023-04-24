@@ -211,6 +211,9 @@ void Fold::add_outer_state_end() {
 
 			this->state = FOLD_STATE_EXPERIMENT_DONE;
 		} else {
+			this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
+			this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
+
 			int num_inner_networks = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_sequence_states;
@@ -222,7 +225,7 @@ void Fold::add_outer_state_end() {
 			this->remove_inner_input_index = 0;
 			this->test_inner_inputs_needed[this->remove_inner_input_index] = false;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-				this->test_state_networks_not_needed[this->remove_inner_input_index] = true;
+				this->test_state_networks_not_needed[f_index][this->remove_inner_input_index] = true;
 			}
 
 			// outer unchanged
@@ -241,7 +244,6 @@ void Fold::add_outer_state_end() {
 
 				// this->test_score_networks cleared above
 				this->test_score_networks.push_back(new StateNetwork(this->curr_score_networks[f_index]));
-				this->test_score_networks[f_index]->add_new_outer();
 			}
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
 					it != this->curr_inner_state_networks.end(); it++) {

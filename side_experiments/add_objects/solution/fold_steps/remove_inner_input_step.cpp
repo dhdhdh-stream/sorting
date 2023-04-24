@@ -111,7 +111,7 @@ void Fold::remove_inner_input_inner_scope_activate_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				if (it != this->curr_inner_state_networks.end()) {
+				if (it != this->test_inner_state_networks.end()) {
 					int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
 					if (node_id < (int)it->second.size()
 							&& it->second[node_id].size() > 0) {
@@ -189,7 +189,7 @@ void Fold::remove_inner_input_sequence_activate(vector<double>& state_vals,
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
+			int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
 			vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
@@ -419,7 +419,7 @@ void Fold::remove_inner_input_backprop(vector<double>& state_errors,
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
+			int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
 			vector<double> inner_input_errors(new_inner_state_errors.begin() + this->inner_input_start_indexes[f_index],
 				new_inner_state_errors.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
@@ -467,7 +467,7 @@ void Fold::remove_inner_input_backprop(vector<double>& state_errors,
 						+ this->curr_num_new_inner_states
 						+ s_index;
 					this->test_state_networks[f_index][state_index]->new_sequence_backprop(
-						state_errors[l_index],
+						state_errors[s_index],
 						new_inner_state_errors,
 						state_errors,
 						new_outer_state_errors,

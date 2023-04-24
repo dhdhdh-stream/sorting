@@ -19,6 +19,7 @@ Solution::Solution() {
 	this->scopes.push_back(new Scope(0,
 									 vector<bool>(),
 									 false,
+									 vector<int>(),
 									 vector<StateNetwork*>(),
 									 NULL,
 									 NULL,

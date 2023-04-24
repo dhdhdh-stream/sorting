@@ -1,11 +1,11 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include <iostream>
 
 using namespace std;
 
-void Fold::remove_outer_scope_network_end() {
-	if (this->sum_error/this->sub_iter < 0.01) {
+void LoopFold::remove_outer_scope_network_end() {
+	if (this->sum_error/this->sub_iter < 0.05) {
 		cout << "REMOVE_OUTER_SCOPE_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sub_iter << endl;
 
@@ -54,12 +54,10 @@ void Fold::remove_outer_scope_network_end() {
 				// initialize inner clean
 				this->clean_inner_step_index = 0;
 				this->clean_inner_state_index = 0;
-				this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
-
-				// test variables already initialized
+				this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
 
 				cout << "ending REMOVE_OUTER_SCOPE_NETWORK" << endl;
-				clean_transform_helper();
+				remove_inner_network_transform_helper();
 			} else {
 				this->clean_inner_scope_index = 0;
 				map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
@@ -67,13 +65,30 @@ void Fold::remove_outer_scope_network_end() {
 
 				this->reverse_test_inner_scopes_needed.insert(clean_inner_scope_scope_id);
 
+				for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+					if (i_index >= this->sum_inner_inputs
+							|| this->curr_inner_inputs_needed[i_index]) {
+						this->test_starting_state_networks[i_index] = new StateNetwork(
+							this->curr_starting_state_networks[i_index]);
+					} else {
+						this->test_starting_state_networks[i_index] = NULL;
+					}
+				}
+
+				this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
+				this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
+				this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
+				this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
+
 				int num_inner_networks = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
-					+ this->num_sequence_states;
+					+ this->num_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 						if (!this->curr_state_networks_not_needed[f_index][s_index]) {
 							this->test_state_networks[f_index][s_index] = new StateNetwork(this->curr_state_networks[f_index][s_index]);
+						} else {
+							this->test_state_networks[f_index][s_index] = NULL;
 						}
 					}
 
@@ -97,7 +112,7 @@ void Fold::remove_outer_scope_network_end() {
 				cout << "ending REMOVE_OUTER_SCOPE_NETWORK" << endl;
 				cout << "starting REMOVE_INNER_SCOPE " << this->clean_inner_scope_index << endl;
 
-				this->state = FOLD_STATE_REMOVE_INNER_SCOPE;
+				this->state = LOOP_FOLD_STATE_REMOVE_INNER_SCOPE;
 				this->state_iter = 0;
 				this->sub_iter = 0;
 				this->sum_error = 0.0;
@@ -134,14 +149,14 @@ void Fold::remove_outer_scope_network_end() {
 			}
 		}
 
-		// don't special case starting_score_network
+		// don't special case starting
 
 		// don't special case inner
 
 		cout << "ending REMOVE_OUTER_SCOPE_NETWORK" << endl;
 		cout << "starting REMOVE_OUTER_SCOPE_NETWORK " << this->clean_outer_scope_index << " " << this->clean_outer_node_index << " " << this->clean_outer_state_index << endl;
 
-		this->state = FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
+		this->state = LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
 		this->state_iter = 0;
 		this->sub_iter = 0;
 		this->sum_error = 0.0;
@@ -150,7 +165,7 @@ void Fold::remove_outer_scope_network_end() {
 	}
 }
 
-void Fold::remove_outer_scope_network_from_load() {
+void LoopFold::remove_outer_scope_network_from_load() {
 	this->test_outer_state_networks_not_needed = this->curr_outer_state_networks_not_needed;
 
 	map<int, vector<vector<bool>>>::iterator remove_network_it = this->test_outer_state_networks_not_needed.begin();
@@ -175,13 +190,13 @@ void Fold::remove_outer_scope_network_from_load() {
 		}
 	}
 
-	// don't special case starting_score_network
+	// don't special case starting
 
 	// don't special case inner
 
 	cout << "starting REMOVE_OUTER_SCOPE_NETWORK " << this->clean_outer_scope_index << " " << this->clean_outer_node_index << " " << this->clean_outer_state_index << endl;
 
-	this->state = FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
+	this->state = LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
 	this->state_iter = 0;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;

@@ -9,8 +9,8 @@
 #include "fold_sequence_node.h"
 #include "fold_to_nodes.h"
 #include "globals.h"
-#include "loop_fold_node.h"
-#include "loop_fold_to_scope.h"
+// #include "loop_fold_node.h"
+// #include "loop_fold_to_scope.h"
 #include "pass_through_node.h"
 #include "scope_node.h"
 #include "utilities.h"
@@ -20,7 +20,7 @@ using namespace std;
 Scope::Scope(int num_states,
 			 vector<bool> is_initialized_locally,
 			 bool is_loop,
-			 vector<bool> starting_state_network_target_indexes,
+			 vector<int> starting_state_network_target_indexes,
 			 vector<StateNetwork*> starting_state_networks,
 			 StateNetwork* continue_score_network,
 			 StateNetwork* continue_misguess_network,
@@ -224,7 +224,7 @@ Scope::~Scope() {
 // ... = 0, early exit to here, jump to early_exit_node_id
 // ... > 0, decrement and continue early exit
 void Scope::activate(vector<double>& state_vals,
-					 vector<bool> inputs_initialized,
+					 vector<bool>& inputs_initialized,
 					 vector<vector<double>>& flat_vals,
 					 double& predicted_score,
 					 double& scale_factor,
@@ -416,8 +416,8 @@ void Scope::activate(vector<double>& state_vals,
 			bool is_early_exit = handle_node_activate_helper(0,
 															 curr_node_id,
 															 curr_fold_history,
-															 local_state_vals,
-															 input_vals,
+															 state_vals,
+															 states_initialized,
 															 flat_vals,
 															 predicted_score,
 															 scale_factor,
@@ -506,8 +506,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				if (matches_context) {
 					// explore_phase set in fold
 					FoldHistory* fold_history = new FoldHistory(action_node->explore_fold);
-					action_node->explore_fold->explore_score_activate(
-						state_vals,	// converted to fold local state_vals in fold
+					action_node->explore_fold->score_activate(
+						state_vals,
 						predicted_score,
 						scale_factor,
 						context_histories,
@@ -516,11 +516,13 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					history->explore_fold_history = fold_history;
 
 					if (action_node->explore_exit_depth == 0) {
-						action_node->explore_fold->explore_sequence_activate(
+						action_node->explore_fold->sequence_activate(
 							state_vals,
+							states_initialized,
 							flat_vals,
 							predicted_score,
 							scale_factor,
+							sum_impact,
 							run_helper,
 							fold_history);
 						history->explore_iter_index = iter_index;
@@ -615,12 +617,13 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		if (inner_explore_exit_depth != -1) {
 			if (inner_explore_exit_depth == 1) {
-				Fold* fold = inner_explore_exit_fold_history->fold;
-				fold->explore_sequence_activate(
+				inner_explore_exit_fold_history->fold->sequence_activate(
 					state_vals,
+					states_initialized,
 					flat_vals,
 					predicted_score,
 					scale_factor,
+					sum_impact,
 					run_helper,
 					inner_explore_exit_fold_history);
 				history->explore_iter_index = iter_index;
@@ -671,7 +674,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					if (matches_context) {
 						// explore_phase set in fold
 						FoldHistory* fold_history = new FoldHistory(scope_node->explore_fold);
-						scope_node->explore_fold->explore_score_activate(
+						scope_node->explore_fold->score_activate(
 							state_vals,
 							predicted_score,
 							scale_factor,
@@ -681,11 +684,13 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						history->explore_fold_history = fold_history;
 
 						if (scope_node->explore_exit_depth == 0) {
-							scope_node->explore_fold->explore_sequence_activate(
+							scope_node->explore_fold->sequence_activate(
 								state_vals,
+								states_initialized,
 								flat_vals,
 								predicted_score,
 								scale_factor,
+								sum_impact,
 								run_helper,
 								fold_history);
 							history->explore_iter_index = iter_index;
@@ -808,7 +813,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		FoldSequenceNodeHistory* node_history = new FoldSequenceNodeHistory(fold_sequence_node,
 																			curr_node_id);
 		fold_sequence_node->activate(curr_fold_history,
-									 state_vals,	// converted to fold local state_vals in fold
+									 state_vals,
+									 states_initialized,
 									 flat_vals,
 									 predicted_score,
 									 scale_factor,
@@ -850,7 +856,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 }
 
 void Scope::backprop(vector<double>& state_errors,
-					 vector<bool> inputs_initialized,
+					 vector<bool>& inputs_initialized,
 					 double target_val,
 					 double final_misguess,
 					 double final_sum_impact,
@@ -920,9 +926,11 @@ void Scope::backprop(vector<double>& state_errors,
 
 				if (history->explore_iter_index == iter_index
 						&& history->explore_node_index == h_index+1) {	// node_history appended to, then explore indexes captured
-					backprop_explore_fold_helper(state_errors,	// converted to fold local state_errors in fold
+					backprop_explore_fold_helper(state_errors,
+												 states_initialized,
 												 target_val,
 												 final_misguess,
+												 final_sum_impact,
 												 predicted_score,
 												 scale_factor,
 												 run_helper,
@@ -1001,8 +1009,10 @@ void Scope::backprop(vector<double>& state_errors,
 
 			if (history->explore_node_index == h_index+1) {	// node_history appended to, then explore indexes captured
 				backprop_explore_fold_helper(state_errors,
+											 states_initialized,
 											 target_val,
 											 final_misguess,
+											 final_sum_impact,
 											 predicted_score,
 											 scale_factor,
 											 run_helper,
@@ -1147,6 +1157,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SEQUENCE) {
 		FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[iter_index][h_index]->node;
 		fold_sequence_node->backprop(state_errors,
+									 states_initialized,
 									 target_val,
 									 final_misguess,
 									 final_sum_impact,
@@ -1188,8 +1199,8 @@ void Scope::handle_node_backprop_helper(int iter_index,
 				Scope* outer_scope = solution->scopes[(*it).first];
 				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
 				for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
-					scope_node->inner_input_indexes.push_back(outer_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
-					scope_node->inner_input_target_indexes.push_back(inner_scope->num_input_states-fold->curr_num_new_inner_states+i_index);
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-fold->curr_num_new_inner_states+i_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-fold->curr_num_new_inner_states+i_index);
 				}
 			}
 
@@ -1397,23 +1408,27 @@ void Scope::handle_node_backprop_helper(int iter_index,
 }
 
 void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
+										 vector<bool>& states_initialized,
 										 double target_val,
 										 double final_misguess,
+										 double final_sum_impact,
 										 double& predicted_score,
 										 double& scale_factor,
 										 RunHelper& run_helper,
 										 ScopeHistory* history) {
 	if (history->explore_fold_history != NULL) {
 		Fold* fold = history->explore_fold_history->fold;
-		fold->explore_backprop(state_errors,	// converted to fold local state_errors in fold
-							   target_val,
-							   final_misguess,
-							   predicted_score,
-							   scale_factor,
-							   run_helper,
-							   history->explore_fold_history);
+		fold->backprop(state_errors,
+					   states_initialized,
+					   target_val,
+					   final_misguess,
+					   final_sum_impact,
+					   predicted_score,
+					   scale_factor,
+					   run_helper,
+					   history->explore_fold_history);
 
-		if (fold->state == FOLD_STATE_EXPLORE_FAIL) {
+		if (fold->state == FOLD_STATE_EXPERIMENT_FAIL) {
 			Scope* score_scope = solution->scopes[fold->scope_context[0]];
 			if (score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)score_scope->nodes[fold->node_context[0]];
@@ -1433,8 +1448,8 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 				delete scope_node->explore_fold;
 				scope_node->explore_fold = NULL;
 			}
-		} else if (fold->state == FOLD_STATE_EXPLORE_DONE) {
-			fold->add_to_clean();
+		} else if (fold->state == FOLD_STATE_EXPERIMENT_DONE) {
+			fold->experiment_to_clean();
 
 			// sequence_scope == this
 
@@ -1445,10 +1460,10 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 																	0,
 																	20);
 			bool fold_is_pass_through;
-			if (fold->explore_result == FOLD_RESULT_BRANCH) {
+			if (fold->experiment_result == FOLD_RESULT_BRANCH) {
 				fold_is_pass_through = false;
 			} else {
-				// fold->explore_result == FOLD_RESULT_REPLACE
+				// fold->experiment_result == FOLD_RESULT_REPLACE
 				fold_is_pass_through = true;
 			}
 

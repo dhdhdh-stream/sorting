@@ -310,7 +310,7 @@ void ScopeNode::backprop(vector<double>& state_errors,
 	vector<bool> scope_inputs_initialized;
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		scope_input_errors = vector<double>(inner_scope->num_states, 0.0);
-		scope_inputs_initialized = vector<double>(inner_scope->num_states, false);
+		scope_inputs_initialized = vector<bool>(inner_scope->num_states, false);
 		for (int i_index = 0; i_index < (int)this->inner_input_indexes.size(); i_index++) {
 			if (states_initialized[this->inner_input_indexes[i_index]]) {
 				scope_input_errors[this->inner_input_target_indexes[i_index]] = state_errors[this->inner_input_indexes[i_index]];
@@ -328,7 +328,7 @@ void ScopeNode::backprop(vector<double>& state_errors,
 						  run_helper,
 						  history->inner_scope_history);
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		for (int i_index = 0; i_index < (int)this->inner_input_is_local.size(); i_index++) {
+		for (int i_index = 0; i_index < (int)this->inner_input_indexes.size(); i_index++) {
 			if (states_initialized[this->inner_input_indexes[i_index]]) {
 				state_errors[this->inner_input_indexes[i_index]] = scope_input_errors[this->inner_input_target_indexes[i_index]];
 			}

@@ -133,6 +133,8 @@ void FoldScoreNode::activate(vector<double>& state_vals,
 	if (fold_avail && matches_context) {
 		FoldHistory* fold_history = new FoldHistory(this->fold);
 		this->fold->score_activate(state_vals,
+								   predicted_score,
+								   scale_factor,
 								   context_histories,
 								   run_helper,
 								   fold_history);

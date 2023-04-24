@@ -310,7 +310,7 @@ void Fold::remove_outer_scope_sequence_activate(vector<double>& state_vals,
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
+			int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
 			vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
@@ -461,7 +461,7 @@ void Fold::remove_outer_scope_sequence_activate(vector<double>& state_vals,
 							test_new_inner_state_vals,
 							test_state_vals,
 							test_new_outer_state_vals);
-						test_state_vals[l_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
+						test_state_vals[s_index] += this->test_state_networks[f_index][state_index]->output->acti_vals[0];
 					}
 				}
 			}
@@ -559,7 +559,7 @@ void Fold::remove_outer_scope_sequence_activate(vector<double>& state_vals,
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
 		vector<double> test_new_inner_state_errors(this->sum_inner_inputs+this->curr_num_new_inner_states, 0.0);
-		vector<double> state_errors(this->num_sequence_states);
+		vector<double> test_state_errors(this->num_sequence_states);
 		for (int s_index = 0; s_index < this->num_sequence_states; s_index++) {
 			test_state_errors[s_index] = state_vals[s_index] - test_state_vals[s_index];
 			this->sum_error += abs(test_state_errors[s_index]);
@@ -614,14 +614,14 @@ void Fold::remove_outer_scope_sequence_activate(vector<double>& state_vals,
 				for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
 					test_new_state_errors.push_back(test_new_inner_state_errors[this->sum_inner_inputs+i_index]);
 				}
-				for (int n_index = (int)history->test_inner_state_network_histories[f_index].size()-1; n_index >= 0; n_index--) {
+				for (int n_index = (int)test_inner_state_network_histories[f_index].size()-1; n_index >= 0; n_index--) {
 					for (int i_index = this->curr_num_new_inner_states-1; i_index >= 0; i_index--) {
-						StateNetwork* state_network = history->test_inner_state_network_histories[f_index][n_index][i_index]->network;
+						StateNetwork* state_network = test_inner_state_network_histories[f_index][n_index][i_index]->network;
 						state_network->new_external_backprop(
 							test_new_state_errors[i_index],
 							test_new_state_errors,
 							target_max_update,
-							history->test_inner_state_network_histories[f_index][n_index][i_index]);
+							test_inner_state_network_histories[f_index][n_index][i_index]);
 					}
 				}
 				for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {

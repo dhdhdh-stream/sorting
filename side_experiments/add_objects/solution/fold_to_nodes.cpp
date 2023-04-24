@@ -312,6 +312,7 @@ void fold_to_nodes(Scope* parent_scope,
 		Scope* new_scope = new Scope(new_num_states,
 									 new_is_initialized_locally,
 									 false,
+									 vector<int>(),
 									 vector<StateNetwork*>(),
 									 NULL,
 									 NULL,
@@ -373,7 +374,7 @@ void fold_to_nodes(Scope* parent_scope,
 												post_state_network_target_indexes,
 												post_state_networks,
 												score_network);
-				new_nodes.push_back(node);
+				new_outer_nodes.push_back(node);
 			} else {
 				vector<int> state_network_target_indexes;
 				vector<StateNetwork*> state_networks;
@@ -417,7 +418,7 @@ void fold_to_nodes(Scope* parent_scope,
 
 				vector<int> inner_input_indexes;
 				vector<int> inner_input_target_indexes;
-				for (int i_index = 0; i_index < solution->scopes[inner_scope_id]->num_input_states; i_index++) {
+				for (int i_index = 0; i_index < solution->scopes[inner_scope_id]->num_states; i_index++) {
 					int original_index = input_index_reverse_mappings[scope_indexes[f_index]][i_index];
 					original_index -= (fold->sum_inner_inputs + fold->curr_num_new_inner_states);
 					if (original_index < fold->num_sequence_states) {

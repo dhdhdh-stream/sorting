@@ -1,38 +1,29 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include <iostream>
 
 using namespace std;
 
-void Fold::experiment_to_clean() {
-	// initialize clean
+void LoopFold::experiment_to_clean() {
+	// state_networks_not_needed already initialized
+
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
-		+ this->num_sequence_states;
-	int total_num_states = this->sum_inner_inputs
-		+ this->curr_num_new_inner_states
-		+ this->num_sequence_states
-		+ this->curr_num_new_outer_states;
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		// state_networks_not_needed already initialized
-
-		this->curr_state_not_needed_locally.push_back(vector<bool>(total_num_states, false));
-		this->curr_num_states_cleared.push_back(0);
-	}
-	for (int i_index = 0; i_index < this->sum_inner_inputs; i_index++) {
-		if (!this->curr_inner_inputs_needed[i_index]) {
-			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-				this->curr_state_not_needed_locally[f_index][i_index] = true;
-			}
-		}
-	}
-	this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
-	this->test_num_states_cleared = this->curr_num_states_cleared;
+		+ this->num_states;
 
 	// Note: don't adjust context even if outer state not needed, as trained within specific context
 	if (this->curr_outer_state_networks.size() == 0) {
 		this->curr_num_new_outer_states = 0;
-		this->curr_starting_score_network->remove_new_outer();
+		for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+			if (i_index >= this->sum_inner_inputs
+					|| this->curr_inner_inputs_needed[i_index]) {
+				this->curr_starting_state_networks[i_index]->remove_new_outer();
+			}
+		}
+		this->curr_continue_score_network->remove_new_outer();
+		this->curr_continue_misguess_network->remove_new_outer();
+		this->curr_halt_score_network->remove_new_outer();
+		this->curr_halt_misguess_network->remove_new_outer();
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				if (!this->curr_state_networks_not_needed[f_index][s_index]) {
@@ -48,15 +39,14 @@ void Fold::experiment_to_clean() {
 			// initialize inner clean
 			this->clean_inner_step_index = 0;
 			this->clean_inner_state_index = 0;
-			this->state = FOLD_STATE_REMOVE_INNER_NETWORK;
-
-			// test variables already initialized
+			this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
 
 			// initialize size
+			this->test_starting_state_networks = this->curr_starting_state_networks;
 			this->test_state_networks = this->curr_state_networks;
 			this->test_score_networks = this->curr_score_networks;
 
-			clean_transform_helper();
+			remove_inner_network_transform_helper();
 		} else {
 			this->clean_inner_scope_index = 0;
 			map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
@@ -64,12 +54,29 @@ void Fold::experiment_to_clean() {
 
 			this->reverse_test_inner_scopes_needed.insert(clean_inner_scope_scope_id);
 
+			for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+				// this->test_starting_state_networks previously cleared
+				if (i_index >= this->sum_inner_inputs
+						|| this->curr_inner_inputs_needed[i_index]) {
+					this->test_starting_state_networks.push_back(new StateNetwork(
+						this->curr_starting_state_networks[i_index]));
+				} else {
+					this->test_starting_state_networks.push_back(NULL);
+				}
+			}
+
+			this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
+			this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
+			this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
+			this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
+
 			// test_state_networks/test_score_networks previously cleared
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				this->test_state_networks.push_back(vector<StateNetwork*>());
 				for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 					if (!this->curr_state_networks_not_needed[f_index][s_index]) {
-						this->test_state_networks[f_index].push_back(new StateNetwork(this->curr_state_networks[f_index][s_index]));
+						this->test_state_networks[f_index].push_back(new StateNetwork(
+							this->curr_state_networks[f_index][s_index]));
 					} else {
 						this->test_state_networks[f_index].push_back(NULL);
 					}
@@ -94,7 +101,7 @@ void Fold::experiment_to_clean() {
 
 			cout << "starting REMOVE_INNER_SCOPE " << this->clean_inner_scope_index << endl;
 
-			this->state = FOLD_STATE_REMOVE_INNER_SCOPE;
+			this->state = LOOP_FOLD_STATE_REMOVE_INNER_SCOPE;
 			this->state_iter = 0;
 			this->sub_iter = 0;
 			this->sum_error = 0.0;
@@ -120,14 +127,29 @@ void Fold::experiment_to_clean() {
 			}
 		}
 
-		this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
+		for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+			// this->test_starting_state_networks previously cleared
+			if (i_index >= this->sum_inner_inputs
+					|| this->curr_inner_inputs_needed[i_index]) {
+				this->test_starting_state_networks.push_back(new StateNetwork(
+					this->curr_starting_state_networks[i_index]));
+			} else {
+				this->test_starting_state_networks.push_back(NULL);
+			}
+		}
+
+		this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
+		this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
+		this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
+		this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
 
 		// test_state_networks/test_score_networks previously cleared
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			this->test_state_networks.push_back(vector<StateNetwork*>());
 			for (int s_index = 0; s_index < num_inner_networks; s_index++) {
 				if (!this->curr_state_networks_not_needed[f_index][s_index]) {
-					this->test_state_networks[f_index].push_back(new StateNetwork(this->curr_state_networks[f_index][s_index]));
+					this->test_state_networks[f_index].push_back(new StateNetwork(
+						this->curr_state_networks[f_index][s_index]));
 				} else {
 					this->test_state_networks[f_index].push_back(NULL);
 				}
@@ -150,7 +172,7 @@ void Fold::experiment_to_clean() {
 
 		cout << "starting REMOVE_OUTER_SCOPE " << this->clean_outer_scope_index << endl;
 
-		this->state = FOLD_STATE_REMOVE_OUTER_SCOPE;
+		this->state = LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE;
 		this->state_iter = 0;
 		this->sub_iter = 0;
 		this->sum_error = 0.0;

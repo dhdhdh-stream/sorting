@@ -277,7 +277,7 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			}
 
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
-			int num_input_states_diff = inner_scope->num_input_states - this->num_inner_inputs[f_index];
+			int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
 			vector<double> inner_input_vals(new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index],
 				new_inner_state_vals.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);

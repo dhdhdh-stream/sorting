@@ -34,7 +34,7 @@ void FoldSequenceNode::activate(FoldHistory* fold_history,
 								RunHelper& run_helper,
 								FoldSequenceNodeHistory* history) {
 	fold_history->fold->sequence_activate(state_vals,
-										  states_initialized
+										  states_initialized,
 										  flat_vals,
 										  predicted_score,
 										  scale_factor,

@@ -19,7 +19,7 @@ public:
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
 	bool is_loop;
-	std::vector<bool> starting_state_network_target_indexes;
+	std::vector<int> starting_state_network_target_indexes;
 	std::vector<StateNetwork*> starting_state_networks;
 	StateNetwork* continue_score_network;
 	StateNetwork* continue_misguess_network;
@@ -36,7 +36,7 @@ public:
 	Scope(int num_states,
 		  std::vector<bool> is_initialized_locally,
 		  bool is_loop,
-		  std::vector<bool> starting_state_network_target_indexes,
+		  std::vector<int> starting_state_network_target_indexes,
 		  std::vector<StateNetwork*> starting_state_networks,
 		  StateNetwork* continue_score_network,
 		  StateNetwork* continue_misguess_network,
@@ -50,7 +50,7 @@ public:
 	Scope(std::ifstream& input_file);
 	~Scope();
 
-	void activate(std::vector<double>& input_vals,
+	void activate(std::vector<double>& state_vals,
 				  std::vector<bool>& inputs_initialized,
 				  std::vector<std::vector<double>>& flat_vals,
 				  double& predicted_score,
@@ -67,7 +67,7 @@ public:
 				  FoldHistory*& explore_exit_fold_history,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
-	void backprop(std::vector<double>& input_errors,
+	void backprop(std::vector<double>& state_errors,
 				  std::vector<bool>& inputs_initialized,
 				  double target_val,
 				  double final_misguess,
@@ -109,8 +109,10 @@ public:
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
 	void backprop_explore_fold_helper(std::vector<double>& state_errors,
+									  std::vector<bool>& states_initialized,
 									  double target_val,
 									  double final_misguess,
+									  double final_sum_impact,
 									  double& predicted_score,
 									  double& scale_factor,
 									  RunHelper& run_helper,

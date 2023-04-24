@@ -89,7 +89,7 @@ public:
 
 	std::vector<bool> curr_inner_inputs_needed;
 	std::vector<bool> test_inner_inputs_needed;
-	// set state_networks_not_needed on add_to_clean_transform
+	// set state_networks_not_needed and state_not_needed_locally on experiment_to_clean
 
 	int existing_sequence_length;
 	double* existing_average_score;
@@ -270,7 +270,7 @@ public:
 
 	void remove_inner_input_end();
 
-	void add_to_clean();
+	void experiment_to_clean();
 
 	void clean_increment();
 
@@ -349,6 +349,7 @@ public:
 							  RunHelper& run_helper,
 							  FoldHistory* history);
 	void clean_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+										   std::vector<bool>& new_state_vals_initialized,
 										   ScopeHistory* scope_history,
 										   std::vector<int>& curr_scope_context,
 										   std::vector<int>& curr_node_context,
@@ -356,6 +357,7 @@ public:
 										   int step_index,
 										   FoldHistory* history,
 										   std::vector<double>& test_new_state_vals,
+										   std::vector<bool>& test_new_state_vals_initialized,
 										   std::vector<std::vector<std::vector<StateNetworkHistory*>>>& test_inner_state_network_histories);
 	void clean_sequence_activate(std::vector<double>& state_vals,
 								 std::vector<bool>& states_initialized,
@@ -377,6 +379,12 @@ public:
 
 	void remove_inner_scope_end();
 	void remove_inner_scope_network_end();
+	
+	void clean_transform_helper();
+	bool remove_inner_network_transform_helper();
+	bool remove_inner_state_transform_helper();
+	bool clear_inner_state_transform_helper();
+
 	void remove_inner_network_end();
 	void remove_inner_state_end();
 	void clear_inner_state_end();

@@ -112,6 +112,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		vector<double> input_vals;
+		vector<bool> inputs_initialized;
 		double predicted_score = solution->average_score;
 		double scale_factor = 1.0;
 		double sum_impact = 0.0;
@@ -132,6 +133,7 @@ int main(int argc, char* argv[]) {
 		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(input_vals,
+									  inputs_initialized,
 									  flat_vals,
 									  predicted_score,
 									  scale_factor,
@@ -156,6 +158,7 @@ int main(int argc, char* argv[]) {
 
 			vector<double> input_errors;
 			solution->scopes[0]->backprop(input_errors,
+										  inputs_initialized,
 										  target_val,
 										  final_misguess,
 										  sum_impact,
@@ -202,6 +205,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		vector<double> input_vals;
+		vector<bool> inputs_initialized;
 		double predicted_score = solution->average_score;
 		double scale_factor = 1.0;
 		double sum_impact = 0.0;
@@ -222,6 +226,7 @@ int main(int argc, char* argv[]) {
 		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(input_vals,
+									  inputs_initialized,
 									  flat_vals,
 									  predicted_score,
 									  scale_factor,
@@ -246,6 +251,7 @@ int main(int argc, char* argv[]) {
 
 			vector<double> input_errors;
 			solution->scopes[0]->backprop(input_errors,
+										  inputs_initialized,
 										  target_val,
 										  final_misguess,
 										  sum_impact,
@@ -292,6 +298,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		vector<double> input_vals;
+		vector<bool> inputs_initialized;
 		double predicted_score = solution->average_score;
 		double scale_factor = 1.0;
 		double sum_impact = 0.0;
@@ -312,6 +319,7 @@ int main(int argc, char* argv[]) {
 		}
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(input_vals,
+									  inputs_initialized,
 									  flat_vals,
 									  predicted_score,
 									  scale_factor,
@@ -339,6 +347,7 @@ int main(int argc, char* argv[]) {
 
 			vector<double> input_errors;
 			solution->scopes[0]->backprop(input_errors,
+										  inputs_initialized,
 										  target_val,
 										  final_misguess,
 										  sum_impact,

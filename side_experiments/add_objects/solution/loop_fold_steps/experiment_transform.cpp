@@ -1,4 +1,4 @@
-#include "fold.h"
+#include "loop_fold.h"
 
 #include <cmath>
 #include <iostream>
@@ -7,74 +7,55 @@
 
 using namespace std;
 
-void Fold::experiment_end() {
+void LoopFold::experiment_end() {
 	double score_standard_deviation = sqrt(*this->existing_score_variance);
 	double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
 
+	double score_improvement = this->test_average_score - *this->existing_average_score;
+	cout << "this->test_average_score: " << this->test_average_score << endl;
 	cout << "this->existing_average_score: " << *this->existing_average_score << endl;
 
-	double branch_improvement = this->test_branch_average_score - *this->existing_average_score;
-	cout << "this->test_branch_average_score: " << this->test_branch_average_score << endl;
+	double score_improvement_t_value = score_improvement
+		/ (score_standard_deviation / sqrt(20000));
+	cout << "score_improvement_t_value: " << score_improvement_t_value << endl;
 
-	cout << "this->test_existing_average_improvement: " << this->test_existing_average_improvement << endl;
-
-	double replace_improvement = this->test_replace_average_score - *this->existing_average_score;
-	cout << "this->test_replace_average_score: " << this->test_replace_average_score << endl;
-
-	double misguess_improvement = *this->existing_average_misguess - this->test_replace_average_misguess;
-	cout << "this->test_replace_average_misguess: " << this->test_replace_average_misguess << endl;
+	double misguess_improvement = *this->existing_average_misguess - this->test_average_misguess;
+	cout << "this->test_average_misguess: " << this->test_average_misguess << endl;
 	cout << "this->existing_average_misguess: " << *this->existing_average_misguess << endl;
-
-	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
-
-	double branch_improvement_t_value = branch_improvement
-		/ (score_standard_deviation / sqrt(20000));
-	cout << "branch_improvement_t_value: " << branch_improvement_t_value << endl;
-
-	double existing_improvement_t_value = this->test_existing_average_improvement
-		/ (score_standard_deviation / sqrt(20000));
-	cout << "existing_improvement_t_value: " << existing_improvement_t_value << endl;
-
-	double replace_improvement_t_value = replace_improvement
-		/ (score_standard_deviation / sqrt(20000));
-	cout << "replace_improvement_t_value: " << replace_improvement_t_value << endl;
 
 	double misguess_improvement_t_value = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (branch_improvement_t_value > 2.326) {	// >99%
-		if (existing_improvement_t_value < 0.842	// 80%<
-				&& this->is_recursive == 0) {
-			cout << "FOLD_RESULT_REPLACE" << endl;
-			this->experiment_result = FOLD_RESULT_REPLACE;
-		} else {
-			cout << "FOLD_RESULT_BRANCH" << endl;
-			this->experiment_result = FOLD_RESULT_BRANCH;
-		}
+	bool is_success;
+	if (score_improvement_t_value > 2.326) {
+		cout << "EXPERIMENT success" << endl;
+		is_success = true;
 	} else if (*this->existing_average_misguess > 0.01
-			&& misguess_improvement_t_value > 2.326	// >99%
-			&& replace_improvement_t_value > -0.842	// 80%<
-			&& this->is_recursive == 0) {
-		cout << "FOLD_RESULT_REPLACE" << endl;
-		this->experiment_result = FOLD_RESULT_REPLACE;
-	} else if (this->sequence_length < this->existing_sequence_length
-			&& replace_improvement_t_value > 0.0
-			&& misguess_improvement_t_value > 0.0
-			&& this->is_recursive == 0) {
-		cout << "FOLD_RESULT_REPLACE" << endl;
-		this->experiment_result = FOLD_RESULT_REPLACE;
+			&& misguess_improvement_t_value > 2.326
+			&& score_improvement_t_value > -0.842) {
+		cout << "EXPERIMENT success" << endl;
+		is_success = true;
 	} else {
-		cout << "FOLD_RESULT_FAIL" << endl;
-		this->experiment_result = FOLD_RESULT_FAIL;
+		cout << "EXPERIMENT fail" << endl;
+		is_success = false;
 	}
 
-	if (this->experiment_result != FOLD_RESULT_FAIL) {
+	if (is_success) {
 		this->curr_outer_state_networks = this->test_outer_state_networks;
 		this->test_outer_state_networks.clear();
 
-		this->curr_starting_score_network = this->test_starting_score_network;
-		this->test_starting_score_network = NULL;
+		this->curr_starting_state_networks = this->test_starting_state_networks;
+		this->test_starting_state_networks.clear();
+
+		this->curr_continue_score_network = this->test_continue_score_network;
+		this->test_continue_score_network = NULL;
+		this->curr_continue_misguess_network = this->test_continue_misguess_network;
+		this->test_continue_misguess_network = NULL;
+		this->curr_halt_score_network = this->test_halt_score_network;
+		this->test_halt_score_network = NULL;
+		this->curr_halt_misguess_network = this->test_halt_misguess_network;
+		this->test_halt_misguess_network = NULL;
 
 		this->curr_state_networks = this->test_state_networks;
 		this->test_state_networks.clear();
@@ -83,18 +64,16 @@ void Fold::experiment_end() {
 		this->curr_inner_state_networks = this->test_inner_state_networks;
 		this->test_inner_state_networks.clear();
 
-		this->curr_branch_average_score = this->test_branch_average_score;
-		this->test_branch_average_score = 0.0;
-		this->curr_existing_average_improvement = this->test_existing_average_improvement;
-		this->test_existing_average_improvement = 0.0;
-		this->curr_replace_average_score = this->test_replace_average_score;
-		this->test_replace_average_score = 0.0;
-		this->curr_replace_average_misguess = this->test_replace_average_misguess;
-		this->test_replace_average_misguess = 0.0;
-		this->curr_replace_misguess_variance = this->test_replace_misguess_variance;
-		this->test_replace_misguess_variance = 0.0;
+		this->curr_average_score = this->test_average_score;
+		this->test_average_score = 0.0;
+		this->curr_score_variance = this->test_score_variance;
+		this->test_score_variance = 0.0;
+		this->curr_average_misguess = this->test_average_misguess;
+		this->test_average_misguess = 0.0;
+		this->curr_misguess_variance = this->test_misguess_variance;
+		this->test_misguess_variance = 0.0;
 
-		if (this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+		if (this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
 			this->experiment_added_state = false;
 
 			this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
@@ -109,7 +88,6 @@ void Fold::experiment_end() {
 						this->test_outer_state_networks[it->first][n_index].push_back(
 							new StateNetwork(it->second[n_index][0]));
 						this->test_outer_state_networks[it->first][n_index][0]->add_new_outer();
-						// state networks track their needs, so robust against scope updates
 
 						this->test_outer_state_networks[it->first][n_index].push_back(
 							new StateNetwork(1,
@@ -121,13 +99,26 @@ void Fold::experiment_end() {
 				}
 			}
 
-			this->test_starting_score_network = new StateNetwork(this->curr_starting_score_network);
-			this->test_starting_score_network->add_new_outer();
-
 			this->test_num_new_inner_states = this->curr_num_new_inner_states;
+			for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+				// this->test_starting_state_networks cleared above
+				this->test_starting_state_networks.push_back(new StateNetwork(
+					this->curr_starting_state_networks[i_index]));
+				this->test_starting_state_networks[i_index]->add_new_outer();
+			}
+
+			this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
+			this->test_continue_score_network->add_new_outer();
+			this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
+			this->test_continue_misguess_network->add_new_outer();
+			this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
+			this->test_halt_score_network->add_new_outer();
+			this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
+			this->test_halt_misguess_network->add_new_outer();
+
 			int num_inner_networks = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
-				+ this->num_sequence_states;
+				+ this->num_states;
 			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 				// this->test_state_networks cleared above
 				this->test_state_networks.push_back(vector<StateNetwork*>());
@@ -148,43 +139,59 @@ void Fold::experiment_end() {
 				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					this->test_inner_state_networks[it->first].push_back(vector<StateNetwork*>());
 					if (it->second[n_index].size() != 0) {
-						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-							this->test_inner_state_networks[it->first][n_index].push_back(
-								new StateNetwork(it->second[n_index][s_index]));
-						}
+						// this->curr_num_new_inner_states = 1
+						this->test_inner_state_networks[it->first][n_index].push_back(
+							new StateNetwork(it->second[n_index][0]));
 					}
 				}
 			}
 
 			cout << "starting ADD_OUTER_STATE " << this->test_num_new_outer_states << endl;
 
-			this->state = FOLD_STATE_ADD_OUTER_STATE;
+			this->state = LOOP_FOLD_STATE_ADD_OUTER_STATE;
+			this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
 			if (this->sum_inner_inputs == 0) {
 				cout << "EXPERIMENT_DONE" << endl;
 
-				this->state = FOLD_STATE_EXPERIMENT_DONE;
+				this->state = LOOP_FOLD_STATE_EXPERIMENT_DONE;
 			} else {
 				this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
 				this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
 
 				int num_inner_networks = this->sum_inner_inputs
 					+ this->curr_num_new_inner_states
-					+ this->num_sequence_states;
+					+ this->num_states;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
 				}
 				this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
 
 				this->remove_inner_input_index = 0;
+
 				this->test_inner_inputs_needed[this->remove_inner_input_index] = false;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					this->test_state_networks_not_needed[f_index][this->remove_inner_input_index] = true;
 				}
 
 				// outer unchanged
+
+				for (int i_index = 0; i_index < this->sum_inner_inputs+this->curr_num_new_inner_states; i_index++) {
+					if (i_index >= this->sum_inner_inputs
+							|| this->test_inner_inputs_needed[i_index]) {
+						this->test_starting_state_networks.push_back(new StateNetwork(
+							this->curr_starting_state_networks[i_index]));
+					} else {
+						this->test_starting_state_networks.push_back(NULL);
+					}
+				}
+
+				this->test_continue_score_network = new StateNetwork(this->curr_continue_score_network);
+				this->test_continue_misguess_network = new StateNetwork(this->curr_continue_misguess_network);
+				this->test_halt_score_network = new StateNetwork(this->curr_halt_score_network);
+				this->test_halt_misguess_network = new StateNetwork(this->curr_halt_misguess_network);
 
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 					// this->test_state_networks cleared above
@@ -200,7 +207,6 @@ void Fold::experiment_end() {
 
 					// this->test_score_networks cleared above
 					this->test_score_networks.push_back(new StateNetwork(this->curr_score_networks[f_index]));
-					this->test_score_networks[f_index]->add_new_outer();
 				}
 				for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
 						it != this->curr_inner_state_networks.end(); it++) {
@@ -216,7 +222,8 @@ void Fold::experiment_end() {
 
 				cout << "starting REMOVE_INNER_INPUT " << this->remove_inner_input_index << endl;
 
-				this->state = FOLD_STATE_REMOVE_INNER_INPUT;
+				this->state = LOOP_FOLD_STATE_REMOVE_INNER_INPUT;
+				this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
 				this->state_iter = 0;
 				this->sum_error = 0.0;
 			}
@@ -232,8 +239,14 @@ void Fold::experiment_end() {
 		}
 		this->test_outer_state_networks.clear();
 
-		delete this->test_starting_score_network;
-		this->test_starting_score_network = NULL;
+		for (int i_index = 0; i_index < (int)this->test_starting_state_networks.size(); i_index++) {
+			delete this->test_starting_state_networks[i_index];
+		}
+
+		delete this->test_continue_score_network;
+		delete this->test_continue_misguess_network;
+		delete this->test_halt_score_network;
+		delete this->test_halt_misguess_network;
 
 		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
 			for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
@@ -253,6 +266,6 @@ void Fold::experiment_end() {
 		}
 		this->test_inner_state_networks.clear();
 
-		this->state = FOLD_STATE_EXPERIMENT_FAIL;
+		this->state = LOOP_FOLD_STATE_EXPERIMENT_FAIL;
 	}
 }
