@@ -35,6 +35,8 @@ const int LOOP_FOLD_STATE_ADD_INNER_STATE = 3;
 
 const int LOOP_FOLD_STATE_REMOVE_INNER_INPUT = 4;
 
+// TODO: remove unneeded num_states
+
 const int LOOP_FOLD_STATE_EXPERIMENT_DONE = 5;
 
 const int LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE = 6;

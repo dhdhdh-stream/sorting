@@ -19,8 +19,7 @@ public:
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
 	bool is_loop;
-	std::vector<int> starting_state_network_target_indexes;
-	std::vector<StateNetwork*> starting_state_networks;
+	std::vector<StateNetwork*> starting_state_networks;	// first states
 	StateNetwork* continue_score_network;
 	StateNetwork* continue_misguess_network;
 	StateNetwork* halt_score_network;
@@ -36,7 +35,6 @@ public:
 	Scope(int num_states,
 		  std::vector<bool> is_initialized_locally,
 		  bool is_loop,
-		  std::vector<int> starting_state_network_target_indexes,
 		  std::vector<StateNetwork*> starting_state_networks,
 		  StateNetwork* continue_score_network,
 		  StateNetwork* continue_misguess_network,
