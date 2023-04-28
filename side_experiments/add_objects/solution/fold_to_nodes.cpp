@@ -155,8 +155,8 @@ void fold_to_nodes(Scope* parent_scope,
 					new_is_initialized_locally.push_back(true);
 				} else {
 					new_is_initialized_locally.push_back(false);
-					input_index_reverse_mapping.push_back(s_index);
 				}
+				input_index_reverse_mapping.push_back(s_index);
 			}
 		}
 
@@ -173,9 +173,11 @@ void fold_to_nodes(Scope* parent_scope,
 				vector<int> inner_input_indexes;
 				vector<int> inner_input_target_indexes;
 				for (int i_index = 0; i_index < solution->scopes[inner_scope_id]->num_states; i_index++) {
-					int original_index = input_index_reverse_mappings[inner_scope_indexes[n_index][a_index]][i_index];
-					inner_input_indexes.push_back(state_index_mapping[original_index]);
-					inner_input_target_indexes.push_back(i_index);
+					if (!solution->scopes[inner_scope_id]->is_initialized_locally[i_index]) {
+						int original_index = input_index_reverse_mappings[inner_scope_indexes[n_index][a_index]][i_index];
+						inner_input_indexes.push_back(state_index_mapping[original_index]);
+						inner_input_target_indexes.push_back(i_index);
+					}
 				}
 
 				StateNetwork* score_network = new StateNetwork(0,
@@ -415,20 +417,7 @@ void fold_to_nodes(Scope* parent_scope,
 
 				int inner_scope_id = new_scope_ids[scope_indexes[f_index]];
 
-				vector<int> inner_input_indexes;
-				vector<int> inner_input_target_indexes;
-				for (int i_index = 0; i_index < solution->scopes[inner_scope_id]->num_states; i_index++) {
-					int original_index = input_index_reverse_mappings[scope_indexes[f_index]][i_index];
-					original_index -= (fold->sum_inner_inputs + fold->curr_num_new_inner_states);
-					if (original_index < fold->num_sequence_states) {
-						inner_input_indexes.push_back(original_index);
-					} else {
-						original_index -= fold->num_sequence_states;
-						// parent scope not yet updated with new outer
-						inner_input_indexes.push_back(parent_scope->num_states + original_index);
-					}
-					inner_input_target_indexes.push_back(i_index);
-				}
+				// inner_input_indexes must be empty
 
 				StateNetwork* score_network;
 				score_network = new StateNetwork(0,
@@ -440,8 +429,8 @@ void fold_to_nodes(Scope* parent_scope,
 				ScopeNode* node = new ScopeNode(vector<int>(),
 												vector<StateNetwork*>(),
 												inner_scope_id,
-												inner_input_indexes,
-												inner_input_target_indexes,
+												vector<int>(),
+												vector<int>(),
 												vector<int>(),
 												vector<StateNetwork*>(),
 												score_network);

@@ -85,7 +85,7 @@ void LoopFold::remove_inner_input_learn_inner_scope_activate_helper(
 							&& it->second[node_id].size() > 0) {
 						history->inner_state_network_histories[iter_index][step_index].push_back(vector<StateNetworkHistory*>());
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-						for (int s_index = 0; s_index < this->test_num_new_inner_states; s_index++) {
+						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
 							StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
 							it->second[node_id][s_index]->new_external_activate(
 								action_node_history->obs_snapshot,

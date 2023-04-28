@@ -1,5 +1,7 @@
 #include "fold.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -133,8 +135,14 @@ void Fold::clean_inner_scope_activate_helper(vector<double>& new_state_vals,
 						if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 							history->inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
 							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]
-										&& new_state_vals_initialized[s_index]) {
+								bool is_needed = false;
+								if (new_state_vals_initialized[s_index]) {
+									if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE
+											|| !this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
+										is_needed = true;
+									}
+								}
+								if (is_needed) {
 									StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
 									it->second[node_id][s_index]->new_external_activate(
 										action_node_history->obs_snapshot,
@@ -149,8 +157,14 @@ void Fold::clean_inner_scope_activate_helper(vector<double>& new_state_vals,
 							}
 						} else {
 							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]
-										&& new_state_vals_initialized[s_index]) {
+								bool is_needed = false;
+								if (new_state_vals_initialized[s_index]) {
+									if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE
+											|| !this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]) {
+										is_needed = true;
+									}
+								}
+								if (is_needed) {
 									it->second[node_id][s_index]->new_external_activate(
 										action_node_history->obs_snapshot,
 										action_node_history->ending_state_snapshot,
@@ -170,8 +184,19 @@ void Fold::clean_inner_scope_activate_helper(vector<double>& new_state_vals,
 							test_inner_state_network_histories[step_index].push_back(vector<StateNetworkHistory*>());
 							ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 							for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
-								if (!this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index]
-										&& test_new_state_vals_initialized[s_index]) {
+								bool is_needed = false;
+								if (test_new_state_vals_initialized[s_index]) {
+									if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE) {
+										is_needed = true;
+									} else {
+										if (this->state == FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
+											is_needed = !this->test_inner_state_networks_not_needed[scope_id][node_id][s_index];
+										} else {
+											is_needed = !this->curr_inner_state_networks_not_needed[scope_id][node_id][s_index];
+										}
+									}
+								}
+								if (is_needed) {
 									StateNetworkHistory* state_network_history = new StateNetworkHistory(test_it->second[node_id][s_index]);
 									test_it->second[node_id][s_index]->new_external_activate(
 										action_node_history->obs_snapshot,

@@ -78,7 +78,7 @@ void LoopFold::remove_inner_input_measure_inner_scope_activate_helper(
 					if (node_id < (int)it->second.size()
 							&& it->second[node_id].size() > 0) {
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-						for (int s_index = 0; s_index < this->test_num_new_inner_states; s_index++) {
+						for (int s_index = 0; s_index < this->curr_num_new_inner_states; s_index++) {
 							it->second[node_id][s_index]->new_external_activate(
 								action_node_history->obs_snapshot,
 								action_node_history->ending_state_snapshot,

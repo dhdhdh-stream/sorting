@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "globals.h"
 
 using namespace std;
 

@@ -162,22 +162,22 @@ void Fold::experiment_end() {
 			this->state_iter = 0;
 			this->sum_error = 0.0;
 		} else {
+			this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
+			this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
+
+			int num_inner_networks = this->sum_inner_inputs
+				+ this->curr_num_new_inner_states
+				+ this->num_sequence_states;
+			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+				this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
+			}
+			this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
+
 			if (this->sum_inner_inputs == 0) {
 				cout << "EXPERIMENT_DONE" << endl;
 
 				this->state = FOLD_STATE_EXPERIMENT_DONE;
 			} else {
-				this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
-				this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
-
-				int num_inner_networks = this->sum_inner_inputs
-					+ this->curr_num_new_inner_states
-					+ this->num_sequence_states;
-				for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-					this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
-				}
-				this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
-
 				this->remove_inner_input_index = 0;
 				this->test_inner_inputs_needed[this->remove_inner_input_index] = false;
 				for (int f_index = 0; f_index < this->sequence_length; f_index++) {

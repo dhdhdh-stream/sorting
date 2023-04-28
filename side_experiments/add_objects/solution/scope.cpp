@@ -1288,19 +1288,23 @@ void Scope::handle_node_backprop_helper(int iter_index,
 			loop_fold_to_scope(loop_fold,
 							   new_scope_id);
 
+			int new_scope_num_states = solution->scopes[new_scope_id]->num_states;
+
 			vector<int> new_inner_input_indexes;
 			vector<int> new_inner_input_target_indexes;
 			for (int s_index = 0; s_index < loop_fold->num_states; s_index++) {
 				// TODO: remove unneeded num_states
 				new_inner_input_indexes.push_back(s_index);
-				new_inner_input_target_indexes.push_back(s_index);
+				new_inner_input_target_indexes.push_back(new_scope_num_states
+					- loop_fold->num_states
+					- loop_fold->curr_num_new_outer_states
+					+ s_index);
 			}
 			for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
 				// outer not updated yet
 				new_inner_input_indexes.push_back(this->num_states + o_index);
-				new_inner_input_target_indexes.push_back(loop_fold->sum_inner_inputs
-					+ loop_fold->curr_num_new_inner_states
-					+ loop_fold->num_states
+				new_inner_input_target_indexes.push_back(new_scope_num_states
+					- loop_fold->curr_num_new_outer_states
 					+ o_index);
 			}
 			StateNetwork* new_score_network = new StateNetwork(0,

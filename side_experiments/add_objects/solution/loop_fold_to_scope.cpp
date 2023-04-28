@@ -80,7 +80,7 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 			vector<StateNetwork*> post_state_networks;
 			for (int s_index = loop_fold->inner_input_start_indexes[f_index] + loop_fold->num_inner_inputs[f_index]; s_index < num_inner_networks; s_index++) {
 				if (!loop_fold->curr_state_networks_not_needed[f_index][s_index]) {
-					post_state_network_target_indexes.push_back(s_index);
+					post_state_network_target_indexes.push_back(state_index_mapping[s_index]);
 
 					StateNetwork* state_network = loop_fold->curr_state_networks[f_index][s_index];
 					state_network->new_sequence_finalize();
@@ -146,14 +146,17 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 
 	vector<StateNetwork*> starting_state_networks;
 	for (int i_index = 0; i_index < loop_fold->sum_inner_inputs+loop_fold->curr_num_new_inner_states; i_index++) {
-		StateNetwork* state_network = loop_fold->curr_starting_state_networks[i_index];
-		state_network->new_sequence_finalize();
-		for (int ss_index = loop_fold->sum_inner_inputs-1; ss_index >= 0; ss_index--) {
-			if (!loop_fold->curr_inner_inputs_needed[ss_index]) {
-				state_network->remove_state(ss_index);
+		if (i_index >= loop_fold->sum_inner_inputs
+				|| loop_fold->curr_inner_inputs_needed[i_index]) {
+			StateNetwork* state_network = loop_fold->curr_starting_state_networks[i_index];
+			state_network->new_sequence_finalize();
+			for (int ss_index = loop_fold->sum_inner_inputs-1; ss_index >= 0; ss_index--) {
+				if (!loop_fold->curr_inner_inputs_needed[ss_index]) {
+					state_network->remove_state(ss_index);
+				}
 			}
+			starting_state_networks.push_back(state_network);
 		}
-		starting_state_networks.push_back(state_network);
 	}
 
 	StateNetwork* continue_score_network = loop_fold->curr_continue_score_network;

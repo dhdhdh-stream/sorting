@@ -131,6 +131,8 @@ void LoopFold::remove_inner_input_end() {
 		this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
 	}
 
+	this->remove_inner_input_index++;
+
 	if (this->remove_inner_input_index >= this->sum_inner_inputs) {
 		cout << "ending REMOVE_INNER_INPUT" << endl;
 		cout << "EXPERIMENT_DONE" << endl;
