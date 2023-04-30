@@ -1,140 +1,168 @@
-// TODO: add loops
+// TODO: zero train by tracking separate set of state, selecting 1 per run randomly forward
 
 #ifndef FOLD_H
 #define FOLD_H
 
-#include <fstream>
+#include <map>
+#include <set>
 #include <vector>
 
-#include "finished_step.h"
-#include "fold_network.h"
-#include "network.h"
+#include "action.h"
 #include "problem.h"
-#include "run_status.h"
+#include "run_helper.h"
 #include "scope.h"
+#include "state_network.h"
 
-const int STATE_STARTING_COMPRESS = 0;
+const int FOLD_STATE_EXPERIMENT = 0;	// with 1 new outer, 1 new local
 
-const int STATE_INNER_SCOPE_INPUT = 1;
-// no fold step, and instead, simply transfer weights
-const int STATE_SCORE = 2;	// adjust fold meanwhile as well
-const int STATE_COMPRESS_STATE = 3;
-const int STATE_COMPRESS_SCOPE = 4;
-const int STATE_INPUT = 5;
+const int FOLD_STATE_EXPERIMENT_FAIL = 1;
 
-const int STATE_DONE = 6;
+const int FOLD_STATE_ADD_OUTER_STATE = 2;
+const int FOLD_STATE_ADD_INNER_STATE = 3;
 
-class FinishedStep;
+// freeze external scopes/nodes
+
+const int FOLD_STATE_REMOVE_INNER_INPUT = 4;
+
+const int FOLD_STATE_EXPERIMENT_DONE = 5;
+
+const int FOLD_STATE_REMOVE_OUTER_SCOPE = 6;
+// don't worry about removing outer states individually as will have no impact on scopes
+const int FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK = 7;
+
+const int FOLD_STATE_REMOVE_INNER_SCOPE = 8;
+const int FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK = 9;
+
+const int FOLD_STATE_REMOVE_INNER_NETWORK = 10;
+const int FOLD_STATE_REMOVE_INNER_STATE = 11;
+const int FOLD_STATE_CLEAR_INNER_STATE = 12;
+
+const int FOLD_STATE_DONE = 13;
+
+const int FOLD_RESULT_FAIL = 0;
+const int FOLD_RESULT_BRANCH = 1;
+const int FOLD_RESULT_REPLACE = 2;
+
 class FoldHistory;
-class Scope;
+class ScopeHistory;
 class Fold {
 public:
-	int id;
+	std::vector<int> scope_context;
+	std::vector<int> node_context;	// store explore node index in node_context[0]
+	int exit_depth;		// 0 is local
 
-	int num_inputs;
-	int num_outputs;
-	int outer_s_input_size;
-
-	int sequence_length;	// can be 0
+	int sequence_length;
 	std::vector<bool> is_inner_scope;
 	std::vector<int> existing_scope_ids;
 	std::vector<Action> actions;
 
-	std::vector<FinishedStep*> finished_steps;
+	// keep fixed even if parent scope updates
+	int num_score_states;
+	int num_sequence_states;
+
+	int sum_inner_inputs;
+	std::vector<int> inner_input_start_indexes;
+	std::vector<int> num_inner_inputs;	// keep track here fixed even if scope updates
+	// TODO: inner and ending scale_mods
 
 	int state;
 	int state_iter;
+	int sub_iter;
 	double sum_error;
-	double new_state_factor;
+
+	int curr_num_new_outer_states;
+	// for new outer state, for inner, use as input, but don't modify
+	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
+	StateNetwork* curr_starting_score_network;
+	// no starting state networks as ideally, state should already capture everything relevant
+
+	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
+	std::vector<std::vector<StateNetwork*>> curr_state_networks;
+	std::vector<StateNetwork*> curr_score_networks;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_inner_state_networks;
+
+	int test_num_new_outer_states;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
+	StateNetwork* test_starting_score_network;
+
+	int test_num_new_inner_states;
+	std::vector<std::vector<StateNetwork*>> test_state_networks;
+	std::vector<StateNetwork*> test_score_networks;	// compare against curr_score_networks rather than score, as easier to measure
+	std::map<int, std::vector<std::vector<StateNetwork*>>> test_inner_state_networks;
+
+	std::vector<bool> curr_inner_inputs_needed;
+	std::vector<bool> test_inner_inputs_needed;
+	// set state_networks_not_needed and state_not_needed_locally to match
 
 	int existing_sequence_length;
 	double* existing_average_score;
 	double* existing_score_variance;
 	double* existing_average_misguess;
 	double* existing_misguess_variance;
-	double existing_average_predicted_score;
-	double existing_predicted_score_variance;
 
-	std::vector<double> seed_local_s_input_vals;
-	std::vector<double> seed_local_state_vals;
-	double seed_start_score;
+	double seed_start_predicted_score;
+	double seed_start_scale_factor;
+	std::vector<double> seed_state_vals_snapshot;
+	ScopeHistory* seed_outer_context_history;
 	double seed_target_val;
+	// don't worry about sequence for seed, as due to updates for inner scope, seed may quickly become irrelevant
 
-	FoldNetwork* starting_score_network;
-	FoldNetwork* combined_score_network;	// replace existing if already branch
-	Network* end_scale_mod;
+	double curr_branch_average_score;
+	double curr_existing_average_improvement;
+	double curr_replace_average_score;
+	double curr_replace_average_misguess;
+	double curr_replace_misguess_variance;
 
-	int existing_noticably_better;
-	int new_noticably_better;
-	double new_noticably_better_improvement;
+	double test_branch_average_score;
+	double test_existing_average_improvement;
+	double test_replace_average_score;
+	double test_replace_average_misguess;
+	double test_replace_misguess_variance;
+
 	int is_recursive;
 
-	double average_score;
-	double score_variance;
-	double average_misguess;
-	double misguess_variance;
+	int experiment_result;
 
-	std::vector<Network*> scope_scale_mod;
+	bool experiment_added_state;
 
-	std::vector<int> curr_s_input_sizes;
-	std::vector<int> curr_scope_sizes;
-	FoldNetwork* curr_fold;
-	// Note: input_folds don't care about current obs whereas fold and end_fold do
-	std::vector<FoldNetwork*> curr_input_folds;
-	FoldNetwork* curr_end_fold;	// becomes last compress network
+	int remove_inner_input_index;
 
-	double starting_average_local_impact;
+	int clean_outer_scope_index;
+	std::set<int> curr_outer_scopes_needed;
+	std::set<std::pair<int, int>> curr_outer_contexts_needed;
+	std::set<int> reverse_test_outer_scopes_needed;
+	std::set<std::pair<int, int>> reverse_test_outer_contexts_needed;
 
-	int curr_starting_compress_new_size;
-	FoldNetwork* curr_starting_compress_network;
-	int starting_compress_original_size;
-	int test_starting_compress_new_size;
-	FoldNetwork* test_starting_compress_network;
+	int clean_outer_node_index;
+	int clean_outer_state_index;
+	std::map<int, std::vector<std::vector<bool>>> curr_outer_state_networks_not_needed;
+	std::map<int, std::vector<std::vector<bool>>> test_outer_state_networks_not_needed;
 
-	std::vector<int> test_s_input_sizes;
-	std::vector<int> test_scope_sizes;
-	FoldNetwork* test_fold;
-	std::vector<FoldNetwork*> test_input_folds;
-	FoldNetwork* test_end_fold;
+	int clean_inner_scope_index;
+	std::set<int> curr_inner_scopes_needed;
+	std::set<std::pair<int, int>> curr_inner_contexts_needed;
+	std::set<int> reverse_test_inner_scopes_needed;
+	std::set<std::pair<int, int>> reverse_test_inner_contexts_needed;
 
-	// don't need extra test fields as curr_inner_input_network and test_inner_input_network use different layers
-	std::vector<int> inner_input_input_layer;
-	std::vector<int> inner_input_input_sizes;
-	std::vector<FoldNetwork*> inner_input_input_networks;
-	FoldNetwork* curr_inner_input_network;
-	FoldNetwork* test_inner_input_network;
+	int clean_inner_node_index;
+	int clean_inner_state_index;
+	std::map<int, std::vector<std::vector<bool>>> curr_inner_state_networks_not_needed;
+	std::map<int, std::vector<std::vector<bool>>> test_inner_state_networks_not_needed;
 
-	FoldNetwork* curr_score_network;
-	FoldNetwork* test_score_network;
+	int clean_inner_step_index;
 
-	FoldNetwork* curr_compress_network;
-	int curr_compress_num_layers;
-	int curr_compress_new_size;
-	int curr_compress_original_size;	// for constructing scope
-	std::vector<int> curr_compressed_s_input_sizes;
-	std::vector<int> curr_compressed_scope_sizes;
-	
-	FoldNetwork* test_compress_network;
-	int test_compress_num_layers;
-	int test_compress_new_size;
-	int test_compress_original_size;
-	std::vector<int> test_compressed_s_input_sizes;
-	std::vector<int> test_compressed_scope_sizes;
+	std::vector<std::vector<bool>> curr_state_networks_not_needed;
+	std::vector<std::vector<bool>> test_state_networks_not_needed;
 
-	std::vector<int> input_layer;
-	std::vector<int> input_sizes;
-	std::vector<FoldNetwork*> input_networks;
+	std::vector<std::vector<bool>> curr_state_not_needed_locally;
+	std::vector<std::vector<bool>> test_state_not_needed_locally;
 
-	// for saving/loading
-	std::vector<int> checkpoint_s_input_sizes;
-	std::vector<int> checkpoint_scope_sizes;
-	FoldNetwork* checkpoint_fold;
-	std::vector<FoldNetwork*> checkpoint_input_folds;
-	FoldNetwork* checkpoint_end_fold;
+	std::vector<int> curr_num_states_cleared;
+	std::vector<int> test_num_states_cleared;
 
-	Fold(int num_inputs,
-		 int num_outputs,
-		 int outer_s_input_size,
+	Fold(std::vector<int> scope_context,
+		 std::vector<int> node_context,
+		 int exit_depth,
 		 int sequence_length,
 		 std::vector<bool> is_inner_scope,
 		 std::vector<int> existing_scope_ids,
@@ -144,505 +172,256 @@ public:
 		 double* existing_score_variance,
 		 double* existing_average_misguess,
 		 double* existing_misguess_variance,
-		 std::vector<double> seed_local_s_input_vals,
-		 std::vector<double> seed_local_state_vals,
-		 double seed_start_score,
+		 double seed_start_predicted_score,
+		 double seed_start_scale_factor,
+		 std::vector<double> seed_state_vals_snapshot,
+		 ScopeHistory* seed_outer_context_history,
 		 double seed_target_val);
-	Fold(std::ifstream& input_file);
+	Fold(std::ifstream& input_file,
+		 int scope_id,
+		 int scope_index);
 	~Fold();
 
-	void explore_on_path_activate(double existing_score,
-								  Problem& problem,
-								  std::vector<double>& local_s_input_vals,
-								  std::vector<double>& local_state_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  RunStatus& run_status,
-								  FoldHistory* history);
-	int explore_on_path_backprop(std::vector<double>& local_state_errors,
+	void score_activate(std::vector<double>& state_vals,
+						double& predicted_score,
+						double& scale_factor,
+						std::vector<ScopeHistory*>& context_histories,
+						RunHelper& run_helper,
+						FoldHistory* history);
+	void sequence_activate(Problem& problem,
+						   std::vector<double>& state_vals,
+						   std::vector<bool>& states_initialized,
+						   double& predicted_score,
+						   double& scale_factor,
+						   double& sum_impact,
+						   RunHelper& run_helper,
+						   FoldHistory* history);
+	void backprop(std::vector<double>& state_errors,
+				  std::vector<bool>& states_initialized,
+				  double target_val,
+				  double final_misguess,
+				  double final_sum_impact,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  FoldHistory* history);
+
+	void experiment_increment();
+
+	void experiment_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+												ScopeHistory* scope_history,
+												FoldHistory* history);
+	void experiment_score_activate(std::vector<double>& state_vals,
+								   double& predicted_score,
+								   double& scale_factor,
+								   std::vector<ScopeHistory*>& context_histories,
+								   RunHelper& run_helper,
+								   FoldHistory* history);
+	void experiment_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+												ScopeHistory* scope_history,
+												int step_index,
+												FoldHistory* history);
+	void experiment_sequence_activate(Problem& problem,
+									  std::vector<double>& state_vals,
+									  std::vector<bool>& states_initialized,
+									  double& predicted_score,
+									  double& scale_factor,
+									  RunHelper& run_helper,
+									  FoldHistory* history);
+	void experiment_backprop(std::vector<double>& state_errors,
+							 std::vector<bool>& states_initialized,
+							 double target_val,
+							 double final_misguess,
+							 double& predicted_score,
+							 double& scale_factor,
+							 RunHelper& run_helper,
+							 FoldHistory* history);
+
+	void seed_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+										  ScopeHistory* scope_history,
+										  std::vector<std::vector<StateNetworkHistory*>>& outer_state_network_histories);
+	void seed_train();
+
+	void experiment_end();
+	void add_inner_state_end();
+	void add_outer_state_end();
+
+	void remove_inner_input_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+														ScopeHistory* scope_history,
+														FoldHistory* history);
+	void remove_inner_input_score_activate(std::vector<double>& state_vals,
+										   double& predicted_score,
+										   double& scale_factor,
+										   std::vector<ScopeHistory*>& context_histories,
+										   RunHelper& run_helper,
+										   FoldHistory* history);
+	void remove_inner_input_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+														ScopeHistory* scope_history,
+														int step_index,
+														FoldHistory* history);
+	void remove_inner_input_sequence_activate(Problem& problem,
+											  std::vector<double>& state_vals,
+											  std::vector<bool>& states_initialized,
+											  double& predicted_score,
+											  double& scale_factor,
+											  RunHelper& run_helper,
+											  FoldHistory* history);
+	void remove_inner_input_backprop(std::vector<double>& state_errors,
+									 std::vector<bool>& states_initialized,
+									 double target_val,
+									 double final_misguess,
+									 double& predicted_score,
+									 double& scale_factor,
+									 RunHelper& run_helper,
+									 FoldHistory* history);
+
+	void remove_inner_input_end();
+
+	void experiment_to_clean();
+
+	void clean_increment();
+
+	void remove_outer_scope_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+														ScopeHistory* scope_history,
+														std::vector<int>& curr_scope_context,
+														std::vector<int>& curr_node_context,
+														RunHelper& run_helper,
+														FoldHistory* history,
+														std::vector<double>& test_new_outer_state_vals);
+	void remove_outer_scope_score_activate(std::vector<double>& state_vals,
+										   std::vector<ScopeHistory*>& context_histories,
+										   RunHelper& run_helper,
+										   FoldHistory* history);
+	void remove_outer_scope_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+														ScopeHistory* scope_history,
+														RunHelper& run_helper,
+														int step_index,
+														FoldHistory* history,
+														std::vector<double>& test_new_state_vals,
+														std::vector<std::vector<std::vector<StateNetworkHistory*>>>& test_inner_state_network_histories);
+	void remove_outer_scope_sequence_activate(Problem& problem,
+											  std::vector<double>& state_vals,
+											  std::vector<bool>& states_initialized,
+											  double& predicted_score,
+											  double& scale_factor,
+											  double& sum_impact,
+											  RunHelper& run_helper,
+											  FoldHistory* history);
+
+	void remove_outer_scope_end();
+
+	void remove_outer_scope_network_outer_scope_activate_helper(
+		std::vector<double>& new_outer_state_vals,
+		ScopeHistory* scope_history,
+		RunHelper& run_helper,
+		FoldHistory* history,
+		std::vector<double>& test_new_outer_state_vals);
+	void remove_outer_scope_network_score_activate(
+		std::vector<double>& state_vals,
+		std::vector<ScopeHistory*>& context_histories,
+		RunHelper& run_helper,
+		FoldHistory* history);
+	void remove_outer_scope_network_inner_scope_activate_helper(
+		std::vector<double>& new_state_vals,
+		ScopeHistory* scope_history,
+		RunHelper& run_helper,
+		int step_index,
+		FoldHistory* history);
+	void remove_outer_scope_network_sequence_activate(
+		Problem& problem,
+		std::vector<double>& state_vals,
+		std::vector<bool>& states_initialized,
+		double& predicted_score,
+		double& scale_factor,
+		double& sum_impact,
+		RunHelper& run_helper,
+		FoldHistory* history);
+
+	void remove_outer_scope_network_end();
+
+	void clean_outer_scope_activate_helper(std::vector<double>& new_outer_state_vals,
+										   ScopeHistory* scope_history,
+										   FoldHistory* history);
+	void clean_score_activate(std::vector<double>& state_vals,
+							  std::vector<ScopeHistory*> context_histories,
+							  FoldHistory* history);
+	void clean_inner_scope_activate_helper(std::vector<double>& new_state_vals,
+										   std::vector<bool>& new_state_vals_initialized,
+										   ScopeHistory* scope_history,
+										   std::vector<int>& curr_scope_context,
+										   std::vector<int>& curr_node_context,
+										   RunHelper& run_helper,
+										   int step_index,
+										   FoldHistory* history,
+										   std::vector<double>& test_new_state_vals,
+										   std::vector<bool>& test_new_state_vals_initialized,
+										   std::vector<std::vector<std::vector<StateNetworkHistory*>>>& test_inner_state_network_histories);
+	void clean_sequence_activate(Problem& problem,
+								 std::vector<double>& state_vals,
+								 std::vector<bool>& states_initialized,
 								 double& predicted_score,
-								 double target_val,
-								 double final_misguess,
 								 double& scale_factor,
-								 double& scale_factor_error,
+								 double& sum_impact,
+								 RunHelper& run_helper,
 								 FoldHistory* history);
-	void explore_off_path_activate(Problem& problem,
-								   double starting_score,
-								   std::vector<double>& local_s_input_vals,
-								   std::vector<double>& local_state_vals,
-								   double& predicted_score,
-								   double& scale_factor,
-								   RunStatus& run_status,
-								   FoldHistory* history);
-	void explore_off_path_backprop(std::vector<double>& local_s_input_errors,
-								   std::vector<double>& local_state_errors,
-								   double& predicted_score,
-								   double target_val,
-								   double& scale_factor,
-								   double& scale_factor_error,
-								   FoldHistory* history);
-	void existing_flat_activate(Problem& problem,
-								double starting_score,
-								std::vector<double>& local_s_input_vals,
-								std::vector<double>& local_state_vals,
-								double& predicted_score,
-								double& scale_factor,
-								RunStatus& run_status,
-								FoldHistory* history);
-	void existing_flat_backprop(std::vector<double>& local_s_input_errors,
-								std::vector<double>& local_state_errors,
-								double& predicted_score,
-								double predicted_score_error,
-								double& scale_factor,
-								double& scale_factor_error,
-								FoldHistory* history);
-	void update_activate(Problem& problem,
-						 double starting_score,
-						 std::vector<double>& local_s_input_vals,
-						 std::vector<double>& local_state_vals,
-						 double& predicted_score,
-						 double& scale_factor,
-						 RunStatus& run_status,
-						 FoldHistory* history);
-	void update_backprop(double& predicted_score,
-						 double target_val,
-						 double final_misguess,
-						 double& scale_factor,
-						 double& scale_factor_error,
-						 FoldHistory* history);
-	void existing_update_activate(Problem& problem,
-								  double starting_score,
-								  std::vector<double>& local_s_input_vals,
-								  std::vector<double>& local_state_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  RunStatus& run_status,
-								  FoldHistory* history);
-	void existing_update_backprop(double& predicted_score,
-								  double predicted_score_error,
-								  double& scale_factor,
-								  double& scale_factor_error,
-								  FoldHistory* history);
+	void clean_backprop(std::vector<double>& state_errors,
+						std::vector<bool>& states_initialized,
+						double target_val,
+						double final_misguess,
+						double final_sum_impact,
+						double& predicted_score,
+						double& scale_factor,
+						RunHelper& run_helper,
+						FoldHistory* history);
 
-	void update_increment(FoldHistory* history,
-						  std::vector<Fold*>& folds_to_delete);
+	void remove_inner_scope_end();
+	void remove_inner_scope_network_end();
+	
+	void clean_transform_helper();
+	bool remove_inner_network_transform_helper();
+	bool remove_inner_state_transform_helper();
+	bool clear_inner_state_transform_helper();
 
-	void save(std::ofstream& output_file);
-	void save_for_display(std::ofstream& output_file);
+	void remove_inner_network_end();
+	void remove_inner_state_end();
+	void clear_inner_state_end();
 
-	void flat_step_explore_on_path_activate(double existing_score,
-											Problem& problem,
-											std::vector<double>& local_s_input_vals,
-											std::vector<double>& local_state_vals,
-											double& predicted_score,
-											double& scale_factor,
-											RunStatus& run_status,
-											FoldHistory* history);
-	void flat_step_explore_on_path_backprop(std::vector<double>& local_state_errors,
-											double& predicted_score,
-											double target_val,
-											double final_misguess,
-											double& scale_factor,
-											double& scale_factor_error,
-											FoldHistory* history);
+	void save(std::ofstream& output_file,
+			  int scope_id,
+			  int scope_index);
 
-	void flat_to_fold();
-
-	void starting_compress_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void starting_compress_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void starting_compress_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void starting_compress_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void starting_compress_step_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void starting_compress_step_update_backprop(
-		double& predicted_score,
-		double target_val,
-		double final_misguess,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void starting_compress_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void starting_compress_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-
-	void starting_compress_end();
-
-	void inner_scope_input_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void inner_scope_input_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void inner_scope_input_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void inner_scope_input_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void inner_scope_input_step_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void inner_scope_input_step_update_backprop(
-		double& predicted_score,
-		double target_val,
-		double final_misguess,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void inner_scope_input_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void inner_scope_input_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-
-	void inner_scope_input_end();
-
-	void score_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void score_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void score_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void score_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void score_step_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void score_step_update_backprop(
-		double& predicted_score,
-		double target_val,
-		double final_misguess,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void score_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void score_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-
-	void score_end();
-
-	void compress_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void compress_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void compress_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void compress_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void compress_step_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void compress_step_update_backprop(
-		double& predicted_score,
-		double target_val,
-		double final_misguess,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void compress_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void compress_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-
-	void compress_state_end();
-
-	void compress_scope_end();
-
-	void input_step_explore_off_path_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void input_step_explore_off_path_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double target_val,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void input_step_existing_flat_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void input_step_existing_flat_backprop(
-		std::vector<double>& local_s_input_errors,
-		std::vector<double>& local_state_errors,
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void input_step_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void input_step_update_backprop(
-		double& predicted_score,
-		double target_val,
-		double final_misguess,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-	void input_step_existing_update_activate(
-		Problem& problem,
-		double starting_score,
-		std::vector<double>& local_s_input_vals,
-		std::vector<double>& local_state_vals,
-		double& predicted_score,
-		double& scale_factor,
-		RunStatus& run_status,
-		FoldHistory* history);
-	void input_step_existing_update_backprop(
-		double& predicted_score,
-		double predicted_score_error,
-		double& scale_factor,
-		double& scale_factor_error,
-		FoldHistory* history);
-
-	void input_end();
-
-	void add_finished_step();
-	void restart_from_finished_step();
-
-	void inner_scope_input_step_update_increment(FoldHistory* history,
-												 std::vector<Fold*>& folds_to_delete);
-	void score_step_update_increment(FoldHistory* history,
-									 std::vector<Fold*>& folds_to_delete);
-	void compress_step_update_increment(FoldHistory* history,
-										std::vector<Fold*>& folds_to_delete);
-	void input_step_update_increment(FoldHistory* history,
-									 std::vector<Fold*>& folds_to_delete);
-
-	void fold_increment();
+	void remove_outer_scope_from_load();
+	void remove_outer_scope_network_from_load();
+	void remove_inner_scope_from_load();
+	void remove_inner_scope_network_from_load();
+	void remove_inner_network_from_load();
+	void remove_inner_state_from_load();
+	void clear_inner_state_from_load();
 };
 
-class FinishedStepHistory;
-class ScopeHistory;
 class FoldHistory {
 public:
 	Fold* fold;
 
-	double existing_score;
+	// to track between score and sequence
+	std::vector<double> new_outer_state_vals;
+	std::vector<double> test_new_outer_state_vals;
 
+	std::vector<std::vector<StateNetworkHistory*>> outer_state_network_histories;
 	double starting_score_update;
-	double combined_score_update;
+	StateNetworkHistory* starting_score_network_history;
 
-	FoldNetworkHistory* curr_starting_compress_network_history;
+	std::vector<std::vector<StateNetworkHistory*>> test_outer_state_network_histories;
+	double test_starting_score_update;
+	StateNetworkHistory* test_starting_score_network_history;
 
-	std::vector<FinishedStepHistory*> finished_step_histories;
+	std::vector<std::vector<StateNetworkHistory*>> state_network_histories;
+	std::vector<ScopeHistory*> inner_scope_histories;
+	std::vector<double> score_network_updates;
+	std::vector<StateNetworkHistory*> score_network_histories;
+	std::vector<std::vector<std::vector<StateNetworkHistory*>>> inner_state_network_histories;
 
-	std::vector<FoldNetworkHistory*> inner_input_input_network_histories;
-	FoldNetworkHistory* curr_inner_input_network_history;
-
-	FoldNetworkHistory* curr_score_network_history;
-	double score_update;
-
-	FoldNetworkHistory* curr_compress_network_history;
-
-	std::vector<FoldNetworkHistory*> input_network_histories;
-
-	std::vector<FoldNetworkHistory*> curr_input_fold_histories;	// initialize to empty
-	std::vector<ScopeHistory*> scope_histories;	// initialize to empty
-
-	FoldNetworkHistory* curr_fold_history;
-	FoldNetworkHistory* curr_end_fold_history;
-
-	double ending_score_update;
-
-	// in case of early exit due to scope depth
-	int exit_index;
-	int exit_location;
-
-	int state;	// to check if update_increment still valid
+	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();

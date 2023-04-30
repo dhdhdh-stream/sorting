@@ -4,16 +4,14 @@
 
 using namespace std;
 
-void Network::construct(int input_size,
-						int hidden_size,
-						int output_size) {
-	this->input = new Layer(LINEAR_LAYER, input_size);
+void Network::construct() {
+	this->input = new Layer(LINEAR_LAYER, this->input_size);
 	
-	this->hidden = new Layer(LEAKY_LAYER, hidden_size);
+	this->hidden = new Layer(LEAKY_LAYER, this->hidden_size);
 	this->hidden->input_layers.push_back(this->input);
 	this->hidden->setup_weights_full();
 
-	this->output = new Layer(LINEAR_LAYER, output_size);
+	this->output = new Layer(LINEAR_LAYER, this->output_size);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
@@ -25,14 +23,19 @@ void Network::construct(int input_size,
 Network::Network(int input_size,
 				 int hidden_size,
 				 int output_size) {
-	construct(input_size, hidden_size, output_size);
+	this->input_size = input_size;
+	this->hidden_size = hidden_size;
+	this->output_size = output_size;
+
+	construct();
 }
 
 Network::Network(Network* original) {
-	construct(
-		(int)original->input->acti_vals.size(),
-		(int)original->hidden->acti_vals.size(),
-		(int)original->output->acti_vals.size());
+	this->input_size = original->input_size;
+	this->hidden_size = original->hidden_size;
+	this->output_size = original->output_size;
+
+	construct();
 
 	this->hidden->copy_weights_from(original->hidden);
 	this->output->copy_weights_from(original->output);
@@ -41,17 +44,17 @@ Network::Network(Network* original) {
 Network::Network(ifstream& input_file) {
 	string input_size_line;
 	getline(input_file, input_size_line);
-	int input_size = stoi(input_size_line);
+	this->input_size = stoi(input_size_line);
 
 	string hidden_size_line;
 	getline(input_file, hidden_size_line);
-	int hidden_size = stoi(hidden_size_line);
+	this->hidden_size = stoi(hidden_size_line);
 
 	string output_size_line;
 	getline(input_file, output_size_line);
-	int output_size = stoi(output_size_line);
+	this->output_size = stoi(output_size_line);
 
-	construct(input_size, hidden_size, output_size);
+	construct();
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
@@ -64,7 +67,7 @@ Network::~Network() {
 }
 
 void Network::activate(vector<double>& vals) {
-	for (int i = 0; i < (int)this->input->acti_vals.size(); i++) {
+	for (int i = 0; i < this->input_size; i++) {
 		this->input->acti_vals[i] = vals[i];
 	}
 
@@ -81,7 +84,7 @@ void Network::activate(vector<double>& vals,
 
 void Network::backprop(vector<double>& errors,
 					   double target_max_update) {
-	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -126,7 +129,7 @@ void Network::backprop(vector<double>& errors,
 }
 
 void Network::backprop_errors_with_no_weight_change(vector<double>& errors) {
-	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -143,7 +146,7 @@ void Network::backprop_errors_with_no_weight_change(vector<double>& errors,
 
 void Network::backprop_weights_with_no_error_signal(vector<double>& errors,
 													double target_max_update) {
-	for (int e_index = 0; e_index < (int)this->output->errors.size(); e_index++) {
+	for (int e_index = 0; e_index < this->output_size; e_index++) {
 		this->output->errors[e_index] = errors[e_index];
 	}
 
@@ -188,9 +191,9 @@ void Network::backprop_weights_with_no_error_signal(vector<double>& errors,
 }
 
 void Network::save(ofstream& output_file) {
-	output_file << this->input->acti_vals.size() << endl;
-	output_file << this->hidden->acti_vals.size() << endl;
-	output_file << this->output->acti_vals.size() << endl;
+	output_file << this->input_size << endl;
+	output_file << this->hidden_size << endl;
+	output_file << this->output_size << endl;
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
 }

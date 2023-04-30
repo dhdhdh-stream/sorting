@@ -10,8 +10,11 @@
 class NetworkHistory;
 class Network {
 public:
+	int input_size;
 	Layer* input;
+	int hidden_size;
 	Layer* hidden;
+	int output_size;
 	Layer* output;
 
 	int epoch_iter;
@@ -45,12 +48,18 @@ public:
 											   double target_max_update,
 											   NetworkHistory* history);
 
+	void add_input();
+	void remove_input(int index);
+	void scope_activate(std::vector<double>& obs,
+						std::vector<double>& input_vals,
+						std::vector<double>& local_state_vals);
+	void scope_activate(std::vector<double>& input_vals,
+						std::vector<double>& local_state_vals);
+
 	void save(std::ofstream& output_file);
 
 private:
-	void construct(int input_size,
-				   int hidden_size,
-				   int output_size);
+	void construct();
 };
 
 class NetworkHistory {

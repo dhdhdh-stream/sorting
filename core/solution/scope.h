@@ -1,224 +1,153 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
-#include <fstream>
 #include <vector>
 
-#include "action.h"
-#include "branch.h"
+#include "abstract_node.h"
 #include "fold.h"
-#include "fold_network.h"
-#include "network.h"
+#include "loop_fold.h"
 #include "problem.h"
-#include "run_status.h"
+#include "run_helper.h"
+#include "state_network.h"
 
-class Branch;
-class Fold;
+class FoldHistory;
+class LoopFoldHistory;
+class RunHelper;
 class ScopeHistory;
 class Scope {
 public:
 	int id;
 
-	int num_inputs;
-	int num_outputs;
+	int num_states;
+	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
-	int sequence_length;
-	std::vector<bool> is_inner_scope;
-	std::vector<Scope*> scopes;
-	std::vector<Action> actions;
-
-	std::vector<std::vector<FoldNetwork*>> inner_input_networks;
-	std::vector<std::vector<int>> inner_input_sizes;
-	std::vector<Network*> scope_scale_mod;
-
-	std::vector<int> step_types;
-	std::vector<Branch*> branches;
-	std::vector<Fold*> folds;
-
-	std::vector<FoldNetwork*> score_networks;
-	// Note: don't use soft targets even with early exit, as hard targets needed to determine impact
-	// TODO: perhaps add confidence if results have greater range
-
-	std::vector<double> average_inner_scope_impacts;
-	std::vector<double> average_local_impacts;	// if scope end, will be 0.0, so don't explore
-	std::vector<double> average_inner_branch_impacts;
-
+	bool is_loop;
+	std::vector<StateNetwork*> starting_state_networks;	// first states
+	StateNetwork* continue_score_network;
+	StateNetwork* continue_misguess_network;
+	StateNetwork* halt_score_network;
+	StateNetwork* halt_misguess_network;
 	double average_score;
 	double score_variance;
 	double average_misguess;
 	double misguess_variance;
+	int furthest_successful_halt;
 
-	std::vector<bool> active_compress;
-	std::vector<int> compress_new_sizes;	// may be expansion instead of compression because of folds
-	std::vector<FoldNetwork*> compress_networks;
-	std::vector<int> compress_original_sizes;	// WARN: may not actually match original size due to fold to scope transformation -- use with compress_new_sizes
+	std::vector<AbstractNode*> nodes;
 
-	bool full_last;
-
-	// to help construct folds
-	std::vector<int> starting_state_sizes;
-
-	int explore_curr_try;
-	int explore_target_tries;
-	double best_explore_surprise;
-	int best_explore_index_inclusive;
-	int best_explore_end_non_inclusive;
-	int best_explore_sequence_length;
-	std::vector<bool> best_explore_is_inner_scope;
-	std::vector<int> best_explore_existing_scope_ids;
-	std::vector<Action> best_explore_actions;
-	std::vector<double> best_seed_local_s_input_vals;
-	std::vector<double> best_seed_local_state_vals;
-	double best_seed_start_score;
-	double best_seed_target_val;
-
-	Fold* explore_fold;
-
-	// initialized at most once per run
-	int curr_explore_end_non_inclusive;
-	int curr_explore_sequence_length;
-	std::vector<bool> curr_explore_is_inner_scope;
-	std::vector<int> curr_explore_existing_scope_ids;
-	std::vector<Action> curr_explore_actions;
-	std::vector<double> curr_seed_local_s_input_vals;
-	std::vector<double> curr_seed_local_state_vals;
-	double curr_seed_start_score;
-
-	Scope();
+	Scope(int num_states,
+		  std::vector<bool> is_initialized_locally,
+		  bool is_loop,
+		  std::vector<StateNetwork*> starting_state_networks,
+		  StateNetwork* continue_score_network,
+		  StateNetwork* continue_misguess_network,
+		  StateNetwork* halt_score_network,
+		  StateNetwork* halt_misguess_network,
+		  double average_score,
+		  double score_variance,
+		  double average_misguess,
+		  double misguess_variance,
+		  std::vector<AbstractNode*> nodes);
+	Scope(std::ifstream& input_file);
 	~Scope();
 
-	void initialize(int num_inputs,
-					int num_outputs,
-					int sequence_length,
-					std::vector<bool> is_inner_scope,
-					std::vector<Scope*> scopes,
-					std::vector<Action> actions,
-					std::vector<std::vector<FoldNetwork*>> inner_input_networks,
-					std::vector<std::vector<int>> inner_input_sizes,
-					std::vector<Network*> scope_scale_mod,
-					std::vector<int> step_types,
-					std::vector<Branch*> branches,
-					std::vector<Fold*> folds,
-					std::vector<FoldNetwork*> score_networks,
-					std::vector<double> average_inner_scope_impacts,
-					std::vector<double> average_local_impacts,
-					std::vector<double> average_inner_branch_impacts,
-					double average_score,
-					double score_variance,
-					double average_misguess,
-					double misguess_variance,
-					std::vector<bool> active_compress,
-					std::vector<int> compress_new_sizes,
-					std::vector<FoldNetwork*> compress_networks,
-					std::vector<int> compress_original_sizes,
-					bool full_last);
-	void load(std::ifstream& input_file);
+	void activate(Problem& problem,
+				  std::vector<double>& state_vals,
+				  std::vector<bool>& inputs_initialized,
+				  double& predicted_score,
+				  double& scale_factor,
+				  double& sum_impact,
+				  std::vector<int>& scope_context,
+				  std::vector<int>& node_context,
+				  std::vector<ScopeHistory*>& context_histories,
+				  int& early_exit_depth,
+				  int& early_exit_node_id,
+				  FoldHistory*& early_exit_fold_history,
+				  int& explore_exit_depth,
+				  int& explore_exit_node_id,
+				  FoldHistory*& explore_exit_fold_history,
+				  RunHelper& run_helper,
+				  ScopeHistory* history);
+	void backprop(std::vector<double>& state_errors,
+				  std::vector<bool>& inputs_initialized,
+				  double target_val,
+				  double final_misguess,
+				  double final_sum_impact,
+				  double& predicted_score,
+				  double& scale_factor,
+				  RunHelper& run_helper,
+				  ScopeHistory* history);
 
-	void explore_on_path_activate(Problem& problem,
-								  std::vector<double>& local_s_input_vals,
-								  std::vector<double>& local_state_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  RunStatus& run_status,
-								  ScopeHistory* history);
-	void explore_off_path_activate(Problem& problem,
-								   std::vector<double>& local_s_input_vals,
-								   std::vector<double>& local_state_vals,
-								   double& predicted_score,
-								   double& scale_factor,
-								   RunStatus& run_status,
-								   ScopeHistory* history);
-	void explore_on_path_backprop(std::vector<double>& local_state_errors,
-								  double& predicted_score,
-								  double target_val,
-								  double final_misguess,
-								  double& scale_factor,
-								  double& scale_factor_error,
-								  ScopeHistory* history);
-	void explore_off_path_backprop(std::vector<double>& local_state_errors,
-								   std::vector<double>& local_s_input_errors,
-								   double& predicted_score,
-								   double target_val,
-								   double& scale_factor,
-								   double& scale_factor_error,
-								   ScopeHistory* history);
-	void existing_flat_activate(Problem& problem,
-								std::vector<double>& local_s_input_vals,
-								std::vector<double>& local_state_vals,
-								double& predicted_score,
-								double& scale_factor,
-								RunStatus& run_status,
-								ScopeHistory* history);
-	void existing_flat_backprop(std::vector<double>& local_state_errors,
-								std::vector<double>& local_s_input_errors,
-								double& predicted_score,
-								double predicted_score_error,
-								double& scale_factor,
-								double& scale_factor_error,
-								ScopeHistory* history);
-	void update_activate(Problem& problem,
-						 std::vector<double>& local_s_input_vals,
-						 std::vector<double>& local_state_vals,
-						 double& predicted_score,
-						 double& scale_factor,
-						 RunStatus& run_status,
-						 ScopeHistory* history);
-	void update_backprop(double& predicted_score,
-						 double target_val,
-						 double final_misguess,
-						 double& scale_factor,
-						 double& scale_factor_error,
-						 ScopeHistory* history);
-	void existing_update_activate(Problem& problem,
-								  std::vector<double>& local_s_input_vals,
-								  std::vector<double>& local_state_vals,
-								  double& predicted_score,
-								  double& scale_factor,
-								  RunStatus& run_status,
-								  ScopeHistory* history);
-	void existing_update_backprop(double& predicted_score,
-								  double predicted_score_error,
-								  double& scale_factor,
-								  double& scale_factor_error,
-								  ScopeHistory* history);
+	bool handle_node_activate_helper(int iter_index,
+									 int& curr_node_id,
+									 FoldHistory*& curr_fold_history,
+									 Problem& problem,
+									 std::vector<double>& state_vals,
+									 std::vector<bool>& states_initialized,
+									 double& predicted_score,
+									 double& scale_factor,
+									 double& sum_impact,
+									 std::vector<int>& scope_context,
+									 std::vector<int>& node_context,
+									 std::vector<ScopeHistory*>& context_histories,
+									 int& early_exit_depth,
+									 int& early_exit_node_id,
+									 FoldHistory*& early_exit_fold_history,
+									 int& explore_exit_depth,
+									 int& explore_exit_node_id,
+									 FoldHistory*& explore_exit_fold_history,
+									 RunHelper& run_helper,
+									 ScopeHistory* history);
+	void handle_node_backprop_helper(int iter_index,
+									 int h_index,
+									 std::vector<double>& state_errors,
+									 std::vector<bool>& states_initialized,
+									 double target_val,
+									 double final_misguess,
+									 double final_sum_impact,
+									 double& predicted_score,
+									 double& scale_factor,
+									 RunHelper& run_helper,
+									 ScopeHistory* history);
+	void backprop_explore_fold_helper(std::vector<double>& state_errors,
+									  std::vector<bool>& states_initialized,
+									  double target_val,
+									  double final_misguess,
+									  double final_sum_impact,
+									  double& predicted_score,
+									  double& scale_factor,
+									  RunHelper& run_helper,
+									  ScopeHistory* history);
 
-	void explore_set(double target_val,
-					 double existing_score,
-					 ScopeHistory* history);
-	void update_increment(ScopeHistory* history,
-						  std::vector<Fold*>& folds_to_delete);
-
-	void explore_replace();
-	void explore_branch();
-	void resolve_fold(int a_index,
-					  std::vector<Fold*>& folds_to_delete);
+	void add_new_state(int new_state_size,
+					   bool initialized_locally);
 
 	void save(std::ofstream& output_file);
-	void save_for_display(std::ofstream& output_file);
 };
 
-class BranchHistory;
-class FoldHistory;
 class ScopeHistory {
 public:
 	Scope* scope;
 
-	std::vector<std::vector<FoldNetworkHistory*>> inner_input_network_histories;
-	std::vector<ScopeHistory*> scope_histories;
-	std::vector<BranchHistory*> branch_histories;
-	std::vector<FoldHistory*> fold_histories;
-	std::vector<FoldNetworkHistory*> score_network_histories;
-	std::vector<double> score_updates;
-	std::vector<FoldNetworkHistory*> compress_network_histories;
+	std::vector<StateNetworkHistory*> starting_state_network_histories;
 
-	int explore_type;
-	int explore_index_inclusive;
+	int num_loop_iters;
 
+	std::vector<double> continue_score_network_updates;
+	std::vector<StateNetworkHistory*> continue_score_network_histories;
+	std::vector<double> continue_misguess_vals;
+	std::vector<StateNetworkHistory*> continue_misguess_network_histories;
+	double halt_score_network_update;
+	StateNetworkHistory* halt_score_network_history;
+	double halt_misguess_val;
+	StateNetworkHistory* halt_misguess_network_history;
+
+	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
+
+	int explore_iter_index;
+	int explore_node_index;
 	FoldHistory* explore_fold_history;
-
-	// in case of early exit due to scope depth
-	int exit_index;
-	int exit_location;
+	LoopFoldHistory* explore_loop_fold_history;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

@@ -1,2254 +1,1595 @@
 #include "scope.h"
 
 #include <iostream>
-#include <boost/algorithm/string/trim.hpp>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "fold_score_node.h"
+#include "fold_sequence_node.h"
+#include "fold_to_nodes.h"
 #include "globals.h"
+#include "loop_fold_node.h"
+#include "loop_fold_to_scope.h"
+#include "pass_through_node.h"
+#include "scope_node.h"
 #include "utilities.h"
 
 using namespace std;
 
-Scope::Scope() {
-	// do nothing
-}
-
-Scope::~Scope() {
-	// scopes owned and deleted by solution
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-			delete this->inner_input_networks[a_index][i_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->scope_scale_mod[a_index] != NULL) {
-			delete this->scope_scale_mod[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->branches[a_index] != NULL) {
-			delete this->branches[a_index];
-		}
-	}
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->folds[a_index] != NULL) {
-			delete this->folds[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->score_networks[a_index] != NULL) {
-			delete this->score_networks[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->compress_networks[a_index] != NULL) {
-			delete this->compress_networks[a_index];
-		}
-	}
-
-	if (this->explore_fold != NULL) {
-		delete this->explore_fold;
-	}
-}
-
-void Scope::initialize(int num_inputs,
-					   int num_outputs,
-					   int sequence_length,
-					   vector<bool> is_inner_scope,
-					   vector<Scope*> scopes,
-					   vector<Action> actions,
-					   vector<vector<FoldNetwork*>> inner_input_networks,
-					   vector<vector<int>> inner_input_sizes,
-					   vector<Network*> scope_scale_mod,
-					   vector<int> step_types,
-					   vector<Branch*> branches,
-					   vector<Fold*> folds,
-					   vector<FoldNetwork*> score_networks,
-					   vector<double> average_inner_scope_impacts,
-					   vector<double> average_local_impacts,
-					   vector<double> average_inner_branch_impacts,
-					   double average_score,
-					   double score_variance,
-					   double average_misguess,
-					   double misguess_variance,
-					   vector<bool> active_compress,
-					   vector<int> compress_new_sizes,
-					   vector<FoldNetwork*> compress_networks,
-					   vector<int> compress_original_sizes,
-					   bool full_last) {
-	this->num_inputs = num_inputs;
-	this->num_outputs = num_outputs;
-
-	this->sequence_length = sequence_length;
-	this->is_inner_scope = is_inner_scope;
-	this->scopes = scopes;
-	this->actions = actions;
-
-	this->inner_input_networks = inner_input_networks;
-	this->inner_input_sizes = inner_input_sizes;
-	this->scope_scale_mod = scope_scale_mod;
-
-	this->step_types = step_types;
-	this->branches = branches;
-	this->folds = folds;
-
-	this->score_networks = score_networks;
-
-	this->average_inner_scope_impacts = average_inner_scope_impacts;
-	this->average_local_impacts = average_local_impacts;
-	this->average_inner_branch_impacts = average_inner_branch_impacts;
-
+Scope::Scope(int num_states,
+			 vector<bool> is_initialized_locally,
+			 bool is_loop,
+			 vector<StateNetwork*> starting_state_networks,
+			 StateNetwork* continue_score_network,
+			 StateNetwork* continue_misguess_network,
+			 StateNetwork* halt_score_network,
+			 StateNetwork* halt_misguess_network,
+			 double average_score,
+			 double score_variance,
+			 double average_misguess,
+			 double misguess_variance,
+			 vector<AbstractNode*> nodes) {
+	this->num_states = num_states;
+	this->is_initialized_locally = is_initialized_locally;
+	this->is_loop = is_loop;
+	this->starting_state_networks = starting_state_networks;
+	this->continue_score_network = continue_score_network;
+	this->continue_misguess_network = continue_misguess_network;
+	this->halt_score_network = halt_score_network;
+	this->halt_misguess_network = halt_misguess_network;
 	this->average_score = average_score;
 	this->score_variance = score_variance;
 	this->average_misguess = average_misguess;
 	this->misguess_variance = misguess_variance;
+	this->nodes = nodes;
 
-	this->active_compress = active_compress;
-	this->compress_new_sizes = compress_new_sizes;
-	this->compress_networks = compress_networks;
-	this->compress_original_sizes = compress_original_sizes;
-
-	this->full_last = full_last;
-
-	int state_size = 0;
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		this->starting_state_sizes.push_back(state_size);
-
-		if (!this->is_inner_scope[a_index]) {
-			// obs_size always 1 for sorting
-			state_size++;
+	for (int n_index = 0; n_index < (int)this->nodes.size()-1; n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			action_node->next_node_id = n_index+1;
 		} else {
-			state_size += this->scopes[a_index]->num_outputs;
-		}
-
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// do nothing
-			} else {
-				if (this->active_compress[a_index]) {
-					state_size = this->compress_new_sizes[a_index];
-				} else {
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					state_size -= compress_size;
-				}
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			state_size = this->branches[a_index]->num_outputs;
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			state_size = this->folds[a_index]->num_outputs;
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+			scope_node->next_node_id = n_index+1;
 		}
 	}
-
-	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
+	if (this->nodes.back()->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)this->nodes.back();
+		action_node->next_node_id = -1;
+	} else {
+		ScopeNode* scope_node = (ScopeNode*)this->nodes.back();
+		scope_node->next_node_id = -1;
 	}
-	this->best_explore_surprise = 0.0;
-	this->explore_fold = NULL;
+
+	this->furthest_successful_halt = 5;	// simply initializing to 5 for now
 }
 
-void Scope::load(std::ifstream& input_file) {
+Scope::Scope(ifstream& input_file) {
 	string id_line;
 	getline(input_file, id_line);
 	this->id = stoi(id_line);
 
-	string num_inputs_line;
-	getline(input_file, num_inputs_line);
-	this->num_inputs = stoi(num_inputs_line);
+	string num_states_line;
+	getline(input_file, num_states_line);
+	this->num_states = stoi(num_states_line);
+	
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		string is_initialized_locally_line;
+		getline(input_file, is_initialized_locally_line);
+		this->is_initialized_locally.push_back(stoi(is_initialized_locally_line));
+	}
 
-	string num_outputs_line;
-	getline(input_file, num_outputs_line);
-	this->num_outputs = stoi(num_outputs_line);
+	string is_loop_line;
+	getline(input_file, is_loop_line);
+	this->is_loop = stoi(is_loop_line);
 
-	string full_last_line;
-	getline(input_file, full_last_line);
-	this->full_last = stoi(full_last_line);
-
-	string sequence_length_line;
-	getline(input_file, sequence_length_line);
-	this->sequence_length = stoi(sequence_length_line);
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		string is_inner_scope_line;
-		getline(input_file, is_inner_scope_line);
-		this->is_inner_scope.push_back(stoi(is_inner_scope_line));
-
-		if (this->is_inner_scope[a_index]) {
-			string scope_id_line;
-			getline(input_file, scope_id_line);
-			int scope_id = stoi(scope_id_line);
-
-			this->scopes.push_back(solution->scope_dictionary[scope_id]);
-
-			this->actions.push_back(Action());
-
-			string inner_input_networks_size_line;
-			getline(input_file, inner_input_networks_size_line);
-			int inner_input_networks_size = stoi(inner_input_networks_size_line);
-
-			this->inner_input_networks.push_back(vector<FoldNetwork*>());
-			this->inner_input_sizes.push_back(vector<int>());
-			for (int i_index = 0; i_index < inner_input_networks_size; i_index++) {
-				ifstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
-				this->inner_input_networks[a_index].push_back(new FoldNetwork(inner_input_network_save_file));
-				inner_input_network_save_file.close();
-
-				string inner_input_size_line;
-				getline(input_file, inner_input_size_line);
-				this->inner_input_sizes[a_index].push_back(stoi(inner_input_size_line));
-			}
-
-			ifstream scope_scale_mod_save_file;
-			scope_scale_mod_save_file.open("saves/nns/scope_" + to_string(this->id) + "_scope_scale_mod_" + to_string(a_index) + ".txt");
-			this->scope_scale_mod.push_back(new Network(scope_scale_mod_save_file));
-			scope_scale_mod_save_file.close();
-		} else {
-			this->scopes.push_back(NULL);
-
-			this->actions.push_back(Action(input_file));
-
-			this->inner_input_networks.push_back(vector<FoldNetwork*>());
-			this->inner_input_sizes.push_back(vector<int>());
-			this->scope_scale_mod.push_back(NULL);
+	if (this->is_loop) {
+		string starting_state_networks_size_line;
+		getline(input_file, starting_state_networks_size_line);
+		int starting_state_networks_size = stoi(starting_state_networks_size_line);
+		for (int l_index = 0; l_index < starting_state_networks_size; l_index++) {
+			ifstream starting_state_network_save_file;
+			starting_state_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_starting_state_" + to_string(l_index) + ".txt");
+			this->starting_state_networks.push_back(new StateNetwork(starting_state_network_save_file));
+			starting_state_network_save_file.close();
 		}
+
+		ifstream continue_score_network_save_file;
+		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
+		this->continue_score_network = new StateNetwork(continue_score_network_save_file);
+		continue_score_network_save_file.close();
+
+		ifstream continue_misguess_network_save_file;
+		continue_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_misguess.txt");
+		this->continue_misguess_network = new StateNetwork(continue_misguess_network_save_file);
+		continue_misguess_network_save_file.close();
+
+		ifstream halt_score_network_save_file;
+		halt_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_score.txt");
+		this->halt_score_network = new StateNetwork(halt_score_network_save_file);
+		halt_score_network_save_file.close();
+
+		ifstream halt_misguess_network_save_file;
+		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
+		this->halt_misguess_network = new StateNetwork(halt_misguess_network_save_file);
+		halt_misguess_network_save_file.close();
+
+		string average_score_line;
+		getline(input_file, average_score_line);
+		this->average_score = stod(average_score_line);
+
+		string score_variance_line;
+		getline(input_file, score_variance_line);
+		this->score_variance = stod(score_variance_line);
+
+		string average_misguess_line;
+		getline(input_file, average_misguess_line);
+		this->average_misguess = stod(average_misguess_line);
+
+		string misguess_variance_line;
+		getline(input_file, misguess_variance_line);
+		this->misguess_variance = stod(misguess_variance_line);
+	} else {
+		this->continue_score_network = NULL;
+		this->continue_misguess_network = NULL;
+		this->halt_score_network = NULL;
+		this->halt_misguess_network = NULL;
 	}
 
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		string step_type_line;
-		getline(input_file, step_type_line);
-		this->step_types.push_back(stoi(step_type_line));
+	string num_nodes_line;
+	getline(input_file, num_nodes_line);
+	int num_nodes = stoi(num_nodes_line);
+	for (int n_index = 0; n_index < num_nodes; n_index++) {
+		string node_type_line;
+		getline(input_file, node_type_line);
+		int node_type = stoi(node_type_line);
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				this->score_networks.push_back(NULL);
-
-				this->active_compress.push_back(false);	// doesn't matter
-				this->compress_new_sizes.push_back(-1);
-				this->compress_networks.push_back(NULL);
-				this->compress_original_sizes.push_back(-1);
-			} else {
-				ifstream score_network_save_file;
-				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-				this->score_networks.push_back(new FoldNetwork(score_network_save_file));
-				score_network_save_file.close();
-
-				string active_compress_line;
-				getline(input_file, active_compress_line);
-				this->active_compress.push_back(stoi(active_compress_line));
-
-				string compress_new_size_line;
-				getline(input_file, compress_new_size_line);
-				this->compress_new_sizes.push_back(stoi(compress_new_size_line));
-
-				if (this->active_compress[a_index]) {
-					ifstream compress_network_save_file;
-					compress_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
-					this->compress_networks.push_back(new FoldNetwork(compress_network_save_file));
-					compress_network_save_file.close();
-				} else {
-					this->compress_networks.push_back(NULL);
-				}
-
-				string compress_original_size_line;
-				getline(input_file, compress_original_size_line);
-				this->compress_original_sizes.push_back(stoi(compress_original_size_line));
-			}
-
-			this->branches.push_back(NULL);
-			this->folds.push_back(NULL);
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			this->score_networks.push_back(NULL);
-
-			string branch_id_line;
-			getline(input_file, branch_id_line);
-			int branch_id = stoi(branch_id_line);
-
-			ifstream branch_save_file;
-			branch_save_file.open("saves/branch_" + to_string(branch_id) + ".txt");
-			this->branches.push_back(new Branch(branch_save_file));
-			branch_save_file.close();
-
-			this->active_compress.push_back(false);	// doesn't matter
-			this->compress_new_sizes.push_back(-1);
-			this->compress_networks.push_back(NULL);
-			this->compress_original_sizes.push_back(-1);
-
-			this->folds.push_back(NULL);
+		ifstream node_save_file;
+		node_save_file.open("saves/node_" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		if (node_type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = new ActionNode(node_save_file,
+													 this->id,
+													 n_index);
+			this->nodes.push_back(action_node);
+		} else if (node_type == NODE_TYPE_INNER_SCOPE) {
+			ScopeNode* scope_node = new ScopeNode(node_save_file,
+												  this->id,
+												  n_index);
+			this->nodes.push_back(scope_node);
+		} else if (node_type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = new BranchNode(node_save_file,
+													 this->id,
+													 n_index);
+			this->nodes.push_back(branch_node);
+		} else if (node_type == NODE_TYPE_FOLD_SCORE) {
+			FoldScoreNode* fold_score_node = new FoldScoreNode(node_save_file,
+															   this->id,
+															   n_index);
+			this->nodes.push_back(fold_score_node);
+		} else if (node_type == NODE_TYPE_FOLD_SEQUENCE) {
+			FoldSequenceNode* fold_sequence_node = new FoldSequenceNode(node_save_file,
+																		this->id,
+																		n_index);
+			this->nodes.push_back(fold_sequence_node);
+		} else if (node_type == NODE_TYPE_LOOP_FOLD) {
+			LoopFoldNode* loop_fold_node = new LoopFoldNode(node_save_file,
+															this->id,
+															n_index);
+			this->nodes.push_back(loop_fold_node);
 		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			ifstream score_network_save_file;
-			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-			this->score_networks.push_back(new FoldNetwork(score_network_save_file));
-			score_network_save_file.close();
-
-			string fold_id_line;
-			getline(input_file, fold_id_line);
-			int fold_id = stoi(fold_id_line);
-
-			ifstream fold_save_file;
-			fold_save_file.open("saves/fold_" + to_string(fold_id) + ".txt");
-			this->folds.push_back(new Fold(fold_save_file));
-			fold_save_file.close();
-
-			this->active_compress.push_back(false);	// doesn't matter
-			this->compress_new_sizes.push_back(-1);
-			this->compress_networks.push_back(NULL);
-			this->compress_original_sizes.push_back(-1);
-
-			this->branches.push_back(NULL);
+			// node_type == NODE_TYPE_PASS_THROUGH
+			PassThroughNode* pass_through_node = new PassThroughNode(node_save_file,
+																	 this->id,
+																	 n_index);
+			this->nodes.push_back(pass_through_node);
 		}
+		node_save_file.close();
 	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		string average_inner_scope_impact_line;
-		getline(input_file, average_inner_scope_impact_line);
-		this->average_inner_scope_impacts.push_back(stof(average_inner_scope_impact_line));
-
-		string average_local_impact_line;
-		getline(input_file, average_local_impact_line);
-		this->average_local_impacts.push_back(stof(average_local_impact_line));
-
-		string average_inner_branch_impact_line;
-		getline(input_file, average_inner_branch_impact_line);
-		this->average_inner_branch_impacts.push_back(stof(average_inner_branch_impact_line));
-	}
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stof(average_score_line);
-
-	string score_variance_line;
-	getline(input_file, score_variance_line);
-	this->score_variance = stof(score_variance_line);
-
-	string average_misguess_line;
-	getline(input_file, average_misguess_line);
-	this->average_misguess = stof(average_misguess_line);
-
-	string misguess_variance_line;
-	getline(input_file, misguess_variance_line);
-	this->misguess_variance = stof(misguess_variance_line);
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		string starting_state_size_line;
-		getline(input_file, starting_state_size_line);
-		this->starting_state_sizes.push_back(stoi(starting_state_size_line));
-	}
-
-	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
-	this->best_explore_surprise = 0.0;
-	this->explore_fold = NULL;
 }
 
-void Scope::explore_on_path_activate(Problem& problem,
-									 vector<double>& local_s_input_vals,	// i.e., input
-									 vector<double>& local_state_vals,		// i.e., output
-									 double& predicted_score,
-									 double& scale_factor,
-									 RunStatus& run_status,
-									 ScopeHistory* history) {
-	run_status.curr_depth++;
-	if (run_status.curr_depth > solution->depth_limit) {
-		run_status.exceeded_depth = true;
-		history->exit_location = EXIT_LOCATION_SPOT;	// though doesn't matter, as won't backprop
-		return;
-	} else if (run_status.curr_depth > run_status.max_depth) {
-		run_status.max_depth = run_status.curr_depth;
+Scope::~Scope() {
+	for (int l_index = 0; l_index < (int)this->starting_state_networks.size(); l_index++) {
+		delete this->starting_state_networks[l_index];
 	}
 
-	// TODO: need to account for important factor is something not paid attention to yet in observations
-	// TODO: need to explore from every observation and need to be able to break scope?
-	// TODO: or need to be good about adding factors?
-	// TODO: or randomly try to flat different selections/combinations of observations
+	if (this->continue_score_network != NULL) {
+		delete this->continue_score_network;
+	}
 
-	// TODO: to choose inputs, recurse with 50% probability, so possibility to choose anything, but won't get stuck
-	// TODO: scope outputs are useful because they give bigger chance of input being selected for the outside (and are needed for score networks outside)
-	// TODO: then sort them based on time, determine which are needed, then build hierarchical scopes
-	// TODO: to choose branching point, recurse to do the same
+	if (this->continue_misguess_network != NULL) {
+		delete this->continue_misguess_network;
+	}
 
-	double sum_impact = 0.0;
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->is_inner_scope[a_index]) {
-			sum_impact += this->average_inner_scope_impacts[a_index];
-		}
+	if (this->halt_score_network != NULL) {
+		delete this->halt_score_network;
+	}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// do nothing
-			} else {
-				sum_impact += this->average_local_impacts[a_index];
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			sum_impact += this->average_inner_branch_impacts[a_index];
+	if (this->halt_misguess_network != NULL) {
+		delete this->halt_misguess_network;
+	}
+
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		delete this->nodes[n_index];
+	}
+}
+
+// if early_exit_depth...
+// ... = -1, no early exit
+// ... = 0, early exit to here, jump to early_exit_node_id
+// ... > 0, decrement and continue early exit
+void Scope::activate(Problem& problem,
+					 vector<double>& state_vals,
+					 vector<bool>& inputs_initialized,
+					 double& predicted_score,
+					 double& scale_factor,
+					 double& sum_impact,
+					 vector<int>& scope_context,
+					 vector<int>& node_context,
+					 vector<ScopeHistory*>& context_histories,
+					 int& early_exit_depth,
+					 int& early_exit_node_id,
+					 FoldHistory*& early_exit_fold_history,
+					 int& explore_exit_depth,
+					 int& explore_exit_node_id,
+					 FoldHistory*& explore_exit_fold_history,
+					 RunHelper& run_helper,
+					 ScopeHistory* history) {
+	// TODO: check recursive depth and exit if needed
+
+	vector<bool> states_initialized(this->num_states);
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		if (inputs_initialized[s_index] || this->is_initialized_locally[s_index]) {
+			states_initialized[s_index] = true;
 		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			// do nothing
+			states_initialized[s_index] = false;
 		}
 	}
 
-	double rand_val = randuni()*sum_impact;
+	scope_context.push_back(this->id);
+	node_context.push_back(-1);
+	context_histories.push_back(history);
 
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (this->is_inner_scope[a_index]) {
-			rand_val -= this->average_inner_scope_impacts[a_index];
-			if (rand_val <= 0.0) {
-				if (rand()%2 == 0) {
-					history->explore_type = EXPLORE_TYPE_INNER_SCOPE;
-					history->explore_index_inclusive = a_index;
+	early_exit_depth = -1;
+	explore_exit_depth = -1;
+
+	if (is_loop) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			history->starting_state_network_histories = vector<StateNetworkHistory*>(this->starting_state_networks.size(), NULL);
+		}
+		for (int s_index = 0; s_index < (int)this->starting_state_networks.size(); s_index++) {
+			if (states_initialized[s_index]) {
+				if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+					StateNetworkHistory* network_history = new StateNetworkHistory(this->starting_state_networks[s_index]);
+					this->starting_state_networks[s_index]->activate(state_vals,
+																	 network_history);
+					history->starting_state_network_histories[s_index] = network_history;
 				} else {
-					history->explore_type = EXPLORE_TYPE_LOCAL;
-					history->explore_index_inclusive = a_index;	// unused if this->explore_fold != NULL
+					this->starting_state_networks[s_index]->activate(state_vals);
 				}
-				break;
+				state_vals[s_index] += this->starting_state_networks[s_index]->output->acti_vals[0];
 			}
 		}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// do nothing
+		int iter_index = 0;
+		while (true) {
+			StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->continue_score_network);
+			this->continue_score_network->activate(state_vals,
+												   continue_score_network_history);
+
+			StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->continue_misguess_network);
+			this->continue_misguess_network->activate(state_vals,
+													  continue_misguess_network_history);
+
+			StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->halt_score_network);
+			this->halt_score_network->activate(state_vals,
+											   halt_score_network_history);
+
+			StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->halt_misguess_network);
+			this->halt_misguess_network->activate(state_vals,
+												  halt_misguess_network_history);
+
+			bool is_halt;
+			if (iter_index > this->furthest_successful_halt+3) {
+				is_halt = true;
 			} else {
-				rand_val -= this->average_local_impacts[a_index];
-				if (rand_val <= 0.0) {
-					history->explore_type = EXPLORE_TYPE_LOCAL;
-					history->explore_index_inclusive = a_index;
+				double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
+					- scale_factor*this->halt_score_network->output->acti_vals[0];
+				double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
+				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+				double score_diff_t_value = score_diff
+					/ (score_standard_deviation / sqrt(2500));
+				if (score_diff_t_value > 2.326) {
+					is_halt = false;
+				} else if (score_diff_t_value < -2.326) {
+					is_halt = true;
+
+					if (iter_index > this->furthest_successful_halt) {
+						this->furthest_successful_halt = iter_index;
+					}
+				} else {
+					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
+						- this->halt_misguess_network->output->acti_vals[0];
+					double misguess_standard_deviation = sqrt(this->misguess_variance);
+					double misguess_diff_t_value = misguess_diff
+						/ (misguess_standard_deviation / sqrt(2500));
+					if (misguess_diff_t_value < -2.326) {
+						is_halt = false;
+					} else if (misguess_diff_t_value > 2.326) {
+						is_halt = true;
+
+						if (iter_index > this->furthest_successful_halt) {
+							this->furthest_successful_halt = iter_index;
+						}
+					} else {
+						// continue if no strong signal either way
+						is_halt = false;
+					}
+				}
+			}
+
+			if (is_halt) {
+				history->halt_score_network_update = this->halt_score_network->output->acti_vals[0];
+				history->halt_score_network_history = halt_score_network_history;
+
+				history->halt_misguess_val = this->halt_misguess_network->output->acti_vals[0];
+				history->halt_misguess_network_history = halt_misguess_network_history;
+
+				delete continue_score_network_history;
+				delete continue_misguess_network_history;
+
+				predicted_score += scale_factor*this->halt_score_network->output->acti_vals[0];
+
+				history->num_loop_iters = iter_index;
+				
+				break;
+			} else {
+				history->continue_score_network_updates.push_back(this->continue_score_network->output->acti_vals[0]);
+				history->continue_score_network_histories.push_back(continue_score_network_history);
+
+				history->continue_misguess_vals.push_back(this->continue_misguess_network->output->acti_vals[0]);
+				history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+
+				delete halt_score_network_history;
+				delete halt_misguess_network_history;
+
+				predicted_score += scale_factor*this->continue_score_network->output->acti_vals[0];
+
+				history->node_histories.push_back(vector<AbstractNodeHistory*>());
+
+				int curr_node_id = 0;
+				FoldHistory* curr_fold_history = NULL;
+				bool is_early_exit;
+				while (true) {
+					if (curr_node_id == -1) {
+						break;
+					}
+
+					is_early_exit = handle_node_activate_helper(iter_index,
+																curr_node_id,
+																curr_fold_history,
+																problem,
+																state_vals,
+																states_initialized,
+																predicted_score,
+																scale_factor,
+																sum_impact,
+																scope_context,
+																node_context,
+																context_histories,
+																early_exit_depth,
+																early_exit_node_id,
+																early_exit_fold_history,
+																explore_exit_depth,
+																explore_exit_node_id,
+																explore_exit_fold_history,
+																run_helper,
+																history);
+
+					if (is_early_exit) {
+						break;
+					}
+				}
+
+				if (is_early_exit) {
 					break;
 				}
 			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			rand_val -= this->average_inner_branch_impacts[a_index];
-			if (rand_val <= 0.0) {
-				// Note: don't worry about explore after branch as there's either inner scope in-between, or an action performed first
-				if (rand()%2 == 0) {
-					history->explore_type = EXPLORE_TYPE_INNER_BRANCH;
-					history->explore_index_inclusive = a_index;
-				} else {
-					history->explore_type = EXPLORE_TYPE_LOCAL;
-					history->explore_index_inclusive = a_index;
-				}
+
+			iter_index++;
+		}
+	} else {
+		history->node_histories.push_back(vector<AbstractNodeHistory*>());
+
+		int curr_node_id = 0;
+		FoldHistory* curr_fold_history = NULL;
+		while (true) {
+			if (curr_node_id == -1) {
 				break;
 			}
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			// do nothing
-		}
-	}
 
-	if (history->explore_type == EXPLORE_TYPE_LOCAL) { 
-		if (this->explore_fold != NULL) {
-			history->explore_index_inclusive = -1;
-		} else {
-			this->curr_explore_end_non_inclusive = history->explore_index_inclusive + 1
-				+ rand()%(this->sequence_length - history->explore_index_inclusive);
-
-			bool can_be_empty;
-			if (this->curr_explore_end_non_inclusive > history->explore_index_inclusive+1) {
-				can_be_empty = true;
-			} else {
-				can_be_empty = false;
-			}
-
-			this->curr_explore_is_inner_scope.clear();
-			this->curr_explore_existing_scope_ids.clear();
-			this->curr_explore_actions.clear();
-			solution->new_sequence(this->curr_explore_sequence_length,
-								   this->curr_explore_is_inner_scope,
-								   this->curr_explore_existing_scope_ids,
-								   this->curr_explore_actions,
-								   can_be_empty);
-		}
-	}
-
-	int a_index = 0;
-	while (a_index < this->sequence_length) {
-		if (!this->is_inner_scope[a_index]) {
-			problem.perform_action(this->actions[a_index]);
-			local_state_vals.push_back(problem.get_observation());
-		} else {
-			vector<double> scope_input;
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-			} else {
-				// scopes formed through folding may have multiple inner_input_networks
-				// reused scopes will have 1 inner_input_network
-				for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-					if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-						FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_networks[a_index][i_index]);
-						this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																					 local_state_vals,
-																					 inner_input_network_history);
-						history->inner_input_network_histories[a_index].push_back(inner_input_network_history);
-					} else {
-						this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																					 local_state_vals);
-					}
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						scope_input.push_back(this->inner_input_networks[a_index][i_index]->output->acti_vals[s_index]);
-					}
-				}
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			if (history->explore_index_inclusive == a_index
-					&& history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-				this->scopes[a_index]->explore_on_path_activate(problem,
-																scope_input,
-																scope_output,
-																predicted_score,
-																scale_factor,
-																run_status,
-																scope_history);
-			} else {
-				this->scopes[a_index]->explore_off_path_activate(problem,
-																 scope_input,
-																 scope_output,
-																 predicted_score,
-																 scale_factor,
-																 run_status,
-																 scope_history);
-			}
-			history->scope_histories[a_index] = scope_history;
-
-			scale_factor /= scope_scale_mod_val;
-
-			// return after scale_factor restored
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FRONT;
-				return;
-			}
-
-			local_state_vals.insert(local_state_vals.end(),
-				scope_output.begin(), scope_output.end());
-		}
-
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				FoldNetworkHistory* score_network_history = NULL;
-				if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-					score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-					this->score_networks[a_index]->activate_small(local_s_input_vals,
-																  local_state_vals,
-																  score_network_history);
-				} else {
-					this->score_networks[a_index]->activate_small(local_s_input_vals,
-																  local_state_vals);
-				}
-				double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-
-				if (history->explore_type == EXPLORE_TYPE_LOCAL
-						&& this->explore_fold != NULL
-						&& this->best_explore_index_inclusive == a_index) {
-					// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
-
-					run_status.explore_location = this;
-
-					FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
-					this->explore_fold->explore_on_path_activate(existing_score,
-																 problem,
-																 local_s_input_vals,
-																 local_state_vals,
-																 predicted_score,
-																 scale_factor,
-																 run_status,
-																 explore_fold_history);
-					history->explore_fold_history = explore_fold_history;
-
-					run_status.explore_phase = EXPLORE_PHASE_FLAT;
-
-					if (run_status.exceeded_depth) {
-						history->exit_index = a_index;
-						history->exit_location = EXIT_LOCATION_BACK;
-						return;
-					}
-
-					a_index = this->best_explore_end_non_inclusive-1;	// account for increment at end
-				} else if (history->explore_type == EXPLORE_TYPE_LOCAL
-						&& history->explore_index_inclusive == a_index) {
-					// explore_phase != EXPLORE_PHASE_FLAT, so don't need to delete score_network_history
-					run_status.existing_score = existing_score;
-					run_status.score_variance = this->score_variance;
-
-					run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
-
-					for (int n_index = 0; n_index < this->curr_explore_sequence_length; n_index++) {
-						if (this->curr_explore_is_inner_scope[n_index]) {
-							Scope* explore_scope = solution->scope_dictionary[this->curr_explore_existing_scope_ids[n_index]];
-							vector<double> scope_input(explore_scope->num_inputs, 0.0);
-							vector<double> scope_output;	// unused
-							ScopeHistory* scope_history = new ScopeHistory(explore_scope);
-							explore_scope->existing_update_activate(
-								problem,
-								scope_input,
-								scope_output,
-								predicted_score,	// won't be relevant after
-								scale_factor,	// won't be relevant after
-								run_status,
-								scope_history);
-							delete scope_history;
-
-							if (run_status.exceeded_depth) {
-								history->exit_index = a_index;
-								history->exit_location = EXIT_LOCATION_SPOT;
-								return;
-							}
-						} else {
-							problem.perform_action(this->curr_explore_actions[n_index]);
-						}
-					}
-
-					this->curr_seed_local_s_input_vals = local_s_input_vals;
-					this->curr_seed_local_state_vals = local_state_vals;
-					this->curr_seed_start_score = predicted_score;
-
-					if (this->curr_explore_end_non_inclusive == this->sequence_length) {
-						local_state_vals = vector<double>(this->num_outputs, 0.0);
-					} else {
-						local_state_vals = vector<double>(this->starting_state_sizes[this->curr_explore_end_non_inclusive], 0.0);
-					}
-					a_index = this->curr_explore_end_non_inclusive-1;		// account for increment at end
-				} else {
-					history->score_network_histories[a_index] = score_network_history;
-					history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-					predicted_score += existing_score;
-
-					if (this->active_compress[a_index]) {
-						if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-							FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
-							this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																			 local_state_vals,
-																			 compress_network_history);
-							history->compress_network_histories[a_index] = compress_network_history;
-						} else {
-							this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																			 local_state_vals);
-						}
-
-						local_state_vals.clear();
-						local_state_vals.reserve(this->compress_new_sizes[a_index]);
-						for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
-							local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-						}
-					} else {
-						int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-						local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
-					}
-				}
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			if (history->explore_index_inclusive == a_index
-					&& history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-				this->branches[a_index]->explore_on_path_activate_score(local_s_input_vals,
-																		local_state_vals,
-																		scale_factor,
-																		run_status,
-																		branch_history);
-			} else {
-				this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
-																		 local_state_vals,
-																		 scale_factor,
-																		 run_status,
-																		 branch_history);
-			}
-
-			if (history->explore_type == EXPLORE_TYPE_LOCAL
-					&& this->explore_fold != NULL
-					&& this->best_explore_index_inclusive == a_index) {
-				double existing_score = branch_history->best_score;
-				delete branch_history;
-
-				run_status.explore_location = this;
-
-				FoldHistory* explore_fold_history = new FoldHistory(this->explore_fold);
-				this->explore_fold->explore_on_path_activate(existing_score,
+			bool is_early_exit = handle_node_activate_helper(0,
+															 curr_node_id,
+															 curr_fold_history,
 															 problem,
-															 local_s_input_vals,
-															 local_state_vals,
+															 state_vals,
+															 states_initialized,
 															 predicted_score,
 															 scale_factor,
-															 run_status,
-															 explore_fold_history);
-				history->explore_fold_history = explore_fold_history;
+															 sum_impact,
+															 scope_context,
+															 node_context,
+															 context_histories,
+															 early_exit_depth,
+															 early_exit_node_id,
+															 early_exit_fold_history,
+															 explore_exit_depth,
+															 explore_exit_node_id,
+															 explore_exit_fold_history,
+															 run_helper,
+															 history);
 
-				run_status.explore_phase = EXPLORE_PHASE_FLAT;
+			if (is_early_exit) {
+				break;
+			}
+		}
+	}
 
-				if (run_status.exceeded_depth) {
-					history->exit_index = a_index;
-					history->exit_location = EXIT_LOCATION_BACK;
-					return;
+	scope_context.pop_back();
+	node_context.pop_back();
+	context_histories.pop_back();
+}
+
+bool Scope::handle_node_activate_helper(int iter_index,
+										int& curr_node_id,
+										FoldHistory*& curr_fold_history,
+										Problem& problem,
+										vector<double>& state_vals,
+										vector<bool>& states_initialized,
+										double& predicted_score,
+										double& scale_factor,
+										double& sum_impact,
+										vector<int>& scope_context,
+										vector<int>& node_context,
+										vector<ScopeHistory*>& context_histories,
+										int& early_exit_depth,
+										int& early_exit_node_id,
+										FoldHistory*& early_exit_fold_history,
+										int& explore_exit_depth,
+										int& explore_exit_node_id,
+										FoldHistory*& explore_exit_fold_history,
+										RunHelper& run_helper,
+										ScopeHistory* history) {
+	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
+
+		ActionNodeHistory* node_history = new ActionNodeHistory(action_node,
+																curr_node_id);
+		action_node->activate(problem,
+							  state_vals,
+							  states_initialized,
+							  predicted_score,
+							  scale_factor,
+							  run_helper,
+							  node_history);
+		history->node_histories[iter_index].push_back(node_history);
+
+		sum_impact += action_node->average_impact;
+
+		if (run_helper.explore_phase == EXPLORE_PHASE_NONE
+				&& randuni() < action_node->average_impact/action_node->average_sum_impact
+				&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+			if (action_node->explore_fold != NULL) {
+				bool matches_context = true;
+				if (action_node->explore_scope_context.size() > scope_context.size()) {
+					matches_context = false;
+				} else {
+					// special case first scope context
+					if (action_node->explore_scope_context[0] != scope_context.back()) {
+						matches_context = false;
+					} else {
+						for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
+							if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+									|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+								matches_context = false;
+								break;
+							}
+						}
+					}
 				}
+				if (matches_context) {
+					// explore_phase set in fold
+					FoldHistory* fold_history = new FoldHistory(action_node->explore_fold);
+					action_node->explore_fold->score_activate(
+						state_vals,
+						predicted_score,
+						scale_factor,
+						context_histories,
+						run_helper,
+						fold_history);
+					history->explore_fold_history = fold_history;
 
-				a_index = this->best_explore_end_non_inclusive-1;	// account for increment at end
-			} else if (history->explore_type == EXPLORE_TYPE_LOCAL
-					&& history->explore_index_inclusive == a_index) {
-				run_status.existing_score = branch_history->best_score;
-				run_status.score_variance = this->score_variance;
-				delete branch_history;
-
-				run_status.explore_phase = EXPLORE_PHASE_EXPLORE;
-
-				for (int n_index = 0; n_index < this->curr_explore_sequence_length; n_index++) {
-					if (this->curr_explore_is_inner_scope[n_index]) {
-						Scope* explore_scope = solution->scope_dictionary[this->curr_explore_existing_scope_ids[n_index]];
-						vector<double> scope_input(explore_scope->num_inputs, 0.0);
-						vector<double> scope_output;	// unused
-						ScopeHistory* scope_history = new ScopeHistory(explore_scope);
-						explore_scope->existing_update_activate(
+					if (action_node->explore_exit_depth == 0) {
+						action_node->explore_fold->sequence_activate(
 							problem,
-							scope_input,
-							scope_output,
-							predicted_score,	// won't be relevant after
-							scale_factor,	// won't be relevant after
-							run_status,
-							scope_history);
-						delete scope_history;
+							state_vals,
+							states_initialized,
+							predicted_score,
+							scale_factor,
+							sum_impact,
+							run_helper,
+							fold_history);
+						history->explore_iter_index = iter_index;
+						history->explore_node_index = (int)history->node_histories[iter_index].size();
 
-						if (run_status.exceeded_depth) {
-							history->exit_index = a_index;
-							history->exit_location = EXIT_LOCATION_SPOT;
-							return;
+						curr_node_id = action_node->explore_next_node_id;
+						return false;
+					} else {
+						explore_exit_depth = action_node->explore_exit_depth;
+						explore_exit_node_id = action_node->explore_next_node_id;
+						explore_exit_fold_history = fold_history;
+						return true;
+					}
+				}
+			} else if (action_node->explore_loop_fold != NULL) {
+				bool matches_context = true;
+				if (action_node->explore_scope_context.size() > scope_context.size()) {
+					matches_context = false;
+				} else {
+					// special case first scope context
+					if (action_node->explore_scope_context[0] != scope_context.back()) {
+						matches_context = false;
+					} else {
+						for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
+							if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+									|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+								matches_context = false;
+								break;
+							}
 						}
-					} else {
-						problem.perform_action(this->curr_explore_actions[n_index]);
 					}
 				}
-
-				this->curr_seed_local_s_input_vals = local_s_input_vals;
-				this->curr_seed_local_state_vals = local_state_vals;
-				this->curr_seed_start_score = predicted_score;
-
-				if (this->curr_explore_end_non_inclusive == this->sequence_length) {
-					local_state_vals = vector<double>(this->num_outputs, 0.0);
-				} else {
-					local_state_vals = vector<double>(this->starting_state_sizes[this->curr_explore_end_non_inclusive], 0.0);
-				}
-				a_index = this->curr_explore_end_non_inclusive-1;		// account for increment at end
-			} else {
-				if (history->explore_index_inclusive == a_index
-						&& history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-					this->branches[a_index]->explore_on_path_activate(problem,
-																	  local_s_input_vals,
-																	  local_state_vals,
-																	  predicted_score,
-																	  scale_factor,
-																	  run_status,
-																	  branch_history);
-				} else {
-					this->branches[a_index]->explore_off_path_activate(problem,
-																	   local_s_input_vals,
-																	   local_state_vals,
-																	   predicted_score,
-																	   scale_factor,
-																	   run_status,
-																	   branch_history);
-				}
-				history->branch_histories[a_index] = branch_history;
-
-				if (run_status.exceeded_depth) {
-					history->exit_index = a_index;
-					history->exit_location = EXIT_LOCATION_BACK;
-					return;
-				}
-			}
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			FoldNetworkHistory* score_network_history = NULL;
-			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-				score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals,
-															  score_network_history);
-				history->score_network_histories[a_index] = score_network_history;
-			} else {
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals);
-			}
-			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-
-			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-			// predicted_score updated in fold
-
-			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-			this->folds[a_index]->explore_off_path_activate(problem,
-															existing_score,
-															local_s_input_vals,
-															local_state_vals,
-															predicted_score,
-															scale_factor,
-															run_status,
-															fold_history);
-			history->fold_histories[a_index] = fold_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		}
-
-		a_index++;
-	}
-}
-
-void Scope::explore_off_path_activate(Problem& problem,
-									  vector<double>& local_s_input_vals,	// i.e., input
-									  vector<double>& local_state_vals,		// i.e., output
-									  double& predicted_score,
-									  double& scale_factor,
-									  RunStatus& run_status,
-									  ScopeHistory* history) {
-	run_status.curr_depth++;
-	if (run_status.curr_depth > solution->depth_limit) {
-		run_status.exceeded_depth = true;
-		history->exit_location = EXIT_LOCATION_SPOT;
-		return;
-	} else if (run_status.curr_depth > run_status.max_depth) {
-		run_status.max_depth = run_status.curr_depth;
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (!this->is_inner_scope[a_index]) {
-			problem.perform_action(this->actions[a_index]);
-			local_state_vals.push_back(problem.get_observation());
-		} else {
-			vector<double> scope_input;
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-			} else {
-				// scopes formed through folding may have multiple inner_input_networks
-				// reused scopes will have 1 inner_input_network
-				for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-					if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-						FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_networks[a_index][i_index]);
-						this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																					 local_state_vals,
-																					 inner_input_network_history);
-						history->inner_input_network_histories[a_index].push_back(inner_input_network_history);
-					} else {
-						this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																					 local_state_vals);
-					}
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						scope_input.push_back(this->inner_input_networks[a_index][i_index]->output->acti_vals[s_index]);
-					}
-				}
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			this->scopes[a_index]->explore_off_path_activate(problem,
-															 scope_input,
-															 scope_output,
+				if (matches_context) {
+					// explore_phase set in fold
+					LoopFoldHistory* loop_fold_history = new LoopFoldHistory(action_node->explore_loop_fold);
+					action_node->explore_loop_fold->activate(problem,
+															 state_vals,
+															 states_initialized,
 															 predicted_score,
 															 scale_factor,
-															 run_status,
-															 scope_history);
-			history->scope_histories[a_index] = scope_history;
+															 sum_impact,
+															 context_histories,
+															 run_helper,
+															 loop_fold_history);
+					history->explore_loop_fold_history = loop_fold_history;
 
-			scale_factor /= scope_scale_mod_val;
+					history->explore_iter_index = iter_index;
+					history->explore_node_index = (int)history->node_histories[iter_index].size();
 
-			// return after scale_factor restored
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FRONT;
-				return;
+					// explore_next_node_id is just action_node->next_node_id
+				}
+			} else {
+				// new explore
+				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+
+
+				// simply let state stay as is
 			}
-
-			local_state_vals.insert(local_state_vals.end(),
-				scope_output.begin(), scope_output.end());
 		}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
+		curr_node_id = action_node->next_node_id;
+	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_INNER_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+
+		node_context.back() = curr_node_id;
+
+		int inner_early_exit_depth;
+		int inner_early_exit_node_id;
+		FoldHistory* inner_early_exit_fold_history;
+		int inner_explore_exit_depth;
+		int inner_explore_exit_node_id;
+		FoldHistory* inner_explore_exit_fold_history;
+		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node,
+															  curr_node_id);
+		scope_node->activate(problem,
+							 state_vals,
+							 states_initialized,
+							 predicted_score,
+							 scale_factor,
+							 sum_impact,
+							 scope_context,
+							 node_context,
+							 context_histories,
+							 inner_early_exit_depth,
+							 inner_early_exit_node_id,
+							 inner_early_exit_fold_history,
+							 inner_explore_exit_depth,
+							 inner_explore_exit_node_id,
+							 inner_explore_exit_fold_history,
+							 run_helper,
+							 node_history);
+		history->node_histories[iter_index].push_back(node_history);
+
+		node_context.back() = -1;
+
+		if (inner_explore_exit_depth != -1) {
+			if (inner_explore_exit_depth == 1) {
+				inner_explore_exit_fold_history->fold->sequence_activate(
+					problem,
+					state_vals,
+					states_initialized,
+					predicted_score,
+					scale_factor,
+					sum_impact,
+					run_helper,
+					inner_explore_exit_fold_history);
+				history->explore_iter_index = iter_index;
+				history->explore_node_index = (int)history->node_histories[iter_index].size();
+
+				curr_node_id = inner_explore_exit_node_id;
 			} else {
-				if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-					FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-					this->score_networks[a_index]->activate_small(local_s_input_vals,
-																  local_state_vals,
-																  score_network_history);
-					history->score_network_histories[a_index] = score_network_history;
-				} else {
-					this->score_networks[a_index]->activate_small(local_s_input_vals,
-																  local_state_vals);
-				}
-				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-
-				if (this->active_compress[a_index]) {
-					if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-						FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
-						this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																		 local_state_vals,
-																		 compress_network_history);
-						history->compress_network_histories[a_index] = compress_network_history;
-					} else {
-						this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																		 local_state_vals);
-					}
-
-					local_state_vals.clear();
-					local_state_vals.reserve(this->compress_new_sizes[a_index]);
-					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
-						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-					}
-				} else {
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
-				}
+				explore_exit_depth = inner_explore_exit_depth-1;
+				explore_exit_node_id = inner_explore_exit_node_id;
+				explore_exit_fold_history = inner_explore_exit_fold_history;
+				return true;
 			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->explore_off_path_activate_score(local_s_input_vals,
-																	 local_state_vals,
-																	 scale_factor,
-																	 run_status,
-																	 branch_history);
-
-			this->branches[a_index]->explore_off_path_activate(problem,
-															   local_s_input_vals,
-															   local_state_vals,
-															   predicted_score,
-															   scale_factor,
-															   run_status,
-															   branch_history);
-			history->branch_histories[a_index] = branch_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
+		} else if (inner_early_exit_depth != -1) {
+			if (inner_early_exit_depth == 1) {
+				curr_node_id = inner_early_exit_node_id;
+				curr_fold_history = inner_early_exit_fold_history;
+			} else {
+				early_exit_depth = inner_early_exit_depth-1;
+				early_exit_node_id = inner_early_exit_node_id;
+				early_exit_fold_history = inner_early_exit_fold_history;
+				return true;
 			}
 		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			if (run_status.explore_phase == EXPLORE_PHASE_FLAT) {
-				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals,
-															  score_network_history);
-				history->score_network_histories[a_index] = score_network_history;
-			} else {
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals);
-			}
-			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-			// predicted_score updated in fold
+			sum_impact += scope_node->average_impact;
 
-			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-			this->folds[a_index]->explore_off_path_activate(problem,
-															existing_score,
-															local_s_input_vals,
-															local_state_vals,
-															predicted_score,
-															scale_factor,
-															run_status,
-															fold_history);
-			history->fold_histories[a_index] = fold_history;
+			if (run_helper.explore_phase == EXPLORE_PHASE_NONE
+					&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
+					&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+				if (scope_node->explore_fold != NULL) {
+					bool matches_context = true;
+					if (scope_node->explore_scope_context.size() > scope_context.size()) {
+						matches_context = false;
+					} else {
+						// special case first scope context
+						if (scope_node->explore_scope_context[0] != scope_context.back()) {
+							matches_context = false;
+						} else {
+							for (int c_index = 1; c_index < (int)scope_node->explore_scope_context.size(); c_index++) {
+								if (scope_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+										|| scope_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+									matches_context = false;
+									break;
+								}
+							}
+						}
+					}
+					if (matches_context) {
+						// explore_phase set in fold
+						FoldHistory* fold_history = new FoldHistory(scope_node->explore_fold);
+						scope_node->explore_fold->score_activate(
+							state_vals,
+							predicted_score,
+							scale_factor,
+							context_histories,
+							run_helper,
+							fold_history);
+						history->explore_fold_history = fold_history;
 
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
+						if (scope_node->explore_exit_depth == 0) {
+							scope_node->explore_fold->sequence_activate(
+								problem,
+								state_vals,
+								states_initialized,
+								predicted_score,
+								scale_factor,
+								sum_impact,
+								run_helper,
+								fold_history);
+							history->explore_iter_index = iter_index;
+							history->explore_node_index = (int)history->node_histories[iter_index].size();
+
+							curr_node_id = scope_node->explore_next_node_id;
+							return false;
+						} else {
+							explore_exit_depth = scope_node->explore_exit_depth;
+							explore_exit_node_id = scope_node->explore_next_node_id;
+							explore_exit_fold_history = fold_history;
+							return true;
+						}
+					}
+				} else if (scope_node->explore_loop_fold != NULL) {
+					bool matches_context = true;
+					if (scope_node->explore_scope_context.size() > scope_context.size()) {
+						matches_context = false;
+					} else {
+						// special case first scope context
+						if (scope_node->explore_scope_context[0] != scope_context.back()) {
+							matches_context = false;
+						} else {
+							for (int c_index = 1; c_index < (int)scope_node->explore_scope_context.size(); c_index++) {
+								if (scope_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+										|| scope_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+									matches_context = false;
+									break;
+								}
+							}
+						}
+					}
+					if (matches_context) {
+						// explore_phase set in fold
+						LoopFoldHistory* loop_fold_history = new LoopFoldHistory(scope_node->explore_loop_fold);
+						scope_node->explore_loop_fold->activate(problem,
+																state_vals,
+																states_initialized,
+																predicted_score,
+																scale_factor,
+																sum_impact,
+																context_histories,
+																run_helper,
+																loop_fold_history);
+						history->explore_loop_fold_history = loop_fold_history;
+
+						history->explore_iter_index = iter_index;
+						history->explore_node_index = (int)history->node_histories[iter_index].size();
+
+						// explore_next_node_id is just scope_node->next_node_id
+					}
+				} else {
+					// new explore
+					// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+
+
+				}
 			}
+
+			curr_node_id = scope_node->next_node_id;
 		}
-	}
-}
+	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
+		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
-void Scope::explore_on_path_backprop(vector<double>& local_state_errors,	// i.e., input_errors
-									 double& predicted_score,
-									 double target_val,
-									 double final_misguess,
-									 double& scale_factor,
-									 double& scale_factor_error,
-									 ScopeHistory* history) {
-	// history->exit_location != EXIT_LOCATION_SPOT
+		int branch_exit_depth;
+		int branch_exit_node_id;
+		BranchNodeHistory* node_history = new BranchNodeHistory(branch_node,
+																curr_node_id);
+		branch_node->activate(state_vals,
+							  predicted_score,
+							  scale_factor,
+							  scope_context,
+							  node_context,
+							  branch_exit_depth,
+							  branch_exit_node_id,
+							  node_history);
+		history->node_histories[iter_index].push_back(node_history);
 
-	// don't need to output local_s_input_errors on path but for explore_off_path_backprop
-	vector<double> local_s_input_errors(this->num_inputs, 0.0);
+		// branch_exit_depth != -1
+		if (branch_exit_depth == 0) {
+			curr_node_id = branch_exit_node_id;
+		} else {
+			early_exit_depth = branch_exit_depth;
+			early_exit_node_id = branch_exit_node_id;
+			early_exit_fold_history = NULL;
+			return true;
+		}
+	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_FOLD_SCORE) {
+		FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[curr_node_id];
 
-	int a_index;
-	if (history->exit_location != EXIT_LOCATION_NORMAL) {
-		a_index = history->exit_index;
+		int fold_exit_depth;
+		int fold_exit_node_id;
+		FoldHistory* fold_exit_fold_history;
+		FoldScoreNodeHistory* node_history = new FoldScoreNodeHistory(fold_score_node,
+																	  curr_node_id);
+		fold_score_node->activate(state_vals,
+								  predicted_score,
+								  scale_factor,
+								  scope_context,
+								  node_context,
+								  context_histories,
+								  fold_exit_depth,
+								  fold_exit_node_id,
+								  fold_exit_fold_history,
+								  run_helper,
+								  node_history);
+		history->node_histories[iter_index].push_back(node_history);
+
+		// fold_exit_depth != -1
+		if (fold_exit_depth == 0) {
+			curr_node_id = fold_exit_node_id;
+			curr_fold_history = fold_exit_fold_history;
+		} else {
+			early_exit_depth = fold_exit_depth;
+			early_exit_node_id = fold_exit_node_id;
+			early_exit_fold_history = fold_exit_fold_history;
+			return true;
+		}
+	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_FOLD_SEQUENCE) {
+		FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)this->nodes[curr_node_id];
+
+		FoldSequenceNodeHistory* node_history = new FoldSequenceNodeHistory(fold_sequence_node,
+																			curr_node_id);
+		fold_sequence_node->activate(curr_fold_history,
+									 problem,
+									 state_vals,
+									 states_initialized,
+									 predicted_score,
+									 scale_factor,
+									 sum_impact,
+									 run_helper,
+									 node_history);
+		history->node_histories[iter_index].push_back(node_history);
+
+		curr_node_id = fold_sequence_node->next_node_id;
+		curr_fold_history = NULL;
+	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_LOOP_FOLD) {
+		LoopFoldNode* loop_fold_node = (LoopFoldNode*)this->nodes[curr_node_id];
+
+		LoopFoldNodeHistory* node_history = new LoopFoldNodeHistory(loop_fold_node,
+																	curr_node_id);
+		loop_fold_node->activate(problem,
+								 state_vals,
+								 states_initialized,
+								 predicted_score,
+								 scale_factor,
+								 sum_impact,
+								 scope_context,
+								 node_context,
+								 context_histories,
+								 run_helper,
+								 node_history);
+		history->node_histories[iter_index].push_back(node_history);
+
+		curr_node_id = loop_fold_node->next_node_id;
 	} else {
-		if (history->explore_type == EXPLORE_TYPE_LOCAL
-				&& this->best_explore_end_non_inclusive == this->sequence_length) {
-			// this->explore_fold != NULL for explore_on_path_backprop
-			a_index = this->best_explore_index_inclusive;
-		} else {
-			a_index = this->sequence_length-1;
-		}
+		// this->nodes[curr_node_id]->type == NODE_TYPE_PASS_THROUGH
+		PassThroughNode* pass_through_node = (PassThroughNode*)this->nodes[curr_node_id];
+
+		// always goes local as can't care about context/branch
+
+		curr_node_id = pass_through_node->next_node_id;
 	}
 
-	while (a_index >= 0) {
-		if (history->explore_type == EXPLORE_TYPE_LOCAL
-				&& this->best_explore_index_inclusive == a_index) {
-			int explore_signal = this->explore_fold->explore_on_path_backprop(
-				local_state_errors,
-				predicted_score,
-				target_val,
-				final_misguess,
-				scale_factor,
-				scale_factor_error,
-				history->explore_fold_history);
-
-			if (explore_signal == EXPLORE_SIGNAL_REPLACE) {
-				explore_replace();
-			} else if (explore_signal == EXPLORE_SIGNAL_BRANCH) {
-				explore_branch();
-			} else if (explore_signal == EXPLORE_SIGNAL_CLEAN) {
-				this->explore_curr_try = 0;
-				this->explore_target_tries = 1;
-				int rand_scale = rand()%4;
-				for (int i = 0; i < rand_scale; i++) {
-					this->explore_target_tries *= 10;
-				}
-				this->best_explore_surprise = 0.0;
-				delete this->explore_fold;
-				this->explore_fold = NULL;
-			}
-
-			return;
-		} else {
-			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-				// do nothing
-			} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
-				if (a_index == this->sequence_length-1 && !this->full_last) {
-					// scope end -- do nothing
-				} else {
-					if (this->active_compress[a_index]) {
-						vector<double> compress_s_input_output_errors;
-						vector<double> compress_state_output_errors;
-						this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
-							local_state_errors,
-							compress_s_input_output_errors,
-							compress_state_output_errors,
-							history->compress_network_histories[a_index]);
-						// don't need to output local_s_input_errors on path
-						local_state_errors = compress_state_output_errors;
-					} else {
-						// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
-						int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-						for (int c_index = 0; c_index < compress_size; c_index++) {
-							local_state_errors.push_back(0.0);
-						}
-					}
-
-					double predicted_score_error = target_val - predicted_score;
-
-					scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-					// have to include scale_factor as it can change the sign of the gradient
-					vector<double> score_errors{scale_factor*predicted_score_error};
-					vector<double> score_s_input_output_errors;
-					vector<double> score_state_output_errors;
-					this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-						score_errors,
-						score_s_input_output_errors,
-						score_state_output_errors,
-						history->score_network_histories[a_index]);
-					// don't need to output local_s_input_errors on path
-					for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += score_state_output_errors[s_index];
-					}
-
-					predicted_score -= scale_factor*history->score_updates[a_index];
-				}
-			} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-				// if early exit, then local_state_errors will be initialized within
-				if (history->explore_index_inclusive == a_index
-						&& history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-					this->branches[a_index]->explore_on_path_backprop(local_s_input_errors,
-																	  local_state_errors,
-																	  predicted_score,
-																	  target_val,
-																	  final_misguess,
-																	  scale_factor,
-																	  scale_factor_error,
-																	  history->branch_histories[a_index]);
-					return;
-				} else {
-					this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
-																	   local_state_errors,
-																	   predicted_score,
-																	   target_val,
-																	   scale_factor,
-																	   scale_factor_error,
-																	   history->branch_histories[a_index]);
-				}
-			} else {
-				// this->step_types[a_index] == STEP_TYPE_FOLD
-				// if early exit, then local_state_errors will be initialized within
-				this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
-																local_state_errors,
-																predicted_score,
-																target_val,
-																scale_factor,
-																scale_factor_error,
-																history->fold_histories[a_index]);
-
-				// predicted_score already modified to before fold value in fold
-				double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
-				double score_predicted_score_error = target_val - score_predicted_score;
-
-				scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
-
-				// have to include scale_factor as it can change the sign of the gradient
-				vector<double> score_errors{scale_factor*score_predicted_score_error};
-				vector<double> score_s_input_output_errors;
-				vector<double> score_state_output_errors;
-				this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-					score_errors,
-					score_s_input_output_errors,
-					score_state_output_errors,
-					history->score_network_histories[a_index]);
-				// don't need to output local_s_input_errors on path
-				for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-					local_state_errors[s_index] += score_state_output_errors[s_index];
-				}
-			}
-		}
-
-		if (!this->is_inner_scope[a_index]) {
-			// obs_size always 1 for sorting
-			local_state_errors.pop_back();
-		} else {
-			vector<double> scope_input_errors;
-			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
-			} else {
-				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			if (history->explore_index_inclusive == a_index
-					&& history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-				// on_path doesn't need scope_output_errors
-
-				scale_factor_error /= scope_scale_mod_val;
-
-				this->scopes[a_index]->explore_on_path_backprop(scope_input_errors,
-																predicted_score,
-																target_val,
-																final_misguess,
-																scale_factor,
-																scale_factor_error,
-																history->scope_histories[a_index]);
-
-				return;
-			} else {
-				vector<double> scope_output_errors;
-				double scope_scale_factor_error = 0.0;
-				this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
-																 scope_output_errors,
-																 predicted_score,
-																 target_val,
-																 scale_factor,
-																 scope_scale_factor_error,
-																 history->scope_histories[a_index]);
-
-				scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-				scale_factor /= scope_scale_mod_val;
-
-				// a_index != 0
-				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
-					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = scope_output_errors.back();
-						scope_output_errors.pop_back();
-					}
-					vector<double> inner_input_s_input_output_errors;
-					vector<double> inner_input_state_output_errors;
-					this->inner_input_networks[a_index][i_index]->backprop_small_errors_with_no_weight_change(
-						inner_input_errors,
-						inner_input_s_input_output_errors,
-						inner_input_state_output_errors,
-						history->inner_input_network_histories[a_index][i_index]);
-					// don't need to output local_s_input_errors on path
-					for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += inner_input_state_output_errors[s_index];
-					}
-				}
-			}
-		}
-
-		if (history->explore_type == EXPLORE_TYPE_LOCAL
-				&& this->best_explore_end_non_inclusive == a_index) {
-			a_index = this->best_explore_index_inclusive;
-		} else {
-			a_index--;
-		}
-	}
+	return false;
 }
 
-void Scope::explore_off_path_backprop(vector<double>& local_state_errors,	// i.e., input_errors
-									  vector<double>& local_s_input_errors,	// i.e., output_errors
-									  double& predicted_score,
-									  double target_val,
-									  double& scale_factor,
-									  double& scale_factor_error,
-									  ScopeHistory* history) {
-	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
-
-	if (history->exit_location == EXIT_LOCATION_SPOT) {
-		return;
-	}
-
-	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-			// do nothing
-		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
+void Scope::backprop(vector<double>& state_errors,
+					 vector<bool>& inputs_initialized,
+					 double target_val,
+					 double final_misguess,
+					 double final_sum_impact,
+					 double& predicted_score,
+					 double& scale_factor,
+					 RunHelper& run_helper,
+					 ScopeHistory* history) {
+	vector<bool> states_initialized;
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+		states_initialized = vector<bool>(this->num_states);
+		for (int s_index = 0; s_index < this->num_states; s_index++) {
+			if (inputs_initialized[s_index] || this->is_initialized_locally[s_index]) {
+				states_initialized[s_index] = true;
 			} else {
-				if (this->active_compress[a_index]) {
-					vector<double> compress_s_input_output_errors;
-					vector<double> compress_state_output_errors;
-					this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
-						local_state_errors,
-						compress_s_input_output_errors,
-						compress_state_output_errors,
-						history->compress_network_histories[a_index]);
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)compress_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += compress_s_input_output_errors[s_index];
-					}
-					local_state_errors = compress_state_output_errors;
-				} else {
-					// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					for (int c_index = 0; c_index < compress_size; c_index++) {
-						local_state_errors.push_back(0.0);
-					}
-				}
-
-				double predicted_score_error = target_val - predicted_score;
-
-				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-				vector<double> score_errors{scale_factor*predicted_score_error};
-				vector<double> score_s_input_output_errors;
-				vector<double> score_state_output_errors;
-				this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-					score_errors,
-					score_s_input_output_errors,
-					score_state_output_errors,
-					history->score_network_histories[a_index]);
-				// use output sizes as might not have used all inputs
-				for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
-					local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
-				}
-				for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-					local_state_errors[s_index] += score_state_output_errors[s_index];
-				}
-
-				predicted_score -= scale_factor*history->score_updates[a_index];
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			// if early exit, then local_state_errors will be initialized within
-			this->branches[a_index]->explore_off_path_backprop(local_s_input_errors,
-															   local_state_errors,
-															   predicted_score,
-															   target_val,
-															   scale_factor,
-															   scale_factor_error,
-															   history->branch_histories[a_index]);
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			// if early exit, then local_state_errors will be initialized within
-			this->folds[a_index]->explore_off_path_backprop(local_s_input_errors,
-															local_state_errors,
-															predicted_score,
-															target_val,
-															scale_factor,
-															scale_factor_error,
-															history->fold_histories[a_index]);
-
-			// predicted_score already modified to before fold value in fold
-			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
-			double score_predicted_score_error = target_val - score_predicted_score;
-
-			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
-
-			vector<double> score_errors{scale_factor*score_predicted_score_error};
-			vector<double> score_s_input_output_errors;
-			vector<double> score_state_output_errors;
-			this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-				score_errors,
-				score_s_input_output_errors,
-				score_state_output_errors,
-				history->score_network_histories[a_index]);
-			// use output sizes as might not have used all inputs
-			for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
-				local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
-			}
-			for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-				local_state_errors[s_index] += score_state_output_errors[s_index];
-			}
-		}
-
-		if (!this->is_inner_scope[a_index]) {
-			// obs_size always 1 for sorting
-			local_state_errors.pop_back();
-		} else {
-			vector<double> scope_input_errors;
-			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
-			} else {
-				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output_errors;
-			double scope_scale_factor_error = 0.0;
-			this->scopes[a_index]->explore_off_path_backprop(scope_input_errors,
-															 scope_output_errors,
-															 predicted_score,
-															 target_val,
-															 scale_factor,
-															 scope_scale_factor_error,
-															 history->scope_histories[a_index]);
-
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-			scale_factor /= scope_scale_mod_val;
-
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				for (int i_index = 0; i_index < this->scopes[0]->num_inputs; i_index++) {
-					local_s_input_errors[i_index] += scope_output_errors[i_index];
-				}
-			} else {
-				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
-					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = scope_output_errors.back();
-						scope_output_errors.pop_back();
-					}
-					vector<double> inner_input_s_input_output_errors;
-					vector<double> inner_input_state_output_errors;
-					this->inner_input_networks[a_index][i_index]->backprop_small_errors_with_no_weight_change(
-						inner_input_errors,
-						inner_input_s_input_output_errors,
-						inner_input_state_output_errors,
-						history->inner_input_network_histories[a_index][i_index]);
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)inner_input_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += inner_input_s_input_output_errors[s_index];
-					}
-					for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += inner_input_state_output_errors[s_index];
-					}
-				}
+				states_initialized[s_index] = false;
 			}
 		}
 	}
-}
 
-void Scope::existing_flat_activate(Problem& problem,
-								   vector<double>& local_s_input_vals,	// i.e., input
-								   vector<double>& local_state_vals,	// i.e., output
-								   double& predicted_score,
-								   double& scale_factor,
-								   RunStatus& run_status,
-								   ScopeHistory* history) {
-	if (this == run_status.explore_location) {
-		run_status.is_recursive = true;
-	}
+	if (is_loop) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+			this->average_score = 0.9999*this->average_score + 0.0001*target_val;
+			double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
+			this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
 
-	run_status.curr_depth++;
-	if (run_status.curr_depth > solution->depth_limit) {
-		run_status.exceeded_depth = true;
-		history->exit_location = EXIT_LOCATION_SPOT;
-		return;
-	} else if (run_status.curr_depth > run_status.max_depth) {
-		run_status.max_depth = run_status.curr_depth;
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (!this->is_inner_scope[a_index]) {
-			problem.perform_action(this->actions[a_index]);
-			local_state_vals.push_back(problem.get_observation());
-		} else {
-			vector<double> scope_input;
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-			} else {
-				// scopes formed through folding may have multiple inner_input_networks
-				// reused scopes will have 1 inner_input_network
-				for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-					FoldNetworkHistory* inner_input_network_history = new FoldNetworkHistory(this->inner_input_networks[a_index][i_index]);
-					this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																				 local_state_vals,
-																				 inner_input_network_history);
-					history->inner_input_network_histories[a_index].push_back(inner_input_network_history);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						scope_input.push_back(this->inner_input_networks[a_index][i_index]->output->acti_vals[s_index]);
-					}
-				}
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			this->scopes[a_index]->existing_flat_activate(problem,
-														  scope_input,
-														  scope_output,
-														  predicted_score,
-														  scale_factor,
-														  run_status,
-														  scope_history);
-			history->scope_histories[a_index] = scope_history;
-
-			scale_factor /= scope_scale_mod_val;
-
-			// return after scale_factor restored
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FRONT;
-				return;
-			}
-
-			local_state_vals.insert(local_state_vals.end(),
-				scope_output.begin(), scope_output.end());
+			this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
+			double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
+			this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 		}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals,
-															  score_network_history);
-				history->score_network_histories[a_index] = score_network_history;
-				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			this->halt_score_network->backprop_errors_with_no_weight_change(
+				target_val - predicted_score,
+				state_errors,
+				history->halt_score_network_history);
 
-				if (this->active_compress[a_index]) {
-					FoldNetworkHistory* compress_network_history = new FoldNetworkHistory(this->compress_networks[a_index]);
-					this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																	 local_state_vals,
-																	 compress_network_history);
-					history->compress_network_histories[a_index] = compress_network_history;
+			predicted_score -= scale_factor*history->halt_score_network_update;
 
-					local_state_vals.clear();
-					local_state_vals.reserve(this->compress_new_sizes[a_index]);
-					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
-						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-					}
-				} else {
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
-				}
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->existing_flat_activate(problem,
-															local_s_input_vals,
-															local_state_vals,
-															predicted_score,
-															scale_factor,
-															run_status,
-															branch_history);
-			history->branch_histories[a_index] = branch_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-			this->score_networks[a_index]->activate_small(local_s_input_vals,
-														  local_state_vals,
-														  score_network_history);
-			history->score_network_histories[a_index] = score_network_history;
-			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-			// predicted_score updated in fold
-
-			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-			this->folds[a_index]->existing_flat_activate(problem,
-														 existing_score,
-														 local_s_input_vals,
-														 local_state_vals,
-														 predicted_score,
-														 scale_factor,
-														 run_status,
-														 fold_history);
-			history->fold_histories[a_index] = fold_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		}
-	}
-}
-
-void Scope::existing_flat_backprop(vector<double>& local_state_errors,		// input_errors
-								   vector<double>& local_s_input_errors,	// output_errors
-								   double& predicted_score,
-								   double predicted_score_error,
-								   double& scale_factor,
-								   double& scale_factor_error,
-								   ScopeHistory* history) {
-	local_s_input_errors = vector<double>(this->num_inputs, 0.0);
-
-	if (history->exit_location == EXIT_LOCATION_SPOT) {
-		return;
-	}
-
-	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-			// do nothing
-		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				if (this->active_compress[a_index]) {
-					vector<double> compress_s_input_output_errors;
-					vector<double> compress_state_output_errors;
-					this->compress_networks[a_index]->backprop_small_errors_with_no_weight_change(
-						local_state_errors,
-						compress_s_input_output_errors,
-						compress_state_output_errors,
-						history->compress_network_histories[a_index]);
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)compress_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += compress_s_input_output_errors[s_index];
-					}
-					local_state_errors = compress_state_output_errors;
-				} else {
-					// this->compress_original_sizes[a_index] > this->compress_new_sizes[a_index]
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					for (int c_index = 0; c_index < compress_size; c_index++) {
-						local_state_errors.push_back(0.0);
-					}
-				}
-
-				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-				vector<double> score_errors{scale_factor*predicted_score_error};
-				vector<double> score_s_input_output_errors;
-				vector<double> score_state_output_errors;
-				this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-					score_errors,
-					score_s_input_output_errors,
-					score_state_output_errors,
-					history->score_network_histories[a_index]);
-				// use output sizes as might not have used all inputs
-				for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
-					local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
-				}
-				for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-					local_state_errors[s_index] += score_state_output_errors[s_index];
-				}
-
-				predicted_score -= scale_factor*history->score_updates[a_index];
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			this->branches[a_index]->existing_flat_backprop(local_s_input_errors,
-															local_state_errors,
-															predicted_score,
-															predicted_score_error,
-															scale_factor,
-															scale_factor_error,
-															history->branch_histories[a_index]);
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			this->folds[a_index]->existing_flat_backprop(local_s_input_errors,
-														 local_state_errors,
-														 predicted_score,
-														 predicted_score_error,
-														 scale_factor,
-														 scale_factor_error,
-														 history->fold_histories[a_index]);
-
-			scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-			vector<double> score_errors{scale_factor*predicted_score_error};
-			vector<double> score_s_input_output_errors;
-			vector<double> score_state_output_errors;
-			this->score_networks[a_index]->backprop_small_errors_with_no_weight_change(
-				score_errors,
-				score_s_input_output_errors,
-				score_state_output_errors,
-				history->score_network_histories[a_index]);
-			// use output sizes as might not have used all inputs
-			for (int s_index = 0; s_index < (int)score_s_input_output_errors.size(); s_index++) {
-				local_s_input_errors[s_index] += score_s_input_output_errors[s_index];
-			}
-			for (int s_index = 0; s_index < (int)score_state_output_errors.size(); s_index++) {
-				local_state_errors[s_index] += score_state_output_errors[s_index];
-			}
-
-			// predicted_score updated in fold
-		}
-
-		if (!this->is_inner_scope[a_index]) {
-			// obs_size always 1 for sorting
-			local_state_errors.pop_back();
-		} else {
-			vector<double> scope_input_errors;
-			if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-				local_state_errors = vector<double>(this->starting_state_sizes[a_index], 0.0);
-			} else {
-				scope_input_errors = vector<double>(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-				local_state_errors.erase(local_state_errors.end()-this->scopes[a_index]->num_outputs,
-					local_state_errors.end());
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output_errors;
-			double scope_scale_factor_error = 0.0;
-			this->scopes[a_index]->existing_flat_backprop(scope_input_errors,
-														  scope_output_errors,
-														  predicted_score,
-														  predicted_score_error,
-														  scale_factor,
-														  scope_scale_factor_error,
-														  history->scope_histories[a_index]);
-
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-			scale_factor /= scope_scale_mod_val;
-
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				for (int i_index = 0; i_index < this->scopes[0]->num_inputs; i_index++) {
-					local_s_input_errors[i_index] += scope_output_errors[i_index];
-				}
-			} else {
-				for (int i_index = (int)this->inner_input_networks[a_index].size()-1; i_index >= 0; i_index--) {
-					vector<double> inner_input_errors(this->inner_input_sizes[a_index][i_index]);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						inner_input_errors[this->inner_input_sizes[a_index][i_index]-1-s_index] = scope_output_errors.back();
-						scope_output_errors.pop_back();
-					}
-					vector<double> inner_input_s_input_output_errors;
-					vector<double> inner_input_state_output_errors;
-					this->inner_input_networks[a_index][i_index]->backprop_small_errors_with_no_weight_change(
-						inner_input_errors,
-						inner_input_s_input_output_errors,
-						inner_input_state_output_errors,
-						history->inner_input_network_histories[a_index][i_index]);
-					// use output sizes as might not have used all inputs
-					for (int s_index = 0; s_index < (int)inner_input_s_input_output_errors.size(); s_index++) {
-						local_s_input_errors[s_index] += inner_input_s_input_output_errors[s_index];
-					}
-					for (int s_index = 0; s_index < (int)inner_input_state_output_errors.size(); s_index++) {
-						local_state_errors[s_index] += inner_input_state_output_errors[s_index];
-					}
-				}
-			}
-		}
-	}
-}
-
-void Scope::update_activate(Problem& problem,
-							vector<double>& local_s_input_vals,	// i.e., input
-							vector<double>& local_state_vals,	// i.e., output
-							double& predicted_score,
-							double& scale_factor,
-							RunStatus& run_status,
-							ScopeHistory* history) {
-	run_status.curr_depth++;
-	if (run_status.curr_depth > solution->depth_limit) {
-		run_status.exceeded_depth = true;
-		history->exit_location = EXIT_LOCATION_SPOT;
-		return;
-	} else if (run_status.curr_depth > run_status.max_depth) {
-		run_status.max_depth = run_status.curr_depth;
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (!this->is_inner_scope[a_index]) {
-			problem.perform_action(this->actions[a_index]);
-			local_state_vals.push_back(problem.get_observation());
-		} else {
-			vector<double> scope_input;
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-			} else {
-				// scopes formed through folding may have multiple inner_input_networks
-				// reused scopes will have 1 inner_input_network
-				for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-					this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																				 local_state_vals);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						scope_input.push_back(this->inner_input_networks[a_index][i_index]->output->acti_vals[s_index]);
-					}
-				}
-			}
-
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			this->scopes[a_index]->update_activate(problem,
-												   scope_input,
-												   scope_output,
-												   predicted_score,
-												   scale_factor,
-												   run_status,
-												   scope_history);
-			history->scope_histories[a_index] = scope_history;
-
-			scale_factor /= scope_scale_mod_val;
-
-			// return after scale_factor restored
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FRONT;
-				return;
-			}
-
-			local_state_vals.insert(local_state_vals.end(),
-				scope_output.begin(), scope_output.end());
-		}
-
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals,
-															  score_network_history);
-				history->score_network_histories[a_index] = score_network_history;
-				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-
-				if (this->active_compress[a_index]) {
-					this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																	 local_state_vals);
-
-					local_state_vals.clear();
-					local_state_vals.reserve(this->compress_new_sizes[a_index]);
-					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
-						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-					}
-				} else {
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
-				}
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->update_activate(problem,
-													 local_s_input_vals,
-													 local_state_vals,
-													 predicted_score,
-													 scale_factor,
-													 run_status,
-													 branch_history);
-			history->branch_histories[a_index] = branch_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			FoldNetworkHistory* score_network_history = new FoldNetworkHistory(this->score_networks[a_index]);
-			this->score_networks[a_index]->activate_small(local_s_input_vals,
-														  local_state_vals,
-														  score_network_history);
-			history->score_network_histories[a_index] = score_network_history;
-			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-			// predicted_score updated in fold
-
-			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-			this->folds[a_index]->update_activate(problem,
-												  existing_score,
-												  local_s_input_vals,
-												  local_state_vals,
-												  predicted_score,
-												  scale_factor,
-												  run_status,
-												  fold_history);
-			history->fold_histories[a_index] = fold_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		}
-	}
-}
-
-void Scope::update_backprop(double& predicted_score,
-							double target_val,
-							double final_misguess,
-							double& scale_factor,
-							double& scale_factor_error,
-							ScopeHistory* history) {
-	if (history->exit_location == EXIT_LOCATION_SPOT) {
-		return;
-	}
-
-	// update misguess even after early exit as goal is predict it correctly too
-	this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
-	double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
-	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
-
-	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
-	double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
-	this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
-
-	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-			// do nothing
-		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				double predicted_score_error = target_val - predicted_score;
-
-				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-				vector<double> score_errors{scale_factor*predicted_score_error};
-				this->score_networks[a_index]->backprop_small_weights_with_no_error_signal(
-					score_errors,
-					0.002,
-					history->score_network_histories[a_index]);
-
-				predicted_score -= scale_factor*history->score_updates[a_index];
-
-				this->average_local_impacts[a_index] = 0.9999*this->average_local_impacts[a_index]
-					+ 0.0001*abs(scale_factor*history->score_updates[a_index]);
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			double ending_predicted_score = predicted_score;
-
-			this->branches[a_index]->update_backprop(predicted_score,
-													 target_val,
-													 final_misguess,
-													 scale_factor,
-													 scale_factor_error,
-													 history->branch_histories[a_index]);
-
-			double starting_predicted_score = predicted_score;
-			this->average_inner_branch_impacts[a_index] = 0.9999*this->average_inner_branch_impacts[a_index]
-				+ 0.0001*abs(ending_predicted_score - starting_predicted_score);
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			this->folds[a_index]->update_backprop(predicted_score,
-												  target_val,
-												  final_misguess,
-												  scale_factor,
-												  scale_factor_error,
-												  history->fold_histories[a_index]);
-
-			// predicted_score already modified to before fold value in fold
-			double score_predicted_score = predicted_score + scale_factor*history->score_updates[a_index];
-			double score_predicted_score_error = target_val - score_predicted_score;
-
-			scale_factor_error += history->score_updates[a_index]*score_predicted_score_error;
-
-			vector<double> score_errors{scale_factor*score_predicted_score_error};
-			this->score_networks[a_index]->backprop_small_weights_with_no_error_signal(
-				score_errors,
+			this->halt_misguess_network->backprop_errors_with_no_weight_change(
+				final_misguess - history->halt_misguess_val,
+				state_errors,
+				history->halt_misguess_network_history);
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+			this->halt_score_network->backprop_weights_with_no_error_signal(
+				target_val - predicted_score,
 				0.002,
-				history->score_network_histories[a_index]);
+				history->halt_score_network_history);
 
-			// local_impact kept track of as starting impact in fold
+			predicted_score -= scale_factor*history->halt_score_network_update;
+
+			this->halt_misguess_network->backprop_weights_with_no_error_signal(
+				final_misguess - history->halt_misguess_val,
+				0.002,
+				history->halt_misguess_network_history);
 		}
 
-		if (!this->is_inner_scope[a_index]) {
-			// do nothing
-		} else {
-			double ending_predicted_score = predicted_score;
+		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
+			for (int h_index = (int)history->node_histories[iter_index].size()-1; h_index >= 0; h_index--) {
+				if (this->nodes[history->node_histories[iter_index][h_index]->scope_index]
+						!= history->node_histories[iter_index][h_index]->node) {
+					// node replaced, mainly for fold nodes
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
+					// skip processing history, should only have minor temporary impact
 
-			double scope_scale_factor_error = 0.0;
-			this->scopes[a_index]->update_backprop(predicted_score,
-												   target_val,
-												   final_misguess,
-												   scale_factor,
-												   scope_scale_factor_error,
-												   history->scope_histories[a_index]);
+					continue;
+				}
 
-			// update mod even with early exit as might improve predictions/results
-			vector<double> mod_errors{scope_scale_factor_error};
-			this->scope_scale_mod[a_index]->backprop(mod_errors, 0.0002);
+				if (history->explore_iter_index == iter_index
+						&& history->explore_node_index == h_index+1) {	// node_history appended to, then explore indexes captured
+					backprop_explore_fold_helper(state_errors,
+												 states_initialized,
+												 target_val,
+												 final_misguess,
+												 final_sum_impact,
+												 predicted_score,
+												 scale_factor,
+												 run_helper,
+												 history);
+					break;
+				}
 
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
+				handle_node_backprop_helper(iter_index,
+											h_index,
+											state_errors,
+											states_initialized,
+											target_val,
+											final_misguess,
+											final_sum_impact,
+											predicted_score,
+											scale_factor,
+											run_helper,
+											history);
 
-			scale_factor /= scope_scale_mod_val;
-
-			double starting_predicted_score = predicted_score;
-			this->average_inner_scope_impacts[a_index] = 0.9999*this->average_inner_scope_impacts[a_index]
-				+ 0.0001*abs(ending_predicted_score - starting_predicted_score);
-		}
-	}
-}
-
-void Scope::existing_update_activate(Problem& problem,
-									 vector<double>& local_s_input_vals,	// i.e., input
-									 vector<double>& local_state_vals,	// i.e., output
-									 double& predicted_score,
-									 double& scale_factor,
-									 RunStatus& run_status,
-									 ScopeHistory* history) {
-	run_status.curr_depth++;
-	if (run_status.curr_depth > solution->depth_limit) {
-		run_status.exceeded_depth = true;
-		history->exit_location = EXIT_LOCATION_SPOT;
-		return;
-	} else if (run_status.curr_depth > run_status.max_depth) {
-		run_status.max_depth = run_status.curr_depth;
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		if (!this->is_inner_scope[a_index]) {
-			problem.perform_action(this->actions[a_index]);
-			local_state_vals.push_back(problem.get_observation());
-		} else {
-			vector<double> scope_input;
-			if (a_index == 0) {
-				// for start, if inner scope, scope_input is first local_s_input_vals
-				scope_input = vector<double>(local_s_input_vals.begin(), local_s_input_vals.begin()+this->scopes[0]->num_inputs);
-			} else {
-				// scopes formed through folding may have multiple inner_input_networks
-				// reused scopes will have 1 inner_input_network
-				for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-					this->inner_input_networks[a_index][i_index]->activate_small(local_s_input_vals,
-																				 local_state_vals);
-					for (int s_index = 0; s_index < this->inner_input_sizes[a_index][i_index]; s_index++) {
-						scope_input.push_back(this->inner_input_networks[a_index][i_index]->output->acti_vals[s_index]);
-					}
+				if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE) {
+					break;
 				}
 			}
 
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			vector<double> scope_output;
-			ScopeHistory* scope_history = new ScopeHistory(this->scopes[a_index]);
-			this->scopes[a_index]->existing_update_activate(problem,
-															scope_input,
-															scope_output,
-															predicted_score,
-															scale_factor,
-															run_status,
-															scope_history);
-			history->scope_histories[a_index] = scope_history;
-
-			scale_factor /= scope_scale_mod_val;
-
-			// return after scale_factor restored
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_FRONT;
-				return;
+			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE) {
+				break;
 			}
 
-			local_state_vals.insert(local_state_vals.end(),
-				scope_output.begin(), scope_output.end());
+			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+				this->continue_score_network->backprop_errors_with_no_weight_change(
+					target_val - predicted_score,
+					state_errors,
+					history->continue_score_network_histories[iter_index]);
+
+				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
+
+				this->continue_misguess_network->backprop_errors_with_no_weight_change(
+					final_misguess - history->continue_misguess_vals[iter_index],
+					state_errors,
+					history->continue_misguess_network_histories[iter_index]);
+			} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+				this->continue_score_network->backprop_weights_with_no_error_signal(
+					target_val - predicted_score,
+					0.002,
+					history->continue_score_network_histories[iter_index]);
+
+				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
+
+				this->continue_misguess_network->backprop_weights_with_no_error_signal(
+					final_misguess - history->continue_misguess_vals[iter_index],
+					0.002,
+					history->continue_misguess_network_histories[iter_index]);
+			}
 		}
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				this->score_networks[a_index]->activate_small(local_s_input_vals,
-															  local_state_vals);
-				history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-				predicted_score += scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-
-				if (this->active_compress[a_index]) {
-					this->compress_networks[a_index]->activate_small(local_s_input_vals,
-																	 local_state_vals);
-
-					local_state_vals.clear();
-					local_state_vals.reserve(this->compress_new_sizes[a_index]);
-					for (int s_index = 0; s_index < this->compress_new_sizes[a_index]; s_index++) {
-						local_state_vals.push_back(this->compress_networks[a_index]->output->acti_vals[s_index]);
-					}
-				} else {
-					int compress_size = this->compress_original_sizes[a_index] - this->compress_new_sizes[a_index];
-					local_state_vals.erase(local_state_vals.end()-compress_size, local_state_vals.end());
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			for (int s_index = (int)this->starting_state_networks.size()-1; s_index >= 0; s_index--) {
+				if (states_initialized[s_index]) {
+					this->starting_state_networks[s_index]->backprop_errors_with_no_weight_change(
+						state_errors[s_index],
+						state_errors,
+						history->starting_state_network_histories[s_index]);
 				}
 			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			BranchHistory* branch_history = new BranchHistory(this->branches[a_index]);
-			this->branches[a_index]->existing_update_activate(problem,
-															  local_s_input_vals,
-															  local_state_vals,
-															  predicted_score,
-															  scale_factor,
-															  run_status,
-															  branch_history);
-			history->branch_histories[a_index] = branch_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			this->score_networks[a_index]->activate_small(local_s_input_vals,
-														  local_state_vals);
-			history->score_updates[a_index] = this->score_networks[a_index]->output->acti_vals[0];
-			double existing_score = scale_factor*this->score_networks[a_index]->output->acti_vals[0];
-			// predicted_score updated in fold
-
-			FoldHistory* fold_history = new FoldHistory(this->folds[a_index]);
-			this->folds[a_index]->existing_update_activate(problem,
-														   existing_score,
-														   local_s_input_vals,
-														   local_state_vals,
-														   predicted_score,
-														   scale_factor,
-														   run_status,
-														   fold_history);
-			history->fold_histories[a_index] = fold_history;
-
-			if (run_status.exceeded_depth) {
-				history->exit_index = a_index;
-				history->exit_location = EXIT_LOCATION_BACK;
-				return;
-			}
 		}
-	}
-}
-
-void Scope::existing_update_backprop(double& predicted_score,
-									 double predicted_score_error,
-									 double& scale_factor,
-									 double& scale_factor_error,
-									 ScopeHistory* history) {
-	if (history->exit_location == EXIT_LOCATION_SPOT) {
-		return;
-	}
-
-	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-			// do nothing
-		} else if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// scope end -- do nothing
-			} else {
-				scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-				predicted_score -= scale_factor*history->score_updates[a_index];
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			this->branches[a_index]->existing_update_backprop(predicted_score,
-															  predicted_score_error,
-															  scale_factor,
-															  scale_factor_error,
-															  history->branch_histories[a_index]);
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			this->folds[a_index]->existing_update_backprop(predicted_score,
-														   predicted_score_error,
-														   scale_factor,
-														   scale_factor_error,
-														   history->fold_histories[a_index]);
-
-			scale_factor_error += history->score_updates[a_index]*predicted_score_error;
-
-			// predicted_score updated in fold
-		}
-
-		if (!this->is_inner_scope[a_index]) {
-			// do nothing
-		} else {
-			double scope_scale_mod_val = this->scope_scale_mod[a_index]->output->constants[0];
-			scale_factor *= scope_scale_mod_val;
-
-			double scope_scale_factor_error = 0.0;
-			this->scopes[a_index]->existing_update_backprop(predicted_score,
-															predicted_score_error,
-															scale_factor,
-															scope_scale_factor_error,
-															history->scope_histories[a_index]);
-
-			scale_factor_error += scope_scale_mod_val*scope_scale_factor_error;
-
-			scale_factor /= scope_scale_mod_val;
-		}
-	}
-}
-
-void Scope::explore_set(double target_val,
-						double existing_score,
-						ScopeHistory* history) {
-	if (history->explore_type == EXPLORE_TYPE_INNER_SCOPE) {
-		this->scopes[history->explore_index_inclusive]->explore_set(
-			target_val,
-			existing_score,
-			history->scope_histories[history->explore_index_inclusive]);
-	} else if (history->explore_type == EXPLORE_TYPE_INNER_BRANCH) {
-		this->branches[history->explore_index_inclusive]->explore_set(
-			target_val,
-			existing_score,
-			history->branch_histories[history->explore_index_inclusive]);
 	} else {
-		// history->explore_type == EXPLORE_TYPE_EXPLORE
-		if (target_val - existing_score > this->best_explore_surprise) {
-			this->best_explore_surprise = target_val - existing_score;
-			this->best_explore_index_inclusive = history->explore_index_inclusive;
-			this->best_explore_end_non_inclusive = this->curr_explore_end_non_inclusive;
-			this->best_explore_sequence_length = this->curr_explore_sequence_length;
-			this->best_explore_is_inner_scope = this->curr_explore_is_inner_scope;
-			this->best_explore_existing_scope_ids = this->curr_explore_existing_scope_ids;
-			this->best_explore_actions = this->curr_explore_actions;
-			this->best_seed_local_s_input_vals = this->curr_seed_local_s_input_vals;
-			this->best_seed_local_state_vals = this->curr_seed_local_state_vals;
-			this->best_seed_start_score = this->curr_seed_start_score;
-			this->best_seed_target_val = target_val;
-		}
+		for (int h_index = (int)history->node_histories[0].size()-1; h_index >= 0; h_index--) {
+			if (this->nodes[history->node_histories[0][h_index]->scope_index]
+					!= history->node_histories[0][h_index]->node) {
+				// node replaced, mainly for fold nodes
 
-		this->explore_curr_try++;
-		if (this->explore_curr_try >= this->explore_target_tries) {
-			int new_num_inputs = this->starting_state_sizes[this->best_explore_index_inclusive];
-			if (!this->is_inner_scope[this->best_explore_index_inclusive]) {
-				// obs_size always 1 for sorting
-				new_num_inputs++;
-			} else {
-				new_num_inputs += this->scopes[this->best_explore_index_inclusive]->num_outputs;
-			}
-			int new_num_outputs;
-			if (this->best_explore_end_non_inclusive == this->sequence_length) {
-				new_num_outputs = this->num_outputs;
-			} else {
-				new_num_outputs = this->starting_state_sizes[this->best_explore_end_non_inclusive];
+				// skip processing history, should only have minor temporary impact
+
+				continue;
 			}
 
-			this->explore_fold = new Fold(new_num_inputs,
-										  new_num_outputs,
-										  this->num_inputs,
-										  this->best_explore_sequence_length,
-										  this->best_explore_is_inner_scope,
-										  this->best_explore_existing_scope_ids,
-										  this->best_explore_actions,
-										  this->best_explore_end_non_inclusive-this->best_explore_index_inclusive-1,
-										  &this->average_score,
-										  &this->score_variance,
-										  &this->average_misguess,
-										  &this->misguess_variance,
-										  this->best_seed_local_s_input_vals,
-										  this->best_seed_local_state_vals,
-										  this->best_seed_start_score,
-										  this->best_seed_target_val);
-
-			cout << "EXPLORE_SET" << endl;
-			cout << "this->best_explore_index_inclusive: " << this->best_explore_index_inclusive << endl;
-			cout << "this->best_explore_surprise: " << this->best_explore_surprise << endl;
-			cout << "this->explore_curr_try: " << this->explore_curr_try << endl;
-			cout << "new_sequence:";
-			for (int s_index = 0; s_index < this->best_explore_sequence_length; s_index++) {
-				if (this->best_explore_is_inner_scope[s_index]) {
-					cout << " S_" << this->best_explore_existing_scope_ids[s_index];
-				} else {
-					cout << " " << this->best_explore_actions[s_index].to_string();
-				}
+			if (history->explore_node_index == h_index+1) {	// node_history appended to, then explore indexes captured
+				backprop_explore_fold_helper(state_errors,
+											 states_initialized,
+											 target_val,
+											 final_misguess,
+											 final_sum_impact,
+											 predicted_score,
+											 scale_factor,
+											 run_helper,
+											 history);
+				break;
 			}
-			cout << endl;
+
+			handle_node_backprop_helper(0,
+										h_index,
+										state_errors,
+										states_initialized,
+										target_val,
+										final_misguess,
+										final_sum_impact,
+										predicted_score,
+										scale_factor,
+										run_helper,
+										history);
+
+			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE) {
+				break;
+			}
 		}
 	}
 }
 
-void Scope::update_increment(ScopeHistory* history,
-							 vector<Fold*>& folds_to_delete) {
-	if (history->exit_location == EXIT_LOCATION_SPOT) {
-		return;
-	}
+void Scope::handle_node_backprop_helper(int iter_index,
+										int h_index,
+										vector<double>& state_errors,
+										vector<bool>& states_initialized,
+										double target_val,
+										double final_misguess,
+										double final_sum_impact,
+										double& predicted_score,
+										double& scale_factor,
+										RunHelper& run_helper,
+										ScopeHistory* history) {
+	if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)history->node_histories[iter_index][h_index]->node;
+		action_node->backprop(state_errors,
+							  states_initialized,
+							  target_val,
+							  final_misguess,
+							  final_sum_impact,
+							  predicted_score,
+							  scale_factor,
+							  run_helper,
+							  (ActionNodeHistory*)history->node_histories[iter_index][h_index]);
+	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)history->node_histories[iter_index][h_index]->node;
+		scope_node->backprop(state_errors,
+							 states_initialized,
+							 target_val,
+							 final_misguess,
+							 final_sum_impact,
+							 predicted_score,
+							 scale_factor,
+							 run_helper,
+							 (ScopeNodeHistory*)history->node_histories[iter_index][h_index]);
+	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_BRANCH) {
+		BranchNode* branch_node = (BranchNode*)history->node_histories[iter_index][h_index]->node;
+		branch_node->backprop(state_errors,
+							  target_val,
+							  predicted_score,
+							  scale_factor,
+							  run_helper,
+							  (BranchNodeHistory*)history->node_histories[iter_index][h_index]);
+	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SCORE) {
+		FoldScoreNode* fold_score_node = (FoldScoreNode*)history->node_histories[iter_index][h_index]->node;
+		fold_score_node->backprop(state_errors,
+								  target_val,
+								  predicted_score,
+								  scale_factor,
+								  run_helper,
+								  (FoldScoreNodeHistory*)history->node_histories[iter_index][h_index]);
 
-	for (int a_index = history->exit_index; a_index >= 0; a_index--) {
-		if (a_index == history->exit_index && history->exit_location == EXIT_LOCATION_FRONT) {
-			// do nothing
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			// check for equality in case previous update_increment updated structure
-			if (history->branch_histories[a_index]->branch == this->branches[a_index]) {
-				this->branches[a_index]->update_increment(history->branch_histories[a_index],
-														  folds_to_delete);
-			} else {
-				// if structure changed, cancel later updates
-				return;
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
-			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
-				this->folds[a_index]->update_increment(history->fold_histories[a_index],
-													   folds_to_delete);
-			} else {
-				return;
-			}
+		if (fold_score_node->fold->state == FOLD_STATE_DONE) {
+			int new_outer_state_size = fold_score_node->fold->curr_num_new_outer_states;
 
-			// re-check because might have updated
-			if (history->fold_histories[a_index]->fold == this->folds[a_index]) {
-				if (this->folds[a_index]->state == STATE_DONE) {
-					resolve_fold(a_index,
-								 folds_to_delete);
+			int starting_scope_id = fold_score_node->fold->scope_context.back();
+
+			// add networks and update_state_sizes before updating scopes
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold_score_node->fold->curr_outer_state_networks.begin();
+					it != fold_score_node->fold->curr_outer_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
+							if (!fold_score_node->fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+s_index);
+								action_node->state_networks.push_back(it->second[n_index][s_index]);
+
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
 				}
+			}
+
+			StateNetwork* branch_score_network = fold_score_node->fold->curr_starting_score_network;
+			branch_score_network->update_state_size(this->num_states);
+			branch_score_network->new_external_to_state();
+
+			// new_outer_state_size may be 0
+			solution->scopes[starting_scope_id]->add_new_state(new_outer_state_size,
+															   true);
+
+			for (set<int>::iterator it = fold_score_node->fold->curr_outer_scopes_needed.begin();
+					it != fold_score_node->fold->curr_outer_scopes_needed.end(); it++) {
+				if (*it != starting_scope_id) {
+					solution->scopes[*it]->add_new_state(new_outer_state_size,
+														 false);
+				}
+			}
+
+			for (set<pair<int, int>>::iterator it = fold_score_node->fold->curr_outer_contexts_needed.begin();
+					it != fold_score_node->fold->curr_outer_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int s_index = 0; s_index < new_outer_state_size; s_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-new_outer_state_size+s_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-new_outer_state_size+s_index);
+				}
+			}
+
+			BranchNode* new_branch_node = new BranchNode(fold_score_node->fold_scope_context,
+														 fold_score_node->fold_node_context,
+														 fold_score_node->fold_is_pass_through,
+														 branch_score_network,
+														 fold_score_node->fold_exit_depth,
+														 fold_score_node->fold_next_node_id,
+														 fold_score_node->existing_score_network,
+														 fold_score_node->existing_next_node_id);
+			fold_score_node->existing_score_network = NULL;		// for garbage collection
+			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_branch_node;
+			// delete fold_score_node along with fold
+		}
+	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SEQUENCE) {
+		FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[iter_index][h_index]->node;
+		fold_sequence_node->backprop(state_errors,
+									 states_initialized,
+									 target_val,
+									 final_misguess,
+									 final_sum_impact,
+									 predicted_score,
+									 scale_factor,
+									 run_helper,
+									 (FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index]);
+
+		Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index])->fold_history->fold;
+		if (fold->state == FOLD_STATE_DONE) {
+			// update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
+					it != fold->curr_inner_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+							if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
+								action_node->state_networks.push_back(it->second[n_index][i_index]);
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
+				}
+			}
+
+			for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
+					it != fold->curr_inner_scopes_needed.end(); it++) {
+				solution->scopes[*it]->add_new_state(fold->curr_num_new_inner_states,
+													 false);
+			}
+
+			for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
+					it != fold->curr_inner_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-fold->curr_num_new_inner_states+i_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-fold->curr_num_new_inner_states+i_index);
+				}
+			}
+
+			vector<AbstractNode*> new_nodes;
+			fold_to_nodes(this,
+						  fold,
+						  new_nodes);
+
+			int starting_new_node_id = (int)this->nodes.size();
+			for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
+				if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+					action_node->next_node_id = (int)this->nodes.size()+1;
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+					scope_node->next_node_id = (int)this->nodes.size()+1;
+				}
+				this->nodes.push_back(new_nodes[n_index]);
+			}
+			if (new_nodes.back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)new_nodes.back();
+				action_node->next_node_id = fold_sequence_node->next_node_id;
 			} else {
-				return;
+				ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
+				scope_node->next_node_id = fold_sequence_node->next_node_id;
+			}
+			this->nodes.push_back(new_nodes.back());
+
+			PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
+			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
+		}
+	} else {
+		// history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_LOOP_FOLD
+		LoopFoldNode* loop_fold_node = (LoopFoldNode*)history->node_histories[iter_index][h_index]->node;
+		loop_fold_node->backprop(state_errors,
+								 states_initialized,
+								 target_val,
+								 final_misguess,
+								 final_sum_impact,
+								 predicted_score,
+								 scale_factor,
+								 run_helper,
+								 (LoopFoldNodeHistory*)history->node_histories[iter_index][h_index]);
+
+		LoopFold* loop_fold = loop_fold_node->loop_fold;
+		if (loop_fold->state == LOOP_FOLD_STATE_DONE) {
+			// input
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_inner_state_networks.begin();
+					it != loop_fold->curr_inner_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+							if (!loop_fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
+								action_node->state_networks.push_back(it->second[n_index][i_index]);
+
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
+				}
+			}
+
+			for (set<int>::iterator it = loop_fold->curr_inner_scopes_needed.begin();
+					it != loop_fold->curr_inner_scopes_needed.end(); it++) {
+				solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_inner_states,
+													 false);
+			}
+
+			for (set<pair<int, int>>::iterator it = loop_fold->curr_inner_contexts_needed.begin();
+					it != loop_fold->curr_inner_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
+				}
+			}
+
+			int new_scope_id;
+			loop_fold_to_scope(loop_fold,
+							   new_scope_id);
+
+			int new_scope_num_states = solution->scopes[new_scope_id]->num_states;
+
+			vector<int> new_inner_input_indexes;
+			vector<int> new_inner_input_target_indexes;
+			for (int s_index = 0; s_index < loop_fold->num_states; s_index++) {
+				// TODO: remove unneeded num_states
+				new_inner_input_indexes.push_back(s_index);
+				new_inner_input_target_indexes.push_back(new_scope_num_states
+					- loop_fold->num_states
+					- loop_fold->curr_num_new_outer_states
+					+ s_index);
+			}
+			for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
+				// outer not updated yet
+				new_inner_input_indexes.push_back(this->num_states + o_index);
+				new_inner_input_target_indexes.push_back(new_scope_num_states
+					- loop_fold->curr_num_new_outer_states
+					+ o_index);
+			}
+			StateNetwork* new_score_network = new StateNetwork(0,
+															   this->num_states,
+															   0,
+															   0,
+															   20);
+			ScopeNode* new_scope_node = new ScopeNode(vector<int>(),
+													  vector<StateNetwork*>(),
+													  new_scope_id,
+													  new_inner_input_indexes,
+													  new_inner_input_target_indexes,
+													  vector<int>(),
+													  vector<StateNetwork*>(),
+													  new_score_network);
+			new_scope_node->next_node_id = loop_fold_node->next_node_id;
+
+			// outer
+			int outer_scope_id = loop_fold->scope_context.back();
+
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_outer_state_networks.begin();
+					it != loop_fold->curr_outer_state_networks.end(); it++) {
+				Scope* scope = solution->scopes[it->first];
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					if (it->second[n_index].size() > 0) {
+						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+						for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+							if (!loop_fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+								action_node->state_network_target_indexes.push_back(scope->num_states+s_index);
+								action_node->state_networks.push_back(it->second[n_index][s_index]);
+
+								action_node->state_networks.back()->update_state_size(scope->num_states);
+								action_node->state_networks.back()->new_external_to_state();
+							}
+						}
+					}
+				}
+			}
+
+			// new_outer_state_size may be 0
+			solution->scopes[outer_scope_id]->add_new_state(loop_fold->curr_num_new_outer_states,
+															true);
+
+			for (set<int>::iterator it = loop_fold->curr_outer_scopes_needed.begin();
+					it != loop_fold->curr_outer_scopes_needed.end(); it++) {
+				if (*it != outer_scope_id) {
+					solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_outer_states,
+														 false);
+				}
+			}
+
+			for (set<pair<int, int>>::iterator it = loop_fold->curr_outer_contexts_needed.begin();
+					it != loop_fold->curr_outer_contexts_needed.end(); it++) {
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+				Scope* outer_scope = solution->scopes[(*it).first];
+				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+				for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+					scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
+					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
+				}
+			}
+
+			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
+			// delete loop_fold_node along with loop_fold
+		}
+	}
+}
+
+void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
+										 vector<bool>& states_initialized,
+										 double target_val,
+										 double final_misguess,
+										 double final_sum_impact,
+										 double& predicted_score,
+										 double& scale_factor,
+										 RunHelper& run_helper,
+										 ScopeHistory* history) {
+	if (history->explore_fold_history != NULL) {
+		Fold* fold = history->explore_fold_history->fold;
+		fold->backprop(state_errors,
+					   states_initialized,
+					   target_val,
+					   final_misguess,
+					   final_sum_impact,
+					   predicted_score,
+					   scale_factor,
+					   run_helper,
+					   history->explore_fold_history);
+
+		if (fold->state == FOLD_STATE_EXPERIMENT_FAIL) {
+			Scope* score_scope = solution->scopes[fold->scope_context[0]];
+			if (score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)score_scope->nodes[fold->node_context[0]];
+				action_node->explore_scope_context.clear();
+				action_node->explore_node_context.clear();
+				action_node->explore_exit_depth = -1;
+				action_node->explore_next_node_id = -1;
+				delete action_node->explore_fold;
+				action_node->explore_fold = NULL;
+			} else {
+				// score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+				ScopeNode* scope_node = (ScopeNode*)score_scope->nodes[fold->node_context[0]];
+				scope_node->explore_scope_context.clear();
+				scope_node->explore_node_context.clear();
+				scope_node->explore_exit_depth = -1;
+				scope_node->explore_next_node_id = -1;
+				delete scope_node->explore_fold;
+				scope_node->explore_fold = NULL;
+			}
+		} else if (fold->state == FOLD_STATE_EXPERIMENT_DONE) {
+			fold->experiment_to_clean();
+
+			// sequence_scope == this
+
+			Scope* score_scope = solution->scopes[fold->scope_context[0]];
+			StateNetwork* existing_score_network = new StateNetwork(0,
+																	score_scope->num_states,
+																	0,
+																	0,
+																	20);
+			bool fold_is_pass_through;
+			if (fold->experiment_result == FOLD_RESULT_BRANCH) {
+				fold_is_pass_through = false;
+			} else {
+				// fold->experiment_result == FOLD_RESULT_REPLACE
+				fold_is_pass_through = true;
+			}
+
+			if (score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)score_scope->nodes[fold->node_context[0]];
+
+				FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(action_node->explore_next_node_id);
+				this->nodes.push_back(new_fold_sequence_node);
+				int fold_sequence_node_id = (int)this->nodes.size()-1;
+
+				FoldScoreNode* new_fold_score_node = new FoldScoreNode(existing_score_network,
+																	   action_node->next_node_id,
+																	   fold,
+																	   fold_is_pass_through,
+																	   action_node->explore_scope_context,
+																	   action_node->explore_node_context,
+																	   action_node->explore_exit_depth,
+																	   fold_sequence_node_id);
+				score_scope->nodes.push_back(new_fold_score_node);
+				int fold_score_node_id = (int)score_scope->nodes.size()-1;
+
+				action_node->next_node_id = fold_score_node_id;
+
+				action_node->explore_scope_context.clear();
+				action_node->explore_node_context.clear();
+				action_node->explore_exit_depth = -1;
+				action_node->explore_next_node_id = -1;
+				action_node->explore_fold = NULL;
+			} else {
+				// score_scope->nodes[fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+				ScopeNode* scope_node = (ScopeNode*)score_scope->nodes[fold->node_context[0]];
+
+				FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(scope_node->explore_next_node_id);
+				this->nodes.push_back(new_fold_sequence_node);
+				int fold_sequence_node_id = (int)this->nodes.size()-1;
+
+				FoldScoreNode* new_fold_score_node = new FoldScoreNode(existing_score_network,
+																	   scope_node->next_node_id,
+																	   fold,
+																	   fold_is_pass_through,
+																	   scope_node->explore_scope_context,
+																	   scope_node->explore_node_context,
+																	   scope_node->explore_exit_depth,
+																	   fold_sequence_node_id);
+				score_scope->nodes.push_back(new_fold_score_node);
+				int fold_score_node_id = (int)score_scope->nodes.size()-1;
+
+				scope_node->next_node_id = fold_score_node_id;
+
+				scope_node->explore_scope_context.clear();
+				scope_node->explore_node_context.clear();
+				scope_node->explore_exit_depth = -1;
+				scope_node->explore_next_node_id = -1;
+				scope_node->explore_fold = NULL;
 			}
 		}
+	} else {
+		// history->explore_loop_fold_history != NULL
+		LoopFold* loop_fold = history->explore_loop_fold_history->loop_fold;
+		loop_fold->backprop(state_errors,
+							states_initialized,
+							target_val,
+							final_misguess,
+							final_sum_impact,
+							predicted_score,
+							scale_factor,
+							run_helper,
+							history->explore_loop_fold_history);
 
-		if (this->is_inner_scope[a_index]) {
-			if (history->scope_histories[a_index]->scope == this->scopes[a_index]) {
-				this->scopes[a_index]->update_increment(history->scope_histories[a_index],
-														folds_to_delete);
+		if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_FAIL) {
+			if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
+				action_node->explore_scope_context.clear();
+				action_node->explore_node_context.clear();
+				delete action_node->explore_loop_fold;
+				action_node->explore_loop_fold = NULL;
 			} else {
-				return;
+				// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+				ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
+				scope_node->explore_scope_context.clear();
+				scope_node->explore_node_context.clear();
+				delete scope_node->explore_loop_fold;
+				scope_node->explore_loop_fold = NULL;
 			}
+		} else if (loop_fold->state == LOOP_FOLD_STATE_EXPERIMENT_DONE) {
+			loop_fold->experiment_to_clean();
+
+			if (this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->nodes[loop_fold->node_context[0]];
+
+				LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
+																	action_node->explore_scope_context,
+																	action_node->explore_node_context,
+																	action_node->next_node_id);
+				this->nodes.push_back(new_loop_fold_node);
+				int new_node_id = (int)this->nodes.size()-1;
+				action_node->next_node_id = new_node_id;
+
+				action_node->explore_scope_context.clear();
+				action_node->explore_node_context.clear();
+				action_node->explore_loop_fold = NULL;
+			} else {
+				// this->nodes[loop_fold->node_context[0]]->type == NODE_TYPE_INNER_SCOPE
+				ScopeNode* scope_node = (ScopeNode*)this->nodes[loop_fold->node_context[0]];
+
+				LoopFoldNode* new_loop_fold_node = new LoopFoldNode(loop_fold,
+																	scope_node->explore_scope_context,
+																	scope_node->explore_node_context,
+																	scope_node->next_node_id);
+				this->nodes.push_back(new_loop_fold_node);
+				int new_node_id = (int)this->nodes.size()-1;
+				scope_node->next_node_id = new_node_id;
+
+				scope_node->explore_scope_context.clear();
+				scope_node->explore_node_context.clear();
+				scope_node->explore_loop_fold = NULL;
+			}
+		}
+	}
+
+	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE;
+}
+
+void Scope::add_new_state(int new_state_size,
+						  bool initialized_locally) {
+	this->num_states += new_state_size;
+	for (int s_index = 0; s_index < new_state_size; s_index++) {
+		this->is_initialized_locally.push_back(initialized_locally);
+	}
+
+	if (is_loop) {
+		this->continue_score_network->add_state(new_state_size);
+		this->continue_misguess_network->add_state(new_state_size);
+		this->halt_score_network->add_state(new_state_size);
+		this->halt_misguess_network->add_state(new_state_size);
+	}
+
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			if (action_node->score_network->state_size == this->num_states) {
+				// new node added from fold_seqeuence
+			} else {
+				action_node->score_network->add_state(new_state_size);
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_INNER_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+			if (scope_node->score_network->state_size == this->num_states) {
+				// new node added from fold_seqeuence
+			} else {
+				scope_node->score_network->add_state(new_state_size);
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+			branch_node->branch_score_network->add_state(new_state_size);
+			branch_node->original_score_network->add_state(new_state_size);
+		} else if (this->nodes[n_index]->type == NODE_TYPE_FOLD_SCORE) {
+			FoldScoreNode* fold_score_node = (FoldScoreNode*)this->nodes[n_index];
+			fold_score_node->existing_score_network->add_state(new_state_size);
 		}
 	}
 }
@@ -2256,187 +1597,101 @@ void Scope::update_increment(ScopeHistory* history,
 void Scope::save(ofstream& output_file) {
 	output_file << this->id << endl;
 
-	output_file << this->num_inputs << endl;
-	output_file << this->num_outputs << endl;
+	output_file << this->num_states << endl;
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		output_file << this->is_initialized_locally[s_index] << endl;
+	}
 
-	output_file << this->full_last << endl;
+	output_file << this->is_loop << endl;
 
-	output_file << this->sequence_length << endl;
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->is_inner_scope[a_index] << endl;
-		if (this->is_inner_scope[a_index]) {
-			output_file << this->scopes[a_index]->id << endl;
-
-			output_file << this->inner_input_networks[a_index].size() << endl;
-			for (int i_index = 0; i_index < (int)this->inner_input_networks[a_index].size(); i_index++) {
-				ofstream inner_input_network_save_file;
-				inner_input_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_inner_input_" + to_string(a_index) + "_" + to_string(i_index) + ".txt");
-				this->inner_input_networks[a_index][i_index]->save(inner_input_network_save_file);
-				inner_input_network_save_file.close();
-
-				output_file << this->inner_input_sizes[a_index][i_index] << endl;
-			}
-
-			ofstream scope_scale_mod_save_file;
-			scope_scale_mod_save_file.open("saves/nns/scope_" + to_string(this->id) + "_scope_scale_mod_" + to_string(a_index) + ".txt");
-			this->scope_scale_mod[a_index]->save(scope_scale_mod_save_file);
-			scope_scale_mod_save_file.close();
-		} else {
-			this->actions[a_index].save(output_file);
+	if (this->is_loop) {
+		output_file << this->starting_state_networks.size() << endl;
+		for (int l_index = 0; l_index < (int)this->starting_state_networks.size(); l_index++) {
+			ofstream starting_state_network_save_file;
+			starting_state_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_starting_state_" + to_string(l_index) + ".txt");
+			this->starting_state_networks[l_index]->save(starting_state_network_save_file);
+			starting_state_network_save_file.close();
 		}
+
+		ofstream continue_score_network_save_file;
+		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
+		this->continue_score_network->save(continue_score_network_save_file);
+		continue_score_network_save_file.close();
+
+		ofstream continue_misguess_network_save_file;
+		continue_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_misguess.txt");
+		this->continue_misguess_network->save(continue_misguess_network_save_file);
+		continue_misguess_network_save_file.close();
+
+		ofstream halt_score_network_save_file;
+		halt_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_score.txt");
+		this->halt_score_network->save(halt_score_network_save_file);
+		halt_score_network_save_file.close();
+
+		ofstream halt_misguess_network_save_file;
+		halt_misguess_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_halt_misguess.txt");
+		this->halt_misguess_network->save(halt_misguess_network_save_file);
+		halt_misguess_network_save_file.close();
+
+		output_file << this->average_score << endl;
+		output_file << this->score_variance << endl;
+		output_file << this->average_misguess << endl;
+		output_file << this->misguess_variance << endl;
 	}
 
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->step_types[a_index] << endl;
+	output_file << this->nodes.size() << endl;
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		output_file << this->nodes[n_index]->type << endl;
 
-		if (this->step_types[a_index] == STEP_TYPE_STEP) {
-			if (a_index == this->sequence_length-1 && !this->full_last) {
-				// do nothing
-			} else {
-				ofstream score_network_save_file;
-				score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-				this->score_networks[a_index]->save(score_network_save_file);
-				score_network_save_file.close();
-
-				output_file << this->active_compress[a_index] << endl;
-				output_file << this->compress_new_sizes[a_index] << endl;
-				if (this->active_compress[a_index]) {
-					ofstream compress_network_save_file;
-					compress_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_compress_" + to_string(a_index) + ".txt");
-					this->compress_networks[a_index]->save(compress_network_save_file);
-					compress_network_save_file.close();
-				}
-				output_file << this->compress_original_sizes[a_index] << endl;
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			output_file << this->branches[a_index]->id << endl;
-
-			ofstream branch_save_file;
-			branch_save_file.open("saves/branch_" + to_string(this->branches[a_index]->id) + ".txt");
-			this->branches[a_index]->save(branch_save_file);
-			branch_save_file.close();
-		} else {
-			// this->step_types[a_index] == STEP_TYPE_FOLD
-			ofstream score_network_save_file;
-			score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_score_" + to_string(a_index) + ".txt");
-			this->score_networks[a_index]->save(score_network_save_file);
-			score_network_save_file.close();
-
-			output_file << this->folds[a_index]->id << endl;
-
-			ofstream fold_save_file;
-			fold_save_file.open("saves/fold_" + to_string(this->folds[a_index]->id) + ".txt");
-			this->folds[a_index]->save(fold_save_file);
-			fold_save_file.close();
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->average_inner_scope_impacts[a_index] << endl;
-		output_file << this->average_local_impacts[a_index] << endl;
-		output_file << this->average_inner_branch_impacts[a_index] << endl;
-	}
-
-	output_file << this->average_score << endl;
-	output_file << this->score_variance << endl;
-	output_file << this->average_misguess << endl;
-	output_file << this->misguess_variance << endl;
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->starting_state_sizes[a_index] << endl;
-	}
-}
-
-void Scope::save_for_display(ofstream& output_file) {
-	output_file << this->id << endl;
-
-	output_file << this->sequence_length << endl;
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->is_inner_scope[a_index] << endl;
-		if (this->is_inner_scope[a_index]) {
-			output_file << this->scopes[a_index]->id << endl;
-
-			if (this->scopes[a_index]->id > this->id) {
-				this->scopes[a_index]->save_for_display(output_file);
-			}
-		} else {
-			this->actions[a_index].save(output_file);
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->step_types[a_index] << endl;
-
-		if (this->step_types[a_index] == STEP_TYPE_BRANCH) {
-			this->branches[a_index]->save_for_display(output_file,
-													  this->id);
-		} else if (this->step_types[a_index] == STEP_TYPE_FOLD) {
-			this->folds[a_index]->save_for_display(output_file);
-		}
-	}
-
-	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
-		output_file << this->average_inner_scope_impacts[a_index] << endl;
-		output_file << this->average_local_impacts[a_index] << endl;
-		output_file << this->average_inner_branch_impacts[a_index] << endl;
+		ofstream node_save_file;
+		node_save_file.open("saves/node_" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		this->nodes[n_index]->save(node_save_file,
+								   this->id,
+								   n_index);
+		node_save_file.close();
 	}
 }
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->inner_input_network_histories = vector<vector<FoldNetworkHistory*>>(scope->sequence_length);
-	this->scope_histories = vector<ScopeHistory*>(scope->sequence_length, NULL);
-	this->branch_histories = vector<BranchHistory*>(scope->sequence_length, NULL);
-	this->fold_histories = vector<FoldHistory*>(scope->sequence_length, NULL);
-	this->score_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
-	this->score_updates = vector<double>(scope->sequence_length, 0.0);
-	this->compress_network_histories = vector<FoldNetworkHistory*>(scope->sequence_length, NULL);
+	this->halt_score_network_history = NULL;
+	this->halt_misguess_network_history = NULL;
 
+	this->explore_iter_index = -1;
+	this->explore_node_index = -1;
 	this->explore_fold_history = NULL;
-
-	this->exit_index = scope->sequence_length-1;	// initialize to normal exit
-	this->exit_location = EXIT_LOCATION_NORMAL;
+	this->explore_loop_fold_history = NULL;
 }
 
 ScopeHistory::~ScopeHistory() {
-	for (int a_index = 0; a_index < (int)this->inner_input_network_histories.size(); a_index++) {
-		for (int i_index = 0; i_index < (int)this->inner_input_network_histories[a_index].size(); i_index++) {
-			delete this->inner_input_network_histories[a_index][i_index];
+	for (int iter_index = 0; iter_index < (int)this->node_histories.size(); iter_index++) {
+		for (int h_index = 0; h_index < (int)this->node_histories[iter_index].size(); h_index++) {
+			delete this->node_histories[iter_index][h_index];
 		}
 	}
 
-	for (int a_index = 0; a_index < (int)this->scope_histories.size(); a_index++) {
-		if (this->scope_histories[a_index] != NULL) {
-			delete this->scope_histories[a_index];
-		}
+	for (int iter_index = 0; iter_index < (int)this->continue_score_network_histories.size(); iter_index++) {
+		delete this->continue_score_network_histories[iter_index];
 	}
 
-	for (int a_index = 0; a_index < (int)this->branch_histories.size(); a_index++) {
-		if (this->branch_histories[a_index] != NULL) {
-			delete this->branch_histories[a_index];
-		}
+	for (int iter_index = 0; iter_index < (int)this->continue_misguess_network_histories.size(); iter_index++) {
+		delete this->continue_misguess_network_histories[iter_index];
 	}
 
-	for (int a_index = 0; a_index < (int)this->fold_histories.size(); a_index++) {
-		if (this->fold_histories[a_index] != NULL) {
-			delete this->fold_histories[a_index];
-		}
+	if (this->halt_score_network_history != NULL) {
+		delete this->halt_score_network_history;
 	}
 
-	for (int a_index = 0; a_index < (int)this->score_network_histories.size(); a_index++) {
-		if (this->score_network_histories[a_index] != NULL) {
-			delete this->score_network_histories[a_index];
-		}
-	}
-
-	for (int a_index = 0; a_index < (int)this->compress_network_histories.size(); a_index++) {
-		if (this->compress_network_histories[a_index] != NULL) {
-			delete this->compress_network_histories[a_index];
-		}
+	if (this->halt_misguess_network_history != NULL) {
+		delete this->halt_misguess_network_history;
 	}
 
 	if (this->explore_fold_history != NULL) {
 		delete this->explore_fold_history;
+	}
+
+	if (this->explore_loop_fold_history != NULL) {
+		delete this->explore_loop_fold_history;
 	}
 }

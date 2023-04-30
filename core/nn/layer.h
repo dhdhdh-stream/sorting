@@ -41,34 +41,17 @@ public:
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
 
-	void fold_add_scope(Layer* new_scope_input);
-	void fold_pop_scope();
-	void fold_activate(int fold_index);
-	void fold_backprop_weights_with_no_error_signal(int fold_index);
-	void fold_backprop_last_state(int fold_index);
-	void fold_get_max_update(int fold_index,
-							 double& max_update_size);
-	void fold_update_weights(int fold_index,
-							 double learning_rate);
-
-	void subfold_set_s_input(int layer,
-							 Layer* new_s_input);
-	void subfold_activate(int subfold_index,
-						  int num_state_layers);
-	void subfold_backprop_errors_with_no_weight_change(
-		int subfold_index,
-		int num_state_layers);
-	void subfold_backprop_weights_with_no_error_signal(
-		int subfold_index,
-		int num_state_layers);
-	void subfold_backprop_s_input(int subfold_index,
-								  int num_state_layers);
-	void subfold_get_max_update(int subfold_index,
-								int num_state_layers,
-								double& max_update_size);
-	void subfold_update_weights(int subfold_index,
-								int num_state_layers,
-								double learning_rate);
+	void state_hidden_add_new_inner();
+	void state_hidden_add_new_outer();
+	void state_hidden_remove_new_outer();
+	void state_hidden_zero_new_input(int index);
+	void state_hidden_zero_state(int index);
+	void state_hidden_zero_new_outer(int index);
+	void state_hidden_update_state_size(int state_size_increase);
+	void state_hidden_new_external_weights_to_state();
+	void state_hidden_new_sequence_finalize();
+	void state_hidden_remove_state(int index);
+	void state_hidden_add_state(int size);
 };
 
 #endif /* LAYER_H */
