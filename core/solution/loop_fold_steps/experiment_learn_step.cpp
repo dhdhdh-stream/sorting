@@ -200,6 +200,8 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 					new_inner_state_vals[i_index] += this->test_state_networks[f_index][i_index]->output->acti_vals[0];
 				}
 
+				scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
 				Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 				int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
@@ -259,6 +261,8 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 				for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
 					new_inner_state_vals[this->sum_inner_inputs+i_index] = new_state_vals[i_index];
 				}
+
+				scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 
 				// update back state so have chance to compress front after
 				for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
@@ -377,6 +381,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 	vector<double> new_inner_state_errors(this->sum_inner_inputs+this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_errors(this->test_num_new_outer_states, 0.0);
 
+	double halt_predicted_score_error = target_val - predicted_score;
 	double halt_score_network_target_max_update;
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 		halt_score_network_target_max_update = 0.05;
@@ -386,7 +391,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 		halt_score_network_target_max_update = 0.002;
 	}
 	this->test_halt_score_network->new_sequence_backprop(
-		target_val - predicted_score,
+		scale_factor*halt_predicted_score_error,
 		new_inner_state_errors,
 		state_errors,
 		new_outer_state_errors,
@@ -413,6 +418,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 
 	for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 		for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
+			double predicted_score_error = target_val - predicted_score;
 			double score_network_target_max_update;
 			if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 				score_network_target_max_update = 0.05;
@@ -422,7 +428,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 				score_network_target_max_update = 0.002;
 			}
 			this->test_score_networks[f_index]->new_sequence_backprop(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				new_inner_state_errors,
 				state_errors,
 				new_outer_state_errors,
@@ -474,6 +480,8 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 						history->state_network_histories[iter_index][f_index][i_index]);
 				}
 
+				scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
 				vector<double> new_state_errors(new_inner_state_errors.begin()+this->sum_inner_inputs,
 					new_inner_state_errors.begin()+this->sum_inner_inputs+this->test_num_new_inner_states);
 				for (int n_index = (int)history->inner_state_network_histories[iter_index][f_index].size()-1; n_index >= 0; n_index--) {
@@ -513,6 +521,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 				double inner_final_misguess = 0.0;
 				double inner_final_sum_impact = 0.0;
 
+				double scope_scale_factor_error = 0.0;
 				inner_scope->backprop(inner_input_errors,
 									  inner_inputs_initialized,
 									  target_val,
@@ -520,12 +529,17 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 									  inner_final_sum_impact,
 									  predicted_score,
 									  scale_factor,
+									  scope_scale_factor_error,
 									  run_helper,
 									  history->inner_scope_histories[iter_index][f_index]);
 
 				for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 					new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_errors[i_index];
 				}
+
+				scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
+
+				this->inner_scope_scale_mods[f_index]->backprop(scope_scale_factor_error, 0.0002);
 
 				for (int i_index = this->inner_input_start_indexes[f_index]+this->num_inner_inputs[f_index]-1; i_index >= 0; i_index--) {
 					double state_network_target_max_update;
@@ -588,6 +602,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 			}
 		}
 
+		double continue_predicted_score_error = target_val - predicted_score;
 		double continue_score_network_target_max_update;
 		if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 			continue_score_network_target_max_update = 0.05;
@@ -597,7 +612,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 			continue_score_network_target_max_update = 0.002;
 		}
 		this->test_continue_score_network->new_sequence_backprop(
-			target_val - predicted_score,
+			scale_factor*continue_predicted_score_error,
 			new_inner_state_errors,
 			state_errors,
 			new_outer_state_errors,

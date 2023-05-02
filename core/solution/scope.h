@@ -75,6 +75,7 @@ public:
 				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
@@ -107,6 +108,7 @@ public:
 									 double final_sum_impact,
 									 double& predicted_score,
 									 double& scale_factor,
+									 double& scale_factor_error,
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
 	void backprop_explore_fold_helper(std::vector<double>& state_errors,
@@ -116,6 +118,7 @@ public:
 									  double final_sum_impact,
 									  double& predicted_score,
 									  double& scale_factor,
+									  double& scale_factor_error,
 									  RunHelper& run_helper,
 									  ScopeHistory* history);
 
@@ -149,8 +152,12 @@ public:
 	FoldHistory* explore_fold_history;
 	LoopFoldHistory* explore_loop_fold_history;
 
+	bool exceeded_depth;
+
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
+
+	ScopeHistory* deep_copy_for_seed();
 };
 
 #endif /* SCOPE_H */

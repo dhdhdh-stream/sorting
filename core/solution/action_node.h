@@ -38,16 +38,12 @@ public:
 	bool best_explore_is_loop;
 	int best_explore_exit_depth;
 	int best_explore_next_node_id;
-	int best_explore_sequence_length;
 	std::vector<bool> best_explore_is_inner_scope;
 	std::vector<int> best_explore_existing_scope_ids;
 	std::vector<Action> best_explore_actions;
 	double best_explore_seed_start_predicted_score;
-	std::vector<double> best_explore_seed_score_state_vals_snapshot;
-	ScopeHistory* best_explore_seed_outer_context_history;
-	std::vector<double> best_explore_seed_sequence_state_vals_snapshot;
-	std::vector<std::vector<double>> best_explore_seed_sequence_obs_snapshot;
-	std::vector<std::vector<ScopeHistory*>> best_explore_seed_inner_context_histories;
+	std::vector<double> best_explore_seed_state_vals_snapshot;
+	ScopeHistory* best_explore_seed_outer_context_history;	// deep copy before continuing past explore node
 
 	std::vector<int> explore_scope_context;
 	std::vector<int> explore_node_context;
@@ -78,6 +74,7 @@ public:
 				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
@@ -98,6 +95,8 @@ public:
 	ActionNodeHistory(ActionNode* node,
 					  int scope_index);
 	~ActionNodeHistory();
+
+	AbstractNodeHistory* deep_copy_for_seed();
 };
 
 #endif /* ACTION_NODE_H */

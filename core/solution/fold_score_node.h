@@ -52,6 +52,7 @@ public:
 				  double target_val,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  FoldScoreNodeHistory* history);
 
@@ -66,7 +67,7 @@ public:
 	StateNetworkHistory* existing_score_network_history;
 	double existing_score_network_update;
 
-	// FoldHistory saved and processed by FoldSequenceNode
+	FoldHistory* fold_history;
 
 	FoldScoreNodeHistory(FoldScoreNode* node,
 						 int scope_index);

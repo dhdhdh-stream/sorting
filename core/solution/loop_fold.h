@@ -69,7 +69,7 @@ public:
 	int sum_inner_inputs;
 	std::vector<int> inner_input_start_indexes;
 	std::vector<int> num_inner_inputs;
-	// TODO: inner and ending scale_mods
+	std::vector<Scale*> inner_scope_scale_mods;
 
 	int state;
 	int sub_state;
@@ -188,6 +188,7 @@ public:
 				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  LoopFoldHistory* history);
 
@@ -379,6 +380,7 @@ public:
 						double final_sum_impact,
 						double& predicted_score,
 						double& scale_factor,
+						double& scale_factor_error,
 						RunHelper& run_helper,
 						LoopFoldHistory* history);
 

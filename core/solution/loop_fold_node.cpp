@@ -103,6 +103,7 @@ void LoopFoldNode::backprop(vector<double>& state_errors,
 							double final_sum_impact,
 							double& predicted_score,
 							double& scale_factor,
+							double& scale_factor_error,
 							RunHelper& run_helper,
 							LoopFoldNodeHistory* history) {
 	if (history->loop_fold_history != NULL) {
@@ -113,6 +114,7 @@ void LoopFoldNode::backprop(vector<double>& state_errors,
 								  final_sum_impact,
 								  predicted_score,
 								  scale_factor,
+								  scale_factor_error,
 								  run_helper,
 								  history->loop_fold_history);
 	}

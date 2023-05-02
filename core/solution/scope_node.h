@@ -7,6 +7,7 @@
 #include "fold.h"
 #include "loop_fold.h"
 #include "run_helper.h"
+#include "scale.h"
 #include "scope.h"
 #include "state_network.h"
 
@@ -19,7 +20,7 @@ public:
 	int inner_scope_id;
 	std::vector<int> inner_input_indexes;
 	std::vector<int> inner_input_target_indexes;
-	// Scale* scope_scale_mod;
+	Scale* scope_scale_mod;
 
 	std::vector<int> post_state_network_target_indexes;
 	std::vector<StateNetwork*> post_state_networks;
@@ -52,6 +53,7 @@ public:
 			  int inner_scope_id,
 			  std::vector<int> inner_input_indexes,
 			  std::vector<int> inner_input_target_indexes,
+			  Scale* scope_scale_mod,
 			  std::vector<int> post_state_network_target_indexes,
 			  std::vector<StateNetwork*> post_state_networks,
 			  StateNetwork* score_network);
@@ -84,6 +86,7 @@ public:
 				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  ScopeNodeHistory* history);
 
@@ -106,6 +109,8 @@ public:
 	ScopeNodeHistory(ScopeNode* node,
 					 int scope_index);
 	~ScopeNodeHistory();
+
+	AbstractNodeHistory* deep_copy_for_seed();
 };
 
 #endif /* SCOPE_NODE_H */

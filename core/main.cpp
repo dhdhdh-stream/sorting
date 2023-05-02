@@ -102,6 +102,7 @@ int main(int argc, char* argv[]) {
 			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 
 			vector<double> input_errors;
+			double scale_factor_error = 0.0;	// unused
 			solution->scopes[0]->backprop(input_errors,
 										  inputs_initialized,
 										  target_val,
@@ -109,6 +110,7 @@ int main(int argc, char* argv[]) {
 										  sum_impact,
 										  predicted_score,
 										  scale_factor,
+										  scale_factor_error,
 										  run_helper,
 										  root_history);
 		}

@@ -234,7 +234,18 @@ void Scope::activate(Problem& problem,
 					 FoldHistory*& explore_exit_fold_history,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
-	// TODO: check recursive depth and exit if needed
+	early_exit_depth = -1;
+	explore_exit_depth = -1;
+
+	run_helper.curr_depth++;
+	if (run_helper.curr_depth > run_helper.max_depth) {
+		run_helper.max_depth = run_helper.curr_depth;
+	}
+	if (run_helper.curr_depth > solution->max_depth) {
+		run_helper.exceeded_depth = true;
+		history->exceeded_depth = true;
+		return;
+	}
 
 	vector<bool> states_initialized(this->num_states);
 	for (int s_index = 0; s_index < this->num_states; s_index++) {
@@ -248,9 +259,6 @@ void Scope::activate(Problem& problem,
 	scope_context.push_back(this->id);
 	node_context.push_back(-1);
 	context_histories.push_back(history);
-
-	early_exit_depth = -1;
-	explore_exit_depth = -1;
 
 	if (is_loop) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
@@ -571,7 +579,11 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				// new explore
 				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
+				if (randuni() < 0.2) {
 
+				} else {
+
+				}
 
 				// simply let state stay as is
 			}
@@ -861,8 +873,13 @@ void Scope::backprop(vector<double>& state_errors,
 					 double final_sum_impact,
 					 double& predicted_score,
 					 double& scale_factor,
+					 double& scale_factor_error,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
+	if (history->exceeded_depth) {
+		return;
+	}
+
 	vector<bool> states_initialized;
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		states_initialized = vector<bool>(this->num_states);
@@ -887,8 +904,9 @@ void Scope::backprop(vector<double>& state_errors,
 		}
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			double predicted_score_error = target_val - predicted_score;
 			this->halt_score_network->backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				state_errors,
 				history->halt_score_network_history);
 
@@ -899,8 +917,12 @@ void Scope::backprop(vector<double>& state_errors,
 				state_errors,
 				history->halt_misguess_network_history);
 		} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+			double predicted_score_error = target_val - predicted_score;
+
+			scale_factor_error += history->halt_score_network_update*predicted_score_error;
+
 			this->halt_score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				0.002,
 				history->halt_score_network_history);
 
@@ -932,6 +954,7 @@ void Scope::backprop(vector<double>& state_errors,
 												 final_sum_impact,
 												 predicted_score,
 												 scale_factor,
+												 scale_factor_error,
 												 run_helper,
 												 history);
 					break;
@@ -946,6 +969,7 @@ void Scope::backprop(vector<double>& state_errors,
 											final_sum_impact,
 											predicted_score,
 											scale_factor,
+											scale_factor_error,
 											run_helper,
 											history);
 
@@ -959,8 +983,9 @@ void Scope::backprop(vector<double>& state_errors,
 			}
 
 			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+				double predicted_score_error = target_val - predicted_score;
 				this->continue_score_network->backprop_errors_with_no_weight_change(
-					target_val - predicted_score,
+					scale_factor*predicted_score_error,
 					state_errors,
 					history->continue_score_network_histories[iter_index]);
 
@@ -971,8 +996,12 @@ void Scope::backprop(vector<double>& state_errors,
 					state_errors,
 					history->continue_misguess_network_histories[iter_index]);
 			} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+				double predicted_score_error = target_val - predicted_score;
+
+				scale_factor_error += history->continue_score_network_updates[iter_index]*predicted_score_error;
+
 				this->continue_score_network->backprop_weights_with_no_error_signal(
-					target_val - predicted_score,
+					scale_factor*predicted_score_error,
 					0.002,
 					history->continue_score_network_histories[iter_index]);
 
@@ -1014,6 +1043,7 @@ void Scope::backprop(vector<double>& state_errors,
 											 final_sum_impact,
 											 predicted_score,
 											 scale_factor,
+											 scale_factor_error,
 											 run_helper,
 											 history);
 				break;
@@ -1028,6 +1058,7 @@ void Scope::backprop(vector<double>& state_errors,
 										final_sum_impact,
 										predicted_score,
 										scale_factor,
+										scale_factor_error,
 										run_helper,
 										history);
 
@@ -1047,6 +1078,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										double final_sum_impact,
 										double& predicted_score,
 										double& scale_factor,
+										double& scale_factor_error,
 										RunHelper& run_helper,
 										ScopeHistory* history) {
 	if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
@@ -1058,6 +1090,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							  final_sum_impact,
 							  predicted_score,
 							  scale_factor,
+							  scale_factor_error,
 							  run_helper,
 							  (ActionNodeHistory*)history->node_histories[iter_index][h_index]);
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
@@ -1069,6 +1102,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							 final_sum_impact,
 							 predicted_score,
 							 scale_factor,
+							 scale_factor_error,
 							 run_helper,
 							 (ScopeNodeHistory*)history->node_histories[iter_index][h_index]);
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_BRANCH) {
@@ -1077,6 +1111,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							  target_val,
 							  predicted_score,
 							  scale_factor,
+							  scale_factor_error,
 							  run_helper,
 							  (BranchNodeHistory*)history->node_histories[iter_index][h_index]);
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SCORE) {
@@ -1085,6 +1120,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 								  target_val,
 								  predicted_score,
 								  scale_factor,
+								  scale_factor_error,
 								  run_helper,
 								  (FoldScoreNodeHistory*)history->node_histories[iter_index][h_index]);
 
@@ -1162,6 +1198,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 									 final_sum_impact,
 									 predicted_score,
 									 scale_factor,
+									 scale_factor_error,
 									 run_helper,
 									 (FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index]);
 
@@ -1242,6 +1279,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 								 final_sum_impact,
 								 predicted_score,
 								 scale_factor,
+								 scale_factor_error,
 								 run_helper,
 								 (LoopFoldNodeHistory*)history->node_histories[iter_index][h_index]);
 
@@ -1317,6 +1355,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 													  new_scope_id,
 													  new_inner_input_indexes,
 													  new_inner_input_target_indexes,
+													  new Scale(1.0),
 													  vector<int>(),
 													  vector<StateNetwork*>(),
 													  new_score_network);
@@ -1381,19 +1420,21 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 										 double final_sum_impact,
 										 double& predicted_score,
 										 double& scale_factor,
+										 double& scale_factor_error,	// unused
 										 RunHelper& run_helper,
 										 ScopeHistory* history) {
 	if (history->explore_fold_history != NULL) {
 		Fold* fold = history->explore_fold_history->fold;
-		fold->backprop(state_errors,
-					   states_initialized,
-					   target_val,
-					   final_misguess,
-					   final_sum_impact,
-					   predicted_score,
-					   scale_factor,
-					   run_helper,
-					   history->explore_fold_history);
+		fold->sequence_backprop(state_errors,
+								states_initialized,
+								target_val,
+								final_misguess,
+								final_sum_impact,
+								predicted_score,
+								scale_factor,
+								scale_factor_error,	// unused
+								run_helper,
+								history->explore_fold_history);
 
 		if (fold->state == FOLD_STATE_EXPERIMENT_FAIL) {
 			Scope* score_scope = solution->scopes[fold->scope_context[0]];
@@ -1497,6 +1538,7 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 							final_sum_impact,
 							predicted_score,
 							scale_factor,
+							scale_factor_error,	// unused
 							run_helper,
 							history->explore_loop_fold_history);
 
@@ -1662,6 +1704,8 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->explore_node_index = -1;
 	this->explore_fold_history = NULL;
 	this->explore_loop_fold_history = NULL;
+
+	this->exceeded_depth = false;
 }
 
 ScopeHistory::~ScopeHistory() {
@@ -1694,4 +1738,21 @@ ScopeHistory::~ScopeHistory() {
 	if (this->explore_loop_fold_history != NULL) {
 		delete this->explore_loop_fold_history;
 	}
+}
+
+ScopeHistory* ScopeHistory::deep_copy_for_seed() {
+	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
+
+	for (int i_index = 0; i_index < (int)this->node_histories.size(); i_index++) {
+		new_scope_history->node_histories.push_back(vector<AbstractNodeHistory*>());
+		for (int h_index = 0; h_index < (int)this->node_histories[i_index].size(); h_index++) {
+			if (this->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION
+					|| this->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+				new_scope_history->node_histories.back().push_back(
+					this->node_histories[i_index][h_index]->deep_copy_for_seed());
+			}
+		}
+	}
+
+	return new_scope_history;
 }

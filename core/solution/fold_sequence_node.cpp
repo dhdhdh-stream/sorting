@@ -52,17 +52,19 @@ void FoldSequenceNode::backprop(vector<double>& state_errors,
 								double final_sum_impact,
 								double& predicted_score,
 								double& scale_factor,
+								double& scale_factor_error,
 								RunHelper& run_helper,
 								FoldSequenceNodeHistory* history) {
-	history->fold_history->fold->backprop(state_errors,
-										  states_initialized,
-										  target_val,
-										  final_misguess,
-										  final_sum_impact,
-										  predicted_score,
-										  scale_factor,
-										  run_helper,
-										  history->fold_history);
+	history->fold_history->fold->sequence_backprop(state_errors,
+												   states_initialized,
+												   target_val,
+												   final_misguess,
+												   final_sum_impact,
+												   predicted_score,
+												   scale_factor,
+												   scale_factor_error,
+												   run_helper,
+												   history->fold_history);
 }
 
 void FoldSequenceNode::save(ofstream& output_file,
@@ -78,5 +80,5 @@ FoldSequenceNodeHistory::FoldSequenceNodeHistory(FoldSequenceNode* node,
 }
 
 FoldSequenceNodeHistory::~FoldSequenceNodeHistory() {
-	delete this->fold_history;
+	// delete fold_history if needed in FoldScoreNodeHistory
 }

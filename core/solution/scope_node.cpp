@@ -12,6 +12,7 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 					 int inner_scope_id,
 					 vector<int> inner_input_indexes,
 					 vector<int> inner_input_target_indexes,
+					 Scale* scope_scale_mod,
 					 vector<int> post_state_network_target_indexes,
 					 vector<StateNetwork*> post_state_networks,
 					 StateNetwork* score_network) {
@@ -23,6 +24,7 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 	this->inner_scope_id = inner_scope_id;
 	this->inner_input_indexes = inner_input_indexes;
 	this->inner_input_target_indexes = inner_input_target_indexes;
+	this->scope_scale_mod = scope_scale_mod;
 
 	this->post_state_network_target_indexes = post_state_network_target_indexes;
 	this->post_state_networks = post_state_networks;
@@ -78,6 +80,10 @@ ScopeNode::ScopeNode(ifstream& input_file,
 		getline(input_file, input_target_indexes_line);
 		this->inner_input_target_indexes.push_back(stoi(input_target_indexes_line));
 	}
+
+	string scope_scale_mod_weight_line;
+	getline(input_file, scope_scale_mod_weight_line);
+	this->scope_scale_mod = new Scale(stof(scope_scale_mod_weight_line));
 
 	string post_state_networks_size_line;
 	getline(input_file, post_state_networks_size_line);
@@ -189,6 +195,8 @@ void ScopeNode::activate(Problem& problem,
 		}
 	}
 
+	scale_factor *= this->scope_scale_mod->weight;
+
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 	vector<double> scope_input_vals(inner_scope->num_states, 0.0);
 	vector<bool> scope_inputs_initialized(inner_scope->num_states, false);
@@ -223,6 +231,8 @@ void ScopeNode::activate(Problem& problem,
 			state_vals[this->inner_input_indexes[i_index]] = scope_input_vals[this->inner_input_target_indexes[i_index]];
 		}
 	}
+
+	scale_factor /= this->scope_scale_mod->weight;
 
 	if (early_exit_depth == -1 && explore_exit_depth == -1) {
 		history->inner_is_early_exit = false;
@@ -265,12 +275,14 @@ void ScopeNode::backprop(vector<double>& state_errors,
 						 double final_sum_impact,
 						 double& predicted_score,
 						 double& scale_factor,
+						 double& scale_factor_error,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
 	if (!history->inner_is_early_exit) {
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			double predicted_score_error = target_val - predicted_score;
 			this->score_network->backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				state_errors,
 				history->score_network_history);
 
@@ -296,14 +308,20 @@ void ScopeNode::backprop(vector<double>& state_errors,
 			this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
 			this->average_sum_impact = 0.9999*this->average_sum_impact + 0.0001*final_sum_impact;
 
+			double predicted_score_error = target_val - predicted_score;
+
+			scale_factor_error += history->score_network_update*predicted_score_error;
+
 			this->score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				0.002,
 				history->score_network_history);
 
 			predicted_score -= scale_factor*history->score_network_update;
 		}
 	}
+
+	scale_factor *= this->scope_scale_mod->weight;
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 	vector<double> scope_input_errors;
@@ -318,6 +336,7 @@ void ScopeNode::backprop(vector<double>& state_errors,
 			}
 		}
 	}
+	double scope_scale_factor_error = 0.0;
 	inner_scope->backprop(scope_input_errors,
 						  scope_inputs_initialized,
 						  target_val,
@@ -325,8 +344,12 @@ void ScopeNode::backprop(vector<double>& state_errors,
 						  final_sum_impact,
 						  predicted_score,
 						  scale_factor,
+						  scope_scale_factor_error,
 						  run_helper,
 						  history->inner_scope_history);
+
+	scale_factor /= this->scope_scale_mod->weight;
+
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		for (int i_index = 0; i_index < (int)this->inner_input_indexes.size(); i_index++) {
 			if (states_initialized[this->inner_input_indexes[i_index]]) {
@@ -342,6 +365,10 @@ void ScopeNode::backprop(vector<double>& state_errors,
 					history->pre_state_network_histories[s_index]);
 			}
 		}
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+		this->scope_scale_mod->backprop(scope_scale_factor_error, 0.0002);
+
+		scale_factor_error += this->scope_scale_mod->weight*scope_scale_factor_error;
 	}
 }
 
@@ -365,6 +392,8 @@ void ScopeNode::save(ofstream& output_file,
 		output_file << this->inner_input_indexes[i_index] << endl;
 		output_file << this->inner_input_target_indexes[i_index] << endl;
 	}
+
+	output_file << this->scope_scale_mod->weight << endl;
 
 	output_file << this->post_state_networks.size() << endl;
 	for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
@@ -418,4 +447,12 @@ ScopeNodeHistory::~ScopeNodeHistory() {
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
 	}
+}
+
+AbstractNodeHistory* ScopeNodeHistory::deep_copy_for_seed() {
+	ScopeNodeHistory* new_scope_node_history = new ScopeNodeHistory((ScopeNode*)this->node, this->scope_index);
+
+	new_scope_node_history->inner_scope_history = this->inner_scope_history->deep_copy_for_seed();
+
+	return new_scope_node_history;
 }

@@ -143,6 +143,8 @@ void FoldScoreNode::activate(vector<double>& state_vals,
 		if (this->fold_is_pass_through) {
 			history->is_existing = false;
 
+			history->fold_history = fold_history;
+
 			predicted_score += fold_score;
 
 			exit_depth = this->fold_exit_depth;
@@ -158,6 +160,8 @@ void FoldScoreNode::activate(vector<double>& state_vals,
 				delete existing_network_history;
 
 				history->is_existing = false;
+
+				history->fold_history = fold_history;
 
 				predicted_score += fold_score;
 
@@ -201,26 +205,38 @@ void FoldScoreNode::backprop(vector<double>& state_errors,
 							 double target_val,
 							 double& predicted_score,
 							 double& scale_factor,
+							 double& scale_factor_error,
 							 RunHelper& run_helper,
 							 FoldScoreNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		if (history->is_existing) {
+	if (history->is_existing) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+			double predicted_score_error = target_val - predicted_score;
 			this->existing_score_network->backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				state_errors,
 				history->existing_score_network_history);
 
 			predicted_score -= scale_factor*history->existing_score_network_update;
-		}
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-		if (history->is_existing) {
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+			double predicted_score_error = target_val - predicted_score;
+
+			scale_factor_error += history->existing_score_network_update*predicted_score_error;
+
 			this->existing_score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				0.002,
 				history->existing_score_network_history);
 
 			predicted_score -= scale_factor*history->existing_score_network_update;
 		}
+	} else {
+		this->fold->score_backprop(state_errors,
+								   target_val,
+								   predicted_score,
+								   scale_factor,
+								   scale_factor_error,
+								   run_helper,
+								   history->fold_history);
 	}
 }
 
@@ -259,10 +275,15 @@ FoldScoreNodeHistory::FoldScoreNodeHistory(FoldScoreNode* node,
 	this->scope_index = scope_index;
 
 	this->existing_score_network_history = NULL;
+	this->fold_history = NULL;
 }
 
 FoldScoreNodeHistory::~FoldScoreNodeHistory() {
 	if (this->existing_score_network_history != NULL) {
 		delete this->existing_score_network_history;
+	}
+
+	if (this->fold_history != NULL) {
+		delete this->fold_history;
 	}
 }

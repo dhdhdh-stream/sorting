@@ -10,6 +10,7 @@
 #include "action.h"
 #include "problem.h"
 #include "run_helper.h"
+#include "scale.h"
 #include "scope.h"
 #include "state_network.h"
 
@@ -63,7 +64,7 @@ public:
 	int sum_inner_inputs;
 	std::vector<int> inner_input_start_indexes;
 	std::vector<int> num_inner_inputs;	// keep track here fixed even if scope updates
-	// TODO: inner and ending scale_mods
+	std::vector<Scale*> inner_scope_scale_mods;	// don't split between curr and test for now
 
 	int state;
 	int state_iter;
@@ -94,7 +95,6 @@ public:
 	std::vector<bool> test_inner_inputs_needed;
 	// set state_networks_not_needed and state_not_needed_locally to match
 
-	int existing_sequence_length;
 	double* existing_average_score;
 	double* existing_score_variance;
 	double* existing_average_misguess;
@@ -167,7 +167,6 @@ public:
 		 std::vector<bool> is_inner_scope,
 		 std::vector<int> existing_scope_ids,
 		 std::vector<Action> actions,
-		 int existing_sequence_length,
 		 double* existing_average_score,
 		 double* existing_score_variance,
 		 double* existing_average_misguess,
@@ -196,15 +195,23 @@ public:
 						   double& sum_impact,
 						   RunHelper& run_helper,
 						   FoldHistory* history);
-	void backprop(std::vector<double>& state_errors,
-				  std::vector<bool>& states_initialized,
-				  double target_val,
-				  double final_misguess,
-				  double final_sum_impact,
-				  double& predicted_score,
-				  double& scale_factor,
-				  RunHelper& run_helper,
-				  FoldHistory* history);
+	void sequence_backprop(std::vector<double>& state_errors,
+						   std::vector<bool>& states_initialized,
+						   double target_val,
+						   double final_misguess,
+						   double final_sum_impact,
+						   double& predicted_score,
+						   double& scale_factor,
+						   double& scale_factor_error,
+						   RunHelper& run_helper,
+						   FoldHistory* history);
+	void score_backprop(std::vector<double>& state_errors,
+						double target_val,
+						double& predicted_score,
+						double& scale_factor,
+						double& scale_factor_error,
+						RunHelper& run_helper,
+						FoldHistory* history);
 
 	void experiment_increment();
 
@@ -364,15 +371,23 @@ public:
 								 double& sum_impact,
 								 RunHelper& run_helper,
 								 FoldHistory* history);
-	void clean_backprop(std::vector<double>& state_errors,
-						std::vector<bool>& states_initialized,
-						double target_val,
-						double final_misguess,
-						double final_sum_impact,
-						double& predicted_score,
-						double& scale_factor,
-						RunHelper& run_helper,
-						FoldHistory* history);
+	void clean_sequence_backprop(std::vector<double>& state_errors,
+								 std::vector<bool>& states_initialized,
+								 double target_val,
+								 double final_misguess,
+								 double final_sum_impact,
+								 double& predicted_score,
+								 double& scale_factor,
+								 double& scale_factor_error,
+								 RunHelper& run_helper,
+								 FoldHistory* history);
+	void clean_score_backprop(std::vector<double>& state_errors,
+							  double target_val,
+							  double& predicted_score,
+							  double& scale_factor,
+							  double& scale_factor_error,
+							  RunHelper& run_helper,
+							  FoldHistory* history);
 
 	void remove_inner_scope_end();
 	void remove_inner_scope_network_end();

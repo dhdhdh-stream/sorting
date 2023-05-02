@@ -14,7 +14,6 @@ Fold::Fold(vector<int> scope_context,
 		   vector<bool> is_inner_scope,
 		   vector<int> existing_scope_ids,
 		   vector<Action> actions,
-		   int existing_sequence_length,
 		   double* existing_average_score,
 		   double* existing_score_variance,
 		   double* existing_average_misguess,
@@ -33,7 +32,6 @@ Fold::Fold(vector<int> scope_context,
 	this->existing_scope_ids = existing_scope_ids;
 	this->actions = actions;
 
-	this->existing_sequence_length = existing_sequence_length;
 	this->existing_average_score = existing_average_score;
 	this->existing_score_variance = existing_score_variance;
 	this->existing_average_misguess = existing_average_misguess;
@@ -57,9 +55,11 @@ Fold::Fold(vector<int> scope_context,
 			this->inner_input_start_indexes.push_back(this->sum_inner_inputs);
 			this->num_inner_inputs.push_back(inner_scope->num_states);
 			this->sum_inner_inputs += inner_scope->num_states;
+			this->inner_scope_scale_mods.push_back(new Scale(1.0));
 		} else {
 			this->inner_input_start_indexes.push_back(-1);
 			this->num_inner_inputs.push_back(-1);
+			this->inner_scope_scale_mods.push_back(NULL);
 		}
 	}
 
@@ -158,9 +158,14 @@ Fold::Fold(ifstream& input_file,
 			getline(input_file, existing_scope_id_line);
 			this->existing_scope_ids.push_back(stoi(existing_scope_id_line));
 
+			string scope_scale_mod_weight_line;
+			getline(input_file, scope_scale_mod_weight_line);
+			this->inner_scope_scale_mods.push_back(new Scale(stof(scope_scale_mod_weight_line)));
+
 			this->actions.push_back(Action());
 		} else {
 			this->existing_scope_ids.push_back(-1);
+			this->inner_scope_scale_mods.push_back(NULL);
 
 			this->actions.push_back(Action(input_file));
 		}
@@ -581,18 +586,20 @@ void Fold::sequence_activate(Problem& problem,
 	}
 }
 
-void Fold::backprop(vector<double>& state_errors,
-					vector<bool>& states_initialized,
-					double target_val,
-					double final_misguess,
-					double final_sum_impact,
-					double& predicted_score,
-					double& scale_factor,
-					RunHelper& run_helper,
-					FoldHistory* history) {
+void Fold::sequence_backprop(vector<double>& state_errors,
+							 vector<bool>& states_initialized,
+							 double target_val,
+							 double final_misguess,
+							 double final_sum_impact,
+							 double& predicted_score,
+							 double& scale_factor,
+							 double& scale_factor_error,
+							 RunHelper& run_helper,
+							 FoldHistory* history) {
 	if (this->state == FOLD_STATE_EXPERIMENT
 			|| this->state == FOLD_STATE_ADD_OUTER_STATE
 			|| this->state == FOLD_STATE_ADD_INNER_STATE) {
+		// don't split between score and sequence for backprop for experiment
 		experiment_backprop(state_errors,
 							states_initialized,
 							target_val,
@@ -615,16 +622,33 @@ void Fold::backprop(vector<double>& state_errors,
 									run_helper,
 									history);
 	} else {
-		clean_backprop(state_errors,
-					   states_initialized,
-					   target_val,
-					   final_misguess,
-					   final_sum_impact,
-					   predicted_score,
-					   scale_factor,
-					   run_helper,
-					   history);
+		clean_sequence_backprop(state_errors,
+								states_initialized,
+								target_val,
+								final_misguess,
+								final_sum_impact,
+								predicted_score,
+								scale_factor,
+								scale_factor_error,
+								run_helper,
+								history);
 	}
+}
+
+void Fold::score_backprop(vector<double>& state_errors,
+						  double target_val,
+						  double& predicted_score,
+						  double& scale_factor,
+						  double& scale_factor_error,
+						  RunHelper& run_helper,
+						  FoldHistory* history) {
+	clean_score_backprop(state_errors,
+						 target_val,
+						 predicted_score,
+						 scale_factor,
+						 scale_factor_error,
+						 run_helper,
+						 history);
 }
 
 void Fold::experiment_increment() {
@@ -804,6 +828,8 @@ void Fold::save(ofstream& output_file,
 
 		if (this->is_inner_scope[f_index]) {
 			output_file << this->existing_scope_ids[f_index] << endl;
+
+			output_file << this->inner_scope_scale_mods[f_index] << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}

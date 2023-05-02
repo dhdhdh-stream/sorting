@@ -23,6 +23,8 @@ BranchNode::BranchNode(vector<int> branch_scope_context,
 	this->branch_next_node_id = branch_next_node_id;
 	this->original_score_network = original_score_network;
 	this->original_next_node_id = original_next_node_id;
+
+	this->branch_weight = 0.5;
 }
 
 BranchNode::BranchNode(ifstream& input_file,
@@ -68,6 +70,10 @@ BranchNode::BranchNode(ifstream& input_file,
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
+
+	string branch_weight_line;
+	getline(input_file, branch_weight_line);
+	this->branch_weight = stof(branch_weight_line);
 }
 
 BranchNode::~BranchNode() {
@@ -168,29 +174,40 @@ void BranchNode::backprop(vector<double>& state_errors,
 						  double target_val,
 						  double& predicted_score,
 						  double& scale_factor,
+						  double& scale_factor_error,
 						  RunHelper& run_helper,
 						  BranchNodeHistory* history) {
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		if (history->is_branch) {
+			double predicted_score_error = target_val - predicted_score;
 			this->branch_score_network->backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				state_errors,
 				history->score_network_history);
 		} else {
+			double predicted_score_error = target_val - predicted_score;
 			this->original_score_network->backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				state_errors,
 				history->score_network_history);
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+		double predicted_score_error = target_val - predicted_score;
+
+		scale_factor_error += history->score_network_update*predicted_score_error;
+
 		if (history->is_branch) {
+			this->branch_weight = 0.9999*this->branch_weight + 1.0;
+
 			this->branch_score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				0.002,
 				history->score_network_history);
 		} else {
+			this->branch_weight = 0.9999*this->branch_weight + 0.0;
+
 			this->original_score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				0.002,
 				history->score_network_history);
 		}
@@ -223,6 +240,8 @@ void BranchNode::save(ofstream& output_file,
 	original_score_network_save_file.close();
 
 	output_file << this->original_next_node_id << endl;
+
+	output_file << this->branch_weight << endl;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node,

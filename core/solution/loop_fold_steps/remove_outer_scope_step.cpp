@@ -475,6 +475,8 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 						}
 					}
 
+					scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
 					Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 					int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
@@ -567,6 +569,8 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 							test_new_inner_state_vals[this->sum_inner_inputs+i_index] = test_new_state_vals[i_index];
 						}
 					}
+
+					scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 
 					for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
 							i_index < this->sum_inner_inputs + this->curr_num_new_inner_states; i_index++) {

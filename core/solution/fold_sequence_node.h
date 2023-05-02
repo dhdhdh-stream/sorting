@@ -34,6 +34,7 @@ public:
 				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  FoldSequenceNodeHistory* history);
 

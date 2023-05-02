@@ -157,11 +157,13 @@ void ActionNode::backprop(vector<double>& state_errors,
 						  double final_sum_impact,
 						  double& predicted_score,
 						  double& scale_factor,
+						  double& scale_factor_error,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+		double predicted_score_error = target_val - predicted_score;
 		this->score_network->backprop_errors_with_no_weight_change(
-			target_val - predicted_score,
+			scale_factor*predicted_score_error,
 			state_errors,
 			history->score_network_history);
 
@@ -187,8 +189,12 @@ void ActionNode::backprop(vector<double>& state_errors,
 		this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
 		this->average_sum_impact = 0.9999*this->average_sum_impact + 0.0001*final_sum_impact;
 
+		double predicted_score_error = target_val - predicted_score;
+
+		scale_factor_error += history->score_network_update*predicted_score_error;
+
 		this->score_network->backprop_weights_with_no_error_signal(
-			target_val - predicted_score,
+			scale_factor*predicted_score_error,
 			0.002,
 			history->score_network_history);
 
@@ -241,4 +247,13 @@ ActionNodeHistory::~ActionNodeHistory() {
 	}
 
 	delete this->score_network_history;
+}
+
+AbstractNodeHistory* ActionNodeHistory::deep_copy_for_seed() {
+	ActionNodeHistory* new_action_node_history = new ActionNodeHistory((ActionNode*)this->node, this->scope_index);
+
+	new_action_node_history->obs_snapshot = this->obs_snapshot;
+	new_action_node_history->ending_state_snapshot = this->ending_state_snapshot;
+
+	return new_action_node_history;
 }

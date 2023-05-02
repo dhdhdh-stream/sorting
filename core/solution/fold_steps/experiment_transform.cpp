@@ -58,12 +58,6 @@ void Fold::experiment_end() {
 			&& this->is_recursive == 0) {
 		cout << "FOLD_RESULT_REPLACE" << endl;
 		this->experiment_result = FOLD_RESULT_REPLACE;
-	} else if (this->sequence_length < this->existing_sequence_length
-			&& replace_improvement_t_value > 0.0
-			&& misguess_improvement_t_value > 0.0
-			&& this->is_recursive == 0) {
-		cout << "FOLD_RESULT_REPLACE" << endl;
-		this->experiment_result = FOLD_RESULT_REPLACE;
 	} else {
 		cout << "FOLD_RESULT_FAIL" << endl;
 		this->experiment_result = FOLD_RESULT_FAIL;

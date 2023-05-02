@@ -107,6 +107,7 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 											inner_scope_id,
 											inner_input_indexes,
 											inner_input_target_indexes,
+											loop_fold->inner_scope_scale_mods[f_index],
 											post_state_network_target_indexes,
 											post_state_networks,
 											score_network);

@@ -53,6 +53,7 @@ public:
 				  double target_val,
 				  double& predicted_score,
 				  double& scale_factor,
+				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  BranchNodeHistory* history);
 

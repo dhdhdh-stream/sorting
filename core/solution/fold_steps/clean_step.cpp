@@ -286,6 +286,8 @@ void Fold::clean_sequence_activate(Problem& problem,
 				}
 			}
 
+			scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 			int num_input_states_diff = inner_scope->num_states - this->num_inner_inputs[f_index];
 
@@ -398,6 +400,8 @@ void Fold::clean_sequence_activate(Problem& problem,
 					}
 				}
 			}
+
+			scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 
 			// update back state so have chance to compress front after
 			for (int i_index = this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index];
@@ -711,15 +715,16 @@ void Fold::clean_sequence_activate(Problem& problem,
 	}
 }
 
-void Fold::clean_backprop(vector<double>& state_errors,
-						  vector<bool>& states_initialized,
-						  double target_val,
-						  double final_misguess,
-						  double final_sum_impact,
-						  double& predicted_score,
-						  double& scale_factor,
-						  RunHelper& run_helper,
-						  FoldHistory* history) {
+void Fold::clean_sequence_backprop(vector<double>& state_errors,
+								   vector<bool>& states_initialized,
+								   double target_val,
+								   double final_misguess,
+								   double final_sum_impact,
+								   double& predicted_score,
+								   double& scale_factor,
+								   double& scale_factor_error,
+								   RunHelper& run_helper,
+								   FoldHistory* history) {
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		vector<double> new_inner_state_errors(this->sum_inner_inputs+this->curr_num_new_inner_states, 0.0);
 		vector<double> new_outer_state_errors(this->curr_num_new_outer_states, 0.0);
@@ -729,8 +734,9 @@ void Fold::clean_backprop(vector<double>& state_errors,
 				new_inner_state_errors[i_index] = 0.0;
 			}
 
+			double predicted_score_error = target_val - predicted_score;
 			this->curr_score_networks[f_index]->new_sequence_backprop_errors_with_no_weight_change(
-				target_val - predicted_score,
+				scale_factor*predicted_score_error,
 				new_inner_state_errors,
 				state_errors,
 				new_outer_state_errors,
@@ -766,6 +772,8 @@ void Fold::clean_backprop(vector<double>& state_errors,
 							history->state_network_histories[f_index][i_index]);
 					}
 				}
+
+				scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
 
 				vector<double> new_state_errors;
 				for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
@@ -803,6 +811,7 @@ void Fold::clean_backprop(vector<double>& state_errors,
 					this->curr_inner_inputs_needed.begin() + this->inner_input_start_indexes[f_index] + this->num_inner_inputs[f_index]);
 				inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
+				double scope_scale_factor_error = 0.0;	// unused
 				inner_scope->backprop(inner_input_errors,
 									  inner_inputs_initialized,
 									  target_val,
@@ -810,6 +819,7 @@ void Fold::clean_backprop(vector<double>& state_errors,
 									  final_sum_impact,
 									  predicted_score,
 									  scale_factor,
+									  scope_scale_factor_error,
 									  run_helper,
 									  history->inner_scope_histories[f_index]);
 
@@ -818,6 +828,8 @@ void Fold::clean_backprop(vector<double>& state_errors,
 						new_inner_state_errors[this->inner_input_start_indexes[f_index] + i_index] = inner_input_errors[i_index];
 					}
 				}
+
+				scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 
 				for (int i_index = this->inner_input_start_indexes[f_index]+this->num_inner_inputs[f_index]-1; i_index >= 0; i_index--) {
 					// state_networks_not_needed already set in correspondence with inner_inputs_needed
@@ -862,21 +874,27 @@ void Fold::clean_backprop(vector<double>& state_errors,
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
 		if (history->state_iter_snapshot <= this->state_iter) {
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
+				double predicted_score_error = target_val - predicted_score;
+
+				scale_factor_error += history->score_network_updates[f_index]*predicted_score_error;
+
 				this->curr_score_networks[f_index]->backprop_weights_with_no_error_signal(
-					target_val - predicted_score,
+					scale_factor*predicted_score_error,
 					0.002,
 					history->score_network_histories[f_index]);
 
 				predicted_score -= scale_factor*history->score_network_updates[f_index];
 
 				if (this->is_inner_scope[f_index]) {
+					scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
 					Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 					
 					// unused
 					vector<double> inner_input_errors;
 					vector<bool> inner_inputs_initialized;
 
-					// TODO: calc scale_factor_error
+					double scope_scale_factor_error = 0.0;
 					inner_scope->backprop(inner_input_errors,
 										  inner_inputs_initialized,
 										  target_val,
@@ -884,19 +902,48 @@ void Fold::clean_backprop(vector<double>& state_errors,
 										  final_sum_impact,
 										  predicted_score,
 										  scale_factor,
+										  scope_scale_factor_error,
 										  run_helper,
 										  history->inner_scope_histories[f_index]);
+
+					scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
+
+					this->inner_scope_scale_mods[f_index]->backprop(scope_scale_factor_error, 0.0002);
+
+					scale_factor_error += this->inner_scope_scale_mods[f_index]->weight*scope_scale_factor_error;
 				}
 			}
-
-			this->curr_starting_score_network->backprop_weights_with_no_error_signal(
-				target_val - predicted_score,
-				0.002,
-				history->starting_score_network_history);
-
-			predicted_score -= scale_factor*history->starting_score_update;
-
-			clean_increment();
 		}
+	}
+}
+
+void Fold::clean_score_backprop(vector<double>& state_errors,
+								double target_val,
+								double& predicted_score,
+								double& scale_factor,
+								double& scale_factor_error,
+								RunHelper& run_helper,
+								FoldHistory* history) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+		double predicted_score_error = target_val - predicted_score;
+		this->curr_starting_score_network->backprop_errors_with_no_weight_change(
+			scale_factor*predicted_score_error,
+			state_errors,
+			history->starting_score_network_history);
+
+		predicted_score -= scale_factor*history->starting_score_update;
+	} else {
+		double predicted_score_error = target_val - predicted_score;
+
+		scale_factor_error += history->starting_score_update*predicted_score_error;
+
+		this->curr_starting_score_network->backprop_weights_with_no_error_signal(
+			scale_factor*predicted_score_error,
+			0.002,
+			history->starting_score_network_history);
+
+		predicted_score -= scale_factor*history->starting_score_update;
+
+		clean_increment();
 	}
 }

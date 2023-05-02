@@ -40,9 +40,11 @@ LoopFold::LoopFold(vector<int> scope_context,
 			this->inner_input_start_indexes.push_back(this->sum_inner_inputs);
 			this->num_inner_inputs.push_back(inner_scope->num_states);
 			this->sum_inner_inputs += inner_scope->num_states;
+			this->inner_scope_scale_mods.push_back(new Scale(1.0));
 		} else {
 			this->inner_input_start_indexes.push_back(-1);
 			this->num_inner_inputs.push_back(-1);
+			this->inner_scope_scale_mods.push_back(NULL);
 		}
 	}
 
@@ -160,9 +162,14 @@ LoopFold::LoopFold(ifstream& input_file,
 			getline(input_file, existing_scope_id_line);
 			this->existing_scope_ids.push_back(stoi(existing_scope_id_line));
 
+			string scope_scale_mod_weight_line;
+			getline(input_file, scope_scale_mod_weight_line);
+			this->inner_scope_scale_mods.push_back(new Scale(stof(scope_scale_mod_weight_line)));
+
 			this->actions.push_back(Action());
 		} else {
 			this->existing_scope_ids.push_back(-1);
+			this->inner_scope_scale_mods.push_back(NULL);
 
 			this->actions.push_back(Action(input_file));
 		}
@@ -574,6 +581,7 @@ void LoopFold::backprop(vector<double>& state_errors,
 						double final_sum_impact,
 						double& predicted_score,
 						double& scale_factor,
+						double& scale_factor_error,
 						RunHelper& run_helper,
 						LoopFoldHistory* history) {
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
@@ -615,6 +623,7 @@ void LoopFold::backprop(vector<double>& state_errors,
 					   final_sum_impact,
 					   predicted_score,
 					   scale_factor,
+					   scale_factor_error,
 					   run_helper,
 					   history);
 	}
@@ -797,6 +806,8 @@ void LoopFold::save(ofstream& output_file,
 
 		if (this->is_inner_scope[f_index]) {
 			output_file << this->existing_scope_ids[f_index] << endl;
+
+			output_file << this->inner_scope_scale_mods[f_index] << endl;
 		} else {
 			this->actions[f_index].save(output_file);
 		}
