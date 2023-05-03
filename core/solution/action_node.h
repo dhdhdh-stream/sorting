@@ -33,7 +33,7 @@ public:
 	int explore_curr_try;
 	int explore_target_tries;
 	double best_explore_surprise;
-	std::vector<int> best_explore_scope_context;	// TODO: select randomly with decreasing probability to go outer
+	std::vector<int> best_explore_scope_context;
 	std::vector<int> best_explore_node_context;
 	bool best_explore_is_loop;
 	int best_explore_exit_depth;
@@ -42,6 +42,7 @@ public:
 	std::vector<int> best_explore_existing_scope_ids;
 	std::vector<Action> best_explore_actions;
 	double best_explore_seed_start_predicted_score;
+	double best_explore_seed_start_scale_factor;
 	std::vector<double> best_explore_seed_state_vals_snapshot;
 	ScopeHistory* best_explore_seed_outer_context_history;	// deep copy before continuing past explore node
 

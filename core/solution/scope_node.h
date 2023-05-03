@@ -38,8 +38,21 @@ public:
 	double average_impact;
 	double average_sum_impact;
 
-	// TODO: add batch surprise and seeding
-	std::vector<Action> explore_sequence;
+	int explore_curr_try;
+	int explore_target_tries;
+	double best_explore_surprise;
+	std::vector<int> best_explore_scope_context;
+	std::vector<int> best_explore_node_context;
+	bool best_explore_is_loop;
+	int best_explore_exit_depth;
+	int best_explore_next_node_id;
+	std::vector<bool> best_explore_is_inner_scope;
+	std::vector<int> best_explore_existing_scope_ids;
+	std::vector<Action> best_explore_actions;
+	double best_explore_seed_start_predicted_score;
+	double best_explore_seed_start_scale_factor;
+	std::vector<double> best_explore_seed_state_vals_snapshot;
+	ScopeHistory* best_explore_seed_outer_context_history;	// deep copy before continuing past explore node
 
 	std::vector<int> explore_scope_context;
 	std::vector<int> explore_node_context;

@@ -111,6 +111,26 @@ public:
 									 double& scale_factor_error,
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
+
+	void explore_new_loop(int curr_node_id,
+						  Problem& problem,
+						  double& predicted_score,
+						  std::vector<int>& scope_context,
+						  std::vector<int>& node_context,
+						  std::vector<ScopeHistory*>& context_histories,
+						  RunHelper& run_helper);
+	void explore_new_path(int curr_node_id,
+						  int next_node_id,
+						  Problem& problem,
+						  std::vector<double>& state_vals,
+						  double& predicted_score,
+						  double& scale_factor,
+						  std::vector<int>& scope_context,
+						  std::vector<int>& node_context,
+						  std::vector<ScopeHistory*>& context_histories,
+						  int& new_explore_exit_depth,
+						  int& new_explore_exit_node_id,
+						  RunHelper& run_helper);
 	void backprop_explore_fold_helper(std::vector<double>& state_errors,
 									  std::vector<bool>& states_initialized,
 									  double target_val,

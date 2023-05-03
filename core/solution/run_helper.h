@@ -21,7 +21,6 @@ public:
 	bool explore_is_loop;
 	int explore_exit_depth;
 	int explore_next_node_id;
-	int explore_sequence_length;
 	std::vector<bool> explore_is_inner_scope;
 	std::vector<int> explore_existing_scope_ids;
 	std::vector<Action> explore_actions;

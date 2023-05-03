@@ -445,6 +445,8 @@ void Scope::activate(Problem& problem,
 	scope_context.pop_back();
 	node_context.pop_back();
 	context_histories.pop_back();
+
+	run_helper.curr_depth--;
 }
 
 bool Scope::handle_node_activate_helper(int iter_index,
@@ -537,6 +539,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						explore_exit_fold_history = fold_history;
 						return true;
 					}
+				} else {
+					curr_node_id = action_node->next_node_id;
 				}
 			} else if (action_node->explore_loop_fold != NULL) {
 				bool matches_context = true;
@@ -575,21 +579,62 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 					// explore_next_node_id is just action_node->next_node_id
 				}
+
+				curr_node_id = action_node->next_node_id;
 			} else {
 				// new explore
 				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-				if (randuni() < 0.2) {
+				if (randuni() < 0.3) {
+					node_context.back() = curr_node_id;
 
+					explore_new_loop(curr_node_id,
+									 problem,
+									 predicted_score,
+									 scope_context,
+									 node_context,
+									 context_histories,
+									 run_helper);
+
+					node_context.back() = -1;
+
+					// simply let state stay as is
+
+					curr_node_id = action_node->next_node_id;
 				} else {
+					node_context.back() = curr_node_id;
 
+					int new_explore_exit_depth;
+					int new_explore_exit_node_id;
+					explore_new_path(curr_node_id,
+									 action_node->next_node_id,
+									 problem,
+									 state_vals,
+									 predicted_score,
+									 scale_factor,
+									 scope_context,
+									 node_context,
+									 context_histories,
+									 new_explore_exit_depth,
+									 new_explore_exit_node_id,
+									 run_helper);
+
+					node_context.back() = -1;
+
+					// simply let state stay as is
+
+					if (new_explore_exit_depth == 0) {
+						curr_node_id = new_explore_exit_node_id;
+					} else {
+						early_exit_depth = new_explore_exit_depth;
+						early_exit_node_id = new_explore_exit_node_id;
+						return true;
+					}
 				}
-
-				// simply let state stay as is
 			}
+		} else {
+			curr_node_id = action_node->next_node_id;
 		}
-
-		curr_node_id = action_node->next_node_id;
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_INNER_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
@@ -712,6 +757,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							explore_exit_fold_history = fold_history;
 							return true;
 						}
+					} else {
+						curr_node_id = scope_node->next_node_id;
 					}
 				} else if (scope_node->explore_loop_fold != NULL) {
 					bool matches_context = true;
@@ -750,15 +797,60 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 						// explore_next_node_id is just scope_node->next_node_id
 					}
+
+					curr_node_id = scope_node->next_node_id;
 				} else {
 					// new explore
-					// run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
+					run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
+					if (randuni() < 0.3) {
+						node_context.back() = curr_node_id;
 
+						explore_new_loop(curr_node_id,
+										 problem,
+										 predicted_score,
+										 scope_context,
+										 node_context,
+										 context_histories,
+										 run_helper);
+
+						node_context.back() = -1;
+
+						// simply let state stay as is
+
+						curr_node_id = scope_node->next_node_id;
+					} else {
+						node_context.back() = curr_node_id;
+
+						int new_explore_exit_depth;
+						int new_explore_exit_node_id;
+						explore_new_path(curr_node_id,
+										 scope_node->next_node_id,
+										 problem,
+										 state_vals,
+										 predicted_score,
+										 scale_factor,
+										 scope_context,
+										 node_context,
+										 context_histories,
+										 new_explore_exit_depth,
+										 new_explore_exit_node_id,
+										 run_helper);
+
+						node_context.back() = -1;
+
+						// simply let state stay as is
+
+						if (new_explore_exit_depth == 0) {
+							curr_node_id = new_explore_exit_node_id;
+						} else {
+							early_exit_depth = new_explore_exit_depth;
+							early_exit_node_id = new_explore_exit_node_id;
+							return true;
+						}
+					}
 				}
 			}
-
-			curr_node_id = scope_node->next_node_id;
 		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
@@ -1411,6 +1503,204 @@ void Scope::handle_node_backprop_helper(int iter_index,
 			// delete loop_fold_node along with loop_fold
 		}
 	}
+}
+
+void Scope::explore_new_loop(int curr_node_id,
+							 Problem& problem,
+							 double& predicted_score,
+							 vector<int>& scope_context,
+							 vector<int>& node_context,
+							 vector<ScopeHistory*>& context_histories,
+							 RunHelper& run_helper) {
+	vector<bool> explore_is_inner_scope;
+	vector<int> explore_existing_scope_ids;
+	vector<Action> explore_actions;
+	solution->backtrack_for_loop(context_histories,
+								 explore_is_inner_scope,
+								 explore_existing_scope_ids,
+								 explore_actions);
+
+	int num_iters = 2 + rand()%3;	// 3-5
+	for (int i_index = 0; i_index < num_iters; i_index++) {
+		for (int f_index = 0; f_index < (int)explore_is_inner_scope.size(); f_index++) {
+			if (explore_is_inner_scope[f_index]) {
+				Scope* inner_scope = solution->scopes[explore_existing_scope_ids[f_index]];
+
+				vector<double> inner_input_vals(inner_scope->num_states, 0.0);
+				vector<bool> inner_inputs_initialized(inner_scope->num_states, false);
+
+				// unused
+				double inner_predicted_score = 0.0;
+				double inner_scale_factor = 1.0;
+				double inner_sum_impact = 0.0;
+				vector<int> inner_scope_context;
+				vector<int> inner_node_context;
+				vector<ScopeHistory*> inner_context_histories;
+				int inner_early_exit_depth;
+				int inner_early_exit_node_id;
+				FoldHistory* inner_early_exit_fold_history;
+				int inner_explore_exit_depth;
+				int inner_explore_exit_node_id;
+				FoldHistory* inner_explore_exit_fold_history;
+
+				ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+				inner_scope->activate(problem,
+									  inner_input_vals,
+									  inner_inputs_initialized,
+									  inner_predicted_score,
+									  inner_scale_factor,
+									  inner_sum_impact,
+									  inner_scope_context,
+									  inner_node_context,
+									  inner_context_histories,
+									  inner_early_exit_depth,
+									  inner_early_exit_node_id,
+									  inner_early_exit_fold_history,
+									  inner_explore_exit_depth,
+									  inner_explore_exit_node_id,
+									  inner_explore_exit_fold_history,
+									  run_helper,
+									  scope_history);
+				delete scope_history;
+			} else {
+				problem.perform_action(explore_actions[f_index]);
+			}
+		}
+	}
+
+	vector<int> explore_scope_context;
+	vector<int> explore_node_context;
+	geometric_distribution<int> num_context_geo_dist(0.5);
+	int num_contexts = 1 + num_context_geo_dist(generator);
+	if (num_contexts > (int)scope_context.size()) {
+		num_contexts = (int)scope_context.size();
+	}
+	for (int c_index = 0; c_index < num_contexts; c_index++) {
+		explore_scope_context.push_back((int)scope_context.size()-c_index);
+		explore_node_context.push_back((int)node_context.size()-c_index);
+	}
+
+	run_helper.explore_scope_id = this->id;
+	run_helper.explore_node_id = curr_node_id;
+	run_helper.explore_scope_context = explore_scope_context;
+	run_helper.explore_node_context = explore_node_context;
+	run_helper.explore_is_loop = true;
+	run_helper.explore_is_inner_scope = explore_is_inner_scope;
+	run_helper.explore_existing_scope_ids = explore_existing_scope_ids;
+	run_helper.explore_actions = explore_actions;
+	run_helper.explore_seed_start_predicted_score = predicted_score;
+}
+
+void Scope::explore_new_path(int curr_node_id,
+							 int next_node_id,
+							 Problem& problem,
+							 vector<double>& state_vals,
+							 double& predicted_score,
+							 double& scale_factor,
+							 vector<int>& scope_context,
+							 vector<int>& node_context,
+							 vector<ScopeHistory*>& context_histories,
+							 int& new_explore_exit_depth,
+							 int& new_explore_exit_node_id,
+							 RunHelper& run_helper) {
+	vector<int> potential_exit_depths;
+	vector<int> potential_next_node_ids;
+	solution->random_run_continuation(next_node_id,
+									  scope_context,
+									  node_context,
+									  potential_exit_depths,
+									  potential_next_node_ids);
+
+	int random_exit_index = rand()%(int)potential_exit_depths.size();
+	bool can_be_empty;
+	if (random_exit_index == 0) {
+		can_be_empty = false;
+	} else {
+		can_be_empty = true;
+	}
+
+	vector<bool> explore_is_inner_scope;
+	vector<int> explore_existing_scope_ids;
+	vector<Action> explore_actions;
+	solution->new_sequence(explore_is_inner_scope,
+						   explore_existing_scope_ids,
+						   explore_actions,
+						   can_be_empty);
+
+	for (int f_index = 0; f_index < (int)explore_is_inner_scope.size(); f_index++) {
+		if (explore_is_inner_scope[f_index]) {
+			Scope* inner_scope = solution->scopes[explore_existing_scope_ids[f_index]];
+
+			vector<double> inner_input_vals(inner_scope->num_states, 0.0);
+			vector<bool> inner_inputs_initialized(inner_scope->num_states, false);
+
+			// unused
+			double inner_predicted_score = 0.0;
+			double inner_scale_factor = 1.0;
+			double inner_sum_impact = 0.0;
+			vector<int> inner_scope_context;
+			vector<int> inner_node_context;
+			vector<ScopeHistory*> inner_context_histories;
+			int inner_early_exit_depth;
+			int inner_early_exit_node_id;
+			FoldHistory* inner_early_exit_fold_history;
+			int inner_explore_exit_depth;
+			int inner_explore_exit_node_id;
+			FoldHistory* inner_explore_exit_fold_history;
+
+			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+			inner_scope->activate(problem,
+								  inner_input_vals,
+								  inner_inputs_initialized,
+								  inner_predicted_score,
+								  inner_scale_factor,
+								  inner_sum_impact,
+								  inner_scope_context,
+								  inner_node_context,
+								  inner_context_histories,
+								  inner_early_exit_depth,
+								  inner_early_exit_node_id,
+								  inner_early_exit_fold_history,
+								  inner_explore_exit_depth,
+								  inner_explore_exit_node_id,
+								  inner_explore_exit_fold_history,
+								  run_helper,
+								  scope_history);
+			delete scope_history;
+		} else {
+			problem.perform_action(explore_actions[f_index]);
+		}
+	}
+
+	vector<int> explore_scope_context;
+	vector<int> explore_node_context;
+	geometric_distribution<int> num_context_geo_dist(0.5);
+	int num_contexts = 1 + potential_exit_depths[random_exit_index] + num_context_geo_dist(generator);
+	if (num_contexts > (int)scope_context.size()) {
+		num_contexts = (int)scope_context.size();
+	}
+	for (int c_index = 0; c_index < num_contexts; c_index++) {
+		explore_scope_context.push_back((int)scope_context.size()-c_index);
+		explore_node_context.push_back((int)node_context.size()-c_index);
+	}
+
+	run_helper.explore_scope_id = this->id;
+	run_helper.explore_node_id = curr_node_id;
+	run_helper.explore_scope_context = explore_scope_context;
+	run_helper.explore_node_context = explore_node_context;
+	run_helper.explore_is_loop = false;
+	run_helper.explore_exit_depth = potential_exit_depths[random_exit_index];
+	run_helper.explore_next_node_id = potential_next_node_ids[random_exit_index];
+	run_helper.explore_is_inner_scope = explore_is_inner_scope;
+	run_helper.explore_existing_scope_ids = explore_existing_scope_ids;
+	run_helper.explore_actions = explore_actions;
+	run_helper.explore_seed_start_predicted_score = predicted_score;
+	run_helper.explore_seed_start_scale_factor = scale_factor;
+	run_helper.explore_seed_state_vals_snapshot = state_vals;
+	run_helper.explore_seed_outer_context_history = context_histories[(int)context_histories.size()-num_contexts]->deep_copy_for_seed();
+
+	new_explore_exit_depth = potential_exit_depths[random_exit_index];
+	new_explore_exit_node_id = potential_next_node_ids[random_exit_index];
 }
 
 void Scope::backprop_explore_fold_helper(vector<double>& state_errors,

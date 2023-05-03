@@ -39,6 +39,15 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 	this->average_impact = 0.0;
 	this->average_sum_impact = 0.0;
 
+	this->explore_curr_try = 0;
+	this->explore_target_tries = 1;
+	int rand_scale = rand()%4;
+	for (int i = 0; i < rand_scale; i++) {
+		this->explore_target_tries *= 10;
+	}
+	this->best_explore_surprise = numeric_limits<double>::lowest();
+	this->best_explore_seed_outer_context_history = NULL;
+
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;
 	this->explore_fold = NULL;
@@ -131,6 +140,15 @@ ScopeNode::ScopeNode(ifstream& input_file,
 	string average_sum_impact_line;
 	getline(input_file, average_sum_impact_line);
 	this->average_sum_impact = stod(average_sum_impact_line);
+
+	this->explore_curr_try = 0;
+	this->explore_target_tries = 1;
+	int rand_scale = rand()%4;
+	for (int i = 0; i < rand_scale; i++) {
+		this->explore_target_tries *= 10;
+	}
+	this->best_explore_surprise = numeric_limits<double>::lowest();
+	this->best_explore_seed_outer_context_history = NULL;
 
 	this->explore_exit_depth = -1;
 	this->explore_next_node_id = -1;

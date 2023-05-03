@@ -404,25 +404,24 @@ void Solution::random_run_continuation_helper(int scope_id,
 	node_context.pop_back();
 }
 
-void Solution::random_run_continuation(int explore_scope_id,
-									   int explore_node_next_node_id,
+void Solution::random_run_continuation(int explore_node_next_node_id,
 									   vector<int>& scope_context,
 									   vector<int>& node_context,
-									   vector<int>& explore_exit_depths,
-									   vector<int>& explore_next_node_ids) {
-	int starting_scope_index = (int)scope_context.size()+1;
+									   vector<int>& potential_exit_depths,
+									   vector<int>& potential_next_node_ids) {
+	int starting_scope_index = (int)scope_context.size()-1;
 	int curr_scope_index = starting_scope_index;
 
 	vector<int> curr_scope_context = scope_context;
 	vector<int> curr_node_context = node_context;
 
-	Scope* scope = this->scopes[explore_scope_id];
+	Scope* scope = this->scopes[scope_context[starting_scope_index]];
 	int curr_node_id = explore_node_next_node_id;
-	
+
 	while (curr_scope_index >= 0) {
 		while (true) {
-			explore_exit_depths.push_back(starting_scope_index - curr_scope_index);
-			explore_next_node_ids.push_back(curr_node_id);
+			potential_exit_depths.push_back(starting_scope_index - curr_scope_index);
+			potential_next_node_ids.push_back(curr_node_id);
 
 			if (curr_node_id == -1) {
 				curr_scope_index--;

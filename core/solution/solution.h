@@ -37,12 +37,11 @@ public:
 										std::vector<int>& node_context,
 										int& early_exit_depth,
 										int& early_exit_node_id);
-	void random_run_continuation(int explore_scope_id,
-								 int explore_node_next_node_id,
+	void random_run_continuation(int explore_node_next_node_id,
 								 std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
-								 std::vector<int>& explore_exit_depths,
-								 std::vector<int>& explore_next_node_ids);
+								 std::vector<int>& potential_exit_depths,
+								 std::vector<int>& potential_next_node_ids);
 
 	void backtrack_for_loop_helper(ScopeHistory* scope_history,
 								   int& remaining_length,

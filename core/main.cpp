@@ -3,7 +3,9 @@
 #include <thread>
 #include <random>
 
+#include "action_node.h"
 #include "constants.h"
+#include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
@@ -85,7 +87,175 @@ int main(int argc, char* argv[]) {
 		double final_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
-			// add fold
+			double curr_surprise = target_val - run_helper.explore_seed_start_predicted_score;
+			if (solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id];
+
+				action_node->explore_curr_try++;
+				if (curr_surprise > action_node->best_explore_surprise) {
+					action_node->best_explore_surprise = curr_surprise;
+					action_node->best_explore_scope_context = run_helper.explore_scope_context;
+					action_node->best_explore_node_context = run_helper.explore_node_context;
+					action_node->best_explore_is_loop = run_helper.explore_is_loop;
+					action_node->best_explore_is_inner_scope = run_helper.explore_is_inner_scope;
+					action_node->best_explore_existing_scope_ids = run_helper.explore_existing_scope_ids;
+					action_node->best_explore_actions = run_helper.explore_actions;
+
+					if (action_node->best_explore_seed_outer_context_history != NULL) {
+						delete action_node->best_explore_seed_outer_context_history;
+					}
+
+					if (run_helper.explore_is_loop) {
+						action_node->best_explore_exit_depth = -1;
+						action_node->best_explore_next_node_id = -1;
+						action_node->best_explore_seed_start_predicted_score = 0.0;
+						action_node->best_explore_seed_start_scale_factor = 0.0;
+						action_node->best_explore_seed_state_vals_snapshot.clear();
+						action_node->best_explore_seed_outer_context_history = NULL;
+					} else {
+						action_node->best_explore_exit_depth = run_helper.explore_exit_depth;
+						action_node->best_explore_next_node_id = run_helper.explore_next_node_id;
+						action_node->best_explore_seed_start_predicted_score = run_helper.explore_seed_start_predicted_score;
+						action_node->best_explore_seed_start_scale_factor = run_helper.explore_seed_start_scale_factor;
+						action_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
+						action_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
+					}
+				}
+
+				if (action_node->explore_curr_try >= action_node->explore_target_tries) {
+					if (action_node->best_explore_is_loop) {
+						LoopFold* loop_fold = new LoopFold(action_node->best_explore_scope_context,
+														   action_node->best_explore_node_context,
+														   action_node->best_explore_is_inner_scope,
+														   action_node->best_explore_existing_scope_ids,
+														   action_node->best_explore_actions,
+														   &action_node->average_score,
+														   &action_node->score_variance,
+														   &action_node->average_misguess,
+														   &action_node->misguess_variance);
+
+						action_node->explore_scope_context = action_node->best_explore_scope_context;
+						action_node->explore_node_context = action_node->best_explore_node_context;
+						action_node->explore_exit_depth = -1;
+						action_node->explore_next_node_id = -1;
+						action_node->explore_loop_fold = loop_fold;
+					} else {
+						Fold* fold = new Fold(action_node->best_explore_scope_context,
+											  action_node->best_explore_node_context,
+											  action_node->best_explore_exit_depth,
+											  action_node->best_explore_is_inner_scope,
+											  action_node->best_explore_existing_scope_ids,
+											  action_node->best_explore_actions,
+											  &action_node->average_score,
+											  &action_node->score_variance,
+											  &action_node->average_misguess,
+											  &action_node->misguess_variance,
+											  action_node->best_explore_seed_start_predicted_score,
+											  action_node->best_explore_seed_start_scale_factor,
+											  action_node->best_explore_seed_state_vals_snapshot,
+											  action_node->best_explore_seed_outer_context_history,
+											  target_val);
+
+						action_node->explore_scope_context = action_node->best_explore_scope_context;
+						action_node->explore_node_context = action_node->best_explore_node_context;
+						action_node->explore_exit_depth = action_node->best_explore_exit_depth;
+						action_node->explore_next_node_id = action_node->best_explore_next_node_id;
+						action_node->explore_fold = fold;
+					}
+
+					action_node->explore_curr_try = 0;
+					action_node->explore_target_tries = 1;
+					int rand_scale = rand()%4;
+					for (int i = 0; i < rand_scale; i++) {
+						action_node->explore_target_tries *= 10;
+					}
+					action_node->best_explore_surprise = numeric_limits<double>::lowest();
+				}
+			} else {
+				// solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id]->type == NODE_TYPE_ACTION
+				ScopeNode* scope_node = (ScopeNode*)solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id];
+
+				scope_node->explore_curr_try++;
+				if (curr_surprise > scope_node->best_explore_surprise) {
+					scope_node->best_explore_surprise = curr_surprise;
+					scope_node->best_explore_scope_context = run_helper.explore_scope_context;
+					scope_node->best_explore_node_context = run_helper.explore_node_context;
+					scope_node->best_explore_is_loop = run_helper.explore_is_loop;
+					scope_node->best_explore_is_inner_scope = run_helper.explore_is_inner_scope;
+					scope_node->best_explore_existing_scope_ids = run_helper.explore_existing_scope_ids;
+					scope_node->best_explore_actions = run_helper.explore_actions;
+
+					if (scope_node->best_explore_seed_outer_context_history != NULL) {
+						delete scope_node->best_explore_seed_outer_context_history;
+					}
+
+					if (run_helper.explore_is_loop) {
+						scope_node->best_explore_exit_depth = -1;
+						scope_node->best_explore_next_node_id = -1;
+						scope_node->best_explore_seed_start_predicted_score = 0.0;
+						scope_node->best_explore_seed_start_scale_factor = 0.0;
+						scope_node->best_explore_seed_state_vals_snapshot.clear();
+						scope_node->best_explore_seed_outer_context_history = NULL;
+					} else {
+						scope_node->best_explore_exit_depth = run_helper.explore_exit_depth;
+						scope_node->best_explore_next_node_id = run_helper.explore_next_node_id;
+						scope_node->best_explore_seed_start_predicted_score = run_helper.explore_seed_start_predicted_score;
+						scope_node->best_explore_seed_start_scale_factor = run_helper.explore_seed_start_scale_factor;
+						scope_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
+						scope_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
+					}
+				}
+
+				if (scope_node->explore_curr_try >= scope_node->explore_target_tries) {
+					if (scope_node->best_explore_is_loop) {
+						LoopFold* loop_fold = new LoopFold(scope_node->best_explore_scope_context,
+														   scope_node->best_explore_node_context,
+														   scope_node->best_explore_is_inner_scope,
+														   scope_node->best_explore_existing_scope_ids,
+														   scope_node->best_explore_actions,
+														   &scope_node->average_score,
+														   &scope_node->score_variance,
+														   &scope_node->average_misguess,
+														   &scope_node->misguess_variance);
+
+						scope_node->explore_scope_context = scope_node->best_explore_scope_context;
+						scope_node->explore_node_context = scope_node->best_explore_node_context;
+						scope_node->explore_exit_depth = -1;
+						scope_node->explore_next_node_id = -1;
+						scope_node->explore_loop_fold = loop_fold;
+					} else {
+						Fold* fold = new Fold(scope_node->best_explore_scope_context,
+											  scope_node->best_explore_node_context,
+											  scope_node->best_explore_exit_depth,
+											  scope_node->best_explore_is_inner_scope,
+											  scope_node->best_explore_existing_scope_ids,
+											  scope_node->best_explore_actions,
+											  &scope_node->average_score,
+											  &scope_node->score_variance,
+											  &scope_node->average_misguess,
+											  &scope_node->misguess_variance,
+											  scope_node->best_explore_seed_start_predicted_score,
+											  scope_node->best_explore_seed_start_scale_factor,
+											  scope_node->best_explore_seed_state_vals_snapshot,
+											  scope_node->best_explore_seed_outer_context_history,
+											  target_val);
+
+						scope_node->explore_scope_context = scope_node->best_explore_scope_context;
+						scope_node->explore_node_context = scope_node->best_explore_node_context;
+						scope_node->explore_exit_depth = scope_node->best_explore_exit_depth;
+						scope_node->explore_next_node_id = scope_node->best_explore_next_node_id;
+						scope_node->explore_fold = fold;
+					}
+
+					scope_node->explore_curr_try = 0;
+					scope_node->explore_target_tries = 1;
+					int rand_scale = rand()%4;
+					for (int i = 0; i < rand_scale; i++) {
+						scope_node->explore_target_tries *= 10;
+					}
+					scope_node->best_explore_surprise = numeric_limits<double>::lowest();
+				}
+			}
 		} else {
 			if (!run_helper.exceeded_depth) {
 				if (run_helper.max_depth > solution->max_depth) {

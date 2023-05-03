@@ -10,7 +10,6 @@ using namespace std;
 Fold::Fold(vector<int> scope_context,
 		   vector<int> node_context,
 		   int exit_depth,
-		   int sequence_length,
 		   vector<bool> is_inner_scope,
 		   vector<int> existing_scope_ids,
 		   vector<Action> actions,
@@ -27,7 +26,7 @@ Fold::Fold(vector<int> scope_context,
 	this->node_context = node_context;
 	this->exit_depth = exit_depth;
 
-	this->sequence_length = sequence_length;
+	this->sequence_length = (int)is_inner_scope.size();
 	this->is_inner_scope = is_inner_scope;
 	this->existing_scope_ids = existing_scope_ids;
 	this->actions = actions;

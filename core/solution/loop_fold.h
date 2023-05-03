@@ -159,7 +159,6 @@ public:
 
 	LoopFold(std::vector<int> scope_context,
 			 std::vector<int> node_context,
-			 int sequence_length,
 			 std::vector<bool> is_inner_scope,
 			 std::vector<int> existing_scope_ids,
 			 std::vector<Action> actions,
