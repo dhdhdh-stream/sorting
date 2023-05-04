@@ -233,6 +233,7 @@ void Fold::clean_sequence_activate(Problem& problem,
 			+ this->num_sequence_states;
 		history->state_network_histories = vector<vector<StateNetworkHistory*>>(
 			this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL));
+		history->inner_state_network_histories = vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length);
 	}
 	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
 	history->score_network_updates = vector<double>(this->sequence_length);
@@ -318,6 +319,12 @@ void Fold::clean_sequence_activate(Problem& problem,
 			int inner_explore_exit_node_id;
 			FoldHistory* inner_explore_exit_fold_history;
 
+			// make sure inner_scope can't explore
+			int curr_explore_phase = run_helper.explore_phase;
+			if (run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+				run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
+			}
+
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
 			inner_scope->activate(problem,
 								  inner_input_vals,
@@ -336,8 +343,9 @@ void Fold::clean_sequence_activate(Problem& problem,
 								  inner_explore_exit_fold_history,
 								  run_helper,
 								  scope_history);
-			// allow explore in inner for simplicity
 			history->inner_scope_histories[f_index] = scope_history;
+
+			run_helper.explore_phase = curr_explore_phase;
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				if (this->curr_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {
@@ -709,9 +717,18 @@ void Fold::clean_sequence_activate(Problem& problem,
 			}
 		}
 
+		for (int f_index = 0; f_index < (int)test_inner_state_network_histories.size(); f_index++) {
+			for (int n_index = 0; n_index < (int)test_inner_state_network_histories[f_index].size(); n_index++) {
+				for (int s_index = 0; s_index < (int)test_inner_state_network_histories[f_index][n_index].size(); s_index++) {
+					if (test_inner_state_network_histories[f_index][n_index][s_index] != NULL) {
+						delete test_inner_state_network_histories[f_index][n_index][s_index];
+					}
+				}
+			}
+		}
+
 		this->state_iter++;
 		this->sub_iter++;
-		history->state_iter_snapshot = this->state_iter;
 	}
 }
 
@@ -914,6 +931,9 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 				}
 			}
 		}
+
+		// increment in sequence so applies to both score and sequence
+		clean_increment();
 	}
 }
 
@@ -933,17 +953,17 @@ void Fold::clean_score_backprop(vector<double>& state_errors,
 
 		predicted_score -= scale_factor*history->starting_score_update;
 	} else {
-		double predicted_score_error = target_val - predicted_score;
+		if (this->state != FOLD_STATE_DONE && history->state_iter_snapshot <= this->state_iter) {
+			double predicted_score_error = target_val - predicted_score;
 
-		scale_factor_error += history->starting_score_update*predicted_score_error;
+			scale_factor_error += history->starting_score_update*predicted_score_error;
 
-		this->curr_starting_score_network->backprop_weights_with_no_error_signal(
-			scale_factor*predicted_score_error,
-			0.002,
-			history->starting_score_network_history);
+			this->curr_starting_score_network->backprop_weights_with_no_error_signal(
+				scale_factor*predicted_score_error,
+				0.002,
+				history->starting_score_network_history);
 
-		predicted_score -= scale_factor*history->starting_score_update;
-
-		clean_increment();
+			predicted_score -= scale_factor*history->starting_score_update;
+		}
 	}
 }

@@ -131,7 +131,6 @@ void Fold::remove_outer_scope_network_score_activate(
 
 		this->state_iter++;
 		this->sub_iter++;
-		history->state_iter_snapshot = this->state_iter;
 	}
 
 	StateNetworkHistory* starting_score_network_history = new StateNetworkHistory(this->curr_starting_score_network);
@@ -219,6 +218,7 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			+ this->num_sequence_states;
 		history->state_network_histories = vector<vector<StateNetworkHistory*>>(
 			this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL));
+		history->inner_state_network_histories = vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length);
 	}
 	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
 	history->score_network_updates = vector<double>(this->sequence_length);
@@ -270,6 +270,12 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			int inner_explore_exit_node_id;
 			FoldHistory* inner_explore_exit_fold_history;
 
+			// make sure inner_scope can't explore
+			int curr_explore_phase = run_helper.explore_phase;
+			if (run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+				run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
+			}
+
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
 			inner_scope->activate(problem,
 								  inner_input_vals,
@@ -290,6 +296,8 @@ void Fold::remove_outer_scope_network_sequence_activate(
 								  scope_history);
 			history->inner_scope_histories[f_index] = scope_history;
 
+			run_helper.explore_phase = curr_explore_phase;
+
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				if (this->curr_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {
 					new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
@@ -297,7 +305,7 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			}
 
 			vector<double> new_state_vals;
-			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
+			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
 				new_state_vals.push_back(new_inner_state_vals[this->sum_inner_inputs+i_index]);
 			}
 			remove_outer_scope_network_inner_scope_activate_helper(
@@ -306,7 +314,7 @@ void Fold::remove_outer_scope_network_sequence_activate(
 				run_helper,
 				f_index,
 				history);
-			for (int i_index = 0; i_index < this->test_num_new_inner_states; i_index++) {
+			for (int i_index = 0; i_index < this->curr_num_new_inner_states; i_index++) {
 				new_inner_state_vals[this->sum_inner_inputs+i_index] = new_state_vals[i_index];
 			}
 

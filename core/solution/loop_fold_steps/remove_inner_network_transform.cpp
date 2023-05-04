@@ -85,9 +85,8 @@ void LoopFold::remove_inner_network_transform_helper() {
 }
 
 void LoopFold::remove_inner_network_end() {
-	cout << "this->curr_average_score: " << this->curr_average_score << endl;
-
-	if (this->sum_error/this->sequence_length / this->sub_iter < 0.05) {
+	// if (this->sum_error/this->sequence_length / this->sub_iter < 0.05) {
+	if (rand()%2 == 0) {
 		cout << "REMOVE_INNER_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 

@@ -244,6 +244,7 @@ void Fold::remove_outer_scope_sequence_activate(Problem& problem,
 			+ this->num_sequence_states;
 		history->state_network_histories = vector<vector<StateNetworkHistory*>>(
 			this->sequence_length, vector<StateNetworkHistory*>(num_inner_networks, NULL));
+		history->inner_state_network_histories = vector<vector<vector<StateNetworkHistory*>>>(this->sequence_length);
 	}
 	history->inner_scope_histories = vector<ScopeHistory*>(this->sequence_length, NULL);
 	history->score_network_updates = vector<double>(this->sequence_length);
@@ -329,6 +330,12 @@ void Fold::remove_outer_scope_sequence_activate(Problem& problem,
 			int inner_explore_exit_node_id;
 			FoldHistory* inner_explore_exit_fold_history;
 
+			// make sure inner_scope can't explore
+			int curr_explore_phase = run_helper.explore_phase;
+			if (run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+				run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
+			}
+
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
 			inner_scope->activate(problem,
 								  inner_input_vals,
@@ -347,8 +354,9 @@ void Fold::remove_outer_scope_sequence_activate(Problem& problem,
 								  inner_explore_exit_fold_history,
 								  run_helper,
 								  scope_history);
-			// allow explore in inner for simplicity
 			history->inner_scope_histories[f_index] = scope_history;
+
+			run_helper.explore_phase = curr_explore_phase;
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				if (this->curr_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {
@@ -682,9 +690,18 @@ void Fold::remove_outer_scope_sequence_activate(Problem& problem,
 			}
 		}
 
+		for (int f_index = 0; f_index < (int)test_inner_state_network_histories.size(); f_index++) {
+			for (int n_index = 0; n_index < (int)test_inner_state_network_histories[f_index].size(); n_index++) {
+				for (int s_index = 0; s_index < (int)test_inner_state_network_histories[f_index][n_index].size(); s_index++) {
+					if (test_inner_state_network_histories[f_index][n_index][s_index] != NULL) {
+						delete test_inner_state_network_histories[f_index][n_index][s_index];
+					}
+				}
+			}
+		}
+
 		this->state_iter++;
 		this->sub_iter++;
-		history->state_iter_snapshot = this->state_iter;
 	}
 }
 

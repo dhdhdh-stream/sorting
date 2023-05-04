@@ -95,9 +95,8 @@ public:
 
 	ActionNodeHistory(ActionNode* node,
 					  int scope_index);
+	ActionNodeHistory(ActionNodeHistory* original);	// deep copy for seed
 	~ActionNodeHistory();
-
-	AbstractNodeHistory* deep_copy_for_seed();
 };
 
 #endif /* ACTION_NODE_H */

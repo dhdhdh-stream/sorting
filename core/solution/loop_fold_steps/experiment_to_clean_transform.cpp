@@ -7,6 +7,14 @@ using namespace std;
 void LoopFold::experiment_to_clean() {
 	// state_networks_not_needed already initialized
 
+	this->curr_outer_scopes_needed.insert(this->scope_context[0]);
+	for (int c_index = 1; c_index < (int)this->scope_context.size(); c_index++) {
+		this->curr_outer_scopes_needed.insert(this->scope_context[c_index]);
+		this->curr_outer_contexts_needed.insert(make_pair(this->scope_context[c_index], this->node_context[c_index]));
+	}
+	this->reverse_test_outer_scopes_needed = this->curr_outer_scopes_needed;
+	this->reverse_test_outer_contexts_needed = this->curr_outer_contexts_needed;
+
 	int num_inner_networks = this->sum_inner_inputs
 		+ this->curr_num_new_inner_states
 		+ this->num_states;

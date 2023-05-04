@@ -32,7 +32,8 @@ void LoopFold::add_inner_state_end() {
 	}
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (misguess_improvement_t_value > 1.282) {	// >90%
+	// if (misguess_improvement_t_value > 1.282) {	// >90%
+	if (rand()%3 == 0) {
 		cout << "ADD_INNER_STATE success" << endl;
 		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
@@ -151,8 +152,9 @@ void LoopFold::add_inner_state_end() {
 		this->test_inner_state_networks.clear();
 	}
 
-	if (this->experiment_added_state
-			&& this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+	// if (this->experiment_added_state
+	// 		&& this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+	if (this->experiment_added_state) {
 		this->experiment_added_state = false;
 
 		this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
@@ -233,23 +235,23 @@ void LoopFold::add_inner_state_end() {
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	} else {
+		this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
+		this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
+
+		int num_inner_networks = this->sum_inner_inputs
+			+ this->curr_num_new_inner_states
+			+ this->num_states;
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+			this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
+		}
+		this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
+
 		if (this->sum_inner_inputs == 0) {
 			cout << "ending ADD_INNER_STATE" << endl;
 			cout << "EXPERIMENT_DONE" << endl;
 
 			this->state = LOOP_FOLD_STATE_EXPERIMENT_DONE;
 		} else {
-			this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
-			this->test_inner_inputs_needed = this->curr_inner_inputs_needed;
-
-			int num_inner_networks = this->sum_inner_inputs
-				+ this->curr_num_new_inner_states
-				+ this->num_states;
-			for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-				this->curr_state_networks_not_needed.push_back(vector<bool>(num_inner_networks, false));
-			}
-			this->test_state_networks_not_needed = this->curr_state_networks_not_needed;
-
 			this->remove_inner_input_index = 0;
 
 			this->test_inner_inputs_needed[this->remove_inner_input_index] = false;

@@ -29,7 +29,7 @@ LoopFold::LoopFold(vector<int> scope_context,
 	this->existing_average_misguess = existing_average_misguess;
 	this->existing_misguess_variance = existing_misguess_variance;
 
-	Scope* scope = solution->scopes[0];
+	Scope* scope = solution->scopes[scope_context[0]];
 	this->num_states = scope->num_states;
 
 	this->sum_inner_inputs = 0;
@@ -61,6 +61,11 @@ LoopFold::LoopFold(vector<int> scope_context,
 																	  this->test_num_new_outer_states,
 																	  20));
 	}
+
+	this->curr_continue_score_network = NULL;
+	this->curr_continue_misguess_network = NULL;
+	this->curr_halt_score_network = NULL;
+	this->curr_halt_misguess_network = NULL;
 
 	this->test_continue_score_network = new StateNetwork(0,
 														 this->num_states,
@@ -486,7 +491,121 @@ LoopFold::LoopFold(ifstream& input_file,
 }
 
 LoopFold::~LoopFold() {
-	// do nothing
+	// clean in case of early exit
+	if (this->state != LOOP_FOLD_STATE_EXPERIMENT_FAIL
+			&& this->state != LOOP_FOLD_STATE_DONE) {
+		for (int f_index = 0; f_index < (int)this->inner_scope_scale_mods.size(); f_index++) {
+			if (this->inner_scope_scale_mods[f_index] != NULL) {
+				delete this->inner_scope_scale_mods[f_index];
+			}
+		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
+				it != this->curr_outer_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
+
+		for (int i_index = 0; i_index < (int)this->curr_starting_state_networks.size(); i_index++) {
+			if (this->curr_starting_state_networks[i_index] != NULL) {
+				delete this->curr_starting_state_networks[i_index];
+			}
+		}
+
+		if (this->curr_continue_score_network != NULL) {
+			delete this->curr_continue_score_network;
+		}
+		if (this->curr_continue_misguess_network != NULL) {
+			delete this->curr_continue_misguess_network;
+		}
+		if (this->curr_halt_score_network != NULL) {
+			delete this->curr_halt_score_network;
+		}
+		if (this->curr_halt_misguess_network != NULL) {
+			delete this->curr_halt_misguess_network;
+		}
+
+		for (int f_index = 0; f_index < (int)this->curr_state_networks.size(); f_index++) {
+			for (int s_index = 0; s_index < (int)this->curr_state_networks[f_index].size(); s_index++) {
+				if (this->curr_state_networks[f_index][s_index] != NULL) {
+					delete this->curr_state_networks[f_index][s_index];
+				}
+			}
+		}
+
+		for (int f_index = 0; f_index < (int)this->curr_score_networks.size(); f_index++) {
+			delete this->curr_score_networks[f_index];
+		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_inner_state_networks.begin();
+				it != this->curr_inner_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
+				it != this->test_outer_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
+
+		for (int i_index = 0; i_index < (int)this->test_starting_state_networks.size(); i_index++) {
+			if (this->test_starting_state_networks[i_index] != NULL) {
+				delete this->test_starting_state_networks[i_index];
+			}
+		}
+
+		if (this->test_continue_score_network != NULL) {
+			delete this->test_continue_score_network;
+		}
+		if (this->test_continue_misguess_network != NULL) {
+			delete this->test_continue_misguess_network;
+		}
+		if (this->test_halt_score_network != NULL) {
+			delete this->test_halt_score_network;
+		}
+		if (this->test_halt_misguess_network != NULL) {
+			delete this->test_halt_misguess_network;
+		}
+
+		for (int f_index = 0; f_index < (int)this->test_state_networks.size(); f_index++) {
+			for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
+				if (this->test_state_networks[f_index][s_index] != NULL) {
+					delete this->test_state_networks[f_index][s_index];
+				}
+			}
+		}
+
+		for (int f_index = 0; f_index < (int)this->test_score_networks.size(); f_index++) {
+			delete this->test_score_networks[f_index];
+		}
+
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_inner_state_networks.begin();
+				it != this->test_inner_state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					if (it->second[n_index][s_index] != NULL) {
+						delete it->second[n_index][s_index];
+					}
+				}
+			}
+		}
+	}
 }
 
 void LoopFold::activate(Problem& problem,
@@ -633,7 +752,8 @@ void LoopFold::experiment_increment() {
 
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -647,12 +767,14 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			experiment_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -666,12 +788,14 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			add_outer_state_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 500000) {
+		// if (this->state_iter == 500000) {
+		if (this->state_iter == 50) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -685,12 +809,14 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			add_inner_state_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_INPUT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		if (this->state_iter == 150000) {
+		// if (this->state_iter == 150000) {
+		if (this->state_iter == 15) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -704,7 +830,8 @@ void LoopFold::experiment_increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_INPUT && this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE
-		if (this->state_iter == 10000) {
+		// if (this->state_iter == 10000) {
+		if (this->state_iter == 10) {
 			remove_inner_input_end();
 		}
 	}
@@ -712,8 +839,10 @@ void LoopFold::experiment_increment() {
 
 void LoopFold::clean_increment() {
 	if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (this->sub_iter >= 10) {
 				remove_outer_scope_end();
 			}
 		} else {
@@ -727,8 +856,10 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (this->sub_iter >= 10) {
 				remove_outer_scope_network_end();
 			}
 		} else {
@@ -742,8 +873,10 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (this->sub_iter >= 10) {
 				remove_inner_scope_end();
 			}
 		} else {
@@ -757,8 +890,10 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (this->sub_iter >= 10) {
 				remove_inner_scope_network_end();
 			}
 		} else {
@@ -773,8 +908,10 @@ void LoopFold::clean_increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK
-		if (this->state_iter > 150000) {
-			if (this->sub_iter >= 10000) {
+		// if (this->state_iter > 150000) {
+		if (this->state_iter > 15) {
+			// if (this->sub_iter >= 10000) {
+			if (this->sub_iter >= 10) {
 				remove_inner_network_end();
 			}
 		} else {
@@ -833,7 +970,7 @@ void LoopFold::save(ofstream& output_file,
 		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 			output_file << it->second[n_index].size() << endl;
 			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
-				cout << it->second[n_index][s_index] << endl;
+				output_file << it->second[n_index][s_index] << endl;
 			}
 		}
 	}
@@ -923,7 +1060,7 @@ void LoopFold::save(ofstream& output_file,
 		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 			output_file << it->second[n_index].size() << endl;
 			for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
-				cout << it->second[n_index][s_index] << endl;
+				output_file << it->second[n_index][s_index] << endl;
 			}
 		}
 	}
@@ -1004,6 +1141,8 @@ LoopFoldHistory::LoopFoldHistory(LoopFold* loop_fold) {
 
 	this->halt_score_network_history = NULL;
 	this->halt_misguess_network_history = NULL;
+
+	this->state_iter_snapshot = loop_fold->state_iter;
 }
 
 LoopFoldHistory::~LoopFoldHistory() {

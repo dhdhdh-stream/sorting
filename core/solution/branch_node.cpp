@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 
@@ -128,7 +130,8 @@ void BranchNode::activate(vector<double>& state_vals,
 												   original_network_history);
 			double original_score = scale_factor*this->original_score_network->output->acti_vals[0];
 
-			if (branch_score > original_score) {
+			// if (branch_score > original_score) {
+			if (rand()%2 == 0) {
 				delete original_network_history;
 
 				history->is_branch = true;

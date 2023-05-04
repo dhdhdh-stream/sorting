@@ -5,7 +5,8 @@
 using namespace std;
 
 void Fold::clear_inner_state_end() {
-	if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
+	// if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
+	if (rand()%2 == 0) {
 		cout << "CLEAR_INNER_STATE success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 

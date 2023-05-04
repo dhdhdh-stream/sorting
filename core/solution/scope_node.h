@@ -121,9 +121,8 @@ public:
 
 	ScopeNodeHistory(ScopeNode* node,
 					 int scope_index);
+	ScopeNodeHistory(ScopeNodeHistory* original);	// deep copy for seed
 	~ScopeNodeHistory();
-
-	AbstractNodeHistory* deep_copy_for_seed();
 };
 
 #endif /* SCOPE_NODE_H */

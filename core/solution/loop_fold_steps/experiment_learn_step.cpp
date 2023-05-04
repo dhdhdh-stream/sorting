@@ -21,7 +21,7 @@ void LoopFold::experiment_learn_outer_scope_activate_helper(
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
-	it->second.insert(it->second.begin(), size_diff, vector<StateNetwork*>());
+	it->second.insert(it->second.end(), size_diff, vector<StateNetwork*>());
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -74,7 +74,7 @@ void LoopFold::experiment_learn_inner_scope_activate_helper(
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
-	it->second.insert(it->second.begin(), size_diff, vector<StateNetwork*>());
+	it->second.insert(it->second.end(), size_diff, vector<StateNetwork*>());
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {

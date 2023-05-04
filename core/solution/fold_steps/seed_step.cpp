@@ -21,7 +21,7 @@ void Fold::seed_outer_scope_activate_helper(vector<double>& new_outer_state_vals
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
-	it->second.insert(it->second.begin(), size_diff, vector<StateNetwork*>());
+	it->second.insert(it->second.end(), size_diff, vector<StateNetwork*>());
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -39,6 +39,11 @@ void Fold::seed_outer_scope_activate_helper(vector<double>& new_outer_state_vals
 				}
 				outer_state_network_histories.push_back(vector<StateNetworkHistory*>());
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+				if ((int)action_node_history->ending_state_snapshot.size() < scope_history->scope->num_states) {
+					// pad snapshot size in case scope size later increases
+					int diff = scope_history->scope->num_states - (int)action_node_history->ending_state_snapshot.size();
+					action_node_history->ending_state_snapshot.insert(action_node_history->ending_state_snapshot.end(), diff, 0.0);
+				}
 				for (int s_index = 0; s_index < this->test_num_new_outer_states; s_index++) {
 					StateNetworkHistory* state_network_history = new StateNetworkHistory(it->second[node_id][s_index]);
 					it->second[node_id][s_index]->new_external_activate(
@@ -68,6 +73,11 @@ void Fold::seed_train() {
 									 this->seed_outer_context_history,
 									 outer_state_network_histories);
 
+	if ((int)this->seed_state_vals_snapshot.size() < this->test_starting_score_network->state_size) {
+		// pad snapshot size in case scope size later increases
+		int diff = this->test_starting_score_network->state_size - (int)this->seed_state_vals_snapshot.size();
+		this->seed_state_vals_snapshot.insert(this->seed_state_vals_snapshot.end(), diff, 0.0);
+	}
 	this->test_starting_score_network->new_external_activate(
 		this->seed_state_vals_snapshot,
 		new_outer_state_vals);
@@ -102,6 +112,12 @@ void Fold::seed_train() {
 				new_outer_state_errors,
 				state_network_target_max_update,
 				outer_state_network_histories[n_index][o_index]);
+		}
+	}
+
+	for (int n_index = 0; n_index < (int)outer_state_network_histories.size(); n_index++) {
+		for (int o_index = 0; o_index < (int)outer_state_network_histories[n_index].size(); o_index++) {
+			delete outer_state_network_histories[n_index][o_index];
 		}
 	}
 }

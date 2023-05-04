@@ -1,5 +1,6 @@
 #include "solution.h"
 
+#include <iostream>
 #include <random>
 
 #include "action_node.h"
@@ -101,9 +102,11 @@ void Solution::random_run_helper(int scope_id,
 		if (scope->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)scope->nodes[curr_node_id];
 
-			is_inner_scope.push_back(false);
-			existing_scope_ids.push_back(-1);
-			actions.push_back(action_node->action);
+			if (action_node->action.move != ACTION_START) {
+				is_inner_scope.push_back(false);
+				existing_scope_ids.push_back(-1);
+				actions.push_back(action_node->action);
+			}
 
 			curr_node_id = action_node->next_node_id;
 		} else if (scope->nodes[curr_node_id]->type == NODE_TYPE_INNER_SCOPE) {
@@ -268,21 +271,36 @@ void Solution::new_sequence(vector<bool>& is_inner_scope,
 							  early_exit_depth,
 							  early_exit_node_id);
 
-			geometric_distribution<int> segment_length_geo_dist(0.5);
-			int segment_length = 1 + segment_length_geo_dist(generator);
+			if (run_is_inner_scope.size() == 0) {
+				is_inner_scope.push_back(false);
+				int move = rand()%3;
+				actions.push_back(Action(move));
 
-			int start_index = rand()%((int)run_is_inner_scope.size() - segment_length);
+				existing_scope_ids.push_back(-1);
+			} else {
+				geometric_distribution<int> segment_length_geo_dist(0.5);
+				int segment_length = 1 + segment_length_geo_dist(generator);
+				if (segment_length > (int)run_is_inner_scope.size()) {
+					segment_length = (int)run_is_inner_scope.size();
+				}
 
-			sequence_length += segment_length;
-			is_inner_scope.insert(is_inner_scope.end(),
-				run_is_inner_scope.begin() + start_index,
-				run_is_inner_scope.begin() + start_index + segment_length);
-			existing_scope_ids.insert(existing_scope_ids.end(),
-				run_existing_scope_ids.begin() + start_index,
-				run_existing_scope_ids.begin() + start_index + segment_length);
-			actions.insert(actions.end(),
-				actions.begin() + start_index,
-				actions.begin() + start_index + segment_length);
+				int start_index;
+				if (segment_length == (int)run_is_inner_scope.size()) {
+					start_index = 0;
+				} else {
+					start_index = rand()%((int)run_is_inner_scope.size() - segment_length);
+				}
+
+				is_inner_scope.insert(is_inner_scope.end(),
+					run_is_inner_scope.begin() + start_index,
+					run_is_inner_scope.begin() + start_index + segment_length);
+				existing_scope_ids.insert(existing_scope_ids.end(),
+					run_existing_scope_ids.begin() + start_index,
+					run_existing_scope_ids.begin() + start_index + segment_length);
+				actions.insert(actions.end(),
+					run_actions.begin() + start_index,
+					run_actions.begin() + start_index + segment_length);
+			}
 		}
 	}
 }

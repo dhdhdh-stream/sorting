@@ -43,19 +43,22 @@ void Fold::experiment_end() {
 		/ (misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (branch_improvement_t_value > 2.326) {	// >99%
-		if (existing_improvement_t_value < 0.842	// 80%<
-				&& this->is_recursive == 0) {
+	// if (branch_improvement_t_value > 2.326) {	// >99%
+	if (rand()%3 != 0) {	// >99%
+		// if (existing_improvement_t_value < 0.842	// 80%<
+		// 		&& this->is_recursive == 0) {
+		if (rand()%2 == 0) {
 			cout << "FOLD_RESULT_REPLACE" << endl;
 			this->experiment_result = FOLD_RESULT_REPLACE;
 		} else {
 			cout << "FOLD_RESULT_BRANCH" << endl;
 			this->experiment_result = FOLD_RESULT_BRANCH;
 		}
-	} else if (*this->existing_average_misguess > 0.01
-			&& misguess_improvement_t_value > 2.326	// >99%
-			&& replace_improvement_t_value > -0.842	// 80%<
-			&& this->is_recursive == 0) {
+	// } else if (*this->existing_average_misguess > 0.01
+	// 		&& misguess_improvement_t_value > 2.326	// >99%
+	// 		&& replace_improvement_t_value > -0.842	// 80%<
+	// 		&& this->is_recursive == 0) {
+	} else if (false) {
 		cout << "FOLD_RESULT_REPLACE" << endl;
 		this->experiment_result = FOLD_RESULT_REPLACE;
 	} else {
@@ -88,7 +91,8 @@ void Fold::experiment_end() {
 		this->curr_replace_misguess_variance = this->test_replace_misguess_variance;
 		this->test_replace_misguess_variance = 0.0;
 
-		if (this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+		// if (this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
+		if (true) {
 			this->experiment_added_state = false;
 
 			this->test_num_new_outer_states = this->curr_num_new_outer_states+1;
@@ -216,6 +220,12 @@ void Fold::experiment_end() {
 			}
 		}
 	} else {
+		for (int f_index = 0; f_index < this->sequence_length; f_index++) {
+			if (this->is_inner_scope[f_index]) {
+				delete this->inner_scope_scale_mods[f_index];
+			}
+		}
+
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_outer_state_networks.begin();
 				it != this->test_outer_state_networks.end(); it++) {
 			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {

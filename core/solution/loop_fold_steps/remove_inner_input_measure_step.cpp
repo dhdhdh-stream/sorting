@@ -125,17 +125,19 @@ void LoopFold::remove_inner_input_measure_activate(Problem& problem,
 			state_vals,
 			new_outer_state_vals);
 
-		double score_diff = scale_factor*this->test_continue_score_network->output->acti_vals[0]
-			- scale_factor*this->test_halt_score_network->output->acti_vals[0];
-		// fold variance not representative yet, so use existing variance for now
-		double score_standard_deviation = abs(scale_factor)*sqrt(*this->existing_score_variance);
-		// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-		double score_diff_t_value = score_diff
-			/ (score_standard_deviation / sqrt(2500));
-		if (score_diff_t_value > 2.326) {
+		// double score_diff = scale_factor*this->test_continue_score_network->output->acti_vals[0]
+		// 	- scale_factor*this->test_halt_score_network->output->acti_vals[0];
+		// // fold variance not representative yet, so use existing variance for now
+		// double score_standard_deviation = abs(scale_factor)*sqrt(*this->existing_score_variance);
+		// // TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+		// double score_diff_t_value = score_diff
+		// 	/ (score_standard_deviation / sqrt(2500));
+		// if (score_diff_t_value > 2.326) {
+		if (rand()%2 == 0) {
 			// continue
 			predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
-		} else if (score_diff_t_value < -2.326) {
+		// } else if (score_diff_t_value < -2.326) {
+		} else if (true) {
 			// halt
 			predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
 			break;

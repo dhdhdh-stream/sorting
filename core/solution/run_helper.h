@@ -40,6 +40,8 @@ public:
 
 		this->explore_scope_id = -1;
 		this->is_recursive = false;
+
+		this->explore_seed_outer_context_history = NULL;
 	};
 };
 

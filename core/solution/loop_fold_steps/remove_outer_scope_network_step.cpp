@@ -206,7 +206,6 @@ void LoopFold::remove_outer_scope_network_activate(
 
 		this->state_iter++;
 		this->sub_iter++;
-		history->state_iter_snapshot = this->state_iter;
 	}
 
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
@@ -264,36 +263,37 @@ void LoopFold::remove_outer_scope_network_activate(
 			halt_misguess_network_history);
 
 		bool is_halt;
-		if (iter_index > 7) {
-			// cap number of iters for now
-			is_halt = true;
-		} else {
-			double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
-				- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
-			double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
-			// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-			double score_diff_t_value = score_diff
-				/ (score_standard_deviation / sqrt(2500));
-			if (score_diff_t_value > 2.326) {
-				is_halt = false;
-			} else if (score_diff_t_value < -2.326) {
-				is_halt = true;
-			} else {
-				double misguess_diff = this->curr_continue_misguess_network->output->acti_vals[0]
-					- this->curr_halt_misguess_network->output->acti_vals[0];
-				double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
-				double misguess_diff_t_value = misguess_diff
-					/ (misguess_standard_deviation / sqrt(2500));
-				if (misguess_diff_t_value < -2.326) {
-					is_halt = false;
-				} else if (misguess_diff_t_value > 2.326) {
-					is_halt = true;
-				} else {
-					// continue if no strong signal either way
-					is_halt = false;
-				}
-			}
-		}
+		is_halt = rand()%3 == 0;
+		// if (iter_index > 7) {
+		// 	// cap number of iters for now
+		// 	is_halt = true;
+		// } else {
+		// 	double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
+		// 		- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
+		// 	double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
+		// 	// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+		// 	double score_diff_t_value = score_diff
+		// 		/ (score_standard_deviation / sqrt(2500));
+		// 	if (score_diff_t_value > 2.326) {
+		// 		is_halt = false;
+		// 	} else if (score_diff_t_value < -2.326) {
+		// 		is_halt = true;
+		// 	} else {
+		// 		double misguess_diff = this->curr_continue_misguess_network->output->acti_vals[0]
+		// 			- this->curr_halt_misguess_network->output->acti_vals[0];
+		// 		double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
+		// 		double misguess_diff_t_value = misguess_diff
+		// 			/ (misguess_standard_deviation / sqrt(2500));
+		// 		if (misguess_diff_t_value < -2.326) {
+		// 			is_halt = false;
+		// 		} else if (misguess_diff_t_value > 2.326) {
+		// 			is_halt = true;
+		// 		} else {
+		// 			// continue if no strong signal either way
+		// 			is_halt = false;
+		// 		}
+		// 	}
+		// }
 
 		if (is_halt) {
 			history->halt_score_network_update = this->curr_halt_score_network->output->acti_vals[0];
@@ -382,6 +382,12 @@ void LoopFold::remove_outer_scope_network_activate(
 					int inner_explore_exit_node_id;
 					FoldHistory* inner_explore_exit_fold_history;
 
+					// make sure inner_scope can't explore
+					int curr_explore_phase = run_helper.explore_phase;
+					if (run_helper.explore_phase == EXPLORE_PHASE_NONE) {
+						run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
+					}
+
 					ScopeHistory* scope_history = new ScopeHistory(inner_scope);
 					inner_scope->activate(problem,
 										  inner_input_vals,
@@ -400,8 +406,9 @@ void LoopFold::remove_outer_scope_network_activate(
 										  inner_explore_exit_fold_history,
 										  run_helper,
 										  scope_history);
-					// allow explore in inner for simplicity
 					history->inner_scope_histories[iter_index][f_index] = scope_history;
+
+					run_helper.explore_phase = curr_explore_phase;
 
 					for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 						if (this->curr_inner_inputs_needed[this->inner_input_start_indexes[f_index] + i_index]) {

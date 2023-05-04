@@ -25,11 +25,12 @@ ActionNode::ActionNode(vector<int> state_network_target_indexes,
 	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
+	// this->explore_target_tries = 1;
+	this->explore_target_tries = 10;
+	// int rand_scale = rand()%4;
+	// for (int i = 0; i < rand_scale; i++) {
+	// 	this->explore_target_tries *= 10;
+	// }
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -114,6 +115,10 @@ ActionNode::~ActionNode() {
 	}
 
 	delete this->score_network;
+
+	if (this->best_explore_seed_outer_context_history != NULL) {
+		delete this->best_explore_seed_outer_context_history;
+	}
 
 	if (this->explore_fold != NULL) {
 		delete this->explore_fold;
@@ -255,6 +260,18 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node,
 									 int scope_index) {
 	this->node = node;
 	this->scope_index = scope_index;
+
+	this->score_network_history = NULL;
+}
+
+ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
+	this->node = original->node;
+	this->scope_index = original->scope_index;
+
+	this->score_network_history = NULL;
+
+	this->obs_snapshot = original->obs_snapshot;
+	this->ending_state_snapshot = original->ending_state_snapshot;
 }
 
 ActionNodeHistory::~ActionNodeHistory() {
@@ -264,14 +281,7 @@ ActionNodeHistory::~ActionNodeHistory() {
 		}
 	}
 
-	delete this->score_network_history;
-}
-
-AbstractNodeHistory* ActionNodeHistory::deep_copy_for_seed() {
-	ActionNodeHistory* new_action_node_history = new ActionNodeHistory((ActionNode*)this->node, this->scope_index);
-
-	new_action_node_history->obs_snapshot = this->obs_snapshot;
-	new_action_node_history->ending_state_snapshot = this->ending_state_snapshot;
-
-	return new_action_node_history;
+	if (this->score_network_history != NULL) {
+		delete this->score_network_history;
+	}
 }

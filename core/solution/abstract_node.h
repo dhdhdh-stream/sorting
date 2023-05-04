@@ -28,9 +28,6 @@ public:
 	int scope_index;	// index within parent scope
 
 	virtual ~AbstractNodeHistory() {};
-	virtual AbstractNodeHistory* deep_copy_for_seed() {
-		return NULL;
-	};
 };
 
 #endif /* ABSTRACT_NODE_H */

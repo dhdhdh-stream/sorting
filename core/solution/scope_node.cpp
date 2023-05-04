@@ -40,11 +40,12 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
+	// this->explore_target_tries = 1;
+	this->explore_target_tries = 10;
+	// int rand_scale = rand()%4;
+	// for (int i = 0; i < rand_scale; i++) {
+	// 	this->explore_target_tries *= 10;
+	// }
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -161,11 +162,17 @@ ScopeNode::~ScopeNode() {
 		delete this->pre_state_networks[s_index];
 	}
 
+	delete this->scope_scale_mod;
+
 	for (int s_index = 0; s_index < (int)this->post_state_networks.size(); s_index++) {
 		delete this->post_state_networks[s_index];
 	}
 
 	delete this->score_network;
+
+	if (this->best_explore_seed_outer_context_history != NULL) {
+		delete this->best_explore_seed_outer_context_history;
+	}
 
 	if (this->explore_fold != NULL) {
 		delete this->explore_fold;
@@ -447,6 +454,15 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node,
 	this->score_network_history = NULL;	// may not trigger
 }
 
+ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
+	this->node = original->node;
+	this->scope_index = original->scope_index;
+
+	this->score_network_history = NULL;
+
+	this->inner_scope_history = new ScopeHistory(original->inner_scope_history);
+}
+
 ScopeNodeHistory::~ScopeNodeHistory() {
 	for (int s_index = 0; s_index < (int)this->pre_state_network_histories.size(); s_index++) {
 		if (this->pre_state_network_histories[s_index] != NULL) {
@@ -465,12 +481,4 @@ ScopeNodeHistory::~ScopeNodeHistory() {
 	if (this->score_network_history != NULL) {
 		delete this->score_network_history;
 	}
-}
-
-AbstractNodeHistory* ScopeNodeHistory::deep_copy_for_seed() {
-	ScopeNodeHistory* new_scope_node_history = new ScopeNodeHistory((ScopeNode*)this->node, this->scope_index);
-
-	new_scope_node_history->inner_scope_history = this->inner_scope_history->deep_copy_for_seed();
-
-	return new_scope_node_history;
 }

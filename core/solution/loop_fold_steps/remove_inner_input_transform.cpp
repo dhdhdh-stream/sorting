@@ -23,7 +23,8 @@ void LoopFold::remove_inner_input_end() {
 		/ (misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (score_improvement_t_value > -0.842 && misguess_improvement_t_value > -0.842) {
+	// if (score_improvement_t_value > -0.842 && misguess_improvement_t_value > -0.842) {
+	if (rand()%2 == 0) {
 		cout << "REMOVE_INNER_INPUT success" << endl;
 
 		// no change to outer

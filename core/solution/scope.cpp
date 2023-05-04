@@ -241,7 +241,7 @@ void Scope::activate(Problem& problem,
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
-	if (run_helper.curr_depth > solution->max_depth) {
+	if (run_helper.curr_depth > solution->depth_limit) {
 		run_helper.exceeded_depth = true;
 		history->exceeded_depth = true;
 		return;
@@ -297,43 +297,44 @@ void Scope::activate(Problem& problem,
 												  halt_misguess_network_history);
 
 			bool is_halt;
-			if (iter_index > this->furthest_successful_halt+3) {
-				is_halt = true;
-			} else {
-				double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
-					- scale_factor*this->halt_score_network->output->acti_vals[0];
-				double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
-				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-				double score_diff_t_value = score_diff
-					/ (score_standard_deviation / sqrt(2500));
-				if (score_diff_t_value > 2.326) {
-					is_halt = false;
-				} else if (score_diff_t_value < -2.326) {
-					is_halt = true;
+			is_halt = rand()%3 == 0;
+			// if (iter_index > this->furthest_successful_halt+3) {
+			// 	is_halt = true;
+			// } else {
+			// 	double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
+			// 		- scale_factor*this->halt_score_network->output->acti_vals[0];
+			// 	double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
+			// 	// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+			// 	double score_diff_t_value = score_diff
+			// 		/ (score_standard_deviation / sqrt(2500));
+			// 	if (score_diff_t_value > 2.326) {
+			// 		is_halt = false;
+			// 	} else if (score_diff_t_value < -2.326) {
+			// 		is_halt = true;
 
-					if (iter_index > this->furthest_successful_halt) {
-						this->furthest_successful_halt = iter_index;
-					}
-				} else {
-					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
-						- this->halt_misguess_network->output->acti_vals[0];
-					double misguess_standard_deviation = sqrt(this->misguess_variance);
-					double misguess_diff_t_value = misguess_diff
-						/ (misguess_standard_deviation / sqrt(2500));
-					if (misguess_diff_t_value < -2.326) {
-						is_halt = false;
-					} else if (misguess_diff_t_value > 2.326) {
-						is_halt = true;
+			// 		if (iter_index > this->furthest_successful_halt) {
+			// 			this->furthest_successful_halt = iter_index;
+			// 		}
+			// 	} else {
+			// 		double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
+			// 			- this->halt_misguess_network->output->acti_vals[0];
+			// 		double misguess_standard_deviation = sqrt(this->misguess_variance);
+			// 		double misguess_diff_t_value = misguess_diff
+			// 			/ (misguess_standard_deviation / sqrt(2500));
+			// 		if (misguess_diff_t_value < -2.326) {
+			// 			is_halt = false;
+			// 		} else if (misguess_diff_t_value > 2.326) {
+			// 			is_halt = true;
 
-						if (iter_index > this->furthest_successful_halt) {
-							this->furthest_successful_halt = iter_index;
-						}
-					} else {
-						// continue if no strong signal either way
-						is_halt = false;
-					}
-				}
-			}
+			// 			if (iter_index > this->furthest_successful_halt) {
+			// 				this->furthest_successful_halt = iter_index;
+			// 			}
+			// 		} else {
+			// 			// continue if no strong signal either way
+			// 			is_halt = false;
+			// 		}
+			// 	}
+			// }
 
 			if (is_halt) {
 				history->halt_score_network_update = this->halt_score_network->output->acti_vals[0];
@@ -399,6 +400,7 @@ void Scope::activate(Problem& problem,
 				}
 
 				if (is_early_exit) {
+					history->num_loop_iters = iter_index+1;	// not incremented yet
 					break;
 				}
 			}
@@ -485,9 +487,11 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		sum_impact += action_node->average_impact;
 
+		// if (run_helper.explore_phase == EXPLORE_PHASE_NONE
+		// 		&& randuni() < action_node->average_impact/action_node->average_sum_impact
+		// 		&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 		if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-				&& randuni() < action_node->average_impact/action_node->average_sum_impact
-				&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+				&& rand()%20 == 0) {
 			if (action_node->explore_fold != NULL) {
 				bool matches_context = true;
 				if (action_node->explore_scope_context.size() > scope_context.size()) {
@@ -516,7 +520,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						context_histories,
 						run_helper,
 						fold_history);
-					history->explore_fold_history = fold_history;
 
 					if (action_node->explore_exit_depth == 0) {
 						action_node->explore_fold->sequence_activate(
@@ -530,6 +533,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							fold_history);
 						history->explore_iter_index = iter_index;
 						history->explore_node_index = (int)history->node_histories[iter_index].size();
+						history->explore_fold_history = fold_history;
 
 						curr_node_id = action_node->explore_next_node_id;
 						return false;
@@ -682,6 +686,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					inner_explore_exit_fold_history);
 				history->explore_iter_index = iter_index;
 				history->explore_node_index = (int)history->node_histories[iter_index].size();
+				history->explore_fold_history = inner_explore_exit_fold_history;
 
 				curr_node_id = inner_explore_exit_node_id;
 			} else {
@@ -703,9 +708,11 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		} else {
 			sum_impact += scope_node->average_impact;
 
+			// if (run_helper.explore_phase == EXPLORE_PHASE_NONE
+			// 		&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
+			// 		&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 			if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-					&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
-					&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+					&& rand()%20 == 0) {
 				if (scope_node->explore_fold != NULL) {
 					bool matches_context = true;
 					if (scope_node->explore_scope_context.size() > scope_context.size()) {
@@ -734,7 +741,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							context_histories,
 							run_helper,
 							fold_history);
-						history->explore_fold_history = fold_history;
 
 						if (scope_node->explore_exit_depth == 0) {
 							scope_node->explore_fold->sequence_activate(
@@ -748,6 +754,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 								fold_history);
 							history->explore_iter_index = iter_index;
 							history->explore_node_index = (int)history->node_histories[iter_index].size();
+							history->explore_fold_history = fold_history;
 
 							curr_node_id = scope_node->explore_next_node_id;
 							return false;
@@ -850,6 +857,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 						}
 					}
 				}
+			} else {
+				curr_node_id = scope_node->next_node_id;
 			}
 		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
@@ -995,35 +1004,37 @@ void Scope::backprop(vector<double>& state_errors,
 			this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 		}
 
-		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-			double predicted_score_error = target_val - predicted_score;
-			this->halt_score_network->backprop_errors_with_no_weight_change(
-				scale_factor*predicted_score_error,
-				state_errors,
-				history->halt_score_network_history);
+		if (history->halt_score_network_history != NULL) {	// check for if early exit
+			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+				double predicted_score_error = target_val - predicted_score;
+				this->halt_score_network->backprop_errors_with_no_weight_change(
+					scale_factor*predicted_score_error,
+					state_errors,
+					history->halt_score_network_history);
 
-			predicted_score -= scale_factor*history->halt_score_network_update;
+				predicted_score -= scale_factor*history->halt_score_network_update;
 
-			this->halt_misguess_network->backprop_errors_with_no_weight_change(
-				final_misguess - history->halt_misguess_val,
-				state_errors,
-				history->halt_misguess_network_history);
-		} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-			double predicted_score_error = target_val - predicted_score;
+				this->halt_misguess_network->backprop_errors_with_no_weight_change(
+					final_misguess - history->halt_misguess_val,
+					state_errors,
+					history->halt_misguess_network_history);
+			} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+				double predicted_score_error = target_val - predicted_score;
 
-			scale_factor_error += history->halt_score_network_update*predicted_score_error;
+				scale_factor_error += history->halt_score_network_update*predicted_score_error;
 
-			this->halt_score_network->backprop_weights_with_no_error_signal(
-				scale_factor*predicted_score_error,
-				0.002,
-				history->halt_score_network_history);
+				this->halt_score_network->backprop_weights_with_no_error_signal(
+					scale_factor*predicted_score_error,
+					0.002,
+					history->halt_score_network_history);
 
-			predicted_score -= scale_factor*history->halt_score_network_update;
+				predicted_score -= scale_factor*history->halt_score_network_update;
 
-			this->halt_misguess_network->backprop_weights_with_no_error_signal(
-				final_misguess - history->halt_misguess_val,
-				0.002,
-				history->halt_misguess_network_history);
+				this->halt_misguess_network->backprop_weights_with_no_error_signal(
+					final_misguess - history->halt_misguess_val,
+					0.002,
+					history->halt_misguess_network_history);
+			}
 		}
 
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
@@ -1576,8 +1587,8 @@ void Scope::explore_new_loop(int curr_node_id,
 		num_contexts = (int)scope_context.size();
 	}
 	for (int c_index = 0; c_index < num_contexts; c_index++) {
-		explore_scope_context.push_back((int)scope_context.size()-c_index);
-		explore_node_context.push_back((int)node_context.size()-c_index);
+		explore_scope_context.push_back(scope_context[(int)scope_context.size()-1-c_index]);
+		explore_node_context.push_back(node_context[(int)node_context.size()-1-c_index]);
 	}
 
 	run_helper.explore_scope_id = this->id;
@@ -1680,8 +1691,8 @@ void Scope::explore_new_path(int curr_node_id,
 		num_contexts = (int)scope_context.size();
 	}
 	for (int c_index = 0; c_index < num_contexts; c_index++) {
-		explore_scope_context.push_back((int)scope_context.size()-c_index);
-		explore_node_context.push_back((int)node_context.size()-c_index);
+		explore_scope_context.push_back(scope_context[(int)scope_context.size()-1-c_index]);
+		explore_node_context.push_back(node_context[(int)node_context.size()-1-c_index]);
 	}
 
 	run_helper.explore_scope_id = this->id;
@@ -1697,7 +1708,7 @@ void Scope::explore_new_path(int curr_node_id,
 	run_helper.explore_seed_start_predicted_score = predicted_score;
 	run_helper.explore_seed_start_scale_factor = scale_factor;
 	run_helper.explore_seed_state_vals_snapshot = state_vals;
-	run_helper.explore_seed_outer_context_history = context_histories[(int)context_histories.size()-num_contexts]->deep_copy_for_seed();
+	run_helper.explore_seed_outer_context_history = new ScopeHistory(context_histories[(int)context_histories.size()-num_contexts]);
 
 	new_explore_exit_depth = potential_exit_depths[random_exit_index];
 	new_explore_exit_node_id = potential_next_node_ids[random_exit_index];
@@ -1998,10 +2009,39 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->exceeded_depth = false;
 }
 
+ScopeHistory::ScopeHistory(ScopeHistory* original) {
+	this->scope = original->scope;
+
+	this->halt_score_network_history = NULL;
+	this->halt_misguess_network_history = NULL;
+
+	this->explore_fold_history = NULL;
+	this->explore_loop_fold_history = NULL;
+
+	for (int i_index = 0; i_index < (int)original->node_histories.size(); i_index++) {
+		this->node_histories.push_back(vector<AbstractNodeHistory*>());
+		for (int h_index = 0; h_index < (int)original->node_histories[i_index].size(); h_index++) {
+			if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)original->node_histories[i_index][h_index];
+				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
+			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)original->node_histories[i_index][h_index];
+				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
+			}
+		}
+	}
+}
+
 ScopeHistory::~ScopeHistory() {
 	for (int iter_index = 0; iter_index < (int)this->node_histories.size(); iter_index++) {
 		for (int h_index = 0; h_index < (int)this->node_histories[iter_index].size(); h_index++) {
 			delete this->node_histories[iter_index][h_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->starting_state_network_histories.size(); s_index++) {
+		if (this->starting_state_network_histories[s_index] != NULL) {
+			delete this->starting_state_network_histories[s_index];
 		}
 	}
 
@@ -2028,21 +2068,4 @@ ScopeHistory::~ScopeHistory() {
 	if (this->explore_loop_fold_history != NULL) {
 		delete this->explore_loop_fold_history;
 	}
-}
-
-ScopeHistory* ScopeHistory::deep_copy_for_seed() {
-	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
-
-	for (int i_index = 0; i_index < (int)this->node_histories.size(); i_index++) {
-		new_scope_history->node_histories.push_back(vector<AbstractNodeHistory*>());
-		for (int h_index = 0; h_index < (int)this->node_histories[i_index].size(); h_index++) {
-			if (this->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION
-					|| this->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
-				new_scope_history->node_histories.back().push_back(
-					this->node_histories[i_index][h_index]->deep_copy_for_seed());
-			}
-		}
-	}
-
-	return new_scope_history;
 }

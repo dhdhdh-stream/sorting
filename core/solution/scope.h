@@ -175,9 +175,8 @@ public:
 	bool exceeded_depth;
 
 	ScopeHistory(Scope* scope);
+	ScopeHistory(ScopeHistory* original);	// deep copy for seed
 	~ScopeHistory();
-
-	ScopeHistory* deep_copy_for_seed();
 };
 
 #endif /* SCOPE_H */

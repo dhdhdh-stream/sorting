@@ -29,6 +29,14 @@ void Fold::experiment_to_clean() {
 	this->test_state_not_needed_locally = this->curr_state_not_needed_locally;
 	this->test_num_states_cleared = this->curr_num_states_cleared;
 
+	this->curr_outer_scopes_needed.insert(this->scope_context[0]);
+	for (int c_index = 1; c_index < (int)this->scope_context.size(); c_index++) {
+		this->curr_outer_scopes_needed.insert(this->scope_context[c_index]);
+		this->curr_outer_contexts_needed.insert(make_pair(this->scope_context[c_index], this->node_context[c_index]));
+	}
+	this->reverse_test_outer_scopes_needed = this->curr_outer_scopes_needed;
+	this->reverse_test_outer_contexts_needed = this->curr_outer_contexts_needed;
+
 	// Note: don't adjust context even if outer state not needed, as trained within specific context
 	if (this->curr_outer_state_networks.size() == 0) {
 		this->curr_num_new_outer_states = 0;

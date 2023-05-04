@@ -207,4 +207,5 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 								 new_nodes);
 	solution->scopes.push_back(new_scope);
 	new_scope_id = (int)solution->scopes.size()-1;
+	new_scope->id = new_scope_id;
 }

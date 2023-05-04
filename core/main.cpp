@@ -19,7 +19,8 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1683095054;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -28,11 +29,16 @@ int main(int argc, char* argv[]) {
 
 	int iter_index = 0;
 	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
-	while (true) {
+	// while (true) {
+	while (iter_index < 100000) {
+		if (iter_index%100 == 0) {
+			cout << "iter_index: " << iter_index << endl;
+		}
 		Problem problem;
 
 		RunHelper run_helper;
-		if (iter_index > 200000 && rand()%3 != 0) {
+		// if (iter_index > 200000 && rand()%3 != 0) {
+		if (rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
@@ -81,6 +87,8 @@ int main(int argc, char* argv[]) {
 		double target_val;
 		if (run_helper.exceeded_depth) {
 			target_val = -1.0;
+			cout << "exceeded_depth" << endl;
+			cout << "run_helper.max_depth: " << run_helper.max_depth << endl;
 		} else {
 			target_val = problem.score_result();
 		}
@@ -119,6 +127,7 @@ int main(int argc, char* argv[]) {
 						action_node->best_explore_seed_start_scale_factor = run_helper.explore_seed_start_scale_factor;
 						action_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
 						action_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
+						run_helper.explore_seed_outer_context_history = NULL;
 					}
 				}
 
@@ -164,12 +173,14 @@ int main(int argc, char* argv[]) {
 					}
 
 					action_node->explore_curr_try = 0;
-					action_node->explore_target_tries = 1;
-					int rand_scale = rand()%4;
-					for (int i = 0; i < rand_scale; i++) {
-						action_node->explore_target_tries *= 10;
-					}
+					// action_node->explore_target_tries = 1;
+					action_node->explore_target_tries = 10;
+					// int rand_scale = rand()%4;
+					// for (int i = 0; i < rand_scale; i++) {
+					// 	action_node->explore_target_tries *= 10;
+					// }
 					action_node->best_explore_surprise = numeric_limits<double>::lowest();
+					action_node->best_explore_seed_outer_context_history = NULL;
 				}
 			} else {
 				// solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id]->type == NODE_TYPE_ACTION
@@ -203,6 +214,7 @@ int main(int argc, char* argv[]) {
 						scope_node->best_explore_seed_start_scale_factor = run_helper.explore_seed_start_scale_factor;
 						scope_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
 						scope_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
+						run_helper.explore_seed_outer_context_history = NULL;
 					}
 				}
 
@@ -248,13 +260,19 @@ int main(int argc, char* argv[]) {
 					}
 
 					scope_node->explore_curr_try = 0;
-					scope_node->explore_target_tries = 1;
-					int rand_scale = rand()%4;
-					for (int i = 0; i < rand_scale; i++) {
-						scope_node->explore_target_tries *= 10;
-					}
+					// scope_node->explore_target_tries = 1;
+					scope_node->explore_target_tries = 10;
+					// int rand_scale = rand()%4;
+					// for (int i = 0; i < rand_scale; i++) {
+					// 	scope_node->explore_target_tries *= 10;
+					// }
 					scope_node->best_explore_surprise = numeric_limits<double>::lowest();
+					scope_node->best_explore_seed_outer_context_history = NULL;
 				}
+			}
+
+			if (run_helper.explore_seed_outer_context_history != NULL) {
+				delete run_helper.explore_seed_outer_context_history;
 			}
 		} else {
 			if (!run_helper.exceeded_depth) {
@@ -271,7 +289,7 @@ int main(int argc, char* argv[]) {
 
 			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
 
-			vector<double> input_errors;
+			vector<double> input_errors(solution->scopes[0]->num_states, 0.0);
 			double scale_factor_error = 0.0;	// unused
 			solution->scopes[0]->backprop(input_errors,
 										  inputs_initialized,
