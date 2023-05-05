@@ -18,6 +18,7 @@ class Scope {
 public:
 	int id;
 
+	// TODO: actually, name states (i.e., objects), so that on reuse in exploration, can immediately make intelligent choices
 	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 

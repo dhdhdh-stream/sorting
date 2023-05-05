@@ -123,7 +123,7 @@ void Fold::remove_inner_state_from_load() {
 	cout << "starting REMOVE_INNER_STATE " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
 	this->state = FOLD_STATE_REMOVE_INNER_STATE;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

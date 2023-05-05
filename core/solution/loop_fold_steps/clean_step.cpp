@@ -1248,7 +1248,11 @@ void LoopFold::clean_backprop(vector<double>& state_errors,
 		double misguess_variance = (this->curr_average_misguess - final_misguess)*(this->curr_average_misguess - final_misguess);
 		this->curr_misguess_variance = 0.9999*this->curr_misguess_variance + 0.0001*misguess_variance;
 
-		if (history->state_iter_snapshot <= this->state_iter) {
+		if (this->state_iter != -1) {
+			// capture in case fold wrapped up
+			int fold_node_scope_id = this->fold_node_scope_id;
+			int fold_node_scope_index = this->fold_node_scope_index;
+
 			double halt_predicted_score_error = target_val - predicted_score;
 			this->curr_halt_score_network->backprop_weights_with_no_error_signal(
 				scale_factor*halt_predicted_score_error,
@@ -1292,6 +1296,13 @@ void LoopFold::clean_backprop(vector<double>& state_errors,
 											  scope_scale_factor_error,
 											  run_helper,
 											  history->inner_scope_histories[iter_index][f_index]);
+
+						// fold might have updated or wrapped up inner
+						if (solution->scopes[fold_node_scope_id]->nodes[fold_node_scope_index]->type != NODE_TYPE_LOOP_FOLD
+								|| this->state_iter == -1) {
+							cout << "loop fold inner updated" << endl;
+							return;
+						}
 
 						scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 

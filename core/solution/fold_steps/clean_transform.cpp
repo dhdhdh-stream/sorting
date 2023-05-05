@@ -5,6 +5,14 @@
 using namespace std;
 
 void Fold::clean_transform_helper() {
+	if (this->sequence_length == 0) {
+		cout << "DONE" << endl;
+
+		this->state = FOLD_STATE_DONE;
+
+		return;
+	}
+
 	bool is_done = false;
 	while (!is_done) {
 		if (this->state == FOLD_STATE_REMOVE_INNER_NETWORK) {
@@ -69,7 +77,7 @@ bool Fold::remove_inner_network_transform_helper() {
 
 	cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 
@@ -156,7 +164,7 @@ bool Fold::remove_inner_state_transform_helper() {
 
 	cout << "starting REMOVE_INNER_STATE " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 
@@ -225,7 +233,7 @@ bool Fold::clear_inner_state_transform_helper() {
 
 	cout << "starting CLEAR_INNER_STATE " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 

@@ -26,7 +26,8 @@ public:
 						   std::vector<int>& scope_context,
 						   std::vector<int>& node_context,
 						   int& early_exit_depth,
-						   int& early_exit_node_id);
+						   int& early_exit_node_id,
+						   bool& exceeded_depth);
 	void new_sequence(std::vector<bool>& is_inner_scope,
 					  std::vector<int>& existing_scope_ids,
 					  std::vector<Action>& actions,

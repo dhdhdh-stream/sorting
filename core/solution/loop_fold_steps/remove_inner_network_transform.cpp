@@ -76,7 +76,7 @@ void LoopFold::remove_inner_network_transform_helper() {
 
 		cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
-		this->state_iter = 0;
+		this->state_iter = -1;
 		this->sub_iter = 0;
 		this->sum_error = 0.0;
 
@@ -243,7 +243,7 @@ void LoopFold::remove_inner_network_from_load() {
 	cout << "starting REMOVE_INNER_NETWORK " << this->clean_inner_step_index << " " << this->clean_inner_state_index << endl;
 
 	this->state = LOOP_FOLD_STATE_REMOVE_INNER_NETWORK;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

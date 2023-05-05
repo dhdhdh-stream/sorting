@@ -120,7 +120,7 @@ Fold::Fold(vector<int> scope_context,
 	this->clean_inner_state_index = -1;
 
 	this->state = FOLD_STATE_EXPERIMENT;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sum_error = 0.0;
 }
 
@@ -587,6 +587,11 @@ void Fold::score_activate(vector<double>& state_vals,
 						  vector<ScopeHistory*>& context_histories,
 						  RunHelper& run_helper,
 						  FoldHistory* history) {
+	if (this->state_iter == -1) {
+		// used to catch if state change occurred
+		this->state_iter = 0;
+	}
+
 	if (this->state == FOLD_STATE_EXPERIMENT
 			|| this->state == FOLD_STATE_ADD_OUTER_STATE
 			|| this->state == FOLD_STATE_ADD_INNER_STATE) {
@@ -1127,8 +1132,6 @@ FoldHistory::FoldHistory(Fold* fold) {
 
 	this->starting_score_network_history = NULL;
 	this->test_starting_score_network_history = NULL;
-
-	this->state_iter_snapshot = fold->state_iter;
 }
 
 FoldHistory::~FoldHistory() {

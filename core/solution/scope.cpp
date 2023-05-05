@@ -30,6 +30,11 @@ Scope::Scope(int num_states,
 			 double average_misguess,
 			 double misguess_variance,
 			 vector<AbstractNode*> nodes) {
+	if (nodes.size() == 0) {
+		cout << "weird" << endl;
+		exit(1);
+	}
+
 	this->num_states = num_states;
 	this->is_initialized_locally = is_initialized_locally;
 	this->is_loop = is_loop;
@@ -237,11 +242,10 @@ void Scope::activate(Problem& problem,
 	early_exit_depth = -1;
 	explore_exit_depth = -1;
 
-	run_helper.curr_depth++;
-	if (run_helper.curr_depth > run_helper.max_depth) {
-		run_helper.max_depth = run_helper.curr_depth;
+	if ((int)scope_context.size() > run_helper.max_depth) {
+		run_helper.max_depth = (int)scope_context.size();
 	}
-	if (run_helper.curr_depth > solution->depth_limit) {
+	if ((int)scope_context.size() > solution->depth_limit) {
 		run_helper.exceeded_depth = true;
 		history->exceeded_depth = true;
 		return;
@@ -447,8 +451,6 @@ void Scope::activate(Problem& problem,
 	scope_context.pop_back();
 	node_context.pop_back();
 	context_histories.pop_back();
-
-	run_helper.curr_depth--;
 }
 
 bool Scope::handle_node_activate_helper(int iter_index,
@@ -1305,72 +1307,81 @@ void Scope::handle_node_backprop_helper(int iter_index,
 									 run_helper,
 									 (FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index]);
 
-		Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index])->fold_history->fold;
-		if (fold->state == FOLD_STATE_DONE) {
-			// update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
-			for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
-					it != fold->curr_inner_state_networks.end(); it++) {
-				Scope* scope = solution->scopes[it->first];
-				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-					if (it->second[n_index].size() > 0) {
-						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-						for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
-							if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
-								action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
-								action_node->state_networks.push_back(it->second[n_index][i_index]);
-								action_node->state_networks.back()->update_state_size(scope->num_states);
-								action_node->state_networks.back()->new_external_to_state();
+		// re-check as might have been updated by inner
+		if (this->nodes[history->node_histories[iter_index][h_index]->scope_index]->type == NODE_TYPE_FOLD_SEQUENCE) {
+			Fold* fold = ((FoldSequenceNodeHistory*)history->node_histories[iter_index][h_index])->fold_history->fold;
+			if (fold->state == FOLD_STATE_DONE) {
+				// update inner scopes before fold_to_nodes and FoldSequenceNode outer scopes updates
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = fold->curr_inner_state_networks.begin();
+						it != fold->curr_inner_state_networks.end(); it++) {
+					Scope* scope = solution->scopes[it->first];
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						if (it->second[n_index].size() > 0) {
+							ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+							for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+								if (!fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+									action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
+									action_node->state_networks.push_back(it->second[n_index][i_index]);
+									action_node->state_networks.back()->update_state_size(scope->num_states);
+									action_node->state_networks.back()->new_external_to_state();
+								}
 							}
 						}
 					}
 				}
-			}
 
-			for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
-					it != fold->curr_inner_scopes_needed.end(); it++) {
-				solution->scopes[*it]->add_new_state(fold->curr_num_new_inner_states,
-													 false);
-			}
-
-			for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
-					it != fold->curr_inner_contexts_needed.end(); it++) {
-				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-				Scope* outer_scope = solution->scopes[(*it).first];
-				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-				for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
-					scope_node->inner_input_indexes.push_back(outer_scope->num_states-fold->curr_num_new_inner_states+i_index);
-					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-fold->curr_num_new_inner_states+i_index);
+				for (set<int>::iterator it = fold->curr_inner_scopes_needed.begin();
+						it != fold->curr_inner_scopes_needed.end(); it++) {
+					solution->scopes[*it]->add_new_state(fold->curr_num_new_inner_states,
+														 false);
 				}
-			}
 
-			vector<AbstractNode*> new_nodes;
-			fold_to_nodes(this,
-						  fold,
-						  new_nodes);
+				for (set<pair<int, int>>::iterator it = fold->curr_inner_contexts_needed.begin();
+						it != fold->curr_inner_contexts_needed.end(); it++) {
+					ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+					Scope* outer_scope = solution->scopes[(*it).first];
+					Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+					for (int i_index = 0; i_index < fold->curr_num_new_inner_states; i_index++) {
+						scope_node->inner_input_indexes.push_back(outer_scope->num_states-fold->curr_num_new_inner_states+i_index);
+						scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-fold->curr_num_new_inner_states+i_index);
+					}
+				}
 
-			int starting_new_node_id = (int)this->nodes.size();
-			for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
-				if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)new_nodes[n_index];
-					action_node->next_node_id = (int)this->nodes.size()+1;
+				vector<AbstractNode*> new_nodes;
+				fold_to_nodes(this,
+							  fold,
+							  new_nodes);
+
+				if (new_nodes.size() > 0) {
+					int starting_new_node_id = (int)this->nodes.size();
+					for (int n_index = 0; n_index < (int)new_nodes.size()-1; n_index++) {
+						if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+							action_node->next_node_id = (int)this->nodes.size()+1;
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+							scope_node->next_node_id = (int)this->nodes.size()+1;
+						}
+						this->nodes.push_back(new_nodes[n_index]);
+					}
+					if (new_nodes.back()->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)new_nodes.back();
+						action_node->next_node_id = fold_sequence_node->next_node_id;
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
+						scope_node->next_node_id = fold_sequence_node->next_node_id;
+					}
+					this->nodes.push_back(new_nodes.back());
+
+					PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
+					delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+					this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
 				} else {
-					ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
-					scope_node->next_node_id = (int)this->nodes.size()+1;
+					PassThroughNode* new_pass_through_node = new PassThroughNode(fold_sequence_node->next_node_id);
+					delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+					this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
 				}
-				this->nodes.push_back(new_nodes[n_index]);
 			}
-			if (new_nodes.back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)new_nodes.back();
-				action_node->next_node_id = fold_sequence_node->next_node_id;
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)new_nodes.back();
-				scope_node->next_node_id = fold_sequence_node->next_node_id;
-			}
-			this->nodes.push_back(new_nodes.back());
-
-			PassThroughNode* new_pass_through_node = new PassThroughNode(starting_new_node_id);
-			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
-			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_pass_through_node;
 		}
 	} else {
 		// history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_LOOP_FOLD
@@ -1386,132 +1397,135 @@ void Scope::handle_node_backprop_helper(int iter_index,
 								 run_helper,
 								 (LoopFoldNodeHistory*)history->node_histories[iter_index][h_index]);
 
-		LoopFold* loop_fold = loop_fold_node->loop_fold;
-		if (loop_fold->state == LOOP_FOLD_STATE_DONE) {
-			// input
-			for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_inner_state_networks.begin();
-					it != loop_fold->curr_inner_state_networks.end(); it++) {
-				Scope* scope = solution->scopes[it->first];
-				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-					if (it->second[n_index].size() > 0) {
-						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-						for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
-							if (!loop_fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
-								action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
-								action_node->state_networks.push_back(it->second[n_index][i_index]);
+		// re-check as might have been updated by inner
+		if (this->nodes[history->node_histories[iter_index][h_index]->scope_index]->type == NODE_TYPE_LOOP_FOLD) {
+			LoopFold* loop_fold = loop_fold_node->loop_fold;
+			if (loop_fold->state == LOOP_FOLD_STATE_DONE) {
+				// input
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_inner_state_networks.begin();
+						it != loop_fold->curr_inner_state_networks.end(); it++) {
+					Scope* scope = solution->scopes[it->first];
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						if (it->second[n_index].size() > 0) {
+							ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+							for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+								if (!loop_fold->curr_inner_state_networks_not_needed[it->first][n_index][i_index]) {
+									action_node->state_network_target_indexes.push_back(scope->num_states+i_index);
+									action_node->state_networks.push_back(it->second[n_index][i_index]);
 
-								action_node->state_networks.back()->update_state_size(scope->num_states);
-								action_node->state_networks.back()->new_external_to_state();
+									action_node->state_networks.back()->update_state_size(scope->num_states);
+									action_node->state_networks.back()->new_external_to_state();
+								}
 							}
 						}
 					}
 				}
-			}
 
-			for (set<int>::iterator it = loop_fold->curr_inner_scopes_needed.begin();
-					it != loop_fold->curr_inner_scopes_needed.end(); it++) {
-				solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_inner_states,
-													 false);
-			}
-
-			for (set<pair<int, int>>::iterator it = loop_fold->curr_inner_contexts_needed.begin();
-					it != loop_fold->curr_inner_contexts_needed.end(); it++) {
-				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-				Scope* outer_scope = solution->scopes[(*it).first];
-				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-				for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
-					scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
-					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
-				}
-			}
-
-			int new_scope_id;
-			loop_fold_to_scope(loop_fold,
-							   new_scope_id);
-
-			int new_scope_num_states = solution->scopes[new_scope_id]->num_states;
-
-			vector<int> new_inner_input_indexes;
-			vector<int> new_inner_input_target_indexes;
-			for (int s_index = 0; s_index < loop_fold->num_states; s_index++) {
-				// TODO: remove unneeded num_states
-				new_inner_input_indexes.push_back(s_index);
-				new_inner_input_target_indexes.push_back(new_scope_num_states
-					- loop_fold->num_states
-					- loop_fold->curr_num_new_outer_states
-					+ s_index);
-			}
-			for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
-				// outer not updated yet
-				new_inner_input_indexes.push_back(this->num_states + o_index);
-				new_inner_input_target_indexes.push_back(new_scope_num_states
-					- loop_fold->curr_num_new_outer_states
-					+ o_index);
-			}
-			StateNetwork* new_score_network = new StateNetwork(0,
-															   this->num_states,
-															   0,
-															   0,
-															   20);
-			ScopeNode* new_scope_node = new ScopeNode(vector<int>(),
-													  vector<StateNetwork*>(),
-													  new_scope_id,
-													  new_inner_input_indexes,
-													  new_inner_input_target_indexes,
-													  new Scale(1.0),
-													  vector<int>(),
-													  vector<StateNetwork*>(),
-													  new_score_network);
-			new_scope_node->next_node_id = loop_fold_node->next_node_id;
-
-			// outer
-			int outer_scope_id = loop_fold->scope_context.back();
-
-			for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_outer_state_networks.begin();
-					it != loop_fold->curr_outer_state_networks.end(); it++) {
-				Scope* scope = solution->scopes[it->first];
-				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-					if (it->second[n_index].size() > 0) {
-						ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
-						for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
-							if (!loop_fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
-								action_node->state_network_target_indexes.push_back(scope->num_states+s_index);
-								action_node->state_networks.push_back(it->second[n_index][s_index]);
-
-								action_node->state_networks.back()->update_state_size(scope->num_states);
-								action_node->state_networks.back()->new_external_to_state();
-							}
-						}
-					}
-				}
-			}
-
-			// new_outer_state_size may be 0
-			solution->scopes[outer_scope_id]->add_new_state(loop_fold->curr_num_new_outer_states,
-															true);
-
-			for (set<int>::iterator it = loop_fold->curr_outer_scopes_needed.begin();
-					it != loop_fold->curr_outer_scopes_needed.end(); it++) {
-				if (*it != outer_scope_id) {
-					solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_outer_states,
+				for (set<int>::iterator it = loop_fold->curr_inner_scopes_needed.begin();
+						it != loop_fold->curr_inner_scopes_needed.end(); it++) {
+					solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_inner_states,
 														 false);
 				}
-			}
 
-			for (set<pair<int, int>>::iterator it = loop_fold->curr_outer_contexts_needed.begin();
-					it != loop_fold->curr_outer_contexts_needed.end(); it++) {
-				ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
-				Scope* outer_scope = solution->scopes[(*it).first];
-				Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
-				for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
-					scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
-					scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
+				for (set<pair<int, int>>::iterator it = loop_fold->curr_inner_contexts_needed.begin();
+						it != loop_fold->curr_inner_contexts_needed.end(); it++) {
+					ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+					Scope* outer_scope = solution->scopes[(*it).first];
+					Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+					for (int i_index = 0; i_index < loop_fold->curr_num_new_inner_states; i_index++) {
+						scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
+						scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_inner_states+i_index);
+					}
 				}
-			}
 
-			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
-			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
-			// delete loop_fold_node along with loop_fold
+				int new_scope_id;
+				loop_fold_to_scope(loop_fold,
+								   new_scope_id);
+
+				int new_scope_num_states = solution->scopes[new_scope_id]->num_states;
+
+				vector<int> new_inner_input_indexes;
+				vector<int> new_inner_input_target_indexes;
+				for (int s_index = 0; s_index < loop_fold->num_states; s_index++) {
+					// TODO: remove unneeded num_states
+					new_inner_input_indexes.push_back(s_index);
+					new_inner_input_target_indexes.push_back(new_scope_num_states
+						- loop_fold->num_states
+						- loop_fold->curr_num_new_outer_states
+						+ s_index);
+				}
+				for (int o_index = 0; o_index < loop_fold->curr_num_new_outer_states; o_index++) {
+					// outer not updated yet
+					new_inner_input_indexes.push_back(this->num_states + o_index);
+					new_inner_input_target_indexes.push_back(new_scope_num_states
+						- loop_fold->curr_num_new_outer_states
+						+ o_index);
+				}
+				StateNetwork* new_score_network = new StateNetwork(0,
+																   this->num_states,
+																   0,
+																   0,
+																   20);
+				ScopeNode* new_scope_node = new ScopeNode(vector<int>(),
+														  vector<StateNetwork*>(),
+														  new_scope_id,
+														  new_inner_input_indexes,
+														  new_inner_input_target_indexes,
+														  new Scale(1.0),
+														  vector<int>(),
+														  vector<StateNetwork*>(),
+														  new_score_network);
+				new_scope_node->next_node_id = loop_fold_node->next_node_id;
+
+				// outer
+				int outer_scope_id = loop_fold->scope_context.back();
+
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = loop_fold->curr_outer_state_networks.begin();
+						it != loop_fold->curr_outer_state_networks.end(); it++) {
+					Scope* scope = solution->scopes[it->first];
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						if (it->second[n_index].size() > 0) {
+							ActionNode* action_node = (ActionNode*)scope->nodes[n_index];
+							for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+								if (!loop_fold->curr_outer_state_networks_not_needed[it->first][n_index][s_index]) {
+									action_node->state_network_target_indexes.push_back(scope->num_states+s_index);
+									action_node->state_networks.push_back(it->second[n_index][s_index]);
+
+									action_node->state_networks.back()->update_state_size(scope->num_states);
+									action_node->state_networks.back()->new_external_to_state();
+								}
+							}
+						}
+					}
+				}
+
+				// new_outer_state_size may be 0
+				solution->scopes[outer_scope_id]->add_new_state(loop_fold->curr_num_new_outer_states,
+																true);
+
+				for (set<int>::iterator it = loop_fold->curr_outer_scopes_needed.begin();
+						it != loop_fold->curr_outer_scopes_needed.end(); it++) {
+					if (*it != outer_scope_id) {
+						solution->scopes[*it]->add_new_state(loop_fold->curr_num_new_outer_states,
+															 false);
+					}
+				}
+
+				for (set<pair<int, int>>::iterator it = loop_fold->curr_outer_contexts_needed.begin();
+						it != loop_fold->curr_outer_contexts_needed.end(); it++) {
+					ScopeNode* scope_node = (ScopeNode*)solution->scopes[(*it).first]->nodes[(*it).second];
+					Scope* outer_scope = solution->scopes[(*it).first];
+					Scope* inner_scope = solution->scopes[scope_node->inner_scope_id];
+					for (int s_index = 0; s_index < loop_fold->curr_num_new_outer_states; s_index++) {
+						scope_node->inner_input_indexes.push_back(outer_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
+						scope_node->inner_input_target_indexes.push_back(inner_scope->num_states-loop_fold->curr_num_new_outer_states+s_index);
+					}
+				}
+
+				delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
+				this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_scope_node;
+				// delete loop_fold_node along with loop_fold
+			}
 		}
 	}
 }
@@ -1783,6 +1797,9 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 				this->nodes.push_back(new_fold_sequence_node);
 				int fold_sequence_node_id = (int)this->nodes.size()-1;
 
+				fold->fold_node_scope_id = this->id;
+				fold->fold_node_scope_index = fold_sequence_node_id;
+
 				FoldScoreNode* new_fold_score_node = new FoldScoreNode(existing_score_network,
 																	   action_node->next_node_id,
 																	   fold,
@@ -1808,6 +1825,9 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 				FoldSequenceNode* new_fold_sequence_node = new FoldSequenceNode(scope_node->explore_next_node_id);
 				this->nodes.push_back(new_fold_sequence_node);
 				int fold_sequence_node_id = (int)this->nodes.size()-1;
+
+				fold->fold_node_scope_id = this->id;
+				fold->fold_node_scope_index = fold_sequence_node_id;
 
 				FoldScoreNode* new_fold_score_node = new FoldScoreNode(existing_score_network,
 																	   scope_node->next_node_id,
@@ -1872,6 +1892,9 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 				int new_node_id = (int)this->nodes.size()-1;
 				action_node->next_node_id = new_node_id;
 
+				loop_fold->fold_node_scope_id = this->id;
+				loop_fold->fold_node_scope_index = new_node_id;
+
 				action_node->explore_scope_context.clear();
 				action_node->explore_node_context.clear();
 				action_node->explore_loop_fold = NULL;
@@ -1886,6 +1909,9 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 				this->nodes.push_back(new_loop_fold_node);
 				int new_node_id = (int)this->nodes.size()-1;
 				scope_node->next_node_id = new_node_id;
+
+				loop_fold->fold_node_scope_id = this->id;
+				loop_fold->fold_node_scope_index = new_node_id;
 
 				scope_node->explore_scope_context.clear();
 				scope_node->explore_node_context.clear();

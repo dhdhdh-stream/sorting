@@ -132,7 +132,7 @@ LoopFold::LoopFold(vector<int> scope_context,
 
 	this->state = LOOP_FOLD_STATE_EXPERIMENT;
 	this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sum_error = 0.0;
 }
 
@@ -617,6 +617,11 @@ void LoopFold::activate(Problem& problem,
 						vector<ScopeHistory*>& context_histories,
 						RunHelper& run_helper,
 						LoopFoldHistory* history) {
+	if (this->state_iter == -1) {
+		// used to catch if state change occurred
+		this->state_iter = 0;
+	}
+
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			|| this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			|| this->state == LOOP_FOLD_STATE_ADD_INNER_STATE) {
@@ -1141,8 +1146,6 @@ LoopFoldHistory::LoopFoldHistory(LoopFold* loop_fold) {
 
 	this->halt_score_network_history = NULL;
 	this->halt_misguess_network_history = NULL;
-
-	this->state_iter_snapshot = loop_fold->state_iter;
 }
 
 LoopFoldHistory::~LoopFoldHistory() {

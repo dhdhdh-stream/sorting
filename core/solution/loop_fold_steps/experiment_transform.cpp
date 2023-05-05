@@ -153,7 +153,7 @@ void LoopFold::experiment_end() {
 
 			this->state = LOOP_FOLD_STATE_ADD_OUTER_STATE;
 			this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
-			this->state_iter = 0;
+			this->state_iter = -1;
 			this->sum_error = 0.0;
 		} else {
 			this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
@@ -227,7 +227,7 @@ void LoopFold::experiment_end() {
 
 				this->state = LOOP_FOLD_STATE_REMOVE_INNER_INPUT;
 				this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
-				this->state_iter = 0;
+				this->state_iter = -1;
 				this->sum_error = 0.0;
 			}
 		}

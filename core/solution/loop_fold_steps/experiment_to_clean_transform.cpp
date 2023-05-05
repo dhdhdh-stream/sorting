@@ -110,7 +110,7 @@ void LoopFold::experiment_to_clean() {
 			cout << "starting REMOVE_INNER_SCOPE " << this->clean_inner_scope_index << endl;
 
 			this->state = LOOP_FOLD_STATE_REMOVE_INNER_SCOPE;
-			this->state_iter = 0;
+			this->state_iter = -1;
 			this->sub_iter = 0;
 			this->sum_error = 0.0;
 		}
@@ -181,7 +181,7 @@ void LoopFold::experiment_to_clean() {
 		cout << "starting REMOVE_OUTER_SCOPE " << this->clean_outer_scope_index << endl;
 
 		this->state = LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE;
-		this->state_iter = 0;
+		this->state_iter = -1;
 		this->sub_iter = 0;
 		this->sum_error = 0.0;
 	}

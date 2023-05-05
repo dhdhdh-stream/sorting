@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	// int seed = (unsigned)time(NULL);
-	int seed = 1683095054;
+	int seed = 1683183267;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 				ActionNode* action_node = (ActionNode*)solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id];
 
 				action_node->explore_curr_try++;
-				if (curr_surprise > action_node->best_explore_surprise) {
+				if (action_node->explore_curr_try == 1 || curr_surprise > action_node->best_explore_surprise) {
 					action_node->best_explore_surprise = curr_surprise;
 					action_node->best_explore_scope_context = run_helper.explore_scope_context;
 					action_node->best_explore_node_context = run_helper.explore_node_context;
@@ -187,7 +187,8 @@ int main(int argc, char* argv[]) {
 				ScopeNode* scope_node = (ScopeNode*)solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id];
 
 				scope_node->explore_curr_try++;
-				if (curr_surprise > scope_node->best_explore_surprise) {
+				// if (curr_surprise > scope_node->best_explore_surprise) {
+				if (scope_node->explore_curr_try == 1 || curr_surprise > scope_node->best_explore_surprise) {
 					scope_node->best_explore_surprise = curr_surprise;
 					scope_node->best_explore_scope_context = run_helper.explore_scope_context;
 					scope_node->best_explore_node_context = run_helper.explore_node_context;
@@ -278,6 +279,11 @@ int main(int argc, char* argv[]) {
 			if (!run_helper.exceeded_depth) {
 				if (run_helper.max_depth > solution->max_depth) {
 					solution->max_depth = run_helper.max_depth;
+
+					// temp
+					if (solution->max_depth > 10) {
+						solution->max_depth = 10;
+					}
 
 					if (solution->max_depth < 50) {
 						solution->depth_limit = solution->max_depth + 10;

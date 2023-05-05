@@ -204,7 +204,7 @@ void Fold::add_outer_state_end() {
 		cout << "starting ADD_INNER_STATE " << this->test_num_new_inner_states << endl;
 
 		this->state = FOLD_STATE_ADD_INNER_STATE;
-		this->state_iter = 0;
+		this->state_iter = -1;
 		this->sum_error = 0.0;
 	} else {
 		this->curr_inner_inputs_needed = vector<bool>(this->sum_inner_inputs, true);
@@ -263,7 +263,7 @@ void Fold::add_outer_state_end() {
 			cout << "starting REMOVE_INNER_INPUT " << this->remove_inner_input_index << endl;
 
 			this->state = FOLD_STATE_REMOVE_INNER_INPUT;
-			this->state_iter = 0;
+			this->state_iter = -1;
 			this->sum_error = 0.0;
 		}
 	}

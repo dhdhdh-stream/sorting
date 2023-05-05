@@ -78,6 +78,7 @@ Solution::~Solution() {
 	}
 }
 
+// TODO: add breaks for recursion
 void Solution::random_run_helper(int scope_id,
 								 vector<bool>& is_inner_scope,
 								 vector<int>& existing_scope_ids,
@@ -85,13 +86,19 @@ void Solution::random_run_helper(int scope_id,
 								 vector<int>& scope_context,
 								 vector<int>& node_context,
 								 int& early_exit_depth,
-								 int& early_exit_node_id) {
+								 int& early_exit_node_id,
+								 bool& exceeded_depth) {
+	early_exit_depth = -1;
+
+	if ((int)scope_context.size() > this->depth_limit) {
+		exceeded_depth = true;
+		return;
+	}
+
 	Scope* scope = this->scopes[scope_id];
 
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
-
-	early_exit_depth = -1;
 
 	int curr_node_id = 0;
 	while (true) {
@@ -128,7 +135,8 @@ void Solution::random_run_helper(int scope_id,
 							  scope_context,
 							  node_context,
 							  inner_early_exit_depth,
-							  inner_early_exit_node_id);
+							  inner_early_exit_node_id,
+							  exceeded_depth);
 
 			node_context.back() = -1;
 
@@ -262,6 +270,7 @@ void Solution::new_sequence(vector<bool>& is_inner_scope,
 			vector<int> node_context;
 			int early_exit_depth;
 			int early_exit_node_id;
+			bool exceeded_depth = false;
 			random_run_helper(0,
 							  run_is_inner_scope,
 							  run_existing_scope_ids,
@@ -269,9 +278,10 @@ void Solution::new_sequence(vector<bool>& is_inner_scope,
 							  scope_context,
 							  node_context,
 							  early_exit_depth,
-							  early_exit_node_id);
+							  early_exit_node_id,
+							  exceeded_depth);
 
-			if (run_is_inner_scope.size() == 0) {
+			if (run_is_inner_scope.size() == 0 || exceeded_depth) {
 				is_inner_scope.push_back(false);
 				int move = rand()%3;
 				actions.push_back(Action(move));
@@ -310,12 +320,16 @@ void Solution::random_run_continuation_helper(int scope_id,
 											  vector<int>& node_context,
 											  int& early_exit_depth,
 											  int& early_exit_node_id) {
+	early_exit_depth = -1;
+
+	if ((int)scope_context.size() > solution->depth_limit) {
+		return;
+	}
+
 	Scope* scope = this->scopes[scope_id];
 
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
-
-	early_exit_depth = -1;
 
 	int curr_node_id = 0;
 	while (true) {

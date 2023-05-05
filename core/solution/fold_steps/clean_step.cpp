@@ -889,7 +889,11 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 			}
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-		if (history->state_iter_snapshot <= this->state_iter) {
+		if (this->state_iter != -1) {
+			// capture in case fold wrapped up
+			int fold_node_scope_id = this->fold_node_scope_id;
+			int fold_node_scope_index = this->fold_node_scope_index;
+
 			for (int f_index = this->sequence_length-1; f_index >= 0; f_index--) {
 				double predicted_score_error = target_val - predicted_score;
 
@@ -923,6 +927,13 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 										  run_helper,
 										  history->inner_scope_histories[f_index]);
 
+					// fold might have updated or wrapped up inner
+					if (solution->scopes[fold_node_scope_id]->nodes[fold_node_scope_index]->type != NODE_TYPE_FOLD_SEQUENCE
+							|| this->state_iter == -1) {
+						cout << "fold inner updated" << endl;
+						return;
+					}
+
 					scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
 
 					this->inner_scope_scale_mods[f_index]->backprop(scope_scale_factor_error, 0.0002);
@@ -930,10 +941,10 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 					scale_factor_error += this->inner_scope_scale_mods[f_index]->weight*scope_scale_factor_error;
 				}
 			}
-		}
 
-		// increment in sequence so applies to both score and sequence
-		clean_increment();
+			// increment in sequence so applies to both score and sequence
+			clean_increment();
+		}
 	}
 }
 
@@ -953,7 +964,7 @@ void Fold::clean_score_backprop(vector<double>& state_errors,
 
 		predicted_score -= scale_factor*history->starting_score_update;
 	} else {
-		if (this->state != FOLD_STATE_DONE && history->state_iter_snapshot <= this->state_iter) {
+		if (this->state_iter != -1) {
 			double predicted_score_error = target_val - predicted_score;
 
 			scale_factor_error += history->starting_score_update*predicted_score_error;

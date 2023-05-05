@@ -160,6 +160,9 @@ public:
 	std::vector<int> curr_num_states_cleared;
 	std::vector<int> test_num_states_cleared;
 
+	int fold_node_scope_id;
+	int fold_node_scope_index;
+
 	Fold(std::vector<int> scope_context,
 		 std::vector<int> node_context,
 		 int exit_depth,
@@ -434,8 +437,6 @@ public:
 	std::vector<double> score_network_updates;
 	std::vector<StateNetworkHistory*> score_network_histories;
 	std::vector<std::vector<std::vector<StateNetworkHistory*>>> inner_state_network_histories;
-
-	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 
 	FoldHistory(Fold* fold);
 	~FoldHistory();

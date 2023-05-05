@@ -197,7 +197,7 @@ void LoopFold::remove_inner_input_end() {
 
 		this->state = LOOP_FOLD_STATE_REMOVE_INNER_INPUT;
 		this->sub_state = LOOP_FOLD_SUB_STATE_LEARN;
-		this->state_iter = 0;
+		this->state_iter = -1;
 		this->sum_error = 0.0;
 	}
 }

@@ -99,7 +99,7 @@ void Fold::remove_outer_scope_network_end() {
 				cout << "starting REMOVE_INNER_SCOPE " << this->clean_inner_scope_index << endl;
 
 				this->state = FOLD_STATE_REMOVE_INNER_SCOPE;
-				this->state_iter = 0;
+				this->state_iter = -1;
 				this->sub_iter = 0;
 				this->sum_error = 0.0;
 			}
@@ -143,7 +143,7 @@ void Fold::remove_outer_scope_network_end() {
 		cout << "starting REMOVE_OUTER_SCOPE_NETWORK " << this->clean_outer_scope_index << " " << this->clean_outer_node_index << " " << this->clean_outer_state_index << endl;
 
 		this->state = FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
-		this->state_iter = 0;
+		this->state_iter = -1;
 		this->sub_iter = 0;
 		this->sum_error = 0.0;
 
@@ -183,7 +183,7 @@ void Fold::remove_outer_scope_network_from_load() {
 	cout << "starting REMOVE_OUTER_SCOPE_NETWORK " << this->clean_outer_scope_index << " " << this->clean_outer_node_index << " " << this->clean_outer_state_index << endl;
 
 	this->state = FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

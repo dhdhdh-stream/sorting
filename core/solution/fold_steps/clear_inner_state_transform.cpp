@@ -126,7 +126,7 @@ void Fold::clear_inner_state_from_load() {
 	cout << "starting CLEAR_INNER_STATE " << this->clean_inner_step_index << " " << this->test_num_states_cleared[this->clean_inner_step_index] << endl;
 
 	this->state = FOLD_STATE_CLEAR_INNER_STATE;
-	this->state_iter = 0;
+	this->state_iter = -1;
 	this->sub_iter = 0;
 	this->sum_error = 0.0;
 }

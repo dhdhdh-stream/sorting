@@ -157,6 +157,9 @@ public:
 	std::vector<std::vector<bool>> curr_state_networks_not_needed;
 	std::vector<std::vector<bool>> test_state_networks_not_needed;
 
+	int fold_node_scope_id;
+	int fold_node_scope_index;
+
 	LoopFold(std::vector<int> scope_context,
 			 std::vector<int> node_context,
 			 std::vector<bool> is_inner_scope,
@@ -234,6 +237,7 @@ public:
 									 std::vector<ScopeHistory*>& context_histories,
 									 RunHelper& run_helper,
 									 LoopFoldHistory* history);
+	// TODO: don't perform full backprop for measure
 	void experiment_measure_backprop(double target_val,
 									 double final_misguess);
 
@@ -424,8 +428,6 @@ public:
 	std::vector<std::vector<double>> score_network_updates;
 	std::vector<std::vector<StateNetworkHistory*>> score_network_histories;
 	std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>> inner_state_network_histories;
-
-	int state_iter_snapshot;	// heuristic to try to catch if state change occurred
 
 	LoopFoldHistory(LoopFold* loop_fold);
 	~LoopFoldHistory();
