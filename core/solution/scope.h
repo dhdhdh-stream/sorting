@@ -115,6 +115,8 @@ public:
 
 	void explore_new_loop(int curr_node_id,
 						  Problem& problem,
+						  std::vector<double>& state_vals,
+						  std::vector<bool>& states_initialized,
 						  double& predicted_score,
 						  std::vector<int>& scope_context,
 						  std::vector<int>& node_context,
@@ -124,6 +126,7 @@ public:
 						  int next_node_id,
 						  Problem& problem,
 						  std::vector<double>& state_vals,
+						  std::vector<bool>& states_initialized,
 						  double& predicted_score,
 						  double& scale_factor,
 						  std::vector<int>& scope_context,

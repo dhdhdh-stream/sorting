@@ -30,11 +30,6 @@ Scope::Scope(int num_states,
 			 double average_misguess,
 			 double misguess_variance,
 			 vector<AbstractNode*> nodes) {
-	if (nodes.size() == 0) {
-		cout << "weird" << endl;
-		exit(1);
-	}
-
 	this->num_states = num_states;
 	this->is_initialized_locally = is_initialized_locally;
 	this->is_loop = is_loop;
@@ -596,6 +591,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 					explore_new_loop(curr_node_id,
 									 problem,
+									 state_vals,
+									 states_initialized,
 									 predicted_score,
 									 scope_context,
 									 node_context,
@@ -616,6 +613,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 									 action_node->next_node_id,
 									 problem,
 									 state_vals,
+									 states_initialized,
 									 predicted_score,
 									 scale_factor,
 									 scope_context,
@@ -817,6 +815,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 						explore_new_loop(curr_node_id,
 										 problem,
+										 state_vals,
+										 states_initialized,
 										 predicted_score,
 										 scope_context,
 										 node_context,
@@ -837,6 +837,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 										 scope_node->next_node_id,
 										 problem,
 										 state_vals,
+										 states_initialized,
 										 predicted_score,
 										 scale_factor,
 										 scope_context,
@@ -1532,6 +1533,8 @@ void Scope::handle_node_backprop_helper(int iter_index,
 
 void Scope::explore_new_loop(int curr_node_id,
 							 Problem& problem,
+							 vector<double>& state_vals,
+							 vector<bool>& states_initialized,
 							 double& predicted_score,
 							 vector<int>& scope_context,
 							 vector<int>& node_context,
@@ -1551,12 +1554,28 @@ void Scope::explore_new_loop(int curr_node_id,
 			if (explore_is_inner_scope[f_index]) {
 				Scope* inner_scope = solution->scopes[explore_existing_scope_ids[f_index]];
 
-				vector<double> inner_input_vals(inner_scope->num_states, 0.0);
-				vector<bool> inner_inputs_initialized(inner_scope->num_states, false);
+				vector<double> inner_input_vals(inner_scope->num_states);
+				vector<bool> inner_inputs_initialized(inner_scope->num_states);
+				for (int s_index = 0; s_index < inner_scope->num_states; s_index++) {
+					if (randuni() < 0.2 || state_vals.size() == 0) {
+						inner_input_vals[s_index] = 0.0;
+						inner_inputs_initialized[s_index] = false;
+					} else {
+						// can be 0.0 and uninitialized as well
+						int rand_index = rand()%(int)state_vals.size();
+						inner_input_vals[s_index] = state_vals[rand_index];
+						inner_inputs_initialized[s_index] = states_initialized[rand_index];
+					}
+				}
 
 				// unused
 				double inner_predicted_score = 0.0;
-				double inner_scale_factor = 1.0;
+				double inner_scale_factor;
+				if (randuni() < 0.2) {
+					inner_scale_factor = -1.0;
+				} else {
+					inner_scale_factor = 1.0;
+				}
 				double inner_sum_impact = 0.0;
 				vector<int> inner_scope_context;
 				vector<int> inner_node_context;
@@ -1620,6 +1639,7 @@ void Scope::explore_new_path(int curr_node_id,
 							 int next_node_id,
 							 Problem& problem,
 							 vector<double>& state_vals,
+							 vector<bool>& states_initialized,
 							 double& predicted_score,
 							 double& scale_factor,
 							 vector<int>& scope_context,
@@ -1656,12 +1676,28 @@ void Scope::explore_new_path(int curr_node_id,
 		if (explore_is_inner_scope[f_index]) {
 			Scope* inner_scope = solution->scopes[explore_existing_scope_ids[f_index]];
 
-			vector<double> inner_input_vals(inner_scope->num_states, 0.0);
-			vector<bool> inner_inputs_initialized(inner_scope->num_states, false);
+			vector<double> inner_input_vals(inner_scope->num_states);
+			vector<bool> inner_inputs_initialized(inner_scope->num_states);
+			for (int s_index = 0; s_index < inner_scope->num_states; s_index++) {
+				if (randuni() < 0.2 || state_vals.size() == 0) {
+					inner_input_vals[s_index] = 0.0;
+					inner_inputs_initialized[s_index] = false;
+				} else {
+					// can be 0.0 and uninitialized as well
+					int rand_index = rand()%(int)state_vals.size();
+					inner_input_vals[s_index] = state_vals[rand_index];
+					inner_inputs_initialized[s_index] = states_initialized[rand_index];
+				}
+			}
 
 			// unused
 			double inner_predicted_score = 0.0;
-			double inner_scale_factor = 1.0;
+			double inner_scale_factor;
+			if (randuni() < 0.2) {
+				inner_scale_factor = -1.0;
+			} else {
+				inner_scale_factor = 1.0;
+			}
 			double inner_sum_impact = 0.0;
 			vector<int> inner_scope_context;
 			vector<int> inner_node_context;
