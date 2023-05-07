@@ -28,14 +28,12 @@ void LoopFold::experiment_end() {
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 	bool is_success;
-	// if (score_improvement_t_value > 2.326) {
-	if (rand()%2 == 0) {
+	if (score_improvement_t_value > 2.326) {
 		cout << "EXPERIMENT success" << endl;
 		is_success = true;
-	// } else if (*this->existing_average_misguess > 0.01
-	// 		&& misguess_improvement_t_value > 2.326
-	// 		&& score_improvement_t_value > -0.842) {
-	} else if (false) {
+	} else if (*this->existing_average_misguess > 0.01
+			&& misguess_improvement_t_value > 2.326
+			&& score_improvement_t_value > -0.842) {
 		cout << "EXPERIMENT success" << endl;
 		is_success = true;
 	} else {
@@ -75,8 +73,7 @@ void LoopFold::experiment_end() {
 		this->curr_misguess_variance = this->test_misguess_variance;
 		this->test_misguess_variance = 0.0;
 
-		// if (this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
-		if (true) {
+		if (this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
 			this->experiment_added_state = false;
 
 			this->test_num_new_outer_states = this->curr_num_new_outer_states+1;

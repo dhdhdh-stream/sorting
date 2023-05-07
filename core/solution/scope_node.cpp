@@ -40,12 +40,11 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	// this->explore_target_tries = 1;
-	this->explore_target_tries = 10;
-	// int rand_scale = rand()%4;
-	// for (int i = 0; i < rand_scale; i++) {
-	// 	this->explore_target_tries *= 10;
-	// }
+	this->explore_target_tries = 1;
+	int rand_scale = rand()%4;
+	for (int i = 0; i < rand_scale; i++) {
+		this->explore_target_tries *= 10;
+	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -296,6 +295,7 @@ void ScopeNode::activate(Problem& problem,
 void ScopeNode::backprop(vector<double>& state_errors,
 						 vector<bool>& states_initialized,
 						 double target_val,
+						 double final_diff,
 						 double final_misguess,
 						 double final_sum_impact,
 						 double& predicted_score,
@@ -365,6 +365,7 @@ void ScopeNode::backprop(vector<double>& state_errors,
 	inner_scope->backprop(scope_input_errors,
 						  scope_inputs_initialized,
 						  target_val,
+						  final_diff,
 						  final_misguess,
 						  final_sum_impact,
 						  predicted_score,
@@ -434,6 +435,20 @@ void ScopeNode::save(ofstream& output_file,
 	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
+
+	output_file << this->next_node_id << endl;
+
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
+
+	output_file << this->average_impact << endl;
+	output_file << this->average_sum_impact << endl;
+}
+
+void ScopeNode::save_for_display(ofstream& output_file) {
+	output_file << this->inner_scope_id << endl;
 
 	output_file << this->next_node_id << endl;
 

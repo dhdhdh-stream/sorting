@@ -19,8 +19,8 @@ using namespace std;
 Solution::Solution() {
 	this->average_score = 0.0;
 
-	// starting action ACTION_START
-	ActionNode* starting_node = new ActionNode(vector<int>(),
+	ActionNode* starting_node = new ActionNode(ACTION_START,
+											   vector<int>(),
 											   vector<StateNetwork*>(),
 											   new StateNetwork(1,
 																0,
@@ -78,7 +78,6 @@ Solution::~Solution() {
 	}
 }
 
-// TODO: add breaks for recursion
 void Solution::random_run_helper(int scope_id,
 								 vector<bool>& is_inner_scope,
 								 vector<int>& existing_scope_ids,
@@ -508,16 +507,16 @@ void Solution::random_run_continuation(int explore_node_next_node_id,
 				BranchNode* branch_node = (BranchNode*)scope->nodes[curr_node_id];
 
 				bool matches_context = true;
-				if (branch_node->branch_scope_context.size() > scope_context.size()) {
+				if (branch_node->branch_scope_context.size() > curr_scope_context.size()) {
 					matches_context = false;
 				} else {
 					// special case first scope context
-					if (branch_node->branch_scope_context[0] != scope_context.back()) {
+					if (branch_node->branch_scope_context[0] != curr_scope_context.back()) {
 						matches_context = false;
 					} else {
 						for (int c_index = 1; c_index < (int)branch_node->branch_scope_context.size(); c_index++) {
-							if (branch_node->branch_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-									|| branch_node->branch_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+							if (branch_node->branch_scope_context[c_index] != curr_scope_context[curr_scope_context.size()-1-c_index]
+									|| branch_node->branch_node_context[c_index] != curr_node_context[curr_node_context.size()-1-c_index]) {
 								matches_context = false;
 								break;
 							}
@@ -700,4 +699,11 @@ void Solution::save(ofstream& output_file) {
 	}
 
 	output_file << this->max_depth << endl;
+}
+
+void Solution::save_for_display(ofstream& output_file) {
+	output_file << this->scopes.size() << endl;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save_for_display(output_file);
+	}
 }

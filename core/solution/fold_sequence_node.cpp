@@ -48,6 +48,7 @@ void FoldSequenceNode::activate(FoldHistory* fold_history,
 void FoldSequenceNode::backprop(vector<double>& state_errors,
 								std::vector<bool>& states_initialized,
 								double target_val,
+								double final_diff,
 								double final_misguess,
 								double final_sum_impact,
 								double& predicted_score,
@@ -58,6 +59,7 @@ void FoldSequenceNode::backprop(vector<double>& state_errors,
 	history->fold_history->fold->sequence_backprop(state_errors,
 												   states_initialized,
 												   target_val,
+												   final_diff,
 												   final_misguess,
 												   final_sum_impact,
 												   predicted_score,
@@ -70,6 +72,10 @@ void FoldSequenceNode::backprop(vector<double>& state_errors,
 void FoldSequenceNode::save(ofstream& output_file,
 							int scope_id,
 							int scope_index) {
+	output_file << this->next_node_id << endl;
+}
+
+void FoldSequenceNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 

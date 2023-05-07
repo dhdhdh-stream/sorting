@@ -70,6 +70,7 @@ public:
 	std::vector<int> inner_input_start_indexes;
 	std::vector<int> num_inner_inputs;
 	std::vector<Scale*> inner_scope_scale_mods;
+	double end_mod;	// temporary to help measure misguess
 
 	int state;
 	int sub_state;
@@ -186,6 +187,7 @@ public:
 	void backprop(std::vector<double>& state_errors,
 				  std::vector<bool>& states_initialized,
 				  double target_val,
+				  double final_diff,
 				  double final_misguess,
 				  double final_sum_impact,
 				  double& predicted_score,
@@ -217,6 +219,7 @@ public:
 	void experiment_learn_backprop(std::vector<double>& state_errors,
 								   std::vector<bool>& states_initialized,
 								   double target_val,
+								   double final_diff,
 								   double final_misguess,
 								   double& predicted_score,
 								   double& scale_factor,
@@ -266,6 +269,7 @@ public:
 	void remove_inner_input_learn_backprop(std::vector<double>& state_errors,
 										   std::vector<bool>& states_initialized,
 										   double target_val,
+										   double final_diff,
 										   double final_misguess,
 										   double& predicted_score,
 										   double& scale_factor,
@@ -379,6 +383,7 @@ public:
 	void clean_backprop(std::vector<double>& state_errors,
 						std::vector<bool>& states_initialized,
 						double target_val,
+						double final_diff,
 						double final_misguess,
 						double final_sum_impact,
 						double& predicted_score,

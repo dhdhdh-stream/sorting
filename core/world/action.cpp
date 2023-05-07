@@ -1,5 +1,7 @@
 #include "action.h"
 
+#include <iostream>
+
 #include "globals.h"
 
 using namespace std;
@@ -39,6 +41,6 @@ string Action::to_string() {
 	} else {
 		move_s = "N/A";
 	}
-	
+
 	return move_s;
 }

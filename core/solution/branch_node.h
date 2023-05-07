@@ -60,6 +60,7 @@ public:
 	void save(std::ofstream& output_file,
 			  int scope_id,
 			  int scope_index);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {

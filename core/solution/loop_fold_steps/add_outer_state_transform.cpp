@@ -32,8 +32,7 @@ void LoopFold::add_outer_state_end() {
 	}
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	// if (misguess_improvement_t_value > 1.282) {	// >90%
-	if (rand()%3 == 0) {
+	if (misguess_improvement_t_value > 1.282) {	// >90%
 		cout << "ADD_OUTER_STATE success" << endl;
 		cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
@@ -152,8 +151,7 @@ void LoopFold::add_outer_state_end() {
 		this->test_inner_state_networks.clear();
 	}
 
-	// if (this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
-	if (true) {
+	if (this->curr_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
 		this->test_num_new_outer_states = this->curr_num_new_outer_states;
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->curr_outer_state_networks.begin();
 				it != this->curr_outer_state_networks.end(); it++) {

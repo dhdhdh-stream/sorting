@@ -32,8 +32,7 @@ void Fold::add_inner_state_end() {
 	}
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	// if (misguess_improvement_t_value > 1.282) {	// >90%
-	if (rand()%3 == 0) {
+	if (misguess_improvement_t_value > 1.282) {	// >90%
 		cout << "ADD_INNER_STATE success" << endl;
 
 		// no change to num_new_outer_states
@@ -126,9 +125,8 @@ void Fold::add_inner_state_end() {
 		this->test_inner_state_networks.clear();
 	}
 
-	// if (this->experiment_added_state
-	// 		&& this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
-	if (this->experiment_added_state) {
+	if (this->experiment_added_state
+			&& this->curr_replace_average_misguess > 0.01) {	// TODO: find systematic way to decide if further misguess improvement isn't worth it
 		this->experiment_added_state = false;
 
 		this->test_num_new_outer_states = this->curr_num_new_outer_states+1;

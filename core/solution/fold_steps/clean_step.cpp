@@ -735,6 +735,7 @@ void Fold::clean_sequence_activate(Problem& problem,
 void Fold::clean_sequence_backprop(vector<double>& state_errors,
 								   vector<bool>& states_initialized,
 								   double target_val,
+								   double final_diff,
 								   double final_misguess,
 								   double final_sum_impact,
 								   double& predicted_score,
@@ -832,6 +833,7 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 				inner_scope->backprop(inner_input_errors,
 									  inner_inputs_initialized,
 									  target_val,
+									  final_diff,
 									  final_misguess,
 									  final_sum_impact,
 									  predicted_score,
@@ -919,6 +921,7 @@ void Fold::clean_sequence_backprop(vector<double>& state_errors,
 					inner_scope->backprop(inner_input_errors,
 										  inner_inputs_initialized,
 										  target_val,
+										  final_diff,
 										  final_misguess,
 										  final_sum_impact,
 										  predicted_score,
@@ -964,7 +967,8 @@ void Fold::clean_score_backprop(vector<double>& state_errors,
 
 		predicted_score -= scale_factor*history->starting_score_update;
 	} else {
-		if (this->state_iter != -1) {
+		if (this->state != FOLD_STATE_DONE	// sequence might have reached FOLD_STATE_DONE
+				&& this->state_iter != -1) {
 			double predicted_score_error = target_val - predicted_score;
 
 			scale_factor_error += history->starting_score_update*predicted_score_error;

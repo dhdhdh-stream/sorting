@@ -146,6 +146,8 @@ void Fold::experiment_sequence_activate(Problem& problem,
 										double& scale_factor,
 										RunHelper& run_helper,
 										FoldHistory* history) {
+	run_helper.flat_scope_id = this->scope_context[this->exit_depth];
+
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_vals = history->new_outer_state_vals;
 
@@ -309,6 +311,8 @@ void Fold::experiment_sequence_activate(Problem& problem,
 		predicted_score += scale_factor*this->test_score_networks[f_index]->output->acti_vals[0];
 	}
 
+	predicted_score += this->end_mod;
+
 	if (run_helper.is_recursive) {
 		this->is_recursive++;
 	}
@@ -317,11 +321,15 @@ void Fold::experiment_sequence_activate(Problem& problem,
 void Fold::experiment_backprop(vector<double>& state_errors,
 							   vector<bool>& states_initialized,
 							   double target_val,
+							   double final_diff,
 							   double final_misguess,
 							   double& predicted_score,
 							   double& scale_factor,
 							   RunHelper& run_helper,
 							   FoldHistory* history) {
+	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
+	predicted_score -= this->end_mod;
+
 	this->test_replace_average_score = 0.9999*this->test_replace_average_score + 0.0001*target_val;
 	this->test_replace_average_misguess = 0.9999*this->test_replace_average_misguess + 0.0001*final_misguess;
 	double curr_misguess_variance = (this->test_replace_average_misguess - final_misguess)*(this->test_replace_average_misguess - final_misguess);
@@ -433,14 +441,14 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 			inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 			// unused
-			double inner_final_misguess = 0.0;
 			double inner_final_sum_impact = 0.0;
 
 			double scope_scale_factor_error = 0.0;
 			inner_scope->backprop(inner_input_errors,
 								  inner_inputs_initialized,
 								  target_val,
-								  inner_final_misguess,
+								  final_diff,
+								  final_misguess,
 								  inner_final_sum_impact,
 								  predicted_score,
 								  scale_factor,

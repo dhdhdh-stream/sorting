@@ -25,3 +25,7 @@ void PassThroughNode::save(ofstream& output_file,
 						   int scope_index) {
 	output_file << this->next_node_id << endl;
 }
+
+void PassThroughNode::save_for_display(ofstream& output_file) {
+	output_file << this->next_node_id << endl;
+}

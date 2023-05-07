@@ -55,6 +55,7 @@ public:
 							std::vector<Action>& actions);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* SOLUTION_H */

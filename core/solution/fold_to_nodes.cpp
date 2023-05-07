@@ -303,7 +303,8 @@ void fold_to_nodes(Scope* parent_scope,
 						}
 					}
 
-					ActionNode* node = new ActionNode(state_network_target_indexes,
+					ActionNode* node = new ActionNode(fold->actions[f_index],
+													  state_network_target_indexes,
 													  state_networks,
 													  score_network);
 					new_nodes.push_back(node);
@@ -405,7 +406,8 @@ void fold_to_nodes(Scope* parent_scope,
 				score_network->update_state_size(parent_scope->num_states);
 				score_network->new_external_to_state();
 
-				ActionNode* node = new ActionNode(state_network_target_indexes,
+				ActionNode* node = new ActionNode(fold->actions[f_index],
+												  state_network_target_indexes,
 												  state_networks,
 												  score_network);
 				new_outer_nodes.push_back(node);

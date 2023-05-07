@@ -99,6 +99,7 @@ void LoopFoldNode::activate(Problem& problem,
 void LoopFoldNode::backprop(vector<double>& state_errors,
 							vector<bool>& states_initialized,
 							double target_val,
+							double final_diff,
 							double final_misguess,
 							double final_sum_impact,
 							double& predicted_score,
@@ -110,6 +111,7 @@ void LoopFoldNode::backprop(vector<double>& state_errors,
 		this->loop_fold->backprop(state_errors,
 								  states_initialized,
 								  target_val,
+								  final_diff,
 								  final_misguess,
 								  final_sum_impact,
 								  predicted_score,
@@ -136,6 +138,10 @@ void LoopFoldNode::save(ofstream& output_file,
 		output_file << this->fold_node_context[c_index] << endl;
 	}
 
+	output_file << this->next_node_id << endl;
+}
+
+void LoopFoldNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 

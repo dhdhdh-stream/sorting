@@ -130,8 +130,7 @@ void BranchNode::activate(vector<double>& state_vals,
 												   original_network_history);
 			double original_score = scale_factor*this->original_score_network->output->acti_vals[0];
 
-			// if (branch_score > original_score) {
-			if (rand()%2 == 0) {
+			if (branch_score > original_score) {
 				delete original_network_history;
 
 				history->is_branch = true;
@@ -245,6 +244,13 @@ void BranchNode::save(ofstream& output_file,
 	output_file << this->original_next_node_id << endl;
 
 	output_file << this->branch_weight << endl;
+}
+
+void BranchNode::save_for_display(ofstream& output_file) {
+	output_file << this->original_next_node_id << endl;
+
+	output_file << this->branch_scope_context[this->branch_exit_depth] << endl;
+	output_file << this->branch_next_node_id << endl;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node,

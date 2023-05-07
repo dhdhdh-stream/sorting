@@ -46,6 +46,7 @@ LoopFold::LoopFold(vector<int> scope_context,
 			this->inner_scope_scale_mods.push_back(NULL);
 		}
 	}
+	this->end_mod = 0.0;
 
 	this->curr_num_new_outer_states = 1;
 	this->test_num_new_outer_states = this->curr_num_new_outer_states;
@@ -564,43 +565,45 @@ LoopFold::~LoopFold() {
 			}
 		}
 
-		for (int i_index = 0; i_index < (int)this->test_starting_state_networks.size(); i_index++) {
-			if (this->test_starting_state_networks[i_index] != NULL) {
-				delete this->test_starting_state_networks[i_index];
-			}
-		}
-
-		if (this->test_continue_score_network != NULL) {
-			delete this->test_continue_score_network;
-		}
-		if (this->test_continue_misguess_network != NULL) {
-			delete this->test_continue_misguess_network;
-		}
-		if (this->test_halt_score_network != NULL) {
-			delete this->test_halt_score_network;
-		}
-		if (this->test_halt_misguess_network != NULL) {
-			delete this->test_halt_misguess_network;
-		}
-
-		for (int f_index = 0; f_index < (int)this->test_state_networks.size(); f_index++) {
-			for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
-				if (this->test_state_networks[f_index][s_index] != NULL) {
-					delete this->test_state_networks[f_index][s_index];
+		if (this->state != LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {	// TODO: find more elegant way of catching this
+			for (int i_index = 0; i_index < (int)this->test_starting_state_networks.size(); i_index++) {
+				if (this->test_starting_state_networks[i_index] != NULL) {
+					delete this->test_starting_state_networks[i_index];
 				}
 			}
-		}
 
-		for (int f_index = 0; f_index < (int)this->test_score_networks.size(); f_index++) {
-			delete this->test_score_networks[f_index];
-		}
+			if (this->test_continue_score_network != NULL) {
+				delete this->test_continue_score_network;
+			}
+			if (this->test_continue_misguess_network != NULL) {
+				delete this->test_continue_misguess_network;
+			}
+			if (this->test_halt_score_network != NULL) {
+				delete this->test_halt_score_network;
+			}
+			if (this->test_halt_misguess_network != NULL) {
+				delete this->test_halt_misguess_network;
+			}
 
-		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_inner_state_networks.begin();
-				it != this->test_inner_state_networks.end(); it++) {
-			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
-					if (it->second[n_index][s_index] != NULL) {
-						delete it->second[n_index][s_index];
+			for (int f_index = 0; f_index < (int)this->test_state_networks.size(); f_index++) {
+				for (int s_index = 0; s_index < (int)this->test_state_networks[f_index].size(); s_index++) {
+					if (this->test_state_networks[f_index][s_index] != NULL) {
+						delete this->test_state_networks[f_index][s_index];
+					}
+				}
+			}
+
+			for (int f_index = 0; f_index < (int)this->test_score_networks.size(); f_index++) {
+				delete this->test_score_networks[f_index];
+			}
+
+			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->test_inner_state_networks.begin();
+					it != this->test_inner_state_networks.end(); it++) {
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+					for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+						if (it->second[n_index][s_index] != NULL) {
+							delete it->second[n_index][s_index];
+						}
 					}
 				}
 			}
@@ -700,6 +703,7 @@ void LoopFold::activate(Problem& problem,
 void LoopFold::backprop(vector<double>& state_errors,
 						vector<bool>& states_initialized,
 						double target_val,
+						double final_diff,
 						double final_misguess,
 						double final_sum_impact,
 						double& predicted_score,
@@ -714,6 +718,7 @@ void LoopFold::backprop(vector<double>& state_errors,
 			experiment_learn_backprop(state_errors,
 									  states_initialized,
 									  target_val,
+									  final_diff,
 									  final_misguess,
 									  predicted_score,
 									  scale_factor,
@@ -729,6 +734,7 @@ void LoopFold::backprop(vector<double>& state_errors,
 			remove_inner_input_learn_backprop(state_errors,
 											  states_initialized,
 											  target_val,
+											  final_diff,
 											  final_misguess,
 											  predicted_score,
 											  scale_factor,
@@ -742,6 +748,7 @@ void LoopFold::backprop(vector<double>& state_errors,
 		clean_backprop(state_errors,
 					   states_initialized,
 					   target_val,
+					   final_diff,
 					   final_misguess,
 					   final_sum_impact,
 					   predicted_score,
@@ -757,8 +764,7 @@ void LoopFold::experiment_increment() {
 
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -772,14 +778,12 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_EXPERIMENT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		// if (this->state_iter == 10000) {
-		if (this->state_iter == 10) {
+		if (this->state_iter == 10000) {
 			experiment_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -793,14 +797,12 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_OUTER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		// if (this->state_iter == 10000) {
-		if (this->state_iter == 10) {
+		if (this->state_iter == 10000) {
 			add_outer_state_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		// if (this->state_iter == 500000) {
-		if (this->state_iter == 50) {
+		if (this->state_iter == 500000) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -814,14 +816,12 @@ void LoopFold::experiment_increment() {
 		}
 	} else if (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE) {
-		// if (this->state_iter == 10000) {
-		if (this->state_iter == 10) {
+		if (this->state_iter == 10000) {
 			add_inner_state_end();
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_INPUT
 			&& this->sub_state == LOOP_FOLD_SUB_STATE_LEARN) {
-		// if (this->state_iter == 150000) {
-		if (this->state_iter == 15) {
+		if (this->state_iter == 150000) {
 			this->sub_state = LOOP_FOLD_SUB_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;
@@ -835,8 +835,7 @@ void LoopFold::experiment_increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_INPUT && this->sub_state == LOOP_FOLD_SUB_STATE_MEASURE
-		// if (this->state_iter == 10000) {
-		if (this->state_iter == 10) {
+		if (this->state_iter == 10000) {
 			remove_inner_input_end();
 		}
 	}
@@ -844,10 +843,8 @@ void LoopFold::experiment_increment() {
 
 void LoopFold::clean_increment() {
 	if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
-			// if (this->sub_iter >= 10000) {
-			if (this->sub_iter >= 10) {
+		if (this->state_iter > 150000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_end();
 			}
 		} else {
@@ -861,10 +858,8 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
-			// if (this->sub_iter >= 10000) {
-			if (this->sub_iter >= 10) {
+		if (this->state_iter > 150000) {
+			if (this->sub_iter >= 10000) {
 				remove_outer_scope_network_end();
 			}
 		} else {
@@ -878,10 +873,8 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
-			// if (this->sub_iter >= 10000) {
-			if (this->sub_iter >= 10) {
+		if (this->state_iter > 150000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_end();
 			}
 		} else {
@@ -895,10 +888,8 @@ void LoopFold::clean_increment() {
 			}
 		}
 	} else if (this->state == LOOP_FOLD_STATE_REMOVE_INNER_SCOPE_NETWORK) {
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
-			// if (this->sub_iter >= 10000) {
-			if (this->sub_iter >= 10) {
+		if (this->state_iter > 150000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_scope_network_end();
 			}
 		} else {
@@ -913,10 +904,8 @@ void LoopFold::clean_increment() {
 		}
 	} else {
 		// this->state == LOOP_FOLD_STATE_REMOVE_INNER_NETWORK
-		// if (this->state_iter > 150000) {
-		if (this->state_iter > 15) {
-			// if (this->sub_iter >= 10000) {
-			if (this->sub_iter >= 10) {
+		if (this->state_iter > 150000) {
+			if (this->sub_iter >= 10000) {
 				remove_inner_network_end();
 			}
 		} else {

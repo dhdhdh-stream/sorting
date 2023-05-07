@@ -40,6 +40,7 @@ public:
 	void backprop(std::vector<double>& state_errors,
 				  std::vector<bool>& states_initialized,
 				  double target_val,
+				  double final_diff,
 				  double final_misguess,
 				  double final_sum_impact,
 				  double& predicted_score,
@@ -51,6 +52,7 @@ public:
 	void save(std::ofstream& output_file,
 			  int scope_id,
 			  int scope_index);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class LoopFoldNodeHistory : public AbstractNodeHistory {

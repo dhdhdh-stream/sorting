@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	// int seed = (unsigned)time(NULL);
-	int seed = 1683183267;
+	int seed = 1683405762;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -28,17 +28,12 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 
 	int iter_index = 0;
-	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
-	// while (true) {
-	while (iter_index < 100000) {
-		if (iter_index%100 == 0) {
-			cout << "iter_index: " << iter_index << endl;
-		}
+	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
+	while (true) {
 		Problem problem;
 
 		RunHelper run_helper;
-		// if (iter_index > 200000 && rand()%3 != 0) {
-		if (rand()%3 != 0) {
+		if (iter_index > 100000 && rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
@@ -87,11 +82,10 @@ int main(int argc, char* argv[]) {
 		double target_val;
 		if (run_helper.exceeded_depth) {
 			target_val = -1.0;
-			cout << "exceeded_depth" << endl;
-			cout << "run_helper.max_depth: " << run_helper.max_depth << endl;
 		} else {
 			target_val = problem.score_result();
 		}
+		double final_diff = target_val - predicted_score;
 		double final_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
@@ -133,6 +127,18 @@ int main(int argc, char* argv[]) {
 
 				if (action_node->explore_curr_try >= action_node->explore_target_tries) {
 					if (action_node->best_explore_is_loop) {
+						cout << "loop" << endl;
+						cout << "action_node->explore_target_tries: " << action_node->explore_target_tries << endl;
+						cout << "action_node->best_explore_surprise: " << action_node->best_explore_surprise << endl;
+						cout << "actions:";
+						for (int f_index = 0; f_index < (int)action_node->best_explore_actions.size(); f_index++) {
+							if (action_node->best_explore_is_inner_scope[f_index]) {
+								cout << " S" << action_node->best_explore_existing_scope_ids[f_index];
+							} else {
+								cout << " " << action_node->best_explore_actions[f_index].to_string();
+							}
+						}
+						cout << endl;
 						LoopFold* loop_fold = new LoopFold(action_node->best_explore_scope_context,
 														   action_node->best_explore_node_context,
 														   action_node->best_explore_is_inner_scope,
@@ -149,6 +155,18 @@ int main(int argc, char* argv[]) {
 						action_node->explore_next_node_id = -1;
 						action_node->explore_loop_fold = loop_fold;
 					} else {
+						cout << "path" << endl;
+						cout << "action_node->explore_target_tries: " << action_node->explore_target_tries << endl;
+						cout << "action_node->best_explore_surprise: " << action_node->best_explore_surprise << endl;
+						cout << "actions:";
+						for (int f_index = 0; f_index < (int)action_node->best_explore_actions.size(); f_index++) {
+							if (action_node->best_explore_is_inner_scope[f_index]) {
+								cout << " S" << action_node->best_explore_existing_scope_ids[f_index];
+							} else {
+								cout << " " << action_node->best_explore_actions[f_index].to_string();
+							}
+						}
+						cout << endl;
 						Fold* fold = new Fold(action_node->best_explore_scope_context,
 											  action_node->best_explore_node_context,
 											  action_node->best_explore_exit_depth,
@@ -173,12 +191,11 @@ int main(int argc, char* argv[]) {
 					}
 
 					action_node->explore_curr_try = 0;
-					// action_node->explore_target_tries = 1;
-					action_node->explore_target_tries = 10;
-					// int rand_scale = rand()%4;
-					// for (int i = 0; i < rand_scale; i++) {
-					// 	action_node->explore_target_tries *= 10;
-					// }
+					action_node->explore_target_tries = 1;
+					int rand_scale = rand()%4;
+					for (int i = 0; i < rand_scale; i++) {
+						action_node->explore_target_tries *= 10;
+					}
 					action_node->best_explore_surprise = numeric_limits<double>::lowest();
 					action_node->best_explore_seed_outer_context_history = NULL;
 				}
@@ -187,8 +204,7 @@ int main(int argc, char* argv[]) {
 				ScopeNode* scope_node = (ScopeNode*)solution->scopes[run_helper.explore_scope_id]->nodes[run_helper.explore_node_id];
 
 				scope_node->explore_curr_try++;
-				// if (curr_surprise > scope_node->best_explore_surprise) {
-				if (scope_node->explore_curr_try == 1 || curr_surprise > scope_node->best_explore_surprise) {
+				if (curr_surprise > scope_node->best_explore_surprise) {
 					scope_node->best_explore_surprise = curr_surprise;
 					scope_node->best_explore_scope_context = run_helper.explore_scope_context;
 					scope_node->best_explore_node_context = run_helper.explore_node_context;
@@ -221,6 +237,18 @@ int main(int argc, char* argv[]) {
 
 				if (scope_node->explore_curr_try >= scope_node->explore_target_tries) {
 					if (scope_node->best_explore_is_loop) {
+						cout << "loop" << endl;
+						cout << "scope_node->explore_target_tries: " << scope_node->explore_target_tries << endl;
+						cout << "scope_node->best_explore_surprise: " << scope_node->best_explore_surprise << endl;
+						cout << "actions:";
+						for (int f_index = 0; f_index < (int)scope_node->best_explore_actions.size(); f_index++) {
+							if (scope_node->best_explore_is_inner_scope[f_index]) {
+								cout << " S" << scope_node->best_explore_existing_scope_ids[f_index];
+							} else {
+								cout << " " << scope_node->best_explore_actions[f_index].to_string();
+							}
+						}
+						cout << endl;
 						LoopFold* loop_fold = new LoopFold(scope_node->best_explore_scope_context,
 														   scope_node->best_explore_node_context,
 														   scope_node->best_explore_is_inner_scope,
@@ -237,6 +265,18 @@ int main(int argc, char* argv[]) {
 						scope_node->explore_next_node_id = -1;
 						scope_node->explore_loop_fold = loop_fold;
 					} else {
+						cout << "path" << endl;
+						cout << "scope_node->explore_target_tries: " << scope_node->explore_target_tries << endl;
+						cout << "scope_node->best_explore_surprise: " << scope_node->best_explore_surprise << endl;
+						cout << "actions:";
+						for (int f_index = 0; f_index < (int)scope_node->best_explore_actions.size(); f_index++) {
+							if (scope_node->best_explore_is_inner_scope[f_index]) {
+								cout << " S" << scope_node->best_explore_existing_scope_ids[f_index];
+							} else {
+								cout << " " << scope_node->best_explore_actions[f_index].to_string();
+							}
+						}
+						cout << endl;
 						Fold* fold = new Fold(scope_node->best_explore_scope_context,
 											  scope_node->best_explore_node_context,
 											  scope_node->best_explore_exit_depth,
@@ -261,12 +301,11 @@ int main(int argc, char* argv[]) {
 					}
 
 					scope_node->explore_curr_try = 0;
-					// scope_node->explore_target_tries = 1;
-					scope_node->explore_target_tries = 10;
-					// int rand_scale = rand()%4;
-					// for (int i = 0; i < rand_scale; i++) {
-					// 	scope_node->explore_target_tries *= 10;
-					// }
+					scope_node->explore_target_tries = 1;
+					int rand_scale = rand()%4;
+					for (int i = 0; i < rand_scale; i++) {
+						scope_node->explore_target_tries *= 10;
+					}
 					scope_node->best_explore_surprise = numeric_limits<double>::lowest();
 					scope_node->best_explore_seed_outer_context_history = NULL;
 				}
@@ -279,11 +318,6 @@ int main(int argc, char* argv[]) {
 			if (!run_helper.exceeded_depth) {
 				if (run_helper.max_depth > solution->max_depth) {
 					solution->max_depth = run_helper.max_depth;
-
-					// temp
-					if (solution->max_depth > 10) {
-						solution->max_depth = 10;
-					}
 
 					if (solution->max_depth < 50) {
 						solution->depth_limit = solution->max_depth + 10;
@@ -300,6 +334,7 @@ int main(int argc, char* argv[]) {
 			solution->scopes[0]->backprop(input_errors,
 										  inputs_initialized,
 										  target_val,
+										  final_diff,
 										  final_misguess,
 										  sum_impact,
 										  predicted_score,
@@ -312,18 +347,18 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		iter_index++;
-		// if (iter_index%10000 == 0) {
-		// 	chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
-		// 	chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
-		// 	if (time_span.count() > 120.0) {
-		// 		ofstream display_file;
-		// 		display_file.open("../display.txt");
-		// 		solution->root->save_for_display(display_file);
-		// 		display_file.close();
+		if (iter_index%10000 == 0) {
+			chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
+			chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
+			if (time_span.count() > 120.0) {
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
 
-		// 		display_previous_time = curr_time;
-		// 	}
-		// }
+				display_previous_time = curr_time;
+			}
+		}
 	}
 
 	delete solution;

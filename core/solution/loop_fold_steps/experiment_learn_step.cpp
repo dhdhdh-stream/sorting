@@ -359,16 +359,22 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 		halt_misguess_network_history);
 	history->halt_misguess_val = this->test_halt_misguess_network->output->acti_vals[0];
 	history->halt_misguess_network_history = halt_misguess_network_history;
+
+	predicted_score += this->end_mod;
 }
 
 void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 										 vector<bool>& states_initialized,
 										 double target_val,
+										 double final_diff,
 										 double final_misguess,
 										 double& predicted_score,
 										 double& scale_factor,
 										 RunHelper& run_helper,
 										 LoopFoldHistory* history) {
+	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
+	predicted_score -= this->end_mod;
+
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
 	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
 	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
@@ -518,14 +524,14 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 				inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 				// unused
-				double inner_final_misguess = 0.0;
 				double inner_final_sum_impact = 0.0;
 
 				double scope_scale_factor_error = 0.0;
 				inner_scope->backprop(inner_input_errors,
 									  inner_inputs_initialized,
 									  target_val,
-									  inner_final_misguess,
+									  final_diff,
+									  final_misguess,
 									  inner_final_sum_impact,
 									  predicted_score,
 									  scale_factor,

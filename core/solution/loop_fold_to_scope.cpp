@@ -138,7 +138,8 @@ void loop_fold_to_scope(LoopFold* loop_fold,
 				}
 			}
 
-			ActionNode* node = new ActionNode(state_network_target_indexes,
+			ActionNode* node = new ActionNode(loop_fold->actions[f_index],
+											  state_network_target_indexes,
 											  state_networks,
 											  score_network);
 			new_nodes.push_back(node);

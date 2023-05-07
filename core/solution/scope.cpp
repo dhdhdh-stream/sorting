@@ -237,10 +237,15 @@ void Scope::activate(Problem& problem,
 	early_exit_depth = -1;
 	explore_exit_depth = -1;
 
-	if ((int)scope_context.size() > run_helper.max_depth) {
-		run_helper.max_depth = (int)scope_context.size();
+	if (run_helper.flat_scope_id == this->id) {
+		run_helper.is_recursive = true;
 	}
-	if ((int)scope_context.size() > solution->depth_limit) {
+
+	run_helper.curr_depth++;
+	if (run_helper.curr_depth > run_helper.max_depth) {
+		run_helper.max_depth = run_helper.curr_depth;
+	}
+	if (run_helper.curr_depth > solution->depth_limit) {
 		run_helper.exceeded_depth = true;
 		history->exceeded_depth = true;
 		return;
@@ -296,44 +301,43 @@ void Scope::activate(Problem& problem,
 												  halt_misguess_network_history);
 
 			bool is_halt;
-			is_halt = rand()%3 == 0;
-			// if (iter_index > this->furthest_successful_halt+3) {
-			// 	is_halt = true;
-			// } else {
-			// 	double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
-			// 		- scale_factor*this->halt_score_network->output->acti_vals[0];
-			// 	double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
-			// 	// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-			// 	double score_diff_t_value = score_diff
-			// 		/ (score_standard_deviation / sqrt(2500));
-			// 	if (score_diff_t_value > 2.326) {
-			// 		is_halt = false;
-			// 	} else if (score_diff_t_value < -2.326) {
-			// 		is_halt = true;
+			if (iter_index > this->furthest_successful_halt+3) {
+				is_halt = true;
+			} else {
+				double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
+					- scale_factor*this->halt_score_network->output->acti_vals[0];
+				double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
+				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
+				double score_diff_t_value = score_diff
+					/ (score_standard_deviation / sqrt(2500));
+				if (score_diff_t_value > 2.326) {
+					is_halt = false;
+				} else if (score_diff_t_value < -2.326) {
+					is_halt = true;
 
-			// 		if (iter_index > this->furthest_successful_halt) {
-			// 			this->furthest_successful_halt = iter_index;
-			// 		}
-			// 	} else {
-			// 		double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
-			// 			- this->halt_misguess_network->output->acti_vals[0];
-			// 		double misguess_standard_deviation = sqrt(this->misguess_variance);
-			// 		double misguess_diff_t_value = misguess_diff
-			// 			/ (misguess_standard_deviation / sqrt(2500));
-			// 		if (misguess_diff_t_value < -2.326) {
-			// 			is_halt = false;
-			// 		} else if (misguess_diff_t_value > 2.326) {
-			// 			is_halt = true;
+					if (iter_index > this->furthest_successful_halt) {
+						this->furthest_successful_halt = iter_index;
+					}
+				} else {
+					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
+						- this->halt_misguess_network->output->acti_vals[0];
+					double misguess_standard_deviation = sqrt(this->misguess_variance);
+					double misguess_diff_t_value = misguess_diff
+						/ (misguess_standard_deviation / sqrt(2500));
+					if (misguess_diff_t_value < -2.326) {
+						is_halt = false;
+					} else if (misguess_diff_t_value > 2.326) {
+						is_halt = true;
 
-			// 			if (iter_index > this->furthest_successful_halt) {
-			// 				this->furthest_successful_halt = iter_index;
-			// 			}
-			// 		} else {
-			// 			// continue if no strong signal either way
-			// 			is_halt = false;
-			// 		}
-			// 	}
-			// }
+						if (iter_index > this->furthest_successful_halt) {
+							this->furthest_successful_halt = iter_index;
+						}
+					} else {
+						// continue if no strong signal either way
+						is_halt = false;
+					}
+				}
+			}
 
 			if (is_halt) {
 				history->halt_score_network_update = this->halt_score_network->output->acti_vals[0];
@@ -446,6 +450,8 @@ void Scope::activate(Problem& problem,
 	scope_context.pop_back();
 	node_context.pop_back();
 	context_histories.pop_back();
+
+	run_helper.curr_depth--;
 }
 
 bool Scope::handle_node_activate_helper(int iter_index,
@@ -484,11 +490,9 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		sum_impact += action_node->average_impact;
 
-		// if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-		// 		&& randuni() < action_node->average_impact/action_node->average_sum_impact
-		// 		&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 		if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-				&& rand()%20 == 0) {
+				&& randuni() < action_node->average_impact/action_node->average_sum_impact
+				&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 			if (action_node->explore_fold != NULL) {
 				bool matches_context = true;
 				if (action_node->explore_scope_context.size() > scope_context.size()) {
@@ -586,7 +590,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				// new explore
 				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-				if (randuni() < 0.3) {
+				if (action_node->action.move != ACTION_START && randuni() < 0.3) {
 					node_context.back() = curr_node_id;
 
 					explore_new_loop(curr_node_id,
@@ -708,11 +712,9 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		} else {
 			sum_impact += scope_node->average_impact;
 
-			// if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-			// 		&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
-			// 		&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 			if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-					&& rand()%20 == 0) {
+					&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
+					&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
 				if (scope_node->explore_fold != NULL) {
 					bool matches_context = true;
 					if (scope_node->explore_scope_context.size() > scope_context.size()) {
@@ -973,6 +975,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 void Scope::backprop(vector<double>& state_errors,
 					 vector<bool>& inputs_initialized,
 					 double target_val,
+					 double final_diff,
 					 double final_misguess,
 					 double final_sum_impact,
 					 double& predicted_score,
@@ -1056,6 +1059,7 @@ void Scope::backprop(vector<double>& state_errors,
 					backprop_explore_fold_helper(state_errors,
 												 states_initialized,
 												 target_val,
+												 final_diff,
 												 final_misguess,
 												 final_sum_impact,
 												 predicted_score,
@@ -1071,6 +1075,7 @@ void Scope::backprop(vector<double>& state_errors,
 											state_errors,
 											states_initialized,
 											target_val,
+											final_diff,
 											final_misguess,
 											final_sum_impact,
 											predicted_score,
@@ -1145,6 +1150,7 @@ void Scope::backprop(vector<double>& state_errors,
 				backprop_explore_fold_helper(state_errors,
 											 states_initialized,
 											 target_val,
+											 final_diff,
 											 final_misguess,
 											 final_sum_impact,
 											 predicted_score,
@@ -1160,6 +1166,7 @@ void Scope::backprop(vector<double>& state_errors,
 										state_errors,
 										states_initialized,
 										target_val,
+										final_diff,
 										final_misguess,
 										final_sum_impact,
 										predicted_score,
@@ -1180,6 +1187,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										vector<double>& state_errors,
 										vector<bool>& states_initialized,
 										double target_val,
+										double final_diff,
 										double final_misguess,
 										double final_sum_impact,
 										double& predicted_score,
@@ -1204,6 +1212,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 		scope_node->backprop(state_errors,
 							 states_initialized,
 							 target_val,
+							 final_diff,
 							 final_misguess,
 							 final_sum_impact,
 							 predicted_score,
@@ -1300,6 +1309,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 		fold_sequence_node->backprop(state_errors,
 									 states_initialized,
 									 target_val,
+									 final_diff,
 									 final_misguess,
 									 final_sum_impact,
 									 predicted_score,
@@ -1390,6 +1400,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 		loop_fold_node->backprop(state_errors,
 								 states_initialized,
 								 target_val,
+								 final_diff,
 								 final_misguess,
 								 final_sum_impact,
 								 predicted_score,
@@ -1767,6 +1778,7 @@ void Scope::explore_new_path(int curr_node_id,
 void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 										 vector<bool>& states_initialized,
 										 double target_val,
+										 double final_diff,
 										 double final_misguess,
 										 double final_sum_impact,
 										 double& predicted_score,
@@ -1779,6 +1791,7 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 		fold->sequence_backprop(state_errors,
 								states_initialized,
 								target_val,
+								final_diff,
 								final_misguess,
 								final_sum_impact,
 								predicted_score,
@@ -1891,6 +1904,7 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 		loop_fold->backprop(state_errors,
 							states_initialized,
 							target_val,
+							final_diff,
 							final_misguess,
 							final_sum_impact,
 							predicted_score,
@@ -2054,6 +2068,16 @@ void Scope::save(ofstream& output_file) {
 								   this->id,
 								   n_index);
 		node_save_file.close();
+	}
+}
+
+void Scope::save_for_display(ofstream& output_file) {
+	output_file << this->is_loop << endl;
+
+	output_file << this->nodes.size() << endl;
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		output_file << this->nodes[n_index]->type << endl;
+		this->nodes[n_index]->save_for_display(output_file);
 	}
 }
 

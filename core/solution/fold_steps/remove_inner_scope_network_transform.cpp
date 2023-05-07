@@ -5,8 +5,7 @@
 using namespace std;
 
 void Fold::remove_inner_scope_network_end() {
-	// if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
-	if (rand()%2 == 0) {
+	if (this->sum_error/this->sequence_length / this->sub_iter < 0.01) {
 		cout << "REMOVE_INNER_SCOPE_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sequence_length / this->sub_iter << endl;
 

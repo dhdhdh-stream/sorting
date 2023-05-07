@@ -18,7 +18,12 @@ class Scope {
 public:
 	int id;
 
-	// TODO: actually, name states (i.e., objects), so that on reuse in exploration, can immediately make intelligent choices
+	// TODO: name states (i.e., objects), so that on reuse in exploration, can immediately make intelligent choices
+	//   - will need to track states globally
+	//   - but try other states too
+	//     - if successful, link state to each other
+	//       - so build state graph as well
+	//   - probably not needed for sorting, but needed for bigger problems
 	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
@@ -72,6 +77,7 @@ public:
 	void backprop(std::vector<double>& state_errors,
 				  std::vector<bool>& inputs_initialized,
 				  double target_val,
+				  double final_diff,
 				  double final_misguess,
 				  double final_sum_impact,
 				  double& predicted_score,
@@ -105,6 +111,7 @@ public:
 									 std::vector<double>& state_errors,
 									 std::vector<bool>& states_initialized,
 									 double target_val,
+									 double final_diff,
 									 double final_misguess,
 									 double final_sum_impact,
 									 double& predicted_score,
@@ -138,6 +145,7 @@ public:
 	void backprop_explore_fold_helper(std::vector<double>& state_errors,
 									  std::vector<bool>& states_initialized,
 									  double target_val,
+									  double final_diff,
 									  double final_misguess,
 									  double final_sum_impact,
 									  double& predicted_score,
@@ -150,6 +158,7 @@ public:
 					   bool initialized_locally);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ScopeHistory {

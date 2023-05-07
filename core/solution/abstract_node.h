@@ -19,6 +19,7 @@ public:
 	virtual void save(std::ofstream& output_file,
 					  int scope_id,
 					  int scope_index) = 0;
+	virtual void save_for_display(std::ofstream& output_file) = 0;
 };
 
 class AbstractNodeHistory {

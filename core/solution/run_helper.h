@@ -6,6 +6,7 @@
 class ScopeHistory;
 class RunHelper {
 public:
+	int curr_depth;	// need to track separate from context as context resets for folds
 	int max_depth;
 	bool exceeded_depth;
 
@@ -29,17 +30,18 @@ public:
 	ScopeHistory* explore_seed_outer_context_history;
 
 	// to detect recursive calls for flat -- not fullproof but hopefully effective enough
-	// also uses explore_scope_id
+	int flat_scope_id;
 	bool is_recursive;
 
 	RunHelper() {
+		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		this->explore_scope_id = -1;
-		this->is_recursive = false;
-
 		this->explore_seed_outer_context_history = NULL;
+
+		this->flat_scope_id = -1;
+		this->is_recursive = false;
 	};
 };
 

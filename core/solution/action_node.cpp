@@ -7,10 +7,13 @@
 
 using namespace std;
 
-ActionNode::ActionNode(vector<int> state_network_target_indexes,
+ActionNode::ActionNode(Action action,
+					   vector<int> state_network_target_indexes,
 					   vector<StateNetwork*> state_networks,
 					   StateNetwork* score_network) {
 	this->type = NODE_TYPE_ACTION;
+
+	this->action = action;
 
 	this->state_network_target_indexes = state_network_target_indexes;
 	this->state_networks = state_networks;
@@ -25,12 +28,11 @@ ActionNode::ActionNode(vector<int> state_network_target_indexes,
 	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	// this->explore_target_tries = 1;
-	this->explore_target_tries = 10;
-	// int rand_scale = rand()%4;
-	// for (int i = 0; i < rand_scale; i++) {
-	// 	this->explore_target_tries *= 10;
-	// }
+	this->explore_target_tries = 1;
+	int rand_scale = rand()%4;
+	for (int i = 0; i < rand_scale; i++) {
+		this->explore_target_tries *= 10;
+	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -244,6 +246,20 @@ void ActionNode::save(ofstream& output_file,
 	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
+
+	output_file << this->next_node_id << endl;
+
+	output_file << this->average_score << endl;
+	output_file << this->score_variance << endl;
+	output_file << this->average_misguess << endl;
+	output_file << this->misguess_variance << endl;
+
+	output_file << this->average_impact << endl;
+	output_file << this->average_sum_impact << endl;
+}
+
+void ActionNode::save_for_display(ofstream& output_file) {
+	this->action.save(output_file);
 
 	output_file << this->next_node_id << endl;
 

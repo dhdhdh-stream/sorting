@@ -53,7 +53,8 @@ public:
 	Fold* explore_fold;
 	LoopFold* explore_loop_fold;
 
-	ActionNode(std::vector<int> state_network_target_indexes,
+	ActionNode(Action action,
+			   std::vector<int> state_network_target_indexes,
 			   std::vector<StateNetwork*> state_networks,
 			   StateNetwork* score_network);
 	ActionNode(std::ifstream& input_file,
@@ -82,6 +83,7 @@ public:
 	void save(std::ofstream& output_file,
 			  int scope_id,
 			  int scope_index);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
