@@ -136,7 +136,10 @@ for s_index in range(len(scopes)):
 	start_node_index = global_node_index
 	global_node_index += 1
 
-	start_node = pydot.Node(start_node_index, label='S'+str(s_index)+' START')
+	if scopes[s_index][0] == 1:
+		start_node = pydot.Node(start_node_index, label='LOOP S'+str(s_index)+' START')
+	else:
+		start_node = pydot.Node(start_node_index, label='S'+str(s_index)+' START')
 	graph.add_node(start_node)
 	scopes[s_index][2] = start_node_index
 

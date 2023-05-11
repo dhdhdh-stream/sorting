@@ -1,6 +1,8 @@
 /**
  * Branch size always 2.
  * (So essentially saying there's no continuous generalization, with that effect instead achieved through loops.)
+ * 
+ * TODO: keep track of misguess, and choose better if score close
  */
 
 #ifndef BRANCH_NODE_H

@@ -128,16 +128,13 @@ void LoopFold::remove_inner_input_measure_activate(Problem& problem,
 		double score_diff = scale_factor*this->test_continue_score_network->output->acti_vals[0]
 			- scale_factor*this->test_halt_score_network->output->acti_vals[0];
 		// fold variance not representative yet, so use existing variance for now
-		double score_standard_deviation = abs(scale_factor)*sqrt(*this->existing_score_variance);
-		// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-		double score_diff_t_value = score_diff
-			/ (score_standard_deviation / sqrt(2500));
-		if (score_diff_t_value > 2.326) {
+		double score_standard_deviation = sqrt(*this->existing_score_variance);
+		// not a t-test, just looking for meaningful difference
+		double score_val = score_diff / abs(scale_factor) / score_standard_deviation;
+		if (score_val > 0.1) {
 			// continue
-			predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
-		} else if (score_diff_t_value < -2.326) {
+		} else if (score_val < -0.1) {
 			// halt
-			predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
 			break;
 		} else {
 			this->test_continue_misguess_network->new_sequence_activate(
@@ -150,22 +147,20 @@ void LoopFold::remove_inner_input_measure_activate(Problem& problem,
 				state_vals,
 				new_outer_state_vals);
 
+			// no need to multiply then divide misguess by scale_factor
 			double misguess_diff = this->test_continue_misguess_network->output->acti_vals[0]
 				- this->test_halt_misguess_network->output->acti_vals[0];
 			// fold variance not representative yet, so use existing variance for now
 			double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
-			double misguess_diff_t_value = misguess_diff
-				/ (misguess_standard_deviation / sqrt(2500));
-			if (misguess_diff_t_value < -2.326) {
+			double misguess_val = misguess_diff / misguess_standard_deviation;
+			if (misguess_val < -0.1) {
 				// continue
-				predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
-			} else if (misguess_diff_t_value > 2.326) {
+			} else if (misguess_val > 0.1) {
 				// halt
-				predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
 				break;
 			} else {
-				// continue if no strong signal either way
-				predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
+				// halt if no strong signal either way
+				break;
 			}
 		}
 

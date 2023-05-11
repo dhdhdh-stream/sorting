@@ -23,10 +23,13 @@ public:
 	//   - but try other states too
 	//     - if successful, link state to each other
 	//       - so build state graph as well
+	//       - link states by attributes, and for actions, build what attributes are desired for what inputs
 	//   - probably not needed for sorting, but needed for bigger problems
 	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
+	// Note: don't backprop halt/continue networks after train, simply hope that backproping score helps
+	//   - because no easy way to determine continue target
 	bool is_loop;
 	std::vector<StateNetwork*> starting_state_networks;	// first states
 	StateNetwork* continue_score_network;
@@ -168,15 +171,6 @@ public:
 	std::vector<StateNetworkHistory*> starting_state_network_histories;
 
 	int num_loop_iters;
-
-	std::vector<double> continue_score_network_updates;
-	std::vector<StateNetworkHistory*> continue_score_network_histories;
-	std::vector<double> continue_misguess_vals;
-	std::vector<StateNetworkHistory*> continue_misguess_network_histories;
-	double halt_score_network_update;
-	StateNetworkHistory* halt_score_network_history;
-	double halt_misguess_val;
-	StateNetworkHistory* halt_misguess_network_history;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 

@@ -422,20 +422,27 @@ void fold_to_nodes(Scope* parent_scope,
 
 				int inner_scope_id = new_scope_ids[scope_indexes[f_index]];
 
-				// inner_input_indexes must be empty
+				vector<int> inner_input_indexes;
+				vector<int> inner_input_target_indexes;
+				for (int i_index = 0; i_index < solution->scopes[inner_scope_id]->num_states; i_index++) {
+					if (!solution->scopes[inner_scope_id]->is_initialized_locally[i_index]) {
+						int original_index = input_index_reverse_mappings[scope_indexes[f_index]][i_index];
+						inner_input_indexes.push_back(original_index - fold->sum_inner_inputs - fold->curr_num_new_inner_states);
+						inner_input_target_indexes.push_back(i_index);
+					}
+				}
 
-				StateNetwork* score_network;
-				score_network = new StateNetwork(0,
-												 parent_scope->num_states + fold->curr_num_new_outer_states,
-												 0,
-												 0,
-												 20);
+				StateNetwork* score_network = new StateNetwork(0,
+															   parent_scope->num_states + fold->curr_num_new_outer_states,
+															   0,
+															   0,
+															   20);
 
 				ScopeNode* node = new ScopeNode(vector<int>(),
 												vector<StateNetwork*>(),
 												inner_scope_id,
-												vector<int>(),
-												vector<int>(),
+												inner_input_indexes,
+												inner_input_target_indexes,
 												new Scale(1.0),
 												vector<int>(),
 												vector<StateNetwork*>(),

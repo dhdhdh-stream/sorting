@@ -19,13 +19,16 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1683405762;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution = new Solution(solution_save_file);
+	// solution_save_file.close();
 
 	int iter_index = 0;
 	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
@@ -315,19 +318,22 @@ int main(int argc, char* argv[]) {
 				delete run_helper.explore_seed_outer_context_history;
 			}
 		} else {
-			if (!run_helper.exceeded_depth) {
-				if (run_helper.max_depth > solution->max_depth) {
-					solution->max_depth = run_helper.max_depth;
+			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+				if (!run_helper.exceeded_depth) {
+					if (run_helper.max_depth > solution->max_depth) {
+						solution->max_depth = run_helper.max_depth;
 
-					if (solution->max_depth < 50) {
-						solution->depth_limit = solution->max_depth + 10;
-					} else {
-						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+						if (solution->max_depth < 50) {
+							solution->depth_limit = solution->max_depth + 10;
+						} else {
+							solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+						}
 					}
 				}
-			}
 
-			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
+				solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
+				solution->average_misguess = 0.9999*solution->average_misguess + 0.0001*final_misguess;
+			}
 
 			vector<double> input_errors(solution->scopes[0]->num_states, 0.0);
 			double scale_factor_error = 0.0;	// unused

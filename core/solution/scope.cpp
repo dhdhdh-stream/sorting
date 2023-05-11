@@ -284,21 +284,8 @@ void Scope::activate(Problem& problem,
 
 		int iter_index = 0;
 		while (true) {
-			StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->continue_score_network);
-			this->continue_score_network->activate(state_vals,
-												   continue_score_network_history);
-
-			StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->continue_misguess_network);
-			this->continue_misguess_network->activate(state_vals,
-													  continue_misguess_network_history);
-
-			StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->halt_score_network);
-			this->halt_score_network->activate(state_vals,
-											   halt_score_network_history);
-
-			StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->halt_misguess_network);
-			this->halt_misguess_network->activate(state_vals,
-												  halt_misguess_network_history);
+			this->continue_score_network->activate(state_vals);
+			this->continue_misguess_network->activate(state_vals);
 
 			bool is_halt;
 			if (iter_index > this->furthest_successful_halt+3) {
@@ -306,66 +293,46 @@ void Scope::activate(Problem& problem,
 			} else {
 				double score_diff = scale_factor*this->continue_score_network->output->acti_vals[0]
 					- scale_factor*this->halt_score_network->output->acti_vals[0];
-				double score_standard_deviation = abs(scale_factor)*sqrt(this->score_variance);
-				// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-				double score_diff_t_value = score_diff
-					/ (score_standard_deviation / sqrt(2500));
-				if (score_diff_t_value > 2.326) {
+				double score_standard_deviation = sqrt(this->score_variance);
+				// not a t-test, just looking for meaningful difference
+				double score_val = score_diff / abs(scale_factor) / score_standard_deviation;
+				if (score_val > 0.1) {
 					is_halt = false;
-				} else if (score_diff_t_value < -2.326) {
+				} else if (score_val < -0.1) {
 					is_halt = true;
 
 					if (iter_index > this->furthest_successful_halt) {
 						this->furthest_successful_halt = iter_index;
 					}
 				} else {
+					this->halt_score_network->activate(state_vals);
+					this->halt_misguess_network->activate(state_vals);
+
+					// no need to multiply then divide misguess by scale_factor
 					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
 						- this->halt_misguess_network->output->acti_vals[0];
 					double misguess_standard_deviation = sqrt(this->misguess_variance);
-					double misguess_diff_t_value = misguess_diff
-						/ (misguess_standard_deviation / sqrt(2500));
-					if (misguess_diff_t_value < -2.326) {
+					double misguess_val = misguess_diff / misguess_standard_deviation;
+					if (misguess_val < -0.1) {
 						is_halt = false;
-					} else if (misguess_diff_t_value > 2.326) {
+					} else if (misguess_val > 0.1) {
 						is_halt = true;
 
 						if (iter_index > this->furthest_successful_halt) {
 							this->furthest_successful_halt = iter_index;
 						}
 					} else {
-						// continue if no strong signal either way
-						is_halt = false;
+						// halt if no strong signal either way
+						is_halt = true;
 					}
 				}
 			}
 
 			if (is_halt) {
-				history->halt_score_network_update = this->halt_score_network->output->acti_vals[0];
-				history->halt_score_network_history = halt_score_network_history;
-
-				history->halt_misguess_val = this->halt_misguess_network->output->acti_vals[0];
-				history->halt_misguess_network_history = halt_misguess_network_history;
-
-				delete continue_score_network_history;
-				delete continue_misguess_network_history;
-
-				predicted_score += scale_factor*this->halt_score_network->output->acti_vals[0];
-
 				history->num_loop_iters = iter_index;
-				
+
 				break;
 			} else {
-				history->continue_score_network_updates.push_back(this->continue_score_network->output->acti_vals[0]);
-				history->continue_score_network_histories.push_back(continue_score_network_history);
-
-				history->continue_misguess_vals.push_back(this->continue_misguess_network->output->acti_vals[0]);
-				history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
-
-				delete halt_score_network_history;
-				delete halt_misguess_network_history;
-
-				predicted_score += scale_factor*this->continue_score_network->output->acti_vals[0];
-
 				history->node_histories.push_back(vector<AbstractNodeHistory*>());
 
 				int curr_node_id = 0;
@@ -590,7 +557,8 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				// new explore
 				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-				if (action_node->action.move != ACTION_START && randuni() < 0.3) {
+				// if (action_node->action.move != ACTION_START && randuni() < 0.3) {
+				if (true) {
 					node_context.back() = curr_node_id;
 
 					explore_new_loop(curr_node_id,
@@ -1010,39 +978,6 @@ void Scope::backprop(vector<double>& state_errors,
 			this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 		}
 
-		if (history->halt_score_network_history != NULL) {	// check for if early exit
-			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-				double predicted_score_error = target_val - predicted_score;
-				this->halt_score_network->backprop_errors_with_no_weight_change(
-					scale_factor*predicted_score_error,
-					state_errors,
-					history->halt_score_network_history);
-
-				predicted_score -= scale_factor*history->halt_score_network_update;
-
-				this->halt_misguess_network->backprop_errors_with_no_weight_change(
-					final_misguess - history->halt_misguess_val,
-					state_errors,
-					history->halt_misguess_network_history);
-			} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-				double predicted_score_error = target_val - predicted_score;
-
-				scale_factor_error += history->halt_score_network_update*predicted_score_error;
-
-				this->halt_score_network->backprop_weights_with_no_error_signal(
-					scale_factor*predicted_score_error,
-					0.002,
-					history->halt_score_network_history);
-
-				predicted_score -= scale_factor*history->halt_score_network_update;
-
-				this->halt_misguess_network->backprop_weights_with_no_error_signal(
-					final_misguess - history->halt_misguess_val,
-					0.002,
-					history->halt_misguess_network_history);
-			}
-		}
-
 		for (int iter_index = history->num_loop_iters-1; iter_index >= 0; iter_index--) {
 			for (int h_index = (int)history->node_histories[iter_index].size()-1; h_index >= 0; h_index--) {
 				if (this->nodes[history->node_histories[iter_index][h_index]->scope_index]
@@ -1091,37 +1026,6 @@ void Scope::backprop(vector<double>& state_errors,
 
 			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_BACKPROP_DONE) {
 				break;
-			}
-
-			if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-				double predicted_score_error = target_val - predicted_score;
-				this->continue_score_network->backprop_errors_with_no_weight_change(
-					scale_factor*predicted_score_error,
-					state_errors,
-					history->continue_score_network_histories[iter_index]);
-
-				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
-
-				this->continue_misguess_network->backprop_errors_with_no_weight_change(
-					final_misguess - history->continue_misguess_vals[iter_index],
-					state_errors,
-					history->continue_misguess_network_histories[iter_index]);
-			} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-				double predicted_score_error = target_val - predicted_score;
-
-				scale_factor_error += history->continue_score_network_updates[iter_index]*predicted_score_error;
-
-				this->continue_score_network->backprop_weights_with_no_error_signal(
-					scale_factor*predicted_score_error,
-					0.002,
-					history->continue_score_network_histories[iter_index]);
-
-				predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
-
-				this->continue_misguess_network->backprop_weights_with_no_error_signal(
-					final_misguess - history->continue_misguess_vals[iter_index],
-					0.002,
-					history->continue_misguess_network_histories[iter_index]);
 			}
 		}
 
@@ -1303,6 +1207,11 @@ void Scope::handle_node_backprop_helper(int iter_index,
 			delete this->nodes[history->node_histories[iter_index][h_index]->scope_index];
 			this->nodes[history->node_histories[iter_index][h_index]->scope_index] = new_branch_node;
 			// delete fold_score_node along with fold
+
+			// ofstream solution_save_file;
+			// solution_save_file.open("saves/solution.txt");
+			// solution->save(solution_save_file);
+			// solution_save_file.close();
 		}
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_FOLD_SEQUENCE) {
 		FoldSequenceNode* fold_sequence_node = (FoldSequenceNode*)history->node_histories[iter_index][h_index]->node;
@@ -2084,9 +1993,6 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->halt_score_network_history = NULL;
-	this->halt_misguess_network_history = NULL;
-
 	this->explore_iter_index = -1;
 	this->explore_node_index = -1;
 	this->explore_fold_history = NULL;
@@ -2097,9 +2003,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	this->scope = original->scope;
-
-	this->halt_score_network_history = NULL;
-	this->halt_misguess_network_history = NULL;
 
 	this->explore_fold_history = NULL;
 	this->explore_loop_fold_history = NULL;
@@ -2129,22 +2032,6 @@ ScopeHistory::~ScopeHistory() {
 		if (this->starting_state_network_histories[s_index] != NULL) {
 			delete this->starting_state_network_histories[s_index];
 		}
-	}
-
-	for (int iter_index = 0; iter_index < (int)this->continue_score_network_histories.size(); iter_index++) {
-		delete this->continue_score_network_histories[iter_index];
-	}
-
-	for (int iter_index = 0; iter_index < (int)this->continue_misguess_network_histories.size(); iter_index++) {
-		delete this->continue_misguess_network_histories[iter_index];
-	}
-
-	if (this->halt_score_network_history != NULL) {
-		delete this->halt_score_network_history;
-	}
-
-	if (this->halt_misguess_network_history != NULL) {
-		delete this->halt_misguess_network_history;
 	}
 
 	if (this->explore_fold_history != NULL) {

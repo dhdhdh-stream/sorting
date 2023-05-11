@@ -327,15 +327,15 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 							   double& scale_factor,
 							   RunHelper& run_helper,
 							   FoldHistory* history) {
-	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
-	predicted_score -= this->end_mod;
-
 	this->test_replace_average_score = 0.9999*this->test_replace_average_score + 0.0001*target_val;
 	this->test_replace_average_misguess = 0.9999*this->test_replace_average_misguess + 0.0001*final_misguess;
 	double curr_misguess_variance = (this->test_replace_average_misguess - final_misguess)*(this->test_replace_average_misguess - final_misguess);
 	this->test_replace_misguess_variance = 0.9999*this->test_replace_misguess_variance + 0.0001*curr_misguess_variance;
 
 	this->sum_error += abs(target_val-predicted_score);
+
+	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
+	predicted_score -= this->end_mod;
 
 	vector<double> new_inner_state_errors(this->sum_inner_inputs+this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_errors(this->test_num_new_outer_states, 0.0);

@@ -8,6 +8,7 @@
 class Solution {
 public:
 	double average_score;
+	double average_misguess;
 
 	std::vector<Scope*> scopes;
 	// scopes[0] is root, starts with ACTION_START, don't include in explore

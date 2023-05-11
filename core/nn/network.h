@@ -48,14 +48,6 @@ public:
 											   double target_max_update,
 											   NetworkHistory* history);
 
-	void add_input();
-	void remove_input(int index);
-	void scope_activate(std::vector<double>& obs,
-						std::vector<double>& input_vals,
-						std::vector<double>& local_state_vals);
-	void scope_activate(std::vector<double>& input_vals,
-						std::vector<double>& local_state_vals);
-
 	void save(std::ofstream& output_file);
 
 private:

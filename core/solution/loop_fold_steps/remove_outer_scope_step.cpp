@@ -284,33 +284,25 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 
 	int iter_index = 0;
 	while (true) {
-		StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->curr_continue_score_network);
 		this->curr_continue_score_network->new_sequence_activate(
 			new_inner_state_vals,
 			state_vals,
-			new_outer_state_vals,
-			continue_score_network_history);
+			new_outer_state_vals);
 
-		StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->curr_continue_misguess_network);
 		this->curr_continue_misguess_network->new_sequence_activate(
 			new_inner_state_vals,
 			state_vals,
-			new_outer_state_vals,
-			continue_misguess_network_history);
+			new_outer_state_vals);
 
-		StateNetworkHistory* halt_score_network_history = new StateNetworkHistory(this->curr_halt_score_network);
 		this->curr_halt_score_network->new_sequence_activate(
 			new_inner_state_vals,
 			state_vals,
-			new_outer_state_vals,
-			halt_score_network_history);
+			new_outer_state_vals);
 
-		StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->curr_halt_misguess_network);
 		this->curr_halt_misguess_network->new_sequence_activate(
 			new_inner_state_vals,
 			state_vals,
-			new_outer_state_vals,
-			halt_misguess_network_history);
+			new_outer_state_vals);
 
 		// Note: test histories will have an extra iteration for ending
 		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE || run_helper.explore_phase == EXPLORE_PHASE_NONE) {
@@ -362,62 +354,37 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 		} else {
 			double score_diff = scale_factor*this->curr_continue_score_network->output->acti_vals[0]
 				- scale_factor*this->curr_halt_score_network->output->acti_vals[0];
-			double score_standard_deviation = abs(scale_factor)*sqrt(this->curr_score_variance);
-			// TODO: not sure how network gradient descent corresponds to sample size, but simply set to 2500 for now
-			double score_diff_t_value = score_diff
-				/ (score_standard_deviation / sqrt(2500));
-			if (score_diff_t_value > 2.326) {
+			double score_standard_deviation = sqrt(this->curr_score_variance);
+			double score_val = score_diff / abs(scale_factor) / score_standard_deviation;
+			if (score_val > 0.1) {
 				is_halt = false;
-			} else if (score_diff_t_value < -2.326) {
+			} else if (score_val < -0.1) {
 				is_halt = true;
 			} else {
 				double misguess_diff = this->curr_continue_misguess_network->output->acti_vals[0]
 					- this->curr_halt_misguess_network->output->acti_vals[0];
 				double misguess_standard_deviation = sqrt(this->curr_misguess_variance);
-				double misguess_diff_t_value = misguess_diff
-					/ (misguess_standard_deviation / sqrt(2500));
-				if (misguess_diff_t_value < -2.326) {
+				double misguess_val = misguess_diff / misguess_standard_deviation;
+				if (misguess_val < -0.1) {
 					is_halt = false;
-				} else if (misguess_diff_t_value > 2.326) {
+				} else if (misguess_val > 0.1) {
 					is_halt = true;
 				} else {
-					// continue if no strong signal either way
-					is_halt = false;
+					// halt if no strong signal either way
+					is_halt = true;
 				}
 			}
 		}
 
 		if (is_halt) {
-			history->halt_score_network_update = this->curr_halt_score_network->output->acti_vals[0];
-			history->halt_score_network_history = halt_score_network_history;
-
-			history->halt_misguess_val = this->curr_halt_misguess_network->output->acti_vals[0];
-			history->halt_misguess_network_history = halt_misguess_network_history;
-
-			delete continue_score_network_history;
-			delete continue_misguess_network_history;
-
-			predicted_score += scale_factor*this->curr_halt_score_network->output->acti_vals[0];
-
 			history->num_loop_iters = iter_index;
-			
+
 			break;
 		} else {
-			history->continue_score_network_updates.push_back(this->curr_continue_score_network->output->acti_vals[0]);
-			history->continue_score_network_histories.push_back(continue_score_network_history);
-
-			history->continue_misguess_vals.push_back(this->curr_continue_misguess_network->output->acti_vals[0]);
-			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
-
-			delete halt_score_network_history;
-			delete halt_misguess_network_history;
-
-			predicted_score += scale_factor*this->curr_continue_score_network->output->acti_vals[0];
-
 			int num_inner_networks = this->sum_inner_inputs
 				+ this->curr_num_new_inner_states
 				+ this->num_states;
-			
+
 			history->inner_scope_histories.push_back(vector<ScopeHistory*>(this->sequence_length, NULL));
 			history->score_network_updates.push_back(vector<double>(this->sequence_length));
 			history->score_network_histories.push_back(vector<StateNetworkHistory*>(this->sequence_length, NULL));

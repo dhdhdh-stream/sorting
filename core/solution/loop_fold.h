@@ -6,13 +6,6 @@
  * 
  * - assume all newly added state needed for continue/halt networks
  *   - so no need to remove or clear inner state
- * 
- * - keep looping until clear signal to halt
- *   - this is because may be difficult to train to look ahead, when initially forcing number of iterations
- *     - negative signals from continuing can cancel out the target positive signals?
- *   - if leads to issues, then loop will simply not be added
- *     - and otherwise, can find loops that would otherwise be difficult to find
- *   - though might also not matter too much?
  */
 
 #ifndef LOOP_FOLD_H
@@ -419,14 +412,16 @@ public:
 
 	int num_loop_iters;
 
-	std::vector<double> continue_score_network_updates;
 	std::vector<StateNetworkHistory*> continue_score_network_histories;
-	std::vector<double> continue_misguess_vals;
+	std::vector<double> continue_score_snapshots;
 	std::vector<StateNetworkHistory*> continue_misguess_network_histories;
-	double halt_score_network_update;
+	std::vector<double> continue_misguess_snapshots;
+
 	StateNetworkHistory* halt_score_network_history;
-	double halt_misguess_val;
 	StateNetworkHistory* halt_misguess_network_history;
+	// will have 1 more iter than num_loop_iters
+	std::vector<double> halt_score_snapshots;
+	std::vector<double> halt_misguess_snapshots;
 
 	std::vector<std::vector<std::vector<StateNetworkHistory*>>> state_network_histories;
 	std::vector<std::vector<ScopeHistory*>> inner_scope_histories;

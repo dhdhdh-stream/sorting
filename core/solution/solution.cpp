@@ -18,6 +18,7 @@ using namespace std;
 
 Solution::Solution() {
 	this->average_score = 0.0;
+	this->average_misguess = 0.0;
 
 	ActionNode* starting_node = new ActionNode(ACTION_START,
 											   vector<int>(),
@@ -50,6 +51,10 @@ Solution::Solution(ifstream& input_file) {
 	string average_score_line;
 	getline(input_file, average_score_line);
 	this->average_score = stod(average_score_line);
+
+	string average_misguess_line;
+	getline(input_file, average_misguess_line);
+	this->average_misguess = stod(average_misguess_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -689,6 +694,7 @@ void Solution::backtrack_for_loop(vector<ScopeHistory*>& context_histories,
 
 void Solution::save(ofstream& output_file) {
 	output_file << this->average_score << endl;
+	output_file << this->average_misguess << endl;
 
 	output_file << this->scopes.size() << endl;
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {

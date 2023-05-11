@@ -148,24 +148,30 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 		new_inner_state_vals[i_index] += this->test_starting_state_networks[i_index]->output->acti_vals[0];
 	}
 
-	geometric_distribution<int> distribution(0.4);
-	int loop_iters = distribution(generator);
-	if (loop_iters > 6) {
-		loop_iters = 6;
-	}
+	int loop_iters = rand()%7;
 	history->num_loop_iters = loop_iters;
 
 	for (int iter_index = 0; iter_index < loop_iters; iter_index++) {
+		this->test_halt_score_network->new_sequence_activate(
+			new_inner_state_vals,
+			state_vals,
+			new_outer_state_vals);
+		history->halt_score_snapshots.push_back(predicted_score + scale_factor*this->test_halt_score_network->output->acti_vals[0]);
+
 		StateNetworkHistory* continue_score_network_history = new StateNetworkHistory(this->test_continue_score_network);
 		this->test_continue_score_network->new_sequence_activate(
 			new_inner_state_vals,
 			state_vals,
 			new_outer_state_vals,
 			continue_score_network_history);
-		history->continue_score_network_updates.push_back(this->test_continue_score_network->output->acti_vals[0]);
 		history->continue_score_network_histories.push_back(continue_score_network_history);
+		history->continue_score_snapshots.push_back(predicted_score + scale_factor*this->test_continue_score_network->output->acti_vals[0]);
 
-		predicted_score += scale_factor*this->test_continue_score_network->output->acti_vals[0];
+		this->test_halt_misguess_network->new_sequence_activate(
+			new_inner_state_vals,
+			state_vals,
+			new_outer_state_vals);
+		history->halt_misguess_snapshots.push_back(abs(scale_factor)*this->test_halt_misguess_network->output->acti_vals[0]);
 
 		StateNetworkHistory* continue_misguess_network_history = new StateNetworkHistory(this->test_continue_misguess_network);
 		this->test_continue_misguess_network->new_sequence_activate(
@@ -173,8 +179,8 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 			state_vals,
 			new_outer_state_vals,
 			continue_misguess_network_history);
-		history->continue_misguess_vals.push_back(this->test_continue_misguess_network->output->acti_vals[0]);
 		history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+		history->continue_misguess_snapshots.push_back(abs(scale_factor)*this->test_continue_misguess_network->output->acti_vals[0]);
 
 		int num_inner_networks = this->sum_inner_inputs
 			+ this->test_num_new_inner_states
@@ -346,10 +352,8 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 		state_vals,
 		new_outer_state_vals,
 		halt_score_network_history);
-	history->halt_score_network_update = this->test_halt_score_network->output->acti_vals[0];
 	history->halt_score_network_history = halt_score_network_history;
-
-	predicted_score += scale_factor*this->test_halt_score_network->output->acti_vals[0];
+	history->halt_score_snapshots.push_back(predicted_score + scale_factor*this->test_halt_score_network->output->acti_vals[0]);
 
 	StateNetworkHistory* halt_misguess_network_history = new StateNetworkHistory(this->test_halt_misguess_network);
 	this->test_halt_misguess_network->new_sequence_activate(
@@ -357,8 +361,8 @@ void LoopFold::experiment_learn_activate(Problem& problem,
 		state_vals,
 		new_outer_state_vals,
 		halt_misguess_network_history);
-	history->halt_misguess_val = this->test_halt_misguess_network->output->acti_vals[0];
 	history->halt_misguess_network_history = halt_misguess_network_history;
+	history->halt_misguess_snapshots.push_back(scale_factor*this->test_halt_misguess_network->output->acti_vals[0]);
 
 	predicted_score += this->end_mod;
 }
@@ -372,9 +376,6 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 										 double& scale_factor,
 										 RunHelper& run_helper,
 										 LoopFoldHistory* history) {
-	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
-	predicted_score -= this->end_mod;
-
 	this->test_average_score = 0.9999*this->test_average_score + 0.0001*target_val;
 	double score_variance = (this->test_average_score - target_val)*(this->test_average_score - target_val);
 	this->test_score_variance = 0.9999*this->test_score_variance + 0.0001*score_variance;
@@ -382,12 +383,15 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 	double misguess_variance = (this->test_average_misguess - final_misguess)*(this->test_average_misguess - final_misguess);
 	this->test_misguess_variance = 0.9999*this->test_misguess_variance + 0.0001*misguess_variance;
 
-	this->sum_error += abs(target_val-predicted_score);
+	this->sum_error += abs(target_val - predicted_score);
+
+	this->end_mod = 0.9999*this->end_mod + 0.0001*final_diff;
+	predicted_score -= this->end_mod;
 
 	vector<double> new_inner_state_errors(this->sum_inner_inputs+this->test_num_new_inner_states, 0.0);
 	vector<double> new_outer_state_errors(this->test_num_new_outer_states, 0.0);
 
-	double halt_predicted_score_error = target_val - predicted_score;
+	double halt_predicted_score_error = target_val - history->halt_score_snapshots.back();
 	double halt_score_network_target_max_update;
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 		halt_score_network_target_max_update = 0.05;
@@ -404,8 +408,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 		halt_score_network_target_max_update,
 		history->halt_score_network_history);
 
-	predicted_score -= scale_factor*history->halt_score_network_update;
-
+	double halt_misguess_error = abs(halt_predicted_score_error) - history->halt_misguess_snapshots.back();
 	double halt_misguess_network_target_max_update;
 	if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 		halt_misguess_network_target_max_update = 0.05;
@@ -415,7 +418,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 		halt_misguess_network_target_max_update = 0.002;
 	}
 	this->test_halt_misguess_network->new_sequence_backprop(
-		final_misguess - history->halt_misguess_val,
+		abs(scale_factor)*halt_misguess_error,
 		new_inner_state_errors,
 		state_errors,
 		new_outer_state_errors,
@@ -451,11 +454,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 							+ s_index;
 						double state_network_target_max_update;
 						if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
-							state_network_target_max_update = 0.05;
-						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.01;
-						} else {
+						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.002;
+						} else {
+							state_network_target_max_update = 0.0005;
 						}
 						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 							state_errors[s_index],
@@ -471,11 +474,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 					double state_network_target_max_update;
 					if ((this->state == LOOP_FOLD_STATE_EXPERIMENT || (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
 							&& this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.01;
-					} else {
+					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.002;
+					} else {
+						state_network_target_max_update = 0.0005;
 					}
 					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 						new_inner_state_errors[i_index],
@@ -496,11 +499,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 						double state_network_target_max_update;
 						if ((this->state == LOOP_FOLD_STATE_EXPERIMENT || (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE && i_index == this->test_num_new_inner_states-1))
 								&& this->state_iter <= 100000) {
-							state_network_target_max_update = 0.05;
-						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.01;
-						} else {
+						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.002;
+						} else {
+							state_network_target_max_update = 0.0005;
 						}
 						state_network->new_external_backprop(
 							new_state_errors[i_index],
@@ -550,11 +553,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 				for (int i_index = this->inner_input_start_indexes[f_index]+this->num_inner_inputs[f_index]-1; i_index >= 0; i_index--) {
 					double state_network_target_max_update;
 					if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.01;
-					} else {
+					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.002;
+					} else {
+						state_network_target_max_update = 0.0005;
 					}
 					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 						new_inner_state_errors[i_index],
@@ -572,11 +575,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 							+ s_index;
 						double state_network_target_max_update;
 						if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
-							state_network_target_max_update = 0.05;
-						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.01;
-						} else {
+						} else if (this->state_iter <= 400000) {
 							state_network_target_max_update = 0.002;
+						} else {
+							state_network_target_max_update = 0.0005;
 						}
 						this->test_state_networks[f_index][state_index]->new_sequence_backprop(
 							state_errors[s_index],
@@ -591,11 +594,11 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 					double state_network_target_max_update;
 					if ((this->state == LOOP_FOLD_STATE_EXPERIMENT || (this->state == LOOP_FOLD_STATE_ADD_INNER_STATE && i_index == this->sum_inner_inputs+this->test_num_new_inner_states-1))
 							&& this->state_iter <= 100000) {
-						state_network_target_max_update = 0.05;
-					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.01;
-					} else {
+					} else if (this->state_iter <= 400000) {
 						state_network_target_max_update = 0.002;
+					} else {
+						state_network_target_max_update = 0.0005;
 					}
 					this->test_state_networks[f_index][i_index]->new_sequence_backprop(
 						new_inner_state_errors[i_index],
@@ -608,7 +611,39 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 			}
 		}
 
-		double continue_predicted_score_error = target_val - predicted_score;
+		double best_halt_score = history->halt_score_snapshots.back();
+		double best_halt_misguess = abs(target_val - history->halt_score_snapshots.back());
+		for (int ii_index = history->num_loop_iters-1;	// back to front
+				ii_index >= iter_index + 1; ii_index--) {
+			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
+			// fold variance not representative yet, so use existing variance for now
+			double score_standard_deviation = sqrt(*this->existing_score_variance);
+			// not a t-test, just looking for meaningful difference
+			double score_val = score_diff / abs(scale_factor) / score_standard_deviation;
+			if (score_val > 0.1) {
+				best_halt_score = history->halt_score_snapshots[ii_index];
+				best_halt_misguess = abs(target_val - history->halt_score_snapshots[ii_index]);
+			} else if (score_val < -0.1) {
+				continue;
+			} else {
+				double misguess_diff = abs(target_val - history->halt_score_snapshots[ii_index]) - best_halt_misguess;
+				// fold variance not representative yet, so use existing variance for now
+				double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
+				double misguess_val = misguess_diff / abs(scale_factor) / misguess_standard_deviation;
+				if (misguess_val < -0.1) {
+					best_halt_score = history->halt_score_snapshots[ii_index];
+					best_halt_misguess = abs(target_val - history->halt_score_snapshots[ii_index]);
+				} else if (misguess_val > 0.1) {
+					continue;
+				} else {
+					// use earlier iter if no strong signal either way
+					best_halt_score = history->halt_score_snapshots[ii_index];
+					best_halt_misguess = abs(target_val - history->halt_score_snapshots[ii_index]);
+				}
+			}
+		}
+
+		double continue_predicted_score_error = best_halt_score - history->continue_score_snapshots[iter_index];
 		double continue_score_network_target_max_update;
 		if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 			continue_score_network_target_max_update = 0.05;
@@ -625,8 +660,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 			continue_score_network_target_max_update,
 			history->continue_score_network_histories[iter_index]);
 
-		predicted_score -= scale_factor*history->continue_score_network_updates[iter_index];
-
+		double continue_misguess_error = best_halt_misguess - history->continue_misguess_snapshots[iter_index];
 		double continue_misguess_network_target_max_update;
 		if (this->state == LOOP_FOLD_STATE_EXPERIMENT && this->state_iter <= 100000) {
 			continue_misguess_network_target_max_update = 0.05;
@@ -636,7 +670,7 @@ void LoopFold::experiment_learn_backprop(vector<double>& state_errors,
 			continue_misguess_network_target_max_update = 0.002;
 		}
 		this->test_continue_misguess_network->new_sequence_backprop(
-			final_misguess - history->continue_misguess_vals[iter_index],
+			abs(scale_factor)*continue_misguess_error,
 			new_inner_state_errors,
 			state_errors,
 			new_outer_state_errors,

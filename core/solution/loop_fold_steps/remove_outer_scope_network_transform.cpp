@@ -5,7 +5,7 @@
 using namespace std;
 
 void LoopFold::remove_outer_scope_network_end() {
-	if (this->sum_error/this->sub_iter < 0.05) {
+	if (this->sum_error/this->sub_iter < 0.01) {
 		cout << "REMOVE_OUTER_SCOPE_NETWORK success" << endl;
 		cout << "score: " << this->sum_error/this->sub_iter << endl;
 
