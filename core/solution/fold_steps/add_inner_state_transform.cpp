@@ -78,8 +78,8 @@ void Fold::add_inner_state_end() {
 
 		this->curr_branch_average_score = this->test_branch_average_score;
 		this->test_branch_average_score = 0.0;
-		this->curr_existing_average_improvement = this->test_existing_average_improvement;
-		this->test_existing_average_improvement = 0.0;
+		this->curr_branch_existing_average_score = this->test_branch_existing_average_score;
+		this->test_branch_existing_average_score = 0.0;
 		this->curr_replace_average_score = this->test_replace_average_score;
 		this->test_replace_average_score = 0.0;
 		this->curr_replace_average_misguess = this->test_replace_average_misguess;

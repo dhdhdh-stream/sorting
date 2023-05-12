@@ -191,7 +191,6 @@ void LoopFold::remove_inner_input_measure_activate(Problem& problem,
 				inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 				// unused
-				double inner_sum_impact = 0.0;
 				vector<int> inner_scope_context;
 				vector<int> inner_node_context;
 				vector<ScopeHistory*> inner_context_histories;
@@ -208,7 +207,6 @@ void LoopFold::remove_inner_input_measure_activate(Problem& problem,
 									  inner_inputs_initialized,
 									  predicted_score,
 									  scale_factor,
-									  inner_sum_impact,
 									  inner_scope_context,
 									  inner_node_context,
 									  inner_context_histories,

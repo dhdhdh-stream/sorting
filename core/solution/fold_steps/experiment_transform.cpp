@@ -13,10 +13,9 @@ void Fold::experiment_end() {
 
 	cout << "this->existing_average_score: " << *this->existing_average_score << endl;
 
-	double branch_improvement = this->test_branch_average_score - *this->existing_average_score;
+	double branch_improvement = this->test_branch_average_score - this->test_branch_existing_average_score;
 	cout << "this->test_branch_average_score: " << this->test_branch_average_score << endl;
-
-	cout << "this->test_existing_average_improvement: " << this->test_existing_average_improvement << endl;
+	cout << "this->test_branch_existing_average_score: " << this->test_branch_existing_average_score << endl;
 
 	double replace_improvement = this->test_replace_average_score - *this->existing_average_score;
 	cout << "this->test_replace_average_score: " << this->test_replace_average_score << endl;
@@ -31,10 +30,6 @@ void Fold::experiment_end() {
 		/ (score_standard_deviation / sqrt(20000));
 	cout << "branch_improvement_t_value: " << branch_improvement_t_value << endl;
 
-	double existing_improvement_t_value = this->test_existing_average_improvement
-		/ (score_standard_deviation / sqrt(20000));
-	cout << "existing_improvement_t_value: " << existing_improvement_t_value << endl;
-
 	double replace_improvement_t_value = replace_improvement
 		/ (score_standard_deviation / sqrt(20000));
 	cout << "replace_improvement_t_value: " << replace_improvement_t_value << endl;
@@ -44,7 +39,7 @@ void Fold::experiment_end() {
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 	if (branch_improvement_t_value > 2.326) {	// >99%
-		if (existing_improvement_t_value < 0.842	// 80%<
+		if (replace_improvement_t_value > -0.842	// 80%<
 				&& this->is_recursive == 0) {
 			cout << "FOLD_RESULT_REPLACE" << endl;
 			this->experiment_result = FOLD_RESULT_REPLACE;
@@ -79,8 +74,8 @@ void Fold::experiment_end() {
 
 		this->curr_branch_average_score = this->test_branch_average_score;
 		this->test_branch_average_score = 0.0;
-		this->curr_existing_average_improvement = this->test_existing_average_improvement;
-		this->test_existing_average_improvement = 0.0;
+		this->curr_branch_existing_average_score = this->test_branch_existing_average_score;
+		this->test_branch_existing_average_score = 0.0;
 		this->curr_replace_average_score = this->test_replace_average_score;
 		this->test_replace_average_score = 0.0;
 		this->curr_replace_average_misguess = this->test_replace_average_misguess;

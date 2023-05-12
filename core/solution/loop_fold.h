@@ -6,6 +6,8 @@
  * 
  * - assume all newly added state needed for continue/halt networks
  *   - so no need to remove or clear inner state
+ * 
+ * - TODO: loop_fold should be done apart from surprise
  */
 
 #ifndef LOOP_FOLD_H
@@ -173,7 +175,6 @@ public:
 				  std::vector<bool>& states_initialized,
 				  double& predicted_score,
 				  double& scale_factor,
-				  double& sum_impact,
 				  std::vector<ScopeHistory*>& context_histories,
 				  RunHelper& run_helper,
 				  LoopFoldHistory* history);
@@ -182,7 +183,6 @@ public:
 				  double target_val,
 				  double final_diff,
 				  double final_misguess,
-				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
 				  double& scale_factor_error,
@@ -315,7 +315,6 @@ public:
 									 std::vector<bool>& states_initialized,
 									 double& predicted_score,
 									 double& scale_factor,
-									 double& sum_impact,
 									 std::vector<ScopeHistory*>& context_histories,
 									 RunHelper& run_helper,
 									 LoopFoldHistory* history);
@@ -341,7 +340,6 @@ public:
 											 std::vector<bool>& states_initialized,
 											 double& predicted_score,
 											 double& scale_factor,
-											 double& sum_impact,
 											 std::vector<ScopeHistory*>& context_histories,
 											 RunHelper& run_helper,
 											 LoopFoldHistory* history);
@@ -369,7 +367,6 @@ public:
 						std::vector<bool>& states_initialized,
 						double& predicted_score,
 						double& scale_factor,
-						double& sum_impact,
 						std::vector<ScopeHistory*>& context_histories,
 						RunHelper& run_helper,
 						LoopFoldHistory* history);
@@ -378,7 +375,6 @@ public:
 						double target_val,
 						double final_diff,
 						double final_misguess,
-						double final_sum_impact,
 						double& predicted_score,
 						double& scale_factor,
 						double& scale_factor_error,

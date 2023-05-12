@@ -10,6 +10,8 @@
 
 using namespace std;
 
+const int EXPLORE_TARGET_TRIES = 1000;
+
 default_random_engine generator;
 bool global_debug_flag = false;
 double global_sum_error = 0.0;
@@ -46,7 +48,6 @@ int main(int argc, char* argv[]) {
 		vector<bool> inputs_initialized(solution->scopes[0]->num_states, false);
 		double predicted_score = solution->average_score;
 		double scale_factor = 1.0;
-		double sum_impact = 0.0;
 		vector<int> scope_context;
 		vector<int> node_context;
 		vector<ScopeHistory*> context_histories;
@@ -65,7 +66,6 @@ int main(int argc, char* argv[]) {
 									  inputs_initialized,
 									  predicted_score,
 									  scale_factor,
-									  sum_impact,
 									  scope_context,
 									  node_context,
 									  context_histories,
@@ -117,6 +117,7 @@ int main(int argc, char* argv[]) {
 						action_node->best_explore_seed_start_scale_factor = 0.0;
 						action_node->best_explore_seed_state_vals_snapshot.clear();
 						action_node->best_explore_seed_outer_context_history = NULL;
+						action_node->best_explore_seed_target_val = 0.0;
 					} else {
 						action_node->best_explore_exit_depth = run_helper.explore_exit_depth;
 						action_node->best_explore_next_node_id = run_helper.explore_next_node_id;
@@ -125,13 +126,13 @@ int main(int argc, char* argv[]) {
 						action_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
 						action_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
 						run_helper.explore_seed_outer_context_history = NULL;
+						action_node->best_explore_seed_target_val = target_val;
 					}
 				}
 
-				if (action_node->explore_curr_try >= action_node->explore_target_tries) {
+				if (action_node->explore_curr_try >= EXPLORE_TARGET_TRIES) {
 					if (action_node->best_explore_is_loop) {
 						cout << "loop" << endl;
-						cout << "action_node->explore_target_tries: " << action_node->explore_target_tries << endl;
 						cout << "action_node->best_explore_surprise: " << action_node->best_explore_surprise << endl;
 						cout << "actions:";
 						for (int f_index = 0; f_index < (int)action_node->best_explore_actions.size(); f_index++) {
@@ -159,7 +160,6 @@ int main(int argc, char* argv[]) {
 						action_node->explore_loop_fold = loop_fold;
 					} else {
 						cout << "path" << endl;
-						cout << "action_node->explore_target_tries: " << action_node->explore_target_tries << endl;
 						cout << "action_node->best_explore_surprise: " << action_node->best_explore_surprise << endl;
 						cout << "actions:";
 						for (int f_index = 0; f_index < (int)action_node->best_explore_actions.size(); f_index++) {
@@ -170,6 +170,7 @@ int main(int argc, char* argv[]) {
 							}
 						}
 						cout << endl;
+						cout << "action_node->best_explore_seed_target_val: " << action_node->best_explore_seed_target_val << endl;
 						Fold* fold = new Fold(action_node->best_explore_scope_context,
 											  action_node->best_explore_node_context,
 											  action_node->best_explore_exit_depth,
@@ -184,7 +185,7 @@ int main(int argc, char* argv[]) {
 											  action_node->best_explore_seed_start_scale_factor,
 											  action_node->best_explore_seed_state_vals_snapshot,
 											  action_node->best_explore_seed_outer_context_history,
-											  target_val);
+											  action_node->best_explore_seed_target_val);
 
 						action_node->explore_scope_context = action_node->best_explore_scope_context;
 						action_node->explore_node_context = action_node->best_explore_node_context;
@@ -194,11 +195,6 @@ int main(int argc, char* argv[]) {
 					}
 
 					action_node->explore_curr_try = 0;
-					action_node->explore_target_tries = 1;
-					int rand_scale = rand()%4;
-					for (int i = 0; i < rand_scale; i++) {
-						action_node->explore_target_tries *= 10;
-					}
 					action_node->best_explore_surprise = numeric_limits<double>::lowest();
 					action_node->best_explore_seed_outer_context_history = NULL;
 				}
@@ -227,6 +223,7 @@ int main(int argc, char* argv[]) {
 						scope_node->best_explore_seed_start_scale_factor = 0.0;
 						scope_node->best_explore_seed_state_vals_snapshot.clear();
 						scope_node->best_explore_seed_outer_context_history = NULL;
+						scope_node->best_explore_seed_target_val = 0.0;
 					} else {
 						scope_node->best_explore_exit_depth = run_helper.explore_exit_depth;
 						scope_node->best_explore_next_node_id = run_helper.explore_next_node_id;
@@ -235,13 +232,13 @@ int main(int argc, char* argv[]) {
 						scope_node->best_explore_seed_state_vals_snapshot = run_helper.explore_seed_state_vals_snapshot;
 						scope_node->best_explore_seed_outer_context_history = run_helper.explore_seed_outer_context_history;
 						run_helper.explore_seed_outer_context_history = NULL;
+						scope_node->best_explore_seed_target_val = target_val;
 					}
 				}
 
-				if (scope_node->explore_curr_try >= scope_node->explore_target_tries) {
+				if (scope_node->explore_curr_try >= EXPLORE_TARGET_TRIES) {
 					if (scope_node->best_explore_is_loop) {
 						cout << "loop" << endl;
-						cout << "scope_node->explore_target_tries: " << scope_node->explore_target_tries << endl;
 						cout << "scope_node->best_explore_surprise: " << scope_node->best_explore_surprise << endl;
 						cout << "actions:";
 						for (int f_index = 0; f_index < (int)scope_node->best_explore_actions.size(); f_index++) {
@@ -269,7 +266,6 @@ int main(int argc, char* argv[]) {
 						scope_node->explore_loop_fold = loop_fold;
 					} else {
 						cout << "path" << endl;
-						cout << "scope_node->explore_target_tries: " << scope_node->explore_target_tries << endl;
 						cout << "scope_node->best_explore_surprise: " << scope_node->best_explore_surprise << endl;
 						cout << "actions:";
 						for (int f_index = 0; f_index < (int)scope_node->best_explore_actions.size(); f_index++) {
@@ -280,6 +276,7 @@ int main(int argc, char* argv[]) {
 							}
 						}
 						cout << endl;
+						cout << "scope_node->best_explore_seed_target_val: " << scope_node->best_explore_seed_target_val << endl;
 						Fold* fold = new Fold(scope_node->best_explore_scope_context,
 											  scope_node->best_explore_node_context,
 											  scope_node->best_explore_exit_depth,
@@ -294,7 +291,7 @@ int main(int argc, char* argv[]) {
 											  scope_node->best_explore_seed_start_scale_factor,
 											  scope_node->best_explore_seed_state_vals_snapshot,
 											  scope_node->best_explore_seed_outer_context_history,
-											  target_val);
+											  scope_node->best_explore_seed_target_val);
 
 						scope_node->explore_scope_context = scope_node->best_explore_scope_context;
 						scope_node->explore_node_context = scope_node->best_explore_node_context;
@@ -304,11 +301,6 @@ int main(int argc, char* argv[]) {
 					}
 
 					scope_node->explore_curr_try = 0;
-					scope_node->explore_target_tries = 1;
-					int rand_scale = rand()%4;
-					for (int i = 0; i < rand_scale; i++) {
-						scope_node->explore_target_tries *= 10;
-					}
 					scope_node->best_explore_surprise = numeric_limits<double>::lowest();
 					scope_node->best_explore_seed_outer_context_history = NULL;
 				}
@@ -342,7 +334,6 @@ int main(int argc, char* argv[]) {
 										  target_val,
 										  final_diff,
 										  final_misguess,
-										  sum_impact,
 										  predicted_score,
 										  scale_factor,
 										  scale_factor_error,

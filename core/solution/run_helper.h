@@ -11,8 +11,11 @@ public:
 	bool exceeded_depth;
 
 	int explore_phase;
-	double existing_score;
-	double score_variance;
+	bool loop_delay_explore;
+	// TODO: choose iter on the outside from loop
+	// if explore exists, but not triggered, still track
+	// double existing_score;
+	// double score_variance;
 
 	int explore_scope_id;
 	int explore_node_id;

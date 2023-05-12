@@ -206,7 +206,6 @@ void Fold::remove_outer_scope_network_sequence_activate(
 		vector<bool>& states_initialized,
 		double& predicted_score,
 		double& scale_factor,
-		double& sum_impact,
 		RunHelper& run_helper,
 		FoldHistory* history) {
 	vector<double> new_inner_state_vals(this->sum_inner_inputs + this->curr_num_new_inner_states, 0.0);
@@ -277,12 +276,12 @@ void Fold::remove_outer_scope_network_sequence_activate(
 			}
 
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+			history->inner_scope_histories[f_index] = scope_history;
 			inner_scope->activate(problem,
 								  inner_input_vals,
 								  inner_inputs_initialized,
 								  predicted_score,
 								  scale_factor,
-								  sum_impact,
 								  inner_scope_context,
 								  inner_node_context,
 								  inner_context_histories,
@@ -294,7 +293,6 @@ void Fold::remove_outer_scope_network_sequence_activate(
 								  inner_explore_exit_fold_history,
 								  run_helper,
 								  scope_history);
-			history->inner_scope_histories[f_index] = scope_history;
 
 			run_helper.explore_phase = curr_explore_phase;
 

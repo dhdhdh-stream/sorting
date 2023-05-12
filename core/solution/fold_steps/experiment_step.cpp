@@ -189,7 +189,6 @@ void Fold::experiment_sequence_activate(Problem& problem,
 			inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
 			// unused
-			double inner_sum_impact = 0.0;
 			vector<int> inner_scope_context;
 			vector<int> inner_node_context;
 			vector<ScopeHistory*> inner_context_histories;
@@ -201,12 +200,12 @@ void Fold::experiment_sequence_activate(Problem& problem,
 			FoldHistory* inner_explore_exit_fold_history;
 
 			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+			history->inner_scope_histories[f_index] = scope_history;
 			inner_scope->activate(problem,
 								  inner_input_vals,
 								  inner_inputs_initialized,
 								  predicted_score,
 								  scale_factor,
-								  inner_sum_impact,
 								  inner_scope_context,
 								  inner_node_context,
 								  inner_context_histories,
@@ -218,7 +217,6 @@ void Fold::experiment_sequence_activate(Problem& problem,
 								  inner_explore_exit_fold_history,
 								  run_helper,
 								  scope_history);
-			history->inner_scope_histories[f_index] = scope_history;
 
 			for (int i_index = 0; i_index < this->num_inner_inputs[f_index]; i_index++) {
 				new_inner_state_vals[this->inner_input_start_indexes[f_index] + i_index] = inner_input_vals[i_index];
@@ -440,16 +438,12 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 			vector<bool> inner_inputs_initialized(this->num_inner_inputs[f_index], true);
 			inner_inputs_initialized.insert(inner_inputs_initialized.end(), num_input_states_diff, false);
 
-			// unused
-			double inner_final_sum_impact = 0.0;
-
 			double scope_scale_factor_error = 0.0;
 			inner_scope->backprop(inner_input_errors,
 								  inner_inputs_initialized,
 								  target_val,
 								  final_diff,
 								  final_misguess,
-								  inner_final_sum_impact,
 								  predicted_score,
 								  scale_factor,
 								  scope_scale_factor_error,
@@ -538,15 +532,13 @@ void Fold::experiment_backprop(vector<double>& state_errors,
 		starting_score_network_target_max_update,
 		history->starting_score_network_history);
 
-	// no need to update predicted_score as end of backprop
+	predicted_score -= scale_factor*history->starting_score_update;
 
 	if (scale_factor*history->starting_score_update > 0.0) {
 		this->test_branch_average_score = 0.9999*this->test_branch_average_score + 0.0001*target_val;
-	} else {
-		this->test_branch_average_score = 0.9999*this->test_branch_average_score + 0.0001*predicted_score;
 
-		double existing_improvement = predicted_score - target_val;
-		this->test_existing_average_improvement = 0.9999*this->test_existing_average_improvement + 0.0001*existing_improvement;
+		// predicted_score is existing score
+		this->test_branch_existing_average_score = 0.9999*this->test_branch_existing_average_score + 0.0001*predicted_score;
 	}
 
 	for (int n_index = (int)history->outer_state_network_histories.size()-1; n_index >= 0; n_index--) {

@@ -191,7 +191,6 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 										   vector<bool>& states_initialized,
 										   double& predicted_score,
 										   double& scale_factor,
-										   double& sum_impact,
 										   vector<ScopeHistory*>& context_histories,
 										   RunHelper& run_helper,
 										   LoopFoldHistory* history) {
@@ -481,12 +480,12 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 					FoldHistory* inner_explore_exit_fold_history;
 
 					ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+					history->inner_scope_histories[iter_index][f_index] = scope_history;
 					inner_scope->activate(problem,
 										  inner_input_vals,
 										  inner_inputs_initialized,
 										  predicted_score,
 										  scale_factor,
-										  sum_impact,	// track impact in inner to simplify backprop
 										  inner_scope_context,
 										  inner_node_context,
 										  inner_context_histories,
@@ -498,7 +497,6 @@ void LoopFold::remove_outer_scope_activate(Problem& problem,
 										  inner_explore_exit_fold_history,
 										  run_helper,
 										  scope_history);
-					history->inner_scope_histories[iter_index][f_index] = scope_history;
 
 					run_helper.explore_phase = curr_explore_phase;
 

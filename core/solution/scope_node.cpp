@@ -37,14 +37,8 @@ ScopeNode::ScopeNode(vector<int> pre_state_network_target_indexes,
 	this->average_misguess = 0.0;
 	this->misguess_variance = 0.0;
 	this->average_impact = 0.0;
-	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -137,16 +131,7 @@ ScopeNode::ScopeNode(ifstream& input_file,
 	getline(input_file, average_impact_line);
 	this->average_impact = stod(average_impact_line);
 
-	string average_sum_impact_line;
-	getline(input_file, average_sum_impact_line);
-	this->average_sum_impact = stod(average_sum_impact_line);
-
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -187,7 +172,6 @@ void ScopeNode::activate(Problem& problem,
 						 vector<bool>& states_initialized,
 						 double& predicted_score,
 						 double& scale_factor,
-						 double& sum_impact,
 						 vector<int>& scope_context,
 						 vector<int>& node_context,
 						 vector<ScopeHistory*>& context_histories,
@@ -231,12 +215,12 @@ void ScopeNode::activate(Problem& problem,
 		}
 	}
 	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
+	history->inner_scope_history = inner_scope_history;	// add to history before activate for explore seed
 	inner_scope->activate(problem,
 						  scope_input_vals,
 						  scope_inputs_initialized,
 						  predicted_score,
 						  scale_factor,
-						  sum_impact,
 						  scope_context,
 						  node_context,
 						  context_histories,
@@ -248,7 +232,6 @@ void ScopeNode::activate(Problem& problem,
 						  explore_exit_fold_history,
 						  run_helper,
 						  inner_scope_history);
-	history->inner_scope_history = inner_scope_history;
 	// even if early exit, set state_vals
 	for (int i_index = 0; i_index < (int)this->inner_input_indexes.size(); i_index++) {
 		if (states_initialized[this->inner_input_indexes[i_index]]) {
@@ -297,7 +280,6 @@ void ScopeNode::backprop(vector<double>& state_errors,
 						 double target_val,
 						 double final_diff,
 						 double final_misguess,
-						 double final_sum_impact,
 						 double& predicted_score,
 						 double& scale_factor,
 						 double& scale_factor_error,
@@ -331,7 +313,6 @@ void ScopeNode::backprop(vector<double>& state_errors,
 			this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
 			this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
-			this->average_sum_impact = 0.9999*this->average_sum_impact + 0.0001*final_sum_impact;
 
 			double predicted_score_error = target_val - predicted_score;
 
@@ -367,7 +348,6 @@ void ScopeNode::backprop(vector<double>& state_errors,
 						  target_val,
 						  final_diff,
 						  final_misguess,
-						  final_sum_impact,
 						  predicted_score,
 						  scale_factor,
 						  scope_scale_factor_error,
@@ -444,7 +424,6 @@ void ScopeNode::save(ofstream& output_file,
 	output_file << this->misguess_variance << endl;
 
 	output_file << this->average_impact << endl;
-	output_file << this->average_sum_impact << endl;
 }
 
 void ScopeNode::save_for_display(ofstream& output_file) {
@@ -458,7 +437,6 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 	output_file << this->misguess_variance << endl;
 
 	output_file << this->average_impact << endl;
-	output_file << this->average_sum_impact << endl;
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node,

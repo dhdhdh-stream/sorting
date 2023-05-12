@@ -222,7 +222,6 @@ void Scope::activate(Problem& problem,
 					 vector<bool>& inputs_initialized,
 					 double& predicted_score,
 					 double& scale_factor,
-					 double& sum_impact,
 					 vector<int>& scope_context,
 					 vector<int>& node_context,
 					 vector<ScopeHistory*>& context_histories,
@@ -351,7 +350,6 @@ void Scope::activate(Problem& problem,
 																states_initialized,
 																predicted_score,
 																scale_factor,
-																sum_impact,
 																scope_context,
 																node_context,
 																context_histories,
@@ -395,7 +393,6 @@ void Scope::activate(Problem& problem,
 															 states_initialized,
 															 predicted_score,
 															 scale_factor,
-															 sum_impact,
 															 scope_context,
 															 node_context,
 															 context_histories,
@@ -429,7 +426,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 										vector<bool>& states_initialized,
 										double& predicted_score,
 										double& scale_factor,
-										double& sum_impact,
 										vector<int>& scope_context,
 										vector<int>& node_context,
 										vector<ScopeHistory*>& context_histories,
@@ -446,6 +442,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		ActionNodeHistory* node_history = new ActionNodeHistory(action_node,
 																curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);
 		action_node->activate(problem,
 							  state_vals,
 							  states_initialized,
@@ -453,13 +450,9 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							  scale_factor,
 							  run_helper,
 							  node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
-		sum_impact += action_node->average_impact;
-
-		if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-				&& randuni() < action_node->average_impact/action_node->average_sum_impact
-				&& action_node->average_impact/action_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+		if (run_helper.explore_phase == EXPLORE_PHASE_NEW_PATH
+				&& action_node->explore_type > EXPLORE_TYPE_NEW_PATH) {
 			if (action_node->explore_fold != NULL) {
 				bool matches_context = true;
 				if (action_node->explore_scope_context.size() > scope_context.size()) {
@@ -496,7 +489,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							states_initialized,
 							predicted_score,
 							scale_factor,
-							sum_impact,
 							run_helper,
 							fold_history);
 						history->explore_iter_index = iter_index;
@@ -514,100 +506,80 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				} else {
 					curr_node_id = action_node->next_node_id;
 				}
-			} else if (action_node->explore_loop_fold != NULL) {
-				bool matches_context = true;
-				if (action_node->explore_scope_context.size() > scope_context.size()) {
-					matches_context = false;
-				} else {
-					// special case first scope context
-					if (action_node->explore_scope_context[0] != scope_context.back()) {
-						matches_context = false;
-					} else {
-						for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
-							if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-									|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-								matches_context = false;
-								break;
-							}
-						}
-					}
-				}
-				if (matches_context) {
-					// explore_phase set in fold
-					LoopFoldHistory* loop_fold_history = new LoopFoldHistory(action_node->explore_loop_fold);
-					action_node->explore_loop_fold->activate(problem,
-															 state_vals,
-															 states_initialized,
-															 predicted_score,
-															 scale_factor,
-															 sum_impact,
-															 context_histories,
-															 run_helper,
-															 loop_fold_history);
-					history->explore_loop_fold_history = loop_fold_history;
-
-					history->explore_iter_index = iter_index;
-					history->explore_node_index = (int)history->node_histories[iter_index].size();
-
-					// explore_next_node_id is just action_node->next_node_id
-				}
-
-				curr_node_id = action_node->next_node_id;
 			} else {
 				// new explore
 				run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-				// if (action_node->action.move != ACTION_START && randuni() < 0.3) {
-				if (true) {
-					node_context.back() = curr_node_id;
+				node_context.back() = curr_node_id;
 
-					explore_new_loop(curr_node_id,
-									 problem,
-									 state_vals,
-									 states_initialized,
-									 predicted_score,
-									 scope_context,
-									 node_context,
-									 context_histories,
-									 run_helper);
+				int new_explore_exit_depth;
+				int new_explore_exit_node_id;
+				explore_new_path(curr_node_id,
+								 action_node->next_node_id,
+								 problem,
+								 state_vals,
+								 states_initialized,
+								 predicted_score,
+								 scale_factor,
+								 scope_context,
+								 node_context,
+								 context_histories,
+								 new_explore_exit_depth,
+								 new_explore_exit_node_id,
+								 run_helper);
 
-					node_context.back() = -1;
+				node_context.back() = -1;
 
-					// simply let state stay as is
+				// simply let state stay as is
 
-					curr_node_id = action_node->next_node_id;
+				if (new_explore_exit_depth == 0) {
+					curr_node_id = new_explore_exit_node_id;
 				} else {
-					node_context.back() = curr_node_id;
-
-					int new_explore_exit_depth;
-					int new_explore_exit_node_id;
-					explore_new_path(curr_node_id,
-									 action_node->next_node_id,
-									 problem,
-									 state_vals,
-									 states_initialized,
-									 predicted_score,
-									 scale_factor,
-									 scope_context,
-									 node_context,
-									 context_histories,
-									 new_explore_exit_depth,
-									 new_explore_exit_node_id,
-									 run_helper);
-
-					node_context.back() = -1;
-
-					// simply let state stay as is
-
-					if (new_explore_exit_depth == 0) {
-						curr_node_id = new_explore_exit_node_id;
-					} else {
-						early_exit_depth = new_explore_exit_depth;
-						early_exit_node_id = new_explore_exit_node_id;
-						return true;
+					early_exit_depth = new_explore_exit_depth;
+					early_exit_node_id = new_explore_exit_node_id;
+					return true;
+				}
+			}
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_LOOP
+				&& action_node->explore_type > EXPLORE_TYPE_LOOP) {
+			// action_node->explore_loop_fold != NULL
+			bool matches_context = true;
+			if (action_node->explore_scope_context.size() > scope_context.size()) {
+				matches_context = false;
+			} else {
+				// special case first scope context
+				if (action_node->explore_scope_context[0] != scope_context.back()) {
+					matches_context = false;
+				} else {
+					for (int c_index = 1; c_index < (int)action_node->explore_scope_context.size(); c_index++) {
+						if (action_node->explore_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
+								|| action_node->explore_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
+							matches_context = false;
+							break;
+						}
 					}
 				}
 			}
+			if (matches_context) {
+				// explore_phase set in fold
+				LoopFoldHistory* loop_fold_history = new LoopFoldHistory(action_node->explore_loop_fold);
+				action_node->explore_loop_fold->activate(problem,
+														 state_vals,
+														 states_initialized,
+														 predicted_score,
+														 scale_factor,
+														 context_histories,
+														 run_helper,
+														 loop_fold_history);
+				history->explore_loop_fold_history = loop_fold_history;
+
+				history->explore_iter_index = iter_index;
+				history->explore_node_index = (int)history->node_histories[iter_index].size();
+
+				// explore_next_node_id is just action_node->next_node_id
+			}
+
+			curr_node_id = action_node->next_node_id;
 		} else {
 			curr_node_id = action_node->next_node_id;
 		}
@@ -624,12 +596,12 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		FoldHistory* inner_explore_exit_fold_history;
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node,
 															  curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);	// add to history before activate for explore seed
 		scope_node->activate(problem,
 							 state_vals,
 							 states_initialized,
 							 predicted_score,
 							 scale_factor,
-							 sum_impact,
 							 scope_context,
 							 node_context,
 							 context_histories,
@@ -641,7 +613,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							 inner_explore_exit_fold_history,
 							 run_helper,
 							 node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
 		node_context.back() = -1;
 
@@ -653,7 +624,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 					states_initialized,
 					predicted_score,
 					scale_factor,
-					sum_impact,
 					run_helper,
 					inner_explore_exit_fold_history);
 				history->explore_iter_index = iter_index;
@@ -678,11 +648,9 @@ bool Scope::handle_node_activate_helper(int iter_index,
 				return true;
 			}
 		} else {
-			sum_impact += scope_node->average_impact;
-
-			if (run_helper.explore_phase == EXPLORE_PHASE_NONE
-					&& randuni() < scope_node->average_impact/scope_node->average_sum_impact
-					&& scope_node->average_impact/scope_node->average_sum_impact > 0.05) {	// TODO: find systematic way of gating
+			if (run_helper.explore_phase == EXPLORE_PHASE_NEW_PATH
+					&& scope_node->explore_type > EXPLORE_TYPE_NEW_PATH) {
+				// here
 				if (scope_node->explore_fold != NULL) {
 					bool matches_context = true;
 					if (scope_node->explore_scope_context.size() > scope_context.size()) {
@@ -719,7 +687,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 								states_initialized,
 								predicted_score,
 								scale_factor,
-								sum_impact,
 								run_helper,
 								fold_history);
 							history->explore_iter_index = iter_index;
@@ -763,7 +730,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 																states_initialized,
 																predicted_score,
 																scale_factor,
-																sum_impact,
 																context_histories,
 																run_helper,
 																loop_fold_history);
@@ -841,6 +807,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		int branch_exit_node_id;
 		BranchNodeHistory* node_history = new BranchNodeHistory(branch_node,
 																curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);
 		branch_node->activate(state_vals,
 							  predicted_score,
 							  scale_factor,
@@ -849,7 +816,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 							  branch_exit_depth,
 							  branch_exit_node_id,
 							  node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
 		// branch_exit_depth != -1
 		if (branch_exit_depth == 0) {
@@ -868,6 +834,7 @@ bool Scope::handle_node_activate_helper(int iter_index,
 		FoldHistory* fold_exit_fold_history;
 		FoldScoreNodeHistory* node_history = new FoldScoreNodeHistory(fold_score_node,
 																	  curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);
 		fold_score_node->activate(state_vals,
 								  predicted_score,
 								  scale_factor,
@@ -879,7 +846,6 @@ bool Scope::handle_node_activate_helper(int iter_index,
 								  fold_exit_fold_history,
 								  run_helper,
 								  node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
 		// fold_exit_depth != -1
 		if (fold_exit_depth == 0) {
@@ -896,16 +862,15 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		FoldSequenceNodeHistory* node_history = new FoldSequenceNodeHistory(fold_sequence_node,
 																			curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);
 		fold_sequence_node->activate(curr_fold_history,
 									 problem,
 									 state_vals,
 									 states_initialized,
 									 predicted_score,
 									 scale_factor,
-									 sum_impact,
 									 run_helper,
 									 node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
 		curr_node_id = fold_sequence_node->next_node_id;
 		curr_fold_history = NULL;
@@ -914,18 +879,17 @@ bool Scope::handle_node_activate_helper(int iter_index,
 
 		LoopFoldNodeHistory* node_history = new LoopFoldNodeHistory(loop_fold_node,
 																	curr_node_id);
+		history->node_histories[iter_index].push_back(node_history);
 		loop_fold_node->activate(problem,
 								 state_vals,
 								 states_initialized,
 								 predicted_score,
 								 scale_factor,
-								 sum_impact,
 								 scope_context,
 								 node_context,
 								 context_histories,
 								 run_helper,
 								 node_history);
-		history->node_histories[iter_index].push_back(node_history);
 
 		curr_node_id = loop_fold_node->next_node_id;
 	} else {
@@ -945,7 +909,6 @@ void Scope::backprop(vector<double>& state_errors,
 					 double target_val,
 					 double final_diff,
 					 double final_misguess,
-					 double final_sum_impact,
 					 double& predicted_score,
 					 double& scale_factor,
 					 double& scale_factor_error,
@@ -996,7 +959,6 @@ void Scope::backprop(vector<double>& state_errors,
 												 target_val,
 												 final_diff,
 												 final_misguess,
-												 final_sum_impact,
 												 predicted_score,
 												 scale_factor,
 												 scale_factor_error,
@@ -1012,7 +974,6 @@ void Scope::backprop(vector<double>& state_errors,
 											target_val,
 											final_diff,
 											final_misguess,
-											final_sum_impact,
 											predicted_score,
 											scale_factor,
 											scale_factor_error,
@@ -1056,7 +1017,6 @@ void Scope::backprop(vector<double>& state_errors,
 											 target_val,
 											 final_diff,
 											 final_misguess,
-											 final_sum_impact,
 											 predicted_score,
 											 scale_factor,
 											 scale_factor_error,
@@ -1072,7 +1032,6 @@ void Scope::backprop(vector<double>& state_errors,
 										target_val,
 										final_diff,
 										final_misguess,
-										final_sum_impact,
 										predicted_score,
 										scale_factor,
 										scale_factor_error,
@@ -1093,7 +1052,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										double target_val,
 										double final_diff,
 										double final_misguess,
-										double final_sum_impact,
 										double& predicted_score,
 										double& scale_factor,
 										double& scale_factor_error,
@@ -1105,7 +1063,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							  states_initialized,
 							  target_val,
 							  final_misguess,
-							  final_sum_impact,
 							  predicted_score,
 							  scale_factor,
 							  scale_factor_error,
@@ -1118,7 +1075,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							 target_val,
 							 final_diff,
 							 final_misguess,
-							 final_sum_impact,
 							 predicted_score,
 							 scale_factor,
 							 scale_factor_error,
@@ -1220,7 +1176,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 									 target_val,
 									 final_diff,
 									 final_misguess,
-									 final_sum_impact,
 									 predicted_score,
 									 scale_factor,
 									 scale_factor_error,
@@ -1311,7 +1266,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 								 target_val,
 								 final_diff,
 								 final_misguess,
-								 final_sum_impact,
 								 predicted_score,
 								 scale_factor,
 								 scale_factor_error,
@@ -1496,7 +1450,6 @@ void Scope::explore_new_loop(int curr_node_id,
 				} else {
 					inner_scale_factor = 1.0;
 				}
-				double inner_sum_impact = 0.0;
 				vector<int> inner_scope_context;
 				vector<int> inner_node_context;
 				vector<ScopeHistory*> inner_context_histories;
@@ -1513,7 +1466,6 @@ void Scope::explore_new_loop(int curr_node_id,
 									  inner_inputs_initialized,
 									  inner_predicted_score,
 									  inner_scale_factor,
-									  inner_sum_impact,
 									  inner_scope_context,
 									  inner_node_context,
 									  inner_context_histories,
@@ -1618,7 +1570,6 @@ void Scope::explore_new_path(int curr_node_id,
 			} else {
 				inner_scale_factor = 1.0;
 			}
-			double inner_sum_impact = 0.0;
 			vector<int> inner_scope_context;
 			vector<int> inner_node_context;
 			vector<ScopeHistory*> inner_context_histories;
@@ -1635,7 +1586,6 @@ void Scope::explore_new_path(int curr_node_id,
 								  inner_inputs_initialized,
 								  inner_predicted_score,
 								  inner_scale_factor,
-								  inner_sum_impact,
 								  inner_scope_context,
 								  inner_node_context,
 								  inner_context_histories,
@@ -1689,7 +1639,6 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 										 double target_val,
 										 double final_diff,
 										 double final_misguess,
-										 double final_sum_impact,
 										 double& predicted_score,
 										 double& scale_factor,
 										 double& scale_factor_error,	// unused
@@ -1702,7 +1651,6 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 								target_val,
 								final_diff,
 								final_misguess,
-								final_sum_impact,
 								predicted_score,
 								scale_factor,
 								scale_factor_error,	// unused
@@ -1815,7 +1763,6 @@ void Scope::backprop_explore_fold_helper(vector<double>& state_errors,
 							target_val,
 							final_diff,
 							final_misguess,
-							final_sum_impact,
 							predicted_score,
 							scale_factor,
 							scale_factor_error,	// unused

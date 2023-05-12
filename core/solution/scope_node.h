@@ -36,10 +36,8 @@ public:
 	double misguess_variance;
 
 	double average_impact;
-	double average_sum_impact;
 
 	int explore_curr_try;
-	int explore_target_tries;
 	double best_explore_surprise;
 	std::vector<int> best_explore_scope_context;
 	std::vector<int> best_explore_node_context;
@@ -53,6 +51,7 @@ public:
 	double best_explore_seed_start_scale_factor;
 	std::vector<double> best_explore_seed_state_vals_snapshot;
 	ScopeHistory* best_explore_seed_outer_context_history;	// deep copy before continuing past explore node
+	double best_explore_seed_target_val;
 
 	std::vector<int> explore_scope_context;
 	std::vector<int> explore_node_context;
@@ -80,7 +79,6 @@ public:
 				  std::vector<bool>& states_initialized,
 				  double& predicted_score,
 				  double& scale_factor,
-				  double& sum_impact,
 				  std::vector<int>& scope_context,
 				  std::vector<int>& node_context,
 				  std::vector<ScopeHistory*>& context_histories,
@@ -97,7 +95,6 @@ public:
 				  double target_val,
 				  double final_diff,
 				  double final_misguess,
-				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
 				  double& scale_factor_error,

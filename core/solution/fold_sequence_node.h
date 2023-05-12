@@ -24,7 +24,6 @@ public:
 				  std::vector<bool>& states_initialized,
 				  double& predicted_score,
 				  double& scale_factor,
-				  double& sum_impact,
 				  RunHelper& run_helper,
 				  FoldSequenceNodeHistory* history);
 	void backprop(std::vector<double>& state_errors,
@@ -32,7 +31,6 @@ public:
 				  double target_val,
 				  double final_diff,
 				  double final_misguess,
-				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
 				  double& scale_factor_error,

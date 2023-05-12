@@ -25,6 +25,17 @@ public:
 	//       - so build state graph as well
 	//       - link states by attributes, and for actions, build what attributes are desired for what inputs
 	//   - probably not needed for sorting, but needed for bigger problems
+
+	// - can't really slot in other states though because not correctly scaled?
+	//   - have to use the same state, but track globally?
+	//   - can use other state if already related
+	//   - so explore decision is just whether to reuse existing global state, or blank (potentially introduce new related state)
+
+	// - also track state that appear together
+	//   - states that are used in the same network
+	//   - they will be related in a different way
+	//     - when one of them is used, others should be used too
+
 	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
@@ -65,7 +76,6 @@ public:
 				  std::vector<bool>& inputs_initialized,
 				  double& predicted_score,
 				  double& scale_factor,
-				  double& sum_impact,
 				  std::vector<int>& scope_context,
 				  std::vector<int>& node_context,
 				  std::vector<ScopeHistory*>& context_histories,
@@ -82,7 +92,6 @@ public:
 				  double target_val,
 				  double final_diff,
 				  double final_misguess,
-				  double final_sum_impact,
 				  double& predicted_score,
 				  double& scale_factor,
 				  double& scale_factor_error,
@@ -97,7 +106,6 @@ public:
 									 std::vector<bool>& states_initialized,
 									 double& predicted_score,
 									 double& scale_factor,
-									 double& sum_impact,
 									 std::vector<int>& scope_context,
 									 std::vector<int>& node_context,
 									 std::vector<ScopeHistory*>& context_histories,
@@ -116,7 +124,6 @@ public:
 									 double target_val,
 									 double final_diff,
 									 double final_misguess,
-									 double final_sum_impact,
 									 double& predicted_score,
 									 double& scale_factor,
 									 double& scale_factor_error,
@@ -150,7 +157,6 @@ public:
 									  double target_val,
 									  double final_diff,
 									  double final_misguess,
-									  double final_sum_impact,
 									  double& predicted_score,
 									  double& scale_factor,
 									  double& scale_factor_error,

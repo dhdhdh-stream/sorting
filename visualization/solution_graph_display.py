@@ -147,9 +147,11 @@ for s_index in range(len(scopes)):
 		node_index = global_node_index
 		global_node_index += 1
 		if scopes[s_index][1][n_index][0][0] == NODE_TYPE_ACTION:
-			node = pydot.Node(node_index, label=pretty_print_action(scopes[s_index][1][n_index][0][1]))
+			node = pydot.Node(node_index, label=pretty_print_action(scopes[s_index][1][n_index][0][1])
+				+ '\n' + str(scopes[s_index][1][n_index][0][7]))
 		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_INNER_SCOPE:
-			node = pydot.Node(node_index, label='S'+str(scopes[s_index][1][n_index][0][1]))
+			node = pydot.Node(node_index, label='S' + str(scopes[s_index][1][n_index][0][1])
+				+ '\n' + str(scopes[s_index][1][n_index][0][7]))
 		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_BRANCH:
 			node = pydot.Node(node_index, label='B')
 		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_FOLD_SCORE:

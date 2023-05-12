@@ -25,14 +25,8 @@ ActionNode::ActionNode(Action action,
 	this->average_misguess = 0.0;
 	this->misguess_variance = 0.0;
 	this->average_impact = 0.0;
-	this->average_sum_impact = 0.0;
 
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -92,16 +86,7 @@ ActionNode::ActionNode(ifstream& input_file,
 	getline(input_file, average_impact_line);
 	this->average_impact = stod(average_impact_line);
 
-	string average_sum_impact_line;
-	getline(input_file, average_sum_impact_line);
-	this->average_sum_impact = stod(average_sum_impact_line);
-
 	this->explore_curr_try = 0;
-	this->explore_target_tries = 1;
-	int rand_scale = rand()%4;
-	for (int i = 0; i < rand_scale; i++) {
-		this->explore_target_tries *= 10;
-	}
 	this->best_explore_surprise = numeric_limits<double>::lowest();
 	this->best_explore_seed_outer_context_history = NULL;
 
@@ -179,7 +164,6 @@ void ActionNode::backprop(vector<double>& state_errors,
 						  vector<bool>& states_initialized,
 						  double target_val,
 						  double final_misguess,
-						  double final_sum_impact,
 						  double& predicted_score,
 						  double& scale_factor,
 						  double& scale_factor_error,
@@ -212,7 +196,6 @@ void ActionNode::backprop(vector<double>& state_errors,
 		this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
 		this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
-		this->average_sum_impact = 0.9999*this->average_sum_impact + 0.0001*final_sum_impact;
 
 		double predicted_score_error = target_val - predicted_score;
 
@@ -255,7 +238,6 @@ void ActionNode::save(ofstream& output_file,
 	output_file << this->misguess_variance << endl;
 
 	output_file << this->average_impact << endl;
-	output_file << this->average_sum_impact << endl;
 }
 
 void ActionNode::save_for_display(ofstream& output_file) {
@@ -269,7 +251,6 @@ void ActionNode::save_for_display(ofstream& output_file) {
 	output_file << this->misguess_variance << endl;
 
 	output_file << this->average_impact << endl;
-	output_file << this->average_sum_impact << endl;
 }
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node,

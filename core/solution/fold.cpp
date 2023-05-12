@@ -106,7 +106,7 @@ Fold::Fold(vector<int> scope_context,
 	}
 
 	this->test_branch_average_score = 0.0;
-	this->test_existing_average_improvement = 0.0;
+	this->test_branch_existing_average_score = 0.0;
 	this->test_replace_average_score = 0.0;
 	this->test_replace_average_misguess = 0.0;
 	this->test_replace_misguess_variance = 0.0;
@@ -633,7 +633,6 @@ void Fold::sequence_activate(Problem& problem,
 							 vector<bool>& states_initialized,
 							 double& predicted_score,
 							 double& scale_factor,
-							 double& sum_impact,
 							 RunHelper& run_helper,
 							 FoldHistory* history) {
 	if (this->state == FOLD_STATE_EXPERIMENT
@@ -660,7 +659,6 @@ void Fold::sequence_activate(Problem& problem,
 											 states_initialized,
 											 predicted_score,
 											 scale_factor,
-											 sum_impact,
 											 run_helper,
 											 history);
 	} else if (this->state == FOLD_STATE_REMOVE_OUTER_SCOPE_NETWORK) {
@@ -669,7 +667,6 @@ void Fold::sequence_activate(Problem& problem,
 													 states_initialized,
 													 predicted_score,
 													 scale_factor,
-													 sum_impact,
 													 run_helper,
 													 history);
 	} else {
@@ -678,7 +675,6 @@ void Fold::sequence_activate(Problem& problem,
 								states_initialized,
 								predicted_score,
 								scale_factor,
-								sum_impact,
 								run_helper,
 								history);
 	}
@@ -689,7 +685,6 @@ void Fold::sequence_backprop(vector<double>& state_errors,
 							 double target_val,
 							 double final_diff,
 							 double final_misguess,
-							 double final_sum_impact,
 							 double& predicted_score,
 							 double& scale_factor,
 							 double& scale_factor_error,
@@ -710,8 +705,8 @@ void Fold::sequence_backprop(vector<double>& state_errors,
 							history);
 
 		if (this->state == FOLD_STATE_EXPERIMENT
-				&& this->state_iter < 200000
-				&& this->state_iter%10 == 0) {
+				&& this->state_iter < 300000
+				&& this->state_iter%5 == 0) {
 			seed_train();
 		}
 	} else if (this->state == FOLD_STATE_REMOVE_INNER_INPUT) {
@@ -730,7 +725,6 @@ void Fold::sequence_backprop(vector<double>& state_errors,
 								target_val,
 								final_diff,
 								final_misguess,
-								final_sum_impact,
 								predicted_score,
 								scale_factor,
 								scale_factor_error,

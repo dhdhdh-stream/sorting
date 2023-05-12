@@ -109,13 +109,13 @@ public:
 	// don't worry about sequence for seed, as due to updates for inner scope, seed may quickly become irrelevant
 
 	double curr_branch_average_score;
-	double curr_existing_average_improvement;
+	double curr_branch_existing_average_score;
 	double curr_replace_average_score;
 	double curr_replace_average_misguess;
 	double curr_replace_misguess_variance;
 
 	double test_branch_average_score;
-	double test_existing_average_improvement;
+	double test_branch_existing_average_score;
 	double test_replace_average_score;
 	double test_replace_average_misguess;
 	double test_replace_misguess_variance;
@@ -195,7 +195,6 @@ public:
 						   std::vector<bool>& states_initialized,
 						   double& predicted_score,
 						   double& scale_factor,
-						   double& sum_impact,
 						   RunHelper& run_helper,
 						   FoldHistory* history);
 	void sequence_backprop(std::vector<double>& state_errors,
@@ -203,7 +202,6 @@ public:
 						   double target_val,
 						   double final_diff,
 						   double final_misguess,
-						   double final_sum_impact,
 						   double& predicted_score,
 						   double& scale_factor,
 						   double& scale_factor_error,
@@ -317,7 +315,6 @@ public:
 											  std::vector<bool>& states_initialized,
 											  double& predicted_score,
 											  double& scale_factor,
-											  double& sum_impact,
 											  RunHelper& run_helper,
 											  FoldHistory* history);
 
@@ -346,7 +343,6 @@ public:
 		std::vector<bool>& states_initialized,
 		double& predicted_score,
 		double& scale_factor,
-		double& sum_impact,
 		RunHelper& run_helper,
 		FoldHistory* history);
 
@@ -374,7 +370,6 @@ public:
 								 std::vector<bool>& states_initialized,
 								 double& predicted_score,
 								 double& scale_factor,
-								 double& sum_impact,
 								 RunHelper& run_helper,
 								 FoldHistory* history);
 	void clean_sequence_backprop(std::vector<double>& state_errors,
@@ -382,7 +377,6 @@ public:
 								 double target_val,
 								 double final_diff,
 								 double final_misguess,
-								 double final_sum_impact,
 								 double& predicted_score,
 								 double& scale_factor,
 								 double& scale_factor_error,
