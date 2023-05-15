@@ -36,6 +36,63 @@ public:
 	//   - they will be related in a different way
 	//     - when one of them is used, others should be used too
 
+	// - keeping track of initialization can be good because:
+	//   - if initialized, add copy of object
+	//   - otherwise, keep modifying object initialized from outside
+
+	// - add L1/L2, and also check the update size of networks, and use to quick filter
+	//   - use L1 norm here for feature removal
+
+	// - use just in time for calculating state?
+	//   - likely saves a lot of effort as network gets big?
+	//   - main question is on experiment, what state to include
+	//     - should ideally be everything initially
+	//       - so iterate through and fire every network?
+	//     - what version of state to use?
+	//       - either last or near to last?
+	//       - or line up with iterations
+	//         - but humans don't remember lists
+
+	// - perhaps actions aren't just actual actions, but include looking through memory
+	//   - solves lots of problems:
+	//     - just in time
+	//     - which version of state to use
+	//     - what state to include for experiment, score network, etc.
+	//       - shouldn't need to worry about outer state anyways since what enabled high impact should already almost be good enough
+	// - if state needed for action, just run the fetch beforehand
+
+	// - don't freeze state anymore?
+	//   - modifying existing state for new purposes
+
+	// - how to split folds?
+	//   - the thing is, when an outer state is created, and it could be extended into inner, won't be sure if outer and inner can be combined, or should be separate
+	//     - only way to know for sure is if scope is reused, and realize outer state needs to be extended for reuse
+	//       - so maybe don't even have inner state?
+
+	// - maybe don't try to do everything at once
+	//   - focus on a single score, a single branch each time
+
+	// - no, scopes are still good
+	//   - a segment where a certain set of data is useful
+	//     - maybe when folding, split/clear first, then remove after
+	//   - so don't distinguish between outer and inner state?
+
+	// - maybe priority is to use the minimum amount of state possible
+	//   - for state, don't have earlier depending on later, but make it hierarchical/sequential
+	//     - regularization, and split into scopes
+
+	// - don't split score and sequence
+
+	// - don't split between replace and branch, but just include misguess networks?
+	//   - actually no, more efficient to just replace
+
+	// - hierarchy/layering for rewind is just having dependencies
+	//   - so states can also have dependencies that can change
+	//     - again, units for the dependencies have to be the same
+
+	// - if there is a recursive dependency, then inner depends on outer
+	//   - else if there is only dependency in one direction, then inner can simply be independent
+
 	int num_states;
 	std::vector<bool> is_initialized_locally;	// for folds, try even if initialized locally -- will instead initialize outside in fold
 
