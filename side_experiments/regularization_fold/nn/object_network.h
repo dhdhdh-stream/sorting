@@ -1,5 +1,5 @@
-#ifndef NETWORK_H
-#define NETWORK_H
+#ifndef OBJECT_NETWORK_H
+#define OBJECT_NETWORK_H
 
 #include <fstream>
 #include <mutex>
@@ -7,14 +7,14 @@
 
 #include "layer.h"
 
-class NetworkHistory;
-class Network {
+class ObjectNetworkHistory;
+class ObjectNetwork {
 public:
 	int obs_size;	// can be 0
 	Layer* obs_input;
 
-	int state_size;
-	Layer* state_input;
+	std::vector<int> dependency_indexes;
+	Layer* dependency_input;
 
 	int hidden_size;
 	Layer* hidden;
@@ -27,10 +27,10 @@ public:
 
 	std::mutex mtx;
 
-	Network(int obs_size,
-			int state_size,
-			int hidden_size);
-	Network(Network* original);
+	ObjectNetwork(int obs_size,
+				  int dependency_size,
+				  int hidden_size);
+	ObjectNetwork(ObjectNetwork* original);
 	Network(std::ifstream& input_file);
 	~Network();
 
@@ -61,17 +61,17 @@ private:
 	void construct();
 };
 
-class NetworkHistory {
+class ObjectNetworkHistory {
 public:
-	Network* network;
+	ObjectNetwork* network;
 
 	double obs_input_history;
 	std::vector<double> state_input_history;
 	std::vector<double> hidden_history;
 
-	NetworkHistory(Network* network);
+	ObjectNetworkHistory(ObjectNetwork* network);
 	void save_weights();
 	void reset_weights();
 };
 
-#endif /* NETWORK_H */
+#endif /* OBJECT_NETWORK_H */

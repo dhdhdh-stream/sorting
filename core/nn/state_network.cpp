@@ -656,7 +656,7 @@ void StateNetwork::remove_state(int index) {
 	this->state_size--;
 	this->state_input->acti_vals.pop_back();
 	this->state_input->errors.pop_back();
-	this->state_zeroed.pop_back();
+	this->state_zeroed.pop_back();	// TODO: if will continue to use, fix here
 }
 
 void StateNetwork::add_state(int size) {

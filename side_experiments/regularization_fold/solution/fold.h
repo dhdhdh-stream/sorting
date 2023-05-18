@@ -22,7 +22,16 @@ const int FOLD_RESULT_FAIL = 0;
 const int FOLD_RESULT_BRANCH = 1;
 const int FOLD_RESULT_REPLACE = 2;
 
-// HERE
+// no more outer, and instead inner can rewind
+
+// calc all state updates, then apply all at end, so there are no ordering concerns
+
+// actually, should try to not train new objects as much?
+// - one advantage with having existing objects is to also make training easier?
+
+// also, on explore, can reuse networks too, and not just treat as brand new actions
+// - also gives the best chance for the backside to work correctly
+//   - yeah, if use new, then might make backside worse too
 
 class FoldHistory;
 class ScopeHistory;
@@ -30,38 +39,117 @@ class Fold {
 public:
 	std::vector<int> scope_context;
 	std::vector<int> node_context;	// store explore node index in node_context[0]
-	int exit_depth;		// 0 is local
 
 	int sequence_length;
 	std::vector<bool> is_inner_scope;
 	std::vector<int> existing_scope_ids;
+	std::vector<std::vector<Input*>> existing_scope_inputs;
 	std::vector<Action> actions;
 
+	// when trying to reuse objects, initially full copy, and train new with original 50/50 mix
+	// then after, see if there's significant difference
+
+	// or after training, have separate object merge step where swap one in place of other throughout the solution, and see if there's significant impact
+
+	// as much as possible, try to reuse state from outer scopes
+
+	// the way object replacement works is:
+	// - first, new object gets created that works on entirely separate context
+	// - then, original context gets reused in new context, but with new object being used instead
+	// - new object is better, so it gets used in place from then on in new contexts, which become increasingly relevant
+
+	// can also try re-applying in original context
+
 	// keep fixed even if parent scope updates
-	int num_score_states;
-	int num_sequence_states;
+	int num_existing_states;
 
 	int sum_inner_inputs;
 	std::vector<int> inner_input_start_indexes;
 	std::vector<int> num_inner_inputs;	// keep track here fixed even if scope updates
-	std::vector<Scale*> inner_scope_scale_mods;	// don't split between curr and test for now
+	std::vector<Scale*> inner_scope_scale_mods;	// won't bother splitting between curr and test
 	double end_mod;	// temporary to help measure misguess
 
-	int state;
-	int state_iter;
-	int sub_iter;
-	double sum_error;
+	int curr_num_new_states;
 
-	int curr_num_new_outer_states;
-	// for new outer state, for inner, use as input, but don't modify
-	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_outer_state_networks;
 	StateNetwork* curr_starting_score_network;
-	// no starting state networks as ideally, state should already capture everything relevant
+	/**
+	 * state ordering:
+	 * - new
+	 * - new input
+	 * - existing
+	 */
+	// maybe inherit state networks? but need to inherit for outside as well
+	// actually, probably don't, too messy
+	// - just stick with scopes instead
+	//   - actions outside of scopes may not contain useful data anyways
+	// - so actually, what happens for the actions doesn't end up really mattering
+	//   - what is passed into the scopes is far more relevant
+	//     - so actually don't retrain everything
+	//       - focus should be on incremental improvements
 
-	int curr_num_new_inner_states;	// in addition to sum_inner_inputs, starts at 1
-	std::vector<std::vector<StateNetwork*>> curr_state_networks;
+	// it mainly matters what happens thoughout the entire solution
+	// - but changing the entire solution might take too much effort?
+
+	// in fact, new state doesn't matter that much
+	// - it at most affects the sequence, but inner and back matter more eventually
+
+	// maybe always try state as-is (pick among available options)
+	// - and separately, look for better inputs
+
+	// the rewind feature can just be for efficiency
+	// - and actually, scopes can have a million inputs for everything within
+	// - that way idea of scopes stays consistent
+	//   - and it's just that some state won't be calculated until it's actually needed
+
+	// training for score for new sequence doesn't matter in the long run as well
+	// - focus for training should be on decision making for branch
+
+	// for inner, assume that decisions are made well with state passed in?
+
+	// maybe new sequences creates scopes in front, not within the scope
+
+	// yeah, so goal is to always improve decision making at a single spot, and create scopes in front
+
+	// actually no need to have score networks everywhere, only need when state changes
+	// so for each state change, also have impact on score
+	// - maybe also have 1 for obs
+	// - or have 1 score network, but it's input only includes state changes
+	//   - then on state addition, no need to directly update, but make state available and let score update on its own
+
+	// actually, while adding new state, check if has score impact
+	// - if not, then can rewind?
+	// - it might signal a good vs. bad choice, but not have that much affect on overall score
+
+	// yeah, so on new branch, look for new state for both original and new
+
+	// treat new state for starting score network and new input for inner the same
+
+	// divide between 3 processes:
+	// - trying new sequences
+	// - improving existing objects
+	// - fitting new objects
+	//   - there should be no harm in fitting new objects even if it doesn't fit?
+	//   - or can measure impact to either
+
+	// rewind is just last seen in any context
+	// - so no need to run new calculation
+	// - then if effective, keep doing that?
+
+	// but how to handle initializing/re-initializing?
+	// - there has to be clears/initializations
+	//   - due to the way humans are able to identify distinct events
+	//     - but this is where rewind makes sense
+	//       - but then it doesn't impact score
+
+	// it's sooo much cleaner if it was always the same object
+	// - maybe scope just means simply "forget" what happened before?
+	//   - it matters if process deeper, but can often simply not worry
+
+	// yeah, so it's always rolling, but you don't start "remembering" from the front always
+
+	std::vector<std::vector<StateNetwork*>> curr_sequence_state_networks;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_scope_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
-	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_inner_state_networks;
 
 	int test_num_new_outer_states;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> test_outer_state_networks;
@@ -143,6 +231,11 @@ public:
 
 	int fold_node_scope_id;
 	int fold_node_scope_index;
+
+	int state;
+	int state_iter;
+	int sub_iter;
+	double sum_error;
 
 	Fold(std::vector<int> scope_context,
 		 std::vector<int> node_context,

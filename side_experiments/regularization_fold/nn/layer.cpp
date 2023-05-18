@@ -377,3 +377,17 @@ void Layer::save_weights(ofstream& output_file) {
 		output_file << this->constants[n_index] << endl;
 	}
 }
+
+void Layer::hidden_add_state() {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][1].push_back((randuni()-0.5)*0.02);
+		this->weight_updates[n_index][1].push_back(0.0);
+	}
+}
+
+void Layer::hidden_remove_state(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][1].erase(this->weights[n_index][1].begin()+index);
+		this->weight_updates[n_index][1].erase(this->weight_updates[n_index][1].begin()+index);
+	}
+}

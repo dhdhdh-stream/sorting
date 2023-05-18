@@ -42,6 +42,9 @@ public:
 	void backprop_weights_with_no_error_signal();
 
 	void save_weights(std::ofstream& output_file);
+
+	void hidden_add_state();
+	void hidden_remove_state(int index);
 };
 
 #endif /* LAYER_H */
