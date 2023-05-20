@@ -147,6 +147,46 @@ public:
 
 	// yeah, so it's always rolling, but you don't start "remembering" from the front always
 
+	// can change pressure to go to 0 based on distance to starting factor, so info is more localized
+
+	// divide scopes as previous
+	// - issue with dividing ahead is recursion again (and dealing with existing scope)
+	// - but dividing scope as previous feels low impact?
+	// - important state needed for the back is not captured until later anyways
+
+	// ...already going all the way forward, what if go all the way backward as well
+	// - each state network modifies state and modifies score
+	//   - don't worry about creating scopes forward and back
+	//     - too complicated
+	//     - shouldn't be too impactful as everything is meant to be used in combination with new middle
+
+	// could also have preferred strat, and only begin rewinding and adding state when preferred strat cannot be anymore
+	// - so anything that isn't the preferred strat won't affect score network
+
+	// for back, maybe split score networks, and have some that activate only when certain paths taken previously
+	// - when certain variables initialized maybe
+
+	// one issue with trying to create scopes outer is that after creation, scopes are chaotic
+	// - not clear where things start or stop
+	// - not to mention that a lot of indexes are already locked in
+
+	// yeah, so have to keep in mind that scopes are best effort?
+	// - don't have to split super well, cleanly, or hierarchicly in a good way as long as trying full sequences, and not isolated scopes
+
+	// or can treat recursive properly with re-initializing variables
+
+	// add weights on recurrent network input, and put zero pressure on those
+	// - add more pressure the further away
+	// - add more pressure the higher the variable
+
+	// maybe don't worry too much about splitting new sequence
+	// - just look to create a new inner scope if appropriate?
+
+	// check impact of obs
+	// don't update any state until end
+	// - so obs impact won't come through other state
+	// keep if obs has impact
+
 	std::vector<std::vector<StateNetwork*>> curr_sequence_state_networks;
 	std::map<int, std::vector<std::vector<StateNetwork*>>> curr_scope_state_networks;
 	std::vector<StateNetwork*> curr_score_networks;
