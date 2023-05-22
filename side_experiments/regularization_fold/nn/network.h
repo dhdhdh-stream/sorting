@@ -12,9 +12,11 @@ class Network {
 public:
 	int obs_size;	// can be 0
 	Layer* obs_input;
+	// lasso to determine if network needed
 
 	int state_size;
 	Layer* state_input;
+	// lasso to best effort remove and simplify network
 
 	int hidden_size;
 	Layer* hidden;
