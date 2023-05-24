@@ -5,10 +5,13 @@ class ActionNode : public AbstractNode {
 public:
 	// Action action;
 
+	int num_state_networks;
 	// don't worry about type-specific x type-specific networks
 	// when extending an object, don't give it type-specific state, so it will extend itself
 	// so the same obs can cause matching changes to 2 types, but the 2 types will be independent
-	std::map<ObjectDefinition*, std::vector<ObjectNetwork*>> networks;
+	std::map<ObjectDefinition*, std::vector<ObjectNetwork*>> state_networks;
+
+	Network* score_network;
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<Object*>& state_vals,
@@ -20,7 +23,7 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<ObjectNetworkHistory> network_histories;
+	std::vector<ObjectNetworkHistory> state_network_histories;
 	NetworkHistory* score_network_history;
 	double score_network_update;
 

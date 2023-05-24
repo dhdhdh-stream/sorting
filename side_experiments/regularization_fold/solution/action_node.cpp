@@ -13,6 +13,10 @@ void ActionNode::activate(vector<double>& flat_vals,
 	history->obs_snapshot = flat_vals.begin();
 	history->obj_vals_snapshot = obj_vals;
 
+	for (int s_index = 0; s_index < this->num_state_networks; s_index++) {
+		this->score_network->state_input->acti_vals[s_index] = 0.0;
+	}
+
 	for (int o_index = 0; o_index < (int)obj_vals.size(); o_index++) {
 		ObjectDefinition* curr_definition = obj_vals[o_index].definition;
 		while (true) {
@@ -25,16 +29,21 @@ void ActionNode::activate(vector<double>& flat_vals,
 					network->obs_input->acti_vals[0] = history->obs_snapshot;
 
 					for (int s_index = 0; s_index < network->state_size; s_index++) {
-						network->state_input->acti_vals[s_index] = history->obj_vals_snapshot[object_network->object_index[s_index]]
+						network->state_input->acti_vals[s_index] = history->obj_vals_snapshot[object_network->scope_object_index[s_index]]
 							->state_vals[object_network->state_index[s_index]];
 					}
 
-					NetworkHistory* network_history = new NetworkHistory(network);
-					network->activate(network_history);
-					history->network_histories.push_back(ObjectNetworkHistory(object_network,
-																			  network_history));
+					if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+						NetworkHistory* network_history = new NetworkHistory(network);
+						network->activate(network_history);
+						history->state_network_histories.push_back(ObjectNetworkHistory(object_network, network_history));
+					} else {
+						network->activate();
+					}
 
 					obj_vals[o_index]->state_vals[object_network->target_index] += network->output->acti_vals[0];
+
+					this->score_network->state_input->acti_vals[object_network->score_input_index] = network->output->acti_vals[0];
 				}
 			}
 
@@ -45,8 +54,11 @@ void ActionNode::activate(vector<double>& flat_vals,
 		}
 	}
 
-	// using updated obj_vals
-	
+	NetworkHistory* score_network_history = new NetworkHistory(this->score_network);
+	this->score_network->activate(score_network_history);
+	history->score_network_history = score_network_history;
+	history->score_network_update = this->score_network->output->acti_vals[0];
+	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
 
 	flat_vals.erase(flat_vals.begin());
 }

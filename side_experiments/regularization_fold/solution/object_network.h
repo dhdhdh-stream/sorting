@@ -5,9 +5,12 @@ class ObjectNetwork {
 public:
 	Network* network;
 
-	std::vector<int> object_index;
+	std::vector<int> scope_object_index;
+	std::vector<int> object_dependency_index;
 	std::vector<int> state_index;
 	int target_index;
+
+	int score_input_index;
 };
 
 class ObjectNetworkHistory {

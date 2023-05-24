@@ -1,17 +1,24 @@
-#ifndef FOLD_H
-#define FOLD_H
+#ifndef EXPERIMENT_H
+#define EXPERIMENT_H
 
-class Fold {
+class Experiment {
 public:
+	std::vector<int> scope_context;
+	std::vector<int> node_context;	// store explore node index in node_context[0]
 
-	int parent_scope_id;
 	// keep fixed even if parent scope updates
 	int num_existing_states;
 
 	int sequence_length;
 	std::vector<bool> is_inner_scope;
 	std::vector<int> existing_scope_ids;
-	std::vector<std::vector<Input*>> existing_scope_inputs;
+	std::vector<ObjectDefinition*> fetch_inner_inputs;
+	/**
+	 * Notes:
+	 * - can reuse between different inner scopes
+	 * - if explore succeeds, simply assume assignment fits, and build on top of
+	 */
+	std::vector<std::vector<InnerInput*>> existing_scope_inputs;
 	std::vector<Action> actions;
 
 	// temporary to help measure state impact
@@ -19,11 +26,11 @@ public:
 
 };
 
-class FoldHistory {
+class ExperimentHistory {
 public:
-	Fold* fold;
+	Experiment* Experiment;
 
 
 };
 
-#endif /* FOLD_H */
+#endif /* NEW_SEQUENCE_EXPERIMENT_H */
