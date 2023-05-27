@@ -6,8 +6,12 @@ public:
 	int id;
 
 	int num_inputs;
-	std::vector<ObjectDefinition*> input_types;
-	// can be child of inner input types
+	std::vector<StateDefinition*> input_types;
+	std::vector<ScopeObjectDefinition*> input_objects;
+
+	int num_local;
+	std::vector<StateDefinition*> local_types;
+	std::vector<ScopeObjectDefinition*> local_objects;
 
 	// loop stuff
 
@@ -18,7 +22,8 @@ public:
 	// TODO: when determining what type scope input is, look at what state is needed, and select most general type that fits
 
 	void activate(std::vector<double>& flat_vals,
-				  std::vector<Object>& inputs,
+				  std::vector<double>& input_vals,
+				  std::vector<bool>& inputs_initialized,
 				  double& predicted_score,
 				  double& scale_factor,
 				  std::vector<int>& scope_context,

@@ -17,7 +17,9 @@ public:
 	//       - just check if there needs to be any modification to the value
 	int local_scope_index;
 	int scope_object_index;
+	// and local can't be from an inner
 
+	// for fetch, for simplicity, just recalculate, and don't worry about reusing inner effort
 	int fetch_
 	std::vector<>
 };
