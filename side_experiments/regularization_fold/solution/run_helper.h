@@ -3,13 +3,11 @@
 
 class RunHelper {
 public:
-	ScopeHistory* full_history;
-
 	int explore_phase;
 	// TODO: choose iter on the outside from loop
 	// if explore exists, but not triggered, still track
 
-
+	Experiment* experiment;
 
 };
 

@@ -262,6 +262,34 @@ void Layer::lasso_update_weights(double lambda,
 	}
 }
 
+void Layer::lasso_update_weights(vector<double>& lambdas,
+								 double learning_rate) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				double update = this->weight_updates[n_index][l_index][ln_index]
+								*learning_rate;
+				this->weight_updates[n_index][l_index][ln_index] = 0.0;
+				this->weights[n_index][l_index][ln_index] += update;
+
+				if (this->weights[n_index][l_index][ln_index] > lambdas[ln_index]*learning_rate) {
+					this->weights[n_index][l_index][ln_index] -= lambdas[ln_index]*learning_rate;
+				} else if (this->weights[n_index][l_index][ln_index] < -lambdas[ln_index]*learning_rate) {
+					this->weights[n_index][l_index][ln_index] += lambdas[ln_index]*learning_rate;
+				} else {
+					this->weights[n_index][l_index][ln_index] = 0.0;
+				}
+			}
+		}
+
+		double update = this->constant_updates[n_index]
+						*learning_rate;
+		this->constant_updates[n_index] = 0.0;
+		this->constants[n_index] += update;
+	}
+}
+
 void Layer::backprop_errors_with_no_weight_change() {
 	if (this->type == LINEAR_LAYER) {
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {

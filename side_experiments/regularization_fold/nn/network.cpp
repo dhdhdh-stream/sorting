@@ -7,9 +7,12 @@ using namespace std;
 void Network::construct() {
 	this->obs_input = new Layer(LINEAR_LAYER, this->obs_size);
 	this->state_input = new Layer(LINEAR_LAYER, this->state_size);
+	this->new_state_input = new Layer(LINEAR_LAYER, this->new_state_size);
 
 	this->hidden = new Layer(LEAKY_LAYER, this->hidden_size);
-	this->hidden->input_layers.push_back(this->input);
+	this->hidden->input_layers.push_back(this->obs_input);
+	this->hidden->input_layers.push_back(this->state_input);
+	this->hidden->input_layers.push_back(this->new_state_input);
 	this->hidden->setup_weights_full();
 
 	this->output = new Layer(LINEAR_LAYER, 1);
@@ -23,9 +26,11 @@ void Network::construct() {
 
 Network::Network(int obs_size,
 				 int state_size,
+				 int new_state_size,
 				 int hidden_size) {
 	this->obs_size = obs_size;
 	this->state_size = state_size;
+	this->new_state_size = new_state_size;
 	this->hidden_size = hidden_size;
 
 	construct();
@@ -34,6 +39,7 @@ Network::Network(int obs_size,
 Network::Network(Network* original) {
 	this->obs_size = original->obs_size;
 	this->state_size = original->state_size;
+	this->new_state_size = original->new_state_size;
 	this->hidden_size = original->hidden_size;
 
 	construct();
@@ -51,6 +57,10 @@ Network::Network(ifstream& input_file) {
 	getline(input_file, state_size_line);
 	this->state_size = stoi(state_size_line);
 
+	string new_state_size_line;
+	getline(input_file, new_state_size_line);
+	this->new_state_size = stoi(new_state_size_line);
+
 	string hidden_size_line;
 	getline(input_file, hidden_size_line);
 	this->hidden_size = stoi(hidden_size_line);
@@ -64,20 +74,24 @@ Network::Network(ifstream& input_file) {
 Network::~Network() {
 	delete this->obs_input;
 	delete this->state_input;
+	delete this->new_state_input;
 	delete this->hidden;
 	delete this->output;
 }
 
-void Network::activate() {
+void Network::activate(double obs_val,
+					   vector<double>& state_vals) {
+	this->obs_input->acti_vals[0] = obs_val;
+
+	for (int s_index = 0; s_index < this->state_size; s_index++) {
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
+	}
+
 	this->hidden->activate();
 	this->output->activate();
 }
 
-void Network::activate(NetworkHistory* history) {
-	activate();
 
-	history->save_weights();
-}
 
 void Network::backprop(double target_max_update) {
 	this->output->backprop();
@@ -211,34 +225,35 @@ void Network::backprop_weights_with_no_error_signal(double target_max_update,
 	backprop_weights_with_no_error_signal(target_max_update);
 }
 
-void Network::add_state() {
-	this->hidden->hidden_add_state();
+// void Network::add_state() {
+// 	this->hidden->hidden_add_state();
 
-	this->state_size++;
-	this->state_input->acti_vals.push_back(0.0);
-	this->state_input->errors.push_back(0.0);
-}
+// 	this->state_size++;
+// 	this->state_input->acti_vals.push_back(0.0);
+// 	this->state_input->errors.push_back(0.0);
+// }
 
-void Network::calc_state_impact(int index) {
-	double impact = 0.0;
-	for (int n_index = 0; n_index < this->hidden_size; n_index++) {
-		impact += abs(this->hidden->weights[n_index][0][index]);
-	}
-	return impact;
-}
+// void Network::calc_state_impact(int index) {
+// 	double impact = 0.0;
+// 	for (int n_index = 0; n_index < this->hidden_size; n_index++) {
+// 		impact += abs(this->hidden->weights[n_index][0][index]);
+// 	}
+// 	return impact;
+// }
 
-void Network::remove_state(int index) {
-	this->hidden->hidden_remove_state(index);
+// void Network::remove_state(int index) {
+// 	this->hidden->hidden_remove_state(index);
 
-	this->state_size--;
-	this->state_input->acti_vals.pop_back();
-	this->state_input->errors.pop_back();
-}
+// 	this->state_size--;
+// 	this->state_input->acti_vals.pop_back();
+// 	this->state_input->errors.pop_back();
+// }
 
 void Network::save(ofstream& output_file) {
-	output_file << this->input_size << endl;
+	output_file << this->obs_size << endl;
+	output_file << this->state_size << endl;
+	output_file << this->new_state_size << endl;
 	output_file << this->hidden_size << endl;
-	output_file << this->output_size << endl;
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
 }

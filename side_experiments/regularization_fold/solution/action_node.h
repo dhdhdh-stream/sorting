@@ -5,16 +5,14 @@ class ActionNode : public AbstractNode {
 public:
 	// Action action;
 
-	int num_state_networks;
-	// don't worry about type-specific x type-specific networks
-	// when extending an object, don't give it type-specific state, so it will extend itself
-	// so the same obs can cause matching changes to 2 types, but the 2 types will be independent
-	std::map<ObjectDefinition*, std::vector<ObjectNetwork*>> state_networks;
+	std::vector<std::map<StateDefinition*, ScopeNetwork*>> state_networks;
+	// set to NULL if tried and decided network was unneeded
 
 	Network* score_network;
 
 	void activate(std::vector<double>& flat_vals,
-				  std::vector<Object*>& state_vals,
+				  std::vector<StateDefinition*>& state_types,	// set to NULL if not initialized
+				  std::vector<double>& state_vals,
 				  double& predicted_score,
 				  double& scale_factor,
 				  RunHelper& run_helper,
@@ -23,17 +21,14 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<ObjectNetworkHistory> state_network_histories;
-	NetworkHistory* score_network_history;
-	double score_network_update;
-
 	double obs_snapshot;
-	std::vector<Object> obj_vals_snapshot;	// starting
+	std::vector<double> starting_state_vals_snapshot;
+	std::vector<double> ending_state_vals_snapshot;
+	double score_network_output;
 
-	// // for both pre and post
-	// std::vector<NetworkHistory*> new_state_network_histories;
-	// NetworkHistory* new_score_network_history;
-	// double new_score_network_update;
+	std::vector<double> starting_new_state_vals_snapshot;
+	std::vector<bool> network_zeroed;
+	std::vector<double> ending_new_state_vals_snapshot;
 };
 
 #endif /* ACTION_NODE_H */

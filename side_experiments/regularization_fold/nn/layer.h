@@ -37,6 +37,8 @@ public:
 	void update_weights(double learning_rate);
 	void lasso_update_weights(double lambda,
 							  double learning_rate);
+	void lasso_update_weights(std::vector<double>& lambdas,
+							  double learning_rate);
 
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
