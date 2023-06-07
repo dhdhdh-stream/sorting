@@ -3,10 +3,8 @@
 
 class StateDefinition {
 public:
-	StateDefinition* parent;
-
-	int state_id;
-	int type_id;
+	int id;
+	TypeDefinition* type;
 };
 
 #endif /* STATE_DEFINITION_H */

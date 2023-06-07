@@ -1,6 +1,9 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+const int SCOPE_TYPE_FULL = 0;
+const int SCOPE_TYPE_FETCH = 1;
+
 class Scope {
 public:
 	int id;
@@ -13,6 +16,8 @@ public:
 	// loop stuff
 
 	std::vector<AbstractNode*> nodes;
+
+	int type;
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<State>& input_vals,
