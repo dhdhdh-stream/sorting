@@ -11,6 +11,7 @@ public:
 	int num_states;
 	std::vector<StateDefinition*> state_minimum_types;
 	int starting_num_states;	// i.e., states that are necessary
+	std::vector<bool> initialized_locally;
 	std::vector<std::map<StateDefinition*, std::vector<int>>> state_dependencies;
 
 	// loop stuff

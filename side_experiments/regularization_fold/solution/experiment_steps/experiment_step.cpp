@@ -4,9 +4,9 @@ using namespace std;
 
 void Fold::experiment_global_activate_helper(bool on_path,
 											 int remaining_scope_depth,
-											 vector<double>& new_state_vals,
 											 double& new_predicted_score,
 											 double& pre_scale_factor,
+											 RunHelper& run_helper,
 											 ScopeHistory* scope_history,
 											 FoldHistory* history) {
 	int scope_id = scope_history->scope->id;
@@ -29,23 +29,23 @@ void Fold::experiment_global_activate_helper(bool on_path,
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 				if (state_it->second[node_id].size() == 0) {
-					for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+					for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
 						state_it->second[node_id].push_back(
 							new Network(1,
 										scope_history->scope->num_states,
-										this->num_new_states,
+										this->num_inner_inputs+5,
 										20));
 					}
 					score_it->second[node_id] = new Network(0,
 															scope_history->scope->num_states,
-															this->num_new_states,
+															this->num_inner_inputs+5,
 															20);
 				}
 
-				action_node_history->starting_new_state_vals_snapshot = new_state_vals;
+				action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-				action_node_history->network_zeroed = vector<bool>(this->num_new_states);
-				for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+				action_node_history->network_zeroed = vector<bool>(this->num_inner_inputs+5);
+				for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
 					if (history->can_zero && rand()%5 == 0) {
 						action_node_history->network_zeroed[s_index] = true;
 					} else {
@@ -53,20 +53,20 @@ void Fold::experiment_global_activate_helper(bool on_path,
 						network->activate(action_node_history->obs_snapshot,
 										  action_node_history->starting_state_vals_snapshot,
 										  action_node_history->starting_new_state_vals_snapshot);
-						new_state_vals[s_index] += network->output->acti_vals[0];
+						run_helper.new_state_vals[s_index] += network->output->acti_vals[0];
 
 						action_node_history->network_zeroed[s_index] = false;
 					}
 				}
 
-				action_node_history->ending_new_state_vals_snapshot = new_state_vals;
+				action_node_history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
 				Network* score_network = score_it->second[node_id];
 				score_network->activate(action_node_history->ending_state_vals_snapshot,
 										action_node_history->ending_new_state_vals_snapshot);
 
 				new_predicted_score += pre_scale_factor*action_node_history->score_network_output;
-				new_predicted_score += pre_scale_factor*action_node_history->experiment_score_network_output;
+				new_predicted_score += pre_scale_factor*score_network->output->acti_vals[0];
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
@@ -81,18 +81,18 @@ void Fold::experiment_global_activate_helper(bool on_path,
 					} else {
 						experiment_global_activate_helper(true,
 														  remaining_scope_depth-1,
-														  new_state_vals,
 														  new_predicted_score,
 														  pre_scale_factor,
+														  run_helper,
 														  scope_node_history->inner_scope_history,
 														  history);
 					}
 				} else {
 					experiment_global_activate_helper(false,
 													  remaining_scope_depth,
-													  new_state_vals,
 													  new_predicted_score,
 													  pre_scale_factor,
+													  run_helper,
 													  scope_node_history->inner_scope_history,
 													  history);
 				}
@@ -104,9 +104,9 @@ void Fold::experiment_global_activate_helper(bool on_path,
 }
 
 void Fold::experiment_context_activate_helper(int context_index,
-											  vector<double>& new_state_vals,
 											  double& new_predicted_score,
 											  double& pre_scale_factor,
+											  RunHelper& run_helper,
 											  ScopeHistory* scope_history
 											  FoldHistory* history) {
 	int scope_id = scope_history->scope->id;
@@ -129,23 +129,23 @@ void Fold::experiment_context_activate_helper(int context_index,
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 				if (state_it->second[node_id].size() == 0) {
-					for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+					for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
 						state_it->second[node_id].push_back(
 							new Network(1,
 										scope_history->scope->num_states,
-										this->num_new_states,
+										this->num_inner_inputs+5,
 										20));
 					}
 					score_it->second[node_id] = new Network(0,
 															scope_history->scope->num_states,
-															this->num_new_states,
+															this->num_inner_inputs+5,
 															20);
 				}
 
-				action_node_history->starting_new_state_vals_snapshot = new_state_vals;
+				action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-				action_node_history->network_zeroed = vector<bool>(this->num_new_states);
-				for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+				action_node_history->network_zeroed = vector<bool>(this->num_inner_inputs+5);
+				for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
 					if (history->can_zero && rand()%5 == 0) {
 						action_node_history->network_zeroed[s_index] = true;
 					} else {
@@ -153,20 +153,20 @@ void Fold::experiment_context_activate_helper(int context_index,
 						network->activate(action_node_history->obs_snapshot,
 										  action_node_history->starting_state_vals_snapshot,
 										  action_node_history->starting_new_state_vals_snapshot);
-						new_state_vals[s_index] += network->output->acti_vals[0];
+						run_helper.new_state_vals[s_index] += network->output->acti_vals[0];
 
 						action_node_history->network_zeroed[s_index] = false;
 					}
 				}
 
-				action_node_history->ending_new_state_vals_snapshot = new_state_vals;
+				action_node_history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
 				Network* score_network = score_it->second[node_id];
 				score_network->activate(action_node_history->ending_state_vals_snapshot,
 										action_node_history->ending_new_state_vals_snapshot);
 
 				new_predicted_score += pre_scale_factor*action_node_history->score_network_output;
-				new_predicted_score += pre_scale_factor*action_node_history->experiment_score_network_output;
+				new_predicted_score += pre_scale_factor*score_network->output->acti_vals[0];
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
@@ -178,9 +178,9 @@ void Fold::experiment_context_activate_helper(int context_index,
 					// do nothing
 				} else {
 					experiment_context_activate_helper(context_index,
-													   new_state_vals,
 													   new_predicted_score,
 													   pre_scale_factor,
+													   run_helper,
 													   scope_node_history->inner_scope_history,
 													   history);
 				}
@@ -192,17 +192,16 @@ void Fold::experiment_context_activate_helper(int context_index,
 }
 
 void Fold::experiment_activate(vector<double>& flat_vals,
-							   vector<double>& state_vals,
+							   vector<double>& state_vals,	// for starting_score_network
+							   vector<bool>& state_initialized,
+							   vector<TypeDefinition*>& state_types,
 							   double& predicted_score,
 							   double& scale_factor,
-							   vector<int>& curr_scope_context,
-							   vector<int>& curr_node_context,
-							   vector<ScopeHistory*>& context_histories,
-							   vector<vector<double>*>& context_state_vals,
+							   vector<ContextLayer>& context,
 							   RunHelper& run_helper,
 							   FoldHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT_LEARN;
-	run_helper.fold_scope_id = this->parent_scope_id;
+	run_helper.experiment_scope_id = this->scope_context.back();
 
 	if (rand()%5 == 0) {
 		history->can_zero = true;
@@ -210,57 +209,133 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 		history->can_zero = false;
 	}
 
-	vector<double> new_state_vals(this->num_new_states, 0.0);
-	double new_predicted_score = solution->average_score;
+	run_helper.new_state_vals = vector<double>(this->num_inner_inputs+5, 0.0);
 
+	double new_predicted_score = this->replace_average_score;
 	double pre_scale_factor = 1.0;
 
 	if (curr_scope_context.size() > this->scope_context.size()) {
 		experiment_global_activate_helper(true,
 										  curr_scope_context.size() - this->scope_context.size(),
-										  new_state_vals,
 										  new_predicted_score,
 										  pre_scale_factor,
-										  context_histories[0],
+										  run_helper,
+										  context[0]->scope_history,
 										  history);
 	}
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		experiment_context_activate_helper(c_index,
-										   new_state_vals,
 										   new_predicted_score,
 										   pre_scale_factor,
-										   context_histories[curr_scope_context.size() - this->scope_context.size() + c_index],
+										   run_helper,
+										   context[curr_scope_context.size() - this->scope_context.size() + c_index]->scope_history,
 										   history);
-	}
 
-	history->starting_state_vals_snapshot = state_vals;
-	history->starting_new_state_vals_snapshot = new_state_vals;
-
-	// no need to activate starting_score_network until backprop
-
-	vector<double> local_inner_input_vals(this->reverse_local_inner_input_mapping.size());
-	for (int l_index = 0; l_index < (int)this->reverse_local_inner_input_mapping.size(); l_index++) {
-		local_inner_input_vals[l_index] = context_state_vals[context_state_vals.size()-this->scope_context.size()
-			+this->inner_input_scope_depths[this->reverse_local_inner_input_mapping[l_index]]][
-			this->inner_input_input_indexes[this->reverse_local_inner_input_mapping[l_index]]];
-	}
-
-	for (int f_index = 0; f_index < this->sequence_length; f_index++) {
-		if (this->is_inner_scope[f_index]) {
-			// don't update state networks pre scope node
-			// - intuitively, state is tied to the world
-			//   - not decisions (i.e., branching)
-		} else {
-
+		for (int i_index = 0; i_index < this->num_inner_inputs; i_index++) {
+			if (this->init_inner_input_scope_depths[i_index] == c_index) {
+				vector<double>* scope_state_vals = context[
+					context_state_vals.size() - this->scope_context.size() + this->init_inner_input_scope_depths[i_index]]->state_vals;
+				new_state_vals[i_index] += scope_state_vals->at(this->init_inner_input_input_indexes[i_index]);
+			}
 		}
 	}
 
-	for (int l_index = 0; l_index < (int)this->reverse_local_inner_input_mapping.size(); l_index++) {
-		context_state_vals[context_state_vals.size()-this->scope_context.size()
-			+this->inner_input_scope_depths[this->reverse_local_inner_input_mapping[l_index]]][
-			this->inner_input_input_indexes[this->reverse_local_inner_input_mapping[l_index]]] = local_inner_input_vals[l_index];
+	history->starting_state_vals_snapshot = state_vals;
+	history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
+	history->existing_predicted_score = predicted_score;
+	predicted_score = new_predicted_score;
+
+	// no need to activate starting_score_network until backprop
+
+	history->sequence_obs_snapshots = vector<double>(this->sequence_length, 0.0);
+	history->sequence_starting_new_state_vals_snapshots = vector<vector<double>>(this->sequence_length);
+	history->sequence_network_zeroed = vector<vector<bool>>(this->sequence_length);
+	history->sequence_ending_new_state_vals_snapshots = vector<vector<double>>(this->sequence_length);
+
+	for (int a_index = 0; a_index < this->sequence_length; a_index++) {
+		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+			double obs = flat_vals.begin();
+
+			history->sequence_obs_snapshots[a_index] = obs;
+			history->sequence_starting_new_state_vals_snapshots[a_index] = run_helper.new_state_vals;
+
+			history->sequence_network_zeroed[a_index] = vector<bool>(this->num_inner_inputs+5);
+			for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
+				if (history->can_zero && rand()%5 == 0) {
+					history->sequence_network_zeroed[a_index][s_index] = true;
+				} else {
+					Network* network = this->sequence_state_networks[a_index][s_index];
+					network->activate(history->sequence_obs_snapshots[a_index],
+									  history->sequence_starting_new_state_vals_snapshots[a_index]);
+					run_helper.new_state_vals[s_index] += network->output->acti_vals[0];
+
+					history->sequence_network_zeroed[a_index][s_index] = false;
+				}
+			}
+
+			history->sequence_ending_new_state_vals_snapshots[a_index] = run_helper.new_state_vals;
+
+			Network* score_network = this->sequence_score_networks[a_index];
+			score_network->activate(history->sequence_ending_new_state_vals_snapshots[a_index]);
+			predicted_score += scale_factor*score_network->output->acti_vals[0];
+
+			flat_vals.erase(flat_vals.begin());
+		} else if (this->step_types[a_index] == EXPLORE_STEP_TYPE_EXISTING_SCOPE) {
+			scale_factor *= this->inner_scope_scale_mods[f_index]->weight;
+
+			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
+
+			vector<double> input_vals(inner_scope->num_states, 0.0);
+			vector<bool> input_initialized(inner_scope->num_states, false);
+			vector<TypeDefinition*> input_types(inner_scope->num_states, NULL);
+			for (int i_index = 0; i_index < (int)this->inner_input_indexes[a_index].size(); i_index++) {
+				if (this->inner_input_indexes[a_index][i_index] != -1) {
+					double val = run_helper.new_state_vals[this->inner_input_indexes[a_index][i_index]];
+					if (this->inner_input_transformation[a_index][i_index] != NULL) {
+						val = this->inner_input_transformation[a_index][i_index]->forward(val);
+					}
+					input_vals[i_index] = val;
+					run_helper.new_state_vals[this->inner_input_indexes[a_index][i_index]] = 0.0;
+					/**
+					 * - set new_state_val to 0.0 if used
+					 *   - OK, since units should remain the same due to use after inner
+					 */
+
+					input_initialized[i_index] = true;
+
+					input_types[i_index] = this->inner_input_types
+				}
+			}
+
+			vector<ContextLayer> inner_context;
+			int early_exit_depth;
+			int early_exit_node_id;
+
+			ScopeHistory* scope_history = new ScopeHistory(inner_scope);
+			history->inner_scope_histories[a_index] = scope_history;
+			inner_scope->activate(flat_vals,
+								  input_vals,
+								  input_initialized,
+								  input_types,
+								  predicted_score,
+								  scale_factor,
+								  inner_context,
+								  early_exit_depth,
+								  early_exit_node_id,
+								  run_helper,
+								  scope_history);
+
+			for (int i_index = 0; i_index < (int)this->inner_input_indexes[a_index].size(); i_index++) {
+				if (this->inner_input_indexes[a_index][i_index] != -1) {
+					run_helper.new_state_vals[this->inner_input_indexes[a_index][i_index]] += input_vals[i_index];
+				}
+			}
+
+			scale_factor /= this->inner_scope_scale_mods[f_index]->weight;
+		} else {
+			// this->step_types[a_index] == EXPLORE_STEP_TYPE_FETCH
+
+		}
 	}
-
-
 }

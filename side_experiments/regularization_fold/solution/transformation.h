@@ -7,6 +7,9 @@ public:
 	double weight;
 
 	double pcc;
+
+	double forward(double input);
+	double backward(double input);
 };
 
 #endif /* TRANSFORMATION_H */

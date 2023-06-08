@@ -1,0 +1,8 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+const int EXPLORE_STEP_TYPE_ACTION = 0;
+const int EXPLORE_STEP_TYPE_EXISTING_SCOPE = 0;
+const int EXPLORE_STEP_TYPE_FETCH = 0;
+
+#endif /* CONSTANTS_H */

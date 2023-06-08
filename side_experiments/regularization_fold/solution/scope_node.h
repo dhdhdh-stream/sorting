@@ -9,6 +9,11 @@ public:
 	std::vector<int> inner_input_target_indexes;
 	Scale* scope_scale_mod;
 
+
+	// TODO: add transformations
+	// - and types to transform to?
+
+	// TODO: update context before going inwards
 };
 
 #endif /* SCOPE_NODE_H */
