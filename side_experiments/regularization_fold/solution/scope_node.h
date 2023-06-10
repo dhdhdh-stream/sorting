@@ -9,6 +9,8 @@ public:
 	std::vector<int> inner_input_target_indexes;
 	Scale* scope_scale_mod;
 
+	// TODO: post networks take input from inner as well
+	// - run even on early exit
 
 	// TODO: add transformations
 	// - and types to transform to?

@@ -1,10 +1,11 @@
-#ifndef EXPERIMENT_H
-#define EXPERIMENT_H
+#ifndef BRANCH_EXPERIMENT_H
+#define BRANCH_EXPERIMENT_H
 
-class Experiment {
+class BranchExperiment {
 public:
 	std::vector<int> scope_context;
 	std::vector<int> node_context;	// store explore node index in node_context[0]
+	// TODO: or think about how to include last context layer?
 
 	int num_inner_inputs;
 	std::vector<double> init_inner_input_scope_depths;	// -1 if no init
@@ -12,6 +13,7 @@ public:
 	// add to and set at corresponding scope node
 	// - after setting back, splits back into 2 separate variables
 	//   - do not set back to 0.0, so units remain the same
+	// - if not initialized, just leave at 0.0
 
 	// TODO: think about rewinding memory
 	// - current main issue is how to rewind to arrive at state different than what had been calculated?
@@ -23,7 +25,7 @@ public:
 	std::vector<int> step_types;
 	std::vector<Action> actions;
 	std::vector<int> existing_scope_ids;
-	std::vector<Fetch*> fetches;	// squash into new scope if experiment successful
+	std::vector<Fetch*> fetches;
 	/**
 	 * - -1 if nothing passed
 	 * - shared for existing scopes and fetches
@@ -37,7 +39,10 @@ public:
 	 */
 	std::vector<std::vector<TypeDefinition*>> inner_input_types;
 	std::vector<std::vector<Transformation*>> inner_input_transformations;
+	std::vector<std::vector<int>> fetch_output_scope_depths;
+	std::vector<std::vector<int>> fetch_output_input_indexes;
 	std::vector<std::vector<int>> fetch_output_inner_input_indexes;
+	std::vector<std::vector<Transformation*>> fetch_output_transformations;
 
 	Network* starting_score_network;
 
@@ -86,9 +91,9 @@ public:
 
 };
 
-class ExperimentHistory {
+class BranchExperimentHistory {
 public:
-	Experiment* experiment;
+	BranchExperiment* branch_experiment;
 
 	bool can_zero;
 
@@ -104,4 +109,4 @@ public:
 
 };
 
-#endif /* EXPERIMENT_H */
+#endif /* BRANCH_EXPERIMENT_H */

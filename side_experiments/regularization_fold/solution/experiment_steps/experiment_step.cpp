@@ -193,7 +193,6 @@ void Fold::experiment_context_activate_helper(int context_index,
 
 void Fold::experiment_activate(vector<double>& flat_vals,
 							   vector<double>& state_vals,	// for starting_score_network
-							   vector<bool>& state_initialized,
 							   vector<TypeDefinition*>& state_types,
 							   double& predicted_score,
 							   double& scale_factor,
@@ -237,6 +236,7 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 				vector<double>* scope_state_vals = context[
 					context_state_vals.size() - this->scope_context.size() + this->init_inner_input_scope_depths[i_index]]->state_vals;
 				new_state_vals[i_index] += scope_state_vals->at(this->init_inner_input_input_indexes[i_index]);
+				// can be uninitialized (i.e., 0.0)
 			}
 		}
 	}
@@ -287,7 +287,6 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 
 			vector<double> input_vals(inner_scope->num_states, 0.0);
-			vector<bool> input_initialized(inner_scope->num_states, false);
 			vector<TypeDefinition*> input_types(inner_scope->num_states, NULL);
 			for (int i_index = 0; i_index < (int)this->inner_input_indexes[a_index].size(); i_index++) {
 				if (this->inner_input_indexes[a_index][i_index] != -1) {
@@ -302,9 +301,7 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 					 *   - OK, since units should remain the same due to use after inner
 					 */
 
-					input_initialized[i_index] = true;
-
-					input_types[i_index] = this->inner_input_types
+					input_types[i_index] = this->inner_input_types[a_index][i_index];
 				}
 			}
 
@@ -316,7 +313,6 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 			history->inner_scope_histories[a_index] = scope_history;
 			inner_scope->activate(flat_vals,
 								  input_vals,
-								  input_initialized,
 								  input_types,
 								  predicted_score,
 								  scale_factor,
@@ -336,6 +332,7 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 		} else {
 			// this->step_types[a_index] == EXPLORE_STEP_TYPE_FETCH
 
+			// TODO: fetch output from context
 		}
 	}
 }

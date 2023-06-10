@@ -5,6 +5,8 @@ class TypeDefinition {
 public:
 	int id;
 
+	std::vector<StateDefinition*> states;
+
 	std::vector<TypeDefinition*> similar_types;
 	std::vector<Transformation*> similar_transformations;
 };

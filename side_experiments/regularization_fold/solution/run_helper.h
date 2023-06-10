@@ -3,6 +3,10 @@
 
 class RunHelper {
 public:
+	int curr_depth;	// need to track separate from context as context resets for experiments
+	int max_depth;
+	bool exceeded_depth;
+
 	int explore_phase;
 	// TODO: choose iter on the outside from loop
 	// if explore exists, but not triggered, still track

@@ -10,6 +10,8 @@ public:
 
 	Network* score_network;
 
+	// TODO: next node id and previous node id
+
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<StateDefinition*>& state_types,	// set to NULL if not initialized
 				  std::vector<double>& state_vals,

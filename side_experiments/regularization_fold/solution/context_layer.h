@@ -7,6 +7,7 @@ public:
 	int node_id;
 
 	std::vector<double>* state_vals;
+	std::vector<bool>* state_initialized;
 	std::vector<TypeDefinition*>* state_types;
 
 	ScopeHistory* scope_history;
