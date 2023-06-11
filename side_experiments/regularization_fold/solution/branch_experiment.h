@@ -1,3 +1,5 @@
+// TODO: branch can be fetch by itself
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -18,7 +20,7 @@ public:
 	// TODO: think about rewinding memory
 	// - current main issue is how to rewind to arrive at state different than what had been calculated?
 	//   - otherwise, not much more to gain than local state
-	// (rewinding might also be not calculating certain state until needed, but will also not worry about that, and calculate fully for now)
+	// ("rewinding" could instead be not calculating certain state until needed, but will also not worry about that, and calculate fully for now)
 	// TODO: maybe add last seen instead?
 
 	int sequence_length;

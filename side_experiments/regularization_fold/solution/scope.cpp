@@ -2,6 +2,8 @@
 
 using namespace std;
 
+
+
 void Scope::activate(vector<double>& flat_vals,
 					 vector<double>& state_vals,
 					 vector<TypeDefinition*>& state_types,
@@ -112,6 +114,58 @@ void Scope::handle_node_activate_helper(int iter_index,
 	}
 }
 
-void Scope::fetch_activate() {
+void Scope::fetch_on_path_activate(Fetch* fetch,
+								   int fetch_layer,
+								   vector<double>& flat_vals,
+								   vector<double>& state_vals,
+								   vector<TypeDefinition*>& state_types,
+								   double& predicted_score,
+								   double& scale_factor,
+								   vector<ContextLayer>& context,
+								   int& early_exit_depth,
+								   int& early_exit_node_id,
+								   RunHelper& run_helper,
+								   ScopeHistory* history) {
+	early_exit_depth = -1;
 
+	if (run_helper.experiment_scope_id == this->id) {
+		run_helper.is_recursive = true;
+	}
+
+	run_helper.curr_depth++;
+	if (run_helper.curr_depth > run_helper.max_depth) {
+		run_helper.max_depth = run_helper.curr_depth;
+	}
+	if (run_helper.curr_depth > solution->depth_limit) {
+		run_helper.exceeded_depth = true;
+		history->exceeded_depth = true;
+		return;
+	}
+
+	if (this->is_loop) {
+
+	} else {
+		history->node_histories.push_back(vector<AbstractNodeHistory*>());
+
+		int curr_node_id = 0;
+		while (true) {
+			if (curr_node_id == -1) {
+				break;
+			}
+
+			fetch_on_path_handle_node_activate_helper();
+
+			if (early_exit_depth != -1) {
+				break;
+			}
+
+			// TODO: if early exit can always break fetch, then is it necessary to force branches?
+			// - yeah, probably don't force branches
+			//   - maybe acts like an early exit in case detected fetch meaningless early
+		}
+	}
+
+	// TODO: don't pop context for fetch for end
+
+	// TODO: if hit scope end that's not in fetch, then missed, and can exit
 }

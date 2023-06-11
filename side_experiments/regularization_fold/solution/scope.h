@@ -1,3 +1,20 @@
+// - scopes roughly capture when certain state is relevant
+//   - it doesn't strictly align with the corresponding actions
+//     - it may start sooner or later, and may end sooner or later
+
+// - should compound actions correspond to scopes?
+//   - actually, probably no
+//     - compound actions are things that are reused successfully?
+
+// - actually, if going to have wiggle room + sequences anyways, then it doesn't really matter?
+//   - just need some abstraction to try to promote reuse
+
+// - I'm not even creating scopes by state anymore anyways?
+//   - it's currently too loose, so scopes are larger than the minimum required for state
+//     - so from the outside, there's more that's abstracted, but from the inside, subscopes aren't created
+//       - but on branch, it's likely that a subscope will be created
+//         - so all in all, probably good enough
+
 #ifndef SCOPE_H
 #define SCOPE_H
 
