@@ -14,6 +14,8 @@ public:
 	// lasso to determine if network needed
 
 	int state_size;
+	// TODO: add a vector marking which states to use
+	// - so state_input will be smaller than state_size
 	Layer* state_input;
 	// lasso to best effort remove and simplify network
 

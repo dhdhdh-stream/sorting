@@ -46,7 +46,7 @@ void Fold::experiment_global_activate_helper(bool on_path,
 
 				action_node_history->network_zeroed = vector<bool>(this->num_inner_inputs+5);
 				for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
-					if (history->can_zero && rand()%5 == 0) {
+					if (run_helper.can_zero && rand()%5 == 0) {
 						action_node_history->network_zeroed[s_index] = true;
 					} else {
 						Network* network = state_it->second[node_id][s_index];
@@ -203,9 +203,9 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 	run_helper.experiment_scope_id = this->scope_context.back();
 
 	if (rand()%5 == 0) {
-		history->can_zero = true;
+		run_helper.can_zero = true;
 	} else {
-		history->can_zero = false;
+		run_helper.can_zero = false;
 	}
 
 	run_helper.new_state_vals = vector<double>(this->num_inner_inputs+5, 0.0);
@@ -287,7 +287,7 @@ void Fold::experiment_activate(vector<double>& flat_vals,
 			Scope* inner_scope = solution->scopes[this->existing_scope_ids[f_index]];
 
 			vector<double> input_vals(inner_scope->num_states, 0.0);
-			vector<TypeDefinition*> input_types(inner_scope->num_states, NULL);
+			vector<StateDefinition*> input_types(inner_scope->num_states, NULL);
 			for (int i_index = 0; i_index < (int)this->inner_input_indexes[a_index].size(); i_index++) {
 				if (this->inner_input_indexes[a_index][i_index] != -1) {
 					double val = run_helper.new_state_vals[this->inner_input_indexes[a_index][i_index]];

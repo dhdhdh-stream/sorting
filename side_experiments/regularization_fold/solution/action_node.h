@@ -5,18 +5,16 @@ class ActionNode : public AbstractNode {
 public:
 	// Action action;
 
-	std::vector<std::map<StateDefinition*, ScopeNetwork*>> state_networks;
+	std::vector<std::map<StateDefinition*, Network*>> state_networks;
 	// set to NULL if tried and decided network was unneeded
 
 	Network* score_network;
 
-	// TODO: next node id and previous node id
+
 
 	void activate(std::vector<double>& flat_vals,
-				  std::vector<StateDefinition*>& state_types,	// set to NULL if not initialized
 				  std::vector<double>& state_vals,
-				  double& predicted_score,
-				  double& scale_factor,
+				  std::vector<StateDefinition*>& state_types,	// set to NULL if not initialized
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 };
