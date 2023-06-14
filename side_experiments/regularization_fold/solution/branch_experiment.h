@@ -20,37 +20,16 @@ public:
 	 *     - do not set back to 0.0, so units remain the same
 	 *   - if not initialized, just leave at 0.0
 	 */
-	std::vector<int> last_seen_init_step_index;		// -1 if no init
-	std::vector<StateDefinition*> last_seen_init_types;
-	/**
-	 * - for last seen, use fully initially, but gradually scale down impact
-	 *   - so new state can grow into replacing use of last seen
-	 */
-	std::vector<Transformation*> last_seen_init_transformations;
 
 	// TODO: think about rewinding memory
 	// - current main issue is how to rewind to arrive at state different than what had been calculated?
 	//   - otherwise, not much more to gain than local state
 	// ("rewinding" could instead be not calculating certain state until needed, but will also not worry about that, and calculate fully for now)
 
-	/**
-	 * - tracks scope sizes (if scopes later update)
-	 */
-	std::vector<std::vector<std::vector<int>>> sequence_input_indexes;
-	/**
-	 * - what networks to use in inner
-	 *   - may not match outer original type
-	 * - NULL if use outer original type
-	 */
-	std::vector<std::vector<std::vector<StateDefinition*>>> sequence_input_types;
-	std::vector<std::vector<std::vector<Transformation*>>> sequence_input_transformations;
-
 	Network* starting_score_network;
 
 	std::vector<std::vector<Network*>> step_state_networks;
 	std::vector<Network*> step_score_networks;
-
-	// TODO: consider using a small number of recurrent networks instead of unique networks for each node?
 
 	double* existing_average_score;
 	double* existing_score_variance;

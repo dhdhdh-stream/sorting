@@ -13,9 +13,10 @@ public:
 	 */
 	std::vector<StateDefinition*> inner_input_types;
 	std::vector<Transformation*> inner_input_transformations;
+	int inner_starting_node_id;
 	Scale* scope_scale_mod;
 
-	// TODO: update context before going inwards
+
 };
 
 class ScopeNodeHistory : public AbstractNodeHistory {

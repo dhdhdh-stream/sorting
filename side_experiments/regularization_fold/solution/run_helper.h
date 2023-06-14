@@ -14,13 +14,14 @@ public:
 	// TODO: choose iter on the outside from loop
 	// if explore exists, but not triggered, still track
 
-	std::map<TypeDefinition*, double> last_seen_vals;
-	// update at end of scope nodes
+	std::map<StateDefinition*, double> last_seen_vals;
+	// update beginning and end of scope nodes
 
 	AbstractExperiment* experiment;
+	bool can_zero;
 	std::vector<double> new_state_vals;
 	int experiment_context_index;
-	bool can_zero;
+	bool experiment_on_path;
 	// helpers
 	vector<vector<Network*>>* scope_state_networks;
 	vector<Network*>* scope_score_networks;

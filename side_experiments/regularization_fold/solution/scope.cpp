@@ -75,9 +75,9 @@ void Scope::handle_node_activate_helper(int iter_index,
 				} else {
 					for (int c_index = 0; c_index < (int)action_node->branch_experiment->scope_context.size(); c_index++) {
 						if (action_node->branch_experiment->scope_context[c_index] != 
-									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index]->scope_id
+									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index].scope_id
 								|| action_node->branch_experiment->node_context[c_index] !=
-									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index]->node_id) {
+									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index].node_id) {
 							matches_context = false;
 							break;
 						}
@@ -107,4 +107,8 @@ void Scope::handle_node_activate_helper(int iter_index,
 	} else if () {
 
 	}
+}
+
+void Scope::halfway_activate() {
+
 }

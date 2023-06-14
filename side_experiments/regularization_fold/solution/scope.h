@@ -39,6 +39,8 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
+	void halfway_activate(std::vector<int> starting_node_ids,	// copy constructor
+						  );
 };
 
 class ScopeHistory {

@@ -19,6 +19,9 @@ public:
 	Layer* state_input;
 	// lasso to best effort remove and simplify network
 
+	// TODO: but don't trim for score networks
+	// - so maybe have different types of networks again?
+
 	int new_state_size;
 	Layer* new_state_input;
 

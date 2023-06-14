@@ -1,9 +1,10 @@
-#ifndef EXIT_NETWORK_H
-#define EXIT_NETWORK_H
+#ifndef STATE_NETWORK_H
+#define STATE_NETWORK_H
 
-class ExitNetwork {
+class StateNetwork {
 public:
-	std::vector<int> context_indexes;
+	Layer* obs_input;	// size always 1 for sorting
+
 	std::vector<int> state_indexes;
 	Layer* state_input;
 
@@ -21,17 +22,16 @@ public:
 
 	std::mutex mtx;
 
-	ExitNetwork(std::vector<int>& exit_context);
 
-	void activate(std::vector<std::vector<double>>& state_vals);
 };
 
-class ExitNetworkHistory {
+class StateNetworkHistory {
 public:
-	ExitNetwork* network;
+	StateNetworkHistory* history;
 
 	std::vector<double> hidden_history;
+
 	
 };
 
-#endif /* EXIT_NETWORK_H */
+#endif /* STATE_NETWORK_H */

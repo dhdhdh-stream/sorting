@@ -21,9 +21,7 @@ public:
 	// temporary to determine state needed
 	std::vector<std::map<int, std::vector<Network*>>> action_node_score_networks;
 
-	std::map<ScopeExitNode*, std::vector<std::map<StateDefinition*, ExitNetwork*>>> exit_node_state_networks;
-	// TODO: train against seed evaluating to 0.0?
-	// - or don't seed, but simply train against existing (perhaps before applying changes from inner)?
+	std::vector<std::vector<std::map<StateDefinition*, ExitNetwork*>>> exit_node_state_networks;
 };
 
 #endif /* ABSTRACT_EXPERIMENT_H */
