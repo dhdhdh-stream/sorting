@@ -6,12 +6,14 @@ using namespace std;
 
 void Scope::activate(vector<double>& flat_vals,
 					 vector<double>& state_vals,
-					 vector<TypeDefinition*>& state_types,
-					 vector<ContextLayer> context,
+					 vector<StateDefinition*>& state_types,
+					 vector<ContextLayer>& context,
 					 int& exit_depth,
 					 int& exit_node_id,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
+	// TODO: switch back to updating context on scope start?
+
 	early_exit_depth = -1;
 
 	if (run_helper.experiment_scope_id == this->id) {
@@ -109,6 +111,67 @@ void Scope::handle_node_activate_helper(int iter_index,
 	}
 }
 
-void Scope::halfway_activate() {
+void Scope::halfway_activate(vector<int>& starting_node_ids,
+							 vector<vector<double>>& starting_state_vals,
+							 vector<vector<StateDefinition*>>& starting_state_types,
+							 vector<double>& flat_vals,
+							 vector<double>& state_vals,
+							 vector<StateDefinition*>& state_types,
+							 vector<ContextLayer>& context,
+							 int& exit_depth,
+							 int& exit_node_id,
+							 RunHelper& run_helper,
+							 ScopeHistory* history) {
+	early_exit_depth = -1;
+
+	if (run_helper.experiment_scope_id == this->id) {
+		run_helper.is_recursive = true;
+	}
+
+	run_helper.curr_depth++;
+	if (run_helper.curr_depth > run_helper.max_depth) {
+		run_helper.max_depth = run_helper.curr_depth;
+	}
+	if (run_helper.curr_depth > solution->depth_limit) {
+		run_helper.exceeded_depth = true;
+		history->exceeded_depth = true;
+		return;
+	}
+
+	// can't be loop
+
+	history->node_histories.push_back(vector<AbstractNodeHistory*>());
+
+	int curr_node_id = starting_node_ids[0];
+	starting_node_ids.erase(starting_node_ids.begin());
+	starting_state_vals.erase(starting_state_vals.begin());
+	starting_state_types.erase(starting_state_types.begin());
+	if (starting_node_ids.size() != 0) {
+		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+
+		int inner_exit_depth;
+		int inner_exit_node_id;
+
+		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
+		history->node_histories[0].push_back(node_history);
+		scope_node->halfway_activate(starting_node_ids,
+									 starting_state_vals,
+									 starting_state_types,
+									 flat_vals,
+									 state_vals,
+									 state_types,
+									 context,
+									 inner_exit_depth,
+									 inner_exit_node_id,
+									 run_helper,
+									 node_history);
+
+
+	}
+
+	while (true) {
+
+	}
+
 
 }

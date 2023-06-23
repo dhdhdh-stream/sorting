@@ -1,6 +1,14 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
+const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 0;
+const int BRANCH_EXPERIMENT_STATE_NEW_TYPES = 1;
+const int BRANCH_EXPERIMENT_STATE_CLEANUP = 2;
+
+const int BRANCH_EXPERIMENT_RESULT_FAIL = 0;
+const int BRANCH_EXPERIMENT_RESULT_REPLACE = 1;
+const int BRANCH_EXPERIMENT_RESULT_BRANCH = 2;
+
 class BranchExperiment {
 public:
 	int num_steps;
@@ -8,28 +16,13 @@ public:
 	std::vector<Action> actions;
 	std::vector<Sequence*> sequences;
 
-	/**
-	 * - num_new_states tracked in AbstractExperiment
-	 *   - equals needed inner input + 5
-	 */
-	std::vector<double> local_init_scope_depths;	// -1 if no init
-	std::vector<double> local_init_input_indexes;
-	/**
-	 * - add to and set at corresponding scope node
-	 *   - after setting back, splits back into 2 separate variables
-	 *     - do not set back to 0.0, so units remain the same
-	 *   - if not initialized, just leave at 0.0
-	 */
+	ScoreNetwork* starting_score_network;
 
-	// TODO: think about rewinding memory
-	// - current main issue is how to rewind to arrive at state different than what had been calculated?
-	//   - otherwise, not much more to gain than local state
-	// ("rewinding" could instead be not calculating certain state until needed, but will also not worry about that, and calculate fully for now)
+	std::vector<std::vector<StateNetwork*>> step_state_networks;
+	std::vector<ScoreNetwork*> step_score_networks;
 
-	Network* starting_score_network;
-
-	std::vector<std::vector<Network*>> step_state_networks;
-	std::vector<Network*> step_score_networks;
+	int exit_depth;
+	std::vector<std::map<StateDefinition*, ExitNetwork*>> exit_networks;
 
 	double* existing_average_score;
 	double* existing_score_variance;
@@ -49,6 +42,14 @@ public:
 	double curr_replace_average_misguess;
 	double curr_replace_misguess_variance;
 
+	int state;
+	int state_iter;
+	double sum_error;
+
+	std::vector<bool> input_is_new_type;
+
+	std::vector<int> input_additions_needed;
+	std::vector<std::pair<int, int>> scope_node_additions_needed;
 
 };
 
@@ -60,12 +61,17 @@ public:
 	std::vector<double> starting_new_state_vals_snapshot;
 	double existing_predicted_score;
 
-	std::vector<double> sequence_obs_snapshots;
-	std::vector<std::vector<double>> sequence_starting_new_state_vals_snapshots;
-	std::vector<std::vector<bool>> sequence_network_zeroed;
-	std::vector<std::vector<double>> sequence_ending_new_state_vals_snapshots;
+	std::vector<double> step_obs_snapshots;
+	std::vector<std::vector<double>> step_starting_new_state_vals_snapshots;
+	std::vector<std::vector<StateNetworkHistory*>> step_state_network_histories;
+	std::vector<std::vector<double>> step_ending_new_state_vals_snapshots;
+	std::vector<ScoreNetworkHistory*> step_score_network_histories;
+	std::vector<double> step_score_network_outputs;
 
+	std::vector<SequenceHistory*> sequence_histories;
 
+	std::vector<std::vector<double>> exit_state_vals_snapshot;
+	std::vector<ExitNetworkHistory*> exit_network_histories;
 };
 
 #endif /* BRANCH_EXPERIMENT_H */

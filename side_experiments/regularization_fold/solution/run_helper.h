@@ -20,16 +20,21 @@ public:
 	AbstractExperiment* experiment;
 	bool can_zero;
 	std::vector<double> new_state_vals;
+	std::vector<StateDefinition*> new_state_types;
+	std::vector<double> new_state_errors;
 	int experiment_context_index;
 	bool experiment_on_path;
 	// helpers
 	vector<vector<Network*>>* scope_state_networks;
 	vector<Network*>* scope_score_networks;
 
-
 	// to detect recursive calls for experiment -- not fullproof but hopefully effective enough
 	int experiment_scope_id;
 	bool is_recursive;
+
+	double target_val;
+	double final_misguess;
+
 };
 
 #endif /* RUN_HELPER_H */

@@ -39,8 +39,17 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void halfway_activate(std::vector<int> starting_node_ids,	// copy constructor
-						  );
+	void halfway_activate(std::vector<int>& starting_node_ids,
+						  std::vector<std::vector<double>>& starting_state_vals,
+						  std::vector<std::vector<StateDefinition*>>& starting_state_types,
+						  std::vector<double>& flat_vals,
+						  std::vector<double>& state_vals,
+						  std::vector<StateDefinition*>& state_types,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper,
+						  ScopeHistory* history);
 };
 
 class ScopeHistory {

@@ -4,17 +4,22 @@
 class ScopeNode : public AbstractNode {
 public:
 	int inner_scope_id;
-	std::vector<int> inner_input_indexes;
-	std::vector<int> inner_input_target_indexes;
+
+	bool is_halfway;
+	std::vector<int> starting_node_ids;
+
+	std::vector<std::vector<int>> inner_input_indexes;
+	std::vector<std::vector<int>> inner_input_target_indexes;
 	/**
 	 * - what networks to use in inner
 	 *   - may not match outer original type
 	 * - NULL if use outer original type
 	 */
-	std::vector<StateDefinition*> inner_input_types;
-	std::vector<Transformation*> inner_input_transformations;
-	int inner_starting_node_id;
+	std::vector<std::vector<StateDefinition*>> inner_input_types;
+	std::vector<std::vector<Transformation*>> inner_input_transformations;
+
 	Scale* scope_scale_mod;
+
 
 
 };
