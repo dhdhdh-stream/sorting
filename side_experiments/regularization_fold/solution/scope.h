@@ -20,32 +20,25 @@ public:
 	int id;
 
 	int num_states;
-	std::vector<TypeDefinition*> state_types;
-
-	int starting_num_states;	// i.e., states that are necessary
-	std::vector<bool> initialized_locally;
-	std::vector<std::map<StateDefinition*, std::vector<int>>> state_dependencies;
+	std::vector<FamilyDefinition*> state_families;
+	std::vector<ClassDefinition*> default_state_classes;
 
 	// loop stuff
 
 	std::vector<AbstractNode*> nodes;
 
 	void activate(std::vector<double>& flat_vals,
-				  std::vector<double>& state_vals,
-				  std::vector<StateDefinition*>& state_types,
-				  std::vector<ContextLayer>& context,
+				  std::vector<ForwardContextLayer>& context,
 				  int& exit_depth,
 				  int& exit_node_id,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
 	void halfway_activate(std::vector<int>& starting_node_ids,
-						  std::vector<std::vector<double>>& starting_state_vals,
-						  std::vector<std::vector<StateDefinition*>>& starting_state_types,
+						  std::vector<*std::vector<double>>& starting_state_vals,	// use pointers so sequence keeps values
+						  std::vector<std::vector<bool>>& starting_states_initialized,
 						  std::vector<double>& flat_vals,
-						  std::vector<double>& state_vals,
-						  std::vector<StateDefinition*>& state_types,
-						  std::vector<ContextLayer>& context,
+						  std::vector<ForwardContextLayer>& context,
 						  int& exit_depth,
 						  int& exit_node_id,
 						  RunHelper& run_helper,

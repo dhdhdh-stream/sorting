@@ -9,45 +9,37 @@ void ActionNode::activate(vector<double>& flat_vals,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	history->obs_snapshot = flat_vals.begin();
-	history->starting_state_vals_snapshot = context.back().state_vals;
+	history->starting_state_vals_snapshot = *(context.back().state_vals);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
 			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
 		history->state_network_histories = vector<StateNetworkHistory*>(this->state_networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-			if (state_types[s_index] != NULL) {
-				map<StateDefinition*, StateNetwork*>::iterator it = this->state_networks[s_index].find(
-					context.back().state_types[s_index]);
-				if (it != this->state_networks[s_index].end()
-						&& it->second != NULL) {
-					StateNetwork* network = it->second;
-					StateNetworkHistory* network_history = new StateNetworkHistory(network);
-					network->activate(history->obs_snapshot,
-									  history->starting_state_vals_snapshot,
-									  network_history);
+			if (context.back().states_initialized[s_index]) {
+				if (this->state_networks[s_index] != NULL) {
+					StateNetworkHistory* network_history = new StateNetworkHistory(this->state_networks[s_index]);
+					this->state_networks[s_index]->activate(history->obs_snapshot,
+															history->starting_state_vals_snapshot,
+															network_history);
 					history->state_network_histories[s_index] = network_history;
-					context.back().state_vals[s_index] += network->output->acti_vals[0];
+					context.back().state_vals->at(s_index) += this->state_networks[s_index]->output->acti_vals[0];
 				}
 			}
 		}
 	} else {
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-			if (state_types[s_index] != NULL) {
-				map<StateDefinition*, StateNetwork*>::iterator it = this->state_networks[s_index].find(
-					context.back().state_types[s_index]);
-				if (it != this->state_networks[s_index].end()
-						&& it->second != NULL) {
-					StateNetwork* network = it->second;
-					network->activate(history->obs_snapshot,
-									  history->starting_state_vals_snapshot);
-					context.back().state_vals[s_index] += network->output->acti_vals[0];
+			if (context.back().states_initialized[s_index]) {
+				if (this->state_networks[s_index] != NULL) {
+					this->state_networks[s_index]->activate(history->obs_snapshot,
+															history->starting_state_vals_snapshot);
+					context.back().state_vals->at(s_index) += this->state_networks[s_index]->output->acti_vals[0];
 				}
 			}
 		}
 	}
 
 	if (run_helper.explore_phase != EXPLORE_PHASE_EXPLORE) {
-		history->ending_state_vals_snapshot = context.back().state_vals;
+		history->ending_state_vals_snapshot = *(context.back().state_vals);
 
 		ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->score_network);
 		this->score_network->activate(history->ending_state_vals_snapshot,
@@ -61,25 +53,23 @@ void ActionNode::activate(vector<double>& flat_vals,
 	flat_vals.erase(flat_vals.begin());
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		int num_new_states = run_helper.experiment->num_new_states;
-
 		if (run_helper.scope_state_networks->at(this->id).size() == 0) {
-			for (int s_index = 0; s_index < num_new_states; s_index++) {
+			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				run_helper.scope_state_networks->at(this->id).push_back(
 					new StateNetwork(this->parent->num_states,
-									 num_new_states,
+									 NUM_NEW_STATES,
 									 20));
 			}
 			run_helper.scope_score_networks->at(this->id) = new ScoreNetwork(this->parent->num_states,
-																			 num_new_states,
+																			 NUM_NEW_STATES,
 																			 20);
 		}
 
 		history->experiment_context_index = run_helper.experiment_context_index;
 		history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-		history->new_state_network_histories = vector<StateNetworkHistory*>(num_new_states, NULL);
-		for (int s_index = 0; s_index < num_new_states; s_index++) {
+		history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
+		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			if (run_helper.can_zero && rand()%5 == 0) {
 				// do nothing
 			} else {
@@ -106,15 +96,13 @@ void ActionNode::activate(vector<double>& flat_vals,
 
 		run_helper.predicted_score += scale_factor*score_network->output->acti_vals[0];
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
-		int num_new_states = run_helper.experiment->num_new_states;
-
 		if (this->id < run_helper.scope_state_networks->size()
 				&& run_helper.scope_state_networks->at(this->id).size() > 0) {
 			history->experiment_context_index = run_helper.experiment_context_index;
 			history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-			history->new_state_network_histories = vector<StateNetworkHistory*>(num_new_states, NULL);
-			for (int s_index = 0; s_index < num_new_states; s_index++) {
+			history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
+			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				if (run_helper.can_zero && rand()%5 == 0) {
 					// do nothing
 				} else {

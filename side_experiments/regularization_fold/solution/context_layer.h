@@ -6,10 +6,10 @@ public:
 	int scope_id;
 	int node_id;
 
-	ScopeHistory* scope_history;
+	std::vector<double>* state_vals;	// actual copy in ScopeNode
+	std::vector<bool> states_initialized;
 
-	std::vector<double> state_vals;
-	std::vector<StateDefinition*> state_types;	// set to NULL if not initialized
+	ScopeHistory* scope_history;
 };
 
 class BackwardContextLayer {

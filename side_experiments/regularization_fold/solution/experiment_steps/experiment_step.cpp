@@ -4,10 +4,19 @@ using namespace std;
 
 void BranchExperiment::experiment_outer_activate_helper(
 		int context_index,
-		double& pre_scale_factor,
+		double& temp_scale_factor,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
+
+	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
+	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
+		seen_it[scope_id] = context_index;
+	} else {
+		if (seen_it->second > context_index) {
+			seen_it->second = context_index;
+		}
+	}
 
 	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
 	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
@@ -27,22 +36,22 @@ void BranchExperiment::experiment_outer_activate_helper(
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 				if (state_it->second[node_id].size() == 0) {
-					for (int s_index = 0; s_index < this->num_inner_inputs+5; s_index++) {
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
-											 this->num_new_states,
+											 NUM_NEW_STATES,
 											 20));
 					}
 					score_it->second[node_id] = new ScoreNetwork(scope_history->scope->num_states,
-																 this->num_new_states,
+																 NUM_NEW_STATES,
 																 20);
 				}
 
 				action_node_history->experiment_context_index = context_index;
 				action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-				action_node_history->new_state_network_histories = vector<StateNetworkHistory*>(this->num_new_states, NULL);
-				for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+				action_node_history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
+				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 					if (run_helper.can_zero && rand()%5 == 0) {
 						// do nothing
 					} else {
@@ -67,24 +76,24 @@ void BranchExperiment::experiment_outer_activate_helper(
 				action_node_history->new_score_network_history = score_network_history;
 				action_node_history->new_score_network_output = score_network->output->acti_vals[0];
 
-				run_helper.predicted_score += pre_scale_factor*score_network->output->acti_vals[0];
+				run_helper.predicted_score += temp_scale_factor*score_network->output->acti_vals[0];
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				pre_scale_factor *= scope_node->scope_scale_mod->weight;
+				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
 				if (i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
 					experiment_outer_activate_helper(context_index,
-													 pre_scale_factor,
+													 temp_scale_factor,
 													 run_helper,
 													 scope_node_history->inner_scope_history);
-				}
 
-				pre_scale_factor /= scope_node->scope_scale_mod->weight;
+					temp_scale_factor /= scope_node->scope_scale_mod->weight;
+				}
 			}
 		}
 	}
@@ -107,25 +116,16 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	} else {
 		run_helper.can_zero = false;
 	}
-	run_helper.new_state_vals = vector<double>(this->num_new_states, 0.0);
-	run_helper.new_state_types = vector<StateDefinition*>(this->num_new_states, NULL);
-	// only needed to track local init types
+	run_helper.new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
 
-	double pre_scale_factor = 1.0;
+	double temp_scale_factor = 1.0;
 
 	int context_size_diff = (int)context.size() - (int)this->scope_context.size();
 	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 		experiment_outer_activate_helper(c_index - context_size_diff,
-										 pre_scale_factor,
+										 temp_scale_factor,
 										 run_helper,
 										 context[c_index].scope_history);
-
-		for (int i_index = 0; i_index < this->num_inner_inputs; i_index++) {
-			if (this->local_init_scope_depths[i_index] == c_index - context_size_diff) {
-				run_helper.new_state_vals[i_index] += context[c_index].state_vals[this->local_init_input_indexes[i_index]];
-				// can be uninitialized (i.e., 0.0)
-			}
-		}
 	}
 
 	history->starting_state_vals_snapshot = context.back().state_vals;
@@ -151,8 +151,8 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 			history->step_obs_snapshots[a_index] = obs;
 			history->step_starting_new_state_vals_snapshots[a_index] = run_helper.new_state_vals;
 
-			history->step_state_network_histories[a_index] = vector<StateNetworkHistory*>(this->num_new_states, NULL);
-			for (int s_index = 0; s_index < this->num_new_states; s_index++) {
+			history->step_state_network_histories[a_index] = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
+			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				if (history->can_zero && rand()%5 == 0) {
 					// do nothing
 				} else {
@@ -179,9 +179,13 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
+			run_helper.experiment_step_index = a_index;
+
 			SequenceHistory* sequence_history = new SequenceHistory(this->sequences[a_index]);
 			history->sequence_histories[a_index] = sequence_history;
 			this->sequences[a_index]->experiment_activate(flat_vals,
+														  context,
+														  history,
 														  run_helper,
 														  sequence_history);
 		}
@@ -222,5 +226,6 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	}
 
 	run_helper.experiment_context_index--;
+	run_helper.experiment_step_index = -1;
 	run_helper.experiment_on_path = true;
 }

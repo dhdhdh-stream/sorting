@@ -5,8 +5,7 @@ class ActionNode : public AbstractNode {
 public:
 	// Action action;
 
-	std::vector<std::map<StateDefinition*, StateNetwork*>> state_networks;
-	// set to NULL if tried and decided network was unneeded
+	std::vector<StateNetwork*> state_networks;
 
 	ScoreNetwork* score_network;
 
@@ -34,9 +33,9 @@ public:
 	ScoreNetwork* new_score_network_history;
 	double new_score_network_output;
 
-	std::vector<int> experiment_sequence_indexes;
-	std::vector<std::vector<std::vector<int>>> input_vals_snapshots;
-	std::vector<std::vector<std::vector<StateNetworkHistory*>>> input_state_network_histories;
+	std::vector<int> experiment_sequence_step_indexes;
+	std::vector<std::vector<int>> input_vals_snapshots;
+	std::vector<std::vector<StateNetworkHistory*>> input_state_network_histories;
 };
 
 #endif /* ACTION_NODE_H */

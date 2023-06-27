@@ -5,6 +5,7 @@ const int SEQUENCE_INPUT_INIT_NONE = 0;
 const int SEQUENCE_INPUT_INIT_LOCAL = 1;
 const int SEQUENCE_INPUT_INIT_PREVIOUS = 2;
 const int SEQUENCE_INPUT_INIT_LAST_SEEN = 3;
+// if empty (i.e., not initialize), don't include in input_init_types, etc.
 
 class Sequence {
 public:
@@ -12,6 +13,8 @@ public:
 
 	/**
 	 * - non-loop
+	 * 
+	 * - if halfway activate, skip intermediary scopes
 	 */
 	std::vector<Scope*> scopes;
 
@@ -24,47 +27,62 @@ public:
 	 */
 	std::vector<int> starting_node_ids;
 
-	std::vector<std::vector<int>> input_init_types;
-	// needs to be state that isn't passed down further
-	std::vector<std::vector<int>> input_init_local_scope_depths;
-	std::vector<std::vector<int>> input_init_local_input_indexes;
+	std::vector<int> input_init_types;
+	std::vector<int> input_init_layer;
+	std::vector<int> input_init_target_index;
+	/**
+	 * - needs to be state that isn't passed down further
+	 * - don't reuse, even between different sequences
+	 *   - instead, use previous
+	 * - negative indexing from end
+	 */
+	std::vector<int> input_init_local_scope_depths;
+	std::vector<int> input_init_local_input_indexes;
 	/**
 	 * - if use previous, then take responsibility for setting value back
-	 *   - during experiment, gradually scale down impact to instead rely on exit networks
+	 * 
+	 * - if previous was local, then use original local class
+	 *   - so transformation goes from original local to inner_input
+	 *     - (so skipping previous input_inner_classes)
 	 */
-	std::vector<std::vector<int>> input_init_previous_step_index;
-	std::vector<std::vector<int>> input_init_previous_scope_index;
-	std::vector<std::vector<int>> input_init_previous_input_index;
-	std::vector<std::vector<StateDefinition*>> input_init_last_seen_types;
-	std::vector<std::vector<Transformation*>> input_init_transformations;
-	/**
-	 * - what networks to use in inner
-	 *   - may not match outer original type
-	 * - NULL if use outer original type
-	 */
-	std::vector<std::vector<StateDefinition*>> input_inner_types;
+	std::vector<int> input_init_previous_step_index;
+	std::vector<int> input_init_previous_input_index;
+	std::vector<ClassDefinition*> input_init_last_seen_classes;
+	std::vector<Transformation*> input_transformations;
 
 	std::vector<std::vector<int>> node_ids;
 	/**
 	 * - scope nodes always given empty context
 	 *   - so will always result in reasonable sequence
 	 *     - (though may not be optimal due to original scope's later explored early exits)
+	 *   - even if from halfway activate
 	 * 
 	 * - don't include branch nodes (and won't have exit nodes)
 	 *   - also on success, create new scopes rather than reuse original scopes
 	 *     - but inner scopes will be reused and generalized
 	 */
 
-	std::map<int, std::vector<std::vector<std::vector<StateNetwork*>>>> state_networks;
-	std::vector<std::vector<std::vector<StateNetwork*>>> step_state_networks;
-	std::vector<std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>>> sequence_state_networks;
+	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
+	std::vector<std::vector<StateNetwork*>> step_state_networks;
+	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
+
+	// share scope_further_layer_seen_in with experiment
+	std::vector<int> input_furthest_layer_seen_in;
+
+	std::vector<bool> input_is_new_class;
+
+	std::vector<std::vector<int>> scope_additions_needed;
+	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
 
 	void explore_activate(std::vector<double>& flat_vals,
-						  std::vector<double>& new_state_vals,
-						  std::vector<StateDefinition>& new_state_types,
+						  std::vector<ForwardContextLayer>& context,
+						  std::vector<Sequence*>& sequences,
+						  std::vector<std::vector<double>>& sequence_ending_input_vals_snapshots,
 						  RunHelper& run_helper);
 
 	void experiment_activate(std::vector<double>& flat_vals,
+							 std::vector<ForwardContextLayer>& context,
+							 BranchExperimentHistory* branch_experiment_history,
 							 RunHelper& run_helper,
 							 SequenceHistory* history);
 };
@@ -74,10 +92,10 @@ public:
 	Sequence* sequence;
 
 	// just tracking here rather than in BranchExperimentHistory
-	std::vector<std::vector<std::vector<double>>> step_input_vals_snapshots;
-	std::vector<std::vector<std::vector<StateNetworkHistory*>>> step_state_network_histories;
-	std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> sequence_input_vals_snapshots;
-	std::vector<std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>>> sequence_state_network_histories;
+	std::vector<std::vector<double>> step_input_vals_snapshots;
+	std::vector<std::vector<StateNetworkHistory*>> step_state_network_histories;
+	std::vector<std::vector<std::vector<std::vector<double>>>> sequence_input_vals_snapshots;
+	std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>> sequence_state_network_histories;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 

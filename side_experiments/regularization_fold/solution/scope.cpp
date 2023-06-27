@@ -5,15 +5,11 @@ using namespace std;
 
 
 void Scope::activate(vector<double>& flat_vals,
-					 vector<double>& state_vals,
-					 vector<StateDefinition*>& state_types,
-					 vector<ContextLayer>& context,
+					 vector<ForwardContextLayer>& context,
 					 int& exit_depth,
 					 int& exit_node_id,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
-	// TODO: switch back to updating context on scope start?
-
 	early_exit_depth = -1;
 
 	if (run_helper.experiment_scope_id == this->id) {
@@ -28,6 +24,24 @@ void Scope::activate(vector<double>& flat_vals,
 		run_helper.exceeded_depth = true;
 		history->exceeded_depth = true;
 		return;
+	}
+
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (state_it == run_helper.experiment->state_networks.end()) {
+			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
+			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
+		}
+
+		run_helper.scope_state_networks = &(state_it->second);
+		run_helper.scope_score_networks = &(score_it->second);
+
+		int size_diff = (int)this->nodes.size() - run_helper.scope_state_networks->size();
+		run_helper.scope_state_networks->insert(run_helper.scope_state_networks->end(), size_diff, vector<StateNetwork*>());
+		run_helper.scope_score_networks->insert(run_helper.scope_score_networks->end(), size_diff, NULL);
 	}
 
 	if (this->is_loop) {
@@ -49,14 +63,24 @@ void Scope::activate(vector<double>& flat_vals,
 		}
 	}
 
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+		run_helper.scope_state_networks = NULL;
+		run_helper.scope_score_networks = NULL;
+
+		if (run_helper.experiment_on_path) {
+			run_helper.experiment_context_index--;
+		}
+	}
+
 	run_helper.curr_depth--;
 }
 
 void Scope::handle_node_activate_helper(int iter_index,
 										int& curr_node_id,
 										vector<double>& flat_vals,
-										vector<double>& state_vals,
-										vector<TypeDefinition*>& state_types,
+										vector<ForwardContextLayer>& context,
 										int& exit_depth,
 										int& exit_node_id,
 										RunHelper& run_helper,
@@ -112,17 +136,15 @@ void Scope::handle_node_activate_helper(int iter_index,
 }
 
 void Scope::halfway_activate(vector<int>& starting_node_ids,
-							 vector<vector<double>>& starting_state_vals,
-							 vector<vector<StateDefinition*>>& starting_state_types,
+							 vector<vector<double>*>& starting_state_vals,
+							 vector<vector<bool>>& starting_states_initialized,
 							 vector<double>& flat_vals,
-							 vector<double>& state_vals,
-							 vector<StateDefinition*>& state_types,
-							 vector<ContextLayer>& context,
+							 vector<ForwardContextLayer>& context,
 							 int& exit_depth,
 							 int& exit_node_id,
 							 RunHelper& run_helper,
 							 ScopeHistory* history) {
-	early_exit_depth = -1;
+	exit_depth = -1;
 
 	if (run_helper.experiment_scope_id == this->id) {
 		run_helper.is_recursive = true;
@@ -144,9 +166,9 @@ void Scope::halfway_activate(vector<int>& starting_node_ids,
 
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
-	starting_state_vals.erase(starting_state_vals.begin());
-	starting_state_types.erase(starting_state_types.begin());
-	if (starting_node_ids.size() != 0) {
+	if (starting_node_ids.size() > 0) {
+		context.back().node_id = 0;
+
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
 		int inner_exit_depth;
@@ -156,22 +178,60 @@ void Scope::halfway_activate(vector<int>& starting_node_ids,
 		history->node_histories[0].push_back(node_history);
 		scope_node->halfway_activate(starting_node_ids,
 									 starting_state_vals,
-									 starting_state_types,
+									 starting_states_initialized,
 									 flat_vals,
-									 state_vals,
-									 state_types,
 									 context,
 									 inner_exit_depth,
 									 inner_exit_node_id,
 									 run_helper,
 									 node_history);
 
+		context.back().node_id = -1;
 
+		if (inner_exit_depth == 0) {
+			curr_node_id = inner_exit_node_id;
+		} else {
+			exit_depth = inner_exit_depth-1;
+			exit_node_id = inner_exit_node_id;
+		}
+	}
+
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (state_it == run_helper.experiment->state_networks.end()) {
+			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
+			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
+		}
+
+		run_helper.scope_state_networks = &(state_it->second);
+		run_helper.scope_score_networks = &(score_it->second);
+
+		int size_diff = (int)this->nodes.size() - run_helper.scope_state_networks->size();
+		run_helper.scope_state_networks->insert(run_helper.scope_state_networks->end(), size_diff, vector<StateNetwork*>());
+		run_helper.scope_score_networks->insert(run_helper.scope_score_networks->end(), size_diff, NULL);
 	}
 
 	while (true) {
+		if (curr_node_id == -1 || exit_depth != -1) {
+			break;
+		}
 
+		handle_node_activate_helper();
 	}
 
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
+			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+		run_helper.scope_state_networks = NULL;
+		run_helper.scope_score_networks = NULL;
 
+		if (run_helper.experiment_on_path) {
+			run_helper.experiment_context_index--;
+		}
+	}
+
+	run_helper.curr_depth--;
 }

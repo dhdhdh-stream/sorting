@@ -2,7 +2,7 @@
 #define BRANCH_EXPERIMENT_H
 
 const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 0;
-const int BRANCH_EXPERIMENT_STATE_NEW_TYPES = 1;
+const int BRANCH_EXPERIMENT_STATE_NEW_CLASS = 1;
 const int BRANCH_EXPERIMENT_STATE_CLEANUP = 2;
 
 const int BRANCH_EXPERIMENT_RESULT_FAIL = 0;
@@ -22,7 +22,7 @@ public:
 	std::vector<ScoreNetwork*> step_score_networks;
 
 	int exit_depth;
-	std::vector<std::map<StateDefinition*, ExitNetwork*>> exit_networks;
+	std::vector<ExitNetwork*> exit_networks;
 
 	double* existing_average_score;
 	double* existing_score_variance;
@@ -46,16 +46,16 @@ public:
 	int state_iter;
 	double sum_error;
 
-	std::vector<bool> input_is_new_type;
+	std::vector<std::vector<int>> scope_additions_needed;
+	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
 
-	std::vector<int> input_additions_needed;
-	std::vector<std::pair<int, int>> scope_node_additions_needed;
+
 
 };
 
 class BranchExperimentHistory {
 public:
-	BranchExperiment* branch_experiment;
+	BranchExperiment* experiment;
 
 	std::vector<double> starting_state_vals_snapshot;
 	std::vector<double> starting_new_state_vals_snapshot;
@@ -69,6 +69,7 @@ public:
 	std::vector<double> step_score_network_outputs;
 
 	std::vector<SequenceHistory*> sequence_histories;
+	std::vector<std::vector<double>> sequence_ending_input_vals_snapshots;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> exit_network_histories;

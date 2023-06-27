@@ -55,8 +55,20 @@ void BranchExperiment::experiment_transform() {
 
 	if (this->experiment_result != BRANCH_EXPERIMENT_RESULT_FAIL) {
 		// determine if new types needed
+		for (int a_index = 0; a_index < this->num_steps; a_index++) {
+			if (this->step_types[a_index] == EXPLORE_STEP_TYPE_SEQUENCE) {
+				this->sequences[a_index]->input_furthest_layer_seen_in = vector<int>(
+					this->sequences[a_index]->input_init_types.size(), (int)this->scope_context.size()+1);
+
+				for ()
+			}
+		}
+
+
+
 		this->new_state_furthest_layer_seen_in = vector<int>(this->num_new_states, (int)this->scope_context.size()+1);
 
+		// HERE, redo based around scopes
 		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
 				it != this->state_networks.end(); it++) {
 			for (int n_index = 0; n_index < it->second.size(); n_index++) {
