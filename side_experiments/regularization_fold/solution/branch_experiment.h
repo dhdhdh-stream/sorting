@@ -1,15 +1,14 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
-const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 0;
-const int BRANCH_EXPERIMENT_STATE_NEW_CLASS = 1;
-const int BRANCH_EXPERIMENT_STATE_CLEANUP = 2;
+const int BRANCH_EXPERIMENT_STEP_TYPE_ACTION = 0;
+const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 0;
 
 const int BRANCH_EXPERIMENT_RESULT_FAIL = 0;
 const int BRANCH_EXPERIMENT_RESULT_REPLACE = 1;
 const int BRANCH_EXPERIMENT_RESULT_BRANCH = 2;
 
-class BranchExperiment {
+class BranchExperiment : public Experiment {
 public:
 	int num_steps;
 	std::vector<int> step_types;
@@ -20,6 +19,8 @@ public:
 
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<ScoreNetwork*> step_score_networks;
+	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
+	std::vector<std::vector<std::vector<ScoreNetwork*>>> sequence_score_networks;
 
 	int exit_depth;
 	std::vector<ExitNetwork*> exit_networks;
@@ -42,9 +43,7 @@ public:
 	double curr_replace_average_misguess;
 	double curr_replace_misguess_variance;
 
-	int state;
-	int state_iter;
-	double sum_error;
+	std::map<int, vector<bool>> scope_steps_seen_in;
 
 	std::vector<std::vector<int>> scope_additions_needed;
 	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;

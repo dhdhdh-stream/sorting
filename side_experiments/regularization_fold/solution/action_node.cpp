@@ -52,6 +52,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 
 	flat_vals.erase(flat_vals.begin());
 
+	// TODO: redo based around combining to EXPLORE_PHASE_EXPERIMENT
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
 		if (run_helper.scope_state_networks->at(this->id).size() == 0) {
 			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {

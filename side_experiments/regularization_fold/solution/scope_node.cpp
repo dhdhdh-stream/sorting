@@ -17,7 +17,8 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
-	vector<double>* curr_state_vals = &(context.back().state_vals);
+	vector<double>* curr_state_vals = context.back().state_vals;
+	vector<bool>* curr_states_initialized = &(context.back().states_initialized);
 
 	context.push_back(ForwardContextLayer());
 
@@ -26,16 +27,22 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	vector<double> inner_state_vals(inner_scope->num_states, 0.0);
 	context.back().states_initialized = vector<bool>(inner_scope->num_states, false);
-	for (int i_index = 0; i_index < (int)this->inner_input_indexes[0].size(); i_index++) {
-		if (this->inner_input_types[0][i_index] == INNER_INPUT_TYPE_EXISTING) {
-			double val = curr_state_vals->at(this->inner_input_indexes[0][i_index]);
-			if (this->inner_input_transformations[0][i_index] != NULL) {
-				val = this->inner_input_transformations[0][i_index]->forward(val);
-			}
-			inner_state_vals[this->inner_input_target_indexes[0][i_index]] = val;
-		}
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_target_layers[i_index] == 0) {
+			if (this->input_types[i_index] == INPUT_TYPE_EXISTING) {
+				if (curr_states_initialized->at(this->input_indexes[i_index])) {
+					double val = curr_state_vals->at(this->input_indexes[i_index]);
+					if (this->input_transformations[i_index] != NULL) {
+						val = this->input_transformations[i_index]->forward(val);
+					}
+					inner_state_vals[this->input_target_indexes[i_index]] = val;
 
-		context.back().states_initialized[this->inner_input_target_indexes[0][i_index]] = true;
+					context.back().states_initialized[this->input_target_indexes[i_index]] = true;
+				}
+			} else {
+				context.back().states_initialized[this->input_target_indexes[i_index]] = true;
+			}
+		}
 	}
 	context.back().state_vals = &inner_state_vals;
 
@@ -59,34 +66,41 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	if (this->scope_node_type == SCOPE_NODE_TYPE_HALFWAY_START) {
 		vector<int> starting_node_ids_copy = this->starting_node_ids;
-		vector<vector<double>> starting_state_vals(this->inner_input_indexes.size()-1);
-		vector<vector<bool>> starting_states_initialized(this->inner_input_indexes.size()-1);
+		vector<vector<double>> starting_state_vals(this->starting_node_ids.size()-1);
+		vector<vector<bool>> starting_states_initialized(this->starting_node_ids.size()-1);
+
 		Scope* curr_scope = solution->scopes[this->inner_scope_id];
-		for (int l_index = 0; l_index < this->inner_input_indexes.size()-1; l_index++) {
+		for (int l_index = 0; l_index < this->starting_node_ids.size()-1; l_index++) {
 			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
 			Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
 
 			starting_state_vals[l_index] = vector<double>(next_scope->num_states, 0.0);
 			starting_states_initialized[l_index] = vector<bool>(next_scope->num_states, false);
-			for (int i_index = 0; i_index < this->inner_input_indexes[1+l_index].size(); i_index++) {
-				if (this->inner_input_types[1+l_index][i_index] == INNER_INPUT_TYPE_EXISTING) {
-					double val = curr_state_vals->at(this->inner_input_indexes[1+l_index][i_index]);
-					if (this->inner_input_transformations[1+l_index][i_index] != NULL) {
-						val = this->inner_input_transformations[1+l_index][i_index]->forward(val);
-					}
-					starting_state_vals[l_index][this->inner_input_target_indexes[1+l_index][i_index]] = val;
-				}
-
-				starting_states_initialized[this->inner_input_target_indexes[1+l_index][i_index]] = true;
-			}
 
 			curr_scope = next_scope;
+		}
+		for (int i_index = 0; i_index < this->input_types.size(); i_index++) {
+			if (this->input_target_layers[i_index] != 0) {
+				if (this->input_types[i_index] == INPUT_TYPE_EXISTING) {
+					if (curr_states_initialized->at(this->input_indexes[i_index])) {
+						double val = curr_state_vals->at(this->input_indexes[i_index]);
+						if (this->input_transformations[i_index] != NULL) {
+							val = this->input_transformations[i_index]->forward(val);
+						}
+						starting_state_vals[this->input_target_layers[i_index]-1][this->input_target_indexes[i_index]] = val;
+
+						starting_states_initialized[this->input_target_layers[i_index]-1][this->input_target_indexes[i_index]] = true;
+					}
+				} else {
+					starting_states_initialized[this->input_target_layers[i_index]-1][this->input_target_indexes[i_index]] = true;
+				}
+			}
 		}
 
 		// currently, starting_node_ids.size() == starting_state_vals.size()+1
 
-		vector<vector<double>*> inner_starting_state_vals(this->inner_input_indexes.size()-1);
-		for (int l_index = 0; l_index < this->inner_input_indexes.size()-1; l_index++) {
+		vector<vector<double>*> inner_starting_state_vals(this->starting_node_ids.size()-1);
+		for (int l_index = 0; l_index < this->starting_node_ids.size()-1; l_index++) {
 			inner_starting_state_vals[l_index] = &starting_state_vals[l_index];
 		}
 
@@ -108,17 +122,21 @@ void ScopeNode::activate(vector<double>& flat_vals,
 							  inner_scope_history);
 	}
 
-	for (int i_index = 0; i_index < (int)this->inner_input_indexes[0].size(); i_index++) {
-		if (this->inner_input_types[0][i_index] == INNER_INPUT_TYPE_EXISTING) {
-			double val = context.back().state_vals[this->inner_input_target_indexes[0][i_index]];
-			if (this->inner_input_transformations[0][i_index] != NULL) {
-				val = this->inner_input_transformations[0][i_index]->backward(val);
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_target_layers[i_index] == 0) {
+			if (this->input_types[i_index] == INPUT_TYPE_EXISTING) {
+				if (curr_states_initialized->at(this->input_indexes[i_index])) {
+					double val = inner_state_vals[this->input_target_indexes[i_index]];
+					if (this->input_transformations[i_index] != NULL) {
+						val = this->input_transformations[i_index]->backward(val);
+					}
+					curr_state_vals->at(this->input_indexes[i_index]) = val;
+				}
+			} else {
+				ClassDefinition* inner_input_class = inner_scope->default_state_classes[this->input_target_indexes[i_index]];
+				run_helper.last_seen_vals[inner_input_class] = inner_state_vals[this->input_target_indexes[i_index]];
 			}
-			curr_state_vals->at(this->inner_input_indexes[0][i_index]) = val;
 		}
-
-		ClassDefinition* inner_input_class = inner_scope->default_state_classes[this->inner_input_target_indexes[0][i_index]];
-		run_helper.last_seen_vals[inner_input_class] = context.back().state_vals[this->inner_input_target_indexes[0][i_index]];
 	}
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
@@ -147,7 +165,8 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
-	vector<double>* curr_state_vals = &(context.back().state_vals);
+	vector<double>* curr_state_vals = context.back().state_vals;
+	vector<bool>* curr_states_initialized = &(context.back().states_initialized);
 
 	context.push_back(ForwardContextLayer());
 
@@ -177,17 +196,20 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 						  run_helper,
 						  inner_scope_history);
 
-	for (int i_index = 0; i_index < (int)this->inner_input_indexes[0].size(); i_index++) {
-		if (this->inner_input_types[0][i_index] == INNER_INPUT_TYPE_EXISTING) {
-			double val = context.back().state_vals[this->inner_input_target_indexes[0][i_index]];
-			if (this->inner_input_transformations[0][i_index] != NULL) {
-				val = this->inner_input_transformations[0][i_index]->backward(val);
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		// this->input_target_layers[i_index] == 0
+		if (this->input_types[i_index] == INPUT_TYPE_EXISTING) {
+			if (curr_states_initialized->at(this->input_indexes[i_index])) {
+				double val = context.back().state_vals->at(this->input_target_indexes[i_index]);
+				if (this->input_transformations[i_index] != NULL) {
+					val = this->input_transformations[i_index]->backward(val);
+				}
+				curr_state_vals->at(this->input_indexes[i_index]) = val;
 			}
-			curr_state_vals->at(this->inner_input_indexes[0][i_index]) = val;
+		} else {
+			ClassDefinition* inner_input_class = inner_scope->default_state_classes[this->input_target_indexes[i_index]];
+			run_helper.last_seen_vals[inner_input_class] = context.back().state_vals->at(this->input_target_indexes[i_index]);
 		}
-
-		ClassDefinition* inner_input_class = inner_scope->default_state_classes[this->inner_input_target_indexes[0][i_index]];
-		run_helper.last_seen_vals[inner_input_class] = context.back().state_vals[this->inner_input_target_indexes[0][i_index]];
 	}
 
 	context.pop_back();

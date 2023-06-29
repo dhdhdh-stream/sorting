@@ -42,6 +42,24 @@ void Scope::activate(vector<double>& flat_vals,
 		int size_diff = (int)this->nodes.size() - run_helper.scope_state_networks->size();
 		run_helper.scope_state_networks->insert(run_helper.scope_state_networks->end(), size_diff, vector<StateNetwork*>());
 		run_helper.scope_score_networks->insert(run_helper.scope_score_networks->end(), size_diff, NULL);
+
+		map<int, int>::iterator layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.find(this->id);
+		if (layer_seen_in_it == run_helper.experiment->scope_furthest_layer_seen_in.end()) {
+			run_helper.experiment->scope_furthest_layer_seen_in[this->id] = run_helper.experiment_context_index;
+		} else {
+			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
+				layer_seen_in_it->second = run_helper.experiment_context_index;
+			}
+		}
+
+		if (run_helper.experiment_step_index != -1) {
+			BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
+			map<int, vector<bool>>::iterator steps_seen_in_it = branch_experiment->scope_steps_seen_in.find(this->id);
+			if (steps_seen_in_it == branch_experiment->scope_steps_seen_in.end()) {
+				steps_seen_in_it = branch_experiment->scope_steps_seen_in.insert({this->id, vector<bool>(branch_experiment->num_steps, false)}).first;
+			}
+			steps_seen_in_it[run_helper.experiment_step_index] = true;
+		}
 	}
 
 	if (this->is_loop) {

@@ -9,12 +9,11 @@ const int SEQUENCE_INPUT_INIT_LAST_SEEN = 3;
 
 class Sequence {
 public:
+	BranchExperiment* experiment;
 	int step_index;
 
 	/**
 	 * - non-loop
-	 * 
-	 * - if halfway activate, skip intermediary scopes
 	 */
 	std::vector<Scope*> scopes;
 
@@ -28,8 +27,8 @@ public:
 	std::vector<int> starting_node_ids;
 
 	std::vector<int> input_init_types;
-	std::vector<int> input_init_layer;
-	std::vector<int> input_init_target_index;
+	std::vector<int> input_init_target_layers;
+	std::vector<int> input_init_target_indexes;
 	/**
 	 * - needs to be state that isn't passed down further
 	 * - don't reuse, even between different sequences
@@ -45,8 +44,8 @@ public:
 	 *   - so transformation goes from original local to inner_input
 	 *     - (so skipping previous input_inner_classes)
 	 */
-	std::vector<int> input_init_previous_step_index;
-	std::vector<int> input_init_previous_input_index;
+	std::vector<int> input_init_previous_step_indexes;
+	std::vector<int> input_init_previous_input_indexes;
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
 
@@ -66,8 +65,8 @@ public:
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
 
-	// share scope_further_layer_seen_in with experiment
 	std::vector<int> input_furthest_layer_seen_in;
+	std::vector<std::vector<bool>> input_steps_seen_in;
 
 	std::vector<bool> input_is_new_class;
 
