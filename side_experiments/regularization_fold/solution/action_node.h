@@ -10,6 +10,12 @@ public:
 	ScoreNetwork* score_network;
 
 
+	bool is_explore;
+	std::vector<int> explore_scope_context;
+	std::vector<int> explore_node_context;
+	int explore_curr_try;
+	double best_explore_surprise;
+	AbstractExperiment* best_experiment;
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,

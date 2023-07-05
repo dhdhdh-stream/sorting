@@ -10,9 +10,18 @@ const int EXPERIMENT_STATE_EXPERIMENT = 0;
 const int EXPERIMENT_STATE_NEW_CLASSES = 1;	// for branch
 const int EXPERIMENT_STATE_MEASURE = 1;		// for loop
 
+/**
+ * - add new state and update score networks in a controlled way
+ *   - only activate experiment depending on score
+ *     - but mark that experiment seen for run
+ */
 const int EXPERIMENT_STATE_CLEANUP = 2;
 
+const double DEFAULT_LASSO_WEIGHT = 0.2;
+
 const int NUM_NEW_STATES = 8;
+const std::vector<double> DEFAULT_NEW_STATE_LASSO_WEIGHTS{
+	0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2};
 
 class AbstractExperiment {
 public:
@@ -41,7 +50,9 @@ public:
 	std::map<int, int> scope_furthest_layer_seen_in;
 
 	std::vector<int> new_state_furthest_layer_seen_in;
+	int final_num_new_states;
 	std::vector<int> layer_num_new_states;
+	std::vector<int> last_layer_new_state_indexes;
 
 };
 

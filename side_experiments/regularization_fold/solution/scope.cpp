@@ -108,7 +108,10 @@ void Scope::handle_node_activate_helper(int iter_index,
 
 		ActionNodeHistory* node_history = new ActionNodeHistory(action_node);
 		history->node_histories[iter_index].push_back(node_history);
-		action_node->activate();
+		action_node->activate(flat_vals,
+							  context,
+							  run_helper,
+							  node_history);
 
 		if (action_node->is_explore
 				&& run_helper.explore_phase == EXPLORE_PHASE_NONE) {

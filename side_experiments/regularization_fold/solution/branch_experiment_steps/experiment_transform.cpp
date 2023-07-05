@@ -97,6 +97,9 @@ void BranchExperiment::experiment_transform() {
 							}
 
 							if (sum_obs_impact > 0.1) {
+								if (this->scopes.size()+1 < this->sequences[a_index]->input_furthest_layer_seen_in[i_index]) {
+									this->sequences[a_index]->input_furthest_layer_seen_in[i_index] = this->scopes.size()+1;
+								}
 								this->sequences[a_index]->input_steps_seen_in[i_index][ia_index] = true;
 							}
 						} else {
@@ -112,6 +115,9 @@ void BranchExperiment::experiment_transform() {
 										}
 
 										if (sum_obs_impact > 0.1) {
+											if (this->scopes.size()+1 < this->sequences[a_index]->input_furthest_layer_seen_in[i_index]) {
+												this->sequences[a_index]->input_furthest_layer_seen_in[i_index] = this->scopes.size()+1;
+											}
 											this->sequences[a_index]->input_steps_seen_in[i_index][ia_index] = true;
 										}
 									}
@@ -155,6 +161,7 @@ void BranchExperiment::experiment_transform() {
 		// remove networks if not new type
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+				int input_size = this->sequences[a_index]->input_init_types.size();
 				for (int i_index = 0; i_index < input_size; i_index++) {
 					if (!this->sequences[a_index]->input_is_new_class[i_index]) {
 						for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
@@ -175,19 +182,18 @@ void BranchExperiment::experiment_transform() {
 						}
 
 						for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
-							double sum_obs_impact = 0.0;
-							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_obs_impact += abs(this->sequences[a_index]->step_state_networks[ia_index][i_index]->hidden->weights[in_index][0][0]);
-							}
+							if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+								double sum_obs_impact = 0.0;
+								for (int in_index = 0; in_index < 20; in_index++) {
+									sum_obs_impact += abs(this->sequences[a_index]->step_state_networks[ia_index][i_index]->hidden->weights[in_index][0][0]);
+								}
 
-							if (sum_obs_impact < 0.1) {
-								delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
-								this->sequences[a_index]->step_state_networks[ia_index][i_index] = NULL;
-							}
-						}
-
-						for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
-							if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+								if (sum_obs_impact < 0.1) {
+									delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
+									this->sequences[a_index]->step_state_networks[ia_index][i_index] = NULL;
+								}
+							} else {
+								// this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE
 								for (int s_index = 0; s_index < (int)this->sequences[ia_index]->scopes.size(); s_index++) {
 									Scope* scope = solution->scopes[this->sequences[ia_index]->scopes[s_index]];
 									for (int n_index = 0; n_index < (int)this->sequences[ia_index]->node_ids[s_index].size(); n_index++) {
@@ -214,6 +220,7 @@ void BranchExperiment::experiment_transform() {
 
 		// remove unnecessary new state
 		this->new_state_furthest_layer_seen_in = vector<int>(NUM_NEW_STATES, this->scope_context.size()+2);
+		vector<int> new_state_furthest_layer_used_in = vector<int>(NUM_NEW_STATES, this->scope_context.size()+2);
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
 					it != this->state_networks.end(); it++) {
@@ -221,19 +228,37 @@ void BranchExperiment::experiment_transform() {
 
 				for (int n_index = 0; n_index < it->second.size(); n_index++) {
 					if (it->second[n_index].size() > 0) {
-						for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
-							double sum_obs_impact = 0.0;
-							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_obs_impact += abs(it->second[n_index][is_index]->hidden->weights[in_index][0][0]);
-							}
+						double sum_obs_impact = 0.0;
+						for (int in_index = 0; in_index < 20; in_index++) {
+							sum_obs_impact += abs(it->second[n_index][s_index]->hidden->weights[in_index][0][0]);
+						}
 
-							if (sum_obs_impact > 0.1) {
-								if (furthest_layer_seen_in < this->new_state_furthest_layer_seen_in[s_index]) {
-									this->new_state_furthest_layer_seen_in[s_index] = furthest_layer_seen_in;
-								}
-							} else {
-								delete it->second[n_index][is_index];
-								it->second[n_index][is_index] = NULL;
+						if (sum_obs_impact > 0.1) {
+							if (furthest_layer_seen_in < this->new_state_furthest_layer_seen_in[s_index]) {
+								this->new_state_furthest_layer_seen_in[s_index] = furthest_layer_seen_in;
+							}
+						} else {
+							delete it->second[n_index][s_index];
+							it->second[n_index][s_index] = NULL;
+						}
+					}
+				}
+			}
+
+			for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
+					it != this->score_networks.end(); it++) {
+				int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+
+				for (int n_index = 0; n_index < it->second.size(); n_index++) {
+					if (it->second[n_index] != NULL) {
+						double sum_state_impact = 0.0;
+						for (int in_index = 0; in_index < 20; in_index++) {
+							sum_state_impact += abs(it->second[n_index]->hidden->weights[in_index][1][s_index]);
+						}
+
+						if (sum_state_impact > 0.1) {
+							if (furthest_layer_seen_in < new_state_furthest_layer_used_in[s_index]) {
+								new_state_furthest_layer_used_in[s_index] = furthest_layer_seen_in;
 							}
 						}
 					}
@@ -282,6 +307,14 @@ void BranchExperiment::experiment_transform() {
 			}
 		}
 
+		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+			if (this->new_state_furthest_layer_seen_in[s_index] < this->scopes.size()+2) {
+				if (new_state_furthest_layer_used_in[s_index] < this->new_state_furthest_layer_seen_in[s_index]) {
+					this->new_state_furthest_layer_seen_in[s_index] = new_state_furthest_layer_used_in[s_index];
+				}
+			}
+		}
+
 		for (int s_index = NUM_NEW_STATES-1; s_index >= 1; s_index--) {
 			if (this->new_state_furthest_layer_seen_in[s_index-1] > this->new_state_furthest_layer_seen_in[s_index]) {
 				this->new_state_furthest_layer_seen_in[s_index-1] = this->new_state_furthest_layer_seen_in[s_index];
@@ -299,7 +332,114 @@ void BranchExperiment::experiment_transform() {
 		}
 
 		// clean connections
-		
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
+				it != this->state_networks.end(); it++) {
+			int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+			int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
+
+			for (int n_index = 0; n_index < it->second.size(); n_index++) {
+				if (it->second[n_index].size() > 0) {
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+						if (it->second[n_index][s_index] != NULL) {
+							it->second[n_index][s_index]->clean(num_new_states);
+						}
+					}
+				}
+			}
+		}
+
+		for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
+				it != this->score_networks.end(); it++) {
+			int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+			int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
+
+			for (int n_index = 0; n_index < it->second.size(); n_index++) {
+				if (it->second[n_index].size() > 0) {
+					if (it->second[n_index] != NULL) {
+						it->second[n_index]->clean(num_new_states);
+					}
+				}
+			}
+		}
+
+		for (int a_index = 0; a_index < this->num_steps; a_index++) {
+			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					if (this->step_state_networks[a_index][s_index] != NULL) {
+						this->step_state_networks[a_index][s_index]->clean(this->layer_num_new_states.back());
+					}
+				}
+
+				this->step_score_networks[a_index]->clean(this->layer_num_new_states.back());
+			} else {
+				// this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE
+				for (int s_index = 0; s_index < (int)this->sequences[a_index]->scopes.size(); s_index++) {
+					Scope* scope = solution->scopes[this->sequences[a_index]->scopes[s_index]];
+					for (int n_index = 0; n_index < (int)this->sequences[a_index]->node_ids[s_index].size(); n_index++) {
+						if (scope->nodes[this->sequences[a_index]->node_ids[s_index][n_index]]->type == NODE_TYPE_ACTION) {
+							for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
+								StateNetwork* network = this->sequence_state_networks[a_index][s_index]
+									[this->sequences[a_index]->node_ids[s_index][n_index]][is_index];
+								if (network != NULL) {
+									network->clean(this->layer_num_new_states.back());
+								}
+							}
+
+							this->sequence_score_networks[a_index][s_index]
+								[this->sequences[a_index]->node_ids[s_index][n_index]]->clean(this->layer_num_new_states.back());
+						}
+					}
+				}
+			}
+		}
+
+		for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
+			if (this->exit_network_impacts[s_index] < 0.1) {
+				delete this->exit_networks[s_index];
+				this->exit_networks[s_index] = NULL;
+			} else {
+				this->exit_networks[s_index]->clean(this->layer_num_new_states.back());
+			}
+		}
+
+		for (int a_index = 0; a_index < this->num_steps; a_index++) {
+			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+				int input_size = this->sequences[a_index]->input_init_types.size();
+				for (int i_index = 0; i_index < input_size; i_index++) {
+					for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
+							it != this->sequences[a_index]->state_networks.end(); it++) {
+						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+						int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
+
+						for (int n_index = 0; n_index < it->second.size(); n_index++) {
+							if (it->second[n_index].size() > 0) {
+								if (it->second[n_index][i_index] != NULL) {
+									it->second[n_index][i_index]->clean(num_new_states);
+								}
+							}
+						}
+					}
+
+					for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
+						if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+							if (this->sequences[a_index]->step_state_networks[ia_index][i_index] != NULL) {
+								this->sequences[a_index]->step_state_networks[ia_index][i_index]->clean(num_new_states);
+							}
+						} else {
+							// this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE
+							for (int s_index = 0; s_index < (int)this->sequences[ia_index]->scopes.size(); s_index++) {
+								Scope* scope = solution->scopes[this->sequences[ia_index]->scopes[s_index]];
+								for (int n_index = 0; n_index < (int)this->sequences[ia_index]->node_ids[s_index].size(); n_index++) {
+									if (scope->nodes[this->sequences[ia_index]->node_ids[s_index][n_index]]->type == NODE_TYPE_ACTION) {
+										this->sequences[a_index]->sequence_state_networks[ia_index][s_index][n_index][i_index]->clean(num_new_states);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		this->state = EXPERIMENT_STATE_NEW_CLASSES;
 		this->state_iter = 0;

@@ -35,9 +35,9 @@ public:
 	void backprop();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
-	void lasso_update_weights(double lambda,
+	void lasso_update_weights(double lasso_weight,
 							  double learning_rate);
-	void lasso_update_weights(std::vector<double>& lambdas,
+	void lasso_update_weights(std::vector<std::vector<double>>& lasso_weights,
 							  double learning_rate);
 
 	void backprop_errors_with_no_weight_change();
@@ -45,8 +45,11 @@ public:
 
 	void save_weights(std::ofstream& output_file);
 
-	void hidden_add_state();
-	void hidden_remove_state(int index);
+	void state_hidden_finalize_new_state();
+	void state_hidden_finalize_new_input();
+	void score_hidden_finalize_new_state(int new_total_states);
+	void score_hidden_add_new_state(int new_state_size);
+	void exit_hidden_finalize_new_state();
 };
 
 #endif /* LAYER_H */

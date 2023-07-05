@@ -234,7 +234,7 @@ void Layer::update_weights(double learning_rate) {
 	}
 }
 
-void Layer::lasso_update_weights(double lambda,
+void Layer::lasso_update_weights(double lasso_weight,
 								 double learning_rate) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
@@ -245,10 +245,10 @@ void Layer::lasso_update_weights(double lambda,
 				this->weight_updates[n_index][l_index][ln_index] = 0.0;
 				this->weights[n_index][l_index][ln_index] += update;
 
-				if (this->weights[n_index][l_index][ln_index] > lambda*learning_rate) {
-					this->weights[n_index][l_index][ln_index] -= lambda*learning_rate;
-				} else if (this->weights[n_index][l_index][ln_index] < -lambda*learning_rate) {
-					this->weights[n_index][l_index][ln_index] += lambda*learning_rate;
+				if (this->weights[n_index][l_index][ln_index] > lasso_weight*learning_rate) {
+					this->weights[n_index][l_index][ln_index] -= lasso_weight*learning_rate;
+				} else if (this->weights[n_index][l_index][ln_index] < -lasso_weight*learning_rate) {
+					this->weights[n_index][l_index][ln_index] += lasso_weight*learning_rate;
 				} else {
 					this->weights[n_index][l_index][ln_index] = 0.0;
 				}
@@ -262,7 +262,7 @@ void Layer::lasso_update_weights(double lambda,
 	}
 }
 
-void Layer::lasso_update_weights(vector<double>& lambdas,
+void Layer::lasso_update_weights(vector<vector<double>>& lasso_weights,
 								 double learning_rate) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
@@ -273,10 +273,10 @@ void Layer::lasso_update_weights(vector<double>& lambdas,
 				this->weight_updates[n_index][l_index][ln_index] = 0.0;
 				this->weights[n_index][l_index][ln_index] += update;
 
-				if (this->weights[n_index][l_index][ln_index] > lambdas[ln_index]*learning_rate) {
-					this->weights[n_index][l_index][ln_index] -= lambdas[ln_index]*learning_rate;
-				} else if (this->weights[n_index][l_index][ln_index] < -lambdas[ln_index]*learning_rate) {
-					this->weights[n_index][l_index][ln_index] += lambdas[ln_index]*learning_rate;
+				if (this->weights[n_index][l_index][ln_index] > lasso_weights[l_index][ln_index]*learning_rate) {
+					this->weights[n_index][l_index][ln_index] -= lasso_weights[l_index][ln_index]*learning_rate;
+				} else if (this->weights[n_index][l_index][ln_index] < -lasso_weights[l_index][ln_index]*learning_rate) {
+					this->weights[n_index][l_index][ln_index] += lasso_weights[l_index][ln_index]*learning_rate;
 				} else {
 					this->weights[n_index][l_index][ln_index] = 0.0;
 				}
@@ -403,19 +403,5 @@ void Layer::save_weights(ofstream& output_file) {
 			output_file << endl;
 		}
 		output_file << this->constants[n_index] << endl;
-	}
-}
-
-void Layer::hidden_add_state() {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][1].push_back((randuni()-0.5)*0.02);
-		this->weight_updates[n_index][1].push_back(0.0);
-	}
-}
-
-void Layer::hidden_remove_state(int index) {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		this->weights[n_index][1].erase(this->weights[n_index][1].begin()+index);
-		this->weight_updates[n_index][1].erase(this->weight_updates[n_index][1].begin()+index);
 	}
 }

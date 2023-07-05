@@ -20,10 +20,14 @@ public:
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<ScoreNetwork*> step_score_networks;
 	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
+	// temporary to determine state needed
 	std::vector<std::vector<std::vector<ScoreNetwork*>>> sequence_score_networks;
 
-	int exit_depth;
+	Scale* sequence_scale_factors;
+
+	int exit_depth;	// including new experiment scope
 	std::vector<ExitNetwork*> exit_networks;
+	std::vector<double> exit_network_impacts;
 
 	double* existing_average_score;
 	double* existing_score_variance;
@@ -71,6 +75,7 @@ public:
 	std::vector<std::vector<double>> sequence_ending_input_vals_snapshots;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
+	std::vector<double> exit_new_state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> exit_network_histories;
 };
 

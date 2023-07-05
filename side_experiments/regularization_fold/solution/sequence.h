@@ -49,6 +49,8 @@ public:
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
 
+	// TODO: will need to add new state
+
 	std::vector<std::vector<int>> node_ids;
 	/**
 	 * - scope nodes always given empty context
@@ -73,17 +75,11 @@ public:
 	std::vector<std::vector<int>> scope_additions_needed;
 	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
 
-	void explore_activate(std::vector<double>& flat_vals,
-						  std::vector<ForwardContextLayer>& context,
-						  std::vector<Sequence*>& sequences,
-						  std::vector<std::vector<double>>& sequence_ending_input_vals_snapshots,
-						  RunHelper& run_helper);
-
-	void experiment_activate(std::vector<double>& flat_vals,
-							 std::vector<ForwardContextLayer>& context,
-							 BranchExperimentHistory* branch_experiment_history,
-							 RunHelper& run_helper,
-							 SequenceHistory* history);
+	void activate(std::vector<double>& flat_vals,
+				  std::vector<ForwardContextLayer>& context,
+				  BranchExperimentHistory* branch_experiment_history,
+				  RunHelper& run_helper,
+				  SequenceHistory* history);
 };
 
 class SequenceHistory {

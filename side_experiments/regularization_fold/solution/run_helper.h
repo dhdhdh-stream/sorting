@@ -15,7 +15,6 @@ public:
 	// if explore exists, but not triggered, still track
 
 	std::map<StateDefinition*, double> last_seen_vals;
-	// update beginning and end of scope nodes
 
 	AbstractExperiment* experiment;
 	bool can_zero;
