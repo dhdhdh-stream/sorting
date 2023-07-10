@@ -4,23 +4,34 @@
  *   - if something new has to be created, it won't need to involve exit nodes, just action nodes
  */
 
-#ifndef SCOPE_EXIT_NODE_H
-#define SCOPE_EXIT_NODE_H
+#ifndef EXIT_NODE_H
+#define EXIT_NODE_H
 
-class ScopeExitNode : public AbstractNode {
+class ExitNode : public AbstractNode {
 public:
-	int exit_depth;
+	int exit_depth;		// can be 0
 	int exit_node_id;
 
-	std::vector<std::map<StateDefinition*, ExitNetwork*>> networks;
+	std::vector<int> target_indexes;
+	std::vector<ExitNetwork*> networks;
 
+
+
+	void activate(std::vector<ForwardContextLayer>& context,
+				  RunHelper& run_helper,
+				  ExitNodeHistory* history);
+	void backprop(std::vector<BackwardContextLayer>& context,
+				  RunHelper& run_helper,
+				  ExitNodeHistory* history);
+
+	
 };
 
-class ScopeExitNodeHistory : public AbstractNodeHistory {
+class ExitNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<std::vector<double>> state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> network_histories;
 
 };
 
-#endif /* SCOPE_EXIT_NODE_H */
+#endif /* EXIT_NODE_H */

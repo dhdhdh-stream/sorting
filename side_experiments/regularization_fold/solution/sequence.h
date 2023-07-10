@@ -27,6 +27,9 @@ public:
 	std::vector<int> starting_node_ids;
 
 	std::vector<int> input_init_types;
+	/**
+	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down and up
+	 */
 	std::vector<int> input_init_target_layers;
 	std::vector<int> input_init_target_indexes;
 	/**
@@ -35,6 +38,10 @@ public:
 	 *   - instead, use previous
 	 * - negative indexing from end
 	 */
+	// TODO: when lasso-ing, instead of obs, include using existing state as well (but not new)
+	// - remove init previous, and just rely on last seen
+	// - keep local, as that is as much about setting values back as getting them
+	//   - if 2 sequences use same local, first will re-set, then second will refetch (and re-set again)
 	std::vector<int> input_init_local_scope_depths;
 	std::vector<int> input_init_local_input_indexes;
 	/**
@@ -49,8 +56,6 @@ public:
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
 
-	// TODO: will need to add new state
-
 	std::vector<std::vector<int>> node_ids;
 	/**
 	 * - scope nodes always given empty context
@@ -64,8 +69,10 @@ public:
 	 */
 
 	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
+	// save separately from experiment to more easily update lasso weights
+	std::map<int, int> scope_furthest_layer_seen_in;
+
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
-	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
 
 	std::vector<int> input_furthest_layer_seen_in;
 	std::vector<std::vector<bool>> input_steps_seen_in;
@@ -80,6 +87,11 @@ public:
 				  BranchExperimentHistory* branch_experiment_history,
 				  RunHelper& run_helper,
 				  SequenceHistory* history);
+	void backprop(std::vector<BackwardContextLayer>& context,
+				  double& scale_factor_error,
+				  RunHelper& run_helper,
+				  SequenceHistory* history);
+
 };
 
 class SequenceHistory {
@@ -89,8 +101,6 @@ public:
 	// just tracking here rather than in BranchExperimentHistory
 	std::vector<std::vector<double>> step_input_vals_snapshots;
 	std::vector<std::vector<StateNetworkHistory*>> step_state_network_histories;
-	std::vector<std::vector<std::vector<std::vector<double>>>> sequence_input_vals_snapshots;
-	std::vector<std::vector<std::vector<std::vector<StateNetworkHistory*>>>> sequence_state_network_histories;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 

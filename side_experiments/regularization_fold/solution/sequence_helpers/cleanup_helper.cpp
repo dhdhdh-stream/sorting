@@ -60,8 +60,6 @@ void Sequence::cleanup_experiment_activate_helper(
 		SequenceHistory* history) {
 	history->step_input_vals_snapshots = vector<vector<double>>(this->step_index);
 	history->step_state_network_histories = vector<vector<StateNetworkHistory*>>(this->step_index);
-	history->sequence_input_vals_snapshots = vector<vector<vector<vector<double>>>>(this->step_index);
-	history->sequence_state_network_histories = vector<vector<vector<vector<StateNetworkHistory*>>>>(this->step_index);
 	for (int a_index = 0; a_index < this->step_index; a_index++) {
 		if (this->experiment->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
 			history->step_input_vals_snapshots[a_index] = input_vals;
@@ -85,33 +83,32 @@ void Sequence::cleanup_experiment_activate_helper(
 			}
 		} else {
 			SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
+			vector<Scope*> step_scopes = sequence_history->sequence->scopes;
 
-			history->sequence_input_vals_snapshots[a_index] = vector<vector<vector<double>>>(sequence_history->node_histories.size());
-			history->sequence_state_network_histories[a_index] = vector<vector<vector<StateNetworkHistory*>>>(sequence_history->node_histories.size());
 			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
-				history->sequence_input_vals_snapshots[a_index][s_index] = vector<vector<double>>(sequence_history->node_histories[s_index].size());
-				history->sequence_state_network_histories[a_index][s_index] = vector<vector<StateNetworkHistory*>>(sequence_history->node_histories[s_index].size());
+				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(step_scopes[s_index]);
 				for (int n_index = 0; n_index < (int)sequence_history->node_histories[s_index].size(); n_index++) {
 					if (sequence_history->node_histories[s_index][n_index]->node->type == NODE_TYPE_ACTION) {
 						int node_id = sequence_history->node_histories[s_index][n_index]->node->id;
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)sequence_history->node_histories[s_index][n_index];
 
-						history->sequence_input_vals_snapshots[a_index][s_index][n_index] = input_vals;
-						history->sequence_state_network_histories[a_index][s_index][n_index] = vector<StateNetworkHistory*>(this->input_init_types.size(), NULL);
+						action_node_history->experiment_sequence_step_indexes.push_back(this->step_index);
+						action_node_history->input_vals_snapshots.push_back(input_vals);
+						action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
 						for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 							if (run_helper.can_zero && rand()%5 == 0) {
 								// do nothing
-							} else if (this->sequence_state_networks[a_index][s_index][n_index][i_index] == NULL) {
+							} else if (it->second[node_id][i_index] == NULL) {
 								// do nothing
 							} else {
-								StateNetwork* network = this->sequence_state_networks[a_index][s_index][n_index][i_index];
+								StateNetwork* network = it->second[node_id][i_index];
 								StateNetworkHistory* network_history = new StateNetworkHistory(network);
 								network->new_activate(action_node_history->obs_snapshot,
 													  action_node_history->starting_state_vals_snapshot,
 													  // new state vals already merged
 													  input_vals[i_index],
 													  network_history);
-								history->sequence_state_network_histories[a_index][s_index][n_index][i_index] = network_history;
+								action_node_history->input_state_network_histories.back()[i_index] = network_history;
 								input_vals[i_index] += network->output->acti_vals[0];
 							}
 						}

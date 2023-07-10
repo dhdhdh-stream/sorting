@@ -12,9 +12,17 @@ void Sequence::activate(vector<double>& flat_vals,
 	vector<double> input_vals(this->input_init_types.size(), 0.0);
 
 	if (this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-		experiment_outer_activate_helper(input_vals,
-										 run_helper,
-										 context[c_index].scope_history);
+		int context_size_diff = (int)context.size() - (int)this->scope_context.size();
+		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			int context_index = c_index - context_size_diff;
+			if (context_index < 0) {
+				context_index = 0;
+			}
+			experiment_outer_activate_helper(context_index,
+											 input_vals,
+											 run_helper,
+											 context[c_index].scope_history);
+		}
 
 		experiment_experiment_activate_helper(input_vals,
 											  branch_experiment_history,
@@ -97,6 +105,10 @@ void Sequence::activate(vector<double>& flat_vals,
 		}
 	}
 
+	/**
+	 * - can use existing context but won't bother for now
+	 *   - anyways, a separate variable easily cleans itself up
+	 */
 	vector<ForwardContextLayer> sequence_context;
 	sequence_context.push_back(ForwardContextLayer());
 	sequence_context.back().scope_id = -1;
@@ -180,14 +192,10 @@ void Sequence::activate(vector<double>& flat_vals,
 	vector<vector<double>> next_starting_state_vals;
 	vector<vector<bool>> next_starting_states_initialized;
 	for (int l_index = 0; l_index < (int)this->scopes.size(); l_index++) {
-		run_helper.scope_state_networks = &(this->experiment->sequence_state_networks[this->step_index][l_index]);
-		run_helper.scope_score_networks = &(this->experiment->sequence_score_networks[this->step_index][l_index]);
-
-		if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
-			int size_diff = (int)this->scopes[l_index]->nodes.size() - (int)run_helper.scope_state_networks->size();
-			run_helper.scope_state_networks->insert(run_helper.scope_state_networks->begin(), size_diff, vector<StateNetwork*>());
-			run_helper.scope_score_networks->insert(run_helper.scope_score_networks->begin(), size_diff, NULL);
-		}
+		int scope_id = this->scopes[l_index]->id;
+		run_helper.scope_state_networks = &(this->experiment->state_networks[scope_id]);
+		run_helper.scope_score_networks = &(this->experiment->score_networks[scope_id]);
+		// initialize on experiment start
 
 		for (int n_index = 0; n_index < (int)this->node_ids[l_index].size(); n_index++) {
 			if (l_index == 0 && n_index == 0 && this->starting_node_ids.size() > 0) {
@@ -195,17 +203,15 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 
 			if (n_index == (int)this->node_ids[l_index].size()-1 && l_index != (int)this->scopes.size()-1) {
-				ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[n_index]];
+				ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]];
 
 				run_helper.scale_factor *= scope_node->scope_scale_mod->weight;
 
-				sequence_context.push_back(ForwardContextLayer);
-				sequence_context.back().scope_id = -1;
-				sequence_context.back().node_id = -1;
+				// don't bother appending to sequence_context, simply reuse first/last layer
 
 				if (scope_node->scope_node_type == SCOPE_NODE_TYPE_NORMAL) {
-					state_vals[l_index+1] = vector<double>(scopes[l_index+1]->num_states, 0.0);
-					states_initialized[l_index+1] = vector<bool>(scopes[l_index+1]->num_states, false);
+					state_vals[l_index+1] = vector<double>(this->scopes[l_index+1]->num_states, 0.0);
+					states_initialized[l_index+1] = vector<bool>(this->scopes[l_index+1]->num_states, false);
 					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 						// scope_node->input_target_layers[i_index] == 0
 						if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
@@ -261,7 +267,7 @@ void Sequence::activate(vector<double>& flat_vals,
 
 						curr_scope = next_scope;
 					}
-					for (int i_index = 0; i_index < scope_node->input_types.size(); i_index++) {
+					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 						if (scope_node->input_target_layers[i_index] != 0) {
 							if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
 								if (states_initialized[l_index][scope_node->input_indexes[i_index]]) {
@@ -269,7 +275,7 @@ void Sequence::activate(vector<double>& flat_vals,
 									if (scope_node->input_transformations[i_index] != NULL) {
 										val = scope_node->input_transformations[i_index]->forward(val);
 									}
-									next_starting_state_vals[scope_node->input_target_layers[i_index]-1][scope_node->input_target_indexes[i_index]] = val
+									next_starting_state_vals[scope_node->input_target_layers[i_index]-1][scope_node->input_target_indexes[i_index]] = val;
 
 									next_starting_states_initialized[scope_node->input_target_layers[i_index]-1][scope_node->input_target_indexes[i_index]] = true;
 								}
@@ -280,7 +286,18 @@ void Sequence::activate(vector<double>& flat_vals,
 					}
 				} else {
 					// scope_node->scope_node_type == SCOPE_NODE_TYPE_HALFWAY_CONTINUE
-					// note: first node in layer
+
+					/**
+					 * - also first node in layer
+					 * 
+					 * - previous set vals for this layer doesn't matter
+					 *   - will not be used by any action nodes
+					 *   - vals will be reset on layer end
+					 *     - doesn't go through exit nodes, so impact that might have previously been set may be missed
+					 *       - but hopefully, new state can make up for it
+					 *   - (though the following sets vals for next layer)
+					 */
+
 					next_starting_node_ids.erase(next_starting_node_ids.begin());
 					state_vals[l_index+1] = next_starting_state_vals.begin();
 					sequence_context.back().state_vals = &(state_vals[l_index+1]);
@@ -295,7 +312,7 @@ void Sequence::activate(vector<double>& flat_vals,
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
 					history->node_histories[l_index].push_back(action_node_history);
 					action_node->activate(flat_vals,
-										  sequence_context
+										  sequence_context,
 										  run_helper,
 										  action_node_history);
 				} else {
@@ -311,9 +328,9 @@ void Sequence::activate(vector<double>& flat_vals,
 						// note: first node in layer
 						next_starting_node_ids.erase(next_starting_node_ids.begin());
 
-						inner_starting_state_vals = vector<vector<double>*>(next_starting_state_vals.size());
-						for (int l_index = 0; l_index < (int)next_starting_state_vals.size(); l_index++) {
-							inner_starting_state_vals[l_index] = &(next_starting_state_vals[l_index]);
+						vector<vector<double>*> inner_starting_state_vals(next_starting_state_vals.size());
+						for (int il_index = 0; il_index < (int)next_starting_state_vals.size(); il_index++) {
+							inner_starting_state_vals[il_index] = &(next_starting_state_vals[il_index]);
 						}
 
 						scope_node->halfway_activate(next_starting_node_ids,
@@ -373,11 +390,13 @@ void Sequence::activate(vector<double>& flat_vals,
 
 	starting_state_vals[0] = state_vals[0];
 	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		double val = starting_state_vals[this->input_init_layer[i_index]][this->input_init_target_index[i_index]];
-		if (this->input_transformations[i_index] != NULL) {
-			val = this->input_transformations[i_index]->backward(val);
+		if (this->input_init_layer[i_index] == 0) {
+			double val = starting_state_vals[this->input_init_layer[i_index]][this->input_init_target_index[i_index]];
+			if (this->input_transformations[i_index] != NULL) {
+				val = this->input_transformations[i_index]->backward(val);
+			}
+			input_vals[i_index] = val;
 		}
-		input_vals[i_index] = val;
 	}
 	branch_experiment_history->sequence_ending_input_vals_snapshots[this->step_index] = input_vals;
 
@@ -467,6 +486,202 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 		}
 	}
+}
+
+void Sequence::backprop(vector<BackwardContextLayer>& context,
+						double& scale_factor_error,
+						RunHelper& run_helper,
+						SequenceHistory* history) {
+	/**
+	 * - run_helper.new_input_errors already initialized in experiment
+	 *   - if SEQUENCE_INPUT_INIT_LOCAL/SEQUENCE_INPUT_INIT_PREVIOUS, then already contains local error
+	 *   - also may already contain errors from later step's SEQUENCE_INPUT_INIT_PREVIOUS
+	 */
+
+	vector<vector<double>> state_errors(this->scopes.size());
+	state_errors[0] = vector<double>(this->scopes[0]->num_states, 0.0);
+	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+		if (this->input_init_layer[i_index] == 0) {
+			double error = run_helper.new_input_errors[this->step_index][i_index];
+			if (this->input_transformations[i_index] != NULL) {
+				error = this->input_transformations[i_index]->backprop_backward(error);
+			}
+			state_errors[0][this->input_init_target_index[i_index]] = error;
+		}
+	}
+	vector<vector<vector<double>>> starting_state_errors(this->scopes.size());
+	vector<vector<double>> next_starting_state_errors;
+	for (int l_index = 0; l_index < (int)this->scopes.size()-1; l_index++) {
+		ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]];
+
+		run_helper.scale_factor *= scope_node->scope_scale_mod->weight;
+
+		if (scope_node->scope_node_type == SCOPE_NODE_TYPE_NORMAL) {
+			if (next_starting_state_errors.size() != 0) {
+				starting_state_errors[l_index] = next_starting_state_errors;
+				next_starting_state_errors.clear();
+			}
+
+			state_errors[l_index+1] = vector<double>(this->scopes[l_index+1]->num_states, 0.0);
+			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+				// scope_node->input_target_layers[i_index] == 0
+				if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
+					double error = state_errors[l_index][scope_node->input_indexes[i_index]];
+					if (scope_node->input_transformations[i_index] != NULL) {
+						error = scope_node->input_transformations[i_index]->backprop_backward(error);
+					}
+					state_errors[l_index+1][scope_node->input_target_indexes[i_index]] = error;
+				} else {
+					// do nothing
+				}
+			}
+		} else if (scope_node->scope_node_type == SCOPE_NODE_TYPE_HALFWAY_START) {
+			if (next_starting_state_errors.size() != 0) {
+				starting_state_errors[l_index] = next_starting_state_errors;
+				next_starting_state_errors.clear();
+			}
+
+			state_errors[l_index+1] = vector<double>(this->scopes[l_index+1]->num_states, 0.0);
+			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+				// scope_node->input_target_layers[i_index] == 0
+				if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
+					double error = state_errors[l_index][scope_node->input_indexes[i_index]];
+					if (scope_node->input_transformations[i_index] != NULL) {
+						error = scope_node->input_transformations[i_index]->backprop_backward(error);
+					}
+					state_errors[l_index+1][scope_node->input_target_indexes[i_index]] = error;
+				} else {
+					// do nothing
+				}
+			}
+
+			next_starting_state_errors = vector<vector<double>>(scope_node->starting_node_ids.size()-1);
+
+			Scope* curr_scope = solution->scopes[scope_node->inner_scope_id];
+			for (int l_index = 0; l_index < scope_node->starting_node_ids.size()-1; l_index++) {
+				ScopeNode* l_scope_node = (ScopeNode*)curr_scope->nodes[scope_node->starting_node_ids[l_index]];
+				Scope* next_scope = solution->scopes[l_scope_node->inner_scope_id];
+
+				next_starting_state_errors[l_index] = vector<double>(next_scope->num_states, 0.0);
+
+				curr_scope = next_scope;
+			}
+			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+				if (scope_node->input_target_layers[i_index] != 0) {
+					if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
+						double error = state_errors[l_index][scope_node->input_indexes[i_index]];
+						if (scope_node->input_transformations[i_index] != NULL) {
+							error = scope_node->input_transformations[i_index]->backprop_backward(error);
+						}
+						next_starting_state_errors[scope_node->input_target_layers[i_index]-1][scope_node->input_target_indexes[i_index]] = error;
+					} else {
+						// do nothing
+					}
+				}
+			}
+		} else {
+			// scope_node->scope_node_type == SCOPE_NODE_TYPE_HALFWAY_CONTINUE
+			state_errors[l_index+1] = next_starting_state_errors.begin();
+			next_starting_state_errors.erase(next_starting_state_errors.begin());
+		}
+	}
+
+	vector<BackwardContextLayer> sequence_context;
+	sequence_context.push_back(BackwardContextLayer());
+
+	double scale_factor_error_helper = 0.0;
+	for (int l_index = (int)this->scopes.size()-1; l_index >= 0; l_index--) {
+		sequence_context.back().state_errors = &(state_errors[l_index]);
+
+		for (int n_index = (int)this->node_ids[l_index].size()-1; n_index >= 0; n_index--) {
+			if (l_index == 0 && n_index == 0 && this->starting_node_ids.size() > 0) {
+				continue;	// i.e., break
+			}
+
+			if (n_index == (int)this->node_ids[l_index].size()-1 && l_index != (int)this->scopes.size()-1) {
+				ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]];
+
+				scale_factor_error_helper *= scope_node->scope_scale_mod->weight;
+
+				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+					if (scope_node->input_target_layers[i_index] == 0) {
+						if (scope_node->input_types[i_index] == INPUT_TYPE_EXISTING) {
+							double error = state_errors[l_index+1][scope_node->input_target_indexes[i_index]];
+							if (scope_node->input_transformations[i_index] != NULL) {
+								error = scope_node->input_transformations[i_index]->backprop_forward(error);
+							}
+							state_errors[l_index][scope_node->input_indexes[i_index]] = error;
+						}
+					}
+				}
+
+				run_helper.scale_factor /= scope_node->scope_scale_mod->weight;
+			} else {
+				if (this->scopes[l_index]->nodes[this->node_ids[n_index]]->type == NODE_TYPE_ACTION) {
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[l_index][n_index];
+					ActionNode* action_node = (ActionNode*)action_node_history->node;
+					action_node->backprop(sequence_context,
+										  scale_factor_error_helper,
+										  run_helper,
+										  action_node_history);
+				} else {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[iter_index][h_index];
+					ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+					if (scope_node->scope_node_type == SCOPE_NODE_TYPE_HALFWAY_CONTINUE) {
+						// note: first node in layer
+
+						vector<vector<double>*> inner_starting_state_errors(starting_state_errors[l_index].size());
+						for (int il_index = 0; il_index < (int)starting_state_errors[l_index].size(); il_index++) {
+							inner_starting_state_errors[il_index] = &(starting_state_errors[l_index][il_index]);
+						}
+
+						scope_node->halfway_backprop(inner_starting_state_errors,
+													 sequence_context,
+													 scale_factor_error_helper,
+													 run_helper,
+													 scope_node_history);
+					} else {
+						scope_node->backprop(sequence_context,
+											 scale_factor_error_helper,
+											 run_helper,
+											 scope_node_history);
+					}
+				}
+			}
+		}
+	}
+
+	if (this->starting_node_ids.size() > 0) {
+		vector<vector<double>> starting_state_errors(this->starting_node_ids.size());
+
+		int curr_scope_id = ((ScopeNode*)this->scopes[0]->nodes[this->node_ids[0][0]])->inner_scope_id;
+		Scope* curr_scope = solution->scopes[curr_scope_id];
+		for (int l_index = 0; l_index < this->starting_node_ids.size(); l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
+			Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
+
+			starting_state_errors[l_index] = vector<double>(next_scope->num_states, 0.0);
+
+			curr_scope = next_scope;
+		}
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->input_init_layer[i_index] != 0) {
+				double error = run_helper.new_input_errors[this->step_index][i_index];
+				// HERE
+				if (this->input_transformations[i_index] != NULL) {
+					val = this->input_transformations[i_index]->forward(val);
+				}
+				starting_state_vals[this->input_init_layer[i_index]-1][this->input_init_target_index[i_index]] = val;
+				starting_states_initialized[this->input_init_layer[i_index]-1][this->input_init_target_index[i_index]] = true;
+			}
+		}
+
+
+
+	}
+
+	scale_factor_error_helper = scale_factor_helper;
+
 }
 
 

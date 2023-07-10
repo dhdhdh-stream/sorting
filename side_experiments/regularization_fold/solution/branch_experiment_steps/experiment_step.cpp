@@ -30,7 +30,7 @@ void BranchExperiment::experiment_outer_activate_helper(
 		if (seen_it->second > context_index) {
 			seen_it->second = context_index;
 
-			int new_furthest_distance = this->scope.size()-1 - context_index;
+			int new_furthest_distance = this->scope.size()+2 - context_index;
 			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 				if (state_it->second[node_id].size() != 0) {
 					for (s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
@@ -46,26 +46,23 @@ void BranchExperiment::experiment_outer_activate_helper(
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
 
-				if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
-					if (state_it->second[node_id].size() == 0) {
-						int new_furthest_distance = this->scope.size()-1 - context_index;
-						for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-							state_it->second[node_id].push_back(
-								new StateNetwork(scope_history->scope->num_states,
-												 NUM_NEW_STATES,
-												 0,
-												 20));
-							state_it->second[node_id].back()->update_lasso_weights(new_furthest_distance);
-						}
-						score_it->second[node_id] = new ScoreNetwork(scope_history->scope->num_states,
-																	 NUM_NEW_STATES,
-																	 20);
+				if (state_it->second[node_id].size() == 0) {
+					int new_furthest_distance = this->scope_context.size()+2 - seen_it[scope_id];
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+						state_it->second[node_id].push_back(
+							new StateNetwork(scope_history->scope->num_states,
+											 NUM_NEW_STATES,
+											 0,
+											 20));
+						state_it->second[node_id].back()->update_lasso_weights(new_furthest_distance);
 					}
+					score_it->second[node_id] = new ScoreNetwork(scope_history->scope->num_states,
+																 NUM_NEW_STATES,
+																 20);
 				}
 
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
-				action_node_history->experiment_context_index = context_index;
 				action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
 				action_node_history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
@@ -140,7 +137,11 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 	int context_size_diff = (int)context.size() - (int)this->scope_context.size();
 	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		experiment_outer_activate_helper(c_index - context_size_diff,
+		int context_index = c_index - context_size_diff;
+		if (context_index < 0) {
+			context_index = 0;
+		}
+		experiment_outer_activate_helper(context_index,
 										 temp_scale_factor,
 										 run_helper,
 										 context[c_index].scope_history);
@@ -217,15 +218,15 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 		}
 	}
 
-	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth);
-	for (int l_index = 0; l_index < this->exit_depth; l_index++) {
+	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
+	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
 		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - this->exit_depth + l_index].state_vals;
+			context.size() - (this->exit_depth+1) + l_index].state_vals;
 	}
 	history->exit_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	vector<double>* outer_state_vals = context[context.size() - this->exit_depth].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - this->exit_depth].states_initialized);
+	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
+	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
 
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {

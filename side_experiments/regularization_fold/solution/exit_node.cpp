@@ -13,42 +13,33 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 			context.size() - (this->exit_depth+1) + l_index].state_vals;
 	}
 
-	vector<double>* outer_state_vals = &(context[context.size() - (this->exit_depth+1)].state_vals);
-	vector<StateDefinition*>* outer_state_types = &(context[context.size() - (this->exit_depth+1)].state_types);
+	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
+	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
 		history->network_histories = vector<ExitNetworkHistory*>(this->networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
-			if (outer_state_types->at(s_index) != NULL) {
-				map<StateDefinition*, ExitNetwork*>::iterator it = this->networks[s_index].find(outer_state_types->at(s_index));
-				if (it != this->networks[s_index].end()
-						&& it->second != NULL) {
-					ExitNetwork* network = it->second;
-					ExitNetworkHistory* network_history = new ExitNetworkHistory(network);
-					network->activate(history->state_vals_snapshot,
-									  network_history);
-					history->network_histories[s_index] = network_history;
-					outer_state_vals->at(s_index) += network->output->acti_vals[0];
-				}
+			if (outer_states_initialized->at(s_index)) {
+				ExitNetwork* network = this->networks[s_index];
+				ExitNetworkHistory* network_history = new ExitNetworkHistory(network);
+				network->activate(history->state_vals_snapshot,
+								  network_history);
+				history->network_histories[s_index] = network_history;
+				outer_state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
 			}
 		}
 	} else {
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
-			if (outer_state_types->at(s_index) != NULL) {
-				map<StateDefinition*, ExitNetwork*>::iterator it = this->networks[s_index].find(outer_state_types->at(s_index));
-				if (it != this->networks[s_index].end()
-						&& it->second != NULL) {
-					ExitNetwork* network = it->second;
-					network->activate(history->state_vals_snapshot);
-					outer_state_vals->at(s_index) += network->output->acti_vals[0];
-				}
+			if (outer_states_initialized->at(s_index)) {
+				ExitNetwork* network = this->networks[s_index];
+				network->activate(history->state_vals_snapshot);
+				outer_state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
 			}
 		}
 	}
 }
 
 void ExitNode::backprop(vector<BackwardContextLayer>& context,
-						double& scale_factor_error,
 						RunHelper& run_helper,
 						ExitNodeHistory* history) {
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
@@ -64,10 +55,13 @@ void ExitNode::backprop(vector<BackwardContextLayer>& context,
 			if (history->network_histories[s_index] != NULL) {
 				ExitNetwork* network = history->network_histories[s_index]->network;
 				network->backprop_errors_with_no_weight_change(
-					outer_state_errors->at(s_index),
+					outer_state_errors->at(this->target_indexes[s_index]),
 					state_errors,
+					history->state_vals_snapshot,
 					history->network_histories[s_index]);
 			}
 		}
 	}
 }
+
+

@@ -15,17 +15,28 @@ public:
 	std::vector<Action> actions;
 	std::vector<Sequence*> sequences;
 
+	int exit_depth;
+	int exit_node_id;
+
 	ScoreNetwork* starting_score_network;
+	ScoreNetwork* starting_original_score_network;
 
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<ScoreNetwork*> step_score_networks;
-	std::vector<std::vector<std::vector<std::vector<StateNetwork*>>>> sequence_state_networks;
-	// temporary to determine state needed
-	std::vector<std::vector<std::vector<ScoreNetwork*>>> sequence_score_networks;
+	/**
+	 * - share networks instead of having separate networks for sequence
+	 *   - much cleaner when merging new state
+	 *     - can be seen as generalization anyways
+	 */
 
 	Scale* sequence_scale_factors;
 
-	int exit_depth;	// including new experiment scope
+	/**
+	 * - exit node takes place after new experiment scope
+	 *   - so new experiment scope has a default ending
+	 *   - so doesn't include experiment context
+	 *     - so layer is actually this->scopes.size()
+	 */
 	std::vector<ExitNetwork*> exit_networks;
 	std::vector<double> exit_network_impacts;
 
@@ -63,6 +74,10 @@ public:
 	std::vector<double> starting_state_vals_snapshot;
 	std::vector<double> starting_new_state_vals_snapshot;
 	double existing_predicted_score;
+
+	bool is_original;
+	ScoreNetworkHistory* score_network_history;
+	double score_network_update;
 
 	std::vector<double> step_obs_snapshots;
 	std::vector<std::vector<double>> step_starting_new_state_vals_snapshots;

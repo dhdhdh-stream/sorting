@@ -54,6 +54,9 @@ void BranchExperiment::experiment_transform() {
 	}
 
 	if (this->experiment_result != BRANCH_EXPERIMENT_RESULT_FAIL) {
+		// TODO: to determine if network needed, check both obs and using existing input
+		// - if there is a dependency, that could be a reason to check correlation?
+
 		// determine if new types needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {

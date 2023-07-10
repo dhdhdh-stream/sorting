@@ -3,7 +3,6 @@
 using namespace std;
 
 void BranchExperiment::new_classes_outer_activate_helper(
-		int context_index,
 		double& temp_scale_factor,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -22,7 +21,6 @@ void BranchExperiment::new_classes_outer_activate_helper(
 						&& state_it->second[n_index].size() != 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
-					action_node_history->experiment_context_index = context_index;
 					action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
 					action_node_history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
@@ -61,17 +59,11 @@ void BranchExperiment::new_classes_outer_activate_helper(
 
 				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
-				if (i_index == (int)scope_history->node_histories.size()-1
-						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
-					// do nothing
-				} else {
-					new_classes_outer_activate_helper(context_index,
-													  temp_scale_factor,
-													  run_helper,
-													  scope_node_history->inner_scope_history);
+				new_classes_outer_activate_helper(temp_scale_factor,
+												  run_helper,
+												  scope_node_history->inner_scope_history);
 
-					temp_scale_factor /= scope_node->scope_scale_mod->weight;
-				}
+				temp_scale_factor /= scope_node->scope_scale_mod->weight;
 			}
 		}
 	}
@@ -97,14 +89,9 @@ void BranchExperiment::new_classes_activate(vector<double>& flat_vals,
 	run_helper.new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
 
 	double temp_scale_factor = 1.0;
-
-	int context_size_diff = (int)context.size() - (int)this->scope_context.size();
-	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		new_classes_outer_activate_helper(c_index - context_size_diff,
-										  temp_scale_factor,
-										  run_helper,
-										  context[c_index].scope_history);
-	}
+	new_classes_outer_activate_helper(temp_scale_factor,
+									  run_helper,
+									  context[0].scope_history);
 
 	history->starting_state_vals_snapshot = context.back().state_vals;
 	history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
@@ -118,9 +105,6 @@ void BranchExperiment::new_classes_activate(vector<double>& flat_vals,
 	history->step_score_network_histories = vector<ScoreNetworkHistory*>(this->num_steps, NULL);
 
 	history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
-
-	run_helper.experiment_context_index = this->scope_context.size()+1;
-	run_helper.experiment_on_path = false;
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
@@ -165,7 +149,7 @@ void BranchExperiment::new_classes_activate(vector<double>& flat_vals,
 		} else {
 			run_helper.scale_factor *= this->sequence_scale_factors[a_index];
 
-			run_helper.experiment_step_index = a_index;
+			// no longer need to track experiment_step_index
 
 			SequenceHistory* sequence_history = new SequenceHistory(this->sequences[a_index]);
 			history->sequence_histories[a_index] = sequence_history;
@@ -179,15 +163,15 @@ void BranchExperiment::new_classes_activate(vector<double>& flat_vals,
 		}
 	}
 
-	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth);
-	for (int l_index = 0; l_index < this->exit_depth; l_index++) {
+	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
+	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
 		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - this->exit_depth + l_index].state_vals;
+			context.size() - (this->exit_depth+1) + l_index].state_vals;
 	}
 	history->exit_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	vector<double>* outer_state_vals = context[context.size() - this->exit_depth].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - this->exit_depth].states_initialized);
+	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
+	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
 
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
@@ -205,7 +189,5 @@ void BranchExperiment::new_classes_activate(vector<double>& flat_vals,
 		}
 	}
 
-	run_helper.experiment_context_index--;
-	run_helper.experiment_step_index = -1;
-	run_helper.experiment_on_path = true;
+	// no longer need to track experiment_context_index/experiment_on_path
 }

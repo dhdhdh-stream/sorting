@@ -19,13 +19,17 @@ public:
 	AbstractExperiment* experiment;
 	bool can_zero;
 	std::vector<double> new_state_vals;
-	std::vector<double> new_state_errors;
 	int experiment_context_index;
 	int experiment_step_index;
 	bool experiment_on_path;
+
 	// helpers
 	vector<vector<StateNetwork*>>* scope_state_networks;
 	vector<ScoreNetwork*>* scope_score_networks;
+	int scope_distance;
+
+	std::vector<double> new_state_errors;
+	std::vector<std::vector<double>> new_input_errors;
 
 	// to detect recursive calls for experiment -- not fullproof but hopefully effective enough
 	int experiment_scope_id;

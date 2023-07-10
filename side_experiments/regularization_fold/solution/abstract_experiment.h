@@ -14,8 +14,14 @@ const int EXPERIMENT_STATE_MEASURE = 1;		// for loop
  * - add new state and update score networks in a controlled way
  *   - only activate experiment depending on score
  *     - but mark that experiment seen for run
+ * 
+ * - gradually scale down temp score networks during first half
+ *   - then let permanent score networks settle during second half
+ * 
+ * - also calculate correlation between new classes and existing classes
  */
 const int EXPERIMENT_STATE_CLEANUP = 2;
+const int EXPERIMENT_STATE_DONE = 3;
 
 const double DEFAULT_LASSO_WEIGHT = 0.2;
 
@@ -41,7 +47,6 @@ public:
 	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
 	// temporary to determine state needed
 	std::map<int, std::vector<ScoreNetwork*>> score_networks;
-
 	/**
 	 * - index 0 is global
 	 * - contexts in the middle
