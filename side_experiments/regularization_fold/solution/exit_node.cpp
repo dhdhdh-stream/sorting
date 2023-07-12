@@ -16,7 +16,8 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
 	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		history->network_histories = vector<ExitNetworkHistory*>(this->networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
 			if (outer_states_initialized->at(s_index)) {
@@ -42,7 +43,8 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 void ExitNode::backprop(vector<BackwardContextLayer>& context,
 						RunHelper& run_helper,
 						ExitNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		vector<vector<double>*> state_errors(this->exit_depth+1);
 		for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
 			state_errors[l_index] = context[

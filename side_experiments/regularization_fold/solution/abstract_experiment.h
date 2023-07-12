@@ -25,9 +25,9 @@ const int EXPERIMENT_STATE_DONE = 3;
 
 const double DEFAULT_LASSO_WEIGHT = 0.2;
 
-const int NUM_NEW_STATES = 8;
+const int NUM_NEW_STATES = 10;
 const std::vector<double> DEFAULT_NEW_STATE_LASSO_WEIGHTS{
-	0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2};
+	0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0};
 
 class AbstractExperiment {
 public:

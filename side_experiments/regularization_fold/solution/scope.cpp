@@ -4,7 +4,10 @@ using namespace std;
 
 
 
-void Scope::activate(vector<double>& flat_vals,
+void Scope::activate(vector<int>& starting_node_ids,
+					 vector<vector<double>*>& starting_state_vals,
+					 vector<vector<bool>>& starting_states_initialized,
+					 vector<double>& flat_vals,
 					 vector<ForwardContextLayer>& context,
 					 int& exit_depth,
 					 int& exit_node_id,
@@ -16,7 +19,6 @@ void Scope::activate(vector<double>& flat_vals,
 		run_helper.is_recursive = true;
 	}
 
-	run_helper.curr_depth++;
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
@@ -25,10 +27,19 @@ void Scope::activate(vector<double>& flat_vals,
 		history->exceeded_depth = true;
 		return;
 	}
+	run_helper.curr_depth++;
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+	vector<bool> local_states_initialized(this->num_states, false);
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		if (this->states_initialized[s_index]) {
+			if (!context.back().states_initialized[s_index]) {
+				local_states_initialized[s_index] = true;
+				context.back().states_initialized[s_index] = true;
+			}
+		}
+	}
+
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
 		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
 		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
 		if (state_it == run_helper.experiment->state_networks.end()) {
@@ -60,6 +71,24 @@ void Scope::activate(vector<double>& flat_vals,
 			}
 			steps_seen_in_it[run_helper.experiment_step_index] = true;
 		}
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES
+			|| run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (state_it == run_helper.experiment->state_networks.end()) {
+			run_helper.scope_state_networks = NULL;
+			run_helper.scope_score_networks = NULL;
+		} else {
+			run_helper.scope_state_networks = &(state_it->second);
+			run_helper.scope_score_networks = &(score_it->second);
+		}
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (score_it == run_helper.experiment->score_networks.end()) {
+			run_helper.scope_score_networks = NULL;
+		} else {
+			run_helper.scope_score_networks = &(score_it->second);
+		}
 	}
 
 	if (this->is_loop) {
@@ -67,7 +96,40 @@ void Scope::activate(vector<double>& flat_vals,
 	} else {
 		history->node_histories.push_back(vector<AbstractNodeHistory*>());
 
-		int curr_node_id = 0;
+		int curr_node_id = starting_node_ids[0];
+		starting_node_ids.erase(starting_node_ids.begin());
+		if (starting_node_ids.size() > 0) {
+			context.back().node_id = 0;
+
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+
+			int inner_exit_depth;
+			int inner_exit_node_id;
+
+			ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
+			history->node_histories[0].push_back(node_history);
+			scope_node->halfway_activate(starting_node_ids,
+										 starting_state_vals,
+										 starting_states_initialized,
+										 flat_vals,
+										 context,
+										 inner_exit_depth,
+										 inner_exit_node_id,
+										 run_helper,
+										 node_history);
+
+			context.back().node_id = -1;
+
+			if (inner_exit_depth == -1) {
+				curr_node_id = scope_node->next_node_id;
+			} else if (inner_exit_depth == 0) {
+				curr_node_id = inner_exit_node_id;
+			} else {
+				exit_depth = inner_exit_depth-1;
+				exit_node_id = inner_exit_node_id;
+			}
+		}
+
 		while (true) {
 			if (curr_node_id == -1 || exit_depth != -1) {
 				break;
@@ -84,9 +146,7 @@ void Scope::activate(vector<double>& flat_vals,
 		}
 	}
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
 		run_helper.scope_state_networks = NULL;
 		run_helper.scope_score_networks = NULL;
 
@@ -95,131 +155,9 @@ void Scope::activate(vector<double>& flat_vals,
 		}
 	}
 
-	run_helper.curr_depth--;
-}
-
-void Scope::halfway_activate(vector<int>& starting_node_ids,
-							 vector<vector<double>*>& starting_state_vals,
-							 vector<vector<bool>>& starting_states_initialized,
-							 vector<double>& flat_vals,
-							 vector<ForwardContextLayer>& context,
-							 int& exit_depth,
-							 int& exit_node_id,
-							 RunHelper& run_helper,
-							 ScopeHistory* history) {
-	exit_depth = -1;
-
-	if (run_helper.experiment_scope_id == this->id) {
-		run_helper.is_recursive = true;
-	}
-
-	run_helper.curr_depth++;
-	if (run_helper.curr_depth > run_helper.max_depth) {
-		run_helper.max_depth = run_helper.curr_depth;
-	}
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_depth = true;
-		history->exceeded_depth = true;
-		return;
-	}
-
-	// can't be loop
-
-	history->node_histories.push_back(vector<AbstractNodeHistory*>());
-
-	int curr_node_id = starting_node_ids[0];
-	starting_node_ids.erase(starting_node_ids.begin());
-	if (starting_node_ids.size() > 0) {
-		context.back().node_id = 0;
-
-		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
-
-		int inner_exit_depth;
-		int inner_exit_node_id;
-
-		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
-		history->node_histories[0].push_back(node_history);
-		scope_node->halfway_activate(starting_node_ids,
-									 starting_state_vals,
-									 starting_states_initialized,
-									 flat_vals,
-									 context,
-									 inner_exit_depth,
-									 inner_exit_node_id,
-									 run_helper,
-									 node_history);
-
-		context.back().node_id = -1;
-
-		if (inner_exit_depth == -1) {
-			curr_node_id = scope_node->next_node_id;
-		} else if (inner_exit_depth == 0) {
-			curr_node_id = inner_exit_node_id;
-		} else {
-			exit_depth = inner_exit_depth-1;
-			exit_node_id = inner_exit_node_id;
-		}
-	}
-
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
-		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
-		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
-		if (state_it == run_helper.experiment->state_networks.end()) {
-			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
-			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
-		}
-
-		run_helper.scope_state_networks = &(state_it->second);
-		run_helper.scope_score_networks = &(score_it->second);
-
-		int size_diff = (int)this->nodes.size() - run_helper.scope_state_networks->size();
-		run_helper.scope_state_networks->insert(run_helper.scope_state_networks->end(), size_diff, vector<StateNetwork*>());
-		run_helper.scope_score_networks->insert(run_helper.scope_score_networks->end(), size_diff, NULL);
-
-		map<int, int>::iterator layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.find(this->id);
-		if (layer_seen_in_it == run_helper.experiment->scope_furthest_layer_seen_in.end()) {
-			run_helper.experiment->scope_furthest_layer_seen_in[this->id] = run_helper.experiment_context_index;
-		} else {
-			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
-				layer_seen_in_it->second = run_helper.experiment_context_index;
-			}
-		}
-
-		if (run_helper.experiment_step_index != -1) {
-			BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
-			map<int, vector<bool>>::iterator steps_seen_in_it = branch_experiment->scope_steps_seen_in.find(this->id);
-			if (steps_seen_in_it == branch_experiment->scope_steps_seen_in.end()) {
-				steps_seen_in_it = branch_experiment->scope_steps_seen_in.insert({this->id, vector<bool>(branch_experiment->num_steps, false)}).first;
-			}
-			steps_seen_in_it[run_helper.experiment_step_index] = true;
-		}
-	}
-
-	while (true) {
-		if (curr_node_id == -1 || exit_depth != -1) {
-			break;
-		}
-
-		handle_node_activate_helper(0,
-									curr_node_id,
-									flat_vals,
-									context,
-									exit_depth,
-									exit_node_id,
-									run_helper,
-									history);
-	}
-
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_MEASURE
-			|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_CLEAN) {
-		run_helper.scope_state_networks = NULL;
-		run_helper.scope_score_networks = NULL;
-
-		if (run_helper.experiment_on_path) {
-			run_helper.experiment_context_index--;
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		if (local_states_initialized[s_index]) {
+			run_helper.last_seen_vals[this->default_state_classes[s_index]] = context.back().state_vals->at(s_index);
 		}
 	}
 
@@ -353,7 +291,9 @@ void Scope::handle_node_activate_helper(int iter_index,
 	}
 }
 
-void Scope::backprop(vector<BackwardContextLayer>& context,
+void Scope::backprop(vector<int>& starting_node_ids,
+					 vector<vector<double>*>& starting_state_errors,
+					 vector<BackwardContextLayer>& context,
 					 double& scale_factor_error,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
@@ -364,7 +304,9 @@ void Scope::backprop(vector<BackwardContextLayer>& context,
 	if (is_loop) {
 
 	} else {
-		for (int h_index = (int)history->node_histories[0].size()-1; h_index >= 0; h_index--) {
+		starting_node_ids.erase(starting_node_ids.begin());
+
+		for (int h_index = (int)history->node_histories[0].size()-1; h_index >= 1; h_index--) {
 			handle_node_backprop_helper(0,
 										h_index,
 										context,
@@ -372,43 +314,23 @@ void Scope::backprop(vector<BackwardContextLayer>& context,
 										run_helper,
 										history);
 		}
-	}
-}
 
-void Scope::halfway_backprop(vector<vector<double>*>& starting_state_errors,
-							 vector<BackwardContextLayer>& context,
-							 double& scale_factor_error,
-							 RunHelper& run_helper,
-							 ScopeHistory* history) {
-	if (history->exceeded_depth) {
-		return;
-	}
-
-	// can't be loop
-
-	for (int h_index = (int)history->node_histories[0].size()-1; h_index >= 1; h_index--) {
-		handle_node_backprop_helper(0,
-									h_index,
-									context,
-									scale_factor_error,
-									run_helper,
-									history);
-	}
-
-	if (starting_state_errors.size() > 0) {
-		ScopeNode* scope_node = (ScopeNode*)history->node_histories[0][0]->node;
-		scope_node->halfway_backprop(starting_state_errors,
-									 context,
-									 scale_factor_error,
-									 run_helper,
-									 history);
-	} else {
-		handle_node_backprop_helper(0,
-									0,
-									context,
-									scale_factor_error,
-									run_helper,
-									history);
+		if (starting_state_errors.size() > 0) {
+			ScopeNode* scope_node = (ScopeNode*)history->node_histories[0][0]->node;
+			scope_node->halfway_backprop(starting_node_ids,
+										 starting_state_errors,
+										 context,
+										 scale_factor_error,
+										 run_helper,
+										 history);
+		} else {
+			handle_node_backprop_helper(0,
+										0,
+										context,
+										scale_factor_error,
+										run_helper,
+										history);
+		}
 	}
 }
 

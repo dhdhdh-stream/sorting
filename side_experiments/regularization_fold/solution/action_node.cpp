@@ -11,7 +11,8 @@ void ActionNode::activate(vector<double>& flat_vals,
 	history->obs_snapshot = flat_vals.begin();
 	history->starting_state_vals_snapshot = *(context.back().state_vals);
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		history->state_network_histories = vector<StateNetworkHistory*>(this->state_networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
 			if (context.back().states_initialized[this->target_indexes[s_index]]) {
@@ -47,7 +48,8 @@ void ActionNode::activate(vector<double>& flat_vals,
 
 	flat_vals.erase(flat_vals.begin());
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		if (run_helper.experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
 			if (run_helper.scope_state_networks->at(this->id).size() == 0) {
 				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
@@ -64,7 +66,8 @@ void ActionNode::activate(vector<double>& flat_vals,
 			}
 		}
 
-		if (this->id < run_helper.scope_state_networks->size()
+		if (run_helper.scope_state_networks != NULL
+				&& this->id < run_helper.scope_state_networks->size()
 				&& run_helper.scope_state_networks->at(this->id).size() != 0) {
 			history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
@@ -100,7 +103,8 @@ void ActionNode::activate(vector<double>& flat_vals,
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
 		if (run_helper.experiment->state_iter < 100000) {
-			if (this->id < run_helper.scope_score_networks->size()
+			if (run_helper.scope_score_networks != NULL
+					&& this->id < run_helper.scope_score_networks->size()
 					&& run_helper.scope_score_networks->at(this->id) != NULL) {
 				ScoreNetwork* score_network = run_helper.scope_score_networks->at(this->id);
 				score_network->activate(history->ending_state_vals_snapshot);
@@ -120,88 +124,60 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
 		vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
 		for (int s_index = 0; s_index < (int)history->new_state_network_histories.size(); s_index++) {
-			if (history->new_state_network_histories[s_index] != NULL) {
-				StateNetwork* network = history->new_state_network_histories[s_index]->network;
-				if (run_helper.experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-					double new_state_network_target_max_update;
-					if (run_helper.experiment->state_iter <= 100000) {
-						new_state_network_target_max_update = 0.05;
-					} else {
-						new_state_network_target_max_update = 0.01;
-					}
-					if (run_helper.experiment->state_iter <= 20000) {
-						network->new_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
-											  run_helper.new_state_errors,
-											  new_state_network_target_max_update,
-											  history->obs_snapshot,
-											  history->starting_state_vals_snapshot,
-											  history->starting_new_state_vals_snapshot,
-											  history->new_state_network_histories[s_index]);
-					} else {
-						network->new_lasso_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
-													run_helper.new_state_errors,
-													new_state_network_target_max_update,
-													history->obs_snapshot,
-													history->starting_state_vals_snapshot,
-													history->starting_new_state_vals_snapshot,
-													history->new_state_network_histories[s_index]);
-					}
-				} else {
-					// run_helper.experiment->state == EXPERIMENT_STATE_NEW_CLASSES
-					network->new_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
-										  run_helper.new_state_errors,
-										  0.01,
-										  history->obs_snapshot,
-										  history->starting_state_vals_snapshot,
-										  history->starting_new_state_vals_snapshot,
-										  history->new_state_network_histories[s_index]);
-				}
+			StateNetwork* network = history->new_state_network_histories[s_index]->network;
+			double new_state_network_target_max_update;
+			if (run_helper.experiment->state_iter <= 100000) {
+				new_state_network_target_max_update = 0.05;
+			} else {
+				new_state_network_target_max_update = 0.01;
+			}
+			if (run_helper.experiment->state_iter <= 20000) {
+				network->new_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
+									  run_helper.new_state_errors,
+									  new_state_network_target_max_update,
+									  history->obs_snapshot,
+									  history->starting_state_vals_snapshot,
+									  history->starting_new_state_vals_snapshot,
+									  history->new_state_network_histories[s_index]);
+			} else {
+				network->new_lasso_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
+											run_helper.new_state_errors,
+											new_state_network_target_max_update,
+											history->obs_snapshot,
+											history->starting_state_vals_snapshot,
+											history->starting_new_state_vals_snapshot,
+											history->new_state_network_histories[s_index]);
 			}
 		}
 		for (int st_index = 0; st_index < (int)history->experiment_sequence_step_indexes.size(); st_index++) {
 			for (int i_index = 0; i_index < (int)history->input_state_network_histories[st_index].size(); i_index++) {
-				if (history->input_state_network_histories[st_index][i_index] != NULL) {
-					StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
-					if (run_helper.experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-						if (run_helper.experiment->state_iter <= 20000) {
-							double new_input_network_target_max_update;
-							if (run_helper.experiment->state_iter <= 100000) {
-								new_input_network_target_max_update = 0.05;
-							} else {
-								new_input_network_target_max_update = 0.01;
-							}
-							network->new_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-												  run_helper.new_state_errors,
-												  run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-												  new_input_network_target_max_update,
-												  history->obs_snapshot,
-												  history->starting_state_vals_snapshot,
-												  history->starting_new_state_vals_snapshot,
-												  history->input_vals_snapshots[st_index][i_index],
-												  history->input_state_network_histories[st_index][i_index]);
-						} else {
-							network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-														run_helper.new_state_errors,
-														run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-														0.01,
-														history->obs_snapshot,
-														history->starting_state_vals_snapshot,
-														history->starting_new_state_vals_snapshot,
-														history->input_vals_snapshots[st_index][i_index],
-														history->input_state_network_histories[st_index][i_index]);
-						}
+				StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
+				if (run_helper.experiment->state_iter <= 20000) {
+					double new_input_network_target_max_update;
+					if (run_helper.experiment->state_iter <= 100000) {
+						new_input_network_target_max_update = 0.05;
 					} else {
-						// run_helper.experiment->state == EXPERIMENT_STATE_NEW_CLASSES
-						network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-													run_helper.new_state_errors,
-													run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-													0.01,
-													history->obs_snapshot,
-													history->starting_state_vals_snapshot,
-													history->starting_new_state_vals_snapshot,
-													history->input_vals_snapshots[st_index][i_index],
-													history->input_state_network_histories[st_index][i_index]);
+						new_input_network_target_max_update = 0.01;
 					}
+					network->new_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+										  run_helper.new_state_errors,
+										  run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+										  new_input_network_target_max_update,
+										  history->obs_snapshot,
+										  history->starting_state_vals_snapshot,
+										  history->starting_new_state_vals_snapshot,
+										  history->input_vals_snapshots[st_index][i_index],
+										  history->input_state_network_histories[st_index][i_index]);
+				} else {
+					network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+												run_helper.new_state_errors,
+												run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+												0.01,
+												history->obs_snapshot,
+												history->starting_state_vals_snapshot,
+												history->starting_new_state_vals_snapshot,
+												history->input_vals_snapshots[st_index][i_index],
+												history->input_state_network_histories[st_index][i_index]);
 				}
 			}
 		}
@@ -212,8 +188,7 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 
 		ScoreNetwork* new_score_network = history->new_score_network_history->network;
 		double new_score_network_target_max_update;
-		if (run_helper.experiment->state == EXPERIMENT_STATE_EXPERIMENT
-				&& run_helper.experiment->state_iter <= 100000) {
+		if (run_helper.experiment->state_iter <= 100000) {
 			new_score_network_target_max_update = 0.05;
 		} else {
 			new_score_network_target_max_update = 0.01;
@@ -221,6 +196,48 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 		new_score_network->new_backprop(predicted_score_error,
 										run_helper.new_state_errors,
 										new_score_network_target_max_update,
+										history->ending_state_vals_snapshot,
+										history->ending_new_state_vals_snapshot,
+										history->new_score_network_history);
+
+		run_helper.predicted_score -= run_helper.scale_factor*history->new_score_network_output;
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
+		vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
+		for (int s_index = 0; s_index < (int)history->new_state_network_histories.size(); s_index++) {
+			if (history->new_state_network_histories[s_index] != NULL) {
+				StateNetwork* network = history->new_state_network_histories[s_index]->network;
+				network->new_backprop(new_state_errors_snapshot[this->target_indexes[s_index]],
+									  run_helper.new_state_errors,
+									  0.01,
+									  history->obs_snapshot,
+									  history->starting_state_vals_snapshot,
+									  history->starting_new_state_vals_snapshot,
+									  history->new_state_network_histories[s_index]);
+			}
+		}
+		for (int st_index = 0; st_index < (int)history->experiment_sequence_step_indexes.size(); st_index++) {
+			for (int i_index = 0; i_index < (int)history->input_state_network_histories[st_index].size(); i_index++) {
+				if (history->input_state_network_histories[st_index][i_index] != NULL) {
+					StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
+					network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+												run_helper.new_state_errors,
+												run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+												0.01,
+												history->obs_snapshot,
+												history->starting_state_vals_snapshot,
+												history->starting_new_state_vals_snapshot,
+												history->input_vals_snapshots[st_index][i_index],
+												history->input_state_network_histories[st_index][i_index]);
+				}
+			}
+		}
+
+		double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
+
+		ScoreNetwork* new_score_network = history->new_score_network_history->network;
+		new_score_network->new_backprop(predicted_score_error,
+										run_helper.new_state_errors,
+										0.01,
 										history->ending_state_vals_snapshot,
 										history->ending_new_state_vals_snapshot,
 										history->new_score_network_history);
@@ -273,7 +290,8 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 			history->score_network_history);
 
 		run_helper.predicted_score -= run_helper.scale_factor*history->score_network_output;
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
 		this->score_network->backprop_errors_with_no_weight_change(
 			predicted_score_error,
@@ -284,7 +302,8 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 		run_helper.predicted_score -= run_helper.scale_factor*history->score_network_output;
 	}
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
 			if (history->state_network_histories[s_index] != NULL) {
 				this->state_networks[s_index]->backprop_errors_with_no_weight_change(

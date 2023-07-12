@@ -86,7 +86,8 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 				0.002,
 				history->state_vals_snapshot,
 				history->score_network_history);
-		} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+				|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
 			score_network->backprop_errors_with_no_weight_change(
 				predicted_score_error,
 				*(context.back().state_errors),

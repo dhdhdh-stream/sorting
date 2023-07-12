@@ -87,7 +87,6 @@ public:
 	std::vector<double> step_score_network_outputs;
 
 	std::vector<SequenceHistory*> sequence_histories;
-	std::vector<std::vector<double>> sequence_ending_input_vals_snapshots;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
 	std::vector<double> exit_new_state_vals_snapshot;

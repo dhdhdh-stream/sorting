@@ -54,6 +54,8 @@ void BranchExperiment::experiment_transform() {
 	}
 
 	if (this->experiment_result != BRANCH_EXPERIMENT_RESULT_FAIL) {
+		// TODO: when lasso-ing, instead of obs, include using existing state as well (but not new)
+
 		// TODO: to determine if network needed, check both obs and using existing input
 		// - if there is a dependency, that could be a reason to check correlation?
 

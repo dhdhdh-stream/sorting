@@ -20,6 +20,7 @@ public:
 	int id;
 
 	int num_states;
+	std::vector<bool> states_initialized;
 	std::vector<FamilyDefinition*> state_families;
 	std::vector<ClassDefinition*> default_state_classes;
 
@@ -27,30 +28,21 @@ public:
 
 	std::vector<AbstractNode*> nodes;
 
-	void activate(std::vector<double>& flat_vals,
+	void activate(std::vector<int>& starting_node_ids,
+				  std::vector<std::vector<double>*>& starting_state_vals,
+				  std::vector<std::vector<bool>>& starting_states_initialized,
+				  std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
 				  int& exit_depth,
 				  int& exit_node_id,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
-	void halfway_activate(std::vector<int>& starting_node_ids,
-						  std::vector<std::vector<double>*>& starting_state_vals,	// use pointers so sequence keeps values
-						  std::vector<std::vector<bool>>& starting_states_initialized,
-						  std::vector<double>& flat_vals,
-						  std::vector<ForwardContextLayer>& context,
-						  int& exit_depth,
-						  int& exit_node_id,
-						  RunHelper& run_helper,
-						  ScopeHistory* history);
-	void backprop(std::vector<BackwardContextLayer>& context,
+	void backprop(std::vector<int>& starting_node_ids,
+				  std::vector<std::vector<double>*>& starting_state_errors,
+				  std::vector<BackwardContextLayer>& context,
 				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
-	void halfway_backprop(std::vector<std::vector<double>*>& starting_state_errors,
-						  std::vector<BackwardContextLayer>& context,
-						  double& scale_factor_error,
-						  RunHelper& run_helper,
-						  ScopeHistory* history);
 
 	void handle_node_activate_helper(int iter_index,
 									 int& curr_node_id,

@@ -3,8 +3,7 @@
 
 const int SEQUENCE_INPUT_INIT_NONE = 0;
 const int SEQUENCE_INPUT_INIT_LOCAL = 1;
-const int SEQUENCE_INPUT_INIT_PREVIOUS = 2;
-const int SEQUENCE_INPUT_INIT_LAST_SEEN = 3;
+const int SEQUENCE_INPUT_INIT_LAST_SEEN = 2;
 // if empty (i.e., not initialize), don't include in input_init_types, etc.
 
 class Sequence {
@@ -18,41 +17,26 @@ public:
 	std::vector<Scope*> scopes;
 
 	/**
-	 * - for node_ids[0][0]
-	 *   - if not empty, nodes_ids[0][0] has to be scope node
+	 * - starting_node_ids[0] == node_ids[0][0]
+	 * 
 	 * - last node id can be any type
 	 *   - others all have to be non-loop scope nodes
-	 * - length is scopes-1
 	 */
 	std::vector<int> starting_node_ids;
 
 	std::vector<int> input_init_types;
 	/**
-	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down and up
+	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down
 	 */
 	std::vector<int> input_init_target_layers;
 	std::vector<int> input_init_target_indexes;
 	/**
 	 * - needs to be state that isn't passed down further
-	 * - don't reuse, even between different sequences
-	 *   - instead, use previous
+	 * - can be reused between sequences, with each re-setting and re-fetching
 	 * - negative indexing from end
 	 */
-	// TODO: when lasso-ing, instead of obs, include using existing state as well (but not new)
-	// - remove init previous, and just rely on last seen
-	// - keep local, as that is as much about setting values back as getting them
-	//   - if 2 sequences use same local, first will re-set, then second will refetch (and re-set again)
 	std::vector<int> input_init_local_scope_depths;
 	std::vector<int> input_init_local_input_indexes;
-	/**
-	 * - if use previous, then take responsibility for setting value back
-	 * 
-	 * - if previous was local, then use original local class
-	 *   - so transformation goes from original local to inner_input
-	 *     - (so skipping previous input_inner_classes)
-	 */
-	std::vector<int> input_init_previous_step_indexes;
-	std::vector<int> input_init_previous_input_indexes;
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
 
@@ -99,6 +83,7 @@ public:
 	Sequence* sequence;
 
 	// just tracking here rather than in BranchExperimentHistory
+	// TODO: actually, need to move to experiment
 	std::vector<std::vector<double>> step_input_vals_snapshots;
 	std::vector<std::vector<StateNetworkHistory*>> step_state_network_histories;
 
