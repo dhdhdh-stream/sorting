@@ -17,7 +17,7 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
-			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		history->network_histories = vector<ExitNetworkHistory*>(this->networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
 			if (outer_states_initialized->at(s_index)) {
@@ -44,23 +44,25 @@ void ExitNode::backprop(vector<BackwardContextLayer>& context,
 						RunHelper& run_helper,
 						ExitNodeHistory* history) {
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
-			|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
-		vector<vector<double>*> state_errors(this->exit_depth+1);
-		for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-			state_errors[l_index] = context[
-				context.size() - (this->exit_depth+1) + l_index].state_errors;
-		}
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		if (!run_helper.backprop_is_pre_experiment) {
+			vector<vector<double>*> state_errors(this->exit_depth+1);
+			for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
+				state_errors[l_index] = context[
+					context.size() - (this->exit_depth+1) + l_index].state_errors;
+			}
 
-		vector<double>* outer_state_errors = &(context[context.size() - (this->exit_depth+1)].state_errors);
+			vector<double> outer_state_errors_snapshot = *(context[context.size() - (this->exit_depth+1)].state_errors);
 
-		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
-			if (history->network_histories[s_index] != NULL) {
-				ExitNetwork* network = history->network_histories[s_index]->network;
-				network->backprop_errors_with_no_weight_change(
-					outer_state_errors->at(this->target_indexes[s_index]),
-					state_errors,
-					history->state_vals_snapshot,
-					history->network_histories[s_index]);
+			for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
+				if (history->network_histories[s_index] != NULL) {
+					ExitNetwork* network = history->network_histories[s_index]->network;
+					network->backprop_errors_with_no_weight_change(
+						outer_state_errors_snapshot[this->target_indexes[s_index]],
+						state_errors,
+						history->state_vals_snapshot,
+						history->network_histories[s_index]);
+				}
 			}
 		}
 	}

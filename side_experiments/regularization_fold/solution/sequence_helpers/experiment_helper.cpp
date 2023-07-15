@@ -99,12 +99,11 @@ void Sequence::experiment_experiment_activate_helper(
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper,
 		SequenceHistory* history) {
-	history->step_input_vals_snapshots = vector<vector<double>>(this->step_index);
-	history->step_state_network_histories = vector<vector<StateNetworkHistory*>>(this->step_index);
-	for (int a_index = 0; a_index < this->step_index; a_index++) {
+	for (int a_index = 0; a_index < this->experiment->step_index; a_index++) {
 		if (this->experiment->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
-			history->step_input_vals_snapshots[a_index] = input_vals;
-			history->step_state_network_histories[a_index] = vector<double>(this->input_init_types.size());
+			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
+			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
+			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (run_helper.can_zero && rand()%5 == 0) {
 					// do nothing
@@ -117,7 +116,7 @@ void Sequence::experiment_experiment_activate_helper(
 										  branch_experiment_history->step_starting_new_state_vals_snapshots[a_index],
 										  input_vals[i_index],
 										  network_history);
-					history->step_state_network_histories[a_index][i_index] = network_history;
+					branch_experiment_history->step_input_state_network_histories[a_index].back()[i_index] = network_history;
 					input_vals[i_index] += network->output->acti_vals[0];
 				}
 			}

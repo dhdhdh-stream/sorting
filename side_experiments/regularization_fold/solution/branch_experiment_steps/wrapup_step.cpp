@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void BranchExperiment::cleanup_outer_activate_helper(
+void BranchExperiment::wrapup_outer_activate_helper(
 		double& temp_scale_factor,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -31,9 +31,9 @@ void BranchExperiment::cleanup_outer_activate_helper(
 
 				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
-				cleanup_outer_activate_helper(temp_scale_factor,
-											  run_helper,
-											  scope_node_history->inner_scope_history);
+				wrapup_outer_activate_helper(temp_scale_factor,
+											 run_helper,
+											 scope_node_history->inner_scope_history);
 
 				temp_scale_factor /= scope_node->scope_scale_mod->weight;
 			}
@@ -41,13 +41,13 @@ void BranchExperiment::cleanup_outer_activate_helper(
 	}
 }
 
-void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
-										vector<ForwardContextLayer>& context,
-										RunHelper& run_helper,
-										FoldHistory* history) {
-	run_helper.explore_phase = EXPLORE_PHASE_CLEANUP;
+void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
+									   vector<ForwardContextLayer>& context,
+									   RunHelper& run_helper,
+									   FoldHistory* history) {
+	run_helper.explore_phase = EXPLORE_PHASE_WRAPUP;
 
-	// no need to save separate existing_predicted_score
+	// no longer need to save separate existing_predicted_score
 
 	history->starting_state_vals_snapshot = context.back().state_vals;
 
@@ -60,13 +60,13 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 													starting_original_score_network_history);
 
 	if (starting_original_score_network->output->acti_vals[0] > starting_score_network->output->acti_vals[0]) {
-		history->is_original = true;
+		history->is_branch = false;
 
 		history->score_network_history = starting_original_score_network_history;
 		history->score_network_update = this->starting_original_score_network->output->acti_vals[0];
 		delete starting_score_network_history;
 	} else {
-		history->is_original = false;
+		history->is_branch = true;
 
 		history->score_network_history = starting_score_network_history;
 		history->score_network_update = this->starting_score_network->output->acti_vals[0];
@@ -74,30 +74,29 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 
 		if (this->state_iter < 100000) {
 			double temp_scale_factor = 1.0;
-			new_classes_outer_activate_helper(temp_scale_factor,
-											  run_helper,
-											  context[0].scope_history);
+			wrapup_outer_activate_helper(temp_scale_factor,
+										 run_helper,
+										 context[0].scope_history);
 		}
 
-		history->starting_state_vals_snapshot = context.back().state_vals;
+		vector<double> new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
+		for (int s_index = 0; s_index < (int)this->last_layer_new_state_indexes.size(); s_index++) {
+			new_state_vals[s_index] = context.back().state_vals[this->last_layer_new_state_indexes[s_index]];
+		}
 
 		context.push_back(ForwardContextLayer());
 
 		context.back().scope_id = -1;
 		context.back().node_id = -1;
 
-		vector<double> new_state_vals = vector<double>(this->final_num_new_states, 0.0);
-		context.back().states_initialized = vector<bool>(this->final_num_new_states, true);
-		for (int s_index = 0; s_index < (int)this->last_layer_new_state_indexes.size(); s_index++) {
-			new_state_vals[s_index] = context.back().state_vals[this->last_layer_new_state_indexes[s_index]];
-		}
 		context.back().state_vals = &new_state_vals;
+		context.back().states_initialized = vector<bool>(NUM_NEW_STATES, true);
 
 		history->step_obs_snapshots = vector<double>(this->num_steps, 0.0);
 		history->step_starting_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);
-		history->step_state_network_histories = vector<vector<StateNetworkHistory*>>(this->num_steps);
 		history->step_ending_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);
 		history->step_score_network_histories = vector<ScoreNetworkHistory*>(this->num_steps, NULL);
+		history->step_score_network_outputs = vector<double>(this->num_steps, 0.0);
 
 		history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
 
@@ -108,19 +107,13 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 				history->step_obs_snapshots[a_index] = obs;
 				history->step_starting_new_state_vals_snapshots[a_index] = new_state_vals;
 
-				history->step_state_network_histories[a_index] = vector<StateNetworkHistory*>(this->final_num_new_states, NULL);
-				for (int s_index = 0; s_index < this->final_num_new_states; s_index++) {
-					if (history->can_zero && rand()%5 == 0) {
-						// do nothing
-					} else if (this->step_state_networks[a_index][s_index] == NULL) {
+				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					if (this->step_state_networks[a_index][s_index] == NULL) {
 						// do nothing
 					} else {
 						StateNetwork* network = this->step_state_networks[a_index][s_index];
-						StateNetworkHistory* network_history = new StateNetworkHistory(network);
 						network->activate(history->step_obs_snapshots[a_index],
-										  history->step_starting_new_state_vals_snapshots[a_index],
-										  network_history);
-						history->step_state_network_histories[a_index][s_index] = network_history;
+										  history->step_starting_new_state_vals_snapshots[a_index]);
 						new_state_vals[s_index] += network->output->acti_vals[0];
 					}
 				}
@@ -138,7 +131,7 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 
 				flat_vals.erase(flat_vals.begin());
 			} else {
-				run_helper.scale_factor *= this->sequence_scale_factors[a_index];
+				run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
 
 				// no longer need to track experiment_step_index
 
@@ -150,7 +143,7 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 												   run_helper,
 												   sequence_history);
 
-				run_helper.scale_factor /= this->sequence_scale_factors[a_index];
+				run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
 			}
 		}
 
@@ -179,4 +172,65 @@ void BranchExperiment::cleanup_activate(vector<double>& flat_vals,
 
 		// no longer need to track experiment_context_index/experiment_on_path
 	}
+}
+
+void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
+									   double& scale_factor_error,
+									   RunHelper& run_helper,
+									   BranchExperimentHistory* history) {
+	if (history->is_branch) {
+		// no need to track context for WRAPUP
+
+		for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
+			if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+				this->step_average_scores[a_index] = 0.9999*this->step_average_scores[a_index] + 0.0001*run_helper.target_val;
+				double curr_score_variance = (this->step_average_scores[a_index] - run_helper.target_val)*(this->step_average_scores[a_index] - run_helper.target_val);
+				this->step_score_variances[a_index] = 0.9999*this->step_score_variances[a_index] + 0.0001*curr_score_variance;
+
+				this->step_average_misguesses[a_index] = 0.9999*this->step_average_misguesses[a_index] + 0.0001*run_helper.final_misguess;
+				double curr_misguess_variance = (this->step_average_misguesses[a_index] - run_helper.final_misguess)*(this->step_average_misguesses[a_index] - run_helper.final_misguess);
+				this->step_misguess_variances[a_index] = 0.9999*this->step_misguess_variances[a_index] + 0.0001*curr_misguess_variance;
+
+				this->step_average_impacts[a_index] = 0.9999*this->step_average_impacts[a_index] + 0.0001*abs(scale_factor*history->step_score_network_outputs[a_index]);
+
+				double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
+
+				scale_factor_error += history->step_score_network_outputs[a_index]*predicted_score_error;
+
+				this->step_score_networks[a_index]->backprop_weights_with_no_error_signal(
+					run_helper.scale_factor*predicted_score_error,
+					0.01,
+					history->step_ending_new_state_vals_snapshots[a_index],
+					history->step_score_network_histories[a_index]);
+
+				run_helper.predicted_score -= run_helper.scale_factor*history->step_score_network_outputs[a_index];
+			} else {
+				run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
+
+				double inner_scale_factor_error = 0.0;
+
+				this->sequences[a_index]->backprop(context,
+												   inner_scale_factor_error,
+												   run_helper,
+												   history->sequence_histories[a_index]);
+
+				this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
+
+				run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
+			}
+		}
+	}
+
+	double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
+
+	double predicted_score_error = run_helper.target_val - branch_predicted_score;
+
+	ScoreNetwork* score_network = history->score_network_history->network;
+	score_network->backprop_weights_with_no_error_signal(
+		run_helper.scale_factor*predicted_score_error,
+		0.01,
+		history->starting_state_vals_snapshot,
+		history->score_network_history);
+
+	// no need to set run_helper.backprop_is_pre_experiment
 }

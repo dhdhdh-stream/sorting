@@ -11,8 +11,20 @@ void Sequence::activate(vector<double>& flat_vals,
 						SequenceHistory* history) {
 	vector<double> input_vals(this->input_init_types.size(), 0.0);
 
-	if (this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-		int context_size_diff = (int)context.size() - (int)this->scope_context.size();
+	if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+				input_vals[i_index] += context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+					.state_vals->at(this->input_init_local_input_indexes[i_index]);
+			} else {
+				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
+				if (it != run_helper.last_seen_vals.end()) {
+					input_vals[i_index] += *it->second;
+				}
+			}
+		}
+	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 			int context_index = c_index - context_size_diff;
 			if (context_index < 0) {
@@ -28,61 +40,91 @@ void Sequence::activate(vector<double>& flat_vals,
 											  branch_experiment_history,
 											  run_helper,
 											  history);
-	} else if (this->experiment->state == EXPERIMENT_STATE_NEW_CLASSES) {
-		new_classes_outer_activate_helper(input_vals,
-										  run_helper,
-										  context[c_index].scope_history);
 
-		new_classes_experiment_activate_helper(input_vals,
-											   branch_experiment_history,
-											   run_helper,
-											   history);
-	} else if (this->experiment->state == EXPERIMENT_STATE_CLEANUP) {
-		cleanup_outer_activate_helper(input_vals,
-									  run_helper,
-									  context[c_index].scope_history);
-
-		cleanup_experiment_activate_helper(input_vals,
-										   branch_experiment_history,
-										   run_helper,
-										   history);
-	}
-
-	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_NONE) {
-			// do nothing
-		} else if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-			if (this->experiment->state == EXPERIMENT_STATE_EXPLORE
-					|| this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 				input_vals[i_index] += context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]);
-			} else if (this->experiment->state == EXPERIMENT_STATE_NEW_CLASS) {
-				double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
-					.state_vals->at(this->input_init_local_input_indexes[i_index]);
-				if (this->input_is_new_class[i_index]) {
-					double new_class_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
-					input_vals[i_index] += new_class_scale*val;
-				} else {
-					input_vals[i_index] += val;
-				}
 			} else {
-				// this->experiment->state == EXPERIMENT_STATE_CLEANUP
-				if (!this->input_is_new_class[i_index]) {
-					// TODO: change when val is set?
-					// - or simply make unable to depend on self
-					//   - can depend on new state if absolutely need it
-					input_vals[i_index] += context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
-						.state_vals->at(this->input_init_local_input_indexes[i_index]);
-				}
-			}
-		} else {
-			if (this->experiment->state == EXPERIMENT_STATE_EXPLORE
-					|| this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
 				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
 				if (it != run_helper.last_seen_vals.end()) {
 					double last_seen_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
 					input_vals[i_index] += last_seen_scale*it->second;
 				}
+			}
+		}
+	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
+		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			int context_index = c_index - context_size_diff;
+			if (context_index < 0) {
+				context_index = 0;
+			}
+			clean_outer_activate_helper(input_vals,
+										run_helper,
+										context[c_index].scope_history);
+
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+					if (c_index == context.size()-1 - this->input_init_local_scope_depths[i_index]) {
+						if (!this->input_is_new_class[i_index]) {
+							/**
+							 * - if also used by previous sequence, value has already been set back
+							 *   - (and in order to be new class, can't be any state updates until after previous sequence, so this is safe)
+							 */
+							double original_val_scale = this->experiment->state_iter/1000000.0;
+							input_vals[i_index] += original_val_scale*context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+								.state_vals->at(this->input_init_local_input_indexes[i_index]);
+						}
+					}
+				}
+			}
+		}
+
+		clean_experiment_activate_helper(input_vals,
+										 branch_experiment_history,
+										 run_helper,
+										 history);
+
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+				double original_val_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
+				input_vals[i_index] += original_val_scale*context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+					.state_vals->at(this->input_init_local_input_indexes[i_index]);
+			}
+		}
+	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
+		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			int context_index = c_index - context_size_diff;
+			if (context_index < 0) {
+				context_index = 0;
+			}
+			clean_outer_activate_helper(input_vals,
+										run_helper,
+										context[c_index].scope_history);
+
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+					if (c_index == context.size()-1 - this->input_init_local_scope_depths[i_index]) {
+						if (!this->input_is_new_class[i_index]) {
+							input_vals[i_index] += context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+								.state_vals->at(this->input_init_local_input_indexes[i_index]);
+						}
+					}
+				}
+			}
+		}
+
+		clean_experiment_activate_helper(input_vals,
+										 branch_experiment_history,
+										 run_helper,
+										 history);
+	} else {
+		// this->experiment->state == BRANCH_EXPERIMENT_STATE_WRAPUP
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->last_layer_new_indexes[i_index] != -1) {
+				input_vals[i_index] = context.back().state_vals[this->last_layer_new_indexes[i_index]];
 			}
 		}
 	}
@@ -239,11 +281,11 @@ void Sequence::activate(vector<double>& flat_vals,
 
 	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 		if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-			if (this->experiment->state == EXPERIMENT_STATE_EXPLORE
-					|| this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
+			if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPLORE
+					|| this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
 				context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]) = input_vals[i_index];
-			} else if (this->experiment->state == EXPERIMENT_STATE_NEW_CLASS) {
+			} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
 				if (this->input_is_new_class[i_index]) {
 					double val_diff = input_vals[i_index] - context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 						.state_vals[this->input_init_local_input_indexes[i_index]];
@@ -256,11 +298,15 @@ void Sequence::activate(vector<double>& flat_vals,
 					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 						.state_vals->at(this->input_init_local_input_indexes[i_index]) = input_vals[i_index];
 				}
-			} else {
-				// this->experiment->state == EXPERIMENT_STATE_CLEANUP
+			} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
 				if (!this->input_is_new_class[i_index]) {
 					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 						.state_vals->at(this->input_init_local_input_indexes[i_index]) = input_vals[i_index];
+				}
+			} else {
+				// this->experiment->state == BRANCH_EXPERIMENT_STATE_WRAPUP
+				if (this->last_layer_new_indexes[i_index] != -1) {
+					context.back().state_vals[this->last_layer_new_indexes[i_index]] = input_vals[i_index];
 				}
 			}
 		}
@@ -271,101 +317,36 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 						double& scale_factor_error,
 						RunHelper& run_helper,
 						SequenceHistory* history) {
-	vector<double> input_errors(this->input_init_types.size(), 0.0);
-
-	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-			if (this->experiment->state == EXPERIMENT_STATE_EXPLORE
-					|| this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-				input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
-					.state_errors->at(this->input_init_local_input_indexes[i_index]);
-			} else if (this->experiment->state == EXPERIMENT_STATE_NEW_CLASS) {
-				if (this->input_is_new_class[i_index]) {
-					double new_class_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
-					input_errors[i_index] = new_class_scale*context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
-						.state_errors->at(this->input_init_local_input_indexes[i_index]);
-				} else {
-					input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
-						.state_errors->at(this->input_init_local_input_indexes[i_index]);
-				}
-			} else {
-				// this->experiment->state == EXPERIMENT_STATE_CLEANUP
-				if (!this->input_is_new_class[i_index]) {
-					input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
-						.state_errors->at(this->input_init_local_input_indexes[i_index]);
-				}
-			}
+	if (this->experiment->state == BRANCH_EXPERIMENT_STATE_WRAPUP) {
+		for (int l_index = 0; l_index < (int)this->scopes.size()-1; l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index].back()];
+			run_helper.scale_factor *= scope_node->scope_scale_mod->weight;
 		}
-	}
 
-	vector<vector<double>> inner_state_errors(this->starting_node_ids.size());
-	inner_state_errors[0] = vector<double>(this->scopes[0]->num_states, 0.0);
-	Scope* curr_scope = this->scopes[0];
-	for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
-		ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
-		Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
+		/**
+		 * - can track separate inner_scale_factor_errors and update separate scope nodes/scale mods
+		 *   - but will simply track cumulative for now, and let separate adjust after experiment
+		 */
+		double cumulative_scale_factor_error = 0.0;
+		for (int l_index = (int)this->scopes.size()-1; l_index >= 0; l_index--) {
+			for (int n_index = (int)this->node_ids[l_index].size()-1; n_index >= 0; n_index--) {
+				if (n_index == (int)this->node_ids[l_index].size()-1 && l_index != (int)this->scopes.size()-1) {
+					ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]];
 
-		inner_state_errors[1+l_index] = vector<double>(next_scope->num_states, 0.0);
+					cumulative_scale_factor_error *= scope_node->scope_scale_mod->weight;
 
-		curr_scope = next_scope;
-	}
-	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		double error = input_errors[i_index];
-		if (this->input_transformations[i_index] != NULL) {
-			error = this->input_transformations[i_index]->backprop_backward(error);
-		}
-		inner_state_errors[this->input_init_target_layers[i_index]][this->input_init_target_indexes[i_index]] = error;
-	}
-
-	context.push_back(BackwardContextLayer());
-
-	context.back().state_errors = &(inner_state_errors[0]);
-
-	vector<int> next_starting_node_ids;
-	vector<vector<double>*> next_starting_state_errors;
-	vector<EndingScopeNodeBackpropHelper> ending_scope_node_helpers;
-	for (int l_index = 0; l_index < (int)this->scopes.size()-1; l_index++) {
-		ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index].back()];
-		ending_scope_node_helpers.push_back(EndingScopeNodeBackpropHelper(scope_node));
-		ending_scope_node_helpers.back().backward(next_starting_node_ids,
-												  next_starting_state_errors,
-												  context,
-												  run_helper);
-	}
-
-	double cumulative_scale_factor_error = 0.0;
-	for (int l_index = (int)this->scopes.size()-1; l_index >= 0; l_index--) {
-		for (int n_index = (int)this->node_ids[l_index].size()-1; n_index >= 0; n_index--) {
-			if (l_index == 0 && n_index == 0 && this->starting_node_ids.size() > 1) {
-				continue;	// i.e., break
-			}
-
-			if (n_index == (int)this->node_ids[l_index].size()-1 && l_index != (int)this->scopes.size()-1) {
-				ending_scope_node_helpers[l_index].forward(context,
-														   cumulative_scale_factor_error,
-														   run_helper);
-			} else {
-				if (this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]]->type == NODE_TYPE_ACTION) {
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[l_index][n_index];
-					ActionNode* action_node = (ActionNode*)action_node_history->node;
-					action_node->backprop(context,
-										  cumulative_scale_factor_error,
-										  run_helper,
-										  action_node_history);
+					run_helper.scale_factor /= scope_node->scope_scale_mod->weight;
 				} else {
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[l_index][n_index];
-					ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-					if (n_index == 0 && next_starting_node_ids.size() > 0) {
-						scope_node->halfway_backprop(next_starting_node_ids,
-													 next_starting_state_errors,
-													 context,
-													 cumulative_scale_factor_error,
-													 run_helper,
-													 scope_node_history);
-
-						next_starting_node_ids.clear();
-						next_starting_state_errors.clear();
+					if (this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]]->type == NODE_TYPE_ACTION) {
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[l_index][n_index];
+						ActionNode* action_node = (ActionNode*)action_node_history->node;
+						action_node->backprop(context,
+											  cumulative_scale_factor_error,
+											  run_helper,
+											  action_node_history);
 					} else {
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[l_index][n_index];
+						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 						scope_node->backprop(context,
 											 cumulative_scale_factor_error,
 											 run_helper,
@@ -374,59 +355,182 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 				}
 			}
 		}
-	}
 
-	if (this->starting_node_ids.size() > 1) {
-		vector<int> starting_node_ids_copy = this->starting_node_ids;
-		starting_node_ids_copy.erase(starting_node_ids_copy.begin());
+		scale_factor_error = cumulative_scale_factor_error;
+	} else {
+		vector<double> input_errors(this->input_init_types.size(), 0.0);
 
-		vector<vector<double>*> inner_state_errors_copy(this->starting_node_ids.size()-1);
-		for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
-			inner_state_errors_copy[l_index] = &(inner_state_errors[1+l_index]);
-		}
-
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[0][0];
-		ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-		scope_node->halfway_backprop(starting_node_ids_copy,
-									 inner_state_errors_copy,
-									 context,
-									 cumulative_scale_factor_error,
-									 run_helper,
-									 scope_node_history);
-	}
-
-	scale_factor_error = cumulative_scale_factor_error;
-
-	context.pop_back();
-
-	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		double error = inner_state_errors[this->input_init_target_layers[i_index]][this->input_init_target_indexes[i_index]];
-		if (this->input_transformations[i_index] != NULL) {
-			error = this->input_transformations[i_index]->backprop_forward(error);
-		}
-		input_errors[i_index] = error;
-	}
-
-	// set back local errors in case used by previous sequence
-	for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-		if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-			if (this->experiment->state == EXPERIMENT_STATE_EXPLORE
-					|| this->experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
-
-			} else if (this->experiment->state == EXPERIMENT_STATE_NEW_CLASS) {
-
-			} else {
-				// this->experiment->state == EXPERIMENT_STATE_CLEANUP
-				if (!this->input_is_new_class[i_index]) {
-					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
-						.state_errors->at(this->input_init_local_input_indexes[i_index]) = ;
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+				if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+					input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
+						.state_errors->at(this->input_init_local_input_indexes[i_index]);
+				} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+					if (this->input_is_new_class[i_index]) {
+						double new_class_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
+						input_errors[i_index] = new_class_scale*context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]);
+					} else {
+						input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]);
+					}
+				} else {
+					// this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN
+					if (!this->input_is_new_class[i_index]) {
+						input_errors[i_index] = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]);
+					}
 				}
 			}
 		}
-	}
-	// HERE
 
-	// TODO: set run_helper.new_input_errors
+		vector<vector<double>> inner_state_errors(this->starting_node_ids.size());
+		inner_state_errors[0] = vector<double>(this->scopes[0]->num_states, 0.0);
+		Scope* curr_scope = this->scopes[0];
+		for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
+			Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
+
+			inner_state_errors[1+l_index] = vector<double>(next_scope->num_states, 0.0);
+
+			curr_scope = next_scope;
+		}
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			double error = input_errors[i_index];
+			if (this->input_transformations[i_index] != NULL) {
+				error = this->input_transformations[i_index]->backprop_backward(error);
+			}
+			inner_state_errors[this->input_init_target_layers[i_index]][this->input_init_target_indexes[i_index]] = error;
+		}
+
+		context.push_back(BackwardContextLayer());
+
+		context.back().state_errors = &(inner_state_errors[0]);
+
+		vector<int> next_starting_node_ids;
+		vector<vector<double>*> next_starting_state_errors;
+		vector<EndingScopeNodeBackpropHelper> ending_scope_node_helpers;
+		for (int l_index = 0; l_index < (int)this->scopes.size()-1; l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)this->scopes[l_index]->nodes[this->node_ids[l_index].back()];
+			ending_scope_node_helpers.push_back(EndingScopeNodeBackpropHelper(scope_node));
+			ending_scope_node_helpers.back().backward(next_starting_node_ids,
+													  next_starting_state_errors,
+													  context,
+													  run_helper);
+		}
+
+		double cumulative_scale_factor_error = 0.0;
+		for (int l_index = (int)this->scopes.size()-1; l_index >= 0; l_index--) {
+			for (int n_index = (int)this->node_ids[l_index].size()-1; n_index >= 0; n_index--) {
+				if (l_index == 0 && n_index == 0 && this->starting_node_ids.size() > 1) {
+					continue;	// i.e., break
+				}
+
+				if (n_index == (int)this->node_ids[l_index].size()-1 && l_index != (int)this->scopes.size()-1) {
+					ending_scope_node_helpers[l_index].forward(context,
+															   cumulative_scale_factor_error,
+															   run_helper);
+				} else {
+					if (this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]]->type == NODE_TYPE_ACTION) {
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[l_index][n_index];
+						ActionNode* action_node = (ActionNode*)action_node_history->node;
+						action_node->backprop(context,
+											  cumulative_scale_factor_error,
+											  run_helper,
+											  action_node_history);
+					} else {
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[l_index][n_index];
+						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+						if (n_index == 0 && next_starting_node_ids.size() > 0) {
+							scope_node->halfway_backprop(next_starting_node_ids,
+														 next_starting_state_errors,
+														 context,
+														 cumulative_scale_factor_error,
+														 run_helper,
+														 scope_node_history);
+
+							next_starting_node_ids.clear();
+							next_starting_state_errors.clear();
+						} else {
+							scope_node->backprop(context,
+												 cumulative_scale_factor_error,
+												 run_helper,
+												 scope_node_history);
+						}
+					}
+				}
+			}
+		}
+
+		if (this->starting_node_ids.size() > 1) {
+			vector<int> starting_node_ids_copy = this->starting_node_ids;
+			starting_node_ids_copy.erase(starting_node_ids_copy.begin());
+
+			vector<vector<double>*> inner_state_errors_copy(this->starting_node_ids.size()-1);
+			for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
+				inner_state_errors_copy[l_index] = &(inner_state_errors[1+l_index]);
+			}
+
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[0][0];
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+			scope_node->halfway_backprop(starting_node_ids_copy,
+										 inner_state_errors_copy,
+										 context,
+										 cumulative_scale_factor_error,
+										 run_helper,
+										 scope_node_history);
+		}
+
+		scale_factor_error = cumulative_scale_factor_error;
+
+		context.pop_back();
+
+		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			double error = inner_state_errors[this->input_init_target_layers[i_index]][this->input_init_target_indexes[i_index]];
+			if (this->input_transformations[i_index] != NULL) {
+				error = this->input_transformations[i_index]->backprop_forward(error);
+			}
+			input_errors[i_index] = error;
+		}
+
+		if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+						.state_errors->at(this->input_init_local_input_indexes[i_index]) = input_errors[i_index];
+				}
+			}
+		} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+					if (this->input_is_new_class[i_index]) {
+						double error_diff = input_errors[i_index] - context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index])
+
+						double set_back_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
+
+						context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]) += set_back_scale*error_diff;
+					} else {
+						context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]) = input_errors[i_index];
+					}
+				}
+			}
+		} else {
+			// this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
+					if (!this->input_is_new_class[i_index]) {
+						context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
+							.state_errors->at(this->input_init_local_input_indexes[i_index]) = input_errors[i_index];
+					}
+				}
+			}
+		}
+
+		run_helper.new_input_errors[this->step_index] = input_errors;
+	}
 }
 
 

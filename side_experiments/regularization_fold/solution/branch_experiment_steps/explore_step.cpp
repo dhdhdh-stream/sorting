@@ -5,10 +5,11 @@ using namespace std;
 void BranchExperiment::explore_activate(vector<double>& flat_vals,
 										vector<ForwardContextLayer>& context,
 										RunHelper& run_helper,
-										FoldHistory* history) {
+										BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
-	history->sequence_ending_input_vals_snapshots = vector<vector<double>>(this->num_steps);
+	// no need to append to context yet
+
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
 			double obs = flat_vals.begin();

@@ -121,7 +121,7 @@ void BranchExperiment::seed_activate() {
 	vector<vector<double>> new_state_vals_snapshots;
 	vector<vector<StateNetworkHistory*>> new_state_network_histories;
 
-	int context_size_diff = (int)context.size() - (int)this->scope_context.size();
+	int context_size_diff = (int)context.size() - (int)this->scope_context.size() - 1;
 	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 		int context_index = c_index - context_size_diff;
 		if (context_index < 0) {
@@ -143,6 +143,8 @@ void BranchExperiment::seed_activate() {
 	double seed_predicted_score = this->seed_start_predicted_score
 		+ this->seed_start_scale_factor*this->starting_score_network->output->acti_vals[0];
 
+	double seed_predicted_score_error = this->seed_target_val - seed_predicted_score;
+
 	vector<double> new_state_errors(NUM_NEW_STATES, 0.0);
 
 	double starting_score_network_target_max_update;
@@ -152,7 +154,7 @@ void BranchExperiment::seed_activate() {
 		starting_score_network_target_max_update = 0.01;
 	}
 	this->starting_score_network->new_backprop(
-		this->seed_target_val - seed_predicted_score,
+		this->seed_start_scale_factor*seed_predicted_score_error,
 		new_state_errors,
 		starting_score_network_target_max_update);
 

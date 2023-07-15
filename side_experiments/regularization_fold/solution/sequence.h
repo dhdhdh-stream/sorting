@@ -27,18 +27,28 @@ public:
 	std::vector<int> input_init_types;
 	/**
 	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down
+	 *   - append with new state by BRANCH_EXPERIMENT_STATE_WRAPUP
 	 */
 	std::vector<int> input_init_target_layers;
 	std::vector<int> input_init_target_indexes;
 	/**
 	 * - needs to be state that isn't passed down further
+	 * 
 	 * - can be reused between sequences, with each re-setting and re-fetching
+	 * 
 	 * - negative indexing from end
+	 *   - original scope is 0
+	 *     - (experiment context not added yet)
+	 * 
+	 * - no longer needed by BRANCH_EXPERIMENT_STATE_WRAPUP
 	 */
 	std::vector<int> input_init_local_scope_depths;
 	std::vector<int> input_init_local_input_indexes;
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
+	/**
+	 * - don't calculate correlations for new inputs because already have a family
+	 */
 
 	std::vector<std::vector<int>> node_ids;
 	/**
@@ -61,10 +71,18 @@ public:
 	std::vector<int> input_furthest_layer_seen_in;
 	std::vector<std::vector<bool>> input_steps_seen_in;
 
+	/**
+	 * - change input_init_type to SEQUENCE_INPUT_INIT_NONE if not needed
+	 */
 	std::vector<bool> input_is_new_class;
 
 	std::vector<std::vector<int>> scope_additions_needed;
 	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
+
+	/**
+	 * - from experiment layer
+	 */
+	std::vector<int> last_layer_new_indexes;
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
@@ -81,11 +99,6 @@ public:
 class SequenceHistory {
 public:
 	Sequence* sequence;
-
-	// just tracking here rather than in BranchExperimentHistory
-	// TODO: actually, need to move to experiment
-	std::vector<std::vector<double>> step_input_vals_snapshots;
-	std::vector<std::vector<StateNetworkHistory*>> step_state_network_histories;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 

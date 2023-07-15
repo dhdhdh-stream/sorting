@@ -74,25 +74,32 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 	 */
 
 	if (history->score_network_history != NULL) {
-		double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
-
-		double predicted_score_error = run_helper.target_val - branch_predicted_score;
-
-		ScoreNetwork* score_network = history->score_network_history->network;
 		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
-				|| run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
+				|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
+			double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
+
+			double predicted_score_error = run_helper.target_val - branch_predicted_score;
+
+			ScoreNetwork* score_network = history->score_network_history->network;
 			score_network->backprop_weights_with_no_error_signal(
-				predicted_score_error,
+				run_helper.scale_factor*predicted_score_error,
 				0.002,
 				history->state_vals_snapshot,
 				history->score_network_history);
 		} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
-				|| run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES) {
-			score_network->backprop_errors_with_no_weight_change(
-				predicted_score_error,
-				*(context.back().state_errors),
-				history->state_vals_snapshot,
-				history->score_network_history);
+				|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+			if (!run_helper.backprop_is_pre_experiment) {
+				double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
+
+				double predicted_score_error = run_helper.target_val - branch_predicted_score;
+
+				ScoreNetwork* score_network = history->score_network_history->network;
+				score_network->backprop_errors_with_no_weight_change(
+					run_helper.scale_factor*predicted_score_error,
+					*(context.back().state_errors),
+					history->state_vals_snapshot,
+					history->score_network_history);
+			}
 		}
 	}
 }

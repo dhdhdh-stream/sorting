@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void Sequence::cleanup_outer_activate_helper(
+void Sequence::clean_outer_activate_helper(
 		vector<double>& input_vals,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -20,6 +20,8 @@ void Sequence::cleanup_outer_activate_helper(
 						&& it->second[node_id].size() != 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
+					// new_state_vals_snapshots already set
+
 					action_node_history->experiment_sequence_step_indexes.push_back(this->step_index);
 					action_node_history->input_vals_snapshots.push_back(input_vals);
 					action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
@@ -33,7 +35,7 @@ void Sequence::cleanup_outer_activate_helper(
 							StateNetworkHistory* network_history = new StateNetworkHistory(network);
 							network->new_activate(action_node_history->obs_snapshot,
 												  action_node_history->starting_state_vals_snapshot,
-												  // new state vals already merged
+												  action_node_history->starting_new_state_vals_snapshot,
 												  input_vals[ii_index],
 												  network_history);
 							action_node_history->input_state_network_histories.back()[ii_index] = network_history;
@@ -45,25 +47,29 @@ void Sequence::cleanup_outer_activate_helper(
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				cleanup_outer_activate_helper(input_vals,
-											  run_helper,
-											  scope_node_history->inner_scope_history);
+				if (i_index == (int)scope_history->node_histories.size()-1
+						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
+					// do nothing
+				} else {
+					clean_outer_activate_helper(input_vals,
+												run_helper,
+												scope_node_history->inner_scope_history);
+				}
 			}
 		}
 	}
 }
 
-void Sequence::cleanup_experiment_activate_helper(
+void Sequence::clean_experiment_activate_helper(
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper,
 		SequenceHistory* history) {
-	history->step_input_vals_snapshots = vector<vector<double>>(this->step_index);
-	history->step_state_network_histories = vector<vector<StateNetworkHistory*>>(this->step_index);
 	for (int a_index = 0; a_index < this->step_index; a_index++) {
 		if (this->experiment->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
-			history->step_input_vals_snapshots[a_index] = input_vals;
-			history->step_state_network_histories[a_index] = vector<double>(this->input_init_types.size());
+			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
+			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
+			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (run_helper.can_zero && rand()%5 == 0) {
 					// do nothing
@@ -71,13 +77,14 @@ void Sequence::cleanup_experiment_activate_helper(
 					// do nothing
 				} else {
 					StateNetwork* network = this->step_state_networks[a_index][i_index];
+					vector<double> empty_state_vals;
 					StateNetworkHistory* network_history = new StateNetworkHistory(network);
 					network->new_activate(branch_experiment_history->step_obs_snapshots[a_index],
+										  empty_state_vals,
 										  branch_experiment_history->step_starting_new_state_vals_snapshots[a_index],
-										  // saved as new_state_vals_snapshot even though already merged
 										  input_vals[i_index],
 										  network_history);
-					history->step_state_network_histories[a_index][i_index] = network_history;
+					branch_experiment_history->step_input_state_network_histories[a_index].back()[i_index] = network_history;
 					input_vals[i_index] += network->output->acti_vals[0];
 				}
 			}
@@ -105,7 +112,7 @@ void Sequence::cleanup_experiment_activate_helper(
 								StateNetworkHistory* network_history = new StateNetworkHistory(network);
 								network->new_activate(action_node_history->obs_snapshot,
 													  action_node_history->starting_state_vals_snapshot,
-													  // new state vals already merged
+													  action_node_history->starting_new_state_vals_snapshot,
 													  input_vals[i_index],
 													  network_history);
 								action_node_history->input_state_network_histories.back()[i_index] = network_history;
@@ -116,9 +123,9 @@ void Sequence::cleanup_experiment_activate_helper(
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[s_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-						cleanup_outer_activate_helper(input_vals,
-													  run_helper,
-													  scope_node_history->inner_scope_history);
+						clean_outer_activate_helper(input_vals,
+													run_helper,
+													scope_node_history->inner_scope_history);
 					}
 				}
 			}

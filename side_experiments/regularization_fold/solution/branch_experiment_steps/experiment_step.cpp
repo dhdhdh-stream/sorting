@@ -117,7 +117,7 @@ void BranchExperiment::experiment_outer_activate_helper(
 void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 										   vector<ForwardContextLayer>& context,
 										   RunHelper& run_helper,
-										   FoldHistory* history) {
+										   BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
 
 	run_helper.experiment_scope_id = this->scope_context.back();
@@ -135,7 +135,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 	double temp_scale_factor = 1.0;
 
-	int context_size_diff = (int)context.size() - (int)this->scope_context.size();
+	int context_size_diff = (int)context.size() - (int)this->scope_context.size() - 1;
 	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 		int context_index = c_index - context_size_diff;
 		if (context_index < 0) {
@@ -152,11 +152,17 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 	// no need to activate starting_score_network until backprop
 
+	// no need to append to context yet
+
 	history->step_obs_snapshots = vector<double>(this->num_steps, 0.0);
 	history->step_starting_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);
 	history->step_state_network_histories = vector<vector<StateNetworkHistory*>>(this->num_steps);
 	history->step_ending_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);
 	history->step_score_network_histories = vector<ScoreNetworkHistory*>(this->num_steps, NULL);
+	history->step_score_network_outputs = vector<double>(this->num_steps, 0.0);
+	history->step_input_sequence_step_indexes = vector<vector<int>>(this->num_steps);
+	history->step_input_vals_snapshots = vector<vector<vector<double>>>(this->num_steps);
+	history->step_input_state_network_histories = vector<vector<vector<StateNetworkHistory*>>>(this->num_steps);
 
 	history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
 
@@ -202,7 +208,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
-			run_helper.scale_factor *= this->sequence_scale_factors[a_index];
+			run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
 
 			run_helper.experiment_step_index = a_index;
 
@@ -214,7 +220,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 											   run_helper,
 											   sequence_history);
 
-			run_helper.scale_factor /= this->sequence_scale_factors[a_index];
+			run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
 		}
 	}
 
@@ -237,12 +243,169 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 													   network_history);
 			history->network_histories[s_index] = network_history;
 			outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
-
-			this->exit_network_impacts[s_index] = 0.9999*this->exit_network_impacts[s_index] + 0.0001*abs(this->exit_networks[s_index]->output->acti_vals[0]);
 		}
 	}
 
 	run_helper.experiment_context_index--;
 	run_helper.experiment_step_index = -1;
 	run_helper.experiment_on_path = true;
+}
+
+void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
+										   RunHelper& run_helper,
+										   BranchExperimentHistory* history) {
+	vector<double>* outer_state_errors = context[context.size() - (this->exit_depth+1)].state_errors;
+
+	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
+		if (history->exit_network_histories[s_index] != NULL) {
+			double exit_network_target_max_update;
+			if (this->state_iter <= 100000) {
+				exit_network_target_max_update = 0.05;
+			} else {
+				exit_network_target_max_update = 0.01;
+			}
+			if (this->state_iter <= 20000) {
+				this->exit_networks[s_index]->new_backprop(outer_state_errors->at(s_index),
+														   run_helper.new_state_errors,
+														   exit_network_target_max_update,
+														   history->exit_state_vals_snapshot,
+														   history->exit_new_state_vals_snapshot,
+														   history->exit_network_histories[s_index]);
+			} else {
+				this->exit_networks[s_index]->new_lasso_backprop(outer_state_errors->at(s_index),
+																 run_helper.new_state_errors,
+																 exit_network_target_max_update,
+																 history->exit_state_vals_snapshot,
+																 history->exit_new_state_vals_snapshot,
+																 history->exit_network_histories[s_index]);
+			}
+		}
+	}
+
+	// no need to append to context yet
+
+	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
+		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+			vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
+			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+				if (history->step_state_network_histories[a_index][s_index] != NULL) {
+					double state_network_target_max_update;
+					if (this->state_iter <= 100000) {
+						state_network_target_max_update = 0.05;
+					} else {
+						state_network_target_max_update = 0.01;
+					}
+					if (this->state_iter <= 20000) {
+						vector<double> empty_state_vals;
+						this->step_state_networks[a_index][s_index]->new_backprop(
+							new_state_errors_snapshot[s_index],
+							run_helper.new_state_errors,
+							state_network_target_max_update,
+							history->step_obs_snapshots[a_index],
+							empty_state_vals,
+							history->step_starting_new_state_vals_snapshots[a_index],
+							history->step_state_network_histories[a_index][s_index]);
+					} else {
+						vector<double> empty_state_vals;
+						this->step_state_networks[a_index][s_index]->new_lasso_backprop(
+							new_state_errors_snapshot[s_index],
+							run_helper.new_state_errors,
+							state_network_target_max_update,
+							history->step_obs_snapshots[a_index],
+							empty_state_vals,
+							history->step_starting_new_state_vals_snapshots[a_index],
+							history->step_state_network_histories[a_index][s_index]);
+					}
+				}
+			}
+			for (int st_index = 0; st_index < (int)history->step_input_sequence_step_indexes[a_index].size(); st_index++) {
+				for (int i_index = 0; i_index < (int)history->step_input_state_network_histories[a_index][st_index].size(); i_index++) {
+					if (history->step_input_state_network_histories[a_index][st_index][i_index] != NULL) {
+						StateNetwork* network = history->step_input_state_network_histories[a_index][st_index][i_index]->network;
+						double new_input_network_target_max_update;
+						if (this->state_iter <= 100000) {
+							new_input_network_target_max_update = 0.05;
+						} else {
+							new_input_network_target_max_update = 0.01;
+						}
+						if (this->state_iter <= 20000) {
+							vector<double> empty_state_vals;
+							network->new_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+												  run_helper.new_state_errors,
+												  run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+												  new_input_network_target_max_update,
+												  history->step_obs_snapshots[a_index],
+												  empty_state_vals,
+												  history->step_starting_new_state_vals_snapshots[a_index],
+												  history->step_input_vals_snapshots[a_index][st_index][i_index],
+												  history->step_input_state_network_histories[a_index][st_index][i_index]);
+						} else {
+							vector<double> empty_state_vals;
+							network->new_lasso_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+														run_helper.new_state_errors,
+														run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+														new_input_network_target_max_update,
+														history->step_obs_snapshots[a_index],
+														empty_state_vals,
+														history->step_starting_new_state_vals_snapshots[a_index],
+														history->step_input_vals_snapshots[a_index][st_index][i_index],
+														history->step_input_state_network_histories[a_index][st_index][i_index]);
+						}
+					}
+				}
+			}
+
+			double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
+
+			double new_score_network_target_max_update;
+			if (this->state_iter <= 100000) {
+				new_score_network_target_max_update = 0.05;
+			} else {
+				new_score_network_target_max_update = 0.01;
+			}
+			vector<double> empty_state_vals;
+			this->step_score_networks[a_index]->new_backprop(run_helper.scale_factor*predicted_score_error,
+															 run_helper.new_state_errors,
+															 new_score_network_target_max_update,
+															 empty_state_vals,
+															 history->step_ending_new_state_vals_snapshots[a_index],
+															 history->step_score_network_histories[a_index]);
+
+			run_helper.predicted_score -= run_helper.scale_factor*history->step_score_network_outputs[a_index];
+		} else {
+			run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
+
+			double inner_scale_factor_error = 0.0;
+
+			this->sequences[a_index]->backprop(context,
+											   inner_scale_factor_error,
+											   run_helper,
+											   history->sequence_histories[a_index]);
+
+			this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
+
+			run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
+		}
+	}
+
+	this->starting_score_network->activate(this->starting_state_vals_snapshot,
+										   this->starting_new_state_vals_snapshot);
+
+	double starting_predicted_score = this->existing_predicted_score
+		+ run_helper.scale_factor*this->starting_score_network->output->acti_vals[0];
+
+	double starting_predicted_score_error = run_helper.target_val - starting_predicted_score;
+
+	double starting_score_network_target_max_update;
+	if (this->state_iter <= 100000) {
+		starting_score_network_target_max_update = 0.05;
+	} else {
+		starting_score_network_target_max_update = 0.01;
+	}
+	this->starting_score_network->new_backprop(
+		run_helper.scale_factor*starting_predicted_score_error,
+		run_helper.new_state_errors,
+		starting_score_network_target_max_update);
+
+	run_helper.backprop_is_pre_experiment = true;
 }

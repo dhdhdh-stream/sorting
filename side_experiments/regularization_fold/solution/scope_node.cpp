@@ -250,11 +250,12 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 						  history->inner_scope_history);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
-			|| run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
+			|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 		this->scope_scale_mod->backprop(inner_scale_factor_error, 0.0002);
 
 		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
 	}
 
@@ -321,11 +322,12 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 						  history->inner_scope_history);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
-			|| run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
+			|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 		this->scope_scale_mod->backprop(inner_scale_factor_error, 0.0002);
 
 		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
 	}
 

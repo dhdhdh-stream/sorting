@@ -56,9 +56,6 @@ void BranchExperiment::experiment_transform() {
 	if (this->experiment_result != BRANCH_EXPERIMENT_RESULT_FAIL) {
 		// TODO: when lasso-ing, instead of obs, include using existing state as well (but not new)
 
-		// TODO: to determine if network needed, check both obs and using existing input
-		// - if there is a dependency, that could be a reason to check correlation?
-
 		// determine if new types needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
@@ -74,12 +71,17 @@ void BranchExperiment::experiment_transform() {
 
 						for (int n_index = 0; n_index < it->second.size(); n_index++) {
 							if (it->second[n_index].size() > 0) {
-								double sum_obs_impact = 0.0;
+								StateNetwork* network = it->second[n_index][i_index];
+								double sum_impact = 0.0;
 								for (int in_index = 0; in_index < 20; in_index++) {
-									sum_obs_impact += abs(it->second[n_index][i_index]->hidden->weights[in_index][0][0]);
+									sum_impact += abs(network->hidden->weights[in_index][0][0]);
+
+									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									}
 								}
 
-								if (sum_obs_impact > 0.1) {
+								if (sum_impact > 0.1) {
 									// network needed
 									if (furthest_layer_seen_in < this->sequences[a_index]->input_furthest_layer_seen_in[i_index]) {
 										this->sequences[a_index]->input_furthest_layer_seen_in[i_index] = furthest_layer_seen_in;
@@ -96,37 +98,21 @@ void BranchExperiment::experiment_transform() {
 
 					for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
 						if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
-							double sum_obs_impact = 0.0;
+							StateNetwork* network = this->sequences[a_index]->step_state_networks[ia_index][i_index];
+							double sum_impact = 0.0;
 							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_obs_impact += abs(this->sequences[a_index]->step_state_networks[ia_index][i_index]->hidden->weights[in_index][0][0]);
+								sum_impact += abs(network->hidden->weights[in_index][0][0]);
+
+								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+								}
 							}
 
-							if (sum_obs_impact > 0.1) {
+							if (sum_impact > 0.1) {
 								if (this->scopes.size()+1 < this->sequences[a_index]->input_furthest_layer_seen_in[i_index]) {
 									this->sequences[a_index]->input_furthest_layer_seen_in[i_index] = this->scopes.size()+1;
 								}
 								this->sequences[a_index]->input_steps_seen_in[i_index][ia_index] = true;
-							}
-						} else {
-							// this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE
-							for (int s_index = 0; s_index < (int)this->sequences[ia_index]->scopes.size(); s_index++) {
-								Scope* scope = solution->scopes[this->sequences[ia_index]->scopes[s_index]];
-								for (int n_index = 0; n_index < (int)this->sequences[ia_index]->node_ids[s_index].size(); n_index++) {
-									if (scope->nodes[this->sequences[ia_index]->node_ids[s_index][n_index]]->type == NODE_TYPE_ACTION) {
-										double sum_obs_impact = 0.0;
-										for (int in_index = 0; in_index < 20; in_index++) {
-											sum_obs_impact += abs(this->sequences[a_index]->sequence_state_networks
-												[ia_index][s_index][n_index][i_index]->hidden->weights[in_index][0][0]);
-										}
-
-										if (sum_obs_impact > 0.1) {
-											if (this->scopes.size()+1 < this->sequences[a_index]->input_furthest_layer_seen_in[i_index]) {
-												this->sequences[a_index]->input_furthest_layer_seen_in[i_index] = this->scopes.size()+1;
-											}
-											this->sequences[a_index]->input_steps_seen_in[i_index][ia_index] = true;
-										}
-									}
-								}
 							}
 						}
 					}

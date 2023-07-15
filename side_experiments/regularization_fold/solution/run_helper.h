@@ -38,7 +38,6 @@ public:
 	double target_val;
 	double final_misguess;
 
-	// TODO: add
 	bool backprop_is_pre_experiment;
 
 };

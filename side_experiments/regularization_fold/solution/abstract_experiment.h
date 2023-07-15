@@ -4,25 +4,6 @@
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_LOOP = 1;
 
-const int EXPERIMENT_STATE_EXPLORE = -1;
-const int EXPERIMENT_STATE_EXPERIMENT = 0;
-
-const int EXPERIMENT_STATE_NEW_CLASSES = 1;	// for branch
-const int EXPERIMENT_STATE_MEASURE = 1;		// for loop
-
-/**
- * - add new state and update score networks in a controlled way
- *   - only activate experiment depending on score
- *     - but mark that experiment seen for run
- * 
- * - gradually scale down temp score networks during first half
- *   - then let permanent score networks settle during second half
- * 
- * - also calculate correlation between new classes and existing classes
- */
-const int EXPERIMENT_STATE_CLEANUP = 2;
-const int EXPERIMENT_STATE_DONE = 3;
-
 const double DEFAULT_LASSO_WEIGHT = 0.2;
 
 const int NUM_NEW_STATES = 10;
@@ -55,9 +36,26 @@ public:
 	std::map<int, int> scope_furthest_layer_seen_in;
 
 	std::vector<int> new_state_furthest_layer_seen_in;
-	int final_num_new_states;
 	std::vector<int> layer_num_new_states;
-	std::vector<int> last_layer_new_state_indexes;
+
+	/**
+	 * - includes both new states and new inputs
+	 */
+	std::vector<int> last_layer_new_indexes;
+
+	/**
+	 * - calculate against pre-experiment values
+	 *   - (as not all state is updated post-experiment)
+	 * 
+	 * - if new state not at depth, then ignore
+	 */
+	std::vector<int> corr_calc_scope_depths;
+	std::vector<int> corr_calc_input_indexes;
+	std::vector<double> corr_calc_average_vals;
+	std::vector<double> corr_calc_variances;
+	std::vector<std::vector<double>> corr_calc_new_average_vals;
+	std::vector<std::vector<double>> corr_calc_covariances;
+	std::vector<std::vector<double>> corr_calc_new_variances;
 
 };
 

@@ -4,6 +4,23 @@
 const int BRANCH_EXPERIMENT_STEP_TYPE_ACTION = 0;
 const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 0;
 
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
+const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 0;
+const int BRANCH_EXPERIMENT_STATE_FIRST_CLEAN = 1;
+const int BRANCH_EXPERIMENT_STATE_SECOND_CLEAN = 2;
+/**
+ * - update score networks in a controlled way
+ *   - only activate experiment depending on score
+ *     - but mark that experiment seen for run
+ * 
+ * - gradually scale down temp score networks during first half
+ *   - then let permanent score networks settle during second half
+ * 
+ * - also calculate correlation between new classes and existing classes
+ */
+const int BRANCH_EXPERIMENT_STATE_WRAPUP = 3;
+const int BRANCH_EXPERIMENT_STATE_DONE = 4;
+
 const int BRANCH_EXPERIMENT_RESULT_FAIL = 0;
 const int BRANCH_EXPERIMENT_RESULT_REPLACE = 1;
 const int BRANCH_EXPERIMENT_RESULT_BRANCH = 2;
@@ -29,13 +46,15 @@ public:
 	 *     - can be seen as generalization anyways
 	 */
 
-	Scale* sequence_scale_factors;
+	Scale* sequence_scale_mods;
 
 	/**
 	 * - exit node takes place after new experiment scope
 	 *   - so new experiment scope has a default ending
 	 *   - so doesn't include experiment context
 	 *     - so layer is actually this->scopes.size()
+	 * 
+	 * - lasso clean after BRANCH_EXPERIMENT_STATE_FIRST_CLEAN
 	 */
 	std::vector<ExitNetwork*> exit_networks;
 	std::vector<double> exit_network_impacts;
@@ -63,7 +82,11 @@ public:
 	std::vector<std::vector<int>> scope_additions_needed;
 	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
 
-
+	std::vector<double> step_average_scores;
+	std::vector<double> step_score_variances;
+	std::vector<double> step_average_misguesses;
+	std::vector<double> step_misguess_variances;
+	std::vector<double> step_average_impacts;
 
 };
 
@@ -75,7 +98,7 @@ public:
 	std::vector<double> starting_new_state_vals_snapshot;
 	double existing_predicted_score;
 
-	bool is_original;
+	bool is_branch;
 	ScoreNetworkHistory* score_network_history;
 	double score_network_update;
 
@@ -85,12 +108,17 @@ public:
 	std::vector<std::vector<double>> step_ending_new_state_vals_snapshots;
 	std::vector<ScoreNetworkHistory*> step_score_network_histories;
 	std::vector<double> step_score_network_outputs;
+	std::vector<std::vector<int>> step_input_sequence_step_indexes;
+	std::vector<std::vector<std::vector<double>>> step_input_vals_snapshots;
+	std::vector<std::vector<std::vector<StateNetworkHistory*>>> step_input_state_network_histories;
 
 	std::vector<SequenceHistory*> sequence_histories;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
 	std::vector<double> exit_new_state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> exit_network_histories;
+
+	
 };
 
 #endif /* BRANCH_EXPERIMENT_H */
