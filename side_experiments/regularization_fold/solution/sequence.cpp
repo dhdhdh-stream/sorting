@@ -54,13 +54,19 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 		}
 	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
-		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
+		vector<int> off_path_scope_context;
+		vector<int> off_path_node_context;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			int context_index = c_index - context_size_diff;
-			if (context_index < 0) {
-				context_index = 0;
+			if (c_index >= context.size() - this->experiment->scope_context.size()) {
+				off_path_scope_context.clear();
+				off_path_node_context.clear();
 			}
-			clean_outer_activate_helper(input_vals,
+			off_path_scope_context.push_back(context[c_index].scope_id);
+			off_path_node_context.push_back(context[c_index].node_id);
+			clean_outer_activate_helper(true,
+										off_path_scope_context,
+										off_path_node_context,
+										input_vals,
 										run_helper,
 										context[c_index].scope_history);
 
@@ -96,10 +102,6 @@ void Sequence::activate(vector<double>& flat_vals,
 	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
 		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			int context_index = c_index - context_size_diff;
-			if (context_index < 0) {
-				context_index = 0;
-			}
 			clean_outer_activate_helper(input_vals,
 										run_helper,
 										context[c_index].scope_history);
@@ -110,6 +112,21 @@ void Sequence::activate(vector<double>& flat_vals,
 						if (!this->input_is_new_class[i_index]) {
 							input_vals[i_index] += context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 								.state_vals->at(this->input_init_local_input_indexes[i_index]);
+						}
+					}
+				}
+			}
+
+			for (int cc_index = 0; cc_index < (int)this->experiment->corr_calc_scope_depths.size(); cc_index++) {
+				if (c_index == context.size()-1 - this->experiment->corr_calc_scope_depths[cc_index]) {
+					double curr_val = context[context.size()-1 - this->experiment->corr_calc_scope_depths[cc_index]].state_vals->at(this->experiment->corr_calc_input_indexes[cc_index]);
+					for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+						if (this->input_furthest_layer_needed_in[i_index] <= c_index - context_size_diff) {
+							this->corr_calc_new_average_vals[cc_index][i_index] = 0.9999*this->corr_calc_new_average_vals[cc_index][i_index] + 0.0001*input_vals[i_index];
+							double curr_new_variance = (this->corr_calc_new_average_vals[cc_index][i_index] - input_vals[i_index])*(this->corr_calc_new_average_vals[cc_index][i_index] - input_vals[i_index]);
+							this->corr_calc_new_variances[cc_index][i_index] = 0.9999*this->corr_calc_new_variances[cc_index][i_index] + 0.0001*curr_new_variance;
+							double curr_covariance = (this->experiment->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_new_average_vals[cc_index][i_index] - input_vals[i_index]);
+							this->corr_calc_covariances[cc_index][i_index] = 0.9999*this->corr_calc_covariances[cc_index][i_index] + 0.0001*curr_covariance;
 						}
 					}
 				}
@@ -201,6 +218,7 @@ void Sequence::activate(vector<double>& flat_vals,
 		run_helper.scope_state_networks = &(this->experiment->state_networks[scope_id]);
 		run_helper.scope_score_networks = &(this->experiment->score_networks[scope_id]);
 		// initialize on experiment start
+		run_helper.scope_distance = (int)this->experiment->scope_context.size()+1;
 
 		for (int n_index = 0; n_index < (int)this->node_ids[l_index].size(); n_index++) {
 			if (l_index == 0 && n_index == 0 && this->starting_node_ids.size() > 1) {

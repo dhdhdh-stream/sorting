@@ -34,14 +34,17 @@ public:
 	 * - last index is inner
 	 */
 	std::map<int, int> scope_furthest_layer_seen_in;
+	std::map<int, int> scope_earliest_step_seen_in;
 
-	std::vector<int> new_state_furthest_layer_seen_in;
+	std::vector<int> new_state_furthest_layer_needed_in;
 	std::vector<int> layer_num_new_states;
 
 	/**
-	 * - includes both new states and new inputs
+	 * - scope_additions_needed doesn't include all scopes that need to be modified
+	 *   - check scope_node_additions_needed as well
 	 */
-	std::vector<int> last_layer_new_indexes;
+	std::vector<std::set<int>> scope_additions_needed;
+	std::vector<std::set<std::pair<int, int>>> scope_node_additions_needed;
 
 	/**
 	 * - calculate against pre-experiment values
@@ -54,8 +57,13 @@ public:
 	std::vector<double> corr_calc_average_vals;
 	std::vector<double> corr_calc_variances;
 	std::vector<std::vector<double>> corr_calc_new_average_vals;
-	std::vector<std::vector<double>> corr_calc_covariances;
 	std::vector<std::vector<double>> corr_calc_new_variances;
+	std::vector<std::vector<double>> corr_calc_covariances;
+
+	/**
+	 * - includes both new states and new inputs
+	 */
+	std::vector<int> last_layer_new_indexes;
 
 };
 

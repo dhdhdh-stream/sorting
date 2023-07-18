@@ -7,7 +7,6 @@ public:
 	int node_id;
 
 	std::vector<double>* state_vals;	// actual copy in ScopeNode
-	// doesn't need to be pointers
 	std::vector<bool> states_initialized;
 
 	ScopeHistory* scope_history;

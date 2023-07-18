@@ -3,12 +3,26 @@
 using namespace std;
 
 void Sequence::clean_outer_activate_helper(
+		bool on_path,
+		vector<int> off_path_scope_context,
+		vector<int> off_path_node_context,
 		vector<double>& input_vals,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
 	map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(scope_id);
+
+	if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+		for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
+			set<int>::iterator needed_it = this->scope_additions_needed[ii_index].find(scope_id);
+			if (needed_it != this->scope_additions_needed[ii_index].end()) {
+				for (int c_index = 0; c_index < (int)off_path_scope_context.size(); c_index++) {
+					this->scope_node_additions_needed[ii_index].insert({off_path_scope_context[c_index], off_path_node_context[c_index]});
+				}
+			}
+		}
+	}
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -47,13 +61,23 @@ void Sequence::clean_outer_activate_helper(
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				if (i_index == (int)scope_history->node_histories.size()-1
+				if (on_path
+						&& i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
-					clean_outer_activate_helper(input_vals,
-												run_helper,
-												scope_node_history->inner_scope_history);
+					off_path_scope_context.push_back(scope_id);
+					off_path_node_context.push_back(scope_node->id);
+
+					clean_pre_activate_helper(false,
+											  off_path_scope_context,
+											  off_path_node_context,
+											  input_vals,
+											  run_helper,
+											  scope_node_history->inner_scope_history);
+
+					off_path_scope_context.pop_back();
+					off_path_node_context.pop_back();
 				}
 			}
 		}
@@ -90,10 +114,14 @@ void Sequence::clean_experiment_activate_helper(
 			}
 		} else {
 			SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
-			vector<Scope*> step_scopes = sequence_history->sequence->scopes;
+
+			vector<int> off_path_scope_context;
+			vector<int> off_path_node_context;
 
 			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
-				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(step_scopes[s_index]);
+				int scope_id = this->experiment->sequences[a_index]->scopes[s_index]->id;
+				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(scope_id);
+
 				for (int n_index = 0; n_index < (int)sequence_history->node_histories[s_index].size(); n_index++) {
 					if (sequence_history->node_histories[s_index][n_index]->node->type == NODE_TYPE_ACTION) {
 						int node_id = sequence_history->node_histories[s_index][n_index]->node->id;
@@ -123,11 +151,24 @@ void Sequence::clean_experiment_activate_helper(
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[s_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-						clean_outer_activate_helper(input_vals,
-													run_helper,
-													scope_node_history->inner_scope_history);
+						off_path_scope_context.push_back(scope_id);
+						off_path_node_context.push_back(scope_node->id);
+
+						clean_pre_activate_helper(false,
+												  off_path_scope_context,
+												  off_path_node_context,
+												  input_vals,
+												  run_helper,
+												  scope_node_history->inner_scope_history);
+
+						off_path_scope_context.pop_back();
+						off_path_node_context.pop_back();
 					}
 				}
+
+				off_path_scope_context.push_back(scope_id);
+				off_path_node_context.push_back(this->experiment->sequences[a_index]->node_ids[s_index].back());
+				// for last layer, node isn't scope node, but won't matter
 			}
 		}
 	}

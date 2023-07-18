@@ -33,6 +33,9 @@ public:
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
+				  std::vector<std::vector<StateNetwork*>>*& experiment_scope_state_networks,
+				  std::vector<ScoreNetwork*>*& experiment_scope_score_networks,
+				  int& experiment_scope_distance,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 	void backprop(std::vector<BackwardContextLayer>& context,

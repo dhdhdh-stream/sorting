@@ -67,12 +67,10 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	// currently, starting_node_ids.size() == starting_state_vals.size()+1
 
-	bool experiment_on_path_save = run_helper.experiment_on_path;
-	run_helper.experiment_on_path = false;
-	vector<vector<StateNetwork*>>* scope_state_networks_save = run_helper.scope_state_networks;
-	run_helper.scope_state_networks = NULL;
-	vector<ScoreNetwork*>* scope_score_networks_save = run_helper.scope_score_networks;
-	run_helper.scope_score_networks = NULL;
+	if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		run_helper.experiment_off_path_scope_context.push_back(this->parent->id);
+		run_helper.experiment_off_path_node_context.push_back(this->id);
+	}
 
 	inner_scope->activate(starting_node_ids_copy,
 						  inner_state_vals_copy,
@@ -84,9 +82,13 @@ void ScopeNode::activate(vector<double>& flat_vals,
 						  run_helper,
 						  inner_scope_history);
 
-	run_helper.experiment_on_path = experiment_on_path_save;
-	run_helper.scope_state_networks = scope_state_networks_save;
-	run_helper.scope_score_networks = scope_score_networks_save;
+	if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		// check size in case on path
+		if (run_helper.experiment_off_path_scope_context.size() > 0) {
+			run_helper.experiment_off_path_scope_context.pop_back();
+			run_helper.experiment_off_path_node_context.pop_back();
+		}
+	}
 
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (curr_states_initialized->at(this->input_indexes[i_index])) {
@@ -162,12 +164,10 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	// currently, starting_node_ids.size() == inner_state_vals.size()+1
 
-	bool experiment_on_path_save = run_helper.experiment_on_path;
-	run_helper.experiment_on_path = false;
-	vector<vector<StateNetwork*>>* scope_state_networks_save = run_helper.scope_state_networks;
-	run_helper.scope_state_networks = NULL;
-	vector<ScoreNetwork*>* scope_score_networks_save = run_helper.scope_score_networks;
-	run_helper.scope_score_networks = NULL;
+	if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		run_helper.experiment_off_path_scope_context.push_back(this->parent->id);
+		run_helper.experiment_off_path_node_context.push_back(this->id);
+	}
 
 	inner_scope->activate(starting_node_ids,
 						  inner_state_vals,
@@ -179,9 +179,13 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 						  run_helper,
 						  inner_scope_history);
 
-	run_helper.experiment_on_path = experiment_on_path_save;
-	run_helper.scope_state_networks = scope_state_networks_save;
-	run_helper.scope_score_networks = scope_score_networks_save;
+	if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		// check size in case on path
+		if (run_helper.experiment_off_path_scope_context.size() > 0) {
+			run_helper.experiment_off_path_scope_context.pop_back();
+			run_helper.experiment_off_path_node_context.pop_back();
+		}
+	}
 
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {

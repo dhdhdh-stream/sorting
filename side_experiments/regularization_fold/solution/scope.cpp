@@ -39,57 +39,10 @@ void Scope::activate(vector<int>& starting_node_ids,
 		}
 	}
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
-		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
-		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
-		if (state_it == run_helper.experiment->state_networks.end()) {
-			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
-			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
-		}
-
-		run_helper.scope_state_networks = &(state_it->second);
-		run_helper.scope_score_networks = &(score_it->second);
-
-		int size_diff = (int)this->nodes.size() - run_helper.scope_state_networks->size();
-		run_helper.scope_state_networks->insert(run_helper.scope_state_networks->end(), size_diff, vector<StateNetwork*>());
-		run_helper.scope_score_networks->insert(run_helper.scope_score_networks->end(), size_diff, NULL);
-
-		map<int, int>::iterator layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.find(this->id);
-		if (layer_seen_in_it == run_helper.experiment->scope_furthest_layer_seen_in.end()) {
-			run_helper.experiment->scope_furthest_layer_seen_in[this->id] = run_helper.experiment_context_index;
-		} else {
-			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
-				layer_seen_in_it->second = run_helper.experiment_context_index;
-			}
-		}
-
-		if (run_helper.experiment_step_index != -1) {
-			BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
-			map<int, vector<bool>>::iterator steps_seen_in_it = branch_experiment->scope_steps_seen_in.find(this->id);
-			if (steps_seen_in_it == branch_experiment->scope_steps_seen_in.end()) {
-				steps_seen_in_it = branch_experiment->scope_steps_seen_in.insert({this->id, vector<bool>(branch_experiment->num_steps, false)}).first;
-			}
-			steps_seen_in_it[run_helper.experiment_step_index] = true;
-		}
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_NEW_CLASSES
-			|| run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
-		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
-		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
-		if (state_it == run_helper.experiment->state_networks.end()) {
-			run_helper.scope_state_networks = NULL;
-			run_helper.scope_score_networks = NULL;
-		} else {
-			run_helper.scope_state_networks = &(state_it->second);
-			run_helper.scope_score_networks = &(score_it->second);
-		}
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_CLEANUP) {
-		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
-		if (score_it == run_helper.experiment->score_networks.end()) {
-			run_helper.scope_score_networks = NULL;
-		} else {
-			run_helper.scope_score_networks = &(score_it->second);
-		}
-	}
+	bool experiment_variables_initialized = false;
+	vector<vector<StateNetwork*>>* experiment_scope_state_networks = NULL;
+	vector<ScoreNetwork*>* experiment_scope_score_networks = NULL;
+	int experiment_scope_distance = 0;
 
 	if (this->is_loop) {
 
@@ -139,6 +92,10 @@ void Scope::activate(vector<int>& starting_node_ids,
 										curr_node_id,
 										flat_vals,
 										context,
+										experiment_variables_initialized,
+										experiment_scope_state_networks,
+										experiment_scope_score_networks,
+										experiment_scope_distance,
 										exit_depth,
 										exit_node_id,
 										run_helper,
@@ -146,12 +103,17 @@ void Scope::activate(vector<int>& starting_node_ids,
 		}
 	}
 
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
-		run_helper.scope_state_networks = NULL;
-		run_helper.scope_score_networks = NULL;
+	if (run_helper.experiment_on_path) {
+		run_helper.experiment_context_index--;
+		if (run_helper.experiment_context_index == 0) {
+			if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+				for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+					run_helper.experiment_off_path_scope_context.push_back(context[c_index].scope_id);
+					run_helper.experiment_off_path_node_context.push_back(context[c_index].node_id);
+				}
+			}
 
-		if (run_helper.experiment_on_path) {
-			run_helper.experiment_context_index--;
+			run_helper.experiment_on_path = false;
 		}
 	}
 
@@ -168,6 +130,10 @@ void Scope::handle_node_activate_helper(int iter_index,
 										int& curr_node_id,
 										vector<double>& flat_vals,
 										vector<ForwardContextLayer>& context,
+										bool& experiment_variables_initialized,
+										vector<vector<StateNetwork*>>*& experiment_scope_state_networks,
+										vector<ScoreNetwork*>*& experiment_scope_score_networks,
+										int& experiment_scope_distance,
 										int& exit_depth,
 										int& exit_node_id,
 										RunHelper& run_helper,
@@ -175,10 +141,20 @@ void Scope::handle_node_activate_helper(int iter_index,
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
+		if (!experiment_variables_initialized) {
+			experiment_variables_helper(experiment_variables_initialized,
+										experiment_scope_state_networks,
+										experiment_scope_score_networks,
+										experiment_scope_distance);
+		}
+
 		ActionNodeHistory* node_history = new ActionNodeHistory(action_node);
 		history->node_histories[iter_index].push_back(node_history);
 		action_node->activate(flat_vals,
 							  context,
+							  experiment_scope_state_networks,
+							  experiment_scope_score_networks,
+							  experiment_scope_distance,
 							  run_helper,
 							  node_history);
 
@@ -210,8 +186,8 @@ void Scope::handle_node_activate_helper(int iter_index,
 													run_helper,
 													branch_experiment_history);
 
-						if (run_helper.explore_phase == EXPLORE_PHASE_CLEANUP
-								&& branch_experiment_history->is_original) {
+						if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP
+								&& !branch_experiment_history->is_branch) {
 							curr_node_id = action_node->next_node_id;
 						} else {
 							if (branch_experiment->exit_depth == 0) {
@@ -291,6 +267,93 @@ void Scope::handle_node_activate_helper(int iter_index,
 	}
 }
 
+void Scope::experiment_variables_helper(
+		bool& experiment_variables_initialized,
+		vector<vector<StateNetwork*>>*& experiment_scope_state_networks,
+		vector<ScoreNetwork*>*& experiment_scope_score_networks,
+		int& experiment_scope_distance,
+		RunHelper& run_helper) {
+	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+
+		if (state_it == run_helper.experiment->state_networks.end()) {
+			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
+			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
+		}
+
+		int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();
+		state_it->second.insert(state_it->second.end(), size_diff, vector<StateNetwork*>());
+		score_it->second.insert(score_it->second.end(), size_diff, NULL);
+
+		map<int, int>::iterator layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.find(this->id);
+		if (layer_seen_in_it == run_helper.experiment->scope_furthest_layer_seen_in.end()) {
+			layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.insert({this->id, run_helper.experiment_context_index}).first;
+		} else {
+			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
+				layer_seen_in_it->second = run_helper.experiment_context_index;
+
+				int new_furthest_distance = run_helper.experiment->scope_context.size()+2 - run_helper.experiment_context_index;
+				for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
+					if (state_it->second[n_index].size() != 0) {
+						for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+							state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
+						}
+					}
+				}
+			}
+		}
+
+		if (run_helper.experiment_step_index != -1) {
+			map<int, int>::iterator step_seen_in_it = run_helper.experiment->scope_earliest_step_seen_in.find(this->id);
+			if (step_seen_in_it == run_helper.experiment->scope_earliest_step_seen_in.end()) {
+				run_helper.experiment->scope_earliest_step_seen_in[this->id] = run_helper.experiment_step_index;
+			} else {
+				if (run_helper.experiment_step_index < step_seen_in_it->second) {
+					step_seen_in_it->second = run_helper.experiment_step_index;
+				}
+			}
+		}
+
+		scope_state_networks = &(state_it->second);
+		scope_score_networks = &(score_it->second);
+		scope_distance = (int)run_helper.experiment->scope_context.size()+2 - layer_seen_in_it->second;
+
+		experiment_variables_initialized = true;
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_MEASURE
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = run_helper.experiment->state_networks.find(this->id);
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (state_it != run_helper.experiment->state_networks.end()) {
+			scope_state_networks = &(state_it->second);
+			scope_score_networks = &(score_it->second);
+		}
+
+		if (run_helper.experiment->type == EXPERIMENT_TYPE_BRANCH
+				&& run_helper.state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+				set<int>::iterator needed_it = run_helper.experiment->scope_additions_needed[s_index].find(this->id);
+				if (needed_it != run_helper.experiment->scope_additions_needed[s_index].end()) {
+					for (int c_index = 0; c_index < (int)run_helper.experiment_off_path_scope_context.size(); c_index++) {
+						run_helper.experiment->scope_node_additions_needed[s_index].insert({
+							run_helper.experiment_off_path_scope_context[c_index],
+							run_helper.experiment_off_path_node_context[c_index]});
+					}
+				}
+			}
+		}
+
+		experiment_variables_initialized = true;
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
+		map<int, vector<ScoreNetwork*>>::iterator score_it = run_helper.experiment->score_networks.find(this->id);
+		if (score_it != run_helper.experiment->score_networks.end()) {
+			scope_score_networks = &(score_it->second);
+		}
+
+		experiment_variables_initialized = true;
+	}
+}
+
 void Scope::backprop(vector<int>& starting_node_ids,
 					 vector<vector<double>*>& starting_state_errors,
 					 vector<BackwardContextLayer>& context,
@@ -349,9 +412,13 @@ void Scope::handle_node_backprop_helper(int iter_index,
 							  action_node_history);
 
 		if (action_node_history->experiment_history != NULL) {
+			if ()
 			action_node->curr_experiment->backprop();
 
-			if (action_node->curr_experiment->state == EXPERIMENT_STATE_DONE) {
+			if (action_node->curr_experiment->type == EXPERIMENT_TYPE_BRANCH
+					&& action_node->curr_experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
+
+			} else if () {
 
 			}
 		}

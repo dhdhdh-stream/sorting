@@ -71,16 +71,11 @@ public:
 	double seed_target_val;
 	// only worry about starting score network for seed, as due to updates for inner scopes, seed may quickly become irrelevant
 
-	double curr_branch_average_score;
-	double curr_branch_existing_average_score;
-	double curr_replace_average_score;
-	double curr_replace_average_misguess;
-	double curr_replace_misguess_variance;
-
-	std::map<int, vector<bool>> scope_steps_seen_in;
-
-	std::vector<std::vector<int>> scope_additions_needed;
-	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
+	double branch_average_score;
+	double branch_existing_average_score;
+	double replace_average_score;
+	double replace_average_misguess;
+	double replace_misguess_variance;
 
 	std::vector<double> step_average_scores;
 	std::vector<double> step_score_variances;

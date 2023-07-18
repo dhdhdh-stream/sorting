@@ -2,6 +2,10 @@
  * - don't modify exit nodes after creation
  *   - for new experiments to impact outer state, just modify local state and chain out
  *   - if something new has to be created, it won't need to involve exit nodes, just action nodes
+ * 
+ * - should be no need to add score networks for exit nodes
+ *   - predicted scores should already be accurate before exit node
+ *     - any needed state should be passed
  */
 
 #ifndef EXIT_NODE_H

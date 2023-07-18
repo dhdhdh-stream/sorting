@@ -2,7 +2,8 @@
 
 using namespace std;
 
-void Sequence::experiment_outer_activate_helper(
+void Sequence::experiment_pre_activate_helper(
+		bool on_path,
 		int context_index,
 		vector<double>& input_vals,
 		RunHelper& run_helper,
@@ -19,14 +20,14 @@ void Sequence::experiment_outer_activate_helper(
 
 	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
 	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
-		seen_it[scope_id] = context_index;
+		seen_it = this->scope_furthest_layer_seen_in.insert({scope_id, context_index}).first;
 
 		// no state networks added yet
 	} else {
 		if (seen_it->second > context_index) {
 			seen_it->second = context_index;
 
-			int new_furthest_distance = this->scope.size()+2 - context_index;
+			int new_furthest_distance = this->experiment->scope_context.size()+2 - context_index;
 			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 				if (state_it->second[node_id].size() != 0) {
 					for (s_index = 0; s_index < (int)this->input_init_types.size(); s_index++) {
@@ -43,7 +44,7 @@ void Sequence::experiment_outer_activate_helper(
 				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (it->second[node_id].size() == 0) {
-					int new_furthest_distance = this->scope_context.size()+2 - seen_it[scope_id];
+					int new_furthest_distance = this->experiment->scope_context.size()+2 - seen_it->second;
 					for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
 						it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
@@ -80,14 +81,16 @@ void Sequence::experiment_outer_activate_helper(
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				if (i_index == (int)scope_history->node_histories.size()-1
+				if (on_path
+						&& i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
-					experiment_outer_activate_helper(context_index,
-													 input_vals,
-													 run_helper,
-													 scope_node_history->inner_scope_history);
+					experiment_pre_activate_helper(false,
+												   context_index,
+												   input_vals,
+												   run_helper,
+												   scope_node_history->inner_scope_history);
 				}
 			}
 		}
@@ -125,7 +128,12 @@ void Sequence::experiment_experiment_activate_helper(
 			vector<Scope*> step_scopes = sequence_history->sequence->scopes;
 
 			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
-				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(step_scopes[s_index]);
+				/**
+				 * - already initialized
+				 *   - furthest_layer_seen_in/earliest_step_seen_in already set as well
+				 */
+				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(step_scopes[s_index]->id);
+
 				for (int n_index = 0; n_index < (int)sequence_history->node_histories[s_index].size(); n_index++) {
 					if (sequence_history->node_histories[s_index][n_index]->node->type == NODE_TYPE_ACTION) {
 						int node_id = sequence_history->node_histories[s_index][n_index]->node->id;
@@ -153,10 +161,11 @@ void Sequence::experiment_experiment_activate_helper(
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[s_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-						experiment_outer_activate_helper(this->experiment->scope_context.size()+1,
-														 input_vals,
-														 run_helper,
-														 scope_node_history->inner_scope_history);
+						experiment_pre_activate_helper(false,
+													   this->experiment->scope_context.size()+1,
+													   input_vals,
+													   run_helper,
+													   scope_node_history->inner_scope_history);
 					}
 				}
 			}

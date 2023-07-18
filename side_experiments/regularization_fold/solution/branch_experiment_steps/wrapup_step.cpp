@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void BranchExperiment::wrapup_outer_activate_helper(
+void BranchExperiment::wrapup_pre_activate_helper(
 		double& temp_scale_factor,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -31,9 +31,9 @@ void BranchExperiment::wrapup_outer_activate_helper(
 
 				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
-				wrapup_outer_activate_helper(temp_scale_factor,
-											 run_helper,
-											 scope_node_history->inner_scope_history);
+				wrapup_pre_activate_helper(temp_scale_factor,
+										   run_helper,
+										   scope_node_history->inner_scope_history);
 
 				temp_scale_factor /= scope_node->scope_scale_mod->weight;
 			}
@@ -74,9 +74,9 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 
 		if (this->state_iter < 100000) {
 			double temp_scale_factor = 1.0;
-			wrapup_outer_activate_helper(temp_scale_factor,
-										 run_helper,
-										 context[0].scope_history);
+			wrapup_pre_activate_helper(temp_scale_factor,
+									   run_helper,
+									   context[0].scope_history);
 		}
 
 		vector<double> new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);

@@ -19,17 +19,11 @@ public:
 	AbstractExperiment* experiment;
 	bool can_zero;
 	std::vector<double> new_state_vals;
+	bool experiment_on_path;
 	int experiment_context_index;
 	int experiment_step_index;
-	bool experiment_on_path;
-
-	// helpers
-	vector<vector<StateNetwork*>>* scope_state_networks;
-	vector<ScoreNetwork*>* scope_score_networks;
-	int scope_distance;
-
-	std::vector<double> new_state_errors;
-	std::vector<std::vector<double>> new_input_errors;
+	std::vector<int> experiment_off_path_scope_context;
+	std::vector<int> experiment_off_path_node_context;
 
 	// to detect recursive calls for experiment -- not fullproof but hopefully effective enough
 	int experiment_scope_id;
@@ -38,8 +32,22 @@ public:
 	double target_val;
 	double final_misguess;
 
+	std::vector<double> new_state_errors;
+	std::vector<std::vector<double>> new_input_errors;
+
 	bool backprop_is_pre_experiment;
 
+	RunHelper() {
+		this->curr_depth = 0;
+		this->max_depth = 0;
+		this->exceeded_depth = false;
+
+		// initialize to false to make some Scope logic slightly easier
+		this->experiment_on_path = false;
+
+		this->experiment_scope_id = -1;
+		this->is_recursive = false;
+	}
 };
 
 #endif /* RUN_HELPER_H */

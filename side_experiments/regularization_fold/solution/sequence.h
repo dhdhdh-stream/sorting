@@ -46,9 +46,6 @@ public:
 	std::vector<int> input_init_local_input_indexes;
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
 	std::vector<Transformation*> input_transformations;
-	/**
-	 * - don't calculate correlations for new inputs because already have a family
-	 */
 
 	std::vector<std::vector<int>> node_ids;
 	/**
@@ -68,21 +65,31 @@ public:
 
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 
-	std::vector<int> input_furthest_layer_seen_in;
-	std::vector<std::vector<bool>> input_steps_seen_in;
+	std::vector<int> input_furthest_layer_needed_in;
+	std::vector<int> input_earliest_step_needed_in;
 
 	/**
-	 * - change input_init_type to SEQUENCE_INPUT_INIT_NONE if not needed
+	 * - only for SEQUENCE_INPUT_INIT_LOCAL
+	 *   - (for other input types, check input_furthest_layer_seen_in to determine if needed)
 	 */
 	std::vector<bool> input_is_new_class;
 
-	std::vector<std::vector<int>> scope_additions_needed;
-	std::vector<std::vector<std::pair<int, int>>> scope_node_additions_needed;
+	std::vector<std::set<int>> scope_additions_needed;
+	std::vector<std::set<std::pair<int, int>>> scope_node_additions_needed;
+
+	/**
+	 * - even though already have family, calculate correlation to try to build relations between existing families
+	 */
+	std::vector<std::vector<double>> corr_calc_new_average_vals;
+	std::vector<std::vector<double>> corr_calc_new_variances;
+	std::vector<std::vector<double>> corr_calc_covariances;
 
 	/**
 	 * - from experiment layer
 	 */
 	std::vector<int> last_layer_new_indexes;
+
+
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,

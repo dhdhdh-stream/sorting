@@ -2,7 +2,10 @@
 
 using namespace std;
 
-void BranchExperiment::clean_outer_activate_helper(
+void BranchExperiment::clean_pre_activate_helper(
+		bool on_path,
+		vector<int> off_path_scope_context,
+		vector<int> off_path_node_context,
 		double& temp_scale_factor,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -10,6 +13,17 @@ void BranchExperiment::clean_outer_activate_helper(
 
 	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
 	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
+
+	if (this->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+			set<int>::iterator needed_it = this->scope_additions_needed[s_index].find(scope_id);
+			if (needed_it != this->scope_additions_needed[s_index].end()) {
+				for (int c_index = 0; c_index < (int)off_path_scope_context.size(); c_index++) {
+					this->scope_node_additions_needed[s_index].insert({off_path_scope_context[c_index], off_path_node_context[c_index]});
+				}
+			}
+		}
+	}
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -59,11 +73,26 @@ void BranchExperiment::clean_outer_activate_helper(
 
 				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
-				clean_outer_activate_helper(temp_scale_factor,
-											run_helper,
-											scope_node_history->inner_scope_history);
+				if (on_path,
+						&& i_index == (int)scope_history->node_histories.size()-1
+						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
+					// do nothing
+				} else {
+					off_path_scope_context.push_back(scope_id);
+					off_path_node_context.push_back(scope_node->id);
 
-				temp_scale_factor /= scope_node->scope_scale_mod->weight;
+					clean_pre_activate_helper(false,
+											  off_path_scope_context,
+											  off_path_node_context,
+											  temp_scale_factor,
+											  run_helper,
+											  scope_node_history->inner_scope_history);
+
+					off_path_scope_context.pop_back();
+					off_path_node_context.pop_back();
+
+					temp_scale_factor /= scope_node->scope_scale_mod->weight;
+				}
 			}
 		}
 	}
@@ -89,9 +118,46 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 	run_helper.new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
 
 	double temp_scale_factor = 1.0;
-	new_classes_outer_activate_helper(temp_scale_factor,
-									  run_helper,
-									  context[0].scope_history);
+	vector<int> off_path_scope_context;
+	vector<int> off_path_node_context;
+	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+		if (c_index >= context.size() - this->scope_context.size()) {
+			off_path_scope_context.clear();
+			off_path_node_context.clear();
+		}
+		off_path_scope_context.push_back(context[c_index].scope_id);
+		off_path_node_context.push_back(context[c_index].node_id);
+		clean_pre_activate_helper(true,
+								  off_path_scope_context,
+								  off_path_node_context,
+								  temp_scale_factor,
+								  run_helper,
+								  context[c_index].scope_history);
+
+		if (this->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+			int context_size_diff = (int)context.size() - (int)this->scope_context.size() - 1;
+			for (int cc_index = 0; cc_index < (int)this->corr_calc_scope_depths.size(); cc_index++) {
+				if (c_index == context.size()-1 - this->corr_calc_scope_depths[cc_index]) {
+					double curr_val = context[context.size()-1 - this->corr_calc_scope_depths[cc_index]].state_vals->at(this->corr_calc_input_indexes[cc_index]);
+					this->corr_calc_average_vals[cc_index] = 0.9999*this->corr_calc_average_vals[cc_index] + 0.0001*curr_val;
+					double curr_variance = (this->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_average_vals[cc_index] - curr_val);
+					this->corr_calc_variances[cc_index] = 0.9999*this->corr_calc_variances[cc_index] + 0.0001*curr_variance;
+
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+						if (this->new_state_furthest_layer_needed_in[s_index] <= c_index - context_size_diff) {
+							// c_index - context_size_diff >= 0
+							double curr_new_val = run_helper.new_state_vals[s_index];
+							this->corr_calc_new_average_vals[cc_index][s_index] = 0.9999*this->corr_calc_new_average_vals[cc_index][s_index] + 0.0001*curr_new_val;
+							double curr_new_variance = (this->corr_calc_new_average_vals[cc_index][s_index] - curr_new_val)*(this->corr_calc_new_average_vals[cc_index][s_index] - curr_new_val);
+							this->corr_calc_new_variances[cc_index][s_index] = 0.9999*this->corr_calc_new_variances[cc_index][s_index] + 0.0001*curr_new_variance;
+							double curr_covariance = (this->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_new_average_vals[cc_index][s_index] - curr_new_val);
+							this->corr_calc_covariances[cc_index][s_index] = 0.9999*this->corr_calc_covariances[cc_index][s_index] + 0.0001*curr_covariance;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	history->starting_state_vals_snapshot = context.back().state_vals;
 	history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
@@ -111,6 +177,9 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 	history->step_input_state_network_histories = vector<vector<vector<StateNetworkHistory*>>>(this->num_steps);
 
 	history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
+
+	run_helper.experiment_on_path = false;
+	run_helper.experiment_context_index = this->scope_context.size()+1;
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
@@ -195,7 +264,9 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 		}
 	}
 
-	// no longer need to track experiment_context_index/experiment_on_path
+	run_helper.experiment_on_path = true;
+	run_helper.experiment_context_index--;
+	// run_helper.experiment_context_index still has to be >0
 }
 
 void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
