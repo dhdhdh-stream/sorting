@@ -48,7 +48,7 @@ public:
 	void state_hidden_finalize_new_state();
 	void state_hidden_finalize_new_input();
 	void score_hidden_finalize_new_state(int new_total_states);
-	void score_hidden_add_new_state(int new_state_size);
+	void score_hidden_add_state();
 	void exit_hidden_finalize_new_state();
 };
 

@@ -67,7 +67,7 @@ void BranchExperiment::experiment_transform() {
 						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
 						int earliest_step_seen_in = this->scope_earliest_step_seen_in.find(it->first);
 
-						for (int n_index = 0; n_index < it->second.size(); n_index++) {
+						for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 							if (it->second[n_index].size() > 0) {
 								StateNetwork* network = it->second[n_index][i_index];
 								double sum_impact = 0.0;
@@ -206,7 +206,7 @@ void BranchExperiment::experiment_transform() {
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
 					it != this->state_networks.end(); it++) {
-				for (int n_index = 0; n_index < it->second.size(); n_index++) {
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					if (it->second[n_index].size() > 0) {
 						StateNetwork* network = it->second[n_index][s_index];
 						double sum_impact = 0.0;
@@ -262,7 +262,7 @@ void BranchExperiment::experiment_transform() {
 					it != this->state_networks.end(); it++) {
 				int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
 
-				for (int n_index = 0; n_index < it->second.size(); n_index++) {
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					if (it->second[n_index].size() > 0) {
 						for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
 							if (it->second[n_index][is_index] != NULL) {
@@ -292,7 +292,7 @@ void BranchExperiment::experiment_transform() {
 					it != this->score_networks.end(); it++) {
 				int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
 
-				for (int n_index = 0; n_index < it->second.size(); n_index++) {
+				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					if (it->second[n_index] != NULL) {
 						double sum_state_impact = 0.0;
 						for (int in_index = 0; in_index < 20; in_index++) {
@@ -372,7 +372,7 @@ void BranchExperiment::experiment_transform() {
 			int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
 			int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
 
-			for (int n_index = 0; n_index < it->second.size(); n_index++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				if (it->second[n_index].size() > 0) {
 					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						if (it->second[n_index][s_index] != NULL) {
@@ -388,7 +388,7 @@ void BranchExperiment::experiment_transform() {
 			int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
 			int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
 
-			for (int n_index = 0; n_index < it->second.size(); n_index++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 				if (it->second[n_index].size() > 0) {
 					if (it->second[n_index] != NULL) {
 						it->second[n_index]->clean(num_new_states);
@@ -411,7 +411,7 @@ void BranchExperiment::experiment_transform() {
 
 		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
 			if (this->exit_networks[e_index] != NULL) {
-				this->exit_networks[e_index]->clean(this->scope_context.size());
+				this->exit_networks[e_index]->clean(this->layer_num_new_states[this->scope_context.size()]);
 			}
 		}
 

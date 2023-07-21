@@ -152,6 +152,7 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 							this->corr_calc_new_variances[cc_index][s_index] = 0.9999*this->corr_calc_new_variances[cc_index][s_index] + 0.0001*curr_new_variance;
 							double curr_covariance = (this->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_new_average_vals[cc_index][s_index] - curr_new_val);
 							this->corr_calc_covariances[cc_index][s_index] = 0.9999*this->corr_calc_covariances[cc_index][s_index] + 0.0001*curr_covariance;
+							this->new_transformations[cc_index][s_index]->backprop(curr_val, curr_new_val);
 						}
 					}
 				}

@@ -329,15 +329,13 @@ void ScoreNetwork::finalize_new_state(int new_total_states) {
 	this->new_state_input->errors.clear();
 }
 
-void ScoreNetwork::add_new_state(int new_state_size) {
-	this->hidden->score_hidden_add_new_state(new_state_size);
+void ScoreNetwork::add_state() {
+	this->hidden->score_hidden_add_state();
 
-	int size_diff = new_state_size - this->state_size;
-	for (int s_index = 0; s_index < size_diff; s_index++) {
-		this->state_input->acti_vals.push_back(0.0);
-		this->state_input->errors.push_back(0.0);
-	}
-	this->state_size = new_state_size;
+	this->state_input->acti_vals.push_back(0.0);
+	this->state_input->errors.push_back(0.0);
+
+	this->state_size+=;
 }
 
 void ScoreNetwork::save(ofstream& output_file) {

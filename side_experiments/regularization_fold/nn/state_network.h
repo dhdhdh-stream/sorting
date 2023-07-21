@@ -136,10 +136,10 @@ public:
 
 	void update_lasso_weights(int new_furthest_distance);
 
-	void clean_new_state(int num_new_states);
-	void finalize_new_state(int new_total_states);
-	void clean_new_input();
-	void finalize_new_input(int new_state_index);
+	void clean(int num_new_states);
+	void finalize_new_state(int layer_num_new_states,
+							int new_total_states);
+	void finalize_new_input(int new_index);
 
 	void save(std::ofstream& output_file);
 

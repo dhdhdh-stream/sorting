@@ -79,9 +79,10 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 									   context[0].scope_history);
 		}
 
-		vector<double> new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
-		for (int s_index = 0; s_index < (int)this->last_layer_new_state_indexes.size(); s_index++) {
-			new_state_vals[s_index] = context.back().state_vals[this->last_layer_new_state_indexes[s_index]];
+		vector<double> new_state_vals = vector<double>(this->new_num_states, 0.0);
+		for (int s_index = 0; s_index < (int)this->last_layer_new_indexes.size(); s_index++) {
+			new_state_vals[this->last_layer_new_target_indexes[s_index]]
+				= context.back().state_vals[this->last_layer_new_indexes[s_index]];
 		}
 
 		context.push_back(ForwardContextLayer());
@@ -90,7 +91,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 		context.back().node_id = -1;
 
 		context.back().state_vals = &new_state_vals;
-		context.back().states_initialized = vector<bool>(NUM_NEW_STATES, true);
+		context.back().states_initialized = vector<bool>(this->new_num_states, true);
 
 		history->step_obs_snapshots = vector<double>(this->num_steps, 0.0);
 		history->step_starting_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);

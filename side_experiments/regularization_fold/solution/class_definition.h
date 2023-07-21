@@ -4,8 +4,12 @@
 class ClassDefinition {
 public:
 	int id;
-	FamilyDefinition* family;
-	
+	int family_id;
+
+	ClassDefinition(int family_id);
+	ClassDefinition(std::ifstream& input_file);
+
+	void save(std::ofstream& output_file);
 };
 
 #endif /* CLASS_DEFINITION_H */

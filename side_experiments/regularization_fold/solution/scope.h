@@ -22,7 +22,7 @@ public:
 	int num_states;
 	std::vector<bool> states_initialized;
 	std::vector<FamilyDefinition*> state_families;
-	std::vector<ClassDefinition*> default_state_classes;
+	std::vector<ClassDefinition*> default_state_classes;	// if initialized locally
 
 	// loop stuff
 
@@ -58,6 +58,12 @@ public:
 									 double& scale_factor_error,
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
+
+
+
+	void add_state(bool state_initialized,
+				   FamilyDefinition* state_family,
+				   ClassDefinition* default_state_class);
 
 };
 

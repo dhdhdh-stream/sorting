@@ -83,6 +83,7 @@ public:
 	std::vector<std::vector<double>> corr_calc_new_average_vals;
 	std::vector<std::vector<double>> corr_calc_new_variances;
 	std::vector<std::vector<double>> corr_calc_covariances;
+	std::vector<std::vector<Transformation*>> new_transformations;
 
 	/**
 	 * - from experiment layer

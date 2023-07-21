@@ -12,6 +12,8 @@ public:
 
 	std::vector<Scope*> scopes;
 	// scopes[0] is root, starts with ACTION_START
+	std::vector<FamilyDefinition*> families;
+	std::vector<ClassDefinition*> classes;
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;

@@ -83,6 +83,9 @@ public:
 	std::vector<double> step_misguess_variances;
 	std::vector<double> step_average_impacts;
 
+	std::vector<std::vector<int>> new_action_node_target_indexes;
+	std::vector<std::vector<StateNetwork*>> new_action_node_state_networks;
+
 };
 
 class BranchExperimentHistory {

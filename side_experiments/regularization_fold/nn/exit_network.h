@@ -63,11 +63,9 @@ public:
 							ExitNetworkHistory* history);
 
 	void clean(int num_new_states);
-	/**
-	 * - same state may appear multiple times in context, but use at final layer
-	 *   - (remaining new state becomes start of new final layer)
-	 */
-	void finalize_new_state(int exit_depth);
+	void finalize_new_state(int exit_depth,
+							int layer_num_new_states,
+							int new_total_states);
 
 	void save(std::ofstream& output_file);
 

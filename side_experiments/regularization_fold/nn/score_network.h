@@ -73,7 +73,7 @@ public:
 	// new states at the end of total states
 	void finalize_new_state(int new_total_states);
 
-	void add_new_state(int new_state_size);
+	void add_state();
 
 	void save(std::ofstream& output_file);
 

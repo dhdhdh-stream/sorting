@@ -552,7 +552,7 @@ void StateNetwork::update_lasso_weights(int new_furthest_distance) {
 	this->lasso_weights[3] = vector<double>{new_furthest_distance*DEFAULT_LASSO_WEIGHT};
 }
 
-void StateNetwork::clean_new_state(int num_new_states) {
+void StateNetwork::clean(int num_new_states) {
 	// remove global unnecessary
 	int size_diff = this->new_state_indexes.size() - num_new_states;
 	for (int s_index = 0; s_index < size_diff; s_index++) {
@@ -567,82 +567,6 @@ void StateNetwork::clean_new_state(int num_new_states) {
 		}
 	}
 
-	if (this->new_input_size == 0) {
-		// clean output layer
-		// remove back to front
-		for (int n_index = this->hidden_size-1; n_index >= 0; n_index--) {
-			if (this->output->weights[0][0][n_index] < 0.1) {
-				this->hidden->acti_vals.erase(this->hidden->acti_vals.begin()+n_index);
-				this->hidden->errors.erase(this->hidden->errors.begin()+n_index);
-				this->hidden->weights.erase(this->hidden->weights.begin()+n_index);
-				this->hidden->constants.erase(this->hidden->constants.begin()+n_index);
-				this->hidden->weight_updates.erase(this->hidden->weight_updates.begin()+n_index);
-				this->hidden->constant_updates.erase(this->hidden->constant_updates.begin()+n_index);
-
-				this->output->weights[0][0].erase(this->output->weights[0][0].begin()+n_index);
-				this->output->weight_updates[0][0].erase(this->output->weight_updates[0][0].begin()+n_index);
-
-				this->hidden_size--;
-			}
-		}
-
-		// clean hidden layer
-		// remove back to front
-		for (int s_index = (int)this->state_indexes.size()-1; s_index >= 0; s_index--) {
-			double sum_state_impact = 0.0;
-			for (int n_index = 0; n_index < this->hidden_size; n_index++) {
-				sum_state_impact += abs(this->hidden->weights[n_index][1][s_index]);
-			}
-
-			if (sum_state_impact < 0.1) {
-				this->state_indexes.erase(this->state_indexes.begin()+s_index);
-				this->state_input->acti_vals.erase(this->state_input->acti_vals.begin()+s_index);
-				this->state_input->errors.erase(this->state_input->errors.begin()+s_index);
-
-				for (int n_index = 0; n_index < this->hidden_size; n_index++) {
-					this->hidden->weights[n_index][1].erase(this->hidden->weights[n_index][1].begin()+n_index);
-					this->hidden->weight_updates[n_index][1].erase(this->hidden->weight_updates[n_index][1].begin()+n_index);
-				}
-			}
-		}
-		for (int s_index = (int)this->new_state_indexes.size()-1; s_index >= 0; s_index--) {
-			double sum_state_impact = 0.0;
-			for (int n_index = 0; n_index < this->hidden_size; n_index++) {
-				sum_state_impact += abs(this->hidden->weights[n_index][2][s_index]);
-			}
-
-			if (sum_state_impact < 0.1) {
-				this->new_state_indexes.erase(this->new_state_indexes.begin()+s_index);
-				this->new_state_input->acti_vals.erase(this->new_state_input->acti_vals.begin()+s_index);
-				this->new_state_input->errors.erase(this->new_state_input->errors.begin()+s_index);
-
-				for (int n_index = 0; n_index < this->hidden_size; n_index++) {
-					this->hidden->weights[n_index][2].erase(this->hidden->weights[n_index][2].begin()+n_index);
-					this->hidden->weight_updates[n_index][2].erase(this->hidden->weight_updates[n_index][2].begin()+n_index);
-				}
-			}
-		}
-
-		this->lasso_weights.clear();
-	}
-}
-
-void StateNetwork::finalize_new_state(int new_total_states) {
-	this->hidden->state_hidden_finalize_new_state(new_total_states);
-
-	for (int s_index = 0; s_index < (int)this->new_state_indexes.size(); s_index++) {
-		this->state_indexes.push_back(this->new_state_indexes[s_index]);
-
-		this->state_input->acti_vals.push_back(0.0);
-		this->state_input->errors.push_back(0.0);
-	}
-
-	this->new_state_indexes.clear();
-	this->new_state_input->acti_vals.clear();
-	this->new_state_input->errors.clear();
-}
-
-void StateNetwork::clean_new_input() {
 	// clean output layer
 	// remove back to front
 	for (int n_index = this->hidden_size-1; n_index >= 0; n_index--) {
@@ -680,8 +604,24 @@ void StateNetwork::clean_new_input() {
 			}
 		}
 	}
+	for (int s_index = (int)this->new_state_indexes.size()-1; s_index >= 0; s_index--) {
+		double sum_state_impact = 0.0;
+		for (int n_index = 0; n_index < this->hidden_size; n_index++) {
+			sum_state_impact += abs(this->hidden->weights[n_index][2][s_index]);
+		}
 
-	{
+		if (sum_state_impact < 0.1) {
+			this->new_state_indexes.erase(this->new_state_indexes.begin()+s_index);
+			this->new_state_input->acti_vals.erase(this->new_state_input->acti_vals.begin()+s_index);
+			this->new_state_input->errors.erase(this->new_state_input->errors.begin()+s_index);
+
+			for (int n_index = 0; n_index < this->hidden_size; n_index++) {
+				this->hidden->weights[n_index][2].erase(this->hidden->weights[n_index][2].begin()+n_index);
+				this->hidden->weight_updates[n_index][2].erase(this->hidden->weight_updates[n_index][2].begin()+n_index);
+			}
+		}
+	}
+	if (this->new_input_size > 0) {
 		double sum_state_impact = 0.0;
 		for (int n_index = 0; n_index < this->hidden_size; n_index++) {
 			sum_state_impact += abs(this->hidden->weights[n_index][3][0]);
@@ -702,11 +642,27 @@ void StateNetwork::clean_new_input() {
 	this->lasso_weights.clear();
 }
 
-void StateNetwork::finalize_new_input(int new_state_index) {
-	this->hidden->state_hidden_finalize_new_input();
+void StateNetwork::finalize_new_state(int layer_num_new_states,
+									  int new_total_states) {
+	this->hidden->state_hidden_finalize_new_state(new_total_states);
 
+	for (int s_index = 0; s_index < (int)this->new_state_indexes.size(); s_index++) {
+		this->state_indexes.push_back(new_total_states - layer_num_new_states + this->new_state_indexes[s_index]);
+
+		this->state_input->acti_vals.push_back(0.0);
+		this->state_input->errors.push_back(0.0);
+	}
+
+	this->new_state_indexes.clear();
+	this->new_state_input->acti_vals.clear();
+	this->new_state_input->errors.clear();
+}
+
+void StateNetwork::finalize_new_input(int new_index) {
 	if (this->new_input_size > 0) {
-		this->state_indexes.push_back(new_state_index);
+		this->hidden->state_hidden_finalize_new_input();
+
+		this->state_indexes.push_back(new_index);
 
 		this->state_input->acti_vals.push_back(0.0);
 		this->state_input->errors.push_back(0.0);

@@ -446,3 +446,21 @@ void Scope::handle_node_backprop_helper(int iter_index,
 }
 
 
+
+void Scope::add_state(bool state_initialized,
+					  FamilyDefinition* state_family,
+					  ClassDefinition* default_state_class) {
+	this->num_states++;
+	this->state_initialized.push_back(state_initialized);
+	this->state_families.push_back(state_family);
+	this->default_state_classes.push_back(default_state_class);
+
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			action_node->score_network->add_state();
+		}
+	}
+}
+
+

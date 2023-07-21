@@ -350,19 +350,20 @@ void ExitNetwork::clean(int num_new_states) {
 	this->lasso_weights.clear();
 }
 
-void ExitNetwork::finalize_new_state(int exit_depth) {
+void ExitNetwork::finalize_new_state(int exit_depth,
+									 int layer_num_new_states,
+									 int new_total_states) {
 	this->hidden->exit_hidden_finalize_new_state();
 
 	for (int s_index = 0; s_index < (int)this->new_state_indexes.size(); s_index++) {
 		this->context_indexes.push_back(exit_depth);
-		this->state_indexes.push_back(this->new_state_indexes[s_index]);
+		this->state_indexes.push_back(new_total_states - layer_num_new_states + this->new_state_indexes[s_index]);
 
 		this->state_input->acti_vals.push_back(0.0);
 		this->state_input->errors.push_back(0.0);
 	}
 
 	this->new_state_indexes.clear();
-
 	this->new_state_input->acti_vals.clear();
 	this->new_state_input->errors.clear();
 }

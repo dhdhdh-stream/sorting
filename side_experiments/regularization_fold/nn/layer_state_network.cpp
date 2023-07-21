@@ -16,13 +16,9 @@ void Layer::state_hidden_finalize_new_state() {
 }
 
 void Layer::state_hidden_finalize_new_input() {
-	int new_input_size = (int)this->input_layers[3]->acti_vals.size();
-	// 0 or 1
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int s_index = 0; s_index < new_input_size; s_index++) {
-			this->weights[n_index][1].push_back(this->weights[n_index][3][s_index]);
-			this->weight_updates[n_index][1].push_back(0.0);
-		}
+		this->weights[n_index][1].push_back(this->weights[n_index][3][0]);
+		this->weight_updates[n_index][1].push_back(0.0);
 	}
 
 	this->weights[n_index][3].clear();

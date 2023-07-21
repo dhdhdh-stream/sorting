@@ -29,7 +29,17 @@ public:
 
 	AbstractExperiment* curr_experiment;
 
-
+	ActionNode(std::vector<int> target_indexes,
+			   std::vector<StateNetwork*> state_networks,
+			   ScoreNetwork* score_network,
+			   int next_node_id,
+			   double average_score,
+			   double score_variance,
+			   double average_misguess,
+			   double misguess_variance,
+			   double average_impact);
+	ActionNode();
+	~ActionNode();
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
