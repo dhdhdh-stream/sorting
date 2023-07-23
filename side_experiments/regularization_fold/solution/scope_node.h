@@ -16,6 +16,8 @@ public:
 
 	int next_node_id;
 
+
+
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
 				  int& inner_exit_depth,

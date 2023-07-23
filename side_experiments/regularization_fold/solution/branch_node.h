@@ -5,6 +5,11 @@
  *       - but should still be good enough to make decisions
  * 
  * - don't update predicted_score with branch networks
+ * 
+ * - on reuse, on explore, hope that lucky state enables even small differences to be meaningful
+ *   - then on experiment, both branches will initially be near 0.0, so will likely both be tried and re-trained appropriately
+ *     - backprop error signals
+ *       - (even though scores will be near 0.0, demand for state can be strong)
  */
 
 #ifndef BRANCH_NODE_H

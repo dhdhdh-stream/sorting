@@ -284,7 +284,7 @@ void Scope::activate(Problem& problem,
 		int iter_index = 0;
 		while (true) {
 			this->continue_score_network->activate(state_vals);
-			this->continue_misguess_network->activate(state_vals);
+			this->halt_score_network->activate(state_vals);
 
 			bool is_halt;
 			if (iter_index > this->furthest_successful_halt+3) {
@@ -304,7 +304,7 @@ void Scope::activate(Problem& problem,
 						this->furthest_successful_halt = iter_index;
 					}
 				} else {
-					this->halt_score_network->activate(state_vals);
+					this->continue_misguess_network->activate(state_vals);
 					this->halt_misguess_network->activate(state_vals);
 
 					// no need to multiply then divide misguess by scale_factor

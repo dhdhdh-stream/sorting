@@ -1,6 +1,9 @@
 #ifndef ACTION_NODE_H
 #define ACTION_NODE_H
 
+#include <vector>
+
+class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
 	// Action action;
@@ -27,9 +30,16 @@ public:
 	double best_explore_surprise;
 	AbstractExperiment* best_experiment;
 
+	/**
+	 * - if node deleted before experiment finishes, should be OK
+	 *   - can only be that new state added without corresponding branch
+	 *     - but even that might be useful
+	 */
 	AbstractExperiment* curr_experiment;
 
-	ActionNode(std::vector<int> target_indexes,
+	ActionNode(Scope* parent,
+			   int id,
+			   std::vector<int> target_indexes,
 			   std::vector<StateNetwork*> state_networks,
 			   ScoreNetwork* score_network,
 			   int next_node_id,
@@ -38,7 +48,13 @@ public:
 			   double average_misguess,
 			   double misguess_variance,
 			   double average_impact);
-	ActionNode();
+	ActionNode(ActionNode* original,
+			   Scope* parent,
+			   int id,
+			   int next_node_id);
+	ActionNode(std::ifstream& input_file,
+			   Scope* parent,
+			   int id);
 	~ActionNode();
 
 	void activate(std::vector<double>& flat_vals,
@@ -53,6 +69,8 @@ public:
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
+	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
@@ -76,7 +94,9 @@ public:
 	std::vector<std::vector<int>> input_vals_snapshots;
 	std::vector<std::vector<StateNetworkHistory*>> input_state_network_histories;
 
-	
+	ActionNodeHistory(ActionNode* node);
+	ActionNodeHistory(ActionNodeHistory* original);	// deep copy for seed
+	~ActionNodeHistory();
 };
 
 #endif /* ACTION_NODE_H */
