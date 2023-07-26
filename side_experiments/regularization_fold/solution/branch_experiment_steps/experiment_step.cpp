@@ -123,9 +123,6 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 										   BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
 
-	run_helper.experiment_scope_id = this->scope_context.back();
-	run_helper.is_recursive = false;
-
 	history->existing_predicted_score = predicted_score;
 
 	run_helper.experiment = this;
@@ -251,9 +248,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 	run_helper.experiment_on_path = true;
 	run_helper.experiment_context_index--;
-	if (run_helper.experiment_context_index == 0) {
-		run_helper.experiment_on_path = false;
-	}
+	// run_helper.experiment_context_index still has to be >0
 	run_helper.experiment_step_index = -1;
 }
 

@@ -86,6 +86,17 @@ public:
 	std::vector<std::vector<Transformation*>> new_transformations;
 
 	/**
+	 * TODO:
+	 * - correlation between new state and new input
+	 */
+	std::vector<std::vector<double>> corr_calc_state_average_vals;
+	std::vector<std::vector<double>> corr_calc_state_variances;
+	std::vector<std::vector<double>> corr_calc_input_average_vals;
+	std::vector<std::vector<double>> corr_calc_input_variances;
+	std::vector<std::vector<double>> corr_calc_new_covariances;
+	std::vector<std::vector<Transformation*>> new_new_transformations;
+
+	/**
 	 * - from experiment layer
 	 */
 	std::vector<int> last_layer_new_indexes;

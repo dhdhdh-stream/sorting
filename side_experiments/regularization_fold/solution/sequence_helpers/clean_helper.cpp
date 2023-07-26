@@ -4,8 +4,8 @@ using namespace std;
 
 void Sequence::clean_outer_activate_helper(
 		bool on_path,
-		vector<int> off_path_scope_context,
-		vector<int> off_path_node_context,
+		vector<int>& temp_scope_context,
+		vector<int>& temp_node_context,
 		vector<double>& input_vals,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
@@ -17,8 +17,17 @@ void Sequence::clean_outer_activate_helper(
 		for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
 			set<int>::iterator needed_it = this->scope_additions_needed[ii_index].find(scope_id);
 			if (needed_it != this->scope_additions_needed[ii_index].end()) {
-				for (int c_index = 0; c_index < (int)off_path_scope_context.size(); c_index++) {
-					this->scope_node_additions_needed[ii_index].insert({off_path_scope_context[c_index], off_path_node_context[c_index]});
+				// if needed, then starting must be on path
+				int starting_index;
+				if (this->input_furthest_layer_needed_in[i_index] == 0) {
+					starting_index = 0;
+				} else {
+					starting_index = run_helper.experiment_context_start_index
+						+ this->input_furthest_layer_needed_in[i_index]-1;
+					// input_furthest_layer_needed_in[i_index] < scope_context.size()+2
+				}
+				for (int c_index = starting_index; c_index < (int)temp_scope_context.size(); c_index++) {
+					this->scope_node_additions_needed[ii_index].insert({temp_scope_context[c_index], temp_node_context[c_index]});
 				}
 			}
 		}
@@ -61,23 +70,23 @@ void Sequence::clean_outer_activate_helper(
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
+				temp_scope_context.push_back(scope_id);
+				temp_node_context.push_back(scope_node->id);
+
 				if (on_path
 						&& i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
-					off_path_scope_context.push_back(scope_id);
-					off_path_node_context.push_back(scope_node->id);
-
 					clean_pre_activate_helper(false,
-											  off_path_scope_context,
-											  off_path_node_context,
+											  temp_scope_context,
+											  temp_node_context,
 											  input_vals,
 											  run_helper,
 											  scope_node_history->inner_scope_history);
 
-					off_path_scope_context.pop_back();
-					off_path_node_context.pop_back();
+					temp_scope_context.pop_back();
+					temp_node_context.pop_back();
 				}
 			}
 		}
@@ -85,6 +94,8 @@ void Sequence::clean_outer_activate_helper(
 }
 
 void Sequence::clean_experiment_activate_helper(
+		vector<int>& temp_scope_context,
+		vector<int>& temp_node_context,
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper,
@@ -115,8 +126,9 @@ void Sequence::clean_experiment_activate_helper(
 		} else {
 			SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
 
-			vector<int> off_path_scope_context;
-			vector<int> off_path_node_context;
+			vector<int> temp_scope_context_copy = temp_scope_context;
+			vector<int> temp_node_context_copy = temp_node_context;
+			// copy so don't have to reset for each sequence
 
 			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
 				int scope_id = this->experiment->sequences[a_index]->scopes[s_index]->id;
@@ -151,23 +163,23 @@ void Sequence::clean_experiment_activate_helper(
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[s_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-						off_path_scope_context.push_back(scope_id);
-						off_path_node_context.push_back(scope_node->id);
+						temp_scope_context.push_back(scope_id);
+						temp_node_context.push_back(scope_node->id);
 
 						clean_pre_activate_helper(false,
-												  off_path_scope_context,
-												  off_path_node_context,
+												  temp_scope_context,
+												  temp_node_context,
 												  input_vals,
 												  run_helper,
 												  scope_node_history->inner_scope_history);
 
-						off_path_scope_context.pop_back();
-						off_path_node_context.pop_back();
+						temp_scope_context.pop_back();
+						temp_node_context.pop_back();
 					}
 				}
 
-				off_path_scope_context.push_back(scope_id);
-				off_path_node_context.push_back(this->experiment->sequences[a_index]->node_ids[s_index].back());
+				temp_scope_context.push_back(scope_id);
+				temp_node_context.push_back(this->experiment->sequences[a_index]->node_ids[s_index].back());
 				// for last layer, node isn't scope node, but won't matter
 			}
 		}

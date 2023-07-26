@@ -11,8 +11,15 @@ public:
 	bool exceeded_depth;
 
 	int explore_phase;
-	// TODO: choose iter on the outside from loop
-	// if explore exists, but not triggered, still track
+	bool can_random_iter;	// if EXPLORE_PHASE_UPDATE
+
+	/**
+	 * - for loops, choose explore iter on start so there's broader representation
+	 * 
+	 * - if explore seen but not triggered, change to EXPLORE_PHASE_UPDATE
+	 */
+	bool is_explore_iter;
+	bool explore_seen;
 
 	std::map<StateDefinition*, double> last_seen_vals;
 
@@ -22,12 +29,14 @@ public:
 	bool experiment_on_path;
 	int experiment_context_index;
 	int experiment_step_index;
-	std::vector<int> experiment_off_path_scope_context;
-	std::vector<int> experiment_off_path_node_context;
 
-	// to detect recursive calls for experiment -- not fullproof but hopefully effective enough
-	int experiment_scope_id;
-	bool is_recursive;
+	int experiment_context_start_index;
+	std::vector<int> experiment_helper_scope_context;
+	std::vector<int> experiment_helper_node_context;
+	/**
+	 * - save separate copy of scope/node context for scope_node_additions_needed
+	 *   - actual context may need to be empty to control branching
+	 */
 
 	double target_val;
 	double final_misguess;
@@ -42,11 +51,11 @@ public:
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		// initialize to false to make some Scope logic slightly easier
-		this->experiment_on_path = false;
+		this->is_explore_iter = true;
+		this->explore_seen = false;
 
-		this->experiment_scope_id = -1;
-		this->is_recursive = false;
+		// initialize to false to simplify a check in Scope
+		this->experiment_on_path = false;
 	}
 };
 

@@ -34,7 +34,6 @@ public:
 	 * - last index is inner
 	 */
 	std::map<int, int> scope_furthest_layer_seen_in;
-	std::map<int, int> scope_earliest_step_seen_in;
 
 	std::vector<int> new_state_furthest_layer_needed_in;
 	std::vector<int> layer_num_new_states;
@@ -51,8 +50,6 @@ public:
 	 *   - (as not all state is updated post-experiment)
 	 * 
 	 * - if new state not at depth, then ignore
-	 * 
-	 * - TODO: can also check if state networks have any strong dependencies and evaluate correlation
 	 */
 	std::vector<int> corr_calc_scope_depths;
 	std::vector<int> corr_calc_input_indexes;

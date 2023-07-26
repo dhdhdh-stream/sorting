@@ -12,15 +12,19 @@ public:
 	std::vector<StateNetwork*> state_networks;
 
 	ScoreNetwork* score_network;
-
+	/**
+	 * - don't have network for misguess
+	 *   - may prevent some beneficial changes from being recognized immediately
+	 *     - but ultimately shouldn't block progress
+	 *   - instead learn if needed in experiment
+	 */
 	int next_node_id;
 
-	double average_score;
-	double score_variance;
-	double average_misguess;
-	double misguess_variance;
-
-	double average_impact;
+	/**
+	 * - don't keep track of average impact
+	 *   - instead use instance impact
+	 *     - will average out to be the same thing with less bookkeeping
+	 */
 
 	// TODO: assign is_explore if run passed without any explore node being hit
 	bool is_explore;
@@ -42,12 +46,7 @@ public:
 			   std::vector<int> target_indexes,
 			   std::vector<StateNetwork*> state_networks,
 			   ScoreNetwork* score_network,
-			   int next_node_id,
-			   double average_score,
-			   double score_variance,
-			   double average_misguess,
-			   double misguess_variance,
-			   double average_impact);
+			   int next_node_id);
 	ActionNode(ActionNode* original,
 			   Scope* parent,
 			   int id,

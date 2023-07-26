@@ -4,9 +4,9 @@ using namespace std;
 
 void BranchExperiment::clean_pre_activate_helper(
 		bool on_path,
-		vector<int> off_path_scope_context,
-		vector<int> off_path_node_context,
 		double& temp_scale_factor,
+		vector<int> temp_scope_context,
+		vector<int> temp_node_context,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
@@ -18,8 +18,17 @@ void BranchExperiment::clean_pre_activate_helper(
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			set<int>::iterator needed_it = this->scope_additions_needed[s_index].find(scope_id);
 			if (needed_it != this->scope_additions_needed[s_index].end()) {
-				for (int c_index = 0; c_index < (int)off_path_scope_context.size(); c_index++) {
-					this->scope_node_additions_needed[s_index].insert({off_path_scope_context[c_index], off_path_node_context[c_index]});
+				// if needed, then starting must be on path
+				int starting_index;
+				if (this->new_state_furthest_layer_needed_in[s_index] == 0) {
+					starting_index = 0;
+				} else {
+					starting_index = run_helper.experiment_context_start_index
+						+ this->new_state_furthest_layer_needed_in[s_index]-1;
+					// new_state_furthest_layer_needed_in[s_index] < scope_context.size()+2
+				}
+				for (int c_index = starting_index; c_index < (int)temp_scope_context.size(); c_index++) {
+					this->scope_node_additions_needed[s_index].insert({temp_scope_context[c_index], temp_node_context[c_index]});
 				}
 			}
 		}
@@ -73,23 +82,23 @@ void BranchExperiment::clean_pre_activate_helper(
 
 				temp_scale_factor *= scope_node->scope_scale_mod->weight;
 
+				temp_scope_context.push_back(scope_id);
+				temp_node_context.push_back(scope_node->id);
+
 				if (on_path,
 						&& i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
-					off_path_scope_context.push_back(scope_id);
-					off_path_node_context.push_back(scope_node->id);
-
 					clean_pre_activate_helper(false,
-											  off_path_scope_context,
-											  off_path_node_context,
 											  temp_scale_factor,
+											  temp_scope_context,
+											  temp_node_context,
 											  run_helper,
 											  scope_node_history->inner_scope_history);
 
-					off_path_scope_context.pop_back();
-					off_path_node_context.pop_back();
+					temp_scope_context.pop_back();
+					temp_node_context.pop_back();
 
 					temp_scale_factor /= scope_node->scope_scale_mod->weight;
 				}
@@ -104,9 +113,6 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 									  FoldHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_CLEAN;
 
-	run_helper.experiment_scope_id = this->scope_context.back();
-	run_helper.is_recursive = false;
-
 	history->existing_predicted_score = predicted_score;
 
 	run_helper.experiment = this;
@@ -118,19 +124,13 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 	run_helper.new_state_vals = vector<double>(NUM_NEW_STATES, 0.0);
 
 	double temp_scale_factor = 1.0;
-	vector<int> off_path_scope_context;
-	vector<int> off_path_node_context;
+	vector<int> temp_scope_context;
+	vector<int> temp_node_context;
 	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		if (c_index >= context.size() - this->scope_context.size()) {
-			off_path_scope_context.clear();
-			off_path_node_context.clear();
-		}
-		off_path_scope_context.push_back(context[c_index].scope_id);
-		off_path_node_context.push_back(context[c_index].node_id);
 		clean_pre_activate_helper(true,
-								  off_path_scope_context,
-								  off_path_node_context,
 								  temp_scale_factor,
+								  temp_scope_context,
+								  temp_node_context,
 								  run_helper,
 								  context[c_index].scope_history);
 
@@ -181,6 +181,13 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 
 	run_helper.experiment_on_path = false;
 	run_helper.experiment_context_index = this->scope_context.size()+1;
+
+	run_helper.experiment_context_start_index = (int)context.size() - this->scope_context.size();
+	// don't include last layer, which is from ActionNode
+	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+		run_helper.experiment_helper_scope_context.push_back(context[c_index].scope_id);
+		run_helper.experiment_helper_node_context.push_back(context[c_index].node_id);
+	}
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {

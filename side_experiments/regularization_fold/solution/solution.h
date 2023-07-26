@@ -7,8 +7,19 @@
 
 class Solution {
 public:
+	/**
+	 * - just keep track of overall variances instead of per node
+	 *   - may prevent incremental improvements on clear paths from being recognized, but reduces bookkeeping
+	 */
 	double average_score;
+	double score_variance;
+	/**
+	 * - i.e., the portion of the score variance that cannot be explained away
+	 *   - so minimal but significant value to compare against for branching
+	 */
 	double average_misguess;
+	double misguess_variance;
+	double misguess_standard_deviation;
 
 	std::vector<Scope*> scopes;
 	// scopes[0] is root, starts with ACTION_START

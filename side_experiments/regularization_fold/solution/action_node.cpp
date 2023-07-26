@@ -11,12 +11,7 @@ ActionNode::ActionNode(Scope* parent,
 					   vector<int> target_indexes,
 					   vector<StateNetwork*> state_networks,
 					   ScoreNetwork* score_network,
-					   int next_node_id,
-					   double average_score,
-					   double score_variance,
-					   double average_misguess,
-					   double misguess_variance,
-					   double average_impact) {
+					   int next_node_id) {
 	this->type = NODE_TYPE_ACTION;
 
 	this->parent = parent;
@@ -26,11 +21,6 @@ ActionNode::ActionNode(Scope* parent,
 	this->state_networks = state_networks;
 	this->score_network = score_network;
 	this->next_node_id = next_node_id;
-	this->average_score = average_score;
-	this->score_variance = score_variance;
-	this->average_misguess = average_misguess;
-	this->misguess_variance = misguess_variance;
-	this->average_impact = average_impact;
 
 	this->is_explore = false;
 	this->best_experiment = NULL;
@@ -52,11 +42,6 @@ ActionNode::ActionNode(ActionNode* original,
 	}
 	this->score_network = new ScoreNetwork(original->score_network);
 	this->next_node_id = next_node_id;
-	this->average_score = original->average_score;
-	this->score_variance = original->score_variance;
-	this->average_misguess = original->average_misguess;
-	this->misguess_variance = original->misguess_variance;
-	this->average_impact = original->average_impact;
 
 	this->is_explore = false;
 	this->best_experiment = NULL;
@@ -93,26 +78,6 @@ ActionNode::ActionNode(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
-	string score_variance_line;
-	getline(input_file, score_variance_line);
-	this->score_variance = stod(score_variance_line);
-
-	string average_misguess_line;
-	getline(input_file, average_misguess_line);
-	this->average_misguess = stod(average_misguess_line);
-
-	string misguess_variance_line;
-	getline(input_file, misguess_variance_line);
-	this->misguess_variance = stod(misguess_variance_line);
-
-	string average_impact_line;
-	getline(input_file, average_impact_line);
-	this->average_impact = stod(average_impact_line);
 
 	this->is_explore = false;
 	this->best_experiment = NULL;
@@ -394,16 +359,6 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
 			|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
-		this->average_score = 0.9999*this->average_score + 0.0001*run_helper.target_val;
-		double curr_score_variance = (this->average_score - run_helper.target_val)*(this->average_score - run_helper.target_val);
-		this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
-
-		this->average_misguess = 0.9999*this->average_misguess + 0.0001*run_helper.final_misguess;
-		double curr_misguess_variance = (this->average_misguess - run_helper.final_misguess)*(this->average_misguess - run_helper.final_misguess);
-		this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
-
-		this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
-
 		double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
 
 		scale_factor_error += history->score_network_update*predicted_score_error;
@@ -463,13 +418,6 @@ void ActionNode::save(ofstream& output_file) {
 	score_network_save_file.close();
 
 	output_file << this->next_node_id << endl;
-
-	output_file << this->average_score << endl;
-	output_file << this->score_variance << endl;
-	output_file << this->average_misguess << endl;
-	output_file << this->misguess_variance << endl;
-
-	output_file << this->average_impact << endl;
 }
 
 void ActionNode::save_for_display(ofstream& output_file) {

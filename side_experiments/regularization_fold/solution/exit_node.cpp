@@ -2,7 +2,59 @@
 
 using namespace std;
 
+ExitNode::ExitNode(Scope* parent,
+				   int id,
+				   int exit_depth,
+				   int exit_node_id,
+				   vector<int> target_indexes,
+				   vector<ExitNetwork*> networks) {
+	this->type = NODE_TYPE_EXIT;
 
+	this->parent = parent;
+	this->id = id;
+
+	this->exit_depth = exit_depth;
+	this->exit_node_id = exit_node_id;
+	this->target_indexes = target_indexes;
+	this->networks = networks;
+}
+
+ExitNode::ExitNode(ifstream& input_file,
+				   Scope* parent,
+				   int id) {
+	this->type = NODE_TYPE_EXIT;
+
+	this->parent = parent;
+	this->id = id;
+
+	string exit_depth_line;
+	getline(input_file, exit_depth_line);
+	this->exit_depth = stoi(exit_depth_line);
+
+	string exit_node_id_line;
+	getline(input_file, exit_node_id_line);
+	this->exit_node_id = stoi(exit_node_id_line);
+
+	string networks_size_line;
+	getline(input_file, networks_size_line);
+	int networks_size = stoi(networks_size_line);
+	for (int s_index = 0; s_index < networks_size; s_index++) {
+		string target_index_line;
+		getline(input_file, target_index_line);
+		this->target_indexes.push_back(stoi(target_index_line));
+
+		ifstream network_save_file;
+		network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_exit_" + to_string(s_index) + ".txt");
+		this->networks.push_back(new ExitNetwork(network_save_file));
+		network_save_file.close();
+	}
+}
+
+ExitNode::~ExitNode() {
+	for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
+		delete this->networks[s_index];
+	}
+}
 
 void ExitNode::activate(vector<ForwardContextLayer>& context,
 						RunHelper& run_helper,
@@ -68,4 +120,33 @@ void ExitNode::backprop(vector<BackwardContextLayer>& context,
 	}
 }
 
+void ExitNode::save(ofstream& output_file) {
+	output_file << this->exit_depth << endl;
+	output_file << this->exit_node_id << endl;
 
+	output_file << this->networks.size() << endl;
+	for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
+		output_file << this->target_indexes[s_index] << endl;
+
+		ofstream network_save_file;
+		network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_exit_" + to_string(s_index) + ".txt");
+		this->networks[s_index]->save(network_save_file);
+		network_save_file.close();
+	}
+}
+
+void ExitNode::save_for_display(ofstream& output_file) {
+
+}
+
+ExitNodeHistory::ExitNodeHistory(ExitNode* node) {
+	this->node = node;
+}
+
+ExitNodeHistory::~ExitNodeHistory() {
+	for (int s_index = 0; s_index < (int)this->network_histories.size(); s_index++) {
+		if (this->network_histories[s_index] != NULL) {
+			delete this->network_histories[s_index];
+		}
+	}
+}

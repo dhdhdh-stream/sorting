@@ -17,9 +17,19 @@ Transformation::Transformation() {
 	this->average_weight_update_size = 0.0;
 }
 
-Transformation::Transformation(Transformation* reverse) {
-	this->scale = 1.0/reverse->scale;
-	this->weight = -reverse->weight/reverse->scale;
+Transformation::Transformation(Transformation& reverse) {
+	this->scale = 1.0/reverse.scale;
+	this->weight = -reverse.weight/reverse.scale;
+}
+
+Transformation::Transformation(ifstream& save_file) {
+	string scale_line;
+	getline(input_file, scale_line);
+	this->scale = stod(scale_line);
+
+	string weight_line;
+	getline(input_file, weight_line);
+	this->weight = stod(weight_line);
 }
 
 void Transformation::backprop(double val_in,
@@ -73,4 +83,9 @@ double Transformation::backprop_backward(double error_in) {
 
 double Transformation::backprop_forward(double error_in) {
 	return error_in/this->scale;
+}
+
+void Transformation::save(ofstream& save_file) {
+	save_file << this->scale << endl;
+	save_file << this->weight < endl;
 }

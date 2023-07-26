@@ -106,15 +106,15 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 		next_starting_state_vals.erase(next_starting_state_vals.begin());
 	}
 
-	run_helper.experiment_off_path_scope_context.push_back(this->scope_node->parent->id);
-	run_helper.experiment_off_path_node_context.push_back(this->scope_node->id);
+	run_helper.experiment_helper_scope_context.push_back(this->scope_node->parent->id);
+	run_helper.experiment_helper_node_context.push_back(this->scope_node->id);
 	// only needed for BRANCH_EXPERIMENT_STATE_SECOND_CLEAN, but will simply update in general for now
 }
 
 void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& context,
 											 RunHelper& run_helper) {
-	run_helper.experiment_off_path_scope_context.pop_back();
-	run_helper.experiment_off_path_node_context.pop_back();
+	run_helper.experiment_helper_scope_context.pop_back();
+	run_helper.experiment_helper_node_context.pop_back();
 
 	if (this->is_halfway == false) {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {

@@ -59,6 +59,9 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 	this->starting_original_score_network->activate(history->starting_state_vals_snapshot,
 													starting_original_score_network_history);
 
+	// TODO: ease-in in case of recursion
+	// - start from 50%?
+
 	if (starting_original_score_network->output->acti_vals[0] > starting_score_network->output->acti_vals[0]) {
 		history->is_branch = false;
 

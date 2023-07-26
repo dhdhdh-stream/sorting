@@ -20,13 +20,37 @@ public:
 	int id;
 
 	int num_states;
-	std::vector<bool> states_initialized;
-	std::vector<FamilyDefinition*> state_families;
-	std::vector<ClassDefinition*> default_state_classes;	// if initialized locally
+	std::vector<bool> state_initialized_locally;
+	std::vector<int> state_family_ids;
+	std::vector<int> state_default_class_ids;	// if initialized locally
 
-	// loop stuff
+	bool is_loop;
+	std::vector<int> starting_target_indexes;
+	std::vector<StateNetwork*> starting_state_networks;
+	ScoreNetwork* continue_score_network;
+	ScoreNetwork* continue_misguess_network;
+	ScoreNetwork* halt_score_network;
+	ScoreNetwork* halt_misguess_network;
+	int furthest_successful_halt;
 
 	std::vector<AbstractNode*> nodes;
+
+	Scope(int id,
+		  int num_states,
+		  std::vector<bool> state_initialized_locally,
+		  std::vector<int> state_family_ids,
+		  std::vector<int> state_default_class_ids,
+		  bool is_loop,
+		  std::vector<int> starting_target_indexes,
+		  std::vector<StateNetwork*> starting_state_networks,
+		  ScoreNetwork* continue_score_network,
+		  ScoreNetwork* continue_misguess_network,
+		  ScoreNetwork* halt_score_network,
+		  ScoreNetwork* halt_misguess_network,
+		  std::vector<AbstractNode*> nodes);
+	Scope(std::ifstream& input_file,
+		  int id);
+	~Scope();
 
 	void activate(std::vector<int>& starting_node_ids,
 				  std::vector<std::vector<double>*>& starting_state_vals,
@@ -48,10 +72,19 @@ public:
 									 int& curr_node_id,
 									 std::vector<double>& flat_vals,
 									 std::vector<ForwardContextLayer>& context,
+									 bool& experiment_variables_initialized,
+									 std::vector<std::vector<StateNetwork*>>*& experiment_scope_state_networks,
+									 std::vector<ScoreNetwork*>*& experiment_scope_score_networks,
+									 int& experiment_scope_distance,
 									 int& exit_depth,
 									 int& exit_node_id,
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
+	void experiment_variables_helper(bool& experiment_variables_initialized,
+									 std::vector<std::vector<StateNetwork*>>*& experiment_scope_state_networks,
+									 std::vector<ScoreNetwork*>*& experiment_scope_score_networks,
+									 int& experiment_scope_distance,
+									 RunHelper& run_helper);
 	void handle_node_backprop_helper(int iter_index,
 									 int h_index,
 									 std::vector<BackwardContextLayer>& context,
@@ -59,22 +92,27 @@ public:
 									 RunHelper& run_helper,
 									 ScopeHistory* history);
 
-
-
 	void add_state(bool state_initialized,
-				   FamilyDefinition* state_family,
-				   ClassDefinition* default_state_class);
+				   int state_family_id,
+				   int state_default_class_id);
 
+	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ScopeHistory {
 public:
 	Scope* scope;
 
+	std::vector<StateNetworkHistory*> starting_state_network_histories;
+
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
 	bool exceeded_depth;
-	
+
+	ScopeHistory(Scope* scope);
+	ScopeHistory(ScopeHistory* original);	// deep copy for seed
+	~ScopeHistory();
 };
 
 #endif /* SCOPE_H */

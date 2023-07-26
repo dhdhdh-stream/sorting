@@ -335,7 +335,7 @@ void ScoreNetwork::add_state() {
 	this->state_input->acti_vals.push_back(0.0);
 	this->state_input->errors.push_back(0.0);
 
-	this->state_size+=;
+	this->state_size++;
 }
 
 void ScoreNetwork::save(ofstream& output_file) {

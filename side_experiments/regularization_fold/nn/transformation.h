@@ -1,6 +1,8 @@
 #ifndef TRANSFORMATION_H
 #define TRANSFORMATION_H
 
+#include <fstream>
+
 class Transformation {
 public:
 	double scale;
@@ -13,7 +15,8 @@ public:
 	double average_weight_update_size;
 
 	Transformation();
-	Transformation(Transformation* reverse);
+	Transformation(Transformation& reverse);
+	Transformation(std::ifstream& save_file);
 
 	void backprop(double val_in,
 				  double target);
@@ -23,6 +26,8 @@ public:
 
 	double backprop_backward(double error_in);	// multiply by scale
 	double backprop_forward(double error_in);	// divide by scale
+
+	void save(std::ofstream& save_file);
 };
 
 #endif /* TRANSFORMATION_H */

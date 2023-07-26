@@ -70,18 +70,12 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 		}
 	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
-		vector<int> off_path_scope_context;
-		vector<int> off_path_node_context;
+		vector<int> temp_scope_context;
+		vector<int> temp_node_context;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			if (c_index >= context.size() - this->experiment->scope_context.size()) {
-				off_path_scope_context.clear();
-				off_path_node_context.clear();
-			}
-			off_path_scope_context.push_back(context[c_index].scope_id);
-			off_path_node_context.push_back(context[c_index].node_id);
 			clean_outer_activate_helper(true,
-										off_path_scope_context,
-										off_path_node_context,
+										temp_scope_context,
+										temp_node_context,
 										input_vals,
 										run_helper,
 										context[c_index].scope_history);
@@ -107,7 +101,9 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 		}
 
-		clean_experiment_activate_helper(input_vals,
+		clean_experiment_activate_helper(temp_scope_context,
+										 temp_node_context,
+										 input_vals,
 										 branch_experiment_history,
 										 run_helper,
 										 history);

@@ -41,9 +41,8 @@ public:
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<ScoreNetwork*> step_score_networks;
 	/**
-	 * - share networks instead of having separate networks for sequence
-	 *   - much cleaner when merging new state
-	 *     - can be seen as generalization anyways
+	 * - simply share networks instead of having separate networks for sequence
+	 *   - can be seen as generalization anyways
 	 */
 
 	Scale* sequence_scale_mods;
@@ -59,11 +58,6 @@ public:
 	std::vector<ExitNetwork*> exit_networks;
 	std::vector<double> exit_network_impacts;
 
-	double* existing_average_score;
-	double* existing_score_variance;
-	double* existing_average_misguess;
-	double* existing_misguess_variance;
-
 	double seed_start_predicted_score;
 	double seed_start_scale_factor;
 	std::vector<double> seed_state_vals_snapshot;
@@ -77,11 +71,9 @@ public:
 	double replace_average_misguess;
 	double replace_misguess_variance;
 
-	std::vector<double> step_average_scores;
-	std::vector<double> step_score_variances;
-	std::vector<double> step_average_misguesses;
-	std::vector<double> step_misguess_variances;
-	std::vector<double> step_average_impacts;
+	std::map<int, std::vector<bool>> scope_steps_seen_in;
+
+	std::vector<std::vector<bool>> new_state_steps_needed_in;
 
 	std::vector<std::vector<int>> new_action_node_target_indexes;
 	std::vector<std::vector<StateNetwork*>> new_action_node_state_networks;
