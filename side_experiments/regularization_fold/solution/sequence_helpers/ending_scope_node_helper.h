@@ -44,6 +44,7 @@ public:
 				  std::vector<BackwardContextLayer>& context,
 				  RunHelper& run_helper);
 	void forward(std::vector<BackwardContextLayer>& context,
+				 double& cumulative_scale_factor_error,
 				 RunHelper& run_helper);
 };
 

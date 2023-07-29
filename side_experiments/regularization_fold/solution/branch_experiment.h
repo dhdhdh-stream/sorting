@@ -21,10 +21,6 @@ const int BRANCH_EXPERIMENT_STATE_SECOND_CLEAN = 2;
 const int BRANCH_EXPERIMENT_STATE_WRAPUP = 3;
 const int BRANCH_EXPERIMENT_STATE_DONE = 4;
 
-const int BRANCH_EXPERIMENT_RESULT_FAIL = 0;
-const int BRANCH_EXPERIMENT_RESULT_REPLACE = 1;
-const int BRANCH_EXPERIMENT_RESULT_BRANCH = 2;
-
 class BranchExperiment : public Experiment {
 public:
 	int num_steps;
@@ -35,8 +31,13 @@ public:
 	int exit_depth;
 	int exit_node_id;
 
+	ScoreNetwork* existing_misguess_network;
+
 	ScoreNetwork* starting_score_network;
+	ScoreNetwork* starting_misguess_network;
 	ScoreNetwork* starting_original_score_network;
+	ScoreNetwork* starting_original_misguess_network;
+	double branch_weight;	// TODO: add
 
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 	std::vector<ScoreNetwork*> step_score_networks;
@@ -66,15 +67,15 @@ public:
 	// only worry about starting score network for seed, as due to updates for inner scopes, seed may quickly become irrelevant
 
 	double branch_average_score;
-	double branch_existing_average_score;
-	double replace_average_score;
-	double replace_average_misguess;
-	double replace_misguess_variance;
+	double existing_average_score;
+	double branch_average_misguess;
+	double existing_average_misguess;
 
 	std::map<int, std::vector<bool>> scope_steps_seen_in;
 
 	std::vector<std::vector<bool>> new_state_steps_needed_in;
 
+	// for BRANCH_EXPERIMENT_STEP_TYPE_ACTION
 	std::vector<std::vector<int>> new_action_node_target_indexes;
 	std::vector<std::vector<StateNetwork*>> new_action_node_state_networks;
 
@@ -90,7 +91,9 @@ public:
 
 	bool is_branch;
 	ScoreNetworkHistory* score_network_history;
-	double score_network_update;
+	ScoreNetworkHistory* misguess_network_history;
+	double score_network_output;
+	double misguess_network_output
 
 	std::vector<double> step_obs_snapshots;
 	std::vector<std::vector<double>> step_starting_new_state_vals_snapshots;

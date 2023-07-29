@@ -152,7 +152,7 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 							this->corr_calc_new_variances[cc_index][s_index] = 0.9999*this->corr_calc_new_variances[cc_index][s_index] + 0.0001*curr_new_variance;
 							double curr_covariance = (this->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_new_average_vals[cc_index][s_index] - curr_new_val);
 							this->corr_calc_covariances[cc_index][s_index] = 0.9999*this->corr_calc_covariances[cc_index][s_index] + 0.0001*curr_covariance;
-							this->new_transformations[cc_index][s_index]->backprop(curr_val, curr_new_val);
+							this->new_transformations[cc_index][s_index].backprop(curr_val, curr_new_val);
 						}
 					}
 				}
@@ -393,14 +393,19 @@ void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 
 	this->starting_score_network->activate(this->starting_state_vals_snapshot,
 										   this->starting_new_state_vals_snapshot);
-
 	double starting_predicted_score = this->existing_predicted_score
 		+ run_helper.scale_factor*this->starting_score_network->output->acti_vals[0];
-
 	double starting_predicted_score_error = run_helper.target_val - starting_predicted_score;
-
 	this->starting_score_network->new_backprop(
 		run_helper.scale_factor*starting_predicted_score_error,
+		run_helper.new_state_errors,
+		0.01);
+
+	this->starting_misguess_network->activate(this->starting_state_vals_snapshot,
+											  this->starting_new_state_vals_snapshot);
+	double starting_misguess_error = run_helper.final_misguess - this->starting_misguess_network->output->acti_vals[0];
+	this->starting_misguess_network->new_backprop(
+		starting_misguess_error,
 		run_helper.new_state_errors,
 		0.01);
 

@@ -3,69 +3,50 @@
 using namespace std;
 
 void BranchExperiment::experiment_transform() {
-	double score_standard_deviation = sqrt(*this->existing_score_variance);
-	double misguess_standard_deviation = sqrt(*this->existing_misguess_variance);
-
-	cout << "this->existing_average_score: " << *this->existing_average_score << endl;
-
-	double branch_improvement = this->branch_average_score - this->branch_existing_average_score;
+	double score_improvement = this->branch_average_score - this->existing_average_score;
 	cout << "this->branch_average_score: " << this->branch_average_score << endl;
-	cout << "this->branch_existing_average_score: " << this->branch_existing_average_score << endl;
+	cout << "this->existing_average_score: " << this->existing_average_score << endl;
 
-	double replace_improvement = this->replace_average_score - *this->existing_average_score;
-	cout << "this->replace_average_score: " << this->replace_average_score << endl;
-
-	double misguess_improvement = *this->existing_average_misguess - this->replace_average_misguess;
-	cout << "this->replace_average_misguess: " << this->replace_average_misguess << endl;
-	cout << "this->existing_average_misguess: " << *this->existing_average_misguess << endl;
+	double misguess_improvement = this->existing_average_misguess - this->branch_average_misguess;
+	cout << "this->branch_average_misguess: " << this->branch_average_misguess << endl;
+	cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
-	double branch_improvement_t_value = branch_improvement
+	double score_standard_deviation = sqrt(solution->score_variance);
+	double score_improvement_t_value = score_improvement
 		/ (score_standard_deviation / sqrt(20000));
-	cout << "branch_improvement_t_value: " << branch_improvement_t_value << endl;
-
-	double replace_improvement_t_value = replace_improvement
-		/ (score_standard_deviation / sqrt(20000));
-	cout << "replace_improvement_t_value: " << replace_improvement_t_value << endl;
+	cout << "score_improvement_t_value: " << score_improvement_t_value << endl;
 
 	double misguess_improvement_t_value = misguess_improvement
-		/ (misguess_standard_deviation / sqrt(20000));
+		/ (solution->misguess_standard_deviation / sqrt(20000));
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
-	if (branch_improvement_t_value > 2.326) {	// >99%
-		if (replace_improvement_t_value > -0.842	// 80%<
-				&& this->is_recursive == 0) {
-			cout << "FOLD_RESULT_REPLACE" << endl;
-			this->experiment_result = BRANCH_EXPERIMENT_RESULT_REPLACE;
-		} else {
-			cout << "FOLD_RESULT_BRANCH" << endl;
-			this->experiment_result = BRANCH_EXPERIMENT_RESULT_BRANCH;
-		}
-	} else if (*this->existing_average_misguess > 0.01
-			&& misguess_improvement_t_value > 2.326	// >99%
-			&& replace_improvement_t_value > -0.842	// 80%<
-			&& this->is_recursive == 0) {
-		cout << "FOLD_RESULT_REPLACE" << endl;
-		this->experiment_result = BRANCH_EXPERIMENT_RESULT_REPLACE;
+	bool is_success;
+	if (score_improvement_t_value > 2.326) {	// >99%
+		is_success = true;
+	} else if (score_improvement_t_value > -0.674	// 75%<
+			&& misguess_improvement_t_value > 2.326) {
+		is_success = true;
 	} else {
-		cout << "FOLD_RESULT_FAIL" << endl;
-		this->experiment_result = BRANCH_EXPERIMENT_RESULT_FAIL;
+		is_success = false;
 	}
 
-	if (this->experiment_result != BRANCH_EXPERIMENT_RESULT_FAIL) {
+	if (is_success) {
 		// determine if new class needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
 				int input_size = this->sequences[a_index]->input_init_types.size();
 				this->sequences[a_index]->input_furthest_layer_needed_in = vector<int>(input_size, this->scope_context.size()+2);	// 1 greater than lowest
-				this->sequences[a_index]->input_earliest_step_needed_in = vector<int>(input_size, a_index);
+				this->sequences[a_index]->input_steps_needed_in = vector<vector<bool>>(input_size, vector<bool>(this->num_steps, false));
 				this->sequences[a_index]->input_is_new_class = vector<bool>(input_size, false);
 				for (int i_index = 0; i_index < input_size; i_index++) {
+					int earliest_step_needed_in = a_index;
+
 					for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 							it != this->sequences[a_index]->state_networks.end(); it++) {
 						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
-						int earliest_step_seen_in = this->scope_earliest_step_seen_in.find(it->first);
+						vector<bool> steps_seen_in = this->scope_steps_seen_in.find(it->first);
 
 						for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 							if (it->second[n_index].size() > 0) {
@@ -84,8 +65,15 @@ void BranchExperiment::experiment_transform() {
 									if (furthest_layer_seen_in < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
 										this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = furthest_layer_seen_in;
 									}
-									if (earliest_step_seen_in < this->sequences[a_index]->input_earliest_step_needed_in[i_index]) {
-										this->sequences[a_index]->input_earliest_step_needed_in[i_index] = earliest_step_seen_in;
+
+									for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
+										if (steps_seen_in[ia_index]) {
+											this->sequences[a_index]->input_steps_needed_in[i_index][ia_index] = true;
+
+											if (ia_index < earliest_step_needed_in) {
+												earliest_step_needed_in = ia_index;
+											}
+										}
 									}
 								}
 							}
@@ -108,8 +96,9 @@ void BranchExperiment::experiment_transform() {
 								if (this->scope_context.size()+1 < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
 									this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = this->scope_context.size()+1;
 								}
-								if (ia_index < this->sequences[a_index]->input_earliest_step_needed_in[i_index]) {
-									this->sequences[a_index]->input_earliest_step_needed_in[i_index] = ia_index;
+
+								if (ia_index < earliest_step_needed_in) {
+									earliest_step_needed_in = ia_index;
 								}
 							}
 						}
@@ -123,7 +112,9 @@ void BranchExperiment::experiment_transform() {
 									if (this->sequences[ia_index]->input_init_types[ii_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 										if (this->sequences[ia_index]->input_init_local_scope_depths[ii_index] == this->sequences[a_index]->input_init_local_scope_depths[i_index]
 												&& this->sequences[ia_index]->input_init_target_indexes[ii_index] == this->sequences[a_index]->input_init_target_indexes[i_index]) {
-											previous_used_in = ia_index;
+											if (!this->sequences[ia_index]->input_is_new_class[ii_index]) {
+												previous_used_in = ia_index;
+											}
 										}
 									}
 								}
@@ -131,8 +122,8 @@ void BranchExperiment::experiment_transform() {
 						}
 
 						if (previous_used_in != -1) {
-							if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] <= this->scope_context.size()+1
-									this->sequences[a_index]->input_earliest_step_needed_in[i_index] <= previous_used_in) {
+							if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] < this->scope_context.size()+1
+									|| earliest_step_needed_in <= previous_used_in) {
 								this->sequences[a_index]->input_is_new_class[i_index] = true;
 							}
 						} else {
@@ -202,7 +193,6 @@ void BranchExperiment::experiment_transform() {
 		}
 
 		// remove unnecessary new state networks
-		this->scope_additions_needed = vector<set<int>>(NUM_NEW_STATES);
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
 					it != this->state_networks.end(); it++) {
@@ -218,9 +208,7 @@ void BranchExperiment::experiment_transform() {
 							}
 						}
 
-						if (sum_impact > 0.1) {
-							this->scope_additions_needed[s_index].insert(it->first);
-						} else {
+						if (sum_impact < 0.1) {
 							delete it->second[n_index][s_index];
 							it->second[n_index][s_index] = NULL;
 						}
@@ -246,29 +234,40 @@ void BranchExperiment::experiment_transform() {
 					}
 				}
 			}
+		}
 
-			for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
-				if (this->exit_network_impacts[e_index] < 0.1) {
-					delete this->exit_networks[e_index];
-					this->exit_networks[e_index] = NULL;
-				}
+		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
+			if (this->exit_network_impacts[e_index] < 0.1) {
+				delete this->exit_networks[e_index];
+				this->exit_networks[e_index] = NULL;
 			}
 		}
 
 		// determine new state layers needed in
 		this->new_state_furthest_layer_needed_in = vector<int>(NUM_NEW_STATES, this->scope_context.size()+2);
+		this->new_state_steps_needed_in = vector<vector<bool>>(NUM_NEW_STATES, vector<bool>(this->num_steps, false))
+		this->scope_additions_needed = vector<set<int>>(NUM_NEW_STATES);
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
 					it != this->state_networks.end(); it++) {
 				int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+				vector<bool> steps_seen_in = this->scope_steps_seen_in.find(it->first);
 
 				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					if (it->second[n_index].size() > 0) {
 						for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
 							if (it->second[n_index][is_index] != NULL) {
 								if (is_index == s_index) {
+									this->scope_additions_needed[s_index].insert(it->first);
+
 									if (furthest_layer_seen_in < this->new_state_furthest_layer_needed_in[s_index]) {
 										this->new_state_furthest_layer_needed_in[s_index] = furthest_layer_seen_in;
+									}
+
+									for (int a_index = 0; a_index < this->num_steps; a_index++) {
+										if (steps_seen_in[a_index]) {
+											this->new_state_steps_needed_in[s_index][a_index] = true;
+										}
 									}
 								} else {
 									double sum_state_impact = 0.0;
@@ -277,8 +276,16 @@ void BranchExperiment::experiment_transform() {
 									}
 
 									if (sum_state_impact > 0.1) {
+										this->scope_additions_needed[s_index].insert(it->first);
+
 										if (furthest_layer_seen_in < this->new_state_furthest_layer_needed_in[s_index]) {
 											this->new_state_furthest_layer_needed_in[s_index] = furthest_layer_seen_in;
+										}
+
+										for (int a_index = 0; a_index < this->num_steps; a_index++) {
+											if (steps_seen_in[a_index]) {
+												this->new_state_steps_needed_in[s_index][a_index] = true;
+											}
 										}
 									}
 								}
@@ -291,6 +298,7 @@ void BranchExperiment::experiment_transform() {
 			for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
 					it != this->score_networks.end(); it++) {
 				int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+				vector<bool> steps_seen_in = this->scope_steps_seen_in.find(it->first);
 
 				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 					if (it->second[n_index] != NULL) {
@@ -300,8 +308,16 @@ void BranchExperiment::experiment_transform() {
 						}
 
 						if (sum_state_impact > 0.1) {
+							this->scope_additions_needed[s_index].insert(it->first);
+
 							if (furthest_layer_seen_in < this->new_state_furthest_layer_needed_in[s_index]) {
 								this->new_state_furthest_layer_needed_in[s_index] = furthest_layer_seen_in;
+							}
+
+							for (int a_index = 0; a_index < this->num_steps; a_index++) {
+								if (steps_seen_in[a_index]) {
+									this->new_state_steps_needed_in[s_index][a_index] = true;
+								}
 							}
 						}
 					}
@@ -329,6 +345,32 @@ void BranchExperiment::experiment_transform() {
 								}
 							}
 						}
+					}
+				}
+			}
+
+			{
+				double sum_state_impact = 0.0;
+				for (int in_index = 0; in_index < 20; in_index++) {
+					sum_state_impact += abs(this->starting_score_network->hidden->weights[in_index][1][s_index]);
+				}
+
+				if (sum_state_impact > 0.1) {
+					if (this->scope_context.size() < this->new_state_furthest_layer_needed_in[s_index]) {
+						this->new_state_furthest_layer_needed_in[s_index] = this->scope_context.size();
+					}
+				}
+			}
+
+			{
+				double sum_state_impact = 0.0;
+				for (int in_index = 0; in_index < 20; in_index++) {
+					sum_state_impact += abs(this->starting_misguess_network->hidden->weights[in_index][1][s_index]);
+				}
+
+				if (sum_state_impact > 0.1) {
+					if (this->scope_context.size() < this->new_state_furthest_layer_needed_in[s_index]) {
+						this->new_state_furthest_layer_needed_in[s_index] = this->scope_context.size();
 					}
 				}
 			}
@@ -409,6 +451,9 @@ void BranchExperiment::experiment_transform() {
 			}
 		}
 
+		this->starting_score_network->clean(this->layer_num_new_states[this->scope_context.size()]);
+		this->starting_misguess_network->clean(this->layer_num_new_states[this->scope_context.size()]);
+
 		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
 			if (this->exit_networks[e_index] != NULL) {
 				this->exit_networks[e_index]->clean(this->layer_num_new_states[this->scope_context.size()]);
@@ -452,5 +497,7 @@ void BranchExperiment::experiment_transform() {
 		this->sum_error = 0.0;
 	} else {
 
+
+		this->state = BRANCH_EXPERIMENT_STATE_DONE;
 	}
 }

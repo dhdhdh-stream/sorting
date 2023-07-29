@@ -4,6 +4,7 @@
 const int SEQUENCE_INPUT_INIT_NONE = 0;
 const int SEQUENCE_INPUT_INIT_LOCAL = 1;
 const int SEQUENCE_INPUT_INIT_LAST_SEEN = 2;
+const int SEQUENCE_INPUT_INIT_NEW_STATE = 3;
 // if empty (i.e., not initialize), don't include in input_init_types, etc.
 
 class Sequence {
@@ -27,7 +28,7 @@ public:
 	std::vector<int> input_init_types;
 	/**
 	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down
-	 *   - append with new state by BRANCH_EXPERIMENT_STATE_WRAPUP
+	 *   - insert new state by BRANCH_EXPERIMENT_STATE_WRAPUP
 	 */
 	std::vector<int> input_init_target_layers;
 	std::vector<int> input_init_target_indexes;
@@ -45,7 +46,8 @@ public:
 	std::vector<int> input_init_local_scope_depths;
 	std::vector<int> input_init_local_input_indexes;
 	std::vector<ClassDefinition*> input_init_last_seen_classes;
-	std::vector<Transformation*> input_transformations;
+	std::vector<bool> input_has_transform;
+	std::vector<Transformation> input_transformations;
 
 	std::vector<std::vector<int>> node_ids;
 	/**
@@ -66,7 +68,7 @@ public:
 	std::vector<std::vector<StateNetwork*>> step_state_networks;
 
 	std::vector<int> input_furthest_layer_needed_in;
-	std::vector<int> input_earliest_step_needed_in;
+	std::vector<std::vector<bool>> input_steps_needed_in;
 
 	/**
 	 * - only for SEQUENCE_INPUT_INIT_LOCAL
@@ -83,23 +85,19 @@ public:
 	std::vector<std::vector<double>> corr_calc_new_average_vals;
 	std::vector<std::vector<double>> corr_calc_new_variances;
 	std::vector<std::vector<double>> corr_calc_covariances;
-	std::vector<std::vector<Transformation*>> new_transformations;
+	std::vector<std::vector<TransformationHelper>> new_transformations;
 
 	/**
-	 * TODO:
 	 * - correlation between new state and new input
 	 */
-	std::vector<std::vector<double>> corr_calc_state_average_vals;
-	std::vector<std::vector<double>> corr_calc_state_variances;
+	std::vector<double> corr_calc_state_average_vals;
+	std::vector<double> corr_calc_state_variances;
 	std::vector<std::vector<double>> corr_calc_input_average_vals;
 	std::vector<std::vector<double>> corr_calc_input_variances;
 	std::vector<std::vector<double>> corr_calc_new_covariances;
-	std::vector<std::vector<Transformation*>> new_new_transformations;
+	std::vector<std::vector<TransformationHelper>> new_new_transformations;
 
-	/**
-	 * - from experiment layer
-	 */
-	std::vector<int> last_layer_new_indexes;
+	std::vector<int> input_index_translations;
 
 
 

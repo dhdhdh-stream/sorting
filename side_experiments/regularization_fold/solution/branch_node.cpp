@@ -12,7 +12,8 @@ BranchNode::BranchNode(Scope* parent,
 					   int branch_next_node_id,
 					   ScoreNetwork* original_score_network,
 					   ScoreNetwork* original_misguess_network,
-					   int original_next_node_id) {
+					   int original_next_node_id,
+					   double branch_weight) {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->parent = parent;
@@ -27,7 +28,7 @@ BranchNode::BranchNode(Scope* parent,
 	this->original_score_network = original_score_network;
 	this->original_misguess_network = original_misguess_network;
 	this->original_next_node_id = original_next_node_id;
-	this->branch_weight = 0.5;
+	this->branch_weight = branch_weight;
 }
 
 BranchNode::BranchNode(ifstream& input_file,
@@ -55,29 +56,33 @@ BranchNode::BranchNode(ifstream& input_file,
 	getline(input_file, is_pass_through_line);
 	this->branch_is_pass_through = stoi(is_pass_through_line);
 
-	ifstream branch_score_network_save_file;
-	branch_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_score.txt");
-	this->branch_score_network = new ScoreNetwork(branch_score_network_save_file);
-	branch_score_network_save_file.close();
+	if (!this->branch_is_pass_through) {
+		ifstream branch_score_network_save_file;
+		branch_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_score.txt");
+		this->branch_score_network = new ScoreNetwork(branch_score_network_save_file);
+		branch_score_network_save_file.close();
 
-	ifstream branch_misguess_network_save_file;
-	branch_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_misguess.txt");
-	this->branch_misguess_network = new ScoreNetwork(branch_misguess_network_save_file);
-	branch_misguess_network_save_file.close();
+		ifstream branch_misguess_network_save_file;
+		branch_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_misguess.txt");
+		this->branch_misguess_network = new ScoreNetwork(branch_misguess_network_save_file);
+		branch_misguess_network_save_file.close();
+	}
 
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
 
-	ifstream original_score_network_save_file;
-	original_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_score.txt");
-	this->original_score_network = new ScoreNetwork(original_score_network_save_file);
-	original_score_network_save_file.close();
+	if (!this->branch_is_pass_through) {
+		ifstream original_score_network_save_file;
+		original_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_score.txt");
+		this->original_score_network = new ScoreNetwork(original_score_network_save_file);
+		original_score_network_save_file.close();
 
-	ifstream original_misguess_network_save_file;
-	original_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_misguess.txt");
-	this->original_misguess_network = new ScoreNetwork(original_misguess_network_save_file);
-	original_misguess_network_save_file.close();
+		ifstream original_misguess_network_save_file;
+		original_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_misguess.txt");
+		this->original_misguess_network = new ScoreNetwork(original_misguess_network_save_file);
+		original_misguess_network_save_file.close();
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -145,73 +150,51 @@ void BranchNode::activate(vector<ForwardContextLayer>& context,
 												   original_score_network_history);
 			double original_score = run_helper.scale_factor*this->original_score_network->output->acti_vals[0];
 
+			ScoreNetworkHistory* branch_misguess_network_history = new ScoreNetworkHistory(this->branch_misguess_network);
+			this->branch_misguess_network->activate(history->state_vals_snapshot,
+													branch_misguess_network_history);
+
+			ScoreNetworkHistory* original_misguess_network_history = new ScoreNetworkHistory(this->original_misguess_network);
+			this->original_misguess_network->activate(history->state_vals_snapshot,
+													  original_misguess_network_history);
+
 			double score_diff = branch_score - original_score;
 			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
-
 			if (score_val > 0.1) {
 				history->is_branch = true;
-
-				delete original_score_network_history;
-				history->score_network_history = branch_score_network_history;
-				history->score_network_update = this->branch_score_network->output->acti_vals[0];
 			} else if (score_val < -0.1) {
 				history->is_branch = false;
-
-				delete branch_score_network_history;
-				history->score_network_history = original_score_network_history;
-				history->score_network_update = this->original_score_network->output->acti_vals[0];
 			} else {
-				ScoreNetworkHistory* branch_misguess_network_history = new ScoreNetworkHistory(this->branch_misguess_network);
-				this->branch_misguess_network->activate(history->state_vals_snapshot,
-														branch_misguess_network_history);
-
-				ScoreNetworkHistory* original_misguess_network_history = new ScoreNetworkHistory(this->original_misguess_network);
-				this->original_misguess_network->activate(history->state_vals_snapshot,
-														  original_misguess_network_history);
-
 				double misguess_diff = this->branch_misguess_network->output->acti_vals[0]
 					- this->original_misguess_network->output->acti_vals[0];
 				double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
-
 				if (misguess_val < -0.1) {
 					history->is_branch = true;
-
-					delete original_score_network_history;
-					delete original_misguess_network_history;
-					history->score_network_history = branch_score_network_history;
-					history->misguess_network_history = branch_misguess_network_history;
-					history->score_network_update = this->branch_score_network->output->acti_vals[0];
-					history->misguess_network_update = this->branch_misguess_network->output->acti_vals[0];
 				} else if (misguess_val > 0.1) {
 					history->is_branch = false;
-
-					delete branch_score_network_history;
-					delete branch_misguess_network_history;
-					history->score_network_history = original_score_network_history;
-					history->misguess_network_history = original_misguess_network_history;
-					history->score_network_update = this->original_score_network->output->acti_vals[0];
-					history->misguess_network_update = this->original_misguess_network->output->acti_vals[0];
 				} else {
 					if (rand()%2 == 0) {
 						history->is_branch = true;
-
-						delete original_score_network_history;
-						delete original_misguess_network_history;
-						history->score_network_history = branch_score_network_history;
-						history->misguess_network_history = branch_misguess_network_history;
-						history->score_network_update = this->branch_score_network->output->acti_vals[0];
-						history->misguess_network_update = this->branch_misguess_network->output->acti_vals[0];
 					} else {
 						history->is_branch = false;
-
-						delete branch_score_network_history;
-						delete branch_misguess_network_history;
-						history->score_network_history = original_score_network_history;
-						history->misguess_network_history = original_misguess_network_history;
-						history->score_network_update = this->original_score_network->output->acti_vals[0];
-						history->misguess_network_update = this->original_misguess_network->output->acti_vals[0];
 					}
 				}
+			}
+
+			if (history->is_branch) {
+				delete original_score_network_history;
+				delete original_misguess_network_history;
+				history->score_network_history = branch_score_network_history;
+				history->misguess_network_history = branch_misguess_network_history;
+				history->score_network_output = this->branch_score_network->output->acti_vals[0];
+				history->misguess_network_output = this->branch_misguess_network->output->acti_vals[0];
+			} else {
+				delete branch_score_network_history;
+				delete branch_misguess_network_history;
+				history->score_network_history = original_score_network_history;
+				history->misguess_network_history = original_misguess_network_history;
+				history->score_network_output = this->original_score_network->output->acti_vals[0];
+				history->misguess_network_output = this->original_misguess_network->output->acti_vals[0];
 			}
 		}
 	} else {
@@ -239,7 +222,7 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 		}
 
 		if (history->score_network_history != NULL) {
-			double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
+			double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_output;
 
 			double predicted_score_error = run_helper.target_val - branch_predicted_score;
 
@@ -252,7 +235,7 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 		}
 
 		if (history->misguess_network_history != NULL) {
-			double misguess_error = run_helper.final_misguess - history->misguess_network_update;
+			double misguess_error = run_helper.final_misguess - history->misguess_network_output;
 
 			ScoreNetwork* misguess_network = history->misguess_network_history->network;
 			misguess_network->backprop_weights_with_no_error_signal(
@@ -265,7 +248,7 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		if (!run_helper.backprop_is_pre_experiment) {
 			if (history->score_network_history != NULL) {
-				double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
+				double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_output;
 
 				double predicted_score_error = run_helper.target_val - branch_predicted_score;
 
@@ -278,7 +261,7 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 			}
 
 			if (history->misguess_network_history != NULL) {
-				double misguess_error = run_helper.final_misguess - history->misguess_network_update;
+				double misguess_error = run_helper.final_misguess - history->misguess_network_output;
 
 				ScoreNetwork* misguess_network = history->misguess_network_history->network;
 				misguess_network->backprop_errors_with_no_weight_change(
@@ -299,27 +282,31 @@ void BranchNode::save(ofstream& output_file) {
 	}
 	output_file << this->branch_is_pass_through << endl;
 
-	ofstream branch_score_network_save_file;
-	branch_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_score.txt");
-	this->branch_score_network->save(branch_score_network_save_file);
-	branch_score_network_save_file.close();
+	if (!this->branch_is_pass_through) {
+		ofstream branch_score_network_save_file;
+		branch_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_score.txt");
+		this->branch_score_network->save(branch_score_network_save_file);
+		branch_score_network_save_file.close();
 
-	ofstream branch_misguess_network_save_file;
-	branch_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_misguess.txt");
-	this->branch_misguess_network->save(branch_misguess_network_save_file);
-	branch_misguess_network_save_file.close();
+		ofstream branch_misguess_network_save_file;
+		branch_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_misguess.txt");
+		this->branch_misguess_network->save(branch_misguess_network_save_file);
+		branch_misguess_network_save_file.close();
+	}
 
 	output_file << this->branch_next_node_id << endl;
 
-	ofstream original_score_network_save_file;
-	original_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_score.txt");
-	this->original_score_network->save(original_score_network_save_file);
-	original_score_network_save_file.close();
+	if (!this->branch_is_pass_through) {
+		ofstream original_score_network_save_file;
+		original_score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_score.txt");
+		this->original_score_network->save(original_score_network_save_file);
+		original_score_network_save_file.close();
 
-	ofstream original_misguess_network_save_file;
-	original_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_misguess.txt");
-	this->original_misguess_network->save(original_misguess_network_save_file);
-	original_misguess_network_save_file.close();
+		ofstream original_misguess_network_save_file;
+		original_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_misguess.txt");
+		this->original_misguess_network->save(original_misguess_network_save_file);
+		original_misguess_network_save_file.close();
+	}
 
 	output_file << this->original_next_node_id << endl;
 

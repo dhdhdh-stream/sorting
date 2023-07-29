@@ -7,7 +7,7 @@
 using namespace std;
 
 Scale::Scale() {
-	this->weight = randuni()*0.01;
+	this->weight = 1.0;
 	this->weight_update = 0.0;
 
 	this->epoch_iter = 0;

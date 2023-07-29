@@ -38,8 +38,8 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
 				double val = curr_state_vals->at(this->scope_node->input_indexes[i_index]);
-				if (this->scope_node->input_transformations[i_index] != NULL) {
-					val = this->scope_node->input_transformations[i_index]->forward(val);
+				if (this->scope_node->input_has_transform[i_index]) {
+					val = this->scope_node->input_transformations[i_index].forward(val);
 				}
 				this->inner_state_vals[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]] = val;
 
@@ -80,8 +80,8 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
 				double val = curr_state_vals->at(this->scope_node->input_indexes[i_index]);
-				if (this->scope_node->input_transformations[i_index] != NULL) {
-					val = this->scope_node->input_transformations[i_index]->forward(val);
+				if (this->scope_node->input_has_transform[i_index]) {
+					val = this->scope_node->input_transformations[i_index].forward(val);
 				}
 				next_starting_state_vals[this->scope_node->input_target_layers[i_index]]->at(this->scope_node->input_target_indexes[i_index]) = val;
 
@@ -120,8 +120,8 @@ void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& contex
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
 				double val = this->inner_state_vals[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]];
-				if (this->scope_node->input_transformations[i_index] != NULL) {
-					val = this->scope_node->input_transformations[i_index]->backward(val);
+				if (this->scope_node->input_has_transform[i_index]) {
+					val = this->scope_node->input_transformations[i_index].backward(val);
 				}
 				this->curr_state_vals->at(this->scope_node->input_indexes[i_index]) = val;
 			}
@@ -131,8 +131,8 @@ void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& contex
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
 				if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
 					double val = this->starting_state_vals_save[this->scope_node->input_target_layers[i_index]]->at(this->scope_node->input_target_indexes[i_index]);
-					if (this->scope_node->input_transformations[i_index] != NULL) {
-						val = this->scope_node->input_transformations[i_index]->backward(val);
+					if (this->scope_node->input_has_transform[i_index]) {
+						val = this->scope_node->input_transformations[i_index].backward(val);
 					}
 					this->curr_state_vals->at(this->scope_node->input_indexes[i_index]) = val;
 				}
@@ -175,8 +175,8 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 		}
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			double error = curr_state_errors->at(this->scope_node->input_indexes[i_index]);
-			if (this->scope_node->input_transformations[i_index] != NULL) {
-				error = this->scope_node->input_transformations[i_index]->backprop_backward(error);
+			if (this->scope_node->input_has_transform[i_index]) {
+				error = this->scope_node->input_transformations[i_index].backprop_backward(error);
 			}
 			this->inner_state_errors[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]] = error;
 		}
@@ -207,8 +207,8 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
 				double error = curr_state_errors->at(this->scope_node->input_indexes[i_index]);
-				if (this->scope_node->input_transformations[i_index] != NULL) {
-					error = this->scope_node->input_transformations[i_index]->backprop_backward(error);
+				if (this->scope_node->input_has_transform[i_index]) {
+					error = this->scope_node->input_transformations[i_index].backprop_backward(error);
 				}
 				next_starting_state_errors[this->scope_node->input_target_layers[i_index]]->at(this->scope_node->input_target_indexes[i_index]) = error;
 			}
@@ -225,14 +225,14 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 	}
 }
 
-void EndingScopeNodeHelper::forward(vector<BackwardContextLayer>& context,
-									double& cumulative_scale_factor_error,
-									RunHelper& run_helper) {
+void EndingScopeNodeBackpropHelper::forward(vector<BackwardContextLayer>& context,
+											double& cumulative_scale_factor_error,
+											RunHelper& run_helper) {
 	if (this->is_halfway == false) {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			double error = this->inner_state_errors[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]];
-			if (this->scope_node->input_transformations[i_index] != NULL) {
-				error = this->scope_node->input_transformations[i_index]->backprop_forward(error);
+			if (this->scope_node->input_has_transform[i_index]) {
+				error = this->scope_node->input_transformations[i_index].backprop_forward(error);
 			}
 			this->curr_state_errors->at(this->scope_node->input_indexes[i_index]) = error;
 		}
@@ -240,8 +240,8 @@ void EndingScopeNodeHelper::forward(vector<BackwardContextLayer>& context,
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
 				double error = this->starting_state_errors_save[this->scope_node->input_target_layers[i_index]]->at(this->scope_node->input_target_indexes[i_index]);
-				if (this->scope_node->input_transformations[i_index] != NULL) {
-					error = this->scope_node->input_transformations[i_index]->backprop_forward(error);
+				if (this->scope_node->input_has_transform[i_index]) {
+					error = this->scope_node->input_transformations[i_index].backprop_forward(error);
 				}
 				this->curr_state_errors->at(this->scope_node->input_indexes[i_index]) = error;
 			}

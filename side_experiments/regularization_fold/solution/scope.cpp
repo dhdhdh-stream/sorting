@@ -13,8 +13,7 @@ Scope::Scope(int id,
 			 ScoreNetwork* continue_score_network,
 			 ScoreNetwork* continue_misguess_network,
 			 ScoreNetwork* halt_score_network,
-			 ScoreNetwork* halt_misguess_network,
-			 vector<AbstractNode*> nodes) {
+			 ScoreNetwork* halt_misguess_network) {
 	this->id = id;
 	this->num_states = num_states;
 	this->state_initialized_locally = state_initialized_locally;
@@ -28,7 +27,6 @@ Scope::Scope(int id,
 	this->halt_score_network = halt_score_network;
 	this->halt_misguess_network = halt_misguess_network;
 	this->furthest_successful_halt = 5;	// simply initializing to 5
-	this->nodes = nodes;
 }
 
 Scope::Scope(ifstream& input_file,
@@ -549,7 +547,9 @@ void Scope::backprop(vector<int>& starting_node_ids,
 										history);
 		}
 
-		if (starting_state_errors.size() > 0) {
+		if ((run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+					|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN)
+				&& starting_state_errors.size() > 0) {
 			ScopeNode* scope_node = (ScopeNode*)history->node_histories[0][0]->node;
 			scope_node->halfway_backprop(starting_node_ids,
 										 starting_state_errors,
@@ -628,6 +628,21 @@ void Scope::add_state(bool initialized_locally,
 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
 			action_node->score_network->add_state();
+			action_node->misguess_network->add_state();
+		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+			if (branch_node->branch_score_network != NULL) {
+				branch_node->branch_score_network->add_state();
+			}
+			if (branch_node->branch_misguess_network != NULL) {
+				branch_node->branch_misguess_network->add_state();
+			}
+			if (branch_node->original_score_network != NULL) {
+				branch_node->original_score_network->add_state();
+			}
+			if (branch_node->original_misguess_network != NULL) {
+				branch_node->original_misguess_network->add_state();
+			}
 		}
 	}
 }

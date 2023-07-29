@@ -255,11 +255,6 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 										   RunHelper& run_helper,
 										   BranchExperimentHistory* history) {
-	this->replace_average_score = 0.9999*this->replace_average_score + 0.0001*run_helper.target_val;
-	this->replace_average_misguess = 0.9999*this->replace_average_misguess + 0.0001*run_helper.final_misguess;
-	double curr_misguess_variance = (this->replace_average_misguess - run_helper.final_misguess)*(this->replace_average_misguess - run_helper.final_misguess);
-	this->replace_misguess_variance = 0.9999*this->replace_misguess_variance + 0.0001*curr_misguess_variance;
-
 	vector<double>* outer_state_errors = context[context.size() - (this->exit_depth+1)].state_errors;
 
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
@@ -396,18 +391,9 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 
 	this->starting_score_network->activate(this->starting_state_vals_snapshot,
 										   this->starting_new_state_vals_snapshot);
-
-	if (run_helper.scale_factor*this->starting_score_network->output->acti_vals[0] > 0.0) {
-		this->branch_average_score = 0.9999*this->branch_average_score + 0.0001*run_helper.target_val;
-
-		this->branch_existing_average_score = 0.9999*this->branch_existing_average_score + 0.0001*this->existing_predicted_score;
-	}
-
 	double starting_predicted_score = this->existing_predicted_score
 		+ run_helper.scale_factor*this->starting_score_network->output->acti_vals[0];
-
 	double starting_predicted_score_error = run_helper.target_val - starting_predicted_score;
-
 	double starting_score_network_target_max_update;
 	if (this->state_iter <= 100000) {
 		starting_score_network_target_max_update = 0.05;
@@ -418,6 +404,41 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 		run_helper.scale_factor*starting_predicted_score_error,
 		run_helper.new_state_errors,
 		starting_score_network_target_max_update);
+
+	this->starting_misguess_network->activate(this->starting_state_vals_snapshot,
+											  this->starting_new_state_vals_snapshot);
+	double starting_misguess_error = run_helper.final_misguess - this->starting_misguess_network->output->acti_vals[0];
+	double starting_misguess_network_target_max_update;
+	if (this->state_iter <= 100000) {
+		starting_misguess_network_target_max_update = 0.05;
+	} else {
+		starting_misguess_network_target_max_update = 0.01;
+	}
+	this->starting_misguess_network->new_backprop(
+		starting_misguess_error,
+		run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so
+		starting_misguess_network_target_max_update);
+
+	this->existing_misguess_network->activate(this->starting_state_vals_snapshot);
+
+	double score_val = run_helper.scale_factor*this->starting_score_network->output->acti_vals[0]
+		/ (solution->average_misguess*abs(run_helper.scale_factor));
+	if (score_val > 0.1) {
+		this->branch_average_score = 0.9999*this->branch_average_score + 0.0001*run_helper.target_val;
+		this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*this->existing_predicted_score;
+		this->branch_average_misguess = 0.9999*this->branch_average_misguess + 0.0001*run_helper.final_misguess;
+		this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*this->existing_misguess_network->output->acti_vals[0];
+	} else if (score_val > -0.1) {
+		double misguess_diff = this->starting_misguess_network->output->acti_vals[0]
+			- this->existing_misguess_network->output->acti_vals[0];
+		double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+		if (misguess_val < -0.1) {
+			this->branch_average_score = 0.9999*this->branch_average_score + 0.0001*run_helper.target_val;
+			this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*this->existing_predicted_score;
+			this->branch_average_misguess = 0.9999*this->branch_average_misguess + 0.0001*run_helper.final_misguess;
+			this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*this->existing_misguess_network->output->acti_vals[0];
+		}
+	}
 
 	run_helper.backprop_is_pre_experiment = true;
 }

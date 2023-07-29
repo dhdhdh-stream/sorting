@@ -16,16 +16,16 @@ void Sequence::activate(vector<double>& flat_vals,
 			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 				double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]);
-				if (this->input_transformations[i_index] != NULL) {
-					val = this->input_transformations[i_index]->forward(val);
+				if (this->input_has_transform[i_index]) {
+					val = this->input_transformations[i_index].forward(val);
 				}
 				input_vals[i_index] += val;
 			} else if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LAST_SEEN) {
 				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
 				if (it != run_helper.last_seen_vals.end()) {
 					double val = it->second;
-					if (this->input_transformations[i_index] != NULL) {
-						val = this->input_transformations[i_index]->forward(val);
+					if (this->input_has_transform[i_index]) {
+						val = this->input_transformations[i_index].forward(val);
 					}
 					input_vals[i_index] += val;
 				}
@@ -53,16 +53,16 @@ void Sequence::activate(vector<double>& flat_vals,
 			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 				double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]);
-				if (this->input_transformations[i_index] != NULL) {
-					val = this->input_transformations[i_index]->forward(val);
+				if (this->input_has_transform[i_index]) {
+					val = this->input_transformations[i_index].forward(val);
 				}
 				input_vals[i_index] += val;
 			} else if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LAST_SEEN) {
 				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
 				if (it != run_helper.last_seen_vals.end()) {
 					double val = it->second;
-					if (this->input_transformations[i_index] != NULL) {
-						val = this->input_transformations[i_index]->forward(val);
+					if (this->input_has_transform[i_index]) {
+						val = this->input_transformations[i_index].forward(val);
 					}
 					double last_seen_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
 					input_vals[i_index] += last_seen_scale*val;
@@ -90,8 +90,8 @@ void Sequence::activate(vector<double>& flat_vals,
 							 */
 							double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 								.state_vals->at(this->input_init_local_input_indexes[i_index]);
-							if (this->input_transformations[i_index] != NULL) {
-								val = this->input_transformations[i_index]->forward(val);
+							if (this->input_has_transform[i_index]) {
+								val = this->input_transformations[i_index].forward(val);
 							}
 							double original_val_scale = this->experiment->state_iter/1000000.0;
 							input_vals[i_index] += original_val_scale*val;
@@ -112,8 +112,8 @@ void Sequence::activate(vector<double>& flat_vals,
 			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 				double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]);
-				if (this->input_transformations[i_index] != NULL) {
-					val = this->input_transformations[i_index]->forward(val);
+				if (this->input_has_transform[i_index]) {
+					val = this->input_transformations[i_index].forward(val);
 				}
 				double original_val_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
 				input_vals[i_index] += original_val_scale*val;
@@ -132,8 +132,8 @@ void Sequence::activate(vector<double>& flat_vals,
 						if (!this->input_is_new_class[i_index]) {
 							double val = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 								.state_vals->at(this->input_init_local_input_indexes[i_index]);
-							if (this->input_transformations[i_index] != NULL) {
-								val = this->input_transformations[i_index]->forward(val);
+							if (this->input_has_transform[i_index]) {
+								val = this->input_transformations[i_index].forward(val);
 							}
 							input_vals[i_index] += val;
 						}
@@ -153,9 +153,13 @@ void Sequence::activate(vector<double>& flat_vals,
 								this->corr_calc_new_variances[cc_index][i_index] = 0.9999*this->corr_calc_new_variances[cc_index][i_index] + 0.0001*curr_new_variance;
 								double curr_covariance = (this->experiment->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_new_average_vals[cc_index][i_index] - input_vals[i_index]);
 								this->corr_calc_covariances[cc_index][i_index] = 0.9999*this->corr_calc_covariances[cc_index][i_index] + 0.0001*curr_covariance;
-								this->new_transformations[cc_index][i_index]->backprop(curr_val, input_vals[i_index]);
+								this->new_transformations[cc_index][i_index].backprop(curr_val, input_vals[i_index]);
 							}
 						}
+						/**
+						 * - don't calculate correlation for non-new class
+						 *   - should have already been calculated in previous experiments
+						 */
 					}
 				}
 			}
@@ -165,11 +169,33 @@ void Sequence::activate(vector<double>& flat_vals,
 										 branch_experiment_history,
 										 run_helper,
 										 history);
+
+		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+			this->corr_calc_state_average_vals[s_index] = 0.9999*this->corr_calc_state_average_vals[s_index] + 0.0001*run_helper.new_state_vals[s_index];
+			double curr_state_variance = (this->corr_calc_state_average_vals[s_index] - run_helper.new_state_vals[s_index])*(this->corr_calc_state_average_vals[s_index] - run_helper.new_state_vals[s_index]);
+			this->corr_calc_state_variances[s_index] = 0.9999*this->corr_calc_state_variances[s_index] + 0.0001*curr_state_variance;
+
+			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+				if (this->input_init_types[i_index] != SEQUENCE_INPUT_INIT_LOCAL
+						|| this->input_is_new_class[i_index]) {
+					this->corr_calc_input_average_vals[s_index][i_index] = 0.9999*this->corr_calc_input_average_vals[s_index][i_index] + 0.0001*input_vals[i_index];
+					double curr_state_variance = (this->corr_calc_input_average_vals[s_index][i_index] - input_vals[i_index])*(this->corr_calc_input_average_vals[s_index][i_index] - input_vals[i_index]);
+					this->corr_calc_input_variances[s_index][i_index] = 0.9999*this->corr_calc_input_variances[s_index][i_index] + 0.0001*curr_state_variance;
+					double curr_covariance = (this->corr_calc_state_average_vals[s_index] - run_helper.new_state_vals[s_index])*(this->corr_calc_input_average_vals[s_index][i_index] - input_vals[i_index]);
+					this->corr_calc_new_covariances[s_index][i_index] = 0.9999*this->corr_calc_new_covariances[s_index][i_index] + 0.0001*curr_covariance;
+					this->new_new_transformations[s_index][i_index].backprop(run_helper.new_state_vals[s_index], input_vals[i_index]);
+				}
+			}
+			/**
+			 * - don't calculate correlation for non-new class
+			 *   - already calculated in BranchExperiment
+			 */
+		}
 	} else {
 		// this->experiment->state == BRANCH_EXPERIMENT_STATE_WRAPUP
 		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
-			if (this->last_layer_new_indexes[i_index] != -1) {
-				input_vals[i_index] = context.back().state_vals[this->last_layer_new_indexes[i_index]];
+			if (this->last_layer_indexes[i_index] != -1) {
+				input_vals[i_index] = context.back().state_vals[this->last_layer_indexes[i_index]];
 			}
 		}
 	}
@@ -321,15 +347,15 @@ void Sequence::activate(vector<double>& flat_vals,
 			if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPLORE
 					|| this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
 				double val = input_vals[i_index];
-				if (this->input_transformations[i_index] != NULL) {
-					val = this->input_transformations[i_index]->forward(val);
+				if (this->input_has_transform[i_index]) {
+					val = this->input_transformations[i_index].forward(val);
 				}
 				context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 					.state_vals->at(this->input_init_local_input_indexes[i_index]) = val;
 			} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
 				double val = input_vals[i_index];
-				if (this->input_transformations[i_index] != NULL) {
-					val = this->input_transformations[i_index]->forward(val);
+				if (this->input_has_transform[i_index]) {
+					val = this->input_transformations[i_index].forward(val);
 				}
 				if (this->input_is_new_class[i_index]) {
 					double val_diff = val - context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
@@ -346,16 +372,16 @@ void Sequence::activate(vector<double>& flat_vals,
 			} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
 				if (!this->input_is_new_class[i_index]) {
 					double val = input_vals[i_index];
-					if (this->input_transformations[i_index] != NULL) {
-						val = this->input_transformations[i_index]->forward(val);
+					if (this->input_has_transform[i_index]) {
+						val = this->input_transformations[i_index].forward(val);
 					}
 					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 						.state_vals->at(this->input_init_local_input_indexes[i_index]) = val;
 				}
 			} else {
 				// this->experiment->state == BRANCH_EXPERIMENT_STATE_WRAPUP
-				if (this->last_layer_new_indexes[i_index] != -1) {
-					context.back().state_vals[this->last_layer_new_indexes[i_index]] = input_vals[i_index];
+				if (this->last_layer_indexes[i_index] != -1) {
+					context.back().state_vals[this->last_layer_indexes[i_index]] = input_vals[i_index];
 				}
 			}
 		}
@@ -414,15 +440,15 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 				if (this->experiment->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
 					double error = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
 						.state_errors->at(this->input_init_local_input_indexes[i_index]);
-					if (this->input_transformations[i_index] != NULL) {
-						error = this->input_transformations[i_index]->backprop_backward(error);
+					if (this->input_has_transform[i_index]) {
+						error = this->input_transformations[i_index].backprop_backward(error);
 					}
 					input_errors[i_index] = error;
 				} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
 					double error = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
 						.state_errors->at(this->input_init_local_input_indexes[i_index]);
-					if (this->input_transformations[i_index] != NULL) {
-						error = this->input_transformations[i_index]->backprop_backward(error);
+					if (this->input_has_transform[i_index]) {
+						error = this->input_transformations[i_index].backprop_backward(error);
 					}
 					if (this->input_is_new_class[i_index]) {
 						double new_class_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
@@ -435,8 +461,8 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 					if (!this->input_is_new_class[i_index]) {
 						double error = context[context.size()-1 - this->input_init_local_scope_depths[i_index]]]
 							.state_errors->at(this->input_init_local_input_indexes[i_index]);
-						if (this->input_transformations[i_index] != NULL) {
-							error = this->input_transformations[i_index]->backprop_backward(error);
+						if (this->input_has_transform[i_index]) {
+							error = this->input_transformations[i_index].backprop_backward(error);
 						}
 						input_errors[i_index] = error;
 					}
@@ -549,8 +575,8 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 					double error = input_errors[i_index];
-					if (this->input_transformations[i_index] != NULL) {
-						error = this->input_transformations[i_index]->backprop_forward(error);
+					if (this->input_has_transform[i_index]) {
+						error = this->input_transformations[i_index].backprop_forward(error);
 					}
 					context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 						.state_errors->at(this->input_init_local_input_indexes[i_index]) = error;
@@ -560,8 +586,8 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 					double error = input_errors[i_index];
-					if (this->input_transformations[i_index] != NULL) {
-						error = this->input_transformations[i_index]->backprop_forward(error);
+					if (this->input_has_transform[i_index]) {
+						error = this->input_transformations[i_index].backprop_forward(error);
 					}
 					if (this->input_is_new_class[i_index]) {
 						double error_diff = error - context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
@@ -583,8 +609,8 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
 					if (!this->input_is_new_class[i_index]) {
 						double error = input_errors[i_index];
-						if (this->input_transformations[i_index] != NULL) {
-							error = this->input_transformations[i_index]->backprop_forward(error);
+						if (this->input_has_transform[i_index]) {
+							error = this->input_transformations[i_index].backprop_forward(error);
 						}
 						context[context.size()-1 - this->input_init_local_scope_depths[i_index]]
 							.state_errors->at(this->input_init_local_input_indexes[i_index]) = error;

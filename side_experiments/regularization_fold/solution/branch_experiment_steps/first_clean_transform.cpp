@@ -9,10 +9,12 @@ void BranchExperiment::first_clean_transform() {
 			for (int i_index = 0; i_index < input_size; i_index++) {
 				if (this->sequences[a_index]->input_is_new_class[i_index]) {
 					this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = this->scope_context.size()+2;
+					this->sequences[a_index]->input_steps_needed_in[i_index] = vector<bool>(this->num_steps, false);
 
 					for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 							it != this->sequences[a_index]->state_networks.end(); it++) {
 						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
+						vector<bool> steps_seen_in = this->scope_steps_seen_in.find(it->first);
 						int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
 
 						for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -33,7 +35,13 @@ void BranchExperiment::first_clean_transform() {
 									it->second[n_index][i_index]->clean(num_new_states);
 
 									if (furthest_layer_seen_in < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
-										this->sequences[a_index]->input_furthest_needed_seen_in[i_index] = furthest_layer_seen_in;
+										this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = furthest_layer_seen_in;
+									}
+
+									for (int ia_index = 0; ia_index < this->num_steps; ia_index++) {
+										if (steps_seen_in[ia_index]) {
+											this->sequences[a_index]->input_steps_needed_in[i_index][ia_index] = true;
+										}
 									}
 								} else {
 									delete it->second[n_index][i_index];
@@ -72,6 +80,14 @@ void BranchExperiment::first_clean_transform() {
 		}
 	}
 
+	this->scope_node_additions_needed = vector<set<pair<int, int>>>(NUM_NEW_STATES);
+	for (int a_index = 0; a_index < this->num_steps; a_index++) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			int input_size = this->sequences[a_index]->input_init_types.size();
+			this->sequences[a_index]->scope_node_additions_needed = vector<set<pair<int, int>>>(input_size);
+		}
+	}
+
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
 		Scope* scope = solution->scopes[this->scope_context[l_index]];
 		ScopeNode* scope_node = scope->nodes[this->node_context[l_index]];
@@ -93,10 +109,7 @@ void BranchExperiment::first_clean_transform() {
 				this->corr_calc_new_average_vals.push_back(vector<double>(NUM_NEW_STATES, 0.0));
 				this->corr_calc_new_variances.push_back(vector<double>(NUM_NEW_STATES, 0.0));
 				this->corr_calc_covariances.push_back(vector<double>(NUM_NEW_STATES, 0.0));
-				this->new_transformations.push_back(vector<Transformation*>(NUM_NEW_STATES));
-				for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
-					this->new_transformations.back()[is_index] = new Transformation();
-				}
+				this->new_transformations.push_back(vector<TransformationHelper>(NUM_NEW_STATES));
 
 				for (int a_index = 0; a_index < this->num_steps; a_index++) {
 					if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
@@ -104,13 +117,22 @@ void BranchExperiment::first_clean_transform() {
 						this->sequences[a_index]->corr_calc_new_average_vals.push_back(vector<double>(input_size, 0.0));
 						this->sequences[a_index]->corr_calc_new_variances.push_back(vector<double>(input_size, 0.0));
 						this->sequences[a_index]->corr_calc_covariances.push_back(vector<double>(input_size, 0.0));
-						this->sequences[a_index]->new_transformations.push_back(vector<Transformation*>(input_size));
-						for (int i_index = 0; i_index < input_size; i_index++) {
-							this->sequences[a_index]->new_transformations.back()[i_index] = new Transformation();
-						}
+						this->sequences[a_index]->new_transformations.push_back(vector<TransformationHelper>(input_size));
 					}
 				}
 			}
+		}
+	}
+
+	for (int a_index = 0; a_index < this->num_steps; a_index++) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			int input_size = this->sequences[a_index]->input_init_types.size();
+			this->sequences[a_index]->corr_calc_state_average_vals = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			this->sequences[a_index]->corr_calc_state_variances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			this->sequences[a_index]->corr_calc_input_average_vals = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			this->sequences[a_index]->corr_calc_input_variances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			this->sequences[a_index]->corr_calc_new_covariances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			this->sequences[a_index]->new_new_transformations = vector<vector<TransformationHelper>>(NUM_NEW_STATES, vector<TransformationHelper>(input_size));
 		}
 	}
 

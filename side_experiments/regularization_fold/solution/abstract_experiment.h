@@ -58,18 +58,20 @@ public:
 	std::vector<std::vector<double>> corr_calc_new_average_vals;
 	std::vector<std::vector<double>> corr_calc_new_variances;
 	std::vector<std::vector<double>> corr_calc_covariances;
-	std::vector<std::vector<Transformation*>> new_transformations;
+	std::vector<std::vector<TransformationHelper>> new_transformations;
 
 	int new_num_states;
-	std::vector<bool> new_states_initialized;
-	std::vector<FamilyDefinition*> new_state_families;
-	std::vector<ClassDefinition*> new_default_state_classes;
+	std::vector<bool> new_state_initialized_locally;
+	std::vector<int> new_state_family_ids;
+	std::vector<int> new_state_default_class_ids;
+
 	/**
 	 * - includes both new states and new inputs
 	 */
-	std::vector<int> last_layer_new_indexes;
-	std::vector<int> last_layer_new_target_indexes;
-	std::vector<Transformation*> last_layer_new_transformations;
+	std::vector<int> last_layer_indexes;
+	std::vector<int> last_layer_target_indexes;
+	std::vector<bool> last_layer_has_transform;
+	std::vector<Transformation> last_layer_transformations;
 
 };
 

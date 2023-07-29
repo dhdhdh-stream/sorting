@@ -46,8 +46,7 @@ public:
 		  ScoreNetwork* continue_score_network,
 		  ScoreNetwork* continue_misguess_network,
 		  ScoreNetwork* halt_score_network,
-		  ScoreNetwork* halt_misguess_network,
-		  std::vector<AbstractNode*> nodes);
+		  ScoreNetwork* halt_misguess_network);
 	Scope(std::ifstream& input_file,
 		  int id);
 	~Scope();

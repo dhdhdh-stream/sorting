@@ -54,26 +54,88 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 	ScoreNetworkHistory* starting_score_network_history = new ScoreNetworkHistory(this->starting_score_network);
 	this->starting_score_network->activate(history->starting_state_vals_snapshot,
 										   starting_score_network_history);
+	double branch_score = run_helper.scale_factor*this->starting_score_network->output->acti_vals[0];
 
 	ScoreNetworkHistory* starting_original_score_network_history = new ScoreNetwork(this->starting_original_score_network);
 	this->starting_original_score_network->activate(history->starting_state_vals_snapshot,
 													starting_original_score_network_history);
+	double original_score = run_helper.scale_factor*this->starting_original_score_network->output->acti_vals[0];
 
-	// TODO: ease-in in case of recursion
-	// - start from 50%?
+	ScoreNetworkHistory* starting_misguess_network_history = new ScoreNetworkHistory(this->starting_misguess_network);
+	this->starting_misguess_network->activate(history->starting_state_vals_snapshot,
+											  starting_misguess_network_history);
 
-	if (starting_original_score_network->output->acti_vals[0] > starting_score_network->output->acti_vals[0]) {
+	ScoreNetworkHistory* starting_original_misguess_network_history = new ScoreNetworkHistory(this->starting_original_misguess_network);
+	this->starting_original_misguess_network->activate(history->starting_state_vals_snapshot,
+													   starting_original_misguess_network_history);
+
+	double score_diff = branch_score - original_score;
+	double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+	if (score_val > 0.1) {
+		if (this->state_iter < 100000) {
+			// ease-in in case of recursion
+			double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+			if (randuni() < ease_in_scale) {
+				history->is_branch = true;
+			} else {
+				history->is_branch = false;
+			}
+		} else {
+			history->is_branch = true;
+		}
+	} else if (score_val < -0.1) {
 		history->is_branch = false;
-
-		history->score_network_history = starting_original_score_network_history;
-		history->score_network_update = this->starting_original_score_network->output->acti_vals[0];
-		delete starting_score_network_history;
 	} else {
-		history->is_branch = true;
+		double misguess_diff = this->starting_misguess_network->output->acti_vals[0]
+			- this->starting_original_misguess_network->output->acti_vals[0];
+		double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+		if (misguess_val < -0.1) {
+			if (this->state_iter < 100000) {
+				// ease-in in case of recursion
+				double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+				if (randuni() < ease_in_scale) {
+					history->is_branch = true;
+				} else {
+					history->is_branch = false;
+				}
+			} else {
+				history->is_branch = true;
+			}
+		} else if (misguess_val > 0.1) {
+			history->is_branch = false;
+		} else {
+			if (rand()%2 == 0) {
+				if (this->state_iter < 100000) {
+					// ease-in in case of recursion
+					double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+					if (randuni() < ease_in_scale) {
+						history->is_branch = true;
+					} else {
+						history->is_branch = false;
+					}
+				} else {
+					history->is_branch = true;
+				}
+			} else {
+				history->is_branch = false;
+			}
+		}
+	}
 
-		history->score_network_history = starting_score_network_history;
-		history->score_network_update = this->starting_score_network->output->acti_vals[0];
+	if (!history->is_branch) {
+		delete starting_score_network_history;
+		delete starting_misguess_network_history;
+		history->score_network_history = starting_original_score_network_history;
+		history->misguess_network_history = starting_original_misguess_network_history;
+		history->score_network_output = this->starting_original_score_network->output->acti_vals[0];
+		history->misguess_network_output = this->starting_original_misguess_network->output->acti_vals[0];
+	} else {
 		delete starting_original_score_network_history;
+		delete starting_original_misguess_network_history;
+		history->score_network_history = starting_score_network_history;
+		history->misguess_network_history = starting_misguess_network_history;
+		history->score_network_output = this->starting_score_network->output->acti_vals[0];
+		history->misguess_network_output = this->starting_misguess_network->output->acti_vals[0];
 
 		if (this->state_iter < 100000) {
 			double temp_scale_factor = 1.0;
@@ -82,10 +144,13 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 									   context[0].scope_history);
 		}
 
-		vector<double> new_state_vals = vector<double>(this->new_num_states, 0.0);
-		for (int s_index = 0; s_index < (int)this->last_layer_new_indexes.size(); s_index++) {
-			new_state_vals[this->last_layer_new_target_indexes[s_index]]
-				= context.back().state_vals[this->last_layer_new_indexes[s_index]];
+		vector<double> new_state_vals(this->new_num_states, 0.0);
+		for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); i_index++) {
+			double val = context.back().state_vals[this->last_layer_indexes[i_index]];
+			if (this->last_layer_has_transform[i_index]) {
+				val = this->last_layer_transformations[i_index].forward(val);
+			}
+			new_state_vals[this->last_layer_target_indexes[i_index]] = val;
 		}
 
 		context.push_back(ForwardContextLayer());
@@ -95,6 +160,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 
 		context.back().state_vals = &new_state_vals;
 		context.back().states_initialized = vector<bool>(this->new_num_states, true);
+		// all states must be initialized
 
 		history->step_obs_snapshots = vector<double>(this->num_steps, 0.0);
 		history->step_starting_new_state_vals_snapshots = vector<vector<double>>(this->num_steps);
@@ -152,8 +218,12 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 		}
 
 		context.pop_back();
-		for (int s_index = 0; s_index < (int)this->last_layer_new_state_indexes.size(); s_index++) {
-			context.back().state_vals[this->last_layer_new_state_indexes[s_index]] = new_state_vals[s_index];
+		for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); s_index++) {
+			double val = new_state_vals[this->last_layer_target_indexes[i_index]];
+			if (this->last_layer_has_transform[i_index]) {
+				val = this->last_layer_transformations[i_index].backward(val);
+			}
+			context.back().state_vals[this->last_layer_indexes[i_index]] = val;
 		}
 
 		history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
@@ -187,16 +257,6 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 
 		for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
 			if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
-				this->step_average_scores[a_index] = 0.9999*this->step_average_scores[a_index] + 0.0001*run_helper.target_val;
-				double curr_score_variance = (this->step_average_scores[a_index] - run_helper.target_val)*(this->step_average_scores[a_index] - run_helper.target_val);
-				this->step_score_variances[a_index] = 0.9999*this->step_score_variances[a_index] + 0.0001*curr_score_variance;
-
-				this->step_average_misguesses[a_index] = 0.9999*this->step_average_misguesses[a_index] + 0.0001*run_helper.final_misguess;
-				double curr_misguess_variance = (this->step_average_misguesses[a_index] - run_helper.final_misguess)*(this->step_average_misguesses[a_index] - run_helper.final_misguess);
-				this->step_misguess_variances[a_index] = 0.9999*this->step_misguess_variances[a_index] + 0.0001*curr_misguess_variance;
-
-				this->step_average_impacts[a_index] = 0.9999*this->step_average_impacts[a_index] + 0.0001*abs(scale_factor*history->step_score_network_outputs[a_index]);
-
 				double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
 
 				scale_factor_error += history->step_score_network_outputs[a_index]*predicted_score_error;
@@ -225,16 +285,22 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		}
 	}
 
-	double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_update;
-
+	double branch_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->score_network_output;
 	double predicted_score_error = run_helper.target_val - branch_predicted_score;
-
 	ScoreNetwork* score_network = history->score_network_history->network;
 	score_network->backprop_weights_with_no_error_signal(
 		run_helper.scale_factor*predicted_score_error,
 		0.01,
 		history->starting_state_vals_snapshot,
 		history->score_network_history);
+
+	double misguess_error = run_helper.final_misguess - history->misguess_network_output;
+	ScoreNetwork* misguess_network = history->misguess_network_history->network;
+	misguess_network->backprop_weights_with_no_error_signal(
+		misguess_error,
+		0.01,
+		history->starting_state_vals_snapshot,
+		history->misguess_network_history);
 
 	// no need to set run_helper.backprop_is_pre_experiment
 }

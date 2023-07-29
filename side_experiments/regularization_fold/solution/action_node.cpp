@@ -20,6 +20,9 @@ ActionNode::ActionNode(Scope* parent,
 	this->target_indexes = target_indexes;
 	this->state_networks = state_networks;
 	this->score_network = score_network;
+	this->misguess_network = new ScoreNetwork(this->score_network->state_size,
+											  0,
+											  20);
 	this->next_node_id = next_node_id;
 
 	this->is_explore = false;
@@ -41,6 +44,7 @@ ActionNode::ActionNode(ActionNode* original,
 		this->state_networks.push_back(new StateNetwork(original->state_networks[s_index]));
 	}
 	this->score_network = new ScoreNetwork(original->score_network);
+	this->misguess_network = new ScoreNetwork(original->misguess_network);
 	this->next_node_id = next_node_id;
 
 	this->is_explore = false;
@@ -75,6 +79,11 @@ ActionNode::ActionNode(ifstream& input_file,
 	this->score_network = new ScoreNetwork(score_network_save_file);
 	score_network_save_file.close();
 
+	ifstream misguess_network_save_file;
+	misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_misguess.txt");
+	this->misguess_network = new ScoreNetwork(misguess_network_save_file);
+	misguess_network_save_file.close();
+
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
@@ -90,6 +99,7 @@ ActionNode::~ActionNode() {
 	}
 
 	delete this->score_network;
+	delete this->misguess_network;
 
 	if (this->best_experiment != NULL) {
 		delete this->best_experiment;
@@ -355,8 +365,6 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 		}
 	}
 
-	vector<double> state_errors_snapshot = *(context.back().state_errors);
-
 	if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
 			|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 		double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
@@ -370,6 +378,10 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 			history->score_network_history);
 
 		run_helper.predicted_score -= run_helper.scale_factor*history->score_network_output;
+
+		this->misguess_network->activate(history->ending_state_vals_snapshot);
+		double misguess_error = run_helper.final_misguess - this->misguess_network->output->acti_vals[0];
+		this->misguess_network->backprop_weights_with_no_error_signal(misguess_error, 0.002);
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		if (!run_helper.backprop_is_pre_experiment) {
@@ -387,6 +399,8 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		if (!run_helper.backprop_is_pre_experiment) {
+			vector<double> state_errors_snapshot = *(context.back().state_errors);
+
 			for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
 				if (history->state_network_histories[s_index] != NULL) {
 					this->state_networks[s_index]->backprop_errors_with_no_weight_change(
@@ -416,6 +430,11 @@ void ActionNode::save(ofstream& output_file) {
 	score_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_score.txt");
 	this->score_network->save(score_network_save_file);
 	score_network_save_file.close();
+
+	ofstream misguess_network_save_file;
+	misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_misguess.txt");
+	this->misguess_network->save(misguess_network_save_file);
+	misguess_network_save_file.close();
 
 	output_file << this->next_node_id << endl;
 }

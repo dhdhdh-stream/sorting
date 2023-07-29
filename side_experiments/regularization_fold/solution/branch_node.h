@@ -61,7 +61,8 @@ public:
 			   int branch_next_node_id,
 			   ScoreNetwork* original_score_network,
 			   ScoreNetwork* original_misguess_network,
-			   int original_next_node_id);
+			   int original_next_node_id,
+			   double branch_weight);
 	BranchNode(std::ifstream& input_file,
 			   Scope* parent,
 			   int id);

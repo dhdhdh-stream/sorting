@@ -6,7 +6,7 @@ public:
 	int id;
 
 	std::vector<int> similar_family_ids;
-	std::vector<Transformation*> transformations;
+	std::vector<Transformation> transformations;
 	std::vector<double> pcc;
 
 	FamilyDefinition();

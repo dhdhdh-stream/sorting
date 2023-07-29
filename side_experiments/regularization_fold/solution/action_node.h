@@ -13,11 +13,12 @@ public:
 
 	ScoreNetwork* score_network;
 	/**
-	 * - don't have network for misguess
-	 *   - may prevent some beneficial changes from being recognized immediately
-	 *     - but ultimately shouldn't block progress
-	 *   - instead learn if needed in experiment
+	 * - only used to compare against for experiments
+	 *   - so don't need to activate normally
+	 *   - can train late, after experiment
+	 *     - what's needed to correctly predict score should largely be what's needed to predict misguess
 	 */
+	ScoreNetwork* misguess_network;
 	int next_node_id;
 
 	/**

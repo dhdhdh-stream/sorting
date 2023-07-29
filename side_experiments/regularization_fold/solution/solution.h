@@ -19,6 +19,10 @@ public:
 	 */
 	double average_misguess;
 	double misguess_variance;
+	/**
+	 * - constantly update misguess_standard_deviation for efficiency
+	 *   - but not for score as only used on experiment transform
+	 */
 	double misguess_standard_deviation;
 
 	std::vector<Scope*> scopes;
