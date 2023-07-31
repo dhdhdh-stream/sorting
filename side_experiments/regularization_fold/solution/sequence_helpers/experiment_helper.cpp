@@ -10,10 +10,10 @@ void Sequence::experiment_pre_activate_helper(
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(scope_id);
+	map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(scope_id);
 
 	if (it == this->state_networks.end()) {
-		it = this->state_networks.insert({scope_id, vector<vector<vector<StateNetwork*>>>()}).first;
+		it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
 	}
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
 	it->second.insert(it->second.end(), size_diff, vector<vector<StateNetwork*>>());
@@ -100,10 +100,9 @@ void Sequence::experiment_pre_activate_helper(
 void Sequence::experiment_experiment_activate_helper(
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
-		RunHelper& run_helper,
-		SequenceHistory* history) {
+		RunHelper& run_helper) {
 	for (int a_index = 0; a_index < this->experiment->step_index; a_index++) {
-		if (this->experiment->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+		if (this->experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
 			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
@@ -127,17 +126,17 @@ void Sequence::experiment_experiment_activate_helper(
 			SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
 			vector<Scope*> step_scopes = sequence_history->sequence->scopes;
 
-			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
+			for (int l_index = 0; l_index < (int)sequence_history->node_histories.size(); l_index++) {
 				/**
 				 * - already initialized
-				 *   - furthest_layer_seen_in/earliest_step_seen_in already set as well
+				 *   - furthest_layer_seen_in/steps_seen_in already set as well
 				 */
-				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(step_scopes[s_index]->id);
+				map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(step_scopes[l_index]->id);
 
-				for (int n_index = 0; n_index < (int)sequence_history->node_histories[s_index].size(); n_index++) {
-					if (sequence_history->node_histories[s_index][n_index]->node->type == NODE_TYPE_ACTION) {
-						int node_id = sequence_history->node_histories[s_index][n_index]->node->id;
-						ActionNodeHistory* action_node_history = (ActionNodeHistory*)sequence_history->node_histories[s_index][n_index];
+				for (int n_index = 0; n_index < (int)sequence_history->node_histories[l_index].size(); n_index++) {
+					if (sequence_history->node_histories[l_index][n_index]->node->type == NODE_TYPE_ACTION) {
+						int node_id = sequence_history->node_histories[l_index][n_index]->node->id;
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)sequence_history->node_histories[l_index][n_index];
 
 						action_node_history->experiment_sequence_step_indexes.push_back(this->step_index);
 						action_node_history->input_vals_snapshots.push_back(input_vals);
@@ -158,7 +157,7 @@ void Sequence::experiment_experiment_activate_helper(
 							}
 						}
 					} else {
-						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[s_index][n_index];
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[l_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 						experiment_pre_activate_helper(false,

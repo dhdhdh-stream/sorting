@@ -21,7 +21,8 @@ public:
 	bool is_explore_iter;
 	bool explore_seen;
 
-	std::map<StateDefinition*, double> last_seen_vals;
+	// class IDs to values
+	std::map<int, double> last_seen_vals;
 
 	AbstractExperiment* experiment;
 	bool can_zero;

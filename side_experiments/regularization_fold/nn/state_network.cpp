@@ -459,92 +459,10 @@ void StateNetwork::new_lasso_backprop(double output_error,
 					   target_max_update);
 }
 
-void StateNetwork::new_activate(double obs_val,
-								vector<double>& state_vals,
-								double new_input_val) {
-	this->obs_input->acti_vals[0] = obs_snapshot;
-	for (int s_index = 0; s_index < (int)this->state_indexes.size(); s_index++) {
-		this->state_input->acti_vals[s_index] = state_vals[this->state_indexes[s_index]];
-	}
-	this->new_input_input->acti_vals[0] = new_input_val;
-
-	this->hidden->activate();
-	this->output->activate();
-}
-
-void StateNetwork::new_activate(double obs_val,
-								vector<double>& state_vals,
-								double new_input_val,
-								StateNetworkHistory* history) {
-	new_activate(obs_val,
-				 state_vals,
-				 new_input_val);
-
-	history->save_weights();
-}
-
-void StateNetwork::new_backprop(double output_error,
-								double& new_input_error,
-								double target_max_update) {
-	this->output->errors[0] = output_error;
-
-	this->output->backprop();
-	this->hidden->backprop();
-
-	new_input_error += this->new_input_input->errors[0];
-	this->new_input_input->errors[0] = 0.0;
-
-	this->epoch_iter++;
-	if (this->epoch_iter == 20) {
-		double hidden_max_update = 0.0;
-		this->hidden->get_max_update(hidden_max_update);
-		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
-		if (hidden_max_update > 0.0) {
-			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
-			if (hidden_learning_rate*hidden_max_update > target_max_update) {
-				hidden_learning_rate = target_max_update/hidden_max_update;
-			}
-			this->hidden->update_weights(hidden_learning_rate);
-		}
-
-		double output_max_update = 0.0;
-		this->output->get_max_update(output_max_update);
-		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		if (output_max_update > 0.0) {
-			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
-			if (output_learning_rate*output_max_update > target_max_update) {
-				output_learning_rate = target_max_update/output_max_update;
-			}
-			this->output->update_weights(output_learning_rate);
-		}
-
-		this->epoch_iter = 0;
-	}
-}
-
-void StateNetwork::new_backprop(double output_error,
-								double& new_input_error,
-								double target_max_update,
-								double obs_snapshot,
-								vector<double>& state_vals_snapshot,
-								double new_input_snapshot,
-								StateNetworkHistory* history) {
-	this->obs_input->acti_vals[0] = obs_snapshot;
-	for (int s_index = 0; s_index < (int)this->state_indexes.size(); s_index++) {
-		this->state_input->acti_vals[s_index] = state_vals_snapshot[this->state_indexes[s_index]];
-	}
-	this->new_input_input->acti_vals[0] = new_input_snapshot;
-	history->reset_weights();
-
-	new_backprop(output_error,
-				 new_input_error,
-				 target_max_update);
-}
-
 void StateNetwork::update_lasso_weights(int new_furthest_distance) {
 	this->lasso_weights = vector<vector<double>>(4);
 	this->lasso_weights[0] = vector<double>{new_furthest_distance*DEFAULT_LASSO_WEIGHT};
-	this->lasso_weights[1] = vector<double>(this->state_indexes.size(), new_furthest_distance*DEFAULT_LASSO_WEIGHT);
+	this->lasso_weights[1] = vector<double>(this->state_indexes.size(), 0.0);
 	this->lasso_weights[2] = vector<double>(NUM_NEW_STATES);
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 		this->lasso_weights[2][s_index] = new_furthest_distance*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];

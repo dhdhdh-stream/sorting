@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void Sequence::clean_outer_activate_helper(
+void Sequence::clean_pre_activate_helper(
 		bool on_path,
 		vector<int>& temp_scope_context,
 		vector<int>& temp_node_context,
@@ -11,7 +11,7 @@ void Sequence::clean_outer_activate_helper(
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(scope_id);
+	map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(scope_id);
 
 	if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
 		for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
@@ -98,10 +98,9 @@ void Sequence::clean_experiment_activate_helper(
 		vector<int>& temp_node_context,
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
-		RunHelper& run_helper,
-		SequenceHistory* history) {
+		RunHelper& run_helper) {
 	for (int a_index = 0; a_index < this->step_index; a_index++) {
-		if (this->experiment->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+		if (this->experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
 			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
@@ -132,7 +131,7 @@ void Sequence::clean_experiment_activate_helper(
 
 			for (int s_index = 0; s_index < (int)sequence_history->node_histories.size(); s_index++) {
 				int scope_id = this->experiment->sequences[a_index]->scopes[s_index]->id;
-				map<int, vector<vector<vector<StateNetwork*>>>>::iterator it = this->state_networks.find(scope_id);
+				map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(scope_id);
 
 				for (int n_index = 0; n_index < (int)sequence_history->node_histories[s_index].size(); n_index++) {
 					if (sequence_history->node_histories[s_index][n_index]->node->type == NODE_TYPE_ACTION) {

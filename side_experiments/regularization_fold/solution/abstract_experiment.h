@@ -73,6 +73,13 @@ public:
 	std::vector<bool> last_layer_has_transform;
 	std::vector<Transformation> last_layer_transformations;
 
+	virtual ~AbstractExperiment() {};
+};
+
+class AbstractExperimentHistory {
+	AbstractExperiment* experiment;
+
+	virtual ~AbstractExperimentHistory() {};
 };
 
 #endif /* ABSTRACT_EXPERIMENT_H */

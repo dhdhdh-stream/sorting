@@ -171,7 +171,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 		history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
 
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
-			if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 				double obs = flat_vals.begin();
 
 				history->step_obs_snapshots[a_index] = obs;
@@ -256,10 +256,14 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		// no need to track context for WRAPUP
 
 		for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
-			if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 				double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
 
 				scale_factor_error += history->step_score_network_outputs[a_index]*predicted_score_error;
+				/**
+				 * - could already begin tracking new/separate scale_mod for new scope
+				 *   - but won't bother for now (i.e., treating scale_mod as 1.0)
+				 */
 
 				this->step_score_networks[a_index]->backprop_weights_with_no_error_signal(
 					run_helper.scale_factor*predicted_score_error,
@@ -279,6 +283,8 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 												   history->sequence_histories[a_index]);
 
 				this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
+
+				scale_factor_error += this->sequence_scale_mods[a_index]->weight*inner_scale_factor_error;
 
 				run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
 			}
@@ -301,6 +307,12 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		0.01,
 		history->starting_state_vals_snapshot,
 		history->misguess_network_history);
+
+	if (history->is_branch) {
+		this->branch_weight = 0.9999*this->branch_weight + 0.0001;
+	} else {
+		this->branch_weight = 0.9999*this->branch_weight + 0.0;
+	}
 
 	// no need to set run_helper.backprop_is_pre_experiment
 }

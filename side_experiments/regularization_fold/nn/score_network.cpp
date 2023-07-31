@@ -299,6 +299,77 @@ void ScoreNetwork::new_backprop(double output_error,
 				 target_max_update);
 }
 
+void ScoreNetwork::new_lasso_backprop(double output_error,
+									  vector<double>& new_state_errors,
+									  double target_max_update) {
+	this->output->errors[0] = output_error;
+
+	this->output->backprop();
+	this->hidden->backprop();
+
+	for (int s_index = 0; s_index < this->new_state_size; s_index++) {
+		new_state_errors[s_index] += this->new_state_input->errors[s_index];
+		this->new_state_input->errors[s_index] = 0.0;
+	}
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 20) {
+		double hidden_max_update = 0.0;
+		this->hidden->get_max_update(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->lasso_update_weights(this->lasso_weights,
+											   hidden_learning_rate);
+		}
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->lasso_update_weights(DEFAULT_LASSO_WEIGHT,
+											   output_learning_rate);
+		}
+
+		this->epoch_iter = 0;
+	}
+}
+
+void ScoreNetwork::new_lasso_backprop(double output_error,
+									  vector<double>& new_state_errors,
+									  double target_max_update,
+									  vector<double>& state_vals_snapshot,
+									  vector<double>& new_state_vals_snapshot,
+									  ScoreNetworkHistory* history) {
+	for (int s_index = 0; s_index < this->state_size; s_index++) {
+		this->state_input->acti_vals[s_index] = state_vals_snapshot[s_index];
+	}
+	for (int s_index = 0; s_index < this->new_state_size; s_index++) {
+		this->new_state_input->acti_vals[s_index] = new_state_vals_snapshot[s_index];
+	}
+	history->reset_weights();
+
+	new_lasso_backprop(output_error,
+					   new_state_errors,
+					   target_max_update);
+}
+
+void ScoreNetwork::update_lasso_weights(int new_furthest_distance) {
+	this->lasso_weights = vector<vector<double>>(2);
+	this->lasso_weights[0] = vector<double>(this->state_size, 0.0);
+	this->lasso_weights[1] = vector<double>(NUM_NEW_STATES);
+	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+		this->lasso_weights[1][s_index] = new_furthest_distance*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];
+	}
+}
+
 void ScoreNetwork::clean(int num_new_states) {
 	int size_diff = this->new_state_size - num_new_states;
 	for (int s_index = 0; s_index < size_diff; s_index++) {
@@ -327,6 +398,8 @@ void ScoreNetwork::finalize_new_state(int new_total_states) {
 
 	this->new_state_input->acti_vals.clear();
 	this->new_state_input->errors.clear();
+
+	this->lasso_weights.clear();
 }
 
 void ScoreNetwork::add_state() {

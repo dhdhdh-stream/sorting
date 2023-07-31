@@ -185,6 +185,14 @@ void BranchExperiment::wrapup_transform() {
 										 original_action_node->next_node_id,
 										 1.0);
 	} else {
+		int size_diff = outer_scope->num_states - this->starting_score_network->state_size;
+		for (int s_index = 0; s_index < size_diff; s_index++) {
+			this->starting_score_network->add_state();
+			this->starting_misguess_network->add_state();
+			this->starting_original_score_network->add_state();
+			this->starting_original_misguess_network->add_state();
+		}
+
 		new_branch_node = new BranchNode(outer_scope,
 										 (int)outer_scope->nodes.size(),
 										 this->scope_context,

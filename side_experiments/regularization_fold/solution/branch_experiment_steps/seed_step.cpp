@@ -2,14 +2,14 @@
 
 using namespace std;
 
-void BranchExperiment::seed_outer_activate_helper(int context_index,
-												  vector<double>& new_state_vals,
-												  bool can_zero,
-												  vector<double>& obs_snapshots,
-												  vector<vector<double>>& state_vals_snapshots,
-												  vector<vector<double>>& new_state_vals_snapshots,
-												  vector<vector<StateNetworkHistory*>>& new_state_network_histories,
-												  ScopeHistory* scope_history) {
+void BranchExperiment::seed_pre_activate_helper(int context_index,
+												vector<double>& new_state_vals,
+												bool can_zero,
+												vector<double>& obs_snapshots,
+												vector<vector<double>>& state_vals_snapshots,
+												vector<vector<double>>& new_state_vals_snapshots,
+												vector<vector<StateNetworkHistory*>>& new_state_network_histories,
+												ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
 	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
@@ -39,6 +39,7 @@ void BranchExperiment::seed_outer_activate_helper(int context_index,
 					for (s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[node_id][s_index]->update_lasso_weights(new_furthest_distance);
 					}
+					score_it->second[node_id]->update_lasso_weights(new_furthest_distance);
 				}
 			}
 		}
@@ -62,6 +63,7 @@ void BranchExperiment::seed_outer_activate_helper(int context_index,
 					score_it->second[node_id] = new ScoreNetwork(scope_history->scope->num_states,
 																 NUM_NEW_STATES,
 																 20);
+					score_it->second[node_id]->update_lasso_weights(new_furthest_distance);
 				}
 
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
@@ -93,14 +95,14 @@ void BranchExperiment::seed_outer_activate_helper(int context_index,
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
 				} else {
-					seed_outer_activate_helper(context_index,
-											   new_state_vals,
-											   can_zero,
-											   obs_snapshots,
-											   state_vals_snapshots,
-											   new_state_vals_snapshots,
-											   new_state_network_histories,
-											   scope_node_history->inner_scope_history);
+					seed_pre_activate_helper(context_index,
+											 new_state_vals,
+											 can_zero,
+											 obs_snapshots,
+											 state_vals_snapshots,
+											 new_state_vals_snapshots,
+											 new_state_network_histories,
+											 scope_node_history->inner_scope_history);
 				}
 			}
 		}
@@ -127,14 +129,14 @@ void BranchExperiment::seed_activate() {
 		if (context_index < 0) {
 			context_index = 0;
 		}
-		seed_outer_activate_helper(context_index,
-								   new_state_vals,
-								   can_zero,
-								   obs_snapshots,
-								   state_vals_snapshots,
-								   new_state_vals_snapshots,
-								   new_state_network_histories,
-								   this->seed_outer_context_history);
+		seed_pre_activate_helper(context_index,
+								 new_state_vals,
+								 can_zero,
+								 obs_snapshots,
+								 state_vals_snapshots,
+								 new_state_vals_snapshots,
+								 new_state_network_histories,
+								 this->seed_context_history);
 	}
 
 	this->starting_score_network->activate(this->seed_state_vals_snapshot,

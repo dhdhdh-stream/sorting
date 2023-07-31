@@ -11,7 +11,7 @@ void BranchExperiment::explore_activate(vector<double>& flat_vals,
 	// no need to append to context yet
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
-		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			double obs = flat_vals.begin();
 			flat_vals.erase(flat_vals.begin());
 		} else {

@@ -110,7 +110,7 @@ void BranchExperiment::clean_pre_activate_helper(
 void BranchExperiment::clean_activate(vector<double>& flat_vals,
 									  vector<ForwardContextLayer>& context,
 									  RunHelper& run_helper,
-									  FoldHistory* history) {
+									  BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_CLEAN;
 
 	history->existing_predicted_score = predicted_score;
@@ -190,7 +190,7 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 	}
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
-		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			double obs = flat_vals.begin();
 
 			history->step_obs_snapshots[a_index] = obs;
@@ -311,7 +311,7 @@ void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 	// no need to append to context yet
 
 	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
-		if (this->step_types[a_index] == EXPLORE_STEP_TYPE_ACTION) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
 			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				if (history->step_state_network_histories[a_index][s_index] != NULL) {

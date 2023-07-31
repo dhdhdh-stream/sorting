@@ -2,7 +2,33 @@
 
 using namespace std;
 
+Sequence::Sequence(vector<Scope*> scopes,
+				   vector<int> starting_node_ids,
+				   vector<int> input_init_types,
+				   vector<int> input_init_target_layers,
+				   vector<int> input_init_target_indexes,
+				   vector<int> input_init_local_scope_depths,
+				   vector<int> input_init_local_input_indexes,
+				   vector<int> input_init_last_seen_class_ids,
+				   vector<bool> input_has_transform,
+				   vector<Transformation> input_transformations,
+				   vector<vector<int>> node_ids) {
+	this->scopes = scopes;
+	this->starting_node_ids = starting_node_ids;
+	this->input_init_types = input_init_types;
+	this->input_init_target_layers = input_init_target_layers;
+	this->input_init_target_indexes = input_init_target_indexes;
+	this->input_init_local_scope_depths = input_init_local_scope_depths;
+	this->input_init_local_input_indexes = input_init_local_input_indexes;
+	this->input_init_last_seen_class_ids = input_init_last_seen_class_ids;
+	this->input_has_transform = input_has_transform;
+	this->input_transformations = input_transformations;
+	this->node_ids = node_ids;
+}
 
+Sequence::~Sequence() {
+	// handle in experiment transforms
+}
 
 void Sequence::activate(vector<double>& flat_vals,
 						vector<ForwardContextLayer>& context,
@@ -21,7 +47,7 @@ void Sequence::activate(vector<double>& flat_vals,
 				}
 				input_vals[i_index] += val;
 			} else if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LAST_SEEN) {
-				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
+				map<int, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_class_ids[i_index]);
 				if (it != run_helper.last_seen_vals.end()) {
 					double val = it->second;
 					if (this->input_has_transform[i_index]) {
@@ -38,16 +64,15 @@ void Sequence::activate(vector<double>& flat_vals,
 			if (context_index < 0) {
 				context_index = 0;
 			}
-			experiment_outer_activate_helper(context_index,
-											 input_vals,
-											 run_helper,
-											 context[c_index].scope_history);
+			experiment_pre_activate_helper(context_index,
+										   input_vals,
+										   run_helper,
+										   context[c_index].scope_history);
 		}
 
 		experiment_experiment_activate_helper(input_vals,
 											  branch_experiment_history,
-											  run_helper,
-											  history);
+											  run_helper);
 
 		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
@@ -58,7 +83,7 @@ void Sequence::activate(vector<double>& flat_vals,
 				}
 				input_vals[i_index] += val;
 			} else if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LAST_SEEN) {
-				map<ClassDefinition*, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_classes[i_index]);
+				map<int, double>::iterator it = run_helper.last_seen_vals.find(this->input_init_last_seen_class_ids[i_index]);
 				if (it != run_helper.last_seen_vals.end()) {
 					double val = it->second;
 					if (this->input_has_transform[i_index]) {
@@ -73,12 +98,12 @@ void Sequence::activate(vector<double>& flat_vals,
 		vector<int> temp_scope_context;
 		vector<int> temp_node_context;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			clean_outer_activate_helper(true,
-										temp_scope_context,
-										temp_node_context,
-										input_vals,
-										run_helper,
-										context[c_index].scope_history);
+			clean_pre_activate_helper(true,
+									  temp_scope_context,
+									  temp_node_context,
+									  input_vals,
+									  run_helper,
+									  context[c_index].scope_history);
 
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
@@ -105,8 +130,7 @@ void Sequence::activate(vector<double>& flat_vals,
 										 temp_node_context,
 										 input_vals,
 										 branch_experiment_history,
-										 run_helper,
-										 history);
+										 run_helper);
 
 		for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 			if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
@@ -121,10 +145,15 @@ void Sequence::activate(vector<double>& flat_vals,
 		}
 	} else if (this->experiment->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
 		int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
+		vector<int> temp_scope_context;
+		vector<int> temp_node_context;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			clean_outer_activate_helper(input_vals,
-										run_helper,
-										context[c_index].scope_history);
+			clean_pre_activate_helper(true,
+									  temp_scope_context,
+									  temp_node_context,
+									  input_vals,
+									  run_helper,
+									  context[c_index].scope_history);
 
 			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
 				if (this->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
@@ -165,10 +194,11 @@ void Sequence::activate(vector<double>& flat_vals,
 			}
 		}
 
-		clean_experiment_activate_helper(input_vals,
+		clean_experiment_activate_helper(temp_scope_context,
+										 temp_node_context,
+										 input_vals,
 										 branch_experiment_history,
-										 run_helper,
-										 history);
+										 run_helper);
 
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 			this->corr_calc_state_average_vals[s_index] = 0.9999*this->corr_calc_state_average_vals[s_index] + 0.0001*run_helper.new_state_vals[s_index];
@@ -264,8 +294,8 @@ void Sequence::activate(vector<double>& flat_vals,
 	vector<EndingScopeNodeActivateHelper> ending_scope_node_helpers;
 	for (int l_index = 0; l_index < (int)this->scopes.size(); l_index++) {
 		int scope_id = this->scopes[l_index]->id;
-		run_helper.scope_state_networks = &(this->experiment->state_networks[scope_id]);
-		run_helper.scope_score_networks = &(this->experiment->score_networks[scope_id]);
+		run_helper.scope_state_networks = &(this->experiment->state_networks.find(scope_id)->second);
+		run_helper.scope_score_networks = &(this->experiment->score_networks.find(scope_id)->second);
 		// initialize on experiment start
 		run_helper.scope_distance = (int)this->experiment->scope_context.size()+1;
 
@@ -623,4 +653,14 @@ void Sequence::backprop(vector<BackwardContextLayer>& context,
 	}
 }
 
+SequenceHistory::SequenceHistory(Sequence* sequence) {
+	this->sequence = sequence;
+}
 
+SequenceHistory::~SequenceHistory() {
+	for (int l_index = 0; l_index < (int)this->node_histories.size(); l_index++) {
+		for (int n_index = 0; n_index < (int)this->node_histories[l_index].size(); n_index++) {
+			delete this->node_histories[l_index][n_index];
+		}
+	}
+}

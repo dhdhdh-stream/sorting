@@ -9,9 +9,6 @@ const int SEQUENCE_INPUT_INIT_NEW_STATE = 3;
 
 class Sequence {
 public:
-	BranchExperiment* experiment;
-	int step_index;
-
 	/**
 	 * - non-loop
 	 */
@@ -45,7 +42,7 @@ public:
 	 */
 	std::vector<int> input_init_local_scope_depths;
 	std::vector<int> input_init_local_input_indexes;
-	std::vector<ClassDefinition*> input_init_last_seen_classes;
+	std::vector<int> input_init_last_seen_class_ids;
 	std::vector<bool> input_has_transform;
 	std::vector<Transformation> input_transformations;
 
@@ -60,6 +57,9 @@ public:
 	 *   - also on success, create new scopes rather than reuse original scopes
 	 *     - but inner scopes will be reused and generalized
 	 */
+
+	BranchExperiment* experiment;
+	int step_index;
 
 	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
 	// save separately from experiment to more easily update lasso weights
@@ -99,7 +99,18 @@ public:
 
 	std::vector<int> input_index_translations;
 
-
+	Sequence(std::vector<Scope*> scopes,
+			 std::vector<int> starting_node_ids,
+			 std::vector<int> input_init_types,
+			 std::vector<int> input_init_target_layers,
+			 std::vector<int> input_init_target_indexes,
+			 std::vector<int> input_init_local_scope_depths,
+			 std::vector<int> input_init_local_input_indexes,
+			 std::vector<int> input_init_last_seen_class_ids,
+			 std::vector<bool> input_has_transform,
+			 std::vector<Transformation> input_transformations,
+			 std::vector<std::vector<int>> node_ids);
+	~Sequence();
 
 	void activate(std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
@@ -111,6 +122,27 @@ public:
 				  RunHelper& run_helper,
 				  SequenceHistory* history);
 
+	void experiment_pre_activate_helper(bool on_path,
+										int context_index,
+										std::vector<double>& input_vals,
+										RunHelper& run_helper,
+										ScopeHistory* scope_history);
+	void experiment_experiment_activate_helper(
+		std::vector<double>& input_vals,
+		BranchExperimentHistory* branch_experiment_history,
+		RunHelper& run_helper);
+
+	void clean_pre_activate_helper(bool on_path,
+								   std::vector<int>& temp_scope_context,
+								   std::vector<int>& temp_node_context,
+								   std::vector<double>& input_vals,
+								   RunHelper& run_helper,
+								   ScopeHistory* scope_history);
+	void clean_experiment_activate_helper(std::vector<int>& temp_scope_context,
+										  std::vector<int>& temp_node_context,
+										  std::vector<double>& input_vals,
+										  BranchExperimentHistory* branch_experiment_history,
+										  RunHelper& run_helper);
 };
 
 class SequenceHistory {
@@ -119,6 +151,8 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
+	SequenceHistory(Sequence* sequence);
+	~SequenceHistory();
 };
 
 #endif /* SEQUENCE_H */

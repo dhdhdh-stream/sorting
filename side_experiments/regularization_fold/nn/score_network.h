@@ -9,6 +9,8 @@ public:
 	int new_state_size;
 	Layer* new_state_input;
 
+	std::vector<std::vector<double>> lasso_weights;
+
 	int hidden_size;
 	Layer* hidden;
 
@@ -55,10 +57,6 @@ public:
 	void new_activate(std::vector<double>& state_vals,
 					  std::vector<double>& new_state_vals,
 					  ScoreNetworkHistory* history);
-	/**
-	 * - don't backprop errors into original state
-	 *   - let original score networks have full impact
-	 */
 	void new_backprop(double output_error,
 					  std::vector<double>& new_state_errors,
 					  double target_max_update);
@@ -68,6 +66,17 @@ public:
 					  std::vector<double>& state_vals_snapshot,
 					  std::vector<double>& new_state_vals_snapshot,
 					  ScoreNetworkHistory* history);
+	void new_lasso_backprop(double output_error,
+							std::vector<double>& new_state_errors,
+							double target_max_update);
+	void new_lasso_backprop(double output_error,
+							std::vector<double>& new_state_errors,
+							double target_max_update,
+							std::vector<double>& state_vals_snapshot,
+							std::vector<double>& new_state_vals_snapshot,
+							ScoreNetworkHistory* history);
+
+	void update_lasso_weights(int new_furthest_distance);
 
 	void clean(int num_new_states);
 	// new states at the end of total states

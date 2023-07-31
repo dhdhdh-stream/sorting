@@ -507,6 +507,13 @@ void BranchExperiment::second_clean_transform() {
 		}
 	}
 
+	this->starting_original_score_network = new ScoreNetwork(this->starting_score_network->state_size,
+															 0,
+															 20);
+	this->starting_original_misguess_network = new ScoreNetwork(this->starting_misguess_network->state_size,
+																0,
+																20);
+
 	this->state = BRANCH_EXPERIMENT_STATE_WRAPUP;
 	this->state_iter = 0;
 	this->sum_error = 0.0;

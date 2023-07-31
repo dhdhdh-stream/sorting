@@ -324,60 +324,76 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 		this->scope_scale_mod->backprop(inner_scale_factor_error, 0.0002);
 
 		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
-	} else {
-		// run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT || run_helper.explore_phase == EXPLORE_PHASE_CLEAN
-		vector<double>* curr_state_errors = context.back().state_errors;
+	} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+		if (run_helper.backprop_is_pre_experiment) {
+			// if pre-experiment, context no longer needed
 
-		vector<vector<double>> inner_state_errors(this->starting_node_ids.size());
-		inner_state_errors[0] = vector<double>(inner_scope->num_states, 0.0);
-		Scope* curr_scope = inner_scope;
-		for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
-			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
-			Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
+			// unused
+			vector<int> starting_node_ids_copy;
+			vector<vector<double>*> inner_state_errors_copy;
+			double inner_scale_factor_error = 0.0;
 
-			inner_state_errors[1+l_index] = vector<double>(next_scope->num_states, 0.0);
+			inner_scope->backprop(starting_node_ids_copy,
+								  inner_state_errors_copy,
+								  context,
+								  inner_scale_factor_error,
+								  run_helper,
+								  history->inner_scope_history);
+		} else {
+			vector<double>* curr_state_errors = context.back().state_errors;
 
-			curr_scope = next_scope;
-		}
-		for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-			double error = curr_state_errors->at(this->input_indexes[i_index]);
-			if (this->input_has_transform[i_index]) {
-				error = this->input_transformations[i_index].backprop_backward(error);
+			vector<vector<double>> inner_state_errors(this->starting_node_ids.size());
+			inner_state_errors[0] = vector<double>(inner_scope->num_states, 0.0);
+			Scope* curr_scope = inner_scope;
+			for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
+				ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
+				Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
+
+				inner_state_errors[1+l_index] = vector<double>(next_scope->num_states, 0.0);
+
+				curr_scope = next_scope;
 			}
-			inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]] = error;
-		}
-
-		context.push_back(BackwardContextLayer());
-
-		context.back().state_errors = &(inner_state_errors[0]);
-
-		vector<int> starting_node_ids_copy = this->starting_node_ids;
-
-		vector<vector<double>*> inner_state_errors_copy(this->starting_node_ids.size()-1);
-		for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
-			inner_state_errors_copy[l_index] = &(inner_state_errors[1+l_index]);
-		}
-
-		double inner_scale_factor_error = 0.0;
-
-		inner_scope->backprop(starting_node_ids_copy,
-							  inner_state_errors_copy,
-							  context,
-							  inner_scale_factor_error,
-							  run_helper,
-							  history->inner_scope_history);
-
-		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
-
-		for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-			double error = inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
-			if (this->input_has_transform[i_index]) {
-				error = this->input_transformations[i_index].backprop_forward(error);
+			for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
+				double error = curr_state_errors->at(this->input_indexes[i_index]);
+				if (this->input_has_transform[i_index]) {
+					error = this->input_transformations[i_index].backprop_backward(error);
+				}
+				inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]] = error;
 			}
-			curr_state_errors->at(this->input_indexes[i_index]) = error;
-		}
 
-		context.pop_back();
+			context.push_back(BackwardContextLayer());
+
+			context.back().state_errors = &(inner_state_errors[0]);
+
+			vector<int> starting_node_ids_copy = this->starting_node_ids;
+
+			vector<vector<double>*> inner_state_errors_copy(this->starting_node_ids.size()-1);
+			for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
+				inner_state_errors_copy[l_index] = &(inner_state_errors[1+l_index]);
+			}
+
+			double inner_scale_factor_error = 0.0;
+
+			inner_scope->backprop(starting_node_ids_copy,
+								  inner_state_errors_copy,
+								  context,
+								  inner_scale_factor_error,
+								  run_helper,
+								  history->inner_scope_history);
+
+			scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
+
+			for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
+				double error = inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
+				if (this->input_has_transform[i_index]) {
+					error = this->input_transformations[i_index].backprop_forward(error);
+				}
+				curr_state_errors->at(this->input_indexes[i_index]) = error;
+			}
+
+			context.pop_back();
+		}
 	}
 
 	run_helper.scale_factor /= this->scope_scale_mod->weight;
@@ -389,7 +405,7 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 								 double& scale_factor_error,
 								 RunHelper& run_helper,
 								 ScopeNodeHistory* history) {
-	// run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT || run_helper.explore_phase == EXPLORE_PHASE_CLEAN
+	// (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT || run_helper.explore_phase == EXPLORE_PHASE_CLEAN) && !run_helper.backprop_is_pre_experiment
 
 	run_helper.scale_factor *= this->scope_scale_mod->weight;
 

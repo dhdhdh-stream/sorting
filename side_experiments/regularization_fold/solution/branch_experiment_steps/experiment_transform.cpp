@@ -23,10 +23,12 @@ void BranchExperiment::experiment_transform() {
 	cout << "misguess_improvement_t_value: " << misguess_improvement_t_value << endl;
 
 	bool is_success;
-	if (score_improvement_t_value > 2.326) {	// >99%
+	if (score_improvement_t_value > 2.326	// >99%
+			&& this->branch_weight > 0.05) {
 		is_success = true;
 	} else if (score_improvement_t_value > -0.674	// 75%<
-			&& misguess_improvement_t_value > 2.326) {
+			&& misguess_improvement_t_value > 2.326
+			&& this->branch_weight > 0.05) {
 		is_success = true;
 	} else {
 		is_success = false;
@@ -496,7 +498,61 @@ void BranchExperiment::experiment_transform() {
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	} else {
+		for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();
+				it != this->state_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				for (int s_index = 0; s_index < (int)it->second[n_index].size(); s_index++) {
+					delete it->second[n_index][s_index];
+				}
+			}
+		}
 
+		for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
+				it != this->score_networks.end(); it++) {
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				if (it->second[n_index] != NULL) {
+					delete it->second[n_index];
+				}
+			}
+		}
+
+		delete this->starting_score_network;
+		delete this->starting_misguess_network;
+
+		for (int a_index = 0; a_index < this->num_steps; a_index++) {
+			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+				for (int s_index = 0; s_index < (int)this->step_state_networks[a_index].size(); s_index++) {
+					delete this->step_state_networks[a_index][s_index];
+				}
+
+				delete this->step_score_networks[a_index];
+			} else {
+				for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
+						it != this->sequences[a_index]->state_networks.end(); it++) {
+					for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+						for (int i_index = 0; i_index < (int)it->second[n_index].size(); i_index++) {
+							delete it->second[n_index][i_index];
+						}
+					}
+				}
+
+				for (int ia_index = 0; ia_index < (int)this->sequences[a_index]->step_state_networks.size(); ia_index++) {
+					for (int i_index = 0; i_index < (int)this->sequences[a_index]->step_state_networks[ia_index].size(); i_index++) {
+						delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
+					}
+				}
+
+				delete this->sequences[a_index];
+
+				delete this->sequence_scale_mods[a_index];
+			}
+		}
+
+		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
+			delete this->exit_networks[e_index];
+		}
+
+		delete this->seed_context_history;
 
 		this->state = BRANCH_EXPERIMENT_STATE_DONE;
 	}

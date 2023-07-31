@@ -273,8 +273,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 
 	for (int s_index = 0; s_index < this->num_states; s_index++) {
 		if (was_initialized_locally[s_index]) {
-			FamilyDefinition* family_definition = solution->families[this->state_default_class_ids[s_index]];
-			run_helper.last_seen_vals[family_definition] = context.back().state_vals->at(s_index);
+			run_helper.last_seen_vals[this->state_default_class_ids[s_index]] = context.back().state_vals->at(s_index);
 		}
 	}
 
@@ -455,6 +454,7 @@ void Scope::experiment_variables_helper(
 						for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 							state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 						}
+						score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
 					}
 				}
 			}
@@ -466,7 +466,7 @@ void Scope::experiment_variables_helper(
 			if (steps_seen_in_it == run_helper.experiment->scope_steps_seen_in.end()) {
 				branch_experiment->scope_steps_seen_in[this->id] = vector<bool>(branch_experiment->num_steps, false);
 			}
-			branch_experiment->scope_steps_seen_in[this->id] = run_helper.experiment_step_index;
+			branch_experiment->scope_steps_seen_in[this->id][run_helper.experiment_step_index] = true;
 		}
 
 		experiment_scope_state_networks = &(state_it->second);
@@ -549,6 +549,7 @@ void Scope::backprop(vector<int>& starting_node_ids,
 
 		if ((run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 					|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN)
+				&& !run_helper.backprop_is_pre_experiment
 				&& starting_state_errors.size() > 0) {
 			ScopeNode* scope_node = (ScopeNode*)history->node_histories[0][0]->node;
 			scope_node->halfway_backprop(starting_node_ids,
@@ -575,24 +576,31 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										RunHelper& run_helper,
 										ScopeHistory* history) {
 	if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
+		if (action_node_history->experiment_history != NULL) {
+			if (action_node->curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)action_node->curr_experiment;
+				branch_experiment->backprop(context,
+											scale_factor_error,
+											run_helper,
+											(BranchExperimentHistory*)action_node_history->experiment_history);
+
+				if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
+					action_node->is_explore = false;
+
+					delete action_node->curr_experiment;
+					action_node->curr_experiment = NULL;
+				}
+			} else {
+
+			}
+		}
+
 		ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[iter_index][h_index];
 		ActionNode* action_node = (ActionNode*)action_node_history->node;
 		action_node->backprop(context,
 							  scale_factor_error,
 							  run_helper,
 							  action_node_history);
-
-		if (action_node_history->experiment_history != NULL) {
-			if ()
-			action_node->curr_experiment->backprop();
-
-			if (action_node->curr_experiment->type == EXPERIMENT_TYPE_BRANCH
-					&& action_node->curr_experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
-
-			} else if () {
-
-			}
-		}
 	} else if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[iter_index][h_index];
 		ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;

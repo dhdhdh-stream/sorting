@@ -116,24 +116,6 @@ public:
 							double new_input_snapshot,
 							StateNetworkHistory* history);
 
-	void new_activate(double obs_val,
-					  std::vector<double>& state_vals,
-					  double new_input_val);
-	void new_activate(double obs_val,
-					  std::vector<double>& state_vals,
-					  double new_input_val,
-					  StateNetworkHistory* history);
-	void new_backprop(double output_error,
-					  double& new_input_error,
-					  double target_max_update);
-	void new_backprop(double output_error,
-					  double& new_input_error,
-					  double target_max_update,
-					  double obs_snapshot,
-					  std::vector<double>& state_vals_snapshot,
-					  double new_input_snapshot,
-					  StateNetworkHistory* history);
-
 	void update_lasso_weights(int new_furthest_distance);
 
 	void clean(int num_new_states);

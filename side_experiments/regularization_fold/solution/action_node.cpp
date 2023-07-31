@@ -172,6 +172,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 				experiment_scope_score_networks->at(this->id) = new ScoreNetwork(this->parent->num_states,
 																				 NUM_NEW_STATES,
 																				 20);
+				experiment_scope_score_networks->at(this->id)->update_lasso_weights(experiment_scope_distance);
 			}
 		}
 
@@ -306,12 +307,21 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 		} else {
 			new_score_network_target_max_update = 0.01;
 		}
-		new_score_network->new_backprop(run_helper.scale_factor*predicted_score_error,
-										run_helper.new_state_errors,
-										new_score_network_target_max_update,
-										history->ending_state_vals_snapshot,
-										history->ending_new_state_vals_snapshot,
-										history->new_score_network_history);
+		if (run_helper.experiment->state_iter <= 20000) {
+			new_score_network->new_backprop(run_helper.scale_factor*predicted_score_error,
+											run_helper.new_state_errors,
+											new_score_network_target_max_update,
+											history->ending_state_vals_snapshot,
+											history->ending_new_state_vals_snapshot,
+											history->new_score_network_history);
+		} else {
+			new_score_network->new_lasso_backprop(run_helper.scale_factor*predicted_score_error,
+												  run_helper.new_state_errors,
+												  new_score_network_target_max_update,
+												  history->ending_state_vals_snapshot,
+												  history->ending_new_state_vals_snapshot,
+												  history->new_score_network_history);
+		}
 
 		run_helper.predicted_score -= run_helper.scale_factor*history->new_score_network_output;
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
