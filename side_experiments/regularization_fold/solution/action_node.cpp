@@ -26,8 +26,8 @@ ActionNode::ActionNode(Scope* parent,
 	this->next_node_id = next_node_id;
 
 	this->is_explore = false;
-	this->best_experiment = NULL;
-	this->curr_experiment = NULL;
+	this->explore_best_experiment = NULL;
+	this->experiment = NULL;
 }
 
 ActionNode::ActionNode(ActionNode* original,
@@ -48,8 +48,8 @@ ActionNode::ActionNode(ActionNode* original,
 	this->next_node_id = next_node_id;
 
 	this->is_explore = false;
-	this->best_experiment = NULL;
-	this->curr_experiment = NULL;
+	this->explore_best_experiment = NULL;
+	this->experiment = NULL;
 }
 
 ActionNode::ActionNode(ifstream& input_file,
@@ -89,8 +89,8 @@ ActionNode::ActionNode(ifstream& input_file,
 	this->next_node_id = stoi(next_node_id_line);
 
 	this->is_explore = false;
-	this->best_experiment = NULL;
-	this->curr_experiment = NULL;
+	this->explore_best_experiment = NULL;
+	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {
@@ -101,12 +101,12 @@ ActionNode::~ActionNode() {
 	delete this->score_network;
 	delete this->misguess_network;
 
-	if (this->best_experiment != NULL) {
-		delete this->best_experiment;
+	if (this->explore_best_experiment != NULL) {
+		delete this->explore_best_experiment;
 	}
 
-	if (this->curr_experiment != NULL) {
-		delete this->curr_experiment;
+	if (this->experiment != NULL) {
+		delete this->experiment;
 	}
 }
 

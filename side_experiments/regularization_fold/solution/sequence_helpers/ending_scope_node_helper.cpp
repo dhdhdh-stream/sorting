@@ -108,7 +108,7 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 
 	run_helper.experiment_helper_scope_context.push_back(this->scope_node->parent->id);
 	run_helper.experiment_helper_node_context.push_back(this->scope_node->id);
-	// only needed for BRANCH_EXPERIMENT_STATE_SECOND_CLEAN, but will simply update in general for now
+	// only needed for EXPERIMENT_STATE_SECOND_CLEAN, but will simply update in general for now
 }
 
 void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& context,

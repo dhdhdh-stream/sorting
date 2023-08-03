@@ -39,7 +39,7 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 
 	this->existing_misguess_network = existing_misguess_network;
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+	this->state = EXPERIMENT_STATE_EXPLORE;
 }
 
 BranchExperiment::~BranchExperiment() {
@@ -50,22 +50,22 @@ void BranchExperiment::activate(vector<double>& flat_vals,
 								vector<ForwardContextLayer>& context,
 								RunHelper& run_helper,
 								BranchExperimentHistory* history) {
-	if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+	if (this->state == EXPERIMENT_STATE_EXPLORE) {
 		explore_activate(flat_vals,
 						 context,
 						 run_helper,
 						 history);
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+	} else if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
 		experiment_activate(flat_vals,
 							context,
 							run_helper,
 							history);
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		clean_activate(flat_vals,
 					   context,
 					   run_helper,
 					   history);
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 		clean_activate(flat_vals,
 					   context,
 					   run_helper,
@@ -82,7 +82,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 								double& scale_factor_error,
 								RunHelper& run_helper,
 								BranchExperimentHistory* history) {
-	if (this->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
 		experiment_backprop(context,
 							run_helper,
 							history);
@@ -90,11 +90,11 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 		if (this->state_iter < 200000 && this->state_iter%10 == 0) {
 			seed_activate();
 		}
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		clean_backprop(context,
 					   run_helper,
 					   history);
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 		clean_backprop(context,
 					   run_helper,
 					   history);
@@ -106,7 +106,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 	}
 
 	this->state_iter++;
-	if (this->state == BRANCH_EXPERIMENT_STATE_EXPERIMENT) {
+	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
 		if (this->state_iter == 1000000) {
 			experiment_transform();
 
@@ -120,7 +120,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 				this->sum_error = 0.0;
 			}
 		}
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_FIRST_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		if (this->state_iter == 200000) {
 			first_clean_transform();
 
@@ -133,7 +133,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 				this->sum_error = 0.0;
 			}
 		}
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN) {
+	} else if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 		if (this->state_iter == 200000) {
 			second_clean_transform();
 

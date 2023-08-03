@@ -12,4 +12,6 @@ const int EXPLORE_PHASE_MEASURE = 3;
 const int EXPLORE_PHASE_CLEAN = 4;
 const int EXPLORE_PHASE_WRAPUP = 5;
 
+const int EXPLORE_TARGET_TRIES = 1000;
+
 #endif /* CONSTANTS_H */

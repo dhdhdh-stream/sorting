@@ -1,11 +1,11 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
-const int SEQUENCE_INPUT_INIT_NONE = 0;
-const int SEQUENCE_INPUT_INIT_LOCAL = 1;
-const int SEQUENCE_INPUT_INIT_LAST_SEEN = 2;
-const int SEQUENCE_INPUT_INIT_NEW_STATE = 3;
-// if empty (i.e., not initialize), don't include in input_init_types, etc.
+const int SEQUENCE_INPUT_TYPE_NONE = 0;
+const int SEQUENCE_INPUT_TYPE_LOCAL = 1;
+const int SEQUENCE_INPUT_TYPE_PREVIOUS = 2;
+const int SEQUENCE_INPUT_TYPE_LAST_SEEN = 3;
+// if empty (i.e., don't initialize), don't include in input_types, etc.
 
 class Sequence {
 public:
@@ -22,29 +22,33 @@ public:
 	 */
 	std::vector<int> starting_node_ids;
 
-	std::vector<int> input_init_types;
+	std::vector<int> input_types;
 	/**
 	 * - if it's the same input in multiple layers, set at top layer, and have it cascade down
 	 *   - insert new state by BRANCH_EXPERIMENT_STATE_WRAPUP
 	 */
-	std::vector<int> input_init_target_layers;
-	std::vector<int> input_init_target_indexes;
+	std::vector<int> input_target_layers;
+	std::vector<int> input_target_indexes;
 	/**
 	 * - needs to be state that isn't passed down further
 	 * 
-	 * - can be reused between sequences, with each re-setting and re-fetching
-	 * 
 	 * - negative indexing from end
 	 *   - original scope is 0
-	 *     - (experiment context not added yet)
+	 *     - (new experiment context not added yet)
 	 * 
 	 * - no longer needed by BRANCH_EXPERIMENT_STATE_WRAPUP
 	 */
-	std::vector<int> input_init_local_scope_depths;
-	std::vector<int> input_init_local_input_indexes;
-	std::vector<int> input_init_last_seen_class_ids;
+	std::vector<int> input_local_scope_depths;
+	std::vector<int> input_local_input_indexes;
+	std::vector<int> input_previous_step_index;
+	std::vector<int> input_previous_input_index;
+	std::vector<int> input_last_seen_class_ids;
 	std::vector<bool> input_has_transform;
 	std::vector<Transformation> input_transformations;
+	/**
+	 * - transform on activate start
+	 *   - so if input_is_new_class, family is local family
+	 */
 
 	std::vector<std::vector<int>> node_ids;
 	/**
@@ -53,12 +57,10 @@ public:
 	 *     - (though may not be optimal due to original scope's later explored early exits)
 	 *   - even if from halfway activate
 	 * 
-	 * - don't include branch nodes (and won't have exit nodes)
-	 *   - also on success, create new scopes rather than reuse original scopes
-	 *     - but inner scopes will be reused and generalized
+	 * - TODO: include branch nodes
 	 */
 
-	BranchExperiment* experiment;
+	AbstractExperiment* experiment;
 	int step_index;
 
 	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
@@ -71,8 +73,8 @@ public:
 	std::vector<std::vector<bool>> input_steps_needed_in;
 
 	/**
-	 * - only for SEQUENCE_INPUT_INIT_LOCAL
-	 *   - (for other input types, check input_furthest_layer_seen_in to determine if needed)
+	 * - for SEQUENCE_INPUT_TYPE_LOCAL and SEQUENCE_INPUT_TYPE_PREVIOUS
+	 *   - (for other types, check input_furthest_layer_seen_in to determine if needed)
 	 */
 	std::vector<bool> input_is_new_class;
 
@@ -101,26 +103,41 @@ public:
 
 	Sequence(std::vector<Scope*> scopes,
 			 std::vector<int> starting_node_ids,
-			 std::vector<int> input_init_types,
-			 std::vector<int> input_init_target_layers,
-			 std::vector<int> input_init_target_indexes,
-			 std::vector<int> input_init_local_scope_depths,
-			 std::vector<int> input_init_local_input_indexes,
-			 std::vector<int> input_init_last_seen_class_ids,
+			 std::vector<int> input_types,
+			 std::vector<int> input_target_layers,
+			 std::vector<int> input_target_indexes,
+			 std::vector<int> input_local_scope_depths,
+			 std::vector<int> input_local_input_indexes,
+			 std::vector<int> input_previous_step_index,
+			 std::vector<int> input_previous_input_index,
+			 std::vector<int> input_last_seen_class_ids,
 			 std::vector<bool> input_has_transform,
 			 std::vector<Transformation> input_transformations,
 			 std::vector<std::vector<int>> node_ids);
 	~Sequence();
 
-	void activate(std::vector<double>& flat_vals,
+	void activate_pull(std::vector<double>& input_vals,
+					   std::vector<ForwardContextLayer>& context,
+					   std::vector<std::vector<double>>& previous_vals,
+					   BranchExperimentHistory* branch_experiment_history,
+					   RunHelper& run_helper);
+	void activate(std::vector<double>& input_vals,
+				  std::vector<double>& flat_vals,
 				  std::vector<ForwardContextLayer>& context,
-				  BranchExperimentHistory* branch_experiment_history,
-				  RunHelper& run_helper,
 				  SequenceHistory* history);
+	void activate_reset(std::vector<double>& input_vals,
+						std::vector<ForwardContextLayer>& context,
+						std::vector<std::vector<double>>& previous_vals);
+	/**
+	 * - by EXPERIMENT_STATE_WRAPUP, reset immediately after activate
+	 */
+
+	void backprop_pull();
 	void backprop(std::vector<BackwardContextLayer>& context,
 				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  SequenceHistory* history);
+	void backprop_reset();
 
 	void experiment_pre_activate_helper(bool on_path,
 										int context_index,

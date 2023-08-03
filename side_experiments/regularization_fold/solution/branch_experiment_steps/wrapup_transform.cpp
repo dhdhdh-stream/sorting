@@ -35,6 +35,7 @@ void BranchExperiment::wrapup_transform() {
 		} else {
 			vector<Scope*> new_sequence_scopes;
 			for (int l_index = 0; l_index < (int)this->sequences[a_index]->scopes.size(); l_index++) {
+				// can't be loop
 				Scope* new_sequence_scope = new Scope(solution->scopes.size(),
 													  this->sequences[a_index]->scopes[l_index]->num_states,
 													  this->sequences[a_index]->scopes[l_index]->state_initialized_locally,
@@ -47,7 +48,6 @@ void BranchExperiment::wrapup_transform() {
 													  NULL,
 													  NULL,
 													  NULL);
-				// can't be loop
 				solution->scopes.push_back(new_sequence_scope);
 				new_sequence_scopes.push_back(new_sequence_scope);
 			}
@@ -60,13 +60,13 @@ void BranchExperiment::wrapup_transform() {
 			vector<int> new_input_target_indexes;
 			vector<bool> new_input_has_transform;
 			vector<Transformation> new_input_transformations;
-			for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_init_types.size(); i_index++) {
+			for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 				if (this->sequences[a_index]->input_index_translations[i_index] != -1) {
 					new_input_indexes.push_back(this->sequences[a_index]->input_index_translations[i_index]);
-					new_input_target_layers.push_back(this->sequences[a_index]->input_init_target_layers[i_index]);
-					new_input_target_indexes.push_back(this->sequences[a_index]->input_init_target_indexes[i_index]);
-					new_input_has_transform.push_back(false);
-					new_input_transformations.push_back(Transformation());
+					new_input_target_layers.push_back(this->sequences[a_index]->input_target_layers[i_index]);
+					new_input_target_indexes.push_back(this->sequences[a_index]->input_target_indexes[i_index]);
+					new_input_has_transform.push_back(this->sequences[a_index]->input_has_transform[i_index]);
+					new_input_transformations.push_back(this->sequences[a_index]->input_transformations[i_index]);
 				}
 			}
 
@@ -218,7 +218,12 @@ void BranchExperiment::wrapup_transform() {
 			}
 		}
 	}
+	for (int a_index = 0; a_index < this->num_steps; a_index++) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			delete this->sequences[a_index];
+		}
+	}
 	delete this->seed_outer_context_history;
 
-	this->state = BRANCH_EXPERIMENT_STATE_DONE;
+	this->state = EXPERIMENT_STATE_DONE;
 }

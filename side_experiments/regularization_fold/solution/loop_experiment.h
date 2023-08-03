@@ -13,7 +13,16 @@
 
 class LoopExperiment {
 public:
-	
+	// find matching outer scope, and trace inputs inwards to reuse
+	// - for last seen, reuse with like 75% probability?
+	Sequence* sequence;
+	Scale* scale_mod;
+
+	ScoreNetwork* continue_score_network;
+	ScoreNetwork* continue_misguess_network;
+	ScoreNetwork* halt_score_network;
+	ScoreNetwork* halt_misguess_network;
+
 };
 
 #endif /* LOOP_EXPERIMENT_H */

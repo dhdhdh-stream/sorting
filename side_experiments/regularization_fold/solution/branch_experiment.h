@@ -4,23 +4,6 @@
 const int BRANCH_EXPERIMENT_STEP_TYPE_ACTION = 0;
 const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 0;
 
-const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
-const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 0;
-const int BRANCH_EXPERIMENT_STATE_FIRST_CLEAN = 1;
-const int BRANCH_EXPERIMENT_STATE_SECOND_CLEAN = 2;
-/**
- * - update score networks in a controlled way
- *   - only activate experiment depending on score
- *     - but mark that experiment seen for run
- * 
- * - gradually scale down temp score networks during first half
- *   - then let permanent score networks settle during second half
- * 
- * - also calculate correlation between new classes and existing classes
- */
-const int BRANCH_EXPERIMENT_STATE_WRAPUP = 3;
-const int BRANCH_EXPERIMENT_STATE_DONE = 4;
-
 class BranchExperiment : public Experiment {
 public:
 	int num_steps;
@@ -35,7 +18,7 @@ public:
 	double seed_start_scale_factor;
 	std::vector<double> seed_state_vals_snapshot;
 	ScopeHistory* seed_context_history;
-	double seed_target_val;		// TODO: set after run
+	double seed_target_val;
 	// only worry about starting score network for seed, as due to updates for inner scopes, seed may quickly become irrelevant
 
 	ScoreNetwork* existing_misguess_network;
@@ -54,22 +37,6 @@ public:
 	 */
 
 	std::vector<Scale*> sequence_scale_mods;
-
-	/**
-	 * - exit node takes place after new experiment scope
-	 *   - so new experiment scope has a default ending
-	 *   - so doesn't include experiment context
-	 *     - so layer is actually this->scopes.size()
-	 * 
-	 * - lasso clean after BRANCH_EXPERIMENT_STATE_FIRST_CLEAN
-	 */
-	std::vector<ExitNetwork*> exit_networks;
-	std::vector<double> exit_network_impacts;
-
-	double branch_average_score;
-	double existing_average_score;
-	double branch_average_misguess;
-	double existing_average_misguess;
 
 	std::map<int, std::vector<bool>> scope_steps_seen_in;
 

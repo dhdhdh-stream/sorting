@@ -95,7 +95,7 @@ void BranchExperiment::experiment_pre_activate_helper(
 				action_node_history->new_score_network_output = score_network->output->acti_vals[0];
 
 				run_helper.predicted_score += temp_scale_factor*score_network->output->acti_vals[0];
-			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
@@ -171,6 +171,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	run_helper.experiment_on_path = false;
 	run_helper.experiment_context_index = this->scope_context.size()+1;
 
+	vector<vector<double>> sequence_input_vals(this->num_steps);
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			double obs = flat_vals.begin();
@@ -210,19 +211,33 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
+			sequence_input_vals[a_index] = vector<double>(this->sequences[a_index]->input_types.size(), 0.0);
+			this->sequences[a_index]->activate_pull(sequence_input_vals[a_index],
+													context,
+													sequence_input_vals,
+													history,
+													run_helper);
+
 			run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
 
 			run_helper.experiment_step_index = a_index;
 
 			SequenceHistory* sequence_history = new SequenceHistory(this->sequences[a_index]);
 			history->sequence_histories[a_index] = sequence_history;
-			this->sequences[a_index]->activate(flat_vals,
-											   context,
-											   history,
+			this->sequences[a_index]->activate(sequence_input_vals[a_index],
+											   flat_vals,
 											   run_helper,
 											   sequence_history);
 
 			run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
+		}
+	}
+
+	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			this->sequences[a_index]->activate_reset(sequence_input_vals[a_index],
+													 context,
+													 sequence_input_vals);
 		}
 	}
 
@@ -446,9 +461,9 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 		}
 	}
 	if (is_branch) {
-		this->branch_average_score = 0.9999*this->branch_average_score + 0.0001*run_helper.target_val;
+		this->new_average_score = 0.9999*this->new_average_score + 0.0001*run_helper.target_val;
 		this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*this->existing_predicted_score;
-		this->branch_average_misguess = 0.9999*this->branch_average_misguess + 0.0001*run_helper.final_misguess;
+		this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*run_helper.final_misguess;
 		this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*this->existing_misguess_network->output->acti_vals[0];
 
 		this->branch_weight = 0.9999*this->branch_weight + 0.0001;

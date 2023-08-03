@@ -167,7 +167,7 @@ void ScopeNode::activate(vector<double>& flat_vals,
 		inner_state_vals_copy[l_index] = &(inner_state_vals[1+l_index]);
 	}
 
-	// currently, starting_node_ids.size() == starting_state_vals.size()+1
+	// currently, starting_node_ids.size() == inner_state_vals_copy.size()+1
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		run_helper.experiment_helper_scope_context.push_back(this->parent->id);

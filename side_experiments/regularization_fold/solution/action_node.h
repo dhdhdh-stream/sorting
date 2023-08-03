@@ -27,20 +27,17 @@ public:
 	 *     - will average out to be the same thing with less bookkeeping
 	 */
 
-	// TODO: assign is_explore if run passed without any explore node being hit
 	bool is_explore;
-	std::vector<int> explore_scope_context;
-	std::vector<int> explore_node_context;
 	int explore_curr_try;
-	double best_explore_surprise;
-	AbstractExperiment* best_experiment;
+	double explore_best_surprise;
+	AbstractExperiment* explore_best_experiment;
 
 	/**
 	 * - if node deleted before experiment finishes, should be OK
 	 *   - can only be that new state added without corresponding branch
 	 *     - but even that might be useful
 	 */
-	AbstractExperiment* curr_experiment;
+	AbstractExperiment* experiment;
 
 	ActionNode(Scope* parent,
 			   int id,

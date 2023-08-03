@@ -30,7 +30,7 @@ void Sequence::experiment_pre_activate_helper(
 			int new_furthest_distance = this->experiment->scope_context.size()+2 - context_index;
 			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 				if (state_it->second[node_id].size() != 0) {
-					for (s_index = 0; s_index < (int)this->input_init_types.size(); s_index++) {
+					for (s_index = 0; s_index < (int)this->input_types.size(); s_index++) {
 						state_it->second[node_id][s_index]->update_lasso_weights(new_furthest_distance);
 					}
 				}
@@ -45,7 +45,7 @@ void Sequence::experiment_pre_activate_helper(
 
 				if (it->second[node_id].size() == 0) {
 					int new_furthest_distance = this->experiment->scope_context.size()+2 - seen_it->second;
-					for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
+					for (int ii_index = 0; ii_index < (int)this->input_types.size(); ii_index++) {
 						it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
 											 NUM_NEW_STATES,
@@ -61,8 +61,8 @@ void Sequence::experiment_pre_activate_helper(
 
 				action_node_history->experiment_sequence_step_indexes.push_back(this->step_index);
 				action_node_history->input_vals_snapshots.push_back(input_vals);
-				action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
-				for (int ii_index = 0; ii_index < (int)this->input_init_types.size(); ii_index++) {
+				action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_types.size(), NULL));
+				for (int ii_index = 0; ii_index < (int)this->input_types.size(); ii_index++) {
 					if (run_helper.can_zero && rand()%5 == 0) {
 						// do nothing
 					} else {
@@ -77,7 +77,7 @@ void Sequence::experiment_pre_activate_helper(
 						input_vals[ii_index] += network->output->acti_vals[0];
 					}
 				}
-			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
@@ -105,8 +105,8 @@ void Sequence::experiment_experiment_activate_helper(
 		if (this->experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
-			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
-			for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_types.size(), NULL));
+			for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 				if (run_helper.can_zero && rand()%5 == 0) {
 					// do nothing
 				} else {
@@ -140,8 +140,8 @@ void Sequence::experiment_experiment_activate_helper(
 
 						action_node_history->experiment_sequence_step_indexes.push_back(this->step_index);
 						action_node_history->input_vals_snapshots.push_back(input_vals);
-						action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_init_types.size(), NULL));
-						for (int i_index = 0; i_index < (int)this->input_init_types.size(); i_index++) {
+						action_node_history->input_state_network_histories.push_back(vector<StateNetworkHistory*>(this->input_types.size(), NULL));
+						for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 							if (run_helper.can_zero && rand()%5 == 0) {
 								// do nothing
 							} else {
@@ -156,7 +156,7 @@ void Sequence::experiment_experiment_activate_helper(
 								input_vals[i_index] += network->output->acti_vals[0];
 							}
 						}
-					} else {
+					} else if (sequence_history->node_histories[l_index][n_index]->node->type == NODE_TYPE_SCOPE) {
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[l_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
@@ -168,6 +168,58 @@ void Sequence::experiment_experiment_activate_helper(
 					}
 				}
 			}
+		}
+	}
+}
+
+void Sequence::experiment_activate_pull(vector<double>& input_vals,
+										vector<ForwardContextLayer>& context,
+										vector<vector<double>>& previous_vals,
+										BranchExperimentHistory* branch_experiment_history,
+										RunHelper& run_helper) {
+	int context_size_diff = (int)context.size() - (int)this->experiment->scope_context.size() - 1;
+	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+		int context_index = c_index - context_size_diff;
+		if (context_index < 0) {
+			context_index = 0;
+		}
+		experiment_pre_activate_helper(context_index,
+									   input_vals,
+									   run_helper,
+									   context[c_index].scope_history);
+	}
+
+	if (branch_experiment_history != NULL) {
+		experiment_experiment_activate_helper(input_vals,
+											  branch_experiment_history,
+											  run_helper);
+	}
+
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			input_vals[i_index] += context[context.size()-1 - this->input_local_scope_depths[i_index]]
+				.state_vals->at(this->input_local_input_indexes[i_index]);
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			input_vals[i_index] += previous_vals[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]];
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LAST_SEEN) {
+			map<int, double>::iterator it = run_helper.last_seen_vals.find(this->input_last_seen_class_ids[i_index]);
+			if (it != run_helper.last_seen_vals.end()) {
+				double last_seen_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
+				input_vals[i_index] += last_seen_scale*it->second;
+			}
+		}
+	}
+}
+
+void Sequence::experiment_activate_reset(vector<double>& input_vals,
+										 vector<ForwardContextLayer>& context,
+										 vector<vector<double>>& previous_vals) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			context[context.size()-1 - this->input_local_scope_depths[i_index]]
+				.state_vals->at(this->input_local_input_indexes[i_index]) = input_vals[i_index];
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			previous_vals[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]] = input_vals[i_index];
 		}
 	}
 }

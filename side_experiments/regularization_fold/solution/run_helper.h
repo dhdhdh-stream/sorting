@@ -24,6 +24,9 @@ public:
 	// class IDs to values
 	std::map<int, double> last_seen_vals;
 
+	ActionNode* explore_node;
+	AbstractExperiment* explore_experiment;
+
 	AbstractExperiment* experiment;
 	bool can_zero;
 	std::vector<double> new_state_vals;

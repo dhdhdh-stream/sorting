@@ -25,7 +25,7 @@ void BranchExperiment::wrapup_pre_activate_helper(
 					double temp_score_scale = (100000.0-this->state_iter)/100000.0;
 					run_helper.predicted_score += temp_scale_factor*temp_score_scale*score_network->output->acti_vals[0];
 				}
-			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
@@ -201,19 +201,30 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 
 				flat_vals.erase(flat_vals.begin());
 			} else {
+				vector<double> input_vals(this->sequences[a_index]->input_types.size(), 0.0);
+				vector<vector<double>> empty_previous_vals;
+				this->sequences[a_index]->activate_pull(input_vals,
+														context,
+														empty_previous_vals,
+														history,
+														run_helper);
+
 				run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
 
 				// no longer need to track experiment_step_index
 
 				SequenceHistory* sequence_history = new SequenceHistory(this->sequences[a_index]);
 				history->sequence_histories[a_index] = sequence_history;
-				this->sequences[a_index]->activate(flat_vals,
-												   context,
-												   history,
+				this->sequences[a_index]->activate(input_vals,
+												   flat_vals,
 												   run_helper,
 												   sequence_history);
 
 				run_helper.scale_factor /= this->sequence_scale_mods[a_index]->weight;
+
+				this->sequences[a_index]->activate_reset(input_vals,
+														 context,
+														 empty_previous_vals);
 			}
 		}
 

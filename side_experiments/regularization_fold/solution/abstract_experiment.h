@@ -4,6 +4,14 @@
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_LOOP = 1;
 
+const int EXPERIMENT_STATE_EXPLORE = -1;
+const int EXPERIMENT_STATE_EXPERIMENT = 0;
+const int EXPERIMENT_STATE_MEASURE = 1;
+const int EXPERIMENT_STATE_FIRST_CLEAN = 2;
+const int EXPERIMENT_STATE_SECOND_CLEAN = 3;
+const int EXPERIMENT_STATE_WRAPUP = 4;
+const int EXPERIMENT_STATE_DONE = 5;
+
 const double DEFAULT_LASSO_WEIGHT = 0.2;
 
 const int NUM_NEW_STATES = 10;
@@ -34,6 +42,20 @@ public:
 	 * - last index is inner
 	 */
 	std::map<int, int> scope_furthest_layer_seen_in;
+
+	/**
+	 * - exit node takes place after new experiment scope
+	 *   - so new experiment scope has a default ending
+	 *   - so doesn't include experiment context
+	 *     - so layer is actually this->scopes.size()
+	 */
+	std::vector<ExitNetwork*> exit_networks;
+	std::vector<double> exit_network_impacts;
+
+	double new_average_score;
+	double existing_average_score;
+	double new_average_misguess;
+	double existing_average_misguess;
 
 	std::vector<int> new_state_furthest_layer_needed_in;
 	std::vector<int> layer_num_new_states;
@@ -67,11 +89,10 @@ public:
 
 	/**
 	 * - includes both new states and new inputs
+	 * - will not have any transformations
 	 */
 	std::vector<int> last_layer_indexes;
 	std::vector<int> last_layer_target_indexes;
-	std::vector<bool> last_layer_has_transform;
-	std::vector<Transformation> last_layer_transformations;
 
 	virtual ~AbstractExperiment() {};
 };

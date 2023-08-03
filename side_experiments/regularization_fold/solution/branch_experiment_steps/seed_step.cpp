@@ -87,7 +87,7 @@ void BranchExperiment::seed_pre_activate_helper(int context_index,
 						new_state_vals[s_index] += network->output->acti_vals[0];
 					}
 				}
-			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 

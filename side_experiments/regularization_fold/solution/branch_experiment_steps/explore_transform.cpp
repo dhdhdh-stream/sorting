@@ -51,8 +51,8 @@ void BranchExperiment::explore_transform() {
 			this->sequences[a_index]->step_state_networks = vector<vector<StateNetwork*>>(this->num_steps);
 			for (int ia_index = 0; ia_index < a_index; ia_index++) {
 				if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
-					this->sequences[a_index]->step_state_networks[ia_index] = vector<StateNetwork*>(this->sequences[a_index]->input_init_types.size());
-					for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_init_types.size(); i_index++) {
+					this->sequences[a_index]->step_state_networks[ia_index] = vector<StateNetwork*>(this->sequences[a_index]->input_types.size());
+					for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 						this->sequences[a_index]->step_state_networks[ia_index][i_index] =
 							new StateNetwork(0,
 											 NUM_NEW_STATES,
@@ -70,7 +70,7 @@ void BranchExperiment::explore_transform() {
 							for (int n_index = 0; n_index < this->sequences[ia_index]->node_ids[l_index].size(); n_index++) {
 								int node_id = this->sequences[ia_index]->node_ids[l_index][n_index];
 								if (this->sequences[ia_index]->scopes[l_index]->nodes[node_id]->type == NODE_TYPE_ACTION) {
-									for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_init_types.size(); i_index++) {
+									for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 										it->second[node_id].push_back(
 											new StateNetwork(this->sequences[ia_index]->num_states,
 															 NUM_NEW_STATES,
@@ -109,7 +109,7 @@ void BranchExperiment::explore_transform() {
 	this->branch_average_misguess = 0.0;
 	this->existing_average_misguess = 0.0;
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+	this->state = EXPERIMENT_STATE_EXPERIMENT;
 	this->state_iter = 0;
 	this->sum_error = 0.0;
 }

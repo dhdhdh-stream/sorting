@@ -315,24 +315,24 @@ void Scope::handle_node_activate_helper(int iter_index,
 
 		if (action_node->is_explore
 				&& run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-			if (action_node->curr_experiment != NULL) {
+			if (action_node->experiment != NULL) {
 				bool matches_context = true;
-				if (action_node->branch_experiment->scope_context.size() > context.size()) {
+				if (action_node->experiment->scope_context.size() > context.size()) {
 					matches_context = false;
 				} else {
-					for (int c_index = 0; c_index < (int)action_node->branch_experiment->scope_context.size()-1; c_index++) {
-						if (action_node->branch_experiment->scope_context[c_index] != 
-									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index].scope_id
-								|| action_node->branch_experiment->node_context[c_index] !=
-									context[context.size()-action_node->branch_experiment->scope_context.size()+c_index].node_id) {
+					for (int c_index = 0; c_index < (int)action_node->experiment->scope_context.size()-1; c_index++) {
+						if (action_node->experiment->scope_context[c_index] != 
+									context[context.size()-action_node->experiment->scope_context.size()+c_index].scope_id
+								|| action_node->experiment->node_context[c_index] !=
+									context[context.size()-action_node->experiment->scope_context.size()+c_index].node_id) {
 							matches_context = false;
 							break;
 						}
 					}
 				}
 				if (matches_context) {
-					if (action_node->curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-						BranchExperiment* branch_experiment = (BranchExperiment*)action_node->curr_experiment;
+					if (action_node->experiment->type == EXPERIMENT_TYPE_BRANCH) {
+						BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
 
 						// explore_phase set in experiment
 						BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(branch_experiment);
@@ -353,7 +353,7 @@ void Scope::handle_node_activate_helper(int iter_index,
 							}
 						}
 					} else {
-						// action_node->curr_experiment->type == EXPERIMENT_TYPE_LOOP
+						// action_node->experiment->type == EXPERIMENT_TYPE_LOOP
 
 					}
 				} else {
@@ -486,9 +486,7 @@ void Scope::experiment_variables_helper(
 			experiment_scope_score_networks = NULL;
 		}
 
-		if ((run_helper.experiment->type == EXPERIMENT_TYPE_BRANCH
-					&& run_helper.state == BRANCH_EXPERIMENT_STATE_SECOND_CLEAN)
-				|| ) {
+		if (run_helper.experiment->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				set<int>::iterator needed_it = run_helper.experiment->scope_additions_needed[s_index].find(this->id);
 				if (needed_it != run_helper.experiment->scope_additions_needed[s_index].end()) {
@@ -577,21 +575,21 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										ScopeHistory* history) {
 	if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
 		if (action_node_history->experiment_history != NULL) {
-			if (action_node->curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-				BranchExperiment* branch_experiment = (BranchExperiment*)action_node->curr_experiment;
+			if (action_node->experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
 				branch_experiment->backprop(context,
 											scale_factor_error,
 											run_helper,
 											(BranchExperimentHistory*)action_node_history->experiment_history);
-
-				if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
-					action_node->is_explore = false;
-
-					delete action_node->curr_experiment;
-					action_node->curr_experiment = NULL;
-				}
 			} else {
 
+			}
+
+			if (action_node->experiment->state == EXPERIMENT_STATE_DONE) {
+				action_node->is_explore = false;
+
+				delete action_node->experiment;
+				action_node->experiment = NULL;
 			}
 		}
 

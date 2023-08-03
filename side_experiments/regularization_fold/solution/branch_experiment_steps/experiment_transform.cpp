@@ -3,12 +3,12 @@
 using namespace std;
 
 void BranchExperiment::experiment_transform() {
-	double score_improvement = this->branch_average_score - this->existing_average_score;
-	cout << "this->branch_average_score: " << this->branch_average_score << endl;
+	double score_improvement = this->new_average_score - this->existing_average_score;
+	cout << "this->new_average_score: " << this->new_average_score << endl;
 	cout << "this->existing_average_score: " << this->existing_average_score << endl;
 
-	double misguess_improvement = this->existing_average_misguess - this->branch_average_misguess;
-	cout << "this->branch_average_misguess: " << this->branch_average_misguess << endl;
+	double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
+	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
@@ -38,7 +38,7 @@ void BranchExperiment::experiment_transform() {
 		// determine if new class needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-				int input_size = this->sequences[a_index]->input_init_types.size();
+				int input_size = this->sequences[a_index]->input_types.size();
 				this->sequences[a_index]->input_furthest_layer_needed_in = vector<int>(input_size, this->scope_context.size()+2);	// 1 greater than lowest
 				this->sequences[a_index]->input_steps_needed_in = vector<vector<bool>>(input_size, vector<bool>(this->num_steps, false));
 				this->sequences[a_index]->input_is_new_class = vector<bool>(input_size, false);
@@ -106,33 +106,15 @@ void BranchExperiment::experiment_transform() {
 						}
 					}
 
-					if (this->sequences[a_index]->input_init_types[i_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-						int previous_used_in = -1;
-						for (int ia_index = 0; ia_index < a_index; ia_index++) {
-							if (this->step_types[ia_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-								for (int ii_index = 0; ii_index < (int)this->sequences[ia_index]->input_init_types.size(); ii_index++) {
-									if (this->sequences[ia_index]->input_init_types[ii_index] == SEQUENCE_INPUT_INIT_LOCAL) {
-										if (this->sequences[ia_index]->input_init_local_scope_depths[ii_index] == this->sequences[a_index]->input_init_local_scope_depths[i_index]
-												&& this->sequences[ia_index]->input_init_target_indexes[ii_index] == this->sequences[a_index]->input_init_target_indexes[i_index]) {
-											if (!this->sequences[ia_index]->input_is_new_class[ii_index]) {
-												previous_used_in = ia_index;
-											}
-										}
-									}
-								}
-							}
+					if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+						if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index]
+								<= this->scope_context.size() - this->sequences[a_index]->input_local_scope_depths[i_index]) {
+							this->sequences[a_index]->input_is_new_class[i_index] = true;
 						}
-
-						if (previous_used_in != -1) {
-							if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] < this->scope_context.size()+1
-									|| earliest_step_needed_in <= previous_used_in) {
-								this->sequences[a_index]->input_is_new_class[i_index] = true;
-							}
-						} else {
-							if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index]
-									<= this->scope_context.size() - this->sequences[a_index]->input_init_local_scope_depths[i_index]) {
-								this->sequences[a_index]->input_is_new_class[i_index] = true;
-							}
+					} else if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+						if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] < this->scope_context.size()+1
+								|| earliest_step_needed_in <= this->sequences[a_index]->input_previous_step_index[i_index]) {
+							this->sequences[a_index]->input_is_new_class[i_index] = true;
 						}
 					}
 				}
@@ -142,11 +124,11 @@ void BranchExperiment::experiment_transform() {
 		// remove networks if not new class
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-				int input_size = this->sequences[a_index]->input_init_types.size();
+				int input_size = this->sequences[a_index]->input_types.size();
 				this->sequences[a_index]->scope_additions_needed = vector<set<int>>(input_size);
 				for (int i_index = 0; i_index < input_size; i_index++) {
 					if (!this->sequences[a_index]->input_is_new_class[i_index]) {
-						// includes SEQUENCE_INPUT_INIT_NONE and SEQUENCE_INPUT_INIT_LAST_SEEN
+						// includes SEQUENCE_INPUT_TYPE_NONE and SEQUENCE_INPUT_TYPE_LAST_SEEN
 						for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 								it != this->sequences[a_index]->state_networks.end(); it++) {
 							for (int n_index = 0; n_index < it->second.size(); n_index++) {
@@ -464,10 +446,10 @@ void BranchExperiment::experiment_transform() {
 
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
 			if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-				int input_size = this->sequences[a_index]->input_init_types.size();
+				int input_size = this->sequences[a_index]->input_types.size();
 				for (int i_index = 0; i_index < input_size; i_index++) {
 					if (!this->sequences[a_index]->input_is_new_class[i_index]) {
-						// includes SEQUENCE_INPUT_INIT_NONE and SEQUENCE_INPUT_INIT_LAST_SEEN
+						// includes SEQUENCE_INPUT_TYPE_NONE and SEQUENCE_INPUT_TYPE_LAST_SEEN
 						for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 								it != this->sequences[a_index]->state_networks.end(); it++) {
 							int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
@@ -494,7 +476,7 @@ void BranchExperiment::experiment_transform() {
 			}
 		}
 
-		this->state = BRANCH_EXPERIMENT_STATE_FIRST_CLEAN;
+		this->state = EXPERIMENT_STATE_FIRST_CLEAN;
 		this->state_iter = 0;
 		this->sum_error = 0.0;
 	} else {
@@ -554,6 +536,6 @@ void BranchExperiment::experiment_transform() {
 
 		delete this->seed_context_history;
 
-		this->state = BRANCH_EXPERIMENT_STATE_DONE;
+		this->state = EXPERIMENT_STATE_DONE;
 	}
 }

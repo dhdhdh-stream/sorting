@@ -75,6 +75,9 @@ public:
 							std::vector<double>& state_vals_snapshot,
 							std::vector<double>& new_state_vals_snapshot,
 							ScoreNetworkHistory* history);
+	/**
+	 * - TODO: always lasso later on, and remove state/classes that are no longer needed
+	 */
 
 	void update_lasso_weights(int new_furthest_distance);
 
