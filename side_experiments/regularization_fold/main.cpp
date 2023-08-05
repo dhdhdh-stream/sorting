@@ -161,8 +161,12 @@ int main(int argc, char* argv[]) {
 				action_node->experiment = action_node->explore_best_experiment;
 				action_node->explore_best_experiment = NULL;
 			}
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
+			run_helper.experiment->new_average_score += run_helper.target_val;
+			run_helper.experiment->new_average_misguess += run_helper.final_misguess;
 		} else {
-			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
+			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 				if (!run_helper.exceeded_depth) {
 					if (run_helper.max_depth > solution->max_depth) {
 						solution->max_depth = run_helper.max_depth;
@@ -182,6 +186,9 @@ int main(int argc, char* argv[]) {
 				double curr_misguess_variance = (solution->average_misguess - run_helper.final_misguess)*(solution->average_misguess - run_helper.final_misguess);
 				solution->misguess_variance = 0.9999*solution->misguess_variance + 0.0001*curr_misguess_variance;
 				solution->misguess_standard_deviation = sqrt(solution->misguess_variance);
+			} else {
+				run_helper.new_state_errors = vector<double>(NUM_NEW_STATES, 0.0);
+				run_helper.backprop_is_pre_experiment = false;
 			}
 
 			vector<BackwardContextLayer> context;

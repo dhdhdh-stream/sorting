@@ -295,4 +295,36 @@ void Sequence::second_clean_activate_reset(vector<double>& input_vals,
 	}
 }
 
+void Sequence::second_clean_backprop_pull(vector<double>& input_errors,
+										  vector<BackwardContextLayer>& context,
+										  vector<vector<double>>& previous_errors) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			if (!this->input_is_new_class[i_index]) {
+				input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+					.state_errors->at(this->input_local_input_indexes[i_index]);
+			}
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			if (!this->input_is_new_class[i_index]) {
+				input_errors[i_index] = previous_errors[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]];
+			}
+		}
+	}
+}
 
+void Sequence::second_clean_backprop_reset(vector<double>& input_errors,
+										   vector<BackwardContextLayer>& context,
+										   vector<vector<double>>& previous_errors) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			if (!this->input_is_new_class[i_index]) {
+				context[context.size()-1 - this->input_local_scope_depths[i_index]]
+					.state_errors->at(this->input_local_input_indexes[i_index]) = input_errors[i_index];
+			}
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			if (!this->input_is_new_class[i_index]) {
+				previous_errors[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]] = input_errors[i_index];
+			}
+		}
+	}
+}

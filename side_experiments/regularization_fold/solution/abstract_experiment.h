@@ -52,6 +52,8 @@ public:
 	std::vector<ExitNetwork*> exit_networks;
 	std::vector<double> exit_network_impacts;
 
+	ScoreNetwork* existing_misguess_network;
+
 	double new_average_score;
 	double existing_average_score;
 	double new_average_misguess;

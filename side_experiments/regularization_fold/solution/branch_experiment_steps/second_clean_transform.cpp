@@ -82,9 +82,12 @@ void BranchExperiment::second_clean_transform() {
 
 						FamilyDefinition* new_family;
 						if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_NONE) {
-							new_family = new FamilyDefinition();
-							new_family->id = solution->families.size();
-							solution->families.push_back(new_family);
+							Scope* curr_scope = this->sequences[a_index]->scopes[0];
+							for (int l_index = 0; l_index < this->sequences[a_index]->input_init_target_layers[i_index]; l_index++) {
+								ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->sequences[a_index]->starting_node_ids[l_index]];
+								curr_scope = solution->scopes[scope_node->inner_scope_id];
+							}
+							new_family = solution->families[curr_scope->state_family_ids[this->sequences[a_index]->input_init_target_indexes[i_index]]];
 						} else if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 							int continue_scope_id = this->scope_context[this->scope_context.size()-1 - this->sequences[a_index]->input_local_scope_depths[i_index]];
 							Scope* continue_scope = solution->scopes[continue_scope_id];

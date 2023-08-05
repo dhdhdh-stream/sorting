@@ -24,7 +24,7 @@ void Sequence::experiment_pre_activate_helper(
 
 		// no state networks added yet
 	} else {
-		if (seen_it->second > context_index) {
+		if (context_index < seen_it->second) {
 			seen_it->second = context_index;
 
 			int new_furthest_distance = this->experiment->scope_context.size()+2 - context_index;
@@ -79,7 +79,6 @@ void Sequence::experiment_pre_activate_helper(
 				}
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				if (on_path
 						&& i_index == (int)scope_history->node_histories.size()-1
@@ -220,6 +219,32 @@ void Sequence::experiment_activate_reset(vector<double>& input_vals,
 				.state_vals->at(this->input_local_input_indexes[i_index]) = input_vals[i_index];
 		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
 			previous_vals[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]] = input_vals[i_index];
+		}
+	}
+}
+
+void Sequence::experiment_backprop_pull(vector<double>& input_errors,
+										vector<BackwardContextLayer>& context,
+										vector<vector<double>>& previous_errors) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+				.state_errors->at(this->input_local_input_indexes[i_index]);
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			input_errors[i_index] = previous_errors[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]];
+		}
+	}
+}
+
+void Sequence::experiment_backprop_reset(vector<double>& input_errors,
+										 vector<BackwardContextLayer>& context,
+										 vector<vector<double>>& previous_errors) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
+			context[context.size()-1 - this->input_local_scope_depths[i_index]]
+				.state_errors->at(this->input_local_input_indexes[i_index]) = input_errors[i_index];
+		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
+			previous_errors[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]] = input_errors[i_index];
 		}
 	}
 }

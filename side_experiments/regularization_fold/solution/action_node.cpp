@@ -338,19 +338,38 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 									  history->new_state_network_histories[s_index]);
 			}
 		}
-		for (int st_index = 0; st_index < (int)history->experiment_sequence_step_indexes.size(); st_index++) {
-			for (int i_index = 0; i_index < (int)history->input_state_network_histories[st_index].size(); i_index++) {
-				if (history->input_state_network_histories[st_index][i_index] != NULL) {
-					StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
-					network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-												run_helper.new_state_errors,
-												run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
-												0.01,
-												history->obs_snapshot,
-												history->starting_state_vals_snapshot,
-												history->starting_new_state_vals_snapshot,
-												history->input_vals_snapshots[st_index][i_index],
-												history->input_state_network_histories[st_index][i_index]);
+		if (run_helper.experiment->state == EXPERIMENT_STATE_FIRST_CLEAN) {
+			for (int st_index = 0; st_index < (int)history->experiment_sequence_step_indexes.size(); st_index++) {
+				for (int i_index = 0; i_index < (int)history->input_state_network_histories[st_index].size(); i_index++) {
+					if (history->input_state_network_histories[st_index][i_index] != NULL) {
+						StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
+						network->new_lasso_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+													run_helper.new_state_errors,
+													run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+													0.01,
+													history->obs_snapshot,
+													history->starting_state_vals_snapshot,
+													history->starting_new_state_vals_snapshot,
+													history->input_vals_snapshots[st_index][i_index],
+													history->input_state_network_histories[st_index][i_index]);
+					}
+				}
+			}
+		} else {
+			for (int st_index = 0; st_index < (int)history->experiment_sequence_step_indexes.size(); st_index++) {
+				for (int i_index = 0; i_index < (int)history->input_state_network_histories[st_index].size(); i_index++) {
+					if (history->input_state_network_histories[st_index][i_index] != NULL) {
+						StateNetwork* network = history->input_state_network_histories[st_index][i_index]->network;
+						network->new_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+											  run_helper.new_state_errors,
+											  run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
+											  0.01,
+											  history->obs_snapshot,
+											  history->starting_state_vals_snapshot,
+											  history->starting_new_state_vals_snapshot,
+											  history->input_vals_snapshots[st_index][i_index],
+											  history->input_state_network_histories[st_index][i_index]);
+					}
 				}
 			}
 		}

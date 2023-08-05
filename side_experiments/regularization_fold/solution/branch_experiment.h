@@ -21,8 +21,6 @@ public:
 	double seed_target_val;
 	// only worry about starting score network for seed, as due to updates for inner scopes, seed may quickly become irrelevant
 
-	ScoreNetwork* existing_misguess_network;
-
 	ScoreNetwork* starting_score_network;
 	ScoreNetwork* starting_misguess_network;
 	ScoreNetwork* starting_original_score_network;

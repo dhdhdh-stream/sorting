@@ -13,8 +13,11 @@
 
 class LoopExperiment {
 public:
-	// find matching outer scope, and trace inputs inwards to reuse
-	// - for last seen, reuse with like 75% probability?
+	/**
+	 * - for inputs, trace from matching outer scope
+	 *   - keep (i.e., initialize) with 75% probability at explore(?)
+	 *     - if kept at explore, then simply always include in new scope
+	 */
 	Sequence* sequence;
 	Scale* scale_mod;
 
@@ -22,6 +25,8 @@ public:
 	ScoreNetwork* continue_misguess_network;
 	ScoreNetwork* halt_score_network;
 	ScoreNetwork* halt_misguess_network;
+
+
 
 };
 

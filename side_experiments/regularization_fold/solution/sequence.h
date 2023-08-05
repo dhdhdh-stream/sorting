@@ -61,7 +61,7 @@ public:
 	 */
 
 	AbstractExperiment* experiment;
-	int step_index;
+	int step_index;		// 0 if loop
 
 	std::map<int, std::vector<std::vector<StateNetwork*>>> state_networks;
 	// save separately from experiment to more easily update lasso weights
@@ -132,34 +132,109 @@ public:
 	 * - by EXPERIMENT_STATE_WRAPUP, reset immediately after activate
 	 */
 
-	void backprop_pull();
-	void backprop(std::vector<BackwardContextLayer>& context,
+	void backprop_pull(std::vector<double>& input_errors,
+					   std::vector<BackwardContextLayer>& context,
+					   std::vector<std::vector<double>>& previous_errors);
+	void backprop(std::vector<double>& input_errors,
 				  double& scale_factor_error,
 				  RunHelper& run_helper,
 				  SequenceHistory* history);
-	void backprop_reset();
+	void backprop_reset(std::vector<double>& input_errors,
+						std::vector<BackwardContextLayer>& context,
+						std::vector<std::vector<double>>& previous_errors);
+
+	void explore_activate_pull(std::vector<double>& input_vals,
+							   std::vector<ForwardContextLayer>& context,
+							   std::vector<std::vector<double>>& previous_vals,
+							   RunHelper& run_helper);
+	void explore_activate_reset(std::vector<double>& input_vals,
+								std::vector<ForwardContextLayer>& context,
+								std::vector<std::vector<double>>& previous_vals);
 
 	void experiment_pre_activate_helper(bool on_path,
 										int context_index,
 										std::vector<double>& input_vals,
 										RunHelper& run_helper,
 										ScopeHistory* scope_history);
-	void experiment_experiment_activate_helper(
-		std::vector<double>& input_vals,
-		BranchExperimentHistory* branch_experiment_history,
-		RunHelper& run_helper);
+	void experiment_experiment_activate_helper(std::vector<double>& input_vals,
+											   BranchExperimentHistory* branch_experiment_history,
+											   RunHelper& run_helper);
+	void experiment_activate_pull(std::vector<double>& input_vals,
+								  std::vector<ForwardContextLayer>& context,
+								  std::vector<std::vector<double>>& previous_vals,
+								  BranchExperimentHistory* branch_experiment_history,
+								  RunHelper& run_helper);
+	void experiment_activate_reset(std::vector<double>& input_vals,
+								   std::vector<ForwardContextLayer>& context,
+								   std::vector<std::vector<double>>& previous_vals);
+	void experiment_backprop_pull(std::vector<double>& input_errors,
+								  std::vector<BackwardContextLayer>& context,
+								  std::vector<std::vector<double>>& previous_errors);
+	void experiment_backprop_reset(std::vector<double>& input_errors,
+								   std::vector<BackwardContextLayer>& context,
+								   std::vector<std::vector<double>>& previous_errors);
 
-	void clean_pre_activate_helper(bool on_path,
-								   std::vector<int>& temp_scope_context,
-								   std::vector<int>& temp_node_context,
-								   std::vector<double>& input_vals,
-								   RunHelper& run_helper,
-								   ScopeHistory* scope_history);
-	void clean_experiment_activate_helper(std::vector<int>& temp_scope_context,
-										  std::vector<int>& temp_node_context,
+	void measure_pre_activate_helper(std::vector<double>& input_vals,
+									 ScopeHistory* scope_history);
+	void measure_activate_pull(std::vector<double>& input_vals,
+							   std::vector<ForwardContextLayer>& context);
+	void measure_activate_reset(std::vector<double>& input_vals,
+								std::vector<ForwardContextLayer>& context);
+
+	void first_clean_pre_activate_helper(bool on_path,
+										 std::vector<double>& input_vals,
+										 RunHelper& run_helper,
+										 ScopeHistory* scope_history);
+	void first_clean_step_activate_helper(int a_index,
 										  std::vector<double>& input_vals,
 										  BranchExperimentHistory* branch_experiment_history,
 										  RunHelper& run_helper);
+	void first_clean_activate_pull(std::vector<double>& input_vals,
+								   std::vector<ForwardContextLayer>& context,
+								   std::vector<std::vector<double>>& previous_vals,
+								   BranchExperimentHistory* branch_experiment_history,
+								   RunHelper& run_helper);
+	void first_clean_activate_reset(std::vector<double>& input_vals,
+									std::vector<ForwardContextLayer>& context,
+									std::vector<std::vector<double>>& previous_vals);
+	void first_clean_backprop_pull(std::vector<double>& input_errors,
+								   std::vector<BackwardContextLayer>& context,
+								   std::vector<std::vector<double>>& previous_errors);
+	void first_clean_backprop_reset(std::vector<double>& input_errors,
+									std::vector<BackwardContextLayer>& context,
+									std::vector<std::vector<double>>& previous_errors);
+
+	void second_clean_pre_activate_helper(bool on_path,
+										  std::vector<int>& temp_scope_context,
+										  std::vector<int>& temp_node_context,
+										  std::vector<double>& input_vals,
+										  RunHelper& run_helper,
+										  ScopeHistory* scope_history);
+	void second_clean_step_activate_helper(int a_index,
+										   std::vector<int> temp_scope_context,
+										   std::vector<int> temp_node_context,
+										   std::vector<double>& input_vals,
+										   BranchExperimentHistory* branch_experiment_history,
+										   RunHelper& run_helper);
+	void second_clean_activate_pull(std::vector<double>& input_vals,
+									std::vector<ForwardContextLayer>& context,
+									std::vector<std::vector<double>>& previous_vals,
+									BranchExperimentHistory* branch_experiment_history,
+									RunHelper& run_helper);
+	void second_clean_activate_reset(std::vector<double>& input_vals,
+									 std::vector<ForwardContextLayer>& context,
+									 std::vector<std::vector<double>>& previous_vals);
+	void second_clean_backprop_pull(std::vector<double>& input_errors,
+									std::vector<BackwardContextLayer>& context,
+									std::vector<std::vector<double>>& previous_errors);
+	void second_clean_backprop_reset(std::vector<double>& input_errors,
+									 std::vector<BackwardContextLayer>& context,
+									 std::vector<std::vector<double>>& previous_errors);
+
+	void wrapup_activate_pull(std::vector<double>& input_vals,
+							  std::vector<ForwardContextLayer>& context);
+	void wrapup_activate_reset(std::vector<double>& input_vals,
+							   std::vector<ForwardContextLayer>& context);
 };
 
 class SequenceHistory {

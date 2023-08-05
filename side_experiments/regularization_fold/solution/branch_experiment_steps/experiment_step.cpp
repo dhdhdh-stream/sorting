@@ -10,12 +10,12 @@ void BranchExperiment::experiment_pre_activate_helper(
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
-	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
+	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->state_networks.find(scope_id);
+	map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(scope_id);
 
-	if (state_it == this->action_node_state_networks.end()) {
-		state_it = this->action_node_state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
-		score_it = this->action_node_score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
+	if (state_it == this->state_networks.end()) {
+		state_it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
+		score_it = this->score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();
@@ -28,7 +28,7 @@ void BranchExperiment::experiment_pre_activate_helper(
 
 		// no state networks added yet
 	} else {
-		if (seen_it->second > context_index) {
+		if (context_index < seen_it->second) {
 			seen_it->second = context_index;
 
 			int new_furthest_distance = this->scope_context.size()+2 - context_index;
@@ -152,7 +152,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	history->starting_state_vals_snapshot = context.back().state_vals;
 	history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	// no need to activate starting_score_network until backprop
+	// no need to activate starting networks until backprop
 
 	// no need to append to context yet
 
@@ -302,6 +302,19 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 
 	// no need to append to context yet
 
+	run_helper.new_input_errors = vector<vector<double>>(this->num_steps);
+
+	vector<vector<double>> sequence_input_errors(this->num_steps);
+	for (int a_index = 0; a_index < this->num_steps; a_index++) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			sequence_input_errors[a_index] = vector<double>(this->sequences[a_index]->input_types.size(), 0.0);
+			this->sequences[a_index]->backprop_pull(sequence_input_errors[a_index],
+													context,
+													sequence_input_errors,
+													run_helper);
+		}
+	}
+
 	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
@@ -404,10 +417,15 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 
 			double inner_scale_factor_error = 0.0;
 
-			this->sequences[a_index]->backprop(context,
+			this->sequences[a_index]->backprop(sequence_input_errors[a_index],
 											   inner_scale_factor_error,
 											   run_helper,
 											   history->sequence_histories[a_index]);
+
+			this->sequences[a_index]->backprop_reset(sequence_input_errors[a_index],
+													 context,
+													 sequence_input_errors);
+			run_helper.new_input_errors[a_index] = sequence_input_errors[a_index];
 
 			this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
 

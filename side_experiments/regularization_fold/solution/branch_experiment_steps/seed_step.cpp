@@ -12,12 +12,12 @@ void BranchExperiment::seed_pre_activate_helper(int context_index,
 												ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
-	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
+	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->state_networks.find(scope_id);
+	map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(scope_id);
 
-	if (state_it == this->action_node_state_networks.end()) {
-		state_it = this->action_node_state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
-		score_it = this->action_node_score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
+	if (state_it == this->state_networks.end()) {
+		state_it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
+		score_it = this->score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();

@@ -43,15 +43,6 @@ public:
 											   std::vector<double>& state_vals_snapshot,
 											   ScoreNetworkHistory* history);
 
-	void backprop(double output_error,
-				  std::vector<double>& new_state_errors,
-				  double target_max_update);
-	void backprop(double output_error,
-				  std::vector<double>& new_state_errors,
-				  double target_max_update,
-				  std::vector<double>& new_state_vals_snapshot,
-				  ScoreNetworkHistory* history);
-
 	void new_activate(std::vector<double>& state_vals,
 					  std::vector<double>& new_state_vals);
 	void new_activate(std::vector<double>& state_vals,
@@ -82,8 +73,7 @@ public:
 	void update_lasso_weights(int new_furthest_distance);
 
 	void clean(int num_new_states);
-	// new states at the end of total states
-	void finalize_new_state(int new_total_states);
+	void finalize_new_state(int new_total_states);	// new states at the end of total states
 
 	void add_state();
 

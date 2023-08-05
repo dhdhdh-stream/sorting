@@ -11,8 +11,8 @@ void BranchExperiment::clean_pre_activate_helper(
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->action_node_state_networks.find(scope_id);
-	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
+	map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->state_networks.find(scope_id);
+	map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(scope_id);
 
 	if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 		for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
@@ -39,7 +39,7 @@ void BranchExperiment::clean_pre_activate_helper(
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
 
-				if (state_it != this->action_node_state_networks.end()
+				if (state_it != this->state_networks.end()
 						&& node_id < state_it->second.size()
 						&& state_it->second[n_index].size() != 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
@@ -311,6 +311,19 @@ void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 
 	// no need to append to context yet
 
+	run_helper.new_input_errors = vector<vector<double>>(this->num_steps);
+
+	vector<vector<double>> sequence_input_errors(this->num_steps);
+	for (int a_index = 0; a_index < this->num_steps; a_index++) {
+		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+			sequence_input_errors[a_index] = vector<double>(this->sequences[a_index]->input_types.size(), 0.0);
+			this->sequences[a_index]->backprop_pull(sequence_input_errors[a_index],
+													context,
+													sequence_input_errors,
+													run_helper);
+		}
+	}
+
 	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
@@ -381,10 +394,15 @@ void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 
 			double inner_scale_factor_error = 0.0;
 
-			this->sequences[a_index]->backprop(context,
+			this->sequences[a_index]->backprop(sequence_input_errors[a_index],
 											   inner_scale_factor_error,
 											   run_helper,
 											   history->sequence_histories[a_index]);
+
+			this->sequences[a_index]->backprop_reset(sequence_input_errors[a_index],
+													 context,
+													 sequence_input_errors);
+			run_helper.new_input_errors[a_index] = sequence_input_errors[a_index];
 
 			this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
 

@@ -8,14 +8,14 @@ void BranchExperiment::wrapup_pre_activate_helper(
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
-	map<int, vector<ScoreNetwork*>>::iterator score_it = this->action_node_score_networks.find(scope_id);
+	map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(scope_id);
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
 
-				if (score_it != this->action_node_score_networks.end()
+				if (score_it != this->score_networks.end()
 						&& node_id < score_it->second.size()
 						&& score_it->second[node_id] != NULL) {
 					ScoreNetwork* score_network = score_it->second[node_id];
@@ -288,7 +288,8 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 
 				double inner_scale_factor_error = 0.0;
 
-				this->sequences[a_index]->backprop(context,
+				vector<double> empty_input_errors;
+				this->sequences[a_index]->backprop(empty_input_errors,
 												   inner_scale_factor_error,
 												   run_helper,
 												   history->sequence_histories[a_index]);
