@@ -9,8 +9,6 @@ void BranchExperiment::wrapup_transform() {
 								 this->new_state_family_ids,
 								 this->new_state_default_class_ids,
 								 false,
-								 vector<int>(),
-								 vector<StateNetwork*>(),
 								 NULL,
 								 NULL,
 								 NULL,
@@ -42,8 +40,6 @@ void BranchExperiment::wrapup_transform() {
 													  this->sequences[a_index]->scopes[l_index]->state_family_ids,
 													  this->sequences[a_index]->scopes[l_index]->state_default_class_ids,
 													  false,
-													  vector<int>(),
-													  vector<StateNetwork*>(),
 													  NULL,
 													  NULL,
 													  NULL,
@@ -56,17 +52,9 @@ void BranchExperiment::wrapup_transform() {
 			new_starting_node_ids[0] = 0;
 
 			vector<int> new_input_indexes;
-			vector<int> new_input_target_layers;
-			vector<int> new_input_target_indexes;
-			vector<bool> new_input_has_transform;
-			vector<Transformation> new_input_transformations;
 			for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 				if (this->sequences[a_index]->input_index_translations[i_index] != -1) {
 					new_input_indexes.push_back(this->sequences[a_index]->input_index_translations[i_index]);
-					new_input_target_layers.push_back(this->sequences[a_index]->input_target_layers[i_index]);
-					new_input_target_indexes.push_back(this->sequences[a_index]->input_target_indexes[i_index]);
-					new_input_has_transform.push_back(this->sequences[a_index]->input_has_transform[i_index]);
-					new_input_transformations.push_back(this->sequences[a_index]->input_transformations[i_index]);
 				}
 			}
 
@@ -75,10 +63,10 @@ void BranchExperiment::wrapup_transform() {
 													  new_sequence_scopes[0]->id,
 													  new_starting_node_ids,
 													  new_input_indexes,
-													  new_input_target_layers,
-													  new_input_target_indexes,
-													  new_input_has_transform,
-													  new_input_transformations,
+													  this->sequences[a_index]->input_target_layers[i_index],
+													  this->sequences[a_index]->input_target_indexes[i_index],
+													  this->sequences[a_index]->input_has_transform[i_index],
+													  this->sequences[a_index]->input_transformations[i_index],
 													  this->sequence_scale_mods[a_index],
 													  next_node_id);
 			new_scope->nodes.push_back(new_outer_node);
@@ -93,12 +81,17 @@ void BranchExperiment::wrapup_transform() {
 																	n_index,
 																	n_index+1);
 						new_sequence_scopes[l_index]->nodes.push_back(new_inner_node);
-					} else {
+					} else if (original_node->type == NODE_TYPE_SCOPE) {
 						ScopeNode* new_inner_node = new ScopeNode((ScopeNode*)original_node,
 																  new_sequence_scopes[l_index],
 																  n_index,
 																  n_index+1);
 						new_sequence_scopes[l_index]->nodes.push_back(new_inner_node);
+					} else if (original_node->type == NODE_TYPE_EXIT) {
+						ExitNode* new_inner_node = new ExitNode((ExitNode*)original_node,
+																new_sequence_scopes[l_index],
+																n_index,
+																n_index+1);
 					}
 				}
 
@@ -111,13 +104,14 @@ void BranchExperiment::wrapup_transform() {
 																	(int)this->sequences[a_index]->node_ids.back().size()-1,
 																	-1);
 						new_sequence_scopes.back()->nodes.push_back(new_inner_node);
-					} else {
+					} else if (original_node->type == NODE_TYPE_SCOPE) {
 						ScopeNode* new_inner_node = new ScopeNode((ScopeNode*)original_node,
 																  new_sequence_scopes.back(),
 																  (int)this->sequences[a_index]->node_ids.back().size()-1,
 																  -1);
 						new_sequence_scopes.back()->nodes.push_back(new_inner_node);
 					}
+					// can't be NODE_TYPE_EXIT
 				} else {
 					ScopeNode* original_node = (ScopeNode*)this->sequences[a_index]->scopes[l_index]->nodes[
 						this->sequences[a_index]->node_ids[l_index].back()];
@@ -157,8 +151,9 @@ void BranchExperiment::wrapup_transform() {
 											  vector<int>{0},
 											  this->last_layer_indexes,
 											  vector<int>(this->last_layer_indexes.size(), 0),
-											  this->last_layer_has_transform,
-											  this->last_layer_transformations,
+											  this->last_layer_target_indexes,
+											  vector<bool>(this->last_layer_indexes.size(), false);
+											  vector<Transformation>(this->last_layer_indexes.size(), Transformation());
 											  new Scale(),
 											  new_exit_node->id);
 	outer_scope->nodes.push_back(new_scope_node);

@@ -25,6 +25,11 @@ public:
 			 int exit_node_id,
 			 std::vector<int> target_indexes,
 			 std::vector<ExitNetwork*> networks);
+	ExitNode(ExitNode* original,
+			 Scope* parent,
+			 int id,
+			 // if copy, exit_depth must be 0
+			 int exit_node_id);
 	ExitNode(ifstream& input_file,
 			 Scope* parent,
 			 int id);

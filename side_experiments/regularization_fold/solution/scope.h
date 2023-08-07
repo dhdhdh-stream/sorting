@@ -25,8 +25,6 @@ public:
 	std::vector<int> state_default_class_ids;	// if initialized locally
 
 	bool is_loop;
-	std::vector<int> starting_target_indexes;
-	std::vector<StateNetwork*> starting_state_networks;
 	ScoreNetwork* continue_score_network;
 	ScoreNetwork* continue_misguess_network;
 	ScoreNetwork* halt_score_network;
@@ -41,8 +39,6 @@ public:
 		  std::vector<int> state_family_ids,
 		  std::vector<int> state_default_class_ids,
 		  bool is_loop,
-		  std::vector<int> starting_target_indexes,
-		  std::vector<StateNetwork*> starting_state_networks,
 		  ScoreNetwork* continue_score_network,
 		  ScoreNetwork* continue_misguess_network,
 		  ScoreNetwork* halt_score_network,

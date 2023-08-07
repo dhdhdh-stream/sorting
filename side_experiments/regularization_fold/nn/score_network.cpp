@@ -314,29 +314,16 @@ void ScoreNetwork::update_lasso_weights(int new_furthest_distance) {
 	}
 }
 
-void ScoreNetwork::clean(int num_new_states) {
-	int size_diff = this->new_state_size - num_new_states;
-	for (int s_index = 0; s_index < size_diff; s_index++) {
-		this->new_state_input->acti_vals.pop_back();
-		this->new_state_input->errors.pop_back();
+void ScoreNetwork::finalize_new_state(int new_state_index) {
+	this->hidden->score_hidden_finalize_new_state(new_state_index);
 
-		for (int n_index = 0; n_index < (int)this->hidden->acti_vals.size(); n_index++) {
-			this->hidden->weights[n_index][1].pop_back();
-			this->hidden->weight_updates[n_index][1].pop_back();
-		}
-	}
-	this->new_state_size = num_new_states;
+	this->state_input->acti_vals.push_back(0.0);
+	this->state_input->errors.push_back(0.0);
+	this->state_size++;
 }
 
-void ScoreNetwork::finalize_new_state(int new_total_states) {
-	this->hidden->score_hidden_finalize(new_total_states);
-
-	int size_diff = new_total_states - this->state_size;
-	for (int s_index = 0; s_index < size_diff; s_index++) {
-		this->state_input->acti_vals.push_back(0.0);
-		this->state_input->errors.push_back(0.0);
-	}
-	this->state_size = new_total_states;
+void ScoreNetwork::cleanup_new_state() {
+	this->hidden->score_hidden_cleanup_new_state();
 
 	this->new_state_size = 0;
 

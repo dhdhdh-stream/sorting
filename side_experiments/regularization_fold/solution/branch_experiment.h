@@ -36,10 +36,6 @@ public:
 
 	std::vector<Scale*> sequence_scale_mods;
 
-	std::map<int, std::vector<bool>> scope_steps_seen_in;
-
-	std::vector<std::vector<bool>> new_state_steps_needed_in;
-
 	// for BRANCH_EXPERIMENT_STEP_TYPE_ACTION
 	std::vector<std::vector<int>> new_action_node_target_indexes;
 	std::vector<std::vector<StateNetwork*>> new_action_node_state_networks;
@@ -126,6 +122,7 @@ public:
 						 double& scale_factor_error,
 						 RunHelper& run_helper,
 						 BranchExperimentHistory* history);
+	void wrapup_transform();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
@@ -155,7 +152,7 @@ public:
 	std::vector<SequenceHistory*> sequence_histories;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
-	std::vector<double> exit_new_state_vals_snapshot;
+	std::vector<double> ending_new_state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> exit_network_histories;
 
 	BranchExperimentHistory(BranchExperiment* experiment);

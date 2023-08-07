@@ -55,8 +55,7 @@ void LoopExperiment::measure_pre_activate_helper(
 
 void LoopExperiment::measure_activate(vector<double>& flat_vals,
 									  vector<ForwardContextLayer>& context,
-									  RunHelper& run_helper,
-									  LoopExperimentHistory* history) {
+									  RunHelper& run_helper) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
 
 	this->existing_average_score += run_helper.predicted_score;
@@ -83,7 +82,7 @@ void LoopExperiment::measure_activate(vector<double>& flat_vals,
 	int iter_index = 0;
 	while (true) {
 		if (iter_index > 7) {
-			// cap at 8 iters for measure
+			// cap at 8 iters for experiment
 			break;
 		}
 
@@ -131,6 +130,8 @@ void LoopExperiment::measure_activate(vector<double>& flat_vals,
 		delete sequence_history;
 
 		run_helper.scale_factor /= this->scale_mod->weight;
+
+		iter_index++;
 	}
 
 	this->sequence->activate_reset(input_vals,

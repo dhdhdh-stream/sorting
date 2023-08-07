@@ -8,8 +8,6 @@ Scope::Scope(int id,
 			 vector<int> state_family_ids,
 			 vector<int> state_default_class_ids,
 			 bool is_loop,
-			 vector<int> starting_target_indexes,
-			 vector<StateNetwork*> starting_state_networks,
 			 ScoreNetwork* continue_score_network,
 			 ScoreNetwork* continue_misguess_network,
 			 ScoreNetwork* halt_score_network,
@@ -20,8 +18,6 @@ Scope::Scope(int id,
 	this->state_family_ids = state_family_ids;
 	this->state_default_class_ids = state_default_class_ids;
 	this->is_loop = is_loop;
-	this->starting_target_indexes = starting_target_indexes;
-	this->starting_state_networks = starting_state_networks;
 	this->continue_score_network = continue_score_network;
 	this->continue_misguess_network = continue_misguess_network;
 	this->halt_score_network = halt_score_network;
@@ -56,20 +52,6 @@ Scope::Scope(ifstream& input_file,
 	this->is_loop = stoi(is_loop_line);
 
 	if (this->is_loop) {
-		string starting_state_networks_size_line;
-		getline(input_file, starting_state_networks_size_line);
-		int starting_state_networks_size = stoi(starting_state_networks_size_line);
-		for (int s_index = 0; s_index < starting_state_networks_size; s_index++) {
-			string starting_target_index_line;
-			getline(input_file, starting_target_index_line);
-			this->starting_target_indexes.push_back(stoi(starting_target_index_line))
-
-			ifstream starting_state_network_save_file;
-			starting_state_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_starting_state_" + to_string(s_index) + ".txt");
-			this->starting_state_networks.push_back(new StateNetwork(starting_state_network_save_file));
-			starting_state_network_save_file.close();
-		}
-
 		ifstream continue_score_network_save_file;
 		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
 		this->continue_score_network = new ScoreNetwork(continue_score_network_save_file);
@@ -136,10 +118,6 @@ Scope::Scope(ifstream& input_file,
 }
 
 Scope::~Scope() {
-	for (int s_index = 0; s_index < (int)this->starting_state_networks.size(); s_index++) {
-		delete this->starting_state_networks[s_index];
-	}
-
 	if (this->continue_score_network != NULL) {
 		delete this->continue_score_network;
 	}
@@ -198,13 +176,143 @@ void Scope::activate(vector<int>& starting_node_ids,
 	int experiment_scope_distance;
 
 	if (this->is_loop) {
+		int target_iter;
+		if ((run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+					|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP)
+				&& run_helper.can_random_iter && rand()%10 == 0) {
+			target_iter = rand()%7;
+		} else {
+			target_iter = -1;
+		}
 
 		bool is_explore_iter_save = run_helper.is_explore_iter;
 		int explore_iter;
 		if (run_helper.is_explore_iter) {
-
+			explore_iter = rand()%this->furthest_successful_halt;
+		} else {
+			explore_iter = -1;
 		}
 
+		int iter_index = 0;
+		while (true) {
+			ScoreNetworkHistory* continue_score_network_history = new ScoreNetworkHistory(this->continue_score_network);
+			this->continue_score_network->activate(*(context.back().state_vals),
+												   continue_score_network_history);
+			double continue_score = run_helper.scale_factor*this->continue_score_network->output->acti_vals[0];
+
+			ScoreNetworkHistory* continue_misguess_network_history = new ScoreNetworkHistory(this->continue_misguess_network);
+			this->continue_misguess_network->activate(*(context.back().state_vals),
+													  continue_misguess_network_history);
+
+			ScoreNetworkHistory* halt_score_network_history = new ScoreNetworkHistory(this->halt_score_network);
+			this->halt_score_network->activate(*(context.back().state_vals),
+											   halt_score_network_history);
+			double halt_score = run_helper.scale_factor*this->halt_score_network->output->acti_vals[0];
+
+			history->halt_score_snapshots.push_back(
+				run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
+
+			ScoreNetworkHistory* halt_misguess_network_history = new ScoreNetworkHistory(this->halt_misguess_network);
+			this->halt_misguess_network->activate(*(context.back().state_vals),
+												  halt_misguess_network_history);
+
+			history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
+
+			bool is_halt;
+			if (iter_index == target_iter) {
+				is_halt = true;
+			} else if (iter_index > this->furthest_successful_halt+3) {
+				is_halt = true;
+			} else {
+				if (target_iter != -1) {
+					is_halt = false;
+				} else {
+					double score_diff = continue_score - halt_score;
+					double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+					if (score_val > 0.1) {
+						is_halt = false;
+					} else if (score_val < -0.1) {
+						is_halt = true;
+
+						if (iter_index > this->furthest_successful_halt) {
+							this->furthest_successful_halt = iter_index;
+						}
+					} else {
+						double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
+							- this->halt_misguess_network->output->acti_vals[0];
+						double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+						if (misguess_val < -0.1) {
+							is_halt = false;
+						} else if (misguess_val > 0.1) {
+							is_halt = true;
+
+							if (iter_index > this->furthest_successful_halt) {
+								this->furthest_successful_halt = iter_index;
+							}
+						} else {
+							// halt if no strong signal either way
+							is_halt = true;
+						}
+					}
+				}
+			}
+
+			if (is_halt) {
+				delete continue_score_network_history;
+				delete continue_misguess_network_history;
+
+				history->ending_state_vals_snapshot = *(context.back().state_vals);
+
+				history->halt_score_network_history = halt_score_network_history;
+				history->halt_score_network_output = this->halt_score_network->output->acti_vals[0];
+
+				history->halt_misguess_network_history = halt_misguess_network_history;
+				history->halt_misguess_network_output = this->halt_misguess_network->output->acti_vals[0];
+
+				break;
+			} else {
+				delete halt_score_network_history;
+				delete halt_misguess_network_history;
+
+				history->iter_state_vals_snapshots.push_back(*(context.back().state_vals));
+
+				history->continue_score_network_histories.push_back(continue_score_network_history);
+				history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
+
+				history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+				history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
+
+				// continue
+			}
+
+			if (iter_index == explore_iter) {
+				run_helper.is_explore_iter = true;
+			} else {
+				run_helper.is_explore_iter = false;
+			}
+
+			int curr_node_id = 0;
+			history->node_histories.push_back(vector<AbstractNodeHistory*>());
+			while (true) {
+				if (curr_node_id == -1 || exit_depth != -1) {
+					break;
+				}
+
+				handle_node_activate_helper(iter_index,
+											curr_node_id,
+											flat_vals,
+											context,
+											experiment_variables_initialized,
+											experiment_scope_state_networks,
+											experiment_scope_score_networks,
+											experiment_scope_distance,
+											exit_depth,
+											exit_node_id,
+											run_helper,
+											history);
+			}
+		}
 
 		run_helper.is_explore_iter = is_explore_iter_save;
 	} else {
@@ -313,58 +421,67 @@ void Scope::handle_node_activate_helper(int iter_index,
 							  run_helper,
 							  node_history);
 
+		curr_node_id = action_node->next_node_id;
+
 		if (action_node->is_explore
 				&& run_helper.explore_phase == EXPLORE_PHASE_NONE) {
-			if (action_node->experiment != NULL) {
-				bool matches_context = true;
-				if (action_node->experiment->scope_context.size() > context.size()) {
-					matches_context = false;
-				} else {
-					for (int c_index = 0; c_index < (int)action_node->experiment->scope_context.size()-1; c_index++) {
-						if (action_node->experiment->scope_context[c_index] != 
-									context[context.size()-action_node->experiment->scope_context.size()+c_index].scope_id
-								|| action_node->experiment->node_context[c_index] !=
-									context[context.size()-action_node->experiment->scope_context.size()+c_index].node_id) {
-							matches_context = false;
-							break;
-						}
-					}
-				}
-				if (matches_context) {
-					if (action_node->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-						BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
-
-						// explore_phase set in experiment
-						BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(branch_experiment);
-						branch_experiment->activate(flat_vals,
-													context,
-													run_helper,
-													branch_experiment_history);
-
-						if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP
-								&& !branch_experiment_history->is_branch) {
-							curr_node_id = action_node->next_node_id;
-						} else {
-							if (branch_experiment->exit_depth == 0) {
-								curr_node_id = branch_experiment->exit_node_id;
-							} else {
-								exit_depth = branch_experiment->exit_depth;
-								exit_node_id = branch_experiment->exit_node_id;
+			run_helper.explore_seen = true;
+			if (run_helper.is_explore_iter) {
+				if (action_node->experiment != NULL) {
+					bool matches_context = true;
+					if (action_node->experiment->scope_context.size() > context.size()) {
+						matches_context = false;
+					} else {
+						for (int c_index = 0; c_index < (int)action_node->experiment->scope_context.size()-1; c_index++) {
+							if (action_node->experiment->scope_context[c_index] != 
+										context[context.size()-action_node->experiment->scope_context.size()+c_index].scope_id
+									|| action_node->experiment->node_context[c_index] !=
+										context[context.size()-action_node->experiment->scope_context.size()+c_index].node_id) {
+								matches_context = false;
+								break;
 							}
 						}
-					} else {
-						// action_node->experiment->type == EXPERIMENT_TYPE_LOOP
+					}
+					if (matches_context) {
+						if (action_node->experiment->type == EXPERIMENT_TYPE_BRANCH) {
+							BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
 
+							BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(branch_experiment);
+							action_node->experiment_history = branch_experiment_history;
+							branch_experiment->activate(flat_vals,
+														context,
+														run_helper,
+														branch_experiment_history);
+
+							if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP
+									&& !branch_experiment_history->is_branch) {
+								curr_node_id = action_node->next_node_id;
+							} else {
+								if (branch_experiment->exit_depth == 0) {
+									curr_node_id = branch_experiment->exit_node_id;
+								} else {
+									exit_depth = branch_experiment->exit_depth;
+									exit_node_id = branch_experiment->exit_node_id;
+								}
+							}
+						} else {
+							LoopExperiment* loop_experiment = (LoopExperiment*)action_node->experiment;
+
+							LoopExperimentHistory* loop_experiment_history = new LoopExperimentHistory(loop_experiment);
+							action_node->experiment_history = loop_experiment_history;
+							loop_experiment->activate(flat_vals,
+													  context,
+													  run_helper,
+													  loop_experiment_history);
+
+							curr_node_id = action_node->next_node_id;
+						}
 					}
 				} else {
-					curr_node_id = action_node->next_node_id;
-				}
-			} else {
-				// TODO: explore
+					// TODO: explore
 
+				}
 			}
-		} else {
-			curr_node_id = action_node->next_node_id;
 		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
@@ -461,12 +578,17 @@ void Scope::experiment_variables_helper(
 		}
 
 		if (run_helper.experiment_step_index != -1) {
-			BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
-			map<int, vector<bool>>::iterator steps_seen_in_it = branch_experiment->scope_steps_seen_in.find(this->id);
+			map<int, vector<bool>>::iterator steps_seen_in_it = run_helper.experiment->scope_steps_seen_in.find(this->id);
 			if (steps_seen_in_it == run_helper.experiment->scope_steps_seen_in.end()) {
-				branch_experiment->scope_steps_seen_in[this->id] = vector<bool>(branch_experiment->num_steps, false);
+				if (run_helper.experiment->type == EXPERIMENT_TYPE_BRANCH) {
+					BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
+					run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(branch_experiment->num_steps, false);
+				} else {
+					// run_helper.experiment->type == EXPERIMENT_TYPE_LOOP
+					run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(1, false);
+				}
 			}
-			branch_experiment->scope_steps_seen_in[this->id][run_helper.experiment_step_index] = true;
+			run_helper.experiment->scope_steps_seen_in[this->id][run_helper.experiment_step_index] = true;
 		}
 
 		experiment_scope_state_networks = &(state_it->second);
@@ -532,7 +654,112 @@ void Scope::backprop(vector<int>& starting_node_ids,
 	}
 
 	if (is_loop) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+				|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
+			double halt_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->halt_score_network_output;
+			double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
+			this->halt_score_network->backprop_weights_with_no_error_signal(
+				run_helper.scale_factor*halt_predicted_score_error,
+				0.002,
+				history->ending_state_vals_snapshot,
+				history->halt_score_network_history);
 
+			double halt_misguess_error = run_helper.final_misguess - history->halt_misguess_network_output;
+			this->halt_misguess_network->backprop_weights_with_no_error_signal(
+				halt_misguess_error,
+				0.002,
+				history->ending_state_vals_snapshot,
+				history->halt_misguess_network_history);
+		} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+				|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+			if (!run_helper.backprop_is_pre_experiment) {
+				double halt_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->halt_score_network_output;
+				double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
+				this->halt_score_network->backprop_errors_with_no_weight_change(
+					run_helper.scale_factor*halt_predicted_score_error,
+					*(context.back().state_errors),
+					history->ending_state_vals_snapshot,
+					history->halt_score_network_history);
+
+				double halt_misguess_error = run_helper.final_misguess - history->halt_misguess_network_output;
+				this->halt_misguess_network->backprop_errors_with_no_weight_change(
+					halt_misguess_error,
+					*(context.back().state_errors),
+					history->ending_state_vals_snapshot,
+					history->halt_misguess_network_history);
+			}
+		}
+
+		for (int i_index = (int)history->node_histories.size()-1; i_index >= 0; i_index--) {
+			for (int h_index = (int)history->node_histories[i_index].size()-1; h_index >= 0; h_index--) {
+				handle_node_backprop_helper(i_index,
+											h_index,
+											context,
+											scale_factor_error,
+											run_helper,
+											history);
+			}
+
+			double best_halt_score = history->halt_score_snapshots.back();
+			double best_halt_misguess = history->halt_misguess_snapshots.back();
+			// back to front
+			for (int ii_index = history->node_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
+				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+				if (score_val > 0.1) {
+					best_halt_score = history->halt_score_snapshots[ii_index];
+					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+				} else if (score_val < -0.1) {
+					continue;
+				} else {
+					double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
+					double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+					if (misguess_val < -0.1) {
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					} else if (misguess_val > 0.1) {
+						continue;
+					} else {
+						// use earlier iter if no strong signal either way
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					}
+				}
+			}
+			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
+					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
+				double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
+				double continue_predicted_score_error = best_halt_score - continue_predicted_score;
+				this->continue_score_network->backprop_weights_with_no_error_signal(
+					run_helper.scale_factor*continue_predicted_score_error,
+					0.002,
+					history->iter_state_vals_snapshots[i_index],
+					history->continue_score_network_histories[i_index]);
+
+				double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
+				this->continue_misguess_network->backprop_weights_with_no_error_signal(
+					continue_misguess_error,
+					0.002,
+					history->iter_state_vals_snapshots[i_index],
+					history->continue_misguess_network_histories[i_index]);
+			} else if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+					|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
+				double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
+				double continue_predicted_score_error = best_halt_score - continue_predicted_score;
+				this->continue_score_network->backprop_errors_with_no_weight_change(
+					run_helper.scale_factor*continue_predicted_score_error,
+					*(context.back().state_errors),
+					history->iter_state_vals_snapshots[i_index],
+					history->continue_score_network_histories[i_index]);
+
+				double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
+				this->continue_misguess_network->backprop_errors_with_no_weight_change(
+					continue_misguess_error,
+					*(context.back().state_errors),
+					history->iter_state_vals_snapshots[i_index],
+					history->continue_misguess_network_histories[i_index]);
+			}
+		}
 	} else {
 		starting_node_ids.erase(starting_node_ids.begin());
 
@@ -582,7 +809,11 @@ void Scope::handle_node_backprop_helper(int iter_index,
 											run_helper,
 											(BranchExperimentHistory*)action_node_history->experiment_history);
 			} else {
-
+				LoopExperiment* loop_experiment = (LoopExperiment*)action_node->experiment;
+				loop_experiment->backprop(context,
+										  scale_factor_error,
+										  run_helper,
+										  (LoopExperimentHistory*)action_node_history->experiment_history);
 			}
 
 			if (action_node->experiment->state == EXPERIMENT_STATE_DONE) {
@@ -630,6 +861,13 @@ void Scope::add_state(bool initialized_locally,
 	this->state_family_ids.push_back(family_id);
 	this->state_default_class_ids.push_back(default_class_id);
 
+	if (this->is_loop) {
+		this->continue_score_network->add_state();
+		this->continue_misguess_network->add_state();
+		this->halt_score_network->add_state();
+		this->halt_misguess_network->add_state();
+	}
+
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
@@ -664,16 +902,6 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->is_loop << endl;
 
 	if (this->is_loop) {
-		output_file << this->starting_state_networks.size() << endl;
-		for (int s_index = 0; s_index < (int)this->starting_state_networks.size(); s_index++) {
-			output_file << this->starting_target_indexes[s_index] << endl;
-
-			ofstream starting_state_network_save_file;
-			starting_state_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_starting_state_" + to_string(s_index) + ".txt");
-			this->starting_state_networks[s_index]->save(starting_state_network_save_file);
-			starting_state_network_save_file.close();
-		}
-
 		ofstream continue_score_network_save_file;
 		continue_score_network_save_file.open("saves/nns/scope_" + to_string(this->id) + "_continue_score.txt");
 		this->continue_score_network->save(continue_score_network_save_file);
@@ -736,12 +964,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 }
 
 ScopeHistory::~ScopeHistory() {
-	for (int s_index = 0; s_index < (int)this->starting_state_network_histories.size(); s_index++) {
-		if (this->starting_state_network_histories[s_index] != NULL) {
-			delete this->starting_state_network_histories[s_index];
-		}
-	}
-
 	for (int iter_index = 0; iter_index < (int)this->node_histories.size(); iter_index++) {
 		for (int h_index = 0; h_index < (int)this->node_histories[iter_index].size(); h_index++) {
 			delete this->node_histories[iter_index][h_index];

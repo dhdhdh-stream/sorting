@@ -63,12 +63,11 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-
-			if (rand()%10 == 0) {
-				run_helper.can_random_iter = true;
-			} else {
-				run_helper.can_random_iter = false;
-			}
+		}
+		if (rand()%10 == 0) {
+			run_helper.can_random_iter = true;
+		} else {
+			run_helper.can_random_iter = false;
 		}
 
 		vector<ForwardContextLayer> context;
@@ -164,6 +163,22 @@ int main(int argc, char* argv[]) {
 		} else if (run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
 			run_helper.experiment->new_average_score += run_helper.target_val;
 			run_helper.experiment->new_average_misguess += run_helper.final_misguess;
+
+			run_helper.experiment->state_iter++;
+			if (run_helper.experiment->state_iter == 10000) {
+				LoopExperiment* loop_experiment = (LoopExperiment*)run_helper.experiment;
+				loop_experiment->experiment_transform();
+
+				if (run_helper.experiment->state == EXPERIMENT_STATE_DONE) {
+					Scope* explore_scope = solution->scopes[run_helper.experiment->scope_context.back()];
+					ActionNode* action_node = (ActionNode*)explore_scope->nodes[run_helper.experiment->node_context.back()];
+
+					action_node->is_explore = false;
+
+					delete action_node->experiment;
+					action_node->experiment = NULL;
+				}
+			}
 		} else {
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
 					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {

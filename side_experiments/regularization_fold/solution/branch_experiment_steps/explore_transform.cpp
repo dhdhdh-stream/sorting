@@ -104,9 +104,9 @@ void BranchExperiment::explore_transform() {
 	}
 	this->exit_network_impacts = vector<double>(exit_scope->num_states, 0.0);
 
-	this->branch_average_score = 0.0;
+	this->new_average_score = 0.0;
 	this->existing_average_score = 0.0;
-	this->branch_average_misguess = 0.0;
+	this->new_average_misguess = 0.0;
 	this->existing_average_misguess = 0.0;
 
 	this->state = EXPERIMENT_STATE_EXPERIMENT;

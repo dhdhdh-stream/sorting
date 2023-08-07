@@ -2,17 +2,14 @@
 
 using namespace std;
 
-void Layer::state_hidden_finalize_new_state() {
-	int new_state_size = (int)this->input_layers[2]->acti_vals.size();
+void Layer::state_hidden_finalize_new_state(int input_layer_index) {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int s_index = 0; s_index < new_state_size; s_index++) {
-			this->weights[n_index][1].push_back(this->weights[n_index][2][s_index]);
-			this->weight_updates[n_index][1].push_back(0.0);
-		}
-	}
+		this->weights[n_index][1].push_back(this->weights[n_index][2][input_layer_index]);
+		this->weight_updates[n_index][1].push_back(0.0);
 
-	this->weights[n_index][2].clear();
-	this->weight_updates[n_index][2].clear();
+		this->weights[n_index][2].erase(this->weights[n_index][2].begin()+input_layer_index);
+		this->weight_updates[n_index][2].erase(this->weight_updates[n_index][2].begin()+input_layer_index);
+	}
 }
 
 void Layer::state_hidden_finalize_new_input() {

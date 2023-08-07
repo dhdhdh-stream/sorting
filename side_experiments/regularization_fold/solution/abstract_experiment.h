@@ -42,6 +42,7 @@ public:
 	 * - last index is inner
 	 */
 	std::map<int, int> scope_furthest_layer_seen_in;
+	std::map<int, std::vector<bool>> scope_steps_seen_in;
 
 	/**
 	 * - exit node takes place after new experiment scope
@@ -61,6 +62,7 @@ public:
 
 	std::vector<int> new_state_furthest_layer_needed_in;
 	std::vector<int> layer_num_new_states;
+	std::vector<std::vector<bool>> new_state_steps_needed_in;
 
 	/**
 	 * - scope_additions_needed doesn't include all scopes that need to be modified

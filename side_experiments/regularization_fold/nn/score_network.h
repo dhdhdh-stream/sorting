@@ -72,8 +72,8 @@ public:
 
 	void update_lasso_weights(int new_furthest_distance);
 
-	void clean(int num_new_states);
-	void finalize_new_state(int new_total_states);	// new states at the end of total states
+	void finalize_new_state(int new_state_index);
+	void cleanup_new_state();
 
 	void add_state();
 

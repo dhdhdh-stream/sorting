@@ -560,20 +560,28 @@ void StateNetwork::clean(int num_new_states) {
 	this->lasso_weights.clear();
 }
 
-void StateNetwork::finalize_new_state(int layer_num_new_states,
-									  int new_total_states) {
-	this->hidden->state_hidden_finalize_new_state(new_total_states);
-
+void StateNetwork::finalize_new_state(int new_state_index,
+									  int new_index) {
+	int layer_index = -1;
 	for (int s_index = 0; s_index < (int)this->new_state_indexes.size(); s_index++) {
-		this->state_indexes.push_back(new_total_states - layer_num_new_states + this->new_state_indexes[s_index]);
+		if (this->new_state_indexes[s_index] == new_state_index) {
+			layer_index = s_index;
+			break;
+		}
+	}
+
+	if (layer_index != -1) {
+		this->hidden->state_hidden_finalize_new_state(layer_index);
+
+		this->state_indexes.push_back(new_index);
 
 		this->state_input->acti_vals.push_back(0.0);
 		this->state_input->errors.push_back(0.0);
-	}
 
-	this->new_state_indexes.clear();
-	this->new_state_input->acti_vals.clear();
-	this->new_state_input->errors.clear();
+		this->new_state_indexes.erase(this->new_state_indexes.begin()+layer_index);
+		this->new_state_input->acti_vals.erase(this->new_state_input->acti_vals.begin()+layer_index);
+		this->new_state_input->errors.erase(this->new_state_input->errors.begin()+layer_index);
+	}
 }
 
 void StateNetwork::finalize_new_input(int new_index) {

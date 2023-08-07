@@ -246,7 +246,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 		history->exit_state_vals_snapshot[l_index] = context[
 			context.size() - (this->exit_depth+1) + l_index].state_vals;
 	}
-	history->exit_new_state_vals_snapshot = run_helper.new_state_vals;
+	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
 	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
 	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
@@ -256,9 +256,9 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 		if (outer_states_initialized->at(s_index)) {
 			ExitNetworkHistory* network_history = new ExitNetworkHistory(this->exit_networks[s_index]);
 			this->exit_networks[s_index]->new_activate(history->exit_state_vals_snapshot,
-													   history->exit_new_state_vals_snapshot,
+													   history->ending_new_state_vals_snapshot,
 													   network_history);
-			history->network_histories[s_index] = network_history;
+			history->exit_network_histories[s_index] = network_history;
 			outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
 		}
 	}
@@ -287,14 +287,14 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 														   run_helper.new_state_errors,
 														   exit_network_target_max_update,
 														   history->exit_state_vals_snapshot,
-														   history->exit_new_state_vals_snapshot,
+														   history->ending_new_state_vals_snapshot,
 														   history->exit_network_histories[s_index]);
 			} else {
 				this->exit_networks[s_index]->new_lasso_backprop(outer_state_errors->at(s_index),
 																 run_helper.new_state_errors,
 																 exit_network_target_max_update,
 																 history->exit_state_vals_snapshot,
-																 history->exit_new_state_vals_snapshot,
+																 history->ending_new_state_vals_snapshot,
 																 history->exit_network_histories[s_index]);
 			}
 		}
@@ -444,10 +444,17 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_score_network_target_max_update = 0.01;
 	}
-	this->starting_score_network->new_backprop(
-		run_helper.scale_factor*starting_predicted_score_error,
-		run_helper.new_state_errors,
-		starting_score_network_target_max_update);
+	if (this->state_iter <= 20000) {
+		this->starting_score_network->new_backprop(
+			run_helper.scale_factor*starting_predicted_score_error,
+			run_helper.new_state_errors,
+			starting_score_network_target_max_update);
+	} else {
+		this->starting_score_network->new_lasso_backprop(
+			run_helper.scale_factor*starting_predicted_score_error,
+			run_helper.new_state_errors,
+			starting_score_network_target_max_update);
+	}
 
 	this->starting_misguess_network->activate(this->starting_state_vals_snapshot,
 											  this->starting_new_state_vals_snapshot);
@@ -458,10 +465,17 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_misguess_network_target_max_update = 0.01;
 	}
-	this->starting_misguess_network->new_backprop(
-		starting_misguess_error,
-		run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so
-		starting_misguess_network_target_max_update);
+	if (this->state_iter <= 20000) {
+		this->starting_misguess_network->new_backprop(
+			starting_misguess_error,
+			run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so
+			starting_misguess_network_target_max_update);
+	} else {
+		this->starting_misguess_network->new_lasso_backprop(
+			starting_misguess_error,
+			run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so
+			starting_misguess_network_target_max_update);
+	}
 
 	this->existing_misguess_network->activate(this->starting_state_vals_snapshot);
 

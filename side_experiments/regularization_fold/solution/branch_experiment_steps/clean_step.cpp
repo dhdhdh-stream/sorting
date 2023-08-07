@@ -266,7 +266,7 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 		history->exit_state_vals_snapshot[l_index] = context[
 			context.size() - (this->exit_depth+1) + l_index].state_vals;
 	}
-	history->exit_new_state_vals_snapshot = run_helper.new_state_vals;
+	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
 	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
 	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
@@ -277,9 +277,9 @@ void BranchExperiment::clean_activate(vector<double>& flat_vals,
 			if (this->exit_networks[s_index] != NULL) {
 				ExitNetworkHistory* network_history = new ExitNetworkHistory(this->exit_networks[s_index]);
 				this->exit_networks[s_index]->new_activate(history->exit_state_vals_snapshot,
-														   history->exit_new_state_vals_snapshot,
+														   history->ending_new_state_vals_snapshot,
 														   network_history);
-				history->network_histories[s_index] = network_history;
+				history->exit_network_histories[s_index] = network_history;
 				outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
 
 				this->exit_network_impacts[s_index] = 0.9999*this->exit_network_impacts[s_index] + 0.0001*abs(this->exit_networks[s_index]->output->acti_vals[0]);
@@ -304,7 +304,7 @@ void BranchExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 				run_helper.new_state_errors,
 				0.01,
 				history->exit_state_vals_snapshot,
-				history->exit_new_state_vals_snapshot,
+				history->ending_new_state_vals_snapshot,
 				history->exit_network_histories[s_index]);
 		}
 	}

@@ -19,6 +19,23 @@ ExitNode::ExitNode(Scope* parent,
 	this->networks = networks;
 }
 
+ExitNode::ExitNode(ExitNode* original,
+				   Scope* parent,
+				   int id,
+				   int exit_node_id) {
+	this->type = NODE_TYPE_EXIT;
+
+	this->parent = parent;
+	this->id = id;
+
+	this->exit_depth = 0;
+	this->exit_node_id = exit_node_id;
+	this->target_indexes = original->target_indexes;
+	for (int e_index = 0; e_index < (int)original->networks.size(); e_index++) {
+		this->networks.push_back(new ExitNetwork(original->networks[e_index]));
+	}
+}
+
 ExitNode::ExitNode(ifstream& input_file,
 				   Scope* parent,
 				   int id) {

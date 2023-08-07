@@ -4,8 +4,7 @@ using namespace std;
 
 void LoopExperiment::explore_activate(vector<double>& flat_vals,
 									  vector<ForwardContextLayer>& context,
-									  RunHelper& run_helper,
-									  LoopExperimentHistory* history) {
+									  RunHelper& run_helper) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPLORE;
 
 	int rand_iters = 3 + rand()%3;

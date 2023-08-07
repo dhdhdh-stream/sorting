@@ -44,7 +44,7 @@ void BranchExperiment::wrapup_pre_activate_helper(
 void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 									   vector<ForwardContextLayer>& context,
 									   RunHelper& run_helper,
-									   FoldHistory* history) {
+									   BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_WRAPUP;
 
 	// no longer need to save separate existing_predicted_score
@@ -146,11 +146,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 
 		vector<double> new_state_vals(this->new_num_states, 0.0);
 		for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); i_index++) {
-			double val = context.back().state_vals[this->last_layer_indexes[i_index]];
-			if (this->last_layer_has_transform[i_index]) {
-				val = this->last_layer_transformations[i_index].forward(val);
-			}
-			new_state_vals[this->last_layer_target_indexes[i_index]] = val;
+			new_state_vals[this->last_layer_target_indexes[i_index]] = context.back().state_vals[this->last_layer_indexes[i_index]];
 		}
 
 		context.push_back(ForwardContextLayer());
@@ -230,11 +226,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 
 		context.pop_back();
 		for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); s_index++) {
-			double val = new_state_vals[this->last_layer_target_indexes[i_index]];
-			if (this->last_layer_has_transform[i_index]) {
-				val = this->last_layer_transformations[i_index].backward(val);
-			}
-			context.back().state_vals[this->last_layer_indexes[i_index]] = val;
+			context.back().state_vals[this->last_layer_indexes[i_index]] = new_state_vals[this->last_layer_target_indexes[i_index]];
 		}
 
 		history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
