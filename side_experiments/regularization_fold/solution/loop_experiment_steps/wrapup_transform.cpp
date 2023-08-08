@@ -1,9 +1,18 @@
 #include "loop_experiment.h"
 
+#include "action_node.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+
 using namespace std;
 
 void LoopExperiment::wrapup_transform() {
-	Scope* new_scope = new Scope(solution->scopes.size(),
+	Scope* new_scope = new Scope((int)solution->scopes.size(),
 								 this->new_num_states,
 								 this->new_state_initialized_locally,
 								 this->new_state_family_ids,
@@ -18,7 +27,7 @@ void LoopExperiment::wrapup_transform() {
 	vector<Scope*> new_sequence_scopes;
 	for (int l_index = 0; l_index < (int)this->sequence->scopes.size(); l_index++) {
 		// can't be loop
-		Scope* new_sequence_scope = new Scope(solution->scopes.size(),
+		Scope* new_sequence_scope = new Scope((int)solution->scopes.size(),
 											  this->sequence->scopes[l_index]->num_states,
 											  this->sequence->scopes[l_index]->state_initialized_locally,
 											  this->sequence->scopes[l_index]->state_family_ids,
@@ -41,16 +50,16 @@ void LoopExperiment::wrapup_transform() {
 	}
 
 	ScopeNode* new_outer_node = new ScopeNode(new_scope,
-											  a_index,
+											  0,
 											  new_sequence_scopes[0]->id,
 											  new_starting_node_ids,
 											  new_input_indexes,
-											  this->sequence->input_target_layers[i_index],
-											  this->sequence->input_target_indexes[i_index],
-											  this->sequence->input_has_transform[i_index],
-											  this->sequence->input_transformations[i_index],
+											  this->sequence->input_target_layers,
+											  this->sequence->input_target_indexes,
+											  this->sequence->input_has_transform,
+											  this->sequence->input_transformations,
 											  this->scale_mod,
-											  next_node_id);
+											  -1);
 	new_scope->nodes.push_back(new_outer_node);
 
 	for (int l_index = 0; l_index < (int)this->sequence->scopes.size(); l_index++) {
@@ -74,6 +83,7 @@ void LoopExperiment::wrapup_transform() {
 														new_sequence_scopes[l_index],
 														n_index,
 														n_index+1);
+				new_sequence_scopes[l_index]->nodes.push_back(new_inner_node);
 			}
 		}
 
@@ -132,8 +142,8 @@ void LoopExperiment::wrapup_transform() {
 											  this->last_layer_indexes,
 											  vector<int>(this->last_layer_indexes.size(), 0),
 											  this->last_layer_target_indexes,
-											  vector<bool>(this->last_layer_indexes.size(), false);
-											  vector<Transformation>(this->last_layer_indexes.size(), Transformation());
+											  vector<bool>(this->last_layer_indexes.size(), false),
+											  vector<Transformation>(this->last_layer_indexes.size(), Transformation()),
 											  new Scale(),
 											  new_exit_node->id);
 	outer_scope->nodes.push_back(new_scope_node);

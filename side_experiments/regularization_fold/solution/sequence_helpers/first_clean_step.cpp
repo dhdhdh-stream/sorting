@@ -1,5 +1,13 @@
 #include "sequence.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "layer.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "state_network.h"
+
 using namespace std;
 
 void Sequence::first_clean_pre_activate_helper(
@@ -67,7 +75,7 @@ void Sequence::first_clean_step_activate_helper(
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper) {
-	BranchExperiment* branch_experiment = this->experiment;
+	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
 	if (branch_experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 		branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 		branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
@@ -93,7 +101,7 @@ void Sequence::first_clean_step_activate_helper(
 	} else {
 		SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
 		for (int l_index = 0; l_index < (int)sequence_history->node_histories.size(); l_index++) {
-			int scope_id = this->experiment->sequences[a_index]->scopes[l_index]->id;
+			int scope_id = branch_experiment->sequences[a_index]->scopes[l_index]->id;
 			map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(scope_id);
 
 			for (int n_index = 0; n_index < (int)sequence_history->node_histories[l_index].size(); n_index++) {
@@ -123,7 +131,6 @@ void Sequence::first_clean_step_activate_helper(
 					}
 				} else if (sequence_history->node_histories[l_index][n_index]->node->type == NODE_TYPE_SCOPE) {
 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[l_index][n_index];
-					ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 					first_clean_pre_activate_helper(false,
 													input_vals,
@@ -148,7 +155,7 @@ void Sequence::first_clean_activate_pull(vector<double>& input_vals,
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
-				if (c_index == context.size()-1 - this->input_local_scope_depths[i_index]) {
+				if (c_index == (int)context.size()-1 - this->input_local_scope_depths[i_index]) {
 					if (!this->input_is_new_class[i_index]) {
 						/**
 						 * - update input_vals immediately so new networks use original value
@@ -201,7 +208,7 @@ void Sequence::first_clean_activate_reset(vector<double>& input_vals,
 		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 			if (this->input_is_new_class[i_index]) {
 				double val_diff = input_vals[i_index] - context[context.size()-1 - this->input_local_scope_depths[i_index]]
-					.state_vals[this->input_local_input_indexes[i_index]];
+					.state_vals->at(this->input_local_input_indexes[i_index]);
 
 				double set_back_scale = (200000.0-this->experiment->state_iter)/200000.0;
 
@@ -232,10 +239,10 @@ void Sequence::first_clean_backprop_pull(vector<double>& input_errors,
 		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 			if (this->input_is_new_class[i_index]) {
 				double new_class_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
-				input_errors[i_index] = new_class_scale*context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+				input_errors[i_index] = new_class_scale*context[context.size()-1 - this->input_local_scope_depths[i_index]]
 					.state_errors->at(this->input_local_input_indexes[i_index]);
 			} else {
-				input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+				input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]
 					.state_errors->at(this->input_local_input_indexes[i_index]);
 			}
 		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
@@ -256,7 +263,7 @@ void Sequence::first_clean_backprop_reset(vector<double>& input_errors,
 		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 			if (this->input_is_new_class[i_index]) {
 				double error_diff = input_errors[i_index] - context[context.size()-1 - this->input_local_scope_depths[i_index]]
-					.state_errors->at(this->input_local_input_indexes[i_index])
+					.state_errors->at(this->input_local_input_indexes[i_index]);
 
 				double set_back_scale = (1000000.0-this->experiment->state_iter)/1000000.0;
 

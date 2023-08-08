@@ -9,8 +9,7 @@ public:
 	double weight;
 
 	Transformation();
-	Transformation(Transformation& reverse);
-	Transformation(std::ifstream& save_file);
+	Transformation(std::ifstream& input_file);
 
 	double forward(double val_in);
 	double backward(double val_in);
@@ -18,7 +17,7 @@ public:
 	double backprop_backward(double error_in);	// multiply by scale
 	double backprop_forward(double error_in);	// divide by scale
 
-	void save(std::ofstream& save_file);
+	void save(std::ofstream& output_file);
 };
 
 #endif /* TRANSFORMATION_H */

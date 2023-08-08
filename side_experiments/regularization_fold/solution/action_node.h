@@ -1,7 +1,17 @@
 #ifndef ACTION_NODE_H
 #define ACTION_NODE_H
 
+#include <fstream>
 #include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractExperiment;
+class Scope;
+class ScoreNetwork;
+class StateNetwork;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
@@ -70,6 +80,10 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
+class AbstractExperimentHistory;
+class ScoreNetworkHistory;
+class StateNetworkHistory;
+
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
@@ -84,11 +98,11 @@ public:
 	std::vector<double> starting_new_state_vals_snapshot;
 	std::vector<StateNetworkHistory*> new_state_network_histories;	// if zeroed, set to NULL
 	std::vector<double> ending_new_state_vals_snapshot;
-	ScoreNetwork* new_score_network_history;
+	ScoreNetworkHistory* new_score_network_history;
 	double new_score_network_output;
 
 	std::vector<int> experiment_sequence_step_indexes;
-	std::vector<std::vector<int>> input_vals_snapshots;
+	std::vector<std::vector<double>> input_vals_snapshots;
 	std::vector<std::vector<StateNetworkHistory*>> input_state_network_histories;
 
 	ActionNodeHistory(ActionNode* node);

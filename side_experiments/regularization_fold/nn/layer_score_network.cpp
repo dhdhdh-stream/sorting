@@ -9,7 +9,7 @@ void Layer::score_hidden_finalize_new_state(int new_state_index) {
 	}
 }
 
-void Layer::score_hidden_cleanup_new_state() {
+void Layer::score_hidden_cleanup_new_states() {
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		this->weights[n_index][1].clear();
 		this->weight_updates[n_index][1].clear();

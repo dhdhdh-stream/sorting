@@ -1,6 +1,8 @@
 #ifndef CONTEXT_LAYER_H
 #define CONTEXT_LAYER_H
 
+class ScopeHistory;
+
 class ForwardContextLayer {
 public:
 	int scope_id;
@@ -15,8 +17,6 @@ public:
 class BackwardContextLayer {
 public:
 	std::vector<double>* state_errors;
-
-
 };
 
 #endif /* CONTEXT_LAYER_H */

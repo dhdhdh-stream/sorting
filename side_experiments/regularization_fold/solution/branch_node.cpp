@@ -1,5 +1,10 @@
 #include "branch_node.h"
 
+#include "constants.h"
+#include "globals.h"
+#include "layer.h"
+#include "scope.h"
+
 using namespace std;
 
 BranchNode::BranchNode(Scope* parent,

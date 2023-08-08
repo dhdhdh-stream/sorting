@@ -1,6 +1,18 @@
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 
+#include <fstream>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+#include "transformation.h"
+
+class Scale;
+class Scope;
+
+class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	int inner_scope_id;
@@ -67,6 +79,7 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
+class ScopeHistory;
 class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* inner_scope_history;

@@ -1,5 +1,14 @@
 #include "sequence.h"
 
+#include "abstract_experiment.h"
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "layer.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "state_network.h"
+
 using namespace std;
 
 void Sequence::experiment_pre_activate_helper(
@@ -16,7 +25,7 @@ void Sequence::experiment_pre_activate_helper(
 		it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
 	}
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
-	it->second.insert(it->second.end(), size_diff, vector<vector<StateNetwork*>>());
+	it->second.insert(it->second.end(), size_diff, vector<StateNetwork*>());
 
 	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
 	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
@@ -27,11 +36,11 @@ void Sequence::experiment_pre_activate_helper(
 		if (context_index < seen_it->second) {
 			seen_it->second = context_index;
 
-			int new_furthest_distance = this->experiment->scope_context.size()+2 - context_index;
-			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
-				if (state_it->second[node_id].size() != 0) {
-					for (s_index = 0; s_index < (int)this->input_types.size(); s_index++) {
-						state_it->second[node_id][s_index]->update_lasso_weights(new_furthest_distance);
+			int new_furthest_distance = (int)this->experiment->scope_context.size()+2 - context_index;
+			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+				if (it->second[n_index].size() != 0) {
+					for (int s_index = 0; s_index < (int)this->input_types.size(); s_index++) {
+						it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 					}
 				}
 			}
@@ -44,7 +53,7 @@ void Sequence::experiment_pre_activate_helper(
 				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (it->second[node_id].size() == 0) {
-					int new_furthest_distance = this->experiment->scope_context.size()+2 - seen_it->second;
+					int new_furthest_distance = (int)this->experiment->scope_context.size()+2 - seen_it->second;
 					for (int ii_index = 0; ii_index < (int)this->input_types.size(); ii_index++) {
 						it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
@@ -100,8 +109,9 @@ void Sequence::experiment_experiment_activate_helper(
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper) {
-	for (int a_index = 0; a_index < this->experiment->step_index; a_index++) {
-		if (this->experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
+	for (int a_index = 0; a_index < this->step_index; a_index++) {
+		if (branch_experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 			branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 			branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
 			branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_types.size(), NULL));
@@ -157,10 +167,9 @@ void Sequence::experiment_experiment_activate_helper(
 						}
 					} else if (sequence_history->node_histories[l_index][n_index]->node->type == NODE_TYPE_SCOPE) {
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)sequence_history->node_histories[l_index][n_index];
-						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 						experiment_pre_activate_helper(false,
-													   this->experiment->scope_context.size()+1,
+													   (int)this->experiment->scope_context.size()+1,
 													   input_vals,
 													   run_helper,
 													   scope_node_history->inner_scope_history);
@@ -182,7 +191,8 @@ void Sequence::experiment_activate_pull(vector<double>& input_vals,
 		if (context_index < 0) {
 			context_index = 0;
 		}
-		experiment_pre_activate_helper(context_index,
+		experiment_pre_activate_helper(true,
+									   context_index,
 									   input_vals,
 									   run_helper,
 									   context[c_index].scope_history);
@@ -228,7 +238,7 @@ void Sequence::experiment_backprop_pull(vector<double>& input_errors,
 										vector<vector<double>>& previous_errors) {
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
-			input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+			input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]
 				.state_errors->at(this->input_local_input_indexes[i_index]);
 		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {
 			input_errors[i_index] = previous_errors[this->input_previous_step_index[i_index]][this->input_previous_input_index[i_index]];

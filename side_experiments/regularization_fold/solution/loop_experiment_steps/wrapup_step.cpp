@@ -1,5 +1,19 @@
 #include "loop_experiment.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "constants.h"
+#include "exit_network.h"
+#include "layer.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+#include "globals.h"
+#include "utilities.h"
+
 using namespace std;
 
 void LoopExperiment::wrapup_pre_activate_helper(
@@ -13,11 +27,13 @@ void LoopExperiment::wrapup_pre_activate_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (score_it != this->score_networks.end()
-						&& node_id < score_it->second.size()
+						&& node_id < (int)score_it->second.size()
 						&& score_it->second[node_id] != NULL) {
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+
 					ScoreNetwork* score_network = score_it->second[node_id];
 					score_network->activate(action_node_history->ending_state_vals_snapshot);
 					action_node_history->new_score_network_output = score_network->output->acti_vals[0];
@@ -56,7 +72,7 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 
 	vector<double> input_vals(this->new_num_states, 0.0);
 	for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); i_index++) {
-		input_vals[this->last_layer_target_indexes[i_index]] = context.back().state_vals[this->last_layer_indexes[i_index]];
+		input_vals[this->last_layer_target_indexes[i_index]] = context.back().state_vals->at(this->last_layer_indexes[i_index]);
 	}
 	// don't need to update context and call activate_pull
 
@@ -223,18 +239,15 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 		iter_index++;
 	}
 
-	for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); s_index++) {
-		context.back().state_vals[this->last_layer_indexes[i_index]] = input_vals[this->last_layer_target_indexes[i_index]];
+	for (int i_index = 0; i_index < (int)this->last_layer_indexes.size(); i_index++) {
+		context.back().state_vals->at(this->last_layer_indexes[i_index]) = input_vals[this->last_layer_target_indexes[i_index]];
 	}
 
-	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
-	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
-	}
+	history->exit_state_vals_snapshot = vector<vector<double>>(1);
+	history->exit_state_vals_snapshot[0] = *(context.back().state_vals);
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
+	vector<double>* outer_state_vals = context.back().state_vals;
+	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
 
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (outer_states_initialized->at(s_index)) {
@@ -265,7 +278,7 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		history->ending_input_vals_snapshot,
 		history->halt_misguess_network_history);
 
-	for (int i_index = history->sequence_histories.size()-1; i_index >= 0; i_index--) {
+	for (int i_index = (int)history->sequence_histories.size()-1; i_index >= 0; i_index--) {
 		run_helper.scale_factor *= this->scale_mod->weight;
 
 		double inner_scale_factor_error = 0.0;
@@ -285,7 +298,7 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		double best_halt_score = history->halt_score_snapshots.back();
 		double best_halt_misguess = history->halt_misguess_snapshots.back();
 		// back to front
-		for (int ii_index = history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
 			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
 			if (score_val > 0.1) {

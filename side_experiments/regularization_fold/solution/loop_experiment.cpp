@@ -1,5 +1,12 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
+#include "constants.h"
+#include "exit_network.h"
+#include "score_network.h"
+#include "sequence.h"
+
 using namespace std;
 
 LoopExperiment::LoopExperiment(vector<int> scope_context,

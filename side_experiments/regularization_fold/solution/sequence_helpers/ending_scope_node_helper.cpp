@@ -1,5 +1,10 @@
 #include "ending_scope_node_helper.h"
 
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 EndingScopeNodeActivateHelper::EndingScopeNodeActivateHelper(ScopeNode* scope_node) {
@@ -185,7 +190,7 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 
 		context.back().state_errors = &(this->inner_state_errors[0]);
 
-		next_starting_node_ids = this->starting_node_ids;
+		next_starting_node_ids = this->scope_node->starting_node_ids;
 		next_starting_node_ids.erase(next_starting_node_ids.begin());
 
 		next_starting_state_errors = vector<vector<double>*>(this->scope_node->starting_node_ids.size()-1);

@@ -1,10 +1,24 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
 const int BRANCH_EXPERIMENT_STEP_TYPE_ACTION = 0;
 const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 0;
 
-class BranchExperiment : public Experiment {
+class Scale;
+class ScopeHistory;
+class ScoreNetwork;
+class StateNetwork;
+class StateNetworkHistory;
+class Sequence;
+
+class BranchExperimentHistory;
+class BranchExperiment : public AbstractExperiment {
 public:
 	int num_steps;
 	std::vector<int> step_types;
@@ -18,7 +32,7 @@ public:
 	double seed_start_scale_factor;
 	std::vector<double> seed_state_vals_snapshot;
 	ScopeHistory* seed_context_history;
-	double seed_target_val;
+	double seed_target_val;		// set at run end
 	// only worry about starting score network for seed, as due to updates for inner scopes, seed may quickly become irrelevant
 
 	ScoreNetwork* starting_score_network;
@@ -52,7 +66,6 @@ public:
 					 double seed_start_scale_factor,
 					 std::vector<double> seed_state_vals_snapshot,
 					 ScopeHistory* seed_context_history,
-					 double seed_target_val,
 					 ScoreNetwork* existing_misguess_network);
 	~BranchExperiment();
 
@@ -72,8 +85,7 @@ public:
 	void explore_transform();
 
 	void seed_activate();
-	void seed_pre_activate_helper(int context_index,
-								  std::vector<double>& new_state_vals,
+	void seed_pre_activate_helper(std::vector<double>& new_state_vals,
 								  bool can_zero,
 								  std::vector<double>& obs_snapshots,
 								  std::vector<std::vector<double>>& state_vals_snapshots,
@@ -125,6 +137,10 @@ public:
 	void wrapup_transform();
 };
 
+class ExitNetworkHistory;
+class ScoreNetworkHistory;
+class SequenceHistory;
+
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	BranchExperiment* experiment;
@@ -137,7 +153,7 @@ public:
 	ScoreNetworkHistory* score_network_history;
 	ScoreNetworkHistory* misguess_network_history;
 	double score_network_output;
-	double misguess_network_output
+	double misguess_network_output;
 
 	std::vector<double> step_obs_snapshots;
 	std::vector<std::vector<double>> step_starting_new_state_vals_snapshots;

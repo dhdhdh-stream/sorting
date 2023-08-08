@@ -1,5 +1,18 @@
 #include "branch_experiment.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "constants.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "layer.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::experiment_pre_activate_helper(
@@ -31,10 +44,10 @@ void BranchExperiment::experiment_pre_activate_helper(
 		if (context_index < seen_it->second) {
 			seen_it->second = context_index;
 
-			int new_furthest_distance = this->scope_context.size()+2 - context_index;
+			int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
 			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 				if (state_it->second[n_index].size() != 0) {
-					for (s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 					}
 					score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
@@ -46,10 +59,10 @@ void BranchExperiment::experiment_pre_activate_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (state_it->second[node_id].size() == 0) {
-					int new_furthest_distance = this->scope_context.size()+2 - seen_it->second;
+					int new_furthest_distance = (int)this->scope_context.size()+2 - seen_it->second;
 					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
@@ -125,7 +138,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 										   BranchExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
 
-	history->existing_predicted_score = predicted_score;
+	history->existing_predicted_score = run_helper.predicted_score;
 
 	run_helper.experiment = this;
 	if (rand()%5 == 0) {
@@ -149,7 +162,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 									   context[c_index].scope_history);
 	}
 
-	history->starting_state_vals_snapshot = context.back().state_vals;
+	history->starting_state_vals_snapshot = *(context.back().state_vals);
 	history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
 	// no need to activate starting networks until backprop
@@ -169,19 +182,19 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	history->sequence_histories = vector<SequenceHistory*>(this->num_steps, NULL);
 
 	run_helper.experiment_on_path = false;
-	run_helper.experiment_context_index = this->scope_context.size()+1;
+	run_helper.experiment_context_index = (int)this->scope_context.size()+1;
 
 	vector<vector<double>> sequence_input_vals(this->num_steps);
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
-			double obs = flat_vals.begin();
+			double obs = flat_vals[0];
 
 			history->step_obs_snapshots[a_index] = obs;
 			history->step_starting_new_state_vals_snapshots[a_index] = run_helper.new_state_vals;
 
 			history->step_state_network_histories[a_index] = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
 			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-				if (history->can_zero && rand()%5 == 0) {
+				if (run_helper.can_zero && rand()%5 == 0) {
 					// do nothing
 				} else {
 					StateNetwork* network = this->step_state_networks[a_index][s_index];
@@ -207,7 +220,7 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 			history->step_score_network_histories[a_index] = score_network_history;
 			history->step_score_network_outputs[a_index] = score_network->output->acti_vals[0];
 
-			predicted_score += run_helper.scale_factor*score_network->output->acti_vals[0];
+			run_helper.predicted_score += run_helper.scale_factor*score_network->output->acti_vals[0];
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
@@ -243,8 +256,8 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 
 	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
 	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
+		history->exit_state_vals_snapshot[l_index] = *(context[
+			context.size() - (this->exit_depth+1) + l_index].state_vals);
 	}
 	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
@@ -310,8 +323,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			sequence_input_errors[a_index] = vector<double>(this->sequences[a_index]->input_types.size(), 0.0);
 			this->sequences[a_index]->backprop_pull(sequence_input_errors[a_index],
 													context,
-													sequence_input_errors,
-													run_helper);
+													sequence_input_errors);
 		}
 	}
 
@@ -433,9 +445,9 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 		}
 	}
 
-	this->starting_score_network->activate(this->starting_state_vals_snapshot,
-										   this->starting_new_state_vals_snapshot);
-	double starting_predicted_score = this->existing_predicted_score
+	this->starting_score_network->new_activate(history->starting_state_vals_snapshot,
+											   history->starting_new_state_vals_snapshot);
+	double starting_predicted_score = history->existing_predicted_score
 		+ run_helper.scale_factor*this->starting_score_network->output->acti_vals[0];
 	double starting_predicted_score_error = run_helper.target_val - starting_predicted_score;
 	double starting_score_network_target_max_update;
@@ -456,8 +468,8 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			starting_score_network_target_max_update);
 	}
 
-	this->starting_misguess_network->activate(this->starting_state_vals_snapshot,
-											  this->starting_new_state_vals_snapshot);
+	this->starting_misguess_network->new_activate(history->starting_state_vals_snapshot,
+												  history->starting_new_state_vals_snapshot);
 	double starting_misguess_error = run_helper.final_misguess - this->starting_misguess_network->output->acti_vals[0];
 	double starting_misguess_network_target_max_update;
 	if (this->state_iter <= 100000) {
@@ -477,13 +489,13 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			starting_misguess_network_target_max_update);
 	}
 
-	this->existing_misguess_network->activate(this->starting_state_vals_snapshot);
+	this->existing_misguess_network->activate(history->starting_state_vals_snapshot);
 
 	bool is_branch = false;
 	double score_val = run_helper.scale_factor*this->starting_score_network->output->acti_vals[0]
 		/ (solution->average_misguess*abs(run_helper.scale_factor));
 	if (score_val > 0.1) {
-		is_branch = true
+		is_branch = true;
 	} else if (score_val > -0.1) {
 		double misguess_diff = this->starting_misguess_network->output->acti_vals[0]
 			- this->existing_misguess_network->output->acti_vals[0];
@@ -494,7 +506,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	}
 	if (is_branch) {
 		this->new_average_score = 0.9999*this->new_average_score + 0.0001*run_helper.target_val;
-		this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*this->existing_predicted_score;
+		this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*history->existing_predicted_score;
 		this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*run_helper.final_misguess;
 		this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*this->existing_misguess_network->output->acti_vals[0];
 

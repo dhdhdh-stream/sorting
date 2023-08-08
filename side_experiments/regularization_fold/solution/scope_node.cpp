@@ -1,5 +1,10 @@
 #include "scope_node.h"
 
+#include "constants.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+
 using namespace std;
 
 ScopeNode::ScopeNode(Scope* parent,
@@ -79,7 +84,7 @@ ScopeNode::ScopeNode(ifstream& input_file,
 		this->input_indexes.push_back(stoi(input_index_line));
 
 		string input_target_layer_line;
-		getline(input_file, input_target_layer_line)
+		getline(input_file, input_target_layer_line);
 		this->input_target_layers.push_back(stoi(input_target_layer_line));
 
 		string input_target_index_line;
@@ -454,7 +459,7 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
-			double error = starting_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
+			double error = starting_state_errors[this->input_target_layers[i_index]]->at(this->input_target_indexes[i_index]);
 			if (this->input_has_transform[i_index]) {
 				error = this->input_transformations[i_index].backprop_forward(error);
 			}
@@ -475,8 +480,8 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->starting_node_ids[l_index] << endl;
 	}
 
-	output_file << this->input_index.size() << endl;
-	for (int i_index = 0; i_index < (int)this->input_index.size(); i_index++) {
+	output_file << this->input_indexes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		output_file << this->input_indexes[i_index] << endl;
 		output_file << this->input_target_layers[i_index] << endl;
 		output_file << this->input_target_indexes[i_index] << endl;

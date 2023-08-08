@@ -1,5 +1,15 @@
 #include "sequence.h"
 
+#include "abstract_experiment.h"
+#include "action_node.h"
+#include "constants.h"
+#include "ending_scope_node_helper.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 Sequence::Sequence(vector<Scope*> scopes,
@@ -78,7 +88,7 @@ void Sequence::activate(vector<double>& input_vals,
 	vector<vector<double>> inner_state_vals(this->starting_node_ids.size());
 	vector<vector<bool>> inner_states_initialized(this->starting_node_ids.size());
 	inner_state_vals[0] = vector<double>(this->scopes[0]->num_states, 0.0);
-	inner_states_initialized[0] = vector<double>(this->scopes[0]->num_states, false);
+	inner_states_initialized[0] = vector<bool>(this->scopes[0]->num_states, false);
 	Scope* curr_scope = this->scopes[0];
 	for (int l_index = 0; l_index < (int)this->starting_node_ids.size()-1; l_index++) {
 		ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->starting_node_ids[l_index]];
@@ -109,7 +119,7 @@ void Sequence::activate(vector<double>& input_vals,
 	temp_context.back().states_initialized = inner_states_initialized[0];
 	inner_states_initialized.erase(inner_states_initialized.begin());
 
-	history->node_histories = vector<vector<AbstractNetworkHistory*>>(this->scopes.size());
+	history->node_histories = vector<vector<AbstractNodeHistory*>>(this->scopes.size());
 
 	if (this->starting_node_ids.size() > 1) {
 		vector<int> starting_node_ids_copy = this->starting_node_ids;
@@ -308,14 +318,16 @@ void Sequence::backprop(vector<double>& input_errors,
 					if (this->scopes[l_index]->nodes[this->node_ids[l_index][n_index]]->type == NODE_TYPE_ACTION) {
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[l_index][n_index];
 						ActionNode* action_node = (ActionNode*)action_node_history->node;
-						action_node->backprop(context,
+						vector<BackwardContextLayer> empty_context;
+						action_node->backprop(empty_context,
 											  cumulative_scale_factor_error,
 											  run_helper,
 											  action_node_history);
 					} else {
 						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[l_index][n_index];
 						ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-						scope_node->backprop(context,
+						vector<BackwardContextLayer> empty_context;
+						scope_node->backprop(empty_context,
 											 cumulative_scale_factor_error,
 											 run_helper,
 											 scope_node_history);

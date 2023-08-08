@@ -1,6 +1,11 @@
 #ifndef FAMILY_DEFINITION_H
 #define FAMILY_DEFINITION_H
 
+#include <fstream>
+#include <vector>
+
+#include "transformation.h"
+
 class FamilyDefinition {
 public:
 	int id;
@@ -9,8 +14,9 @@ public:
 	std::vector<Transformation> transformations;
 	std::vector<double> pcc;
 
-	FamilyDefinition();
-	FamilyDefinition(std::ifstream& input_file);
+	FamilyDefinition(int id);
+	FamilyDefinition(std::ifstream& input_file,
+					 int id);
 
 	void save(std::ofstream& output_file);
 };

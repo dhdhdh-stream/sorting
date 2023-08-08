@@ -1,6 +1,12 @@
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 
+#include <fstream>
+#include <vector>
+
+class Layer;
+
+class StateNetworkHistory;
 class StateNetwork {
 public:
 	Layer* obs_input;	// size always 1 for sorting
@@ -119,8 +125,6 @@ public:
 	void update_lasso_weights(int new_furthest_distance);
 
 	void clean(int num_new_states);
-	void finalize_new_state(int layer_num_new_states,
-							int new_total_states);
 	void finalize_new_state(int new_state_index,
 							int new_index);
 	void finalize_new_input(int new_index);
@@ -133,7 +137,7 @@ private:
 
 class StateNetworkHistory {
 public:
-	StateNetworkHistory* history;
+	StateNetwork* network;
 
 	std::vector<double> hidden_history;
 

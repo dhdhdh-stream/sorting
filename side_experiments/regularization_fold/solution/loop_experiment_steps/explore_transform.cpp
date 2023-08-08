@@ -1,5 +1,14 @@
 #include "loop_experiment.h"
 
+#include "abstract_node.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void LoopExperiment::explore_transform() {
@@ -24,18 +33,14 @@ void LoopExperiment::explore_transform() {
 
 	this->scale_mod = new Scale();
 
-	Scope* exit_scope = solution->scopes[this->scope_context[this->scope_context.size() - (this->exit_depth+1)]];
+	Scope* exit_scope = solution->scopes[this->scope_context.back()];
 	this->exit_networks = vector<ExitNetwork*>(exit_scope->num_states);
-	vector<int> exit_context_sizes(this->exit_depth+1);
-	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		Scope* scope = solution->scopes[this->scope_context[
-			this->scope_context.size() - (this->exit_depth+1) + l_index]];
-		exit_context_sizes[l_index] = scope->num_states;
-	}
+	vector<int> exit_context_sizes(1);
+	exit_context_sizes[0] = exit_scope->num_states;
 	for (int e_index = 0; e_index < exit_scope->num_states; e_index++) {
-		this->exit_networks = new ExitNetwork(exit_context_sizes,
-											  NUM_NEW_STATES,
-											  20);
+		this->exit_networks[e_index] = new ExitNetwork(exit_context_sizes,
+													   NUM_NEW_STATES,
+													   20);
 	}
 	this->exit_network_impacts = vector<double>(exit_scope->num_states, 0.0);
 

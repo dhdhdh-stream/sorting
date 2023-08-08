@@ -1,12 +1,28 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
+#include <map>
+#include <set>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+#include "transformation.h"
+#include "transformation_helper.h"
+
 const int SEQUENCE_INPUT_TYPE_NONE = 0;
 const int SEQUENCE_INPUT_TYPE_LOCAL = 1;
 const int SEQUENCE_INPUT_TYPE_PREVIOUS = 2;
 const int SEQUENCE_INPUT_TYPE_LAST_SEEN = 3;
 // if empty (i.e., don't initialize), don't include in input_types, etc.
 
+class AbstractExperiment;
+class AbstractNodeHistory;
+class BranchExperimentHistory;
+class Scope;
+class StateNetwork;
+
+class SequenceHistory;
 class Sequence {
 public:
 	/**
@@ -123,7 +139,7 @@ public:
 					   RunHelper& run_helper);
 	void activate(std::vector<double>& input_vals,
 				  std::vector<double>& flat_vals,
-				  std::vector<ForwardContextLayer>& context,
+				  RunHelper& run_helper,
 				  SequenceHistory* history);
 	void activate_reset(std::vector<double>& input_vals,
 						std::vector<ForwardContextLayer>& context,

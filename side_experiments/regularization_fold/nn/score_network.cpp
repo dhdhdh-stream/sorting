@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
+#include "layer.h"
+
 using namespace std;
 
 void ScoreNetwork::construct() {
@@ -323,7 +326,7 @@ void ScoreNetwork::finalize_new_state(int new_state_index) {
 }
 
 void ScoreNetwork::cleanup_new_state() {
-	this->hidden->score_hidden_cleanup_new_state();
+	this->hidden->score_hidden_cleanup_new_states();
 
 	this->new_state_size = 0;
 

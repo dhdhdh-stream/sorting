@@ -1,5 +1,18 @@
 #include "loop_experiment.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "constants.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "layer.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void LoopExperiment::clean_pre_activate_helper(
@@ -37,11 +50,11 @@ void LoopExperiment::clean_pre_activate_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (state_it != this->state_networks.end()
-						&& node_id < state_it->second.size()
-						&& state_it->second[n_index].size() != 0) {
+						&& node_id < (int)state_it->second.size()
+						&& (int)state_it->second[node_id].size() != 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 					action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
@@ -85,7 +98,7 @@ void LoopExperiment::clean_pre_activate_helper(
 				temp_scope_context.push_back(scope_id);
 				temp_node_context.push_back(scope_node->id);
 
-				if (on_path,
+				if (on_path
 						&& i_index == (int)scope_history->node_histories.size()-1
 						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
 					// do nothing
@@ -135,8 +148,8 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 		if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
 			int context_size_diff = (int)context.size() - (int)this->scope_context.size() - 1;
 			for (int cc_index = 0; cc_index < (int)this->corr_calc_scope_depths.size(); cc_index++) {
-				if (c_index == context.size()-1 - this->corr_calc_scope_depths[cc_index]) {
-					double curr_val = context[context.size()-1 - this->corr_calc_scope_depths[cc_index]].state_vals->at(this->corr_calc_input_indexes[cc_index]);
+				if (c_index == (int)context.size()-1 - this->corr_calc_scope_depths[cc_index]) {
+					double curr_val = context[(int)context.size()-1 - this->corr_calc_scope_depths[cc_index]].state_vals->at(this->corr_calc_input_indexes[cc_index]);
 					this->corr_calc_average_vals[cc_index] = 0.9999*this->corr_calc_average_vals[cc_index] + 0.0001*curr_val;
 					double curr_variance = (this->corr_calc_average_vals[cc_index] - curr_val)*(this->corr_calc_average_vals[cc_index] - curr_val);
 					this->corr_calc_variances[cc_index] = 0.9999*this->corr_calc_variances[cc_index] + 0.0001*curr_variance;
@@ -161,9 +174,9 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 	int loop_iters = rand()%7;
 
 	run_helper.experiment_on_path = false;
-	run_helper.experiment_context_index = this->scope_context.size()+1;
+	run_helper.experiment_context_index = (int)this->scope_context.size()+1;
 
-	run_helper.experiment_context_start_index = (int)context.size() - this->scope_context.size();
+	run_helper.experiment_context_start_index = (int)context.size() - (int)this->scope_context.size();
 	// don't include last layer, which is from ActionNode
 	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
 		run_helper.experiment_helper_scope_context.push_back(context[c_index].scope_id);
@@ -241,15 +254,12 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 								   context,
 								   empty_previous_vals);
 
-	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
-	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
-	}
+	history->exit_state_vals_snapshot = vector<vector<double>>(1);
+	history->exit_state_vals_snapshot[0] = *(context.back().state_vals);
 	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
+	vector<double>* outer_state_vals = context.back().state_vals;
+	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
 
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
@@ -275,7 +285,7 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 									RunHelper& run_helper,
 									LoopExperimentHistory* history) {
-	vector<double>* outer_state_errors = context[context.size() - (this->exit_depth+1)].state_errors;
+	vector<double>* outer_state_errors = context.back().state_errors;
 
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (history->exit_network_histories[s_index] != NULL) {
@@ -293,8 +303,7 @@ void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 	vector<vector<double>> empty_previous_errors;
 	this->sequence->backprop_pull(input_errors,
 								  context,
-								  empty_previous_errors,
-								  run_helper);
+								  empty_previous_errors);
 
 	double halt_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->halt_score_network_output;
 	double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
@@ -315,7 +324,7 @@ void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 		history->ending_new_state_vals_snapshot,
 		history->halt_misguess_network_history);
 
-	for (int i_index = history->sequence_histories.size()-1; i_index >= 0; i_index--) {
+	for (int i_index = (int)history->sequence_histories.size()-1; i_index >= 0; i_index--) {
 		run_helper.scale_factor *= this->scale_mod->weight;
 
 		double inner_scale_factor_error = 0.0;
@@ -332,7 +341,7 @@ void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 		double best_halt_score = history->halt_score_snapshots.back();
 		double best_halt_misguess = history->halt_misguess_snapshots.back();
 		// back to front
-		for (int ii_index = history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
 			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
 			if (score_val > 0.1) {

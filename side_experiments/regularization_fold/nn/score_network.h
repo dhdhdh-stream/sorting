@@ -1,6 +1,12 @@
 #ifndef SCORE_NETWORK_H
 #define SCORE_NETWORK_H
 
+#include <fstream>
+#include <vector>
+
+class Layer;
+
+class ScoreNetworkHistory;
 class ScoreNetwork {
 public:
 	int state_size;

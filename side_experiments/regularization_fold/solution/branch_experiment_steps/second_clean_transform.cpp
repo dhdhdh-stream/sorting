@@ -1,5 +1,16 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "class_definition.h"
+#include "exit_network.h"
+#include "family_definition.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::second_clean_transform() {
@@ -38,7 +49,7 @@ void BranchExperiment::second_clean_transform() {
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-			int input_size = this->sequences[a_index]->input_types.size();
+			int input_size = (int)this->sequences[a_index]->input_types.size();
 			for (int i_index = 0; i_index < input_size; i_index++) {
 				bool new_input_needed = false;
 
@@ -101,17 +112,17 @@ void BranchExperiment::second_clean_transform() {
 
 					this->sequences[a_index]->input_index_translations[i_index] = new_scope_input_index;
 				} else {
-					if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] < this->scope_context.size()+2) {
+					if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] < (int)this->scope_context.size()+2) {
 						new_input_needed = true;
 
 						FamilyDefinition* new_family;
 						if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_NONE) {
 							Scope* curr_scope = this->sequences[a_index]->scopes[0];
-							for (int l_index = 0; l_index < this->sequences[a_index]->input_init_target_layers[i_index]; l_index++) {
+							for (int l_index = 0; l_index < this->sequences[a_index]->input_target_layers[i_index]; l_index++) {
 								ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[this->sequences[a_index]->starting_node_ids[l_index]];
 								curr_scope = solution->scopes[scope_node->inner_scope_id];
 							}
-							new_family_id = curr_scope->state_family_ids[this->sequences[a_index]->input_init_target_indexes[i_index]];
+							new_family_id = curr_scope->state_family_ids[this->sequences[a_index]->input_target_indexes[i_index]];
 							new_family = solution->families[new_family_id];
 						} else if (this->sequences[a_index]->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 							int continue_scope_id = this->scope_context[this->scope_context.size()-1 - this->sequences[a_index]->input_local_scope_depths[i_index]];
@@ -124,13 +135,13 @@ void BranchExperiment::second_clean_transform() {
 							new_family_id = this->new_state_family_ids[new_scope_input_index];
 							new_family = solution->families[new_family_id];
 						} else {
-							ClassDefinition* last_seen_class = solution->classes[this->input_last_seen_class_ids];
+							ClassDefinition* last_seen_class = solution->classes[this->sequences[a_index]->input_last_seen_class_ids[i_index]];
 							new_family_id = last_seen_class->family_id;
 							new_family = solution->families[new_family_id];
 						}
 
-						ClassDefinition* new_class = new ClassDefinition(new_family_id);
-						new_class->id = solution->classes.size();
+						ClassDefinition* new_class = new ClassDefinition((int)solution->classes.size(),
+																		 new_family_id);
 						solution->classes.push_back(new_class);
 
 						for (int cc_index = 0; cc_index < (int)this->corr_calc_scope_depths.size(); cc_index++) {
@@ -151,11 +162,11 @@ void BranchExperiment::second_clean_transform() {
 
 								if (new_existing_index == -1) {
 									existing_family->similar_family_ids.push_back(new_family_id);
-									existing_family->transformations.push_back(this->sequences[a_index]->new_transformations[cc_index][i_index]);
+									existing_family->transformations.push_back(this->sequences[a_index]->new_transformations[cc_index][i_index].transformation);
 									existing_family->pcc.push_back(pcc);
 
 									new_family->similar_family_ids.push_back(existing_family->id);
-									new_family->transformations.push_back(Transformation(this->sequences[a_index]->new_transformations[cc_index][i_index]));
+									new_family->transformations.push_back(this->sequences[a_index]->new_transformations[cc_index][i_index].reverse());
 									new_family->pcc.push_back(pcc);
 								} else {
 									if (abs(pcc) > abs(new_family->pcc[new_existing_index])) {
@@ -166,10 +177,10 @@ void BranchExperiment::second_clean_transform() {
 												break;
 											}
 										}
-										existing_family->transformations[existing_existing_index] = this->sequences[a_index]->new_transformations[cc_index][i_index];
+										existing_family->transformations[existing_existing_index] = this->sequences[a_index]->new_transformations[cc_index][i_index].transformation;
 										existing_family->pcc[existing_existing_index] = pcc;
 
-										new_family->transformations[new_existing_index] = Transformation(this->sequences[a_index]->new_transformations[cc_index][i_index]);
+										new_family->transformations[new_existing_index] = this->sequences[a_index]->new_transformations[cc_index][i_index].reverse();
 										new_family->pcc[new_existing_index] = pcc;
 									}
 								}
@@ -179,7 +190,7 @@ void BranchExperiment::second_clean_transform() {
 						if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] == 0) {
 							this->new_num_states++;
 							this->new_state_initialized_locally.push_back(false);
-							this->new_state_family_id.push_back(new_family_id);
+							this->new_state_family_ids.push_back(new_family_id);
 							this->new_state_default_class_ids.push_back(-1);
 							this->last_layer_indexes.push_back(solution->scopes[this->scope_context.back()]->num_states);	// new state not added yet
 							this->last_layer_target_indexes.push_back(this->new_num_states-1);
@@ -193,8 +204,8 @@ void BranchExperiment::second_clean_transform() {
 														   new_class->id);
 
 							// special case last layer, as was skipped due to from ActionNode
-							this->sequences[a_index]->scope_additions_needed[i_index].push_back(this->scope_context.back());
-						} else if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] == this->scope_context.size()+1) {
+							this->sequences[a_index]->scope_additions_needed[i_index].insert(this->scope_context.back());
+						} else if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] == (int)this->scope_context.size()+1) {
 							this->new_num_states++;
 							this->new_state_initialized_locally.push_back(true);
 							this->new_state_family_ids.push_back(new_family_id);
@@ -220,7 +231,7 @@ void BranchExperiment::second_clean_transform() {
 																		   new_class->id);
 
 							// special case last layer, as was skipped due to from ActionNode
-							this->sequences[a_index]->scope_additions_needed[i_index].push_back(this->scope_context.back());
+							this->sequences[a_index]->scope_additions_needed[i_index].insert(this->scope_context.back());
 						}
 					}
 				}
@@ -298,12 +309,11 @@ void BranchExperiment::second_clean_transform() {
 	}
 
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-		if (this->new_state_furthest_layer_needed_in[s_index] < this->scope_context.size()+2) {
-			FamilyDefinition* new_family = new FamilyDefinition();
-			new_family->id = solution->families.size();
+		if (this->new_state_furthest_layer_needed_in[s_index] < (int)this->scope_context.size()+2) {
+			FamilyDefinition* new_family = new FamilyDefinition((int)solution->families.size());
 			solution->families.push_back(new_family);
-			ClassDefinition* new_class = new ClassDefinition(new_family->id);
-			new_class->id = solution->classes.size();
+			ClassDefinition* new_class = new ClassDefinition((int)solution->classes.size(),
+															 new_family->id);
 			solution->classes.push_back(new_class);
 
 			for (int cc_index = 0; cc_index < (int)this->corr_calc_scope_depths.size(); cc_index++) {
@@ -326,7 +336,7 @@ void BranchExperiment::second_clean_transform() {
 
 			for (int a_index = 0; a_index < this->num_steps; a_index++) {
 				if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-					for (int i_index = 0; i_index < this->sequences[a_index]->input_types.size(); i_index++) {
+					for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 						double pcc = this->sequences[a_index]->corr_calc_new_covariances[s_index][i_index]
 							/ this->sequences[a_index]->corr_calc_state_variances[s_index]
 							/ this->sequences[a_index]->corr_calc_input_variances[s_index][i_index];
@@ -346,11 +356,11 @@ void BranchExperiment::second_clean_transform() {
 
 							if (new_input_index == -1) {
 								new_family->similar_family_ids.push_back(input_family_id);
-								new_family->transformations.push_back(this->sequences[a_index]->new_new_transformations[s_index][i_index]);
+								new_family->transformations.push_back(this->sequences[a_index]->new_new_transformations[s_index][i_index].transformation);
 								new_family->pcc.push_back(pcc);
 
 								input_family->similar_family_ids.push_back(new_family->id);
-								input_family->transformations.push_back(Transformation(this->sequences[a_index]->new_new_transformations[s_index][i_index]));
+								input_family->transformations.push_back(this->sequences[a_index]->new_new_transformations[s_index][i_index].reverse());
 								input_family->pcc.push_back(pcc);
 							} else {
 								if (abs(pcc) > abs(input_family->pcc[new_input_index])) {
@@ -361,10 +371,10 @@ void BranchExperiment::second_clean_transform() {
 											break;
 										}
 									}
-									new_family->transformations[new_state_index] = this->sequences[a_index]->new_new_transformations[s_index][i_index];
+									new_family->transformations[new_state_index] = this->sequences[a_index]->new_new_transformations[s_index][i_index].transformation;
 									new_family->pcc[new_state_index] = pcc;
 
-									input_family->transformations[new_input_index] = Transformation(this->sequences[a_index]->new_new_transformations[s_index][i_index]);
+									input_family->transformations[new_input_index] = this->sequences[a_index]->new_new_transformations[s_index][i_index].reverse();
 									input_family->pcc[new_input_index] = pcc;
 								}
 							}
@@ -389,8 +399,8 @@ void BranchExperiment::second_clean_transform() {
 											   new_class->id);
 
 				// special case last layer, as was skipped due to from ActionNode
-				this->scope_additions_needed[s_index].push_back(this->scope_context.back());
-			} else if (this->new_state_furthest_layer_needed_in[s_index] == this->scope_context.size()+1) {
+				this->scope_additions_needed[s_index].insert(this->scope_context.back());
+			} else if (this->new_state_furthest_layer_needed_in[s_index] == (int)this->scope_context.size()+1) {
 				this->new_num_states++;
 				this->new_state_initialized_locally.push_back(true);
 				this->new_state_family_ids.push_back(new_family->id);
@@ -412,7 +422,7 @@ void BranchExperiment::second_clean_transform() {
 															   new_class->id);
 
 				// special case last layer, as was skipped due to from ActionNode
-				this->scope_additions_needed[s_index].push_back(this->scope_context.back());
+				this->scope_additions_needed[s_index].insert(this->scope_context.back());
 			}
 
 			for (set<pair<int, int>>::iterator it = this->scope_node_additions_needed[s_index].begin();
@@ -429,7 +439,7 @@ void BranchExperiment::second_clean_transform() {
 				}
 			}
 
-			for (set<pair<int, int>::iterator it = this->scope_node_additions_needed[s_index].begin();
+			for (set<pair<int, int>>::iterator it = this->scope_node_additions_needed[s_index].begin();
 					it != this->scope_node_additions_needed[s_index].end(); it++) {
 				Scope* outer_scope = solution->scopes[(*it).first];
 				ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[(*it).second];
@@ -489,12 +499,12 @@ void BranchExperiment::second_clean_transform() {
 						if (this->step_state_networks[a_index][is_index] != NULL) {
 							this->step_state_networks[a_index][is_index]->finalize_new_state(
 								s_index,
-								this->num_new_states-1);
+								this->new_num_states-1);
 						}
 					}
 
 					if (this->step_state_networks[a_index][s_index] != NULL) {
-						this->new_action_node_target_indexes[a_index].push_back(this->num_new_states-1);
+						this->new_action_node_target_indexes[a_index].push_back(this->new_num_states-1);
 						this->new_action_node_state_networks[a_index].push_back(this->step_state_networks[a_index][s_index]);
 					}
 
@@ -509,7 +519,7 @@ void BranchExperiment::second_clean_transform() {
 				if (this->exit_networks[e_index] != NULL) {
 					this->exit_networks[e_index]->finalize_new_state(this->exit_depth,
 																	 s_index,
-																	 this->scope_context.back()->num_states-1);
+																	 solution->scopes[this->scope_context.back()]->num_states-1);
 				}
 			}
 
@@ -519,7 +529,7 @@ void BranchExperiment::second_clean_transform() {
 					for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 							it != this->sequences[a_index]->state_networks.end(); it++) {
 						Scope* scope = solution->scopes[it->first];
-						for (int n_index = 0; n_index < it->second.size(); n_index++) {
+						for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
 							for (int i_index = 0; i_index < (int)it->second[n_index].size(); i_index++) {
 								if (it->second[n_index][i_index] != NULL) {
 									it->second[n_index][i_index]->finalize_new_state(
@@ -537,7 +547,7 @@ void BranchExperiment::second_clean_transform() {
 								if (this->sequences[a_index]->step_state_networks[ia_index][i_index] != NULL) {
 									this->sequences[a_index]->step_state_networks[ia_index][i_index]->finalize_new_state(
 										s_index,
-										this->num_new_states-1);
+										this->new_num_states-1);
 								}
 							}
 						}

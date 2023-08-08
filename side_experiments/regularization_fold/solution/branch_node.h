@@ -18,8 +18,7 @@
 #include <vector>
 
 #include "abstract_node.h"
-#include "backward_context_layer.h"
-#include "forward_context_layer.h"
+#include "context_layer.h"
 #include "run_helper.h"
 #include "score_network.h"
 
@@ -91,6 +90,6 @@ public:
 
 	BranchNodeHistory(BranchNode* node);
 	~BranchNodeHistory();
-}
+};
 
 #endif /* BRANCH_NODE_H */

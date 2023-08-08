@@ -15,6 +15,17 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+#include <fstream>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class ScoreNetwork;
+class StateNetwork;
+
+class ScopeHistory;
 class Scope {
 public:
 	int id;
@@ -95,11 +106,27 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
+class AbstractNodeHistory;
+class ScoreNetworkHistory;
+
 class ScopeHistory {
 public:
 	Scope* scope;
 
-	std::vector<StateNetworkHistory*> starting_state_network_histories;
+	std::vector<std::vector<double>> iter_state_vals_snapshots;
+	std::vector<ScoreNetworkHistory*> continue_score_network_histories;
+	std::vector<double> continue_score_network_outputs;
+	std::vector<ScoreNetworkHistory*> continue_misguess_network_histories;
+	std::vector<double> continue_misguess_network_outputs;
+	std::vector<double> halt_score_snapshots;
+	std::vector<double> halt_misguess_snapshots;
+
+	std::vector<double> ending_state_vals_snapshot;
+
+	ScoreNetworkHistory* halt_score_network_history;
+	double halt_score_network_output;
+	ScoreNetworkHistory* halt_misguess_network_history;
+	double halt_misguess_network_output;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 

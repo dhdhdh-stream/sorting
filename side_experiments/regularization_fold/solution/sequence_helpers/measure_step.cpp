@@ -1,5 +1,12 @@
 #include "sequence.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "layer.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "state_network.h"
+
 using namespace std;
 
 void Sequence::measure_pre_activate_helper(vector<double>& input_vals,

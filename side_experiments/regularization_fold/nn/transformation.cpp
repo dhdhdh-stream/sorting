@@ -9,12 +9,7 @@ Transformation::Transformation() {
 	this->weight = 0.0;
 }
 
-Transformation::Transformation(Transformation& reverse) {
-	this->scale = 1.0/reverse.scale;
-	this->weight = -reverse.weight/reverse.scale;
-}
-
-Transformation::Transformation(ifstream& save_file) {
+Transformation::Transformation(ifstream& input_file) {
 	string scale_line;
 	getline(input_file, scale_line);
 	this->scale = stod(scale_line);
@@ -40,7 +35,7 @@ double Transformation::backprop_forward(double error_in) {
 	return error_in/this->scale;
 }
 
-void Transformation::save(ofstream& save_file) {
-	save_file << this->scale << endl;
-	save_file << this->weight < endl;
+void Transformation::save(ofstream& output_file) {
+	output_file << this->scale << endl;
+	output_file << this->weight << endl;
 }

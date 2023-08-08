@@ -1,5 +1,10 @@
 #include "exit_node.h"
 
+#include "constants.h"
+#include "exit_network.h"
+#include "layer.h"
+#include "scope.h"
+
 using namespace std;
 
 ExitNode::ExitNode(Scope* parent,
@@ -78,8 +83,8 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 						ExitNodeHistory* history) {
 	history->state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
 	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		history->state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
+		history->state_vals_snapshot[l_index] = *(context[
+			context.size() - (this->exit_depth+1) + l_index].state_vals);
 	}
 
 	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;

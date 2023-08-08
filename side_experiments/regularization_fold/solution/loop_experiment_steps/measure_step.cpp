@@ -1,5 +1,18 @@
 #include "loop_experiment.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "constants.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "layer.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void LoopExperiment::measure_pre_activate_helper(
@@ -16,9 +29,9 @@ void LoopExperiment::measure_pre_activate_helper(
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
-				if (it != this->state_networks.end()
-						&& node_id < (int)it->second.size()
-						&& it->second[node_id].size() != 0) {
+				if (state_it != this->state_networks.end()
+						&& node_id < (int)state_it->second.size()
+						&& state_it->second[node_id].size() != 0) {
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 					action_node_history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
@@ -138,14 +151,11 @@ void LoopExperiment::measure_activate(vector<double>& flat_vals,
 								   context,
 								   empty_previous_vals);
 
-	vector<vector<double>> exit_state_vals_snapshot(this->exit_depth+1);
-	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		exit_state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
-	}
+	vector<vector<double>> exit_state_vals_snapshot(1);
+	exit_state_vals_snapshot[0] = *(context.back().state_vals);
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
+	vector<double>* outer_state_vals = context.back().state_vals;
+	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
 
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (outer_states_initialized->at(s_index)) {

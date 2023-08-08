@@ -1,5 +1,12 @@
 #include "branch_experiment.h"
 
+#include "globals.h"
+#include "layer.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::first_clean_transform() {
@@ -8,13 +15,13 @@ void BranchExperiment::first_clean_transform() {
 			int input_size = (int)this->sequences[a_index]->input_types.size();
 			for (int i_index = 0; i_index < input_size; i_index++) {
 				if (this->sequences[a_index]->input_is_new_class[i_index]) {
-					this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = this->scope_context.size()+2;
+					this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = (int)this->scope_context.size()+2;
 					this->sequences[a_index]->input_steps_needed_in[i_index] = vector<bool>(this->num_steps, false);
 
 					for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.begin();
 							it != this->sequences[a_index]->state_networks.end(); it++) {
-						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in.find(it->first);
-						vector<bool> steps_seen_in = this->scope_steps_seen_in.find(it->first);
+						int furthest_layer_seen_in = this->scope_furthest_layer_seen_in[it->first];
+						vector<bool> steps_seen_in = this->scope_steps_seen_in[it->first];
 						int num_new_states = this->layer_num_new_states[furthest_layer_seen_in];
 
 						for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
@@ -66,8 +73,8 @@ void BranchExperiment::first_clean_transform() {
 							if (sum_impact > 0.1) {
 								this->sequences[a_index]->step_state_networks[ia_index][i_index]->clean(this->layer_num_new_states.back());
 
-								if (this->scopes.size()+1 < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
-									this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = this->scopes.size()+1;
+								if ((int)this->scope_context.size()+1 < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
+									this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = (int)this->scope_context.size()+1;
 								}
 							} else {
 								delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
@@ -83,14 +90,14 @@ void BranchExperiment::first_clean_transform() {
 	this->scope_node_additions_needed = vector<set<pair<int, int>>>(NUM_NEW_STATES);
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-			int input_size = this->sequences[a_index]->input_types.size();
+			int input_size = (int)this->sequences[a_index]->input_types.size();
 			this->sequences[a_index]->scope_node_additions_needed = vector<set<pair<int, int>>>(input_size);
 		}
 	}
 
 	for (int l_index = 0; l_index < (int)this->scope_context.size()-1; l_index++) {
 		Scope* scope = solution->scopes[this->scope_context[l_index]];
-		ScopeNode* scope_node = scope->nodes[this->node_context[l_index]];
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[l_index]];
 		for (int s_index = 0; s_index < scope->num_states; s_index++) {
 			bool passed_in = false;
 			for (int i_index = 0; i_index < (int)scope_node->input_indexes.size(); i_index++) {
@@ -101,7 +108,7 @@ void BranchExperiment::first_clean_transform() {
 			}
 
 			if (!passed_in) {
-				this->corr_calc_scope_depths.push_back(this->scope_context.size()-1 - l_index);
+				this->corr_calc_scope_depths.push_back((int)this->scope_context.size()-1 - l_index);
 				this->corr_calc_input_indexes.push_back(s_index);
 				this->corr_calc_average_vals.push_back(0.0);
 				this->corr_calc_variances.push_back(0.0);
@@ -113,7 +120,7 @@ void BranchExperiment::first_clean_transform() {
 
 				for (int a_index = 0; a_index < this->num_steps; a_index++) {
 					if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-						int input_size = this->sequences[a_index]->input_types.size();
+						int input_size = (int)this->sequences[a_index]->input_types.size();
 						this->sequences[a_index]->corr_calc_new_average_vals.push_back(vector<double>(input_size, 0.0));
 						this->sequences[a_index]->corr_calc_new_variances.push_back(vector<double>(input_size, 0.0));
 						this->sequences[a_index]->corr_calc_covariances.push_back(vector<double>(input_size, 0.0));
@@ -138,7 +145,7 @@ void BranchExperiment::first_clean_transform() {
 
 			for (int a_index = 0; a_index < this->num_steps; a_index++) {
 				if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-					int input_size = this->sequences[a_index]->input_types.size();
+					int input_size = (int)this->sequences[a_index]->input_types.size();
 					this->sequences[a_index]->corr_calc_new_average_vals.push_back(vector<double>(input_size, 0.0));
 					this->sequences[a_index]->corr_calc_new_variances.push_back(vector<double>(input_size, 0.0));
 					this->sequences[a_index]->corr_calc_covariances.push_back(vector<double>(input_size, 0.0));
@@ -150,9 +157,9 @@ void BranchExperiment::first_clean_transform() {
 
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-			int input_size = this->sequences[a_index]->input_types.size();
-			this->sequences[a_index]->corr_calc_state_average_vals = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
-			this->sequences[a_index]->corr_calc_state_variances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
+			int input_size = (int)this->sequences[a_index]->input_types.size();
+			this->sequences[a_index]->corr_calc_state_average_vals = vector<double>(NUM_NEW_STATES, 0.0);
+			this->sequences[a_index]->corr_calc_state_variances = vector<double>(NUM_NEW_STATES, 0.0);
 			this->sequences[a_index]->corr_calc_input_average_vals = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
 			this->sequences[a_index]->corr_calc_input_variances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));
 			this->sequences[a_index]->corr_calc_new_covariances = vector<vector<double>>(NUM_NEW_STATES, vector<double>(input_size, 0.0));

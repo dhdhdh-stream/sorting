@@ -1,6 +1,12 @@
 #ifndef EXIT_NETWORK_H
 #define EXIT_NETWORK_H
 
+#include <fstream>
+#include <vector>
+
+class Layer;
+
+class ExitNetworkHistory;
 class ExitNetwork {
 public:
 	std::vector<int> context_indexes;
@@ -21,7 +27,7 @@ public:
 	double hidden_average_max_update;
 	double output_average_max_update;
 
-	ExitNetwork(std::vector<std::vector<int>>& context_sizes,
+	ExitNetwork(std::vector<int>& context_sizes,
 				int new_state_size,
 				int hidden_size);
 	ExitNetwork(ExitNetwork* original);

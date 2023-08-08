@@ -1,6 +1,12 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
+#include <map>
+#include <vector>
+
+class AbstractExperiment;
+class ActionNode;
+
 class RunHelper {
 public:
 	double predicted_score;
@@ -26,6 +32,7 @@ public:
 
 	ActionNode* explore_node;
 	AbstractExperiment* explore_experiment;
+	double explore_existing_score;
 
 	AbstractExperiment* experiment;
 	bool can_zero;

@@ -3,6 +3,18 @@
 #include <thread>
 #include <random>
 
+#include "abstract_experiment.h"
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "loop_experiment.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "utilities.h"
+
 using namespace std;
 
 default_random_engine generator;
@@ -53,7 +65,7 @@ int main(int argc, char* argv[]) {
 	// solution_save_file.close();
 
 	int iter_index = 0;
-	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
+	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
 	while (true) {
 		// Problem problem;
 		vector<double> flat_vals;
@@ -137,28 +149,39 @@ int main(int argc, char* argv[]) {
 		run_helper.final_misguess = (run_helper.target_val - run_helper.predicted_score)*(run_helper.target_val - run_helper.predicted_score);
 
 		if (run_helper.explore_phase == EXPLORE_PHASE_EXPLORE) {
-			double surprise = run_helper.target_val - run_helper.explore_experiment->seed_start_predicted_score;
+			double surprise = run_helper.target_val - run_helper.explore_existing_score;
 
 			if (surprise > run_helper.explore_node->explore_best_surprise) {
 				if (run_helper.explore_node->explore_best_experiment != NULL) {
-					for (int a_index = 0; a_index < run_helper.explore_node->explore_best_experiment->num_steps) {
-						if (run_helper.explore_node->explore_best_experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-							delete run_helper.explore_node->explore_best_experiment->sequences[a_index];
+					if (run_helper.explore_node->explore_best_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.explore_node->explore_best_experiment;
+						for (int a_index = 0; a_index < branch_experiment->num_steps; a_index++) {
+							if (branch_experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
+								delete branch_experiment->sequences[a_index];
+							}
 						}
+						delete branch_experiment->seed_context_history;
+						delete branch_experiment;
+					} else {
+						LoopExperiment* loop_experiment = (LoopExperiment*)run_helper.explore_node->explore_best_experiment;
+						delete loop_experiment->sequence;
+						delete loop_experiment;
 					}
-					delete run_helper.explore_node->explore_best_experiment->seed_context_history;
-					delete run_helper.explore_node->explore_best_experiment;
 				}
 
 				run_helper.explore_node->explore_best_surprise = surprise;
 				run_helper.explore_node->explore_best_experiment = run_helper.explore_experiment;
-				run_helper.explore_node->explore_best_experiment->seed_target_val = run_helper.target_val;
+
+				if (run_helper.explore_node->explore_best_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+					BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.explore_node->explore_best_experiment;
+					branch_experiment->seed_target_val = run_helper.target_val;
+				}
 			}
 
 			run_helper.explore_node->explore_curr_try++;
-			if (run_helper.explore_curr_try >= EXPLORE_TARGET_TRIES) {
-				action_node->experiment = action_node->explore_best_experiment;
-				action_node->explore_best_experiment = NULL;
+			if (run_helper.explore_node->explore_curr_try >= EXPLORE_TARGET_TRIES) {
+				run_helper.explore_node->experiment = run_helper.explore_node->explore_best_experiment;
+				run_helper.explore_node->explore_best_experiment = NULL;
 			}
 		} else if (run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
 			run_helper.experiment->new_average_score += run_helper.target_val;

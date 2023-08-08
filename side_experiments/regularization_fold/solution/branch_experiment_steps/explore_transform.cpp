@@ -1,5 +1,14 @@
 #include "branch_experiment.h"
 
+#include "abstract_node.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::explore_transform() {
@@ -36,11 +45,10 @@ void BranchExperiment::explore_transform() {
 			for (int l_index = 0; l_index < (int)this->sequences[a_index]->scopes.size(); l_index++) {
 				Scope* scope = this->sequences[a_index]->scopes[l_index];
 				map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->state_networks.find(scope->id);
-				map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(scope->id);
 				if (state_it == this->state_networks.end()) {
 					this->state_networks[scope->id] = vector<vector<StateNetwork*>>(scope->nodes.size());
 					this->score_networks[scope->id] = vector<ScoreNetwork*>(scope->nodes.size());
-					this->scope_furthest_layer_seen_in[scope->id] = this->scope_context.size()+1;
+					this->scope_furthest_layer_seen_in[scope->id] = (int)this->scope_context.size()+1;
 					this->scope_steps_seen_in[scope->id] = vector<bool>(this->num_steps, false);
 
 					// in sequence networks initialized in ActionNode
@@ -66,13 +74,13 @@ void BranchExperiment::explore_transform() {
 						map<int, vector<vector<StateNetwork*>>>::iterator it = this->sequences[a_index]->state_networks.find(scope->id);
 						if (it == this->sequences[a_index]->state_networks.end()) {
 							it = this->sequences[a_index]->state_networks.insert({scope->id, vector<vector<StateNetwork*>>(scope->nodes.size())}).first;
-							this->sequences[a_index]->scope_furthest_layer_seen_in[scope->id] = this->scope_context.size()+1;
-							for (int n_index = 0; n_index < this->sequences[ia_index]->node_ids[l_index].size(); n_index++) {
+							this->sequences[a_index]->scope_furthest_layer_seen_in[scope->id] = (int)this->scope_context.size()+1;
+							for (int n_index = 0; n_index < (int)this->sequences[ia_index]->node_ids[l_index].size(); n_index++) {
 								int node_id = this->sequences[ia_index]->node_ids[l_index][n_index];
 								if (this->sequences[ia_index]->scopes[l_index]->nodes[node_id]->type == NODE_TYPE_ACTION) {
 									for (int i_index = 0; i_index < (int)this->sequences[a_index]->input_types.size(); i_index++) {
 										it->second[node_id].push_back(
-											new StateNetwork(this->sequences[ia_index]->num_states,
+											new StateNetwork(scope->num_states,
 															 NUM_NEW_STATES,
 															 1,
 															 20));
@@ -98,9 +106,9 @@ void BranchExperiment::explore_transform() {
 		exit_context_sizes[l_index] = scope->num_states;
 	}
 	for (int e_index = 0; e_index < exit_scope->num_states; e_index++) {
-		this->exit_networks = new ExitNetwork(exit_context_sizes,
-											  NUM_NEW_STATES,
-											  20);
+		this->exit_networks[e_index] = new ExitNetwork(exit_context_sizes,
+													   NUM_NEW_STATES,
+													   20);
 	}
 	this->exit_network_impacts = vector<double>(exit_scope->num_states, 0.0);
 

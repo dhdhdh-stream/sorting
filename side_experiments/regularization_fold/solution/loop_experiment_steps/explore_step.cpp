@@ -1,5 +1,8 @@
 #include "loop_experiment.h"
 
+#include "constants.h"
+#include "sequence.h"
+
 using namespace std;
 
 void LoopExperiment::explore_activate(vector<double>& flat_vals,

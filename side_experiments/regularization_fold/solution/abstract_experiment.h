@@ -1,6 +1,12 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include <map>
+#include <set>
+#include <vector>
+
+#include "transformation_helper.h"
+
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_LOOP = 1;
 
@@ -17,6 +23,10 @@ const double DEFAULT_LASSO_WEIGHT = 0.2;
 const int NUM_NEW_STATES = 10;
 const std::vector<double> DEFAULT_NEW_STATE_LASSO_WEIGHTS{
 	0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0};
+
+class ExitNetwork;
+class ScoreNetwork;
+class StateNetwork;
 
 class AbstractExperiment {
 public:
@@ -102,6 +112,7 @@ public:
 };
 
 class AbstractExperimentHistory {
+public:
 	AbstractExperiment* experiment;
 
 	virtual ~AbstractExperimentHistory() {};

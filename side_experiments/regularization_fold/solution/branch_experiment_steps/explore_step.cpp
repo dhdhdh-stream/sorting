@@ -1,5 +1,8 @@
 #include "branch_experiment.h"
 
+#include "constants.h"
+#include "sequence.h"
+
 using namespace std;
 
 void BranchExperiment::explore_activate(vector<double>& flat_vals,
@@ -13,7 +16,7 @@ void BranchExperiment::explore_activate(vector<double>& flat_vals,
 	vector<vector<double>> sequence_input_vals(this->num_steps);
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
-			double obs = flat_vals.begin();
+			// double obs = flat_vals[0];
 			flat_vals.erase(flat_vals.begin());
 		} else {
 			sequence_input_vals[a_index] = vector<double>(this->sequences[a_index]->input_types.size(), 0.0);

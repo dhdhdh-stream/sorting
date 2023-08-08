@@ -1,5 +1,19 @@
 #include "scope.h"
 
+#include "abstract_experiment.h"
+#include "branch_experiment.h"
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "layer.h"
+#include "loop_experiment.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "state_network.h"
+
 using namespace std;
 
 Scope::Scope(int id,
@@ -447,7 +461,7 @@ void Scope::handle_node_activate_helper(int iter_index,
 							BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
 
 							BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(branch_experiment);
-							action_node->experiment_history = branch_experiment_history;
+							node_history->experiment_history = branch_experiment_history;
 							branch_experiment->activate(flat_vals,
 														context,
 														run_helper,
@@ -468,7 +482,7 @@ void Scope::handle_node_activate_helper(int iter_index,
 							LoopExperiment* loop_experiment = (LoopExperiment*)action_node->experiment;
 
 							LoopExperimentHistory* loop_experiment_history = new LoopExperimentHistory(loop_experiment);
-							action_node->experiment_history = loop_experiment_history;
+							node_history->experiment_history = loop_experiment_history;
 							loop_experiment->activate(flat_vals,
 													  context,
 													  run_helper,
@@ -513,7 +527,7 @@ void Scope::handle_node_activate_helper(int iter_index,
 		history->node_histories[iter_index].push_back(node_history);
 		branch_node->activate(context,
 							  run_helper,
-							  history);
+							  node_history);
 
 		if (node_history->is_branch) {
 			curr_node_id = branch_node->branch_next_node_id;
@@ -554,7 +568,7 @@ void Scope::experiment_variables_helper(
 			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
 		}
 
-		int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();
+		int size_diff = (int)this->nodes.size() - (int)state_it->second.size();
 		state_it->second.insert(state_it->second.end(), size_diff, vector<StateNetwork*>());
 		score_it->second.insert(score_it->second.end(), size_diff, NULL);
 
@@ -565,7 +579,7 @@ void Scope::experiment_variables_helper(
 			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
 				layer_seen_in_it->second = run_helper.experiment_context_index;
 
-				int new_furthest_distance = run_helper.experiment->scope_context.size()+2 - run_helper.experiment_context_index;
+				int new_furthest_distance = (int)run_helper.experiment->scope_context.size()+2 - run_helper.experiment_context_index;
 				for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 					if (state_it->second[n_index].size() != 0) {
 						for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
@@ -703,7 +717,7 @@ void Scope::backprop(vector<int>& starting_node_ids,
 			double best_halt_score = history->halt_score_snapshots.back();
 			double best_halt_misguess = history->halt_misguess_snapshots.back();
 			// back to front
-			for (int ii_index = history->node_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+			for (int ii_index = (int)history->node_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
 				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
 				if (score_val > 0.1) {
@@ -776,13 +790,14 @@ void Scope::backprop(vector<int>& starting_node_ids,
 					|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN)
 				&& !run_helper.backprop_is_pre_experiment
 				&& starting_state_errors.size() > 0) {
-			ScopeNode* scope_node = (ScopeNode*)history->node_histories[0][0]->node;
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[0][0];
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 			scope_node->halfway_backprop(starting_node_ids,
 										 starting_state_errors,
 										 context,
 										 scale_factor_error,
 										 run_helper,
-										 history);
+										 scope_node_history);
 		} else {
 			handle_node_backprop_helper(0,
 										0,
@@ -801,6 +816,9 @@ void Scope::handle_node_backprop_helper(int iter_index,
 										RunHelper& run_helper,
 										ScopeHistory* history) {
 	if (history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
+		ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[iter_index][h_index];
+		ActionNode* action_node = (ActionNode*)action_node_history->node;
+
 		if (action_node_history->experiment_history != NULL) {
 			if (action_node->experiment->type == EXPERIMENT_TYPE_BRANCH) {
 				BranchExperiment* branch_experiment = (BranchExperiment*)action_node->experiment;
@@ -824,8 +842,6 @@ void Scope::handle_node_backprop_helper(int iter_index,
 			}
 		}
 
-		ActionNodeHistory* action_node_history = (ActionNodeHistory*)history->node_histories[iter_index][h_index];
-		ActionNode* action_node = (ActionNode*)action_node_history->node;
 		action_node->backprop(context,
 							  scale_factor_error,
 							  run_helper,
@@ -849,7 +865,7 @@ void Scope::handle_node_backprop_helper(int iter_index,
 		ExitNode* exit_node = (ExitNode*)exit_node_history->node;
 		exit_node->backprop(context,
 							run_helper,
-							branch_node_history);
+							exit_node_history);
 	}
 }
 
@@ -955,7 +971,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)original->node_histories[i_index][h_index];
 				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
-			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_INNER_SCOPE) {
+			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)original->node_histories[i_index][h_index];
 				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
 			}

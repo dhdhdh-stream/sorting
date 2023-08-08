@@ -50,3 +50,10 @@ void TransformationHelper::backprop(double val_in,
 		this->epoch_iter = 0;
 	}
 }
+
+Transformation TransformationHelper::reverse() {
+	Transformation reverse;
+	reverse.scale = 1.0/this->transformation.scale;
+	reverse.weight = -this->transformation.weight/this->transformation.scale;
+	return reverse;
+}

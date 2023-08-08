@@ -1,6 +1,8 @@
 #ifndef TRANSFORMATION_HELPER_H
 #define TRANSFORMATION_HELPER_H
 
+#include "transformation.h"
+
 class TransformationHelper {
 public:
 	Transformation transformation;
@@ -15,6 +17,8 @@ public:
 
 	void backprop(double val_in,
 				  double target);
+
+	Transformation reverse();
 };
 
 #endif /* TRANSFORMATION_HELPER_H */

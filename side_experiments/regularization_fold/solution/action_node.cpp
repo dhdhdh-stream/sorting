@@ -2,7 +2,12 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "constants.h"
+#include "layer.h"
+#include "scope.h"
+#include "score_network.h"
+#include "state_network.h"
 
 using namespace std;
 
@@ -117,7 +122,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 						  int& experiment_scope_distance,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
-	history->obs_snapshot = flat_vals.begin();
+	history->obs_snapshot = flat_vals[0];
 	history->starting_state_vals_snapshot = *(context.back().state_vals);
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
@@ -177,8 +182,8 @@ void ActionNode::activate(vector<double>& flat_vals,
 		}
 
 		if (experiment_scope_state_networks != NULL
-				&& this->id < experiment_scope_state_networks->size()
-				&& experiment_scope_state_networks->at(this->id).size() != 0) {
+				&& this->id < (int)experiment_scope_state_networks->size()
+				&& (int)experiment_scope_state_networks->at(this->id).size() != 0) {
 			history->starting_new_state_vals_snapshot = run_helper.new_state_vals;
 
 			history->new_state_network_histories = vector<StateNetworkHistory*>(NUM_NEW_STATES, NULL);
@@ -214,7 +219,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 		if (run_helper.experiment->state_iter < 100000) {
 			if (experiment_scope_score_networks != NULL
-					&& this->id < experiment_scope_score_networks->size()
+					&& this->id < (int)experiment_scope_score_networks->size()
 					&& experiment_scope_score_networks->at(this->id) != NULL) {
 				ScoreNetwork* score_network = experiment_scope_score_networks->at(this->id);
 				score_network->activate(history->ending_state_vals_snapshot);
@@ -398,7 +403,7 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 			|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 		double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
 
-		scale_factor_error += history->score_network_update*predicted_score_error;
+		scale_factor_error += history->score_network_output*predicted_score_error;
 
 		this->score_network->backprop_weights_with_no_error_signal(
 			run_helper.scale_factor*predicted_score_error,

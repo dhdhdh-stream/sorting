@@ -1,18 +1,25 @@
 #ifndef ENDING_SCOPE_NODE_HELPER_H
 #define ENDING_SCOPE_NODE_HELPER_H
 
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+
+class ScopeNode;
+
 class EndingScopeNodeActivateHelper {
 public:
 	ScopeNode* scope_node;
 
-	vector<double>* curr_state_vals;
-	vector<bool>* curr_states_initialized;
+	std::vector<double>* curr_state_vals;
+	std::vector<bool>* curr_states_initialized;
 
 	bool is_halfway;
 	int furthest_matching_layer;
 
-	vector<vector<double>> inner_state_vals;
-	vector<vector<double>*> starting_state_vals_save;
+	std::vector<std::vector<double>> inner_state_vals;
+	std::vector<std::vector<double>*> starting_state_vals_save;
 
 	EndingScopeNodeActivateHelper(ScopeNode* scope_node);
 
@@ -29,13 +36,13 @@ class EndingScopeNodeBackpropHelper {
 public:
 	ScopeNode* scope_node;
 
-	vector<double>* curr_state_errors;
+	std::vector<double>* curr_state_errors;
 
 	bool is_halfway;
 	int furthest_matching_layer;
 
-	vector<vector<double>> inner_state_errors;
-	vector<vector<double>*> starting_state_errors_save;
+	std::vector<std::vector<double>> inner_state_errors;
+	std::vector<std::vector<double>*> starting_state_errors_save;
 
 	EndingScopeNodeBackpropHelper(ScopeNode* scope_node);
 

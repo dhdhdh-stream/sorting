@@ -11,6 +11,17 @@
 #ifndef EXIT_NODE_H
 #define EXIT_NODE_H
 
+#include <fstream>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class ExitNetwork;
+class Scope;
+
+class ExitNodeHistory;
 class ExitNode : public AbstractNode {
 public:
 	int exit_depth;		// can be 0
@@ -30,7 +41,7 @@ public:
 			 int id,
 			 // if copy, exit_depth must be 0
 			 int exit_node_id);
-	ExitNode(ifstream& input_file,
+	ExitNode(std::ifstream& input_file,
 			 Scope* parent,
 			 int id);
 	~ExitNode();
@@ -45,6 +56,8 @@ public:
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);
 };
+
+class ExitNetworkHistory;
 
 class ExitNodeHistory : public AbstractNodeHistory {
 public:

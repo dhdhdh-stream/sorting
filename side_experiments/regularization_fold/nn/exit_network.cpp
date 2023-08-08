@@ -2,11 +2,14 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
+#include "layer.h"
+
 using namespace std;
 
 void ExitNetwork::construct() {
-	this->state_input = new Layer(LINEAR_LAYER, this->context_indexes.size());
-	this->new_state_input = new Layer(LINEAR_LAYER, this->new_state_indexes.size());
+	this->state_input = new Layer(LINEAR_LAYER, (int)this->context_indexes.size());
+	this->new_state_input = new Layer(LINEAR_LAYER, (int)this->new_state_indexes.size());
 
 	this->hidden = new Layer(LEAKY_LAYER, this->hidden_size);
 	this->hidden->input_layers.push_back(this->state_input);
@@ -22,11 +25,11 @@ void ExitNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-ExitNetwork::ExitNetwork(vector<vector<int>>& context_sizes,
+ExitNetwork::ExitNetwork(vector<int>& context_sizes,
 						 int new_state_size,
 						 int hidden_size) {
 	for (int l_index = 0; l_index < (int)context_sizes.size(); l_index++) {
-		for (int s_index = 0; s_index < (int)context_sizes[l_index].size(); s_index++) {
+		for (int s_index = 0; s_index < context_sizes[l_index]; s_index++) {
 			this->context_indexes.push_back(l_index);
 			this->state_indexes.push_back(s_index);
 		}
@@ -281,7 +284,7 @@ void ExitNetwork::new_lasso_backprop(double output_error,
 
 void ExitNetwork::clean(int num_new_states) {
 	// remove global unnecessary
-	int size_diff = this->new_state_indexes.size() - num_new_states;
+	int size_diff = (int)this->new_state_indexes.size() - num_new_states;
 	for (int s_index = 0; s_index < size_diff; s_index++) {
 		this->new_state_indexes.pop_back();
 

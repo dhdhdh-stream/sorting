@@ -11,7 +11,16 @@
 #ifndef LOOP_EXPERIMENT_H
 #define LOOP_EXPERIMENT_H
 
-class LoopExperiment : public Experiment {
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class Scale;
+class ScoreNetwork;
+class Sequence;
+
+class LoopExperimentHistory;
+class LoopExperiment : public AbstractExperiment {
 public:
 	/**
 	 * - for inputs, trace from matching outer scope
@@ -98,6 +107,10 @@ public:
 	void wrapup_transform();
 };
 
+class ExitNetworkHistory;
+class ScoreNetworkHistory;
+class SequenceHistory;
+
 class LoopExperimentHistory : public AbstractExperimentHistory {
 public:
 	LoopExperiment* experiment;
@@ -113,7 +126,7 @@ public:
 	std::vector<SequenceHistory*> sequence_histories;
 
 	std::vector<double> ending_input_vals_snapshot;
-	std::vector<double> ending_new_state_vals_snapshots;
+	std::vector<double> ending_new_state_vals_snapshot;
 
 	ScoreNetworkHistory* halt_score_network_history;
 	double halt_score_network_output;

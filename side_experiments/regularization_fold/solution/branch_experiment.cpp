@@ -1,5 +1,13 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
+#include "constants.h"
+#include "exit_network.h"
+#include "score_network.h"
+#include "state_network.h"
+#include "sequence.h"
+
 using namespace std;
 
 BranchExperiment::BranchExperiment(vector<int> scope_context,
@@ -24,8 +32,8 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->sequences = sequences;
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
-			this->sequences->experiment = this;
-			this->sequences->step_index = a_index;
+			this->sequences[a_index]->experiment = this;
+			this->sequences[a_index]->step_index = a_index;
 		}
 	}
 

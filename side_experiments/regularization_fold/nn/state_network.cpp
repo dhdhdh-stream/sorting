@@ -2,12 +2,15 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
+#include "layer.h"
+
 using namespace std;
 
 void StateNetwork::construct() {
 	this->obs_input = new Layer(LINEAR_LAYER, 1);
-	this->state_input = new Layer(LINEAR_LAYER, this->state_indexes.size());
-	this->new_state_input = new Layer(LINEAR_LAYER, this->new_state_indexes.size());
+	this->state_input = new Layer(LINEAR_LAYER, (int)this->state_indexes.size());
+	this->new_state_input = new Layer(LINEAR_LAYER, (int)this->new_state_indexes.size());
 	this->new_input_input = new Layer(LINEAR_LAYER, this->new_input_size);
 
 	this->hidden = new Layer(LEAKY_LAYER, this->hidden_size);
@@ -137,7 +140,7 @@ void StateNetwork::backprop_errors_with_no_weight_change(
 void StateNetwork::new_activate(double obs_val,
 								vector<double>& state_vals,
 								vector<double>& new_state_vals) {
-	this->obs_input->acti_vals[0] = obs_snapshot;
+	this->obs_input->acti_vals[0] = obs_val;
 	for (int s_index = 0; s_index < (int)this->state_indexes.size(); s_index++) {
 		this->state_input->acti_vals[s_index] = state_vals[this->state_indexes[s_index]];
 	}
@@ -291,7 +294,7 @@ void StateNetwork::new_activate(double obs_val,
 								vector<double>& state_vals,
 								vector<double>& new_state_vals,
 								double new_input_val) {
-	this->obs_input->acti_vals[0] = obs_snapshot;
+	this->obs_input->acti_vals[0] = obs_val;
 	for (int s_index = 0; s_index < (int)this->state_indexes.size(); s_index++) {
 		this->state_input->acti_vals[s_index] = state_vals[this->state_indexes[s_index]];
 	}
@@ -472,7 +475,7 @@ void StateNetwork::update_lasso_weights(int new_furthest_distance) {
 
 void StateNetwork::clean(int num_new_states) {
 	// remove global unnecessary
-	int size_diff = this->new_state_indexes.size() - num_new_states;
+	int size_diff = (int)this->new_state_indexes.size() - num_new_states;
 	for (int s_index = 0; s_index < size_diff; s_index++) {
 		this->new_state_indexes.pop_back();
 

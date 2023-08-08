@@ -1,5 +1,14 @@
 #include "sequence.h"
 
+#include "abstract_experiment.h"
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "layer.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "state_network.h"
+
 using namespace std;
 
 void Sequence::second_clean_pre_activate_helper(
@@ -103,7 +112,8 @@ void Sequence::second_clean_step_activate_helper(
 		vector<double>& input_vals,
 		BranchExperimentHistory* branch_experiment_history,
 		RunHelper& run_helper) {
-	if (this->experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
+	if (branch_experiment->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 		branch_experiment_history->step_input_sequence_step_indexes[a_index].push_back(this->step_index);
 		branch_experiment_history->step_input_vals_snapshots[a_index].push_back(input_vals);
 		branch_experiment_history->step_input_state_network_histories[a_index].push_back(vector<StateNetworkHistory*>(this->input_types.size(), NULL));
@@ -129,7 +139,7 @@ void Sequence::second_clean_step_activate_helper(
 		SequenceHistory* sequence_history = branch_experiment_history->sequence_histories[a_index];
 
 		for (int l_index = 0; l_index < (int)sequence_history->node_histories.size(); l_index++) {
-			int scope_id = this->experiment->sequences[a_index]->scopes[l_index]->id;
+			int scope_id = branch_experiment->sequences[a_index]->scopes[l_index]->id;
 			map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.find(scope_id);
 
 			for (int n_index = 0; n_index < (int)sequence_history->node_histories[l_index].size(); n_index++) {
@@ -164,12 +174,12 @@ void Sequence::second_clean_step_activate_helper(
 					temp_scope_context.push_back(scope_id);
 					temp_node_context.push_back(scope_node->id);
 
-					clean_pre_activate_helper(false,
-											  temp_scope_context,
-											  temp_node_context,
-											  input_vals,
-											  run_helper,
-											  scope_node_history->inner_scope_history);
+					second_clean_pre_activate_helper(false,
+													 temp_scope_context,
+													 temp_node_context,
+													 input_vals,
+													 run_helper,
+													 scope_node_history->inner_scope_history);
 
 					temp_scope_context.pop_back();
 					temp_node_context.pop_back();
@@ -177,7 +187,7 @@ void Sequence::second_clean_step_activate_helper(
 			}
 
 			temp_scope_context.push_back(scope_id);
-			temp_node_context.push_back(this->experiment->sequences[a_index]->node_ids[l_index].back());
+			temp_node_context.push_back(branch_experiment->sequences[a_index]->node_ids[l_index].back());
 			// for last layer, node isn't scope node, but won't matter
 		}
 	}
@@ -201,7 +211,7 @@ void Sequence::second_clean_activate_pull(vector<double>& input_vals,
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
-				if (c_index == context.size()-1 - this->input_local_scope_depths[i_index]) {
+				if (c_index == (int)context.size()-1 - this->input_local_scope_depths[i_index]) {
 					if (!this->input_is_new_class[i_index]) {
 						input_vals[i_index] += context[context.size()-1 - this->input_local_scope_depths[i_index]]
 							.state_vals->at(this->input_local_input_indexes[i_index]);
@@ -211,7 +221,7 @@ void Sequence::second_clean_activate_pull(vector<double>& input_vals,
 		}
 
 		for (int cc_index = 0; cc_index < (int)this->experiment->corr_calc_scope_depths.size(); cc_index++) {
-			if (c_index == context.size()-1 - this->experiment->corr_calc_scope_depths[cc_index]) {
+			if (c_index == (int)context.size()-1 - this->experiment->corr_calc_scope_depths[cc_index]) {
 				double curr_val = context[context.size()-1 - this->experiment->corr_calc_scope_depths[cc_index]].state_vals->at(this->experiment->corr_calc_input_indexes[cc_index]);
 				for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 					if (this->input_types[i_index] != SEQUENCE_INPUT_TYPE_LOCAL
@@ -301,7 +311,7 @@ void Sequence::second_clean_backprop_pull(vector<double>& input_errors,
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_LOCAL) {
 			if (!this->input_is_new_class[i_index]) {
-				input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]]
+				input_errors[i_index] = context[context.size()-1 - this->input_local_scope_depths[i_index]]
 					.state_errors->at(this->input_local_input_indexes[i_index]);
 			}
 		} else if (this->input_types[i_index] == SEQUENCE_INPUT_TYPE_PREVIOUS) {

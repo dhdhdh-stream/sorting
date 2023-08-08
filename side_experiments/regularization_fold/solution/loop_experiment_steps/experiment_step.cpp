@@ -1,5 +1,18 @@
 #include "loop_experiment.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "constants.h"
+#include "exit_network.h"
+#include "globals.h"
+#include "layer.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "score_network.h"
+#include "sequence.h"
+#include "state_network.h"
+
 using namespace std;
 
 void LoopExperiment::experiment_pre_activate_helper(
@@ -31,10 +44,10 @@ void LoopExperiment::experiment_pre_activate_helper(
 		if (context_index < seen_it->second) {
 			seen_it->second = context_index;
 
-			int new_furthest_distance = this->scope_context.size()+2 - context_index;
+			int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
 			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
 				if (state_it->second[n_index].size() != 0) {
-					for (s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 					}
 					score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
@@ -46,10 +59,10 @@ void LoopExperiment::experiment_pre_activate_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				int node_id = scope_history->node_histories[i_index][h_index]->scope_index;
+				int node_id = scope_history->node_histories[i_index][h_index]->node->id;
 
 				if (state_it->second[node_id].size() == 0) {
-					int new_furthest_distance = this->scope_context.size()+2 - seen_it->second;
+					int new_furthest_distance = (int)this->scope_context.size()+2 - seen_it->second;
 					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						state_it->second[node_id].push_back(
 							new StateNetwork(scope_history->scope->num_states,
@@ -150,7 +163,7 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 	int loop_iters = rand()%7;
 
 	run_helper.experiment_on_path = false;
-	run_helper.experiment_context_index = this->scope_context.size()+1;
+	run_helper.experiment_context_index = (int)this->scope_context.size()+1;
 	run_helper.experiment_step_index = 0;
 
 	vector<double> input_vals(this->sequence->input_types.size(), 0.0);
@@ -224,14 +237,11 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 								   context,
 								   empty_previous_vals);
 
-	history->exit_state_vals_snapshot = vector<vector<double>>(this->exit_depth+1);
-	for (int l_index = 0; l_index < this->exit_depth+1; l_index++) {
-		history->exit_state_vals_snapshot[l_index] = context[
-			context.size() - (this->exit_depth+1) + l_index].state_vals;
-	}
+	history->exit_state_vals_snapshot = vector<vector<double>>(1);
+	history->exit_state_vals_snapshot[0] = *(context.back().state_vals);
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
+	vector<double>* outer_state_vals = context.back().state_vals;
+	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
 
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
@@ -253,7 +263,7 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 										 RunHelper& run_helper,
 										 LoopExperimentHistory* history) {
-	vector<double>* outer_state_errors = context[context.size() - (this->exit_depth+1)].state_errors;
+	vector<double>* outer_state_errors = context.back().state_errors;
 
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (history->exit_network_histories[s_index] != NULL) {
@@ -285,8 +295,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 	vector<vector<double>> empty_previous_errors;
 	this->sequence->backprop_pull(input_errors,
 								  context,
-								  empty_previous_errors,
-								  run_helper);
+								  empty_previous_errors);
 
 	double halt_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->halt_score_network_output;
 	double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
@@ -339,7 +348,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 			history->halt_misguess_network_history);
 	}
 
-	for (int i_index = history->sequence_histories.size()-1; i_index >= 0; i_index--) {
+	for (int i_index = (int)history->sequence_histories.size()-1; i_index >= 0; i_index--) {
 		run_helper.scale_factor *= this->scale_mod->weight;
 
 		double inner_scale_factor_error = 0.0;
@@ -356,7 +365,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 		double best_halt_score = history->halt_score_snapshots.back();
 		double best_halt_misguess = history->halt_misguess_snapshots.back();
 		// back to front
-		for (int ii_index = history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
 			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
 			if (score_val > 0.1) {

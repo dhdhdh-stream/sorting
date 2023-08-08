@@ -8,6 +8,8 @@ const int NODE_TYPE_SCOPE = 1;
 const int NODE_TYPE_BRANCH = 2;
 const int NODE_TYPE_EXIT = 3;
 
+class Scope;
+
 class AbstractNode {
 public:
 	int type;

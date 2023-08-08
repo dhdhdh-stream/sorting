@@ -1,9 +1,12 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
+#include <fstream>
 #include <vector>
 
-#include "scope.h"
+class ClassDefinition;
+class FamilyDefinition;
+class Scope;
 
 class Solution {
 public:
@@ -33,10 +36,17 @@ public:
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
-
 	/**
 	 * TODO: explore based on current context
 	 * - higher likelihood to start from closer scopes
 	 */
 
-}
+	Solution();
+	Solution(std::ifstream& input_file);
+	~Solution();
+
+	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
+};
+
+#endif /* SOLUTION_H */
