@@ -20,9 +20,6 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 
 	Scope* inner_scope = solution->scopes[this->scope_node->inner_scope_id];
 
-	this->curr_state_vals = context.back().state_vals;
-	this->curr_states_initialized = &(context.back().states_initialized);
-
 	if (next_starting_node_ids.size() == 0) {
 		this->is_halfway = false;
 
@@ -41,8 +38,8 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 			curr_scope = next_scope;
 		}
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
-			if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
-				double val = curr_state_vals->at(this->scope_node->input_indexes[i_index]);
+			if (context.back().states_initialized[this->scope_node->input_indexes[i_index]]) {
+				double val = context.back().state_vals->at(this->scope_node->input_indexes[i_index]);
 				if (this->scope_node->input_has_transform[i_index]) {
 					val = this->scope_node->input_transformations[i_index].forward(val);
 				}
@@ -84,7 +81,7 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 		}
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
-				double val = curr_state_vals->at(this->scope_node->input_indexes[i_index]);
+				double val = context.back().state_vals->at(this->scope_node->input_indexes[i_index]);
 				if (this->scope_node->input_has_transform[i_index]) {
 					val = this->scope_node->input_transformations[i_index].forward(val);
 				}
@@ -121,31 +118,31 @@ void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& contex
 	run_helper.experiment_helper_scope_context.pop_back();
 	run_helper.experiment_helper_node_context.pop_back();
 
+	context.pop_back();
+
 	if (this->is_halfway == false) {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
-			if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
+			if (context.back().states_initialized[this->scope_node->input_indexes[i_index]]) {
 				double val = this->inner_state_vals[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]];
 				if (this->scope_node->input_has_transform[i_index]) {
 					val = this->scope_node->input_transformations[i_index].backward(val);
 				}
-				this->curr_state_vals->at(this->scope_node->input_indexes[i_index]) = val;
+				context.back().state_vals->at(this->scope_node->input_indexes[i_index]) = val;
 			}
 		}
 	} else {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
-				if (this->curr_states_initialized->at(this->scope_node->input_indexes[i_index])) {
+				if (context.back().states_initialized[this->scope_node->input_indexes[i_index]]) {
 					double val = this->starting_state_vals_save[this->scope_node->input_target_layers[i_index]]->at(this->scope_node->input_target_indexes[i_index]);
 					if (this->scope_node->input_has_transform[i_index]) {
 						val = this->scope_node->input_transformations[i_index].backward(val);
 					}
-					this->curr_state_vals->at(this->scope_node->input_indexes[i_index]) = val;
+					context.back().state_vals->at(this->scope_node->input_indexes[i_index]) = val;
 				}
 			}
 		}
 	}
-
-	context.pop_back();
 
 	run_helper.scale_factor /= this->scope_node->scope_scale_mod->weight;
 }
@@ -162,8 +159,6 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 
 	Scope* inner_scope = solution->scopes[this->scope_node->inner_scope_id];
 
-	this->curr_state_errors = context.back().state_errors;
-
 	if (next_starting_node_ids.size() == 0) {
 		this->is_halfway = false;
 
@@ -179,7 +174,7 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 			curr_scope = next_scope;
 		}
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
-			double error = curr_state_errors->at(this->scope_node->input_indexes[i_index]);
+			double error = context.back().state_errors->at(this->scope_node->input_indexes[i_index]);
 			if (this->scope_node->input_has_transform[i_index]) {
 				error = this->scope_node->input_transformations[i_index].backprop_backward(error);
 			}
@@ -211,7 +206,7 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 		}
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			if (this->scope_node->input_target_layers[i_index] <= this->furthest_matching_layer) {
-				double error = curr_state_errors->at(this->scope_node->input_indexes[i_index]);
+				double error = context.back().state_errors->at(this->scope_node->input_indexes[i_index]);
 				if (this->scope_node->input_has_transform[i_index]) {
 					error = this->scope_node->input_transformations[i_index].backprop_backward(error);
 				}
@@ -233,13 +228,17 @@ void EndingScopeNodeBackpropHelper::backward(vector<int>& next_starting_node_ids
 void EndingScopeNodeBackpropHelper::forward(vector<BackwardContextLayer>& context,
 											double& cumulative_scale_factor_error,
 											RunHelper& run_helper) {
+	cumulative_scale_factor_error *= this->scope_node->scope_scale_mod->weight;
+
+	context.pop_back();
+
 	if (this->is_halfway == false) {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
 			double error = this->inner_state_errors[this->scope_node->input_target_layers[i_index]][this->scope_node->input_target_indexes[i_index]];
 			if (this->scope_node->input_has_transform[i_index]) {
 				error = this->scope_node->input_transformations[i_index].backprop_forward(error);
 			}
-			this->curr_state_errors->at(this->scope_node->input_indexes[i_index]) = error;
+			context.back().state_errors->at(this->scope_node->input_indexes[i_index]) = error;
 		}
 	} else {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
@@ -248,14 +247,10 @@ void EndingScopeNodeBackpropHelper::forward(vector<BackwardContextLayer>& contex
 				if (this->scope_node->input_has_transform[i_index]) {
 					error = this->scope_node->input_transformations[i_index].backprop_forward(error);
 				}
-				this->curr_state_errors->at(this->scope_node->input_indexes[i_index]) = error;
+				context.back().state_errors->at(this->scope_node->input_indexes[i_index]) = error;
 			}
 		}
 	}
-
-	cumulative_scale_factor_error *= this->scope_node->scope_scale_mod->weight;
-
-	context.pop_back();
 
 	run_helper.scale_factor /= this->scope_node->scope_scale_mod->weight;
 }

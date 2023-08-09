@@ -15,6 +15,8 @@
 using namespace std;
 
 void BranchExperiment::experiment_transform() {
+	cout << "experiment_transform" << endl;
+
 	double score_improvement = this->new_average_score - this->existing_average_score;
 	cout << "this->new_average_score: " << this->new_average_score << endl;
 	cout << "this->existing_average_score: " << this->existing_average_score << endl;
@@ -46,6 +48,9 @@ void BranchExperiment::experiment_transform() {
 		is_success = false;
 	}
 
+	// temp
+	is_success = true;
+
 	if (is_success) {
 		// determine if new class needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
@@ -67,10 +72,12 @@ void BranchExperiment::experiment_transform() {
 								StateNetwork* network = it->second[n_index][i_index];
 								double sum_impact = 0.0;
 								for (int in_index = 0; in_index < 20; in_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][0][0]);
+									if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+										sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										}
 									}
 								}
 
@@ -99,10 +106,12 @@ void BranchExperiment::experiment_transform() {
 							StateNetwork* network = this->sequences[a_index]->step_state_networks[ia_index][i_index];
 							double sum_impact = 0.0;
 							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][0][0]);
+								if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+									sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									}
 								}
 							}
 
@@ -148,10 +157,12 @@ void BranchExperiment::experiment_transform() {
 									StateNetwork* network = it->second[n_index][i_index];
 									double sum_impact = 0.0;
 									for (int in_index = 0; in_index < 20; in_index++) {
-										sum_impact += abs(network->hidden->weights[in_index][0][0]);
+										if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+											sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+											for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+												sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+											}
 										}
 									}
 
@@ -170,10 +181,12 @@ void BranchExperiment::experiment_transform() {
 								StateNetwork* network = this->sequences[a_index]->step_state_networks[ia_index][i_index];
 								double sum_impact = 0.0;
 								for (int in_index = 0; in_index < 20; in_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][0][0]);
+									if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+										sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										}
 									}
 								}
 
@@ -197,16 +210,23 @@ void BranchExperiment::experiment_transform() {
 						StateNetwork* network = it->second[n_index][s_index];
 						double sum_impact = 0.0;
 						for (int in_index = 0; in_index < 20; in_index++) {
-							sum_impact += abs(network->hidden->weights[in_index][0][0]);
+							if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+								sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-							for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+								for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+								}
 							}
 						}
 
+						cout << "sum_impact: " << sum_impact << endl;
 						if (sum_impact < 0.1) {
+							cout << "delete " << n_index << " " << s_index << endl;
+
 							delete it->second[n_index][s_index];
 							it->second[n_index][s_index] = NULL;
+						} else {
+							cout << "keep " << n_index << " " << s_index << endl;
 						}
 					}
 				}
@@ -217,25 +237,37 @@ void BranchExperiment::experiment_transform() {
 					StateNetwork* network = this->step_state_networks[a_index][s_index];
 					double sum_impact = 0.0;
 					for (int in_index = 0; in_index < 20; in_index++) {
-						sum_impact += abs(network->hidden->weights[in_index][0][0]);
+						if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+							sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-						for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
-							sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+							for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
+								sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+							}
 						}
 					}
 
+					cout << "sum_impact: " << sum_impact << endl;
 					if (sum_impact < 0.1) {
+						cout << "delete step " << a_index << " " << s_index << endl;
+
 						delete this->step_state_networks[a_index][s_index];
 						this->step_state_networks[a_index][s_index] = NULL;
+					} else {
+						cout << "keep step " << a_index << " " << s_index << endl;
 					}
 				}
 			}
 		}
 
 		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
+			cout << "this->exit_network_impacts[e_index]: " << this->exit_network_impacts[e_index] << endl;
 			if (this->exit_network_impacts[e_index] < 0.1) {
+				cout << "delete exit " << e_index << endl;
+
 				delete this->exit_networks[e_index];
 				this->exit_networks[e_index] = NULL;
+			} else {
+				cout << "keep exit " << e_index << endl;
 			}
 		}
 
@@ -268,7 +300,9 @@ void BranchExperiment::experiment_transform() {
 								} else {
 									double sum_state_impact = 0.0;
 									for (int in_index = 0; in_index < 20; in_index++) {
-										sum_state_impact += abs(it->second[n_index][is_index]->hidden->weights[in_index][2][s_index]);
+										if (abs(it->second[n_index][is_index]->output->weights[0][0][in_index]) > 0.05) {
+											sum_state_impact += abs(it->second[n_index][is_index]->hidden->weights[in_index][2][s_index]);
+										}
 									}
 
 									if (sum_state_impact > 0.1) {
@@ -323,22 +357,37 @@ void BranchExperiment::experiment_transform() {
 			for (int a_index = 0; a_index < this->num_steps; a_index++) {
 				if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 					for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
-						if (is_index == s_index) {
-							if (this->step_state_networks[a_index][is_index] != NULL) {
+						if (this->step_state_networks[a_index][is_index] != NULL) {
+							if (is_index == s_index) {
 								if ((int)this->scope_context.size()+1 < this->new_state_furthest_layer_needed_in[s_index]) {
 									this->new_state_furthest_layer_needed_in[s_index] = (int)this->scope_context.size()+1;
 								}
-							}
-						} else {
-							double sum_state_impact = 0.0;
-							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_state_impact += abs(this->step_state_networks[a_index][is_index]->hidden->weights[in_index][2][s_index]);
-							}
+							} else {
+								double sum_state_impact = 0.0;
+								for (int in_index = 0; in_index < 20; in_index++) {
+									if (abs(this->step_state_networks[a_index][is_index]->output->weights[0][0][in_index]) > 0.05) {
+										sum_state_impact += abs(this->step_state_networks[a_index][is_index]->hidden->weights[in_index][2][s_index]);
+									}
+								}
 
-							if (sum_state_impact > 0.1) {
-								if ((int)this->scope_context.size()+1 < this->new_state_furthest_layer_needed_in[s_index]) {
-									this->new_state_furthest_layer_needed_in[s_index] = (int)this->scope_context.size()+1;
+								if (sum_state_impact > 0.1) {
+									if ((int)this->scope_context.size()+1 < this->new_state_furthest_layer_needed_in[s_index]) {
+										this->new_state_furthest_layer_needed_in[s_index] = (int)this->scope_context.size()+1;
+									}
 								}
+							}
+						}
+					}
+
+					{
+						double sum_state_impact = 0.0;
+						for (int in_index = 0; in_index < 20; in_index++) {
+							sum_state_impact += abs(this->step_score_networks[a_index]->hidden->weights[in_index][1][s_index]);
+						}
+
+						if (sum_state_impact > 0.1) {
+							if ((int)this->scope_context.size()+1 < this->new_state_furthest_layer_needed_in[s_index]) {
+								this->new_state_furthest_layer_needed_in[s_index] = (int)this->scope_context.size()+1;
 							}
 						}
 					}
@@ -375,7 +424,9 @@ void BranchExperiment::experiment_transform() {
 				if (this->exit_networks[e_index] != NULL) {
 					double sum_state_impact = 0.0;
 					for (int in_index = 0; in_index < 20; in_index++) {
-						sum_state_impact += abs(this->exit_networks[e_index]->hidden->weights[in_index][1][s_index]);
+						if (abs(this->exit_networks[e_index]->output->weights[0][0][in_index]) > 0.05) {
+							sum_state_impact += abs(this->exit_networks[e_index]->hidden->weights[in_index][1][s_index]);
+						}
 					}
 
 					if (sum_state_impact > 0.1) {
@@ -415,6 +466,7 @@ void BranchExperiment::experiment_transform() {
 					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						if (it->second[n_index][s_index] != NULL) {
 							it->second[n_index][s_index]->clean(num_new_states);
+							cout << n_index << " " << s_index << " hidden: " << it->second[n_index][s_index]->hidden_size << endl;
 						}
 					}
 				}
@@ -426,6 +478,7 @@ void BranchExperiment::experiment_transform() {
 				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 					if (this->step_state_networks[a_index][s_index] != NULL) {
 						this->step_state_networks[a_index][s_index]->clean(this->layer_num_new_states.back());
+						cout << "step " << a_index << " " << s_index << " hidden: " << this->step_state_networks[a_index][s_index]->hidden_size << endl;
 					}
 				}
 			}

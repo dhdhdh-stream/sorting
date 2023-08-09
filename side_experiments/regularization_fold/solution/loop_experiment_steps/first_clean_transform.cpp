@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "layer.h"
 #include "scope.h"
@@ -10,6 +12,8 @@
 using namespace std;
 
 void LoopExperiment::first_clean_transform() {
+	cout << "first_clean_transform" << endl;
+
 	int input_size = (int)this->sequence->input_types.size();
 
 	for (int i_index = 0; i_index < input_size; i_index++) {
@@ -26,10 +30,12 @@ void LoopExperiment::first_clean_transform() {
 						StateNetwork* network = it->second[n_index][i_index];
 						double sum_impact = 0.0;
 						for (int in_index = 0; in_index < 20; in_index++) {
-							sum_impact += abs(network->hidden->weights[in_index][0][0]);
+							if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+								sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-							for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+								}
 							}
 						}
 

@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "exit_network.h"
 #include "globals.h"
@@ -12,6 +14,8 @@
 using namespace std;
 
 void LoopExperiment::explore_transform() {
+	cout << "explore_transform" << endl;
+
 	int input_size = (int)this->sequence->input_types.size();
 
 	this->continue_score_network = new ScoreNetwork(input_size,

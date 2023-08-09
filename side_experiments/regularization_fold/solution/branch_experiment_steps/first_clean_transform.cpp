@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "layer.h"
 #include "scope.h"
@@ -10,6 +12,8 @@
 using namespace std;
 
 void BranchExperiment::first_clean_transform() {
+	cout << "first_clean_transform" << endl;
+
 	for (int a_index = 0; a_index < this->num_steps; a_index++) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE) {
 			int input_size = (int)this->sequences[a_index]->input_types.size();
@@ -29,10 +33,12 @@ void BranchExperiment::first_clean_transform() {
 								StateNetwork* network = it->second[n_index][i_index];
 								double sum_impact = 0.0;
 								for (int in_index = 0; in_index < 20; in_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][0][0]);
+									if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+										sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										}
 									}
 								}
 
@@ -63,10 +69,12 @@ void BranchExperiment::first_clean_transform() {
 							StateNetwork* network = this->sequences[a_index]->step_state_networks[ia_index][i_index];
 							double sum_impact = 0.0;
 							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][0][0]);
+								if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+									sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									}
 								}
 							}
 

@@ -154,14 +154,11 @@ void LoopExperiment::measure_activate(vector<double>& flat_vals,
 	vector<vector<double>> exit_state_vals_snapshot(1);
 	exit_state_vals_snapshot[0] = *(context.back().state_vals);
 
-	vector<double>* outer_state_vals = context.back().state_vals;
-	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
-
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
-		if (outer_states_initialized->at(s_index)) {
+		if (context.back().states_initialized[s_index]) {
 			this->exit_networks[s_index]->new_activate(exit_state_vals_snapshot,
 													   run_helper.new_state_vals);
-			outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
+			context.back().state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
 		}
 	}
 }

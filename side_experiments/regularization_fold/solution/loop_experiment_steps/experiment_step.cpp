@@ -29,6 +29,9 @@ void LoopExperiment::experiment_pre_activate_helper(
 	if (state_it == this->state_networks.end()) {
 		state_it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
 		score_it = this->score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
+
+		this->scope_furthest_layer_seen_in[scope_id] = context_index;
+		this->scope_steps_seen_in[scope_id] = vector<bool>(1, false);
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();
@@ -36,22 +39,16 @@ void LoopExperiment::experiment_pre_activate_helper(
 	score_it->second.insert(score_it->second.end(), size_diff, NULL);
 
 	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
-	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
-		seen_it = this->scope_furthest_layer_seen_in.insert({scope_id, context_index}).first;
+	if (context_index < seen_it->second) {
+		seen_it->second = context_index;
 
-		// no state networks added yet
-	} else {
-		if (context_index < seen_it->second) {
-			seen_it->second = context_index;
-
-			int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
-			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
-				if (state_it->second[n_index].size() != 0) {
-					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-						state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
-					}
-					score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
+		int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
+		for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
+			if (state_it->second[n_index].size() != 0) {
+				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 				}
+				score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
 			}
 		}
 	}
@@ -240,18 +237,15 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 	history->exit_state_vals_snapshot = vector<vector<double>>(1);
 	history->exit_state_vals_snapshot[0] = *(context.back().state_vals);
 
-	vector<double>* outer_state_vals = context.back().state_vals;
-	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
-
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
-		if (outer_states_initialized->at(s_index)) {
+		if (context.back().states_initialized[s_index]) {
 			ExitNetworkHistory* network_history = new ExitNetworkHistory(this->exit_networks[s_index]);
 			this->exit_networks[s_index]->new_activate(history->exit_state_vals_snapshot,
 													   history->ending_new_state_vals_snapshot,
 													   network_history);
 			history->exit_network_histories[s_index] = network_history;
-			outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
+			context.back().state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
 		}
 	}
 
@@ -263,8 +257,6 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 										 RunHelper& run_helper,
 										 LoopExperimentHistory* history) {
-	vector<double>* outer_state_errors = context.back().state_errors;
-
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (history->exit_network_histories[s_index] != NULL) {
 			double exit_network_target_max_update;
@@ -273,15 +265,15 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 			} else {
 				exit_network_target_max_update = 0.01;
 			}
-			if (this->state_iter <= 20000) {
-				this->exit_networks[s_index]->new_backprop(outer_state_errors->at(s_index),
-														   run_helper.new_state_errors,
-														   exit_network_target_max_update,
-														   history->exit_state_vals_snapshot,
-														   history->ending_new_state_vals_snapshot,
-														   history->exit_network_histories[s_index]);
+			if (this->state_iter <= 200000) {
+				this->exit_networks[s_index]->new_scaled_backprop(context.back().state_errors->at(s_index),
+																  run_helper.new_state_errors,
+																  exit_network_target_max_update,
+																  history->exit_state_vals_snapshot,
+																  history->ending_new_state_vals_snapshot,
+																  history->exit_network_histories[s_index]);
 			} else {
-				this->exit_networks[s_index]->new_lasso_backprop(outer_state_errors->at(s_index),
+				this->exit_networks[s_index]->new_lasso_backprop(context.back().state_errors->at(s_index),
 																 run_helper.new_state_errors,
 																 exit_network_target_max_update,
 																 history->exit_state_vals_snapshot,
@@ -305,8 +297,8 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 	} else {
 		halt_score_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 20000) {
-		this->halt_score_network->new_backprop(
+	if (this->state_iter <= 200000) {
+		this->halt_score_network->new_scaled_backprop(
 			run_helper.scale_factor*halt_predicted_score_error,
 			run_helper.new_state_errors,
 			halt_score_network_target_max_update,
@@ -330,8 +322,8 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 	} else {
 		halt_misguess_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 20000) {
-		this->halt_misguess_network->new_backprop(
+	if (this->state_iter <= 200000) {
+		this->halt_misguess_network->new_scaled_backprop(
 			halt_misguess_error,
 			run_helper.new_state_errors,
 			halt_misguess_network_target_max_update,
@@ -397,8 +389,8 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 		} else {
 			continue_score_network_target_max_update = 0.01;
 		}
-		if (this->state_iter <= 20000) {
-			this->continue_score_network->new_backprop(
+		if (this->state_iter <= 200000) {
+			this->continue_score_network->new_scaled_backprop(
 				run_helper.scale_factor*continue_predicted_score_error,
 				run_helper.new_state_errors,
 				continue_score_network_target_max_update,
@@ -422,8 +414,8 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 		} else {
 			continue_misguess_network_target_max_update = 0.01;
 		}
-		if (this->state_iter <= 20000) {
-			this->continue_misguess_network->new_backprop(
+		if (this->state_iter <= 200000) {
+			this->continue_misguess_network->new_scaled_backprop(
 				continue_misguess_error,
 				run_helper.new_state_errors,
 				continue_misguess_network_target_max_update,

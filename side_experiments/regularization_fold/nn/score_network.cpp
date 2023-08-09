@@ -246,6 +246,66 @@ void ScoreNetwork::new_backprop(double output_error,
 				 target_max_update);
 }
 
+void ScoreNetwork::new_scaled_backprop(double output_error,
+									   vector<double>& new_state_errors,
+									   double target_max_update) {
+	this->output->errors[0] = output_error;
+
+	this->output->backprop();
+	this->hidden->backprop();
+
+	for (int s_index = 0; s_index < this->new_state_size; s_index++) {
+		new_state_errors[s_index] += this->new_state_input->errors[s_index];
+		this->new_state_input->errors[s_index] = 0.0;
+	}
+
+	this->epoch_iter++;
+	if (this->epoch_iter == 20) {
+		double hidden_max_update = 0.0;
+		this->hidden->get_max_update(hidden_max_update);
+		this->hidden_average_max_update = 0.999*this->hidden_average_max_update+0.001*hidden_max_update;
+		if (hidden_max_update > 0.0) {
+			double hidden_learning_rate = (0.3*target_max_update)/this->hidden_average_max_update;
+			if (hidden_learning_rate*hidden_max_update > target_max_update) {
+				hidden_learning_rate = target_max_update/hidden_max_update;
+			}
+			this->hidden->score_hidden_scaled_update_weights(hidden_learning_rate);
+		}
+
+		double output_max_update = 0.0;
+		this->output->get_max_update(output_max_update);
+		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+		if (output_max_update > 0.0) {
+			double output_learning_rate = (0.3*target_max_update)/this->output_average_max_update;
+			if (output_learning_rate*output_max_update > target_max_update) {
+				output_learning_rate = target_max_update/output_max_update;
+			}
+			this->output->update_weights(output_learning_rate);
+		}
+
+		this->epoch_iter = 0;
+	}
+}
+
+void ScoreNetwork::new_scaled_backprop(double output_error,
+									   vector<double>& new_state_errors,
+									   double target_max_update,
+									   vector<double>& state_vals_snapshot,
+									   vector<double>& new_state_vals_snapshot,
+									   ScoreNetworkHistory* history) {
+	for (int s_index = 0; s_index < this->state_size; s_index++) {
+		this->state_input->acti_vals[s_index] = state_vals_snapshot[s_index];
+	}
+	for (int s_index = 0; s_index < this->new_state_size; s_index++) {
+		this->new_state_input->acti_vals[s_index] = new_state_vals_snapshot[s_index];
+	}
+	history->reset_weights();
+
+	new_scaled_backprop(output_error,
+						new_state_errors,
+						target_max_update);
+}
+
 void ScoreNetwork::new_lasso_backprop(double output_error,
 									  vector<double>& new_state_errors,
 									  double target_max_update) {
@@ -281,8 +341,7 @@ void ScoreNetwork::new_lasso_backprop(double output_error,
 			if (output_learning_rate*output_max_update > target_max_update) {
 				output_learning_rate = target_max_update/output_max_update;
 			}
-			this->output->lasso_update_weights(DEFAULT_LASSO_WEIGHT,
-											   output_learning_rate);
+			this->output->update_weights(output_learning_rate);
 		}
 
 		this->epoch_iter = 0;

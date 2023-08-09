@@ -1,5 +1,7 @@
 #include "exit_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "exit_network.h"
 #include "layer.h"
@@ -87,28 +89,25 @@ void ExitNode::activate(vector<ForwardContextLayer>& context,
 			context.size() - (this->exit_depth+1) + l_index].state_vals);
 	}
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
-
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
 		history->network_histories = vector<ExitNetworkHistory*>(this->networks.size(), NULL);
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
-			if (outer_states_initialized->at(s_index)) {
+			if (context[context.size() - (this->exit_depth+1)].states_initialized[s_index]) {
 				ExitNetwork* network = this->networks[s_index];
 				ExitNetworkHistory* network_history = new ExitNetworkHistory(network);
 				network->activate(history->state_vals_snapshot,
 								  network_history);
 				history->network_histories[s_index] = network_history;
-				outer_state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
+				context[context.size() - (this->exit_depth+1)].state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
 			}
 		}
 	} else {
 		for (int s_index = 0; s_index < (int)this->networks.size(); s_index++) {
-			if (outer_states_initialized->at(s_index)) {
+			if (context[context.size() - (this->exit_depth+1)].states_initialized[s_index]) {
 				ExitNetwork* network = this->networks[s_index];
 				network->activate(history->state_vals_snapshot);
-				outer_state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
+				context[context.size() - (this->exit_depth+1)].state_vals->at(this->target_indexes[s_index]) += network->output->acti_vals[0];
 			}
 		}
 	}

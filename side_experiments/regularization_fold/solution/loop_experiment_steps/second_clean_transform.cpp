@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "class_definition.h"
 #include "exit_network.h"
@@ -14,6 +16,8 @@
 using namespace std;
 
 void LoopExperiment::second_clean_transform() {
+	cout << "second_clean_transform" << endl;
+
 	for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
 			it != this->score_networks.end(); it++) {
 		int updated_state_size = solution->scopes[it->first]->num_states;
@@ -285,6 +289,15 @@ void LoopExperiment::second_clean_transform() {
 											   new_family->id,
 											   new_class->id);
 
+				{
+					vector<ScoreNetwork*> scope_score_networks = this->score_networks[0];
+					for (int n_index = 0; n_index < (int)scope_score_networks.size(); n_index++) {
+						if (scope_score_networks[n_index] != NULL) {
+							scope_score_networks[n_index]->finalize_new_state(s_index);
+						}
+					}
+				}
+
 				// special case last layer, as was skipped due to from ActionNode
 				this->scope_additions_needed[s_index].insert(this->scope_context.back());
 			} else if (this->new_state_furthest_layer_needed_in[s_index] == (int)this->scope_context.size()+1) {
@@ -308,6 +321,15 @@ void LoopExperiment::second_clean_transform() {
 															   new_family->id,
 															   new_class->id);
 
+				{
+					vector<ScoreNetwork*> scope_score_networks = this->score_networks[starting_scope_id];
+					for (int n_index = 0; n_index < (int)scope_score_networks.size(); n_index++) {
+						if (scope_score_networks[n_index] != NULL) {
+							scope_score_networks[n_index]->finalize_new_state(s_index);
+						}
+					}
+				}
+
 				// special case last layer, as was skipped due to from ActionNode
 				this->scope_additions_needed[s_index].insert(this->scope_context.back());
 			}
@@ -323,7 +345,15 @@ void LoopExperiment::second_clean_transform() {
 					solution->scopes[*it]->add_state(false,
 													 new_family->id,
 													 -1);
-					// check scope_additions_needed to determine if score network should add input?
+
+					map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(*it);
+					if (score_it != this->score_networks.end()) {
+						for (int n_index = 0; n_index < (int)score_it->second.size(); n_index++) {
+							if (score_it->second[n_index] != NULL) {
+								score_it->second[n_index]->finalize_new_state(s_index);
+							}
+						}
+					}
 				}
 			}
 
@@ -364,15 +394,6 @@ void LoopExperiment::second_clean_transform() {
 							action_node->target_indexes.push_back(scope->num_states-1);
 							action_node->state_networks.push_back(it->second[n_index][s_index]);
 						}
-					}
-				}
-			}
-
-			for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
-					it != this->score_networks.end(); it++) {
-				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-					if (it->second[n_index] != NULL) {
-						it->second[n_index]->finalize_new_state(s_index);
 					}
 				}
 			}

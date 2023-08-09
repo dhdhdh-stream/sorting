@@ -75,6 +75,16 @@ public:
 					  std::vector<double>& state_vals_snapshot,
 					  std::vector<double>& new_state_vals_snapshot,
 					  StateNetworkHistory* history);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double target_max_update);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double target_max_update,
+							 double obs_snapshot,
+							 std::vector<double>& state_vals_snapshot,
+							 std::vector<double>& new_state_vals_snapshot,
+							 StateNetworkHistory* history);
 	void new_lasso_backprop(double output_error,
 							std::vector<double>& new_state_errors,
 							double target_max_update);
@@ -108,6 +118,19 @@ public:
 					  std::vector<double>& new_state_vals_snapshot,
 					  double new_input_snapshot,
 					  StateNetworkHistory* history);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double& new_input_error,
+							 double target_max_update);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double& new_input_error,
+							 double target_max_update,
+							 double obs_snapshot,
+							 std::vector<double>& state_vals_snapshot,
+							 std::vector<double>& new_state_vals_snapshot,
+							 double new_input_snapshot,
+							 StateNetworkHistory* history);
 	void new_lasso_backprop(double output_error,
 							std::vector<double>& new_state_errors,
 							double& new_input_error,

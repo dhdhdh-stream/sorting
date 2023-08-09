@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "layer.h"
@@ -184,6 +186,13 @@ void BranchNode::activate(vector<ForwardContextLayer>& context,
 						history->is_branch = false;
 					}
 				}
+			}
+
+			// temp
+			if (rand()%2 == 0) {
+				history->is_branch = true;
+			} else {
+				history->is_branch = false;
 			}
 
 			if (history->is_branch) {

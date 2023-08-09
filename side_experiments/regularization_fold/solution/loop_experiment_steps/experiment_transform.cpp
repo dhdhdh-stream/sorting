@@ -15,6 +15,8 @@
 using namespace std;
 
 void LoopExperiment::experiment_transform() {
+	cout << "experiment_transform" << endl;
+
 	this->new_average_score /= 10000;
 	this->existing_average_score /= 10000;
 	this->new_average_misguess /= 10000;
@@ -65,10 +67,12 @@ void LoopExperiment::experiment_transform() {
 						StateNetwork* network = it->second[n_index][i_index];
 						double sum_impact = 0.0;
 						for (int in_index = 0; in_index < 20; in_index++) {
-							sum_impact += abs(network->hidden->weights[in_index][0][0]);
+							if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+								sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-							for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+								}
 							}
 						}
 
@@ -100,10 +104,12 @@ void LoopExperiment::experiment_transform() {
 							StateNetwork* network = it->second[n_index][i_index];
 							double sum_impact = 0.0;
 							for (int in_index = 0; in_index < 20; in_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][0][0]);
+								if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+									sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
-									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									}
 								}
 							}
 
@@ -128,10 +134,12 @@ void LoopExperiment::experiment_transform() {
 						StateNetwork* network = it->second[n_index][s_index];
 						double sum_impact = 0.0;
 						for (int in_index = 0; in_index < 20; in_index++) {
-							sum_impact += abs(network->hidden->weights[in_index][0][0]);
+							if (abs(network->output->weights[0][0][in_index]) > 0.05) {
+								sum_impact += abs(network->hidden->weights[in_index][0][0]);
 
-							for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
-								sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+								for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+								}
 							}
 						}
 
@@ -178,7 +186,9 @@ void LoopExperiment::experiment_transform() {
 								} else {
 									double sum_state_impact = 0.0;
 									for (int in_index = 0; in_index < 20; in_index++) {
-										sum_state_impact += abs(it->second[n_index][is_index]->hidden->weights[in_index][2][s_index]);
+										if (abs(it->second[n_index][is_index]->output->weights[0][0][in_index]) > 0.05) {
+											sum_state_impact += abs(it->second[n_index][is_index]->hidden->weights[in_index][2][s_index]);
+										}
 									}
 
 									if (sum_state_impact > 0.1) {
@@ -282,7 +292,9 @@ void LoopExperiment::experiment_transform() {
 				if (this->exit_networks[e_index] != NULL) {
 					double sum_state_impact = 0.0;
 					for (int in_index = 0; in_index < 20; in_index++) {
-						sum_state_impact += abs(this->exit_networks[e_index]->hidden->weights[in_index][1][s_index]);
+						if (abs(this->exit_networks[e_index]->output->weights[0][0][in_index]) > 0.05) {
+							sum_state_impact += abs(this->exit_networks[e_index]->hidden->weights[in_index][1][s_index]);
+						}
 					}
 
 					if (sum_state_impact > 0.1) {

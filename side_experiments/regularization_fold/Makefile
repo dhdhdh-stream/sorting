@@ -19,13 +19,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main test_p1
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+test_p1: ${OBJECTS} test_p1.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} test_p1.o -o test_p1 ${LIBS}
+
+-include ${DEPENDS} main.d test_p1.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	test_p1.o test_p1.d test_p1

@@ -91,7 +91,7 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 
 	this->state_iter++;
 	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
-		if (this->state_iter == 1000000) {
+		if (this->state_iter == 500000) {
 			this->state = EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 			this->sum_error = 0.0;

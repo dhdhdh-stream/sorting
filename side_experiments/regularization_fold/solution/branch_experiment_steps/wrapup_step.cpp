@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "action_node.h"
 #include "constants.h"
@@ -251,14 +253,12 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 				context.size() - (this->exit_depth+1) + l_index].state_vals);
 		}
 
-		vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-		vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
-
 		for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
-			if (outer_states_initialized->at(s_index)) {
+			if (context[context.size() - (this->exit_depth+1)].states_initialized[s_index]) {
 				if (this->exit_networks[s_index] != NULL) {
 					this->exit_networks[s_index]->activate(history->exit_state_vals_snapshot);
-					outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
+					context[context.size() - (this->exit_depth+1)].state_vals->at(s_index)
+						+= this->exit_networks[s_index]->output->acti_vals[0];
 				}
 			}
 		}
@@ -272,6 +272,8 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 									   RunHelper& run_helper,
 									   BranchExperimentHistory* history) {
 	if (history->is_branch) {
+		this->sum_error += abs(run_helper.target_val - run_helper.predicted_score);
+
 		// no need to track context for WRAPUP
 
 		for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {

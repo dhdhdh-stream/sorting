@@ -95,9 +95,9 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 							run_helper,
 							history);
 
-		if (this->state_iter < 200000 && this->state_iter%10 == 0) {
-			seed_activate();
-		}
+		// if (this->state_iter < 200000 && this->state_iter%10 == 0) {
+		// 	seed_activate();
+		// }
 	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		clean_backprop(context,
 					   run_helper,
@@ -115,7 +115,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 
 	this->state_iter++;
 	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
-		if (this->state_iter == 1000000) {
+		if (this->state_iter == 500000) {
 			experiment_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;

@@ -23,25 +23,22 @@ void Sequence::experiment_pre_activate_helper(
 
 	if (it == this->state_networks.end()) {
 		it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
+
+		this->scope_furthest_layer_seen_in[scope_id] = context_index;
 	}
+
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)it->second.size();
 	it->second.insert(it->second.end(), size_diff, vector<StateNetwork*>());
 
 	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
-	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
-		seen_it = this->scope_furthest_layer_seen_in.insert({scope_id, context_index}).first;
+	if (context_index < seen_it->second) {
+		seen_it->second = context_index;
 
-		// no state networks added yet
-	} else {
-		if (context_index < seen_it->second) {
-			seen_it->second = context_index;
-
-			int new_furthest_distance = (int)this->experiment->scope_context.size()+2 - context_index;
-			for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-				if (it->second[n_index].size() != 0) {
-					for (int s_index = 0; s_index < (int)this->input_types.size(); s_index++) {
-						it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
-					}
+		int new_furthest_distance = (int)this->experiment->scope_context.size()+2 - context_index;
+		for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
+			if (it->second[n_index].size() != 0) {
+				for (int s_index = 0; s_index < (int)this->input_types.size(); s_index++) {
+					it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 				}
 			}
 		}

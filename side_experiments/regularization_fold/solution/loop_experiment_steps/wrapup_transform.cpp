@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "exit_node.h"
 #include "globals.h"
@@ -12,6 +14,8 @@
 using namespace std;
 
 void LoopExperiment::wrapup_transform() {
+	cout << "wrapup_transform" << endl;
+
 	Scope* new_scope = new Scope((int)solution->scopes.size(),
 								 this->new_num_states,
 								 this->new_state_initialized_locally,

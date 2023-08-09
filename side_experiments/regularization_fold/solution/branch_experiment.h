@@ -8,7 +8,7 @@
 #include "run_helper.h"
 
 const int BRANCH_EXPERIMENT_STEP_TYPE_ACTION = 0;
-const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 0;
+const int BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE = 1;
 
 class Scale;
 class ScopeHistory;

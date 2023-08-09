@@ -58,6 +58,15 @@ public:
 					  std::vector<std::vector<double>>& state_vals_snapshot,
 					  std::vector<double>& new_state_vals_snapshot,
 					  ExitNetworkHistory* history);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double target_max_update);
+	void new_scaled_backprop(double output_error,
+							 std::vector<double>& new_state_errors,
+							 double target_max_update,
+							 std::vector<std::vector<double>>& state_vals_snapshot,
+							 std::vector<double>& new_state_vals_snapshot,
+							 ExitNetworkHistory* history);
 	void new_lasso_backprop(double output_error,
 							std::vector<double>& new_state_errors,
 							double target_max_update);

@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "scale.h"
@@ -123,9 +125,6 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
-	vector<double>* curr_state_vals = context.back().state_vals;
-	vector<bool>* curr_states_initialized = &(context.back().states_initialized);
-
 	vector<vector<double>> inner_state_vals(this->starting_node_ids.size());
 	vector<vector<bool>> inner_states_initialized(this->starting_node_ids.size());
 	inner_state_vals[0] = vector<double>(inner_scope->num_states, 0.0);
@@ -141,8 +140,8 @@ void ScopeNode::activate(vector<double>& flat_vals,
 		curr_scope = next_scope;
 	}
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-		if (curr_states_initialized->at(this->input_indexes[i_index])) {
-			double val = curr_state_vals->at(this->input_indexes[i_index]);
+		if (context.back().states_initialized[this->input_indexes[i_index]]) {
+			double val = context.back().state_vals->at(this->input_indexes[i_index]);
 			if (this->input_has_transform[i_index]) {
 				val = this->input_transformations[i_index].forward(val);
 			}
@@ -194,17 +193,17 @@ void ScopeNode::activate(vector<double>& flat_vals,
 		run_helper.experiment_helper_node_context.pop_back();
 	}
 
+	context.pop_back();
+
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-		if (curr_states_initialized->at(this->input_indexes[i_index])) {
+		if (context.back().states_initialized[this->input_indexes[i_index]]) {
 			double val = inner_state_vals[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
 			if (this->input_has_transform[i_index]) {
 				val = this->input_transformations[i_index].backward(val);
 			}
-			curr_state_vals->at(this->input_indexes[i_index]) = val;
+			context.back().state_vals->at(this->input_indexes[i_index]) = val;
 		}
 	}
-
-	context.pop_back();
 
 	run_helper.scale_factor /= this->scope_scale_mod->weight;
 }
@@ -222,9 +221,6 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
-	vector<double>* curr_state_vals = context.back().state_vals;
-	vector<bool>* curr_states_initialized = &(context.back().states_initialized);
-
 	int furthest_matching_layer = 0;
 	for (int l_index = 0; l_index < (int)this->starting_node_ids.size(); l_index++) {
 		if (l_index >= (int)starting_node_ids.size()
@@ -236,8 +232,8 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	}
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
-			if (curr_states_initialized->at(this->input_indexes[i_index])) {
-				double val = curr_state_vals->at(this->input_indexes[i_index]);
+			if (context.back().states_initialized[this->input_indexes[i_index]]) {
+				double val = context.back().state_vals->at(this->input_indexes[i_index]);
 				if (this->input_has_transform[i_index]) {
 					val = this->input_transformations[i_index].forward(val);
 				}
@@ -288,19 +284,19 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		run_helper.experiment_helper_node_context.pop_back();
 	}
 
+	context.pop_back();
+
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
-			if (curr_states_initialized->at(this->input_indexes[i_index])) {
+			if (context.back().states_initialized[this->input_indexes[i_index]]) {
 				double val = starting_state_vals[this->input_target_layers[i_index]]->at(this->input_target_indexes[i_index]);
 				if (this->input_has_transform[i_index]) {
 					val = this->input_transformations[i_index].backward(val);
 				}
-				curr_state_vals->at(this->input_indexes[i_index]) = val;
+				context.back().state_vals->at(this->input_indexes[i_index]) = val;
 			}
 		}
 	}
-
-	context.pop_back();
 
 	run_helper.scale_factor /= this->scope_scale_mod->weight;
 }
@@ -346,8 +342,6 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 								  run_helper,
 								  history->inner_scope_history);
 		} else {
-			vector<double>* curr_state_errors = context.back().state_errors;
-
 			vector<vector<double>> inner_state_errors(this->starting_node_ids.size());
 			inner_state_errors[0] = vector<double>(inner_scope->num_states, 0.0);
 			Scope* curr_scope = inner_scope;
@@ -360,7 +354,7 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 				curr_scope = next_scope;
 			}
 			for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-				double error = curr_state_errors->at(this->input_indexes[i_index]);
+				double error = context.back().state_errors->at(this->input_indexes[i_index]);
 				if (this->input_has_transform[i_index]) {
 					error = this->input_transformations[i_index].backprop_backward(error);
 				}
@@ -389,15 +383,15 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 
 			scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
 
+			context.pop_back();
+
 			for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 				double error = inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
 				if (this->input_has_transform[i_index]) {
 					error = this->input_transformations[i_index].backprop_forward(error);
 				}
-				curr_state_errors->at(this->input_indexes[i_index]) = error;
+				context.back().state_errors->at(this->input_indexes[i_index]) = error;
 			}
-
-			context.pop_back();
 		}
 	}
 
@@ -416,8 +410,6 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
-	vector<double>* curr_state_errors = context.back().state_errors;
-
 	int furthest_matching_layer = 0;
 	for (int l_index = 0; l_index < (int)this->starting_node_ids.size(); l_index++) {
 		if (l_index >= (int)starting_node_ids.size()
@@ -429,7 +421,7 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 	}
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
-			double error = curr_state_errors->at(this->input_indexes[i_index]);
+			double error = context.back().state_errors->at(this->input_indexes[i_index]);
 			if (this->input_has_transform[i_index]) {
 				error = this->input_transformations[i_index].backprop_backward(error);
 			}
@@ -457,17 +449,17 @@ void ScopeNode::halfway_backprop(vector<int>& starting_node_ids,
 
 	scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
 
+	context.pop_back();
+
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
 			double error = starting_state_errors[this->input_target_layers[i_index]]->at(this->input_target_indexes[i_index]);
 			if (this->input_has_transform[i_index]) {
 				error = this->input_transformations[i_index].backprop_forward(error);
 			}
-			curr_state_errors->at(this->input_indexes[i_index]) = error;
+			context.back().state_errors->at(this->input_indexes[i_index]) = error;
 		}
 	}
-
-	context.pop_back();
 
 	run_helper.scale_factor /= this->scope_scale_mod->weight;
 }

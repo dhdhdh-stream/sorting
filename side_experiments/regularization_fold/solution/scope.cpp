@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "branch_experiment.h"
 #include "abstract_node.h"
@@ -566,6 +568,15 @@ void Scope::experiment_variables_helper(
 		if (state_it == run_helper.experiment->state_networks.end()) {
 			state_it = run_helper.experiment->state_networks.insert({this->id, vector<vector<StateNetwork*>>()}).first;
 			score_it = run_helper.experiment->score_networks.insert({this->id, vector<ScoreNetwork*>()}).first;
+
+			run_helper.experiment->scope_furthest_layer_seen_in[this->id] = run_helper.experiment_context_index;
+			if (run_helper.experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
+				run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(branch_experiment->num_steps, false);
+			} else {
+				// run_helper.experiment->type == EXPERIMENT_TYPE_LOOP
+				run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(1, false);
+			}
 		}
 
 		int size_diff = (int)this->nodes.size() - (int)state_it->second.size();
@@ -573,35 +584,21 @@ void Scope::experiment_variables_helper(
 		score_it->second.insert(score_it->second.end(), size_diff, NULL);
 
 		map<int, int>::iterator layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.find(this->id);
-		if (layer_seen_in_it == run_helper.experiment->scope_furthest_layer_seen_in.end()) {
-			layer_seen_in_it = run_helper.experiment->scope_furthest_layer_seen_in.insert({this->id, run_helper.experiment_context_index}).first;
-		} else {
-			if (run_helper.experiment_context_index < layer_seen_in_it->second) {
-				layer_seen_in_it->second = run_helper.experiment_context_index;
+		if (run_helper.experiment_context_index < layer_seen_in_it->second) {
+			layer_seen_in_it->second = run_helper.experiment_context_index;
 
-				int new_furthest_distance = (int)run_helper.experiment->scope_context.size()+2 - run_helper.experiment_context_index;
-				for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
-					if (state_it->second[n_index].size() != 0) {
-						for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-							state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
-						}
-						score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
+			int new_furthest_distance = (int)run_helper.experiment->scope_context.size()+2 - run_helper.experiment_context_index;
+			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
+				if (state_it->second[n_index].size() != 0) {
+					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+						state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 					}
+					score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
 				}
 			}
 		}
 
 		if (run_helper.experiment_step_index != -1) {
-			map<int, vector<bool>>::iterator steps_seen_in_it = run_helper.experiment->scope_steps_seen_in.find(this->id);
-			if (steps_seen_in_it == run_helper.experiment->scope_steps_seen_in.end()) {
-				if (run_helper.experiment->type == EXPERIMENT_TYPE_BRANCH) {
-					BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment;
-					run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(branch_experiment->num_steps, false);
-				} else {
-					// run_helper.experiment->type == EXPERIMENT_TYPE_LOOP
-					run_helper.experiment->scope_steps_seen_in[this->id] = vector<bool>(1, false);
-				}
-			}
 			run_helper.experiment->scope_steps_seen_in[this->id][run_helper.experiment_step_index] = true;
 		}
 
@@ -775,8 +772,6 @@ void Scope::backprop(vector<int>& starting_node_ids,
 			}
 		}
 	} else {
-		starting_node_ids.erase(starting_node_ids.begin());
-
 		for (int h_index = (int)history->node_histories[0].size()-1; h_index >= 1; h_index--) {
 			handle_node_backprop_helper(0,
 										h_index,
@@ -790,6 +785,8 @@ void Scope::backprop(vector<int>& starting_node_ids,
 					|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN)
 				&& !run_helper.backprop_is_pre_experiment
 				&& starting_state_errors.size() > 0) {
+			starting_node_ids.erase(starting_node_ids.begin());
+
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history->node_histories[0][0];
 			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 			scope_node->halfway_backprop(starting_node_ids,

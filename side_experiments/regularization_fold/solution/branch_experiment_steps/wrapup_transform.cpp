@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
@@ -13,6 +15,8 @@
 using namespace std;
 
 void BranchExperiment::wrapup_transform() {
+	cout << "wrapup_transform" << endl;
+
 	Scope* new_scope = new Scope((int)solution->scopes.size(),
 								 this->new_num_states,
 								 this->new_state_initialized_locally,
@@ -185,7 +189,7 @@ void BranchExperiment::wrapup_transform() {
 										 true,
 										 NULL,
 										 NULL,
-										 new_exit_node->id,
+										 new_scope_node->id,
 										 NULL,
 										 NULL,
 										 original_action_node->next_node_id,
@@ -206,7 +210,7 @@ void BranchExperiment::wrapup_transform() {
 										 false,
 										 this->starting_score_network,
 										 this->starting_misguess_network,
-										 new_exit_node->id,
+										 new_scope_node->id,
 										 this->starting_original_score_network,
 										 this->starting_original_misguess_network,
 										 original_action_node->next_node_id,

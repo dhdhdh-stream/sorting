@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "action_node.h"
 #include "constants.h"
@@ -29,6 +31,9 @@ void BranchExperiment::experiment_pre_activate_helper(
 	if (state_it == this->state_networks.end()) {
 		state_it = this->state_networks.insert({scope_id, vector<vector<StateNetwork*>>()}).first;
 		score_it = this->score_networks.insert({scope_id, vector<ScoreNetwork*>()}).first;
+
+		this->scope_furthest_layer_seen_in[scope_id] = context_index;
+		this->scope_steps_seen_in[scope_id] = vector<bool>(this->num_steps, false);
 	}
 
 	int size_diff = (int)scope_history->scope->nodes.size() - (int)state_it->second.size();
@@ -36,22 +41,16 @@ void BranchExperiment::experiment_pre_activate_helper(
 	score_it->second.insert(score_it->second.end(), size_diff, NULL);
 
 	map<int, int>::iterator seen_it = this->scope_furthest_layer_seen_in.find(scope_id);
-	if (seen_it == this->scope_furthest_layer_seen_in.end()) {
-		seen_it = this->scope_furthest_layer_seen_in.insert({scope_id, context_index}).first;
+	if (context_index < seen_it->second) {
+		seen_it->second = context_index;
 
-		// no state networks added yet
-	} else {
-		if (context_index < seen_it->second) {
-			seen_it->second = context_index;
-
-			int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
-			for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
-				if (state_it->second[n_index].size() != 0) {
-					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-						state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
-					}
-					score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
+		int new_furthest_distance = (int)this->scope_context.size()+2 - context_index;
+		for (int n_index = 0; n_index < (int)state_it->second.size(); n_index++) {
+			if (state_it->second[n_index].size() != 0) {
+				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
+					state_it->second[n_index][s_index]->update_lasso_weights(new_furthest_distance);
 				}
+				score_it->second[n_index]->update_lasso_weights(new_furthest_distance);
 			}
 		}
 	}
@@ -261,18 +260,16 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 	}
 	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	vector<double>* outer_state_vals = context[context.size() - (this->exit_depth+1)].state_vals;
-	vector<bool>* outer_states_initialized = &(context[context.size() - (this->exit_depth+1)].states_initialized);
-
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
-		if (outer_states_initialized->at(s_index)) {
+		if (context[context.size() - (this->exit_depth+1)].states_initialized[s_index]) {
 			ExitNetworkHistory* network_history = new ExitNetworkHistory(this->exit_networks[s_index]);
 			this->exit_networks[s_index]->new_activate(history->exit_state_vals_snapshot,
 													   history->ending_new_state_vals_snapshot,
 													   network_history);
 			history->exit_network_histories[s_index] = network_history;
-			outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
+			context[context.size() - (this->exit_depth+1)].state_vals->at(s_index)
+				+= this->exit_networks[s_index]->output->acti_vals[0];
 		}
 	}
 
@@ -285,8 +282,6 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 										   RunHelper& run_helper,
 										   BranchExperimentHistory* history) {
-	vector<double>* outer_state_errors = context[context.size() - (this->exit_depth+1)].state_errors;
-
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (history->exit_network_histories[s_index] != NULL) {
 			double exit_network_target_max_update;
@@ -295,15 +290,15 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			} else {
 				exit_network_target_max_update = 0.01;
 			}
-			if (this->state_iter <= 20000) {
-				this->exit_networks[s_index]->new_backprop(outer_state_errors->at(s_index),
-														   run_helper.new_state_errors,
-														   exit_network_target_max_update,
-														   history->exit_state_vals_snapshot,
-														   history->ending_new_state_vals_snapshot,
-														   history->exit_network_histories[s_index]);
+			if (this->state_iter <= 200000) {
+				this->exit_networks[s_index]->new_scaled_backprop(context[context.size() - (this->exit_depth+1)].state_errors->at(s_index),
+																  run_helper.new_state_errors,
+																  exit_network_target_max_update,
+																  history->exit_state_vals_snapshot,
+																  history->ending_new_state_vals_snapshot,
+																  history->exit_network_histories[s_index]);
 			} else {
-				this->exit_networks[s_index]->new_lasso_backprop(outer_state_errors->at(s_index),
+				this->exit_networks[s_index]->new_lasso_backprop(context[context.size() - (this->exit_depth+1)].state_errors->at(s_index),
 																 run_helper.new_state_errors,
 																 exit_network_target_max_update,
 																 history->exit_state_vals_snapshot,
@@ -312,6 +307,8 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			}
 		}
 	}
+
+	this->sum_error += abs(run_helper.target_val - run_helper.predicted_score);
 
 	// no need to append to context yet
 
@@ -329,6 +326,33 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 
 	for (int a_index = this->num_steps-1; a_index >= 0; a_index--) {
 		if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
+			double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
+
+			double new_score_network_target_max_update;
+			if (this->state_iter <= 100000) {
+				new_score_network_target_max_update = 0.05;
+			} else {
+				new_score_network_target_max_update = 0.01;
+			}
+			vector<double> empty_state_vals;
+			if (this->state_iter <= 200000) {
+				this->step_score_networks[a_index]->new_scaled_backprop(run_helper.scale_factor*predicted_score_error,
+																		run_helper.new_state_errors,
+																		new_score_network_target_max_update,
+																		empty_state_vals,
+																		history->step_ending_new_state_vals_snapshots[a_index],
+																		history->step_score_network_histories[a_index]);
+			} else {
+				this->step_score_networks[a_index]->new_lasso_backprop(run_helper.scale_factor*predicted_score_error,
+																	   run_helper.new_state_errors,
+																	   new_score_network_target_max_update,
+																	   empty_state_vals,
+																	   history->step_ending_new_state_vals_snapshots[a_index],
+																	   history->step_score_network_histories[a_index]);
+			}
+
+			run_helper.predicted_score -= run_helper.scale_factor*history->step_score_network_outputs[a_index];
+
 			vector<double> new_state_errors_snapshot = run_helper.new_state_errors;
 			for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 				if (history->step_state_network_histories[a_index][s_index] != NULL) {
@@ -338,9 +362,9 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 					} else {
 						state_network_target_max_update = 0.01;
 					}
-					if (this->state_iter <= 20000) {
+					if (this->state_iter <= 200000) {
 						vector<double> empty_state_vals;
-						this->step_state_networks[a_index][s_index]->new_backprop(
+						this->step_state_networks[a_index][s_index]->new_scaled_backprop(
 							new_state_errors_snapshot[s_index],
 							run_helper.new_state_errors,
 							state_network_target_max_update,
@@ -371,17 +395,17 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 						} else {
 							new_input_network_target_max_update = 0.01;
 						}
-						if (this->state_iter <= 20000) {
+						if (this->state_iter <= 200000) {
 							vector<double> empty_state_vals;
-							network->new_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
-												  run_helper.new_state_errors,
-												  run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
-												  new_input_network_target_max_update,
-												  history->step_obs_snapshots[a_index],
-												  empty_state_vals,
-												  history->step_starting_new_state_vals_snapshots[a_index],
-												  history->step_input_vals_snapshots[a_index][st_index][i_index],
-												  history->step_input_state_network_histories[a_index][st_index][i_index]);
+							network->new_scaled_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+														 run_helper.new_state_errors,
+														 run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
+														 new_input_network_target_max_update,
+														 history->step_obs_snapshots[a_index],
+														 empty_state_vals,
+														 history->step_starting_new_state_vals_snapshots[a_index],
+														 history->step_input_vals_snapshots[a_index][st_index][i_index],
+														 history->step_input_state_network_histories[a_index][st_index][i_index]);
 						} else {
 							vector<double> empty_state_vals;
 							network->new_lasso_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
@@ -397,33 +421,6 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 					}
 				}
 			}
-
-			double predicted_score_error = run_helper.target_val - run_helper.predicted_score;
-
-			double new_score_network_target_max_update;
-			if (this->state_iter <= 100000) {
-				new_score_network_target_max_update = 0.05;
-			} else {
-				new_score_network_target_max_update = 0.01;
-			}
-			vector<double> empty_state_vals;
-			if (this->state_iter <= 20000) {
-				this->step_score_networks[a_index]->new_backprop(run_helper.scale_factor*predicted_score_error,
-																 run_helper.new_state_errors,
-																 new_score_network_target_max_update,
-																 empty_state_vals,
-																 history->step_ending_new_state_vals_snapshots[a_index],
-																 history->step_score_network_histories[a_index]);
-			} else {
-				this->step_score_networks[a_index]->new_lasso_backprop(run_helper.scale_factor*predicted_score_error,
-																	   run_helper.new_state_errors,
-																	   new_score_network_target_max_update,
-																	   empty_state_vals,
-																	   history->step_ending_new_state_vals_snapshots[a_index],
-																	   history->step_score_network_histories[a_index]);
-			}
-
-			run_helper.predicted_score -= run_helper.scale_factor*history->step_score_network_outputs[a_index];
 		} else {
 			run_helper.scale_factor *= this->sequence_scale_mods[a_index]->weight;
 
@@ -456,8 +453,8 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_score_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 20000) {
-		this->starting_score_network->new_backprop(
+	if (this->state_iter <= 200000) {
+		this->starting_score_network->new_scaled_backprop(
 			run_helper.scale_factor*starting_predicted_score_error,
 			run_helper.new_state_errors,
 			starting_score_network_target_max_update);
@@ -477,8 +474,8 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_misguess_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 20000) {
-		this->starting_misguess_network->new_backprop(
+	if (this->state_iter <= 200000) {
+		this->starting_misguess_network->new_scaled_backprop(
 			starting_misguess_error,
 			run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so
 			starting_misguess_network_target_max_update);

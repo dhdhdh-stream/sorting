@@ -12,9 +12,6 @@ class EndingScopeNodeActivateHelper {
 public:
 	ScopeNode* scope_node;
 
-	std::vector<double>* curr_state_vals;
-	std::vector<bool>* curr_states_initialized;
-
 	bool is_halfway;
 	int furthest_matching_layer;
 
@@ -35,8 +32,6 @@ public:
 class EndingScopeNodeBackpropHelper {
 public:
 	ScopeNode* scope_node;
-
-	std::vector<double>* curr_state_errors;
 
 	bool is_halfway;
 	int furthest_matching_layer;

@@ -45,11 +45,14 @@ public:
 
 	void save_weights(std::ofstream& output_file);
 
+	void state_hidden_scaled_update_weights(double learning_rate);
 	void state_hidden_finalize_new_state(int input_layer_index);
 	void state_hidden_finalize_new_input();
+	void score_hidden_scaled_update_weights(double learning_rate);
 	void score_hidden_finalize_new_state(int new_state_index);
 	void score_hidden_cleanup_new_states();
 	void score_hidden_add_state();
+	void exit_hidden_scaled_update_weights(double learning_rate);
 	void exit_hidden_finalize_new_state(int input_layer_index);
 };
 

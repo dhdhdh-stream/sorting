@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "class_definition.h"
 #include "exit_network.h"
@@ -14,6 +16,8 @@
 using namespace std;
 
 void BranchExperiment::second_clean_transform() {
+	cout << "second_clean_transform" << endl;
+
 	for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
 			it != this->score_networks.end(); it++) {
 		int updated_state_size = solution->scopes[it->first]->num_states;
@@ -96,6 +100,9 @@ void BranchExperiment::second_clean_transform() {
 						continue_scope_node->input_target_indexes.push_back(inner_scope->num_states);	// new state not added yet
 						continue_scope_node->input_has_transform.push_back(false);
 						continue_scope_node->input_transformations.push_back(Transformation());
+
+						this->starting_score_network->add_state();
+						this->starting_misguess_network->add_state();
 
 						// special case last layer, as was skipped due to from ActionNode
 						this->sequences[a_index]->scope_additions_needed[i_index].insert(this->scope_context.back());
@@ -203,6 +210,9 @@ void BranchExperiment::second_clean_transform() {
 														   new_family_id,
 														   new_class->id);
 
+							this->starting_score_network->add_state();
+							this->starting_misguess_network->add_state();
+
 							// special case last layer, as was skipped due to from ActionNode
 							this->sequences[a_index]->scope_additions_needed[i_index].insert(this->scope_context.back());
 						} else if (this->sequences[a_index]->input_furthest_layer_needed_in[i_index] == (int)this->scope_context.size()+1) {
@@ -229,6 +239,9 @@ void BranchExperiment::second_clean_transform() {
 							solution->scopes[starting_scope_id]->add_state(true,
 																		   new_family_id,
 																		   new_class->id);
+
+							this->starting_score_network->add_state();
+							this->starting_misguess_network->add_state();
 
 							// special case last layer, as was skipped due to from ActionNode
 							this->sequences[a_index]->scope_additions_needed[i_index].insert(this->scope_context.back());
@@ -300,9 +313,6 @@ void BranchExperiment::second_clean_transform() {
 							}
 						}
 					}
-
-					this->starting_score_network->add_state();
-					this->starting_misguess_network->add_state();
 				}
 			}
 		}
@@ -398,6 +408,18 @@ void BranchExperiment::second_clean_transform() {
 											   new_family->id,
 											   new_class->id);
 
+				{
+					vector<ScoreNetwork*> scope_score_networks = this->score_networks[0];
+					for (int n_index = 0; n_index < (int)scope_score_networks.size(); n_index++) {
+						if (scope_score_networks[n_index] != NULL) {
+							scope_score_networks[n_index]->finalize_new_state(s_index);
+						}
+					}
+
+					this->starting_score_network->finalize_new_state(s_index);
+					this->starting_misguess_network->finalize_new_state(s_index);
+				}
+
 				// special case last layer, as was skipped due to from ActionNode
 				this->scope_additions_needed[s_index].insert(this->scope_context.back());
 			} else if (this->new_state_furthest_layer_needed_in[s_index] == (int)this->scope_context.size()+1) {
@@ -421,6 +443,18 @@ void BranchExperiment::second_clean_transform() {
 															   new_family->id,
 															   new_class->id);
 
+				{
+					vector<ScoreNetwork*> scope_score_networks = this->score_networks[starting_scope_id];
+					for (int n_index = 0; n_index < (int)scope_score_networks.size(); n_index++) {
+						if (scope_score_networks[n_index] != NULL) {
+							scope_score_networks[n_index]->finalize_new_state(s_index);
+						}
+					}
+
+					this->starting_score_network->finalize_new_state(s_index);
+					this->starting_misguess_network->finalize_new_state(s_index);
+				}
+
 				// special case last layer, as was skipped due to from ActionNode
 				this->scope_additions_needed[s_index].insert(this->scope_context.back());
 			}
@@ -436,6 +470,15 @@ void BranchExperiment::second_clean_transform() {
 					solution->scopes[*it]->add_state(false,
 													 new_family->id,
 													 -1);
+
+					map<int, vector<ScoreNetwork*>>::iterator score_it = this->score_networks.find(*it);
+					if (score_it != this->score_networks.end()) {
+						for (int n_index = 0; n_index < (int)score_it->second.size(); n_index++) {
+							if (score_it->second[n_index] != NULL) {
+								score_it->second[n_index]->finalize_new_state(s_index);
+							}
+						}
+					}
 				}
 			}
 
@@ -484,15 +527,6 @@ void BranchExperiment::second_clean_transform() {
 				}
 			}
 
-			for (map<int, vector<ScoreNetwork*>>::iterator it = this->score_networks.begin();
-					it != this->score_networks.end(); it++) {
-				for (int n_index = 0; n_index < (int)it->second.size(); n_index++) {
-					if (it->second[n_index] != NULL) {
-						it->second[n_index]->finalize_new_state(s_index);
-					}
-				}
-			}
-
 			for (int a_index = 0; a_index < this->num_steps; a_index++) {
 				if (this->step_types[a_index] == BRANCH_EXPERIMENT_STEP_TYPE_ACTION) {
 					for (int is_index = 0; is_index < NUM_NEW_STATES; is_index++) {
@@ -511,9 +545,6 @@ void BranchExperiment::second_clean_transform() {
 					this->step_score_networks[a_index]->finalize_new_state(s_index);
 				}
 			}
-
-			this->starting_score_network->finalize_new_state(s_index);
-			this->starting_misguess_network->finalize_new_state(s_index);
 
 			for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
 				if (this->exit_networks[e_index] != NULL) {

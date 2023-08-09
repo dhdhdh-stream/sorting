@@ -258,19 +258,16 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 	history->exit_state_vals_snapshot[0] = *(context.back().state_vals);
 	history->ending_new_state_vals_snapshot = run_helper.new_state_vals;
 
-	vector<double>* outer_state_vals = context.back().state_vals;
-	vector<bool>* outer_states_initialized = &(context.back().states_initialized);
-
 	history->exit_network_histories = vector<ExitNetworkHistory*>(this->exit_networks.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
-		if (outer_states_initialized->at(s_index)) {
+		if (context.back().states_initialized[s_index]) {
 			if (this->exit_networks[s_index] != NULL) {
 				ExitNetworkHistory* network_history = new ExitNetworkHistory(this->exit_networks[s_index]);
 				this->exit_networks[s_index]->new_activate(history->exit_state_vals_snapshot,
 														   history->ending_new_state_vals_snapshot,
 														   network_history);
 				history->exit_network_histories[s_index] = network_history;
-				outer_state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
+				context.back().state_vals->at(s_index) += this->exit_networks[s_index]->output->acti_vals[0];
 
 				this->exit_network_impacts[s_index] = 0.9999*this->exit_network_impacts[s_index] + 0.0001*abs(this->exit_networks[s_index]->output->acti_vals[0]);
 			}
@@ -285,12 +282,10 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 									RunHelper& run_helper,
 									LoopExperimentHistory* history) {
-	vector<double>* outer_state_errors = context.back().state_errors;
-
 	for (int s_index = 0; s_index < (int)this->exit_networks.size(); s_index++) {
 		if (history->exit_network_histories[s_index] != NULL) {
 			this->exit_networks[s_index]->new_backprop(
-				outer_state_errors->at(s_index),
+				context.back().state_errors->at(s_index),
 				run_helper.new_state_errors,
 				0.01,
 				history->exit_state_vals_snapshot,

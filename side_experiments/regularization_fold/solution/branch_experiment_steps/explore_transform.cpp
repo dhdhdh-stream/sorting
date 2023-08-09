@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "exit_network.h"
 #include "globals.h"
@@ -12,6 +14,8 @@
 using namespace std;
 
 void BranchExperiment::explore_transform() {
+	cout << "explore_transform" << endl;
+
 	Scope* outer_scope = solution->scopes[this->scope_context.back()];
 
 	this->starting_score_network = new ScoreNetwork(outer_scope->num_states,

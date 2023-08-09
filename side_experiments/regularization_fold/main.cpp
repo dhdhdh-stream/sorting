@@ -71,6 +71,8 @@ int main(int argc, char* argv[]) {
 		vector<double> flat_vals;
 
 		RunHelper run_helper;
+		run_helper.predicted_score = solution->average_score;
+		run_helper.scale_factor = 1.0;
 		if (iter_index > 100000 && rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
