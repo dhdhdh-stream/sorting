@@ -1,12 +1,3 @@
-/**
- * 0: blank
- * 1: switch
- * 2: blank
- * 3: xor
- * 4: xor
- * 5: blank
- */
-
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -40,17 +31,43 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	solution = new Solution();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution = new Solution(solution_save_file);
+	solution_save_file.close();
 
-	ActionNode* explore_node = (ActionNode*)solution->scopes[0]->nodes[0];
+	// for (int n_index = 0; n_index < (int)solution->scopes[0]->nodes.size(); n_index++) {
+	// 	cout << n_index << ": " << solution->scopes[0]->nodes[n_index]->type << endl;
+	// }
+	// for (int n_index = 0; n_index < (int)solution->scopes[1]->nodes.size(); n_index++) {
+	// 	cout << n_index << ": " << solution->scopes[1]->nodes[n_index]->type << endl;
+	// }
+	// cout << "num_states: " << solution->scopes[1]->num_states << endl;
+
+	ActionNode* explore_node = (ActionNode*)solution->scopes[1]->nodes[2];
+
+	Sequence* sequence = new Sequence(
+		vector<Scope*>{solution->scopes[0]},
+		vector<int>{2, 8},
+		vector<int>(5, SEQUENCE_INPUT_TYPE_LOCAL),
+		vector<int>{1, 1, 1, 1, 1},
+		vector<int>{0, 1, 2, 3, 4},
+		vector<int>{0, 0, 0, 0, 0},
+		vector<int>{0, 1, 2, 3, 4},
+		vector<int>(5, -1),
+		vector<int>(5, -1),
+		vector<int>(5, -1),
+		vector<bool>(5, false),
+		vector<Transformation>(5, Transformation()),
+		vector<vector<int>>{vector<int>{2}});
 
 	BranchExperiment* branch_experiment = new BranchExperiment(
-		vector<int>{0},
-		vector<int>{0},
-		6,
-		vector<int>(6, BRANCH_EXPERIMENT_STEP_TYPE_ACTION),
-		vector<Sequence*>(6, NULL),
-		0,
+		vector<int>{0, 1},
+		vector<int>{2, 2},
+		1,
+		vector<int>{BRANCH_EXPERIMENT_STEP_TYPE_SEQUENCE},
+		vector<Sequence*>{sequence},
+		1,
 		-1,
 		-1.0,
 		1.0,
@@ -61,6 +78,68 @@ int main(int argc, char* argv[]) {
 
 	explore_node->is_explore = true;
 	explore_node->experiment = branch_experiment;
+
+	// for (int iter_index = 0; iter_index < 10; iter_index++) {
+	// 	vector<double> flat_vals;
+	// 	flat_vals.push_back(2*(double)(rand()%2)-1);
+	// 	flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
+	// 	int switch_val = rand()%2;
+	// 	flat_vals.push_back(2*(double)switch_val-1);
+	// 	flat_vals.push_back(2*(double)(rand()%2)-1);
+	// 	flat_vals.push_back(2*(double)(rand()%2)-1);
+	// 	flat_vals.push_back(2*(double)(rand()%2)-1);
+	// 	flat_vals.push_back(2*(double)(rand()%2)-1);
+
+	// 	vector<double> flat_vals_snapshot = flat_vals;
+
+	// 	RunHelper run_helper;
+	// 	run_helper.predicted_score = solution->average_score;
+	// 	run_helper.scale_factor = 1.0;
+	// 	run_helper.explore_phase = EXPLORE_PHASE_NONE;
+	// 	if (rand()%10 == 0) {
+	// 		run_helper.can_random_iter = true;
+	// 	} else {
+	// 		run_helper.can_random_iter = false;
+	// 	}
+
+	// 	vector<ForwardContextLayer> context;
+	// 	context.push_back(ForwardContextLayer());
+
+	// 	context.back().scope_id = 0;
+	// 	context.back().node_id = -1;
+
+	// 	vector<double> inner_state_vals(solution->scopes[0]->num_states, 0.0);
+	// 	context.back().state_vals = &inner_state_vals;
+	// 	context.back().states_initialized = vector<bool>(solution->scopes[0]->num_states, true);
+	// 	// minor optimization to initialize to true to prevent updating last_seen_vals for starting scope
+
+	// 	ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+	// 	context.back().scope_history = root_history;
+
+	// 	vector<int> starting_node_ids{0};
+	// 	vector<vector<double>*> starting_state_vals;
+	// 	vector<vector<bool>> starting_states_initialized;
+
+	// 	int exit_depth;
+	// 	int exit_node_id;
+
+	// 	solution->scopes[0]->activate(starting_node_ids,
+	// 								  starting_state_vals,
+	// 								  starting_states_initialized,
+	// 								  flat_vals,
+	// 								  context,
+	// 								  exit_depth,
+	// 								  exit_node_id,
+	// 								  run_helper,
+	// 								  root_history);
+
+	// 	cout << "run_helper.explore_phase: " << run_helper.explore_phase << endl;
+	// 	cout << "switch_val: " << switch_val << endl;
+	// 	cout << "flat_vals.size(): " << flat_vals.size() << endl;
+	// 	cout << "run_helper.predicted_score: " << run_helper.predicted_score << endl;
+
+	// 	delete root_history;
+	// }
 
 	int iter_index = 0;
 	while (true) {
@@ -79,7 +158,7 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 		run_helper.predicted_score = solution->average_score;
 		run_helper.scale_factor = 1.0;
-		if (iter_index > 100000 && rand()%3 != 0) {
+		if (rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
@@ -127,13 +206,35 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
 		}
 
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
-		} else {
-			if (switch_val == 0) {
-				run_helper.target_val = -1;
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
+				|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN
+				|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
+			if (flat_vals.size() == 1) {
+				if (switch_val == 0) {
+					run_helper.target_val = 1 + 2*(double)((xor_1+xor_2)%2);
+				} else {
+					run_helper.target_val = 0;
+				}
 			} else {
-				run_helper.target_val = (double)((xor_1+xor_2)%2);
+				if (switch_val == 0) {
+					run_helper.target_val = 0;
+				} else {
+					run_helper.target_val = 1 + 2*(double)((xor_1+xor_2)%2);
+				}
+			}
+		} else {
+			if (flat_vals.size() == 1) {
+				if (switch_val == 0) {
+					run_helper.target_val = (double)((xor_1+xor_2)%2);
+				} else {
+					run_helper.target_val = -1;
+				}
+			} else {
+				if (switch_val == 0) {
+					run_helper.target_val = -1;
+				} else {
+					run_helper.target_val = (double)((xor_1+xor_2)%2);
+				}
 			}
 		}
 		run_helper.final_misguess = (run_helper.target_val - run_helper.predicted_score)*(run_helper.target_val - run_helper.predicted_score);
@@ -189,156 +290,6 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 		iter_index++;
-	}
-
-	for (int iter_index = 0; iter_index < 20; iter_index++) {
-		vector<double> flat_vals;
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-		flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
-		int switch_val = rand()%2;
-		flat_vals.push_back(2*(double)switch_val-1);
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-		int xor_1 = rand()%2;
-		flat_vals.push_back(2*(double)xor_1-1);
-		int xor_2 = rand()%2;
-		flat_vals.push_back(2*(double)xor_2-1);
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		RunHelper run_helper;
-		run_helper.predicted_score = solution->average_score;
-		run_helper.scale_factor = 1.0;
-		run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-		run_helper.can_random_iter = false;
-
-		vector<ForwardContextLayer> context;
-		context.push_back(ForwardContextLayer());
-
-		context.back().scope_id = 0;
-		context.back().node_id = -1;
-
-		vector<double> inner_state_vals(solution->scopes[0]->num_states, 0.0);
-		context.back().state_vals = &inner_state_vals;
-		context.back().states_initialized = vector<bool>(solution->scopes[0]->num_states, true);
-		// minor optimization to initialize to true to prevent updating last_seen_vals for starting scope
-
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
-
-		vector<int> starting_node_ids{0};
-		vector<vector<double>*> starting_state_vals;
-		vector<vector<bool>> starting_states_initialized;
-
-		int exit_depth;
-		int exit_node_id;
-
-		solution->scopes[0]->activate(starting_node_ids,
-									  starting_state_vals,
-									  starting_states_initialized,
-									  flat_vals,
-									  context,
-									  exit_depth,
-									  exit_node_id,
-									  run_helper,
-									  root_history);
-
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
-		} else {
-			if (switch_val == 0) {
-				run_helper.target_val = -1;
-			} else {
-				run_helper.target_val = (double)((xor_1+xor_2)%2);
-			}
-		}
-
-		cout << "pre: " << iter_index << endl;
-		cout << "run_helper.target_val: " << run_helper.target_val << endl;
-		cout << "run_helper.predicted_score: " << run_helper.predicted_score << endl;
-
-		delete root_history;
-	}
-
-	{
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
-	}
-
-	delete solution;
-
-	{
-		ifstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution = new Solution(solution_save_file);
-		solution_save_file.close();
-	}
-
-	for (int iter_index = 0; iter_index < 20; iter_index++) {
-		vector<double> flat_vals;
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-		flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
-		int switch_val = rand()%2;
-		flat_vals.push_back(2*(double)switch_val-1);
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-		int xor_1 = rand()%2;
-		flat_vals.push_back(2*(double)xor_1-1);
-		int xor_2 = rand()%2;
-		flat_vals.push_back(2*(double)xor_2-1);
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		RunHelper run_helper;
-		run_helper.predicted_score = solution->average_score;
-		run_helper.scale_factor = 1.0;
-		run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-		run_helper.can_random_iter = false;
-
-		vector<ForwardContextLayer> context;
-		context.push_back(ForwardContextLayer());
-
-		context.back().scope_id = 0;
-		context.back().node_id = -1;
-
-		vector<double> inner_state_vals(solution->scopes[0]->num_states, 0.0);
-		context.back().state_vals = &inner_state_vals;
-		context.back().states_initialized = vector<bool>(solution->scopes[0]->num_states, true);
-		// minor optimization to initialize to true to prevent updating last_seen_vals for starting scope
-
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
-
-		vector<int> starting_node_ids{0};
-		vector<vector<double>*> starting_state_vals;
-		vector<vector<bool>> starting_states_initialized;
-
-		int exit_depth;
-		int exit_node_id;
-
-		solution->scopes[0]->activate(starting_node_ids,
-									  starting_state_vals,
-									  starting_states_initialized,
-									  flat_vals,
-									  context,
-									  exit_depth,
-									  exit_node_id,
-									  run_helper,
-									  root_history);
-
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
-		} else {
-			if (switch_val == 0) {
-				run_helper.target_val = -1;
-			} else {
-				run_helper.target_val = (double)((xor_1+xor_2)%2);
-			}
-		}
-
-		cout << "post: " << iter_index << endl;
-		cout << "run_helper.target_val: " << run_helper.target_val << endl;
-		cout << "run_helper.predicted_score: " << run_helper.predicted_score << endl;
-
-		delete root_history;
 	}
 
 	delete solution;

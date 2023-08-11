@@ -80,7 +80,8 @@ void LoopExperiment::second_clean_transform() {
 					/ this->corr_calc_variances[cc_index]
 					/ this->sequence->corr_calc_new_variances[cc_index][i_index];
 				if (abs(pcc) > 0.6) {
-					Scope* scope = solution->scopes[this->scope_context.size()-1 - this->corr_calc_scope_depths[cc_index]];
+					int scope_id = this->scope_context[this->scope_context.size()-1 - this->corr_calc_scope_depths[cc_index]];
+					Scope* scope = solution->scopes[scope_id];
 					FamilyDefinition* existing_family = solution->families[scope->state_family_ids[this->corr_calc_input_indexes[cc_index]]];
 
 					int new_existing_index = -1;
@@ -217,7 +218,8 @@ void LoopExperiment::second_clean_transform() {
 					/ this->corr_calc_variances[cc_index]
 					/ this->corr_calc_new_variances[cc_index][s_index];
 				if (abs(pcc) > 0.6) {
-					Scope* scope = solution->scopes[this->scope_context.size()-1 - this->corr_calc_scope_depths[cc_index]];
+					int scope_id = this->scope_context[this->scope_context.size()-1 - this->corr_calc_scope_depths[cc_index]];
+					Scope* scope = solution->scopes[scope_id];
 					FamilyDefinition* existing_family = solution->families[scope->state_family_ids[this->corr_calc_input_indexes[cc_index]]];
 
 					existing_family->similar_family_ids.push_back(new_family->id);
@@ -230,7 +232,8 @@ void LoopExperiment::second_clean_transform() {
 				}
 			}
 
-			for (int i_index = 0; i_index < (int)this->sequence->input_types.size(); i_index++) {
+			// note: this->sequence->input_types.size() does not match corr_calc (i.e., initial input_types.size())
+			for (int i_index = 0; i_index < (int)this->sequence->corr_calc_new_covariances[s_index].size(); i_index++) {
 				double pcc = this->sequence->corr_calc_new_covariances[s_index][i_index]
 					/ this->sequence->corr_calc_state_variances[s_index]
 					/ this->sequence->corr_calc_input_variances[s_index][i_index];
@@ -374,6 +377,8 @@ void LoopExperiment::second_clean_transform() {
 				this->sequence->input_types.push_back(SEQUENCE_INPUT_TYPE_NONE);
 				this->sequence->input_target_layers.push_back(0);
 				this->sequence->input_target_indexes.push_back(inner_scope->num_states-1);
+				this->sequence->input_has_transform.push_back(false);
+				this->sequence->input_transformations.push_back(Transformation());
 			}
 
 			for (map<int, vector<vector<StateNetwork*>>>::iterator it = this->state_networks.begin();

@@ -598,7 +598,7 @@ void StateNetwork::new_lasso_backprop(double output_error,
 void StateNetwork::update_lasso_weights(int new_furthest_distance) {
 	this->lasso_weights = vector<vector<double>>(4);
 	this->lasso_weights[0] = vector<double>{new_furthest_distance*DEFAULT_LASSO_WEIGHT};
-	this->lasso_weights[1] = vector<double>(this->state_indexes.size(), 0.0);
+	this->lasso_weights[1] = vector<double>(this->state_indexes.size(), DEFAULT_LASSO_WEIGHT);
 	this->lasso_weights[2] = vector<double>(NUM_NEW_STATES);
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 		this->lasso_weights[2][s_index] = new_furthest_distance*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];

@@ -40,7 +40,7 @@ ExitNetwork::ExitNetwork(vector<int>& context_sizes,
 	this->hidden_size = hidden_size;
 
 	this->lasso_weights = vector<vector<double>>(2);
-	this->lasso_weights[0] = vector<double>(this->context_indexes.size(), 0.0);
+	this->lasso_weights[0] = vector<double>(this->context_indexes.size(), DEFAULT_LASSO_WEIGHT);
 	this->lasso_weights[1] = vector<double>(NUM_NEW_STATES);
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 		this->lasso_weights[1][s_index] = 2.0*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];

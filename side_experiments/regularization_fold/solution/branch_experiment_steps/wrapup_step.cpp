@@ -40,7 +40,7 @@ void BranchExperiment::wrapup_pre_activate_helper(
 					score_network->activate(action_node_history->ending_state_vals_snapshot);
 					action_node_history->new_score_network_output = score_network->output->acti_vals[0];
 
-					double temp_score_scale = (100000.0-this->state_iter)/100000.0;
+					double temp_score_scale = (50000.0-this->state_iter)/50000.0;
 					run_helper.predicted_score += temp_scale_factor*temp_score_scale*score_network->output->acti_vals[0];
 				}
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
@@ -90,9 +90,9 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 	double score_diff = branch_score - original_score;
 	double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
 	if (score_val > 0.1) {
-		if (this->state_iter < 100000) {
+		if (this->state_iter < 50000) {
 			// ease-in in case of recursion
-			double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+			double ease_in_scale = 0.5 + 0.5*(this->state_iter/50000.0);
 			if (randuni() < ease_in_scale) {
 				history->is_branch = true;
 			} else {
@@ -108,9 +108,9 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 			- this->starting_original_misguess_network->output->acti_vals[0];
 		double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
 		if (misguess_val < -0.1) {
-			if (this->state_iter < 100000) {
+			if (this->state_iter < 50000) {
 				// ease-in in case of recursion
-				double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+				double ease_in_scale = 0.5 + 0.5*(this->state_iter/50000.0);
 				if (randuni() < ease_in_scale) {
 					history->is_branch = true;
 				} else {
@@ -123,9 +123,9 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 			history->is_branch = false;
 		} else {
 			if (rand()%2 == 0) {
-				if (this->state_iter < 100000) {
+				if (this->state_iter < 50000) {
 					// ease-in in case of recursion
-					double ease_in_scale = 0.5 + 0.5*(this->state_iter/100000.0);
+					double ease_in_scale = 0.5 + 0.5*(this->state_iter/50000.0);
 					if (randuni() < ease_in_scale) {
 						history->is_branch = true;
 					} else {
@@ -155,7 +155,7 @@ void BranchExperiment::wrapup_activate(vector<double>& flat_vals,
 		history->score_network_output = this->starting_score_network->output->acti_vals[0];
 		history->misguess_network_output = this->starting_misguess_network->output->acti_vals[0];
 
-		if (this->state_iter < 100000) {
+		if (this->state_iter < 50000) {
 			double temp_scale_factor = 1.0;
 			wrapup_pre_activate_helper(temp_scale_factor,
 									   run_helper,
@@ -288,7 +288,7 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 
 				this->step_score_networks[a_index]->backprop_weights_with_no_error_signal(
 					run_helper.scale_factor*predicted_score_error,
-					0.01,
+					0.002,
 					history->step_ending_new_state_vals_snapshots[a_index],
 					history->step_score_network_histories[a_index]);
 
@@ -304,7 +304,7 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 												   run_helper,
 												   history->sequence_histories[a_index]);
 
-				this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.002);
+				this->sequence_scale_mods[a_index]->backprop(inner_scale_factor_error, 0.0002);
 
 				scale_factor_error += this->sequence_scale_mods[a_index]->weight*inner_scale_factor_error;
 
@@ -318,7 +318,7 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 	ScoreNetwork* score_network = history->score_network_history->network;
 	score_network->backprop_weights_with_no_error_signal(
 		run_helper.scale_factor*predicted_score_error,
-		0.01,
+		0.002,
 		history->starting_state_vals_snapshot,
 		history->score_network_history);
 
@@ -326,7 +326,7 @@ void BranchExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 	ScoreNetwork* misguess_network = history->misguess_network_history->network;
 	misguess_network->backprop_weights_with_no_error_signal(
 		misguess_error,
-		0.01,
+		0.002,
 		history->starting_state_vals_snapshot,
 		history->misguess_network_history);
 

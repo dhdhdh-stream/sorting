@@ -164,7 +164,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 
 	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 			|| run_helper.explore_phase == EXPLORE_PHASE_CLEAN) {
-		if (run_helper.experiment->state == EXPLORE_PHASE_EXPERIMENT) {
+		if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT) {
 			if (experiment_scope_state_networks->at(this->id).size() == 0) {
 				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 					experiment_scope_state_networks->at(this->id).push_back(
@@ -217,7 +217,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 			run_helper.predicted_score += run_helper.scale_factor*score_network->output->acti_vals[0];
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
-		if (run_helper.experiment->state_iter < 100000) {
+		if (run_helper.experiment->state_iter < 50000) {
 			if (experiment_scope_score_networks != NULL
 					&& this->id < (int)experiment_scope_score_networks->size()
 					&& experiment_scope_score_networks->at(this->id) != NULL) {
@@ -225,7 +225,7 @@ void ActionNode::activate(vector<double>& flat_vals,
 				score_network->activate(history->ending_state_vals_snapshot);
 				history->new_score_network_output = score_network->output->acti_vals[0];
 
-				double temp_score_scale = (100000.0-run_helper.experiment->state_iter)/100000.0;
+				double temp_score_scale = (50000.0-run_helper.experiment->state_iter)/50000.0;
 				run_helper.predicted_score += run_helper.scale_factor*temp_score_scale*score_network->output->acti_vals[0];
 			}
 		}
@@ -393,8 +393,8 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 			}
 		}
 	} else if (run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
-		if (run_helper.experiment->state_iter < 100000) {
-			double temp_score_scale = (100000.0-run_helper.experiment->state_iter)/100000.0;
+		if (run_helper.experiment->state_iter < 50000) {
+			double temp_score_scale = (50000.0-run_helper.experiment->state_iter)/50000.0;
 			run_helper.predicted_score -= run_helper.scale_factor*temp_score_scale*history->new_score_network_output;
 		}
 	}

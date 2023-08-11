@@ -176,7 +176,8 @@ void BranchExperiment::wrapup_transform() {
 	vector<int> new_branch_node_context = this->node_context;
 	new_branch_node_context.back() = -1;
 	BranchNode* new_branch_node;
-	if (this->branch_weight > 0.99) {
+	cout << "this->branch_weight: " << this->branch_weight << endl;
+	if (this->branch_weight > 0.98) {
 		delete this->starting_score_network;
 		delete this->starting_misguess_network;
 		delete this->starting_original_score_network;

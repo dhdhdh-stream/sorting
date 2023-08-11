@@ -2,6 +2,11 @@
  * 0: blank
  * 1: switch
  * 2: blank
+ * 
+ * insert:
+ * - xor
+ * - xor
+ * 
  * 3: xor
  * 4: xor
  * 5: blank
@@ -40,16 +45,19 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	solution = new Solution();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution = new Solution(solution_save_file);
+	solution_save_file.close();
 
-	ActionNode* explore_node = (ActionNode*)solution->scopes[0]->nodes[0];
+	ActionNode* explore_node = (ActionNode*)solution->scopes[1]->nodes[2];
 
 	BranchExperiment* branch_experiment = new BranchExperiment(
-		vector<int>{0},
-		vector<int>{0},
-		6,
-		vector<int>(6, BRANCH_EXPERIMENT_STEP_TYPE_ACTION),
-		vector<Sequence*>(6, NULL),
+		vector<int>{1},
+		vector<int>{2},
+		2,
+		vector<int>(2, BRANCH_EXPERIMENT_STEP_TYPE_ACTION),
+		vector<Sequence*>(2, NULL),
 		0,
 		-1,
 		-1.0,
@@ -79,7 +87,7 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 		run_helper.predicted_score = solution->average_score;
 		run_helper.scale_factor = 1.0;
-		if (iter_index > 100000 && rand()%3 != 0) {
+		if (rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
@@ -127,8 +135,12 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
 		}
 
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
+		if (flat_vals.size() == 1) {
+			if (switch_val == 0) {
+				run_helper.target_val = (double)((xor_1+xor_2)%2);
+			} else {
+				run_helper.target_val = -1;
+			}
 		} else {
 			if (switch_val == 0) {
 				run_helper.target_val = -1;
@@ -241,8 +253,12 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
+		if (flat_vals.size() == 1) {
+			if (switch_val == 0) {
+				run_helper.target_val = (double)((xor_1+xor_2)%2);
+			} else {
+				run_helper.target_val = -1;
+			}
 		} else {
 			if (switch_val == 0) {
 				run_helper.target_val = -1;
@@ -324,8 +340,12 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
-		if (flat_vals.size() == 6) {
-			run_helper.target_val = -1;
+		if (flat_vals.size() == 1) {
+			if (switch_val == 0) {
+				run_helper.target_val = (double)((xor_1+xor_2)%2);
+			} else {
+				run_helper.target_val = -1;
+			}
 		} else {
 			if (switch_val == 0) {
 				run_helper.target_val = -1;

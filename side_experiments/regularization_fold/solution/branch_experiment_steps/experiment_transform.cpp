@@ -219,14 +219,11 @@ void BranchExperiment::experiment_transform() {
 							}
 						}
 
-						cout << "sum_impact: " << sum_impact << endl;
 						if (sum_impact < 0.1) {
-							cout << "delete " << n_index << " " << s_index << endl;
-
 							delete it->second[n_index][s_index];
 							it->second[n_index][s_index] = NULL;
 						} else {
-							cout << "keep " << n_index << " " << s_index << endl;
+							cout << "keep " << it->first << " " << n_index << " " << s_index << ": " << sum_impact << endl;
 						}
 					}
 				}
@@ -246,28 +243,20 @@ void BranchExperiment::experiment_transform() {
 						}
 					}
 
-					cout << "sum_impact: " << sum_impact << endl;
 					if (sum_impact < 0.1) {
-						cout << "delete step " << a_index << " " << s_index << endl;
-
 						delete this->step_state_networks[a_index][s_index];
 						this->step_state_networks[a_index][s_index] = NULL;
 					} else {
-						cout << "keep step " << a_index << " " << s_index << endl;
+						cout << "keep " << a_index << " " << s_index << ": " << sum_impact << endl;
 					}
 				}
 			}
 		}
 
 		for (int e_index = 0; e_index < (int)this->exit_networks.size(); e_index++) {
-			cout << "this->exit_network_impacts[e_index]: " << this->exit_network_impacts[e_index] << endl;
 			if (this->exit_network_impacts[e_index] < 0.1) {
-				cout << "delete exit " << e_index << endl;
-
 				delete this->exit_networks[e_index];
 				this->exit_networks[e_index] = NULL;
-			} else {
-				cout << "keep exit " << e_index << endl;
 			}
 		}
 
@@ -466,7 +455,6 @@ void BranchExperiment::experiment_transform() {
 					for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 						if (it->second[n_index][s_index] != NULL) {
 							it->second[n_index][s_index]->clean(num_new_states);
-							cout << n_index << " " << s_index << " hidden: " << it->second[n_index][s_index]->hidden_size << endl;
 						}
 					}
 				}
@@ -478,7 +466,6 @@ void BranchExperiment::experiment_transform() {
 				for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
 					if (this->step_state_networks[a_index][s_index] != NULL) {
 						this->step_state_networks[a_index][s_index]->clean(this->layer_num_new_states.back());
-						cout << "step " << a_index << " " << s_index << " hidden: " << this->step_state_networks[a_index][s_index]->hidden_size << endl;
 					}
 				}
 			}

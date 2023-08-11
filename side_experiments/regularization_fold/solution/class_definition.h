@@ -8,6 +8,8 @@ public:
 	int id;
 	int family_id;
 
+	// TODO: track seen together count with other classes for last seen?
+
 	ClassDefinition(int id,
 					int family_id);
 	ClassDefinition(std::ifstream& input_file,

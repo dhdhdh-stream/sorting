@@ -38,7 +38,7 @@ void LoopExperiment::wrapup_pre_activate_helper(
 					score_network->activate(action_node_history->ending_state_vals_snapshot);
 					action_node_history->new_score_network_output = score_network->output->acti_vals[0];
 
-					double temp_score_scale = (100000.0-this->state_iter)/100000.0;
+					double temp_score_scale = (50000.0-this->state_iter)/50000.0;
 					run_helper.predicted_score += temp_scale_factor*temp_score_scale*score_network->output->acti_vals[0];
 				}
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
@@ -63,7 +63,7 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 									 LoopExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_WRAPUP;
 
-	if (this->state_iter < 100000) {
+	if (this->state_iter < 50000) {
 		double temp_scale_factor = 1.0;
 		wrapup_pre_activate_helper(temp_scale_factor,
 								   run_helper,
@@ -264,14 +264,14 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 	double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
 	this->halt_score_network->backprop_weights_with_no_error_signal(
 		run_helper.scale_factor*halt_predicted_score_error,
-		0.01,
+		0.002,
 		history->ending_input_vals_snapshot,
 		history->halt_score_network_history);
 
 	double halt_misguess_error = run_helper.final_misguess - history->halt_misguess_network_output;
 	this->halt_misguess_network->backprop_weights_with_no_error_signal(
 		halt_misguess_error,
-		0.01,
+		0.002,
 		history->ending_input_vals_snapshot,
 		history->halt_misguess_network_history);
 
@@ -286,7 +286,7 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 								 run_helper,
 								 history->sequence_histories[i_index]);
 
-		this->scale_mod->backprop(inner_scale_factor_error, 0.002);
+		this->scale_mod->backprop(inner_scale_factor_error, 0.0002);
 
 		scale_factor_error += this->scale_mod->weight*inner_scale_factor_error;
 
@@ -323,14 +323,14 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 		double continue_predicted_score_error = best_halt_score - continue_predicted_score;
 		this->continue_score_network->backprop_weights_with_no_error_signal(
 			run_helper.scale_factor*continue_predicted_score_error,
-			0.01,
+			0.002,
 			history->iter_input_vals_snapshots[i_index],
 			history->continue_score_network_histories[i_index]);
 
 		double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
 		this->continue_misguess_network->backprop_weights_with_no_error_signal(
 			continue_misguess_error,
-			0.01,
+			0.002,
 			history->iter_input_vals_snapshots[i_index],
 			history->continue_misguess_network_histories[i_index]);
 	}

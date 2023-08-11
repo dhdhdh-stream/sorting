@@ -52,7 +52,7 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->input_target_indexes = original->input_target_indexes;
 	this->input_has_transform = original->input_has_transform;
 	this->input_transformations = original->input_transformations;
-	this->scope_scale_mod = original->scope_scale_mod;
+	this->scope_scale_mod = new Scale(original->scope_scale_mod->weight);
 	this->next_node_id = next_node_id;
 }
 
@@ -151,6 +151,8 @@ void ScopeNode::activate(vector<double>& flat_vals,
 		}
 	}
 
+	context.back().node_id = this->id;
+
 	context.push_back(ForwardContextLayer());
 
 	context.back().scope_id = this->inner_scope_id;
@@ -194,6 +196,8 @@ void ScopeNode::activate(vector<double>& flat_vals,
 	}
 
 	context.pop_back();
+
+	context.back().node_id = -1;
 
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (context.back().states_initialized[this->input_indexes[i_index]]) {
@@ -244,6 +248,8 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		}
 	}
 
+	context.back().node_id = this->id;
+
 	context.push_back(ForwardContextLayer());
 
 	context.back().scope_id = this->inner_scope_id;
@@ -285,6 +291,8 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	}
 
 	context.pop_back();
+
+	context.back().node_id = -1;
 
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		if (this->input_target_layers[i_index] <= furthest_matching_layer) {
@@ -385,12 +393,14 @@ void ScopeNode::backprop(vector<BackwardContextLayer>& context,
 
 			context.pop_back();
 
-			for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-				double error = inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
-				if (this->input_has_transform[i_index]) {
-					error = this->input_transformations[i_index].backprop_forward(error);
+			if (run_helper.explore_phase != EXPLORE_PHASE_NONE) {
+				for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
+					double error = inner_state_errors[this->input_target_layers[i_index]][this->input_target_indexes[i_index]];
+					if (this->input_has_transform[i_index]) {
+						error = this->input_transformations[i_index].backprop_forward(error);
+					}
+					context.back().state_errors->at(this->input_indexes[i_index]) = error;
 				}
-				context.back().state_errors->at(this->input_indexes[i_index]) = error;
 			}
 		}
 	}

@@ -73,6 +73,9 @@ BranchNode::BranchNode(ifstream& input_file,
 		branch_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_branch_misguess.txt");
 		this->branch_misguess_network = new ScoreNetwork(branch_misguess_network_save_file);
 		branch_misguess_network_save_file.close();
+	} else {
+		this->branch_score_network = NULL;
+		this->branch_misguess_network = NULL;
 	}
 
 	string branch_next_node_id_line;
@@ -89,6 +92,9 @@ BranchNode::BranchNode(ifstream& input_file,
 		original_misguess_network_save_file.open("saves/nns/" + to_string(this->parent->id) + "_" + to_string(this->id) + "_original_misguess.txt");
 		this->original_misguess_network = new ScoreNetwork(original_misguess_network_save_file);
 		original_misguess_network_save_file.close();
+	} else {
+		this->original_score_network = NULL;
+		this->original_misguess_network = NULL;
 	}
 
 	string original_next_node_id_line;
@@ -186,13 +192,6 @@ void BranchNode::activate(vector<ForwardContextLayer>& context,
 						history->is_branch = false;
 					}
 				}
-			}
-
-			// temp
-			if (rand()%2 == 0) {
-				history->is_branch = true;
-			} else {
-				history->is_branch = false;
 			}
 
 			if (history->is_branch) {

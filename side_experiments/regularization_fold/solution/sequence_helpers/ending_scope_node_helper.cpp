@@ -49,6 +49,8 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 			}
 		}
 
+		// no need to update context.back().node_id
+
 		context.push_back(ForwardContextLayer());
 
 		context.back().scope_id = -1;
@@ -91,6 +93,8 @@ void EndingScopeNodeActivateHelper::forward(vector<int>& next_starting_node_ids,
 			}
 		}
 
+		// no need to update context.back().node_id
+
 		context.push_back(ForwardContextLayer());
 
 		context.back().scope_id = -1;
@@ -119,6 +123,8 @@ void EndingScopeNodeActivateHelper::backward(vector<ForwardContextLayer>& contex
 	run_helper.experiment_helper_node_context.pop_back();
 
 	context.pop_back();
+
+	// no need to update context.back().node_id
 
 	if (this->is_halfway == false) {
 		for (int i_index = 0; i_index < (int)this->scope_node->input_indexes.size(); i_index++) {
