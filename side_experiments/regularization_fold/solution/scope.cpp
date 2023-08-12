@@ -192,12 +192,13 @@ void Scope::activate(vector<int>& starting_node_ids,
 	int experiment_scope_distance;
 
 	if (this->is_loop) {
+		// TODO: add iter_index as input to loop networks
 		int target_iter;
 		if ((run_helper.explore_phase == EXPLORE_PHASE_UPDATE
 					|| run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT
 					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP)
 				&& run_helper.can_random_iter && rand()%10 == 0) {
-			target_iter = rand()%7;
+			target_iter = rand()%(this->furthest_successful_halt+3);
 		} else {
 			target_iter = -1;
 		}
@@ -226,14 +227,9 @@ void Scope::activate(vector<int>& starting_node_ids,
 											   halt_score_network_history);
 			double halt_score = run_helper.scale_factor*this->halt_score_network->output->acti_vals[0];
 
-			history->halt_score_snapshots.push_back(
-				run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
-
 			ScoreNetworkHistory* halt_misguess_network_history = new ScoreNetworkHistory(this->halt_misguess_network);
 			this->halt_misguess_network->activate(*(context.back().state_vals),
 												  halt_misguess_network_history);
-
-			history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
 
 			bool is_halt;
 			if (iter_index == target_iter) {
@@ -296,8 +292,13 @@ void Scope::activate(vector<int>& starting_node_ids,
 				history->continue_score_network_histories.push_back(continue_score_network_history);
 				history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
 
+				history->halt_score_snapshots.push_back(
+					run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
+
 				history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
 				history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
+
+				history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
 
 				// continue
 			}
@@ -328,6 +329,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 											run_helper,
 											history);
 			}
+
+			iter_index++;
 		}
 
 		run_helper.is_explore_iter = is_explore_iter_save;
@@ -711,8 +714,8 @@ void Scope::backprop(vector<int>& starting_node_ids,
 											history);
 			}
 
-			double best_halt_score = history->halt_score_snapshots.back();
-			double best_halt_misguess = history->halt_misguess_snapshots.back();
+			double best_halt_score = run_helper.target_val;
+			double best_halt_misguess = run_helper.final_misguess;
 			// back to front
 			for (int ii_index = (int)history->node_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
@@ -957,6 +960,9 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
 	this->exceeded_depth = false;
+
+	this->halt_score_network_history = NULL;
+	this->halt_misguess_network_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -977,6 +983,22 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 }
 
 ScopeHistory::~ScopeHistory() {
+	for (int iter_index = 0; iter_index < (int)this->continue_score_network_histories.size(); iter_index++) {
+		delete this->continue_score_network_histories[iter_index];
+	}
+
+	for (int iter_index = 0; iter_index < (int)this->continue_misguess_network_histories.size(); iter_index++) {
+		delete this->continue_misguess_network_histories[iter_index];
+	}
+
+	if (this->halt_score_network_history != NULL) {
+		delete this->halt_score_network_history;
+	}
+
+	if (this->halt_misguess_network_history != NULL) {
+		delete this->halt_misguess_network_history;
+	}
+
 	for (int iter_index = 0; iter_index < (int)this->node_histories.size(); iter_index++) {
 		for (int h_index = 0; h_index < (int)this->node_histories[iter_index].size(); h_index++) {
 			delete this->node_histories[iter_index][h_index];

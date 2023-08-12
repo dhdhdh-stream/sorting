@@ -290,7 +290,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 			} else {
 				exit_network_target_max_update = 0.01;
 			}
-			if (this->state_iter <= 200000) {
+			if (this->state_iter <= 300000) {
 				this->exit_networks[s_index]->new_scaled_backprop(context[context.size() - (this->exit_depth+1)].state_errors->at(s_index),
 																  run_helper.new_state_errors,
 																  exit_network_target_max_update,
@@ -335,7 +335,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 				new_score_network_target_max_update = 0.01;
 			}
 			vector<double> empty_state_vals;
-			if (this->state_iter <= 200000) {
+			if (this->state_iter <= 300000) {
 				this->step_score_networks[a_index]->new_scaled_backprop(run_helper.scale_factor*predicted_score_error,
 																		run_helper.new_state_errors,
 																		new_score_network_target_max_update,
@@ -362,7 +362,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 					} else {
 						state_network_target_max_update = 0.01;
 					}
-					if (this->state_iter <= 200000) {
+					if (this->state_iter <= 300000) {
 						vector<double> empty_state_vals;
 						this->step_state_networks[a_index][s_index]->new_scaled_backprop(
 							new_state_errors_snapshot[s_index],
@@ -395,7 +395,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 						} else {
 							new_input_network_target_max_update = 0.01;
 						}
-						if (this->state_iter <= 200000) {
+						if (this->state_iter <= 300000) {
 							vector<double> empty_state_vals;
 							network->new_scaled_backprop(run_helper.new_input_errors[history->step_input_sequence_step_indexes[a_index][st_index]][i_index],
 														 run_helper.new_state_errors,
@@ -453,7 +453,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_score_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 200000) {
+	if (this->state_iter <= 300000) {
 		this->starting_score_network->new_scaled_backprop(
 			run_helper.scale_factor*starting_predicted_score_error,
 			run_helper.new_state_errors,
@@ -474,7 +474,7 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 	} else {
 		starting_misguess_network_target_max_update = 0.01;
 	}
-	if (this->state_iter <= 200000) {
+	if (this->state_iter <= 300000) {
 		this->starting_misguess_network->new_scaled_backprop(
 			starting_misguess_error,
 			run_helper.new_state_errors,	// don't need to backprop error signals, but definitely not bad to do so

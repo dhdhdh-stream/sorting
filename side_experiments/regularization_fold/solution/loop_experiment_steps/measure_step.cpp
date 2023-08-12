@@ -69,7 +69,7 @@ void LoopExperiment::measure_pre_activate_helper(
 void LoopExperiment::measure_activate(vector<double>& flat_vals,
 									  vector<ForwardContextLayer>& context,
 									  RunHelper& run_helper) {
-	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
+	run_helper.explore_phase = EXPLORE_PHASE_MEASURE;
 
 	this->existing_average_score += run_helper.predicted_score;
 	this->existing_misguess_network->activate(*(context.back().state_vals));

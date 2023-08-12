@@ -171,7 +171,7 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 		}
 	}
 
-	int loop_iters = rand()%7;
+	int loop_iters = rand()%6;
 
 	run_helper.experiment_on_path = false;
 	run_helper.experiment_context_index = (int)this->scope_context.size()+1;
@@ -239,8 +239,6 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 										   halt_score_network_history);
 	history->halt_score_network_history = halt_score_network_history;
 	history->halt_score_network_output = this->halt_score_network->output->acti_vals[0];
-	history->halt_score_snapshots.push_back(
-		run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
 
 	ScoreNetworkHistory* halt_misguess_network_history = new ScoreNetworkHistory(this->halt_misguess_network);
 	this->halt_misguess_network->new_activate(input_vals,
@@ -248,7 +246,6 @@ void LoopExperiment::clean_activate(vector<double>& flat_vals,
 											  halt_misguess_network_history);
 	history->halt_misguess_network_history = halt_misguess_network_history;
 	history->halt_misguess_network_output = this->halt_misguess_network->output->acti_vals[0];
-	history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
 
 	this->sequence->activate_reset(input_vals,
 								   context,
@@ -294,6 +291,8 @@ void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 		}
 	}
 
+	this->sum_error += abs(run_helper.target_val - run_helper.predicted_score);
+
 	vector<double> input_errors(this->sequence->input_types.size(), 0.0);
 	vector<vector<double>> empty_previous_errors;
 	this->sequence->backprop_pull(input_errors,
@@ -333,8 +332,8 @@ void LoopExperiment::clean_backprop(vector<BackwardContextLayer>& context,
 
 		run_helper.scale_factor /= this->scale_mod->weight;
 
-		double best_halt_score = history->halt_score_snapshots.back();
-		double best_halt_misguess = history->halt_misguess_snapshots.back();
+		double best_halt_score = run_helper.target_val;
+		double best_halt_misguess = run_helper.final_misguess;
 		// back to front
 		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;

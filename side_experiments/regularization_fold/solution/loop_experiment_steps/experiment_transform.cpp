@@ -115,6 +115,7 @@ void LoopExperiment::experiment_transform() {
 
 							if (sum_impact > 0.1) {
 								this->sequence->scope_additions_needed[i_index].insert(it->first);
+								cout << "keep input " << it->first << " " << n_index << " " << i_index << endl;
 							} else {
 								delete it->second[n_index][i_index];
 								it->second[n_index][i_index] = NULL;
@@ -146,6 +147,8 @@ void LoopExperiment::experiment_transform() {
 						if (sum_impact < 0.1) {
 							delete it->second[n_index][s_index];
 							it->second[n_index][s_index] = NULL;
+						} else {
+							cout << "keep " << it->first << " " << n_index << " " << s_index << ": " << sum_impact << endl;
 						}
 					}
 				}
@@ -156,6 +159,8 @@ void LoopExperiment::experiment_transform() {
 			if (this->exit_network_impacts[e_index] < 0.1) {
 				delete this->exit_networks[e_index];
 				this->exit_networks[e_index] = NULL;
+			} else {
+				cout << "keep exit " << e_index << endl;
 			}
 		}
 

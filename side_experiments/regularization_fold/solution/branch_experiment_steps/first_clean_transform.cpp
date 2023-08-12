@@ -56,6 +56,8 @@ void BranchExperiment::first_clean_transform() {
 											this->sequences[a_index]->input_steps_needed_in[i_index][ia_index] = true;
 										}
 									}
+
+									cout << "keep input " << a_index << " " << it->first << " " << n_index << " " << i_index << endl;
 								} else {
 									delete it->second[n_index][i_index];
 									it->second[n_index][i_index] = NULL;
@@ -84,6 +86,8 @@ void BranchExperiment::first_clean_transform() {
 								if ((int)this->scope_context.size()+1 < this->sequences[a_index]->input_furthest_layer_needed_in[i_index]) {
 									this->sequences[a_index]->input_furthest_layer_needed_in[i_index] = (int)this->scope_context.size()+1;
 								}
+
+								cout << "keep input " << a_index << " " << ia_index << " " << i_index << endl;
 							} else {
 								delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
 								this->sequences[a_index]->step_state_networks[ia_index][i_index] = NULL;

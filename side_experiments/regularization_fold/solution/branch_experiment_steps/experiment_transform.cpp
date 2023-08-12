@@ -48,9 +48,6 @@ void BranchExperiment::experiment_transform() {
 		is_success = false;
 	}
 
-	// temp
-	is_success = true;
-
 	if (is_success) {
 		// determine if new class needed
 		for (int a_index = 0; a_index < this->num_steps; a_index++) {
@@ -168,6 +165,7 @@ void BranchExperiment::experiment_transform() {
 
 									if (sum_impact > 0.1) {
 										this->sequences[a_index]->scope_additions_needed[i_index].insert(it->first);
+										cout << "keep input " << a_index << " " << it->first << " " << n_index << " " << i_index << endl;
 									} else {
 										delete it->second[n_index][i_index];
 										it->second[n_index][i_index] = NULL;
@@ -193,6 +191,8 @@ void BranchExperiment::experiment_transform() {
 								if (sum_impact < 0.1) {
 									delete this->sequences[a_index]->step_state_networks[ia_index][i_index];
 									this->sequences[a_index]->step_state_networks[ia_index][i_index] = NULL;
+								} else {
+									cout << "keep input " << a_index << " " << ia_index << " " << i_index << endl;
 								}
 							}
 						}
@@ -257,6 +257,8 @@ void BranchExperiment::experiment_transform() {
 			if (this->exit_network_impacts[e_index] < 0.1) {
 				delete this->exit_networks[e_index];
 				this->exit_networks[e_index] = NULL;
+			} else {
+				cout << "keep exit " << e_index << endl;
 			}
 		}
 

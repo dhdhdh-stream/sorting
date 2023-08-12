@@ -24,11 +24,11 @@ void Layer::score_hidden_scaled_update_weights(double learning_rate) {
 				
 				if (this->weights[n_index][1][ln_index] > 0.0
 						&& update > 0.0) {
-					double scale = 0.1*(10-ln_index);
+					double scale = 0.5 + 0.05*(10-ln_index);
 					this->weights[n_index][1][ln_index] += scale*update;
 				} else if (this->weights[n_index][1][ln_index] < 0.0
 						&& update < 0.0) {
-					double scale = 0.1*(10-ln_index);
+					double scale = 0.5 + 0.05*(10-ln_index);
 					this->weights[n_index][1][ln_index] += scale*update;
 				} else {
 					this->weights[n_index][1][ln_index] += update;

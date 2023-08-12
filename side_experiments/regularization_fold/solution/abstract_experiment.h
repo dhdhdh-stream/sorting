@@ -18,11 +18,11 @@ const int EXPERIMENT_STATE_SECOND_CLEAN = 3;
 const int EXPERIMENT_STATE_WRAPUP = 4;
 const int EXPERIMENT_STATE_DONE = 5;
 
-const double DEFAULT_LASSO_WEIGHT = 0.1;
+const double DEFAULT_LASSO_WEIGHT = 0.02;
 
 const int NUM_NEW_STATES = 10;
 const std::vector<double> DEFAULT_NEW_STATE_LASSO_WEIGHTS{
-	0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+	0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2};
 
 class ExitNetwork;
 class ScoreNetwork;

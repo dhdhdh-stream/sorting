@@ -115,7 +115,7 @@ void BranchExperiment::backprop(vector<BackwardContextLayer>& context,
 
 	this->state_iter++;
 	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
-		if (this->state_iter == 300000) {
+		if (this->state_iter == 400000) {
 			experiment_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;

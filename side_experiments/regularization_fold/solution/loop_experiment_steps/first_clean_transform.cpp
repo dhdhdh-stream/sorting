@@ -47,6 +47,8 @@ void LoopExperiment::first_clean_transform() {
 							if (furthest_layer_seen_in < this->sequence->input_furthest_layer_needed_in[i_index]) {
 								this->sequence->input_furthest_layer_needed_in[i_index] = furthest_layer_seen_in;
 							}
+
+							cout << "keep input " << it->first << " " << n_index << " " << i_index << endl;
 						} else {
 							delete it->second[n_index][i_index];
 							it->second[n_index][i_index] = NULL;
