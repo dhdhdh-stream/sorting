@@ -17,7 +17,7 @@ public:
 	bool exceeded_depth;
 
 	int explore_phase;
-	bool can_random_iter;
+	bool can_train_loops;
 
 	/**
 	 * - for loops, choose explore iter on start so there's broader representation

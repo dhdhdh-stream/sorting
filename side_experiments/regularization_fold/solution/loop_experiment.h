@@ -115,6 +115,8 @@ class LoopExperimentHistory : public AbstractExperimentHistory {
 public:
 	LoopExperiment* experiment;
 
+	bool train_continue;
+
 	std::vector<std::vector<double>> iter_input_vals_snapshots;
 	std::vector<std::vector<double>> iter_new_state_vals_snapshots;
 	std::vector<ScoreNetworkHistory*> continue_score_network_histories;

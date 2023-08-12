@@ -159,7 +159,14 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 									   context[c_index].scope_history);
 	}
 
-	int loop_iters = rand()%6;
+	int loop_iters;
+	if (rand()%10 == 0) {
+		history->train_continue = true;
+		loop_iters = 6;
+	} else {
+		history->train_continue = false;
+		loop_iters = rand()%7;
+	}
 
 	run_helper.experiment_on_path = false;
 	run_helper.experiment_context_index = (int)this->scope_context.size()+1;
@@ -174,31 +181,33 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 								  run_helper);
 
 	for (int i_index = 0; i_index < loop_iters; i_index++) {
-		history->iter_input_vals_snapshots.push_back(input_vals);
-		history->iter_new_state_vals_snapshots.push_back(run_helper.new_state_vals);
+		if (history->train_continue) {
+			history->iter_input_vals_snapshots.push_back(input_vals);
+			history->iter_new_state_vals_snapshots.push_back(run_helper.new_state_vals);
 
-		ScoreNetworkHistory* continue_score_network_history = new ScoreNetworkHistory(this->continue_score_network);
-		this->continue_score_network->new_activate(input_vals,
-												   run_helper.new_state_vals,
-												   continue_score_network_history);
-		history->continue_score_network_histories.push_back(continue_score_network_history);
-		history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
+			ScoreNetworkHistory* continue_score_network_history = new ScoreNetworkHistory(this->continue_score_network);
+			this->continue_score_network->new_activate(input_vals,
+													   run_helper.new_state_vals,
+													   continue_score_network_history);
+			history->continue_score_network_histories.push_back(continue_score_network_history);
+			history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
 
-		this->halt_score_network->new_activate(input_vals,
-											   run_helper.new_state_vals);
-		history->halt_score_snapshots.push_back(
-			run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
+			this->halt_score_network->new_activate(input_vals,
+												   run_helper.new_state_vals);
+			history->halt_score_snapshots.push_back(
+				run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
 
-		ScoreNetworkHistory* continue_misguess_network_history = new ScoreNetworkHistory(this->continue_misguess_network);
-		this->continue_misguess_network->new_activate(input_vals,
-													  run_helper.new_state_vals,
-													  continue_misguess_network_history);
-		history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
-		history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
+			ScoreNetworkHistory* continue_misguess_network_history = new ScoreNetworkHistory(this->continue_misguess_network);
+			this->continue_misguess_network->new_activate(input_vals,
+														  run_helper.new_state_vals,
+														  continue_misguess_network_history);
+			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+			history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
 
-		this->halt_misguess_network->new_activate(input_vals,
-												  run_helper.new_state_vals);
-		history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
+			this->halt_misguess_network->new_activate(input_vals,
+													  run_helper.new_state_vals);
+			history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
+		}
 
 		run_helper.scale_factor *= this->scale_mod->weight;
 
@@ -355,82 +364,84 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 
 		run_helper.scale_factor /= this->scale_mod->weight;
 
-		double best_halt_score = run_helper.target_val;
-		double best_halt_misguess = run_helper.final_misguess;
-		// back to front
-		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
-			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
-			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
-			if (score_val > 0.1) {
-				best_halt_score = history->halt_score_snapshots[ii_index];
-				best_halt_misguess = history->halt_misguess_snapshots[ii_index];
-			} else if (score_val < -0.1) {
-				continue;
-			} else {
-				double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
-				double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
-				if (misguess_val < -0.1) {
+		if (history->train_continue) {
+			double best_halt_score = run_helper.target_val;
+			double best_halt_misguess = run_helper.final_misguess;
+			// back to front
+			for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
+				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+				if (score_val > 0.1) {
 					best_halt_score = history->halt_score_snapshots[ii_index];
 					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
-				} else if (misguess_val > 0.1) {
+				} else if (score_val < -0.1) {
 					continue;
 				} else {
-					// use earlier iter if no strong signal either way
-					best_halt_score = history->halt_score_snapshots[ii_index];
-					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
+					double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+					if (misguess_val < -0.1) {
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					} else if (misguess_val > 0.1) {
+						continue;
+					} else {
+						// use earlier iter if no strong signal either way
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					}
 				}
 			}
-		}
 
-		double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
-		double continue_predicted_score_error = best_halt_score - continue_predicted_score;
-		double continue_score_network_target_max_update;
-		if (this->state_iter <= 100000) {
-			continue_score_network_target_max_update = 0.05;
-		} else {
-			continue_score_network_target_max_update = 0.01;
-		}
-		if (this->state_iter <= 200000) {
-			this->continue_score_network->new_scaled_backprop(
-				run_helper.scale_factor*continue_predicted_score_error,
-				run_helper.new_state_errors,
-				continue_score_network_target_max_update,
-				history->iter_input_vals_snapshots[i_index],
-				history->iter_new_state_vals_snapshots[i_index],
-				history->continue_score_network_histories[i_index]);
-		} else {
-			this->continue_score_network->new_lasso_backprop(
-				run_helper.scale_factor*continue_predicted_score_error,
-				run_helper.new_state_errors,
-				continue_score_network_target_max_update,
-				history->iter_input_vals_snapshots[i_index],
-				history->iter_new_state_vals_snapshots[i_index],
-				history->continue_score_network_histories[i_index]);
-		}
+			double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
+			double continue_predicted_score_error = best_halt_score - continue_predicted_score;
+			double continue_score_network_target_max_update;
+			if (this->state_iter <= 100000) {
+				continue_score_network_target_max_update = 0.05;
+			} else {
+				continue_score_network_target_max_update = 0.01;
+			}
+			if (this->state_iter <= 200000) {
+				this->continue_score_network->new_scaled_backprop(
+					run_helper.scale_factor*continue_predicted_score_error,
+					run_helper.new_state_errors,
+					continue_score_network_target_max_update,
+					history->iter_input_vals_snapshots[i_index],
+					history->iter_new_state_vals_snapshots[i_index],
+					history->continue_score_network_histories[i_index]);
+			} else {
+				this->continue_score_network->new_lasso_backprop(
+					run_helper.scale_factor*continue_predicted_score_error,
+					run_helper.new_state_errors,
+					continue_score_network_target_max_update,
+					history->iter_input_vals_snapshots[i_index],
+					history->iter_new_state_vals_snapshots[i_index],
+					history->continue_score_network_histories[i_index]);
+			}
 
-		double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
-		double continue_misguess_network_target_max_update;
-		if (this->state_iter <= 100000) {
-			continue_misguess_network_target_max_update = 0.05;
-		} else {
-			continue_misguess_network_target_max_update = 0.01;
-		}
-		if (this->state_iter <= 200000) {
-			this->continue_misguess_network->new_scaled_backprop(
-				continue_misguess_error,
-				run_helper.new_state_errors,
-				continue_misguess_network_target_max_update,
-				history->iter_input_vals_snapshots[i_index],
-				history->iter_new_state_vals_snapshots[i_index],
-				history->continue_misguess_network_histories[i_index]);
-		} else {
-			this->continue_misguess_network->new_lasso_backprop(
-				continue_misguess_error,
-				run_helper.new_state_errors,
-				continue_misguess_network_target_max_update,
-				history->iter_input_vals_snapshots[i_index],
-				history->iter_new_state_vals_snapshots[i_index],
-				history->continue_misguess_network_histories[i_index]);
+			double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
+			double continue_misguess_network_target_max_update;
+			if (this->state_iter <= 100000) {
+				continue_misguess_network_target_max_update = 0.05;
+			} else {
+				continue_misguess_network_target_max_update = 0.01;
+			}
+			if (this->state_iter <= 200000) {
+				this->continue_misguess_network->new_scaled_backprop(
+					continue_misguess_error,
+					run_helper.new_state_errors,
+					continue_misguess_network_target_max_update,
+					history->iter_input_vals_snapshots[i_index],
+					history->iter_new_state_vals_snapshots[i_index],
+					history->continue_misguess_network_histories[i_index]);
+			} else {
+				this->continue_misguess_network->new_lasso_backprop(
+					continue_misguess_error,
+					run_helper.new_state_errors,
+					continue_misguess_network_target_max_update,
+					history->iter_input_vals_snapshots[i_index],
+					history->iter_new_state_vals_snapshots[i_index],
+					history->continue_misguess_network_histories[i_index]);
+			}
 		}
 	}
 

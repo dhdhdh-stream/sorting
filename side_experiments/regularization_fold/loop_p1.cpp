@@ -88,9 +88,9 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
 		}
 		if (rand()%10 == 0) {
-			run_helper.can_random_iter = true;
+			run_helper.can_train_loops = true;
 		} else {
-			run_helper.can_random_iter = false;
+			run_helper.can_train_loops = false;
 		}
 
 		vector<ForwardContextLayer> context;
@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
 		run_helper.predicted_score = solution->average_score;
 		run_helper.scale_factor = 1.0;
 		run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-		run_helper.can_random_iter = false;
+		run_helper.can_train_loops = false;
 
 		vector<ForwardContextLayer> context;
 		context.push_back(ForwardContextLayer());

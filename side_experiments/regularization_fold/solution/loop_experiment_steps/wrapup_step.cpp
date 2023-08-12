@@ -77,9 +77,16 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 	// don't need to update context and call activate_pull
 
 	int target_iter;
-	if (run_helper.can_random_iter && rand()%10 == 0) {
-		target_iter = rand()%6;
+	if (run_helper.can_train_loops && rand()%10 == 0) {
+		if (rand()%10 == 0) {
+			history->train_continue = true;
+			target_iter = 6;
+		} else {
+			history->train_continue = false;
+			target_iter = rand()%7;
+		}
 	} else {
+		history->train_continue = false;
 		target_iter = -1;
 	}
 
@@ -237,47 +244,49 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 
 		run_helper.scale_factor /= this->scale_mod->weight;
 
-		double best_halt_score = run_helper.target_val;
-		double best_halt_misguess = run_helper.final_misguess;
-		// back to front
-		for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
-			double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
-			double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
-			if (score_val > 0.1) {
-				best_halt_score = history->halt_score_snapshots[ii_index];
-				best_halt_misguess = history->halt_misguess_snapshots[ii_index];
-			} else if (score_val < -0.1) {
-				continue;
-			} else {
-				double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
-				double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
-				if (misguess_val < -0.1) {
+		if (history->train_continue) {
+			double best_halt_score = run_helper.target_val;
+			double best_halt_misguess = run_helper.final_misguess;
+			// back to front
+			for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
+				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
+				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+				if (score_val > 0.1) {
 					best_halt_score = history->halt_score_snapshots[ii_index];
 					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
-				} else if (misguess_val > 0.1) {
+				} else if (score_val < -0.1) {
 					continue;
 				} else {
-					// use earlier iter if no strong signal either way
-					best_halt_score = history->halt_score_snapshots[ii_index];
-					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
+					double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+					if (misguess_val < -0.1) {
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					} else if (misguess_val > 0.1) {
+						continue;
+					} else {
+						// use earlier iter if no strong signal either way
+						best_halt_score = history->halt_score_snapshots[ii_index];
+						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
+					}
 				}
 			}
+
+			double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
+			double continue_predicted_score_error = best_halt_score - continue_predicted_score;
+			this->continue_score_network->backprop_weights_with_no_error_signal(
+				run_helper.scale_factor*continue_predicted_score_error,
+				0.002,
+				history->iter_input_vals_snapshots[i_index],
+				history->continue_score_network_histories[i_index]);
+
+			double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
+			this->continue_misguess_network->backprop_weights_with_no_error_signal(
+				continue_misguess_error,
+				0.002,
+				history->iter_input_vals_snapshots[i_index],
+				history->continue_misguess_network_histories[i_index]);
 		}
-
-		double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
-		double continue_predicted_score_error = best_halt_score - continue_predicted_score;
-		this->continue_score_network->backprop_weights_with_no_error_signal(
-			run_helper.scale_factor*continue_predicted_score_error,
-			0.002,
-			history->iter_input_vals_snapshots[i_index],
-			history->continue_score_network_histories[i_index]);
-
-		double continue_misguess_error = best_halt_misguess - history->continue_misguess_network_outputs[i_index];
-		this->continue_misguess_network->backprop_weights_with_no_error_signal(
-			continue_misguess_error,
-			0.002,
-			history->iter_input_vals_snapshots[i_index],
-			history->continue_misguess_network_histories[i_index]);
 	}
 
 	// no need to set run_helper.backprop_is_pre_experiment
