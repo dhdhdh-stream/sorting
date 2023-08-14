@@ -17,11 +17,6 @@ using namespace std;
 void LoopExperiment::experiment_transform() {
 	cout << "experiment_transform" << endl;
 
-	this->new_average_score /= 10000;
-	this->existing_average_score /= 10000;
-	this->new_average_misguess /= 10000;
-	this->existing_average_misguess /= 10000;
-
 	double score_improvement = this->new_average_score - this->existing_average_score;
 	cout << "this->new_average_score: " << this->new_average_score << endl;
 	cout << "this->existing_average_score: " << this->existing_average_score << endl;
@@ -73,6 +68,10 @@ void LoopExperiment::experiment_transform() {
 								for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 									sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
 								}
+
+								for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
+								}
 							}
 						}
 
@@ -110,6 +109,10 @@ void LoopExperiment::experiment_transform() {
 									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
 									}
+
+									for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
+									}
 								}
 							}
 
@@ -140,6 +143,10 @@ void LoopExperiment::experiment_transform() {
 
 								for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
 									sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+								}
+
+								for (int is_index = 0; is_index < (int)network->new_state_indexes.size(); is_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][2][is_index]);
 								}
 							}
 						}
@@ -228,6 +235,7 @@ void LoopExperiment::experiment_transform() {
 
 						if (sum_state_impact > 0.1) {
 							this->scope_additions_needed[s_index].insert(it->first);
+							cout << it->first << " " << n_index << " score needed " << s_index << endl;
 
 							if (furthest_layer_seen_in < this->new_state_furthest_layer_needed_in[s_index]) {
 								this->new_state_furthest_layer_needed_in[s_index] = furthest_layer_seen_in;

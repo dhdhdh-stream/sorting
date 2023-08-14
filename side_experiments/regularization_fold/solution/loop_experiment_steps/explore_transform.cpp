@@ -35,6 +35,19 @@ void LoopExperiment::explore_transform() {
 												   20);
 	this->halt_misguess_network->update_lasso_weights(1);
 
+	for (int l_index = 0; l_index < (int)this->sequence->scopes.size(); l_index++) {
+		Scope* scope = this->sequence->scopes[l_index];
+		map<int, vector<vector<StateNetwork*>>>::iterator state_it = this->state_networks.find(scope->id);
+		if (state_it == this->state_networks.end()) {
+			this->state_networks[scope->id] = vector<vector<StateNetwork*>>(scope->nodes.size());
+			this->score_networks[scope->id] = vector<ScoreNetwork*>(scope->nodes.size());
+			this->scope_furthest_layer_seen_in[scope->id] = (int)this->scope_context.size()+1;
+			this->scope_steps_seen_in[scope->id] = vector<bool>(1, false);
+
+			// in sequence networks initialized in ActionNode
+		}
+		this->scope_steps_seen_in[scope->id][0] = true;
+	}
 	this->scale_mod = new Scale();
 
 	Scope* exit_scope = solution->scopes[this->scope_context.back()];

@@ -597,13 +597,13 @@ void StateNetwork::new_lasso_backprop(double output_error,
 
 void StateNetwork::update_lasso_weights(int new_furthest_distance) {
 	this->lasso_weights = vector<vector<double>>(4);
-	this->lasso_weights[0] = vector<double>{new_furthest_distance*DEFAULT_LASSO_WEIGHT};
+	this->lasso_weights[0] = vector<double>{new_furthest_distance*0.02 + DEFAULT_LASSO_WEIGHT};
 	this->lasso_weights[1] = vector<double>(this->state_indexes.size(), DEFAULT_LASSO_WEIGHT);
 	this->lasso_weights[2] = vector<double>(NUM_NEW_STATES);
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-		this->lasso_weights[2][s_index] = new_furthest_distance*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];
+		this->lasso_weights[2][s_index] = new_furthest_distance*0.02 + DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];
 	}
-	this->lasso_weights[3] = vector<double>(this->new_input_size, new_furthest_distance*DEFAULT_LASSO_WEIGHT);
+	this->lasso_weights[3] = vector<double>(this->new_input_size, new_furthest_distance*0.02 + DEFAULT_LASSO_WEIGHT);
 }
 
 void StateNetwork::clean(int num_new_states) {

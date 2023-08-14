@@ -1,13 +1,4 @@
 /**
- * - too sharp to hit
- * 
- * - to hit sharp targets, need world modeling?
- *   - learn effect of actions (without worrying about decision making within)
- *     - (this happens at multiple scales)
- *   - then monte carlo tree search actions to come up with a plan
- */
-
-/**
  * 0: blank
  * 1: loop iters
  * 2: blank
@@ -114,6 +105,10 @@ int main(int argc, char* argv[]) {
 
 		flat_vals.push_back(2*(double)(rand()%2)-1);
 
+		if (loop_experiment->state_iter%1000 == 0) {
+			cout << "loop_iters: " << loop_iters << endl;
+		}
+
 		RunHelper run_helper;
 		run_helper.predicted_score = solution->average_score;
 		run_helper.scale_factor = 1.0;
@@ -172,26 +167,7 @@ int main(int argc, char* argv[]) {
 		}
 		run_helper.final_misguess = (run_helper.target_val - run_helper.predicted_score)*(run_helper.target_val - run_helper.predicted_score);
 
-		if (run_helper.explore_phase == EXPLORE_PHASE_MEASURE) {
-			run_helper.experiment->new_average_score += run_helper.target_val;
-			run_helper.experiment->new_average_misguess += run_helper.final_misguess;
-
-			run_helper.experiment->state_iter++;
-			if (run_helper.experiment->state_iter == 10000) {
-				LoopExperiment* loop_experiment = (LoopExperiment*)run_helper.experiment;
-				loop_experiment->experiment_transform();
-
-				if (run_helper.experiment->state == EXPERIMENT_STATE_DONE) {
-					Scope* explore_scope = solution->scopes[run_helper.experiment->scope_context.back()];
-					ActionNode* action_node = (ActionNode*)explore_scope->nodes[run_helper.experiment->node_context.back()];
-
-					action_node->is_explore = false;
-
-					delete action_node->experiment;
-					action_node->experiment = NULL;
-				}
-			}
-		} else {
+		{
 			if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE
 					|| run_helper.explore_phase == EXPLORE_PHASE_WRAPUP) {
 				if (!run_helper.exceeded_depth) {
@@ -244,7 +220,7 @@ int main(int argc, char* argv[]) {
 		iter_index++;
 	}
 
-	for (int iter_index = 0; iter_index < 50; iter_index++) {
+	for (int iter_index = 0; iter_index < 20; iter_index++) {
 		vector<double> flat_vals;
 		flat_vals.push_back(2*(double)(rand()%2)-1);
 		flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
@@ -253,7 +229,7 @@ int main(int argc, char* argv[]) {
 		flat_vals.push_back(2*(double)(rand()%2)-1);
 
 		double correct_loop_target_val;
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 20; i++) {
 			int xor_1 = rand()%2;
 			flat_vals.push_back(2*(double)xor_1-1);
 			flat_vals.push_back(2*(double)(rand()%2)-1);
@@ -304,7 +280,7 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
-		if ((int)flat_vals.size() == 3*(10 - loop_iters)) {
+		if ((int)flat_vals.size() == 3*(20 - loop_iters)) {
 			run_helper.target_val = correct_loop_target_val;
 		} else {
 			run_helper.target_val = -1;

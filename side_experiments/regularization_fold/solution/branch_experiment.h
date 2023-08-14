@@ -113,8 +113,8 @@ public:
 						BranchExperimentHistory* history);
 	void clean_pre_activate_helper(bool on_path,
 								   double& temp_scale_factor,
-								   std::vector<int> temp_scope_context,
-								   std::vector<int> temp_node_context,
+								   std::vector<int>& temp_scope_context,
+								   std::vector<int>& temp_node_context,
 								   RunHelper& run_helper,
 								   ScopeHistory* scope_history);
 	void clean_backprop(std::vector<BackwardContextLayer>& context,

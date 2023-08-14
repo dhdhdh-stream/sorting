@@ -67,14 +67,6 @@ public:
 	void experiment_backprop(std::vector<BackwardContextLayer>& context,
 							 RunHelper& run_helper,
 							 LoopExperimentHistory* history);
-
-	void measure_activate(std::vector<double>& flat_vals,
-						  std::vector<ForwardContextLayer>& context,
-						  RunHelper& run_helper);
-	void measure_pre_activate_helper(double& temp_scale_factor,
-									 RunHelper& run_helper,
-									 ScopeHistory* scope_history);
-
 	void experiment_transform();
 
 	void clean_activate(std::vector<double>& flat_vals,
@@ -83,8 +75,8 @@ public:
 						LoopExperimentHistory* history);
 	void clean_pre_activate_helper(bool on_path,
 								   double& temp_scale_factor,
-								   std::vector<int> temp_scope_context,
-								   std::vector<int> temp_node_context,
+								   std::vector<int>& temp_scope_context,
+								   std::vector<int>& temp_node_context,
 								   RunHelper& run_helper,
 								   ScopeHistory* scope_history);
 	void clean_backprop(std::vector<BackwardContextLayer>& context,
@@ -115,6 +107,7 @@ class LoopExperimentHistory : public AbstractExperimentHistory {
 public:
 	LoopExperiment* experiment;
 
+	bool train_loop;
 	bool train_continue;
 
 	std::vector<std::vector<double>> iter_input_vals_snapshots;
@@ -127,15 +120,15 @@ public:
 	std::vector<double> halt_misguess_snapshots;
 	std::vector<SequenceHistory*> sequence_histories;
 
-	std::vector<double> ending_input_vals_snapshot;
-	std::vector<double> ending_new_state_vals_snapshot;
-
+	std::vector<double> halt_input_vals_snapshot;
+	std::vector<double> halt_new_state_vals_snapshot;
 	ScoreNetworkHistory* halt_score_network_history;
 	double halt_score_network_output;
 	ScoreNetworkHistory* halt_misguess_network_history;
 	double halt_misguess_network_output;
 
 	std::vector<std::vector<double>> exit_state_vals_snapshot;
+	std::vector<double> exit_new_state_vals_snapshot;
 	std::vector<ExitNetworkHistory*> exit_network_histories;
 
 	LoopExperimentHistory(LoopExperiment* experiment);

@@ -372,7 +372,7 @@ void ScoreNetwork::update_lasso_weights(int new_furthest_distance) {
 	this->lasso_weights[0] = vector<double>(this->state_size, 0.0);
 	this->lasso_weights[1] = vector<double>(NUM_NEW_STATES);
 	for (int s_index = 0; s_index < NUM_NEW_STATES; s_index++) {
-		this->lasso_weights[1][s_index] = new_furthest_distance*DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];
+		this->lasso_weights[1][s_index] = new_furthest_distance*0.05 + DEFAULT_NEW_STATE_LASSO_WEIGHTS[s_index];
 	}
 }
 

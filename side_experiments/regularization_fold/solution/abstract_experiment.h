@@ -12,17 +12,16 @@ const int EXPERIMENT_TYPE_LOOP = 1;
 
 const int EXPERIMENT_STATE_EXPLORE = -1;
 const int EXPERIMENT_STATE_EXPERIMENT = 0;
-const int EXPERIMENT_STATE_MEASURE = 1;
-const int EXPERIMENT_STATE_FIRST_CLEAN = 2;
-const int EXPERIMENT_STATE_SECOND_CLEAN = 3;
-const int EXPERIMENT_STATE_WRAPUP = 4;
-const int EXPERIMENT_STATE_DONE = 5;
+const int EXPERIMENT_STATE_FIRST_CLEAN = 1;
+const int EXPERIMENT_STATE_SECOND_CLEAN = 2;
+const int EXPERIMENT_STATE_WRAPUP = 3;
+const int EXPERIMENT_STATE_DONE = 4;
 
-const double DEFAULT_LASSO_WEIGHT = 0.02;
+const double DEFAULT_LASSO_WEIGHT = 0.05;
 
 const int NUM_NEW_STATES = 10;
 const std::vector<double> DEFAULT_NEW_STATE_LASSO_WEIGHTS{
-	0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2};
+	0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14};
 
 class ExitNetwork;
 class ScoreNetwork;

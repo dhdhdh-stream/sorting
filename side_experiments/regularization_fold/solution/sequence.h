@@ -190,13 +190,6 @@ public:
 								   std::vector<BackwardContextLayer>& context,
 								   std::vector<std::vector<double>>& previous_errors);
 
-	void measure_pre_activate_helper(std::vector<double>& input_vals,
-									 ScopeHistory* scope_history);
-	void measure_activate_pull(std::vector<double>& input_vals,
-							   std::vector<ForwardContextLayer>& context);
-	void measure_activate_reset(std::vector<double>& input_vals,
-								std::vector<ForwardContextLayer>& context);
-
 	void first_clean_pre_activate_helper(bool on_path,
 										 std::vector<double>& input_vals,
 										 RunHelper& run_helper,

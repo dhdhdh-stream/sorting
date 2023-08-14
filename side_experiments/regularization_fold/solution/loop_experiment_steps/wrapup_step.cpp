@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "action_node.h"
 #include "constants.h"
@@ -63,6 +65,22 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 									 LoopExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_WRAPUP;
 
+	int target_iter;
+	// if (rand()%10 == 0) {
+	if (false) {
+		history->train_loop = true;
+		if (rand()%10 == 0) {
+			history->train_continue = true;
+			target_iter = 6;
+		} else {
+			history->train_continue = false;
+			target_iter = rand()%7;
+		}
+	} else {
+		history->train_loop = false;
+		target_iter = -1;
+	}
+
 	if (this->state_iter < 50000) {
 		double temp_scale_factor = 1.0;
 		wrapup_pre_activate_helper(temp_scale_factor,
@@ -76,103 +94,83 @@ void LoopExperiment::wrapup_activate(vector<double>& flat_vals,
 	}
 	// don't need to update context and call activate_pull
 
-	int target_iter;
-	if (run_helper.can_train_loops && rand()%10 == 0) {
-		if (rand()%10 == 0) {
-			history->train_continue = true;
-			target_iter = 6;
-		} else {
-			history->train_continue = false;
-			target_iter = rand()%7;
-		}
-	} else {
-		history->train_continue = false;
-		target_iter = -1;
-	}
-
 	int iter_index = 0;
 	while (true) {
-		ScoreNetworkHistory* continue_score_network_history = new ScoreNetworkHistory(this->continue_score_network);
-		this->continue_score_network->activate(input_vals,
-											   continue_score_network_history);
-		double continue_score = run_helper.scale_factor*this->continue_score_network->output->acti_vals[0];
+		if (history->train_loop) {
+			if (iter_index == target_iter) {
+				history->halt_input_vals_snapshot = input_vals;
 
-		ScoreNetworkHistory* continue_misguess_network_history = new ScoreNetworkHistory(this->continue_misguess_network);
-		this->continue_misguess_network->activate(input_vals,
-												  continue_misguess_network_history);
+				ScoreNetworkHistory* halt_score_network_history = new ScoreNetworkHistory(this->halt_score_network);
+				this->halt_score_network->activate(history->halt_input_vals_snapshot,
+												   halt_score_network_history);
+				history->halt_score_network_history = halt_score_network_history;
+				history->halt_score_network_output = this->halt_score_network->output->acti_vals[0];
 
-		ScoreNetworkHistory* halt_score_network_history = new ScoreNetworkHistory(this->halt_score_network);
-		this->halt_score_network->activate(input_vals,
-										   halt_score_network_history);
-		double halt_score = run_helper.scale_factor*this->halt_score_network->output->acti_vals[0];
+				ScoreNetworkHistory* halt_misguess_network_history = new ScoreNetworkHistory(this->halt_misguess_network);
+				this->halt_misguess_network->activate(history->halt_input_vals_snapshot,
+													  halt_misguess_network_history);
+				history->halt_misguess_network_history = halt_misguess_network_history;
+				history->halt_misguess_network_output = this->halt_misguess_network->output->acti_vals[0];
 
-		ScoreNetworkHistory* halt_misguess_network_history = new ScoreNetworkHistory(this->halt_misguess_network);
-		this->halt_misguess_network->activate(input_vals,
-											  halt_misguess_network_history);
-
-		bool is_halt;
-		if (iter_index == target_iter) {
-			is_halt = true;
-		} else if (iter_index > 7) {
-			// cap at 8 iters for experiment
-			is_halt = true;
-		} else {
-			if (target_iter != -1) {
-				is_halt = false;
+				break;
 			} else {
-				double score_diff = continue_score - halt_score;
-				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+				if (history->train_continue) {
+					history->iter_input_vals_snapshots.push_back(input_vals);
+
+					ScoreNetworkHistory* continue_score_network_history = new ScoreNetworkHistory(this->continue_score_network);
+					this->continue_score_network->activate(input_vals,
+														   continue_score_network_history);
+					history->continue_score_network_histories.push_back(continue_score_network_history);
+					history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
+
+					this->halt_score_network->activate(input_vals);
+					history->halt_score_snapshots.push_back(this->halt_score_network->output->acti_vals[0]);
+
+					ScoreNetworkHistory* continue_misguess_network_history = new ScoreNetworkHistory(this->continue_misguess_network);
+					this->continue_misguess_network->activate(input_vals,
+															  continue_misguess_network_history);
+					history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
+					history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
+
+					this->halt_misguess_network->activate(input_vals);
+					history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
+				}
+
+				// continue
+			}
+		} else {
+			if (iter_index > 7) {
+				// cap at 8 iters for experiment
+				break;
+			} else {
+				this->continue_score_network->activate(input_vals);
+				this->halt_score_network->activate(input_vals);
+				double score_diff = this->continue_score_network->output->acti_vals[0]
+					- this->halt_score_network->output->acti_vals[0];
+				double score_val = score_diff / solution->average_misguess;
+				if (this->state_iter%1000 == 0) {
+					cout << iter_index << ": " << score_val << endl;
+				}
 				if (score_val > 0.1) {
-					is_halt = false;
+					// continue
 				} else if (score_val < -0.1) {
-					is_halt = true;
+					break;
 				} else {
+					this->continue_misguess_network->activate(input_vals);
+					this->halt_misguess_network->activate(input_vals);
 					double misguess_diff = this->continue_misguess_network->output->acti_vals[0]
 						- this->halt_misguess_network->output->acti_vals[0];
-					double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+					double misguess_val = misguess_diff / solution->misguess_standard_deviation;
 					if (misguess_val < -0.1) {
-						is_halt = false;
+						// continue
 					} else if (misguess_val > 0.1) {
-						is_halt = true;
+						break;
 					} else {
 						// halt if no strong signal either way
-						is_halt = true;
+						break;
 					}
 				}
 			}
-		}
-
-		if (is_halt) {
-			delete continue_score_network_history;
-			delete continue_misguess_network_history;
-
-			history->ending_input_vals_snapshot = input_vals;
-
-			history->halt_score_network_history = halt_score_network_history;
-			history->halt_score_network_output = this->halt_score_network->output->acti_vals[0];
-
-			history->halt_misguess_network_history = halt_misguess_network_history;
-			history->halt_misguess_network_output = this->halt_misguess_network->output->acti_vals[0];
-
-			break;
-		} else {
-			delete halt_score_network_history;
-			delete halt_misguess_network_history;
-
-			history->iter_input_vals_snapshots.push_back(input_vals);
-
-			history->continue_score_network_histories.push_back(continue_score_network_history);
-			history->continue_score_network_outputs.push_back(this->continue_score_network->output->acti_vals[0]);
-
-			history->halt_score_snapshots.push_back(
-				run_helper.predicted_score + run_helper.scale_factor*this->halt_score_network->output->acti_vals[0]);
-
-			history->continue_misguess_network_histories.push_back(continue_misguess_network_history);
-			history->continue_misguess_network_outputs.push_back(this->continue_misguess_network->output->acti_vals[0]);
-
-			history->halt_misguess_snapshots.push_back(this->halt_misguess_network->output->acti_vals[0]);
-
-			// continue
 		}
 
 		run_helper.scale_factor *= this->scale_mod->weight;
@@ -212,20 +210,21 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 									 LoopExperimentHistory* history) {
 	this->sum_error += abs(run_helper.target_val - run_helper.predicted_score);
 
-	double halt_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->halt_score_network_output;
-	double halt_predicted_score_error = run_helper.target_val - halt_predicted_score;
-	this->halt_score_network->backprop_weights_with_no_error_signal(
-		run_helper.scale_factor*halt_predicted_score_error,
-		0.002,
-		history->ending_input_vals_snapshot,
-		history->halt_score_network_history);
+	if (history->train_loop) {
+		double halt_predicted_score_error = run_helper.target_val - history->halt_score_network_output;
+		this->halt_score_network->backprop_weights_with_no_error_signal(
+			halt_predicted_score_error,
+			0.002,
+			history->halt_input_vals_snapshot,
+			history->halt_score_network_history);
 
-	double halt_misguess_error = run_helper.final_misguess - history->halt_misguess_network_output;
-	this->halt_misguess_network->backprop_weights_with_no_error_signal(
-		halt_misguess_error,
-		0.002,
-		history->ending_input_vals_snapshot,
-		history->halt_misguess_network_history);
+		double halt_misguess_error = run_helper.final_misguess - history->halt_misguess_network_output;
+		this->halt_misguess_network->backprop_weights_with_no_error_signal(
+			halt_misguess_error,
+			0.002,
+			history->halt_input_vals_snapshot,
+			history->halt_misguess_network_history);
+	}
 
 	for (int i_index = (int)history->sequence_histories.size()-1; i_index >= 0; i_index--) {
 		run_helper.scale_factor *= this->scale_mod->weight;
@@ -244,13 +243,13 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 
 		run_helper.scale_factor /= this->scale_mod->weight;
 
-		if (history->train_continue) {
-			double best_halt_score = run_helper.target_val;
-			double best_halt_misguess = run_helper.final_misguess;
+		if (history->train_loop && history->train_continue) {
+			double best_halt_score = history->halt_score_network_output;
+			double best_halt_misguess = history->halt_misguess_network_output;
 			// back to front
 			for (int ii_index = (int)history->sequence_histories.size()-1; ii_index >= i_index+1; ii_index--) {
 				double score_diff = history->halt_score_snapshots[ii_index] - best_halt_score;
-				double score_val = score_diff / (solution->average_misguess*abs(run_helper.scale_factor));
+				double score_val = score_diff / solution->average_misguess;
 				if (score_val > 0.1) {
 					best_halt_score = history->halt_score_snapshots[ii_index];
 					best_halt_misguess = history->halt_misguess_snapshots[ii_index];
@@ -258,7 +257,7 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 					continue;
 				} else {
 					double misguess_diff = history->halt_misguess_snapshots[ii_index] - best_halt_misguess;
-					double misguess_val = misguess_diff / (solution->misguess_standard_deviation*abs(run_helper.scale_factor));
+					double misguess_val = misguess_diff / solution->misguess_standard_deviation;
 					if (misguess_val < -0.1) {
 						best_halt_score = history->halt_score_snapshots[ii_index];
 						best_halt_misguess = history->halt_misguess_snapshots[ii_index];
@@ -272,10 +271,9 @@ void LoopExperiment::wrapup_backprop(vector<BackwardContextLayer>& context,
 				}
 			}
 
-			double continue_predicted_score = run_helper.predicted_score + run_helper.scale_factor*history->continue_score_network_outputs[i_index];
-			double continue_predicted_score_error = best_halt_score - continue_predicted_score;
+			double continue_predicted_score_error = best_halt_score - history->continue_score_network_outputs[i_index];
 			this->continue_score_network->backprop_weights_with_no_error_signal(
-				run_helper.scale_factor*continue_predicted_score_error,
+				continue_predicted_score_error,
 				0.002,
 				history->iter_input_vals_snapshots[i_index],
 				history->continue_score_network_histories[i_index]);

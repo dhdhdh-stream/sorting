@@ -62,9 +62,6 @@ void Sequence::activate_pull(vector<double>& input_vals,
 								 previous_vals,
 								 branch_experiment_history,
 								 run_helper);
-	} else if (this->experiment->state == EXPERIMENT_STATE_MEASURE) {
-		measure_activate_pull(input_vals,
-							  context);
 	} else if (this->experiment->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		first_clean_activate_pull(input_vals,
 								  context,
@@ -258,9 +255,6 @@ void Sequence::activate_reset(vector<double>& input_vals,
 		experiment_activate_reset(input_vals,
 								  context,
 								  previous_vals);
-	} else if (this->experiment->state == EXPERIMENT_STATE_MEASURE) {
-		measure_activate_reset(input_vals,
-							   context);
 	} else if (this->experiment->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		first_clean_activate_reset(input_vals,
 								   context,

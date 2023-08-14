@@ -42,10 +42,6 @@ void LoopExperiment::activate(vector<double>& flat_vals,
 							context,
 							run_helper,
 							history);
-	} else if (this->state == EXPERIMENT_STATE_MEASURE) {
-		measure_activate(flat_vals,
-						 context,
-						 run_helper);
 	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
 		clean_activate(flat_vals,
 					   context,
@@ -87,14 +83,10 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 						history);
 	}
 
-	// EXPERIMENT_STATE_MEASURE handled outside
-
 	this->state_iter++;
 	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
 		if (this->state_iter == 400000) {
-			this->state = EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
-			this->sum_error = 0.0;
+			experiment_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 			// set on transitions to prevent network backprops
@@ -107,7 +99,8 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 			}
 		}
 	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
-		if (this->state_iter == 100000) {
+		// if (this->state_iter == 100000) {
+		if (this->state_iter == 200000) {
 			first_clean_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
@@ -120,7 +113,8 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 			}
 		}
 	} else if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
-		if (this->state_iter == 100000) {
+		// if (this->state_iter == 100000) {
+		if (this->state_iter == 200000) {
 			second_clean_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;

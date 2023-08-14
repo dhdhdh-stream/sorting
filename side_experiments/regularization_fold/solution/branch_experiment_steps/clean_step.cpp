@@ -19,8 +19,8 @@ using namespace std;
 void BranchExperiment::clean_pre_activate_helper(
 		bool on_path,
 		double& temp_scale_factor,
-		vector<int> temp_scope_context,
-		vector<int> temp_node_context,
+		vector<int>& temp_scope_context,
+		vector<int>& temp_node_context,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;

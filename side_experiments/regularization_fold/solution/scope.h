@@ -113,6 +113,7 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
+	bool train_loop;
 	bool train_continue;
 
 	std::vector<std::vector<double>> iter_state_vals_snapshots;
@@ -123,8 +124,7 @@ public:
 	std::vector<double> halt_score_snapshots;
 	std::vector<double> halt_misguess_snapshots;
 
-	std::vector<double> ending_state_vals_snapshot;
-
+	std::vector<double> halt_state_vals_snapshot;
 	ScoreNetworkHistory* halt_score_network_history;
 	double halt_score_network_output;
 	ScoreNetworkHistory* halt_misguess_network_history;
