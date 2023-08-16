@@ -75,6 +75,10 @@ void BranchExperiment::experiment_transform() {
 										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
 										}
+
+										for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+											sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
+										}
 									}
 								}
 
@@ -108,6 +112,10 @@ void BranchExperiment::experiment_transform() {
 
 									for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 										sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+									}
+
+									for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+										sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
 									}
 								}
 							}
@@ -160,6 +168,10 @@ void BranchExperiment::experiment_transform() {
 											for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 												sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
 											}
+
+											for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+												sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
+											}
 										}
 									}
 
@@ -184,6 +196,10 @@ void BranchExperiment::experiment_transform() {
 
 										for (int s_index = 0; s_index < (int)network->state_indexes.size(); s_index++) {
 											sum_impact += abs(network->hidden->weights[in_index][1][s_index]);
+										}
+
+										for (int s_index = 0; s_index < (int)network->new_state_indexes.size(); s_index++) {
+											sum_impact += abs(network->hidden->weights[in_index][2][s_index]);
 										}
 									}
 								}
@@ -216,6 +232,10 @@ void BranchExperiment::experiment_transform() {
 								for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
 									sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
 								}
+
+								for (int is_index = 0; is_index < (int)network->new_state_indexes.size(); is_index++) {
+									sum_impact += abs(network->hidden->weights[in_index][2][is_index]);
+								}
 							}
 						}
 
@@ -239,6 +259,10 @@ void BranchExperiment::experiment_transform() {
 
 							for (int is_index = 0; is_index < (int)network->state_indexes.size(); is_index++) {
 								sum_impact += abs(network->hidden->weights[in_index][1][is_index]);
+							}
+
+							for (int is_index = 0; is_index < (int)network->new_state_indexes.size(); is_index++) {
+								sum_impact += abs(network->hidden->weights[in_index][2][is_index]);
 							}
 						}
 					}

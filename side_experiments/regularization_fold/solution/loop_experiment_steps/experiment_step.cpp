@@ -137,31 +137,6 @@ void LoopExperiment::experiment_activate(vector<double>& flat_vals,
 										 LoopExperimentHistory* history) {
 	run_helper.explore_phase = EXPLORE_PHASE_EXPERIMENT;
 
-	// int target_iter;
-	// if (rand()%400000 > this->state_iter) {
-	// 	history->train_loop = true;
-	// 	if (rand()%10 == 0) {
-	// 		history->train_continue = true;
-	// 		target_iter = 6;
-	// 	} else {
-	// 		history->train_continue = false;
-	// 		target_iter = rand()%7;
-	// 	}
-	// } else {
-	// 	if (rand()%10 == 0) {
-	// 		history->train_loop = true;
-	// 		if (rand()%10 == 0) {
-	// 			history->train_continue = true;
-	// 			target_iter = 6;
-	// 		} else {
-	// 			history->train_continue = false;
-	// 			target_iter = rand()%7;
-	// 		}
-	// 	} else {
-	// 		history->train_loop = false;
-	// 		target_iter = -1;
-	// 	}
-	// }
 	int target_iter;
 	if (this->state_iter < 100000 || rand()%2 == 0) {
 		history->train_loop = true;
@@ -363,8 +338,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 			} else {
 				exit_network_target_max_update = 0.01;
 			}
-			// if (this->state_iter <= 300000) {
-			if (this->state_iter <= 200000) {
+			if (this->state_iter <= 300000) {
 				this->exit_networks[s_index]->new_scaled_backprop(context.back().state_errors->at(s_index),
 																  run_helper.new_state_errors,
 																  exit_network_target_max_update,
@@ -397,8 +371,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 		} else {
 			halt_score_network_target_max_update = 0.01;
 		}
-		// if (this->state_iter <= 300000) {
-		if (this->state_iter <= 200000) {
+		if (this->state_iter <= 300000) {
 			this->halt_score_network->new_scaled_backprop(
 				halt_predicted_score_error,
 				run_helper.new_state_errors,
@@ -424,8 +397,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 		} else {
 			halt_misguess_network_target_max_update = 0.01;
 		}
-		// if (this->state_iter <= 300000) {
-		if (this->state_iter <= 200000) {
+		if (this->state_iter <= 300000) {
 			this->halt_misguess_network->new_scaled_backprop(
 				halt_misguess_error,
 				run_helper.new_state_errors,
@@ -494,8 +466,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 			} else {
 				continue_score_network_target_max_update = 0.01;
 			}
-			// if (this->state_iter <= 300000) {
-			if (this->state_iter <= 200000) {
+			if (this->state_iter <= 300000) {
 				this->continue_score_network->new_scaled_backprop(
 					continue_predicted_score_error,
 					run_helper.new_state_errors,
@@ -521,8 +492,7 @@ void LoopExperiment::experiment_backprop(vector<BackwardContextLayer>& context,
 			} else {
 				continue_misguess_network_target_max_update = 0.01;
 			}
-			// if (this->state_iter <= 300000) {
-			if (this->state_iter <= 200000) {
+			if (this->state_iter <= 300000) {
 				this->continue_misguess_network->new_scaled_backprop(
 					continue_misguess_error,
 					run_helper.new_state_errors,

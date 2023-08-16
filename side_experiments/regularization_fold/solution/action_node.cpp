@@ -255,8 +255,7 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 				new_score_network_target_max_update = 0.004;
 			}
 		}
-		// if (run_helper.experiment->state_iter <= 300000) {
-		if (run_helper.experiment->state_iter <= 200000) {
+		if (run_helper.experiment->state_iter <= 300000) {
 			new_score_network->new_scaled_backprop(run_helper.scale_factor*predicted_score_error,
 												   run_helper.new_state_errors,
 												   new_score_network_target_max_update,
@@ -292,8 +291,7 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 						new_state_network_target_max_update = 0.004;
 					}
 				}
-				// if (run_helper.experiment->state_iter <= 300000) {
-				if (run_helper.experiment->state_iter <= 200000) {
+				if (run_helper.experiment->state_iter <= 300000) {
 					network->new_scaled_backprop(new_state_errors_snapshot[s_index],
 												 run_helper.new_state_errors,
 												 new_state_network_target_max_update,
@@ -330,8 +328,7 @@ void ActionNode::backprop(vector<BackwardContextLayer>& context,
 							new_input_network_target_max_update = 0.004;
 						}
 					}
-					// if (run_helper.experiment->state_iter <= 300000) {
-					if (run_helper.experiment->state_iter <= 200000) {
+					if (run_helper.experiment->state_iter <= 300000) {
 						network->new_scaled_backprop(run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],
 													 run_helper.new_state_errors,
 													 run_helper.new_input_errors[history->experiment_sequence_step_indexes[st_index]][i_index],

@@ -1,5 +1,3 @@
-// TODO: unlikely to learn XOR+loop in single shot, so try adding in addition
-
 /**
  * 0: blank
  * 1: loop iters
@@ -22,7 +20,6 @@
 #include "constants.h"
 #include "context_layer.h"
 #include "globals.h"
-#include "loop_experiment.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "score_network.h"
@@ -50,38 +47,25 @@ int main(int argc, char* argv[]) {
 	solution = new Solution(solution_save_file);
 	solution_save_file.close();
 
-	// cout << "num_states: " << solution->scopes[1]->num_states << endl;
+	ActionNode* explore_node = (ActionNode*)solution->scopes[1]->nodes[4];
 
-	ActionNode* explore_node = (ActionNode*)solution->scopes[1]->nodes[5];
-
-	Sequence* sequence = new Sequence(
-		vector<Scope*>{solution->scopes[1]},
-		vector<int>{3},
-		vector<int>(4, SEQUENCE_INPUT_TYPE_LOCAL),
-		vector<int>{0, 0, 0, 0},
-		vector<int>{0, 1, 2, 3},
-		vector<int>{0, 0, 0, 0},
-		vector<int>{0, 1, 2, 3},
-		vector<int>(4, -1),
-		vector<int>(4, -1),
-		vector<int>(4, -1),
-		vector<bool>(4, false),
-		vector<Transformation>(4, Transformation()),
-		vector<vector<int>>{vector<int>{3, 4, 5}});
-
-	LoopExperiment* loop_experiment = new LoopExperiment(
+	BranchExperiment* branch_experiment = new BranchExperiment(
 		vector<int>{1},
-		vector<int>{5},
-		sequence,
+		vector<int>{4},
+		1,
+		vector<int>(1, BRANCH_EXPERIMENT_STEP_TYPE_ACTION),
+		vector<Sequence*>(1, NULL),
+		0,
+		6,
+		-1.0,
+		1.0,
+		vector<double>(),
+		new ScopeHistory(solution->scopes[0]),
 		explore_node->misguess_network);
-
-	sequence->experiment = loop_experiment;
-	sequence->step_index = 0;
-
-	loop_experiment->explore_transform();
+	branch_experiment->explore_transform();
 
 	explore_node->is_explore = true;
-	explore_node->experiment = loop_experiment;
+	explore_node->experiment = branch_experiment;
 
 	int iter_index = 0;
 	while (true) {
@@ -91,30 +75,17 @@ int main(int argc, char* argv[]) {
 		int loop_iters = 1+rand()%10;
 		flat_vals.push_back(loop_iters);
 		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		double correct_loop_target_val;
-		for (int i = 0; i < 10; i++) {
-			int xor_1 = rand()%2;
-			flat_vals.push_back(2*(double)xor_1-1);
-			flat_vals.push_back(2*(double)(rand()%2)-1);
-			int xor_2 = rand()%2;
-			flat_vals.push_back(2*(double)xor_2-1);
-
-			if (i == loop_iters-1) {
-				correct_loop_target_val = (double)((xor_1+xor_2)%2);
-			}
-		}
-
+		int xor_1 = rand()%2;
+		flat_vals.push_back(2*(double)xor_1-1);
 		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		if (loop_experiment->state_iter%1000 == 0) {
-			cout << "loop_iters: " << loop_iters << endl;
-		}
+		int xor_2 = rand()%2;
+		flat_vals.push_back(2*(double)xor_2-1);
+		flat_vals.push_back(2*(double)(rand()%2)-1);
 
 		RunHelper run_helper;
 		run_helper.predicted_score = solution->average_score;
 		run_helper.scale_factor = 1.0;
-		if (rand()%3 != 0) {
+		if (iter_index > 100000 && rand()%3 != 0) {
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
 		} else {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
@@ -162,8 +133,17 @@ int main(int argc, char* argv[]) {
 			run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
 		}
 
-		if ((int)flat_vals.size() == 3*(10 - loop_iters)) {
-			run_helper.target_val = correct_loop_target_val;
+		// if (flat_vals.size() == 0) {
+		// 	if (loop_iters == 1) {
+		// 		run_helper.target_val = (double)((xor_1+xor_2)%2);
+		// 	} else {
+		// 		run_helper.target_val = -1;
+		// 	}
+		// } else {
+		// 	run_helper.target_val = -1;
+		// }
+		if (loop_iters == 1) {
+			run_helper.target_val = (double)((xor_1+xor_2)%2);
 		} else {
 			run_helper.target_val = -1;
 		}
@@ -222,27 +202,18 @@ int main(int argc, char* argv[]) {
 		iter_index++;
 	}
 
-	for (int iter_index = 0; iter_index < 20; iter_index++) {
+	for (int iter_index = 0; iter_index < 50; iter_index++) {
 		vector<double> flat_vals;
 		flat_vals.push_back(2*(double)(rand()%2)-1);
 		flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
 		int loop_iters = 1+rand()%10;
 		flat_vals.push_back(loop_iters);
 		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		double correct_loop_target_val;
-		for (int i = 0; i < 20; i++) {
-			int xor_1 = rand()%2;
-			flat_vals.push_back(2*(double)xor_1-1);
-			flat_vals.push_back(2*(double)(rand()%2)-1);
-			int xor_2 = rand()%2;
-			flat_vals.push_back(2*(double)xor_2-1);
-
-			if (i == loop_iters-1) {
-				correct_loop_target_val = (double)((xor_1+xor_2)%2);
-			}
-		}
-
+		int xor_1 = rand()%2;
+		flat_vals.push_back(2*(double)xor_1-1);
+		flat_vals.push_back(2*(double)(rand()%2)-1);
+		int xor_2 = rand()%2;
+		flat_vals.push_back(2*(double)xor_2-1);
 		flat_vals.push_back(2*(double)(rand()%2)-1);
 
 		RunHelper run_helper;
@@ -282,106 +253,23 @@ int main(int argc, char* argv[]) {
 									  run_helper,
 									  root_history);
 
-		if ((int)flat_vals.size() == 3*(20 - loop_iters)) {
-			run_helper.target_val = correct_loop_target_val;
+		// if (flat_vals.size() == 0) {
+		// 	if (loop_iters == 1) {
+		// 		run_helper.target_val = (double)((xor_1+xor_2)%2);
+		// 	} else {
+		// 		run_helper.target_val = -1;
+		// 	}
+		// } else {
+		// 	run_helper.target_val = -1;
+		// }
+		if (loop_iters == 1) {
+			run_helper.target_val = (double)((xor_1+xor_2)%2);
 		} else {
 			run_helper.target_val = -1;
 		}
 
-		cout << "pre: " << iter_index << endl;
+		cout << iter_index << endl;
 		cout << "loop_iters: " << loop_iters << endl;
-		cout << "flat_vals.size(): " << flat_vals.size() << endl;
-		cout << "run_helper.target_val: " << run_helper.target_val << endl;
-		cout << "run_helper.predicted_score: " << run_helper.predicted_score << endl;
-
-		delete root_history;
-	}
-
-	{
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
-	}
-
-	delete solution;
-
-	{
-		ifstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution = new Solution(solution_save_file);
-		solution_save_file.close();
-	}
-
-	for (int iter_index = 0; iter_index < 20; iter_index++) {
-		vector<double> flat_vals;
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-		flat_vals.push_back(flat_vals[0]);	// copy for ACTION_START
-		int loop_iters = 1+rand()%10;
-		flat_vals.push_back(loop_iters);
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		double correct_loop_target_val;
-		for (int i = 0; i < 20; i++) {
-			int xor_1 = rand()%2;
-			flat_vals.push_back(2*(double)xor_1-1);
-			flat_vals.push_back(2*(double)(rand()%2)-1);
-			int xor_2 = rand()%2;
-			flat_vals.push_back(2*(double)xor_2-1);
-
-			if (i == loop_iters-1) {
-				correct_loop_target_val = (double)((xor_1+xor_2)%2);
-			}
-		}
-
-		flat_vals.push_back(2*(double)(rand()%2)-1);
-
-		RunHelper run_helper;
-		run_helper.predicted_score = solution->average_score;
-		run_helper.scale_factor = 1.0;
-		run_helper.explore_phase = EXPLORE_PHASE_UPDATE;
-		run_helper.can_train_loops = false;
-
-		vector<ForwardContextLayer> context;
-		context.push_back(ForwardContextLayer());
-
-		context.back().scope_id = 0;
-		context.back().node_id = -1;
-
-		vector<double> inner_state_vals(solution->scopes[0]->num_states, 0.0);
-		context.back().state_vals = &inner_state_vals;
-		context.back().states_initialized = vector<bool>(solution->scopes[0]->num_states, true);
-		// minor optimization to initialize to true to prevent updating last_seen_vals for starting scope
-
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
-
-		vector<int> starting_node_ids{0};
-		vector<vector<double>*> starting_state_vals;
-		vector<vector<bool>> starting_states_initialized;
-
-		int exit_depth;
-		int exit_node_id;
-
-		solution->scopes[0]->activate(starting_node_ids,
-									  starting_state_vals,
-									  starting_states_initialized,
-									  flat_vals,
-									  context,
-									  exit_depth,
-									  exit_node_id,
-									  run_helper,
-									  root_history);
-
-		if ((int)flat_vals.size() == 3*(20 - loop_iters)) {
-			run_helper.target_val = correct_loop_target_val;
-		} else {
-			run_helper.target_val = -1;
-		}
-
-		cout << "post: " << iter_index << endl;
-		cout << "loop_iters: " << loop_iters << endl;
-		cout << "flat_vals.size(): " << flat_vals.size() << endl;
 		cout << "run_helper.target_val: " << run_helper.target_val << endl;
 		cout << "run_helper.predicted_score: " << run_helper.predicted_score << endl;
 

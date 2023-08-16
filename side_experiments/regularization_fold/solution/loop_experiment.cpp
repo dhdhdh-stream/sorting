@@ -85,7 +85,7 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 
 	this->state_iter++;
 	if (this->state == EXPERIMENT_STATE_EXPERIMENT) {
-		if (this->state_iter == 400000) {
+		if (this->state_iter == 500000) {
 			experiment_transform();
 
 			run_helper.explore_phase = EXPLORE_PHASE_NONE;
@@ -99,7 +99,6 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 			}
 		}
 	} else if (this->state == EXPERIMENT_STATE_FIRST_CLEAN) {
-		// if (this->state_iter == 100000) {
 		if (this->state_iter == 200000) {
 			first_clean_transform();
 
@@ -113,7 +112,6 @@ void LoopExperiment::backprop(vector<BackwardContextLayer>& context,
 			}
 		}
 	} else if (this->state == EXPERIMENT_STATE_SECOND_CLEAN) {
-		// if (this->state_iter == 100000) {
 		if (this->state_iter == 200000) {
 			second_clean_transform();
 

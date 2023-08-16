@@ -1,3 +1,7 @@
+/**
+ * - TODO: add probability to not include scopes based on off path depth
+ */
+
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 

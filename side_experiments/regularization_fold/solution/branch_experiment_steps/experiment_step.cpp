@@ -220,6 +220,9 @@ void BranchExperiment::experiment_activate(vector<double>& flat_vals,
 			history->step_score_network_outputs[a_index] = score_network->output->acti_vals[0];
 
 			run_helper.predicted_score += run_helper.scale_factor*score_network->output->acti_vals[0];
+			if (this->state_iter%1000 == 0) {
+				cout << "score_network->output->acti_vals[0]: " << score_network->output->acti_vals[0] << endl;
+			}
 
 			flat_vals.erase(flat_vals.begin());
 		} else {
@@ -335,21 +338,27 @@ void BranchExperiment::experiment_backprop(vector<BackwardContextLayer>& context
 				new_score_network_target_max_update = 0.01;
 			}
 			vector<double> empty_state_vals;
-			if (this->state_iter <= 300000) {
-				this->step_score_networks[a_index]->new_scaled_backprop(run_helper.scale_factor*predicted_score_error,
-																		run_helper.new_state_errors,
-																		new_score_network_target_max_update,
-																		empty_state_vals,
-																		history->step_ending_new_state_vals_snapshots[a_index],
-																		history->step_score_network_histories[a_index]);
-			} else {
-				this->step_score_networks[a_index]->new_lasso_backprop(run_helper.scale_factor*predicted_score_error,
+			// if (this->state_iter <= 300000) {
+			// 	this->step_score_networks[a_index]->new_scaled_backprop(run_helper.scale_factor*predicted_score_error,
+			// 															run_helper.new_state_errors,
+			// 															new_score_network_target_max_update,
+			// 															empty_state_vals,
+			// 															history->step_ending_new_state_vals_snapshots[a_index],
+			// 															history->step_score_network_histories[a_index]);
+			// } else {
+			// 	this->step_score_networks[a_index]->new_lasso_backprop(run_helper.scale_factor*predicted_score_error,
+			// 														   run_helper.new_state_errors,
+			// 														   new_score_network_target_max_update,
+			// 														   empty_state_vals,
+			// 														   history->step_ending_new_state_vals_snapshots[a_index],
+			// 														   history->step_score_network_histories[a_index]);
+			// }
+			this->step_score_networks[a_index]->new_backprop(run_helper.scale_factor*predicted_score_error,
 																	   run_helper.new_state_errors,
 																	   new_score_network_target_max_update,
 																	   empty_state_vals,
 																	   history->step_ending_new_state_vals_snapshots[a_index],
 																	   history->step_score_network_histories[a_index]);
-			}
 
 			run_helper.predicted_score -= run_helper.scale_factor*history->step_score_network_outputs[a_index];
 
