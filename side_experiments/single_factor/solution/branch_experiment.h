@@ -55,8 +55,58 @@
  *   - not actually accurate, but only used for exploration anyways
  *     - then relearn correlation after to measure true?
  *       - yeah, easy to check
+ * 
+ * - don't have score networks
+ *   - instead use state updates to guesstimate if have to
+ * 
+ * - prior to explore, first learn score network
+ *   - probably fix context first too
+ * 
+ * - so update will be for making minor improvements/adjustments
+ *   - overtime, can essentially find new solutions on its own
+ *     - but will be very incremental
+ * 
+ * - actually, decide both starting point and ending point before explore
+ * 
+ * - OK, ran a bunch of experiments, and here are the observations:
+ *   - when constructing state, use a single ending score network
+ *     - makes the state impacts/error signals proportional
+ *     - use seeding to overcome XORs
+ *   - update 1 state at a time
+ *     - can always make progress
+ *       - though initially, may not be clean/ideal
+ *       - but keep adding state, and hopefully, eventually, ideal state will be found
+ *       - then let impact of state gradually refactor until everything is ideal
+ *     - state networks only have to depend on itself and obs
+ *       - no need to check other state
+ *         - but can check other state at scope starts and ends to constrain
+ *   - scale state network outputs by their dependency on obs
+ *     - this makes it such that state networks don't only depend on their state
+ *       - i.e., causing unnecessary state networks, which just scale and mess things up
+ *   - for branch/loop score networks, don't need hidden layer
+ *     - can just use flat linear layer
+ *       - (also conveniently removing the issue of expanding the hidden layer)
+ * 
+ * - so need changes:
+ *   - score networks only appear at end of scope
+ *     - so predicted score only updates at end of scope
+ *     - though also update predicted score at branches
+ *   - when exploring, select context beforehand and learn score network
+ *   - during experiment:
+ *     - first, learn all existing state
+ *       - for exit, learn through ending score networks
+ *       - for inner, use inner branch/loop networks
+ *       - also learn branch/new path weight
+ *     - then learn new state from inner to outer
+ *     - learn everything before measuring
+ *   - still update
+ *     - update weights of state for ending score networks
+ *     - update decision making for branch/loop networks
+ *       - randomly select other branch/other iterations
+ *         - shouldn't deviate far from existing solution initially, but over time, might lead to big changes
  */
 
+// TODO: need more lasso practice
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
 
 /**

@@ -8,17 +8,18 @@
  * - types represent values to take initially
  *   - they hopefully help inner and after make good decisions while inputs are being learned
  *     - (cannot rely on seeding as pre and after context would not match)
+ *   - if not, they can still serve as random inspiration during exploration
+ *     - (don't worry about setting back, as may simply be early exit, and will have no impact)
+ * 
+ * - don't need last seen
+ *   - unreliable as can't guarantee comes from the same spot
+ *   - don't need for inspiration, as local may be enough
  */
 const int SEQUENCE_INPUT_TYPE_NONE = 0;
 const int SEQUENCE_INPUT_TYPE_LOCAL = 1;
 const int SEQUENCE_INPUT_TYPE_PREVIOUS = 2;
-/**
- * - meant for
- *   - as pre-context unpredictable
- */
-const int SEQUENCE_INPUT_TYPE_LAST_SEEN = 3;
 
-const int SEQUENCE_INPUT_TYPE_COPY = 4;
+const int SEQUENCE_INPUT_TYPE_COPY = 3;
 
 class SequenceHistory;
 class Sequence {
@@ -47,7 +48,6 @@ public:
 	std::vector<int> input_local_input_indexes;
 	std::vector<int> input_previous_step_index;
 	std::vector<int> input_previous_input_index;
-	std::vector<int> input_last_seen_class_ids;
 	std::vector<bool> input_has_transform;
 	std::vector<Transformation> input_transformations;
 

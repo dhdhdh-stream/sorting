@@ -16,6 +16,20 @@ public:
 
 	int next_node_id;
 
+
+
+	void seed_activate(ScopeNodeHistory* seed_history,
+					   ScopeNodeHistory* history);
+
+};
+
+class ScopeNodeHistory : public AbstractNodeHistory {
+public:
+	ScopeHistory* inner_scope_history;
+
+	ScopeNodeHistory(ScopeNode* node);
+	ScopeNodeHistory(ScopeNodeHistory* original);	// deep copy for seed
+	~ScopeNodeHistory();
 };
 
 #endif /* SCOPE_NODE_H */
