@@ -86,6 +86,9 @@
  *   - for branch/loop score networks, don't need hidden layer
  *     - can just use flat linear layer
  *       - (also conveniently removing the issue of expanding the hidden layer)
+ *   - when using lasso to remove factors, stop zero-ing
+ *     - actually, instead of lasso, scale obs, and remove networks with low impact
+ *       - actually, in addition, lasso just state
  * 
  * - so need changes:
  *   - score networks only appear at end of scope
@@ -106,7 +109,6 @@
  *         - shouldn't deviate far from existing solution initially, but over time, might lead to big changes
  */
 
-// TODO: need more lasso practice
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
 
 /**
