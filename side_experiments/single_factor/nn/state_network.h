@@ -21,8 +21,6 @@ public:
 	Layer* output;
 
 	double obs_weight;
-	double final_val;
-	double final_error;
 
 	int epoch_iter;
 	double hidden_average_max_update;
@@ -34,18 +32,27 @@ public:
 	StateNetwork(std::ifstream& input_file);
 	~StateNetwork();
 
-	void activate();
-	void activate(StateNetworkHistory* history);
-	void backprop(double target_max_update);
-	void backprop(double target_max_update,
+	void activate(std::vector<double>& obs_vals,
+				  double& state_val);
+	void activate(std::vector<double>& obs_vals,
+				  double& state_val,
+				  StateNetworkHistory* history);
+	void backprop(double& state_error,
+				  double target_max_update);
+	void backprop(double& state_error,
+				  double target_max_update,
 				  std::vector<double>& obs_history,
 				  StateNetworkHistory* history);
-	void lasso_backprop(double target_max_update);
-	void lasso_backprop(double target_max_update,
+	void lasso_backprop(double& state_error,
+						double target_max_update);
+	void lasso_backprop(double& state_error,
+						double target_max_update,
 						std::vector<double>& obs_history,
 						StateNetworkHistory* history);
-	void backprop_errors_with_no_weight_change();
 	void backprop_errors_with_no_weight_change(
+		double& state_error);
+	void backprop_errors_with_no_weight_change(
+		double& state_error,
 		std::vector<double>& obs_history,
 		StateNetworkHistory* history);
 

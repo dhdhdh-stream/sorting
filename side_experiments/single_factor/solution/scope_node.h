@@ -12,6 +12,11 @@ public:
 	std::vector<int> input_target_indexes;
 	std::vector<bool> input_is_copy;
 
+	/**
+	 * - when backfilling, can't be input_is_copy
+	 */
+	std::vector<int> state_to_input_mapping;
+
 	Scale* scope_scale_mod;
 
 	int next_node_id;

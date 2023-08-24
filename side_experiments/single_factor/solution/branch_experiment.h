@@ -107,6 +107,54 @@
  *     - update decision making for branch/loop networks
  *       - randomly select other branch/other iterations
  *         - shouldn't deviate far from existing solution initially, but over time, might lead to big changes
+ * 
+ * - don't activate state unless reach decision point?
+ *   - specifically, don't initialize until needed, then backfill
+ * 
+ * - scope nodes have pre networks and post networks
+ *   - pre networks for inner
+ *   - post networks for exit
+ * 
+ * - scope nodes will have multiple "observations" in one spot
+ *   - in which case still treat them one-by-one?
+ *     - nah, not difficult to handle multiple
+ *       - only pre needs some construction
+ *         - though need to think about initialization
+ * 
+ * - on scope node, split into passed in, not passed in, and newly initialized
+ * 
+ * - still need scale
+ * 
+ * - when enabling random branches/loops, also keep track of average damage
+ *   - then modify score by average damage?
+ *     - actually, should just try one thing at a time
+ *       - maybe every spot gets it's turn every 1000th iter?
+ *         - doesn't work if there's 1000 branches ahead
+ *           - maybe scale by number of branches
+ *             - not by number of branches, max number of branches seen in single run
+ * 
+ * - for ending score networks in scope node, on backprop:
+ *   - fire in reverse order, and modify predicted score for each
+ *     - because score networks depend on previous score networks
+ * 
+ * - potentially remove misguess
+ *   - difficult to retrain in new context?
+ *     - would need to constantly update predicted misguess just like score
+ *       - and then may be awkward with scale factor being for 2 different things
+ * - maybe need to keep track of and go against average misguess?
+ *   - and maybe scale doesn't matter?
+ *     - or can have a temporary scale to calculate state, but which can then be dropped?
+ * - OK, use single scale, and keep track of an average that applies only to remeasure
+ * 
+ * - in general, maybe predicted score isn't the right thing to compare against
+ *   - maybe should be average score when choosing randomly
+ * 
+ * - during experiment, when randomly selecting branches, scale possibility by max number of decisions?
+ * 
+ * - scale represents impact of inner scope
+ *   - so simply use for both misguess and score
+ * 
+ * - when remeasuring, compare against an average that is constantly updated
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
