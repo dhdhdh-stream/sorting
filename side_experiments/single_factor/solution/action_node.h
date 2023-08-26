@@ -5,12 +5,17 @@ class ActionNode : public AbstractNode {
 public:
 	// Action action;
 
-	/**
-	 * - matches scope num_states
-	 *   - NULL if no network needed
-	 */
+	std::vector<int> state_network_indexes;
 	std::vector<StateNetwork*> state_networks;
 
+	int next_node_id;
+
+	bool is_explore;
+	int explore_curr_try;
+	double explore_best_surprise;
+	AbstractExperiment* explore_best_experiment;
+
+	AbstractExperiment* experiment;
 
 };
 
@@ -18,8 +23,10 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> obs_snapshot;
 
+	std::vector<int> state_network_indexes;
 	std::vector<StateNetworkHistory*> state_network_histories;
 
+	AbstractExperimentHistory* experiment_history;
 
 };
 

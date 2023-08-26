@@ -19,24 +19,26 @@ class Scope {
 public:
 	int id;
 
-	int num_input_states;
-	std::vector<int> input_state_family_ids;
-
-	int num_local_states;
-	std::vector<int> local_state_family_ids;
-	/**
-	 * - ending score networks
-	 *   - initially used to construct state
-	 *   - later to learn new paths
-	 */
-	std::vector<EndingScoreNetwork*> ending_score_networks;
+	int num_states;
+	std::vector<bool> state_initialized_locally;
+	std::vector<int> state_family_ids;
 	/**
 	 * - when new state added, can be added twice
 	 *   - once as local
 	 *   - once as input
 	 */
 
+	/**
+	 * - ending score networks
+	 *   - initially used to construct state
+	 *   - later to learn new paths
+	 */
+	std::vector<EndingScoreNetwork*> ending_score_networks;
 
+	/**
+	 * - alternate way of storing initialized locally information for scope nodes
+	 */
+	std::vector<int> initialized_locally_indexes;
 
 };
 

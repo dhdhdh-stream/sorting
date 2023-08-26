@@ -8,6 +8,8 @@ class RunHelper {
 public:
 	int phase;
 
+	double running_average_score;
+	double running_average_misguess;
 	double predicted_score;
 	double scale_factor;
 
@@ -26,8 +28,12 @@ public:
 
 
 	int remeasure_type;
+	double scale_factor_snapshot;
 	BranchNodeHistory* remeasure_branch_node_history;
 	ScopeHistory* remeasure_scope_history;
+
+	double target_val;
+	double final_misguess;
 
 };
 

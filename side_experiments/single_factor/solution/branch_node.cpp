@@ -4,54 +4,6 @@ using namespace std;
 
 
 
-void BranchNode::activate_backfill_helper(
-		bool on_path,
-		int state_index,
-		int& next_state_index,
-		double& state_val,
-		ScopeHistory* scope_history) {
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-
-				if (action_node->state_networks[state_index] != NULL) {
-					StateNetwork* network = action_node->state_networks[state_index];
-					if (action_node_history->state_network_histories.size() != 0) {
-						StateNetworkHistory* network_history = new StateNetworkHistory(network);
-						network->activate(action_node_history->obs_snapshot,
-										  state_val,
-										  network_history);
-						action_node_history->state_network_histories[state_index] = network_history;
-					} else {
-						network->activate(action_node_history->obs_snapshot,
-										  state_val);
-					}
-				}
-			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-				int input_index = scope_node->state_to_input_mapping[state_index];
-				if (input_index != -1) {
-					if (on_path
-							&& i_index == (int)scope_history->node_histories.size()-1
-							&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
-						next_state_index = input_index;
-					} else {
-						activate_backfill_helper(false,
-												 input_index,
-												 next_state_index,
-												 state_val,
-												 scope_node_history->inner_scope_history);
-					}
-				}
-			}
-		}
-	}
-}
-
 void BranchNode::activate(vector<ForwardContextLayer>& context,
 						  RunHelper& run_helper,
 						  BranchNodeHistory* history) {
@@ -69,45 +21,164 @@ void BranchNode::activate(vector<ForwardContextLayer>& context,
 	}
 
 	if (matches_context) {
-		for (int b_index = 0; b_index < (int)this->backfill_start_layer.size(); b_index++) {
-			int starting_context_index;
-			if (this->backfill_start_layer[b_index] == 0) {
-				starting_context_index = 0;
-			} else {
-				starting_context_index = context.size()-this->scope_context.size()+this->backfill_start_layer[b_index]-1;
-			}
-			if (!context[starting_context_index].states_initialized[this->backfill_state_index[b_index]]) {
-				double state_val = 0.0;
-				int curr_state_index = this->backfill_state_index[b_index];
-				// include last (i.e., current) layer
-				for (int c_index = starting_context_index; c_index < (int)context.size(); c_index++) {
-					context[c_index].states_initialized[curr_state_index] = true;
-
-					int next_state_index,
-					activate_backfill_helper(true,
-											 curr_state_index,
-											 next_state_index,
-											 state_val,
-											 context[c_index].scope_history);
-
-					// no need to set context[c_index].state_vals
-
-					curr_state_index = next_state_index;
-				}
-				context.back().state_vals->at(curr_state_index) = state_val;
-				context.back().states_initialized[curr_state_index] = true;
-			}
-		}
-
 		if (this->branch_is_pass_through) {
 			history->is_branch = true;
+
+			// don't modify predicted score/misguess
 		} else {
-			if (run_helper.phase == RUN_PHASE_UPDATE_NONE
-					&& this->remeasure_counter > solution->max_decisions) {
+			history->starting_running_average_score = run_helper.running_average_score;
+			history->starting_running_average_misguess = run_helper.running_average_misguess;
 
-
+			vector<vector<double>*> state_vals(this->context_indexes.size()+1);
+			state_vals[0] = context[0].state_vals;
+			for (int c_index = 0; c_index < (int)this->context_indexes.size(); c_index++) {
+				state_vals[1+c_index] = context[context.size()-this->context_indexes.size()+c_index].state_vals;
 			}
 
+			if (run_helper.phase == RUN_PHASE_UPDATE_NONE
+					&& this->remeasure_counter > solution->max_decisions) {
+				run_helper.phase == RUN_PHASE_UPDATE_REMEASURE;
+				run_helper.remeasure_type = REMEASURE_TYPE_BRANCH;
+				run_helper.scale_factor_snapshot = run_helper.scale_factor;
+				run_helper.remeasure_branch_node_history = history;
+
+				if (rand()%2 == 0) {
+					history->is_branch = true;
+
+					ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->branch_score_network);
+					this->branch_score_network->activate(state_vals,
+														 score_network_history);
+					history->score_network_history = score_network_history;
+					history->score_network_output = this->branch_score_network->output->acti_vals[0];
+
+					ScoreNetworkHistory* misguess_network_history = new ScoreNetworkHistory(this->branch_misguess_network);
+					this->branch_misguess_network->activate(state_vals,
+															misguess_network_history);
+					history->misguess_network_history = misguess_network_history;
+					history->misguess_network_output = this->branch_misguess_network->output->acti_vals[0];
+				} else {
+					history->is_branch = false;
+
+					ScoreNetworkHistory* score_network_history = new ScoreNetworkHistory(this->original_score_network);
+					this->original_score_network->activate(state_vals,
+														   score_network_history);
+					history->score_network_history = score_network_history;
+					history->score_network_output = this->original_score_network->output->acti_vals[0];
+
+					ScoreNetworkHistory* misguess_network_history = new ScoreNetworkHistory(this->original_misguess_network);
+					this->original_misguess_network->activate(state_vals,
+															  misguess_network_history);
+					history->misguess_network_history = misguess_network_history;
+					history->misguess_network_output = this->original_misguess_network->output->acti_vals[0];
+				}
+			} else if (run_helper.phase == RUN_PHASE_EXPERIMENT_EXISTING_INNER) {
+				ScoreNetworkHistory* branch_score_network_history = new ScoreNetworkHistory(this->branch_score_network);
+				this->branch_score_network->activate(state_vals,
+													 branch_score_network_history);
+
+				ScoreNetworkHistory* original_score_network_history = new ScoreNetworkHistory(this->original_score_network);
+				this->original_score_network->activate(state_vals,
+													   original_score_network_history);
+
+				ScoreNetworkHistory* branch_misguess_network_history = new ScoreNetworkHistory(this->branch_misguess_network);
+				this->branch_misguess_network->activate(state_vals,
+														branch_misguess_network_history);
+
+				ScoreNetworkHistory* original_misguess_network_history = new ScoreNetworkHistory(this->original_misguess_network);
+				this->original_misguess_network->activate(state_vals,
+														  original_misguess_network_history);
+
+				/**
+				 * - scale to keep equation running_average_score + scale_factor*score_update = target_val
+				 * - also scale average_misguess by abs(scale_factor) to account for potentially lower impact locally
+				 *   - these 2 instances of scaling don't directly relate to each other
+				 *     - but they cancel out, so don't actually have to do anything
+				 */
+
+				double score_diff = this->branch_score_network->output->acti_vals[0]
+					- this->original_score_network->output->acti_vals[0];
+				double score_val = score_diff / solution->average_misguess;
+				if (score_val > 0.1) {
+					history->is_branch = true;
+				} else if (score_val < -0.1) {
+					history->is_branch = false;
+				} else {
+					double misguess_diff = this->branch_misguess_network->output->acti_vals[0]
+						- this->original_misguess_network->output->acti_vals[0];
+					double misguess_val = misguess_diff / solution->misguess_standard_deviation;
+					if (misguess_val < -0.1) {
+						history->is_branch = true;
+					} else if (misguess_val > 0.1) {
+						history->is_branch = false;
+					} else {
+						if (rand()%2 == 0) {
+							history->is_branch = true;
+						} else {
+							history->is_branch = false;
+						}
+					}
+				}
+
+				if (history->is_branch) {
+					run_helper.running_average_score += run_helper.scale_factor*this->branch_score_update;
+					run_helper.running_average_misguess += run_helper.scale_factor*this->branch_misguess_update;
+
+					delete original_score_network_history;
+					delete original_misguess_network_history;
+					history->score_network_history = branch_score_network_history;
+					history->score_network_output = this->branch_score_network->output->acti_vals[0];
+					history->misguess_network_history = branch_misguess_network_history;
+					history->misguess_network_output = this->branch_misguess_network->output->acti_vals[0];
+				} else {
+					run_helper.running_average_score += run_helper.scale_factor*this->original_score_update;
+					run_helper.running_average_misguess += run_helper.scale_factor*this->original_misguess_update;
+
+					delete branch_score_network_history;
+					delete branch_misguess_network_history;
+					history->score_network_history = original_score_network_history;
+					history->score_network_output = this->original_score_network->output->acti_vals[0];
+					history->misguess_network_history = original_misguess_network_history;
+					history->misguess_network_output = this->original_misguess_network->output->acti_vals[0];
+				}
+			} else {
+				this->branch_score_network->activate(state_vals);
+				this->original_score_network->activate(state_vals);
+
+				double score_diff = this->branch_score_network->output->acti_vals[0]
+					- this->original_score_network->output->acti_vals[0];
+				double score_val = score_diff / solution->average_misguess;
+				if (score_val > 0.1) {
+					history->is_branch = true;
+				} else if (score_val < -0.1) {
+					history->is_branch = false;
+				} else {
+					this->branch_misguess_network->activate(state_vals);
+					this->original_misguess_network->activate(state_vals);
+
+					double misguess_diff = this->branch_misguess_network->output->acti_vals[0]
+						- this->original_misguess_network->output->acti_vals[0];
+					double misguess_val = misguess_diff / solution->misguess_standard_deviation;
+					if (misguess_val < -0.1) {
+						history->is_branch = true;
+					} else if (misguess_val > 0.1) {
+						history->is_branch = false;
+					} else {
+						if (rand()%2 == 0) {
+							history->is_branch = true;
+						} else {
+							history->is_branch = false;
+						}
+					}
+				}
+
+				if (history->is_branch) {
+					run_helper.running_average_score += run_helper.scale_factor*this->branch_score_update;
+					run_helper.running_average_misguess += run_helper.scale_factor*this->branch_misguess_update;
+				} else {
+					run_helper.running_average_score += run_helper.scale_factor*this->original_score_update;
+					run_helper.running_average_misguess += run_helper.scale_factor*this->original_misguess_update;
+				}
+			}
 
 			if (run_helper.phase == RUN_PHASE_UPDATE_NONE
 					|| run_helper.phase == RUN_PHASE_UPDATE_REMEASURE) {
@@ -116,17 +187,92 @@ void BranchNode::activate(vector<ForwardContextLayer>& context,
 		}
 	} else {
 		history->is_branch = false;
+
+		// don't modify predicted score/misguess
 	}
 }
 
+void BranchNode::backprop(vector<BackwardContextLayer>& context,
+						  double& scale_factor_error,
+						  RunHelper& run_helper,
+						  BranchNodeHistory* history) {
+	double local_score_update;
+	double local_misguess_update;
+	if (history->is_branch) {
+		local_score_update = run_helper.scale_factor*this->branch_score_update;
+		local_misguess_update = run_helper.scale_factor*this->branch_misguess_update;
+	} else {
+		local_score_update = run_helper.scale_factor*this->original_score_update;
+		local_misguess_update = run_helper.scale_factor*this->original_misguess_update;
+	}
 
+	if (run_helper.phase == RUN_PHASE_UPDATE_NONE) {
+		double running_average_score_error = run_helper.target_val - run_helper.running_average_score;
+		double running_average_misguess_error = run_helper.final_misguess - run_helper.running_average_misguess;
+
+		scale_factor_error += running_average_score_error*local_score_update;
+		scale_factor_error += running_average_misguess_error*local_misguess_update;
+
+		double curr_target_score_update = run_helper.target_val - history->starting_running_average_score;
+		double curr_target_misguess_update = run_helper.final_misguess - history->starting_running_average_misguess;
+		if (history->is_branch) {
+			this->branch_score_update = 0.9999*this->branch_score_update + 0.0001*curr_target_score_update;
+			this->branch_misguess_update = 0.9999*this->branch_misguess_update + 0.0001*curr_target_misguess_update;
+		} else {
+			this->original_score_update = 0.9999*this->original_score_update + 0.0001*curr_target_score_update;
+			this->original_misguess_update = 0.9999*this->original_misguess_update + 0.0001*curr_target_misguess_update;
+		}
+	} else if (run_helper.phase == RUN_PHASE_EXPERIMENT_EXISTING_INNER) {
+		double running_average_score_error = run_helper.target_val - run_helper.running_average_score;
+		double running_average_misguess_error = run_helper.final_misguess - run_helper.running_average_misguess;
+
+		scale_factor_error += running_average_score_error*local_score_update;
+		scale_factor_error += running_average_misguess_error*local_misguess_update;
+
+		vector<vector<double>*> state_errors(this->context_indexes.size()+1);
+		state_errors[0] = context[0].state_errors;
+		for (int c_index = 0; c_index < (int)this->context_indexes.size(); c_index++) {
+			state_errors[1+c_index] = context[context.size()-this->context_indexes.size()+c_index].state_errors;
+		}
+
+		ScoreNetwork* score_network = history->score_network_history->network;
+		score_network->backprop_weights_with_no_error_signal(
+			history->scale_factor_snapshot*running_average_score_error,
+			0.002,
+			history->score_network_history);
+
+		ScoreNetwork* misguess_network = history->misguess_network_history->network;
+		misguess_network->backprop_weights_with_no_error_signal(
+			history->scale_factor_snapshot*running_average_misguess_error,
+			0.002,
+			history->misguess_network_history);
+	}
+
+	run_helper.running_average_score -= local_score_update;
+	run_helper.running_average_misguess -= local_misguess_update;
+}
 
 void BranchNode::remeasure_backprop(RunHelper& run_helper,
 									BranchNodeHistory* history) {
-	double branch_predicted_score = history->predicted_score_snapshot
-		+ history->scale_factor_snapshot*history->score_network_output;
-	// HERE
+	double local_score = history->starting_running_average_score
+		+ run_helper.scale_factor_snapshot*history->score_network_output;
+	double running_average_score_error = run_helper.target_val - local_score;
 	ScoreNetwork* score_network = history->score_network_history->network;
 	score_network->backprop_weights_with_no_error_signal(
-		)
+		run_helper.scale_factor_snapshot*running_average_score_error,
+		0.002,
+		history->score_network_history);
+
+	double local_misguess = history->starting_running_average_misguess
+		+ run_helper.scale_factor_snapshot*history->misguess_network_output;
+	double running_average_misguess_error = run_helper.final_misguess - local_misguess;
+	ScoreNetwork* misguess_network = history->misguess_network_history->network;
+	misguess_network->backprop_weights_with_no_error_signal(
+		run_helper.scale_factor_snapshot*running_average_misguess_error,
+		0.002,
+		history->misguess_network_history);
+
+	this->remeasure_counter = 0;
 }
+
+

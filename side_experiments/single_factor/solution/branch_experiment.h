@@ -155,6 +155,29 @@
  *   - so simply use for both misguess and score
  * 
  * - when remeasuring, compare against an average that is constantly updated
+ * 
+ * - or actually, once state is trained, then it doesn't really matter whether comparing to average
+ *   - so key is what is needed when retraining state in experiment
+ * 
+ * - hmm, conflict between remeasure and reuse
+ *   - remeasure to change decisions is good
+ *     - corresponding state will exist, even if it wasn't trained representatively
+ *       - but should be OK, as even if state is actively confusing, will still have previous state to choose right branch
+ * 
+ * - can potentially use ending score scale?
+ *   - can potentially train score network at end of sequence to help train states?
+ * 
+ * - maybe just train score networks everywhere
+ *   - then they become ending score networks?
+ *     - (and branch networks)
+ * 
+ * - for loops, don't copy, but just try to learn best possible, but then add new state
+ * 
+ * - key is to update predicted score at each branch
+ * 
+ * - don't have branch weight
+ *   - when exploring, just let it keep going, and cut it off
+ *     - so sequences are open ended-ish
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;

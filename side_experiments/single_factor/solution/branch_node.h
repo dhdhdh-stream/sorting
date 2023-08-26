@@ -1,3 +1,7 @@
+/**
+ * - score should average 0.0 for the right branch, and negative for the wrong branch
+ */
+
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
@@ -9,24 +13,19 @@ public:
 	std::vector<int> scope_context;
 	std::vector<int> node_context;
 
-	std::vector<int> backfill_start_layer;
-	std::vector<int> backfill_state_index;
-
 	bool branch_is_pass_through;
 
 	ScoreNetwork* branch_score_network;
 	ScoreNetwork* branch_misguess_network;
+	double branch_score_update;
+	double branch_misguess_update;
 	int branch_next_node_id;
 
 	ScoreNetwork* original_score_network;
 	ScoreNetwork* original_misguess_network;
+	double original_score_update;
+	double original_misguess_update;
 	int original_next_node_id;
-
-	/**
-	 * - to help create reasonable sequences for explore
-	 *   - cheaper than saving past sequences
-	 */
-	double branch_weight;
 
 	int remeasure_counter;
 
@@ -36,11 +35,12 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;	// also used to signal outside
 
-	double predicted_score_snapshot;
-	double scale_factor_snapshot;
+	double starting_running_average_score
+	double starting_running_average_misguess;
+
 	ScoreNetworkHistory* score_network_history;
-	ScoreNetworkHistory* misguess_network_history;
 	double score_network_output;
+	ScoreNetworkHistory* misguess_network_history;
 	double misguess_network_output;
 
 
