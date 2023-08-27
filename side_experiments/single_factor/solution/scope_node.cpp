@@ -289,4 +289,32 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	run_helper.scale_factor /= this->scope_scale_mod->weight;
 }
 
+void ScopeNode::backprop(vector<BackwardContextLayer>& context,
+						 double& scale_factor_error,
+						 RunHelper& run_helper,
+						 ScopeNodeHistory* history) {
+	run_helper.scale_factor *= this->scope_scale_mod->weight;
+
+	Scope* inner_scope = solution->scopes[this->inner_scope_id];
+
+	if (run_helper.explore_phase == RUN_PHASE_UPDATE_NONE) {
+		double inner_scale_factor_error = 0.0;
+
+		vector<int> empty_starting_node_ids_copy;
+		vector<vector<double>*> empty_inner_state_errors_copy;
+		inner_scope->backprop(empty_starting_node_ids_copy,
+							  empty_inner_state_errors_copy,
+							  context,
+							  inner_scale_factor_error,
+							  run_helper,
+							  history->inner_scope_history);
+
+		this->scope_scale_mod->backprop(inner_scale_factor_error, 0.0002);
+
+		scale_factor_error += this->scope_scale_mod->weight*inner_scale_factor_error;
+	} else {
+
+	}
+}
+
 

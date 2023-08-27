@@ -32,6 +32,8 @@ public:
 
 	/**
 	 * - activate even if early exit
+	 *   - previously following state networks may not be activated
+	 *     - but let experiment try to adjust through that
 	 */
 	std::vector<int> post_state_network_indexes;
 	std::vector<StateNetwork*> post_state_networks;

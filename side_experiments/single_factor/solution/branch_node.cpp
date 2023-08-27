@@ -196,6 +196,8 @@ void BranchNode::backprop(vector<BackwardContextLayer>& context,
 						  double& scale_factor_error,
 						  RunHelper& run_helper,
 						  BranchNodeHistory* history) {
+	// TODO: branch networks don't contribute to scale factor
+
 	double local_score_update;
 	double local_misguess_update;
 	if (history->is_branch) {

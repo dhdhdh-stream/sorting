@@ -13,10 +13,6 @@ public:
 	 */
 	std::vector<double>* state_vals;
 	std::vector<bool> states_initialized;
-	/**
-	 * - simply always initialize to false, even if unused
-	 */
-	std::vector<bool> is_learn_existing;
 
 	ScopeHistory* scope_history;
 };

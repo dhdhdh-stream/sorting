@@ -178,6 +178,15 @@
  * - don't have branch weight
  *   - when exploring, just let it keep going, and cut it off
  *     - so sequences are open ended-ish
+ * 
+ * - maybe divide state between scalers and XORs
+ *   - scalers cannot depend on themselves (i.e., the past)
+ *   - XORs cannot scale
+ * 
+ * - for XORs, have way of removing impact of previous state
+ *   - forget
+ * 
+ * - but scalers should be able to overwrite too?
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
