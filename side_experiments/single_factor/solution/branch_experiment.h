@@ -187,6 +187,74 @@
  *   - forget
  * 
  * - but scalers should be able to overwrite too?
+ * 
+ * - but anyways, once split into scalers and XORs, all the zeroing stuff should work
+ *   - then things should be able to be taken from anywhere, fed into anywhere, and continued from anywhere
+ * 
+ * - maybe have some way where the scaler can depend on the XOR
+ * 
+ * - what about if first step is get a value, and second step is to cut in half?
+ *   - not depending makes this impossible?
+ *     - no, the first step would just save half the value, and second step does nothing
+ *     - and ignore multiplications, so maybe this works?
+ * 
+ * - why seeding works
+ *   - 0: establish baseline, then slowly introduce differences
+ *   - 1: hope that there are differences that are identifiable
+ *     - e.g., all match, except for last
+ *       - so up until last, strong signal, and last can use signal plus obs to make correct decision
+ *     - or like all match, except in the middle
+ *   - 2: now after being able to detect and signal simple mistakes, identify where two wrongs make a right
+ *   - 3: XOR found
+ * 
+ * - what does it take to learn XOR
+ *   - for each step, a notion of what matches and what doesn't match
+ *   - for each step, whether or not it matching matters
+ * 
+ * - initially, there is the seed val, which hopefully differs from the average
+ *   - learn to recognize seed val
+ *     - use final error
+ *       - maybe just go above vs below average
+ *     - initially dominated by seed obs
+ *   - so also can recognize seed mismatches
+ * - state represents likelihood of mismatch
+ * - then if mismatch and mismatch, switch to match
+ * - starting network will go match or no match regardless
+ *   - then can create accurate scopes again?
+ * 
+ * - initially, if score is positive, then match, if negative, then mismatch
+ *   - then slowly begin incorporating state
+ *     - if state is mismatch, then flip the signs (and scale?)
+ *       - but then, how to handle start?
+ *         - maybe if match/mismatch have impact on final score?
+ *           - no, initially, all steps correlated
+ * 
+ * - actually, don't need to ramp up
+ *   - for XORs, initially all values are meaningless
+ *     - but with seeding, the seed obs will take values that are different
+ *     - and if keeping track of running state val, it will represent if matches seed
+ *       - but then, what matches starts expanding
+ *         - then mismatches start appearing, and are reported through state
+ *           - but then 2 wrongs leading to a right starts happening, and XOR is found
+ * 
+ * - xor + scalar can't handle val first, then number of times to multiple after
+ * 
+ * - partial/continuous error signals are too important initially
+ *   - so cannot train xor directly
+ * 
+ * - maybe normalize the output
+ *   - shift by mean, and divide by standard deviation
+ *     - yes, this is the answer
+ * 
+ * - to find starting point, look for spot where obs_weight dominates?
+ * 
+ * - seeding still helps, but have to have a slight touch
+ *   - 10% of samples maybe
+ *     - or 5% even actually
+ *   - also use strong learning rate
+ * 
+ * - maybe if obs weight for a state >50%, then consider there to be a dependency/similarity?
+ *   - not including state maybe
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
