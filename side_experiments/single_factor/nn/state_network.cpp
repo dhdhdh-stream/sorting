@@ -15,8 +15,6 @@ void StateNetwork::construct() {
 	this->output->input_layers.push_back(this->hidden);
 	this->output->setup_weights_full();
 
-	this->obs_weight = 0.01;
-
 	this->epoch_iter = 0;
 	this->hidden_average_max_update = 0.0;
 	this->output_average_max_update = 0.0;
@@ -27,12 +25,19 @@ StateNetwork::StateNetwork(int obs_size,
 	this->obs_size = obs_size;
 	this->hidden_size = hidden_size;
 
+	this->obs_weight = 0.5;
+
+	this->ending_state_mean = 0.0;
+	this->ending_state_variance = 1.0;
+
 	construct();
 }
 
 StateNetwork::StateNetwork(StateNetwork* original) {
 	this->obs_size = original->obs_size;
 	this->hidden_size = original->hidden_size;
+
+	
 
 	construct();
 
@@ -73,6 +78,10 @@ void StateNetwork::activate(std::vector<double>& obs_vals,
 	this->output->activate();
 
 	state_val += this->obs_weight*this->output->acti_vals[0];
+
+	double ending_state_standard_deviation = sqrt(this->ending_state_variance);
+	state_val = (state_val-this->ending_state_mean)/ending_state_standard_deviation;
+	// HERE
 }
 
 void StateNetwork::activate(std::vector<double>& obs_vals,

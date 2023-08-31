@@ -22,6 +22,9 @@ public:
 
 	double obs_weight;
 
+	double ending_state_mean;
+	double ending_state_variance;
+
 	int epoch_iter;
 	double hidden_average_max_update;
 	double output_average_max_update;
@@ -52,6 +55,14 @@ public:
 	void backprop_errors_with_no_weight_change(
 		double& state_error);
 	void backprop_errors_with_no_weight_change(
+		double& state_error,
+		std::vector<double>& obs_history,
+		StateNetworkHistory* history);
+	void backprop_errors_with_no_weight_change(
+		std::vector<double>& obs_errors,
+		double& state_error);
+	void backprop_errors_with_no_weight_change(
+		std::vector<double>& obs_errors,
 		double& state_error,
 		std::vector<double>& obs_history,
 		StateNetworkHistory* history);

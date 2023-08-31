@@ -255,6 +255,40 @@
  * 
  * - maybe if obs weight for a state >50%, then consider there to be a dependency/similarity?
  *   - not including state maybe
+ * 
+ * - each node can keep track of state that it needs
+ *   - can be determined from start node
+ *     - use to determine what state is needed on exploration
+ * 
+ * - try negating input too
+ *   - since dependency can be either polarity
+ * 
+ * - lasso doesn't work with normalized state because have to know what previous state is to cancel it out
+ * 
+ * - yeah, go back to zeroing
+ *   - with normalized state, zeroing probably pushes towards closest? which is fine
+ * 
+ * - one issue with zeroing is that if there are duplicates, then can learn to be robust against either missing
+ *   - so then removing both breaks
+ * 
+ * - maybe have both zeroing and clearing prior
+ *   - or remove zeroing
+ *     - can never be certain whether it's safe or not safe
+ * 
+ * - so just go with finding start, then measuring impact?
+ * 
+ * - maybe start by normalizing only by mean
+ *   - then, after determining impact, begin normalizing by standard deviation
+ *     - actually, will just be a simple equation to normalize after?
+ *       - except for branches and merges?
+ * 
+ * - normalizing by standard deviation speeds up learning by so much
+ *   - oh, but only if shallow
+ *     - makes things much worse if deep
+ * 
+ * - without any norm, learning probably relies on signal vs. no signal
+ *   - with norm mean, that is destroyed
+ *     - maybe learn normal first without anything, then try to norm mean?
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
