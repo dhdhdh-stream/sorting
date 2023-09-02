@@ -289,6 +289,68 @@
  * - without any norm, learning probably relies on signal vs. no signal
  *   - with norm mean, that is destroyed
  *     - maybe learn normal first without anything, then try to norm mean?
+ * 
+ * - actually, once learned, can calculate norm without having to relearn anything?
+ *   - no, branches/loops screw things up
+ *     - have to adjust learnings
+ *     - yeah, there's no right mathematical answer
+ *       - easy to end up in situations where the proper mathematical thing to do is nothing
+ *       - instead, it's more about pushing things down and hoping the networks can adjust
+ *         - not a math problem, but a learning problem
+ * 
+ * - what if randomize process order?
+ *   - so can depend on circumstance, but not ordering of the calculation
+ * 
+ * - don't use scale for ending, as may need to shift mean
+ *   - no, just keep using scales
+ *     - shifting mean adds another way for things to screw up
+ * 
+ * TODO: try to find practical XOR limit
+ * 
+ * - answer maybe to just go flat into RNN
+ *   - then just mark obs that are important
+ *     - then don't process, and simply save as state
+ * 
+ * - actually, can't go deep even with flat
+ *   - can only select things to pay attention to and try?
+ *     - which only makes types more important
+ * 
+ * - yeah, so the way this works is that to solve a 10-way XOR, need:
+ *   - all 10 inputs to align in a hidden node, 2^10 (as well as align at output layer, so another 2x)
+ *   - when things align, all the other inputs don't either overshadow the signal straight up, or they don't bounce around and ruin things
+ * - so hidden layer needs to be like 1000x
+ *   - not practical
+ *     - humans can barely pay attention to like 3 things as well
+ *       - though can effectively pay attention to a lot by building states up
+ * 
+ * - with obs size 10:
+ *   - with 20 hidden size, can barely get 6-way XORs, reliably get 5-ways
+ *   - with 10 hidden size, can barely get 5-way XORs, reliably get 4-ways
+ * 
+ * - or maybe, it's like this:
+ *   - with flat, can go deeper, but still limited by XOR size
+ *     - can easily get 5-way XOR with obs size 20
+ *   - with RNN, can't go very deep, but everything is limited by XOR size anyways?
+ *     - can't solve with obs size 20 even with hidden size 40
+ *       - can solve obs size kind of reliably with hidden size 100, so it still matters a bit
+ *         - but cannot solve obs size 20
+ * 
+ * - easy to select obs off of seed
+ *   - can even use to determine context?
+ *     - no, context is already selected to train score
+ * 
+ * - loops shouldn't influence the count that much as helped by them being able to be empty
+ * 
+ * - actually, RNNs just don't work that well
+ *   - only reason why I was finding success with seeding and XORs was because obs_vals were +1 or -1
+ *     - so it was very easy to learn "match" vs "not match"
+ *       - but if the range is bigger, then seeding doesn't matter anymore
+ * 
+ * - so back to folding?
+ * 
+ * - when folding, don't worry about getting perfect answer with multiple state
+ *   - just try to learn best single state
+ *     - the fold is based on a selection of obs anyways, and won't be perfect
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
