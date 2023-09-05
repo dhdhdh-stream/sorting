@@ -41,8 +41,7 @@ public:
 
 	void save_weights(std::ofstream& output_file);
 
-	void state_hidden_lasso_update_weights(double learning_rate,
-										   double target_max_update);
+	void state_hidden_backprop();
 };
 
 #endif /* LAYER_H */

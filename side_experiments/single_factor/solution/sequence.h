@@ -2,6 +2,21 @@
 #define SEQUENCE_H
 
 /**
+ * TODO: inputs are just part of the sequence
+ * - just as how a path contains actions that may or may not match
+ * - don't bother trying to change during experiment
+ *   - extremely tricky, as changing changes behavior of everything
+ *     - makes learning/measuring unstable
+ * - same with ending state
+ * 
+ * - and this actually seems sound
+ *   - due to explore, know that this combination has worked at least once
+ *     - so even if state is not perfect, still good chance to be progress
+ * 
+ * - simply modify state score modifiers
+ */
+
+/**
  * - for first layer, learn for every input
  * - for others, learn for input that is initialized locally
  * 

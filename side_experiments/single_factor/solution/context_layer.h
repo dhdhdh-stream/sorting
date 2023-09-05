@@ -3,7 +3,7 @@
 
 class ScopeHistory;
 
-class ForwardContextLayer {
+class ContextLayer {
 public:
 	int scope_id;
 	int node_id;
@@ -12,14 +12,9 @@ public:
 	 * - actual copy in ScopeNode
 	 */
 	std::vector<double>* state_vals;
-	std::vector<bool> states_initialized;
+	std::vector<double> state_weights;
 
 	ScopeHistory* scope_history;
-};
-
-class BackwardContextLayer {
-public:
-	std::vector<double>* state_errors;
 };
 
 #endif /* CONTEXT_LAYER_H */

@@ -351,6 +351,20 @@
  * - when folding, don't worry about getting perfect answer with multiple state
  *   - just try to learn best single state
  *     - the fold is based on a selection of obs anyways, and won't be perfect
+ * 
+ * - actually, only use flat to determine what to pay attention to
+ *   - then use normalized, directly connected RNNs to actually create the state
+ *     - direct seems to have a better floor than summed
+ *       - but summed seems to have a better ceiling
+ *   - no, use summed
+ *     - summed can kind of pass error signals through
+ * 
+ * - perhaps have ending score scale modifiable
+ *   - that way if branch, and branch destroyed value, can adjust
+ * 
+ * - never change or update state once created
+ *   - even if branch and state basically becomes meaningless
+ *     - instead create new state that score networks can use to hopefully adjust
  */
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = -1;
@@ -363,5 +377,18 @@ const int BRANCH_EXPERIMENT_STATE_NEW = 1;
 const int BRANCH_EXPERIMENT_STATE_DONE = 2;
 
 
+
+class BranchExperiment {
+public:
+
+	// TODO: when initial training, add a mean
+	// - after, change to scale
+
+	std::vector<std::vector<int>> curr_flat_context_indexes;
+	std::vector<std::vector<int>> curr_flat_state_indexes;
+	std::vector<int> curr_flat_obs_indexes;
+	FlatNetwork* curr_flat_network;
+
+}
 
 #endif /* BRANCH_EXPERIMENT_H */

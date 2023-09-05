@@ -3,7 +3,7 @@
 
 class Solution {
 public:
-
+	// TODO: have both solution average for branches, and overall constant for state
 
 	/**
 	 * - max depth for run that didn't exceed

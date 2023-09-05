@@ -1,7 +1,3 @@
-/**
- * - score should average 0.0 for the right branch, and negative for the wrong branch
- */
-
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
@@ -33,10 +29,18 @@ public:
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
-	bool is_branch;	// also used to signal outside
+	bool is_branch;
 
-	double starting_running_average_score
-	double starting_running_average_misguess;
+
+};
+
+class RemeasureBranchNodeHistory {
+public:
+	BranchNode* node;
+
+	double running_average_score_snapshot;
+	double running_average_misguess_snapshot;
+	double scale_factor_snapshot;
 
 	ScoreNetworkHistory* score_network_history;
 	double score_network_output;

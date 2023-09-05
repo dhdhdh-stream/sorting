@@ -4,67 +4,58 @@
 #include <fstream>
 #include <vector>
 
+const int STATE_NETWORK_HIDDEN_SIZE = 10;
+
 class Layer;
 
 class StateNetworkHistory;
 class StateNetwork {
 public:
-	int obs_size;
 	Layer* obs_input;
-	double obs_scale;
-
 	Layer* state_input;
 
-	int hidden_size;
 	Layer* hidden;
 
 	Layer* output;
 
-	double obs_weight;
-
+	// update outside
 	double ending_state_mean;
 	double ending_state_variance;
+	double ending_state_standard_deviation;
 
 	int epoch_iter;
 	double hidden_average_max_update;
 	double output_average_max_update;
 
-	StateNetwork(int obs_size,
-				 int hidden_size);
+	StateNetwork();
 	StateNetwork(StateNetwork* original);
 	StateNetwork(std::ifstream& input_file);
 	~StateNetwork();
 
-	void activate(std::vector<double>& obs_vals,
+	void activate(double obs_val,
 				  double& state_val);
-	void activate(std::vector<double>& obs_vals,
+	void activate(double obs_val,
 				  double& state_val,
 				  StateNetworkHistory* history);
 	void backprop(double& state_error,
 				  double target_max_update);
 	void backprop(double& state_error,
 				  double target_max_update,
-				  std::vector<double>& obs_history,
+				  double obs_snapshot,
 				  StateNetworkHistory* history);
-	void lasso_backprop(double& state_error,
-						double target_max_update);
-	void lasso_backprop(double& state_error,
-						double target_max_update,
-						std::vector<double>& obs_history,
-						StateNetworkHistory* history);
 	void backprop_errors_with_no_weight_change(
 		double& state_error);
 	void backprop_errors_with_no_weight_change(
 		double& state_error,
-		std::vector<double>& obs_history,
+		double obs_snapshot,
 		StateNetworkHistory* history);
 	void backprop_errors_with_no_weight_change(
-		std::vector<double>& obs_errors,
+		double& obs_error,
 		double& state_error);
 	void backprop_errors_with_no_weight_change(
-		std::vector<double>& obs_errors,
+		double& obs_error,
 		double& state_error,
-		std::vector<double>& obs_history,
+		double obs_snapshot,
 		StateNetworkHistory* history);
 
 	void save(std::ofstream& output_file);

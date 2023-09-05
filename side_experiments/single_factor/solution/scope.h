@@ -20,25 +20,21 @@ public:
 	int id;
 
 	int num_states;
-	std::vector<bool> state_initialized_locally;
-	std::vector<int> state_family_ids;
 	/**
 	 * - when new state added, can be added twice
 	 *   - once as local
 	 *   - once as input
 	 */
-
-	/**
-	 * - ending score networks
-	 *   - initially used to construct state
-	 *   - later to learn new paths
-	 */
-	std::vector<EndingScoreNetwork*> ending_score_networks;
+	std::vector<bool> state_initialized_locally;
 
 	/**
 	 * - alternate way of storing initialized locally information for scope nodes
 	 */
 	std::vector<int> initialized_locally_indexes;
+	std::vector<Scale*> ending_score_scales;
+
+	std::vector<std::vector<int>> classes_used;
+
 
 };
 

@@ -112,6 +112,7 @@ void ScoreNetwork::backprop_errors_with_no_weight_change(
 
 	for (int s_index = 0; s_index < (int)this->context_indexes.size(); s_index++) {
 		state_errors[this->context_indexes[s_index]]->at(this->state_indexes[s_index]) += this->state_input->errors[s_index];
+		this->state_input->errors[s_index] = 0.0;
 	}
 }
 

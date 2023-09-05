@@ -25,8 +25,8 @@ public:
 	bool is_explore_iter;
 	bool explore_seen;
 
+	// TODO: track as part of Experiment?
 	double scale_factor_snapshot;	// for both explore setup and remeasure
-
 	double explore_starting_running_average_score;
 	ScoreNetworkHistory* explore_score_network_history;
 	double explore_score_network_output;
@@ -39,8 +39,8 @@ public:
 	double explore_existing_score;
 
 	int remeasure_type;
-	BranchNodeHistory* remeasure_branch_node_history;
-	ScopeHistory* remeasure_scope_history;
+	RemeasureBranchNodeHistory* remeasure_branch_node_history;
+	RemeasureScopeHistory* remeasure_scope_history;
 
 	double target_val;
 	double final_misguess;
