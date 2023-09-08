@@ -11,6 +11,10 @@ public:
 
 	bool branch_is_pass_through;
 
+	// TODO: score networks can keep track themselves when new input seen?
+	// - on remeasure
+	// - check if non 0.0
+
 	ScoreNetwork* branch_score_network;
 	ScoreNetwork* branch_misguess_network;
 	double branch_score_update;

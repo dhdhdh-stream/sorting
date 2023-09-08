@@ -15,20 +15,7 @@ class AbstractNode {
 public:
 	int type;
 
-	Scope* parent;
 	int id;
-
-	bool is_explore;
-	std::vector<int> explore_scope_context;
-	std::vector<int> explore_node_context;
-	int explore_state;
-	int explore_iter;
-	ScoreNetwork* explore_score_network;
-	ScoreNetwork* explore_misguess_network;
-	double explore_best_surprise;
-	AbstractExperiment* explore_best_experiment;
-
-	AbstractExperiment* experiment;
 
 	virtual ~AbstractNode() {};
 	virtual void save(std::ofstream& output_file) = 0;

@@ -33,13 +33,6 @@ public:
 		double output_error,
 		double target_max_update,
 		ScoreNetworkHistory* history);
-	void backprop_errors_with_no_weight_change(
-		double output_error,
-		std::vector<std::vector<double>*>& state_errors);
-	void backprop_errors_with_no_weight_change(
-		double output_error,
-		std::vector<std::vector<double>*>& state_errors,
-		ScoreNetworkHistory* history);
 
 	void add_state(int context_index,
 				   int state_index);

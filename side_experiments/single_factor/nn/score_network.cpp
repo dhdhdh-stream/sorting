@@ -103,29 +103,6 @@ void ScoreNetwork::backprop_weights_with_no_error_signal(
 										  target_max_update);
 }
 
-void ScoreNetwork::backprop_errors_with_no_weight_change(
-		double output_error,
-		vector<vector<double>*>& state_errors) {
-	this->output->errors[0] = output_error;
-
-	this->output->backprop_errors_with_no_weight_change();
-
-	for (int s_index = 0; s_index < (int)this->context_indexes.size(); s_index++) {
-		state_errors[this->context_indexes[s_index]]->at(this->state_indexes[s_index]) += this->state_input->errors[s_index];
-		this->state_input->errors[s_index] = 0.0;
-	}
-}
-
-void ScoreNetwork::backprop_errors_with_no_weight_change(
-		double output_error,
-		vector<vector<double>*>& state_errors,
-		ScoreNetworkHistory* history) {
-	history->reset_weights();
-
-	backprop_errors_with_no_weight_change(output_error,
-										  state_errors);
-}
-
 void ScoreNetwork::add_state(int context_index,
 							 int state_index) {
 	this->context_indexes.push_back(context_index);

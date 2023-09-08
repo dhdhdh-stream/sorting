@@ -3,7 +3,8 @@
 
 class Solution {
 public:
-	// TODO: have both solution average for branches, and overall constant for state
+	double average_score;
+	double average_misguess;
 
 	/**
 	 * - max depth for run that didn't exceed
@@ -15,8 +16,13 @@ public:
 	/**
 	 * - max decisions seen in single run
 	 *   - use to determine how often branches/loops should re-measure
+	 *     - set target to 1.5*max_decisions;
 	 */
 	int max_decisions;
+	int remeasure_target;
+
+
+
 };
 
 #endif /* SOLUTION_H */

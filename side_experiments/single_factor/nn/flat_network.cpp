@@ -2,7 +2,12 @@
 
 using namespace std;
 
-const int FLAT_NETWORK_HIDDEN_SIZE = 20;	// enough to solve 4-way XORs
+/**
+ * - enough to solve 4-way XORs
+ *   - needed size scales exponentially with the size of XOR wished to solve
+ *     - solving XORs requires weights to align, so extra size gives extra chances for that to happen
+ */
+const int FLAT_NETWORK_HIDDEN_SIZE = 20;
 
 const int FLAT_NETWORK_TARGET_MAX_UPDATE = 0.05;
 

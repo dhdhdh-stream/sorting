@@ -21,7 +21,7 @@ void ScopeNode::activate(vector<double>& flat_vals,
 	vector<vector<double>> inner_state_weights(this->starting_node_ids.size());
 
 	inner_state_vals[0] = vector<double>(inner_scope->num_states, 0.0);
-	inner_state_weights[0] = vector<bool>(inner_scope->num_states, 0.0);
+	inner_state_weights[0] = vector<double>(inner_scope->num_states, 0.0);
 	for (int i_index = 0; i_index < (int)inner_scope->initialized_locally_indexes.size(); i_index++) {
 		inner_state_weights[0][inner_scope->initialized_locally_indexes[i_index]] = 1.0;
 	}
@@ -32,7 +32,7 @@ void ScopeNode::activate(vector<double>& flat_vals,
 		Scope* next_scope = solution->scopes[scope_node->inner_scope_id];
 
 		inner_state_vals[1+l_index] = vector<double>(next_scope->num_states, 0.0);
-		inner_state_weights[1+l_index] = vector<bool>(next_scope->num_states, 0.0);
+		inner_state_weights[1+l_index] = vector<double>(next_scope->num_states, 0.0);
 		for (int i_index = 0; i_index < (int)next_scope->initialized_locally_indexes.size(); i_index++) {
 			inner_state_weights[1+l_index][next_scope->initialized_locally_indexes[i_index]] = 1.0;
 		}
@@ -113,6 +113,51 @@ void ScopeNode::activate(vector<double>& flat_vals,
 			if (context.back().state_weights[this->post_state_network_target_indexes[n_index]] != 0.0) {
 				this->post_state_networks[n_index]->activate(scope_node_history->post_obs_snapshot[this->post_state_network_indexes[n_index]],
 															 context.back().state_vals->at(this->post_state_network_target_indexes[n_index]));
+			}
+		}
+
+		if (run_helper.phase == EXPLORE_PHASE_EXPERIMENT) {
+			Explore* explore = run_helper.explore_history->explore;
+
+			// HERE
+			for (int s_index = 0; s_index < (int)this->experiment_hook_state_indexes.size(); s_index++) {
+				bool matches_context = true;
+				if (this->experiment_hook_scope_contexts[s_index].size() > context.size()) {
+					matches_context = false;
+				} else {
+					for (int c_index = 0; c_index < (int)this->experiment_hook_scope_contexts[s_index].size()-1; c_index++) {
+						if (this->experiment_hook_scope_contexts[s_index][c_index] != context[context.size() - this->experiment_hook_scope_contexts[s_index].size() + c_index].scope_id
+								|| this->experiment_hook_node_contexts[s_index][c_index] != context[context.size() - this->experiment_hook_scope_contexts[s_index].size() + c_index].node_id) {
+							matches_context = false;
+							break;
+						}
+					}
+				}
+
+				if (matches_context) {
+					StateNetwork* state_network = explore->state_networks[this->experiment_hook_state_indexes[s_index]][this->experiment_hook_network_indexes[s_index]];
+					state_network->activate(flat_vals[0],
+											run_helper.explore_history->state_vals[this->experiment_hook_state_indexes[s_index]]);
+				}
+			}
+
+			if (this->experiment_hook_test_index != -1) {
+				bool matches_context = true;
+				if (this->experiment_hook_test_scope_contexts.size() > context.size()) {
+					matches_context = false;
+				} else {
+					for (int c_index = 0; c_index < (int)this->experiment_hook_test_scope_contexts.size()-1; c_index++) {
+						if (this->experiment_hook_test_scope_contexts[c_index] != context[context.size() - this->experiment_hook_test_scope_contexts.size() + c_index].scope_id
+								|| this->experiment_hook_test_node_contexts[c_index] != context[context.size() - this->experiment_hook_test_scope_contexts.size() + c_index].node_id) {
+							matches_context = false;
+							break;
+						}
+					}
+				}
+
+				if (matches_context) {
+					run_helper.explore_history->test_obs_vals[this->experiment_hook_test_index].push_back(flat_vals[0]);
+				}
 			}
 		}
 	}

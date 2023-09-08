@@ -12,9 +12,36 @@ public:
 	 * 
 	 * - if target_layer > 0, then still continue back out and resolve twice
 	 *   - once in inner, and once on continuation
+	 *     - so value is continued, but will have separate weights
 	 */
 	std::vector<int> input_target_layers;
 	std::vector<int> input_target_indexes;
+	// std::vector<int> input_is_negated;
+	// TODO: add
+	// TODO: get rid of checking to see if network should not be run
+	// - not much gain, at the cost of potential a lot of accuracy
+	//   - at most 10 networks, each with 30 operations
+	std::vector<double> input_weight_mods;
+	// TODO: because no longer updating state, don't need state weights and even ending scale after
+	// - yeah, doesn't make sense when every branch breaks things
+	// - instead, retrain new score network?
+	//   - yeah, train a giant flat network over everything
+	//     - or, train multiple train multiple flat networks for different scopes?
+	//   - maybe train a giant flat network for initial score and after score too
+	//     - check what the differences are
+	//       - those differences are then what needs to be made available at branch
+	//         - so then what's a scope?
+	//           - can still have every new path be a scope
+	//             - it's not that critical the exact split, just need some abstraction
+	// - or go back to updating states?
+	//   - but with normalization, cannot zero, so cannot prevent states from screwing up
+
+	// - issue is that branch may invalidate all states after, not just states on path
+
+	// - maybe pass branch state backwards and see when it stops becoming relevant?
+	//   - then that's when can actually merge?
+	//     - this is for off path scopes
+	//       - on path can just modify/clear state
 
 	/**
 	 * - state that isn't passed in to top layer
@@ -45,6 +72,21 @@ public:
 
 	int next_node_id;
 
+	Explore* explore;
+
+	std::vector<int> experiment_hook_state_indexes;
+	std::vector<int> experiment_hook_network_indexes;
+	std::vector<std::vector<int>> experiment_hook_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_node_contexts;
+	std::vector<bool> experiment_hook_obs_is_pre;
+	std::vector<int> experiment_hook_obs_indexes;
+
+	std::vector<int> experiment_hook_test_indexes;
+	std::vector<std::vector<int>> experiment_hook_test_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_test_node_contexts;
+	std::vector<bool> experiment_hook_test_obs_is_pre;
+	std::vector<int> experiment_hook_test_obs_indexes;
+
 
 
 };
@@ -62,8 +104,6 @@ public:
 	 * - state initialized in inner
 	 */
 	std::vector<double> post_obs_snapshot;
-
-	AbstractExperimentHistory* experiment_history;
 
 	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);	// deep copy for seed

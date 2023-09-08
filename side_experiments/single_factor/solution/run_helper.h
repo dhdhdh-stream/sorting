@@ -19,24 +19,11 @@ public:
 
 	/**
 	 * - for loops, choose explore iter on start so there's broader representation
-	 * 
-	 * - if explore seen but not triggered, change to RUN_PHASE_UPDATE_NONE
 	 */
 	bool is_explore_iter;
 	bool explore_seen;
 
-	// TODO: track as part of Experiment?
-	double scale_factor_snapshot;	// for both explore setup and remeasure
-	double explore_starting_running_average_score;
-	ScoreNetworkHistory* explore_score_network_history;
-	double explore_score_network_output;
-	double explore_starting_running_average_misguess;
-	ScoreNetworkHistory* explore_misguess_network_history;
-	double explore_misguess_network_output;
-
-	AbstractNode* explore_node;
-	AbstractExperiment* explore_experiment;
-	double explore_existing_score;
+	ExploreHistory* explore_history;
 
 	int remeasure_type;
 	RemeasureBranchNodeHistory* remeasure_branch_node_history;

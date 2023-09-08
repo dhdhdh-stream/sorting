@@ -27,13 +27,73 @@ public:
 	 */
 	std::vector<bool> state_initialized_locally;
 
+	bool is_loop;
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+	ScoreNetwork* continue_score_network;
+	ScoreNetwork* continue_misguess_network;
+	ScoreNetwork* halt_score_network;
+	ScoreNetwork* halt_misguess_network;
+	int furthest_successful_halt;
+
+	std::vector<AbstractNode*> nodes;
+
 	/**
 	 * - alternate way of storing initialized locally information for scope nodes
 	 */
 	std::vector<int> initialized_locally_indexes;
 	std::vector<Scale*> ending_score_scales;
 
-	std::vector<std::vector<int>> classes_used;
+	std::vector<std::vector<int>> used_class_ids;
+
+	int remeasure_counter;
+
+	Scope(int id,
+		  int num_states,
+		  std::vector<bool> state_initialized_locally,
+		  bool is_loop,
+		  ScoreNetwork* continue_score_network,
+		  ScoreNetwork* continue_misguess_network,
+		  ScoreNetwork* halt_score_network,
+		  ScoreNetwork* halt_misguess_network,
+		  );
+
+
+
+};
+
+class ScopeHistory {
+public:
+	Scope* scope;
+
+	bool exceeded_depth;
+
+	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
+
+	std::vector<double> initialized_locally_val_snapshots;
+	std::vector<double> initialized_locally_weight_snapshots;
+
+
+};
+
+class RemeasureScopeHistory {
+public:
+	Scope* scope;
+
+	bool train_continue;
+
+	std::vector<ScoreNetworkHistory*> continue_score_network_histories;
+	std::vector<double> continue_score_network_outputs;
+	std::vector<ScoreNetworkHistory*> continue_misguess_network_histories;
+	std::vector<double> continue_misguess_network_outputs;
+	std::vector<double> halt_score_snapshots;
+	std::vector<double> halt_misguess_snapshots;
+
+	ScoreNetworkHistory* halt_score_network_history;
+	double halt_score_network_output;
+	ScoreNetworkHistory* halt_misguess_network_history;
+	double halt_misguess_network_output;
+
 
 
 };
