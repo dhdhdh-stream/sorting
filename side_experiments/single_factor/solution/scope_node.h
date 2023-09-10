@@ -43,6 +43,69 @@ public:
 	//     - this is for off path scopes
 	//       - on path can just modify/clear state
 
+	// - or maybe if state is significantly affected, pull it upwards onto the path as it does have a secret early dependency
+	//   - then can clear
+
+	// - switch to sparse score networks?
+
+	// - can redo all unused state after branch?
+
+	// - maybe split state into used and unused
+	//   - used state are tied directly or indirectly to score networks
+	//     - unused state are just related to overall score
+
+	// - for used state, whatever happened lead to decisions that lead to reasonable results
+	//   - good enough, don't need to improve
+	//     - then actually don't have to change branch decisions ever?
+	//       - instead of adjusting, just hope that new branch created later that makes correct adjustments
+
+	// - OK, how about:
+	//   - constantly look for state
+	//     - when state found, add a marker at the last obs, and modify predicted score
+	//       - have start too to initialize
+	//   - on experiment, evaluate all previous state
+	//     - some won't change impact, so can leave as-is
+	//       - some will and use to build score network
+	//     - evaluate all later state too
+	//       - if values change dramatically, then remove?
+	//         - if it 50/50 hurts one path, helps one path, then it's not really helping
+	//           - yeah, helps squared error, but doesn't help absolute error
+	//           - yeah, so if 0, then remove
+
+	// 50%  +5/-5 -> +5
+	// 50%  +0/-0 -> +0
+	// +2.5/-2.5 -> 0
+	// 6.25/6.25 -> 6.25
+	// +25/0 -> 12.5
+	// ---
+	// 80%  +5/-5 -> +5
+	// 20%  +0/-0 -> +0
+	// +4/-4 -> 0
+
+	// - score networks should be able to use partial state?
+	//   - or can track partial predicted score update
+
+	// - squared error obviously for backprop, but can use absolute error to check impact?
+	//   - or the reverse actually
+	//     - use squared error, as that represents information
+	//       - then on branch, if go to zero, then modify state
+
+	// - can train state to be ready to be turned off
+
+	// TODO: practice clarifying factors
+	// - start with 1 factor that mixes things up
+	// - then learn new factor, and enable previous scale to adjust
+
+	// BTW, with sums, normalization is intractable
+	// - no direct/smooth/failproof way to make progress
+	// - have to gradient descent/learn
+
+	// TODO: try gating output at +2/-2
+	// - doesn't work
+
+	// - maybe just keep track of expected mean/variance, and morph state values to that
+	//   - yeah, this is the answer
+
 	/**
 	 * - state that isn't passed in to top layer
 	 *   - so can include state that is skip passed

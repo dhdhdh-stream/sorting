@@ -2,6 +2,8 @@
 
 using namespace std;
 
+const double STATE_NETWORK_TARGET_MAX_UPDATE = 0.02;
+
 void StateNetwork::construct() {
 	this->obs_input = new Layer(LINEAR_LAYER, 1);
 	this->state_input = new Layer(LINEAR_LAYER, 1);

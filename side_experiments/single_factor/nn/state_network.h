@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-const int STATE_NETWORK_HIDDEN_SIZE = 10;
+const int STATE_NETWORK_HIDDEN_SIZE = 20;
 
 class Layer;
 
