@@ -33,6 +33,9 @@ public:
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
+	/**
+	 * - also represents obs_val
+	 */
 	bool is_branch;
 
 
