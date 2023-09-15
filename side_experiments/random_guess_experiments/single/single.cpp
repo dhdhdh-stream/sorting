@@ -21,8 +21,7 @@ int main(int argc, char* argv[]) {
 
 	default_random_engine generator;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1694688153;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -477,6 +476,9 @@ int main(int argc, char* argv[]) {
 		int num_parts = distribution(generator);
 		for (int p_index = 0; p_index < num_parts; p_index++) {
 			int random_length = 1 + distribution(generator);
+			if (random_length > num_actions-1) {
+				random_length = num_actions-1;
+			}
 
 			int rand_start = rand()%(num_actions-random_length);
 
@@ -598,11 +600,18 @@ int main(int argc, char* argv[]) {
 				&& num_seen_spot_7%2 == 1
 				&& num_seen_spot_9%2 == 1
 				&& test_num_actions < num_actions) {
-			cout << "success" << endl;
+			cout << "success " << test_num_actions << endl;
 
 			delete curr_solution;
 			curr_solution = test_solution;
 			num_actions = test_num_actions;
+
+			int curr_spot = 0;
+			int curr_0_index = 0;
+			test_solution->print(curr_spot,
+								 curr_0_index);
+
+			cout << endl;
 		}
 
 		iter_index++;

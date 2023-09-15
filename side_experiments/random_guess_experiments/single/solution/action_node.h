@@ -28,6 +28,8 @@ public:
 					   std::vector<int>& node_context,
 					   int& curr_num_action,
 					   int target_num_action);
+	void print(int& curr_spot,
+			   int& curr_0_index);
 };
 
 #endif /* ACTION_NODE_H */

@@ -20,6 +20,8 @@ public:
 							   std::vector<int>& node_context,
 							   int& curr_num_action,
 							   int target_num_action) = 0;
+	virtual void print(int& curr_spot,
+					   int& curr_0_index) = 0;
 };
 
 #endif /* ABSTRACT_NODE_H */

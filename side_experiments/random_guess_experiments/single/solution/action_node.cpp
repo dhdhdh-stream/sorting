@@ -1,5 +1,7 @@
 #include "action_node.h"
 
+#include <iostream>
+
 using namespace std;
 
 ActionNode::ActionNode(int action,
@@ -54,4 +56,32 @@ void ActionNode::fetch_context(vector<Scope*>& scope_context,
 							   int& curr_num_action,
 							   int target_num_action) {
 	curr_num_action++;
+}
+
+void ActionNode::print(int& curr_spot,
+					   int& curr_0_index) {
+	if (this->action == ACTION_LEFT) {
+		if (curr_spot != 0) {
+			curr_spot--;
+		}
+	} else if (this->action == ACTION_RIGHT) {
+		if (curr_spot != 9) {
+			curr_spot++;
+		}
+	}
+
+	if (this->action == ACTION_LEFT) {
+		cout << "LEFT" << endl;
+	} else if (this->action == ACTION_STAY) {
+		cout << "STAY" << endl;
+	} else {
+		cout << "RIGHT" << endl;
+	}
+
+	for (int s_index = 0; s_index < (int)this->state_indexes.size(); s_index++) {
+		if (this->state_indexes[s_index] == curr_0_index) {
+			cout << "spot " << curr_spot << endl;
+			cout << "curr_0_index " << curr_0_index << endl;
+		}
+	}
 }

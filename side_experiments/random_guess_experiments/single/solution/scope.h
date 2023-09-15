@@ -1,23 +1,22 @@
-#ifndef SCOPE_NODE_H
-#define SCOPE_NODE_H
+/**
+ * - not for abstraction for now
+ *   - only for supporting input transforms
+ */
+
+#ifndef SCOPE_H
+#define SCOPE_H
 
 #include <vector>
 
 #include "abstract_node.h"
-#include "scope.h"
 
-class ScopeNode : public AbstractNode {
+class Scope {
 public:
-	std::vector<int> indexes;
-	std::vector<int> target_indexes;
+	std::vector<AbstractNode*> nodes;
 
-	Scope* scope;
-
-	ScopeNode(std::vector<int> indexes,
-			  std::vector<int> target_indexes,
-			  Scope* scope);
-	ScopeNode(ScopeNode* original);
-	~ScopeNode();
+	Scope(std::vector<AbstractNode*> nodes);
+	Scope(Scope* original);
+	~Scope();
 
 	void activate(int& curr_spot,
 				  int& curr_0_index,
@@ -28,6 +27,8 @@ public:
 					   std::vector<int>& node_context,
 					   int& curr_num_action,
 					   int target_num_action);
+	void print(int& curr_spot,
+			   int& curr_0_index);
 };
 
-#endif /* SCOPE_NODE_H */
+#endif /* SCOPE_H */
