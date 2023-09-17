@@ -1,3 +1,8 @@
+/**
+ * - don't worry about vectorization
+ *   - setting values is about as much of a bottleneck as 
+ */
+
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 
