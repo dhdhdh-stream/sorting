@@ -6,13 +6,9 @@ public:
 	int scope_id;
 	int node_id;
 
-	std::vector<bool> state_on;
-	std::vector<double> state_vals;
+	std::map<int, double>* state_vals;
 
-	std::vector<bool> score_state_on;
-	std::vector<double> score_state_vals;
-
-	ScopeHistory* scope_history;
+	std::map<int, ScoreStateStatus> score_state_vals;
 
 	
 };

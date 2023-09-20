@@ -3,8 +3,8 @@
 
 class ScoreNetwork {
 public:
-	std::vector<int> state_indexes;
-	Layer* state_input;
+	int input_size;
+	Layer* input;
 
 	Layer* output;
 

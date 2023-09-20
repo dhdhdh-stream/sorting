@@ -7,7 +7,7 @@ public:
 
 	int next_node_id;
 
-	std::vector<int> state_indexes;
+	std::vector<int> state_ids;
 	std::vector<StateNetwork*> state_networks;
 
 	std::vector<std::vector<int>> score_state_scope_contexts;
@@ -15,9 +15,9 @@ public:
 	std::vector<int> score_state_ids;
 	std::vector<StateNetwork*> score_state_networks;
 
-	std::vector<int> experiment_hook_indexes;
-	std::vector<std::vector<int>> experiment_hook_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_node_contexts;
+	int experiment_hook_index;
+	std::vector<int> experiment_hook_scope_contexts;
+	std::vector<int> experiment_hook_node_contexts;
 
 };
 

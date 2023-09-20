@@ -5,7 +5,7 @@ class ScoreState {
 public:
 	std::vector<AbstractNode*> nodes;
 
-	Scale* score_scale;
+	Scale* scale;
 
 };
 

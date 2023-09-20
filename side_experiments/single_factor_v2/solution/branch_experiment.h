@@ -5,3 +5,9 @@
  *   - if state impact differs at end, add on/off
  *     - or remove if decision point is outside of scope
  */
+
+// TODO: evaluate score_state to try to measure new misguess
+// - use to determine if pass through
+
+// - during branch experiments, still look for new state
+//   - can be only way to make progress

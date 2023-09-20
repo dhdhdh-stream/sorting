@@ -1,20 +1,33 @@
+/**
+ * - if original, 1.0; if branch, -1.0
+ * 
+ * - only have score networks, no misguess networks
+ *   - would not maintain over branching anyways
+ */
+
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
-class BranchNode {
+class BranchNode : public AbstractNode {
 public:
+	std::vector<int> branch_scope_context;
+	std::vector<int> branch_node_context;
+	/**
+	 * - last layer of context doesn't matter
+	 *   - scope id will always match, and node id meaningless
+	 */
 	bool branch_is_pass_through
 
+	std::vector<int> score_network_input_ids;
+
 	ScoreNetwork* branch_score_network;
-	ScoreNetwork* branch_misguess_network;
 	int branch_next_node_id;
 
 	ScoreNetwork* original_score_network;
-	ScoreNetwork* original_misguess_network;
 	int original_next_node_id;
 
-	std::vector<int> state_indexes;
-	std::vector<bool> state_is_branch;
+	std::vector<int> state_ids;
+	std::vector<StateNetwork*> state_networks;
 
 	std::vector<std::vector<int>> score_state_scope_contexts;
 	std::vector<std::vector<int>> score_state_node_contexts;
@@ -22,13 +35,13 @@ public:
 	 * - for top scope context
 	 */
 	std::vector<int> score_state_ids;
-	std::vector<bool> score_state_is_branch;
+	std::vector<StateNetwork*> score_state_networks;
 
-	std::vector<int> experiment_hook_indexes;
-	std::vector<std::vector<int>> experiment_hook_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_node_contexts;
+	int experiment_hook_index;
+	std::vector<int> experiment_hook_scope_contexts;
+	std::vector<int> experiment_hook_node_contexts;
 
-	// TODO: besides on/off, still need normal score state networks
+
 
 };
 

@@ -23,7 +23,8 @@ void Scope::random_activate(vector<int>& starting_node_ids,
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
 		history->node_histories[0].push_back(node_history);
 
-		if (rand()%2 == 0) {
+		uniform_int_distribution<int> distribution(0, 1);
+		if (distribution(generator) == 0) {
 			int inner_exit_depth;
 			int inner_exit_node_id;
 
@@ -90,7 +91,8 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
 		history->node_histories[0].push_back(node_history);
 
-		if (rand()%2 == 0) {
+		uniform_int_distribution<int> distribution(0, 1);
+		if (distribution(generator) == 0) {
 			int inner_exit_depth;
 			int inner_exit_node_id;
 

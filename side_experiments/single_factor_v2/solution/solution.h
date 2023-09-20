@@ -3,7 +3,8 @@
 
 class Solution {
 public:
-	
+
+	std::vector<ScoreState*> score_states;
 
 	void random_start();
 
