@@ -9,13 +9,10 @@ const int NODE_TYPE_BRANCH = 2;
 const int NODE_TYPE_BRANCH_STUB = 3;
 const int NODE_TYPE_EXIT = 4;
 
-class Scope;
-
 class AbstractNode {
 public:
 	int type;
 
-	Scope* parent;
 	int id;
 
 	virtual ~AbstractNode() {};

@@ -2,7 +2,7 @@
  * - if original, 1.0; if branch, -1.0
  * 
  * - only have score networks, no misguess networks
- *   - would not maintain over branching anyways
+ *   - difficult to maintain over branching anyways
  */
 
 #ifndef BRANCH_NODE_H

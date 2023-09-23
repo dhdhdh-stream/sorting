@@ -13,10 +13,16 @@ public:
 	std::vector<ScoreState*> score_states;
 	// TODO: track state dependencies
 
+	std::vector<AbstractNode*> nodes;
+
+	std::vector<Scope*> child_scopes;
+	/**
+	 * - for constructing new sequences
+	 */
+
 	ObsExperiment* obs_experiment;
 
 
-	std::vector<> branch_ends;	// for knowing when to stop on sequences?
 
 };
 

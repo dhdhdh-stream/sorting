@@ -11,3 +11,5 @@
 
 // - during branch experiments, still look for new state
 //   - can be only way to make progress
+
+// TODO: maybe save 1000 runs, and just look for obs on those?

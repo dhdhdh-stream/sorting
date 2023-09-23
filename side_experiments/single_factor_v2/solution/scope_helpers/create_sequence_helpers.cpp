@@ -3,12 +3,14 @@
 using namespace std;
 
 void Scope::create_sequence_activate(vector<int>& starting_node_ids,
-									 vector<map<int, double>*>& starting_state_vals,
+									 vector<map<int, double>>& starting_state_vals,
+									 vector<map<int, int>>& starting_state_mappings,
 									 vector<double>& flat_vals,
 									 vector<ContextLayer>& context,
 									 int target_num_nodes,
 									 int& curr_num_nodes,
-									 map<int, map<int, int>>& state_mapping,
+									 Sequence* new_sequence,
+									 map<int, map<int, int>>& state_mappings,
 									 int& new_num_states,
 									 vector<AbstractNode*>& new_nodes,
 									 RunHelper& run_helper) {
@@ -29,11 +31,13 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 		scope_node->halfway_create_sequence_activate(
 			starting_node_ids,
 			starting_state_vals,
+			starting_state_mappings,
 			flat_vals,
 			context,
 			target_num_nodes,
 			curr_num_nodes,
-			state_mapping,
+			new_sequence,
+			state_mappings,
 			new_num_states,
 			new_nodes,
 			run_helper);
@@ -52,7 +56,8 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 											 context,
 											 target_num_nodes,
 											 curr_num_nodes,
-											 state_mapping,
+											 new_sequence,
+											 state_mappings,
 											 new_num_states,
 											 new_nodes,
 											 run_helper);
@@ -67,7 +72,8 @@ void Scope::node_create_sequence_activate_helper(
 		vector<ContextLayer>& context,
 		int target_num_nodes,
 		int& curr_num_nodes,
-		map<int, map<int, int>>& state_mapping,
+		Sequence* new_sequence,
+		map<int, map<int, int>>& state_mappings,
 		int& new_num_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
@@ -78,7 +84,7 @@ void Scope::node_create_sequence_activate_helper(
 											  context,
 											  target_num_nodes,
 											  curr_num_nodes,
-											  state_mapping,
+											  state_mappings,
 											  new_num_states,
 											  new_nodes);
 
@@ -90,7 +96,8 @@ void Scope::node_create_sequence_activate_helper(
 											 context,
 											 target_num_nodes,
 											 curr_num_nodes,
-											 state_mapping,
+											 new_sequence,
+											 state_mappings,
 											 new_num_states,
 											 new_nodes,
 											 run_helper);
@@ -103,7 +110,7 @@ void Scope::node_create_sequence_activate_helper(
 		branch_node->create_sequence_activate(context,
 											  target_num_nodes,
 											  curr_num_nodes,
-											  state_mapping,
+											  state_mappings,
 											  new_num_states,
 											  new_nodes,
 											  is_branch);
@@ -119,7 +126,7 @@ void Scope::node_create_sequence_activate_helper(
 		branch_stub_node->create_sequence_activate(context,
 												   target_num_nodes,
 												   curr_num_nodes,
-												   state_mapping,
+												   state_mappings,
 												   new_num_states,
 												   new_nodes);
 

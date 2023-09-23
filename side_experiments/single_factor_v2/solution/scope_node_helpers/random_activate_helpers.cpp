@@ -10,6 +10,9 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 								ScopeNodeHistory* history) {
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
+	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
+	history->inner_scope_history = inner_scope_history;
+
 	if (inner_scope->is_loop) {
 		return;
 	}
@@ -18,9 +21,6 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 
 	scope_context.push_back(this->inner_scope_id);
 	node_context.push_back(-1);
-
-	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-	history->inner_scope_history = inner_scope_history;
 
 	vector<int> starting_node_ids_copy = this->starting_node_ids;
 
@@ -49,15 +49,15 @@ void ScopeNode::halfway_random_activate(vector<int>& starting_node_ids,
 
 	Scope* inner_scope = solution->scopes[this->inner_scope_id];
 
+	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
+	history->inner_scope_history = inner_scope_history;
+
 	// inner_scope->is_loop == false
 
 	node_context.back() = this->id;
 
 	scope_context.push_back(this->inner_scope_id);
 	node_context.push_back(-1);
-
-	ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-	history->inner_scope_history = inner_scope_history;
 
 	inner_scope->random_activate(starting_node_ids,
 								 scope_context,

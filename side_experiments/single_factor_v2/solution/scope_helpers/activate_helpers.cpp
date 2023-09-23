@@ -3,7 +3,7 @@
 using namespace std;
 
 void Scope::activate(vector<int>& starting_node_ids,
-					 vector<map<int, double>*>& starting_state_vals,
+					 vector<map<int, double>>& starting_state_vals,
 					 vector<double>& flat_vals,
 					 vector<ContextLayer>& context,
 					 int& exit_depth,
