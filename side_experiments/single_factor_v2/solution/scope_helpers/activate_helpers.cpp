@@ -10,8 +10,6 @@ void Scope::activate(vector<int>& starting_node_ids,
 					 int& exit_node_id,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
-	exit_depth = -1;
-
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
@@ -32,8 +30,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 		if (starting_node_ids.size() > 0) {
 			ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
-			int inner_exit_depth;
-			int inner_exit_node_id;
+			int inner_exit_depth = -1;
+			int inner_exit_node_id = -1;
 
 			ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
 			history->node_histories[0].push_back(node_history);

@@ -3,9 +3,12 @@
 
 class RunHelper {
 public:
-	double predicted_score;
+	/**
+	 * - don't need to track running tally of predicted score
+	 *   - instead, on experiment, calculate from partial and resolved score_state_vals
+	 */
 
-	std::map<int, double> score_state_vals;
+	std::map<ScoreState*, double> score_state_vals;
 
 };
 

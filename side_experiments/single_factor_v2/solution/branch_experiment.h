@@ -12,4 +12,33 @@
 // - during branch experiments, still look for new state
 //   - can be only way to make progress
 
-// TODO: maybe save 1000 runs, and just look for obs on those?
+#ifndef BRANCH_EXPERIMENT_H
+#define BRANCH_EXPERIMENT_H
+
+const int STEP_TYPE_ACTION = 0;
+const int STEP_TYPE_SEQUENCE = 1;
+
+class BranchExperiment {
+public:
+	int num_steps;
+	std::vector<int> step_types;
+	std::vector<ActionNode*> actions;
+	std::vector<Sequence*> sequences;
+
+	std::map<ScoreState*, Scale*> score_state_scales;
+
+	std::vector<ScoreState*> new_score_states;
+	/**
+	 * - if branch, then keep states needed for decision and remove rest
+	 *   - not trained to be robust against branch
+	 * - if replace, then can keep all
+	 */
+	std::vector<std::vector<std::vector<int>>> new_score_state_scope_contexts;
+	std::vector<std::vector<std::vector<int>>> new_score_state_node_contexts;
+	std::vector<std::vector<StateNetwork*>> new_score_state_networks;
+
+	
+
+};
+
+#endif /* BRANCH_EXPERIMENT_H */

@@ -5,8 +5,10 @@ class BranchStubNode : public AbstractNode {
 public:
 	bool was_branch;
 
-	std::vector<int> state_ids;
-	std::vector<StateNetwork*> state_networks;
+	std::vector<int> local_state_ids;
+	std::vector<int> obs_ids;
+	std::vector<State*> states;
+	std::vector<int> network_indexes;
 
 	int next_node_id;
 	

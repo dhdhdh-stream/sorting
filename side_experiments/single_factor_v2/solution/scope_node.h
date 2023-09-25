@@ -25,6 +25,13 @@ public:
 	std::vector<int> output_inner_ids;
 	std::vector<int> output_outer_ids;
 
+	std::vector<int> local_state_ids;
+	std::vector<int> obs_ids;
+	std::vector<State*> states;
+	std::vector<int> network_indexes;
+	std::vector<int> loop_iter;
+	std::vector<int> context_index;
+
 	int next_node_id;
 
 

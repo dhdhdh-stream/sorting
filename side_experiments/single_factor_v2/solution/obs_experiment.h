@@ -10,8 +10,10 @@ public:
 	FlatNetwork* flat_network;
 
 	std::vector<StateNetwork*> state_networks;
-	Scale* score_scale;
-
+	/**
+	 * - don't have ending scale while training (i.e., scale always 1.0)
+	 *   - add scale after state trained and readjusting impact
+	 */
 
 };
 

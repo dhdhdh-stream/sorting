@@ -1,11 +1,3 @@
-// TODO: always mod by mean and variance after trained
-// TODO: if scale negative sign, then make standard deviation negative?
-// - also if negatively correlated to end?
-//   - not possible if multi-input/output, which should assume will always end up being the case
-
-// TODO: or just don't have scale initially (i.e., scale always 1.0)
-// - then let scale drift after state trained when readjusting
-
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 
@@ -18,25 +10,38 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	/**
-	 * - use to modify predicted_score before resolved
-	 *   - "resolve" is after containing scope exits
-	 * 
-	 * - can be 0 even for last network if XOR within loop
-	 */
+	bool can_be_end;
 	double correlation_to_end;
+	/**
+	 * - used to calculate predicted_score before resolved if can't be ending
+	 */
 
-	double starting_state_mean;
-	double starting_state_variance;
-	double starting_state_standard_deviation;
+	std::set<StateNetwork*> preceding_networks;
+	/**
+	 * - if last state network is not among preceding networks, then normalize
+	 */
 
-	double ending_state_mean;
-	double ending_state_variance;
-	double ending_state_standard_deviation;
+	double starting_mean;
+	double starting_variance;
+	double starting_standard_deviation;
+
+	/**
+	 * - averaged from following networks' starting mean/variance
+	 *   - not actual ending mean/variance
+	 */
+	double ending_mean;
+	double ending_variance;
+	double ending_standard_deviation;
 
 	int epoch_iter;
 	double hidden_average_max_update;
 	double output_average_max_update;
+
+
+
+	void activate(double obs_val,
+				  StateStatus& state_status);
+	// TODO: set both val and last network
 
 };
 

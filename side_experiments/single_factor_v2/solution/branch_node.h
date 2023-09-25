@@ -18,28 +18,41 @@ public:
 	 */
 	bool branch_is_pass_through
 
-	std::vector<int> score_network_input_ids;
+	std::vector<int> score_ids;
 
-	ScoreNetwork* branch_score_network;
+	std::vector<double> branch_score_weights;
 	int branch_next_node_id;
 
-	ScoreNetwork* original_score_network;
+	std::vector<double> original_score_weights;
 	int original_next_node_id;
 
-	std::vector<int> state_ids;
-	std::vector<StateNetwork*> state_networks;
+	std::vector<int> local_state_ids;
+	std::vector<int> obs_ids;
+	std::vector<State*> states;
+	std::vector<int> network_indexes;
 
 	std::vector<std::vector<int>> score_state_scope_contexts;
 	std::vector<std::vector<int>> score_state_node_contexts;
 	/**
 	 * - for top scope context
 	 */
-	std::vector<int> score_state_ids;
-	std::vector<StateNetwork*> score_state_networks;
+	std::vector<State*> score_states;
+	std::vector<int> score_obs_ids;
+	std::vector<int> score_network_indexes;
 
-	int experiment_hook_index;
-	std::vector<int> experiment_hook_scope_contexts;
-	std::vector<int> experiment_hook_node_contexts;
+	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	std::vector<State*> experiment_hook_score_states;
+	std::vector<int> experiment_hook_score_obs_ids;
+	std::vector<int> experiment_hook_score_network_indexes;
+
+	std::vector<int> test_hook_scope_contexts;
+	std::vector<int> test_hook_node_contexts;
+	int test_hook_obs_id;
+	int test_hook_index;
+
+	bool experiment_is_branch;
+	AbstractExperiment* experiment;
 
 
 
