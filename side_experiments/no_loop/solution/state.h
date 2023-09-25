@@ -22,11 +22,16 @@ public:
 class StateStatus {
 public:
 	double val;
-	StateNetwork* last_state_network;
+	StateNetwork* last_network;
 
 	StateStatus() {
 		this->val = 0.0;
-		this->last_state_network = NULL;
+		this->last_network = NULL;
+	}
+
+	StateStatus(double val) {
+		this->val = val;
+		this->last_network = NULL;
 	}
 };
 

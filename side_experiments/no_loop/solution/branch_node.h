@@ -33,9 +33,6 @@ public:
 
 	std::vector<std::vector<int>> score_state_scope_contexts;
 	std::vector<std::vector<int>> score_state_node_contexts;
-	/**
-	 * - for top scope context
-	 */
 	std::vector<State*> score_states;
 	std::vector<int> score_obs_ids;
 	std::vector<int> score_network_indexes;

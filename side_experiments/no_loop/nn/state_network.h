@@ -39,6 +39,7 @@ public:
 
 
 
+	// TODO: if last_seen_network is NULL, then just have to do starting norm
 	void activate(double obs_val,
 				  StateStatus& state_status);
 	// TODO: set both val and last network

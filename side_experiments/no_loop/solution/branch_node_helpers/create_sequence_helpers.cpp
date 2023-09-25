@@ -41,47 +41,6 @@ void BranchNode::create_sequence_activate(
 				}
 			}
 
-			// - actually, issue here: what to do about resolved state
-			//   - how to save and pass in, how to normalize, how to generalize, etc.
-
-			// - can simply never resolve state
-			//   - all state trained globally
-			//     - the final result is evaluated globally against predicted score anyways
-
-			// - can have scope nodes decide what states are initialized from the outside to save effort
-			//   - important if everything global
-			//   - have both initialized, and state vals, both in maps
-
-			// - other possibility is that can't rely on anything that has been resolved
-			//   - but seems like a waste
-
-			// - so each scope keeps track of its own state
-			//   - when evaluating predicted score, only use local
-			//     - but each scope "outputs" its local state as obs in scope nodes
-
-			// - so local can't depend on global, but more general as can be used in different spots
-
-			// - actually, there are problems even more difficult than XORs: indexing
-			//   - though an indexing can be broken down into multiple XORs?
-			//     - should somehow really be where loops come into play
-			//     - maybe use some sort of focus?
-			//       - actually, that's basically what focus is for
-			//         - but that's a lot of networks/weights
-			//           - essentially equivalent to special casing every iter
-			//   - maybe just special case
-
-			// - focus is for if want all state to pay attention in a certain way
-			//   - but if each state wants to pay attention in a different way, then does not work
-
-			// TODO: try 5x5, with 1 being important
-			// - try combinations of indexing and averaging
-
-			// - yeah, can be solved by multiple special casing:
-			//   - one special case gets outer 5
-			//   - or no, one special case gets inner 5
-			//     - inner 5 gets exposed at scope node
-			//       - so if just hit it special casing, problem is solved
-
 			if (branch_score > original_score) {
 				is_branch = true;
 			} else {
