@@ -7,21 +7,41 @@ void ScopeNode::create_sequence_activate(vector<double>& flat_vals,
 										 int target_num_nodes,
 										 int& curr_num_nodes,
 										 Sequence* new_sequence,
-										 vector<map<int, int>>& state_mappings,
-										 int& new_num_states,
+										 vector<map<pair<bool,int>, int>>& state_mappings,
+										 int& new_num_input_states,
 										 vector<AbstractNode*>& new_nodes,
 										 RunHelper& run_helper) {
-	Scope* inner_scope = solution->scopes[this->inner_scope_id];
-
-	vector<map<int, double>> inner_state_vals(this->starting_node_ids.size());
+	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_node_ids.size());
+	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_node_ids.size());
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			map<int, double>::iterator it = context.back().state_vals.find(this->input_outer_ids[i_index]);
-			if (it != context.back().state_vals.end()) {
-				inner_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+			if (this->input_outer_is_local[i_index]) {
+				StateStatus state_status;
+				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_ids[i_index]);
+				if (it != context.back().local_state_vals.end()) {
+					state_status = it->second;
+				}
+				if (this->input_inner_is_local[i_index]) {
+					inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = state_status;
+				} else {
+					inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = state_status;
+				}
+			} else {
+				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_ids[i_index]);
+				if (it != context.back().input_state_vals.end()) {
+					if (this->input_inner_is_local[i_index]) {
+						inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+					} else {
+						inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+					}
+				}
 			}
 		} else {
-			inner_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = this->input_init_vals[i_index];
+			if (this->input_inner_is_local[i_index]) {
+				inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			} else {
+				inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			}
 		}
 	}
 
@@ -32,46 +52,53 @@ void ScopeNode::create_sequence_activate(vector<double>& flat_vals,
 	context.back().scope_id = -1;
 	context.back().node_id = -1;
 
-	context.back().state_vals = inner_state_vals[0];
-	inner_state_vals.erase(inner_state_vals.begin());
+	context.back().input_state_vals = inner_input_state_vals[0];
+	inner_input_state_vals.erase(inner_input_state_vals.begin());
+	context.back().local_state_vals = inner_local_state_vals[0];
+	inner_local_state_vals.erase(inner_local_state_vals.begin());
 
 	vector<int> starting_node_ids_copy = this->starting_node_ids;
 
 	// currently, starting_node_ids.size() == inner_state_vals_copy.size()+1
 
 	uniform_int_distribution<int> distribution(0, 1);
-	if (!inner_scope->is_loop
-			&& distribution(generator) == 0) {
-		vector<map<int, int>> inner_state_mappings(this->starting_node_ids.size());
+	// TODO: check inner_scope->is_loop
+	if (distribution(generator) == 0) {
+		vector<map<pair<bool,int>, int>> inner_state_mappings(this->starting_node_ids.size());
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-				map<int, int>::iterator it = state_mappings.back().find(this->input_outer_ids[i_index]);
+				map<int, int>::iterator it = state_mappings.back()
+					.find({this->input_outer_is_local[i_index], this->input_outer_ids[i_index]});
 				if (it != state_mappings.back().end()) {
-					inner_state_mappings[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+					inner_state_mappings[this->input_inner_layers[i_index]]
+						[{this->input_inner_is_local[i_index], this->input_inner_ids[i_index]}] = it->second;
 				}
 			} else {
 				int new_state_id;
-				inner_state_mappings[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = new_num_states;
-				new_state_id = new_num_states;
-				new_num_states++;
+				inner_state_mappings[this->input_inner_layers[i_index]]
+					[{this->input_inner_is_local[i_index], this->input_inner_ids[i_index]}] = new_num_input_states;
+				new_state_id = new_num_input_states;
+				new_num_input_states++;
 
 				new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_sequence->input_inner_ids.push_back(new_state_id);
 				new_sequence->input_scope_depths.push_back(-1);
+				new_sequence->input_outer_is_local.push_back(-1);
 				new_sequence->input_outer_ids.push_back(-1);
 				new_sequence->input_init_vals.push_back(this->input_init_vals[i_index]);
 			}
 		}
 		/**
 		 * - don't worry about output
-		 *   - possibilities will be captured recursing inwards then rebuilt anyways
+		 *   - simply stop (i.e., don't continue outside) even if curr_num_nodes < target_num_nodes
 		 */
 		state_mappings.push_back(inner_state_mappings[0]);
 		inner_state_mappings.erase(inner_state_mappings.begin());
 
-		inner_scope->create_sequence_activate(
+		this->inner_scope->create_sequence_activate(
 			starting_node_ids_copy,
-			inner_state_vals,
+			inner_input_state_vals,
+			inner_local_state_vals,
 			inner_state_mappings,
 			flat_vals,
 			context,
@@ -79,41 +106,32 @@ void ScopeNode::create_sequence_activate(vector<double>& flat_vals,
 			curr_num_nodes,
 			new_sequence,
 			state_mappings,
-			new_num_states,
+			new_num_input_states,
 			new_nodes,
 			run_helper);
 
 		if (curr_num_nodes < target_num_nodes) {
-			state_mappings.pop_back();
-
-			// don't worry about score_state
-
-			for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-				map<int, double>::iterator it = context.back().find(this->output_inner_ids[o_index]);
-				if (it != context.back().end()) {
-					context[context.size()-2].state_vals[this->output_outer_ids[o_index]] = it->second;
-				}
-			}
-
-			context.pop_back();
-
-			// no need to set context.back().node_id
+			target_num_nodes = curr_num_nodes;
+			// to trigger exit
 		}
 	} else {
 		ScopeNode* new_node = new ScopeNode();
 		new_nodes.push_back(new_node);
 
-		new_node->inner_scope_id = this->inner_scope_id;
+		new_node->inner_scope = this->inner_scope;
 
 		new_node->starting_node_ids = this->starting_node_ids;
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-				map<int, int>::iterator it = state_mappings.back().find(this->input_outer_ids[i_index]);
+				map<pair<bool,int>, int>::iterator it = state_mappings.back()
+					.find({this->input_outer_is_local[i_index], this->input_outer_ids[i_index]});
 				if (it != state_mappings.back().end()) {
 					new_node->input_types.push_back(INPUT_TYPE_STATE);
 					new_node->input_inner_layers.push_back(this->input_inner_layers[i_index]);
+					new_node->input_inner_is_local.push_back(this->input_inner_is_local[i_index]);
 					new_node->input_inner_ids.push_back(this->input_inner_ids[i_index]);
+					new_node->input_outer_is_local.push_back(false);
 					new_node->input_outer_ids.push_back(it->second);
 					new_node->input_init_vals.push_back(0.0);
 				}
@@ -123,69 +141,165 @@ void ScopeNode::create_sequence_activate(vector<double>& flat_vals,
 			} else {
 				new_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_node->input_inner_layers.push_back(this->input_inner_layers[i_index]);
+				new_node->input_inner_is_local.push_back(this->input_inner_is_local[i_index]);
 				new_node->input_inner_ids.push_back(this->input_inner_ids[i_index]);
+				new_node->input_outer_is_local.push_back(false);
 				new_node->input_outer_ids.push_back(-1);
 				new_node->input_init_vals.push_back(this->input_init_vals[i_index]);
 			}
 		}
 
-		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-			map<int, int>::iterator it = state_mappings.back().find(this->output_outer_ids[o_index]);
-			if (it == state_mappings.back().end()) {
-				it = state_mappings.back().insert({this->output_outer_ids[o_index], new_num_states}).first;
-				new_num_states++;
-			}
-			new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
-			new_node->output_outer_ids.push_back(it->second);
-		}
-
-		curr_num_nodes++;
-
 		// unused
 		int inner_exit_depth;
 		int inner_exit_node_id;
 
-		ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-		inner_scope->activate(starting_node_ids_copy,
-							  inner_state_vals,
-							  flat_vals,
-							  context,
-							  inner_exit_depth,
-							  inner_exit_node_id,
-							  run_helper,
-							  inner_scope_history);
+		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
+		this->inner_scope->activate(starting_node_ids_copy,
+									inner_input_state_vals,
+									inner_local_state_vals,
+									flat_vals,
+									context,
+									inner_exit_depth,
+									inner_exit_node_id,
+									run_helper,
+									inner_scope_history);
 		delete inner_scope_history;
 
-		// don't worry about score_state
+		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_ids[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_ids[o_index]] = inner_it->second;
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_ids[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
+					}
+				}
+			}
+		}
 
 		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-			map<int, double>::iterator it = context.back().find(this->output_inner_ids[o_index]);
-			if (it != context.back().end()) {
-				context[context.size()-2].state_vals[this->output_outer_ids[o_index]] = it->second;
+			if (this->output_outer_is_local[o_index]) {
+				new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
+				new_node->output_outer_is_local.push_back(false);
+				map<pair<bool,int>, int>::iterator new_state_it
+					= state_mappings[state_mappings.size()-2].find({true, this->output_outer_ids[o_index]});
+				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					new_node->output_outer_ids.push_back(new_state_it->second);
+				} else {
+					int new_state_id;
+					state_mappings[state_mappings.size()-2][{true, this->output_outer_ids[o_index]}] = new_num_input_states;
+					new_state_id = new_num_input_states;
+					new_num_input_states++;
+
+					new_node->output_outer_ids.push_back(new_state_id);
+
+					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_sequence->input_inner_ids.push_back(new_state_id);
+					new_sequence->input_scope_depths.push_back(-1);
+					new_sequence->input_outer_is_local.push_back(-1);
+					new_sequence->input_outer_ids.push_back(-1);
+					new_sequence->input_init_vals.push_back(0.0);
+				}
+			} else {
+				map<pair<bool,int>, int>::iterator new_state_it
+					= state_mappings[state_mappings.size()-2].find({false, this->output_outer_ids[o_index]});
+				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
+					new_node->output_outer_is_local.push_back(false);
+					new_node->output_outer_ids.push_back(new_state_it->second);
+				}
 			}
+		}
+
+		if (inner_exit_node_id == -1) {
+			history->obs_snapshots = context.back().local_state_vals;
 		}
 
 		context.pop_back();
 
 		// no need to set context.back().node_id
+
+		if (inner_exit_node_id == -1) {
+			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
+				if (obs_it != history->obs_snapshots.end()) {
+					if (this->state_is_local[n_index]) {
+						map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
+						if (state_it == context.back().local_state_vals.end()) {
+							state_it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+						}
+						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+						state_network->activate(obs_it->second,
+												state_it->second);
+					} else {
+						map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_ids[n_index]);
+						if (state_it != context.back().input_state_vals.end()) {
+							StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+							state_network->activate(obs_it->second,
+													state_it->second);
+						}
+					}
+				}
+			}
+		}
+
+		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+			if (this->state_is_local[n_index]) {
+				new_node->state_is_local.push_back(false);
+				map<pair<bool,int>, int>::iterator new_state_it = state_mappings.back().find({true, this->state_ids[n_index]});
+				if (new_state_it != state_mappings.back().end()) {
+					new_node->state_ids.push_back(new_state_it->second);
+				} else {
+					int new_state_id;
+					state_mappings.back()[{true, this->state_ids[n_index]}] = new_num_input_states;
+					new_state_id = new_num_input_states;
+					new_num_input_states++;
+
+					new_node->state_ids.push_back(new_state_id);
+
+					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_sequence->input_inner_ids.push_back(new_state_id);
+					new_sequence->input_scope_depths.push_back(-1);
+					new_sequence->input_outer_is_local.push_back(-1);
+					new_sequence->input_outer_ids.push_back(-1);
+					new_sequence->input_init_vals.push_back(0.0);
+				}
+				new_node->state_defs.push_back(this->state_defs[n_index]);
+				new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
+			} else {
+				map<pair<bool,int>, int>::iterator new_state_it = state_mappings.back().find({false, this->state_ids[n_index]});
+				if (new_state_it != state_mappings.back().end()) {
+					new_node->state_is_local.push_back(false);
+					new_node->state_ids.push_back(new_state_it->second);
+					new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);
+					new_node->state_defs.push_back(this->state_defs[n_index]);
+					new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
+				}
+			}
+		}
+
+		// don't worry about score_state
+
+		curr_num_nodes++;
 	}
 }
 
 void ScopeNode::halfway_create_sequence_activate(
 		vector<int>& starting_node_ids,
-		vector<map<int, double>>& starting_state_vals,
-		vector<map<int, int>>& starting_state_mappings,
+		vector<map<int, StateStatus>>& starting_input_state_vals,
+		vector<map<int, StateStatus>>& starting_local_state_vals,
+		vector<map<pair<bool,int>, int>>& starting_state_mappings,
 		vector<double>& flat_vals,
 		vector<ContextLayer>& context,
 		int target_num_nodes,
 		int& curr_num_nodes,
 		Sequence* new_sequence,
-		vector<map<int, int>>& state_mappings,
-		int& new_num_states,
+		vector<map<pair<bool,int>, int>>& state_mappings,
+		int& new_num_input_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
-	Scope* inner_scope = solution->scopes[this->inner_scope_id];
-
 	// no need to set context.back().node_id
 
 	context.push_back(ContextLayer());
@@ -193,8 +307,10 @@ void ScopeNode::halfway_create_sequence_activate(
 	context.back().scope_id = -1;
 	context.back().node_id = -1;
 
-	context.back().state_vals = starting_state_vals[0];
-	starting_state_vals.erase(starting_state_vals.begin());
+	context.back().input_state_vals = starting_input_state_vals[0];
+	starting_input_state_vals.erase(starting_input_state_vals.begin());
+	context.back().local_state_vals = starting_local_state_vals[0];
+	starting_local_state_vals.erase(starting_local_state_vals.begin());
 
 	// currently, starting_node_ids.size() == starting_state_vals.size()+1
 
@@ -204,9 +320,10 @@ void ScopeNode::halfway_create_sequence_activate(
 		state_mappings.push_back(starting_state_mappings[0]);
 		starting_state_mappings.erase(starting_state_mappings.begin());
 
-		inner_scope->create_sequence_activate(
+		this->inner_scope->create_sequence_activate(
 			starting_node_ids,
-			starting_state_vals,
+			starting_input_state_vals,
+			starting_local_state_vals,
 			starting_state_mappings,
 			flat_vals,
 			context,
@@ -214,83 +331,168 @@ void ScopeNode::halfway_create_sequence_activate(
 			curr_num_nodes,
 			new_sequence,
 			state_mappings,
-			new_num_states,
+			new_num_input_states,
 			new_nodes,
 			run_helper);
 
 		if (curr_num_nodes < target_num_nodes) {
-			state_mappings.pop_back();
-
-			// don't worry about score_state
-
-			for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-				map<int, double>::iterator it = context.back().find(this->output_inner_ids[o_index]);
-				if (it != context.back().end()) {
-					context[context.size()-2].state_vals[this->output_outer_ids[o_index]] = it->second;
-				}
-			}
-
-			context.pop_back();
-
-			// no need to set context.back().node_id
+			target_num_nodes = curr_num_nodes;
+			// to trigger exit
 		}
 	} else {
 		ScopeNode* new_node = new ScopeNode();
 		new_nodes.push_back(new_node);
 
-		new_node->inner_scope_id = this->inner_scope_id;
+		new_node->inner_scope = this->inner_scope;
 
 		new_node->starting_node_ids = starting_node_ids;
 
 		for (int l_index = 0; l_index < (int)starting_state_mappings.size(); l_index++) {
-			for (map<int, int>::iterator it = starting_state_mappings[l_index].begin();
+			for (map<pair<bool,int>, int>::iterator it = starting_state_mappings[l_index].begin();
 					it != starting_state_mappings[l_index].end(); it++) {
 				new_node->input_types.push_back(INPUT_TYPE_STATE);
 				new_node->input_inner_layers.push_back(l_index);
-				new_node->input_inner_ids.push_back(it->first);
+				new_node->input_inner_is_local.push_back(it->first.first);
+				new_node->input_inner_ids.push_back(it->first.second);
+				new_node->inout_outer_is_local.push_back(false);
 				new_node->input_outer_ids.push_back(it->second);
 				new_node->input_init_vals.push_back(0.0);
 			}
 		}
 
-		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-			map<int, int>::iterator it = state_mappings.back().find(this->output_outer_ids[o_index]);
-			if (it == state_mappings.back().end()) {
-				it = state_mappings.back().insert({this->output_outer_ids[o_index], new_num_states}).first;
-				new_num_states++;
-			}
-			new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
-			new_node->output_outer_ids.push_back(it->second);
-		}
-
-		curr_num_nodes++;
-
 		// unused
 		int inner_exit_depth;
 		int inner_exit_node_id;
 
-		ScopeHistory* inner_scope_history = new ScopeHistory(inner_scope);
-		inner_scope->activate(starting_node_ids,
-							  starting_state_vals,
-							  flat_vals,
-							  context,
-							  inner_exit_depth,
-							  inner_exit_node_id,
-							  run_helper,
-							  inner_scope_history);
+		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
+		this->inner_scope->activate(starting_node_ids,
+									starting_input_state_vals,
+									starting_local_state_vals,
+									flat_vals,
+									context,
+									inner_exit_depth,
+									inner_exit_node_id,
+									run_helper,
+									inner_scope_history);
 		delete inner_scope_history;
 
-		// don't worry about score_state
+		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_ids[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_ids[o_index]] = inner_it->second;
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_ids[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
+					}
+				}
+			}
+		}
 
 		for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-			map<int, double>::iterator it = context.back().find(this->output_inner_ids[o_index]);
-			if (it != context.back().end()) {
-				context[context.size()-2].state_vals[this->output_outer_ids[o_index]] = it->second;
+			if (this->output_outer_is_local[o_index]) {
+				new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
+				new_node->output_outer_is_local.push_back(false);
+				map<pair<bool,int>, int>::iterator new_state_it
+					= state_mappings[state_mappings.size()-2].find({true, this->output_outer_ids[o_index]});
+				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					new_node->output_outer_ids.push_back(new_state_it->second);
+				} else {
+					int new_state_id;
+					state_mappings[state_mappings.size()-2][{true, this->output_outer_ids[o_index]}] = new_num_input_states;
+					new_state_id = new_num_input_states;
+					new_num_input_states++;
+
+					new_node->output_outer_ids.push_back(new_state_id);
+
+					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_sequence->input_inner_ids.push_back(new_state_id);
+					new_sequence->input_scope_depths.push_back(-1);
+					new_sequence->input_outer_is_local.push_back(-1);
+					new_sequence->input_outer_ids.push_back(-1);
+					new_sequence->input_init_vals.push_back(0.0);
+				}
+			} else {
+				map<pair<bool,int>, int>::iterator new_state_it
+					= state_mappings[state_mappings.size()-2].find({false, this->output_outer_ids[o_index]});
+				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					new_node->output_inner_ids.push_back(this->output_inner_ids[o_index]);
+					new_node->output_outer_is_local.push_back(false);
+					new_node->output_outer_ids.push_back(new_state_it->second);
+				}
 			}
+		}
+
+		if (inner_exit_node_id == -1) {
+			history->obs_snapshots = context.back().local_state_vals;
 		}
 
 		context.pop_back();
 
 		// no need to set context.back().node_id
+
+		if (inner_exit_node_id == -1) {
+			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
+				if (obs_it != history->obs_snapshots.end()) {
+					if (this->state_is_local[n_index]) {
+						map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
+						if (state_it == context.back().local_state_vals.end()) {
+							state_it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+						}
+						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+						state_network->activate(obs_it->second,
+												state_it->second);
+					} else {
+						map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_ids[n_index]);
+						if (state_it != context.back().input_state_vals.end()) {
+							StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+							state_network->activate(obs_it->second,
+													state_it->second);
+						}
+					}
+				}
+			}
+		}
+
+		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+			if (this->state_is_local[n_index]) {
+				new_node->state_is_local.push_back(false);
+				map<pair<bool,int>, int>::iterator new_state_it = state_mappings.back().find({true, this->state_ids[n_index]});
+				if (new_state_it != state_mappings.back().end()) {
+					new_node->state_ids.push_back(new_state_it->second);
+				} else {
+					int new_state_id;
+					state_mappings.back()[{true, this->state_ids[n_index]}] = new_num_input_states;
+					new_state_id = new_num_input_states;
+					new_num_input_states++;
+
+					new_node->state_ids.push_back(new_state_id);
+
+					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_sequence->input_inner_ids.push_back(new_state_id);
+					new_sequence->input_scope_depths.push_back(-1);
+					new_sequence->input_outer_is_local.push_back(-1);
+					new_sequence->input_outer_ids.push_back(-1);
+					new_sequence->input_init_vals.push_back(0.0);
+				}
+				new_node->state_defs.push_back(this->state_defs[n_index]);
+				new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
+			} else {
+				map<pair<bool,int>, int>::iterator new_state_it = state_mappings.back().find({false, this->state_ids[n_index]});
+				if (new_state_it != state_mappings.back().end()) {
+					new_node->state_is_local.push_back(false);
+					new_node->state_ids.push_back(new_state_it->second);
+					new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);
+					new_node->state_defs.push_back(this->state_defs[n_index]);
+					new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
+				}
+			}
+		}
+
+		// don't worry about score_state
+
+		curr_num_nodes++;
 	}
 }

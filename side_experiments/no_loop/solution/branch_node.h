@@ -18,40 +18,46 @@ public:
 	 */
 	bool branch_is_pass_through
 
-	std::vector<int> score_ids;
-
-	std::vector<double> branch_score_weights;
+	std::vector<bool> decision_state_is_local;
+	std::vector<int> decision_state_ids;
+	std::vector<double> branch_weights;
 	int branch_next_node_id;
-
-	std::vector<double> original_score_weights;
+	std::vector<double> original_weights;
 	int original_next_node_id;
 
-	std::vector<int> local_state_ids;
-	std::vector<int> obs_ids;
-	std::vector<State*> states;
-	std::vector<int> network_indexes;
+	std::vector<bool> state_is_local;
+	std::vector<int> state_ids;
+	std::vector<State*> state_defs;
+	std::vector<int> state_network_indexes;
 
 	std::vector<std::vector<int>> score_state_scope_contexts;
 	std::vector<std::vector<int>> score_state_node_contexts;
-	std::vector<State*> score_states;
-	std::vector<int> score_obs_ids;
-	std::vector<int> score_network_indexes;
+	std::vector<State*> score_state_defs;
+	std::vector<int> score_state_network_indexes;
 
-	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
-	std::vector<State*> experiment_hook_score_states;
-	std::vector<int> experiment_hook_score_obs_ids;
-	std::vector<int> experiment_hook_score_network_indexes;
+	// std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	// std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	// std::vector<State*> experiment_hook_score_state_defs;
+	// std::vector<int> experiment_hook_score_state_network_indexes;
 
-	std::vector<int> test_hook_scope_contexts;
-	std::vector<int> test_hook_node_contexts;
-	int test_hook_obs_id;
-	int test_hook_index;
+	std::vector<std::vector<int>> test_hook_scope_contexts;
+	std::vector<std::vector<int>> test_hook_node_contexts;
+	std::vector<ObsExperimentHistory*> test_hook_histories;
+	std::vector<int> test_hook_indexes;
 
 	bool experiment_is_branch;
+	/**
+	 * - only trigger if on right branch
+	 */
 	AbstractExperiment* experiment;
 
 
+
+};
+
+class BranchNodeHistory : public AbstractNodeHistory {
+public:
+	double obs_snapshot;
 
 };
 

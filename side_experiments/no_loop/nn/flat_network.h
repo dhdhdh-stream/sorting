@@ -6,18 +6,26 @@
  *   - needed size scales exponentially with the size of XOR wished to solve
  *     - solving XORs requires weights to align, so extra size gives extra chances for that to happen
  */
-const int FLAT_NETWORK_HIDDEN_SIZE = 40;
+const int FLAT_NETWORK_HIDDEN_SIZE = 20;
 
 class FlatNetwork {
 public:
 	int num_inputs;
-	std::vector<Layer*> inputs;
+	Layer* input;
 
 	Layer* hidden;
 
 	Layer* output;
 
+	int epoch_iter;
+	double hidden_average_max_update;
+	double output_average_max_update;
 
+	FlatNetwork(int num_inputs);
+	~FlatNetwork();
+
+	void activate(std::vector<double>& input_vals);
+	void backprop(double error);
 };
 
 #endif /* FLAT_NETWORK_H */

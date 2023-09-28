@@ -94,9 +94,9 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
 		bool& is_branch;
-		branch_node->random_activate(scope_context,
+		branch_node->random_activate(is_branch,
+									 scope_context,
 									 node_context,
-									 is_branch,
 									 num_nodes,
 									 history->node_histories[0]);
 

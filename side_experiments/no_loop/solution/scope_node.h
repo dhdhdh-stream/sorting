@@ -6,7 +6,10 @@ const int INPUT_TYPE_CONSTANT = 1;
 
 class ScopeNode : public AbstractNode {
 public:
-	int inner_scope_id;
+	Scope* inner_scope;
+	/**
+	 * - use id when saving/loading, but have direct reference for running
+	 */
 
 	std::vector<int> starting_node_ids;
 
@@ -26,6 +29,7 @@ public:
 
 	/**
 	 * - from input states
+	 *   - inner local states impact outside through obs/state networks
 	 */
 	std::vector<int> output_inner_ids;
 	std::vector<bool> output_outer_is_local;
@@ -43,16 +47,17 @@ public:
 	std::vector<State*> score_state_defs;
 	std::vector<int> score_state_network_indexes;
 
-	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
-	std::vector<int> experiment_hook_score_state_obs_indexes;
-	std::vector<State*> experiment_hook_score_state_defs;
-	std::vector<int> experiment_hook_score_state_network_indexes;
+	// std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	// std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	// std::vector<int> experiment_hook_score_state_obs_indexes;
+	// std::vector<State*> experiment_hook_score_state_defs;
+	// std::vector<int> experiment_hook_score_state_network_indexes;
 
-	std::vector<int> test_hook_scope_contexts;
-	std::vector<int> test_hook_node_contexts;
-	int test_hook_obs_index;
-	int test_hook_index;
+	std::vector<std::vector<int>> test_hook_scope_contexts;
+	std::vector<std::vector<int>> test_hook_node_contexts;
+	std::vector<int> test_hook_obs_indexes;
+	std::vector<ObsExperimentHistory*> test_hook_histories;
+	std::vector<int> test_hook_indexes;
 
 	int next_node_id;
 
@@ -64,11 +69,12 @@ class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_halfway;
 
-
+	ScopeHistory* inner_scope_history;
 
 	std::map<int, StateStatus> obs_snapshots;
 
-
+	ScopeNodeHistory(ScopeNode* node);
+	~ScopeNodeHistory();
 };
 
 #endif /* SCOPE_NODE_H */

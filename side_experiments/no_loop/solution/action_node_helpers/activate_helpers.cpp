@@ -54,4 +54,24 @@ void ActionNode::activate(vector<double>& flat_vals,
 									it->second);
 		}
 	}
+
+	for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+		bool matches_context = true;
+		if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->test_hook_scope_contexts[h_index].size()-1; c_index++) {
+				if (this->test_hook_scope_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].scope_id
+						|| this->test_hook_node_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].node_id) {
+					matches_context = false;
+					break;
+				}
+			}
+		}
+
+		if (matches_context) {
+			this->test_hook_histories[h_index]->obs_indexes.push_back(this->test_hook_indexes[h_index]);
+			this->test_hook_histories[h_index]->obs_vals.push_back(history->obs_snapshot);
+		}
+	}
 }

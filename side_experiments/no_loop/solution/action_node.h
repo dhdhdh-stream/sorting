@@ -21,14 +21,15 @@ public:
 	std::vector<State*> score_state_defs;
 	std::vector<int> score_state_network_indexes;
 
-	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
-	std::vector<State*> experiment_hook_score_state_defs;
-	std::vector<int> experiment_hook_score_state_network_indexes;
+	// std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	// std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	// std::vector<State*> experiment_hook_score_state_defs;
+	// std::vector<int> experiment_hook_score_state_network_indexes;
 
-	std::vector<int> test_hook_scope_contexts;
-	std::vector<int> test_hook_node_contexts;
-	int test_hook_index;
+	std::vector<std::vector<int>> test_hook_scope_contexts;
+	std::vector<std::vector<int>> test_hook_node_contexts;
+	std::vector<ObsExperimentHistory*> test_hook_histories;
+	std::vector<int> test_hook_indexes;
 
 	int next_node_id;
 

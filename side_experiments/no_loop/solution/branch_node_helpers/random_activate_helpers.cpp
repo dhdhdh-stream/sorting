@@ -2,9 +2,9 @@
 
 using namespace std;
 
-void BranchNode::random_activate(vector<int>& scope_context,
+void BranchNode::random_activate(bool& is_branch,
+								 vector<int>& scope_context,
 								 vector<int>& node_context,
-								 bool& is_branch,
 								 int& num_nodes,
 								 vector<AbstractNodeHistory*>& node_histories) {
 	bool matches_context = true;

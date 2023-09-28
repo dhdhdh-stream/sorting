@@ -9,6 +9,8 @@ const int NODE_TYPE_BRANCH = 2;
 const int NODE_TYPE_BRANCH_STUB = 3;
 const int NODE_TYPE_EXIT = 4;
 
+class BranchExperiment;
+
 class AbstractNode {
 public:
 	int type;
@@ -23,6 +25,8 @@ public:
 class AbstractNodeHistory {
 public:
 	AbstractNode* node;
+
+	BranchExperimentHistory* branch_experiment_history;
 
 	virtual ~AbstractNodeHistory() {};
 };

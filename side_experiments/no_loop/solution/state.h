@@ -7,7 +7,6 @@ public:
 
 	std::vector<StateNetwork*> networks;
 
-	std::set<StateNetwork*> preceding_networks;
 	double resolved_standard_deviation;
 
 	Scale* scale;
@@ -15,24 +14,18 @@ public:
 	std::vector<AbstractNode*> nodes;
 	/**
 	 * - for tracking while still score state
+	 * 
+	 * - may be duplicates if multiples obs from same node
 	 */
 
-};
+	State();
+	~State() {
+		for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+			delete this->networks[n_index];
+		}
 
-class StateStatus {
-public:
-	double val;
-	StateNetwork* last_network;
-
-	StateStatus() {
-		this->val = 0.0;
-		this->last_network = NULL;
-	}
-
-	StateStatus(double val) {
-		this->val = val;
-		this->last_network = NULL;
-	}
+		delete this->scale;
+	};
 };
 
 #endif /* STATE_H */

@@ -4,16 +4,17 @@
 class StateNetwork {
 public:
 	Layer* obs_input;
-
 	Layer* state_input;
 
 	Layer* hidden;
 	Layer* output;
 
 	bool can_be_end;
+
+	double covariance_with_end;
 	double correlation_to_end;
 	/**
-	 * - used to calculate predicted_score before resolved if can't be ending
+	 * - used to calculate predicted_score if can't be ending
 	 */
 
 	std::set<StateNetwork*> preceding_networks;
@@ -38,6 +39,9 @@ public:
 	double output_average_max_update;
 
 
+	void activate(double obs_val,
+				  double& state_val);
+	void backprop(double& state_error);
 
 	// TODO: if last_seen_network is NULL, then just have to do starting norm
 	void activate(double obs_val,
