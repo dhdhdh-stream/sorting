@@ -16,7 +16,15 @@ public:
 
 	std::vector<ScopeHistory*> scope_histories;
 
+	std::vector<BranchExperiment*> experiments_seen_order;
+	std::map<BranchExperiment*, int> experiments_seen_count;
+
+	BranchExperiment* selected_branch_experiment;
+	int selected_branch_experiment_count;
 	BranchExperimentHistory* branch_experiment_history;
+	/**
+	 * - also use to track if already experimented (i.e., check if not NULL)
+	 */
 
 };
 

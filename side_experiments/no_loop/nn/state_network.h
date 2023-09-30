@@ -9,8 +9,7 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	bool can_be_end;
-
+	// TODO: potentially add can_be_end when adding loops for better predicted score
 	double covariance_with_end;
 	double correlation_to_end;
 	/**
@@ -47,6 +46,10 @@ public:
 	void activate(double obs_val,
 				  StateStatus& state_status);
 	// TODO: set both val and last network
+
+	void activate_score(double obs_val,
+						StateStatus& state_status,
+						StateStatus& state_diff);
 
 };
 

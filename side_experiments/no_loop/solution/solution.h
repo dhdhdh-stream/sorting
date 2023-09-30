@@ -3,11 +3,6 @@
 
 class Solution {
 public:
-	double average_score;
-	double score_variance;
-	double average_misguess;
-	double misguess_variance;
-
 	int num_scopes;
 	std::map<int, Scope*> scopes;
 	// 0 is root, starts with ACTION_START

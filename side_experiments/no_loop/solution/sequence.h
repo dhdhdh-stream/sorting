@@ -18,6 +18,7 @@ public:
 	std::vector<int> output_outer_ids;
 
 	Scope* scope;
+	// TODO: set id only when starting experiment
 
 };
 

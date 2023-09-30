@@ -47,20 +47,22 @@ public:
 	std::vector<State*> score_state_defs;
 	std::vector<int> score_state_network_indexes;
 
-	// std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
-	// std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
-	// std::vector<int> experiment_hook_score_state_obs_indexes;
-	// std::vector<State*> experiment_hook_score_state_defs;
-	// std::vector<int> experiment_hook_score_state_network_indexes;
+	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	std::vector<int> experiment_hook_score_state_obs_indexes;
+	std::vector<State*> experiment_hook_score_state_defs;
+	std::vector<int> experiment_hook_score_state_network_indexes;
 
 	std::vector<std::vector<int>> test_hook_scope_contexts;
 	std::vector<std::vector<int>> test_hook_node_contexts;
 	std::vector<int> test_hook_obs_indexes;
-	std::vector<ObsExperimentHistory*> test_hook_histories;
 	std::vector<int> test_hook_indexes;
 
 	int next_node_id;
 
+	BranchExperiment* experiment;
+	double average_remaining_experiments_from_start;
+	double average_duplicate_experiments;
 
 
 };
@@ -72,6 +74,10 @@ public:
 	ScopeHistory* inner_scope_history;
 
 	std::map<int, StateStatus> obs_snapshots;
+	// also use to check if is early exit
+
+	std::vector<int> score_state_indexes;
+	std::vector<StateStatus> score_state_impacts;
 
 	ScopeNodeHistory(ScopeNode* node);
 	~ScopeNodeHistory();

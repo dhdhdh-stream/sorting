@@ -20,6 +20,7 @@ public:
 	std::vector<AbstractNode*> nodes;
 
 	double average_score;
+	double score_variance;
 	/**
 	 * - measure using sqr over abs
 	 *   - even though sqr may not measure true score improvement, it measures information improvement
@@ -27,6 +28,10 @@ public:
 	 */
 	double average_misguess;
 	double misguess_variance;
+
+	// TODO: surprise is score/average_misguess
+	// TODO: when branch added, misguess may get better or worse
+	// - simply set to max of the two initially?
 
 	int num_states;
 	std::map<int, State*> score_states;
@@ -58,8 +63,13 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
-	std::map<State*, StateStatus> score_state_snapshot;
-	ObsExperimentHistory* obs_experiment_history;
+	std::map<State*, StateStatus> score_state_snapshots;
+
+	// for ObsExperiment
+	std::vector<int> test_obs_indexes;
+	std::vector<double> test_obs_vals;
+
+	BranchExperimentHistory* inner_branch_experiment_history;
 
 	bool exceeded_depth;
 

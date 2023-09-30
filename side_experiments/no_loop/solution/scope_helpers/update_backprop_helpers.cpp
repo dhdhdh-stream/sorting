@@ -4,24 +4,30 @@ using namespace std;
 
 void Scope::update_backprop(double target_val,
 							ScopeHistory* history) {
+	if (history->exceeded_depth) {
+		return;
+	}
+
 	double predicted_score = this->average_score;
-	for (map<State*, StateStatus>::iterator it = history->score_state_snapshot.begin();
-			it != history->score_state_snapshot.end(); it++) {
+	for (map<State*, StateStatus>::iterator it = history->score_state_snapshots.begin();
+			it != history->score_state_snapshots.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
-		if (!last_network->can_be_end) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end;
-				* it->first->resolved_standard_deviation;
+		if (last_network == NULL) {
 			// set for backprop in the following
-			it->second.val = normalized;
+			it->second.val *= it->first->resolved_standard_deviation;
+		} else if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+			// set for backprop in the following
+			it->second.val = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation * last_network->correlation_to_end
+				* it->first->resolved_standard_deviation;
 		}
 		predicted_score += it->first->scale->weight * it->second.val;
 	}
 
 	double error = target_val - predicted_score;
 
-	for (map<State*, StateStatus>::iterator it = history->score_state_snapshot.begin();
-			it != history->score_state_snapshot.end(); it++) {
+	for (map<State*, StateStatus>::iterator it = history->score_state_snapshots.begin();
+			it != history->score_state_snapshots.end(); it++) {
 		it->first->scale->backprop(it->second.val*error, 0.001);
 
 		if (it->first->scale->weight < 0.02) {
@@ -70,14 +76,16 @@ void Scope::update_backprop(double target_val,
 	}
 
 	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
+	double curr_score_variance = (this->average_score - target_val) * (this->average_score - target_val);
+	this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
 	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
 	this->average_misguess = 0.9999*this->average_misguess + 0.0001*curr_misguess;
 	double curr_misguess_variance = (this->average_misguess - curr_misguess) * (this->average_misguess - curr_misguess);
 	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
 	if (history->obs_experiment_history != NULL) {
-		this->obs_experiment->update_backprop(history->obs_experiment_history,
-											  target_val,
-											  predicted_score);
+		this->obs_experiment->backprop(history->obs_experiment_history,
+									   target_val,
+									   predicted_score);
 	}
 }

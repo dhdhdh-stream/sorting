@@ -4,8 +4,19 @@
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SEQUENCE = 1;
 
+// TODO: add state explore
+// TODO: explore performance can't be negative
+// - it can be about even and hope that there's information
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
+const int BRANCH_EXPERIMENT_STATE_TRAIN = 1;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
+const int BRANCH_EXPERIMENT_STATE_DONE = 3;
+
 class BranchExperiment {
 public:
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+
 	std::vector<int> step_types;
 	std::vector<ActionNode*> actions;
 	std::vector<Sequence*> sequences;
@@ -17,9 +28,15 @@ public:
 	int exit_depth;
 	int exit_node_id;
 
+	int state;
+	int state_iter;
+
 	double average_score;
 	double average_misguess;
 	double misguess_variance;
+
+	int branch_count;
+	double combined_score;
 
 	std::map<State*, Scale*> score_state_scales;
 
@@ -35,7 +52,7 @@ public:
 	std::vector<std::vector<int>> new_score_state_obs_indexes;
 
 	ObsExperiment* obs_experiment;
-	
+
 
 };
 
@@ -43,10 +60,13 @@ class BranchExperimentHistory {
 public:
 	BranchExperiment* experiment;
 
-	std::vector<ActionNodeHistory*> action_histories;
 	std::vector<SequenceHistory*> sequence_histories;
 
-	ObsExperimentHistory* obs_experiment_history;
+	std::map<State*, StateStatus> score_state_snapshots;
+	std::map<State*, StateStatus> experiment_score_state_snapshots;
+
+	std::vector<int> test_obs_indexes;
+	std::vector<double> test_obs_vals;
 
 
 };

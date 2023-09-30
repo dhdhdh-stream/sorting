@@ -16,9 +16,10 @@ public:
 	std::map<int, StateStatus> local_state_vals;
 
 	std::map<State*, StateStatus> score_state_vals;
+	std::map<State*, StateStatus> experiment_score_state_vals;
 
 	ScopeHistory* scope_history;
-	
+
 };
 
 #endif /* CONTEXT_LAYER_H */

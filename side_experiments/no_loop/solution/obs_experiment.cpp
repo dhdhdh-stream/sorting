@@ -200,13 +200,13 @@ void ObsExperiment::rnn(ObsExperimentHistory* history,
 			ending_state_vals[o_index] = state_val;
 		}
 
+		this->resolved_networks.insert(last_network);
+
 		double curr_variance = state_val*state_val;
 		this->resolved_variance = 0.9999*this->resolved_variance + 0.0001*curr_variance;
 
 		last_network->ending_mean = 0.999*last_network->ending_mean + 0.0;
 		last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->resolved_variance;
-
-		last_network->can_be_end = true;
 
 		double new_predicted_score = existing_predicted_score + state_val;
 
@@ -228,10 +228,10 @@ void ObsExperiment::rnn(ObsExperimentHistory* history,
 
 void ObsExperiment::scope_eval(Scope* parent) {
 	double misguess_improvement = parent->average_misguess - this->new_average_misguess;
-	double existing_misguess_standard_deviation = sqrt(parent->misguess_variance);
+	double misguess_standard_deviation = sqrt(parent->misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
-		/ existing_misguess_standard_deviation / sqrt(20000);
+		/ misguess_standard_deviation / sqrt(20000);
 	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 

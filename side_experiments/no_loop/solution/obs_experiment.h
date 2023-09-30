@@ -1,3 +1,7 @@
+/**
+ * TODO: instead of running on new problem instances every time, run on a small number of seeds
+ */
+
 #ifndef OBS_EXPERIMENT_H
 #define OBS_EXPERIMENT_H
 
@@ -24,16 +28,6 @@ public:
 	double resolved_variance;
 
 	double new_average_misguess;
-
-};
-
-class ObsExperimentHistory {
-public:
-	ObsExperiment* experiment;
-
-	std::vector<int> obs_indexes;
-	std::vector<double> obs_vals;
-
 
 };
 

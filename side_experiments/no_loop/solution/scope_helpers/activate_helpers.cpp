@@ -21,7 +21,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 	}
 	run_helper.curr_depth++;
 
-	if (this->obs_experiment != NULL) {
+	if (run_helper.phase == RUN_PHASE_UPDATE
+			&& this->obs_experiment != NULL) {
 		ObsExperimentHistory* obs_experiment_history = new ObsExperimentHistory(this->obs_experiment);
 		history->obs_experiment_history = obs_experiment_history;
 		this->obs_experiment->hook(obs_experiment_history);
@@ -74,12 +75,18 @@ void Scope::activate(vector<int>& starting_node_ids,
 							 history);
 	}
 
-	if (exit_depth == -1) {
-		history->score_state_snapshot = context.back().score_state_vals;
+	if (run_helper.phase == RUN_PHASE_UPDATE) {
+		history->score_state_snapshots = context.back().score_state_vals;
+		run_helper.scope_histories.push_back(history);
+		/**
+		 * - keep even if early exit, so that can learn good decisions even if early exit
+		 */
+	} else if (history->inner_branch_experiment_history != NULL) {
+		history->inner_branch_experiment_history->score_state_snapshots = context.back().score_state_vals;
+		history->inner_branch_experiment_history->experiment_score_state_snapshots = context.back().experiment_score_state_vals;
+		history->inner_branch_experiment_history->test_obs_indexes = history->test_obs_indexes;
+		history->inner_branch_experiment_history->test_obs_vals = history->test_obs_vals;
 	}
-	/**
-	 * - intuitively, if early exit, don't treat as activation of current scope, but outer scope
-	 */
 
 	if (this->obs_experiment != NULL) {
 		this->obs_experiment->unhook();
@@ -101,9 +108,18 @@ void Scope::node_activate_helper(int iter_index,
 
 		action_node->activate(flat_vals,
 							  context,
+							  run_helper,
 							  history->node_histories[0]);
 
 		curr_node_id = action_node->next_node_id;
+
+		if (action_node->experiment != NULL) {
+			if (run_helper.phase == RUN_PHASE_EXPLORE_NONE) {
+
+			} else if (run_helper.phase == RUN_PHASE_EXPLORE_EXPLORE) {
+
+			}
+		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
@@ -131,6 +147,7 @@ void Scope::node_activate_helper(int iter_index,
 		bool is_branch;
 		branch_node->activate(is_branch,
 							  context,
+							  run_helper,
 							  history->node_histories[0]);
 
 		if (is_branch) {
