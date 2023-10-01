@@ -29,10 +29,6 @@ public:
 	double average_misguess;
 	double misguess_variance;
 
-	// TODO: surprise is score/average_misguess
-	// TODO: when branch added, misguess may get better or worse
-	// - simply set to max of the two initially?
-
 	int num_states;
 	std::map<int, State*> score_states;
 	/**

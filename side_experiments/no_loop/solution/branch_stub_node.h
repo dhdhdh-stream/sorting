@@ -11,6 +11,13 @@ public:
 	std::vector<int> state_network_indexes;
 
 	int next_node_id;
+
+	
+};
+
+class BranchStubNodeHistory : public AbstractNodeHistory {
+public:
+	BranchStubNodeHistory(BranchStubNode* node);
 };
 
 #endif /* BRANCH_STUB_NODE_H */

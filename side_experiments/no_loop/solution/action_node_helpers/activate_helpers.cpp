@@ -2,8 +2,12 @@
 
 using namespace std;
 
-void ActionNode::activate(vector<double>& flat_vals,
+void ActionNode::activate(int& curr_node_id,
+						  vector<double>& flat_vals,
 						  vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper,
 						  vector<AbstractNodeHistory*>& node_histories) {
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	node_histories.push_back(history);
@@ -106,6 +110,20 @@ void ActionNode::activate(vector<double>& flat_vals,
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 				.scope_history->test_obs_vals.push_back(history->obs_snapshot);
 		}
+	}
+
+	curr_node_id = this->next_node_id;
+
+	if (this->experiment != NULL) {
+		BranchExperimentHistory* branch_experiment_history = NULL;
+		this->experiment->activate(curr_node_id,
+								   flat_vals,
+								   context,
+								   exit_depth,
+								   exit_node_id,
+								   run_helper,
+								   branch_experiment_history);
+		history->branch_experiment_history = branch_experiment_history;
 	}
 }
 

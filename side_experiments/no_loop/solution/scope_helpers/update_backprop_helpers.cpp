@@ -83,9 +83,19 @@ void Scope::update_backprop(double target_val,
 	double curr_misguess_variance = (this->average_misguess - curr_misguess) * (this->average_misguess - curr_misguess);
 	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
-	if (history->obs_experiment_history != NULL) {
-		this->obs_experiment->backprop(history->obs_experiment_history,
-									   target_val,
-									   predicted_score);
+	if (this->obs_experiment != NULL) {
+		this->obs_experiment->backprop(target_val,
+									   predicted_score,
+									   history->test_obs_indexes,
+									   history->test_obs_vals);
+
+		if (this->obs_experiment->state == OBS_EXPERIMENT_STATE_DONE) {
+			delete this->obs_experiment;
+			this->obs_experiment = NULL;
+		}
+	}
+
+	if (this->obs_experiment == NULL) {
+		this->obs_experiment = solution->create_obs_experiment(history);
 	}
 }

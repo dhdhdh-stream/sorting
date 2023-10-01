@@ -23,9 +23,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 
 	if (run_helper.phase == RUN_PHASE_UPDATE
 			&& this->obs_experiment != NULL) {
-		ObsExperimentHistory* obs_experiment_history = new ObsExperimentHistory(this->obs_experiment);
-		history->obs_experiment_history = obs_experiment_history;
-		this->obs_experiment->hook(obs_experiment_history);
+		this->obs_experiment->hook(history);
 	}
 
 	history->node_histories.push_back(vector<AbstractNodeHistory*>());
@@ -34,30 +32,16 @@ void Scope::activate(vector<int>& starting_node_ids,
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
-
-		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
-
-		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
-		history->node_histories[0].push_back(node_history);
 		scope_node->halfway_activate(starting_node_ids,
 									 starting_input_state_vals,
 									 starting_local_state_vals,
+									 curr_node_id,
 									 flat_vals,
 									 context,
-									 inner_exit_depth,
-									 inner_exit_node_id,
+									 exit_depth,
+									 exit_node_id,
 									 run_helper,
-									 node_history);
-
-		if (inner_exit_depth == -1) {
-			curr_node_id = scope_node->next_node_id;
-		} else if (inner_exit_depth == 0) {
-			curr_node_id = inner_exit_node_id;
-		} else {
-			exit_depth = inner_exit_depth-1;
-			exit_node_id = inner_exit_node_id;
-		}
+									 history->node_histories[0]);
 	}
 
 	while (true) {
@@ -89,7 +73,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 	}
 
 	if (this->obs_experiment != NULL) {
-		this->obs_experiment->unhook();
+		this->obs_experiment->unhook(history);
 	}
 
 	run_helper.curr_depth--;
@@ -105,56 +89,31 @@ void Scope::node_activate_helper(int iter_index,
 								 ScopeHistory* history) {
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
-
-		action_node->activate(flat_vals,
+		action_node->activate(curr_node_id,
+							  flat_vals,
 							  context,
+							  exit_depth,
+							  exit_node_id,
 							  run_helper,
 							  history->node_histories[0]);
-
-		curr_node_id = action_node->next_node_id;
-
-		if (action_node->experiment != NULL) {
-			if (run_helper.phase == RUN_PHASE_EXPLORE_NONE) {
-
-			} else if (run_helper.phase == RUN_PHASE_EXPLORE_EXPLORE) {
-
-			}
-		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
-
-		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
-
-		scope_node->activate(flat_vals,
+		scope_node->activate(curr_node_id,
+							 flat_vals,
 							 context,
-							 inner_exit_depth,
-							 inner_exit_node_id,
+							 exit_depth,
+							 exit_node_id,
 							 run_helper,
 							 history->node_histories[0]);
-
-		if (inner_exit_depth == -1) {
-			curr_node_id = scope_node->next_node_id;
-		} else if (inner_exit_depth == 0) {
-			curr_node_id = inner_exit_node_id;
-		} else {
-			exit_depth = inner_exit_depth-1;
-			exit_node_id = inner_exit_node_id;
-		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
-
-		bool is_branch;
-		branch_node->activate(is_branch,
+		branch_node->activate(curr_node_id,
+							  flat_vals,
 							  context,
+							  exit_depth,
+							  exit_node_id,
 							  run_helper,
 							  history->node_histories[0]);
-
-		if (is_branch) {
-			curr_node_id = branch_node->branch_next_node_id;
-		} else {
-			curr_node_id = branch_node->original_next_node_id;
-		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
 		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
 

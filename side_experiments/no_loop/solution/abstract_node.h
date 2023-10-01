@@ -26,8 +26,6 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 
-	BranchExperimentHistory* branch_experiment_history;
-
 	virtual ~AbstractNodeHistory() {};
 };
 

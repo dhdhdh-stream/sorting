@@ -2,12 +2,9 @@
 
 using namespace std;
 
-/**
- * - only use when experimenting
- *   - otherwise simply use activate()
- */
-void ActionNode::branch_experiment_activate(vector<double>& flat_vals,
-											vector<ContextLayer>& context) {
+void ActionNode::branch_experiment_train_activate(
+		vector<double>& flat_vals,
+		vector<ContextLayer>& context) {
 	double obs_snapshot = flat_vals[0];
 	flat_vals.erase(flat_vals.begin());
 
@@ -33,7 +30,7 @@ void ActionNode::branch_experiment_activate(vector<double>& flat_vals,
 					.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
 			}
 			StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-			state_network->activate(history->obs_snapshot,
+			state_network->activate(obs_snapshot,
 									it->second);
 		}
 	}
@@ -56,7 +53,13 @@ void ActionNode::branch_experiment_activate(vector<double>& flat_vals,
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 				.test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-				.test_obs_vals.push_back(history->obs_snapshot);
+				.test_obs_vals.push_back(obs_snapshot);
 		}
 	}
+}
+
+void ActionNode::branch_experiment_simple_activate(
+		vector<double>& flat_vals) {
+	double obs_snapshot = flat_vals[0];
+	flat_vals.erase(flat_vals.begin());
 }

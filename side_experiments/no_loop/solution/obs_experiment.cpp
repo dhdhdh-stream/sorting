@@ -10,70 +10,64 @@ const int OBS_LIMIT = 4;
 
 const double MIN_IMPACT_SCALE = 0.3;
 
-void ObsExperiment::hook(ObsExperimentHistory* obs_experiment_history) {
+void ObsExperiment::hook(void* key) {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
-
 			action_node->test_hook_scope_contexts.push_back(this->scope_contexts[n_index]);
 			action_node->test_hook_node_contexts.push_back(this->node_contexts[n_index]);
-			action_node->test_hook_histories.push_back(obs_experiment_history);
 			action_node->test_hook_indexes.push_back(n_index);
+			action_node->test_hook_keys.push_back(key);
 		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
 			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
-
 			scope_node->test_hook_scope_contexts.push_back(this->scope_contexts[n_index]);
 			scope_node->test_hook_node_contexts.push_back(this->node_contexts[n_index]);
 			scope_node->test_hook_obs_indexes.push_back(this->obs_indexes[n_index]);
-			scope_node->test_hook_histories.push_back(obs_experiment_history);
 			scope_node->test_hook_indexes.push_back(n_index);
+			scope_node->test_hook_keys.push_back(key);
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
-
 			branch_node->test_hook_scope_contexts.push_back(this->scope_contexts[n_index]);
 			branch_node->test_hook_node_contexts.push_back(this->node_contexts[n_index]);
-			branch_node->test_hook_histories.push_back(obs_experiment_history);
 			branch_node->test_hook_indexes.push_back(n_index);
+			branch_node->test_hook_keys.push_back(key);
 		}
 	}
 }
 
-void ObsExperiment::unhook(ObsExperimentHistory* obs_experiment_history) {
+void ObsExperiment::unhook(void* key) {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
-
-			for (int h_index = 0; h_index < (int)action_node->test_hook_histories.size(); h_index++) {
-				if (action_node->test_hook_histories[h_index] == obs_experiment_history) {
-					action_node->test_hook_scope_contexts.erase(action_node->test_hook_scope_contexts.begin() + h_index);
-					action_node->test_hook_node_contexts.erase(action_node->test_hook_node_contexts.begin() + h_index);
-					action_node->test_hook_histories.erase(action_node->test_hook_histories.begin() + h_index);
-					action_node->test_hook_indexes.erase(action_node->test_hook_indexes.begin() + h_index);
+			for (int k_index = 0; k_index < (int)action_node->test_hook_keys.size(); k_index++) {
+				if (action_node->test_hook_keys[k_index] == key) {
+					action_node->test_hook_scope_contexts.erase(action_node->test_hook_scope_contexts.begin() + k_index);
+					action_node->test_hook_node_contexts.erase(action_node->test_hook_node_contexts.begin() + k_index);
+					action_node->test_hook_indexes.erase(action_node->test_hook_indexes.begin() + k_index);
+					action_node->test_hook_keys.erase(action_node->test_hook_keys.begin() + k_index);
 					break;
 				}
 			}
 		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
 			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
-
-			for (int h_index = 0; h_index < (int)scope_node->test_hook_histories.size(); h_index++) {
-				if (scope_node->test_hook_histories[h_index] == obs_experiment_history) {
-					scope_node->test_hook_scope_contexts.erase(scope_node->test_hook_scope_contexts.begin() + h_index);
-					scope_node->test_hook_node_contexts.erase(scope_node->test_hook_node_contexts.begin() + h_index);
-					scope_node->test_hook_obs_indexes.erase(scope_node->test_hook_obs_indexes.begin() + h_index);
-					scope_node->test_hook_histories.erase(scope_node->test_hook_histories.begin() + h_index);
-					scope_node->test_hook_indexes.erase(scope_node->test_hook_indexes.begin() + h_index);
+			for (int k_index = 0; k_index < (int)scope_node->test_hook_keys.size(); k_index++) {
+				if (scope_node->test_hook_keys[k_index] == key) {
+					scope_node->test_hook_scope_contexts.erase(scope_node->test_hook_scope_contexts.begin() + k_index);
+					scope_node->test_hook_node_contexts.erase(scope_node->test_hook_node_contexts.begin() + k_index);
+					scope_node->test_hook_obs_indexes.erase(scope_node->test_hook_obs_indexes.begin() + k_index);
+					scope_node->test_hook_indexes.erase(scope_node->test_hook_indexes.begin() + k_index);
+					scope_node->test_hook_keys.erase(scope_node->test_hook_keys.begin() + k_index);
 					break;
 				}
 			}
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
-
-			for (int h_index = 0; h_index < (int)branch_node->test_hook_histories.size(); h_index++) {
-				if (branch_node->test_hook_histories[h_index] == obs_experiment_history) {
-					branch_node->test_hook_scope_contexts.erase(branch_node->test_hook_scope_contexts.begin() + h_index);
-					branch_node->test_hook_node_contexts.erase(branch_node->test_hook_node_contexts.begin() + h_index);
-					branch_node->test_hook_histories.erase(branch_node->test_hook_histories.begin() + h_index);
-					branch_node->test_hook_indexes.erase(branch_node->test_hook_indexes.begin() + h_index);
+			for (int k_index = 0; k_index < (int)branch_node->test_hook_keys.size(); k_index++) {
+				if (branch_node->test_hook_keys[k_index] == key) {
+					branch_node->test_hook_scope_contexts.erase(branch_node->test_hook_scope_contexts.begin() + k_index);
+					branch_node->test_hook_node_contexts.erase(branch_node->test_hook_node_contexts.begin() + k_index);
+					branch_node->test_hook_indexes.erase(branch_node->test_hook_indexes.begin() + k_index);
+					branch_node->test_hook_keys.erase(branch_node->test_hook_keys.begin() + k_index);
 					break;
 				}
 			}
@@ -83,13 +77,14 @@ void ObsExperiment::unhook(ObsExperimentHistory* obs_experiment_history) {
 
 
 
-void ObsExperiment::flat(ObsExperimentHistory* history,
-						 double target_val,
-						 double existing_predicted_score) {
-	if (history->obs_indexes.size() > 0) {
+void ObsExperiment::flat(double target_val,
+						 double existing_predicted_score,
+						 vector<int>& obs_indexes,
+						 vector<double>& obs_vals) {
+	if (obs_indexes.size() > 0) {
 		vector<double> flat_inputs(this->nodes.size(), 0.0);
-		for (int o_index = 0; o_index < (int)history->obs_indexes.size(); o_index++) {
-			flat_inputs[history->obs_indexes[o_index]] = history->obs_vals[o_index];
+		for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
+			flat_inputs[obs_indexes[o_index]] = obs_vals[o_index];
 		}
 
 		this->flat_network->activate(flat_inputs);
@@ -170,17 +165,18 @@ void ObsExperiment::trim() {
 	this->state_iter = 0;
 }
 
-void ObsExperiment::rnn(ObsExperimentHistory* history,
-						double target_val,
-						double existing_predicted_score) {
-	if (history->obs_indexes.size() > 0) {
+void ObsExperiment::rnn(double target_val,
+						double existing_predicted_score,
+						vector<int>& obs_indexes,
+						vector<double>& obs_vals) {
+	if (obs_indexes.size() > 0) {
 		uniform_real_distribution<double> starting_distribution(-1.0, 1.0);
 		double state_val = starting_distribution(generator);
 
 		StateNetwork* last_network = NULL;
-		vector<double> ending_state_vals(history->obs_indexes.size());
-		for (int o_index = 0; o_index < (int)history->obs_indexes.size(); o_index++) {
-			int network_index = history->obs_indexes[o_index];
+		vector<double> ending_state_vals(obs_indexes.size());
+		for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
+			int network_index = obs_indexes[o_index];
 
 			if (last_network != NULL) {
 				this->state_networks[network_index]->starting_mean = 0.9999*this->state_networks[network_index]->starting_mean + 0.0001*state_val;
@@ -193,7 +189,7 @@ void ObsExperiment::rnn(ObsExperimentHistory* history,
 				this->state_networks[network_index]->preceding_networks.insert(last_network);
 			}
 
-			this->state_networks[network_index]->activate(history->obs_vals[network_index],
+			this->state_networks[network_index]->activate(obs_vals[network_index],
 														  state_val);
 
 			last_network = this->state_networks[network_index];
@@ -215,8 +211,8 @@ void ObsExperiment::rnn(ObsExperimentHistory* history,
 
 		double state_error = target_val - new_predicted_score;
 
-		for (int o_index = (int)history->obs_indexes.size() - 1; o_index >= 0; o_index--) {
-			int network_index = history->obs_indexes[o_index];
+		for (int o_index = (int)obs_indexes.size() - 1; o_index >= 0; o_index--) {
+			int network_index = obs_indexes[o_index];
 
 			double curr_covariance = (ending_state_vals[o_index] - this->state_networks[network_index]->ending_mean) * state_val;
 			this->state_networks[network_index]->covariance_with_end = 0.9999*this->state_networks[network_index]->covariance_with_end + 0.0001*curr_covariance;

@@ -57,12 +57,11 @@ public:
 	std::vector<std::vector<int>> test_hook_node_contexts;
 	std::vector<int> test_hook_obs_indexes;
 	std::vector<int> test_hook_indexes;
+	std::vector<void*> test_hook_keys;
 
 	int next_node_id;
 
 	BranchExperiment* experiment;
-	double average_remaining_experiments_from_start;
-	double average_duplicate_experiments;
 
 
 };
@@ -70,14 +69,16 @@ public:
 class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_halfway;
+	bool is_early_exit;
 
 	ScopeHistory* inner_scope_history;
 
 	std::map<int, StateStatus> obs_snapshots;
-	// also use to check if is early exit
 
 	std::vector<int> score_state_indexes;
 	std::vector<StateStatus> score_state_impacts;
+
+	BranchExperimentHistory* branch_experiment_history;
 
 	ScopeNodeHistory(ScopeNode* node);
 	~ScopeNodeHistory();

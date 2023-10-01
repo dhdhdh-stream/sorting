@@ -29,20 +29,11 @@ public:
 	std::vector<std::vector<int>> test_hook_scope_contexts;
 	std::vector<std::vector<int>> test_hook_node_contexts;
 	std::vector<int> test_hook_indexes;
+	std::vector<void*> test_hook_keys;
 
 	int next_node_id;
 
 	BranchExperiment* experiment;
-	double average_remaining_experiments_from_start;
-	double average_duplicate_experiments;
-	/**
-	 * - when triggering an experiment, it becomes live everywhere
-	 *   - for one selected instance, always trigger branch and experiment
-	 *     - for everywhere else, trigger accordingly
-	 *       - so experiment score_state scales need to be adjusted after ObsExperiment
-	 * 
-	 * - set probabilities after average_duplicate_experiments to 50%
-	 */
 
 
 };
@@ -53,6 +44,8 @@ public:
 
 	std::vector<int> score_state_indexes;
 	std::vector<StateStatus> score_state_impacts;
+
+	BranchExperimentHistory* branch_experiment_history;
 
 };
 

@@ -76,8 +76,8 @@ void Solution::random_halfway_start(ScopeNode* starting_scope_node,
 	ScopeHistory* scope_history = new ScopeHistory(scope);
 
 	// unused
-	int inner_exit_depth;
-	int inner_exit_node_id;
+	int inner_exit_depth = -1;
+	int inner_exit_node_id = -1;
 
 	scope->random_activate(starting_node_ids,
 						   scope_context,
@@ -406,8 +406,8 @@ Sequence* Solution::construct_sequence(vector<double>& flat_vals,
 		vector<int> starting_node_ids_copy = starting_halfway_node_context;
 
 		// unused
-		int inner_exit_depth;
-		int inner_exit_node_id;
+		int inner_exit_depth = -1;
+		int inner_exit_node_id = -1;
 
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(original_starting_scope_node);
 		original_starting_scope_node->activate(starting_node_ids_copy,

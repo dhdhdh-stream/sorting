@@ -48,14 +48,13 @@ public:
 	std::vector<std::vector<int>> test_hook_scope_contexts;
 	std::vector<std::vector<int>> test_hook_node_contexts;
 	std::vector<int> test_hook_indexes;
+	std::vector<void*> test_hook_keys;
 
+	BranchExperiment* experiment;
 	bool experiment_is_branch;
 	/**
 	 * - only trigger if on right branch
 	 */
-	BranchExperiment* experiment;
-	double average_remaining_experiments_from_start;
-	double average_duplicate_experiments;
 
 
 
@@ -67,6 +66,8 @@ public:
 
 	std::vector<int> score_state_indexes;
 	std::vector<StateStatus> score_state_impacts;
+
+	BranchExperimentHistory* branch_experiment_history;
 
 };
 

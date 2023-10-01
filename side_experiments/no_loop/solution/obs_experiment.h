@@ -7,6 +7,7 @@
 
 const int OBS_EXPERIMENT_STATE_FLAT = 0;
 const int OBS_EXPERIMENT_STATE_RNN = 1;
+const int OBS_EXPERIMENT_STATE_DONE = 2;
 
 class ObsExperiment {
 public:

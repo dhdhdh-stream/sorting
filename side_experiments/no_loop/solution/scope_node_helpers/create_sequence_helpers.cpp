@@ -213,18 +213,26 @@ void ScopeNode::create_sequence_activate(vector<double>& flat_vals,
 			}
 		}
 
-		if (inner_exit_node_id == -1) {
-			history->obs_snapshots = context.back().local_state_vals;
+		bool is_early_exit;
+		if (inner_exit_depth == -1) {
+			is_early_exit = false;
+		} else {
+			is_early_exit = true;
+		}
+
+		map<int, StateStatus> obs_snapshots;
+		if (!is_early_exit) {
+			obs_snapshots = context.back().local_state_vals;
 		}
 
 		context.pop_back();
 
 		// no need to set context.back().node_id
 
-		if (inner_exit_node_id == -1) {
+		if (!is_early_exit) {
 			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
-				if (obs_it != history->obs_snapshots.end()) {
+				map<int, StateStatus>::iterator obs_it = obs_snapshots.find(this->state_obs_indexes[n_index]);
+				if (obs_it != obs_snapshots.end()) {
 					if (this->state_is_local[n_index]) {
 						map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
 						if (state_it == context.back().local_state_vals.end()) {
@@ -424,18 +432,26 @@ void ScopeNode::halfway_create_sequence_activate(
 			}
 		}
 
-		if (inner_exit_node_id == -1) {
-			history->obs_snapshots = context.back().local_state_vals;
+		bool is_early_exit;
+		if (inner_exit_depth == -1) {
+			is_early_exit = false;
+		} else {
+			is_early_exit = true;
+		}
+
+		map<int, StateStatus> obs_snapshots;
+		if (!is_early_exit) {
+			obs_snapshots = context.back().local_state_vals;
 		}
 
 		context.pop_back();
 
 		// no need to set context.back().node_id
 
-		if (inner_exit_node_id == -1) {
+		if (!is_early_exit) {
 			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
-				if (obs_it != history->obs_snapshots.end()) {
+				map<int, StateStatus>::iterator obs_it = obs_snapshots.find(this->state_obs_indexes[n_index]);
+				if (obs_it != obs_snapshots.end()) {
 					if (this->state_is_local[n_index]) {
 						map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
 						if (state_it == context.back().local_state_vals.end()) {

@@ -17,7 +17,10 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 
 	std::vector<BranchExperiment*> experiments_seen_order;
-	std::map<BranchExperiment*, int> experiments_seen_count;
+	std::map<BranchExperiment*, int> experiments_seen_counts;
+	/**
+	 * - also use to track start for explore
+	 */
 
 	BranchExperiment* selected_branch_experiment;
 	int selected_branch_experiment_count;

@@ -2,10 +2,11 @@
 
 using namespace std;
 
-void ScopeNode::activate(vector<double>& flat_vals,
+void ScopeNode::activate(int& curr_node_id,
+						 vector<double>& flat_vals,
 						 vector<ContextLayer>& context,
-						 int& inner_exit_depth,
-						 int& inner_exit_node_id,
+						 int& exit_depth,
+						 int& exit_node_id,
 						 RunHelper& run_helper,
 						 vector<AbstractNodeHistory*>& node_histories) {
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -65,6 +66,9 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	// currently, starting_node_ids.size() == inner_state_vals.size()+1
 
+	int inner_exit_depth = -1;
+	int inner_exit_node_id = -1;
+
 	this->inner_scope->activate(starting_node_ids_copy,
 								inner_input_state_vals,
 								inner_local_state_vals,
@@ -95,7 +99,13 @@ void ScopeNode::activate(vector<double>& flat_vals,
 	 * - also will be how inner branches affect outer scopes on early exit
 	 */
 
-	if (inner_exit_node_id == -1) {
+	if (inner_exit_depth == -1) {
+		history->is_early_exit = false;
+	} else {
+		history->is_early_exit = true;
+	}
+
+	if (!history->is_early_exit) {
 		history->obs_snapshots = context.back().local_state_vals;
 	}
 
@@ -103,7 +113,7 @@ void ScopeNode::activate(vector<double>& flat_vals,
 
 	context.back().node_id = -1;
 
-	if (inner_exit_node_id == -1) {
+	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 			map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
 			if (obs_it != history->obs_snapshots.end()) {
@@ -212,16 +222,36 @@ void ScopeNode::activate(vector<double>& flat_vals,
 				}
 			}
 		}
+
+		curr_node_id = this->next_node_id;
+
+		if (this->experiment != NULL) {
+			BranchExperimentHistory* branch_experiment_history = NULL;
+			this->experiment->activate(curr_node_id,
+									   flat_vals,
+									   context,
+									   exit_depth,
+									   exit_node_id,
+									   run_helper,
+									   branch_experiment_history);
+			history->branch_experiment_history = branch_experiment_history;
+		}
+	} else if (inner_exit_depth == 0) {
+		curr_node_id = inner_exit_node_id;
+	} else {
+		exit_depth = inner_exit_depth-1;
+		exit_node_id = inner_exit_node_id;
 	}
 }
 
 void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 								 vector<map<int, StateStatus>>& starting_input_state_vals,
 								 vector<map<int, StateStatus>>& starting_local_state_vals,
+								 int& curr_node_id,
 								 vector<double>& flat_vals,
 								 vector<ContextLayer>& context,
-								 int& inner_exit_depth,
-								 int& inner_exit_node_id,
+								 int& exit_depth,
+								 int& exit_node_id,
 								 RunHelper& run_helper,
 								 vector<AbstractNodeHistory*>& node_histories) {
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -247,6 +277,9 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	// currently, starting_node_ids.size() == starting_state_vals.size()+1
 
+	int inner_exit_depth = -1;
+	int inner_exit_node_id = -1;
+
 	this->inner_scope->activate(starting_node_ids,
 								starting_input_state_vals,
 								starting_local_state_vals,
@@ -271,7 +304,13 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		}
 	}
 
-	if (inner_exit_node_id == -1) {
+	if (inner_exit_depth == -1) {
+		history->is_early_exit = false;
+	} else {
+		history->is_early_exit = true;
+	}
+
+	if (!history->is_early_exit) {
 		history->obs_snapshots = context.back().local_state_vals;
 	}
 
@@ -279,7 +318,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	context.back().node_id = -1;
 
-	if (inner_exit_node_id == -1) {
+	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 			map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
 			if (obs_it != history->obs_snapshots.end()) {
@@ -388,6 +427,25 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 				}
 			}
 		}
+
+		curr_node_id = this->next_node_id;
+
+		if (this->experiment != NULL) {
+			BranchExperimentHistory* branch_experiment_history = NULL;
+			this->experiment->activate(curr_node_id,
+									   flat_vals,
+									   context,
+									   exit_depth,
+									   exit_node_id,
+									   run_helper,
+									   branch_experiment_history);
+			history->branch_experiment_history = branch_experiment_history;
+		}
+	} else if (inner_exit_depth == 0) {
+		curr_node_id = inner_exit_node_id;
+	} else {
+		exit_depth = inner_exit_depth-1;
+		exit_node_id = inner_exit_node_id;
 	}
 }
 
@@ -397,7 +455,7 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 										 vector<int>& test_obs_indexes,
 										 vector<double>& test_obs_vals,
 										 ScopeNodeHistory* history) {
-	if (history->obs_snapshots.size() != 0) {
+	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
 			bool matches_context = true;
 			if (this->experiment_hook_score_state_scope_contexts[n_index].size() > scope_context.size()) {

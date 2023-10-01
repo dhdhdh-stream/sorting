@@ -2,8 +2,12 @@
 
 using namespace std;
 
-void BranchNode::activate(bool& is_branch,
+void BranchNode::activate(int& curr_node_id,
+						  vector<double>& flat_vals,
 						  vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper,
 						  vector<AbstractNodeHistory*>& node_histories) {
 	bool matches_context = true;
 	if (this->branch_scope_context.size() > context.size()) {
@@ -20,7 +24,8 @@ void BranchNode::activate(bool& is_branch,
 
 	if (matches_context) {
 		if (this->branch_is_pass_through) {
-			is_branch = true;
+			// is_branch == true
+			curr_node_id = this->branch_next_node_id;
 		} else {
 			BranchNodeHistory* history = new BranchNodeHistory(this);
 			node_histories.push_back(history);
@@ -118,6 +123,7 @@ void BranchNode::activate(bool& is_branch,
 				}
 			}
 
+			bool is_branch;
 			if (branch_score > original_score) {
 				is_branch = true;
 			} else {
@@ -226,9 +232,40 @@ void BranchNode::activate(bool& is_branch,
 						.scope_history->test_obs_vals.push_back(history->obs_snapshot);
 				}
 			}
+
+			if (is_branch) {
+				curr_node_id = this->branch_next_node_id;
+
+				if (this->experiment_is_branch && this->experiment != NULL) {
+					BranchExperimentHistory* branch_experiment_history = NULL;
+					this->experiment->activate(curr_node_id,
+											   flat_vals,
+											   context,
+											   exit_depth,
+											   exit_node_id,
+											   run_helper,
+											   branch_experiment_history);
+					history->branch_experiment_history = branch_experiment_history;
+				}
+			} else {
+				curr_node_id = this->original_next_node_id;
+
+				if (!this->experiment_is_branch && this->experiment != NULL) {
+					BranchExperimentHistory* branch_experiment_history = NULL;
+					this->experiment->activate(curr_node_id,
+											   flat_vals,
+											   context,
+											   exit_depth,
+											   exit_node_id,
+											   run_helper,
+											   branch_experiment_history);
+					history->branch_experiment_history = branch_experiment_history;
+				}
+			}
 		}
 	} else {
-		is_branch = false;
+		// is_branch == false
+		curr_node_id = this->original_next_node_id;
 	}
 }
 
