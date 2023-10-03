@@ -152,6 +152,13 @@ void BranchExperiment::explore_backprop(double target_val,
 	this->state_iter++;
 	if (this->state_iter >= EXPLORE_ITERS) {
 		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+					this->best_sequences[s_index]->scope->id = solution->num_scopes;
+					solution->num_scopes++;
+				}
+			}
+
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN;
 			this->state_iter = 0;
 		} else {

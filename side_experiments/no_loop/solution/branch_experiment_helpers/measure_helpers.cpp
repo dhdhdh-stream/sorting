@@ -109,33 +109,9 @@ void BranchExperiment::eval() {
 	if (combined_improvement_t_score > 2.326) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
 		if (branch_weight > 0.98) {
-
+			new_pass_through();
 		} else {
-			Scope* starting_scope = solution->scopes[this->scope_context.back()];
-			Scope* parent_scope = solution->scopes[this->scope_context[0]];
-
-			BranchNode* new_branch_node = new BranchNode();
-			new_branch_node->id = (int)starting_scope->nodes.size();
-			starting_scope->nodes.push_back(new_branch_node);
-
-			new_branch_node->branch_scope_context = this->scope_context;
-			new_branch_node->branch_node_context = this->node_context;
-			new_branch_node->branch_node_context.back() = new_branch_node->id;
-
-			new_branch_node->branch_is_pass_through = false;
-
-			// TODO: add nodes first, so when states
-
-			for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
-					it != this->score_state_scales.end(); it++) {
-				double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;
-				double new_impact = it->first->resolved_standard_deviation * it->second->weight;
-				if (abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
-
-				}
-			}
-
-
+			new_branch();
 		}
 	} else {
 		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
@@ -151,7 +127,7 @@ void BranchExperiment::eval() {
 
 		if (score_improvement_t_score > -0.674	// 75%<
 				&& misguess_improvement_t_score > 2.326) {
-
+			new_pass_through();
 		} else {
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -173,4 +149,213 @@ void BranchExperiment::eval() {
 	}
 
 	this->state = BRANCH_EXPERIMENT_STATE_DONE;
+}
+
+void BranchExperiment::new_branch() {
+	Scope* starting_scope = solution->scopes[this->scope_context.back()];
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+
+	BranchNode* new_branch_node = new BranchNode();
+	new_branch_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_branch_node);
+
+	new_branch_node->branch_scope_context = this->scope_context;
+	new_branch_node->branch_node_context = this->node_context;
+	new_branch_node->branch_node_context.back() = new_branch_node->id;
+
+	new_branch_node->branch_is_pass_through = false;
+
+	/**
+	 * TODO: check if state used at decision point so can delete
+	 */
+	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
+			it != this->score_state_scales.end(); it++) {
+		double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;
+		double new_impact = it->first->resolved_standard_deviation * it->second->weight;
+		if (abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
+			finalize_existing_state(parent_scope,
+									it->first,
+									new_branch_node,
+									it->second->weight);
+		}
+
+		delete it->second;
+	}
+
+	map<int, Sequence*> sequence_mappings;
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+			sequence_mappings[this->best_sequences[s_index]->scope->id] = this->best_sequences[s_index];
+		}
+	}
+	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
+		finalize_new_state(parent_scope,
+						   sequence_mappings,
+						   this->new_score_states[s_index],
+						   this->new_score_state_nodes[s_index],
+						   this->new_score_state_scope_contexts[s_index],
+						   this->new_score_state_node_contexts[s_index],
+						   this->new_score_state_obs_indexes[s_index],
+						   new_branch_node);
+	}
+
+	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
+
+		new_branch_node->original_next_node_id = action_node->next_node_id;
+
+		action_node->next_node_id = new_branch_node->id;
+	} else if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)starting_scope->nodes[this->node_context.back()];
+
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
+
+		scope_node->next_node_id = new_branch_node->id;
+	} else {
+		BranchNode* branch_node = (BranchNode*)starting_scope->nodes[this->node_context.back()];
+
+		if (branch_node->experiment_is_branch) {
+			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+
+			branch_node->branch_next_node_id = new_branch_node->id;
+		} else {
+			new_branch_node->original_next_node_id = branch_node->original_next_node_id;
+
+			branch_node->original_next_node_id = new_branch_node->id;
+		}
+	}
+	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
+
+	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
+	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->id = (int)starting_scope->nodes.size();
+			starting_scope->nodes.push_back(this->best_actions[s_index]);
+
+			this->best_actions[s_index]->next_node_id = (int)starting_scope->nodes.size();
+		} else {
+			ScopeNode* new_scope_node = finalize_sequence(this->scope_context,
+														  this->node_context,
+														  this->best_sequences[s_index],
+														  input_scope_depths_mappings,
+														  output_scope_depths_mappings);
+			new_scope_node->id = (int)starting_scope->nodes.size();
+			starting_scope->nodes.push_back(new_scope_node);
+
+			new_scope_node->next_node_id = (int)starting_scope->nodes.size();
+
+			delete this->best_sequences[s_index];
+		}
+	}
+
+	{
+		ExitNode* new_exit_node = new ExitNode();
+
+		new_exit_node->id = (int)starting_scope->nodes.size();
+		starting_scope->nodes.push_back(new_exit_node);
+
+		new_exit_node->exit_depth = this->best_exit_depth;
+		new_exit_node->exit_node_id = this->best_exit_node_id;
+	}
+
+	parent_scope->average_score = this->combined_score;
+}
+
+void BranchExperiment::new_pass_through() {
+	Scope* starting_scope = solution->scopes[this->scope_context.back()];
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+
+	BranchNode* new_branch_node = new BranchNode();
+	new_branch_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_branch_node);
+
+	new_branch_node->branch_scope_context = this->scope_context;
+	new_branch_node->branch_node_context = this->node_context;
+	new_branch_node->branch_node_context.back() = new_branch_node->id;
+
+	new_branch_node->branch_is_pass_through = true;
+
+	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
+
+		new_branch_node->original_next_node_id = action_node->next_node_id;
+
+		action_node->next_node_id = new_branch_node->id;
+	} else if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)starting_scope->nodes[this->node_context.back()];
+
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
+
+		scope_node->next_node_id = new_branch_node->id;
+	} else {
+		BranchNode* branch_node = (BranchNode*)starting_scope->nodes[this->node_context.back()];
+
+		if (branch_node->experiment_is_branch) {
+			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+
+			branch_node->branch_next_node_id = new_branch_node->id;
+		} else {
+			new_branch_node->original_next_node_id = branch_node->original_next_node_id;
+
+			branch_node->original_next_node_id = new_branch_node->id;
+		}
+	}
+	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
+
+	map<int, int> new_scope_node_id_mappings;
+
+	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
+	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->id = (int)starting_scope->nodes.size();
+			starting_scope->nodes.push_back(this->best_actions[s_index]);
+
+			this->best_actions[s_index]->next_node_id = (int)starting_scope->nodes.size();
+		} else {
+			ScopeNode* new_scope_node = finalize_sequence(this->scope_context,
+														  this->node_context,
+														  this->best_sequences[s_index],
+														  input_scope_depths_mappings,
+														  output_scope_depths_mappings);
+			new_scope_node->id = (int)starting_scope->nodes.size();
+			starting_scope->nodes.push_back(new_scope_node);
+
+			new_scope_node->next_node_id = (int)starting_scope->nodes.size();
+
+			delete this->best_sequences[s_index];
+
+			new_scope_node_id_mappings[new_scope_node->inner_scope->id] = new_scope_node->id;
+		}
+	}
+
+	{
+		ExitNode* new_exit_node = new ExitNode();
+
+		new_exit_node->id = (int)starting_scope->nodes.size();
+		starting_scope->nodes.push_back(new_exit_node);
+
+		new_exit_node->exit_depth = this->best_exit_depth;
+		new_exit_node->exit_node_id = this->best_exit_node_id;
+	}
+
+	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
+			it != this->score_state_scales.end(); it++) {
+		delete it->first->scale;
+
+		it->first->scale = it->second;
+	}
+
+	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
+		finalize_new_score_state(parent_scope,
+								 new_scope_node_id_mappings,
+								 this->new_score_states[s_index],
+								 this->new_score_state_nodes[s_index],
+								 this->new_score_state_scope_contexts[s_index],
+								 this->new_score_state_node_contexts[s_index],
+								 this->new_score_state_obs_indexes[s_index]);
+	}
+
+	parent_scope->average_score = this->average_score;
 }
