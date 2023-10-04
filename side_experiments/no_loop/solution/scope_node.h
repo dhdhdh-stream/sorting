@@ -16,9 +16,9 @@ public:
 	std::vector<int> input_types;
 	std::vector<int> input_inner_layers;
 	std::vector<bool> input_inner_is_local;
-	std::vector<int> input_inner_ids;
+	std::vector<int> input_inner_indexes;
 	std::vector<bool> input_outer_is_local;
-	std::vector<int> input_outer_ids;
+	std::vector<int> input_outer_indexes;
 	std::vector<double> input_init_vals;
 	/**
 	 * - don't worry about reversing signs
@@ -31,12 +31,12 @@ public:
 	 * - from input states
 	 *   - inner local states impact outside through obs/state networks
 	 */
-	std::vector<int> output_inner_ids;
+	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
-	std::vector<int> output_outer_ids;
+	std::vector<int> output_outer_indexes;
 
 	std::vector<bool> state_is_local;
-	std::vector<int> state_ids;
+	std::vector<int> state_indexes;
 	std::vector<int> state_obs_indexes;
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;

@@ -17,15 +17,15 @@ void ActionNode::activate(int& curr_node_id,
 
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
-			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_ids[n_index]);
+			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
 			if (it == context.back().local_state_vals.end()) {
-				it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 			}
 			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 			state_network->activate(history->obs_snapshot,
 									it->second);
 		} else {
-			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_ids[n_index]);
+			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
 				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 				state_network->activate(history->obs_snapshot,

@@ -42,10 +42,8 @@ void BranchExperiment::train_backprop(double target_val,
 	for (map<State*, StateStatus>::iterator it = history->parent_scope_history->score_state_snapshots.begin();
 			it != history->parent_scope_history->score_state_snapshots.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			// set for backprop in the following
-			it->second.val *= it->first->resolved_standard_deviation;
-		} else if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+		// last_network != NULL
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
 			// set for backprop in the following
 			it->second.val = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -62,7 +60,7 @@ void BranchExperiment::train_backprop(double target_val,
 			it != history->experiment_score_state_snapshots.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
-		if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
 			// set for backprop in the following
 			it->second.val = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation * last_network->correlation_to_end

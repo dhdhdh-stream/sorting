@@ -35,7 +35,7 @@ void BranchNode::activate(int& curr_node_id,
 
 			for (int i_index = 0; i_index < (int)this->shared_state_is_local.size(); i_index++) {
 				if (this->shared_state_is_local[i_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->shared_state_ids[i_index]);
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->shared_state_indexes[i_index]);
 					if (it != context.back().local_state_vals.end()) {
 						StateNetwork* last_network = it->second.last_network;
 						if (last_network == NULL) {
@@ -45,8 +45,9 @@ void BranchNode::activate(int& curr_node_id,
 							original_score += it->second.val
 								* this->original_state_defs[i_index]->resolved_standard_deviation
 								* this->original_state_defs[i_index]->scale->weight;
-						} else if (this->original_state_defs[i_index]->resolved_networks.find(last_network)
-								== this->original_state_defs[i_index]->resolved_networks.end()) {
+						} else if (last_network->parent_state != this->original_state_defs[i_index]
+								|| this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+									== this->original_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
 								* this->original_state_defs[i_index]->resolved_standard_deviation;
@@ -58,7 +59,7 @@ void BranchNode::activate(int& curr_node_id,
 						}
 					}
 				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->shared_state_ids[i_index]);
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->shared_state_indexes[i_index]);
 					if (it != context.back().input_state_vals.end()) {
 						StateNetwork* last_network = it->second.last_network;
 						if (last_network == NULL) {
@@ -68,8 +69,9 @@ void BranchNode::activate(int& curr_node_id,
 							original_score += it->second.val
 								* this->original_state_defs[i_index]->resolved_standard_deviation
 								* this->original_state_defs[i_index]->scale->weight;
-						} else if (this->original_state_defs[i_index]->resolved_networks.find(last_network)
-								== this->original_state_defs[i_index]->resolved_networks.end()) {
+						} else if (last_network->parent_state != this->original_state_defs[i_index]
+								this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+									== this->original_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
 								* this->original_state_defs[i_index]->resolved_standard_deviation;
@@ -85,15 +87,16 @@ void BranchNode::activate(int& curr_node_id,
 
 			for (int i_index = 0; i_index < (int)this->branch_state_is_local.size(); i_index++) {
 				if (this->branch_state_is_local[i_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->branch_state_ids[i_index]);
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->branch_state_indexes[i_index]);
 					if (it != context.back().local_state_vals.end()) {
 						StateNetwork* last_network = it->second.last_network;
 						if (last_network == NULL) {
 							branch_score += it->second.val
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
-						} else if (this->branch_state_defs[i_index]->resolved_networks.find(last_network)
-								== this->branch_state_defs[i_index]->resolved_networks.end()) {
+						} else if (last_network->parent_state != this->branch_state_defs[i_index]
+								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
 								* this->branch_state_defs[i_index]->resolved_standard_deviation;
@@ -103,15 +106,16 @@ void BranchNode::activate(int& curr_node_id,
 						}
 					}
 				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->branch_state_ids[i_index]);
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->branch_state_indexes[i_index]);
 					if (it != context.back().input_state_vals.end()) {
 						StateNetwork* last_network = it->second.last_network;
 						if (last_network == NULL) {
 							branch_score += it->second.val
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
-						} else if (this->branch_state_defs[i_index]->resolved_networks.find(last_network)
-								== this->branch_state_defs[i_index]->resolved_networks.end()) {
+						} else if (last_network->parent_state != this->branch_state_defs[i_index]
+								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
 								* this->branch_state_defs[i_index]->resolved_standard_deviation;
@@ -138,15 +142,15 @@ void BranchNode::activate(int& curr_node_id,
 
 			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 				if (this->state_is_local[n_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
 					if (it == context.back().local_state_vals.end()) {
-						it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+						it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 					state_network->activate(history->obs_snapshot,
 											it->second);
 				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 					if (it != context.back().input_state_vals.end()) {
 						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 						state_network->activate(history->obs_snapshot,

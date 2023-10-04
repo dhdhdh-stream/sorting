@@ -157,7 +157,7 @@ void ObsExperiment::trim() {
 
 	this->state_networks = vector<StateNetwork*>(this->nodes.size());
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		this->state_networks[n_index] = new StateNetwork();
+		this->state_networks[n_index] = new StateNetwork(n_index);
 	}
 	this->resolved_variance = 0.0;
 
@@ -186,7 +186,7 @@ void ObsExperiment::rnn(double target_val,
 				last_network->ending_mean = 0.999*last_network->ending_mean + 0.001*this->state_networks[network_index]->starting_mean;
 				last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->state_networks[network_index]->starting_variance;
 
-				this->state_networks[network_index]->preceding_networks.insert(last_network);
+				this->state_networks[network_index]->preceding_network_indexes.insert(last_network->index);
 			}
 
 			this->state_networks[network_index]->activate(obs_vals[network_index],
@@ -196,7 +196,7 @@ void ObsExperiment::rnn(double target_val,
 			ending_state_vals[o_index] = state_val;
 		}
 
-		this->resolved_networks.insert(last_network);
+		this->resolved_network_indexes.insert(last_network->index);
 
 		double curr_variance = state_val*state_val;
 		this->resolved_variance = 0.9999*this->resolved_variance + 0.0001*curr_variance;
@@ -247,10 +247,10 @@ void ObsExperiment::scope_eval(Scope* parent) {
 
 		new_state->nodes = this->nodes;
 
-		new_state->id = parent->num_states;
-		parent->num_states++;
+		new_state->id = solution->num_states;
+		solution->num_states++;
 
-		parent[new_state->id] = new_state;
+		solution->states[new_state->id] = new_state;
 
 		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 			if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
@@ -302,12 +302,17 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 
 			this->state_networks[n_index]->correlation_to_end = this->state_networks[n_index]->covariance_with_end
 				/ this->state_networks[n_index]->ending_standard_deviation / new_state->resolved_standard_deviation;
+
+			this->state_networks[n_index]->parent_state = new_state;
 		}
 		new_state->networks = this->state_networks;
 
 		new_state->scale = new Scale(1.0);
 
 		new_state->nodes = this->nodes;
+
+		new_state->id = solution->num_states;
+		solution->num_states++;
 
 		branch_experiment->new_score_states.push_back(new_state);
 		branch_experiment->new_score_state_nodes.push_back(this->nodes);

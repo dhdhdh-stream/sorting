@@ -29,19 +29,6 @@ public:
 	double average_misguess;
 	double misguess_variance;
 
-	int num_states;
-	std::map<int, State*> score_states;
-	/**
-	 * - use map to track states as will be sparse
-	 */
-
-	std::map<int, State*> states;
-	/**
-	 * TODO: track relations among states, e.g.:
-	 *   - which states are used together
-	 *   - which states depend on which states
-	 */
-
 	std::vector<Scope*> child_scopes;
 	/**
 	 * - for constructing new sequences

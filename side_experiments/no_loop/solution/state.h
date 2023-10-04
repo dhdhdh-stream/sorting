@@ -7,7 +7,7 @@ public:
 
 	std::vector<StateNetwork*> networks;
 
-	std::set<StateNetwork*> resolved_networks;
+	std::set<int> resolved_network_indexes;
 	double resolved_standard_deviation;
 
 	Scale* scale;

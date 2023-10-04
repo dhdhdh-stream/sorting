@@ -36,12 +36,7 @@ public:
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 
-	void backprop_errors_with_no_weight_change();
-	void backprop_weights_with_no_error_signal();
-
 	void save_weights(std::ofstream& output_file);
-
-	void state_hidden_backprop();
 };
 
 #endif /* LAYER_H */

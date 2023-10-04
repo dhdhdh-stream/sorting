@@ -70,7 +70,66 @@ public:
 
 	ObsExperiment* obs_experiment;
 
+	BranchExperiment();
+	~BranchExperiment();
 
+	void activate(int& curr_node_id,
+				  std::vector<double>& flat_vals,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  int& exit_node_id,
+				  RunHelper& run_helper,
+				  BranchExperimentHistory* history);
+	void hook(std::vector<ContextLayer>& context,
+			  RunHelper& run_helper);
+	void hook_helper(std::vector<int>& scope_context,
+					 std::vector<int>& node_context,
+					 std::map<State*, StateStatus>& experiment_score_state_vals,
+					 std::vector<int>& test_obs_indexes,
+					 std::vector<double>& test_obs_vals,
+					 ScopeHistory* scope_history);
+	void unhook();
+	void backprop(double target_val,
+				  BranchExperimentHistory* history);
+
+	void explore_activate(int& curr_node_id,
+						  std::vector<double>& flat_vals,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper,
+						  BranchExperimentHistory* history);
+	void explore_backprop(double target_val,
+						  BranchExperimentHistory* history);
+
+	void train_activate(int& curr_node_id,
+						std::vector<double>& flat_vals,
+						std::vector<ContextLayer>& context,
+						int& exit_depth,
+						int& exit_node_id,
+						RunHelper& run_helper,
+						BranchExperimentHistory* history);
+	void train_backprop(double target_val,
+						BranchExperimentHistory* history);
+
+	void simple_activate(int& curr_node_id,
+						 std::vector<double>& flat_vals,
+						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 int& exit_node_id,
+						 RunHelper& run_helper);
+
+	void measure_activate(int& curr_node_id,
+						  std::vector<double>& flat_vals,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper);
+	void measure_backprop(double target_val);
+
+	void eval();
+	void new_branch();
+	void new_pass_through();
 };
 
 class BranchExperimentHistory {
@@ -84,8 +143,8 @@ public:
 	ScopeHistory* parent_scope_history;
 	std::map<State*, StateStatus> experiment_score_state_snapshots;
 
-
-
+	BranchExperimentHistory(BranchExperiment* experiment);
+	~BranchExperimentHistory();
 };
 
 #endif /* BRANCH_EXPERIMENT_H */

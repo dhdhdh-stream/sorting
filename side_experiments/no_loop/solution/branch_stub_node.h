@@ -6,7 +6,7 @@ public:
 	bool was_branch;
 
 	std::vector<bool> state_is_local;
-	std::vector<int> state_ids;
+	std::vector<int> state_indexes;
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;
 

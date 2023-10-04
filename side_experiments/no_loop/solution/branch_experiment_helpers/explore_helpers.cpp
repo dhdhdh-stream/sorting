@@ -21,11 +21,8 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
-		if (last_network == NULL) {
-			predicted_score += it->second.val
-				* it->first->resolved_standard_deviation
-				* it->first->scale->weight;
-		} else if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+		// last_network != NULL
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
 			double normalized = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation * last_network->correlation_to_end
 				* it->first->resolved_standard_deviation;

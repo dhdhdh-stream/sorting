@@ -19,7 +19,6 @@ public:
 	std::map<State*, StateStatus> experiment_score_state_vals;
 
 	ScopeHistory* scope_history;
-
 };
 
 #endif /* CONTEXT_LAYER_H */

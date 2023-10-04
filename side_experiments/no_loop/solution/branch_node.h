@@ -19,19 +19,19 @@ public:
 	bool branch_is_pass_through
 
 	std::vector<bool> shared_state_is_local;
-	std::vector<int> shared_state_ids;
+	std::vector<int> shared_state_indexes;
 	std::vector<double> branch_weights;
 	std::vector<State*> original_state_defs;
 
 	std::vector<bool> branch_state_is_local;
-	std::vector<int> branch_state_ids;
+	std::vector<int> branch_state_indexes;
 	std::vector<State*> branch_state_defs;
 
 	int branch_next_node_id;
 	int original_next_node_id;
 
 	std::vector<bool> state_is_local;
-	std::vector<int> state_ids;
+	std::vector<int> state_indexes;
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;
 
@@ -56,8 +56,47 @@ public:
 	 * - only trigger if on right branch
 	 */
 
+	BranchNode();
+	BranchNode(std::ifstream& input_file,
+			   int id);
+	~BranchNode();
 
+	void activate(int& curr_node_id,
+				  std::vector<double>& flat_vals,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  int& exit_node_id,
+				  RunHelper& run_helper,
+				  std::vector<AbstractNodeHistory*>& node_histories);
 
+	void create_sequence_activate(bool& is_branch,
+								  std::vector<ContextLayer>& context,
+								  int target_num_nodes
+								  int& curr_num_nodes,
+								  Sequence* new_sequence,
+								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
+								  int& new_num_input_states,
+								  std::vector<AbstractNode*>& new_nodes);
+
+	void random_activate(bool& is_branch,
+						 std::vector<int>& scope_context,
+						 std::vector<int>& node_context,
+						 int& num_nodes,
+						 std::vector<AbstractNodeHistory*>& node_histories);
+	void random_exit_activate(bool& is_branch,
+							  std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  int& num_nodes,
+							  std::vector<AbstractNodeHistory*>& node_histories);
+
+	void experiment_back_activate(std::vector<int>& scope_context,
+								  std::vector<int>& node_context,
+								  std::map<State* StateStatus>& experiment_score_state_vals,
+								  std::vector<int>& test_obs_indexes,
+								  std::vector<double>& test_obs_vals,
+								  BranchNodeHistory* history);
+
+	void save(std::ofstream& output_file);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {
@@ -69,6 +108,8 @@ public:
 
 	BranchExperimentHistory* branch_experiment_history;
 
+	BranchNodeHistory(BranchNode* node);
+	~BranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

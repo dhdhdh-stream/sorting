@@ -18,30 +18,30 @@ void ScopeNode::activate(int& curr_node_id,
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
 				StateStatus state_status;
-				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_ids[i_index]);
+				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context.back().local_state_vals.end()) {
 					state_status = it->second;
 				}
 				if (this->input_inner_is_local[i_index]) {
-					inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = state_status;
+					inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = state_status;
 				} else {
-					inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = state_status;
+					inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = state_status;
 				}
 			} else {
-				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_ids[i_index]);
+				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context.back().input_state_vals.end()) {
 					if (this->input_inner_is_local[i_index]) {
-						inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+						inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = it->second;
 					} else {
-						inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = it->second;
+						inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = it->second;
 					}
 				}
 			}
 		} else {
 			if (this->input_inner_is_local[i_index]) {
-				inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = StateStatus(this->input_init_vals[i_index]);
+				inner_local_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 			} else {
-				inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_ids[i_index]] = StateStatus(this->input_init_vals[i_index]);
+				inner_input_state_vals[this->input_inner_layers[i_index]][this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 			}
 		}
 	}
@@ -79,13 +79,13 @@ void ScopeNode::activate(int& curr_node_id,
 								run_helper,
 								inner_scope_history);
 
-	for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_ids[o_index]);
+	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 		if (inner_it != context.back().input_state_vals.end()) {
 			if (this->output_outer_is_local[o_index]) {
-				context[context.size()-2].local_state_vals[this->output_outer_ids[o_index]] = inner_it->second;
+				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 			} else {
-				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_ids[o_index]);
+				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
 				if (outer_it != context[context.size()-2].input_state_vals.end()) {
 					outer_it->second = inner_it->second;
 				}
@@ -118,15 +118,15 @@ void ScopeNode::activate(int& curr_node_id,
 			map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
 			if (obs_it != history->obs_snapshots.end()) {
 				if (this->state_is_local[n_index]) {
-					map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_indexes[n_index]);
 					if (state_it == context.back().local_state_vals.end()) {
-						state_it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+						state_it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 					state_network->activate(obs_it->second,
 											state_it->second);
 				} else {
-					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 					if (state_it != context.back().input_state_vals.end()) {
 						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 						state_network->activate(obs_it->second,
@@ -290,13 +290,13 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 								run_helper,
 								inner_scope_history);
 
-	for (int o_index = 0; o_index < (int)this->output_inner_ids.size(); o_index++) {
-		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_ids[o_index]);
+	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 		if (inner_it != context.back().input_state_vals.end()) {
 			if (this->output_outer_is_local[o_index]) {
-				context[context.size()-2].local_state_vals[this->output_outer_ids[o_index]] = inner_it->second;
+				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 			} else {
-				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_ids[o_index]);
+				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
 				if (outer_it != context[context.size()-2].input_state_vals.end()) {
 					outer_it->second = inner_it->second;
 				}
@@ -323,15 +323,15 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 			map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->state_obs_indexes[n_index]);
 			if (obs_it != history->obs_snapshots.end()) {
 				if (this->state_is_local[n_index]) {
-					map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_indexes[n_index]);
 					if (state_it == context.back().local_state_vals.end()) {
-						state_it = context.back().local_state_vals.insert({this->state_ids[n_index], StateStatus()}).first;
+						state_it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 					state_network->activate(obs_it->second,
 											state_it->second);
 				} else {
-					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_ids[n_index]);
+					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 					if (state_it != context.back().input_state_vals.end()) {
 						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 						state_network->activate(obs_it->second,

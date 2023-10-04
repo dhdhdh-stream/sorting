@@ -16,7 +16,9 @@ public:
 	 * - used to calculate predicted_score if can't be ending
 	 */
 
-	std::set<StateNetwork*> preceding_networks;
+	State* parent_state;
+	int index;
+	std::set<int> preceding_network_indexes;
 	/**
 	 * - if last state network is not among preceding networks, then normalize
 	 */
@@ -37,20 +39,24 @@ public:
 	double hidden_average_max_update;
 	double output_average_max_update;
 
+	StateNetwork(int index);
+	StateNetwork(std::ifstream& input_file);
+	~StateNetwork();
 
 	void activate(double obs_val,
 				  double& state_val);
 	void backprop(double& state_error);
 
-	// TODO: if last_seen_network is NULL, then just have to do starting norm
 	void activate(double obs_val,
 				  StateStatus& state_status);
-	// TODO: set both val and last network
-
 	void activate_score(double obs_val,
 						StateStatus& state_status,
 						StateStatus& state_diff);
 
+	void save(std::ofstream& output_file);
+
+private:
+	void construct();
 };
 
 #endif /* STATE_NETWORK_H */

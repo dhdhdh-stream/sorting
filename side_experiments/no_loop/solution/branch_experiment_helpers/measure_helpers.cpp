@@ -21,17 +21,8 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
-		if (last_network == NULL) {
-			map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
-			if (scale_it != this->score_state_scales.end()) {
-				branch_score += it->second.val
-					* it->first->resolved_standard_deviation
-					* scale_it->second->weight;
-			}
-			original_score += it->second.val
-				* it->first->resolved_standard_deviation
-				* it->first->scale->weight;
-		} else if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+		// last_network != NULL
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
 			double normalized = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation * last_network->correlation_to_end
 				* it->first->resolved_standard_deviation;
@@ -53,7 +44,7 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 			it != context[context.size() - this->scope_context.size()].new_score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
-		if (it->first->resolved_networks.find(last_network) == it->first->resolved_networks.end()) {
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
 			double normalized = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation * last_network->correlation_to_end
 				* it->first->resolved_standard_deviation;
@@ -136,15 +127,19 @@ void BranchExperiment::eval() {
 					delete this->sequences[s_index];
 				}
 			}
+			this->actions.clear();
+			this->sequences.clear();
 
 			for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 					it != this->score_state_scales.end(); it++) {
 				delete it->second;
 			}
+			this->score_state_scales.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
 				delete this->new_score_states[s_index];
 			}
+			this->new_score_states.clear();
 		}
 	}
 
@@ -181,6 +176,7 @@ void BranchExperiment::new_branch() {
 
 		delete it->second;
 	}
+	this->score_state_scales.clear();
 
 	map<int, Sequence*> sequence_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -198,6 +194,7 @@ void BranchExperiment::new_branch() {
 						   this->new_score_state_obs_indexes[s_index],
 						   new_branch_node);
 	}
+	this->new_score_states.clear();
 
 	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
@@ -246,8 +243,12 @@ void BranchExperiment::new_branch() {
 			new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 
 			delete this->best_sequences[s_index];
+
+			starting_scope->child_scopes.push_back(new_scope_node->inner_scope);
 		}
 	}
+	this->best_actions.clear();
+	this->best_sequences.clear();
 
 	{
 		ExitNode* new_exit_node = new ExitNode();
@@ -326,9 +327,13 @@ void BranchExperiment::new_pass_through() {
 
 			delete this->best_sequences[s_index];
 
+			starting_scope->child_scopes.push_back(new_scope_node->inner_scope);
+
 			new_scope_node_id_mappings[new_scope_node->inner_scope->id] = new_scope_node->id;
 		}
 	}
+	this->best_actions.clear();
+	this->best_sequences.clear();
 
 	{
 		ExitNode* new_exit_node = new ExitNode();
@@ -346,6 +351,7 @@ void BranchExperiment::new_pass_through() {
 
 		it->first->scale = it->second;
 	}
+	this->score_state_scales.clear();
 
 	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
 		finalize_new_score_state(parent_scope,
@@ -356,6 +362,7 @@ void BranchExperiment::new_pass_through() {
 								 this->new_score_state_node_contexts[s_index],
 								 this->new_score_state_obs_indexes[s_index]);
 	}
+	this->new_score_states.clear();
 
 	parent_scope->average_score = this->average_score;
 }

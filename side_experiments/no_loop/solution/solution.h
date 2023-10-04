@@ -3,6 +3,17 @@
 
 class Solution {
 public:
+	int num_states;
+	std::map<int, State*> states;
+	/**
+	 * - use map to track states as will be sparse
+	 */
+	/**
+	 * TODO: track relations among states, e.g.:
+	 *   - which states are used together
+	 *   - which states depend on which states
+	 */
+
 	int num_scopes;
 	std::map<int, Scope*> scopes;
 	// 0 is root, starts with ACTION_START
