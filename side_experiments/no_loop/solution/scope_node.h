@@ -63,7 +63,82 @@ public:
 
 	BranchExperiment* experiment;
 
+	ScopeNode();
+	ScopeNode(std::ifstream& input_file,
+			  int id);
+	~ScopeNode();
 
+	void activate(int& curr_node_id,
+				  std::vector<double>& flat_vals,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  int& exit_node_id,
+				  RunHelper& run_helper,
+				  std::vector<AbstractNodeHistory*>& node_histories);
+	void halfway_activate(std::vector<int>& starting_node_ids,
+						  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
+						  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
+						  int& curr_node_id,
+						  std::vector<double>& flat_vals,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  int& exit_node_id,
+						  RunHelper& run_helper,
+						  std::vector<AbstractNodeHistory*>& node_histories);
+
+	void random_activate(std::vector<int>& scope_context,
+						 std::vector<int>& node_context,
+						 int& inner_exit_depth,
+						 int& inner_exit_node_id,
+						 int& num_nodes,
+						 std::vector<AbstractNodeHistory*>& node_histories);
+	void halfway_random_activate(std::vector<int>& starting_node_ids,
+								 std::vector<int>& scope_context,
+								 std::vector<int>& node_context,
+								 int& inner_exit_depth,
+								 int& inner_exit_node_id,
+								 int& num_nodes,
+								 std::vector<AbstractNodeHistory*>& node_histories);
+
+	void halfway_random_exit_activate(std::vector<int>& starting_node_ids,
+									  std::vector<int>& scope_context,
+									  std::vector<int>& node_context,
+									  int& inner_exit_depth,
+									  int& inner_exit_node_id,
+									  int& num_nodes,
+									  std::vector<AbstractNodeHistory*>& node_histories);
+
+	void create_sequence_activate(std::vector<double>& flat_vals,
+								  std::vector<ContextLayer>& context,
+								  int target_num_nodes,
+								  int& curr_num_nodes,
+								  Sequence* new_sequence,
+								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
+								  int& new_num_input_states,
+								  std::vector<AbstractNode*>& new_nodes,
+								  RunHelper& run_helper);
+	void halfway_create_sequence_activate(std::vector<int>& starting_node_ids,
+										  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
+										  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
+										  std::vector<std::map<std::pair<bool,int>, int>>& starting_state_mappings,
+										  std::vector<double>& flat_vals,
+										  std::vector<ContextLayer>& context,
+										  int target_num_nodes,
+										  int& curr_num_nodes,
+										  Sequence* new_sequence,
+										  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
+										  int& new_num_input_states,
+										  std::vector<AbstractNode*>& new_nodes,
+										  RunHelper& run_helper);
+
+	void experiment_back_activate(std::vector<int>& scope_context,
+								  std::vector<int>& node_context,
+								  std::map<State*, StateStatus>& experiment_score_state_vals,
+								  std::vector<int>& test_obs_indexes,
+								  std::vector<double>& test_obs_vals,
+								  ScopeNodeHistory* history);
+
+	void save(std::ofstream& output_file);
 };
 
 class ScopeNodeHistory : public AbstractNodeHistory {

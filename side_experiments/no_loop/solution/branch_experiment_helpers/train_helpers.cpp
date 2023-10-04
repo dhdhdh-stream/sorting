@@ -97,6 +97,8 @@ void BranchExperiment::train_backprop(double target_val,
 									   history->parent_scope_history->test_obs_vals);
 
 		if (this->obs_experiment->state == OBS_EXPERIMENT_STATE_DONE) {
+			this->obs_experiment->branch_experiment_eval(this);
+
 			delete this->obs_experiment;
 			this->obs_experiment = NULL;
 		}
@@ -105,7 +107,7 @@ void BranchExperiment::train_backprop(double target_val,
 	if (this->obs_experiment == NULL) {
 		this->state_iter++;
 		if (this->state_iter <= OBS_EXPERIMENT_TRIES) {
-			this->obs_experiment = solution->create_obs_experiment(history->parent_scope_history);
+			this->obs_experiment = create_obs_experiment(history->parent_scope_history);
 		} else {
 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;

@@ -30,6 +30,29 @@ public:
 
 	double new_average_misguess;
 
+	ObsExperiment(Scope* parent_scope);
+	~ObsExperiment();
+
+	void hook(void* key);
+	void unhook(void* key);
+
+	void backprop(double target_val,
+				  double existing_predicted_score,
+				  std::vector<int>& obs_indexes,
+				  std::vector<double>& obs_vals);
+
+	void flat(double target_val,
+			  double existing_predicted_score,
+			  std::vector<int>& obs_indexes,
+			  std::vector<double>& obs_vals);
+	void trim();
+	void rnn(double target_val,
+			 double existing_predicted_score,
+			 std::vector<int>& obs_indexes,
+			 std::vector<double>& obs_vals);
+
+	void scope_eval(Scope* parent);
+	void branch_experiment_eval(BranchExperiment* branch_experiment);
 };
 
 #endif /* OBS_EXPERIMENT_H */

@@ -20,13 +20,11 @@ public:
 	 */
 
 	State();
-	~State() {
-		for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
-			delete this->networks[n_index];
-		}
+	State(std::ifstream& input_file,
+		  int id);
+	~State();
 
-		delete this->scale;
-	};
+	void save(std::ofstream& output_file);
 };
 
 #endif /* STATE_H */

@@ -1,4 +1,4 @@
-#include "solution.h"
+#include "helpers.h"
 
 using namespace std;
 
@@ -9,7 +9,14 @@ using namespace std;
  */
 const int NUM_INITIAL_OBS = 10;
 
-void Solution::create_obs_experiment_branch_experiment_helper(
+void create_obs_experiment_helper(vector<int>& scope_context,
+								  vector<int>& node_context,
+								  vector<AbstractNode*>& possible_nodes,
+								  vector<vector<int>>& possible_scope_contexts,
+								  vector<vector<int>>& possible_node_contexts,
+								  vector<int>& possible_obs_indexes,
+								  ScopeHistory* scope_history);
+void create_obs_experiment_branch_experiment_helper(
 		vector<int>& scope_context,
 		vector<int>& node_context,
 		vector<AbstractNode*>& possible_nodes,
@@ -39,13 +46,13 @@ void Solution::create_obs_experiment_branch_experiment_helper(
 	}
 }
 
-void Solution::create_obs_experiment_helper(vector<int>& scope_context,
-											vector<int>& node_context,
-											vector<AbstractNode*>& possible_nodes,
-											vector<vector<int>>& possible_scope_contexts,
-											vector<vector<int>>& possible_node_contexts,
-											vector<int>& possible_obs_indexes,
-											ScopeHistory* scope_history) {
+void create_obs_experiment_helper(vector<int>& scope_context,
+								  vector<int>& node_context,
+								  vector<AbstractNode*>& possible_nodes,
+								  vector<vector<int>>& possible_scope_contexts,
+								  vector<vector<int>>& possible_node_contexts,
+								  vector<int>& possible_obs_indexes,
+								  ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
 	scope_context.push_back(scope_id);
@@ -143,7 +150,7 @@ void Solution::create_obs_experiment_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
-ObsExperiment* Solution::create_obs_experiment(ScopeHistory* scope_history) {
+ObsExperiment* create_obs_experiment(ScopeHistory* scope_history) {
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
@@ -159,7 +166,8 @@ ObsExperiment* Solution::create_obs_experiment(ScopeHistory* scope_history) {
 								 possible_obs_indexes,
 								 scope_history);
 
-	ObsExperiment* obs_experiment = new ObsExperiment();
+	Scope* parent_scope = scope_history->scope;
+	ObsExperiment* obs_experiment = new ObsExperiment(parent_scope);
 
 	int num_obs = min(NUM_INITIAL_OBS, possible_nodes.size());
 	for (int o_index = 0; o_index < num_obs; o_index++) {

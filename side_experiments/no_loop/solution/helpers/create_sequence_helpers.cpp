@@ -1,4 +1,4 @@
-#include "solution.h"
+#include "helpers.h"
 
 using namespace std;
 
@@ -9,8 +9,8 @@ using namespace std;
  *   - don't random activate -> trim context
  *     - early exit may exit to a layer outside of bounds
  */
-void Solution::random_starting_node(Scope* containing_scope,
-									int& starting_node_id) {
+void random_starting_node(Scope* containing_scope,
+						  int& starting_node_id) {
 	vector<int> possible_ids;
 	for (int n_index = 0; n_index < (int)containing_scope->nodes.size(); n_index++) {
 		if (containing_scope[n_index] != NODE_TYPE_EXIT) {
@@ -23,7 +23,7 @@ void Solution::random_starting_node(Scope* containing_scope,
 	starting_node_id = possible_ids[rand_index];
 }
 
-void Solution::random_halfway_start_fetch_context_helper(
+void random_halfway_start_fetch_context_helper(
 		ScopeHistory* scope_history,
 		int target_index,
 		int& curr_index,
@@ -63,8 +63,8 @@ void Solution::random_halfway_start_fetch_context_helper(
 	}
 }
 
-void Solution::random_halfway_start(ScopeNode* starting_scope_node,
-									vector<int>& starting_halfway_node_context) {
+void random_halfway_start(ScopeNode* starting_scope_node,
+						  vector<int>& starting_halfway_node_context) {
 	Scope* scope = solution->scopes[starting_scope_node->inner_scope_id];
 
 	vector<int> scope_context{-1};
@@ -99,11 +99,11 @@ void Solution::random_halfway_start(ScopeNode* starting_scope_node,
 		starting_halfway_node_context);
 }
 
-Sequence* Solution::construct_sequence(vector<double>& flat_vals,
-									   vector<ContextLayer>& context,
-									   int explore_context_depth,
-									   Scope* containing_scope,
-									   RunHelper& run_helper) {
+Sequence* create_sequence(vector<double>& flat_vals,
+						  vector<ContextLayer>& context,
+						  int explore_context_depth,
+						  Scope* containing_scope,
+						  RunHelper& run_helper) {
 	Sequence* new_sequence = new Sequence();
 
 	/**
@@ -796,8 +796,7 @@ Sequence* Solution::construct_sequence(vector<double>& flat_vals,
 
 	Scope* new_scope = new Scope();
 
-	new_scope->id = solution->num_scopes;
-	solution->num_scopes++;
+	// don't set id/increment scope_counter until train
 
 	new_scope->num_input_states = new_num_input_states;
 	new_scope->num_local_states = 0;
@@ -826,6 +825,12 @@ Sequence* Solution::construct_sequence(vector<double>& flat_vals,
 			branch_stub_node->next_node_id = next_node_id;
 		}
 	}
+
+	Scope* parent_scope = solution->scopes[context[context.size() - explore_context_depth].scope_id];
+	new_scope->average_score = parent_scope->average_score;
+	new_scope->score_variance = parent_scope->score_variance;
+	new_scope->average_misguess = parent_scope->average_misguess;
+	new_scope->misguess_variance = parent_scope->misguess_variance;
 
 	new_sequence->scope = new_scope;
 

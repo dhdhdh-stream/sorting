@@ -1,11 +1,11 @@
-#include "solution.h"
+#include "helpers.h"
 
 using namespace std;
 
-void Solution::finalize_existing_state(Scope* parent_scope,
-									   State* score_state,
-									   BranchNode* new_branch_node,
-									   double new_branch_weight) {
+void finalize_existing_state(Scope* parent_scope,
+							 State* score_state,
+							 BranchNode* new_branch_node,
+							 double new_branch_weight) {
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
 
@@ -204,14 +204,14 @@ void Solution::finalize_existing_state(Scope* parent_scope,
 	}
 }
 
-void Solution::finalize_new_state(Scope* parent_scope,
-								  map<int, Sequence*>& sequence_mappings,
-								  State* score_state,
-								  vector<AbstractNode*>& nodes,
-								  vector<vector<int>>& scope_contexts,
-								  vector<vector<int>>& node_contexts,
-								  vector<int>& obs_indexes,
-								  BranchNode* new_branch_node) {
+void finalize_new_state(Scope* parent_scope,
+						map<int, Sequence*>& sequence_mappings,
+						State* score_state,
+						vector<AbstractNode*>& nodes,
+						vector<vector<int>>& scope_contexts,
+						vector<vector<int>>& node_contexts,
+						vector<int>& obs_indexes,
+						BranchNode* new_branch_node) {
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
 
@@ -370,6 +370,7 @@ void Solution::finalize_new_state(Scope* parent_scope,
 			}
 		}
 	}
+	score_state->nodes.clear();
 
 	if (new_branch_node->branch_scope_context.size() == 1) {
 		new_branch_node->branch_state_is_local.push_back(true);
@@ -472,11 +473,11 @@ void Solution::finalize_new_state(Scope* parent_scope,
 	solution->states[score_state->id] = score_state;
 }
 
-ScopeNode* Solution::finalize_sequence(vector<int>& scope_context,
-									   vector<int>& node_context,
-									   Sequence* new_sequence,
-									   map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
-									   map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
+ScopeNode* finalize_sequence(vector<int>& scope_context,
+							 vector<int>& node_context,
+							 Sequence* new_sequence,
+							 map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
+							 map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
 	ScopeNode* new_scope_node = new ScopeNode();
 
 	solution->scopes[new_sequence->scope->id] = new_sequence->scope;
@@ -675,13 +676,13 @@ ScopeNode* Solution::finalize_sequence(vector<int>& scope_context,
 	return new_scope_node;
 }
 
-void Solution::finalize_new_score_state(Scope* parent_scope,
-										map<int, int>& new_scope_node_id_mappings,
-										State* score_state,
-										vector<AbstractNode*>& nodes,
-										vector<vector<int>>& scope_contexts,
-										vector<vector<int>>& node_contexts,
-										vector<int>& obs_indexes) {
+void finalize_new_score_state(Scope* parent_scope,
+							  map<int, int>& new_scope_node_id_mappings,
+							  State* score_state,
+							  vector<AbstractNode*>& nodes,
+							  vector<vector<int>>& scope_contexts,
+							  vector<vector<int>>& node_contexts,
+							  vector<int>& obs_indexes) {
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)nodes[n_index];

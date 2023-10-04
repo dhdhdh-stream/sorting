@@ -1,8 +1,8 @@
-#include "solution.h"
+#include "helpers.h"
 
 using namespace std;
 
-void Solution::random_exit_fetch_context_helper(
+void random_exit_fetch_context_helper(
 		ScopeHistory* scope_history,
 		int target_index,
 		int& curr_index,
@@ -50,10 +50,10 @@ void Solution::random_exit_fetch_context_helper(
 	}
 }
 
-void Solution::random_exit(vector<int>& starting_scope_context,
-						   vector<int>& starting_node_context,
-						   int& new_exit_depth,
-						   int& new_exit_node_id) {
+void random_exit(vector<int>& starting_scope_context,
+				 vector<int>& starting_node_context,
+				 int& new_exit_depth,
+				 int& new_exit_node_id) {
 	Scope* parent_scope = solution->scopes[starting_scope_context[0]];
 
 	vector<int> scope_context{starting_scope_context[0]};

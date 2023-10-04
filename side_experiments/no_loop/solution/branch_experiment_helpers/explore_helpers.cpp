@@ -77,11 +77,11 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					}
 				}
 
-				Sequence* new_sequence = solution->construct_sequence(flat_vals,
-																	  context,
-																	  this->scope_context.size(),
-																	  containing_scope,
-																	  run_helper);
+				Sequence* new_sequence = create_sequence(flat_vals,
+														 context,
+														 this->scope_context.size(),
+														 containing_scope,
+														 run_helper);
 				this->curr_sequences.push_back(new_sequence);
 			}
 		}
@@ -91,10 +91,10 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 		// exit
 		int new_exit_depth;
 		int new_exit_node_id;
-		solution->random_exit(this->scope_context,
-							  this->node_context,
-							  new_exit_depth,
-							  new_exit_node_id);
+		random_exit(this->scope_context,
+					this->node_context,
+					new_exit_depth,
+					new_exit_node_id);
 
 		this->curr_exit_depth = new_exit_depth;
 		this->curr_exit_node_id = new_exit_node_id;
@@ -151,8 +151,8 @@ void BranchExperiment::explore_backprop(double target_val,
 		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					this->best_sequences[s_index]->scope->id = solution->num_scopes;
-					solution->num_scopes++;
+					this->best_sequences[s_index]->scope->id = solution->scope_counter;
+					solution->scope_counter++;
 				}
 			}
 

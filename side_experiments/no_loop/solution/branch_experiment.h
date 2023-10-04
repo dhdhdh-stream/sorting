@@ -70,7 +70,8 @@ public:
 
 	ObsExperiment* obs_experiment;
 
-	BranchExperiment();
+	BranchExperiment(std::vector<int>& scope_context,
+					 std::vector<int>& node_context);
 	~BranchExperiment();
 
 	void activate(int& curr_node_id,

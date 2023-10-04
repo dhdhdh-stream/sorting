@@ -11,6 +11,8 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
 	node_histories.push_back(history);
 
+	history->is_halfway = false;
+
 	num_nodes++;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);

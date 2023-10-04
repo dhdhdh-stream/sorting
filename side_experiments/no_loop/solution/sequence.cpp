@@ -2,7 +2,15 @@
 
 using namespace std;
 
+Sequence::Sequence() {
+	// do nothing
+}
 
+Sequence::~Sequence() {
+	if (this->scope != NULL) {
+		delete this->scope;
+	}
+}
 
 void Sequence::activate(vector<double>& flat_vals,
 						vector<ContextLayer>& context,
@@ -77,4 +85,12 @@ void Sequence::activate(vector<double>& flat_vals,
 	context.pop_back();
 
 	// no need to set context.back().node_id
+}
+
+SequenceHistory::SequenceHistory(Sequence* sequence) {
+	this->sequence = sequence;
+}
+
+SequenceHistory::~SequenceHistory() {
+	delete this->scope_history;
 }

@@ -24,30 +24,21 @@ void BranchExperiment::activate(int& curr_node_id,
 
 	if (matches_context) {
 		if (run_helper.phase == RUN_PHASE_EXPLORE) {
-			map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.find(this);
-			if (it == run_helper.experiments_seen_counts.end()) {
-				double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
-				uniform_real_distribution<double> distribution(0.0, 1.0);
-				if (distribution(generator) < selected_probability) {
-					hook(context,
-						 run_helper);
+			if (run_helper.selected_branch_experiment == this) {
+				// already hooked
 
-					run_helper.selected_branch_experiment = this;
-					run_helper.selected_branch_experiment_count = 1;
+				run_helper.selected_branch_experiment_count++;
 
-					bool is_target;
-					if (this->average_instances_per_run == 1.0) {
-						// special case
-						is_target = true;
+				if (run_helper.branch_experiment_history == NULL) {
+					double target_probability;
+					if (run_helper.selected_branch_experiment_count > this->average_instances_per_run) {
+						target_probability = 0.5;
 					} else {
-						double target_probability = 1.0 / (1.0 + this->average_instances_per_run);
-						if (distribution(generator) < target_probability) {
-							is_target = true;
-						} else {
-							is_target = false;
-						}
+						target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - run_helper.selected_branch_experiment_count));
+						// already incremented
 					}
-					if (is_target) {
+					uniform_real_distribution<double> distribution(0.0, 1.0);
+					if (distribution(generator) < target_probability) {
 						history = new BranchExperimentHistory(this);
 						run_helper.branch_experiment_history = history;
 						context[context.size() - this->scope_context.size()]
@@ -78,6 +69,17 @@ void BranchExperiment::activate(int& curr_node_id,
 											 run_helper);
 						}
 					} else {
+						if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
+							simple_activate(curr_node_id,
+											flat_vals,
+											context,
+											exit_depth,
+											exit_node_id,
+											run_helper);
+						}
+					}
+				} else {
+					if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
 						simple_activate(curr_node_id,
 										flat_vals,
 										context,
@@ -85,25 +87,32 @@ void BranchExperiment::activate(int& curr_node_id,
 										exit_node_id,
 										run_helper);
 					}
-				} else {
-					run_helper.experiments_seen_counts[this] = 1;
 				}
-			} else {
-				if (run_helper.selected_branch_experiment == this) {
-					// already hooked
+			} else if (run_helper.selected_branch_experiment == NULL) {
+				map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.find(this);
+				if (it == run_helper.experiments_seen_counts.end()) {
+					double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
+					uniform_real_distribution<double> distribution(0.0, 1.0);
+					if (distribution(generator) < selected_probability) {
+						hook(context,
+							 run_helper);
 
-					run_helper.selected_branch_experiment_count++;
+						run_helper.selected_branch_experiment = this;
+						run_helper.selected_branch_experiment_count = 1;
 
-					if (run_helper.branch_experiment_history == NULL) {
-						double target_probability;
-						if (run_helper.selected_branch_experiment_count > this->average_instances_per_run) {
-							target_probability = 0.5;
+						bool is_target;
+						if (this->average_instances_per_run == 1.0) {
+							// special case
+							is_target = true;
 						} else {
-							target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - run_helper.selected_branch_experiment_count));
-							// already incremented
+							double target_probability = 1.0 / (1.0 + this->average_instances_per_run);
+							if (distribution(generator) < target_probability) {
+								is_target = true;
+							} else {
+								is_target = false;
+							}
 						}
-						uniform_real_distribution<double> distribution(0.0, 1.0);
-						if (distribution(generator) < target_probability) {
+						if (is_target) {
 							history = new BranchExperimentHistory(this);
 							run_helper.branch_experiment_history = history;
 							context[context.size() - this->scope_context.size()]
@@ -134,17 +143,6 @@ void BranchExperiment::activate(int& curr_node_id,
 												 run_helper);
 							}
 						} else {
-							if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
-								simple_activate(curr_node_id,
-												flat_vals,
-												context,
-												exit_depth,
-												exit_node_id,
-												run_helper);
-							}
-						}
-					} else {
-						if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
 							simple_activate(curr_node_id,
 											flat_vals,
 											context,
@@ -152,6 +150,8 @@ void BranchExperiment::activate(int& curr_node_id,
 											exit_node_id,
 											run_helper);
 						}
+					} else {
+						run_helper.experiments_seen_counts[this] = 1;
 					}
 				}
 			}

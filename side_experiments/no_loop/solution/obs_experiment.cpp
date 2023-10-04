@@ -2,6 +2,9 @@
 
 using namespace std;
 
+const int FLAT_ITERS = 500000;
+const int RNN_ITERS = 500000;
+
 /**
  * - practical limit
  *   - requires a huge increase to hidden size (i.e., runtime) to reliably find 5-way XORs
@@ -9,6 +12,25 @@ using namespace std;
 const int OBS_LIMIT = 4;
 
 const double MIN_IMPACT_SCALE = 0.3;
+
+ObsExperiment::ObsExperiment(Scope* parent_scope) {
+	this->resolved_variance = 1.0;
+
+	this->new_average_misguess = parent_scope->average_misguess;
+
+	this->state = OBS_EXPERIMENT_STATE_FLAT;
+	this->state_iter = 0;
+}
+
+ObsExperiment::~ObsExperiment() {
+	if (this->flat_network != NULL) {
+		delete this->flat_network;
+	}
+
+	for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
+		delete this->state_networks[n_index];
+	}
+}
 
 void ObsExperiment::hook(void* key) {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
@@ -75,7 +97,22 @@ void ObsExperiment::unhook(void* key) {
 	}
 }
 
-
+void ObsExperiment::backprop(double target_val,
+							 double existing_predicted_score,
+							 vector<int>& obs_indexes,
+							 vector<double>& obs_vals) {
+	if (this->state == OBS_EXPERIMENT_STATE_FLAT) {
+		flat(target_val,
+			 existing_predicted_score,
+			 obs_indexes,
+			 obs_vals);
+	} else {
+		rnn(target_val,
+			existing_predicted_score,
+			obs_indexes,
+			obs_vals);
+	}
+}
 
 void ObsExperiment::flat(double target_val,
 						 double existing_predicted_score,
@@ -94,6 +131,11 @@ void ObsExperiment::flat(double target_val,
 		double predicted_score_error = target_val - new_predicted_score;
 
 		this->flat_network->backprop(predicted_score_error);
+	}
+
+	this->state_iter++;
+	if (this->state_iter >= FLAT_ITERS) {
+		trim();
 	}
 }
 
@@ -126,6 +168,10 @@ void ObsExperiment::trim() {
 	vector<vector<int>> new_node_contexts;
 	vector<int> new_obs_indexes;
 	for (int l_index = 0; l_index < OBS_LIMIT; l_index++) {
+		if (obs_impacts.size() == 0) {
+			break;
+		}
+
 		double highest_impact = 0.0;
 		double highest_index = -1;
 		for (int n_index = 0; n_index < (int)obs_impacts.size(); n_index++) {
@@ -159,7 +205,6 @@ void ObsExperiment::trim() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		this->state_networks[n_index] = new StateNetwork(n_index);
 	}
-	this->resolved_variance = 0.0;
 
 	this->state = OBS_EXPERIMENT_STATE_RNN;
 	this->state_iter = 0;
@@ -219,6 +264,17 @@ void ObsExperiment::rnn(double target_val,
 
 			this->state_networks[network_index]->backprop(state_error);
 		}
+	} else {
+		double curr_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
+		this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
+		/**
+		 * - still update so measurements are proportional
+		 */
+	}
+
+	this->state_iter++;
+	if (this->state_iter >= RNN_ITERS) {
+		this->state = OBS_EXPERIMENT_STATE_DONE;
 	}
 }
 
@@ -242,13 +298,14 @@ void ObsExperiment::scope_eval(Scope* parent) {
 				/ this->state_networks[n_index]->ending_standard_deviation / new_state->resolved_standard_deviation;
 		}
 		new_state->networks = this->state_networks;
+		this->state_networks.clear();
 
 		new_state->scale = new Scale(1.0);
 
 		new_state->nodes = this->nodes;
 
-		new_state->id = solution->num_states;
-		solution->num_states++;
+		new_state->id = solution->state_counter;
+		solution->state_counter++;
 
 		solution->states[new_state->id] = new_state;
 
@@ -306,13 +363,14 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 			this->state_networks[n_index]->parent_state = new_state;
 		}
 		new_state->networks = this->state_networks;
+		this->state_networks.clear();
 
 		new_state->scale = new Scale(1.0);
 
 		new_state->nodes = this->nodes;
 
-		new_state->id = solution->num_states;
-		solution->num_states++;
+		new_state->id = solution->state_counter;
+		solution->state_counter++;
 
 		branch_experiment->new_score_states.push_back(new_state);
 		branch_experiment->new_score_state_nodes.push_back(this->nodes);

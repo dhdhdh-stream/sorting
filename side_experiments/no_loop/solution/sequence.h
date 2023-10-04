@@ -19,6 +19,13 @@ public:
 
 	Scope* scope;
 
+	Sequence();
+	~Sequence();
+
+	void activate(std::vector<double>& flat_vals,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper,
+				  SequenceHistory* history);
 };
 
 class SequenceHistory {
@@ -29,7 +36,8 @@ public:
 
 	// scope initially has no local state/obs_snapshots
 
-
+	SequenceHistory(Sequence* sequence);
+	~SequenceHistory();
 };
 
 #endif /* SEQUENCE_H */

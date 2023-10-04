@@ -40,7 +40,9 @@ public:
 	double output_average_max_update;
 
 	StateNetwork(int index);
-	StateNetwork(std::ifstream& input_file);
+	StateNetwork(std::ifstream& input_file,
+				 State* parent_state,
+				 int index);
 	~StateNetwork();
 
 	void activate(double obs_val,

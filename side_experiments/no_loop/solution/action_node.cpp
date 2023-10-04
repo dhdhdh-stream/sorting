@@ -12,6 +12,8 @@ ActionNode::ActionNode(ifstream& input_file,
 					   int id) {
 	this->type = NODE_TYPE_ACTION;
 
+	this->id = id;
+
 	string state_defs_size_line;
 	getline(input_file, state_defs_size_line);
 	int state_defs_size = stoi(state_defs_size_line);
@@ -59,11 +61,15 @@ ActionNode::ActionNode(ifstream& input_file,
 		string network_index_line;
 		getline(input_file, network_index_line);
 		this->score_state_network_indexes.push_back(stoi(network_index_line));
+
+		this->score_state_defs.back()->nodes[this->score_state_network_indexes.back()] = this;
 	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {

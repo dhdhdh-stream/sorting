@@ -210,6 +210,8 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(scope_node);
 		history->node_histories[0].push_back(node_history);
 
+		node_history->is_halfway = false;
+
 		ScopeHistory* inner_scope_history = new ScopeHistory(scope_node->inner_scope);
 		node_history->inner_scope_history = inner_scope_history;
 

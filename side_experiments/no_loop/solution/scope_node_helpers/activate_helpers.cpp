@@ -12,6 +12,8 @@ void ScopeNode::activate(int& curr_node_id,
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
 	node_histories.push_back(history);
 
+	history->is_halfway = false;
+
 	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_node_ids.size());
 	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_node_ids.size());
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {

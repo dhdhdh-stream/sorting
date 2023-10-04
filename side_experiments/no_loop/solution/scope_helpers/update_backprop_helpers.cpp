@@ -88,12 +88,14 @@ void Scope::update_backprop(double target_val,
 									   history->test_obs_vals);
 
 		if (this->obs_experiment->state == OBS_EXPERIMENT_STATE_DONE) {
+			this->obs_experiment->scope_eval(this);
+
 			delete this->obs_experiment;
 			this->obs_experiment = NULL;
 		}
 	}
 
 	if (this->obs_experiment == NULL) {
-		this->obs_experiment = solution->create_obs_experiment(history);
+		this->obs_experiment = create_obs_experiment(history);
 	}
 }

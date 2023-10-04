@@ -6,7 +6,12 @@ public:
 	int exit_depth;
 	int exit_node_id;
 
+	ExitNode();
+	ExitNode(std::ifstream& input_file,
+			 int id);
+	~ExitNode();
 
+	void save(ofstream& output_file);
 };
 
 class ExitNodeHistory : public AbstractNodeHistory {
