@@ -2,9 +2,10 @@
 
 #include <cmath>
 #include <iostream>
+#include <random>
 #include <sstream>
 
-#include "utilities.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -23,6 +24,8 @@ Layer::~Layer() {
 }
 
 void Layer::setup_weights_full() {
+	uniform_real_distribution<double> distribution(-0.01, 0.01);
+
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		vector<vector<double>> node_weights;
 		vector<vector<double>> node_weight_updates;
@@ -33,7 +36,7 @@ void Layer::setup_weights_full() {
 			vector<double> layer_weights;
 			vector<double> layer_weight_updates;
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				layer_weights.push_back((randuni()-0.5)*0.02);
+				layer_weights.push_back(distribution(generator));
 				layer_weight_updates.push_back(0.0);
 			}
 			node_weights.push_back(layer_weights);
@@ -41,7 +44,7 @@ void Layer::setup_weights_full() {
 		}
 
 		this->weights.push_back(node_weights);
-		this->constants.push_back((randuni()-0.5)*0.02);
+		this->constants.push_back(distribution(generator));
 		this->weight_updates.push_back(node_weight_updates);
 		this->constant_updates.push_back(0.0);
 	}
@@ -234,19 +237,6 @@ void Layer::update_weights(double learning_rate) {
 	}
 }
 
-void Layer::save_weights(ofstream& output_file) {
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				output_file << this->weights[n_index][l_index][ln_index] << ",";
-			}
-			output_file << endl;
-		}
-		output_file << this->constants[n_index] << endl;
-	}
-}
-
 void Layer::backprop_errors_with_no_weight_change() {
 	if (this->type == LINEAR_LAYER) {
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
@@ -347,5 +337,18 @@ void Layer::backprop_weights_with_no_error_signal() {
 
 			this->errors[n_index] = 0.0;
 		}
+	}
+}
+
+void Layer::save_weights(ofstream& output_file) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				output_file << this->weights[n_index][l_index][ln_index] << ",";
+			}
+			output_file << endl;
+		}
+		output_file << this->constants[n_index] << endl;
 	}
 }

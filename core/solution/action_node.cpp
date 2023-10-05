@@ -2,283 +2,120 @@
 
 #include <iostream>
 
-#include "constants.h"
+#include "branch_experiment.h"
 #include "globals.h"
+#include "solution.h"
+#include "state.h"
 
 using namespace std;
 
-ActionNode::ActionNode(Action action,
-					   vector<int> state_network_target_indexes,
-					   vector<StateNetwork*> state_networks,
-					   StateNetwork* score_network) {
+ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
-	this->action = action;
-
-	this->state_network_target_indexes = state_network_target_indexes;
-	this->state_networks = state_networks;
-	this->score_network = score_network;
-
-	// simply initialize to 0.0
-	this->average_score = 0.0;
-	this->score_variance = 0.0;
-	this->average_misguess = 0.0;
-	this->misguess_variance = 0.0;
-	this->average_impact = 0.0;
-
-	this->explore_curr_try = 0;
-	this->best_explore_surprise = numeric_limits<double>::lowest();
-	this->best_explore_seed_outer_context_history = NULL;
-
-	this->explore_exit_depth = -1;
-	this->explore_next_node_id = -1;
-	this->explore_fold = NULL;
-	this->explore_loop_fold = NULL;
+	this->experiment = NULL;
 }
 
 ActionNode::ActionNode(ifstream& input_file,
-					   int scope_id,
-					   int scope_index) {
+					   int id) {
 	this->type = NODE_TYPE_ACTION;
 
-	this->action = Action(input_file);
+	this->id = id;
 
-	string state_networks_size_line;
-	getline(input_file, state_networks_size_line);
-	int state_networks_size = stoi(state_networks_size_line);
-	for (int s_index = 0; s_index < state_networks_size; s_index++) {
-		string target_index_line;
-		getline(input_file, target_index_line);
-		this->state_network_target_indexes.push_back(stoi(target_index_line));
+	string state_defs_size_line;
+	getline(input_file, state_defs_size_line);
+	int state_defs_size = stoi(state_defs_size_line);
+	for (int s_index = 0; s_index < state_defs_size; s_index++) {
+		string is_local_line;
+		getline(input_file, is_local_line);
+		this->state_is_local.push_back(stoi(is_local_line));
 
-		ifstream state_network_save_file;
-		state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(s_index) + ".txt");
-		this->state_networks.push_back(new StateNetwork(state_network_save_file));
-		state_network_save_file.close();
+		string indexes_line;
+		getline(input_file, indexes_line);
+		this->state_indexes.push_back(stoi(indexes_line));
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->state_defs.push_back(solution->states[stoi(def_id_line)]);
+
+		string network_index_line;
+		getline(input_file, network_index_line);
+		this->state_network_indexes.push_back(stoi(network_index_line));
 	}
 
-	ifstream score_network_save_file;
-	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
-	this->score_network = new StateNetwork(score_network_save_file);
-	score_network_save_file.close();
+	string score_state_defs_size_line;
+	getline(input_file, score_state_defs_size_line);
+	int score_state_defs_size = stoi(score_state_defs_size_line);
+	for (int s_index = 0; s_index < score_state_defs_size; s_index++) {
+		string context_size_line;
+		getline(input_file, context_size_line);
+		int context_size = stoi(context_size_line);
+		this->score_state_scope_contexts.push_back(vector<int>());
+		this->score_state_node_contexts.push_back(vector<int>());
+		for (int c_index = 0; c_index < context_size; c_index++) {
+			string scope_context_line;
+			getline(input_file, scope_context_line);
+			this->score_state_scope_contexts.back().push_back(stoi(scope_context_line));
+
+			string node_context_line;
+			getline(input_file, node_context_line);
+			this->score_state_node_contexts.back().push_back(stoi(node_context_line));
+		}
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->score_state_defs.push_back(solution->states[stoi(def_id_line)]);
+
+		string network_index_line;
+		getline(input_file, network_index_line);
+		this->score_state_network_indexes.push_back(stoi(network_index_line));
+
+		this->score_state_defs.back()->nodes[this->score_state_network_indexes.back()] = this;
+	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
 
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
-	string score_variance_line;
-	getline(input_file, score_variance_line);
-	this->score_variance = stod(score_variance_line);
-
-	string average_misguess_line;
-	getline(input_file, average_misguess_line);
-	this->average_misguess = stod(average_misguess_line);
-
-	string misguess_variance_line;
-	getline(input_file, misguess_variance_line);
-	this->misguess_variance = stod(misguess_variance_line);
-
-	string average_impact_line;
-	getline(input_file, average_impact_line);
-	this->average_impact = stod(average_impact_line);
-
-	this->explore_curr_try = 0;
-	this->best_explore_surprise = numeric_limits<double>::lowest();
-	this->best_explore_seed_outer_context_history = NULL;
-
-	this->explore_exit_depth = -1;
-	this->explore_next_node_id = -1;
-	this->explore_fold = NULL;
-	this->explore_loop_fold = NULL;
+	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {
-	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-		delete this->state_networks[s_index];
-	}
-
-	delete this->score_network;
-
-	if (this->best_explore_seed_outer_context_history != NULL) {
-		delete this->best_explore_seed_outer_context_history;
-	}
-
-	if (this->explore_fold != NULL) {
-		delete this->explore_fold;
-	}
-
-	if (this->explore_loop_fold != NULL) {
-		delete this->explore_loop_fold;
+	if (this->experiment != NULL) {
+		delete this->experiment;
 	}
 }
 
-void ActionNode::activate(Problem& problem,
-						  vector<double>& state_vals,
-						  vector<bool>& states_initialized,
-						  double& predicted_score,
-						  double& scale_factor,
-						  RunHelper& run_helper,
-						  ActionNodeHistory* history) {
-	problem.perform_action(this->action);
-	double obs = problem.get_observation();
-
-	history->obs_snapshot = obs;
-
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		history->state_network_histories = vector<StateNetworkHistory*>(this->state_networks.size(), NULL);
-		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-			if (states_initialized[this->state_network_target_indexes[s_index]]) {
-				StateNetworkHistory* network_history = new StateNetworkHistory(this->state_networks[s_index]);
-				this->state_networks[s_index]->activate(obs,
-														state_vals,
-														network_history);
-				history->state_network_histories[s_index] = network_history;
-				state_vals[this->state_network_target_indexes[s_index]] += this->state_networks[s_index]->output->acti_vals[0];
-			}
-		}
-	} else {
-		for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-			if (states_initialized[this->state_network_target_indexes[s_index]]) {
-				this->state_networks[s_index]->activate(obs,
-														state_vals);
-				state_vals[this->state_network_target_indexes[s_index]] += this->state_networks[s_index]->output->acti_vals[0];
-			}
-		}
+void ActionNode::save(ofstream& output_file) {
+	output_file << this->state_defs.size() << endl;
+	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
+		output_file << this->state_is_local[s_index] << endl;
+		output_file << this->state_indexes[s_index] << endl;
+		output_file << this->state_defs[s_index]->id << endl;
+		output_file << this->state_network_indexes[s_index] << endl;
 	}
 
-	StateNetworkHistory* network_history = new StateNetworkHistory(this->score_network);
-	this->score_network->activate(state_vals,
-								  network_history);
-	history->score_network_history = network_history;
-	history->score_network_update = this->score_network->output->acti_vals[0];
-	predicted_score += scale_factor*this->score_network->output->acti_vals[0];
-
-	history->ending_state_snapshot = state_vals;
-}
-
-void ActionNode::backprop(vector<double>& state_errors,
-						  vector<bool>& states_initialized,
-						  double target_val,
-						  double final_misguess,
-						  double& predicted_score,
-						  double& scale_factor,
-						  double& scale_factor_error,
-						  RunHelper& run_helper,
-						  ActionNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		double predicted_score_error = target_val - predicted_score;
-		this->score_network->backprop_errors_with_no_weight_change(
-			scale_factor*predicted_score_error,
-			state_errors,
-			history->score_network_history);
-
-		predicted_score -= scale_factor*history->score_network_update;
-
-		for (int s_index = (int)this->state_networks.size()-1; s_index >= 0; s_index--) {
-			if (states_initialized[this->state_network_target_indexes[s_index]]) {
-				this->state_networks[s_index]->backprop_errors_with_no_weight_change(
-					state_errors[this->state_network_target_indexes[s_index]],
-					state_errors,
-					history->state_network_histories[s_index]);
-			}
+	output_file << this->score_state_defs.size() << endl;
+	for (int s_index = 0; s_index < (int)this->score_state_defs.size(); s_index++) {
+		output_file << this->score_state_scope_contexts[s_index].size() << endl;
+		for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[s_index].size(); c_index++) {
+			output_file << this->score_state_scope_contexts[s_index][c_index] << endl;
+			output_file << this->score_state_node_contexts[s_index][c_index] << endl;
 		}
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-		this->average_score = 0.9999*this->average_score + 0.0001*target_val;
-		double curr_score_variance = (this->average_score - target_val)*(this->average_score - target_val);
-		this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
-
-		this->average_misguess = 0.9999*this->average_misguess + 0.0001*final_misguess;
-		double curr_misguess_variance = (this->average_misguess - final_misguess)*(this->average_misguess - final_misguess);
-		this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
-
-		this->average_impact = 0.9999*this->average_impact + 0.0001*abs(scale_factor*history->score_network_update);
-
-		double predicted_score_error = target_val - predicted_score;
-
-		scale_factor_error += history->score_network_update*predicted_score_error;
-
-		this->score_network->backprop_weights_with_no_error_signal(
-			scale_factor*predicted_score_error,
-			0.002,
-			history->score_network_history);
-
-		predicted_score -= scale_factor*history->score_network_update;
+		output_file << this->score_state_defs[s_index]->id << endl;
+		output_file << this->score_state_network_indexes[s_index] << endl;
 	}
-}
-
-void ActionNode::save(ofstream& output_file,
-					  int scope_id,
-					  int scope_index) {
-	this->action.save(output_file);
-
-	output_file << this->state_networks.size() << endl;
-	for (int s_index = 0; s_index < (int)this->state_networks.size(); s_index++) {
-		output_file << this->state_network_target_indexes[s_index] << endl;
-
-		ofstream state_network_save_file;
-		state_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_state_" + to_string(s_index) + ".txt");
-		this->state_networks[s_index]->save(state_network_save_file);
-		state_network_save_file.close();
-	}
-
-	ofstream score_network_save_file;
-	score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_score.txt");
-	this->score_network->save(score_network_save_file);
-	score_network_save_file.close();
 
 	output_file << this->next_node_id << endl;
-
-	output_file << this->average_score << endl;
-	output_file << this->score_variance << endl;
-	output_file << this->average_misguess << endl;
-	output_file << this->misguess_variance << endl;
-
-	output_file << this->average_impact << endl;
 }
 
-void ActionNode::save_for_display(ofstream& output_file) {
-	this->action.save(output_file);
-
-	output_file << this->next_node_id << endl;
-
-	output_file << this->average_score << endl;
-	output_file << this->score_variance << endl;
-	output_file << this->average_misguess << endl;
-	output_file << this->misguess_variance << endl;
-
-	output_file << this->average_impact << endl;
-}
-
-ActionNodeHistory::ActionNodeHistory(ActionNode* node,
-									 int scope_index) {
+ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
-	this->scope_index = scope_index;
 
-	this->score_network_history = NULL;
-}
-
-ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
-	this->node = original->node;
-	this->scope_index = original->scope_index;
-
-	this->score_network_history = NULL;
-
-	this->obs_snapshot = original->obs_snapshot;
-	this->ending_state_snapshot = original->ending_state_snapshot;
+	this->branch_experiment_history = NULL;
 }
 
 ActionNodeHistory::~ActionNodeHistory() {
-	for (int s_index = 0; s_index < (int)this->state_network_histories.size(); s_index++) {
-		if (this->state_network_histories[s_index] != NULL) {
-			delete this->state_network_histories[s_index];
-		}
-	}
-
-	if (this->score_network_history != NULL) {
-		delete this->score_network_history;
+	if (this->branch_experiment_history != NULL) {
+		delete this->branch_experiment_history;
 	}
 }

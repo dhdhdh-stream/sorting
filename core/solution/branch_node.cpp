@@ -1,43 +1,28 @@
 #include "branch_node.h"
 
-#include <iostream>
-
-#include "constants.h"
+#include "branch_experiment.h"
 #include "globals.h"
+#include "solution.h"
+#include "state.h"
 
 using namespace std;
 
-BranchNode::BranchNode(vector<int> branch_scope_context,
-					   vector<int> branch_node_context,
-					   bool branch_is_pass_through,
-					   StateNetwork* branch_score_network,
-					   int branch_exit_depth,
-					   int branch_next_node_id,
-					   StateNetwork* original_score_network,
-					   int original_next_node_id) {
+BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->branch_scope_context = branch_scope_context;
-	this->branch_node_context = branch_node_context;
-	this->branch_is_pass_through = branch_is_pass_through;
-	this->branch_score_network = branch_score_network;
-	this->branch_exit_depth = branch_exit_depth;
-	this->branch_next_node_id = branch_next_node_id;
-	this->original_score_network = original_score_network;
-	this->original_next_node_id = original_next_node_id;
-
-	this->branch_weight = 0.5;
+	this->experiment = NULL;
 }
 
 BranchNode::BranchNode(ifstream& input_file,
-					   int scope_id,
-					   int scope_index) {
+					   int id) {
 	this->type = NODE_TYPE_BRANCH;
 
-	string context_size_line;
-	getline(input_file, context_size_line);
-	int context_size = stoi(context_size_line);
-	for (int c_index = 0; c_index < context_size; c_index++) {
+	this->id = id;
+
+	string branch_scope_context_size_line;
+	getline(input_file, branch_scope_context_size_line);
+	int branch_scope_context_size = stoi(branch_scope_context_size_line);
+	for (int c_index = 0; c_index < branch_scope_context_size; c_index++) {
 		string scope_context_line;
 		getline(input_file, scope_context_line);
 		this->branch_scope_context.push_back(stoi(scope_context_line));
@@ -47,218 +32,171 @@ BranchNode::BranchNode(ifstream& input_file,
 		this->branch_node_context.push_back(stoi(node_context_line));
 	}
 
-	string is_pass_through_line;
-	getline(input_file, is_pass_through_line);
-	this->branch_is_pass_through = stoi(is_pass_through_line);
+	string branch_is_pass_through_line;
+	getline(input_file, branch_is_pass_through_line);
+	this->branch_is_pass_through = stoi(branch_is_pass_through_line);
 
-	ifstream branch_score_network_save_file;
-	branch_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_branch_score.txt");
-	this->branch_score_network = new StateNetwork(branch_score_network_save_file);
-	branch_score_network_save_file.close();
+	string shared_state_is_local_size_line;
+	getline(input_file, shared_state_is_local_size_line);
+	int shared_state_is_local_size = stoi(shared_state_is_local_size_line);
+	for (int s_index = 0; s_index < shared_state_is_local_size; s_index++) {
+		string is_local_line;
+		getline(input_file, is_local_line);
+		this->shared_state_is_local.push_back(stoi(is_local_line));
 
-	string branch_exit_depth_line;
-	getline(input_file, branch_exit_depth_line);
-	this->branch_exit_depth = stoi(branch_exit_depth_line);
+		string index_line;
+		getline(input_file, index_line);
+		this->shared_state_indexes.push_back(stoi(index_line));
+
+		string branch_weight_line;
+		getline(input_file, branch_weight_line);
+		this->branch_weights.push_back(stod(branch_weight_line));
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->original_state_defs.push_back(solution->states[stoi(def_id_line)]);
+	}
+
+	string branch_state_is_local_size_line;
+	getline(input_file, branch_state_is_local_size_line);
+	int branch_state_is_local_size = stoi(branch_state_is_local_size_line);
+	for (int s_index = 0; s_index < branch_state_is_local_size; s_index++) {
+		string is_local_line;
+		getline(input_file, is_local_line);
+		this->branch_state_is_local.push_back(stoi(is_local_line));
+
+		string index_line;
+		getline(input_file, index_line);
+		this->branch_state_indexes.push_back(stoi(index_line));
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->branch_state_defs.push_back(solution->states[stoi(def_id_line)]);
+	}
 
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
 
-	ifstream original_score_network_save_file;
-	original_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_original_score.txt");
-	this->original_score_network = new StateNetwork(original_score_network_save_file);
-	original_score_network_save_file.close();
-
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
 
-	string branch_weight_line;
-	getline(input_file, branch_weight_line);
-	this->branch_weight = stof(branch_weight_line);
+	string state_defs_size_line;
+	getline(input_file, state_defs_size_line);
+	int state_defs_size = stoi(state_defs_size_line);
+	for (int s_index = 0; s_index < state_defs_size; s_index++) {
+		string is_local_line;
+		getline(input_file, is_local_line);
+		this->state_is_local.push_back(stoi(is_local_line));
+
+		string indexes_line;
+		getline(input_file, indexes_line);
+		this->state_indexes.push_back(stoi(indexes_line));
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->state_defs.push_back(solution->states[stoi(def_id_line)]);
+
+		string network_index_line;
+		getline(input_file, network_index_line);
+		this->state_network_indexes.push_back(stoi(network_index_line));
+	}
+
+	string score_state_defs_size_line;
+	getline(input_file, score_state_defs_size_line);
+	int score_state_defs_size = stoi(score_state_defs_size_line);
+	for (int s_index = 0; s_index < score_state_defs_size; s_index++) {
+		string context_size_line;
+		getline(input_file, context_size_line);
+		int context_size = stoi(context_size_line);
+		this->score_state_scope_contexts.push_back(vector<int>());
+		this->score_state_node_contexts.push_back(vector<int>());
+		for (int c_index = 0; c_index < context_size; c_index++) {
+			string scope_context_line;
+			getline(input_file, scope_context_line);
+			this->score_state_scope_contexts.back().push_back(stoi(scope_context_line));
+
+			string node_context_line;
+			getline(input_file, node_context_line);
+			this->score_state_node_contexts.back().push_back(stoi(node_context_line));
+		}
+
+		string def_id_line;
+		getline(input_file, def_id_line);
+		this->score_state_defs.push_back(solution->states[stoi(def_id_line)]);
+
+		string network_index_line;
+		getline(input_file, network_index_line);
+		this->score_state_network_indexes.push_back(stoi(network_index_line));
+
+		this->score_state_defs.back()->nodes[this->score_state_network_indexes.back()] = this;
+	}
+
+	this->experiment = NULL;
 }
 
 BranchNode::~BranchNode() {
-	delete this->branch_score_network;
-	delete this->original_score_network;
-}
-
-void BranchNode::activate(vector<double>& state_vals,
-						  double& predicted_score,
-						  double& scale_factor,
-						  vector<int>& scope_context,
-						  vector<int>& node_context,
-						  int& exit_depth,
-						  int& exit_node_id,
-						  BranchNodeHistory* history) {
-	bool matches_context = true;
-	if (this->branch_scope_context.size() > scope_context.size()) {
-		matches_context = false;
-	} else {
-		// special case first scope context
-		if (this->branch_scope_context[0] != scope_context.back()) {
-			matches_context = false;
-		} else {
-			for (int c_index = 1; c_index < (int)this->branch_scope_context.size(); c_index++) {
-				if (this->branch_scope_context[c_index] != scope_context[scope_context.size()-1-c_index]
-						|| this->branch_node_context[c_index] != node_context[node_context.size()-1-c_index]) {
-					matches_context = false;
-					break;
-				}
-			}
-		}
-	}
-
-	if (matches_context) {
-		StateNetworkHistory* branch_network_history = new StateNetworkHistory(this->branch_score_network);
-		this->branch_score_network->activate(state_vals,
-											 branch_network_history);
-		double branch_score = scale_factor*this->branch_score_network->output->acti_vals[0];
-
-		if (this->branch_is_pass_through) {
-			history->is_branch = true;
-			history->score_network_history = branch_network_history;
-			history->score_network_update = this->branch_score_network->output->acti_vals[0];
-
-			predicted_score += branch_score;
-
-			exit_depth = this->branch_exit_depth;
-			exit_node_id = this->branch_next_node_id;
-		} else {
-			StateNetworkHistory* original_network_history = new StateNetworkHistory(this->original_score_network);
-			this->original_score_network->activate(state_vals,
-												   original_network_history);
-			double original_score = scale_factor*this->original_score_network->output->acti_vals[0];
-
-			if (branch_score > original_score) {
-				delete original_network_history;
-
-				history->is_branch = true;
-				history->score_network_history = branch_network_history;
-				history->score_network_update = this->branch_score_network->output->acti_vals[0];
-
-				predicted_score += branch_score;
-
-				exit_depth = this->branch_exit_depth;
-				exit_node_id = this->branch_next_node_id;
-
-				global_debug_flag = true;
-			} else {
-				delete branch_network_history;
-
-				history->is_branch = false;
-				history->score_network_history = original_network_history;
-				history->score_network_update = this->original_score_network->output->acti_vals[0];
-
-				predicted_score += original_score;
-
-				exit_depth = 0;
-				exit_node_id = this->original_next_node_id;
-			}
-		}
-	} else {
-		StateNetworkHistory* original_network_history = new StateNetworkHistory(this->original_score_network);
-		this->original_score_network->activate(state_vals,
-											   original_network_history);
-
-		history->is_branch = false;
-		history->score_network_history = original_network_history;
-		history->score_network_update = this->original_score_network->output->acti_vals[0];
-
-		predicted_score += scale_factor*this->original_score_network->output->acti_vals[0];
-
-		exit_depth = 0;
-		exit_node_id = this->original_next_node_id;
+	if (this->experiment != NULL) {
+		delete this->experiment;
 	}
 }
 
-void BranchNode::backprop(vector<double>& state_errors,
-						  double target_val,
-						  double& predicted_score,
-						  double& scale_factor,
-						  double& scale_factor_error,
-						  RunHelper& run_helper,
-						  BranchNodeHistory* history) {
-	if (run_helper.explore_phase == EXPLORE_PHASE_EXPERIMENT_LEARN) {
-		if (history->is_branch) {
-			double predicted_score_error = target_val - predicted_score;
-			this->branch_score_network->backprop_errors_with_no_weight_change(
-				scale_factor*predicted_score_error,
-				state_errors,
-				history->score_network_history);
-		} else {
-			double predicted_score_error = target_val - predicted_score;
-			this->original_score_network->backprop_errors_with_no_weight_change(
-				scale_factor*predicted_score_error,
-				state_errors,
-				history->score_network_history);
-		}
-	} else if (run_helper.explore_phase == EXPLORE_PHASE_UPDATE) {
-		double predicted_score_error = target_val - predicted_score;
-
-		scale_factor_error += history->score_network_update*predicted_score_error;
-
-		if (history->is_branch) {
-			this->branch_weight = 0.9999*this->branch_weight + 1.0;
-
-			this->branch_score_network->backprop_weights_with_no_error_signal(
-				scale_factor*predicted_score_error,
-				0.002,
-				history->score_network_history);
-		} else {
-			this->branch_weight = 0.9999*this->branch_weight + 0.0;
-
-			this->original_score_network->backprop_weights_with_no_error_signal(
-				scale_factor*predicted_score_error,
-				0.002,
-				history->score_network_history);
-		}
-	}
-
-	predicted_score -= scale_factor*history->score_network_update;
-}
-
-void BranchNode::save(ofstream& output_file,
-					  int scope_id,
-					  int scope_index) {
+void BranchNode::save(ofstream& output_file) {
 	output_file << this->branch_scope_context.size() << endl;
 	for (int c_index = 0; c_index < (int)this->branch_scope_context.size(); c_index++) {
 		output_file << this->branch_scope_context[c_index] << endl;
 		output_file << this->branch_node_context[c_index] << endl;
 	}
+
 	output_file << this->branch_is_pass_through << endl;
 
-	ofstream branch_score_network_save_file;
-	branch_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_branch_score.txt");
-	this->branch_score_network->save(branch_score_network_save_file);
-	branch_score_network_save_file.close();
+	output_file << this->shared_state_is_local.size() << endl;
+	for (int s_index = 0; s_index < (int)this->shared_state_is_local.size(); s_index++) {
+		output_file << this->shared_state_is_local[s_index] << endl;
+		output_file << this->shared_state_indexes[s_index] << endl;
+		output_file << this->branch_weights[s_index] << endl;
+		output_file << this->original_state_defs[s_index]->id << endl;
+	}
 
-	output_file << this->branch_exit_depth << endl;
+	output_file << this->branch_state_is_local.size() << endl;
+	for (int s_index = 0; s_index < (int)this->branch_state_is_local.size(); s_index++) {
+		output_file << this->branch_state_is_local[s_index] << endl;
+		output_file << this->branch_state_indexes[s_index] << endl;
+		output_file << this->branch_state_defs[s_index]->id << endl;
+	}
+
 	output_file << this->branch_next_node_id << endl;
-
-	ofstream original_score_network_save_file;
-	original_score_network_save_file.open("saves/nns/" + to_string(scope_id) + "_" + to_string(scope_index) + "_original_score.txt");
-	this->original_score_network->save(original_score_network_save_file);
-	original_score_network_save_file.close();
-
 	output_file << this->original_next_node_id << endl;
 
-	output_file << this->branch_weight << endl;
+	output_file << this->state_defs.size() << endl;
+	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
+		output_file << this->state_is_local[s_index] << endl;
+		output_file << this->state_indexes[s_index] << endl;
+		output_file << this->state_defs[s_index]->id << endl;
+		output_file << this->state_network_indexes[s_index] << endl;
+	}
+
+	output_file << this->score_state_defs.size() << endl;
+	for (int s_index = 0; s_index < (int)this->score_state_defs.size(); s_index++) {
+		output_file << this->score_state_scope_contexts[s_index].size() << endl;
+		for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[s_index].size(); c_index++) {
+			output_file << this->score_state_scope_contexts[s_index][c_index] << endl;
+			output_file << this->score_state_node_contexts[s_index][c_index] << endl;
+		}
+		output_file << this->score_state_defs[s_index]->id << endl;
+		output_file << this->score_state_network_indexes[s_index] << endl;
+	}
 }
 
-void BranchNode::save_for_display(ofstream& output_file) {
-	output_file << this->original_next_node_id << endl;
-
-	output_file << this->branch_scope_context[this->branch_exit_depth] << endl;
-	output_file << this->branch_next_node_id << endl;
-}
-
-BranchNodeHistory::BranchNodeHistory(BranchNode* node,
-									 int scope_index) {
+BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
-	this->scope_index = scope_index;
+
+	this->branch_experiment_history = NULL;
 }
 
 BranchNodeHistory::~BranchNodeHistory() {
-	delete this->score_network_history;
+	if (this->branch_experiment_history != NULL) {
+		delete this->branch_experiment_history;
+	}
 }

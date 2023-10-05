@@ -16,7 +16,7 @@ class Action {
 public:
 	int move;
 
-	Action();	// empty constructor for convenience
+	Action();
 	Action(int move);
 	Action(std::ifstream& save_file);
 	~Action();

@@ -1,51 +1,49 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
-#include "action.h"
+#include <map>
+#include <vector>
 
+class BranchExperiment;
+class BranchExperimentHistory;
 class ScopeHistory;
+
 class RunHelper {
 public:
-	int curr_depth;	// need to track separate from context as context resets for folds
+	int phase;
+
+	int curr_depth;	// need to track separate from context as context resets for experiments
 	int max_depth;
 	bool exceeded_depth;
 
-	int explore_phase;
-	bool loop_delay_explore;
-	// TODO: choose iter on the outside from loop
-	// if explore exists, but not triggered, still track
-	// double existing_score;
-	// double score_variance;
+	/**
+	 * - don't need to track running tally of predicted score
+	 *   - instead, on experiment, calculate from partial and resolved score_state_vals
+	 */
 
-	int explore_scope_id;
-	int explore_node_id;
-	std::vector<int> explore_scope_context;
-	std::vector<int> explore_node_context;
-	bool explore_is_loop;
-	int explore_exit_depth;
-	int explore_next_node_id;
-	std::vector<bool> explore_is_inner_scope;
-	std::vector<int> explore_existing_scope_ids;
-	std::vector<Action> explore_actions;
-	double explore_seed_start_predicted_score;
-	double explore_seed_start_scale_factor;
-	std::vector<double> explore_seed_state_vals_snapshot;
-	ScopeHistory* explore_seed_outer_context_history;
+	std::vector<ScopeHistory*> scope_histories;
 
-	// to detect recursive calls for flat -- not fullproof but hopefully effective enough
-	int flat_scope_id;
-	bool is_recursive;
+	std::vector<BranchExperiment*> experiments_seen_order;
+	std::map<BranchExperiment*, int> experiments_seen_counts;
+	/**
+	 * - also use to track start for explore
+	 */
+
+	BranchExperiment* selected_branch_experiment;
+	int selected_branch_experiment_count;
+	BranchExperimentHistory* branch_experiment_history;
+	/**
+	 * - also use to track if already experimented (i.e., check if not NULL)
+	 */
 
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		this->explore_seed_outer_context_history = NULL;
-
-		this->flat_scope_id = -1;
-		this->is_recursive = false;
-	};
+		this->selected_branch_experiment = NULL;
+		this->branch_experiment_history = NULL;
+	}
 };
 
 #endif /* RUN_HELPER_H */

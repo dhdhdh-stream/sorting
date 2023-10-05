@@ -1,104 +1,105 @@
 #ifndef ACTION_NODE_H
 #define ACTION_NODE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
 #include <vector>
 
 #include "abstract_node.h"
-#include "action.h"
-#include "fold.h"
-#include "loop_fold.h"
+#include "context_layer.h"
+#include "problem.h"
 #include "run_helper.h"
-#include "state_network.h"
+#include "state_status.h"
+
+class BranchExperiment;
+class BranchExperimentHistory;
+class Sequence;
+class State;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
 	Action action;
 
-	std::vector<int> state_network_target_indexes;
-	std::vector<StateNetwork*> state_networks;
+	std::vector<bool> state_is_local;
+	std::vector<int> state_indexes;
+	std::vector<State*> state_defs;
+	/**
+	 * - use id when saving/loading, but have direct reference for running
+	 */
+	std::vector<int> state_network_indexes;
 
-	StateNetwork* score_network;
+	std::vector<std::vector<int>> score_state_scope_contexts;
+	std::vector<std::vector<int>> score_state_node_contexts;
+	/**
+	 * - for top scope context
+	 */
+	std::vector<State*> score_state_defs;
+	std::vector<int> score_state_network_indexes;
+
+	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
+	std::vector<State*> experiment_hook_score_state_defs;
+	std::vector<int> experiment_hook_score_state_network_indexes;
+
+	std::vector<std::vector<int>> test_hook_scope_contexts;
+	std::vector<std::vector<int>> test_hook_node_contexts;
+	std::vector<int> test_hook_indexes;
+	std::vector<void*> test_hook_keys;
 
 	int next_node_id;
 
-	double average_score;
-	double score_variance;
-	double average_misguess;
-	double misguess_variance;
+	BranchExperiment* experiment;
 
-	double average_impact;
-
-	// don't explore both paths and loops to help prevent some weirdness
-	int explore_type;	// TODO: change to setting explore node on empty explore
-	// TODO: for loops, literally choose random
-	int explore_curr_try;
-	double best_explore_surprise;
-	std::vector<int> best_explore_scope_context;
-	std::vector<int> best_explore_node_context;
-	bool best_explore_is_loop;
-	int best_explore_exit_depth;
-	int best_explore_next_node_id;
-	std::vector<bool> best_explore_is_inner_scope;
-	std::vector<int> best_explore_existing_scope_ids;
-	std::vector<Action> best_explore_actions;
-	double best_explore_seed_start_predicted_score;
-	double best_explore_seed_start_scale_factor;
-	std::vector<double> best_explore_seed_state_vals_snapshot;
-	ScopeHistory* best_explore_seed_outer_context_history;	// deep copy before continuing past explore node
-	double best_explore_seed_target_val;
-
-	std::vector<int> explore_scope_context;
-	std::vector<int> explore_node_context;
-	int explore_exit_depth;
-	int explore_next_node_id;
-	Fold* explore_fold;
-	LoopFold* explore_loop_fold;
-
-	ActionNode(Action action,
-			   std::vector<int> state_network_target_indexes,
-			   std::vector<StateNetwork*> state_networks,
-			   StateNetwork* score_network);
+	ActionNode();
 	ActionNode(std::ifstream& input_file,
-			   int scope_id,
-			   int scope_index);
+			   int id);
 	~ActionNode();
 
-	void activate(Problem& problem,
-				  std::vector<double>& state_vals,
-				  std::vector<bool>& states_initialized,
-				  double& predicted_score,
-				  double& scale_factor,
+	void activate(int& curr_node_id,
+				  Problem& problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  int& exit_node_id,
 				  RunHelper& run_helper,
-				  ActionNodeHistory* history);
-	void backprop(std::vector<double>& state_errors,
-				  std::vector<bool>& states_initialized,
-				  double target_val,
-				  double final_misguess,
-				  double& predicted_score,
-				  double& scale_factor,
-				  double& scale_factor_error,
-				  RunHelper& run_helper,
-				  ActionNodeHistory* history);
+				  std::vector<AbstractNodeHistory*>& node_histories);
 
-	void save(std::ofstream& output_file,
-			  int scope_id,
-			  int scope_index);
-	void save_for_display(std::ofstream& output_file);
+	void create_sequence_activate(Problem& problem,
+								  std::vector<ContextLayer>& context,
+								  int target_num_nodes,
+								  int& curr_num_nodes,
+								  Sequence* new_sequence,
+								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
+								  int& new_num_input_states,
+								  std::vector<AbstractNode*>& new_nodes);
+
+	void branch_experiment_train_activate(
+		Problem& problem,
+		std::vector<ContextLayer>& context);
+	void branch_experiment_simple_activate(
+		Problem& problem);
+
+	void experiment_back_activate(std::vector<int>& scope_context,
+								  std::vector<int>& node_context,
+								  std::map<State*, StateStatus>& experiment_score_state_vals,
+								  std::vector<int>& test_obs_indexes,
+								  std::vector<double>& test_obs_vals,
+								  ActionNodeHistory* history);
+
+	void save(std::ofstream& output_file);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<StateNetworkHistory*> state_network_histories;
-	StateNetworkHistory* score_network_history;
-	double score_network_update;
-
 	double obs_snapshot;
-	std::vector<double> ending_state_snapshot;
 
-	ActionNodeHistory(ActionNode* node,
-					  int scope_index);
-	ActionNodeHistory(ActionNodeHistory* original);	// deep copy for seed
+	std::vector<int> score_state_indexes;
+	std::vector<StateStatus> score_state_impacts;
+
+	BranchExperimentHistory* branch_experiment_history;
+
+	ActionNodeHistory(ActionNode* node);
 	~ActionNodeHistory();
 };
 

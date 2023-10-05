@@ -36,22 +36,10 @@ public:
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 
-	void save_weights(std::ofstream& output_file);
-
 	void backprop_errors_with_no_weight_change();
 	void backprop_weights_with_no_error_signal();
 
-	void state_hidden_add_new_inner();
-	void state_hidden_add_new_outer();
-	void state_hidden_remove_new_outer();
-	void state_hidden_zero_new_input(int index);
-	void state_hidden_zero_state(int index);
-	void state_hidden_zero_new_outer(int index);
-	void state_hidden_update_state_size(int state_size_increase);
-	void state_hidden_new_external_weights_to_state();
-	void state_hidden_new_sequence_finalize();
-	void state_hidden_remove_state(int index);
-	void state_hidden_add_state(int size);
+	void save_weights(std::ofstream& output_file);
 };
 
 #endif /* LAYER_H */

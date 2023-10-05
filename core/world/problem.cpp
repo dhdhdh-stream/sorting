@@ -3,14 +3,17 @@
 #include <algorithm>
 #include <iostream>
 
-#include "constants.h"
+#include "globals.h"
 
 using namespace std;
 
 Problem::Problem() {
-	int random_length = 2+rand()%9;
+	uniform_int_distribution<int> length_distribution(2, 10);
+	int random_length = length_distribution(generator);
+
+	uniform_int_distribution<int> value_distribution(0, 10);
 	for (int i = 0; i < random_length; i++) {
-		this->initial_world.push_back(rand()%11);
+		this->initial_world.push_back(value_distribution(generator));
 	}
 
 	this->current_pointer = 0;
