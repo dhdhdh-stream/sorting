@@ -1,5 +1,17 @@
 #include "obs_experiment.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "flat_network.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 const int FLAT_ITERS = 500000;
@@ -173,7 +185,7 @@ void ObsExperiment::trim() {
 		}
 
 		double highest_impact = 0.0;
-		double highest_index = -1;
+		int highest_index = -1;
 		for (int n_index = 0; n_index < (int)obs_impacts.size(); n_index++) {
 			if (obs_impacts[n_index] > highest_impact) {
 				highest_impact = obs_impacts[n_index];
@@ -189,7 +201,7 @@ void ObsExperiment::trim() {
 			new_node_contexts.push_back(this->node_contexts[original_index]);
 			new_obs_indexes.push_back(this->obs_indexes[original_index]);
 
-			obs_impacts.erase(obs_impacts.begin() + highest_index):
+			obs_impacts.erase(obs_impacts.begin() + highest_index);
 			obs_indexes.erase(obs_indexes.begin() + highest_index);
 		} else {
 			break;
@@ -287,6 +299,7 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 
+		new_state->resolved_network_indexes = this->resolved_network_indexes;
 		new_state->resolved_standard_deviation = sqrt(this->resolved_variance);
 
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
@@ -331,7 +344,7 @@ void ObsExperiment::scope_eval(Scope* parent) {
 				branch_node->score_state_scope_contexts.push_back(this->scope_contexts[n_index]);
 				branch_node->score_state_node_contexts.push_back(this->node_contexts[n_index]);
 				branch_node->score_state_defs.push_back(new_state);
-				action_nodbranch_node->score_state_network_indexes.push_back(n_index);
+				branch_node->score_state_network_indexes.push_back(n_index);
 			}
 		}
 	} else {
@@ -350,6 +363,7 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 
+		new_state->resolved_network_indexes = this->resolved_network_indexes;
 		new_state->resolved_standard_deviation = sqrt(this->resolved_variance);
 
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {

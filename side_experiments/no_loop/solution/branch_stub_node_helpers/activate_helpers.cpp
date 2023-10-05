@@ -1,5 +1,8 @@
 #include "branch_stub_node.h"
 
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchStubNode::activate(vector<ContextLayer>& context) {

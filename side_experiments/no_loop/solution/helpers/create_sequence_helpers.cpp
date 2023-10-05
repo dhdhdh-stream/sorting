@@ -1,5 +1,13 @@
 #include "helpers.h"
 
+#include "action_node.h"
+#include "branch_stub_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+
 using namespace std;
 
 /**
@@ -13,12 +21,12 @@ void random_starting_node(Scope* containing_scope,
 						  int& starting_node_id) {
 	vector<int> possible_ids;
 	for (int n_index = 0; n_index < (int)containing_scope->nodes.size(); n_index++) {
-		if (containing_scope[n_index] != NODE_TYPE_EXIT) {
+		if (containing_scope->nodes[n_index]->type != NODE_TYPE_EXIT) {
 			possible_ids.push_back(n_index);
 		}
 	}
 
-	uniform_int_distribution<int> distribution(0, possible_ids.size()-1);
+	uniform_int_distribution<int> distribution(0, (int)possible_ids.size()-1);
 	int rand_index = distribution(generator);
 	starting_node_id = possible_ids[rand_index];
 }
@@ -65,27 +73,26 @@ void random_halfway_start_fetch_context_helper(
 
 void random_halfway_start(ScopeNode* starting_scope_node,
 						  vector<int>& starting_halfway_node_context) {
-	Scope* scope = solution->scopes[starting_scope_node->inner_scope_id];
-
 	vector<int> scope_context{-1};
 	vector<int> node_context{-1};
 
 	vector<int> starting_node_ids = starting_scope_node->starting_node_ids;
 
 	int num_nodes = 0;
-	ScopeHistory* scope_history = new ScopeHistory(scope);
+	ScopeHistory* scope_history = new ScopeHistory(starting_scope_node->inner_scope);
 
 	// unused
 	int inner_exit_depth = -1;
 	int inner_exit_node_id = -1;
 
-	scope->random_activate(starting_node_ids,
-						   scope_context,
-						   node_context,
-						   inner_exit_depth,
-						   inner_exit_node_id,
-						   num_nodes,
-						   scope_history);
+	starting_scope_node->inner_scope->random_activate(
+		starting_node_ids,
+		scope_context,
+		node_context,
+		inner_exit_depth,
+		inner_exit_node_id,
+		num_nodes,
+		scope_history);
 
 	uniform_int_distribution<int> distribution(0, num_nodes-1);
 	int rand_index = distribution(generator);
@@ -134,7 +141,7 @@ Sequence* create_sequence(vector<double>& flat_vals,
 	}
 	for (int c_index = 1; c_index < explore_context_depth; c_index++) {
 		Scope* scope = solution->scopes[context[context.size()-1 - c_index].scope_id];
-		ScopeNode* scope_node = scope->nodes[context[context.size()-1 - c_index].node_id];
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[context[context.size()-1 - c_index].node_id];
 
 		for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
 				it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
@@ -213,7 +220,7 @@ Sequence* create_sequence(vector<double>& flat_vals,
 
 		ScopeNode* new_starting_scope_node = new ScopeNode();
 
-		new_starting_scope_node->inner_scope_id = original_starting_scope_node->inner_scope_id;
+		new_starting_scope_node->inner_scope = original_starting_scope_node->inner_scope;
 		new_starting_scope_node->starting_node_ids = starting_halfway_node_context;
 
 		vector<int> possible_inner_layers;
@@ -286,7 +293,7 @@ Sequence* create_sequence(vector<double>& flat_vals,
 
 				map<int, pair<bool,int>>::iterator outer_it = output_mappings[l_index].find(scope_node->output_outer_indexes[o_index]);
 				if (outer_it != output_mappings[l_index].end()) {
-					map<int, <bool,int>>::iterator inner_it = output_mappings[l_index+1].find(scope_node->output_inner_indexes[o_index]);
+					map<int, pair<bool,int>>::iterator inner_it = output_mappings[l_index+1].find(scope_node->output_inner_indexes[o_index]);
 					if (inner_it != output_mappings[l_index+1].end()) {
 						if (overwrite_distribution(generator) == 0) {
 							output_mappings[l_index+1][scope_node->output_inner_indexes[o_index]] = outer_it->second;
@@ -297,14 +304,14 @@ Sequence* create_sequence(vector<double>& flat_vals,
 				}
 			}
 
-			for (s_index = 0; s_index < curr_scope->num_input_states; s_index++) {
+			for (int s_index = 0; s_index < curr_scope->num_input_states; s_index++) {
 				if (possible_input_indexes[s_index]) {
 					possible_inner_layers.push_back(l_index);
 					possible_inner_is_local.push_back(false);
 					possible_inner_indexes.push_back(s_index);
 				}
 			}
-			for (s_index = 0; s_index < curr_scope->num_local_states; s_index++) {
+			for (int s_index = 0; s_index < curr_scope->num_local_states; s_index++) {
 				if (possible_local_indexes[s_index]) {
 					possible_inner_layers.push_back(l_index);
 					possible_inner_is_local.push_back(true);
@@ -316,12 +323,12 @@ Sequence* create_sequence(vector<double>& flat_vals,
 		}
 		{
 			for (int s_index = 0; s_index < curr_scope->num_input_states; s_index++) {
-				possible_inner_layers.push_back(starting_halfway_node_context.size()-1);
+				possible_inner_layers.push_back((int)starting_halfway_node_context.size()-1);
 				possible_inner_is_local.push_back(false);
 				possible_inner_indexes.push_back(s_index);
 			}
 			for (int s_index = 0; s_index < curr_scope->num_local_states; s_index++) {
-				possible_inner_layers.push_back(starting_halfway_node_context.size()-1);
+				possible_inner_layers.push_back((int)starting_halfway_node_context.size()-1);
 				possible_inner_is_local.push_back(true);
 				possible_inner_indexes.push_back(s_index);
 			}
@@ -335,16 +342,16 @@ Sequence* create_sequence(vector<double>& flat_vals,
 		uniform_int_distribution<int> input_type_distribution(0, 3);
 		uniform_int_distribution<int> init_distribution(0, 1);
 		for (int i_index = 0; i_index < num_inputs_to_consider; i_index++) {
-			uniform_int_distribution<int> target_distribution(0, possible_inner_layers.size()-1);
+			uniform_int_distribution<int> target_distribution(0, (int)possible_inner_layers.size()-1);
 			int rand_target = target_distribution(generator);
 
 			int type = input_type_distribution(generator);
 			if (type == 0 && possible_input_scope_depths.size() > 0) {
 				// state
-				uniform_int_distribution<int> input_distribution(0, possible_input_scope_depths.size()-1);
+				uniform_int_distribution<int> input_distribution(0, (int)possible_input_scope_depths.size()-1);
 				int rand_input = input_distribution(generator);
 
-				map<int, StateStatus> val_it;
+				map<int, StateStatus>::iterator val_it;
 				if (possible_input_outer_is_local[rand_input]) {
 					val_it = context[context.size()-1 - possible_input_scope_depths[rand_input]]
 						.local_state_vals.find(possible_input_outer_indexes[rand_input]);
@@ -452,21 +459,13 @@ Sequence* create_sequence(vector<double>& flat_vals,
 
 		vector<int> starting_node_ids_copy = starting_halfway_node_context;
 
-		// unused
-		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
-
-		ScopeNodeHistory* node_history = new ScopeNodeHistory(original_starting_scope_node);
-		original_starting_scope_node->activate(starting_node_ids_copy,
-											   halfway_inner_input_state_vals,
-											   halfway_inner_local_state_vals,
-											   flat_vals,
-											   temp_context,
-											   inner_exit_depth,
-											   inner_exit_node_id,
-											   run_helper,
-											   node_history);
-		delete node_history;
+		original_starting_scope_node->simple_halfway_activate(
+			starting_node_ids_copy,
+			halfway_inner_input_state_vals,
+			halfway_inner_local_state_vals,
+			flat_vals,
+			temp_context,
+			run_helper);
 
 		for (int o_index = 0; o_index < (int)original_starting_scope_node->output_inner_indexes.size(); o_index++) {
 			if (original_starting_scope_node->output_outer_is_local[o_index]) {
@@ -559,16 +558,16 @@ Sequence* create_sequence(vector<double>& flat_vals,
 		uniform_int_distribution<int> input_type_distribution(0, 3);
 		uniform_int_distribution<int> init_distribution(0, 1);
 		for (int i_index = 0; i_index < num_inputs_to_consider; i_index++) {
-			uniform_int_distribution<int> target_distribution(0, possible_inner_indexes.size()-1);
+			uniform_int_distribution<int> target_distribution(0, (int)possible_inner_indexes.size()-1);
 			int rand_target = target_distribution(generator);
 
 			int type = input_type_distribution(generator);
 			if (type == 0 && possible_input_scope_depths.size() > 0) {
 				// state
-				uniform_int_distribution<int> input_distribution(0, possible_input_scope_depths.size()-1);
+				uniform_int_distribution<int> input_distribution(0, (int)possible_input_scope_depths.size()-1);
 				int rand_input = input_distribution(generator);
 
-				map<int, StateStatus> val_it;
+				map<int, StateStatus>::iterator val_it;
 				if (possible_input_outer_is_local[rand_input]) {
 					val_it = context[context.size()-1 - possible_input_scope_depths[rand_input]]
 						.local_state_vals.find(possible_input_outer_indexes[rand_input]);
@@ -677,13 +676,13 @@ Sequence* create_sequence(vector<double>& flat_vals,
 	}
 	for (int c_index = 1; c_index < explore_context_depth; c_index++) {
 		Scope* scope = solution->scopes[context[context.size()-1 - c_index].scope_id];
-		ScopeNode* scope_node = scope->nodes[context[context.size()-1 - c_index].node_id];
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[context[context.size()-1 - c_index].node_id];
 
 		for (int s_index = 0; s_index < scope->num_input_states; s_index++) {
 			bool passed_out = false;
 			for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
-				if (scope_node->output_outer_is_local[i_index] == false
-						&& scope_node->output_outer_indexes[i_index] == s_index) {
+				if (scope_node->output_outer_is_local[o_index] == false
+						&& scope_node->output_outer_indexes[o_index] == s_index) {
 					passed_out = true;
 					break;
 				}
@@ -699,8 +698,8 @@ Sequence* create_sequence(vector<double>& flat_vals,
 		for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
 			bool passed_out = false;
 			for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
-				if (scope_node->output_outer_is_local[i_index] == true
-						&& scope_node->output_outer_indexes[i_index] == s_index) {
+				if (scope_node->output_outer_is_local[o_index] == true
+						&& scope_node->output_outer_indexes[o_index] == s_index) {
 					passed_out = true;
 					break;
 				}
@@ -709,16 +708,23 @@ Sequence* create_sequence(vector<double>& flat_vals,
 			if (!passed_out) {
 				possible_output_scope_depths.push_back(c_index);
 				possible_output_outer_is_local.push_back(true);
-				possible_output_outer_indexes.push_back(it->first);
+				possible_output_outer_indexes.push_back(s_index);
 			}
 		}
 	}
 
 	map<int, StateStatus> possible_inner_outputs;
-	for (int c_index = 0; c_index < temp_context.size(); c_index++) {
+	for (int c_index = 0; c_index < (int)temp_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = temp_context[c_index].input_state_vals.begin();
 				it != temp_context[c_index].input_state_vals.end(); it++) {
-			int new_state_index = state_mappings[c_index].find(it->first)->second;
+			int new_state_index = state_mappings[c_index].find({false, it->first})->second;
+			possible_inner_outputs[new_state_index] = it->second;
+			// may overwrite earlier definition
+		}
+
+		for (map<int, StateStatus>::iterator it = temp_context[c_index].local_state_vals.begin();
+				it != temp_context[c_index].local_state_vals.end(); it++) {
+			int new_state_index = state_mappings[c_index].find({true, it->first})->second;
 			possible_inner_outputs[new_state_index] = it->second;
 			// may overwrite earlier definition
 		}
@@ -729,11 +735,11 @@ Sequence* create_sequence(vector<double>& flat_vals,
 		possible_inner_output_ids.push_back(it->first);
 	}
 
-	int num_outputs_to_consider = min(10, possible_output_scope_depths.size());
+	int num_outputs_to_consider = min(10, (int)possible_output_scope_depths.size());
 
 	uniform_int_distribution<int> output_type_distribution(0, 1);
 	for (int o_index = 0; o_index < num_outputs_to_consider; o_index++) {
-		uniform_int_distribution<int> target_distribution(0, possible_output_scope_depths.size()-1);
+		uniform_int_distribution<int> target_distribution(0, (int)possible_output_scope_depths.size()-1);
 		int rand_target = target_distribution(generator);
 
 		int input_index = -1;
@@ -767,7 +773,7 @@ Sequence* create_sequence(vector<double>& flat_vals,
 			}
 		} else {
 			if (output_type_distribution(generator) == 0) {
-				uniform_int_distribution<int> inner_distribution(0, possible_inner_output_ids.size()-1);
+				uniform_int_distribution<int> inner_distribution(0, (int)possible_inner_output_ids.size()-1);
 				int rand_inner = inner_distribution(generator);
 
 				if (possible_output_outer_is_local[rand_target]) {

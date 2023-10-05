@@ -1,5 +1,14 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "globals.h"
+#include "obs_experiment.h"
+#include "scale.h"
+#include "scope.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 BranchExperiment::BranchExperiment(vector<int>& scope_context,
@@ -54,7 +63,7 @@ BranchExperiment::~BranchExperiment() {
 }
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
-	this->experiment = obs_experiment;
+	this->experiment = experiment;
 }
 
 BranchExperimentHistory::~BranchExperimentHistory() {

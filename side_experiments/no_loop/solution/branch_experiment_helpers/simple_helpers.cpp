@@ -1,5 +1,11 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "scale.h"
+#include "sequence.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::simple_activate(int& curr_node_id,
@@ -33,8 +39,8 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 		}
 	}
 
-	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].new_score_state_vals.begin();
-			it != context[context.size() - this->scope_context.size()].new_score_state_vals.end(); it++) {
+	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].experiment_score_state_vals.begin();
+			it != context[context.size() - this->scope_context.size()].experiment_score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
 		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
@@ -43,7 +49,7 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 				* it->first->resolved_standard_deviation;
 			branch_score += normalized * it->first->scale->weight;
 		} else {
-			branch_score += it->second.val * it->first->scale_weight;
+			branch_score += it->second.val * it->first->scale->weight;
 		}
 	}
 

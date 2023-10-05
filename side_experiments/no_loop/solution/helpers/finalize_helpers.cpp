@@ -1,5 +1,17 @@
 #include "helpers.h"
 
+#include <set>
+
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 void finalize_existing_state(Scope* parent_scope,
@@ -38,11 +50,11 @@ void finalize_existing_state(Scope* parent_scope,
 				action_node->state_defs.push_back(score_state);
 				action_node->state_network_indexes.push_back(n_index);
 
-				ScopeNode* local_scope_node = parent_scope->nodes[action_node->score_state_node_contexts[score_state_index][0]];
+				ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[action_node->score_state_node_contexts[score_state_index][0]];
 				local_scope_nodes_to_mod.insert(local_scope_node);
 				for (int c_index = 1; c_index < (int)action_node->score_state_scope_contexts[score_state_index].size()-1; c_index++) {
 					Scope* input_scope = solution->scopes[action_node->score_state_scope_contexts[score_state_index][c_index]];
-					ScopeNode* input_scope_node = input_scope->nodes[action_node->score_state_node_contexts[score_state_index][c_index]];
+					ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[action_node->score_state_node_contexts[score_state_index][c_index]];
 					input_scopes_to_mod.insert(input_scope);
 					input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
 				}
@@ -79,11 +91,11 @@ void finalize_existing_state(Scope* parent_scope,
 				scope_node->state_defs.push_back(score_state);
 				scope_node->state_network_indexes.push_back(n_index);
 
-				ScopeNode* local_scope_node = parent_scope->nodes[scope_node->score_state_node_contexts[score_state_index][0]];
+				ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[scope_node->score_state_node_contexts[score_state_index][0]];
 				local_scope_nodes_to_mod.insert(local_scope_node);
 				for (int c_index = 1; c_index < (int)scope_node->score_state_scope_contexts[score_state_index].size()-1; c_index++) {
 					Scope* input_scope = solution->scopes[scope_node->score_state_scope_contexts[score_state_index][c_index]];
-					ScopeNode* input_scope_node = input_scope->nodes[scope_node->score_state_node_contexts[score_state_index][c_index]];
+					ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[scope_node->score_state_node_contexts[score_state_index][c_index]];
 					input_scopes_to_mod.insert(input_scope);
 					input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
 				}
@@ -119,11 +131,11 @@ void finalize_existing_state(Scope* parent_scope,
 				branch_node->state_defs.push_back(score_state);
 				branch_node->state_network_indexes.push_back(n_index);
 
-				ScopeNode* local_scope_node = parent_scope->nodes[branch_node->score_state_node_contexts[score_state_index][0]];
+				ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[branch_node->score_state_node_contexts[score_state_index][0]];
 				local_scope_nodes_to_mod.insert(local_scope_node);
 				for (int c_index = 1; c_index < (int)branch_node->score_state_scope_contexts[score_state_index].size()-1; c_index++) {
 					Scope* input_scope = solution->scopes[branch_node->score_state_scope_contexts[score_state_index][c_index]];
-					ScopeNode* input_scope_node = input_scope->nodes[branch_node->score_state_node_contexts[score_state_index][c_index]];
+					ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[branch_node->score_state_node_contexts[score_state_index][c_index]];
 					input_scopes_to_mod.insert(input_scope);
 					input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
 				}
@@ -151,11 +163,11 @@ void finalize_existing_state(Scope* parent_scope,
 		new_branch_node->branch_weights.push_back(new_branch_weight);
 		new_branch_node->original_state_defs.push_back(score_state);
 
-		ScopeNode* local_scope_node = parent_scope->nodes[new_branch_node->branch_node_context[0]];
+		ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[new_branch_node->branch_node_context[0]];
 		local_scope_nodes_to_mod.insert(local_scope_node);
 		for (int c_index = 1; c_index < (int)new_branch_node->branch_scope_context.size()-1; c_index++) {
 			Scope* input_scope = solution->scopes[new_branch_node->branch_scope_context[c_index]];
-			ScopeNode* input_scope_node = input_scope->nodes[new_branch_node->branch_node_context[c_index]];
+			ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[new_branch_node->branch_node_context[c_index]];
 			input_scopes_to_mod.insert(input_scope);
 			input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
 		}
@@ -170,12 +182,12 @@ void finalize_existing_state(Scope* parent_scope,
 		scope_node->input_types.push_back(INPUT_TYPE_STATE);
 		scope_node->input_inner_layers.push_back(0);
 		scope_node->input_inner_is_local.push_back(false);
-		scope_node->input_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->input_outer_is_local.push_back(true);
 		scope_node->input_outer_indexes.push_back(new_local_index);
 		scope_node->input_init_vals.push_back(0.0);
 
-		scope_node->output_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->output_outer_is_local.push_back(true);
 		scope_node->output_outer_indexes.push_back(new_local_index);
 	}
@@ -188,12 +200,12 @@ void finalize_existing_state(Scope* parent_scope,
 		scope_node->input_types.push_back(INPUT_TYPE_STATE);
 		scope_node->input_inner_layers.push_back(0);
 		scope_node->input_inner_is_local.push_back(false);
-		scope_node->input_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->input_outer_is_local.push_back(false);
 		scope_node->input_outer_indexes.push_back(outer_scope->num_input_states);
 		scope_node->input_init_vals.push_back(0.0);
 
-		scope_node->output_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->output_outer_is_local.push_back(false);
 		scope_node->output_outer_indexes.push_back(outer_scope->num_input_states);
 	}
@@ -240,7 +252,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = local_sequence->scope;
 					} else {
-						ScopeNode* local_scope_node = curr_scope->nodes[node_contexts[n_index][0]];
+						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
 						local_scope_nodes_to_mod.insert(local_scope_node);
 
 						curr_scope = local_scope_node->inner_scope;
@@ -256,7 +268,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = input_sequence->scope;
 					} else {
-						ScopeNode* input_scope_node = curr_scope->nodes[node_contexts[n_index][c_index]];
+						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
 						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
 
 						curr_scope = input_scope_node->inner_scope;
@@ -289,7 +301,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = local_sequence->scope;
 					} else {
-						ScopeNode* local_scope_node = curr_scope->nodes[node_contexts[n_index][0]];
+						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
 						local_scope_nodes_to_mod.insert(local_scope_node);
 
 						curr_scope = local_scope_node->inner_scope;
@@ -305,7 +317,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = input_sequence->scope;
 					} else {
-						ScopeNode* input_scope_node = curr_scope->nodes[node_contexts[n_index][c_index]];
+						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
 						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
 
 						curr_scope = input_scope_node->inner_scope;
@@ -338,7 +350,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = local_sequence->scope;
 					} else {
-						ScopeNode* local_scope_node = curr_scope->nodes[node_contexts[n_index][0]];
+						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
 						local_scope_nodes_to_mod.insert(local_scope_node);
 
 						curr_scope = local_scope_node->inner_scope;
@@ -354,7 +366,7 @@ void finalize_new_state(Scope* parent_scope,
 
 						curr_scope = input_sequence->scope;
 					} else {
-						ScopeNode* input_scope_node = curr_scope->nodes[node_contexts[n_index][c_index]];
+						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
 						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
 
 						curr_scope = input_scope_node->inner_scope;
@@ -383,11 +395,11 @@ void finalize_new_state(Scope* parent_scope,
 		new_branch_node->branch_state_indexes.push_back(new_input_id);
 		new_branch_node->branch_state_defs.push_back(score_state);
 
-		ScopeNode* local_scope_node = parent_scope->nodes[new_branch_node->branch_node_context[0]];
+		ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[new_branch_node->branch_node_context[0]];
 		local_scope_nodes_to_mod.insert(local_scope_node);
 		for (int c_index = 1; c_index < (int)new_branch_node->branch_scope_context.size()-1; c_index++) {
 			Scope* input_scope = solution->scopes[new_branch_node->branch_scope_context[c_index]];
-			ScopeNode* input_scope_node = input_scope->nodes[new_branch_node->branch_node_context[c_index]];
+			ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[new_branch_node->branch_node_context[c_index]];
 			input_scopes_to_mod.insert(input_scope);
 			input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
 		}
@@ -437,12 +449,12 @@ void finalize_new_state(Scope* parent_scope,
 		scope_node->input_types.push_back(INPUT_TYPE_STATE);
 		scope_node->input_inner_layers.push_back(0);
 		scope_node->input_inner_is_local.push_back(false);
-		scope_node->input_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->input_outer_is_local.push_back(false);
 		scope_node->input_outer_indexes.push_back(outer_scope->num_input_states);
 		scope_node->input_init_vals.push_back(0.0);
 
-		scope_node->output_inner_indexes.push_back(input_scope->num_input_states);
+		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->output_outer_is_local.push_back(false);
 		scope_node->output_outer_indexes.push_back(outer_scope->num_input_states);
 	}
@@ -523,9 +535,9 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 							{new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}}] = output_it->second;
 					} else {
 						{
-							int context_index = scope_context.size()-1 - new_sequence->input_scope_depths[i_index];
+							int context_index = (int)scope_context.size()-1 - new_sequence->input_scope_depths[i_index];
 							Scope* outer_scope = solution->scopes[scope_context[context_index]];
-							ScopeNode* scope_node = outer_scope->nodes[node_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
 							Scope* inner_scope = scope_node->inner_scope;
 
 							scope_node->input_types.push_back(INPUT_TYPE_STATE);
@@ -538,9 +550,9 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 							scope_node->input_init_vals.push_back(0.0);
 						}
 						for (int c_index = new_sequence->input_scope_depths[i_index]-1; c_index >= 1; c_index--) {
-							int context_index = scope_context.size()-1 - c_index;
+							int context_index = (int)scope_context.size()-1 - c_index;
 							Scope* outer_scope = solution->scopes[scope_context[context_index]];
-							ScopeNode* scope_node = outer_scope->nodes[node_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
 							Scope* inner_scope = scope_node->inner_scope;
 
 							int new_input_id = outer_scope->num_input_states;
@@ -632,9 +644,9 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 					inner_index = outer_index;
 				}
 				for (int c_index = 1; c_index < new_sequence->output_scope_depths[o_index]-1; c_index++) {
-					int context_index = scope_context.size()-1 - c_index;
+					int context_index = (int)scope_context.size()-1 - c_index;
 					Scope* outer_scope = solution->scopes[scope_context[context_index]];
-					ScopeNode* scope_node = outer_scope->nodes[node_context[context_index]];
+					ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
 
 					int outer_index = -1;
 					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
@@ -660,9 +672,9 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 				}
 				{
 					Scope* outer_scope = solution->scopes[scope_context.back()];
-					ScopeNode* scope_node = outer_scope->nodes[node_context.back()];
+					ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context.back()];
 
-					scope_node->output_inner_indexes.push_back(input_id);
+					scope_node->output_inner_indexes.push_back(inner_index);
 					scope_node->output_outer_is_local.push_back(new_sequence->output_outer_is_local[o_index]);
 					scope_node->output_outer_indexes.push_back(new_sequence->output_outer_indexes[o_index]);
 				}
@@ -689,7 +701,7 @@ void finalize_new_score_state(Scope* parent_scope,
 
 			action_node->score_state_scope_contexts.push_back(scope_contexts[n_index]);
 			action_node->score_state_node_contexts.push_back(node_contexts[n_index]);
-			for (int c_index = 0; c_index < (int)action_node->score_state_node_contexts.back().size()-1; c_index) {
+			for (int c_index = 0; c_index < (int)action_node->score_state_node_contexts.back().size()-1; c_index++) {
 				if (action_node->score_state_node_contexts.back()[c_index] == -1) {
 					int inner_scope_id = action_node->score_state_scope_contexts.back()[c_index+1];
 					action_node->score_state_node_contexts.back()[c_index] = new_scope_node_id_mappings[inner_scope_id];
@@ -703,7 +715,7 @@ void finalize_new_score_state(Scope* parent_scope,
 
 			scope_node->score_state_scope_contexts.push_back(scope_contexts[n_index]);
 			scope_node->score_state_node_contexts.push_back(node_contexts[n_index]);
-			for (int c_index = 0; c_index < (int)scope_node->score_state_node_contexts.back().size()-1; c_index) {
+			for (int c_index = 0; c_index < (int)scope_node->score_state_node_contexts.back().size()-1; c_index++) {
 				if (scope_node->score_state_node_contexts.back()[c_index] == -1) {
 					int inner_scope_id = scope_node->score_state_scope_contexts.back()[c_index+1];
 					scope_node->score_state_node_contexts.back()[c_index] = new_scope_node_id_mappings[inner_scope_id];
@@ -718,7 +730,7 @@ void finalize_new_score_state(Scope* parent_scope,
 
 			branch_node->score_state_scope_contexts.push_back(scope_contexts[n_index]);
 			branch_node->score_state_node_contexts.push_back(node_contexts[n_index]);
-			for (int c_index = 0; c_index < (int)branch_node->score_state_node_contexts.back().size()-1; c_index) {
+			for (int c_index = 0; c_index < (int)branch_node->score_state_node_contexts.back().size()-1; c_index++) {
 				if (branch_node->score_state_node_contexts.back()[c_index] == -1) {
 					int inner_scope_id = branch_node->score_state_scope_contexts.back()[c_index+1];
 					branch_node->score_state_node_contexts.back()[c_index] = new_scope_node_id_mappings[inner_scope_id];

@@ -1,5 +1,17 @@
 #include "helpers.h"
 
+#include <random>
+
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "globals.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void create_branch_experiment_helper(double& sum_weight,

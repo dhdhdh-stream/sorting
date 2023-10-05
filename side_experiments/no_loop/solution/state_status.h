@@ -1,6 +1,8 @@
 #ifndef STATE_STATUS_H
 #define STATE_STATUS_H
 
+class StateNetwork;
+
 class StateStatus {
 public:
 	double val;

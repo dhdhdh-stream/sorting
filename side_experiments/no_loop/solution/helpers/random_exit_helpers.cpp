@@ -1,5 +1,11 @@
 #include "helpers.h"
 
+#include "abstract_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void random_exit_fetch_context_helper(
@@ -60,8 +66,8 @@ void random_exit(vector<int>& starting_scope_context,
 	vector<int> node_context{starting_node_context[0]};
 
 	vector<int> starting_node_ids;
-	for (int c_index = 1; c_index < this->scope_context.size(); c_index++) {
-		starting_node_ids.push_back(this->node_context[c_index]);
+	for (int c_index = 1; c_index < (int)starting_scope_context.size(); c_index++) {
+		starting_node_ids.push_back(starting_node_context[c_index]);
 	}
 
 	int num_nodes = 0;
@@ -93,6 +99,6 @@ void random_exit(vector<int>& starting_scope_context,
 		curr_index,
 		exit_node_context);
 
-	new_exit_depth = starting_scope_context.size() - exit_node_context.size();
+	new_exit_depth = (int)starting_scope_context.size() - (int)exit_node_context.size();
 	new_exit_node_id = exit_node_context.back();
 }

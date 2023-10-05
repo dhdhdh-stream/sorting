@@ -1,6 +1,13 @@
 #ifndef CONTEXT_LAYER_H
 #define CONTEXT_LAYER_H
 
+#include <map>
+
+#include "state_status.h"
+
+class ScopeHistory;
+class State;
+
 class ContextLayer {
 public:
 	int scope_id;

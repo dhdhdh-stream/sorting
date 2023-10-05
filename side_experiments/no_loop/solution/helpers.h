@@ -1,6 +1,22 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class BranchNode;
+class ObsExperiment;
+class Scope;
+class ScopeHistory;
+class ScopeNode;
+class Sequence;
+class State;
+
 ObsExperiment* create_obs_experiment(ScopeHistory* scope_history);
 
 void create_branch_experiment(ScopeHistory* root_history);

@@ -1,9 +1,27 @@
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class Scope;
+class ScopeHistory;
+class Sequence;
+class State;
+class BranchExperiment;
+class BranchExperimentHistory;
+
 const int INPUT_TYPE_STATE = 0;
 const int INPUT_TYPE_CONSTANT = 1;
 
+class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* inner_scope;
@@ -108,6 +126,12 @@ public:
 									  int& num_nodes,
 									  std::vector<AbstractNodeHistory*>& node_histories);
 
+	void simple_halfway_activate(std::vector<int>& starting_node_ids,
+								 std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
+								 std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
+								 std::vector<double>& flat_vals,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
 	void create_sequence_activate(std::vector<double>& flat_vals,
 								  std::vector<ContextLayer>& context,
 								  int target_num_nodes,

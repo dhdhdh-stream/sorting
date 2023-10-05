@@ -1,5 +1,18 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scale.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 const int MEASURE_ITERS = 10000;
@@ -40,8 +53,8 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 		}
 	}
 
-	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].new_score_state_vals.begin();
-			it != context[context.size() - this->scope_context.size()].new_score_state_vals.end(); it++) {
+	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].experiment_score_state_vals.begin();
+			it != context[context.size() - this->scope_context.size()].experiment_score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
 		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
@@ -50,7 +63,7 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 				* it->first->resolved_standard_deviation;
 			branch_score += normalized * it->first->scale->weight;
 		} else {
-			branch_score += it->second.val * it->first->scale_weight;
+			branch_score += it->second.val * it->first->scale->weight;
 		}
 	}
 
@@ -120,15 +133,15 @@ void BranchExperiment::eval() {
 				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
 		} else {
-			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->actions[s_index];
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->best_actions[s_index];
 				} else {
-					delete this->sequences[s_index];
+					delete this->best_sequences[s_index];
 				}
 			}
-			this->actions.clear();
-			this->sequences.clear();
+			this->best_actions.clear();
+			this->best_sequences.clear();
 
 			for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 					it != this->score_state_scales.end(); it++) {
@@ -163,6 +176,7 @@ void BranchExperiment::new_branch() {
 	/**
 	 * TODO: check if state used at decision point so can delete
 	 */
+	double score_standard_deviation = sqrt(parent_scope->score_variance);
 	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 			it != this->score_state_scales.end(); it++) {
 		double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;

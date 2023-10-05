@@ -1,5 +1,11 @@
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "branch_stub_node.h"
+#include "exit_node.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void Scope::random_activate(vector<int>& starting_node_ids,
@@ -94,7 +100,7 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
-		bool& is_branch;
+		bool is_branch;
 		branch_node->random_activate(is_branch,
 									 scope_context,
 									 node_context,
@@ -221,7 +227,7 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
-		bool& is_branch;
+		bool is_branch;
 		branch_node->random_exit_activate(is_branch,
 										  scope_context,
 										  node_context,

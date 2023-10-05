@@ -1,6 +1,22 @@
 #ifndef ACTION_NODE_H
 #define ACTION_NODE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class BranchExperiment;
+class BranchExperimentHistory;
+class Sequence;
+class State;
+
+class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
 	// Action action;

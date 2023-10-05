@@ -1,6 +1,13 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
+#include <map>
+#include <vector>
+
+class BranchExperiment;
+class BranchExperimentHistory;
+class ScopeHistory;
+
 class RunHelper {
 public:
 	int phase;

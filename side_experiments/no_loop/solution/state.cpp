@@ -1,5 +1,8 @@
 #include "state.h"
 
+#include "scale.h"
+#include "state_network.h"
+
 using namespace std;
 
 State::State() {

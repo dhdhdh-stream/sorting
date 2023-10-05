@@ -1,5 +1,16 @@
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "branch_stub_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "obs_experiment.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void Scope::activate(vector<int>& starting_node_ids,
@@ -66,10 +77,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 		 * - keep even if early exit, so that can learn good decisions even if early exit
 		 */
 	} else if (history->inner_branch_experiment_history != NULL) {
-		history->inner_branch_experiment_history->score_state_snapshots = context.back().score_state_vals;
 		history->inner_branch_experiment_history->experiment_score_state_snapshots = context.back().experiment_score_state_vals;
-		history->inner_branch_experiment_history->test_obs_indexes = history->test_obs_indexes;
-		history->inner_branch_experiment_history->test_obs_vals = history->test_obs_vals;
 	}
 
 	if (this->obs_experiment != NULL) {

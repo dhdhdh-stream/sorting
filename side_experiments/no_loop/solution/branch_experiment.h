@@ -1,6 +1,22 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
+#include <map>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class AbstractNode;
+class ActionNode;
+class ObsExperiment;
+class Scale;
+class ScopeHistory;
+class Sequence;
+class SequenceHistory;
+class State;
+
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SEQUENCE = 1;
 
@@ -9,6 +25,7 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN = 1;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
 const int BRANCH_EXPERIMENT_STATE_DONE = 3;
 
+class BranchExperimentHistory;
 class BranchExperiment {
 public:
 	std::vector<int> scope_context;

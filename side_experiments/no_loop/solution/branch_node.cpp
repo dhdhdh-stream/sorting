@@ -1,11 +1,16 @@
 #include "branch_node.h"
 
+#include "branch_experiment.h"
+#include "globals.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->experiment = NULL:
+	this->experiment = NULL;
 }
 
 BranchNode::BranchNode(ifstream& input_file,

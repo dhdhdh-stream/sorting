@@ -1,5 +1,10 @@
 #include "scope_node.h"
 
+#include "branch_experiment.h"
+#include "scope.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void ScopeNode::activate(int& curr_node_id,
@@ -125,13 +130,13 @@ void ScopeNode::activate(int& curr_node_id,
 						state_it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-					state_network->activate(obs_it->second,
+					state_network->activate(obs_it->second.val,
 											state_it->second);
 				} else {
 					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 					if (state_it != context.back().input_state_vals.end()) {
 						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-						state_network->activate(obs_it->second,
+						state_network->activate(obs_it->second.val,
 												state_it->second);
 					}
 				}
@@ -161,7 +166,7 @@ void ScopeNode::activate(int& curr_node_id,
 					}
 					StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
 					StateStatus score_state_impact;
-					state_network->activate_score(obs_it->second,
+					state_network->activate_score(obs_it->second.val,
 												  state_it->second,
 												  score_state_impact);
 					history->score_state_indexes.push_back(n_index);
@@ -194,13 +199,13 @@ void ScopeNode::activate(int& curr_node_id,
 							.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-					state_network->activate(obs_it->second,
+					state_network->activate(obs_it->second.val,
 											state_it->second);
 				}
 			}
 		}
 
-		for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 			bool matches_context = true;
 			if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
 				matches_context = false;
@@ -220,7 +225,7 @@ void ScopeNode::activate(int& curr_node_id,
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 						.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-						.scope_history->test_obs_vals.push_back(obs_it->second);
+						.scope_history->test_obs_vals.push_back(obs_it->second.val);
 				}
 			}
 		}
@@ -330,13 +335,13 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 						state_it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-					state_network->activate(obs_it->second,
+					state_network->activate(obs_it->second.val,
 											state_it->second);
 				} else {
 					map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 					if (state_it != context.back().input_state_vals.end()) {
 						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-						state_network->activate(obs_it->second,
+						state_network->activate(obs_it->second.val,
 												state_it->second);
 					}
 				}
@@ -366,7 +371,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 					}
 					StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
 					StateStatus score_state_impact;
-					state_network->activate_score(obs_it->second,
+					state_network->activate_score(obs_it->second.val,
 												  state_it->second,
 												  score_state_impact);
 					history->score_state_indexes.push_back(n_index);
@@ -399,13 +404,13 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 							.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-					state_network->activate(obs_it->second,
+					state_network->activate(obs_it->second.val,
 											state_it->second);
 				}
 			}
 		}
 
-		for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 			bool matches_context = true;
 			if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
 				matches_context = false;
@@ -425,7 +430,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 						.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-						.scope_history->test_obs_vals.push_back(obs_it->second);
+						.scope_history->test_obs_vals.push_back(obs_it->second.val);
 				}
 			}
 		}
@@ -480,13 +485,13 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 						state_it = experiment_score_state_vals.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
 					}
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-					state_network->activate(obs_it->second,
+					state_network->activate(obs_it->second.val,
 											state_it->second);
 				}
 			}
 		}
 
-		for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 			bool matches_context = true;
 			if (this->test_hook_scope_contexts[h_index].size() > scope_context.size()) {
 				matches_context = false;
@@ -504,7 +509,7 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->test_hook_obs_indexes[h_index]);
 				if (obs_it != history->obs_snapshots.end()) {
 					test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
-					test_obs_vals.push_back(obs_it->second);
+					test_obs_vals.push_back(obs_it->second.val);
 				}
 			}
 		}

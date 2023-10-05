@@ -1,7 +1,18 @@
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <thread>
 #include <random>
+
+#include "branch_experiment.h"
+#include "constants.h"
+#include "context_layer.h"
+#include "globals.h"
+#include "helpers.h"
+#include "run_helper.h"
+#include "scope.h"
+#include "solution.h"
+#include "state_status.h"
 
 using namespace std;
 
@@ -89,7 +100,7 @@ int main(int argc, char* argv[]) {
 				BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
 					0.999 * experiment->average_remaining_experiments_from_start
-					+ 0.001 * (run_helper.experiments_seen_order.size()-1 - e_index);
+					+ 0.001 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 			}
 
 			for (map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.begin();

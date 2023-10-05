@@ -5,6 +5,15 @@
 #ifndef OBS_EXPERIMENT_H
 #define OBS_EXPERIMENT_H
 
+#include <set>
+#include <vector>
+
+class AbstractNode;
+class BranchExperiment;
+class FlatNetwork;
+class Scope;
+class StateNetwork;
+
 const int OBS_EXPERIMENT_STATE_FLAT = 0;
 const int OBS_EXPERIMENT_STATE_RNN = 1;
 const int OBS_EXPERIMENT_STATE_DONE = 2;
@@ -26,6 +35,8 @@ public:
 	 * - don't have ending scale while training (i.e., scale always 1.0)
 	 *   - add scale after state trained and readjusting impact
 	 */
+
+	std::set<int> resolved_network_indexes;
 	double resolved_variance;
 
 	double new_average_misguess;

@@ -1,5 +1,13 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "obs_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void BranchExperiment::activate(int& curr_node_id,

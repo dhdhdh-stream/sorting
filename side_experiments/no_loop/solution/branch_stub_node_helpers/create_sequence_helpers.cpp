@@ -1,5 +1,10 @@
 #include "branch_stub_node.h"
 
+#include "scope_node.h"
+#include "sequence.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchStubNode::create_sequence_activate(

@@ -1,5 +1,16 @@
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "obs_experiment.h"
+#include "scale.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void Scope::update_backprop(double target_val,

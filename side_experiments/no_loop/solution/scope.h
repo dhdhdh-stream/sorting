@@ -6,6 +6,23 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class AbstractNode;
+class AbstractNodeHistory;
+class BranchExperimentHistory;
+class ObsExperiment;
+class Sequence;
+class State;
+
+class ScopeHistory;
 class Scope {
 public:
 	int id;
@@ -71,6 +88,20 @@ public:
 									 int& exit_node_id,
 									 int& num_nodes,
 									 ScopeHistory* history);
+	void random_exit_activate(std::vector<int>& starting_node_ids,
+							  std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  int& exit_depth,
+							  int& exit_node_id,
+							  int& num_nodes,
+							  ScopeHistory* history);
+	void node_random_exit_activate_helper(int& curr_node_id,
+										  std::vector<int>& scope_context,
+										  std::vector<int>& node_context,
+										  int& exit_depth,
+										  int& exit_node_id,
+										  int& num_nodes,
+										  ScopeHistory* history);
 
 	void create_sequence_activate(std::vector<int>& starting_node_ids,
 								  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,

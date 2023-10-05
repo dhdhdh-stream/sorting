@@ -8,6 +8,22 @@
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class Sequence;
+class State;
+class BranchExperiment;
+class BranchExperimentHistory;
+
+class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
 	std::vector<int> branch_scope_context;
@@ -16,7 +32,7 @@ public:
 	 * - last layer of context doesn't matter
 	 *   - scope id will always match, and node id meaningless
 	 */
-	bool branch_is_pass_through
+	bool branch_is_pass_through;
 
 	std::vector<bool> shared_state_is_local;
 	std::vector<int> shared_state_indexes;
@@ -71,7 +87,7 @@ public:
 
 	void create_sequence_activate(bool& is_branch,
 								  std::vector<ContextLayer>& context,
-								  int target_num_nodes
+								  int target_num_nodes,
 								  int& curr_num_nodes,
 								  Sequence* new_sequence,
 								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
@@ -91,7 +107,7 @@ public:
 
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<State* StateStatus>& experiment_score_state_vals,
+								  std::map<State*, StateStatus>& experiment_score_state_vals,
 								  std::vector<int>& test_obs_indexes,
 								  std::vector<double>& test_obs_vals,
 								  BranchNodeHistory* history);

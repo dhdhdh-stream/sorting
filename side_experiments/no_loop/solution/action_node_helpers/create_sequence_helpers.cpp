@@ -1,5 +1,10 @@
 #include "action_node.h"
 
+#include "scope_node.h"
+#include "sequence.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void ActionNode::create_sequence_activate(

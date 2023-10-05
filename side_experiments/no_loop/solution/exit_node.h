@@ -1,6 +1,10 @@
 #ifndef EXIT_NODE_H
 #define EXIT_NODE_H
 
+#include <fstream>
+
+#include "abstract_node.h"
+
 class ExitNode : public AbstractNode {
 public:
 	int exit_depth;
@@ -11,7 +15,7 @@ public:
 			 int id);
 	~ExitNode();
 
-	void save(ofstream& output_file);
+	void save(std::ofstream& output_file);
 };
 
 class ExitNodeHistory : public AbstractNodeHistory {

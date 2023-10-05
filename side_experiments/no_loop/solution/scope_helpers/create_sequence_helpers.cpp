@@ -1,5 +1,11 @@
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "branch_stub_node.h"
+#include "exit_node.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void Scope::create_sequence_activate(vector<int>& starting_node_ids,
@@ -137,13 +143,9 @@ void Scope::node_create_sequence_activate_helper(
 
 		curr_node_id = branch_stub_node->next_node_id;
 	} else {
-		ExitNode* exit_node = (ExitNode*)this->nodes[curr_node_id];
+		// this->nodes[curr_node_id]->type == NODE_TYPE_EXIT
 
-		if (exit_node->exit_depth == 0) {
-			curr_node_id = exit_node->exit_node_id;
-		} else {
-			exit_depth = exit_node->exit_depth;
-			exit_node_id = exit_node->exit_node_id;
-		}
+		curr_node_id = -1;
+		// simply set to -1 to signal exit
 	}
 }

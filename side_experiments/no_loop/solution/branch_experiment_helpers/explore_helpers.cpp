@@ -1,5 +1,15 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scale.h"
+#include "scope.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 const int EXPLORE_ITERS = 1000;
@@ -55,7 +65,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 				Scope* containing_scope;
 				if (direction_distribution(generator) == 0) {
 					// higher
-					int context_index = context.size() - this->scope_context.size();
+					int context_index = (int)context.size() - (int)this->scope_context.size();
 					while (true) {
 						if (context_index > 0 && next_distribution(generator) == 0) {
 							context_index--;
@@ -69,7 +79,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					containing_scope = solution->scopes[this->scope_context[0]];
 					while (true) {
 						if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
-							uniform_int_distribution<int> child_distribution(0, containing_scope->child_scopes.size()-1);
+							uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
 							containing_scope = containing_scope->child_scopes[child_distribution(generator)];
 						} else {
 							break;
@@ -79,7 +89,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 
 				Sequence* new_sequence = create_sequence(flat_vals,
 														 context,
-														 this->scope_context.size(),
+														 (int)this->scope_context.size(),
 														 containing_scope,
 														 run_helper);
 				this->curr_sequences.push_back(new_sequence);
@@ -137,7 +147,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				delete this->curr_actions[s_index];
 			} else {
-				delete this->curr_sequences[s_index]
+				delete this->curr_sequences[s_index];
 			}
 		}
 

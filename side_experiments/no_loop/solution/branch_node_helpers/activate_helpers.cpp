@@ -1,5 +1,11 @@
 #include "branch_node.h"
 
+#include "branch_experiment.h"
+#include "scale.h"
+#include "scope.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchNode::activate(int& curr_node_id,
@@ -70,7 +76,7 @@ void BranchNode::activate(int& curr_node_id,
 								* this->original_state_defs[i_index]->resolved_standard_deviation
 								* this->original_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->original_state_defs[i_index]
-								this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->original_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -95,7 +101,7 @@ void BranchNode::activate(int& curr_node_id,
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->branch_state_defs[i_index]
-								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -114,7 +120,7 @@ void BranchNode::activate(int& curr_node_id,
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->branch_state_defs[i_index]
-								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -215,7 +221,7 @@ void BranchNode::activate(int& curr_node_id,
 				}
 			}
 
-			for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 				bool matches_context = true;
 				if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
 					matches_context = false;
@@ -304,7 +310,7 @@ void BranchNode::experiment_back_activate(vector<int>& scope_context,
 		}
 	}
 
-	for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 		bool matches_context = true;
 		if (this->test_hook_scope_contexts[h_index].size() > scope_context.size()) {
 			matches_context = false;

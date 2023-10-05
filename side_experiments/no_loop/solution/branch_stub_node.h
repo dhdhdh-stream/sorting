@@ -1,6 +1,17 @@
 #ifndef BRANCH_STUB_NODE_H
 #define BRANCH_STUB_NODE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+
+class Sequence;
+class State;
+
 class BranchStubNode : public AbstractNode {
 public:
 	bool was_branch;

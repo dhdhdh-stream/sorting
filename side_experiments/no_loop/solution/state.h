@@ -1,6 +1,14 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <fstream>
+#include <set>
+#include <vector>
+
+class AbstractNode;
+class Scale;
+class StateNetwork;
+
 class State {
 public:
 	int id;

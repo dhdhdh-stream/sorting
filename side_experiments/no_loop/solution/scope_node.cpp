@@ -1,5 +1,11 @@
 #include "scope_node.h"
 
+#include "branch_experiment.h"
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 ScopeNode::ScopeNode() {
@@ -49,7 +55,7 @@ ScopeNode::ScopeNode(ifstream& input_file,
 
 		string outer_is_local_line;
 		getline(input_file, outer_is_local_line);
-		this->input_outer_is_local.push_back(stoi(outer_is_local_line))
+		this->input_outer_is_local.push_back(stoi(outer_is_local_line));
 
 		string outer_index_line;
 		getline(input_file, outer_index_line);

@@ -1,5 +1,9 @@
 #include "solution.h"
 
+#include "action_node.h"
+#include "scope.h"
+#include "state.h"
+
 using namespace std;
 
 Solution::Solution() {

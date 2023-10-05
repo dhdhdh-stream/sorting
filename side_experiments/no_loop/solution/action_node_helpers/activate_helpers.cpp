@@ -1,5 +1,10 @@
 #include "action_node.h"
 
+#include "branch_experiment.h"
+#include "scope.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void ActionNode::activate(int& curr_node_id,
@@ -90,7 +95,7 @@ void ActionNode::activate(int& curr_node_id,
 		}
 	}
 
-	for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 		bool matches_context = true;
 		if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
 			matches_context = false;
@@ -158,7 +163,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 		}
 	}
 
-	for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 		bool matches_context = true;
 		if (this->test_hook_scope_contexts[h_index].size() > scope_context.size()) {
 			matches_context = false;

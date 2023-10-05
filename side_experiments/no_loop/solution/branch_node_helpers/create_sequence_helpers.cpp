@@ -1,5 +1,12 @@
 #include "branch_node.h"
 
+#include "branch_stub_node.h"
+#include "scale.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchNode::create_sequence_activate(
@@ -44,7 +51,7 @@ void BranchNode::create_sequence_activate(
 								* this->original_state_defs[i_index]->resolved_standard_deviation
 								* this->original_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->original_state_defs[i_index]
-								this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->original_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -68,7 +75,7 @@ void BranchNode::create_sequence_activate(
 								* this->original_state_defs[i_index]->resolved_standard_deviation
 								* this->original_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->original_state_defs[i_index]
-								this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->original_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->original_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -93,7 +100,7 @@ void BranchNode::create_sequence_activate(
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->branch_state_defs[i_index]
-								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end
@@ -112,7 +119,7 @@ void BranchNode::create_sequence_activate(
 								* this->branch_state_defs[i_index]->resolved_standard_deviation
 								* this->branch_state_defs[i_index]->scale->weight;
 						} else if (last_network->parent_state != this->branch_state_defs[i_index]
-								this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
+								|| this->branch_state_defs[i_index]->resolved_network_indexes.find(last_network->index)
 									== this->branch_state_defs[i_index]->resolved_network_indexes.end()) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation * last_network->correlation_to_end

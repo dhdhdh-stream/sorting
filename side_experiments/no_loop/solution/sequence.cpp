@@ -1,5 +1,8 @@
 #include "sequence.h"
 
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 Sequence::Sequence() {

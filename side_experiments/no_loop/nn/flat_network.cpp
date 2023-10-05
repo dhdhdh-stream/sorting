@@ -1,5 +1,7 @@
 #include "flat_network.h"
 
+#include "layer.h"
+
 using namespace std;
 
 /**

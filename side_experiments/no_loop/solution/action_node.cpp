@@ -1,5 +1,10 @@
 #include "action_node.h"
 
+#include "branch_experiment.h"
+#include "globals.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 ActionNode::ActionNode() {

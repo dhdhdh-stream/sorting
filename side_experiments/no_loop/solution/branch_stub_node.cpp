@@ -1,5 +1,9 @@
 #include "branch_stub_node.h"
 
+#include "globals.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 BranchStubNode::BranchStubNode() {

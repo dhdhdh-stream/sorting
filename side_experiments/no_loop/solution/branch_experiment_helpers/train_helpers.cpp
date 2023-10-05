@@ -1,5 +1,14 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "helpers.h"
+#include "obs_experiment.h"
+#include "scale.h"
+#include "scope.h"
+#include "sequence.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 const int OBS_EXPERIMENT_TRIES = 6;
@@ -51,7 +60,7 @@ void BranchExperiment::train_backprop(double target_val,
 		}
 		map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
 		if (scale_it == this->score_state_scales.end()) {
-			scale_it = this->score_state_scales.insert({it->first, Scale(it->first->scale->weight)}).first;
+			scale_it = this->score_state_scales.insert({it->first, new Scale(it->first->scale->weight)}).first;
 		}
 		predicted_score += scale_it->second->weight * it->second.val;
 	}

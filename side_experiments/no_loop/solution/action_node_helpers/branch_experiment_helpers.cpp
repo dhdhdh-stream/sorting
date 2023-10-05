@@ -1,4 +1,7 @@
 #include "action_node.h"
+#include "scope.h"
+#include "state.h"
+#include "state_network.h"
 
 using namespace std;
 
@@ -35,7 +38,7 @@ void ActionNode::branch_experiment_train_activate(
 		}
 	}
 
-	for (int h_index = 0; h_index < (int)this->test_hook_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 		bool matches_context = true;
 		if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
 			matches_context = false;
@@ -51,15 +54,14 @@ void ActionNode::branch_experiment_train_activate(
 
 		if (matches_context) {
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-				.test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
+				.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-				.test_obs_vals.push_back(obs_snapshot);
+				.scope_history->test_obs_vals.push_back(obs_snapshot);
 		}
 	}
 }
 
 void ActionNode::branch_experiment_simple_activate(
 		vector<double>& flat_vals) {
-	double obs_snapshot = flat_vals[0];
 	flat_vals.erase(flat_vals.begin());
 }

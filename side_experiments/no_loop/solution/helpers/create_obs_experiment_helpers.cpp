@@ -1,5 +1,15 @@
 #include "helpers.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "flat_network.h"
+#include "globals.h"
+#include "obs_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+
 using namespace std;
 
 /**
@@ -26,11 +36,11 @@ void create_obs_experiment_branch_experiment_helper(
 		BranchExperimentHistory* branch_experiment_history) {
 	BranchExperiment* branch_experiment = branch_experiment_history->experiment;
 
-	for (int s_index = 0; s_index < (int)branch_experiment->step_types.size(); s_index++) {
+	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
 		// simply leave node_context.back() as -1;
 
-		if (branch_experiment->step_types[s_index] == STEP_TYPE_ACTION) {
-			possible_nodes.push_back(branch_experiment->actions[s_index]);
+		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			possible_nodes.push_back(branch_experiment->best_actions[s_index]);
 			possible_scope_contexts.push_back(scope_context);
 			possible_node_contexts.push_back(node_context);
 			possible_obs_indexes.push_back(0);
@@ -169,9 +179,9 @@ ObsExperiment* create_obs_experiment(ScopeHistory* scope_history) {
 	Scope* parent_scope = scope_history->scope;
 	ObsExperiment* obs_experiment = new ObsExperiment(parent_scope);
 
-	int num_obs = min(NUM_INITIAL_OBS, possible_nodes.size());
+	int num_obs = min(NUM_INITIAL_OBS, (int)possible_nodes.size());
 	for (int o_index = 0; o_index < num_obs; o_index++) {
-		uniform_int_distribution<int> distribution(0, possible_nodes.size()-1);
+		uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
 		int rand_obs = distribution(generator);
 
 		obs_experiment->nodes.push_back(possible_nodes[rand_obs]);

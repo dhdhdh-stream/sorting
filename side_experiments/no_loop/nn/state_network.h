@@ -1,6 +1,14 @@
 #ifndef STATE_NETWORK_H
 #define STATE_NETWORK_H
 
+#include <fstream>
+#include <set>
+
+#include "layer.h"
+#include "state_status.h"
+
+class State;
+
 class StateNetwork {
 public:
 	Layer* obs_input;

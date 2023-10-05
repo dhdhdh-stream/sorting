@@ -1,6 +1,10 @@
 #ifndef FLAT_NETWORK_H
 #define FLAT_NETWORK_H
 
+#include <vector>
+
+#include "layer.h"
+
 /**
  * - enough to solve 4-way XORs
  *   - needed size scales exponentially with the size of XOR wished to solve

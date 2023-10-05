@@ -1,5 +1,15 @@
 #include "scope.h"
 
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "branch_stub_node.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "obs_experiment.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 Scope::Scope() {

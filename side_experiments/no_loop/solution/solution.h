@@ -1,6 +1,12 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
+#include <fstream>
+#include <map>
+
+class Scope;
+class State;
+
 class Solution {
 public:
 	int state_counter;
