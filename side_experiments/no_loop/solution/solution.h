@@ -28,8 +28,10 @@ public:
 	int depth_limit;
 
 	Solution();
-	Solution(std::ifstream& input_file);
 	~Solution();
+
+	void init();
+	void load(std::ifstream& input_file);
 
 	void save(std::ofstream& output_file);
 };

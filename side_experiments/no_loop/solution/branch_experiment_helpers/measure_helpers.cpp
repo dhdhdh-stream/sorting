@@ -109,7 +109,7 @@ void BranchExperiment::eval() {
 	double combined_improvement = combined_average_score - parent->average_score;
 	double score_standard_deviation = sqrt(parent->score_variance);
 	double combined_improvement_t_score = combined_improvement
-		/ score_standard_deviation / sqrt(MEASURE_ITERS);
+		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
 	if (combined_improvement_t_score > 2.326) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
 		if (branch_weight > 0.98) {
@@ -122,12 +122,12 @@ void BranchExperiment::eval() {
 
 		double score_improvement = this->average_score - parent->average_score;
 		double score_improvement_t_score = score_improvement
-			/ score_standard_deviation / sqrt(20000);
+			/ (score_standard_deviation / sqrt(20000));
 
 		double misguess_improvement = parent->average_misguess - this->average_misguess;
 		double misguess_standard_deviation = sqrt(parent->misguess_variance);
 		double misguess_improvement_t_score = misguess_improvement
-			/ misguess_standard_deviation / sqrt(20000);
+			/ (misguess_standard_deviation / sqrt(20000));
 
 		if (score_improvement_t_score > -0.674	// 75%<
 				&& misguess_improvement_t_score > 2.326) {

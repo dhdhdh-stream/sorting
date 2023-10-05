@@ -1,7 +1,12 @@
 #include "action_node.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
+#include "globals.h"
+#include "scale.h"
 #include "scope.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 

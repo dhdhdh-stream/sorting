@@ -1,5 +1,7 @@
 #include "solution.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "scope.h"
 #include "state.h"
@@ -7,6 +9,10 @@
 using namespace std;
 
 Solution::Solution() {
+	// do nothing
+}
+
+void Solution::init() {
 	this->state_counter = 0;
 
 	Scope* starting_scope = new Scope();
@@ -21,14 +27,14 @@ Solution::Solution() {
 	starting_scope->score_variance = 1.0;
 	starting_scope->average_misguess = 0.0;
 	starting_scope->misguess_variance = 1.0;
-	this->state_counter = 1;
+	this->scope_counter = 1;
 	this->scopes[0] = starting_scope;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
 }
 
-Solution::Solution(ifstream& input_file) {
+void Solution::load(ifstream& input_file) {
 	string state_counter_line;
 	getline(input_file, state_counter_line);
 	this->state_counter = stoi(state_counter_line);

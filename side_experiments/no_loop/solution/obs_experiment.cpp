@@ -1,5 +1,7 @@
 #include "obs_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -14,8 +16,10 @@
 
 using namespace std;
 
-const int FLAT_ITERS = 500000;
-const int RNN_ITERS = 500000;
+// const int FLAT_ITERS = 500000;
+const int FLAT_ITERS = 50;
+// const int RNN_ITERS = 500000;
+const int RNN_ITERS = 50;
 
 /**
  * - practical limit
@@ -172,7 +176,7 @@ void ObsExperiment::trim() {
 
 	vector<int> obs_indexes(this->nodes.size());
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		obs_indexes.push_back(n_index);
+		obs_indexes[n_index] = n_index;
 	}
 
 	vector<AbstractNode*> new_nodes;
@@ -295,8 +299,15 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	double misguess_standard_deviation = sqrt(parent->misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
-		/ misguess_standard_deviation / sqrt(20000);
-	if (improvement_t_score > 2.326) {	// >99%
+		/ (misguess_standard_deviation / sqrt(20000));
+
+	cout << "parent->average_misguess: " << parent->average_misguess << endl;
+	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	cout << "improvement_t_score: " << improvement_t_score << endl;
+
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {
 		State* new_state = new State();
 
 		new_state->resolved_network_indexes = this->resolved_network_indexes;
@@ -309,6 +320,8 @@ void ObsExperiment::scope_eval(Scope* parent) {
 
 			this->state_networks[n_index]->correlation_to_end = this->state_networks[n_index]->covariance_with_end
 				/ this->state_networks[n_index]->ending_standard_deviation / new_state->resolved_standard_deviation;
+
+			this->state_networks[n_index]->parent_state = new_state;
 		}
 		new_state->networks = this->state_networks;
 		this->state_networks.clear();
@@ -347,10 +360,6 @@ void ObsExperiment::scope_eval(Scope* parent) {
 				branch_node->score_state_network_indexes.push_back(n_index);
 			}
 		}
-	} else {
-		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
-			delete this->state_networks[n_index];
-		}
 	}
 }
 
@@ -359,7 +368,13 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	double existing_misguess_standard_deviation = sqrt(branch_experiment->misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
-		/ existing_misguess_standard_deviation / sqrt(20000);
+		/ (existing_misguess_standard_deviation / sqrt(20000));
+
+	cout << "branch_experiment->average_misguess: " << branch_experiment->average_misguess << endl;
+	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
+	cout << "improvement_t_score: " << improvement_t_score << endl;
+
 	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 
@@ -391,9 +406,5 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 		branch_experiment->new_score_state_scope_contexts.push_back(this->scope_contexts);
 		branch_experiment->new_score_state_node_contexts.push_back(this->node_contexts);
 		branch_experiment->new_score_state_obs_indexes.push_back(this->obs_indexes);
-	} else {
-		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
-			delete this->state_networks[n_index];
-		}
 	}
 }
