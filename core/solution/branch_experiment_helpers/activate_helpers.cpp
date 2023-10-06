@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -16,7 +18,7 @@ void BranchExperiment::activate(int& curr_node_id,
 								int& exit_depth,
 								int& exit_node_id,
 								RunHelper& run_helper,
-								BranchExperimentHistory* history) {
+								BranchExperimentHistory*& history) {
 	bool matches_context = true;
 	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
@@ -37,6 +39,9 @@ void BranchExperiment::activate(int& curr_node_id,
 
 				run_helper.selected_branch_experiment_count++;
 
+				int phase_save = run_helper.phase;
+				run_helper.phase = RUN_PHASE_NEW;
+
 				if (run_helper.branch_experiment_history == NULL) {
 					double target_probability;
 					if (run_helper.selected_branch_experiment_count > this->average_instances_per_run) {
@@ -51,6 +56,7 @@ void BranchExperiment::activate(int& curr_node_id,
 						run_helper.branch_experiment_history = history;
 						context[context.size() - this->scope_context.size()]
 							.scope_history->inner_branch_experiment_history = history;
+						history->parent_scope_history = context[context.size() - this->scope_context.size()].scope_history;
 
 						if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
 							explore_activate(curr_node_id,
@@ -96,6 +102,8 @@ void BranchExperiment::activate(int& curr_node_id,
 										run_helper);
 					}
 				}
+
+				run_helper.phase = phase_save;
 			} else if (run_helper.selected_branch_experiment == NULL) {
 				map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.find(this);
 				if (it == run_helper.experiments_seen_counts.end()) {
@@ -107,6 +115,9 @@ void BranchExperiment::activate(int& curr_node_id,
 
 						run_helper.selected_branch_experiment = this;
 						run_helper.selected_branch_experiment_count = 1;
+
+						int phase_save = run_helper.phase;
+						run_helper.phase = RUN_PHASE_NEW;
 
 						bool is_target;
 						if (this->average_instances_per_run == 1.0) {
@@ -125,6 +136,7 @@ void BranchExperiment::activate(int& curr_node_id,
 							run_helper.branch_experiment_history = history;
 							context[context.size() - this->scope_context.size()]
 								.scope_history->inner_branch_experiment_history = history;
+							history->parent_scope_history = context[context.size() - this->scope_context.size()].scope_history;
 
 							if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
 								explore_activate(curr_node_id,
@@ -151,19 +163,23 @@ void BranchExperiment::activate(int& curr_node_id,
 												 run_helper);
 							}
 						} else {
-							simple_activate(curr_node_id,
-											problem,
-											context,
-											exit_depth,
-											exit_node_id,
-											run_helper);
+							if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
+								simple_activate(curr_node_id,
+												problem,
+												context,
+												exit_depth,
+												exit_node_id,
+												run_helper);
+							}
 						}
-					} else {
-						run_helper.experiments_seen_counts[this] = 1;
+
+						run_helper.phase = phase_save;
 					}
+
+					run_helper.experiments_seen_counts[this] = 1;
 				}
 			}
-		} else {
+		} else if (run_helper.phase == RUN_PHASE_UPDATE) {
 			map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.find(this);
 			if (it == run_helper.experiments_seen_counts.end()) {
 				run_helper.experiments_seen_order.push_back(this);
@@ -212,12 +228,15 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 
 				node_context.back() = -1;
 
-				scope_node->experiment_back_activate(scope_context,
-													 node_context,
-													 experiment_score_state_vals,
-													 test_obs_indexes,
-													 test_obs_vals,
-													 scope_node_history);
+				if (i_index != (int)scope_history->node_histories.size()-1
+						|| h_index != (int)scope_history->node_histories[i_index].size()-1) {
+					scope_node->experiment_back_activate(scope_context,
+														 node_context,
+														 experiment_score_state_vals,
+														 test_obs_indexes,
+														 test_obs_vals,
+														 scope_node_history);
+				}
 			} else {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[i_index][h_index];
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
@@ -315,8 +334,6 @@ void BranchExperiment::unhook() {
 
 void BranchExperiment::backprop(double target_val,
 								BranchExperimentHistory* history) {
-	unhook();
-
 	if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
 		explore_backprop(target_val,
 						 history);

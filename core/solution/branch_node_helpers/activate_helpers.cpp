@@ -134,7 +134,8 @@ void BranchNode::activate(int& curr_node_id,
 			}
 
 			bool is_branch;
-			if (branch_score > original_score) {
+			// if (branch_score > original_score) {
+			if (rand()%2 == 0) {
 				is_branch = true;
 			} else {
 				is_branch = false;
@@ -246,7 +247,7 @@ void BranchNode::activate(int& curr_node_id,
 			if (is_branch) {
 				curr_node_id = this->branch_next_node_id;
 
-				if (this->experiment_is_branch && this->experiment != NULL) {
+				if (this->experiment != NULL && this->experiment_is_branch) {
 					BranchExperimentHistory* branch_experiment_history = NULL;
 					this->experiment->activate(curr_node_id,
 											   problem,
@@ -260,7 +261,7 @@ void BranchNode::activate(int& curr_node_id,
 			} else {
 				curr_node_id = this->original_next_node_id;
 
-				if (!this->experiment_is_branch && this->experiment != NULL) {
+				if (this->experiment != NULL && !this->experiment_is_branch) {
 					BranchExperimentHistory* branch_experiment_history = NULL;
 					this->experiment->activate(curr_node_id,
 											   problem,

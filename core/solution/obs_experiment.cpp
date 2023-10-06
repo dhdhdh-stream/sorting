@@ -16,8 +16,10 @@
 
 using namespace std;
 
-const int FLAT_ITERS = 500000;
-const int RNN_ITERS = 500000;
+// const int FLAT_ITERS = 500000;
+const int FLAT_ITERS = 50;
+// const int RNN_ITERS = 500000;
+const int RNN_ITERS = 50;
 
 /**
  * - practical limit
@@ -33,7 +35,7 @@ ObsExperiment::ObsExperiment(Scope* parent_scope) {
 	this->new_average_misguess = parent_scope->average_misguess;
 
 	this->state = OBS_EXPERIMENT_STATE_FLAT;
-	this->state_iter = 0;
+	this->state_iter = -1;
 }
 
 ObsExperiment::~ObsExperiment() {
@@ -68,6 +70,10 @@ void ObsExperiment::hook(void* key) {
 			branch_node->test_hook_indexes.push_back(n_index);
 			branch_node->test_hook_keys.push_back(key);
 		}
+	}
+
+	if (this->state_iter == -1) {
+		this->state_iter = 0;
 	}
 }
 
@@ -132,24 +138,26 @@ void ObsExperiment::flat(double target_val,
 						 double existing_predicted_score,
 						 vector<int>& obs_indexes,
 						 vector<double>& obs_vals) {
-	if (obs_indexes.size() > 0) {
-		vector<double> flat_inputs(this->nodes.size(), 0.0);
-		for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
-			flat_inputs[obs_indexes[o_index]] = obs_vals[o_index];
+	if (this->state_iter != -1) {
+		if (obs_indexes.size() > 0) {
+			vector<double> flat_inputs(this->nodes.size(), 0.0);
+			for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
+				flat_inputs[obs_indexes[o_index]] = obs_vals[o_index];
+			}
+
+			this->flat_network->activate(flat_inputs);
+
+			double new_predicted_score = existing_predicted_score + this->flat_network->output->acti_vals[0];
+
+			double predicted_score_error = target_val - new_predicted_score;
+
+			this->flat_network->backprop(predicted_score_error);
 		}
 
-		this->flat_network->activate(flat_inputs);
-
-		double new_predicted_score = existing_predicted_score + this->flat_network->output->acti_vals[0];
-
-		double predicted_score_error = target_val - new_predicted_score;
-
-		this->flat_network->backprop(predicted_score_error);
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= FLAT_ITERS) {
-		trim();
+		this->state_iter++;
+		if (this->state_iter >= FLAT_ITERS) {
+			trim();
+		}
 	}
 }
 
@@ -221,74 +229,76 @@ void ObsExperiment::trim() {
 	}
 
 	this->state = OBS_EXPERIMENT_STATE_RNN;
-	this->state_iter = 0;
+	this->state_iter = -1;
 }
 
 void ObsExperiment::rnn(double target_val,
 						double existing_predicted_score,
 						vector<int>& obs_indexes,
 						vector<double>& obs_vals) {
-	if (obs_indexes.size() > 0) {
-		uniform_real_distribution<double> starting_distribution(-1.0, 1.0);
-		double state_val = starting_distribution(generator);
+	if (this->state_iter != -1) {
+		if (obs_indexes.size() > 0) {
+			uniform_real_distribution<double> starting_distribution(-1.0, 1.0);
+			double state_val = starting_distribution(generator);
 
-		StateNetwork* last_network = NULL;
-		vector<double> ending_state_vals(obs_indexes.size());
-		for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
-			int network_index = obs_indexes[o_index];
+			StateNetwork* last_network = NULL;
+			vector<double> ending_state_vals(obs_indexes.size());
+			for (int o_index = 0; o_index < (int)obs_indexes.size(); o_index++) {
+				int network_index = obs_indexes[o_index];
 
-			if (last_network != NULL) {
-				this->state_networks[network_index]->starting_mean = 0.9999*this->state_networks[network_index]->starting_mean + 0.0001*state_val;
-				double curr_variance = (this->state_networks[network_index]->starting_mean - state_val) * (this->state_networks[network_index]->starting_mean - state_val);
-				this->state_networks[network_index]->starting_variance = 0.9999*this->state_networks[network_index]->starting_variance + 0.0001*curr_variance;
+				if (last_network != NULL) {
+					this->state_networks[network_index]->starting_mean = 0.9999*this->state_networks[network_index]->starting_mean + 0.0001*state_val;
+					double curr_variance = (this->state_networks[network_index]->starting_mean - state_val) * (this->state_networks[network_index]->starting_mean - state_val);
+					this->state_networks[network_index]->starting_variance = 0.9999*this->state_networks[network_index]->starting_variance + 0.0001*curr_variance;
 
-				last_network->ending_mean = 0.999*last_network->ending_mean + 0.001*this->state_networks[network_index]->starting_mean;
-				last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->state_networks[network_index]->starting_variance;
+					last_network->ending_mean = 0.999*last_network->ending_mean + 0.001*this->state_networks[network_index]->starting_mean;
+					last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->state_networks[network_index]->starting_variance;
 
-				this->state_networks[network_index]->preceding_network_indexes.insert(last_network->index);
+					this->state_networks[network_index]->preceding_network_indexes.insert(last_network->index);
+				}
+
+				this->state_networks[network_index]->activate(obs_vals[o_index],
+															  state_val);
+
+				last_network = this->state_networks[network_index];
+				ending_state_vals[o_index] = state_val;
 			}
 
-			this->state_networks[network_index]->activate(obs_vals[network_index],
-														  state_val);
+			this->resolved_network_indexes.insert(last_network->index);
 
-			last_network = this->state_networks[network_index];
-			ending_state_vals[o_index] = state_val;
+			double curr_variance = state_val*state_val;
+			this->resolved_variance = 0.9999*this->resolved_variance + 0.0001*curr_variance;
+
+			last_network->ending_mean = 0.999*last_network->ending_mean + 0.0;
+			last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->resolved_variance;
+
+			double new_predicted_score = existing_predicted_score + state_val;
+
+			double curr_misguess = (target_val - new_predicted_score) * (target_val - new_predicted_score);
+			this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
+
+			double state_error = target_val - new_predicted_score;
+
+			for (int o_index = (int)obs_indexes.size() - 1; o_index >= 0; o_index--) {
+				int network_index = obs_indexes[o_index];
+
+				double curr_covariance = (ending_state_vals[o_index] - this->state_networks[network_index]->ending_mean) * state_val;
+				this->state_networks[network_index]->covariance_with_end = 0.9999*this->state_networks[network_index]->covariance_with_end + 0.0001*curr_covariance;
+
+				this->state_networks[network_index]->backprop(state_error);
+			}
+		} else {
+			double curr_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
+			this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
+			/**
+			 * - still update so measurements are proportional
+			 */
 		}
 
-		this->resolved_network_indexes.insert(last_network->index);
-
-		double curr_variance = state_val*state_val;
-		this->resolved_variance = 0.9999*this->resolved_variance + 0.0001*curr_variance;
-
-		last_network->ending_mean = 0.999*last_network->ending_mean + 0.0;
-		last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*this->resolved_variance;
-
-		double new_predicted_score = existing_predicted_score + state_val;
-
-		double curr_misguess = (target_val - new_predicted_score) * (target_val - new_predicted_score);
-		this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
-
-		double state_error = target_val - new_predicted_score;
-
-		for (int o_index = (int)obs_indexes.size() - 1; o_index >= 0; o_index--) {
-			int network_index = obs_indexes[o_index];
-
-			double curr_covariance = (ending_state_vals[o_index] - this->state_networks[network_index]->ending_mean) * state_val;
-			this->state_networks[network_index]->covariance_with_end = 0.9999*this->state_networks[network_index]->covariance_with_end + 0.0001*curr_covariance;
-
-			this->state_networks[network_index]->backprop(state_error);
+		this->state_iter++;
+		if (this->state_iter >= RNN_ITERS) {
+			this->state = OBS_EXPERIMENT_STATE_DONE;
 		}
-	} else {
-		double curr_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
-		this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
-		/**
-		 * - still update so measurements are proportional
-		 */
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= RNN_ITERS) {
-		this->state = OBS_EXPERIMENT_STATE_DONE;
 	}
 }
 
@@ -373,7 +383,8 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		State* new_state = new State();
 
 		new_state->resolved_network_indexes = this->resolved_network_indexes;

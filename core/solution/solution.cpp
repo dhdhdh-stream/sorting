@@ -21,6 +21,7 @@ void Solution::init() {
 	starting_scope->num_local_states = 0;
 	ActionNode* starting_action_node = new ActionNode();
 	starting_action_node->id = 0;
+	starting_action_node->action = Action(ACTION_START);
 	starting_action_node->next_node_id = -1;
 	starting_scope->nodes.push_back(starting_action_node);
 	starting_scope->average_score = 0.0;

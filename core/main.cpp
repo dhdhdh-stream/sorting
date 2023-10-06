@@ -4,13 +4,16 @@
 #include <thread>
 #include <random>
 
+#include "action_node.h"
 #include "branch_experiment.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
 #include "run_helper.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "state_status.h"
 
@@ -25,12 +28,14 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1696551480;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
+	solution->init();
 	// ifstream solution_save_file;
 	// solution_save_file.open("saves/solution.txt");
 	// solution = new Solution(solution_save_file);
@@ -83,13 +88,35 @@ int main(int argc, char* argv[]) {
 			if (run_helper.experiments_seen_counts.size() == 0) {
 				create_branch_experiment(root_history);
 			} else {
-				if (run_helper.branch_experiment_history != NULL) {
-					BranchExperiment* experiment = run_helper.branch_experiment_history->experiment;
-					experiment->backprop(target_val,
-										 run_helper.branch_experiment_history);
+				if (run_helper.selected_branch_experiment != NULL) {
+					run_helper.selected_branch_experiment->unhook();
+
+					if (run_helper.branch_experiment_history != NULL) {
+						BranchExperiment* experiment = run_helper.branch_experiment_history->experiment;
+						experiment->backprop(target_val,
+											 run_helper.branch_experiment_history);
+
+						if (experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
+							Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
+							AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
+							if (starting_node->type == NODE_TYPE_ACTION) {
+								ActionNode* action_node = (ActionNode*)starting_node;
+								action_node->experiment = NULL;
+							} else if (starting_node->type == NODE_TYPE_SCOPE) {
+								ScopeNode* scope_node = (ScopeNode*)starting_node;
+								scope_node->experiment = NULL;
+							} else {
+								BranchNode* branch_node = (BranchNode*)starting_node;
+								branch_node->experiment = NULL;
+							}
+							delete experiment;
+						}
+					}
 				}
 			}
 		} else {
+			// run_helper.phase == RUN_PHASE_UPDATE
+
 			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
 				Scope* scope = run_helper.scope_histories[h_index]->scope;
 				scope->update_backprop(target_val,
@@ -125,6 +152,11 @@ int main(int argc, char* argv[]) {
 		// 		display_previous_time = curr_time;
 		// 	}
 		// }
+
+		// temp
+		if (iter_index > 10000) {
+			break;
+		}
 	}
 
 	delete solution;

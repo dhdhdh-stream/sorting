@@ -98,7 +98,7 @@ public:
 				  int& exit_depth,
 				  int& exit_node_id,
 				  RunHelper& run_helper,
-				  BranchExperimentHistory* history);
+				  BranchExperimentHistory*& history);
 	void hook(std::vector<ContextLayer>& context,
 			  RunHelper& run_helper);
 	void hook_helper(std::vector<int>& scope_context,

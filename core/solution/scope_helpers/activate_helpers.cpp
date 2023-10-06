@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -80,7 +82,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 		history->inner_branch_experiment_history->experiment_score_state_snapshots = context.back().experiment_score_state_vals;
 	}
 
-	if (this->obs_experiment != NULL) {
+	if (run_helper.phase == RUN_PHASE_UPDATE
+			&& this->obs_experiment != NULL) {
 		this->obs_experiment->unhook(history);
 	}
 
@@ -95,6 +98,8 @@ void Scope::node_activate_helper(int iter_index,
 								 int& exit_node_id,
 								 RunHelper& run_helper,
 								 ScopeHistory* history) {
+	context.back().node_id = this->id;
+
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 		action_node->activate(curr_node_id,
@@ -138,4 +143,6 @@ void Scope::node_activate_helper(int iter_index,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
+
+	context.back().node_id = -1;
 }

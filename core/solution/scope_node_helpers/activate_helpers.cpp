@@ -53,8 +53,6 @@ void ScopeNode::activate(int& curr_node_id,
 		}
 	}
 
-	context.back().node_id = this->id;
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
@@ -117,8 +115,6 @@ void ScopeNode::activate(int& curr_node_id,
 	}
 
 	context.pop_back();
-
-	context.back().node_id = -1;
 
 	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
@@ -266,8 +262,6 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	history->is_halfway = true;
 
-	context.back().node_id = this->id;
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
@@ -322,8 +316,6 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	}
 
 	context.pop_back();
-
-	context.back().node_id = -1;
 
 	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {

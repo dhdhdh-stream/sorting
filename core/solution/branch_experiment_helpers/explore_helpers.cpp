@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "globals.h"
 #include "helpers.h"
@@ -12,7 +14,8 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 1000;
+// const int EXPLORE_ITERS = 1000;
+const int EXPLORE_ITERS = 10;
 
 const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
 /**
@@ -64,36 +67,50 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 				this->curr_step_types.push_back(STEP_TYPE_SEQUENCE);
 				this->curr_actions.push_back(NULL);
 
-				Scope* containing_scope;
-				if (direction_distribution(generator) == 0) {
-					// higher
-					int context_index = (int)context.size() - (int)this->scope_context.size();
-					while (true) {
-						if (context_index > 0 && next_distribution(generator) == 0) {
-							context_index--;
-						} else {
-							break;
+				Sequence* new_sequence;
+				while (true) {
+					Scope* containing_scope;
+					if (direction_distribution(generator) == 0) {
+						// higher
+						int context_index = (int)context.size() - (int)this->scope_context.size();
+						while (true) {
+							if (context_index > 0 && next_distribution(generator) == 0) {
+								context_index--;
+							} else {
+								break;
+							}
+						}
+						containing_scope = solution->scopes[context[context_index].scope_id];
+					} else {
+						// lower
+						containing_scope = solution->scopes[this->scope_context[0]];
+						while (true) {
+							if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
+								uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
+								containing_scope = containing_scope->child_scopes[child_distribution(generator)];
+							} else {
+								break;
+							}
 						}
 					}
-					containing_scope = solution->scopes[context[context_index].scope_id];
-				} else {
-					// lower
-					containing_scope = solution->scopes[this->scope_context[0]];
-					while (true) {
-						if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
-							uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
-							containing_scope = containing_scope->child_scopes[child_distribution(generator)];
-						} else {
-							break;
-						}
-					}
-				}
 
-				Sequence* new_sequence = create_sequence(problem,
+					Sequence* sequence = create_sequence(problem,
 														 context,
 														 (int)this->scope_context.size(),
 														 containing_scope,
 														 run_helper);
+
+					if (sequence->scope->nodes.size() == 0) {
+						/**
+						 * - can be empty sequence if, e.g., start from branch node into exit
+						 *   - in which case retry
+						 */
+						delete sequence;
+					} else {
+						new_sequence = sequence;
+						break;
+					}
+				}
 				this->curr_sequences.push_back(new_sequence);
 			}
 		}
@@ -125,7 +142,8 @@ void BranchExperiment::explore_backprop(double target_val,
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	double curr_surprise = (target_val - history->existing_predicted_score)
 		/ parent_scope->average_misguess;
-	if (curr_surprise > this->best_surprise) {
+	// if (curr_surprise > this->best_surprise) {
+	if (rand()%2 == 0) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				delete this->best_actions[s_index];
@@ -160,7 +178,8 @@ void BranchExperiment::explore_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= EXPLORE_ITERS) {
-		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
+		// if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
+		if (rand()%2 == 0 && this->best_surprise != 1.0) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
 					this->best_sequences[s_index]->scope->id = solution->scope_counter;
@@ -171,7 +190,6 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN;
 			this->state_iter = 0;
 		} else {
-			// if no explore passed EXPERIMENT_SURPRISE_THRESHOLD, then nothing saved/nothing to delete
 			this->state = BRANCH_EXPERIMENT_STATE_DONE;
 		}
 	}

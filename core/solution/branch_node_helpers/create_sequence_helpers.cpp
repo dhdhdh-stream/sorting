@@ -132,7 +132,8 @@ void BranchNode::create_sequence_activate(
 				}
 			}
 
-			if (branch_score > original_score) {
+			// if (branch_score > original_score) {
+			if (rand()%2 == 0) {
 				is_branch = true;
 			} else {
 				is_branch = false;

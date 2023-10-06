@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_stub_node.h"
 #include "globals.h"
@@ -36,37 +38,39 @@ void random_halfway_start_fetch_context_helper(
 		int target_index,
 		int& curr_index,
 		vector<int>& starting_halfway_node_context) {
-	for (int h_index = 0; h_index < (int)scope_history->node_histories[0].size(); h_index++) {
-		if (scope_history->node_histories[0][h_index]->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[0][h_index];
+	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
+		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
+			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 
-			starting_halfway_node_context.push_back(scope_history->node_histories[0][h_index]->node->id);
+				starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 
-			random_halfway_start_fetch_context_helper(
-				scope_node_history->inner_scope_history,
-				target_index,
-				curr_index,
-				starting_halfway_node_context);
+				random_halfway_start_fetch_context_helper(
+					scope_node_history->inner_scope_history,
+					target_index,
+					curr_index,
+					starting_halfway_node_context);
 
-			if (curr_index < target_index) {
-				starting_halfway_node_context.pop_back();
+				if (curr_index < target_index) {
+					starting_halfway_node_context.pop_back();
 
-				if (!scope_node_history->is_halfway) {
-					if (curr_index == target_index) {
-						starting_halfway_node_context.push_back(scope_history->node_histories[0][h_index]->node->id);
-						return;
+					if (!scope_node_history->is_halfway) {
+						if (curr_index == target_index) {
+							starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
+							return;
+						}
+						curr_index++;
 					}
-					curr_index++;
+				} else {
+					return;
 				}
 			} else {
-				return;
+				if (curr_index == target_index) {
+					starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
+					return;
+				}
+				curr_index++;
 			}
-		} else {
-			if (curr_index == target_index) {
-				starting_halfway_node_context.push_back(scope_history->node_histories[0][h_index]->node->id);
-				return;
-			}
-			curr_index++;
 		}
 	}
 }
@@ -104,6 +108,8 @@ void random_halfway_start(ScopeNode* starting_scope_node,
 		rand_index,
 		curr_index,
 		starting_halfway_node_context);
+
+	delete scope_history;
 }
 
 Sequence* create_sequence(Problem& problem,
@@ -729,75 +735,77 @@ Sequence* create_sequence(Problem& problem,
 			// may overwrite earlier definition
 		}
 	}
-	vector<int> possible_inner_output_ids;
-	for (map<int, StateStatus>::iterator it = possible_inner_outputs.begin();
-			it != possible_inner_outputs.end(); it++) {
-		possible_inner_output_ids.push_back(it->first);
-	}
-
-	int num_outputs_to_consider = min(10, (int)possible_output_scope_depths.size());
-
-	uniform_int_distribution<int> output_type_distribution(0, 1);
-	for (int o_index = 0; o_index < num_outputs_to_consider; o_index++) {
-		uniform_int_distribution<int> target_distribution(0, (int)possible_output_scope_depths.size()-1);
-		int rand_target = target_distribution(generator);
-
-		int input_index = -1;
-		for (int i_index = 0; i_index < (int)new_sequence->input_types.size(); i_index++) {
-			if (new_sequence->input_types[i_index] == INPUT_TYPE_STATE) {
-				if (new_sequence->input_scope_depths[i_index] == possible_output_scope_depths[rand_target]
-						&& new_sequence->input_outer_is_local[i_index] == possible_output_outer_is_local[rand_target]
-						&& new_sequence->input_outer_indexes[i_index] == possible_output_outer_indexes[rand_target]) {
-					input_index = new_sequence->input_inner_indexes[i_index];
-					break;
-				}
-			}
+	if (possible_inner_outputs.size() > 0) {
+		vector<int> possible_inner_output_ids;
+		for (map<int, StateStatus>::iterator it = possible_inner_outputs.begin();
+				it != possible_inner_outputs.end(); it++) {
+			possible_inner_output_ids.push_back(it->first);
 		}
 
-		if (input_index != -1) {
-			if (output_type_distribution(generator) == 0) {
-				if (possible_output_outer_is_local[rand_target]) {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
-				} else {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+		int num_outputs_to_consider = min(10, (int)possible_output_scope_depths.size());
+
+		uniform_int_distribution<int> output_type_distribution(0, 1);
+		for (int o_index = 0; o_index < num_outputs_to_consider; o_index++) {
+			uniform_int_distribution<int> target_distribution(0, (int)possible_output_scope_depths.size()-1);
+			int rand_target = target_distribution(generator);
+
+			int input_index = -1;
+			for (int i_index = 0; i_index < (int)new_sequence->input_types.size(); i_index++) {
+				if (new_sequence->input_types[i_index] == INPUT_TYPE_STATE) {
+					if (new_sequence->input_scope_depths[i_index] == possible_output_scope_depths[rand_target]
+							&& new_sequence->input_outer_is_local[i_index] == possible_output_outer_is_local[rand_target]
+							&& new_sequence->input_outer_indexes[i_index] == possible_output_outer_indexes[rand_target]) {
+						input_index = new_sequence->input_inner_indexes[i_index];
+						break;
+					}
 				}
-
-				new_sequence->output_inner_indexes.push_back(input_index);
-				new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
-				new_sequence->output_outer_is_local.push_back(possible_output_outer_is_local[rand_target]);
-				new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
-			} else {
-				// do nothing
 			}
-		} else {
-			if (output_type_distribution(generator) == 0) {
-				uniform_int_distribution<int> inner_distribution(0, (int)possible_inner_output_ids.size()-1);
-				int rand_inner = inner_distribution(generator);
 
-				if (possible_output_outer_is_local[rand_target]) {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[possible_inner_output_ids[rand_inner]];
+			if (input_index != -1) {
+				if (output_type_distribution(generator) == 0) {
+					if (possible_output_outer_is_local[rand_target]) {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+					} else {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+					}
+
+					new_sequence->output_inner_indexes.push_back(input_index);
+					new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
+					new_sequence->output_outer_is_local.push_back(possible_output_outer_is_local[rand_target]);
+					new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
 				} else {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[possible_inner_output_ids[rand_inner]];
+					// do nothing
 				}
-
-				new_sequence->output_inner_indexes.push_back(possible_inner_output_ids[rand_inner]);
-				new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
-				new_sequence->output_outer_is_local.push_back(possible_output_outer_is_local[rand_target]);
-				new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
-
-				// can duplicate, so don't remove from possible_inner_output_ids
 			} else {
-				// do nothing
+				if (output_type_distribution(generator) == 0) {
+					uniform_int_distribution<int> inner_distribution(0, (int)possible_inner_output_ids.size()-1);
+					int rand_inner = inner_distribution(generator);
+
+					if (possible_output_outer_is_local[rand_target]) {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[possible_inner_output_ids[rand_inner]];
+					} else {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[possible_inner_output_ids[rand_inner]];
+					}
+
+					new_sequence->output_inner_indexes.push_back(possible_inner_output_ids[rand_inner]);
+					new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
+					new_sequence->output_outer_is_local.push_back(possible_output_outer_is_local[rand_target]);
+					new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
+
+					// can duplicate, so don't remove from possible_inner_output_ids
+				} else {
+					// do nothing
+				}
 			}
+
+			possible_output_scope_depths.erase(possible_output_scope_depths.begin() + rand_target);
+			possible_output_outer_is_local.erase(possible_output_outer_is_local.begin() + rand_target);
+			possible_output_outer_indexes.erase(possible_output_outer_indexes.begin() + rand_target);
 		}
-
-		possible_output_scope_depths.erase(possible_output_scope_depths.begin() + rand_target);
-		possible_output_outer_is_local.erase(possible_output_outer_is_local.begin() + rand_target);
-		possible_output_outer_indexes.erase(possible_output_outer_indexes.begin() + rand_target);
 	}
 
 	Scope* new_scope = new Scope();

@@ -708,6 +708,10 @@ void finalize_new_score_state(Scope* parent_scope,
 					break;
 				}
 			}
+			// in case is new action
+			if (action_node->score_state_node_contexts.back().back() == -1) {
+				action_node->score_state_node_contexts.back().back() = action_node->id;
+			}
 			action_node->score_state_defs.push_back(score_state);
 			action_node->score_state_network_indexes.push_back(n_index);
 		} else if (nodes[n_index]->type == NODE_TYPE_SCOPE) {

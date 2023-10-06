@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "branch_stub_node.h"
@@ -67,6 +69,8 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 										int& exit_node_id,
 										int& num_nodes,
 										ScopeHistory* history) {
+	node_context.back() = curr_node_id;
+
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
@@ -131,6 +135,8 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
+
+	node_context.back() = -1;
 }
 
 void Scope::random_exit_activate(vector<int>& starting_node_ids,
@@ -201,6 +207,8 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 											 int& exit_node_id,
 											 int& num_nodes,
 											 ScopeHistory* history) {
+	node_context.back() = curr_node_id;
+
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
@@ -263,4 +271,6 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
+
+	node_context.back() = -1;
 }

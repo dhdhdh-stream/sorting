@@ -1,5 +1,6 @@
 #include "helpers.h"
 
+#include <iostream>
 #include <random>
 
 #include "action_node.h"
@@ -19,13 +20,14 @@ void create_branch_experiment_helper(double& sum_weight,
 									 vector<AbstractNode*>& possible_nodes,
 									 vector<vector<int>>& possible_scope_contexts,
 									 vector<vector<int>>& possible_node_contexts,
+									 vector<bool>& possible_is_branch,
 									 ScopeHistory* scope_history) {
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				if (action_node->experiment != NULL) {
+				if (action_node->experiment == NULL) {
 					for (int s_index = 0; s_index < (int)action_node_history->score_state_indexes.size(); s_index++) {
 						State* state_def = action_node->score_state_defs[action_node_history->score_state_indexes[s_index]];
 						StateStatus state_status = action_node_history->score_state_impacts[s_index];
@@ -46,6 +48,7 @@ void create_branch_experiment_helper(double& sum_weight,
 						possible_nodes.push_back(action_node);
 						possible_scope_contexts.push_back(action_node->score_state_scope_contexts[action_node_history->score_state_indexes[s_index]]);
 						possible_node_contexts.push_back(action_node->score_state_node_contexts[action_node_history->score_state_indexes[s_index]]);
+						possible_is_branch.push_back(false);
 					}
 				}
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
@@ -57,9 +60,10 @@ void create_branch_experiment_helper(double& sum_weight,
 												possible_nodes,
 												possible_scope_contexts,
 												possible_node_contexts,
+												possible_is_branch,
 												scope_node_history->inner_scope_history);
 
-				if (scope_node->experiment != NULL) {
+				if (scope_node->experiment == NULL) {
 					for (int s_index = 0; s_index < (int)scope_node_history->score_state_indexes.size(); s_index++) {
 						State* state_def = scope_node->score_state_defs[scope_node_history->score_state_indexes[s_index]];
 						StateStatus state_status = scope_node_history->score_state_impacts[s_index];
@@ -80,12 +84,13 @@ void create_branch_experiment_helper(double& sum_weight,
 						possible_nodes.push_back(scope_node);
 						possible_scope_contexts.push_back(scope_node->score_state_scope_contexts[scope_node_history->score_state_indexes[s_index]]);
 						possible_node_contexts.push_back(scope_node->score_state_node_contexts[scope_node_history->score_state_indexes[s_index]]);
+						possible_is_branch.push_back(false);
 					}
 				}
 			} else {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[i_index][h_index];
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
-				if (branch_node->experiment != NULL) {
+				if (branch_node->experiment == NULL) {
 					for (int s_index = 0; s_index < (int)branch_node_history->score_state_indexes.size(); s_index++) {
 						State* state_def = branch_node->score_state_defs[branch_node_history->score_state_indexes[s_index]];
 						StateStatus state_status = branch_node_history->score_state_impacts[s_index];
@@ -106,6 +111,11 @@ void create_branch_experiment_helper(double& sum_weight,
 						possible_nodes.push_back(branch_node);
 						possible_scope_contexts.push_back(branch_node->score_state_scope_contexts[branch_node_history->score_state_indexes[s_index]]);
 						possible_node_contexts.push_back(branch_node->score_state_node_contexts[branch_node_history->score_state_indexes[s_index]]);
+						if (branch_node_history->obs_snapshot == 1.0) {
+							possible_is_branch.push_back(false);
+						} else {
+							possible_is_branch.push_back(true);
+						}
 					}
 				}
 			}
@@ -119,12 +129,14 @@ void create_branch_experiment(ScopeHistory* root_history) {
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
+	vector<bool> possible_is_branch;
 
 	create_branch_experiment_helper(sum_weight,
 									weights,
 									possible_nodes,
 									possible_scope_contexts,
 									possible_node_contexts,
+									possible_is_branch,
 									root_history);
 
 	if (possible_nodes.size() > 0) {
@@ -146,6 +158,7 @@ void create_branch_experiment(ScopeHistory* root_history) {
 				} else {
 					BranchNode* branch_node = (BranchNode*)possible_nodes[p_index];
 					branch_node->experiment = new_branch_experiment;
+					branch_node->experiment_is_branch = possible_is_branch[p_index];
 				}
 
 				break;

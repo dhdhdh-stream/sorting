@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "sequence.h"
@@ -73,11 +75,35 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 		vector<map<pair<bool,int>, int>> inner_state_mappings(this->starting_node_ids.size());
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-				map<pair<bool,int>, int>::iterator it = state_mappings.back()
-					.find({this->input_outer_is_local[i_index], this->input_outer_indexes[i_index]});
-				if (it != state_mappings.back().end()) {
-					inner_state_mappings[this->input_inner_layers[i_index]]
-						[{this->input_inner_is_local[i_index], this->input_inner_indexes[i_index]}] = it->second;
+				if (this->input_outer_is_local[i_index]) {
+					map<pair<bool,int>, int>::iterator it = state_mappings.back()
+						.find({true, this->input_outer_indexes[i_index]});
+					if (it != state_mappings.back().end()) {
+						inner_state_mappings[this->input_inner_layers[i_index]]
+							[{this->input_inner_is_local[i_index], this->input_inner_indexes[i_index]}] = it->second;
+					} else {
+						int new_state_index;
+						state_mappings.back()[{true, this->input_outer_indexes[i_index]}] = new_num_input_states;
+						new_state_index = new_num_input_states;
+						new_num_input_states++;
+
+						inner_state_mappings[this->input_inner_layers[i_index]]
+							[{this->input_inner_is_local[i_index], this->input_inner_indexes[i_index]}] = new_state_index;
+
+						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+						new_sequence->input_inner_indexes.push_back(new_state_index);
+						new_sequence->input_scope_depths.push_back(-1);
+						new_sequence->input_outer_is_local.push_back(-1);
+						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_init_vals.push_back(0.0);
+					}
+				} else {
+					map<pair<bool,int>, int>::iterator it = state_mappings.back()
+						.find({false, this->input_outer_indexes[i_index]});
+					if (it != state_mappings.back().end()) {
+						inner_state_mappings[this->input_inner_layers[i_index]]
+							[{this->input_inner_is_local[i_index], this->input_inner_indexes[i_index]}] = it->second;
+					}
 				}
 			} else {
 				int new_state_index;
@@ -156,8 +182,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 		}
 
 		// unused
-		int inner_exit_depth;
-		int inner_exit_node_id;
+		int inner_exit_depth = -1;
+		int inner_exit_node_id = -1;
 
 		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
 		this->inner_scope->activate(starting_node_ids_copy,
@@ -190,12 +216,12 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 				new_node->output_inner_indexes.push_back(this->output_inner_indexes[o_index]);
 				new_node->output_outer_is_local.push_back(false);
 				map<pair<bool,int>, int>::iterator new_state_it
-					= state_mappings[state_mappings.size()-2].find({true, this->output_outer_indexes[o_index]});
-				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					= state_mappings.back().find({true, this->output_outer_indexes[o_index]});
+				if (new_state_it != state_mappings.back().end()) {
 					new_node->output_outer_indexes.push_back(new_state_it->second);
 				} else {
 					int new_state_index;
-					state_mappings[state_mappings.size()-2][{true, this->output_outer_indexes[o_index]}] = new_num_input_states;
+					state_mappings.back()[{true, this->output_outer_indexes[o_index]}] = new_num_input_states;
 					new_state_index = new_num_input_states;
 					new_num_input_states++;
 
@@ -210,8 +236,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 				}
 			} else {
 				map<pair<bool,int>, int>::iterator new_state_it
-					= state_mappings[state_mappings.size()-2].find({false, this->output_outer_indexes[o_index]});
-				if (new_state_it != state_mappings[state_mappings.size()-2].end()) {
+					= state_mappings.back().find({false, this->output_outer_indexes[o_index]});
+				if (new_state_it != state_mappings.back().end()) {
 					new_node->output_inner_indexes.push_back(this->output_inner_indexes[o_index]);
 					new_node->output_outer_is_local.push_back(false);
 					new_node->output_outer_indexes.push_back(new_state_it->second);
@@ -314,8 +340,6 @@ void ScopeNode::halfway_create_sequence_activate(
 		int& new_num_input_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
-	// no need to set context.back().node_id
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = -1;
@@ -452,8 +476,6 @@ void ScopeNode::halfway_create_sequence_activate(
 
 		context.pop_back();
 
-		// no need to set context.back().node_id
-
 		if (!is_early_exit) {
 			for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 				map<int, StateStatus>::iterator obs_it = obs_snapshots.find(this->state_obs_indexes[n_index]);
@@ -526,8 +548,6 @@ void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
 										Problem& problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper) {
-	context.back().node_id = this->id;
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
@@ -576,8 +596,6 @@ void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
 	map<int, StateStatus> obs_snapshots = context.back().local_state_vals;
 
 	context.pop_back();
-
-	context.back().node_id = -1;
 
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		map<int, StateStatus>::iterator obs_it = obs_snapshots.find(this->state_obs_indexes[n_index]);

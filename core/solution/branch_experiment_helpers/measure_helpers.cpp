@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
@@ -15,7 +17,8 @@
 
 using namespace std;
 
-const int MEASURE_ITERS = 10000;
+// const int MEASURE_ITERS = 10000;
+const int MEASURE_ITERS = 100;
 
 const double MIN_SCORE_IMPACT = 0.05;
 
@@ -67,7 +70,8 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 		}
 	}
 
-	if (branch_score > original_score) {
+	// if (branch_score > original_score) {
+	if (rand()%2 == 0) {
 		this->branch_count++;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -110,7 +114,14 @@ void BranchExperiment::eval() {
 	double score_standard_deviation = sqrt(parent->score_variance);
 	double combined_improvement_t_score = combined_improvement
 		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
-	if (combined_improvement_t_score > 2.326) {		// >99%
+
+	cout << "combined_average_score: " << combined_average_score << endl;
+	cout << "combined_improvement: " << combined_improvement << endl;
+	cout << "score_standard_deviation: " << score_standard_deviation << endl;
+	cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+
+	// if (combined_improvement_t_score > 2.326) {		// >99%
+	if (rand()%2 == 0) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
 		if (branch_weight > 0.98) {
 			new_pass_through();
@@ -129,8 +140,16 @@ void BranchExperiment::eval() {
 		double misguess_improvement_t_score = misguess_improvement
 			/ (misguess_standard_deviation / sqrt(20000));
 
-		if (score_improvement_t_score > -0.674	// 75%<
-				&& misguess_improvement_t_score > 2.326) {
+		cout << "score_improvement: " << score_improvement << endl;
+		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+
+		cout << "misguess_improvement: " << misguess_improvement << endl;
+		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
+
+		// if (score_improvement_t_score > -0.674	// 75%<
+		// 		&& misguess_improvement_t_score > 2.326) {
+		if (rand()%2 == 0) {
 			new_pass_through();
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -160,6 +179,8 @@ void BranchExperiment::eval() {
 }
 
 void BranchExperiment::new_branch() {
+	cout << "new_branch" << endl;
+
 	Scope* starting_scope = solution->scopes[this->scope_context.back()];
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 
@@ -278,6 +299,8 @@ void BranchExperiment::new_branch() {
 }
 
 void BranchExperiment::new_pass_through() {
+	cout << "new_pass_through" << endl;
+
 	Scope* starting_scope = solution->scopes[this->scope_context.back()];
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 

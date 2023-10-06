@@ -53,7 +53,8 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 		}
 	}
 
-	if (branch_score > original_score) {
+	// if (branch_score > original_score) {
+	if (rand()%2 == 0) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(
