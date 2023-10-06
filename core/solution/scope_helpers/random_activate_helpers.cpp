@@ -131,7 +131,7 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 		if (exit_node->exit_depth == 0) {
 			curr_node_id = exit_node->exit_node_id;
 		} else {
-			exit_depth = exit_node->exit_depth;
+			exit_depth = exit_node->exit_depth-1;
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
@@ -267,7 +267,7 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 		if (exit_node->exit_depth == 0) {
 			curr_node_id = exit_node->exit_node_id;
 		} else {
-			exit_depth = exit_node->exit_depth;
+			exit_depth = exit_node->exit_depth-1;
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}

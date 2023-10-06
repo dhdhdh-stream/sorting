@@ -1,6 +1,23 @@
 /**
  * TODO: to handle loops, average values, and possibly select one iter/context to focus on
  * - even if only one iter is relevant, and that iter changes, will still be correlation
+ * 
+ * - perhaps average for flat, but then train as usual for RNN
+ *   - TODO: try depth 100 RNN where only 1 iter matters?
+ *     - though will probably end up effectively averaging just like flat
+ *       - maybe this is where LSTM/focus matters?
+ *         - or no, would require extra state?
+ *           - with extra state, LSTM could work
+ *             - use 1 extra state as goal is just indexing
+ * 
+ * - have 1 network blindly generate potential updates based only on obs and val state
+ * - the LSTM part doesn't see/use val at all
+ * - have another network blindly update index state using only obs and index state
+ * - have a separate predicted score that is updated
+ * - have 3rd network based on index state determine how much previous val state matters to 1st network
+ * - have 4th network based on index state determine how much impact update has
+ * 
+ * - will need some modification as LSTM is meant to output values every timestep
  */
 
 #ifndef SCOPE_H

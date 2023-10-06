@@ -139,7 +139,7 @@ void Scope::node_activate_helper(int iter_index,
 		if (exit_node->exit_depth == 0) {
 			curr_node_id = exit_node->exit_node_id;
 		} else {
-			exit_depth = exit_node->exit_depth;
+			exit_depth = exit_node->exit_depth-1;
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}

@@ -77,39 +77,47 @@ void random_halfway_start_fetch_context_helper(
 
 void random_halfway_start(ScopeNode* starting_scope_node,
 						  vector<int>& starting_halfway_node_context) {
-	vector<int> scope_context{-1};
-	vector<int> node_context{-1};
+	while (true) {
+		vector<int> scope_context{-1};
+		vector<int> node_context{-1};
 
-	vector<int> starting_node_ids = starting_scope_node->starting_node_ids;
+		vector<int> starting_node_ids = starting_scope_node->starting_node_ids;
 
-	int num_nodes = 0;
-	ScopeHistory* scope_history = new ScopeHistory(starting_scope_node->inner_scope);
+		int num_nodes = 0;
+		ScopeHistory* scope_history = new ScopeHistory(starting_scope_node->inner_scope);
 
-	// unused
-	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+		// unused
+		int inner_exit_depth = -1;
+		int inner_exit_node_id = -1;
 
-	starting_scope_node->inner_scope->random_activate(
-		starting_node_ids,
-		scope_context,
-		node_context,
-		inner_exit_depth,
-		inner_exit_node_id,
-		num_nodes,
-		scope_history);
+		starting_scope_node->inner_scope->random_activate(
+			starting_node_ids,
+			scope_context,
+			node_context,
+			inner_exit_depth,
+			inner_exit_node_id,
+			num_nodes,
+			scope_history);
 
-	uniform_int_distribution<int> distribution(0, num_nodes-1);
-	int rand_index = distribution(generator);
+		if (num_nodes > 0) {
+			uniform_int_distribution<int> distribution(0, num_nodes-1);
+			int rand_index = distribution(generator);
 
-	int curr_index = 0;
+			int curr_index = 0;
 
-	random_halfway_start_fetch_context_helper(
-		scope_history,
-		rand_index,
-		curr_index,
-		starting_halfway_node_context);
+			random_halfway_start_fetch_context_helper(
+				scope_history,
+				rand_index,
+				curr_index,
+				starting_halfway_node_context);
 
-	delete scope_history;
+			delete scope_history;
+
+			break;
+		} else {
+			delete scope_history;
+		}
+	}
 }
 
 Sequence* create_sequence(Problem& problem,

@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "scope.h"
 #include "state.h"

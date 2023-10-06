@@ -399,8 +399,8 @@ void ScopeNode::halfway_create_sequence_activate(
 		}
 
 		// unused
-		int inner_exit_depth;
-		int inner_exit_node_id;
+		int inner_exit_depth = -1;
+		int inner_exit_node_id = -1;
 
 		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
 		this->inner_scope->activate(starting_node_ids,

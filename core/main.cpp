@@ -28,8 +28,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1696551480;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -154,7 +153,10 @@ int main(int argc, char* argv[]) {
 		// }
 
 		// temp
-		if (iter_index > 10000) {
+		if (iter_index%1000 == 0) {
+			cout << iter_index << endl;
+		}
+		if (iter_index > 100000) {
 			break;
 		}
 	}

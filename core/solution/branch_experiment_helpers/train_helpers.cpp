@@ -41,7 +41,7 @@ void BranchExperiment::train_activate(int& curr_node_id,
 	if (this->best_exit_depth == 0) {
 		curr_node_id = this->best_exit_node_id;
 	} else {
-		exit_depth = this->best_exit_depth;
+		exit_depth = this->best_exit_depth-1;
 		exit_node_id = this->best_exit_node_id;
 	}
 }
