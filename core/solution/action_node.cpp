@@ -12,6 +12,8 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
+	this->id = -1;
+
 	this->experiment = NULL;
 }
 
@@ -20,6 +22,8 @@ ActionNode::ActionNode(ifstream& input_file,
 	this->type = NODE_TYPE_ACTION;
 
 	this->id = id;
+
+	this->action = Action(input_file);
 
 	string state_defs_size_line;
 	getline(input_file, state_defs_size_line);
@@ -86,6 +90,8 @@ ActionNode::~ActionNode() {
 }
 
 void ActionNode::save(ofstream& output_file) {
+	this->action.save(output_file);
+
 	output_file << this->state_defs.size() << endl;
 	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
 		output_file << this->state_is_local[s_index] << endl;
@@ -104,6 +110,12 @@ void ActionNode::save(ofstream& output_file) {
 		output_file << this->score_state_defs[s_index]->id << endl;
 		output_file << this->score_state_network_indexes[s_index] << endl;
 	}
+
+	output_file << this->next_node_id << endl;
+}
+
+void ActionNode::save_for_display(ofstream& output_file) {
+	this->action.save(output_file);
 
 	output_file << this->next_node_id << endl;
 }

@@ -8,10 +8,10 @@
 using namespace std;
 
 Problem::Problem() {
-	uniform_int_distribution<int> length_distribution(2, 10);
-	int random_length = length_distribution(generator);
+	geometric_distribution<int> length_distribution(0.3);
+	int random_length = 2 + length_distribution(generator);
 
-	uniform_int_distribution<int> value_distribution(0, 10);
+	uniform_int_distribution<int> value_distribution(0, 3);
 	for (int i = 0; i < random_length; i++) {
 		this->initial_world.push_back(value_distribution(generator));
 	}

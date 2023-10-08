@@ -34,21 +34,40 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// ifstream solution_save_file;
-	// solution_save_file.open("saves/solution.txt");
-	// solution = new Solution(solution_save_file);
-	// solution_save_file.close();
+	// solution->init();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution->load(solution_save_file);
+	solution_save_file.close();
 
 	Scope* root = solution->scopes[0];
 
+	ActionNode* explore_node = (ActionNode*)root->nodes[3];
+	vector<int> experiment_scope_context{0};
+	vector<int> experiment_node_context{3};
+	explore_node->experiment = new BranchExperiment(experiment_scope_context,
+													experiment_node_context);
+	explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+	explore_node->experiment->state_iter = 0;
+	explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+	explore_node->experiment->best_actions.push_back(new ActionNode());
+	explore_node->experiment->best_actions.back()->action = Action(ACTION_LEFT);
+	explore_node->experiment->best_sequences.push_back(NULL);
+	explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+	explore_node->experiment->best_actions.push_back(new ActionNode());
+	explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
+	explore_node->experiment->best_sequences.push_back(NULL);
+	explore_node->experiment->best_exit_depth = 0;
+	explore_node->experiment->best_exit_node_id = -1;
+
 	int iter_index = 0;
-	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
+	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
 	while (true) {
 		Problem problem;
 
 		RunHelper run_helper;
-		if (solution->states.size() > 0 && rand()%3 != 0) {
+		// if (solution->states.size() > 0 && rand()%3 != 0) {
+		if (iter_index > 1000000 && rand()%3 != 0) {
 			run_helper.phase = RUN_PHASE_EXPLORE;
 		} else {
 			run_helper.phase = RUN_PHASE_UPDATE;
@@ -139,25 +158,22 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		iter_index++;
-		// if (iter_index%10000 == 0) {
-		// 	chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
-		// 	chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
-		// 	if (time_span.count() > 120.0) {
-		// 		ofstream display_file;
-		// 		display_file.open("../display.txt");
-		// 		solution->save_for_display(display_file);
-		// 		display_file.close();
+		if (iter_index%10000 == 0) {
+			chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
+			chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
+			if (time_span.count() > 120.0) {
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
 
-		// 		display_previous_time = curr_time;
-		// 	}
-		// }
-
-		// temp
-		if (iter_index%1000 == 0) {
-			cout << iter_index << endl;
+				display_previous_time = curr_time;
+			}
 		}
-		if (iter_index > 100000) {
-			break;
+
+		if (iter_index%1000000 == 0) {
+			cout << iter_index << endl;
+			cout << "solution->states.size(): " << solution->states.size() << endl;
 		}
 	}
 

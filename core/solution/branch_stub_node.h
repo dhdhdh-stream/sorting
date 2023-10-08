@@ -39,6 +39,7 @@ public:
 								  std::vector<AbstractNode*>& new_nodes);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class BranchStubNodeHistory : public AbstractNodeHistory {

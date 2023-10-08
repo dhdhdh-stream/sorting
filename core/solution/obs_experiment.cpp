@@ -16,10 +16,8 @@
 
 using namespace std;
 
-// const int FLAT_ITERS = 500000;
-const int FLAT_ITERS = 50;
-// const int RNN_ITERS = 500000;
-const int RNN_ITERS = 50;
+const int FLAT_ITERS = 500000;
+const int RNN_ITERS = 500000;
 
 /**
  * - practical limit
@@ -309,13 +307,19 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(20000));
 
+	cout << "experiment nodes:";
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		cout << " " << this->nodes[n_index]->id;
+	}
+	cout << endl;
 	cout << "parent->average_misguess: " << parent->average_misguess << endl;
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << endl;
 
 	// if (improvement_t_score > 2.326) {	// >99%
-	if (rand()%2 == 0) {
+	if (improvement_t_score > 1.282) {	// >90%
 		State* new_state = new State();
 
 		new_state->resolved_network_indexes = this->resolved_network_indexes;
@@ -378,13 +382,19 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	double improvement_t_score = misguess_improvement
 		/ (existing_misguess_standard_deviation / sqrt(20000));
 
+	cout << "experiment nodes:";
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		cout << " " << this->nodes[n_index]->id;
+	}
+	cout << endl;
 	cout << "branch_experiment->average_misguess: " << branch_experiment->average_misguess << endl;
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << endl;
 
 	// if (improvement_t_score > 2.326) {	// >99%
-	if (rand()%2 == 0) {	// >99%
+	if (improvement_t_score > 1.282) {	// >90%
 		State* new_state = new State();
 
 		new_state->resolved_network_indexes = this->resolved_network_indexes;

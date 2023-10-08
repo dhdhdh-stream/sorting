@@ -11,6 +11,8 @@ using namespace std;
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
+	this->id = -1;
+
 	this->experiment = NULL;
 }
 
@@ -193,6 +195,12 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->score_state_defs[s_index]->id << endl;
 		output_file << this->score_state_network_indexes[s_index] << endl;
 	}
+
+	output_file << this->next_node_id << endl;
+}
+
+void ScopeNode::save_for_display(ofstream& output_file) {
+	output_file << this->inner_scope->id << endl;
 
 	output_file << this->next_node_id << endl;
 }

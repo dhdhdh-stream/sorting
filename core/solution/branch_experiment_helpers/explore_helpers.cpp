@@ -14,8 +14,7 @@
 
 using namespace std;
 
-// const int EXPLORE_ITERS = 1000;
-const int EXPLORE_ITERS = 10;
+const int EXPLORE_ITERS = 1000;
 
 const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
 /**
@@ -47,16 +46,51 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 	history->existing_predicted_score = predicted_score;
 
 	{
+		// exit
+		int new_exit_depth;
+		int new_exit_node_id;
+		random_exit(this->scope_context,
+					this->node_context,
+					new_exit_depth,
+					new_exit_node_id);
+
+		this->curr_exit_depth = new_exit_depth;
+		this->curr_exit_node_id = new_exit_node_id;
+	}
+
+	{
+		// this->curr_step_types.push_back(STEP_TYPE_ACTION);
+		// this->curr_actions.push_back(new ActionNode());
+		// this->curr_actions.back()->action = Action(ACTION_RIGHT);
+		// this->curr_sequences.push_back(NULL);
+
+		// problem.perform_action(this->curr_actions.back()->action);
+
+		// this->curr_step_types.push_back(STEP_TYPE_ACTION);
+		// this->curr_actions.push_back(new ActionNode());
+		// this->curr_actions.back()->action = Action(ACTION_RIGHT);
+		// this->curr_sequences.push_back(NULL);
+
+		// problem.perform_action(this->curr_actions.back()->action);
+
 		// new path
 		geometric_distribution<int> geometric_distribution(0.3);
-		int new_num_steps = geometric_distribution(generator);
+		int new_num_steps;
+		if (this->curr_exit_depth == 0
+				&& this->curr_exit_node_id == curr_node_id) {
+			new_num_steps = 1 + geometric_distribution(generator);
+		} else {
+			new_num_steps = geometric_distribution(generator);
+		}
 		
 		uniform_int_distribution<int> type_distribution(0, 1);
 		uniform_int_distribution<int> action_distribution(0, 2);
 		uniform_int_distribution<int> direction_distribution(0, 1);
 		uniform_int_distribution<int> next_distribution(0, 1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (type_distribution(generator) == 0) {
+			if (type_distribution(generator) == 0
+					|| (this->scope_context.back() == 0
+						&& solution->scopes[0]->nodes.size() == 1)) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 				this->curr_actions.push_back(new ActionNode());
 				this->curr_actions.back()->action = Action(action_distribution(generator));
@@ -117,17 +151,6 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 	}
 
 	{
-		// exit
-		int new_exit_depth;
-		int new_exit_node_id;
-		random_exit(this->scope_context,
-					this->node_context,
-					new_exit_depth,
-					new_exit_node_id);
-
-		this->curr_exit_depth = new_exit_depth;
-		this->curr_exit_node_id = new_exit_node_id;
-
 		if (this->curr_exit_depth == 0) {
 			curr_node_id = this->curr_exit_node_id;
 		} else {
@@ -142,8 +165,7 @@ void BranchExperiment::explore_backprop(double target_val,
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	double curr_surprise = (target_val - history->existing_predicted_score)
 		/ parent_scope->average_misguess;
-	// if (curr_surprise > this->best_surprise) {
-	if (rand()%2 == 0) {
+	if (curr_surprise > this->best_surprise) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				delete this->best_actions[s_index];
@@ -178,14 +200,23 @@ void BranchExperiment::explore_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= EXPLORE_ITERS) {
-		// if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
-		if (rand()%2 == 0 && this->best_surprise != 1.0) {
+		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
 					this->best_sequences[s_index]->scope->id = solution->scope_counter;
 					solution->scope_counter++;
 				}
 			}
+
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index]->action.to_string();
+				} else {
+					cout << " S";
+				}
+			}
+			cout << endl;
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN;
 			this->state_iter = 0;

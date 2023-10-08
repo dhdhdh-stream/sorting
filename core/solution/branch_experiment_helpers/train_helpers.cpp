@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const int OBS_EXPERIMENT_TRIES = 6;
+const int OBS_EXPERIMENT_TRIES = 4;
 
 void BranchExperiment::train_activate(int& curr_node_id,
 									  Problem& problem,
@@ -62,7 +62,11 @@ void BranchExperiment::train_backprop(double target_val,
 		}
 		map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
 		if (scale_it == this->score_state_scales.end()) {
-			scale_it = this->score_state_scales.insert({it->first, new Scale(it->first->scale->weight)}).first;
+			if (this->state_iter == 0) {
+				scale_it = this->score_state_scales.insert({it->first, new Scale(it->first->scale->weight)}).first;
+			} else {
+				scale_it = this->score_state_scales.insert({it->first, new Scale(0.0)}).first;
+			}
 		}
 		predicted_score += scale_it->second->weight * it->second.val;
 	}

@@ -127,3 +127,12 @@ void Solution::save(ofstream& output_file) {
 
 	output_file << this->max_depth << endl;
 }
+
+void Solution::save_for_display(ofstream& output_file) {
+	output_file << this->scopes.size() << endl;
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		output_file << it->first << endl;
+		it->second->save_for_display(output_file);
+	}
+}

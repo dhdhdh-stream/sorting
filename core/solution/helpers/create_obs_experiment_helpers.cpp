@@ -1,3 +1,5 @@
+// TODO: modify score state/obs to where early matters
+
 #include "helpers.h"
 
 #include <iostream>

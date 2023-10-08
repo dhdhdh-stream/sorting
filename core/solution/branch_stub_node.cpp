@@ -8,6 +8,8 @@ using namespace std;
 
 BranchStubNode::BranchStubNode() {
 	this->type = NODE_TYPE_BRANCH_STUB;
+
+	this->id = -1;
 }
 
 BranchStubNode::BranchStubNode(ifstream& input_file,
@@ -55,6 +57,10 @@ void BranchStubNode::save(ofstream& output_file) {
 		output_file << this->state_network_indexes[s_index] << endl;
 	}
 
+	output_file << this->next_node_id << endl;
+}
+
+void BranchStubNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 

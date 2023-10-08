@@ -35,6 +35,9 @@ public:
 	 */
 	bool branch_is_pass_through;
 
+	double original_score_mod;
+	double branch_score_mod;
+
 	std::vector<bool> shared_state_is_local;
 	std::vector<int> shared_state_indexes;
 	std::vector<double> branch_weights;
@@ -114,6 +117,7 @@ public:
 								  BranchNodeHistory* history);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {

@@ -1,8 +1,11 @@
 #include "branch_experiment.h"
 
 #include "action_node.h"
+#include "globals.h"
 #include "scale.h"
+#include "scope.h"
 #include "sequence.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -14,8 +17,9 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 									   int& exit_depth,
 									   int& exit_node_id,
 									   RunHelper& run_helper) {
-	double branch_score = 0.0;
-	double original_score = 0.0;
+	double branch_score = this->average_score;
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+	double original_score = parent_scope->average_score;
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
@@ -53,8 +57,7 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 		}
 	}
 
-	// if (branch_score > original_score) {
-	if (rand()%2 == 0) {
+	if (branch_score > original_score) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(

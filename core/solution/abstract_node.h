@@ -19,6 +19,7 @@ public:
 
 	virtual ~AbstractNode() {};
 	virtual void save(std::ofstream& output_file) = 0;
+	virtual void save_for_display(std::ofstream& output_file) = 0;
 };
 
 class AbstractNodeHistory {

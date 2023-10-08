@@ -23,7 +23,15 @@ void random_starting_node(Scope* containing_scope,
 						  int& starting_node_id) {
 	vector<int> possible_ids;
 	for (int n_index = 0; n_index < (int)containing_scope->nodes.size(); n_index++) {
-		if (containing_scope->nodes[n_index]->type != NODE_TYPE_EXIT) {
+		bool should_add = true;
+		if (containing_scope->nodes[n_index]->type == NODE_TYPE_EXIT) {
+			should_add = false;
+		}
+		if (containing_scope->nodes[n_index]->type == NODE_TYPE_ACTION
+				&& ((ActionNode*)containing_scope->nodes[n_index])->action.move == ACTION_START) {
+			should_add = false;
+		}
+		if (should_add) {
 			possible_ids.push_back(n_index);
 		}
 	}

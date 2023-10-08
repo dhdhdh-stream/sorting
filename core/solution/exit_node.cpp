@@ -4,6 +4,8 @@ using namespace std;
 
 ExitNode::ExitNode() {
 	this->type = NODE_TYPE_EXIT;
+
+	this->id = -1;
 }
 
 ExitNode::ExitNode(ifstream& input_file,
@@ -26,6 +28,11 @@ ExitNode::~ExitNode() {
 }
 
 void ExitNode::save(ofstream& output_file) {
+	output_file << this->exit_depth << endl;
+	output_file << this->exit_node_id << endl;
+}
+
+void ExitNode::save_for_display(ofstream& output_file) {
 	output_file << this->exit_depth << endl;
 	output_file << this->exit_node_id << endl;
 }

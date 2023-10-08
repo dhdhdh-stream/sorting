@@ -35,8 +35,8 @@ void BranchNode::create_sequence_activate(
 		if (this->branch_is_pass_through) {
 			is_branch = true;
 		} else {
-			double branch_score = 0.0;
-			double original_score = 0.0;
+			double original_score = this->original_score_mod;
+			double branch_score = this->branch_score_mod;
 
 			for (int i_index = 0; i_index < (int)this->shared_state_is_local.size(); i_index++) {
 				if (this->shared_state_is_local[i_index]) {
@@ -132,8 +132,7 @@ void BranchNode::create_sequence_activate(
 				}
 			}
 
-			// if (branch_score > original_score) {
-			if (rand()%2 == 0) {
+			if (branch_score > original_score) {
 				is_branch = true;
 			} else {
 				is_branch = false;

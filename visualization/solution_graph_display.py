@@ -5,22 +5,20 @@ ACTION_LEFT = 0
 ACTION_STAY = 1
 ACTION_RIGHT = 2
 
-NODE_TYPE_ACTION = 0;
-NODE_TYPE_INNER_SCOPE = 1;
-NODE_TYPE_BRANCH = 2;
-NODE_TYPE_FOLD_SCORE = 3;
-NODE_TYPE_FOLD_SEQUENCE = 4;
-NODE_TYPE_LOOP_FOLD = 5;
-NODE_TYPE_PASS_THROUGH = 6;
+NODE_TYPE_ACTION = 0
+NODE_TYPE_SCOPE = 1
+NODE_TYPE_BRANCH = 2
+NODE_TYPE_BRANCH_STUB = 3
+NODE_TYPE_EXIT = 4
 
-scopes = []
+scopes = {}
 
 file = open('../display.txt')
 
 num_scopes = int(file.readline())
 
 for s_index in range(num_scopes):
-	is_loop = int(file.readline())
+	scope_id = int(file.readline())
 
 	nodes = []
 	num_nodes = int(file.readline())
@@ -31,86 +29,44 @@ for s_index in range(num_scopes):
 
 			next_node_id = int(file.readline())
 
-			average_score = float(file.readline())
-			score_variance = float(file.readline())
-			average_misguess = float(file.readline())
-			misguess_variance = float(file.readline())
-
-			average_impact = float(file.readline())
-			average_sum_impact = float(file.readline())
-
-			nodes.append([[node_type,
-						   action,
-						   next_node_id,
-						   average_score,
-						   score_variance,
-						   average_misguess,
-						   misguess_variance,
-						   average_impact,
-						   average_sum_impact], -1])
-		elif node_type == NODE_TYPE_INNER_SCOPE:
+			nodes.append([node_type,
+						  action,
+						  next_node_id])
+		elif node_type == NODE_TYPE_SCOPE:
 			inner_scope_id = int(file.readline())
 
 			next_node_id = int(file.readline())
 
-			average_score = float(file.readline())
-			score_variance = float(file.readline())
-			average_misguess = float(file.readline())
-			misguess_variance = float(file.readline())
-
-			average_impact = float(file.readline())
-			average_sum_impact = float(file.readline())
-
-			nodes.append([[node_type,
-						   inner_scope_id,
-						   next_node_id,
-						   average_score,
-						   score_variance,
-						   average_misguess,
-						   misguess_variance,
-						   average_impact,
-						   average_sum_impact], -1])
+			nodes.append([node_type,
+						  inner_scope_id,
+						  next_node_id])
 		elif node_type == NODE_TYPE_BRANCH:
+			scope_context = int(file.readline())
+
+			branch_next_node_id = int(file.readline())
 			original_next_node_id = int(file.readline())
 
-			branch_scope_id = int(file.readline())
-			branch_next_node_id = int(file.readline())
-
-			nodes.append([[node_type,
-						   original_next_node_id,
-						   branch_scope_id,
-						   branch_next_node_id], -1])
-		elif node_type == NODE_TYPE_FOLD_SCORE:
-			existing_next_node_id = int(file.readline())
-
-			fold_scope_id = int(file.readline())
-			fold_next_node_id = int(file.readline())
-
-			nodes.append([[node_type,
-						   existing_next_node_id,
-						   fold_scope_id,
-						   fold_next_node_id], -1])
-		elif node_type == NODE_TYPE_FOLD_SEQUENCE:
+			nodes.append([node_type,
+						  scope_context,
+						  branch_next_node_id,
+						  original_next_node_id])
+		elif node_type == NODE_TYPE_BRANCH_STUB:
 			next_node_id = int(file.readline())
 
-			nodes.append([[node_type,
-						   next_node_id], -1])
-		elif node_type == NODE_TYPE_LOOP_FOLD:
-			next_node_id = int(file.readline())
-
-			nodes.append([[node_type,
-						   next_node_id], -1])
+			nodes.append([node_type,
+						  next_node_id])
 		else:
-			# node_type == NODE_TYPE_LOOP_FOLD
-			next_node_id = int(file.readline())
+			# node_type == NODE_TYPE_EXIT
+			exit_depth = int(file.readline())
+			exit_node_id = int(file.readline())
 
-			nodes.append([[node_type,
-						   next_node_id], -1])
+			nodes.append([node_type,
+						  exit_depth,
+						  exit_node_id])
 
-	scopes.append([is_loop,
-				   nodes,
-				   -1,
-				   -1])
+	print(nodes)
+
+	scopes[scope_id] = nodes
 
 file.close()
 
@@ -132,130 +88,39 @@ graph = pydot.Dot(graph_type='digraph', strict=True)
 
 global_node_index = 0
 
-for s_index in range(len(scopes)):
-	start_node_index = global_node_index
-	global_node_index += 1
-
-	if scopes[s_index][0] == 1:
-		start_node = pydot.Node(start_node_index, label='LOOP S'+str(s_index)+' START')
-	else:
-		start_node = pydot.Node(start_node_index, label='S'+str(s_index)+' START')
-	graph.add_node(start_node)
-	scopes[s_index][2] = start_node_index
-
-	for n_index in range(len(scopes[s_index][1])):
+for scope_id in scopes:
+	node_mappings = {}
+	for n_index in range(len(scopes[scope_id])):
 		node_index = global_node_index
 		global_node_index += 1
-		if scopes[s_index][1][n_index][0][0] == NODE_TYPE_ACTION:
-			node = pydot.Node(node_index, label=pretty_print_action(scopes[s_index][1][n_index][0][1])
-				+ '\n' + str(scopes[s_index][1][n_index][0][7]))
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_INNER_SCOPE:
-			node = pydot.Node(node_index, label='S' + str(scopes[s_index][1][n_index][0][1])
-				+ '\n' + str(scopes[s_index][1][n_index][0][7]))
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_BRANCH:
-			node = pydot.Node(node_index, label='B')
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_FOLD_SCORE:
-			node = pydot.Node(node_index, label='FOLD START')
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_FOLD_SEQUENCE:
-			node = pydot.Node(node_index, label='FOLD SEQUENCE')
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_LOOP_FOLD:
-			node = pydot.Node(node_index, label='LOOP FOLD')
+		if scopes[scope_id][n_index][0] == NODE_TYPE_ACTION:
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + pretty_print_action(scopes[scope_id][n_index][1])))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_SCOPE:
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'S ' + str(scopes[scope_id][n_index][1])))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH:
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'C ' + str(scopes[scope_id][n_index][1])))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH_STUB:
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'STUB'))
 		else:
-			# scopes[s_index][1][n_index][0][0] == NODE_TYPE_PASS_THROUGH
-			node = pydot.Node(node_index, label='PASS')
-		graph.add_node(node)
-		scopes[s_index][1][n_index][1] = node_index
+			# scopes[scope_id][n_index][0] == NODE_TYPE_EXIT
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'EXIT'))
+		node_mappings[n_index] = node_index
 
-	end_node_index = global_node_index
-	global_node_index += 1
-
-	end_node = pydot.Node(end_node_index, label='S'+str(s_index)+' END')
-	graph.add_node(end_node)
-	scopes[s_index][3] = end_node_index
-
-for s_index in range(len(scopes)):
-	start_edge = pydot.Edge(scopes[s_index][2], scopes[s_index][1][0][1])
-	graph.add_edge(start_edge)
-
-	for n_index in range(len(scopes[s_index][1])):
-		if scopes[s_index][1][n_index][0][0] == NODE_TYPE_ACTION:
-			if scopes[s_index][1][n_index][0][2] == -1:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][2]][1])
-			graph.add_edge(edge)
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_INNER_SCOPE:
-			if s_index < scopes[s_index][1][n_index][0][1]:
-				input_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[scopes[s_index][1][n_index][0][1]][2])
-				graph.add_edge(input_edge)
-
-				if scopes[s_index][1][n_index][0][2] == -1:
-					output_edge = pydot.Edge(scopes[scopes[s_index][1][n_index][0][1]][3],
-						scopes[s_index][3])
-				else:
-					output_edge = pydot.Edge(scopes[scopes[s_index][1][n_index][0][1]][3],
-						scopes[s_index][1][scopes[s_index][1][n_index][0][2]][1])
-				graph.add_edge(output_edge)
-			else:
-				if scopes[s_index][1][n_index][0][2] == -1:
-					edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-				else:
-					edge = pydot.Edge(scopes[s_index][1][n_index][1],
-						scopes[s_index][1][scopes[s_index][1][n_index][0][2]][1])
-				graph.add_edge(edge)
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_BRANCH:
-			if scopes[s_index][1][n_index][0][1] == -1:
-				original_edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				original_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][1]][1])
-			graph.add_edge(original_edge)
-
-			if scopes[s_index][1][n_index][0][3] == -1:
-				branch_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[scopes[s_index][1][n_index][0][2]][3])
-			else:
-				branch_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[scopes[s_index][1][n_index][0][2]][1][scopes[s_index][1][n_index][0][3]][1])
-			graph.add_edge(branch_edge)
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_FOLD_SCORE:
-			if scopes[s_index][1][n_index][0][1] == -1:
-				existing_edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				existing_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][1]][1])
-			graph.add_edge(existing_edge)
-
-			if scopes[s_index][1][n_index][0][3] == -1:
-				fold_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[scopes[s_index][1][n_index][0][2]][3])
-			else:
-				fold_edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[scopes[s_index][1][n_index][0][2]][1][scopes[s_index][1][n_index][0][3]][1])
-			graph.add_edge(fold_edge)
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_FOLD_SEQUENCE:
-			if scopes[s_index][1][n_index][0][1] == -1:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][1]][1])
-			graph.add_edge(edge)
-		elif scopes[s_index][1][n_index][0][0] == NODE_TYPE_LOOP_FOLD:
-			if scopes[s_index][1][n_index][0][1] == -1:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][1]][1])
-			graph.add_edge(edge)
-		else:
-			# scopes[s_index][1][n_index][0][0] == NODE_TYPE_PASS_THROUGH
-			if scopes[s_index][1][n_index][0][1] == -1:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1], scopes[s_index][3])
-			else:
-				edge = pydot.Edge(scopes[s_index][1][n_index][1],
-					scopes[s_index][1][scopes[s_index][1][n_index][0][1]][1])
-			graph.add_edge(edge)
+	for n_index in range(len(scopes[scope_id])):
+		if scopes[scope_id][n_index][0] == NODE_TYPE_ACTION:
+			if scopes[scope_id][n_index][2] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[n_index], node_mappings[scopes[scope_id][n_index][2]]))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_SCOPE:
+			if scopes[scope_id][n_index][2] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[n_index], node_mappings[scopes[scope_id][n_index][2]]))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH:
+			if scopes[scope_id][n_index][2] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[n_index], node_mappings[scopes[scope_id][n_index][2]]))
+			if scopes[scope_id][n_index][3] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[n_index], node_mappings[scopes[scope_id][n_index][3]]))
+		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH_STUB:
+			if scopes[scope_id][n_index][1] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[n_index], node_mappings[scopes[scope_id][n_index][1]]))
+		# else scopes[scope_id][n_index][0] == NODE_TYPE_EXIT, do nothing
 
 graph.write_png('solution.png')

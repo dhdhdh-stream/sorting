@@ -17,8 +17,7 @@
 
 using namespace std;
 
-// const int MEASURE_ITERS = 10000;
-const int MEASURE_ITERS = 100;
+const int MEASURE_ITERS = 10000;
 
 const double MIN_SCORE_IMPACT = 0.05;
 
@@ -31,8 +30,9 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 										int& exit_depth,
 										int& exit_node_id,
 										RunHelper& run_helper) {
-	double branch_score = 0.0;
-	double original_score = 0.0;
+	double branch_score = this->average_score;
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+	double original_score = parent_scope->average_score;
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
@@ -70,8 +70,7 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 		}
 	}
 
-	// if (branch_score > original_score) {
-	if (rand()%2 == 0) {
+	if (branch_score > original_score) {
 		this->branch_count++;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -107,6 +106,16 @@ void BranchExperiment::measure_backprop(double target_val) {
 }
 
 void BranchExperiment::eval() {
+	cout << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			cout << " " << this->best_actions[s_index]->action.to_string();
+		} else {
+			cout << " S";
+		}
+	}
+	cout << endl;
+
 	Scope* parent = solution->scopes[this->scope_context[0]];
 
 	double combined_average_score = this->combined_score / MEASURE_ITERS;
@@ -120,14 +129,18 @@ void BranchExperiment::eval() {
 	cout << "score_standard_deviation: " << score_standard_deviation << endl;
 	cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
-	// if (combined_improvement_t_score > 2.326) {		// >99%
-	if (rand()%2 == 0) {		// >99%
+	if (combined_improvement_t_score > 2.326) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
 		if (branch_weight > 0.98) {
 			new_pass_through();
 		} else {
 			new_branch();
 		}
+
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 	} else {
 		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
@@ -147,10 +160,14 @@ void BranchExperiment::eval() {
 		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		// if (score_improvement_t_score > -0.674	// 75%<
-		// 		&& misguess_improvement_t_score > 2.326) {
-		if (rand()%2 == 0) {
+		if (score_improvement_t_score > -0.674	// 75%<
+				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
+
+			// ofstream solution_save_file;
+			// solution_save_file.open("saves/solution.txt");
+			// solution->save(solution_save_file);
+			// solution_save_file.close();
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -174,6 +191,8 @@ void BranchExperiment::eval() {
 			this->new_score_states.clear();
 		}
 	}
+
+	cout << endl;
 
 	this->state = BRANCH_EXPERIMENT_STATE_DONE;
 }

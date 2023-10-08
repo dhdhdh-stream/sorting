@@ -10,6 +10,8 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->id = -1;
+
 	this->experiment = NULL;
 }
 
@@ -35,6 +37,14 @@ BranchNode::BranchNode(ifstream& input_file,
 	string branch_is_pass_through_line;
 	getline(input_file, branch_is_pass_through_line);
 	this->branch_is_pass_through = stoi(branch_is_pass_through_line);
+
+	string original_score_mod_line;
+	getline(input_file, original_score_mod_line);
+	this->original_score_mod = stod(original_score_mod_line);
+
+	string branch_score_mod_line;
+	getline(input_file, branch_score_mod_line);
+	this->branch_score_mod = stod(branch_score_mod_line);
 
 	string shared_state_is_local_size_line;
 	getline(input_file, shared_state_is_local_size_line);
@@ -151,6 +161,9 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->branch_is_pass_through << endl;
 
+	output_file << this->original_score_mod << endl;
+	output_file << this->branch_score_mod << endl;
+
 	output_file << this->shared_state_is_local.size() << endl;
 	for (int s_index = 0; s_index < (int)this->shared_state_is_local.size(); s_index++) {
 		output_file << this->shared_state_is_local[s_index] << endl;
@@ -187,6 +200,13 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->score_state_defs[s_index]->id << endl;
 		output_file << this->score_state_network_indexes[s_index] << endl;
 	}
+}
+
+void BranchNode::save_for_display(ofstream& output_file) {
+	output_file << this->branch_scope_context[0] << endl;
+
+	output_file << this->branch_next_node_id << endl;
+	output_file << this->original_next_node_id << endl;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {

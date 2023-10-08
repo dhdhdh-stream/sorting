@@ -36,8 +36,8 @@ void BranchNode::activate(int& curr_node_id,
 			BranchNodeHistory* history = new BranchNodeHistory(this);
 			node_histories.push_back(history);
 
-			double branch_score = 0.0;
-			double original_score = 0.0;
+			double original_score = this->original_score_mod;
+			double branch_score = this->branch_score_mod;
 
 			for (int i_index = 0; i_index < (int)this->shared_state_is_local.size(); i_index++) {
 				if (this->shared_state_is_local[i_index]) {
@@ -134,8 +134,7 @@ void BranchNode::activate(int& curr_node_id,
 			}
 
 			bool is_branch;
-			// if (branch_score > original_score) {
-			if (rand()%2 == 0) {
+			if (branch_score > original_score) {
 				is_branch = true;
 			} else {
 				is_branch = false;

@@ -15,6 +15,7 @@
  *     - a forget network to erase index state
  *       - implemented as summing negative of index state times sigmoid
  *         - so error signals still pass through
+ *       - initialize output constant to -10.0 so never forgets initially
  *     - an update size network to control val state update size
  *       - sigmoid times state update
  */
@@ -150,6 +151,8 @@ public:
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  int id);
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ScopeHistory {

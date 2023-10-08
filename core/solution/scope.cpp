@@ -115,6 +115,14 @@ void Scope::load(ifstream& input_file,
 	}
 }
 
+void Scope::save_for_display(ofstream& output_file) {
+	output_file << this->nodes.size() << endl;
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		output_file << this->nodes[n_index]->type << endl;
+		this->nodes[n_index]->save_for_display(output_file);
+	}
+}
+
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 

@@ -164,6 +164,7 @@ public:
 								  ScopeNodeHistory* history);
 
 	void save(std::ofstream& output_file);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ScopeNodeHistory : public AbstractNodeHistory {

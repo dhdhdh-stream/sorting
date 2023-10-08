@@ -1,5 +1,6 @@
 #include "helpers.h"
 
+#include <iostream>
 #include <set>
 
 #include "abstract_node.h"
