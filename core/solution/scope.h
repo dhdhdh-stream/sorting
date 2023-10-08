@@ -1,23 +1,22 @@
 /**
- * TODO: to handle loops, average values, and possibly select one iter/context to focus on
- * - even if only one iter is relevant, and that iter changes, will still be correlation
- * 
- * - perhaps average for flat, but then train as usual for RNN
- *   - TODO: try depth 100 RNN where only 1 iter matters?
- *     - though will probably end up effectively averaging just like flat
- *       - maybe this is where LSTM/focus matters?
- *         - or no, would require extra state?
- *           - with extra state, LSTM could work
- *             - use 1 extra state as goal is just indexing
- * 
- * - have 1 network blindly generate potential updates based only on obs and val state
- * - the LSTM part doesn't see/use val at all
- * - have another network blindly update index state using only obs and index state
- * - have a separate predicted score that is updated
- * - have 3rd network based on index state determine how much previous val state matters to 1st network
- * - have 4th network based on index state determine how much impact update has
- * 
- * - will need some modification as LSTM is meant to output values every timestep
+ * TODO: to handle loops, average values for flat into index network
+ * - for flat even if only one iter is relevant, and that iter changes, will still be correlation
+ * - for index network:
+ *   - keep track of 2 states, a val state, and an index state
+ *     - val state directly tied to ending score as usual
+ *     - index state tied to time
+ *       - minus by 1.0 each iteration so roughly acts as a counter until state update is needed
+ *       - measure activation*index to normalize
+ *   - have 4 sub-networks:
+ *     - a val state update network as usual
+ *       - can depend on self
+ *     - an index state update network
+ *       - depends on obs, but not on self
+ *     - a forget network to erase index state
+ *       - implemented as summing negative of index state times sigmoid
+ *         - so error signals still pass through
+ *     - an update size network to control val state update size
+ *       - sigmoid times state update
  */
 
 #ifndef SCOPE_H
