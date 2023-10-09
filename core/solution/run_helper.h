@@ -12,6 +12,8 @@ class RunHelper {
 public:
 	int phase;
 
+	int node_index;
+
 	int curr_depth;	// need to track separate from context as context resets for experiments
 	int max_depth;
 	bool exceeded_depth;
@@ -37,6 +39,8 @@ public:
 	 */
 
 	RunHelper() {
+		this->node_index = 0;
+
 		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;

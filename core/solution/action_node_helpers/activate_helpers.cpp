@@ -68,11 +68,12 @@ void ActionNode::activate(int& curr_node_id,
 			state_network->activate_score(history->obs_snapshot,
 										  it->second,
 										  score_state_impact);
+			it->second.last_updated = run_helper.node_index;
 			history->score_state_indexes.push_back(n_index);
 			history->score_state_impacts.push_back(score_state_impact);
 		}
 	}
-
+ 
 	for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
 		bool matches_context = true;
 		if (this->experiment_hook_score_state_scope_contexts[n_index].size() > context.size()) {
@@ -97,6 +98,7 @@ void ActionNode::activate(int& curr_node_id,
 			StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 			state_network->activate(history->obs_snapshot,
 									it->second);
+			it->second.last_updated = run_helper.node_index;
 		}
 	}
 
@@ -119,6 +121,8 @@ void ActionNode::activate(int& curr_node_id,
 				.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 				.scope_history->test_obs_vals.push_back(history->obs_snapshot);
+			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
+				.scope_history->test_last_updated = run_helper.node_index;
 		}
 	}
 
@@ -142,6 +146,8 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 										  map<State*, StateStatus>& experiment_score_state_vals,
 										  vector<int>& test_obs_indexes,
 										  vector<double>& test_obs_vals,
+										  int& test_last_updated,
+										  RunHelper& run_helper,
 										  ActionNodeHistory* history) {
 	for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
 		bool matches_context = true;
@@ -165,6 +171,10 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 			StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 			state_network->activate(history->obs_snapshot,
 									it->second);
+			it->second.last_updated = run_helper.node_index;
+			/**
+			 * - simply set to node index right before experiment
+			 */
 		}
 	}
 
@@ -185,6 +195,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 		if (matches_context) {
 			test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 			test_obs_vals.push_back(history->obs_snapshot);
+			test_last_updated = run_helper.node_index;
 		}
 	}
 }

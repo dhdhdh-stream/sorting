@@ -197,6 +197,8 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 								   map<State*, StateStatus>& experiment_score_state_vals,
 								   vector<int>& test_obs_indexes,
 								   vector<double>& test_obs_vals,
+								   int& test_last_updated,
+								   RunHelper& run_helper,
 								   ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
@@ -213,6 +215,8 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 													  experiment_score_state_vals,
 													  test_obs_indexes,
 													  test_obs_vals,
+													  test_last_updated,
+													  run_helper,
 													  action_node_history);
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
@@ -225,6 +229,8 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 							experiment_score_state_vals,
 							test_obs_indexes,
 							test_obs_vals,
+							test_last_updated,
+							run_helper,
 							scope_node_history->inner_scope_history);
 
 				node_context.back() = -1;
@@ -236,6 +242,8 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 														 experiment_score_state_vals,
 														 test_obs_indexes,
 														 test_obs_vals,
+														 test_last_updated,
+														 run_helper,
 														 scope_node_history);
 				}
 			} else {
@@ -246,6 +254,8 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 													  experiment_score_state_vals,
 													  test_obs_indexes,
 													  test_obs_vals,
+													  test_last_updated,
+													  run_helper,
 													  branch_node_history);
 			}
 		}
@@ -296,6 +306,8 @@ void BranchExperiment::hook(vector<ContextLayer>& context,
 				context[context.size() - this->scope_context.size()].experiment_score_state_vals,
 				context[context.size() - this->scope_context.size()].scope_history->test_obs_indexes,
 				context[context.size() - this->scope_context.size()].scope_history->test_obs_vals,
+				context[context.size() - this->scope_context.size()].scope_history->test_last_updated,
+				run_helper,
 				context[context.size() - this->scope_context.size()].scope_history);
 }
 

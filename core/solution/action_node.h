@@ -76,7 +76,8 @@ public:
 
 	void branch_experiment_train_activate(
 		Problem& problem,
-		std::vector<ContextLayer>& context);
+		std::vector<ContextLayer>& context,
+		RunHelper& run_helper);
 	void branch_experiment_simple_activate(
 		Problem& problem);
 
@@ -85,6 +86,8 @@ public:
 								  std::map<State*, StateStatus>& experiment_score_state_vals,
 								  std::vector<int>& test_obs_indexes,
 								  std::vector<double>& test_obs_vals,
+								  int& test_last_updated,
+								  RunHelper& run_helper,
 								  ActionNodeHistory* history);
 
 	void save(std::ofstream& output_file);

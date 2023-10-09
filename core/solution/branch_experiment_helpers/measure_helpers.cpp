@@ -19,8 +19,6 @@ using namespace std;
 
 const int MEASURE_ITERS = 10000;
 
-const double MIN_SCORE_IMPACT = 0.05;
-
 /**
  * - difference between simple_activate() is that increments branch_count
  */
@@ -216,17 +214,12 @@ void BranchExperiment::new_branch() {
 	/**
 	 * TODO: check if state used at decision point so can delete
 	 */
-	double score_standard_deviation = sqrt(parent_scope->score_variance);
 	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 			it != this->score_state_scales.end(); it++) {
-		double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;
-		double new_impact = it->first->resolved_standard_deviation * it->second->weight;
-		if (abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
-			finalize_existing_state(parent_scope,
-									it->first,
-									new_branch_node,
-									it->second->weight);
-		}
+		finalize_existing_state(parent_scope,
+								it->first,
+								new_branch_node,
+								it->second->weight);
 
 		delete it->second;
 	}

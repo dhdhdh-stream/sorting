@@ -106,6 +106,8 @@ public:
 					 std::map<State*, StateStatus>& experiment_score_state_vals,
 					 std::vector<int>& test_obs_indexes,
 					 std::vector<double>& test_obs_vals,
+					 int& test_last_updated,
+					 RunHelper& run_helper,
 					 ScopeHistory* scope_history);
 	void unhook();
 	void backprop(double target_val,

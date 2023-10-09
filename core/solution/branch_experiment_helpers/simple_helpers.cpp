@@ -70,6 +70,8 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 														sequence_history);
 				delete sequence_history;
 			}
+
+			// no need to increment run_helper.node_index
 		}
 
 		if (this->best_exit_depth == 0) {

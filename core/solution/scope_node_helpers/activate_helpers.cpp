@@ -167,6 +167,7 @@ void ScopeNode::activate(int& curr_node_id,
 					state_network->activate_score(obs_it->second.val,
 												  state_it->second,
 												  score_state_impact);
+					state_it->second.last_updated = run_helper.node_index;
 					history->score_state_indexes.push_back(n_index);
 					history->score_state_impacts.push_back(score_state_impact);
 				}
@@ -199,6 +200,7 @@ void ScopeNode::activate(int& curr_node_id,
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 					state_network->activate(obs_it->second.val,
 											state_it->second);
+					state_it->second.last_updated = run_helper.node_index;
 				}
 			}
 		}
@@ -224,6 +226,8 @@ void ScopeNode::activate(int& curr_node_id,
 						.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 						.scope_history->test_obs_vals.push_back(obs_it->second.val);
+					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
+						.scope_history->test_last_updated = run_helper.node_index;
 				}
 			}
 		}
@@ -368,6 +372,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 					state_network->activate_score(obs_it->second.val,
 												  state_it->second,
 												  score_state_impact);
+					state_it->second.last_updated = run_helper.node_index;
 					history->score_state_indexes.push_back(n_index);
 					history->score_state_impacts.push_back(score_state_impact);
 				}
@@ -400,6 +405,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 					state_network->activate(obs_it->second.val,
 											state_it->second);
+					state_it->second.last_updated = run_helper.node_index;
 				}
 			}
 		}
@@ -425,6 +431,8 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 						.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 						.scope_history->test_obs_vals.push_back(obs_it->second.val);
+					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
+						.scope_history->test_last_updated = run_helper.node_index;
 				}
 			}
 		}
@@ -455,6 +463,8 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 										 map<State*, StateStatus>& experiment_score_state_vals,
 										 vector<int>& test_obs_indexes,
 										 vector<double>& test_obs_vals,
+										 int& test_last_updated,
+										 RunHelper& run_helper,
 										 ScopeNodeHistory* history) {
 	if (!history->is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
@@ -481,6 +491,7 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 					state_network->activate(obs_it->second.val,
 											state_it->second);
+					state_it->second.last_updated = run_helper.node_index;
 				}
 			}
 		}
@@ -504,6 +515,7 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 				if (obs_it != history->obs_snapshots.end()) {
 					test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 					test_obs_vals.push_back(obs_it->second.val);
+					test_last_updated = run_helper.node_index;
 				}
 			}
 		}

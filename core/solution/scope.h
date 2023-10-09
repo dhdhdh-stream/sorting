@@ -166,6 +166,7 @@ public:
 	// for ObsExperiment
 	std::vector<int> test_obs_indexes;
 	std::vector<double> test_obs_vals;
+	int test_last_updated;
 
 	BranchExperimentHistory* inner_branch_experiment_history;
 
