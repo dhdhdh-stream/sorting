@@ -29,6 +29,10 @@ Sequence* create_sequence(Problem& problem,
 						  int explore_context_depth,
 						  Scope* containing_scope,
 						  RunHelper& run_helper);
+Sequence* create_root_sequence(Problem& problem,
+							   std::vector<ContextLayer>& context,
+							   int explore_context_depth,
+							   RunHelper& run_helper);
 
 void random_exit(std::vector<int>& starting_scope_context,
 				 std::vector<int>& starting_node_context,

@@ -94,7 +94,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 						// higher
 						int context_index = (int)context.size() - (int)this->scope_context.size();
 						while (true) {
-							if (context_index > 0 && next_distribution(generator) == 0) {
+							if (context_index >= 0 && next_distribution(generator) == 0) {
 								context_index--;
 							} else {
 								break;
@@ -114,11 +114,19 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 						}
 					}
 
-					Sequence* sequence = create_sequence(problem,
-														 context,
-														 (int)this->scope_context.size(),
-														 containing_scope,
-														 run_helper);
+					Sequence* sequence;
+					if (context_index == -1) {
+						sequence = create_root_sequence(problem,
+														context,
+														(int)this->scope_context.size(),
+														run_helper);
+					} else {
+						sequence = create_sequence(problem,
+												   context,
+												   (int)this->scope_context.size(),
+												   containing_scope,
+												   run_helper);
+					}
 
 					bool should_retry = false;
 					if (sequence->scope->nodes.size() == 0) {

@@ -268,6 +268,27 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	history->is_halfway = true;
 
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
+			if (this->input_inner_layers[i_index] == 0) {
+				if (this->input_outer_is_local[i_index]) {
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().local_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+					}
+				} else {
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().input_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * - carry inputs downwards so they are initialized on the way up
+	 */
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;

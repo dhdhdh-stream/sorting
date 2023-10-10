@@ -340,6 +340,34 @@ void ScopeNode::halfway_create_sequence_activate(
 		int& new_num_input_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
+			if (this->input_inner_layers[i_index] == 0) {
+				if (this->input_outer_is_local[i_index]) {
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().local_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+
+						map<pair<bool,int>, int>::iterator mapping_it = state_mappings.back()
+							.find({true, this->input_outer_indexes[i_index]});
+						// mapping_it != state_mappings.back().end()
+						starting_state_mappings[0][{false, this->input_inner_indexes[i_index]}] = mapping_it->second;
+					}
+				} else {
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().input_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+
+						map<pair<bool,int>, int>::iterator mapping_it = state_mappings.back()
+							.find({false, this->input_outer_indexes[i_index]});
+						// mapping_it != state_mappings.back().end()
+						starting_state_mappings[0][{false, this->input_inner_indexes[i_index]}] = mapping_it->second;
+					}
+				}
+			}
+		}
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = -1;
@@ -548,6 +576,25 @@ void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
 										Problem& problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
+			if (this->input_inner_layers[i_index] == 0
+					&& !this->input_inner_is_local[i_index]) {
+				if (this->input_outer_is_local[i_index]) {
+					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().local_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+					}
+				} else {
+					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
+					if (it != context.back().input_state_vals.end()) {
+						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+					}
+				}
+			}
+		}
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
