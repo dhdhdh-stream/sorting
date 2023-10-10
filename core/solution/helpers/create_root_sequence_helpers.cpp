@@ -1,8 +1,14 @@
 #include "helpers.h"
 
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+
 using namespace std;
 
-void random_halfway_start_fetch_context_helper(
+void create_root_random_halfway_start_fetch_context_helper(
 		ScopeHistory* scope_history,
 		int target_index,
 		int& curr_index,
@@ -14,7 +20,7 @@ void random_halfway_start_fetch_context_helper(
 
 				starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 
-				random_halfway_start_fetch_context_helper(
+				create_root_random_halfway_start_fetch_context_helper(
 					scope_node_history->inner_scope_history,
 					target_index,
 					curr_index,
@@ -44,7 +50,7 @@ void random_halfway_start_fetch_context_helper(
 	}
 }
 
-void random_halfway_start(vector<int>& starting_halfway_node_context) {
+void create_root_random_halfway_start(vector<int>& starting_halfway_node_context) {
 	Scope* root = solution->scopes[0];
 
 	while (true) {
@@ -75,7 +81,7 @@ void random_halfway_start(vector<int>& starting_halfway_node_context) {
 
 			int curr_index = 0;
 
-			random_halfway_start_fetch_context_helper(
+			create_root_random_halfway_start_fetch_context_helper(
 				scope_history,
 				rand_index,
 				curr_index,
@@ -175,7 +181,7 @@ Sequence* create_root_sequence(Problem& problem,
 	int new_num_input_states = 0;
 
 	vector<int> starting_halfway_node_context;
-	random_halfway_start(starting_halfway_node_context);
+	create_root_random_halfway_start(starting_halfway_node_context);
 
 	ScopeNode* new_starting_scope_node = new ScopeNode();
 
@@ -240,14 +246,15 @@ Sequence* create_root_sequence(Problem& problem,
 			}
 			// it != end()
 
+			int new_state_index = new_num_input_states;
+			new_num_input_states++;
+
 			if (possible_inner_is_local[rand_target]) {
 				halfway_inner_local_state_vals[possible_inner_layers[rand_target]][possible_inner_indexes[rand_target]] = val_it->second;
 			} else {
-				halfway_inner_input_state_vals[possible_inner_layers[rand_target]][possible_inner_indexes[rand_target]] = val_it->second;
+				// possible_inner_layers[rand_target] == 0
+				halfway_inner_input_state_vals[0][possible_inner_indexes[rand_target]] = val_it->second;
 			}
-
-			int new_state_index = new_num_input_states;
-			new_num_input_states++;
 
 			new_starting_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 			new_starting_scope_node->input_inner_layers.push_back(possible_inner_layers[rand_target]);
@@ -317,7 +324,7 @@ Sequence* create_root_sequence(Problem& problem,
 	int inner_exit_depth = -1;
 	int inner_exit_node_id = -1;
 
-	root->activate(starting_node_ids,
+	root->activate(starting_halfway_node_context,
 				   halfway_inner_input_state_vals,
 				   halfway_inner_local_state_vals,
 				   problem,
@@ -388,7 +395,7 @@ Sequence* create_root_sequence(Problem& problem,
 		vector<int> possible_inner_output_ids;
 		for (map<int, StateStatus>::iterator it = temp_context.back().input_state_vals.begin();
 				it != temp_context.back().input_state_vals.end(); it++) {
-			possible_inner_output_ids.push_back();
+			possible_inner_output_ids.push_back(it->first);
 		}
 
 		int num_outputs_to_consider = min(10, (int)possible_output_scope_depths.size());
@@ -412,12 +419,20 @@ Sequence* create_root_sequence(Problem& problem,
 
 			if (input_index != -1) {
 				if (output_type_distribution(generator) == 0) {
+					int input_inner_index;
+					for (int i_index = 0; i_index < (int)new_starting_scope_node->input_outer_indexes.size(); i_index++) {
+						if (new_starting_scope_node->input_outer_indexes[i_index] == input_index) {
+							input_inner_index = new_starting_scope_node->input_inner_indexes[i_index];
+							break;
+						}
+					}
+
 					if (possible_output_outer_is_local[rand_target]) {
 						context[context.size()-1 - possible_output_scope_depths[rand_target]]
-							.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+							.local_state_vals[possible_output_outer_indexes[rand_target]] = temp_context.back().input_state_vals[input_inner_index];
 					} else {
 						context[context.size()-1 - possible_output_scope_depths[rand_target]]
-							.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+							.input_state_vals[possible_output_outer_indexes[rand_target]] = temp_context.back().input_state_vals[input_inner_index];
 					}
 
 					new_sequence->output_inner_indexes.push_back(input_index);
@@ -446,8 +461,12 @@ Sequence* create_root_sequence(Problem& problem,
 					int new_state_index = new_num_input_states;
 					new_num_input_states++;
 
-					new_sequence->input_types.push_back(INPUT_TYPE_STATE);
-					// HERE
+					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_sequence->input_inner_indexes.push_back(new_state_index);
+					new_sequence->input_scope_depths.push_back(-1);
+					new_sequence->input_outer_is_local.push_back(-1);
+					new_sequence->input_outer_indexes.push_back(-1);
+					new_sequence->input_init_vals.push_back(0.0);
 
 					new_starting_scope_node->output_inner_indexes.push_back(possible_inner_output_ids[rand_inner]);
 					new_starting_scope_node->output_outer_is_local.push_back(false);
@@ -470,4 +489,25 @@ Sequence* create_root_sequence(Problem& problem,
 		}
 	}
 
+	Scope* new_scope = new Scope();
+
+	// don't set id/increment scope_counter until train
+
+	new_scope->num_input_states = new_num_input_states;
+	new_scope->num_local_states = 0;
+
+	new_scope->nodes.push_back(new_starting_scope_node);
+
+	new_starting_scope_node->id = 0;
+	new_starting_scope_node->next_node_id = -1;
+
+	Scope* parent_scope = solution->scopes[context[context.size() - explore_context_depth].scope_id];
+	new_scope->average_score = parent_scope->average_score;
+	new_scope->score_variance = parent_scope->score_variance;
+	new_scope->average_misguess = parent_scope->average_misguess;
+	new_scope->misguess_variance = parent_scope->misguess_variance;
+
+	new_sequence->scope = new_scope;
+
+	return new_sequence;
 }

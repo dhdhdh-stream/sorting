@@ -100,7 +100,11 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 								break;
 							}
 						}
-						containing_scope = solution->scopes[context[context_index].scope_id];
+						if (context_index == -1) {
+							containing_scope = NULL;
+						} else {
+							containing_scope = solution->scopes[context[context_index].scope_id];
+						}
 					} else {
 						// lower
 						containing_scope = solution->scopes[this->scope_context[0]];
@@ -115,7 +119,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					}
 
 					Sequence* sequence;
-					if (context_index == -1) {
+					if (containing_scope == NULL) {
 						sequence = create_root_sequence(problem,
 														context,
 														(int)this->scope_context.size(),
