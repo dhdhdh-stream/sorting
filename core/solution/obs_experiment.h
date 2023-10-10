@@ -41,6 +41,7 @@ public:
 	std::set<int> resolved_network_indexes;
 	double resolved_variance;
 
+	double existing_average_misguess;
 	double new_average_misguess;
 
 	ObsExperiment(Scope* parent_scope);

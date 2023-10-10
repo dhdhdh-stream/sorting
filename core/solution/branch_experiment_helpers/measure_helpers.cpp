@@ -19,15 +19,43 @@ using namespace std;
 
 const int MEASURE_ITERS = 10000;
 
-/**
- * - difference between simple_activate() is that increments branch_count
- */
-void BranchExperiment::measure_activate(int& curr_node_id,
-										Problem& problem,
-										vector<ContextLayer>& context,
-										int& exit_depth,
-										int& exit_node_id,
-										RunHelper& run_helper) {
+void BranchExperiment::measure_existing_backprop(double target_val,
+												 BranchExperimentHistory* history) {
+	this->existing_score += target_val;
+
+	ScopeHistory* scope_history = history->parent_scope_history;
+	Scope* parent_scope = scope_history->scope;
+
+	double predicted_score = parent_scope->average_score;
+	for (map<State*, StateStatus>::iterator it = scope_history->score_state_snapshots.begin();
+			it != scope_history->score_state_snapshots.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		// last_network != NULL
+		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
+			// set for backprop in the following
+			it->second.val = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation * last_network->correlation_to_end
+				* it->first->resolved_standard_deviation;
+		}
+		predicted_score += it->first->scale->weight * it->second.val;
+	}
+
+	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
+	this->existing_misguess += curr_misguess;
+
+	this->state_iter++;
+	if (this->state_iter >= MEASURE_ITERS) {
+		this->state = BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED;
+		this->state_iter = 0;
+	}
+}
+
+void BranchExperiment::measure_combined_activate(int& curr_node_id,
+												 Problem& problem,
+												 vector<ContextLayer>& context,
+												 int& exit_depth,
+												 int& exit_node_id,
+												 RunHelper& run_helper) {
 	double branch_score = this->average_score;
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	double original_score = parent_scope->average_score;
@@ -94,7 +122,7 @@ void BranchExperiment::measure_activate(int& curr_node_id,
 	}
 }
 
-void BranchExperiment::measure_backprop(double target_val) {
+void BranchExperiment::measure_combined_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
@@ -116,8 +144,11 @@ void BranchExperiment::eval() {
 
 	Scope* parent = solution->scopes[this->scope_context[0]];
 
+	double existing_average_score = this->existing_score / MEASURE_ITERS;
+	double existing_average_misguess = this->existing_misguess / MEASURE_ITERS;
+
 	double combined_average_score = this->combined_score / MEASURE_ITERS;
-	double combined_improvement = combined_average_score - parent->average_score;
+	double combined_improvement = combined_average_score - existing_average_score;
 	double score_standard_deviation = sqrt(parent->score_variance);
 	double combined_improvement_t_score = combined_improvement
 		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
@@ -135,18 +166,23 @@ void BranchExperiment::eval() {
 			new_branch();
 		}
 
-		// ofstream solution_save_file;
-		// solution_save_file.open("saves/solution.txt");
-		// solution->save(solution_save_file);
-		// solution_save_file.close();
+		ofstream solution_save_file;
+		solution_save_file.open("saves/solution.txt");
+		solution->save(solution_save_file);
+		solution_save_file.close();
+
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
 	} else {
 		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
-		double score_improvement = this->average_score - parent->average_score;
+		double score_improvement = this->average_score - existing_average_score;
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(20000));
 
-		double misguess_improvement = parent->average_misguess - this->average_misguess;
+		double misguess_improvement = existing_average_misguess - this->average_misguess;
 		double misguess_standard_deviation = sqrt(parent->misguess_variance);
 		double misguess_improvement_t_score = misguess_improvement
 			/ (misguess_standard_deviation / sqrt(20000));
@@ -162,10 +198,15 @@ void BranchExperiment::eval() {
 				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
 
-			// ofstream solution_save_file;
-			// solution_save_file.open("saves/solution.txt");
-			// solution->save(solution_save_file);
-			// solution_save_file.close();
+			ofstream solution_save_file;
+			solution_save_file.open("saves/solution.txt");
+			solution->save(solution_save_file);
+			solution_save_file.close();
+
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -184,6 +225,7 @@ void BranchExperiment::eval() {
 			this->score_state_scales.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
+				this->new_score_states[s_index]->nodes.clear();
 				delete this->new_score_states[s_index];
 			}
 			this->new_score_states.clear();
@@ -210,6 +252,9 @@ void BranchExperiment::new_branch() {
 	new_branch_node->branch_node_context.back() = new_branch_node->id;
 
 	new_branch_node->branch_is_pass_through = false;
+
+	new_branch_node->original_score_mod = parent_scope->average_score;
+	new_branch_node->branch_score_mod = this->average_score;
 
 	/**
 	 * TODO: check if state used at decision point so can delete
@@ -325,6 +370,9 @@ void BranchExperiment::new_pass_through() {
 	new_branch_node->branch_node_context.back() = new_branch_node->id;
 
 	new_branch_node->branch_is_pass_through = true;
+
+	new_branch_node->original_score_mod = 0.0;
+	new_branch_node->branch_score_mod = 0.0;
 
 	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];

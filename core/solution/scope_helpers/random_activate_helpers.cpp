@@ -259,10 +259,10 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 	} else {
 		ExitNode* exit_node = (ExitNode*)this->nodes[curr_node_id];
 
-		ExitNodeHistory* node_history = new ExitNodeHistory(exit_node);
-		history->node_histories[0].push_back(node_history);
-
-		num_nodes++;
+		/**
+		 * - don't add node_history/increment num_nodes
+		 *   - i.e., don't halfway start from ExitNode
+		 */
 
 		if (exit_node->exit_depth == 0) {
 			curr_node_id = exit_node->exit_node_id;

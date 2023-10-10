@@ -98,18 +98,35 @@ ObsExperiment* create_obs_experiment(ScopeHistory* scope_history) {
 	vector<vector<int>> possible_node_contexts;
 	vector<int> possible_obs_indexes;
 
-	vector<int> scope_context;
-	vector<int> node_context;
-	create_obs_experiment_helper(scope_context,
-								 node_context,
-								 possible_nodes,
-								 possible_scope_contexts,
-								 possible_node_contexts,
-								 possible_obs_indexes,
-								 scope_history);
+	while (true) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		create_obs_experiment_helper(scope_context,
+									 node_context,
+									 possible_nodes,
+									 possible_scope_contexts,
+									 possible_node_contexts,
+									 possible_obs_indexes,
+									 scope_history);
+
+		if (possible_nodes.size() > 0) {
+			break;
+		}
+		/**
+		 * - may be 0 if only early exit scope node, but don't recurse inwards
+		 */
+	}
 
 	Scope* parent_scope = scope_history->scope;
 	ObsExperiment* obs_experiment = new ObsExperiment(parent_scope);
+
+	uniform_int_distribution<int> ending_distribution(1, (int)possible_nodes.size());
+	int ending = ending_distribution(generator);
+
+	possible_nodes.erase(possible_nodes.begin()+ending, possible_nodes.end());
+	possible_scope_contexts.erase(possible_scope_contexts.begin()+ending, possible_scope_contexts.end());
+	possible_node_contexts.erase(possible_node_contexts.begin()+ending, possible_node_contexts.end());
+	possible_obs_indexes.erase(possible_obs_indexes.begin()+ending, possible_obs_indexes.end());
 
 	int num_obs = min(NUM_INITIAL_OBS, (int)possible_nodes.size());
 	for (int o_index = 0; o_index < num_obs; o_index++) {

@@ -16,7 +16,8 @@
 using namespace std;
 
 void Scope::update_backprop(double target_val,
-							ScopeHistory* history) {
+							ScopeHistory* history,
+							set<State*>& states_to_remove) {
 	if (history->exceeded_depth) {
 		return;
 	}
@@ -40,8 +41,19 @@ void Scope::update_backprop(double target_val,
 	}
 
 	if (this->obs_experiment != NULL) {
-		backprop_queue.push({history->test_last_updated, NULL});
+		backprop_queue.push({history->test_last_updated+1, NULL});
+		/**
+		 * - increment by 1 so that it triggers after existing
+		 */
 	}
+
+	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
+	double curr_score_variance = (this->average_score - target_val) * (this->average_score - target_val);
+	this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
+	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
+	this->average_misguess = 0.9999*this->average_misguess + 0.0001*curr_misguess;
+	double curr_misguess_variance = (this->average_misguess - curr_misguess) * (this->average_misguess - curr_misguess);
+	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
 	while (!backprop_queue.empty()) {
 		if (backprop_queue.top().second == NULL) {
@@ -64,47 +76,7 @@ void Scope::update_backprop(double target_val,
 			it->first->scale->backprop(it->second.val*error, 0.001);
 
 			if (it->first->scale->weight < 0.02) {
-				for (int n_index = 0; n_index < (int)it->first->nodes.size(); n_index++) {
-					if (it->first->nodes[n_index]->type == NODE_TYPE_ACTION) {
-						ActionNode* action_node = (ActionNode*)it->first->nodes[n_index];
-						for (int s_index = 0; s_index < (int)action_node->score_state_defs.size(); s_index++) {
-							if (action_node->score_state_defs[s_index] == it->first) {
-								action_node->score_state_scope_contexts.erase(action_node->score_state_scope_contexts.begin() + s_index);
-								action_node->score_state_node_contexts.erase(action_node->score_state_node_contexts.begin() + s_index);
-								action_node->score_state_defs.erase(action_node->score_state_defs.begin() + s_index);
-								action_node->score_state_network_indexes.erase(action_node->score_state_network_indexes.begin() + s_index);
-								break;
-							}
-						}
-					} else if (it->first->nodes[n_index]->type == NODE_TYPE_SCOPE) {
-						ScopeNode* scope_node = (ScopeNode*)it->first->nodes[n_index];
-						for (int s_index = 0; s_index < (int)scope_node->score_state_defs.size(); s_index++) {
-							if (scope_node->score_state_defs[s_index] == it->first) {
-								scope_node->score_state_scope_contexts.erase(scope_node->score_state_scope_contexts.begin() + s_index);
-								scope_node->score_state_node_contexts.erase(scope_node->score_state_node_contexts.begin() + s_index);
-								scope_node->score_state_obs_indexes.erase(scope_node->score_state_obs_indexes.begin() + s_index);
-								scope_node->score_state_defs.erase(scope_node->score_state_defs.begin() + s_index);
-								scope_node->score_state_network_indexes.erase(scope_node->score_state_network_indexes.begin() + s_index);
-								break;
-							}
-						}
-					} else {
-						BranchNode* branch_node = (BranchNode*)it->first->nodes[n_index];
-						for (int s_index = 0; s_index < (int)branch_node->score_state_defs.size(); s_index++) {
-							if (branch_node->score_state_defs[s_index] == it->first) {
-								branch_node->score_state_scope_contexts.erase(branch_node->score_state_scope_contexts.begin() + s_index);
-								branch_node->score_state_node_contexts.erase(branch_node->score_state_node_contexts.begin() + s_index);
-								branch_node->score_state_defs.erase(branch_node->score_state_defs.begin() + s_index);
-								branch_node->score_state_network_indexes.erase(branch_node->score_state_network_indexes.begin() + s_index);
-								break;
-							}
-						}
-					}
-				}
-
-				solution->states.erase(it->first->id);
-
-				delete it->first;
+				states_to_remove.insert(it->first);
 			}
 
 			predicted_score -= it->first->scale->weight * it->second.val;
@@ -112,14 +84,6 @@ void Scope::update_backprop(double target_val,
 
 		backprop_queue.pop();
 	}
-
-	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
-	double curr_score_variance = (this->average_score - target_val) * (this->average_score - target_val);
-	this->score_variance = 0.9999*this->score_variance + 0.0001*curr_score_variance;
-	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
-	this->average_misguess = 0.9999*this->average_misguess + 0.0001*curr_misguess;
-	double curr_misguess_variance = (this->average_misguess - curr_misguess) * (this->average_misguess - curr_misguess);
-	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
 	if (this->obs_experiment == NULL) {
 		this->obs_experiment = create_obs_experiment(history);

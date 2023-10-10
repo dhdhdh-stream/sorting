@@ -59,20 +59,6 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 	}
 
 	{
-		// this->curr_step_types.push_back(STEP_TYPE_ACTION);
-		// this->curr_actions.push_back(new ActionNode());
-		// this->curr_actions.back()->action = Action(ACTION_RIGHT);
-		// this->curr_sequences.push_back(NULL);
-
-		// problem.perform_action(this->curr_actions.back()->action);
-
-		// this->curr_step_types.push_back(STEP_TYPE_ACTION);
-		// this->curr_actions.push_back(new ActionNode());
-		// this->curr_actions.back()->action = Action(ACTION_RIGHT);
-		// this->curr_sequences.push_back(NULL);
-
-		// problem.perform_action(this->curr_actions.back()->action);
-
 		// new path
 		geometric_distribution<int> geometric_distribution(0.3);
 		int new_num_steps;
@@ -134,11 +120,28 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 														 containing_scope,
 														 run_helper);
 
+					bool should_retry = false;
 					if (sequence->scope->nodes.size() == 0) {
+						should_retry = true;
 						/**
 						 * - can be empty sequence if, e.g., start from branch node into exit
 						 *   - in which case retry
 						 */
+					}
+					bool has_non_stub_node = false;
+					for (int n_index = 0; n_index < (int)sequence->scope->nodes.size(); n_index++) {
+						if (sequence->scope->nodes[n_index]->type != NODE_TYPE_BRANCH_STUB) {
+							has_non_stub_node = true;
+							break;
+						}
+					}
+					if (!has_non_stub_node) {
+						should_retry = true;
+					}
+					if (sequence->scope->nodes.size() > 0 && sequence->scope->nodes.back()->type == NODE_TYPE_BRANCH_STUB) {
+						should_retry = true;
+					}
+					if (should_retry) {
 						delete sequence;
 					} else {
 						new_sequence = sequence;
@@ -200,6 +203,7 @@ void BranchExperiment::explore_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= EXPLORE_ITERS) {
+		cout << "this->best_surprise: " << this->best_surprise << endl;
 		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
@@ -218,7 +222,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			}
 			cout << endl;
 
-			this->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 			this->state_iter = 0;
 		} else {
 			this->state = BRANCH_EXPERIMENT_STATE_DONE;

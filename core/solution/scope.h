@@ -25,6 +25,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -146,7 +147,8 @@ public:
 											  RunHelper& run_helper);
 
 	void update_backprop(double target_val,
-						 ScopeHistory* history);
+						 ScopeHistory* history,
+						 std::set<State*>& states_to_remove);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

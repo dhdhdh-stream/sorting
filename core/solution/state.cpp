@@ -1,6 +1,11 @@
 #include "state.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "globals.h"
 #include "scale.h"
+#include "scope_node.h"
+#include "solution.h"
 #include "state_network.h"
 
 using namespace std;
@@ -49,6 +54,46 @@ State::State(ifstream& input_file,
 }
 
 State::~State() {
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+			for (int s_index = 0; s_index < (int)action_node->score_state_defs.size(); s_index++) {
+				if (action_node->score_state_defs[s_index] == this) {
+					action_node->score_state_scope_contexts.erase(action_node->score_state_scope_contexts.begin() + s_index);
+					action_node->score_state_node_contexts.erase(action_node->score_state_node_contexts.begin() + s_index);
+					action_node->score_state_defs.erase(action_node->score_state_defs.begin() + s_index);
+					action_node->score_state_network_indexes.erase(action_node->score_state_network_indexes.begin() + s_index);
+					break;
+				}
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+			for (int s_index = 0; s_index < (int)scope_node->score_state_defs.size(); s_index++) {
+				if (scope_node->score_state_defs[s_index] == this) {
+					scope_node->score_state_scope_contexts.erase(scope_node->score_state_scope_contexts.begin() + s_index);
+					scope_node->score_state_node_contexts.erase(scope_node->score_state_node_contexts.begin() + s_index);
+					scope_node->score_state_obs_indexes.erase(scope_node->score_state_obs_indexes.begin() + s_index);
+					scope_node->score_state_defs.erase(scope_node->score_state_defs.begin() + s_index);
+					scope_node->score_state_network_indexes.erase(scope_node->score_state_network_indexes.begin() + s_index);
+					break;
+				}
+			}
+		} else {
+			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+			for (int s_index = 0; s_index < (int)branch_node->score_state_defs.size(); s_index++) {
+				if (branch_node->score_state_defs[s_index] == this) {
+					branch_node->score_state_scope_contexts.erase(branch_node->score_state_scope_contexts.begin() + s_index);
+					branch_node->score_state_node_contexts.erase(branch_node->score_state_node_contexts.begin() + s_index);
+					branch_node->score_state_defs.erase(branch_node->score_state_defs.begin() + s_index);
+					branch_node->score_state_network_indexes.erase(branch_node->score_state_network_indexes.begin() + s_index);
+					break;
+				}
+			}
+		}
+	}
+
+	solution->states.erase(this->id);
+
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		delete this->networks[n_index];
 	}

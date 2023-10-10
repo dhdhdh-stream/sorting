@@ -59,7 +59,8 @@ void BranchExperiment::activate(int& curr_node_id,
 							.scope_history->inner_branch_experiment_history = history;
 						history->parent_scope_history = context[context.size() - this->scope_context.size()].scope_history;
 
-						if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+						switch (this->state) {
+						case BRANCH_EXPERIMENT_STATE_EXPLORE:
 							explore_activate(curr_node_id,
 											 problem,
 											 context,
@@ -67,7 +68,10 @@ void BranchExperiment::activate(int& curr_node_id,
 											 exit_node_id,
 											 run_helper,
 											 history);
-						} else if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN) {
+							break;
+						case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+						case BRANCH_EXPERIMENT_STATE_TRAIN:
+						case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
 							train_activate(curr_node_id,
 										   problem,
 										   context,
@@ -75,13 +79,18 @@ void BranchExperiment::activate(int& curr_node_id,
 										   exit_node_id,
 										   run_helper,
 										   history);
-						} else {
-							measure_activate(curr_node_id,
-											 problem,
-											 context,
-											 exit_depth,
-											 exit_node_id,
-											 run_helper);
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
+							// do nothing
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+							measure_combined_activate(curr_node_id,
+													  problem,
+													  context,
+													  exit_depth,
+													  exit_node_id,
+													  run_helper);
+							break;
 						}
 					} else {
 						if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
@@ -139,7 +148,8 @@ void BranchExperiment::activate(int& curr_node_id,
 								.scope_history->inner_branch_experiment_history = history;
 							history->parent_scope_history = context[context.size() - this->scope_context.size()].scope_history;
 
-							if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+							switch (this->state) {
+							case BRANCH_EXPERIMENT_STATE_EXPLORE:
 								explore_activate(curr_node_id,
 												 problem,
 												 context,
@@ -147,7 +157,10 @@ void BranchExperiment::activate(int& curr_node_id,
 												 exit_node_id,
 												 run_helper,
 												 history);
-							} else if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN) {
+								break;
+							case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+							case BRANCH_EXPERIMENT_STATE_TRAIN:
+							case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
 								train_activate(curr_node_id,
 											   problem,
 											   context,
@@ -155,13 +168,18 @@ void BranchExperiment::activate(int& curr_node_id,
 											   exit_node_id,
 											   run_helper,
 											   history);
-							} else {
-								measure_activate(curr_node_id,
-												 problem,
-												 context,
-												 exit_depth,
-												 exit_node_id,
-												 run_helper);
+								break;
+							case BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
+								// do nothing
+								break;
+							case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+								measure_combined_activate(curr_node_id,
+														  problem,
+														  context,
+														  exit_depth,
+														  exit_node_id,
+														  run_helper);
+								break;
 							}
 						} else {
 							if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
@@ -347,13 +365,23 @@ void BranchExperiment::unhook() {
 
 void BranchExperiment::backprop(double target_val,
 								BranchExperimentHistory* history) {
-	if (this->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history);
-	} else if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN) {
+		break;
+	case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+	case BRANCH_EXPERIMENT_STATE_TRAIN:
+	case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
 		train_backprop(target_val,
 					   history);
-	} else {
-		measure_backprop(target_val);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
+		measure_existing_backprop(target_val,
+								  history);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+		measure_combined_backprop(target_val);
+		break;
 	}
 }

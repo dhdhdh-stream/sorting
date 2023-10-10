@@ -9,4 +9,6 @@ const int RUN_PHASE_NEW = 2;
  * - in new sequence, so don't explore or update
  */
 
+const double MIN_VALUE = 0.00001;
+
 #endif /* CONSTANTS_H */

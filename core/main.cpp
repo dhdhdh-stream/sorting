@@ -15,6 +15,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 #include "state_status.h"
 
 using namespace std;
@@ -34,28 +35,28 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->init();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->load(solution_save_file);
+	// solution_save_file.close();
 
 	Scope* root = solution->scopes[0];
 
-	ActionNode* explore_node = (ActionNode*)root->nodes[3];
+	ActionNode* explore_node = (ActionNode*)root->nodes[0];
 	vector<int> experiment_scope_context{0};
-	vector<int> experiment_node_context{3};
+	vector<int> experiment_node_context{0};
 	explore_node->experiment = new BranchExperiment(experiment_scope_context,
 													experiment_node_context);
 	explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
 	explore_node->experiment->state_iter = 0;
 	explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	explore_node->experiment->best_actions.push_back(new ActionNode());
-	explore_node->experiment->best_actions.back()->action = Action(ACTION_LEFT);
+	explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
 	explore_node->experiment->best_sequences.push_back(NULL);
 	explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	explore_node->experiment->best_actions.push_back(new ActionNode());
-	explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
+	explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
 	explore_node->experiment->best_sequences.push_back(NULL);
 	explore_node->experiment->best_exit_depth = 0;
 	explore_node->experiment->best_exit_node_id = -1;
@@ -66,8 +67,7 @@ int main(int argc, char* argv[]) {
 		Problem problem;
 
 		RunHelper run_helper;
-		// if (solution->states.size() > 0 && rand()%3 != 0) {
-		if (iter_index > 1000000 && rand()%3 != 0) {
+		if (solution->states.size() > 0 && rand()%3 != 0) {
 			run_helper.phase = RUN_PHASE_EXPLORE;
 		} else {
 			run_helper.phase = RUN_PHASE_UPDATE;
@@ -135,10 +135,12 @@ int main(int argc, char* argv[]) {
 		} else {
 			// run_helper.phase == RUN_PHASE_UPDATE
 
+			set<State*> states_to_remove;
 			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
 				Scope* scope = run_helper.scope_histories[h_index]->scope;
 				scope->update_backprop(target_val,
-									   run_helper.scope_histories[h_index]);
+									   run_helper.scope_histories[h_index],
+									   states_to_remove);
 			}
 
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -152,6 +154,10 @@ int main(int argc, char* argv[]) {
 					it != run_helper.experiments_seen_counts.end(); it++) {
 				BranchExperiment* experiment = it->first;
 				experiment->average_instances_per_run = 0.999 * experiment->average_instances_per_run + 0.001 * it->second;
+			}
+
+			for (set<State*>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
+				delete *it;
 			}
 		}
 
@@ -174,6 +180,8 @@ int main(int argc, char* argv[]) {
 		if (iter_index%1000000 == 0) {
 			cout << iter_index << endl;
 			cout << "solution->states.size(): " << solution->states.size() << endl;
+			cout << "root->average_score: " << root->average_score << endl;
+			cout << "root->average_misguess: " << root->average_misguess << endl;
 		}
 	}
 

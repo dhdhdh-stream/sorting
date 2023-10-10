@@ -272,6 +272,8 @@ void ObsExperiment::rnn(double target_val,
 
 			double new_predicted_score = existing_predicted_score + state_val;
 
+			double existing_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
+			this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*existing_misguess;
 			double curr_misguess = (target_val - new_predicted_score) * (target_val - new_predicted_score);
 			this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
 
@@ -286,6 +288,8 @@ void ObsExperiment::rnn(double target_val,
 				this->state_networks[network_index]->backprop(state_error);
 			}
 		} else {
+			double existing_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
+			this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*existing_misguess;
 			double curr_misguess = (target_val - existing_predicted_score) * (target_val - existing_predicted_score);
 			this->new_average_misguess = 0.9999*this->new_average_misguess + 0.0001*curr_misguess;
 			/**
@@ -301,18 +305,18 @@ void ObsExperiment::rnn(double target_val,
 }
 
 void ObsExperiment::scope_eval(Scope* parent) {
-	double misguess_improvement = parent->average_misguess - this->new_average_misguess;
+	double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 	double misguess_standard_deviation = sqrt(parent->misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(20000));
 
-	cout << "experiment nodes:";
+	cout << "scope experiment nodes:";
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		cout << " " << this->nodes[n_index]->id;
 	}
 	cout << endl;
-	cout << "parent->average_misguess: " << parent->average_misguess << endl;
+	cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
@@ -376,18 +380,18 @@ void ObsExperiment::scope_eval(Scope* parent) {
 }
 
 void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) {
-	double misguess_improvement = branch_experiment->average_misguess - this->new_average_misguess;
+	double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 	double existing_misguess_standard_deviation = sqrt(branch_experiment->misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
 		/ (existing_misguess_standard_deviation / sqrt(20000));
 
-	cout << "experiment nodes:";
+	cout << "experiment experiment nodes:";
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		cout << " " << this->nodes[n_index]->id;
 	}
 	cout << endl;
-	cout << "branch_experiment->average_misguess: " << branch_experiment->average_misguess << endl;
+	cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;

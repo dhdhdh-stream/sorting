@@ -22,9 +22,12 @@ const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SEQUENCE = 1;
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
-const int BRANCH_EXPERIMENT_STATE_TRAIN = 1;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
-const int BRANCH_EXPERIMENT_STATE_DONE = 3;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 1;
+const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 3;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 5;
+const int BRANCH_EXPERIMENT_STATE_DONE = 6;
 
 class BranchExperimentHistory;
 class BranchExperiment {
@@ -69,6 +72,9 @@ public:
 	double average_score;
 	double average_misguess;
 	double misguess_variance;
+
+	double existing_score;
+	double existing_misguess;
 
 	int branch_count;
 	double combined_score;
@@ -140,13 +146,16 @@ public:
 						 int& exit_node_id,
 						 RunHelper& run_helper);
 
-	void measure_activate(int& curr_node_id,
-						  Problem& problem,
-						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  int& exit_node_id,
-						  RunHelper& run_helper);
-	void measure_backprop(double target_val);
+	void measure_existing_backprop(double target_val,
+								   BranchExperimentHistory* history);
+
+	void measure_combined_activate(int& curr_node_id,
+								   Problem& problem,
+								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   int& exit_node_id,
+								   RunHelper& run_helper);
+	void measure_combined_backprop(double target_val);
 
 	void eval();
 	void new_branch();
