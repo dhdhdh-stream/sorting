@@ -1,3 +1,8 @@
+// TODO: need to create more scopes
+// - for, e.g., might want information both early, for early branching, but also late, for better abstraction
+//   - no clean way to do that with 1 scope?
+//     - but clean if multiple scopes
+
 #include "branch_experiment.h"
 
 #include <iostream>

@@ -92,8 +92,6 @@ State::~State() {
 		}
 	}
 
-	solution->states.erase(this->id);
-
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		delete this->networks[n_index];
 	}

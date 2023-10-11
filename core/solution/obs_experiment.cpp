@@ -30,6 +30,7 @@ const double MIN_IMPACT_SCALE = 0.3;
 ObsExperiment::ObsExperiment(Scope* parent_scope) {
 	this->resolved_variance = 1.0;
 
+	this->existing_average_misguess = parent_scope->average_misguess;
 	this->new_average_misguess = parent_scope->average_misguess;
 
 	this->state = OBS_EXPERIMENT_STATE_FLAT;

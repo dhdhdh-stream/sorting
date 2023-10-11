@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 	explore_node->experiment->best_exit_node_id = -1;
 
 	int iter_index = 0;
-	chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
+	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
 	while (true) {
 		Problem problem;
 
@@ -102,16 +102,6 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_depth) {
-			if (run_helper.max_depth > solution->max_depth) {
-				solution->max_depth = run_helper.max_depth;
-
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
-			}
-
 			target_val = problem.score_result();
 		} else {
 			target_val = -1.0;
@@ -150,10 +140,23 @@ int main(int argc, char* argv[]) {
 		} else {
 			// run_helper.phase == RUN_PHASE_UPDATE
 
+			if (!run_helper.exceeded_depth) {
+				if (run_helper.max_depth > solution->max_depth) {
+					solution->max_depth = run_helper.max_depth;
+
+					if (solution->max_depth < 50) {
+						solution->depth_limit = solution->max_depth + 10;
+					} else {
+						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+					}
+				}
+			}
+
 			set<State*> states_to_remove;
 			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
 				Scope* scope = run_helper.scope_histories[h_index]->scope;
 				scope->update_backprop(target_val,
+									   run_helper,
 									   run_helper.scope_histories[h_index],
 									   states_to_remove);
 			}
@@ -172,6 +175,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			for (set<State*>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
+				solution->states.erase((*it)->id);
 				delete *it;
 			}
 		}
@@ -179,18 +183,18 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		iter_index++;
-		if (iter_index%10000 == 0) {
-			chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
-			chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
-			if (time_span.count() > 120.0) {
-				ofstream display_file;
-				display_file.open("../display.txt");
-				solution->save_for_display(display_file);
-				display_file.close();
+		// if (iter_index%10000 == 0) {
+		// 	chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
+		// 	chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
+		// 	if (time_span.count() > 120.0) {
+		// 		ofstream display_file;
+		// 		display_file.open("../display.txt");
+		// 		solution->save_for_display(display_file);
+		// 		display_file.close();
 
-				display_previous_time = curr_time;
-			}
-		}
+		// 		display_previous_time = curr_time;
+		// 	}
+		// }
 
 		if (iter_index%1000000 == 0) {
 			cout << iter_index << endl;

@@ -89,22 +89,27 @@ void random_exit(vector<int>& starting_scope_context,
 									   num_nodes,
 									   scope_history);
 
-	uniform_int_distribution<int> distribution(0, num_nodes-2);
-	int rand_index = 1 + distribution(generator);
-	/**
-	 * - skip first node
-	 */
+	if (num_nodes <= 1) {
+		new_exit_depth = 0;
+		new_exit_node_id = -1;
+	} else {
+		uniform_int_distribution<int> distribution(0, num_nodes-2);
+		int rand_index = 1 + distribution(generator);
+		/**
+		 * - skip first node
+		 */
 
-	vector<int> exit_node_context;
-	int curr_index = 0;
-	random_exit_fetch_context_helper(
-		scope_history,
-		rand_index,
-		curr_index,
-		exit_node_context);
+		vector<int> exit_node_context;
+		int curr_index = 0;
+		random_exit_fetch_context_helper(
+			scope_history,
+			rand_index,
+			curr_index,
+			exit_node_context);
+
+		new_exit_depth = (int)starting_scope_context.size() - (int)exit_node_context.size();
+		new_exit_node_id = exit_node_context.back();
+	}
 
 	delete scope_history;
-
-	new_exit_depth = (int)starting_scope_context.size() - (int)exit_node_context.size();
-	new_exit_node_id = exit_node_context.back();
 }

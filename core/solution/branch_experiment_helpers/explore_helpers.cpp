@@ -61,12 +61,17 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 	{
 		// new path
 		geometric_distribution<int> geometric_distribution(0.3);
+		uniform_int_distribution<int> allow_zero_distribution(0, 5);
 		int new_num_steps;
 		if (this->curr_exit_depth == 0
 				&& this->curr_exit_node_id == curr_node_id) {
 			new_num_steps = 1 + geometric_distribution(generator);
 		} else {
-			new_num_steps = geometric_distribution(generator);
+			if (allow_zero_distribution(generator) == 0) {
+				new_num_steps = geometric_distribution(generator);
+			} else {
+				new_num_steps = 1 + geometric_distribution(generator);
+			}
 		}
 		
 		uniform_int_distribution<int> type_distribution(0, 1);
@@ -92,7 +97,11 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					Scope* containing_scope;
 					if (direction_distribution(generator) == 0) {
 						// higher
-						int context_index = (int)context.size() - (int)this->scope_context.size();
+						int context_index = (int)context.size() - (int)this->scope_context.size() - 1;
+						/**
+						 * - start from 1 above
+						 *   - current scope comes from lower
+						 */
 						while (true) {
 							if (context_index >= 0 && next_distribution(generator) == 0) {
 								context_index--;

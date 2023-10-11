@@ -16,6 +16,7 @@
 using namespace std;
 
 void Scope::update_backprop(double target_val,
+							RunHelper& run_helper,
 							ScopeHistory* history,
 							set<State*>& states_to_remove) {
 	if (history->exceeded_depth) {
@@ -85,7 +86,7 @@ void Scope::update_backprop(double target_val,
 		backprop_queue.pop();
 	}
 
-	if (this->obs_experiment == NULL) {
+	if (this->obs_experiment == NULL && !run_helper.exceeded_depth) {
 		this->obs_experiment = create_obs_experiment(history);
 	}
 }

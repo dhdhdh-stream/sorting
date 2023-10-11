@@ -161,6 +161,9 @@ void BranchExperiment::train_backprop(double target_val,
 			this->state_iter = 0;
 		}
 	} else if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN) {
+		/**
+		 * - OK to not worry about run_helper.exceeded_depth as even if inner is cancelled, there will still be preceding obs
+		 */
 		if (this->obs_experiment == NULL) {
 			this->state_iter++;
 			if (this->state_iter <= OBS_EXPERIMENT_DECISION_TRIES) {

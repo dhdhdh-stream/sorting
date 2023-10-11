@@ -147,6 +147,7 @@ public:
 											  RunHelper& run_helper);
 
 	void update_backprop(double target_val,
+						 RunHelper& run_helper,
 						 ScopeHistory* history,
 						 std::set<State*>& states_to_remove);
 

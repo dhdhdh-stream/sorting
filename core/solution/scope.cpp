@@ -126,6 +126,8 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
+	this->test_last_updated = -1;
+
 	this->inner_branch_experiment_history = NULL;
 
 	this->exceeded_depth = false;
