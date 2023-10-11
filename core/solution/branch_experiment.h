@@ -49,6 +49,15 @@ public:
 	int state;
 	int state_iter;
 
+	int new_scope_id;
+	/**
+	 * - always create as extra scope
+	 *   - good to create scopes in general for abstraction
+	 *   - but also may need extra scopes to capture correlated information, e.g.:
+	 *     - on outer, capture early to branch early
+	 *     - on inner, capture later so can be abstracted
+	 */
+
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<Sequence*> curr_sequences;

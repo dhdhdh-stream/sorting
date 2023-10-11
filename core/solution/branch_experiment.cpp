@@ -24,6 +24,9 @@ BranchExperiment::BranchExperiment(vector<int>& scope_context,
 	this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 	this->state_iter = 0;
 
+	this->new_scope_id = solution->scope_counter;
+	solution->scope_counter++;
+
 	this->best_surprise = 1.0;
 
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];

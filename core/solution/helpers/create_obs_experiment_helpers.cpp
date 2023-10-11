@@ -317,8 +317,13 @@ void create_full_obs_experiment_branch_experiment_helper(
 		BranchExperimentHistory* branch_experiment_history) {
 	BranchExperiment* branch_experiment = branch_experiment_history->experiment;
 
+	// leave node_context.back() as -1;
+
+	scope_context.push_back(branch_experiment->new_scope_id);
+	node_context.push_back(-1);
+
 	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-		// simply leave node_context.back() as -1;
+		node_context.back() = s_index;
 
 		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			possible_nodes.push_back(branch_experiment->best_actions[s_index]);
@@ -334,7 +339,12 @@ void create_full_obs_experiment_branch_experiment_helper(
 											  possible_obs_indexes,
 											  branch_experiment_history->sequence_histories[s_index]->scope_history);
 		}
+
+		node_context.back() = -1;
 	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
 }
 
 void create_full_obs_experiment_helper(vector<int>& scope_context,

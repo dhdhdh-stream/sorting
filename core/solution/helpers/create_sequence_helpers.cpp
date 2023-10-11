@@ -146,22 +146,23 @@ Sequence* create_sequence(Problem& problem,
 	vector<int> possible_input_scope_depths;
 	vector<bool> possible_input_outer_is_local;
 	vector<int> possible_input_outer_indexes;
+	// skip context.back()
 	{
-		for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-				it != context.back().input_state_vals.end(); it++) {
-			possible_input_scope_depths.push_back(0);
+		for (map<int, StateStatus>::iterator it = context[context.size()-1 - 1].input_state_vals.begin();
+				it != context[context.size()-1 - 1].input_state_vals.end(); it++) {
+			possible_input_scope_depths.push_back(1);
 			possible_input_outer_is_local.push_back(false);
 			possible_input_outer_indexes.push_back(it->first);
 		}
 
-		for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-				it != context.back().local_state_vals.end(); it++) {
-			possible_input_scope_depths.push_back(0);
+		for (map<int, StateStatus>::iterator it = context[context.size()-1 - 1].local_state_vals.begin();
+				it != context[context.size()-1 - 1].local_state_vals.end(); it++) {
+			possible_input_scope_depths.push_back(1);
 			possible_input_outer_is_local.push_back(true);
 			possible_input_outer_indexes.push_back(it->first);
 		}
 	}
-	for (int c_index = 1; c_index < explore_context_depth; c_index++) {
+	for (int c_index = 2; c_index < explore_context_depth; c_index++) {
 		Scope* scope = solution->scopes[context[context.size()-1 - c_index].scope_id];
 		ScopeNode* scope_node = (ScopeNode*)scope->nodes[context[context.size()-1 - c_index].node_id];
 
@@ -652,28 +653,32 @@ Sequence* create_sequence(Problem& problem,
 		vector<int> possible_output_scope_depths;
 		vector<bool> possible_output_outer_is_local;
 		vector<int> possible_output_outer_indexes;
+		// skip context.back()
 		{
-			Scope* scope = solution->scopes[context.back().scope_id];
-			for (int s_index = 0; s_index < scope->num_input_states; s_index++) {
-				possible_output_scope_depths.push_back(0);
+			for (map<int, StateStatus>::iterator it = context[context.size()-1 - 1].input_state_vals.begin();
+					it != context[context.size()-1 - 1].input_state_vals.end(); it++) {
+				possible_output_scope_depths.push_back(1);
 				possible_output_outer_is_local.push_back(false);
-				possible_output_outer_indexes.push_back(s_index);
+				possible_output_outer_indexes.push_back(it->first);
 			}
+
+			Scope* scope = solution->scopes[context[context.size()-1 - 1].scope_id];
 			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
-				possible_output_scope_depths.push_back(0);
+				possible_output_scope_depths.push_back(1);
 				possible_output_outer_is_local.push_back(true);
 				possible_output_outer_indexes.push_back(s_index);
 			}
 		}
-		for (int c_index = 1; c_index < explore_context_depth; c_index++) {
+		for (int c_index = 2; c_index < explore_context_depth; c_index++) {
 			Scope* scope = solution->scopes[context[context.size()-1 - c_index].scope_id];
 			ScopeNode* scope_node = (ScopeNode*)scope->nodes[context[context.size()-1 - c_index].node_id];
 
-			for (int s_index = 0; s_index < scope->num_input_states; s_index++) {
+			for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
+					it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
 				bool passed_out = false;
 				for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
 					if (scope_node->output_outer_is_local[o_index] == false
-							&& scope_node->output_outer_indexes[o_index] == s_index) {
+							&& scope_node->output_outer_indexes[o_index] == it->first) {
 						passed_out = true;
 						break;
 					}
@@ -682,7 +687,7 @@ Sequence* create_sequence(Problem& problem,
 				if (!passed_out) {
 					possible_output_scope_depths.push_back(c_index);
 					possible_output_outer_is_local.push_back(false);
-					possible_output_outer_indexes.push_back(s_index);
+					possible_output_outer_indexes.push_back(it->first);
 				}
 			}
 

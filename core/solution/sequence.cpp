@@ -19,8 +19,6 @@ void Sequence::activate(Problem& problem,
 						vector<ContextLayer>& context,
 						RunHelper& run_helper,
 						SequenceHistory* history) {
-	// leave context.back().node_id as -1
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->scope->id;

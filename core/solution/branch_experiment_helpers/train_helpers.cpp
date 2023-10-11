@@ -33,8 +33,16 @@ void BranchExperiment::train_activate(int& curr_node_id,
 									  int& exit_node_id,
 									  RunHelper& run_helper,
 									  BranchExperimentHistory* history) {
+	// leave context.back().node_id as -1
+
+	context.push_back(ContextLayer());
+
+	context.back().scope_id = this->new_scope_id;
+
 	history->sequence_histories = vector<SequenceHistory*>(this->best_step_types.size(), NULL);
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		context.back().node_id = s_index;
+
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			this->best_actions[s_index]->branch_experiment_train_activate(
 				problem,
@@ -50,7 +58,11 @@ void BranchExperiment::train_activate(int& curr_node_id,
 		}
 
 		run_helper.node_index++;
+
+		context.back().node_id = -1;
 	}
+
+	context.pop_back();
 
 	if (this->best_exit_depth == 0) {
 		curr_node_id = this->best_exit_node_id;

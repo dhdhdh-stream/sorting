@@ -1,8 +1,3 @@
-// TODO: need to create more scopes
-// - for, e.g., might want information both early, for early branching, but also late, for better abstraction
-//   - no clean way to do that with 1 scope?
-//     - but clean if multiple scopes
-
 #include "branch_experiment.h"
 
 #include <iostream>
@@ -104,7 +99,15 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 	if (branch_score > original_score) {
 		this->branch_count++;
 
+		// leave context.back().node_id as -1
+
+		context.push_back(ContextLayer());
+
+		context.back().scope_id = this->new_scope_id;
+
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			context.back().node_id = s_index;
+
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(
 					problem);
@@ -116,7 +119,13 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 														sequence_history);
 				delete sequence_history;
 			}
+
+			// don't need to worry about run_helper.node_index
+
+			context.back().node_id = -1;
 		}
+
+		context.pop_back();
 
 		if (this->best_exit_depth == 0) {
 			curr_node_id = this->best_exit_node_id;
@@ -261,38 +270,6 @@ void BranchExperiment::new_branch() {
 	new_branch_node->original_score_mod = parent_scope->average_score;
 	new_branch_node->branch_score_mod = this->average_score;
 
-	/**
-	 * TODO: check if state used at decision point so can delete
-	 */
-	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
-			it != this->score_state_scales.end(); it++) {
-		finalize_existing_state(parent_scope,
-								it->first,
-								new_branch_node,
-								it->second->weight);
-
-		delete it->second;
-	}
-	this->score_state_scales.clear();
-
-	map<int, Sequence*> sequence_mappings;
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-			sequence_mappings[this->best_sequences[s_index]->scope->id] = this->best_sequences[s_index];
-		}
-	}
-	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
-		finalize_new_state(parent_scope,
-						   sequence_mappings,
-						   this->new_score_states[s_index],
-						   this->new_score_state_nodes[s_index],
-						   this->new_score_state_scope_contexts[s_index],
-						   this->new_score_state_node_contexts[s_index],
-						   this->new_score_state_obs_indexes[s_index],
-						   new_branch_node);
-	}
-	this->new_score_states.clear();
-
 	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
 
@@ -320,44 +297,91 @@ void BranchExperiment::new_branch() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
+	ScopeNode* new_scope_node = new ScopeNode();
+	new_scope_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_scope_node);
+
+	Scope* new_scope = new Scope();
+	new_scope->id = this->new_scope_id;
+	solution->scopes[new_scope->id] = new_scope;
+
+	new_scope_node->inner_scope = new_scope;
+
+	starting_scope->child_scopes.push_back(new_scope);
+
+	new_scope_node->starting_node_ids = vector<int>{0};
+
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = (int)starting_scope->nodes.size();
-			starting_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = (int)starting_scope->nodes.size();
+		int next_node_id;
+		if (s_index == (int)this->best_step_types.size()-1) {
+			next_node_id = -1;
 		} else {
-			ScopeNode* new_scope_node = finalize_sequence(this->scope_context,
-														  this->node_context,
-														  this->best_sequences[s_index],
-														  input_scope_depths_mappings,
-														  output_scope_depths_mappings);
-			new_scope_node->id = (int)starting_scope->nodes.size();
-			starting_scope->nodes.push_back(new_scope_node);
+			next_node_id = s_index+1;
+		}
 
-			new_scope_node->next_node_id = (int)starting_scope->nodes.size();
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->id = s_index;
+			new_scope->nodes.push_back(this->best_actions[s_index]);
+
+			this->best_actions[s_index]->next_node_id = next_node_id;
+		} else {
+			ScopeNode* new_sequence_scope_node = finalize_sequence(
+				this->scope_context,
+				this->node_context,
+				new_scope_node,
+				this->best_sequences[s_index],
+				input_scope_depths_mappings,
+				output_scope_depths_mappings);
+			new_sequence_scope_node->id = s_index;
+			new_scope->nodes.push_back(new_sequence_scope_node);
+
+			new_sequence_scope_node->next_node_id = next_node_id;
 
 			delete this->best_sequences[s_index];
 
-			starting_scope->child_scopes.push_back(new_scope_node->inner_scope);
+			new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
 		}
 	}
 	this->best_actions.clear();
 	this->best_sequences.clear();
 
-	{
-		ExitNode* new_exit_node = new ExitNode();
+	new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 
-		new_exit_node->id = (int)starting_scope->nodes.size();
-		starting_scope->nodes.push_back(new_exit_node);
+	ExitNode* new_exit_node = new ExitNode();
 
-		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_id = this->best_exit_node_id;
+	new_exit_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_exit_node);
+
+	new_exit_node->exit_depth = this->best_exit_depth;
+	new_exit_node->exit_node_id = this->best_exit_node_id;
+
+	/**
+	 * TODO: check if state used at decision point so can delete
+	 */
+	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
+			it != this->score_state_scales.end(); it++) {
+		finalize_existing_state(parent_scope,
+								it->first,
+								new_branch_node,
+								it->second->weight);
+
+		delete it->second;
 	}
+	this->score_state_scales.clear();
 
-	parent_scope->average_score = this->combined_score;
+	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
+		finalize_new_state(parent_scope,
+						   new_scope_node,
+						   this->new_score_states[s_index],
+						   this->new_score_state_nodes[s_index],
+						   this->new_score_state_scope_contexts[s_index],
+						   this->new_score_state_node_contexts[s_index],
+						   this->new_score_state_obs_indexes[s_index],
+						   new_branch_node);
+	}
+	this->new_score_states.clear();
 }
 
 void BranchExperiment::new_pass_through() {
@@ -406,58 +430,79 @@ void BranchExperiment::new_pass_through() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
-	map<int, int> new_scope_node_id_mappings;
+	ScopeNode* new_scope_node = new ScopeNode();
+	new_scope_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_scope_node);
+
+	Scope* new_scope = new Scope();
+	new_scope->id = this->new_scope_id;
+	solution->scopes[new_scope->id] = new_scope;
+
+	new_scope_node->inner_scope = new_scope;
+
+	starting_scope->child_scopes.push_back(new_scope);
+
+	new_scope_node->starting_node_ids = vector<int>{0};
 
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = (int)starting_scope->nodes.size();
-			starting_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = (int)starting_scope->nodes.size();
+		int next_node_id;
+		if (s_index == (int)this->best_step_types.size()-1) {
+			next_node_id = -1;
 		} else {
-			ScopeNode* new_scope_node = finalize_sequence(this->scope_context,
-														  this->node_context,
-														  this->best_sequences[s_index],
-														  input_scope_depths_mappings,
-														  output_scope_depths_mappings);
-			new_scope_node->id = (int)starting_scope->nodes.size();
-			starting_scope->nodes.push_back(new_scope_node);
+			next_node_id = s_index+1;
+		}
 
-			new_scope_node->next_node_id = (int)starting_scope->nodes.size();
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->id = s_index;
+			new_scope->nodes.push_back(this->best_actions[s_index]);
+
+			this->best_actions[s_index]->next_node_id = next_node_id;
+		} else {
+			ScopeNode* new_sequence_scope_node = finalize_sequence(
+				this->scope_context,
+				this->node_context,
+				new_scope_node,
+				this->best_sequences[s_index],
+				input_scope_depths_mappings,
+				output_scope_depths_mappings);
+			new_sequence_scope_node->id = s_index;
+			new_scope->nodes.push_back(new_sequence_scope_node);
+
+			new_sequence_scope_node->next_node_id = next_node_id;
 
 			delete this->best_sequences[s_index];
 
-			starting_scope->child_scopes.push_back(new_scope_node->inner_scope);
-
-			new_scope_node_id_mappings[new_scope_node->inner_scope->id] = new_scope_node->id;
+			new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
 		}
 	}
 	this->best_actions.clear();
 	this->best_sequences.clear();
 
-	{
-		ExitNode* new_exit_node = new ExitNode();
+	new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 
-		new_exit_node->id = (int)starting_scope->nodes.size();
-		starting_scope->nodes.push_back(new_exit_node);
+	ExitNode* new_exit_node = new ExitNode();
 
-		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_id = this->best_exit_node_id;
-	}
+	new_exit_node->id = (int)starting_scope->nodes.size();
+	starting_scope->nodes.push_back(new_exit_node);
+
+	new_exit_node->exit_depth = this->best_exit_depth;
+	new_exit_node->exit_node_id = this->best_exit_node_id;
 
 	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 			it != this->score_state_scales.end(); it++) {
-		delete it->first->scale;
-
-		it->first->scale = it->second;
+		delete it->second;
+		/**
+		 * - delete experiment scales as may not be general
+		 *   - let parent_scope adjust after
+		 */
 	}
 	this->score_state_scales.clear();
 
 	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
 		finalize_new_score_state(parent_scope,
-								 new_scope_node_id_mappings,
+								 new_scope_node,
 								 this->new_score_states[s_index],
 								 this->new_score_state_nodes[s_index],
 								 this->new_score_state_scope_contexts[s_index],
@@ -465,6 +510,4 @@ void BranchExperiment::new_pass_through() {
 								 this->new_score_state_obs_indexes[s_index]);
 	}
 	this->new_score_states.clear();
-
-	parent_scope->average_score = this->average_score;
 }

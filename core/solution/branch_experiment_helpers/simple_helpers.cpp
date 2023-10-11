@@ -58,7 +58,15 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 	}
 
 	if (branch_score > original_score) {
+		// leave context.back().node_id as -1
+
+		context.push_back(ContextLayer());
+
+		context.back().scope_id = this->new_scope_id;
+
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			context.back().node_id = s_index;
+
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(
 					problem);
@@ -71,8 +79,12 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 				delete sequence_history;
 			}
 
-			// no need to increment run_helper.node_index
+			// don't need to worry about run_helper.node_index
+
+			context.back().node_id = -1;
 		}
+
+		context.pop_back();
 
 		if (this->best_exit_depth == 0) {
 			curr_node_id = this->best_exit_node_id;
