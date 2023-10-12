@@ -27,10 +27,6 @@ void random_starting_node(Scope* containing_scope,
 		if (containing_scope->nodes[n_index]->type == NODE_TYPE_EXIT) {
 			should_add = false;
 		}
-		if (containing_scope->nodes[n_index]->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)containing_scope->nodes[n_index])->action.move == ACTION_START) {
-			should_add = false;
-		}
 		if (should_add) {
 			possible_ids.push_back(n_index);
 		}

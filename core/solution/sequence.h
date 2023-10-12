@@ -1,3 +1,5 @@
+// TODO: instead of having new scope under sequence, merge all sequences into experiment scope
+
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 

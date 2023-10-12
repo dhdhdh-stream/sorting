@@ -30,8 +30,8 @@ void Action::save(ofstream& save_file) {
 
 string Action::to_string() {
 	std::string move_s;
-	if (this->move == ACTION_START) {
-		move_s = "START";
+	if (this->move == ACTION_NOOP) {
+		move_s = "NOOP";
 	} else if (this->move == ACTION_LEFT) {
 		move_s = "LEFT";
 	} else if (this->move == ACTION_RIGHT) {

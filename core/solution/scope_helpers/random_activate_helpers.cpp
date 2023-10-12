@@ -212,12 +212,10 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
-		if (action_node->action.move != ACTION_START) {
-			ActionNodeHistory* node_history = new ActionNodeHistory(action_node);
-			history->node_histories[0].push_back(node_history);
+		ActionNodeHistory* node_history = new ActionNodeHistory(action_node);
+		history->node_histories[0].push_back(node_history);
 
-			num_nodes++;
-		}
+		num_nodes++;
 
 		curr_node_id = action_node->next_node_id;
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {

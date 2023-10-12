@@ -109,7 +109,7 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 		context.back().scope_id = this->new_scope_id;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			context.back().node_id = s_index;
+			context.back().node_id = 1 + s_index;
 
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(
@@ -196,7 +196,7 @@ void BranchExperiment::eval() {
 	cout << "branch_improvement: " << branch_improvement << endl;
 	cout << "branch_improvement_t_score: " << branch_improvement_t_score << endl;
 
-	if (combined_improvement_t_score > 2.326) {		// >99%
+	if (branch_improvement_t_score > 2.326) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
 		if (branch_weight > 0.98) {
 			new_pass_through();
@@ -322,65 +322,74 @@ void BranchExperiment::new_branch() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
-	ScopeNode* new_scope_node = new ScopeNode();
-	new_scope_node->id = (int)starting_scope->nodes.size();
-	starting_scope->nodes.push_back(new_scope_node);
+	ScopeNode* new_scope_node;
+	if (this->best_step_types.size() > 0) {
+		new_scope_node = new ScopeNode();
+		new_scope_node->id = (int)starting_scope->nodes.size();
+		starting_scope->nodes.push_back(new_scope_node);
 
-	Scope* new_scope = new Scope();
-	new_scope->id = this->new_scope_id;
-	solution->scopes[new_scope->id] = new_scope;
+		Scope* new_scope = new Scope();
+		new_scope->id = this->new_scope_id;
+		solution->scopes[new_scope->id] = new_scope;
 
-	new_scope->num_input_states = 0;
-	new_scope->num_local_states = 0;
+		new_scope->num_input_states = 0;
+		new_scope->num_local_states = 0;
 
-	new_scope->average_score = parent_scope->average_score;
-	new_scope->score_variance = parent_scope->score_variance;
-	new_scope->average_misguess = parent_scope->average_misguess;
-	new_scope->misguess_variance = parent_scope->misguess_variance;
+		new_scope->average_score = parent_scope->average_score;
+		new_scope->score_variance = parent_scope->score_variance;
+		new_scope->average_misguess = parent_scope->average_misguess;
+		new_scope->misguess_variance = parent_scope->misguess_variance;
 
-	new_scope_node->inner_scope = new_scope;
+		new_scope_node->inner_scope = new_scope;
 
-	starting_scope->child_scopes.push_back(new_scope);
+		starting_scope->child_scopes.push_back(new_scope);
 
-	new_scope_node->starting_node_ids = vector<int>{0};
+		new_scope_node->starting_node_ids = vector<int>{0};
 
-	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
-	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		int next_node_id;
-		if (s_index == (int)this->best_step_types.size()-1) {
-			next_node_id = -1;
-		} else {
-			next_node_id = s_index+1;
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = 1;
+		new_scope->nodes.push_back(starting_noop_node);
+
+		map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
+		map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			int next_node_id;
+			if (s_index == (int)this->best_step_types.size()-1) {
+				next_node_id = -1;
+			} else {
+				next_node_id = 1 + s_index+1;
+			}
+
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->best_actions[s_index]->id = 1 + s_index;
+				new_scope->nodes.push_back(this->best_actions[s_index]);
+
+				this->best_actions[s_index]->next_node_id = next_node_id;
+			} else {
+				ScopeNode* new_sequence_scope_node = finalize_sequence(
+					this->scope_context,
+					this->node_context,
+					new_scope_node,
+					this->best_sequences[s_index],
+					input_scope_depths_mappings,
+					output_scope_depths_mappings);
+				new_sequence_scope_node->id = 1 + s_index;
+				new_scope->nodes.push_back(new_sequence_scope_node);
+
+				new_sequence_scope_node->next_node_id = next_node_id;
+
+				delete this->best_sequences[s_index];
+
+				new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
+			}
 		}
+		this->best_actions.clear();
+		this->best_sequences.clear();
 
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = s_index;
-			new_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = next_node_id;
-		} else {
-			ScopeNode* new_sequence_scope_node = finalize_sequence(
-				this->scope_context,
-				this->node_context,
-				new_scope_node,
-				this->best_sequences[s_index],
-				input_scope_depths_mappings,
-				output_scope_depths_mappings);
-			new_sequence_scope_node->id = s_index;
-			new_scope->nodes.push_back(new_sequence_scope_node);
-
-			new_sequence_scope_node->next_node_id = next_node_id;
-
-			delete this->best_sequences[s_index];
-
-			new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
-		}
+		new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 	}
-	this->best_actions.clear();
-	this->best_sequences.clear();
-
-	new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 
 	ExitNode* new_exit_node = new ExitNode();
 
@@ -463,65 +472,74 @@ void BranchExperiment::new_pass_through() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
-	ScopeNode* new_scope_node = new ScopeNode();
-	new_scope_node->id = (int)starting_scope->nodes.size();
-	starting_scope->nodes.push_back(new_scope_node);
+	ScopeNode* new_scope_node;
+	if (this->best_step_types.size() > 0) {
+		new_scope_node = new ScopeNode();
+		new_scope_node->id = (int)starting_scope->nodes.size();
+		starting_scope->nodes.push_back(new_scope_node);
 
-	Scope* new_scope = new Scope();
-	new_scope->id = this->new_scope_id;
-	solution->scopes[new_scope->id] = new_scope;
+		Scope* new_scope = new Scope();
+		new_scope->id = this->new_scope_id;
+		solution->scopes[new_scope->id] = new_scope;
 
-	new_scope->num_input_states = 0;
-	new_scope->num_local_states = 0;
+		new_scope->num_input_states = 0;
+		new_scope->num_local_states = 0;
 
-	new_scope->average_score = parent_scope->average_score;
-	new_scope->score_variance = parent_scope->score_variance;
-	new_scope->average_misguess = parent_scope->average_misguess;
-	new_scope->misguess_variance = parent_scope->misguess_variance;
+		new_scope->average_score = parent_scope->average_score;
+		new_scope->score_variance = parent_scope->score_variance;
+		new_scope->average_misguess = parent_scope->average_misguess;
+		new_scope->misguess_variance = parent_scope->misguess_variance;
 
-	new_scope_node->inner_scope = new_scope;
+		new_scope_node->inner_scope = new_scope;
 
-	starting_scope->child_scopes.push_back(new_scope);
+		starting_scope->child_scopes.push_back(new_scope);
 
-	new_scope_node->starting_node_ids = vector<int>{0};
+		new_scope_node->starting_node_ids = vector<int>{0};
 
-	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
-	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		int next_node_id;
-		if (s_index == (int)this->best_step_types.size()-1) {
-			next_node_id = -1;
-		} else {
-			next_node_id = s_index+1;
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = 1;
+		new_scope->nodes.push_back(starting_noop_node);
+
+		map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
+		map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			int next_node_id;
+			if (s_index == (int)this->best_step_types.size()-1) {
+				next_node_id = -1;
+			} else {
+				next_node_id = 1 + s_index+1;
+			}
+
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->best_actions[s_index]->id = 1 + s_index;
+				new_scope->nodes.push_back(this->best_actions[s_index]);
+
+				this->best_actions[s_index]->next_node_id = next_node_id;
+			} else {
+				ScopeNode* new_sequence_scope_node = finalize_sequence(
+					this->scope_context,
+					this->node_context,
+					new_scope_node,
+					this->best_sequences[s_index],
+					input_scope_depths_mappings,
+					output_scope_depths_mappings);
+				new_sequence_scope_node->id = 1 + s_index;
+				new_scope->nodes.push_back(new_sequence_scope_node);
+
+				new_sequence_scope_node->next_node_id = next_node_id;
+
+				delete this->best_sequences[s_index];
+
+				new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
+			}
 		}
+		this->best_actions.clear();
+		this->best_sequences.clear();
 
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = s_index;
-			new_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = next_node_id;
-		} else {
-			ScopeNode* new_sequence_scope_node = finalize_sequence(
-				this->scope_context,
-				this->node_context,
-				new_scope_node,
-				this->best_sequences[s_index],
-				input_scope_depths_mappings,
-				output_scope_depths_mappings);
-			new_sequence_scope_node->id = s_index;
-			new_scope->nodes.push_back(new_sequence_scope_node);
-
-			new_sequence_scope_node->next_node_id = next_node_id;
-
-			delete this->best_sequences[s_index];
-
-			new_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
-		}
+		new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 	}
-	this->best_actions.clear();
-	this->best_sequences.clear();
-
-	new_scope_node->next_node_id = (int)starting_scope->nodes.size();
 
 	ExitNode* new_exit_node = new ExitNode();
 

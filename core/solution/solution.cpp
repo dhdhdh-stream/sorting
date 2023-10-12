@@ -20,11 +20,11 @@ void Solution::init() {
 	starting_scope->id = 0;
 	starting_scope->num_input_states = 0;
 	starting_scope->num_local_states = 0;
-	ActionNode* starting_action_node = new ActionNode();
-	starting_action_node->id = 0;
-	starting_action_node->action = Action(ACTION_START);
-	starting_action_node->next_node_id = -1;
-	starting_scope->nodes.push_back(starting_action_node);
+	ActionNode* starting_noop_node = new ActionNode();
+	starting_noop_node->id = 0;
+	starting_noop_node->action = Action(ACTION_NOOP);
+	starting_noop_node->next_node_id = -1;
+	starting_scope->nodes.push_back(starting_noop_node);
 	starting_scope->average_score = 0.0;
 	starting_scope->score_variance = 1.0;
 	starting_scope->average_misguess = 0.0;

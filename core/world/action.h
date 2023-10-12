@@ -6,7 +6,7 @@
 
 const int ACTION_NONE = -2;
 
-const int ACTION_START = -1;
+const int ACTION_NOOP = -1;
 
 const int ACTION_LEFT = 0;
 const int ACTION_RIGHT = 1;

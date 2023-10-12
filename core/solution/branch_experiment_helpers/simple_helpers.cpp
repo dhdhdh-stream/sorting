@@ -65,7 +65,7 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 		context.back().scope_id = this->new_scope_id;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			context.back().node_id = s_index;
+			context.back().node_id = 1 + s_index;
 
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(

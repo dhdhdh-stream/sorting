@@ -9,7 +9,7 @@ using namespace std;
 
 Problem::Problem() {
 	geometric_distribution<int> length_distribution(0.2);
-	int random_length = 2 + length_distribution(generator);
+	int random_length = 1 + length_distribution(generator);
 
 	uniform_int_distribution<int> value_distribution(0, 3);
 	for (int i = 0; i < random_length; i++) {

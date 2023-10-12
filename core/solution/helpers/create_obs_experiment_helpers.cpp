@@ -37,15 +37,18 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+				ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-				node_context.back() = action_node_history->node->id;
+				if (action_node->action.move != ACTION_NOOP) {
+					node_context.back() = action_node->id;
 
-				possible_nodes.push_back(action_node_history->node);
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+					possible_nodes.push_back(action_node);
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_obs_indexes.push_back(0);
 
-				node_context.back() = -1;
+					node_context.back() = -1;
+				}
 			} else if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 
@@ -97,6 +100,17 @@ ObsExperiment* create_obs_experiment(ScopeHistory* scope_history) {
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
 	vector<int> possible_obs_indexes;
+
+	// TODO: simplify once finished merging sequences into single scope
+	if (scope_history->scope->nodes[0]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)scope_history->scope->nodes[0];
+		if (action_node->action.move == ACTION_NOOP) {
+			possible_nodes.push_back(action_node);
+			possible_scope_contexts.push_back(vector<int>{scope_history->scope->id});
+			possible_node_contexts.push_back(vector<int>{0});
+			possible_obs_indexes.push_back(0);
+		}
+	}
 
 	while (true) {
 		vector<int> scope_context;
@@ -169,14 +183,18 @@ void create_decision_obs_experiment_helper(bool& reached_experiment,
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 
 				if (include_possibilities) {
-					node_context.back() = action_node_history->node->id;
+					ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-					possible_nodes.push_back(action_node_history->node);
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_obs_indexes.push_back(0);
+					if (action_node->action.move != ACTION_NOOP) {
+						node_context.back() = action_node->id;
 
-					node_context.back() = -1;
+						possible_nodes.push_back(action_node);
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_obs_indexes.push_back(0);
+
+						node_context.back() = -1;
+					}
 				}
 
 				if (action_node_history->branch_experiment_history != NULL) {
@@ -262,6 +280,17 @@ ObsExperiment* create_decision_obs_experiment(ScopeHistory* scope_history) {
 	vector<vector<int>> possible_node_contexts;
 	vector<int> possible_obs_indexes;
 
+	// TODO: simplify once finished merging sequences into single scope
+	if (scope_history->scope->nodes[0]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)scope_history->scope->nodes[0];
+		if (action_node->action.move == ACTION_NOOP) {
+			possible_nodes.push_back(action_node);
+			possible_scope_contexts.push_back(vector<int>{scope_history->scope->id});
+			possible_node_contexts.push_back(vector<int>{0});
+			possible_obs_indexes.push_back(0);
+		}
+	}
+
 	bool reached_experiment = false;
 	bool include_possibilities = true;
 	vector<int> scope_context;
@@ -323,7 +352,7 @@ void create_full_obs_experiment_branch_experiment_helper(
 	node_context.push_back(-1);
 
 	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-		node_context.back() = s_index;
+		node_context.back() = 1 + s_index;
 
 		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			possible_nodes.push_back(branch_experiment->best_actions[s_index]);
@@ -363,15 +392,18 @@ void create_full_obs_experiment_helper(vector<int>& scope_context,
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+				ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-				node_context.back() = action_node_history->node->id;
+				if (action_node->action.move != ACTION_NOOP) {
+					node_context.back() = action_node->id;
 
-				possible_nodes.push_back(action_node_history->node);
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+					possible_nodes.push_back(action_node);
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_obs_indexes.push_back(0);
 
-				node_context.back() = -1;
+					node_context.back() = -1;
+				}
 
 				if (action_node_history->branch_experiment_history != NULL) {
 					create_full_obs_experiment_branch_experiment_helper(
@@ -456,6 +488,17 @@ ObsExperiment* create_full_obs_experiment(ScopeHistory* scope_history) {
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
 	vector<int> possible_obs_indexes;
+
+	// TODO: simplify once finished merging sequences into single scope
+	if (scope_history->scope->nodes[0]->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)scope_history->scope->nodes[0];
+		if (action_node->action.move == ACTION_NOOP) {
+			possible_nodes.push_back(action_node);
+			possible_scope_contexts.push_back(vector<int>{scope_history->scope->id});
+			possible_node_contexts.push_back(vector<int>{0});
+			possible_obs_indexes.push_back(0);
+		}
+	}
 
 	vector<int> scope_context;
 	vector<int> node_context;
