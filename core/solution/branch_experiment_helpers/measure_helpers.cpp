@@ -55,7 +55,8 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 												 vector<ContextLayer>& context,
 												 int& exit_depth,
 												 int& exit_node_id,
-												 RunHelper& run_helper) {
+												 RunHelper& run_helper,
+												 BranchExperimentHistory* history) {
 	double branch_score = this->average_score;
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	double original_score = parent_scope->average_score;
@@ -97,6 +98,8 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 	}
 
 	if (branch_score > original_score) {
+		history->is_branch = true;
+		history->existing_predicted_score = original_score;
 		this->branch_count++;
 
 		// leave context.back().node_id as -1
@@ -133,11 +136,19 @@ void BranchExperiment::measure_combined_activate(int& curr_node_id,
 			exit_depth = this->best_exit_depth-1;
 			exit_node_id = this->best_exit_node_id;
 		}
+	} else {
+		history->is_branch = false;
 	}
 }
 
-void BranchExperiment::measure_combined_backprop(double target_val) {
+void BranchExperiment::measure_combined_backprop(double target_val,
+												 BranchExperimentHistory* history) {
 	this->combined_score += target_val;
+
+	if (history->is_branch) {
+		this->branch_original_score += history->existing_predicted_score;
+		this->branch_new_score += target_val;
+	}
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
@@ -167,10 +178,23 @@ void BranchExperiment::eval() {
 	double combined_improvement_t_score = combined_improvement
 		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
 
+	double branch_average_original_score = this->branch_original_score / this->branch_count;
+	double branch_average_new_score = this->branch_new_score / this->branch_count;
+
+	double branch_improvement = branch_average_new_score - branch_average_original_score;
+	double branch_improvement_t_score = branch_improvement
+		/ (score_standard_deviation / sqrt(this->branch_count));
+
 	cout << "combined_average_score: " << combined_average_score << endl;
 	cout << "combined_improvement: " << combined_improvement << endl;
 	cout << "score_standard_deviation: " << score_standard_deviation << endl;
 	cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+
+	cout << "this->branch_count: " << this->branch_count << endl;
+	cout << "branch_average_original_score: " << branch_average_original_score << endl;
+	cout << "branch_average_new_score: " << branch_average_new_score << endl;
+	cout << "branch_improvement: " << branch_improvement << endl;
+	cout << "branch_improvement_t_score: " << branch_improvement_t_score << endl;
 
 	if (combined_improvement_t_score > 2.326) {		// >99%
 		double branch_weight = this->branch_count / MEASURE_ITERS;
@@ -180,15 +204,15 @@ void BranchExperiment::eval() {
 			new_branch();
 		}
 
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 
-		ofstream display_file;
-		display_file.open("../display.txt");
-		solution->save_for_display(display_file);
-		display_file.close();
+		// ofstream display_file;
+		// display_file.open("../display.txt");
+		// solution->save_for_display(display_file);
+		// display_file.close();
 	} else {
 		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
@@ -204,6 +228,7 @@ void BranchExperiment::eval() {
 		cout << "score_improvement: " << score_improvement << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
+		cout << "this->average_misguess: " << this->average_misguess << endl;
 		cout << "misguess_improvement: " << misguess_improvement << endl;
 		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
@@ -212,15 +237,15 @@ void BranchExperiment::eval() {
 				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
 
-			ofstream solution_save_file;
-			solution_save_file.open("saves/solution.txt");
-			solution->save(solution_save_file);
-			solution_save_file.close();
+			// ofstream solution_save_file;
+			// solution_save_file.open("saves/solution.txt");
+			// solution->save(solution_save_file);
+			// solution_save_file.close();
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -304,6 +329,14 @@ void BranchExperiment::new_branch() {
 	Scope* new_scope = new Scope();
 	new_scope->id = this->new_scope_id;
 	solution->scopes[new_scope->id] = new_scope;
+
+	new_scope->num_input_states = 0;
+	new_scope->num_local_states = 0;
+
+	new_scope->average_score = parent_scope->average_score;
+	new_scope->score_variance = parent_scope->score_variance;
+	new_scope->average_misguess = parent_scope->average_misguess;
+	new_scope->misguess_variance = parent_scope->misguess_variance;
 
 	new_scope_node->inner_scope = new_scope;
 
@@ -437,6 +470,14 @@ void BranchExperiment::new_pass_through() {
 	Scope* new_scope = new Scope();
 	new_scope->id = this->new_scope_id;
 	solution->scopes[new_scope->id] = new_scope;
+
+	new_scope->num_input_states = 0;
+	new_scope->num_local_states = 0;
+
+	new_scope->average_score = parent_scope->average_score;
+	new_scope->score_variance = parent_scope->score_variance;
+	new_scope->average_misguess = parent_scope->average_misguess;
+	new_scope->misguess_variance = parent_scope->misguess_variance;
 
 	new_scope_node->inner_scope = new_scope;
 

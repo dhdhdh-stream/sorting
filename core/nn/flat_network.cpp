@@ -5,9 +5,9 @@
 using namespace std;
 
 /**
- * - can use low learning rate as not meant to solve problem, but to discover which inputs are relevant
+ * - can use lower learning rate as not meant to solve problem, but to discover which inputs are relevant
  */
-const double FLAT_NETWORK_TARGET_MAX_UPDATE = 0.002;
+const double FLAT_NETWORK_TARGET_MAX_UPDATE = 0.01;
 
 FlatNetwork::FlatNetwork(int num_inputs) {
 	this->num_inputs = num_inputs;

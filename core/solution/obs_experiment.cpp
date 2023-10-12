@@ -377,6 +377,11 @@ void ObsExperiment::scope_eval(Scope* parent) {
 				branch_node->score_state_network_indexes.push_back(n_index);
 			}
 		}
+
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 	}
 }
 

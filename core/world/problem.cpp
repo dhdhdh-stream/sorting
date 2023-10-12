@@ -8,7 +8,7 @@
 using namespace std;
 
 Problem::Problem() {
-	geometric_distribution<int> length_distribution(0.3);
+	geometric_distribution<int> length_distribution(0.2);
 	int random_length = 2 + length_distribution(generator);
 
 	uniform_int_distribution<int> value_distribution(0, 3);
@@ -28,7 +28,7 @@ double Problem::get_observation() {
 	if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
 		return this->current_world[this->current_pointer];
 	} else {
-		return -100.0;
+		return -10.0;
 	}
 }
 

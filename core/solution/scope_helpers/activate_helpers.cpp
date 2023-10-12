@@ -74,8 +74,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 							 history);
 	}
 
+	history->score_state_snapshots = context.back().score_state_vals;
 	if (run_helper.phase == RUN_PHASE_UPDATE) {
-		history->score_state_snapshots = context.back().score_state_vals;
 		run_helper.scope_histories.push_back(history);
 		/**
 		 * - keep even if early exit, so that can learn good decisions even if early exit
@@ -100,7 +100,7 @@ void Scope::node_activate_helper(int iter_index,
 								 int& exit_node_id,
 								 RunHelper& run_helper,
 								 ScopeHistory* history) {
-	context.back().node_id = this->id;
+	context.back().node_id = curr_node_id;
 
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];

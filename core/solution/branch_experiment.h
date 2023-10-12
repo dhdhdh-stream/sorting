@@ -85,8 +85,10 @@ public:
 	double existing_score;
 	double existing_misguess;
 
-	int branch_count;
 	double combined_score;
+	int branch_count;
+	double branch_original_score;
+	double branch_new_score;
 
 	std::map<State*, Scale*> score_state_scales;
 
@@ -163,8 +165,10 @@ public:
 								   std::vector<ContextLayer>& context,
 								   int& exit_depth,
 								   int& exit_node_id,
-								   RunHelper& run_helper);
-	void measure_combined_backprop(double target_val);
+								   RunHelper& run_helper,
+								   BranchExperimentHistory* history);
+	void measure_combined_backprop(double target_val,
+								   BranchExperimentHistory* history);
 
 	void eval();
 	void new_branch();
@@ -181,6 +185,8 @@ public:
 
 	ScopeHistory* parent_scope_history;
 	std::map<State*, StateStatus> experiment_score_state_snapshots;
+
+	bool is_branch;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 	~BranchExperimentHistory();

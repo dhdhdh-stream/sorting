@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "scale.h"
 #include "scope.h"
 #include "state.h"
 

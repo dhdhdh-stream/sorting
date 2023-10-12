@@ -1,5 +1,6 @@
 #include "scope.h"
 
+#include <iostream>
 #include <queue>
 
 #include "action_node.h"
@@ -86,7 +87,8 @@ void Scope::update_backprop(double target_val,
 		backprop_queue.pop();
 	}
 
-	if (this->obs_experiment == NULL && !run_helper.exceeded_depth) {
+	// if (this->obs_experiment == NULL && !run_helper.exceeded_depth) {
+	if (false) {
 		this->obs_experiment = create_obs_experiment(history);
 	}
 }

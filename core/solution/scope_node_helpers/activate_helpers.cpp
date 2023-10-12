@@ -235,6 +235,10 @@ void ScopeNode::activate(int& curr_node_id,
 		curr_node_id = this->next_node_id;
 
 		if (this->experiment != NULL) {
+			run_helper.node_index++;
+
+			context.back().node_id = -1;
+
 			BranchExperimentHistory* branch_experiment_history = NULL;
 			this->experiment->activate(curr_node_id,
 									   problem,
@@ -461,6 +465,10 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		curr_node_id = this->next_node_id;
 
 		if (this->experiment != NULL) {
+			run_helper.node_index++;
+
+			context.back().node_id = -1;
+
 			BranchExperimentHistory* branch_experiment_history = NULL;
 			this->experiment->activate(curr_node_id,
 									   problem,

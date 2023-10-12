@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "scale.h"
 #include "scope.h"
@@ -251,6 +253,10 @@ void BranchNode::activate(int& curr_node_id,
 				curr_node_id = this->branch_next_node_id;
 
 				if (this->experiment != NULL && this->experiment_is_branch) {
+					run_helper.node_index++;
+
+					context.back().node_id = -1;
+
 					BranchExperimentHistory* branch_experiment_history = NULL;
 					this->experiment->activate(curr_node_id,
 											   problem,
@@ -265,6 +271,10 @@ void BranchNode::activate(int& curr_node_id,
 				curr_node_id = this->original_next_node_id;
 
 				if (this->experiment != NULL && !this->experiment_is_branch) {
+					run_helper.node_index++;
+
+					context.back().node_id = -1;
+
 					BranchExperimentHistory* branch_experiment_history = NULL;
 					this->experiment->activate(curr_node_id,
 											   problem,

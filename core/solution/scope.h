@@ -20,6 +20,8 @@
  *       - sigmoid times state update
  */
 
+// TODO: modify scopes to start with NO-OPs so they have greater potential to be general
+
 #ifndef SCOPE_H
 #define SCOPE_H
 

@@ -1,5 +1,7 @@
 #include "state_network.h"
 
+#include <iostream>
+
 #include "layer.h"
 
 using namespace std;
@@ -80,6 +82,9 @@ StateNetwork::StateNetwork(ifstream& input_file,
 	string ending_standard_deviation_line;
 	getline(input_file, ending_standard_deviation_line);
 	this->ending_standard_deviation = stod(ending_standard_deviation_line);
+
+	this->hidden->load_weights_from(input_file);
+	this->output->load_weights_from(input_file);
 }
 
 StateNetwork::~StateNetwork() {
@@ -204,4 +209,7 @@ void StateNetwork::save(ofstream& output_file) {
 	output_file << this->starting_standard_deviation << endl;
 	output_file << this->ending_mean << endl;
 	output_file << this->ending_standard_deviation << endl;
+
+	this->hidden->save_weights(output_file);
+	this->output->save_weights(output_file);
 }
