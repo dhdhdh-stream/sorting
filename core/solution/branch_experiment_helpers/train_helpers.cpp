@@ -19,10 +19,8 @@ using namespace std;
 
 const int OBS_EXPERIMENT_TRAIN_PRE_ITERS = 100000;
 
-// const int OBS_EXPERIMENT_DECISION_TRIES = 2;
-const int OBS_EXPERIMENT_DECISION_TRIES = 1;
-// const int OBS_EXPERIMENT_FULL_TRIES = 2;
-const int OBS_EXPERIMENT_FULL_TRIES = 1;
+const int OBS_EXPERIMENT_DECISION_TRIES = 2;
+const int OBS_EXPERIMENT_FULL_TRIES = 2;
 
 const int OBS_EXPERIMENT_TRAIN_POST_ITERS = 100000;
 
@@ -35,6 +33,8 @@ void BranchExperiment::train_activate(int& curr_node_id,
 									  int& exit_node_id,
 									  RunHelper& run_helper,
 									  BranchExperimentHistory* history) {
+	// don't worry about curr_depth for simplicity
+
 	// leave context.back().node_id as -1
 
 	context.push_back(ContextLayer());
@@ -153,7 +153,7 @@ void BranchExperiment::train_backprop(double target_val,
 				map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
 				scale_it->second->backprop(it->second.val*error, 0.001);
 
-				predicted_score += scale_it->second->weight * it->second.val;
+				predicted_score -= scale_it->second->weight * it->second.val;
 			} else {
 				map<State*, StateStatus>::iterator it = history->experiment_score_state_snapshots.find(backprop_queue.top().second.second);
 
@@ -189,12 +189,26 @@ void BranchExperiment::train_backprop(double target_val,
 				double score_standard_deviation = sqrt(parent_scope->score_variance);
 				map<State*, Scale*>::iterator it = this->score_state_scales.begin();
 				while (it != this->score_state_scales.end()) {
-					double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;
-					double new_impact = it->first->resolved_standard_deviation * it->second->weight;
-					if (it->first->nodes.size() != 0
-							&& abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
-						it++;
+					bool still_exists = false;
+					for (map<int, State*>::iterator solution_it = solution->states.begin();
+							solution_it != solution->states.end(); solution_it++) {
+						if (solution_it->second == it->first) {
+							still_exists = true;
+							break;
+						}
+					}
+					if (still_exists) {
+						double original_impact = it->first->resolved_standard_deviation * it->first->scale->weight;
+						double new_impact = it->first->resolved_standard_deviation * it->second->weight;
+						if (it->first->nodes.size() != 0
+								&& abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
+							it++;
+						} else {
+							delete it->second;
+							it = this->score_state_scales.erase(it);
+						}
 					} else {
+						delete it->second;
 						it = this->score_state_scales.erase(it);
 					}
 				}

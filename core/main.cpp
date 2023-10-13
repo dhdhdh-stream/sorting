@@ -36,11 +36,11 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->init();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->load(solution_save_file);
+	// solution_save_file.close();
 
 	Scope* root = solution->scopes[0];
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 	// vector<int> experiment_node_context{0};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 	// explore_node->experiment->state_iter = 0;
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
@@ -58,49 +58,31 @@ int main(int argc, char* argv[]) {
 	// explore_node->experiment->best_exit_depth = 0;
 	// explore_node->experiment->best_exit_node_id = -1;
 
-	// ScopeNode* explore_node = (ScopeNode*)root->nodes[2];
-	// vector<int> experiment_scope_context{0};
-	// vector<int> experiment_node_context{2};
+	// Scope* containing_scope = solution->scopes[1];
+	// ActionNode* explore_node = (ActionNode*)containing_scope->nodes[1];
+	// vector<int> experiment_scope_context{1};
+	// vector<int> experiment_node_context{1};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 	// explore_node->experiment->state_iter = 0;
+	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+	// explore_node->experiment->best_actions.push_back(new ActionNode());
+	// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
+	// explore_node->experiment->best_sequences.push_back(NULL);
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
 	// explore_node->experiment->best_actions.back()->action = Action(ACTION_LEFT);
 	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
-	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
-	// explore_node->experiment->best_sequences.push_back(NULL);
 	// explore_node->experiment->best_exit_depth = 0;
 	// explore_node->experiment->best_exit_node_id = -1;
-
-	Scope* containing_scope = solution->scopes[2];
-	ActionNode* explore_node = (ActionNode*)containing_scope->nodes[2];
-	vector<int> experiment_scope_context{2};
-	vector<int> experiment_node_context{2};
-	explore_node->experiment = new BranchExperiment(experiment_scope_context,
-													experiment_node_context);
-	explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
-	explore_node->experiment->state_iter = 0;
-	explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	explore_node->experiment->best_actions.push_back(new ActionNode());
-	explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
-	explore_node->experiment->best_sequences.push_back(NULL);
-	explore_node->experiment->best_exit_depth = 0;
-	explore_node->experiment->best_exit_node_id = -1;
 
 	// ScopeNode* explore_node = (ScopeNode*)root->nodes[2];
 	// vector<int> experiment_scope_context{0};
 	// vector<int> experiment_node_context{2};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 	// explore_node->experiment->state_iter = 0;
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_SEQUENCE);
 	// explore_node->experiment->best_actions.push_back(NULL);
@@ -174,7 +156,7 @@ int main(int argc, char* argv[]) {
 
 		if (run_helper.phase == RUN_PHASE_EXPLORE) {
 			if (run_helper.experiments_seen_counts.size() == 0) {
-				// create_branch_experiment(root_history);
+				create_branch_experiment(root_history);
 			} else {
 				if (run_helper.selected_branch_experiment != NULL) {
 					run_helper.selected_branch_experiment->unhook();
@@ -241,6 +223,7 @@ int main(int argc, char* argv[]) {
 
 			for (set<State*>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
 				solution->states.erase((*it)->id);
+				(*it)->detach();
 				delete *it;
 			}
 		}

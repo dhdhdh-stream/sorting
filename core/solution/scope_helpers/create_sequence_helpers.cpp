@@ -3,8 +3,10 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "branch_stub_node.h"
+#include "globals.h"
 #include "exit_node.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -21,11 +23,10 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 									 int& new_num_input_states,
 									 vector<AbstractNode*>& new_nodes,
 									 RunHelper& run_helper) {
-	/**
-	 * - OK if normal exit, but won't be early exit
-	 *   - if normal exit, then continue search for target_num_nodes outside
-	 */
-
+	if (run_helper.curr_depth > solution->depth_limit) {
+		run_helper.exceeded_depth = true;
+		return;
+	}
 	run_helper.curr_depth++;
 
 	// this->is_loop == false

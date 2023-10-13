@@ -306,6 +306,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 					new_sequence->input_outer_indexes.push_back(-1);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
+				new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);
 				new_node->state_defs.push_back(this->state_defs[n_index]);
 				new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
 			} else {
@@ -549,6 +550,7 @@ void ScopeNode::halfway_create_sequence_activate(
 					new_sequence->input_outer_indexes.push_back(-1);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
+				new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);
 				new_node->state_defs.push_back(this->state_defs[n_index]);
 				new_node->state_network_indexes.push_back(this->state_network_indexes[n_index]);
 			} else {

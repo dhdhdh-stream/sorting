@@ -57,9 +57,10 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 						{new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}}] = output_it->second;
 				} else {
 					{
-						int context_index = (int)scope_context.size()-1 - (new_sequence->input_scope_depths[i_index]-1);
-						// scope_context not adjusted, so scope_depths need to be decremented by 1
-						if (context_index >= 1) {
+						if (new_sequence->input_scope_depths[i_index]-1 >= 1) {
+							int context_index = (int)scope_context.size()-1 - (new_sequence->input_scope_depths[i_index]-1);
+							// scope_context not adjusted, so scope_depths need to be decremented by 1
+						
 							Scope* outer_scope = solution->scopes[scope_context[context_index]];
 							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
 							Scope* inner_scope = scope_node->inner_scope;
@@ -234,8 +235,9 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 				inner_index = outer_index;
 			}
 			{
-				int context_index = (int)scope_context.size()-1 - (new_sequence->output_scope_depths[o_index]-1);
-				if (context_index >= 1) {
+				if (new_sequence->output_scope_depths[o_index]-1 >= 1) {
+					int context_index = (int)scope_context.size()-1 - (new_sequence->output_scope_depths[o_index]-1);
+
 					Scope* outer_scope = solution->scopes[scope_context[context_index]];
 					ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
 

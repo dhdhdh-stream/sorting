@@ -493,6 +493,7 @@ Sequence* create_sequence(Problem& problem,
 					new_sequence->input_outer_indexes.push_back(-1);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
+				new_starting_scope_node->state_obs_indexes.push_back(original_starting_scope_node->state_obs_indexes[n_index]);
 				new_starting_scope_node->state_defs.push_back(original_starting_scope_node->state_defs[n_index]);
 				new_starting_scope_node->state_network_indexes.push_back(original_starting_scope_node->state_network_indexes[n_index]);
 			} else {

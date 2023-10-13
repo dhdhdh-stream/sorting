@@ -32,6 +32,8 @@ public:
 		  int id);
 	~State();
 
+	void detach();
+
 	void save(std::ofstream& output_file);
 };
 

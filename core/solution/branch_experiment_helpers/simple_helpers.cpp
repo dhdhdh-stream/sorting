@@ -17,6 +17,12 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 									   int& exit_depth,
 									   int& exit_node_id,
 									   RunHelper& run_helper) {
+	if (run_helper.curr_depth > solution->depth_limit) {
+		run_helper.exceeded_depth = true;
+		return;
+	}
+	run_helper.curr_depth++;
+
 	double branch_score = this->average_score;
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	double original_score = parent_scope->average_score;
@@ -93,4 +99,6 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 			exit_node_id = this->best_exit_node_id;
 		}
 	}
+
+	run_helper.curr_depth--;
 }

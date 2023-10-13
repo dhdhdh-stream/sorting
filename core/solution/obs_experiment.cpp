@@ -378,10 +378,10 @@ void ObsExperiment::scope_eval(Scope* parent) {
 			}
 		}
 
-		// ofstream solution_save_file;
-		// solution_save_file.open("saves/solution.txt");
-		// solution->save(solution_save_file);
-		// solution_save_file.close();
+		ofstream solution_save_file;
+		solution_save_file.open("saves/solution.txt");
+		solution->save(solution_save_file);
+		solution_save_file.close();
 	}
 }
 

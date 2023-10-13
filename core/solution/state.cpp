@@ -56,6 +56,14 @@ State::State(ifstream& input_file,
 }
 
 State::~State() {
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		delete this->networks[n_index];
+	}
+
+	delete this->scale;
+}
+
+void State::detach() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
@@ -93,12 +101,6 @@ State::~State() {
 			}
 		}
 	}
-
-	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
-		delete this->networks[n_index];
-	}
-
-	delete this->scale;
 }
 
 void State::save(ofstream& output_file) {

@@ -81,16 +81,22 @@ void BranchExperiment::activate(int& curr_node_id,
 										   history);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
-							// do nothing
-							break;
-						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-							measure_combined_activate(curr_node_id,
+							measure_existing_activate(curr_node_id,
 													  problem,
 													  context,
 													  exit_depth,
 													  exit_node_id,
 													  run_helper,
 													  history);
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
+							measure_new_activate(curr_node_id,
+												 problem,
+												 context,
+												 exit_depth,
+												 exit_node_id,
+												 run_helper,
+												 history);
 							break;
 						}
 					} else {
@@ -173,16 +179,22 @@ void BranchExperiment::activate(int& curr_node_id,
 											   history);
 								break;
 							case BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
-								// do nothing
-								break;
-							case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-								measure_combined_activate(curr_node_id,
+								measure_existing_activate(curr_node_id,
 														  problem,
 														  context,
 														  exit_depth,
 														  exit_node_id,
 														  run_helper,
 														  history);
+								break;
+							case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
+								measure_new_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper,
+													 history);
 								break;
 							}
 						} else {
@@ -385,9 +397,9 @@ void BranchExperiment::backprop(double target_val,
 		measure_existing_backprop(target_val,
 								  history);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-		measure_combined_backprop(target_val,
-								  history);
+	case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
+		measure_new_backprop(target_val,
+							 history);
 		break;
 	}
 }

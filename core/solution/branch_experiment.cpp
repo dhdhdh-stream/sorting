@@ -34,11 +34,17 @@ BranchExperiment::BranchExperiment(vector<int>& scope_context,
 	this->average_misguess = parent_scope->average_misguess;
 	this->misguess_variance = parent_scope->misguess_variance;
 
-	this->existing_score = 0.0;
+	this->branch_existing_score = 0.0;
+	this->existing_branch_count = 0;
+	this->non_branch_existing_score = 0.0;
+	this->combined_existing_score = 0.0;
+
 	this->existing_misguess = 0.0;
 
-	this->branch_count = 0;
-	this->combined_score = 0.0;
+	this->branch_new_score = 0.0;
+	this->new_branch_count = 0;
+	this->non_branch_new_score = 0.0;
+	this->combined_new_score = 0.0;
 
 	this->obs_experiment = NULL;
 }

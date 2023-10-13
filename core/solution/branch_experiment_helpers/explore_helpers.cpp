@@ -156,7 +156,16 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					}
 					bool has_non_stub_node = false;
 					for (int n_index = 0; n_index < (int)sequence->scope->nodes.size(); n_index++) {
-						if (sequence->scope->nodes[n_index]->type != NODE_TYPE_BRANCH_STUB) {
+						bool is_non_stub = true;
+						if (sequence->scope->nodes[n_index]->type == NODE_TYPE_BRANCH_STUB) {
+							is_non_stub = false;
+						} else if (sequence->scope->nodes[n_index]->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)sequence->scope->nodes[n_index];
+							if (action_node->action.move == ACTION_NOOP) {
+								is_non_stub = false;
+							}
+						}
+						if (is_non_stub) {
 							has_non_stub_node = true;
 							break;
 						}
@@ -164,7 +173,18 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					if (!has_non_stub_node) {
 						should_retry = true;
 					}
-					if (sequence->scope->nodes.size() > 0 && sequence->scope->nodes.back()->type == NODE_TYPE_BRANCH_STUB) {
+					bool ends_with_non_stub_node = true;
+					if (sequence->scope->nodes.size() > 0) {
+						if (sequence->scope->nodes.back()->type == NODE_TYPE_BRANCH_STUB) {
+							ends_with_non_stub_node = false;
+						} else if (sequence->scope->nodes.back()->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)sequence->scope->nodes.back();
+							if (action_node->action.move == ACTION_NOOP) {
+								ends_with_non_stub_node = false;
+							}
+						}
+					}
+					if (!ends_with_non_stub_node) {
 						should_retry = true;
 					}
 					if (should_retry) {

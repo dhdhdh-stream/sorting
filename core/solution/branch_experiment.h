@@ -26,7 +26,7 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 3;
 const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 5;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_NEW = 5;
 const int BRANCH_EXPERIMENT_STATE_DONE = 6;
 
 class BranchExperimentHistory;
@@ -82,13 +82,17 @@ public:
 	double average_misguess;
 	double misguess_variance;
 
-	double existing_score;
+	double branch_existing_score;
+	int existing_branch_count;
+	double non_branch_existing_score;
+	double combined_existing_score;
+
 	double existing_misguess;
 
-	double combined_score;
-	int branch_count;
-	double branch_original_score;
 	double branch_new_score;
+	int new_branch_count;
+	double non_branch_new_score;
+	double combined_new_score;
 
 	std::map<State*, Scale*> score_state_scales;
 
@@ -157,18 +161,25 @@ public:
 						 int& exit_node_id,
 						 RunHelper& run_helper);
 
-	void measure_existing_backprop(double target_val,
-								   BranchExperimentHistory* history);
-
-	void measure_combined_activate(int& curr_node_id,
+	void measure_existing_activate(int& curr_node_id,
 								   Problem& problem,
 								   std::vector<ContextLayer>& context,
 								   int& exit_depth,
 								   int& exit_node_id,
 								   RunHelper& run_helper,
 								   BranchExperimentHistory* history);
-	void measure_combined_backprop(double target_val,
+	void measure_existing_backprop(double target_val,
 								   BranchExperimentHistory* history);
+
+	void measure_new_activate(int& curr_node_id,
+							  Problem& problem,
+							  std::vector<ContextLayer>& context,
+							  int& exit_depth,
+							  int& exit_node_id,
+							  RunHelper& run_helper,
+							  BranchExperimentHistory* history);
+	void measure_new_backprop(double target_val,
+							  BranchExperimentHistory* history);
 
 	void eval();
 	void new_branch();
