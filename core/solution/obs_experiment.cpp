@@ -321,6 +321,7 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << "impact: " << sqrt(this->resolved_variance) << endl;
 	cout << endl;
 
 	// if (improvement_t_score > 2.326) {	// >99%
@@ -378,10 +379,10 @@ void ObsExperiment::scope_eval(Scope* parent) {
 			}
 		}
 
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 	}
 }
 
@@ -401,6 +402,7 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << "impact: " << sqrt(this->resolved_variance) << endl;
 	cout << endl;
 
 	// if (improvement_t_score > 2.326) {	// >99%

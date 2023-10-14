@@ -26,25 +26,25 @@ void create_root_random_halfway_start_fetch_context_helper(
 					curr_index,
 					starting_halfway_node_context);
 
-				if (curr_index < target_index) {
+				if (curr_index <= target_index) {
 					starting_halfway_node_context.pop_back();
 
 					if (!scope_node_history->is_halfway) {
-						if (curr_index == target_index) {
+						curr_index++;
+						if (curr_index > target_index) {
 							starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 							return;
 						}
-						curr_index++;
 					}
 				} else {
 					return;
 				}
 			} else {
-				if (curr_index == target_index) {
+				curr_index++;
+				if (curr_index > target_index) {
 					starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 					return;
 				}
-				curr_index++;
 			}
 		}
 	}

@@ -223,6 +223,19 @@ void BranchExperiment::activate(int& curr_node_id,
 			} else {
 				it->second++;
 			}
+		} else {
+			// run_helper.phase == RUN_PHASE_NEW
+			if (run_helper.selected_branch_experiment == this) {
+				if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE
+						&& this->state != BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING) {
+					simple_activate(curr_node_id,
+									problem,
+									context,
+									exit_depth,
+									exit_node_id,
+									run_helper);
+				}
+			}
 		}
 	}
 }

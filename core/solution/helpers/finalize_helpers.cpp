@@ -401,7 +401,7 @@ void finalize_existing_state(Scope* parent_scope,
 			new_branch_node->branch_weights.push_back(new_branch_weight);
 			new_branch_node->original_state_defs.push_back(score_state);
 		} else {
-			Scope* containing_scope = solution->scopes[new_branch_node->branch_scope_context[0]];
+			Scope* containing_scope = solution->scopes[new_branch_node->branch_scope_context.back()];
 			int new_input_id = containing_scope->num_input_states;
 			new_branch_node->shared_state_is_local.push_back(false);
 			new_branch_node->shared_state_indexes.push_back(new_input_id);
@@ -621,7 +621,7 @@ void finalize_new_state(Scope* parent_scope,
 		new_branch_node->branch_state_indexes.push_back(new_local_index);
 		new_branch_node->branch_state_defs.push_back(score_state);
 	} else {
-		Scope* containing_scope = solution->scopes[new_branch_node->branch_scope_context[0]];
+		Scope* containing_scope = solution->scopes[new_branch_node->branch_scope_context.back()];
 		int new_input_id = containing_scope->num_input_states;
 		new_branch_node->branch_state_is_local.push_back(false);
 		new_branch_node->branch_state_indexes.push_back(new_input_id);

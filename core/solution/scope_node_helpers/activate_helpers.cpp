@@ -274,12 +274,15 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			if (this->input_inner_layers[i_index] == 0) {
+			if (this->input_inner_layers[i_index] == 0
+					&& !this->input_inner_is_local[i_index]) {
 				if (this->input_outer_is_local[i_index]) {
+					StateStatus state_status;
 					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
 					if (it != context.back().local_state_vals.end()) {
-						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+						state_status = it->second;
 					}
+					starting_input_state_vals[0][this->input_inner_indexes[i_index]] = state_status;
 				} else {
 					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
 					if (it != context.back().input_state_vals.end()) {
@@ -291,6 +294,7 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	}
 	/**
 	 * - carry inputs downwards so they are initialized on the way up
+	 *   - don't worry about input_inner_is_local == true, as always initialized
 	 */
 
 	context.push_back(ContextLayer());

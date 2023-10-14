@@ -68,7 +68,6 @@ void BranchExperiment::measure_existing_activate(int& curr_node_id,
 
 	if (branch_score > original_score) {
 		history->is_branch = true;
-
 	} else {
 		history->is_branch = false;
 	}
@@ -263,8 +262,10 @@ void BranchExperiment::eval() {
 	cout << "non_branch_new_average_score: " << non_branch_new_average_score << endl;
 	cout << "non_branch_improvement_t_score: " << non_branch_improvement_t_score << endl;
 
-	if (branch_improvement_t_score > 2.326) {		// >99%
-		double branch_weight = branch_count / MEASURE_ITERS;
+	double branch_weight = branch_count / MEASURE_ITERS;
+
+	if (branch_weight > 0.02
+			&& branch_improvement_t_score > 2.326) {	// >99%
 		if (branch_weight > 0.98
 				|| non_branch_improvement_t_score > -0.674) {	// 75%<
 			new_pass_through();
@@ -272,15 +273,15 @@ void BranchExperiment::eval() {
 			new_branch();
 		}
 
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 
-		ofstream display_file;
-		display_file.open("../display.txt");
-		solution->save_for_display(display_file);
-		display_file.close();
+		// ofstream display_file;
+		// display_file.open("../display.txt");
+		// solution->save_for_display(display_file);
+		// display_file.close();
 	} else {
 		double combined_existing_average_score = this->combined_existing_score / MEASURE_ITERS;
 		double combined_new_average_score = this->combined_new_score / MEASURE_ITERS;
@@ -304,19 +305,20 @@ void BranchExperiment::eval() {
 		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		if (combined_improvement_t_score > -0.674
+		if (branch_weight > 0.02
+				&& combined_improvement_t_score > -0.674
 				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
 
-			ofstream solution_save_file;
-			solution_save_file.open("saves/solution.txt");
-			solution->save(solution_save_file);
-			solution_save_file.close();
+			// ofstream solution_save_file;
+			// solution_save_file.open("saves/solution.txt");
+			// solution->save(solution_save_file);
+			// solution_save_file.close();
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

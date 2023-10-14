@@ -14,6 +14,8 @@ Solution::Solution() {
 }
 
 void Solution::init() {
+	this->average_score = 0.0;
+
 	this->state_counter = 0;
 
 	Scope* starting_scope = new Scope();
@@ -37,6 +39,10 @@ void Solution::init() {
 }
 
 void Solution::load(ifstream& input_file) {
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stod(average_score_line);
+
 	string state_counter_line;
 	getline(input_file, state_counter_line);
 	this->state_counter = stoi(state_counter_line);
@@ -104,6 +110,8 @@ Solution::~Solution() {
 }
 
 void Solution::save(ofstream& output_file) {
+	output_file << this->average_score << endl;
+
 	output_file << this->state_counter << endl;
 
 	output_file << this->states.size() << endl;

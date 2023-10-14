@@ -167,5 +167,8 @@ void create_branch_experiment(ScopeHistory* root_history) {
 	}
 	/**
 	 * - may fail if all nodes have branch_experiments, but context didn't match (?)
+	 * 
+	 * - may also fail if no score states
+	 *   - e.g., if have been deleted, or been converted into permanent states
 	 */
 }

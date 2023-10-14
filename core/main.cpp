@@ -187,6 +187,8 @@ int main(int argc, char* argv[]) {
 		} else {
 			// run_helper.phase == RUN_PHASE_UPDATE
 
+			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
+
 			if (!run_helper.exceeded_depth) {
 				if (run_helper.max_depth > solution->max_depth) {
 					solution->max_depth = run_helper.max_depth;
@@ -247,8 +249,7 @@ int main(int argc, char* argv[]) {
 		if (iter_index%1000000 == 0) {
 			cout << iter_index << endl;
 			cout << "solution->states.size(): " << solution->states.size() << endl;
-			cout << "root->average_score: " << root->average_score << endl;
-			cout << "root->average_misguess: " << root->average_misguess << endl;
+			cout << "solution->average_score: " << solution->average_score << endl;
 		}
 	}
 

@@ -9,6 +9,8 @@ class State;
 
 class Solution {
 public:
+	double average_score;
+
 	int state_counter;
 	std::map<int, State*> states;
 	/**

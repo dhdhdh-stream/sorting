@@ -343,16 +343,34 @@ void ScopeNode::halfway_create_sequence_activate(
 		RunHelper& run_helper) {
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			if (this->input_inner_layers[i_index] == 0) {
+			if (this->input_inner_layers[i_index] == 0
+					&& !this->input_inner_is_local[i_index]) {
 				if (this->input_outer_is_local[i_index]) {
+					StateStatus state_status;
 					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
 					if (it != context.back().local_state_vals.end()) {
-						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+						state_status = it->second;
+					}
+					starting_input_state_vals[0][this->input_inner_indexes[i_index]] = state_status;
 
-						map<pair<bool,int>, int>::iterator mapping_it = state_mappings.back()
-							.find({true, this->input_outer_indexes[i_index]});
-						// mapping_it != state_mappings.back().end()
+					map<pair<bool,int>, int>::iterator mapping_it = state_mappings.back()
+						.find({true, this->input_outer_indexes[i_index]});
+					if (mapping_it != state_mappings.back().end()) {
 						starting_state_mappings[0][{false, this->input_inner_indexes[i_index]}] = mapping_it->second;
+					} else {
+						int new_state_index;
+						state_mappings.back()[{true, this->input_outer_indexes[i_index]}] = new_num_input_states;
+						new_state_index = new_num_input_states;
+						new_num_input_states++;
+
+						starting_state_mappings[0][{false, this->input_inner_indexes[i_index]}] = new_state_index;
+
+						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+						new_sequence->input_inner_indexes.push_back(new_state_index);
+						new_sequence->input_scope_depths.push_back(-1);
+						new_sequence->input_outer_is_local.push_back(-1);
+						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_init_vals.push_back(0.0);
 					}
 				} else {
 					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
@@ -583,10 +601,12 @@ void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
 			if (this->input_inner_layers[i_index] == 0
 					&& !this->input_inner_is_local[i_index]) {
 				if (this->input_outer_is_local[i_index]) {
+					StateStatus state_status;
 					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
 					if (it != context.back().local_state_vals.end()) {
-						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
+						state_status = it->second;
 					}
+					starting_input_state_vals[0][this->input_inner_indexes[i_index]] = state_status;
 				} else {
 					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
 					if (it != context.back().input_state_vals.end()) {

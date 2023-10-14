@@ -44,6 +44,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
+		context.back().node_id = curr_node_id;
+
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 		scope_node->halfway_activate(starting_node_ids,
 									 starting_input_state_vals,
@@ -57,6 +59,8 @@ void Scope::activate(vector<int>& starting_node_ids,
 									 history->node_histories[0]);
 
 		run_helper.node_index++;
+
+		context.back().node_id = -1;
 	}
 
 	while (true) {

@@ -55,25 +55,25 @@ void random_halfway_start_fetch_context_helper(
 					curr_index,
 					starting_halfway_node_context);
 
-				if (curr_index < target_index) {
+				if (curr_index <= target_index) {
 					starting_halfway_node_context.pop_back();
 
 					if (!scope_node_history->is_halfway) {
-						if (curr_index == target_index) {
+						curr_index++;
+						if (curr_index > target_index) {
 							starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 							return;
 						}
-						curr_index++;
 					}
 				} else {
 					return;
 				}
 			} else {
-				if (curr_index == target_index) {
+				curr_index++;
+				if (curr_index > target_index) {
 					starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 					return;
 				}
-				curr_index++;
 			}
 		}
 	}
@@ -167,6 +167,7 @@ Sequence* create_sequence(Problem& problem,
 			bool passed_down = false;
 			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 				if (scope_node->input_inner_layers[i_index] == 0
+						&& scope_node->input_inner_is_local[i_index] == false
 						&& scope_node->input_outer_is_local[i_index] == false
 						&& scope_node->input_outer_indexes[i_index] == it->first) {
 					passed_down = true;
@@ -191,6 +192,7 @@ Sequence* create_sequence(Problem& problem,
 			bool passed_down = false;
 			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 				if (scope_node->input_inner_layers[i_index] == 0
+						&& scope_node->input_inner_is_local[i_index] == false
 						&& scope_node->input_outer_is_local[i_index] == true
 						&& scope_node->input_outer_indexes[i_index] == it->first) {
 					passed_down = true;

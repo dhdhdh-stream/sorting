@@ -1,5 +1,7 @@
 #include "sequence.h"
 
+#include <iostream>
+
 #include "scope.h"
 #include "scope_node.h"
 

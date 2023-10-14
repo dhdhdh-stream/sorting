@@ -7,6 +7,7 @@
 #include "helpers.h"
 #include "scale.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "sequence.h"
 #include "solution.h"
 #include "state.h"

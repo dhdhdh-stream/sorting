@@ -95,9 +95,13 @@ ScopeNode::ScopeNode(ifstream& input_file,
 		getline(input_file, is_local_line);
 		this->state_is_local.push_back(stoi(is_local_line));
 
-		string indexes_line;
-		getline(input_file, indexes_line);
-		this->state_indexes.push_back(stoi(indexes_line));
+		string index_line;
+		getline(input_file, index_line);
+		this->state_indexes.push_back(stoi(index_line));
+
+		string obs_index_line;
+		getline(input_file, obs_index_line);
+		this->state_obs_indexes.push_back(stoi(obs_index_line));
 
 		string def_id_line;
 		getline(input_file, def_id_line);
@@ -126,6 +130,10 @@ ScopeNode::ScopeNode(ifstream& input_file,
 			getline(input_file, node_context_line);
 			this->score_state_node_contexts.back().push_back(stoi(node_context_line));
 		}
+
+		string obs_index_line;
+		getline(input_file, obs_index_line);
+		this->score_state_obs_indexes.push_back(stoi(obs_index_line));
 
 		string def_id_line;
 		getline(input_file, def_id_line);

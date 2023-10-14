@@ -24,6 +24,8 @@ void Scope::random_activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
+		node_context.back() = curr_node_id;
+
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
 		int inner_exit_depth = -1;
@@ -45,6 +47,8 @@ void Scope::random_activate(vector<int>& starting_node_ids,
 			exit_depth = inner_exit_depth-1;
 			exit_node_id = inner_exit_node_id;
 		}
+
+		node_context.back() = -1;
 	}
 
 	while (true) {
@@ -153,6 +157,8 @@ void Scope::random_exit_activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
+		node_context.back() = curr_node_id;
+
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
 		int inner_exit_depth = -1;
@@ -174,6 +180,8 @@ void Scope::random_exit_activate(vector<int>& starting_node_ids,
 			exit_depth = inner_exit_depth-1;
 			exit_node_id = inner_exit_node_id;
 		}
+
+		node_context.back() = -1;
 	}
 
 	while (true) {

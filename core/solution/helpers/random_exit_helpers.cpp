@@ -18,11 +18,11 @@ void random_exit_fetch_context_helper(
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index] == NULL) {
-				if (curr_index == target_index) {
+				curr_index++;
+				if (curr_index > target_index) {
 					exit_node_context.push_back(-1);
 					return;
 				}
-				curr_index++;
 			} else {
 				if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
@@ -35,25 +35,25 @@ void random_exit_fetch_context_helper(
 						curr_index,
 						exit_node_context);
 
-					if (curr_index < target_index) {
+					if (curr_index <= target_index) {
 						exit_node_context.pop_back();
 
 						if (!scope_node_history->is_halfway) {
-							if (curr_index == target_index) {
+							curr_index++;
+							if (curr_index > target_index) {
 								exit_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 								return;
 							}
-							curr_index++;
 						}
 					} else {
 						return;
 					}
 				} else {
-					if (curr_index == target_index) {
+					curr_index++;
+					if (curr_index > target_index) {
 						exit_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
 						return;
 					}
-					curr_index++;
 				}
 			}
 		}

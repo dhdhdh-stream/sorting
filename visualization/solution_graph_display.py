@@ -1,6 +1,6 @@
 import pydot
 
-ACTION_START = -1
+ACTION_NOOP = -1
 ACTION_LEFT = 0
 ACTION_STAY = 1
 ACTION_RIGHT = 2
@@ -75,7 +75,7 @@ print(scopes)
 def pretty_print_action(action):
 	result = ''
 	if action == -1:
-		result = 'START'
+		result = 'NOOP'
 	elif action == 0:
 		result = 'LEFT'
 	elif action == 1:
