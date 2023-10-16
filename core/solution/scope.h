@@ -160,6 +160,7 @@ public:
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  int id);
+	void link_score_state_nodes();
 
 	void save_for_display(std::ofstream& output_file);
 };

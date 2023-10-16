@@ -49,8 +49,6 @@ int main(int argc, char* argv[]) {
 	// vector<int> experiment_node_context{0};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
-	// explore_node->experiment->state_iter = 0;
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
 	// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
@@ -64,8 +62,6 @@ int main(int argc, char* argv[]) {
 	// vector<int> experiment_node_context{1};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
-	// explore_node->experiment->state_iter = 0;
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
 	// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
@@ -82,8 +78,6 @@ int main(int argc, char* argv[]) {
 	// vector<int> experiment_node_context{2};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
-	// explore_node->experiment->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
-	// explore_node->experiment->state_iter = 0;
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_SEQUENCE);
 	// explore_node->experiment->best_actions.push_back(NULL);
 	// Scope* explore_scope = new Scope();

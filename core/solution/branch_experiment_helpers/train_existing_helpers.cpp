@@ -82,4 +82,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			it != history->starting_score_state_snapshots.end(); it++) {
 		this->existing_starting_score_state_scales[it->first]->backprop(it->second.val*error, 0.001);
 	}
+
+	this->state_iter++;
+	if (this->state_iter >= TRAIN_EXISTING_ITERS) {
+		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+		this->state_iter = 0;
+	}
 }

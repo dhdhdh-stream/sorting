@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "action_node.h"
 #include "branch_node.h"
@@ -54,9 +56,9 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->score_state_scales.size() << endl;
 	for (map<State*, pair<Scale*, double>>::iterator it = this->score_state_scales.begin();
 			it != this->score_state_scales.end(); it++) {
-		output_file << it->first << endl;
+		output_file << it->first->id << endl;
 		output_file << it->second.first->weight << endl;
-		output_file << it->second.second;
+		output_file << it->second.second << endl;;
 	}
 
 	output_file << this->nodes.size() << endl;
@@ -116,7 +118,7 @@ void Scope::load(ifstream& input_file,
 
 		this->score_state_nodes[state] = vector<AbstractNode*>(state->networks.size());
 		/**
-		 * - filled in when nodes are loaded
+		 * - filled in on link_score_state_nodes()
 		 */
 	}
 
@@ -173,6 +175,33 @@ void Scope::load(ifstream& input_file,
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(solution->scopes[stoi(scope_id_line)]);
+	}
+}
+
+void Scope::link_score_state_nodes() {
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+
+			for (int s_index = 0; s_index < (int)action_node->score_state_defs.size(); s_index++) {
+				Scope* parent_scope = solution->scopes[action_node->score_state_scope_contexts[s_index][0]];
+				parent_scope->score_state_nodes[action_node->score_state_defs[s_index]][action_node->score_state_network_indexes[s_index]] = action_node;
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+
+			for (int s_index = 0; s_index < (int)scope_node->score_state_defs.size(); s_index++) {
+				Scope* parent_scope = solution->scopes[scope_node->score_state_scope_contexts[s_index][0]];
+				parent_scope->score_state_nodes[scope_node->score_state_defs[s_index]][scope_node->score_state_network_indexes[s_index]] = scope_node;
+			}
+		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+
+			for (int s_index = 0; s_index < (int)branch_node->score_state_defs.size(); s_index++) {
+				Scope* parent_scope = solution->scopes[branch_node->score_state_scope_contexts[s_index][0]];
+				parent_scope->score_state_nodes[branch_node->score_state_defs[s_index]][branch_node->score_state_network_indexes[s_index]] = branch_node;
+			}
+		}
 	}
 }
 

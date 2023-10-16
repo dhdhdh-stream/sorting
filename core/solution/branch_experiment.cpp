@@ -15,15 +15,15 @@ using namespace std;
 
 BranchExperiment::BranchExperiment(vector<int>& scope_context,
 								   vector<int>& node_context) {
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-
 	this->scope_context = scope_context;
 	this->node_context = node_context;
+
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 
 	this->average_remaining_experiments_from_start = 0.0;
 	this->average_instances_per_run = 1.0;
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->existing_average_score = parent_scope->average_score;

@@ -337,15 +337,15 @@ void BranchExperiment::eval() {
 			new_branch();
 		}
 
-		// ofstream solution_save_file;
-		// solution_save_file.open("saves/solution.txt");
-		// solution->save(solution_save_file);
-		// solution_save_file.close();
+		ofstream solution_save_file;
+		solution_save_file.open("saves/solution.txt");
+		solution->save(solution_save_file);
+		solution_save_file.close();
 
-		// ofstream display_file;
-		// display_file.open("../display.txt");
-		// solution->save_for_display(display_file);
-		// display_file.close();
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
 	} else {
 		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
@@ -367,20 +367,19 @@ void BranchExperiment::eval() {
 		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		if (branch_weight > 0.02
-				&& combined_improvement_t_score > -0.674
+		if (combined_improvement_t_score > -0.674
 				&& misguess_improvement_t_score > 2.326) {
 			new_pass_through();
 
-			// ofstream solution_save_file;
-			// solution_save_file.open("saves/solution.txt");
-			// solution->save(solution_save_file);
-			// solution_save_file.close();
+			ofstream solution_save_file;
+			solution_save_file.open("saves/solution.txt");
+			solution->save(solution_save_file);
+			solution_save_file.close();
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 		} else {
 			for (map<int, Scale*>::iterator it = this->existing_starting_input_state_scales.begin();
 					it != this->existing_starting_input_state_scales.end(); it++) {

@@ -99,25 +99,33 @@ void BranchExperiment::activate(int& curr_node_id,
 							break;
 						}
 					} else {
-						if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE
-								&& this->state != BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING) {
+						switch (this->state) {
+						case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+						case BRANCH_EXPERIMENT_STATE_TRAIN:
+						case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+						case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
 							simple_activate(curr_node_id,
 											problem,
 											context,
 											exit_depth,
 											exit_node_id,
 											run_helper);
+							break;
 						}
 					}
 				} else {
-					if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE
-							&& this->state != BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING) {
+					switch (this->state) {
+					case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+					case BRANCH_EXPERIMENT_STATE_TRAIN:
+					case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+					case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
 						simple_activate(curr_node_id,
 										problem,
 										context,
 										exit_depth,
 										exit_node_id,
 										run_helper);
+						break;
 					}
 				}
 
@@ -196,14 +204,18 @@ void BranchExperiment::activate(int& curr_node_id,
 								break;
 							}
 						} else {
-							if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE
-									&& this->state != BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING) {
+							switch (this->state) {
+							case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+							case BRANCH_EXPERIMENT_STATE_TRAIN:
+							case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+							case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
 								simple_activate(curr_node_id,
 												problem,
 												context,
 												exit_depth,
 												exit_node_id,
 												run_helper);
+								break;
 							}
 						}
 
@@ -224,14 +236,18 @@ void BranchExperiment::activate(int& curr_node_id,
 		} else {
 			// run_helper.phase == RUN_PHASE_NEW
 			if (run_helper.selected_branch_experiment == this) {
-				if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE
-						&& this->state != BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING) {
+				switch (this->state) {
+				case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+				case BRANCH_EXPERIMENT_STATE_TRAIN:
+				case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+				case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
 					simple_activate(curr_node_id,
 									problem,
 									context,
 									exit_depth,
 									exit_node_id,
 									run_helper);
+					break;
 				}
 			}
 		}
