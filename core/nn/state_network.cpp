@@ -35,8 +35,6 @@ void StateNetwork::construct() {
 StateNetwork::StateNetwork(int index) {
 	construct();
 
-	this->covariance_with_end = 0.0;
-
 	this->index = index;
 
 	this->starting_mean = 0.0;
@@ -50,10 +48,6 @@ StateNetwork::StateNetwork(ifstream& input_file,
 						   State* parent_state,
 						   int index) {
 	construct();
-
-	string correlation_to_end_line;
-	getline(input_file, correlation_to_end_line);
-	this->correlation_to_end = stod(correlation_to_end_line);
 
 	this->parent_state = parent_state;
 	this->index = index;
@@ -167,9 +161,9 @@ void StateNetwork::activate(double obs_val,
 	state_status.last_network = this;
 }
 
-void StateNetwork::activate_score(double obs_val,
-								  StateStatus& state_status,
-								  StateStatus& state_diff) {
+void StateNetwork::activate(double obs_val,
+							StateStatus& state_status,
+							StateStatus& state_diff) {
 	this->obs_input->acti_vals[0] = obs_val;
 
 	double starting_state_val;
@@ -197,8 +191,6 @@ void StateNetwork::activate_score(double obs_val,
 }
 
 void StateNetwork::save(ofstream& output_file) {
-	output_file << this->correlation_to_end << endl;
-
 	output_file << this->preceding_network_indexes.size() << endl;
 	for (set<int>::iterator it = preceding_network_indexes.begin();
 			it != preceding_network_indexes.end(); it++) {

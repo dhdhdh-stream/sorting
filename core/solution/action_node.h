@@ -86,7 +86,6 @@ public:
 								  std::map<State*, StateStatus>& experiment_score_state_vals,
 								  std::vector<int>& test_obs_indexes,
 								  std::vector<double>& test_obs_vals,
-								  int& test_last_updated,
 								  RunHelper& run_helper,
 								  ActionNodeHistory* history);
 
@@ -97,6 +96,9 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
+
+	std::vector<int> state_indexes;
+	std::vector<StateStatus> state_impacts;
 
 	std::vector<int> score_state_indexes;
 	std::vector<StateStatus> score_state_impacts;

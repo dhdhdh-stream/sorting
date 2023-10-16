@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 1000;
+const int EXPLORE_ITERS = 10000;
 
 const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
 /**
@@ -29,21 +29,50 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 										int& exit_node_id,
 										RunHelper& run_helper,
 										BranchExperimentHistory* history) {
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-	double predicted_score = parent_scope->average_score;
-	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
-			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-			predicted_score += normalized * it->first->scale->weight;
-		} else {
-			predicted_score += it->second.val * it->first->scale->weight;
+	double predicted_score = this->existing_average_score;
+
+	for (map<int, StateStatus>::iterator it = history->starting_input_state_snapshots.begin();
+			it != history->starting_input_state_snapshots.end(); it++) {
+		map<int, Scale*>::iterator scale_it = this->existing_starting_input_state_scales.find(it->first);
+		if (scale_it != this->existing_starting_input_state_scales.end()) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += scale_it->second->weight * normalized;
+			} else {
+				predicted_score += scale_it->second->weight * it->second.val;
+			}
 		}
 	}
+
+	for (map<int, StateStatus>::iterator it = history->starting_local_state_snapshots.begin();
+			it != history->starting_local_state_snapshots.end(); it++) {
+		map<int, Scale*>::iterator scale_it = this->existing_starting_local_state_scales.find(it->first);
+		if (scale_it != this->existing_starting_local_state_scales.end()) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += scale_it->second->weight * normalized;
+			} else {
+				predicted_score += scale_it->second->weight * it->second.val;
+			}
+		}
+	}
+
+	for (map<State*, StateStatus>::iterator it = history->starting_score_state_snapshots.begin();
+			it != history->starting_score_state_snapshots.end(); it++) {
+		map<State*, Scale*>::iterator scale_it = this->existing_starting_score_state_scales.find(it->first);
+		if (scale_it != this->existing_starting_score_state_scales.end()) {
+			StateNetwork* last_network = it->second.last_network;
+			// last_network != NULL
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+			predicted_score += scale_it->second->weight * normalized;
+		}
+	}
+
 	history->existing_predicted_score = predicted_score;
 
 	{

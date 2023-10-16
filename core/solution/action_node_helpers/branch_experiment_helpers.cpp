@@ -39,7 +39,6 @@ void ActionNode::branch_experiment_train_activate(
 			StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 			state_network->activate(obs_snapshot,
 									it->second);
-			it->second.last_updated = run_helper.node_index;
 		}
 	}
 
@@ -62,8 +61,6 @@ void ActionNode::branch_experiment_train_activate(
 				.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
 			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
 				.scope_history->test_obs_vals.push_back(obs_snapshot);
-			context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-				.scope_history->test_last_updated = run_helper.node_index;
 		}
 	}
 }

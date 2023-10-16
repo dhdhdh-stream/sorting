@@ -38,14 +38,10 @@ public:
 	double original_score_mod;
 	double branch_score_mod;
 
-	std::vector<bool> shared_state_is_local;
-	std::vector<int> shared_state_indexes;
-	std::vector<double> branch_weights;
-	std::vector<State*> original_state_defs;
-
-	std::vector<bool> branch_state_is_local;
-	std::vector<int> branch_state_indexes;
-	std::vector<State*> branch_state_defs;
+	std::vector<bool> decision_state_is_local;
+	std::vector<int> decision_state_indexes;
+	std::vector<double> decision_original_weights;
+	std::vector<double> decision_branch_weights;
 
 	int branch_next_node_id;
 	int original_next_node_id;
@@ -114,7 +110,6 @@ public:
 								  std::map<State*, StateStatus>& experiment_score_state_vals,
 								  std::vector<int>& test_obs_indexes,
 								  std::vector<double>& test_obs_vals,
-								  int& test_last_updated,
 								  RunHelper& run_helper,
 								  BranchNodeHistory* history);
 
@@ -125,6 +120,9 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
+
+	std::vector<int> state_indexes;
+	std::vector<StateStatus> state_impacts;
 
 	std::vector<int> score_state_indexes;
 	std::vector<StateStatus> score_state_impacts;

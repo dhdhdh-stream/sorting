@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
-			set<State*> states_to_remove;
+			set<pair<State*, Scope*>> states_to_remove;
 			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
 				Scope* scope = run_helper.scope_histories[h_index]->scope;
 				scope->update_backprop(target_val,
@@ -223,10 +223,9 @@ int main(int argc, char* argv[]) {
 				experiment->average_instances_per_run = 0.999 * experiment->average_instances_per_run + 0.001 * it->second;
 			}
 
-			for (set<State*>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
-				solution->states.erase((*it)->id);
-				(*it)->detach();
-				delete *it;
+			for (set<pair<State*, Scope*>>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
+				(*it).first->detach((*it).second);
+				delete (*it).first;
 			}
 		}
 

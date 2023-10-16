@@ -9,7 +9,6 @@ public:
 	int epoch_iter;
 	double average_update_size;
 
-	Scale();
 	Scale(double weight);
 	~Scale();
 

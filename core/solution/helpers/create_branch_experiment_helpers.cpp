@@ -22,28 +22,33 @@ void create_branch_experiment_helper(double& sum_weight,
 									 vector<vector<int>>& possible_node_contexts,
 									 vector<bool>& possible_is_branch,
 									 ScopeHistory* scope_history) {
+	int scope_id = scope_history->scope->id;
+
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				if (action_node->experiment == NULL) {
+					for (int s_index = 0; s_index < (int)action_node_history->state_indexes.size(); s_index++) {
+						StateStatus state_status = action_node_history->state_impacts[s_index];
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
+
+						possible_nodes.push_back(action_node);
+						possible_scope_contexts.push_back(vector<int>{scope_id});
+						possible_node_contexts.push_back(vector<int>{action_node->id});
+						possible_is_branch.push_back(false);
+					}
+
 					for (int s_index = 0; s_index < (int)action_node_history->score_state_indexes.size(); s_index++) {
-						State* state_def = action_node->score_state_defs[action_node_history->score_state_indexes[s_index]];
 						StateStatus state_status = action_node_history->score_state_impacts[s_index];
-						StateNetwork* last_network = state_status.last_network;
-						if (state_def->resolved_network_indexes.find(last_network->index) == state_def->resolved_network_indexes.end()) {
-							double normalized = (state_status.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation * last_network->correlation_to_end
-								* state_def->resolved_standard_deviation;
-							double weight = abs(normalized * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
-						} else {
-							double weight = abs(state_status.val * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
-						}
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
 
 						possible_nodes.push_back(action_node);
 						possible_scope_contexts.push_back(action_node->score_state_scope_contexts[action_node_history->score_state_indexes[s_index]]);
@@ -64,22 +69,25 @@ void create_branch_experiment_helper(double& sum_weight,
 												scope_node_history->inner_scope_history);
 
 				if (scope_node->experiment == NULL) {
+					for (int s_index = 0; s_index < (int)scope_node_history->state_indexes.size(); s_index++) {
+						StateStatus state_status = scope_node_history->state_impacts[s_index];
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
+
+						possible_nodes.push_back(scope_node);
+						possible_scope_contexts.push_back(vector<int>{scope_id});
+						possible_node_contexts.push_back(vector<int>{scope_node->id});
+						possible_is_branch.push_back(false);
+					}
+
 					for (int s_index = 0; s_index < (int)scope_node_history->score_state_indexes.size(); s_index++) {
-						State* state_def = scope_node->score_state_defs[scope_node_history->score_state_indexes[s_index]];
 						StateStatus state_status = scope_node_history->score_state_impacts[s_index];
-						StateNetwork* last_network = state_status.last_network;
-						if (state_def->resolved_network_indexes.find(last_network->index) == state_def->resolved_network_indexes.end()) {
-							double normalized = (state_status.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation * last_network->correlation_to_end
-								* state_def->resolved_standard_deviation;
-							double weight = abs(normalized * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
-						} else {
-							double weight = abs(state_status.val * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
-						}
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
 
 						possible_nodes.push_back(scope_node);
 						possible_scope_contexts.push_back(scope_node->score_state_scope_contexts[scope_node_history->score_state_indexes[s_index]]);
@@ -91,22 +99,29 @@ void create_branch_experiment_helper(double& sum_weight,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[i_index][h_index];
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node->experiment == NULL) {
-					for (int s_index = 0; s_index < (int)branch_node_history->score_state_indexes.size(); s_index++) {
-						State* state_def = branch_node->score_state_defs[branch_node_history->score_state_indexes[s_index]];
-						StateStatus state_status = branch_node_history->score_state_impacts[s_index];
-						StateNetwork* last_network = state_status.last_network;
-						if (state_def->resolved_network_indexes.find(last_network->index) == state_def->resolved_network_indexes.end()) {
-							double normalized = (state_status.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation * last_network->correlation_to_end
-								* state_def->resolved_standard_deviation;
-							double weight = abs(normalized * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
+					for (int s_index = 0; s_index < (int)branch_node_history->state_indexes.size(); s_index++) {
+						StateStatus state_status = branch_node_history->state_impacts[s_index];
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
+
+						possible_nodes.push_back(branch_node);
+						possible_scope_contexts.push_back(vector<int>{scope_id});
+						possible_node_contexts.push_back(vector<int>{branch_node->id});
+						if (branch_node_history->obs_snapshot == 1.0) {
+							possible_is_branch.push_back(false);
 						} else {
-							double weight = abs(state_status.val * state_def->scale->weight);
-							sum_weight += weight;
-							weights.push_back(weight);
+							possible_is_branch.push_back(true);
 						}
+					}
+
+					for (int s_index = 0; s_index < (int)branch_node_history->score_state_indexes.size(); s_index++) {
+						StateStatus state_status = branch_node_history->score_state_impacts[s_index];
+						StateNetwork* state_network = state_status.last_network;
+						double weight = abs(state_status.val / state_network->ending_standard_deviation);
+						sum_weight += weight;
+						weights.push_back(weight);
 
 						possible_nodes.push_back(branch_node);
 						possible_scope_contexts.push_back(branch_node->score_state_scope_contexts[branch_node_history->score_state_indexes[s_index]]);

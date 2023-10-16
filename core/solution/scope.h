@@ -38,6 +38,7 @@ class AbstractNode;
 class AbstractNodeHistory;
 class BranchExperimentHistory;
 class ObsExperiment;
+class Scale;
 class Sequence;
 class State;
 
@@ -47,11 +48,16 @@ public:
 	int id;
 
 	int num_input_states;
+	std::vector<Scale*> input_state_scales;
 	int num_local_states;
+	std::vector<Scale*> local_state_scales;
 
 	/**
-	 * - no need to explicitly track score states here
+	 * - double is resolved standard deviation
+	 *   - if scale falls too low beneath, delete
 	 */
+	std::map<State*, std::pair<Scale*, double>> score_state_scales;
+	std::map<State*, std::vector<AbstractNode*>> score_state_nodes;
 
 	std::vector<AbstractNode*> nodes;
 
@@ -149,7 +155,7 @@ public:
 	void update_backprop(double target_val,
 						 RunHelper& run_helper,
 						 ScopeHistory* history,
-						 std::set<State*>& states_to_remove);
+						 std::set<std::pair<State*, Scope*>>& states_to_remove);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -164,12 +170,14 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
+	std::map<int, StateStatus> input_state_snapshots;
+	std::map<int, StateStatus> local_state_snapshots;
+
 	std::map<State*, StateStatus> score_state_snapshots;
 
 	// for ObsExperiment
 	std::vector<int> test_obs_indexes;
 	std::vector<double> test_obs_vals;
-	int test_last_updated;
 
 	BranchExperimentHistory* inner_branch_experiment_history;
 

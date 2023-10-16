@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "scale.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "state_network.h"
@@ -31,42 +32,20 @@ State::State(ifstream& input_file,
 												  n_index));
 		network_save_file.close();
 	}
-
-	string resolved_network_indexes_size_line;
-	getline(input_file, resolved_network_indexes_size_line);
-	int resolved_network_indexes_size = stoi(resolved_network_indexes_size_line);
-	for (int i_index = 0; i_index < resolved_network_indexes_size; i_index++) {
-		string index_line;
-		getline(input_file, index_line);
-		this->resolved_network_indexes.insert(stoi(index_line));
-	}
-
-	string resolved_standard_deviation_line;
-	getline(input_file, resolved_standard_deviation_line);
-	this->resolved_standard_deviation = stod(resolved_standard_deviation_line);
-
-	string scale_weight_line;
-	getline(input_file, scale_weight_line);
-	this->scale = new Scale(stod(scale_weight_line));
-
-	this->nodes = vector<AbstractNode*>(this->networks.size());
-	/**
-	 * - filled in when nodes are loaded
-	 */
 }
 
 State::~State() {
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		delete this->networks[n_index];
 	}
-
-	delete this->scale;
 }
 
-void State::detach() {
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
+void State::detach(Scope* parent_scope) {
+	vector<AbstractNode*> nodes = parent_scope->score_state_nodes[this];
+
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)nodes[n_index];
 			for (int s_index = 0; s_index < (int)action_node->score_state_defs.size(); s_index++) {
 				if (action_node->score_state_defs[s_index] == this) {
 					action_node->score_state_scope_contexts.erase(action_node->score_state_scope_contexts.begin() + s_index);
@@ -76,8 +55,8 @@ void State::detach() {
 					break;
 				}
 			}
-		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
+		} else if (nodes[n_index]->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
 			for (int s_index = 0; s_index < (int)scope_node->score_state_defs.size(); s_index++) {
 				if (scope_node->score_state_defs[s_index] == this) {
 					scope_node->score_state_scope_contexts.erase(scope_node->score_state_scope_contexts.begin() + s_index);
@@ -89,7 +68,7 @@ void State::detach() {
 				}
 			}
 		} else {
-			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
+			BranchNode* branch_node = (BranchNode*)nodes[n_index];
 			for (int s_index = 0; s_index < (int)branch_node->score_state_defs.size(); s_index++) {
 				if (branch_node->score_state_defs[s_index] == this) {
 					branch_node->score_state_scope_contexts.erase(branch_node->score_state_scope_contexts.begin() + s_index);
@@ -101,6 +80,12 @@ void State::detach() {
 			}
 		}
 	}
+
+	delete parent_scope->score_state_scales[this].first;
+	parent_scope->score_state_scales.erase(this);
+	parent_scope->score_state_nodes.erase(this);
+
+	solution->states.erase(this->id);
 }
 
 void State::save(ofstream& output_file) {
@@ -111,14 +96,4 @@ void State::save(ofstream& output_file) {
 		this->networks[n_index]->save(network_save_file);
 		network_save_file.close();
 	}
-
-	output_file << this->resolved_network_indexes.size() << endl;
-	for (set<int>::iterator it = this->resolved_network_indexes.begin();
-			it != this->resolved_network_indexes.end(); it++) {
-		output_file << *it << endl;
-	}
-
-	output_file << this->resolved_standard_deviation << endl;
-
-	output_file << this->scale->weight << endl;
 }

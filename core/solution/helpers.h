@@ -19,8 +19,6 @@ class Sequence;
 class State;
 
 ObsExperiment* create_obs_experiment(ScopeHistory* scope_history);
-ObsExperiment* create_decision_obs_experiment(ScopeHistory* scope_history);
-ObsExperiment* create_full_obs_experiment(ScopeHistory* scope_history);
 
 void create_branch_experiment(ScopeHistory* root_history);
 
@@ -48,6 +46,7 @@ ScopeNode* finalize_sequence(std::vector<int>& scope_context,
 void finalize_existing_state(Scope* parent_scope,
 							 State* score_state,
 							 BranchNode* new_branch_node,
+							 double new_original_weight,
 							 double new_branch_weight);
 void finalize_new_state(Scope* parent_scope,
 						ScopeNode* new_scope_node,
@@ -56,13 +55,7 @@ void finalize_new_state(Scope* parent_scope,
 						std::vector<std::vector<int>>& scope_contexts,
 						std::vector<std::vector<int>>& node_contexts,
 						std::vector<int>& obs_indexes,
-						BranchNode* new_branch_node);
-void finalize_new_score_state(Scope* parent_scope,
-							  ScopeNode* new_scope_node,
-							  State* score_state,
-							  std::vector<AbstractNode*>& nodes,
-							  std::vector<std::vector<int>>& scope_contexts,
-							  std::vector<std::vector<int>>& node_contexts,
-							  std::vector<int>& obs_indexes);
+						BranchNode* new_branch_node,
+						double new_branch_weight);
 
 #endif /* HELPERS_H */

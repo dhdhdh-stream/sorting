@@ -7,6 +7,7 @@
 
 class AbstractNode;
 class Scale;
+class Scope;
 class StateNetwork;
 
 class State {
@@ -15,24 +16,12 @@ public:
 
 	std::vector<StateNetwork*> networks;
 
-	std::set<int> resolved_network_indexes;
-	double resolved_standard_deviation;
-
-	Scale* scale;
-
-	std::vector<AbstractNode*> nodes;
-	/**
-	 * - for tracking while still score state
-	 * 
-	 * - may be duplicates if multiples obs from same node
-	 */
-
 	State();
 	State(std::ifstream& input_file,
 		  int id);
 	~State();
 
-	void detach();
+	void detach(Scope* parent_scope);
 
 	void save(std::ofstream& output_file);
 };

@@ -78,14 +78,17 @@ void Scope::activate(vector<int>& starting_node_ids,
 							 history);
 	}
 
+	history->input_state_snapshots = context.back().input_state_vals;
+	history->local_state_snapshots = context.back().local_state_vals;
 	history->score_state_snapshots = context.back().score_state_vals;
+
 	if (run_helper.phase == RUN_PHASE_UPDATE) {
 		run_helper.scope_histories.push_back(history);
 		/**
 		 * - keep even if early exit, so that can learn good decisions even if early exit
 		 */
 	} else if (history->inner_branch_experiment_history != NULL) {
-		history->inner_branch_experiment_history->experiment_score_state_snapshots = context.back().experiment_score_state_vals;
+		history->inner_branch_experiment_history->ending_experiment_score_state_snapshots = context.back().experiment_score_state_vals;
 	}
 
 	if (run_helper.phase == RUN_PHASE_UPDATE

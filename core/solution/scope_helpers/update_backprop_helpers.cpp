@@ -16,37 +16,51 @@
 
 using namespace std;
 
+/**
+ * - don't worry about getting highest accuracy earliest possible
+ *   - benefit to early branching might not even counter benefit to late abstraction
+ *   - costs a lot of extra state/runtime
+ */
 void Scope::update_backprop(double target_val,
 							RunHelper& run_helper,
 							ScopeHistory* history,
-							set<State*>& states_to_remove) {
+							set<pair<State*, Scope*>>& states_to_remove) {
 	if (history->exceeded_depth) {
 		return;
 	}
 
-	priority_queue<pair<int, State*>> backprop_queue;
-
 	double predicted_score = this->average_score;
+	
+	for (map<int, StateStatus>::iterator it = history->input_state_snapshots.begin();
+			it != history->input_state_snapshots.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			// set for backprop in the following
+			it->second.val = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+		}
+		predicted_score += this->input_state_scales[it->first]->weight * it->second.val;
+	}
+
+	for (map<int, StateStatus>::iterator it = history->local_state_snapshots.begin();
+			it != history->local_state_snapshots.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			// set for backprop in the following
+			it->second.val = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+		}
+		predicted_score += this->local_state_scales[it->first]->weight * it->second.val;
+	}
+
 	for (map<State*, StateStatus>::iterator it = history->score_state_snapshots.begin();
 			it != history->score_state_snapshots.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
-			// set for backprop in the following
-			it->second.val = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-		}
-		predicted_score += it->first->scale->weight * it->second.val;
-
-		backprop_queue.push({it->second.last_updated, it->first});
-	}
-
-	if (this->obs_experiment != NULL) {
-		backprop_queue.push({history->test_last_updated+1, NULL});
-		/**
-		 * - increment by 1 so that it triggers after existing
-		 */
+		// set for backprop in the following
+		it->second.val = (it->second.val - last_network->ending_mean)
+			/ last_network->ending_standard_deviation;
+		predicted_score += this->score_state_scales[it->first].first->weight * it->second.val;
 	}
 
 	this->average_score = 0.9999*this->average_score + 0.0001*target_val;
@@ -57,34 +71,40 @@ void Scope::update_backprop(double target_val,
 	double curr_misguess_variance = (this->average_misguess - curr_misguess) * (this->average_misguess - curr_misguess);
 	this->misguess_variance = 0.9999*this->misguess_variance + 0.0001*curr_misguess_variance;
 
-	while (!backprop_queue.empty()) {
-		if (backprop_queue.top().second == NULL) {
-			this->obs_experiment->backprop(target_val,
-										   predicted_score,
-										   history->test_obs_indexes,
-										   history->test_obs_vals);
+	double error = target_val - predicted_score;
 
-			if (this->obs_experiment->state == OBS_EXPERIMENT_STATE_DONE) {
-				this->obs_experiment->scope_eval(this);
+	for (map<int, StateStatus>::iterator it = history->input_state_snapshots.begin();
+			it != history->input_state_snapshots.end(); it++) {
+		this->input_state_scales[it->first]->backprop(it->second.val*error, 0.001);
+	}
 
-				delete this->obs_experiment;
-				this->obs_experiment = NULL;
-			}
-		} else {
-			double error = target_val - predicted_score;
+	for (map<int, StateStatus>::iterator it = history->local_state_snapshots.begin();
+			it != history->local_state_snapshots.end(); it++) {
+		this->local_state_scales[it->first]->backprop(it->second.val*error, 0.001);
+	}
 
-			map<State*, StateStatus>::iterator it = history->score_state_snapshots.find(backprop_queue.top().second);
+	for (map<State*, StateStatus>::iterator it = history->score_state_snapshots.begin();
+			it != history->score_state_snapshots.end(); it++) {
+		map<State*, std::pair<Scale*, double>>::iterator scale_it = this->score_state_scales.find(it->first);
+		scale_it->second.first->backprop(it->second.val*error, 0.001);
 
-			it->first->scale->backprop(it->second.val*error, 0.001);
-
-			if (it->first->scale->weight < 0.02) {
-				states_to_remove.insert(it->first);
-			}
-
-			predicted_score -= it->first->scale->weight * it->second.val;
+		if (scale_it->second.first->weight < 0.05*scale_it->second.second) {
+			states_to_remove.insert({it->first, this});
 		}
+	}
 
-		backprop_queue.pop();
+	if (this->obs_experiment != NULL) {
+		this->obs_experiment->backprop(target_val,
+									   predicted_score,
+									   history->test_obs_indexes,
+									   history->test_obs_vals);
+
+		if (this->obs_experiment->state == OBS_EXPERIMENT_STATE_DONE) {
+			this->obs_experiment->scope_eval(this);
+
+			delete this->obs_experiment;
+			this->obs_experiment = NULL;
+		}
 	}
 
 	if (this->obs_experiment == NULL && !run_helper.exceeded_depth) {

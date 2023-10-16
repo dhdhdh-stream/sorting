@@ -263,8 +263,6 @@ void ObsExperiment::rnn(double target_val,
 				ending_state_vals[o_index] = state_val;
 			}
 
-			this->resolved_network_indexes.insert(last_network->index);
-
 			double curr_variance = state_val*state_val;
 			this->resolved_variance = 0.9999*this->resolved_variance + 0.0001*curr_variance;
 
@@ -282,10 +280,6 @@ void ObsExperiment::rnn(double target_val,
 
 			for (int o_index = (int)obs_indexes.size() - 1; o_index >= 0; o_index--) {
 				int network_index = obs_indexes[o_index];
-
-				double curr_covariance = (ending_state_vals[o_index] - this->state_networks[network_index]->ending_mean) * state_val;
-				this->state_networks[network_index]->covariance_with_end = 0.9999*this->state_networks[network_index]->covariance_with_end + 0.0001*curr_covariance;
-
 				this->state_networks[network_index]->backprop(state_error);
 			}
 		} else {
@@ -328,30 +322,23 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	if (improvement_t_score > 1.282) {	// >90%
 		State* new_state = new State();
 
-		new_state->resolved_network_indexes = this->resolved_network_indexes;
-		new_state->resolved_standard_deviation = sqrt(this->resolved_variance);
-
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
 			this->state_networks[n_index]->starting_standard_deviation = sqrt(this->state_networks[n_index]->starting_variance);
 
 			this->state_networks[n_index]->ending_standard_deviation = sqrt(this->state_networks[n_index]->ending_variance);
-
-			this->state_networks[n_index]->correlation_to_end = this->state_networks[n_index]->covariance_with_end
-				/ this->state_networks[n_index]->ending_standard_deviation / new_state->resolved_standard_deviation;
 
 			this->state_networks[n_index]->parent_state = new_state;
 		}
 		new_state->networks = this->state_networks;
 		this->state_networks.clear();
 
-		new_state->scale = new Scale(1.0);
-
-		new_state->nodes = this->nodes;
-
 		new_state->id = solution->state_counter;
 		solution->state_counter++;
 
 		solution->states[new_state->id] = new_state;
+
+		parent->score_state_scales[new_state] = {new Scale(sqrt(this->resolved_variance)), sqrt(this->resolved_variance)};
+		parent->score_state_nodes[new_state] = this->nodes;
 
 		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 			if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
@@ -388,7 +375,7 @@ void ObsExperiment::scope_eval(Scope* parent) {
 
 void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) {
 	double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
-	double existing_misguess_standard_deviation = sqrt(branch_experiment->misguess_variance);
+	double existing_misguess_standard_deviation = sqrt(branch_experiment->new_misguess_variance);
 	// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 	double improvement_t_score = misguess_improvement
 		/ (existing_misguess_standard_deviation / sqrt(20000));
@@ -409,25 +396,15 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	if (improvement_t_score > 1.282) {	// >90%
 		State* new_state = new State();
 
-		new_state->resolved_network_indexes = this->resolved_network_indexes;
-		new_state->resolved_standard_deviation = sqrt(this->resolved_variance);
-
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
 			this->state_networks[n_index]->starting_standard_deviation = sqrt(this->state_networks[n_index]->starting_variance);
 
 			this->state_networks[n_index]->ending_standard_deviation = sqrt(this->state_networks[n_index]->ending_variance);
 
-			this->state_networks[n_index]->correlation_to_end = this->state_networks[n_index]->covariance_with_end
-				/ this->state_networks[n_index]->ending_standard_deviation / new_state->resolved_standard_deviation;
-
 			this->state_networks[n_index]->parent_state = new_state;
 		}
 		new_state->networks = this->state_networks;
 		this->state_networks.clear();
-
-		new_state->scale = new Scale(1.0);
-
-		new_state->nodes = this->nodes;
 
 		new_state->id = solution->state_counter;
 		solution->state_counter++;
@@ -437,5 +414,6 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 		branch_experiment->new_score_state_scope_contexts.push_back(this->scope_contexts);
 		branch_experiment->new_score_state_node_contexts.push_back(this->node_contexts);
 		branch_experiment->new_score_state_obs_indexes.push_back(this->obs_indexes);
+		branch_experiment->new_score_state_scales[new_state] = {new Scale(sqrt(this->resolved_variance)), sqrt(this->resolved_variance)};
 	}
 }

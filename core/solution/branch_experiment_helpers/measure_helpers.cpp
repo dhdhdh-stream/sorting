@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
@@ -19,50 +20,91 @@ using namespace std;
 
 const int MEASURE_ITERS = 10000;
 
-void BranchExperiment::measure_existing_activate(int& curr_node_id,
-												 Problem& problem,
-												 vector<ContextLayer>& context,
-												 int& exit_depth,
-												 int& exit_node_id,
-												 RunHelper& run_helper,
+void BranchExperiment::measure_existing_activate(vector<ContextLayer>& context,
 												 BranchExperimentHistory* history) {
-	double branch_score = this->average_score;
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-	double original_score = parent_scope->average_score;
+	double original_score = this->existing_average_score;
+	double branch_score = this->new_average_score;
+
+	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+			it != context.back().input_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+
+			map<int, Scale*>::iterator existing_it = this->existing_starting_input_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_input_state_scales.end()) {
+				original_score += existing_it->second->weight * normalized;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_input_state_scales.find(it->first);
+			if (new_it != this->new_starting_input_state_scales.end()) {
+				branch_score += new_it->second->weight * normalized;
+			}
+		} else {
+			map<int, Scale*>::iterator existing_it = this->existing_starting_input_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_input_state_scales.end()) {
+				original_score += existing_it->second->weight * it->second.val;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_input_state_scales.find(it->first);
+			if (new_it != this->new_starting_input_state_scales.end()) {
+				branch_score += new_it->second->weight * it->second.val;
+			}
+		}
+	}
+
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+
+			map<int, Scale*>::iterator existing_it = this->existing_starting_local_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_local_state_scales.end()) {
+				original_score += existing_it->second->weight * normalized;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_local_state_scales.find(it->first);
+			if (new_it != this->new_starting_local_state_scales.end()) {
+				branch_score += new_it->second->weight * normalized;
+			}
+		} else {
+			map<int, Scale*>::iterator existing_it = this->existing_starting_local_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_local_state_scales.end()) {
+				original_score += existing_it->second->weight * it->second.val;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_local_state_scales.find(it->first);
+			if (new_it != this->new_starting_local_state_scales.end()) {
+				branch_score += new_it->second->weight * it->second.val;
+			}
+		}
+	}
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-			map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
-			if (scale_it != this->score_state_scales.end()) {
-				branch_score += normalized * scale_it->second->weight;
-			}
-			original_score += normalized * it->first->scale->weight;
-		} else {
-			map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
-			if (scale_it != this->score_state_scales.end()) {
-				branch_score += it->second.val * scale_it->second->weight;
-			}
-			original_score += it->second.val * it->first->scale->weight;
+		double normalized = (it->second.val - last_network->ending_mean)
+			/ last_network->ending_standard_deviation;
+
+		map<State*, Scale*>::iterator existing_it = this->existing_starting_score_state_scales.find(it->first);
+		if (existing_it != this->existing_starting_score_state_scales.end()) {
+			original_score += existing_it->second->weight * normalized;
+		}
+		map<State*, Scale*>::iterator new_it = this->new_starting_score_state_scales.find(it->first);
+		if (new_it != this->new_starting_score_state_scales.end()) {
+			branch_score += new_it->second->weight * normalized;
 		}
 	}
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].experiment_score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].experiment_score_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
+		map<State*, Scale*>::iterator scale_it = this->new_starting_experiment_score_state_scales.find(it->first);
+		if (scale_it != this->new_starting_experiment_score_state_scales.end()) {
+			StateNetwork* last_network = it->second.last_network;
+			// last_network != NULL
 			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-			branch_score += normalized * it->first->scale->weight;
-		} else {
-			branch_score += it->second.val * it->first->scale->weight;
+				/ last_network->ending_standard_deviation;
+			branch_score += scale_it->second->weight * normalized;
 		}
 	}
 
@@ -83,28 +125,6 @@ void BranchExperiment::measure_existing_backprop(double target_val,
 		this->non_branch_existing_score += target_val;
 	}
 
-	this->combined_existing_score += target_val;
-
-	ScopeHistory* scope_history = history->parent_scope_history;
-	Scope* parent_scope = scope_history->scope;
-
-	double predicted_score = parent_scope->average_score;
-	for (map<State*, StateStatus>::iterator it = scope_history->score_state_snapshots.begin();
-			it != scope_history->score_state_snapshots.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
-			// set for backprop in the following
-			it->second.val = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-		}
-		predicted_score += it->first->scale->weight * it->second.val;
-	}
-
-	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
-	this->existing_misguess += curr_misguess;
-
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
 		this->state = BRANCH_EXPERIMENT_STATE_MEASURE_NEW;
@@ -120,43 +140,89 @@ void BranchExperiment::measure_new_activate(int& curr_node_id,
 											RunHelper& run_helper,
 											BranchExperimentHistory* history) {
 
-	double branch_score = this->average_score;
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-	double original_score = parent_scope->average_score;
+	double original_score = this->existing_average_score;
+	double branch_score = this->new_average_score;
+
+	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+			it != context.back().input_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+
+			map<int, Scale*>::iterator existing_it = this->existing_starting_input_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_input_state_scales.end()) {
+				original_score += existing_it->second->weight * normalized;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_input_state_scales.find(it->first);
+			if (new_it != this->new_starting_input_state_scales.end()) {
+				branch_score += new_it->second->weight * normalized;
+			}
+		} else {
+			map<int, Scale*>::iterator existing_it = this->existing_starting_input_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_input_state_scales.end()) {
+				original_score += existing_it->second->weight * it->second.val;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_input_state_scales.find(it->first);
+			if (new_it != this->new_starting_input_state_scales.end()) {
+				branch_score += new_it->second->weight * it->second.val;
+			}
+		}
+	}
+
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+
+			map<int, Scale*>::iterator existing_it = this->existing_starting_local_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_local_state_scales.end()) {
+				original_score += existing_it->second->weight * normalized;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_local_state_scales.find(it->first);
+			if (new_it != this->new_starting_local_state_scales.end()) {
+				branch_score += new_it->second->weight * normalized;
+			}
+		} else {
+			map<int, Scale*>::iterator existing_it = this->existing_starting_local_state_scales.find(it->first);
+			if (existing_it != this->existing_starting_local_state_scales.end()) {
+				original_score += existing_it->second->weight * it->second.val;
+			}
+			map<int, Scale*>::iterator new_it = this->new_starting_local_state_scales.find(it->first);
+			if (new_it != this->new_starting_local_state_scales.end()) {
+				branch_score += new_it->second->weight * it->second.val;
+			}
+		}
+	}
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].score_state_vals.end(); it++) {
 		StateNetwork* last_network = it->second.last_network;
 		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-			map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
-			if (scale_it != this->score_state_scales.end()) {
-				branch_score += normalized * scale_it->second->weight;
-			}
-			original_score += normalized * it->first->scale->weight;
-		} else {
-			map<State*, Scale*>::iterator scale_it = this->score_state_scales.find(it->first);
-			if (scale_it != this->score_state_scales.end()) {
-				branch_score += it->second.val * scale_it->second->weight;
-			}
-			original_score += it->second.val * it->first->scale->weight;
+		double normalized = (it->second.val - last_network->ending_mean)
+			/ last_network->ending_standard_deviation;
+
+		map<State*, Scale*>::iterator existing_it = this->existing_starting_score_state_scales.find(it->first);
+		if (existing_it != this->existing_starting_score_state_scales.end()) {
+			original_score += existing_it->second->weight * normalized;
+		}
+		map<State*, Scale*>::iterator new_it = this->new_starting_score_state_scales.find(it->first);
+		if (new_it != this->new_starting_score_state_scales.end()) {
+			branch_score += new_it->second->weight * normalized;
 		}
 	}
 
 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].experiment_score_state_vals.begin();
 			it != context[context.size() - this->scope_context.size()].experiment_score_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		if (it->first->resolved_network_indexes.find(last_network->index) == it->first->resolved_network_indexes.end()) {
+		map<State*, Scale*>::iterator scale_it = this->new_starting_experiment_score_state_scales.find(it->first);
+		if (scale_it != this->new_starting_experiment_score_state_scales.end()) {
+			StateNetwork* last_network = it->second.last_network;
+			// last_network != NULL
 			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation * last_network->correlation_to_end
-				* it->first->resolved_standard_deviation;
-			branch_score += normalized * it->first->scale->weight;
-		} else {
-			branch_score += it->second.val * it->first->scale->weight;
+				/ last_network->ending_standard_deviation;
+			branch_score += scale_it->second->weight * normalized;
 		}
 	}
 
@@ -213,8 +279,6 @@ void BranchExperiment::measure_new_backprop(double target_val,
 	} else {
 		this->non_branch_new_score += target_val;
 	}
-
-	this->combined_new_score += target_val;
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
@@ -283,24 +347,22 @@ void BranchExperiment::eval() {
 		// solution->save_for_display(display_file);
 		// display_file.close();
 	} else {
-		double combined_existing_average_score = this->combined_existing_score / MEASURE_ITERS;
-		double combined_new_average_score = this->combined_new_score / MEASURE_ITERS;
-		double combined_improvement = combined_new_average_score - combined_existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(MEASURE_ITERS));
+		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
-		cout << "combined_existing_average_score: " << combined_existing_average_score << endl;
-		cout << "combined_new_average_score: " << combined_new_average_score << endl;
+		double combined_improvement = this->new_average_score - this->existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(20000));
+
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << "this->new_average_score: " << this->new_average_score << endl;
 		cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
-		double existing_average_misguess = this->existing_misguess / MEASURE_ITERS;
-
-		double misguess_improvement = existing_average_misguess - this->average_misguess;
+		double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 		double misguess_standard_deviation = sqrt(parent->misguess_variance);
 		double misguess_improvement_t_score = misguess_improvement
-			/ (misguess_standard_deviation / sqrt(MEASURE_ITERS));
+			/ (misguess_standard_deviation / sqrt(20000));
 
-		cout << "this->average_misguess: " << this->average_misguess << endl;
+		cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		cout << "misguess_improvement: " << misguess_improvement << endl;
 		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
@@ -320,6 +382,22 @@ void BranchExperiment::eval() {
 			// solution->save_for_display(display_file);
 			// display_file.close();
 		} else {
+			for (map<int, Scale*>::iterator it = this->existing_starting_input_state_scales.begin();
+					it != this->existing_starting_input_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->existing_starting_input_state_scales.clear();
+			for (map<int, Scale*>::iterator it = this->existing_starting_local_state_scales.begin();
+					it != this->existing_starting_local_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->existing_starting_local_state_scales.clear();
+			for (map<State*, Scale*>::iterator it = this->existing_starting_score_state_scales.begin();
+					it != this->existing_starting_score_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->existing_starting_score_state_scales.clear();
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -330,17 +408,53 @@ void BranchExperiment::eval() {
 			this->best_actions.clear();
 			this->best_sequences.clear();
 
-			for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
-					it != this->score_state_scales.end(); it++) {
+			for (map<int, Scale*>::iterator it = this->new_starting_input_state_scales.begin();
+					it != this->new_starting_input_state_scales.end(); it++) {
 				delete it->second;
 			}
-			this->score_state_scales.clear();
+			this->new_starting_input_state_scales.clear();
+			for (map<int, Scale*>::iterator it = this->new_starting_local_state_scales.begin();
+					it != this->new_starting_local_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_starting_local_state_scales.clear();
+			for (map<State*, Scale*>::iterator it = this->new_starting_score_state_scales.begin();
+					it != this->new_starting_score_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_starting_score_state_scales.clear();
+			for (map<State*, Scale*>::iterator it = this->new_starting_experiment_score_state_scales.begin();
+					it != this->new_starting_experiment_score_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_starting_experiment_score_state_scales.clear();
+
+			for (map<int, Scale*>::iterator it = this->new_ending_input_state_scales.begin();
+					it != this->new_ending_input_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_ending_input_state_scales.clear();
+			for (map<int, Scale*>::iterator it = this->new_ending_local_state_scales.begin();
+					it != this->new_ending_local_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_ending_local_state_scales.clear();
+			for (map<State*, Scale*>::iterator it = this->new_ending_score_state_scales.begin();
+					it != this->new_ending_score_state_scales.end(); it++) {
+				delete it->second;
+			}
+			this->new_ending_score_state_scales.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
-				this->new_score_states[s_index]->nodes.clear();
 				delete this->new_score_states[s_index];
 			}
 			this->new_score_states.clear();
+
+			for (map<State*, pair<Scale*, double>>::iterator it = this->new_score_state_scales.begin();
+					it != this->new_score_state_scales.end(); it++) {
+				delete it->second.first;
+			}
+			this->new_score_state_scales.clear();
 		}
 	}
 
@@ -365,8 +479,34 @@ void BranchExperiment::new_branch() {
 
 	new_branch_node->branch_is_pass_through = false;
 
-	new_branch_node->original_score_mod = parent_scope->average_score;
-	new_branch_node->branch_score_mod = this->average_score;
+	new_branch_node->original_score_mod = this->existing_average_score;
+	new_branch_node->branch_score_mod = this->new_average_score;
+
+	for (map<int, Scale*>::iterator existing_it = this->existing_starting_input_state_scales.begin();
+			existing_it != this->existing_starting_input_state_scales.end(); existing_it++) {
+		map<int, Scale*>::iterator new_it = this->new_starting_input_state_scales.find(existing_it->first);
+		new_branch_node->decision_state_is_local.push_back(false);
+		new_branch_node->decision_state_indexes.push_back(existing_it->first);
+		new_branch_node->decision_original_weights.push_back(existing_it->second->weight);
+		new_branch_node->decision_branch_weights.push_back(new_it->second->weight);
+		delete existing_it->second;
+		delete new_it->second;
+	}
+	this->existing_starting_input_state_scales.clear();
+	this->new_starting_input_state_scales.clear();
+
+	for (map<int, Scale*>::iterator existing_it = this->existing_starting_local_state_scales.begin();
+			existing_it != this->existing_starting_local_state_scales.end(); existing_it++) {
+		map<int, Scale*>::iterator new_it = this->new_starting_local_state_scales.find(existing_it->first);
+		new_branch_node->decision_state_is_local.push_back(true);
+		new_branch_node->decision_state_indexes.push_back(existing_it->first);
+		new_branch_node->decision_original_weights.push_back(existing_it->second->weight);
+		new_branch_node->decision_branch_weights.push_back(new_it->second->weight);
+		delete existing_it->second;
+		delete new_it->second;
+	}
+	this->existing_starting_local_state_scales.clear();
+	this->new_starting_local_state_scales.clear();
 
 	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
@@ -472,41 +612,74 @@ void BranchExperiment::new_branch() {
 	new_exit_node->exit_depth = this->best_exit_depth;
 	new_exit_node->exit_node_id = this->best_exit_node_id;
 
-	/**
-	 * TODO: check if state used at decision point so can delete
-	 */
-	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
-			it != this->score_state_scales.end(); it++) {
-		bool still_exists = false;
-		for (map<int, State*>::iterator solution_it = solution->states.begin();
-				solution_it != solution->states.end(); solution_it++) {
-			if (solution_it->second == it->first) {
-				still_exists = true;
-				break;
+	double score_standard_deviation = sqrt(parent_scope->score_variance);
+	for (map<State*, Scale*>::iterator it = this->new_ending_score_state_scales.begin();
+			it != this->new_ending_score_state_scales.end(); it++) {
+		map<State*, Scale*>::iterator existing_it = this->existing_starting_score_state_scales.find(it->first);
+		map<State*, Scale*>::iterator new_it = this->new_starting_score_state_scales.find(it->first);
+
+		bool still_exists = parent_scope->score_state_scales.find(it->first) != parent_scope->score_state_scales.end();
+		if (still_exists) {
+			if (existing_it == this->existing_starting_score_state_scales.end()) {
+				double original_impact = parent_scope->score_state_scales.find(it->first)->second.first->weight;
+				double new_impact = it->second->weight;
+				if (abs(original_impact - new_impact) > MIN_SCORE_IMPACT*score_standard_deviation) {
+					// remove score state
+					it->first->detach(parent_scope);
+					delete it->first;
+				} else {
+					// leave score state as-is
+				}
+			} else {
+				finalize_existing_state(parent_scope,
+										it->first,
+										new_branch_node,
+										existing_it->second->weight,
+										new_it->second->weight);
 			}
 		}
-		if (still_exists) {
-			finalize_existing_state(parent_scope,
-									it->first,
-									new_branch_node,
-									it->second->weight);
-		}
+		/**
+		 * - if score state was too low impact and removed, then simply assume not needed for decision
+		 * 
+		 * - if was added by another branch experiment, then measure was reset, so decisions were OK even without it
+		 */
 
 		delete it->second;
+		if (existing_it != this->existing_starting_score_state_scales.end()) {
+			delete existing_it->second;
+		}
+		if (new_it != this->new_starting_score_state_scales.end()) {
+			delete new_it->second;
+		}
 	}
-	this->score_state_scales.clear();
+	this->existing_starting_score_state_scales.clear();
+	this->new_starting_score_state_scales.clear();
+	this->new_ending_score_state_scales.clear();
 
 	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
-		finalize_new_state(parent_scope,
-						   new_scope_node,
-						   this->new_score_states[s_index],
-						   this->new_score_state_nodes[s_index],
-						   this->new_score_state_scope_contexts[s_index],
-						   this->new_score_state_node_contexts[s_index],
-						   this->new_score_state_obs_indexes[s_index],
-						   new_branch_node);
+		map<State*, Scale*>::iterator start_it = this->new_starting_experiment_score_state_scales.find(this->new_score_states[s_index]);
+		if (start_it == this->new_starting_experiment_score_state_scales.end()) {
+			// don't add
+			delete this->new_score_states[s_index];
+		} else {
+			finalize_new_state(parent_scope,
+							   new_scope_node,
+							   this->new_score_states[s_index],
+							   this->new_score_state_nodes[s_index],
+							   this->new_score_state_scope_contexts[s_index],
+							   this->new_score_state_node_contexts[s_index],
+							   this->new_score_state_obs_indexes[s_index],
+							   new_branch_node,
+							   start_it->second->weight);
+
+			delete start_it->second;
+		}
+
+		delete this->new_score_state_scales[this->new_score_states[s_index]].first;
 	}
+	this->new_starting_experiment_score_state_scales.clear();
 	this->new_score_states.clear();
+	this->new_score_state_scales.clear();
 }
 
 void BranchExperiment::new_pass_through() {
@@ -528,6 +701,28 @@ void BranchExperiment::new_pass_through() {
 	new_branch_node->original_score_mod = 0.0;
 	new_branch_node->branch_score_mod = 0.0;
 
+	for (map<int, Scale*>::iterator it = this->existing_starting_input_state_scales.begin();
+			it != this->existing_starting_input_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->existing_starting_input_state_scales.clear();
+	for (map<int, Scale*>::iterator it = this->new_starting_input_state_scales.begin();
+			it != this->new_starting_input_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->new_starting_input_state_scales.clear();
+
+	for (map<int, Scale*>::iterator it = this->existing_starting_local_state_scales.begin();
+			it != this->existing_starting_local_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->existing_starting_local_state_scales.clear();
+	for (map<int, Scale*>::iterator it = this->new_starting_local_state_scales.begin();
+			it != this->new_starting_local_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->new_starting_local_state_scales.clear();
+
 	if (starting_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)starting_scope->nodes[this->node_context.back()];
 
@@ -632,24 +827,76 @@ void BranchExperiment::new_pass_through() {
 	new_exit_node->exit_depth = this->best_exit_depth;
 	new_exit_node->exit_node_id = this->best_exit_node_id;
 
-	for (map<State*, Scale*>::iterator it = this->score_state_scales.begin();
-			it != this->score_state_scales.end(); it++) {
+	for (map<State*, Scale*>::iterator it = this->existing_starting_score_state_scales.begin();
+			it != this->existing_starting_score_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->existing_starting_score_state_scales.clear();
+	for (map<State*, Scale*>::iterator it = this->new_starting_score_state_scales.begin();
+			it != this->new_starting_score_state_scales.end(); it++) {
+		delete it->second;
+	}
+	this->new_starting_score_state_scales.clear();
+	for (map<State*, Scale*>::iterator it = this->new_ending_score_state_scales.begin();
+			it != this->new_ending_score_state_scales.end(); it++) {
 		delete it->second;
 		/**
 		 * - delete experiment scales as may not be general
 		 *   - let parent_scope adjust after
 		 */
 	}
-	this->score_state_scales.clear();
+	this->new_ending_score_state_scales.clear();
 
 	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
-		finalize_new_score_state(parent_scope,
-								 new_scope_node,
-								 this->new_score_states[s_index],
-								 this->new_score_state_nodes[s_index],
-								 this->new_score_state_scope_contexts[s_index],
-								 this->new_score_state_node_contexts[s_index],
-								 this->new_score_state_obs_indexes[s_index]);
+		for (int n_index = 0; n_index < (int)this->new_score_state_nodes[s_index].size(); n_index++) {
+			if (this->new_score_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->new_score_state_nodes[s_index][n_index];
+
+				action_node->score_state_scope_contexts.push_back(this->new_score_state_scope_contexts[s_index][n_index]);
+				action_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
+				for (int c_index = 0; c_index < (int)action_node->score_state_node_contexts.back().size()-1; c_index++) {
+					if (action_node->score_state_node_contexts.back()[c_index] == -1) {
+						action_node->score_state_node_contexts.back()[c_index] = new_scope_node->id;
+						break;
+					}
+				}
+				action_node->score_state_defs.push_back(this->new_score_states[s_index]);
+				action_node->score_state_network_indexes.push_back(n_index);
+			} else if (this->new_score_state_nodes[s_index][n_index]->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)this->new_score_state_nodes[s_index][n_index];
+
+				scope_node->score_state_scope_contexts.push_back(this->new_score_state_scope_contexts[s_index][n_index]);
+				scope_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
+				for (int c_index = 0; c_index < (int)scope_node->score_state_node_contexts.back().size()-1; c_index++) {
+					if (scope_node->score_state_node_contexts.back()[c_index] == -1) {
+						scope_node->score_state_node_contexts.back()[c_index] = new_scope_node->id;
+						break;
+					}
+				}
+				scope_node->score_state_obs_indexes.push_back(this->new_score_state_obs_indexes[s_index][n_index]);
+				scope_node->score_state_defs.push_back(this->new_score_states[s_index]);
+				scope_node->score_state_network_indexes.push_back(n_index);
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->new_score_state_nodes[s_index][n_index];
+
+				branch_node->score_state_scope_contexts.push_back(this->new_score_state_scope_contexts[s_index][n_index]);
+				branch_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
+				for (int c_index = 0; c_index < (int)branch_node->score_state_node_contexts.back().size()-1; c_index++) {
+					if (branch_node->score_state_node_contexts.back()[c_index] == -1) {
+						branch_node->score_state_node_contexts.back()[c_index] = new_scope_node->id;
+						break;
+					}
+				}
+				branch_node->score_state_defs.push_back(this->new_score_states[s_index]);
+				branch_node->score_state_network_indexes.push_back(n_index);
+			}
+		}
+
+		parent_scope->score_state_scales[this->new_score_states[s_index]] = this->new_score_state_scales[this->new_score_states[s_index]];
+		parent_scope->score_state_nodes[this->new_score_states[s_index]] = this->new_score_state_nodes[s_index];
+
+		solution->states[this->new_score_states[s_index]->id] = this->new_score_states[s_index];
 	}
 	this->new_score_states.clear();
+	this->new_score_state_scales.clear();
 }

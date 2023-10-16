@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "globals.h"
+#include "scope.h"
 #include "solution.h"
 #include "state.h"
 
@@ -48,42 +49,25 @@ BranchNode::BranchNode(ifstream& input_file,
 	getline(input_file, branch_score_mod_line);
 	this->branch_score_mod = stod(branch_score_mod_line);
 
-	string shared_state_is_local_size_line;
-	getline(input_file, shared_state_is_local_size_line);
-	int shared_state_is_local_size = stoi(shared_state_is_local_size_line);
-	for (int s_index = 0; s_index < shared_state_is_local_size; s_index++) {
+	string decision_state_is_local_size_line;
+	getline(input_file, decision_state_is_local_size_line);
+	int decision_state_is_local_size = stoi(decision_state_is_local_size_line);
+	for (int s_index = 0; s_index < decision_state_is_local_size; s_index++) {
 		string is_local_line;
 		getline(input_file, is_local_line);
-		this->shared_state_is_local.push_back(stoi(is_local_line));
+		this->decision_state_is_local.push_back(stoi(is_local_line));
 
 		string index_line;
 		getline(input_file, index_line);
-		this->shared_state_indexes.push_back(stoi(index_line));
+		this->decision_state_indexes.push_back(stoi(index_line));
+
+		string original_weight_line;
+		getline(input_file, original_weight_line);
+		this->decision_original_weights.push_back(stod(original_weight_line));
 
 		string branch_weight_line;
 		getline(input_file, branch_weight_line);
-		this->branch_weights.push_back(stod(branch_weight_line));
-
-		string def_id_line;
-		getline(input_file, def_id_line);
-		this->original_state_defs.push_back(solution->states[stoi(def_id_line)]);
-	}
-
-	string branch_state_is_local_size_line;
-	getline(input_file, branch_state_is_local_size_line);
-	int branch_state_is_local_size = stoi(branch_state_is_local_size_line);
-	for (int s_index = 0; s_index < branch_state_is_local_size; s_index++) {
-		string is_local_line;
-		getline(input_file, is_local_line);
-		this->branch_state_is_local.push_back(stoi(is_local_line));
-
-		string index_line;
-		getline(input_file, index_line);
-		this->branch_state_indexes.push_back(stoi(index_line));
-
-		string def_id_line;
-		getline(input_file, def_id_line);
-		this->branch_state_defs.push_back(solution->states[stoi(def_id_line)]);
+		this->decision_branch_weights.push_back(stod(branch_weight_line));
 	}
 
 	string branch_next_node_id_line;
@@ -142,7 +126,8 @@ BranchNode::BranchNode(ifstream& input_file,
 		getline(input_file, network_index_line);
 		this->score_state_network_indexes.push_back(stoi(network_index_line));
 
-		this->score_state_defs.back()->nodes[this->score_state_network_indexes.back()] = this;
+		Scope* parent_scope = solution->scopes[this->score_state_scope_contexts.back()[0]];
+		parent_scope->score_state_nodes[this->score_state_defs.back()][this->score_state_network_indexes.back()] = this;
 	}
 
 	this->experiment = NULL;
@@ -166,19 +151,12 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_score_mod << endl;
 	output_file << this->branch_score_mod << endl;
 
-	output_file << this->shared_state_is_local.size() << endl;
-	for (int s_index = 0; s_index < (int)this->shared_state_is_local.size(); s_index++) {
-		output_file << this->shared_state_is_local[s_index] << endl;
-		output_file << this->shared_state_indexes[s_index] << endl;
-		output_file << this->branch_weights[s_index] << endl;
-		output_file << this->original_state_defs[s_index]->id << endl;
-	}
-
-	output_file << this->branch_state_is_local.size() << endl;
-	for (int s_index = 0; s_index < (int)this->branch_state_is_local.size(); s_index++) {
-		output_file << this->branch_state_is_local[s_index] << endl;
-		output_file << this->branch_state_indexes[s_index] << endl;
-		output_file << this->branch_state_defs[s_index]->id << endl;
+	output_file << this->decision_state_is_local.size() << endl;
+	for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
+		output_file << this->decision_state_is_local[s_index] << endl;
+		output_file << this->decision_state_indexes[s_index] << endl;
+		output_file << this->decision_original_weights[s_index] << endl;
+		output_file << this->decision_branch_weights[s_index] << endl;
 	}
 
 	output_file << this->branch_next_node_id << endl;

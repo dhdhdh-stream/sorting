@@ -29,6 +29,8 @@ public:
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
+	// TODO: add map of BranchExperiments, and reset measure counters if update happened
+
 	Solution();
 	~Solution();
 

@@ -17,13 +17,6 @@ public:
 	Layer* hidden;
 	Layer* output;
 
-	// TODO: potentially add can_be_end when adding loops for better predicted score
-	double covariance_with_end;
-	double correlation_to_end;
-	/**
-	 * - used to calculate predicted_score if can't be ending
-	 */
-
 	State* parent_state;
 	int index;
 	std::set<int> preceding_network_indexes;
@@ -59,9 +52,9 @@ public:
 
 	void activate(double obs_val,
 				  StateStatus& state_status);
-	void activate_score(double obs_val,
-						StateStatus& state_status,
-						StateStatus& state_diff);
+	void activate(double obs_val,
+				  StateStatus& state_status,
+				  StateStatus& state_diff);
 
 	void save(std::ofstream& output_file);
 

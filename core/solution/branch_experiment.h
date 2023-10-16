@@ -21,13 +21,14 @@ class State;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SEQUENCE = 1;
 
-const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 3;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_NEW = 5;
-const int BRANCH_EXPERIMENT_STATE_DONE = 6;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 2;
+const int BRANCH_EXPERIMENT_STATE_TRAIN = 3;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 5;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_NEW = 6;
+const int BRANCH_EXPERIMENT_STATE_DONE = 7;
 
 class BranchExperimentHistory;
 class BranchExperiment {
@@ -48,6 +49,12 @@ public:
 
 	int state;
 	int state_iter;
+
+	double existing_average_score;
+	double existing_average_misguess;
+	std::map<int, Scale*> existing_starting_input_state_scales;
+	std::map<int, Scale*> existing_starting_local_state_scales;
+	std::map<State*, Scale*> existing_starting_score_state_scales;
 
 	int new_scope_id;
 	/**
@@ -71,41 +78,36 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<Sequence*> best_sequences;
-	/**
-	 * - don't worry about node ids as should have no impact
-	 *   - sequences' scopes use new ids
-	 */
 	int best_exit_depth;
 	int best_exit_node_id;
 
-	double average_score;
-	double average_misguess;
-	double misguess_variance;
+	double new_average_score;
+	double new_average_misguess;
+	double new_misguess_variance;
 
-	double branch_existing_score;
-	int existing_branch_count;
-	double non_branch_existing_score;
-	double combined_existing_score;
+	std::map<int, Scale*> new_starting_input_state_scales;
+	std::map<int, Scale*> new_starting_local_state_scales;
+	std::map<State*, Scale*> new_starting_score_state_scales;
+	std::map<State*, Scale*> new_starting_experiment_score_state_scales;
 
-	double existing_misguess;
-
-	double branch_new_score;
-	int new_branch_count;
-	double non_branch_new_score;
-	double combined_new_score;
-
-	std::map<State*, Scale*> score_state_scales;
+	std::map<int, Scale*> new_ending_input_state_scales;
+	std::map<int, Scale*> new_ending_local_state_scales;
+	std::map<State*, Scale*> new_ending_score_state_scales;
 
 	std::vector<State*> new_score_states;
-	/**
-	 * - if branch, then keep states needed for decision and remove rest
-	 *   - not trained to be robust against branch
-	 * - if replace, then can keep all
-	 */
 	std::vector<std::vector<AbstractNode*>> new_score_state_nodes;
 	std::vector<std::vector<std::vector<int>>> new_score_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> new_score_state_node_contexts;
 	std::vector<std::vector<int>> new_score_state_obs_indexes;
+	std::map<State*, std::pair<Scale*, double>> new_score_state_scales;
+
+	double branch_existing_score;
+	int existing_branch_count;
+	double non_branch_existing_score;
+
+	double branch_new_score;
+	int new_branch_count;
+	double non_branch_new_score;
 
 	ObsExperiment* obs_experiment;
 
@@ -127,12 +129,16 @@ public:
 					 std::map<State*, StateStatus>& experiment_score_state_vals,
 					 std::vector<int>& test_obs_indexes,
 					 std::vector<double>& test_obs_vals,
-					 int& test_last_updated,
 					 RunHelper& run_helper,
 					 ScopeHistory* scope_history);
 	void unhook();
 	void backprop(double target_val,
 				  BranchExperimentHistory* history);
+
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 BranchExperimentHistory* history);
+	void train_existing_backprop(double target_val,
+								 BranchExperimentHistory* history);
 
 	void explore_activate(int& curr_node_id,
 						  Problem& problem,
@@ -161,12 +167,7 @@ public:
 						 int& exit_node_id,
 						 RunHelper& run_helper);
 
-	void measure_existing_activate(int& curr_node_id,
-								   Problem& problem,
-								   std::vector<ContextLayer>& context,
-								   int& exit_depth,
-								   int& exit_node_id,
-								   RunHelper& run_helper,
+	void measure_existing_activate(std::vector<ContextLayer>& context,
 								   BranchExperimentHistory* history);
 	void measure_existing_backprop(double target_val,
 								   BranchExperimentHistory* history);
@@ -190,12 +191,17 @@ class BranchExperimentHistory {
 public:
 	BranchExperiment* experiment;
 
+	std::map<int, StateStatus> starting_input_state_snapshots;
+	std::map<int, StateStatus> starting_local_state_snapshots;
+	std::map<State*, StateStatus> starting_score_state_snapshots;
+	std::map<State*, StateStatus> starting_experiment_score_state_snapshots;
+
 	std::vector<SequenceHistory*> sequence_histories;
 
 	double existing_predicted_score;
 
 	ScopeHistory* parent_scope_history;
-	std::map<State*, StateStatus> experiment_score_state_snapshots;
+	std::map<State*, StateStatus> ending_experiment_score_state_snapshots;
 
 	bool is_branch;
 

@@ -143,7 +143,8 @@ ScopeNode::ScopeNode(ifstream& input_file,
 		getline(input_file, network_index_line);
 		this->score_state_network_indexes.push_back(stoi(network_index_line));
 
-		this->score_state_defs.back()->nodes[this->score_state_network_indexes.back()] = this;
+		Scope* parent_scope = solution->scopes[this->score_state_scope_contexts.back()[0]];
+		parent_scope->score_state_nodes[this->score_state_defs.back()][this->score_state_network_indexes.back()] = this;
 	}
 
 	string next_node_id_line;

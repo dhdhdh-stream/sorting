@@ -7,8 +7,10 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "obs_experiment.h"
+#include "scale.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 
 using namespace std;
 
@@ -17,6 +19,18 @@ Scope::Scope() {
 }
 
 Scope::~Scope() {
+	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
+		delete this->input_state_scales[s_index];
+	}
+	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
+		delete this->local_state_scales[s_index];
+	}
+
+	for (map<State*, pair<Scale*, double>>::iterator it = this->score_state_scales.begin();
+			it != this->score_state_scales.end(); it++) {
+		delete it->second.first;
+	}
+
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
@@ -28,7 +42,22 @@ Scope::~Scope() {
 
 void Scope::save(ofstream& output_file) {
 	output_file << this->num_input_states << endl;
+	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
+		output_file << this->input_state_scales[s_index]->weight << endl;
+	}
+
 	output_file << this->num_local_states << endl;
+	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
+		output_file << this->local_state_scales[s_index]->weight << endl;
+	}
+
+	output_file << this->score_state_scales.size() << endl;
+	for (map<State*, pair<Scale*, double>>::iterator it = this->score_state_scales.begin();
+			it != this->score_state_scales.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second.first->weight << endl;
+		output_file << it->second.second;
+	}
 
 	output_file << this->nodes.size() << endl;
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
@@ -54,10 +83,42 @@ void Scope::load(ifstream& input_file,
 	string num_input_states_line;
 	getline(input_file, num_input_states_line);
 	this->num_input_states = stoi(num_input_states_line);
+	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
+		string weight_line;
+		getline(input_file, weight_line);
+		this->input_state_scales.push_back(new Scale(stod(weight_line)));
+	}
 
 	string num_local_states_line;
 	getline(input_file, num_local_states_line);
 	this->num_local_states = stoi(num_local_states_line);
+	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
+		string weight_line;
+		getline(input_file, weight_line);
+		this->local_state_scales.push_back(new Scale(stod(weight_line)));
+	}
+
+	string num_score_states_line;
+	getline(input_file, num_score_states_line);
+	int num_score_states = stoi(num_score_states_line);
+	for (int s_index = 0; s_index < num_score_states; s_index++) {
+		string id_line;
+		getline(input_file, id_line);
+		State* state = solution->states[stoi(id_line)];
+
+		string weight_line;
+		getline(input_file, weight_line);
+
+		string resolved_standard_deviation_line;
+		getline(input_file, resolved_standard_deviation_line);
+
+		this->score_state_scales[state] = {new Scale(stod(weight_line)), stod(resolved_standard_deviation_line)};
+
+		this->score_state_nodes[state] = vector<AbstractNode*>(state->networks.size());
+		/**
+		 * - filled in when nodes are loaded
+		 */
+	}
 
 	string num_nodes_line;
 	getline(input_file, num_nodes_line);
@@ -125,8 +186,6 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
-
-	this->test_last_updated = -1;
 
 	this->inner_branch_experiment_history = NULL;
 

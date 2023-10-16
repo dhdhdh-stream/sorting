@@ -4,14 +4,6 @@
 
 using namespace std;
 
-Scale::Scale() {
-	this->weight = 1.0;
-	this->weight_update = 0.0;
-
-	this->epoch_iter = 0;
-	this->average_update_size = 0.0;
-}
-
 Scale::Scale(double weight) {
 	this->weight = weight;
 	this->weight_update = 0.0;
