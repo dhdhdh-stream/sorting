@@ -139,7 +139,6 @@ void BranchExperiment::measure_new_activate(int& curr_node_id,
 											int& exit_node_id,
 											RunHelper& run_helper,
 											BranchExperimentHistory* history) {
-
 	double original_score = this->existing_average_score;
 	double branch_score = this->new_average_score;
 
@@ -282,6 +281,61 @@ void BranchExperiment::measure_new_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
+		this->state = BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH;
+		this->state_iter = 0;
+	}
+}
+
+void BranchExperiment::measure_pass_through_activate(
+		int& curr_node_id,
+		Problem& problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		int& exit_node_id,
+		RunHelper& run_helper) {
+	// don't worry about curr_depth for simplicity
+
+	// leave context.back().node_id as -1
+
+	context.push_back(ContextLayer());
+
+	context.back().scope_id = this->new_scope_id;
+
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		context.back().node_id = 1 + s_index;
+
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->branch_experiment_simple_activate(
+				problem);
+		} else {
+			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
+			this->best_sequences[s_index]->activate(problem,
+													context,
+													run_helper,
+													sequence_history);
+			delete sequence_history;
+		}
+
+		// don't need to worry about run_helper.node_index
+
+		context.back().node_id = -1;
+	}
+
+	context.pop_back();
+
+	if (this->best_exit_depth == 0) {
+		curr_node_id = this->best_exit_node_id;
+	} else {
+		exit_depth = this->best_exit_depth-1;
+		exit_node_id = this->best_exit_node_id;
+	}
+}
+
+void BranchExperiment::measure_pass_through_backprop(double target_val) {
+	this->pass_through_score += target_val;
+
+	this->state_iter++;
+	if (this->state_iter >= MEASURE_ITERS) {
 		eval();
 	}
 }
@@ -347,18 +401,20 @@ void BranchExperiment::eval() {
 		solution->save_for_display(display_file);
 		display_file.close();
 	} else {
-		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 
-		double combined_improvement = this->new_average_score - this->existing_average_score;
+		double pass_through_average_score = this->pass_through_score / MEASURE_ITERS;
+
+		double combined_improvement = pass_through_average_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(20000));
+			/ (score_standard_deviation / sqrt(MEASURE_ITERS));
 
+		cout << "pass_through_average_score: " << pass_through_average_score << endl;
 		cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		cout << "this->new_average_score: " << this->new_average_score << endl;
 		cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 		double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 		double misguess_standard_deviation = sqrt(parent->misguess_variance);
+		// 0.0001 rolling average variance approx. equal to 20000 average variance (?)
 		double misguess_improvement_t_score = misguess_improvement
 			/ (misguess_standard_deviation / sqrt(20000));
 

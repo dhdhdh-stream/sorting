@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	int seed = (unsigned)time(NULL);
+
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;

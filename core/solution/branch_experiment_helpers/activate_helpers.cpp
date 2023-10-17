@@ -97,6 +97,14 @@ void BranchExperiment::activate(int& curr_node_id,
 												 run_helper,
 												 history);
 							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+							measure_pass_through_activate(curr_node_id,
+														  problem,
+														  context,
+														  exit_depth,
+														  exit_node_id,
+														  run_helper);
+							break;
 						}
 					} else {
 						switch (this->state) {
@@ -110,6 +118,14 @@ void BranchExperiment::activate(int& curr_node_id,
 											exit_depth,
 											exit_node_id,
 											run_helper);
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+							simple_pass_through_activate(curr_node_id,
+														 problem,
+														 context,
+														 exit_depth,
+														 exit_node_id,
+														 run_helper);
 							break;
 						}
 					}
@@ -125,6 +141,14 @@ void BranchExperiment::activate(int& curr_node_id,
 										exit_depth,
 										exit_node_id,
 										run_helper);
+						break;
+					case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+						simple_pass_through_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper);
 						break;
 					}
 				}
@@ -202,6 +226,14 @@ void BranchExperiment::activate(int& curr_node_id,
 													 run_helper,
 													 history);
 								break;
+							case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+								measure_pass_through_activate(curr_node_id,
+															  problem,
+															  context,
+															  exit_depth,
+															  exit_node_id,
+															  run_helper);
+								break;
 							}
 						} else {
 							switch (this->state) {
@@ -215,6 +247,14 @@ void BranchExperiment::activate(int& curr_node_id,
 												exit_depth,
 												exit_node_id,
 												run_helper);
+								break;
+							case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+								simple_pass_through_activate(curr_node_id,
+															 problem,
+															 context,
+															 exit_depth,
+															 exit_node_id,
+															 run_helper);
 								break;
 							}
 						}
@@ -247,6 +287,14 @@ void BranchExperiment::activate(int& curr_node_id,
 									exit_depth,
 									exit_node_id,
 									run_helper);
+					break;
+				case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+					simple_pass_through_activate(curr_node_id,
+												 problem,
+												 context,
+												 exit_depth,
+												 exit_node_id,
+												 run_helper);
 					break;
 				}
 			}
@@ -425,6 +473,9 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
 		measure_new_backprop(target_val,
 							 history);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+		measure_pass_through_backprop(target_val);
 		break;
 	}
 }

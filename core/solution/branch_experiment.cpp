@@ -13,8 +13,8 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(vector<int>& scope_context,
-								   vector<int>& node_context) {
+BranchExperiment::BranchExperiment(vector<int> scope_context,
+								   vector<int> node_context) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 
@@ -45,6 +45,8 @@ BranchExperiment::BranchExperiment(vector<int>& scope_context,
 	this->branch_new_score = 0.0;
 	this->new_branch_count = 0;
 	this->non_branch_new_score = 0.0;
+
+	this->pass_through_score = 0.0;
 
 	this->obs_experiment = NULL;
 }

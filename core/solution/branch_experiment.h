@@ -28,7 +28,8 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 4;
 const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 5;
 const int BRANCH_EXPERIMENT_STATE_MEASURE_NEW = 6;
-const int BRANCH_EXPERIMENT_STATE_DONE = 7;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 7;
+const int BRANCH_EXPERIMENT_STATE_DONE = 8;
 
 class BranchExperimentHistory;
 class BranchExperiment {
@@ -109,10 +110,12 @@ public:
 	int new_branch_count;
 	double non_branch_new_score;
 
+	double pass_through_score;
+
 	ObsExperiment* obs_experiment;
 
-	BranchExperiment(std::vector<int>& scope_context,
-					 std::vector<int>& node_context);
+	BranchExperiment(std::vector<int> scope_context,
+					 std::vector<int> node_context);
 	~BranchExperiment();
 
 	void activate(int& curr_node_id,
@@ -166,6 +169,12 @@ public:
 						 int& exit_depth,
 						 int& exit_node_id,
 						 RunHelper& run_helper);
+	void simple_pass_through_activate(int& curr_node_id,
+									  Problem& problem,
+									  std::vector<ContextLayer>& context,
+									  int& exit_depth,
+									  int& exit_node_id,
+									  RunHelper& run_helper);
 
 	void measure_existing_activate(std::vector<ContextLayer>& context,
 								   BranchExperimentHistory* history);
@@ -181,6 +190,14 @@ public:
 							  BranchExperimentHistory* history);
 	void measure_new_backprop(double target_val,
 							  BranchExperimentHistory* history);
+
+	void measure_pass_through_activate(int& curr_node_id,
+									   Problem& problem,
+									   std::vector<ContextLayer>& context,
+									   int& exit_depth,
+									   int& exit_node_id,
+									   RunHelper& run_helper);
+	void measure_pass_through_backprop(double target_val);
 
 	void eval();
 	void new_branch();

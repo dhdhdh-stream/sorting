@@ -10,6 +10,7 @@
 #include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -139,51 +140,59 @@ void create_branch_experiment_helper(double& sum_weight,
 }
 
 void create_branch_experiment(ScopeHistory* root_history) {
-	double sum_weight = 0.0;
-	vector<double> weights;
-	vector<AbstractNode*> possible_nodes;
-	vector<vector<int>> possible_scope_contexts;
-	vector<vector<int>> possible_node_contexts;
-	vector<bool> possible_is_branch;
+	if (solution->scopes.size() == 1 && solution->scopes[0]->nodes.size() == 1) {
+		BranchExperiment* new_branch_experiment = new BranchExperiment(
+			vector<int>{0},
+			vector<int>{0});
+		ActionNode* action_node = (ActionNode*)solution->scopes[0]->nodes[0];
+		action_node->experiment = new_branch_experiment;
+	} else {
+		double sum_weight = 0.0;
+		vector<double> weights;
+		vector<AbstractNode*> possible_nodes;
+		vector<vector<int>> possible_scope_contexts;
+		vector<vector<int>> possible_node_contexts;
+		vector<bool> possible_is_branch;
 
-	create_branch_experiment_helper(sum_weight,
-									weights,
-									possible_nodes,
-									possible_scope_contexts,
-									possible_node_contexts,
-									possible_is_branch,
-									root_history);
+		create_branch_experiment_helper(sum_weight,
+										weights,
+										possible_nodes,
+										possible_scope_contexts,
+										possible_node_contexts,
+										possible_is_branch,
+										root_history);
 
-	if (possible_nodes.size() > 0) {
-		uniform_real_distribution<double> distribution(0.0, sum_weight);
-		double rand_val = distribution(generator);
-		for (int p_index = 0; p_index < (int)possible_nodes.size(); p_index++) {
-			rand_val -= weights[p_index];
-			if (rand_val <= 0.0) {
-				BranchExperiment* new_branch_experiment = new BranchExperiment(
-					possible_scope_contexts[p_index],
-					possible_node_contexts[p_index]);
+		if (possible_nodes.size() > 0) {
+			uniform_real_distribution<double> distribution(0.0, sum_weight);
+			double rand_val = distribution(generator);
+			for (int p_index = 0; p_index < (int)possible_nodes.size(); p_index++) {
+				rand_val -= weights[p_index];
+				if (rand_val <= 0.0) {
+					BranchExperiment* new_branch_experiment = new BranchExperiment(
+						possible_scope_contexts[p_index],
+						possible_node_contexts[p_index]);
 
-				if (possible_nodes[p_index]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)possible_nodes[p_index];
-					action_node->experiment = new_branch_experiment;
-				} else if (possible_nodes[p_index]->type == NODE_TYPE_SCOPE) {
-					ScopeNode* scope_node = (ScopeNode*)possible_nodes[p_index];
-					scope_node->experiment = new_branch_experiment;
-				} else {
-					BranchNode* branch_node = (BranchNode*)possible_nodes[p_index];
-					branch_node->experiment = new_branch_experiment;
-					branch_node->experiment_is_branch = possible_is_branch[p_index];
+					if (possible_nodes[p_index]->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)possible_nodes[p_index];
+						action_node->experiment = new_branch_experiment;
+					} else if (possible_nodes[p_index]->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)possible_nodes[p_index];
+						scope_node->experiment = new_branch_experiment;
+					} else {
+						BranchNode* branch_node = (BranchNode*)possible_nodes[p_index];
+						branch_node->experiment = new_branch_experiment;
+						branch_node->experiment_is_branch = possible_is_branch[p_index];
+					}
+
+					break;
 				}
-
-				break;
 			}
 		}
+		/**
+		 * - may fail if all nodes have branch_experiments, but context didn't match (?)
+		 * 
+		 * - may also fail if no score states
+		 *   - e.g., if have been deleted, or been converted into permanent states
+		 */
 	}
-	/**
-	 * - may fail if all nodes have branch_experiments, but context didn't match (?)
-	 * 
-	 * - may also fail if no score states
-	 *   - e.g., if have been deleted, or been converted into permanent states
-	 */
 }

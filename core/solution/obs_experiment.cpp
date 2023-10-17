@@ -318,8 +318,7 @@ void ObsExperiment::scope_eval(Scope* parent) {
 	cout << "impact: " << sqrt(this->resolved_variance) << endl;
 	cout << endl;
 
-	// if (improvement_t_score > 2.326) {	// >99%
-	if (improvement_t_score > 1.282) {	// >90%
+	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
@@ -392,8 +391,7 @@ void ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment) 
 	cout << "impact: " << sqrt(this->resolved_variance) << endl;
 	cout << endl;
 
-	// if (improvement_t_score > 2.326) {	// >99%
-	if (improvement_t_score > 1.282) {	// >90%
+	if (improvement_t_score > 2.326) {	// >99%
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
