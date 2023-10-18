@@ -82,6 +82,8 @@ public:
 	int best_exit_depth;
 	int best_exit_node_id;
 
+	bool recursion_protection;
+
 	double new_average_score;
 	double new_average_misguess;
 	double new_misguess_variance;

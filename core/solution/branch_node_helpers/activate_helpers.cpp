@@ -32,78 +32,83 @@ void BranchNode::activate(int& curr_node_id,
 	}
 
 	if (matches_context) {
-		if (this->branch_is_pass_through) {
-			// is_branch == true
-			curr_node_id = this->branch_next_node_id;
+		if (this->recursion_protection
+				&& run_helper.recursion_protection_flags.find(this) != run_helper.recursion_protection_flags.end()) {
+			// is_branch == false
+			curr_node_id = this->original_next_node_id;
 		} else {
-			BranchNodeHistory* history = new BranchNodeHistory(this);
-			node_histories.push_back(history);
+			if (this->branch_is_pass_through) {
+				// is_branch == true
+				curr_node_id = this->branch_next_node_id;
 
-			double original_score = this->original_score_mod;
-			double branch_score = this->branch_score_mod;
+				if (this->recursion_protection) {
+					context.back().added_recursion_protection_flags.push_back(this);
+					run_helper.recursion_protection_flags.insert(this);
+				}
+			} else {
+				BranchNodeHistory* history = new BranchNodeHistory(this);
+				node_histories.push_back(history);
 
-			for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
-				if (this->decision_state_is_local[s_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->decision_state_indexes[s_index]);
-					if (it != context.back().local_state_vals.end()) {
-						StateNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							original_score += this->decision_original_weights[s_index] * normalized;
-							branch_score += this->decision_branch_weights[s_index] * normalized;
-						} else {
-							original_score += this->decision_original_weights[s_index] * it->second.val;
-							branch_score += this->decision_branch_weights[s_index] * it->second.val;
+				double original_score = this->original_score_mod;
+				double branch_score = this->branch_score_mod;
+
+				for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
+					if (this->decision_state_is_local[s_index]) {
+						map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->decision_state_indexes[s_index]);
+						if (it != context.back().local_state_vals.end()) {
+							StateNetwork* last_network = it->second.last_network;
+							if (last_network != NULL) {
+								double normalized = (it->second.val - last_network->ending_mean)
+									/ last_network->ending_standard_deviation;
+								original_score += this->decision_original_weights[s_index] * normalized;
+								branch_score += this->decision_branch_weights[s_index] * normalized;
+							} else {
+								original_score += this->decision_original_weights[s_index] * it->second.val;
+								branch_score += this->decision_branch_weights[s_index] * it->second.val;
+							}
 						}
-					}
-				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->decision_state_indexes[s_index]);
-					if (it != context.back().input_state_vals.end()) {
-						StateNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							original_score += this->decision_original_weights[s_index] * normalized;
-							branch_score += this->decision_branch_weights[s_index] * normalized;
-						} else {
-							original_score += this->decision_original_weights[s_index] * it->second.val;
-							branch_score += this->decision_branch_weights[s_index] * it->second.val;
+					} else {
+						map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->decision_state_indexes[s_index]);
+						if (it != context.back().input_state_vals.end()) {
+							StateNetwork* last_network = it->second.last_network;
+							if (last_network != NULL) {
+								double normalized = (it->second.val - last_network->ending_mean)
+									/ last_network->ending_standard_deviation;
+								original_score += this->decision_original_weights[s_index] * normalized;
+								branch_score += this->decision_branch_weights[s_index] * normalized;
+							} else {
+								original_score += this->decision_original_weights[s_index] * it->second.val;
+								branch_score += this->decision_branch_weights[s_index] * it->second.val;
+							}
 						}
 					}
 				}
-			}
 
-			bool is_branch;
-			if (branch_score > original_score) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
+				bool is_branch;
+				if (branch_score > original_score) {
+					is_branch = true;
 
-			if (is_branch) {
-				history->obs_snapshot = -1.0;
-			} else {
-				history->obs_snapshot = 1.0;
-			}
+					if (this->recursion_protection) {
+						context.back().added_recursion_protection_flags.push_back(this);
+						run_helper.recursion_protection_flags.insert(this);
+					}
+				} else {
+					is_branch = false;
+				}
 
-			if (run_helper.phase == RUN_PHASE_EXPLORE) {
-				for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-					if (this->state_is_local[n_index]) {
-						map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
-						if (it == context.back().local_state_vals.end()) {
-							it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
-						}
-						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-						StateStatus state_impact;
-						state_network->activate(history->obs_snapshot,
-												it->second,
-												state_impact);
-						history->state_indexes.push_back(n_index);
-						history->state_impacts.push_back(state_impact);
-					} else {
-						map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
-						if (it != context.back().input_state_vals.end()) {
+				if (is_branch) {
+					history->obs_snapshot = -1.0;
+				} else {
+					history->obs_snapshot = 1.0;
+				}
+
+				if (run_helper.phase == RUN_PHASE_EXPLORE) {
+					for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+						if (this->state_is_local[n_index]) {
+							map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
+							if (it == context.back().local_state_vals.end()) {
+								it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
+							}
 							StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 							StateStatus state_impact;
 							state_network->activate(history->obs_snapshot,
@@ -111,66 +116,102 @@ void BranchNode::activate(int& curr_node_id,
 													state_impact);
 							history->state_indexes.push_back(n_index);
 							history->state_impacts.push_back(state_impact);
-						}
-					}
-				}
-
-				for (int n_index = 0; n_index < (int)this->score_state_defs.size(); n_index++) {
-					bool matches_context = true;
-					if (this->score_state_scope_contexts[n_index].size() > context.size()) {
-						matches_context = false;
-					} else {
-						for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[n_index].size()-1; c_index++) {
-							if (this->score_state_scope_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].scope_id
-									|| this->score_state_node_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].node_id) {
-								matches_context = false;
-								break;
+						} else {
+							map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
+							if (it != context.back().input_state_vals.end()) {
+								StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+								StateStatus state_impact;
+								state_network->activate(history->obs_snapshot,
+														it->second,
+														state_impact);
+								history->state_indexes.push_back(n_index);
+								history->state_impacts.push_back(state_impact);
 							}
 						}
 					}
 
-					if (matches_context) {
-						map<State*, StateStatus>::iterator it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.find(this->score_state_defs[n_index]);
-						if (it == context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.end()) {
-							it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.insert({this->score_state_defs[n_index], StateStatus()}).first;
+					for (int n_index = 0; n_index < (int)this->score_state_defs.size(); n_index++) {
+						bool matches_context = true;
+						if (this->score_state_scope_contexts[n_index].size() > context.size()) {
+							matches_context = false;
+						} else {
+							for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[n_index].size()-1; c_index++) {
+								if (this->score_state_scope_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].scope_id
+										|| this->score_state_node_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].node_id) {
+									matches_context = false;
+									break;
+								}
+							}
 						}
-						StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
-						StateStatus score_state_impact;
-						state_network->activate(history->obs_snapshot,
-												it->second,
-												score_state_impact);
-						history->score_state_indexes.push_back(n_index);
-						history->score_state_impacts.push_back(score_state_impact);
+
+						if (matches_context) {
+							map<State*, StateStatus>::iterator it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.find(this->score_state_defs[n_index]);
+							if (it == context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.end()) {
+								it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.insert({this->score_state_defs[n_index], StateStatus()}).first;
+							}
+							StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
+							StateStatus score_state_impact;
+							state_network->activate(history->obs_snapshot,
+													it->second,
+													score_state_impact);
+							history->score_state_indexes.push_back(n_index);
+							history->score_state_impacts.push_back(score_state_impact);
+						}
 					}
-				}
-			} else {
-				for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-					if (this->state_is_local[n_index]) {
-						map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
-						if (it == context.back().local_state_vals.end()) {
-							it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
-						}
-						StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-						state_network->activate(history->obs_snapshot,
-												it->second);
-					} else {
-						map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
-						if (it != context.back().input_state_vals.end()) {
+				} else {
+					for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+						if (this->state_is_local[n_index]) {
+							map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
+							if (it == context.back().local_state_vals.end()) {
+								it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
+							}
 							StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+							state_network->activate(history->obs_snapshot,
+													it->second);
+						} else {
+							map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
+							if (it != context.back().input_state_vals.end()) {
+								StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+								state_network->activate(history->obs_snapshot,
+														it->second);
+							}
+						}
+					}
+
+					for (int n_index = 0; n_index < (int)this->score_state_defs.size(); n_index++) {
+						bool matches_context = true;
+						if (this->score_state_scope_contexts[n_index].size() > context.size()) {
+							matches_context = false;
+						} else {
+							for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[n_index].size()-1; c_index++) {
+								if (this->score_state_scope_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].scope_id
+										|| this->score_state_node_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].node_id) {
+									matches_context = false;
+									break;
+								}
+							}
+						}
+
+						if (matches_context) {
+							map<State*, StateStatus>::iterator it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.find(this->score_state_defs[n_index]);
+							if (it == context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.end()) {
+								it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.insert({this->score_state_defs[n_index], StateStatus()}).first;
+							}
+							StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
 							state_network->activate(history->obs_snapshot,
 													it->second);
 						}
 					}
 				}
 
-				for (int n_index = 0; n_index < (int)this->score_state_defs.size(); n_index++) {
+				for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
 					bool matches_context = true;
-					if (this->score_state_scope_contexts[n_index].size() > context.size()) {
+					if (this->experiment_hook_score_state_scope_contexts[n_index].size() > context.size()) {
 						matches_context = false;
 					} else {
-						for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[n_index].size()-1; c_index++) {
-							if (this->score_state_scope_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].scope_id
-									|| this->score_state_node_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].node_id) {
+						for (int c_index = 0; c_index < (int)this->experiment_hook_score_state_scope_contexts[n_index].size()-1; c_index++) {
+							if (this->experiment_hook_score_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].scope_id
+									|| this->experiment_hook_score_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].node_id) {
 								matches_context = false;
 								break;
 							}
@@ -178,101 +219,72 @@ void BranchNode::activate(int& curr_node_id,
 					}
 
 					if (matches_context) {
-						map<State*, StateStatus>::iterator it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.find(this->score_state_defs[n_index]);
-						if (it == context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.end()) {
-							it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.insert({this->score_state_defs[n_index], StateStatus()}).first;
+						map<State*, StateStatus>::iterator it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()]
+							.experiment_score_state_vals.find(this->experiment_hook_score_state_defs[n_index]);
+						if (it == context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals.end()) {
+							it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals
+								.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
 						}
-						StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
+						StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
 						state_network->activate(history->obs_snapshot,
 												it->second);
 					}
 				}
-			}
 
-			for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
-				bool matches_context = true;
-				if (this->experiment_hook_score_state_scope_contexts[n_index].size() > context.size()) {
-					matches_context = false;
-				} else {
-					for (int c_index = 0; c_index < (int)this->experiment_hook_score_state_scope_contexts[n_index].size()-1; c_index++) {
-						if (this->experiment_hook_score_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].scope_id
-								|| this->experiment_hook_score_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].node_id) {
-							matches_context = false;
-							break;
+				for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
+					bool matches_context = true;
+					if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
+						matches_context = false;
+					} else {
+						for (int c_index = 0; c_index < (int)this->test_hook_scope_contexts[h_index].size()-1; c_index++) {
+							if (this->test_hook_scope_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].scope_id
+									|| this->test_hook_node_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].node_id) {
+								matches_context = false;
+								break;
+							}
 						}
 					}
-				}
 
-				if (matches_context) {
-					map<State*, StateStatus>::iterator it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()]
-						.experiment_score_state_vals.find(this->experiment_hook_score_state_defs[n_index]);
-					if (it == context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals.end()) {
-						it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals
-							.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
+					if (matches_context) {
+						context[context.size()-this->test_hook_scope_contexts[h_index].size()]
+							.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
+						context[context.size()-this->test_hook_scope_contexts[h_index].size()]
+							.scope_history->test_obs_vals.push_back(history->obs_snapshot);
 					}
-					StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-					state_network->activate(history->obs_snapshot,
-											it->second);
 				}
-			}
 
-			for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
-				bool matches_context = true;
-				if (this->test_hook_scope_contexts[h_index].size() > context.size()) {
-					matches_context = false;
+				if (is_branch) {
+					curr_node_id = this->branch_next_node_id;
+
+					if (this->experiment != NULL && this->experiment_is_branch) {
+						context.back().node_id = -1;
+
+						BranchExperimentHistory* branch_experiment_history = NULL;
+						this->experiment->activate(curr_node_id,
+												   problem,
+												   context,
+												   exit_depth,
+												   exit_node_id,
+												   run_helper,
+												   branch_experiment_history);
+						history->branch_experiment_history = branch_experiment_history;
+					}
 				} else {
-					for (int c_index = 0; c_index < (int)this->test_hook_scope_contexts[h_index].size()-1; c_index++) {
-						if (this->test_hook_scope_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].scope_id
-								|| this->test_hook_node_contexts[h_index][c_index] != context[context.size()-this->test_hook_scope_contexts[h_index].size()+c_index].node_id) {
-							matches_context = false;
-							break;
-						}
+					curr_node_id = this->original_next_node_id;
+
+					if (this->experiment != NULL && !this->experiment_is_branch) {
+						context.back().node_id = -1;
+
+						BranchExperimentHistory* branch_experiment_history = NULL;
+						this->experiment->activate(curr_node_id,
+												   problem,
+												   context,
+												   exit_depth,
+												   exit_node_id,
+												   run_helper,
+												   branch_experiment_history);
+						history->branch_experiment_history = branch_experiment_history;
 					}
-				}
-
-				if (matches_context) {
-					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-						.scope_history->test_obs_indexes.push_back(this->test_hook_indexes[h_index]);
-					context[context.size()-this->test_hook_scope_contexts[h_index].size()]
-						.scope_history->test_obs_vals.push_back(history->obs_snapshot);
-				}
-			}
-
-			if (is_branch) {
-				curr_node_id = this->branch_next_node_id;
-
-				if (this->experiment != NULL && this->experiment_is_branch) {
-					run_helper.node_index++;
-
-					context.back().node_id = -1;
-
-					BranchExperimentHistory* branch_experiment_history = NULL;
-					this->experiment->activate(curr_node_id,
-											   problem,
-											   context,
-											   exit_depth,
-											   exit_node_id,
-											   run_helper,
-											   branch_experiment_history);
-					history->branch_experiment_history = branch_experiment_history;
-				}
-			} else {
-				curr_node_id = this->original_next_node_id;
-
-				if (this->experiment != NULL && !this->experiment_is_branch) {
-					run_helper.node_index++;
-
-					context.back().node_id = -1;
-
-					BranchExperimentHistory* branch_experiment_history = NULL;
-					this->experiment->activate(curr_node_id,
-											   problem,
-											   context,
-											   exit_depth,
-											   exit_node_id,
-											   run_helper,
-											   branch_experiment_history);
-					history->branch_experiment_history = branch_experiment_history;
 				}
 			}
 		}

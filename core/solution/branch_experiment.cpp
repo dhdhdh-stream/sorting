@@ -33,7 +33,14 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	solution->scope_counter++;
 
 	this->best_surprise = 1.0;
-	
+
+	uniform_int_distribution<int> recursion_protection_distribution(0, 4);
+	if (recursion_protection_distribution(generator) != 0) {
+		this->recursion_protection = true;
+	} else {
+		this->recursion_protection = false;
+	}
+
 	this->new_average_score = parent_scope->average_score;
 	this->new_average_misguess = parent_scope->average_misguess;
 	this->new_misguess_variance = parent_scope->misguess_variance;

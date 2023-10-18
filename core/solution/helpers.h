@@ -39,7 +39,6 @@ void random_exit(std::vector<int>& starting_scope_context,
 
 ScopeNode* finalize_sequence(std::vector<int>& scope_context,
 							 std::vector<int>& node_context,
-							 ScopeNode* new_scope_node,
 							 Sequence* new_sequence,
 							 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 							 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
@@ -49,7 +48,7 @@ void finalize_existing_state(Scope* parent_scope,
 							 double new_original_weight,
 							 double new_branch_weight);
 void finalize_new_state(Scope* parent_scope,
-						ScopeNode* new_scope_node,
+						std::map<int, ScopeNode*>& sequence_scope_node_mappings,
 						State* score_state,
 						std::vector<AbstractNode*>& nodes,
 						std::vector<std::vector<int>>& scope_contexts,

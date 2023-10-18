@@ -19,12 +19,6 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 									   int& exit_depth,
 									   int& exit_node_id,
 									   RunHelper& run_helper) {
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_depth = true;
-		return;
-	}
-	run_helper.curr_depth++;
-
 	double original_score = this->existing_average_score;
 	double branch_score = this->new_average_score;
 
@@ -112,14 +106,8 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 	}
 
 	if (branch_score > original_score) {
-		// leave context.back().node_id as -1
-
-		context.push_back(ContextLayer());
-
-		context.back().scope_id = this->new_scope_id;
-
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			context.back().node_id = 1 + s_index;
+			// leave context.back().node_id as -1
 
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_actions[s_index]->branch_experiment_simple_activate(
@@ -132,13 +120,7 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 														sequence_history);
 				delete sequence_history;
 			}
-
-			// don't need to worry about run_helper.node_index
-
-			context.back().node_id = -1;
 		}
-
-		context.pop_back();
 
 		if (this->best_exit_depth == 0) {
 			curr_node_id = this->best_exit_node_id;
@@ -147,8 +129,6 @@ void BranchExperiment::simple_activate(int& curr_node_id,
 			exit_node_id = this->best_exit_node_id;
 		}
 	}
-
-	run_helper.curr_depth--;
 }
 
 void BranchExperiment::simple_pass_through_activate(int& curr_node_id,
@@ -157,20 +137,8 @@ void BranchExperiment::simple_pass_through_activate(int& curr_node_id,
 													int& exit_depth,
 													int& exit_node_id,
 													RunHelper& run_helper) {
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_depth = true;
-		return;
-	}
-	run_helper.curr_depth++;
-
-	// leave context.back().node_id as -1
-
-	context.push_back(ContextLayer());
-
-	context.back().scope_id = this->new_scope_id;
-
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		context.back().node_id = 1 + s_index;
+		// leave context.back().node_id as -1
 
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			this->best_actions[s_index]->branch_experiment_simple_activate(
@@ -183,13 +151,7 @@ void BranchExperiment::simple_pass_through_activate(int& curr_node_id,
 													sequence_history);
 			delete sequence_history;
 		}
-
-		// don't need to worry about run_helper.node_index
-
-		context.back().node_id = -1;
 	}
-
-	context.pop_back();
 
 	if (this->best_exit_depth == 0) {
 		curr_node_id = this->best_exit_node_id;
@@ -197,6 +159,4 @@ void BranchExperiment::simple_pass_through_activate(int& curr_node_id,
 		exit_depth = this->best_exit_depth-1;
 		exit_node_id = this->best_exit_node_id;
 	}
-
-	run_helper.curr_depth--;
 }

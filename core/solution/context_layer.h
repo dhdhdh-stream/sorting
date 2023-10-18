@@ -5,6 +5,7 @@
 
 #include "state_status.h"
 
+class BranchNode;
 class ScopeHistory;
 class State;
 
@@ -21,6 +22,8 @@ public:
 	 */
 	std::map<int, StateStatus> input_state_vals;
 	std::map<int, StateStatus> local_state_vals;
+
+	std::vector<BranchNode*> added_recursion_protection_flags;
 
 	std::map<State*, StateStatus> score_state_vals;
 	std::map<State*, StateStatus> experiment_score_state_vals;

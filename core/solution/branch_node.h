@@ -46,6 +46,8 @@ public:
 	int branch_next_node_id;
 	int original_next_node_id;
 
+	bool recursion_protection;
+
 	std::vector<bool> state_is_local;
 	std::vector<int> state_indexes;
 	std::vector<State*> state_defs;
@@ -92,7 +94,8 @@ public:
 								  Sequence* new_sequence,
 								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
 								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes);
+								  std::vector<AbstractNode*>& new_nodes,
+								  RunHelper& run_helper);
 
 	void random_activate(bool& is_branch,
 						 std::vector<int>& scope_context,

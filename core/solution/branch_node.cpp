@@ -78,6 +78,10 @@ BranchNode::BranchNode(ifstream& input_file,
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
 
+	string recursion_protection_line;
+	getline(input_file, recursion_protection_line);
+	this->recursion_protection = stoi(recursion_protection_line);
+
 	string state_defs_size_line;
 	getline(input_file, state_defs_size_line);
 	int state_defs_size = stoi(state_defs_size_line);
@@ -158,6 +162,8 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->branch_next_node_id << endl;
 	output_file << this->original_next_node_id << endl;
+
+	output_file << this->recursion_protection << endl;
 
 	output_file << this->state_defs.size() << endl;
 	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {

@@ -58,8 +58,6 @@ void Scope::activate(vector<int>& starting_node_ids,
 									 run_helper,
 									 history->node_histories[0]);
 
-		run_helper.node_index++;
-
 		context.back().node_id = -1;
 	}
 
@@ -152,8 +150,6 @@ void Scope::node_activate_helper(int iter_index,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
-
-	run_helper.node_index++;
 
 	context.back().node_id = -1;
 }

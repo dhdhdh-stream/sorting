@@ -2,6 +2,7 @@
 #define RUN_HELPER_H
 
 #include <map>
+#include <set>
 #include <vector>
 
 class BranchExperiment;
@@ -12,8 +13,6 @@ class RunHelper {
 public:
 	int phase;
 
-	int node_index;
-
 	int curr_depth;	// need to track separate from context as context resets for experiments
 	int max_depth;
 	bool exceeded_depth;
@@ -22,6 +21,8 @@ public:
 	 * - don't need to track running tally of predicted score
 	 *   - instead, on experiment, calculate from partial and resolved score_state_vals
 	 */
+
+	std::set<BranchNode*> recursion_protection_flags;
 
 	std::vector<ScopeHistory*> scope_histories;
 
@@ -39,8 +40,6 @@ public:
 	 */
 
 	RunHelper() {
-		this->node_index = 0;
-
 		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;

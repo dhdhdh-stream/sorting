@@ -337,6 +337,10 @@ Sequence* create_root_sequence(Problem& problem,
 
 	delete inner_scope_history;
 
+	for (int n_index = 0; n_index < (int)temp_context.back().added_recursion_protection_flags.size(); n_index++) {
+		run_helper.recursion_protection_flags.erase(temp_context.back().added_recursion_protection_flags[n_index]);
+	}
+
 	if (temp_context.back().input_state_vals.size() > 0) {
 		vector<int> possible_output_scope_depths;
 		vector<bool> possible_output_outer_is_local;

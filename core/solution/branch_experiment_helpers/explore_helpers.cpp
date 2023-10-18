@@ -88,11 +88,6 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 		this->curr_exit_node_id = new_exit_node_id;
 	}
 
-	context.push_back(ContextLayer());
-
-	context.back().scope_id = this->new_scope_id;
-	context.back().node_id = -1;
-
 	{
 		// new path
 		geometric_distribution<int> geometric_distribution(0.3);
@@ -166,12 +161,12 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 					if (containing_scope == NULL) {
 						sequence = create_root_sequence(problem,
 														context,
-														(int)this->scope_context.size()+1,
+														(int)this->scope_context.size(),
 														run_helper);
 					} else {
 						sequence = create_sequence(problem,
 												   context,
-												   (int)this->scope_context.size()+1,
+												   (int)this->scope_context.size(),
 												   containing_scope,
 												   run_helper);
 					}
@@ -228,8 +223,6 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 			}
 		}
 	}
-
-	context.pop_back();
 
 	{
 		if (this->curr_exit_depth == 0) {

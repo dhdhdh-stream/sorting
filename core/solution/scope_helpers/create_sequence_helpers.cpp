@@ -126,7 +126,8 @@ void Scope::node_create_sequence_activate_helper(
 											  new_sequence,
 											  state_mappings,
 											  new_num_input_states,
-											  new_nodes);
+											  new_nodes,
+											  run_helper);
 
 		if (is_branch) {
 			curr_node_id = branch_node->branch_next_node_id;

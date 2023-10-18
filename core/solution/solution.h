@@ -1,3 +1,8 @@
+// TODO: have to reduce scoping for efficiency
+// - which kind of means need a way to prevent infinite recursion
+// - so can have a mostly flat structure, and recurse on self, without going infinite
+//   - can add a flag to run helper on branch taken, and check if already set
+
 #ifndef SOLUTION_H
 #define SOLUTION_H
 

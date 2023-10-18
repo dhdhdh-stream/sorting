@@ -117,6 +117,9 @@ void ScopeNode::activate(int& curr_node_id,
 		history->obs_snapshots = context.back().local_state_vals;
 	}
 
+	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+	}
 	context.pop_back();
 
 	if (!history->is_early_exit) {
@@ -292,8 +295,6 @@ void ScopeNode::activate(int& curr_node_id,
 		curr_node_id = this->next_node_id;
 
 		if (this->experiment != NULL) {
-			run_helper.node_index++;
-
 			context.back().node_id = -1;
 
 			BranchExperimentHistory* branch_experiment_history = NULL;
@@ -407,6 +408,9 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		history->obs_snapshots = context.back().local_state_vals;
 	}
 
+	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+	}
 	context.pop_back();
 
 	if (!history->is_early_exit) {
@@ -582,8 +586,6 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 		curr_node_id = this->next_node_id;
 
 		if (this->experiment != NULL) {
-			run_helper.node_index++;
-
 			context.back().node_id = -1;
 
 			BranchExperimentHistory* branch_experiment_history = NULL;

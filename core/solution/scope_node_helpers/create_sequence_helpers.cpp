@@ -257,6 +257,9 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 			obs_snapshots = context.back().local_state_vals;
 		}
 
+		for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+			run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+		}
 		context.pop_back();
 
 		// no need to set context.back().node_id
@@ -521,6 +524,9 @@ void ScopeNode::halfway_create_sequence_activate(
 			obs_snapshots = context.back().local_state_vals;
 		}
 
+		for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+			run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+		}
 		context.pop_back();
 
 		if (!is_early_exit) {
@@ -664,6 +670,9 @@ void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
 
 	map<int, StateStatus> obs_snapshots = context.back().local_state_vals;
 
+	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+	}
 	context.pop_back();
 
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {

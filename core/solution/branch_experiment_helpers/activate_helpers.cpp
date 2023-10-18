@@ -275,27 +275,29 @@ void BranchExperiment::activate(int& curr_node_id,
 			}
 		} else {
 			// run_helper.phase == RUN_PHASE_NEW
-			if (run_helper.selected_branch_experiment == this) {
-				switch (this->state) {
-				case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
-				case BRANCH_EXPERIMENT_STATE_TRAIN:
-				case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
-				case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
-					simple_activate(curr_node_id,
-									problem,
-									context,
-									exit_depth,
-									exit_node_id,
-									run_helper);
-					break;
-				case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
-					simple_pass_through_activate(curr_node_id,
-												 problem,
-												 context,
-												 exit_depth,
-												 exit_node_id,
-												 run_helper);
-					break;
+			if (!this->recursion_protection) {
+				if (run_helper.selected_branch_experiment == this) {
+					switch (this->state) {
+					case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
+					case BRANCH_EXPERIMENT_STATE_TRAIN:
+					case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+					case BRANCH_EXPERIMENT_STATE_MEASURE_NEW:
+						simple_activate(curr_node_id,
+										problem,
+										context,
+										exit_depth,
+										exit_node_id,
+										run_helper);
+						break;
+					case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+						simple_pass_through_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper);
+						break;
+					}
 				}
 			}
 		}

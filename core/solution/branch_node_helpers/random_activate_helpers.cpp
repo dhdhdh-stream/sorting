@@ -23,6 +23,8 @@ void BranchNode::random_activate(bool& is_branch,
 	}
 
 	if (matches_context) {
+		// don't worry about recursion_protection
+
 		if (this->branch_is_pass_through) {
 			is_branch = true;
 
