@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	int seed = (unsigned)time(NULL);
-
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -54,19 +53,6 @@ int main(int argc, char* argv[]) {
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
 	// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
 	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_exit_depth = 0;
-	// explore_node->experiment->best_exit_node_id = -1;
-
-	// Scope* containing_scope = solution->scopes[1];
-	// ActionNode* explore_node = (ActionNode*)containing_scope->nodes[1];
-	// vector<int> experiment_scope_context{1};
-	// vector<int> experiment_node_context{1};
-	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
-	// 												experiment_node_context);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
-	// explore_node->experiment->best_sequences.push_back(NULL);
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
 	// explore_node->experiment->best_actions.push_back(new ActionNode());
 	// explore_node->experiment->best_actions.back()->action = Action(ACTION_LEFT);
@@ -74,9 +60,23 @@ int main(int argc, char* argv[]) {
 	// explore_node->experiment->best_exit_depth = 0;
 	// explore_node->experiment->best_exit_node_id = -1;
 
-	// ScopeNode* explore_node = (ScopeNode*)root->nodes[2];
+	// ActionNode* explore_node = (ActionNode*)root->nodes[2];
 	// vector<int> experiment_scope_context{0};
 	// vector<int> experiment_node_context{2};
+	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
+	// 												experiment_node_context);
+	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+	// explore_node->experiment->best_actions.push_back(new ActionNode());
+	// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
+	// explore_node->experiment->best_sequences.push_back(NULL);
+	// explore_node->experiment->best_exit_depth = 0;
+	// explore_node->experiment->best_exit_node_id = 3;
+
+	// // ActionNode* explore_node = (ActionNode*)root->nodes[3];
+	// ActionNode* explore_node = (ActionNode*)root->nodes[6];
+	// vector<int> experiment_scope_context{0};
+	// // vector<int> experiment_node_context{3};
+	// vector<int> experiment_node_context{6};
 	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
 	// 												experiment_node_context);
 	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_SEQUENCE);
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 	// explore_scope->num_local_states = 0;
 	// ScopeNode* new_explore_scope_node = new ScopeNode();
 	// new_explore_scope_node->id = 0;
-	// new_explore_scope_node->inner_scope = solution->scopes[1];
+	// new_explore_scope_node->inner_scope = solution->scopes[0];
 	// new_explore_scope_node->starting_node_ids = vector<int>{0};
 	// new_explore_scope_node->next_node_id = -1;
 	// explore_scope->nodes.push_back(new_explore_scope_node);
@@ -101,6 +101,7 @@ int main(int argc, char* argv[]) {
 	// explore_node->experiment->best_sequences.push_back(explore_sequence);
 	// explore_node->experiment->best_exit_depth = 0;
 	// explore_node->experiment->best_exit_node_id = -1;
+	// explore_node->experiment->recursion_protection = true;
 
 	int iter_index = 0;
 	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();

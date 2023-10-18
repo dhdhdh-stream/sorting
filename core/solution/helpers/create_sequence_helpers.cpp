@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_stub_node.h"
 #include "globals.h"
+#include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "sequence.h"
@@ -789,6 +790,9 @@ Sequence* create_sequence(Problem& problem,
 	// don't set id/increment scope_counter until train
 
 	new_scope->num_input_states = new_num_input_states;
+	for (int s_index = 0; s_index < new_num_input_states; s_index++) {
+		new_scope->input_state_scales.push_back(new Scale(0.0));
+	}
 	new_scope->num_local_states = 0;
 
 	new_scope->nodes = new_nodes;

@@ -323,6 +323,9 @@ void BranchExperiment::eval() {
 	}
 	cout << endl;
 
+	cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+	cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+
 	Scope* parent = solution->scopes[this->scope_context[0]];
 
 	double score_standard_deviation = sqrt(parent->score_variance);
@@ -373,7 +376,6 @@ void BranchExperiment::eval() {
 		solution->save_for_display(display_file);
 		display_file.close();
 	} else {
-
 		double pass_through_average_score = this->pass_through_score / MEASURE_ITERS;
 
 		double combined_improvement = pass_through_average_score - this->existing_average_score;
@@ -562,7 +564,8 @@ void BranchExperiment::new_branch() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
-	new_branch_node->recursion_protection = this->recursion_protection;
+	new_branch_node->recursion_protection = this->recursion_protection && this->need_recursion_protection;
+	cout << "new_branch_node->recursion_protection: " << new_branch_node->recursion_protection << endl;
 
 	map<int, ScopeNode*> sequence_scope_node_mappings;
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -741,7 +744,8 @@ void BranchExperiment::new_pass_through() {
 	}
 	new_branch_node->branch_next_node_id = (int)starting_scope->nodes.size();
 
-	new_branch_node->recursion_protection = this->recursion_protection;
+	new_branch_node->recursion_protection = this->recursion_protection && this->need_recursion_protection;
+	cout << "new_branch_node->recursion_protection: " << new_branch_node->recursion_protection << endl;
 
 	map<int, ScopeNode*> sequence_scope_node_mappings;
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -811,7 +815,7 @@ void BranchExperiment::new_pass_through() {
 				action_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
 				for (int c_index = 0; c_index < (int)action_node->score_state_node_contexts.back().size()-1; c_index++) {
 					if (action_node->score_state_node_contexts.back()[c_index] == -1) {
-						int inner_scope_id = action_node->score_state_node_contexts.back()[c_index+1];
+						int inner_scope_id = action_node->score_state_scope_contexts.back()[c_index+1];
 						ScopeNode* new_sequence_scope_node = sequence_scope_node_mappings[inner_scope_id];
 						action_node->score_state_node_contexts.back()[c_index] = new_sequence_scope_node->id;
 						break;
@@ -829,7 +833,7 @@ void BranchExperiment::new_pass_through() {
 				scope_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
 				for (int c_index = 0; c_index < (int)scope_node->score_state_node_contexts.back().size()-1; c_index++) {
 					if (scope_node->score_state_node_contexts.back()[c_index] == -1) {
-						int inner_scope_id = scope_node->score_state_node_contexts.back()[c_index+1];
+						int inner_scope_id = scope_node->score_state_scope_contexts.back()[c_index+1];
 						ScopeNode* new_sequence_scope_node = sequence_scope_node_mappings[inner_scope_id];
 						scope_node->score_state_node_contexts.back()[c_index] = new_sequence_scope_node->id;
 						break;
@@ -845,7 +849,7 @@ void BranchExperiment::new_pass_through() {
 				branch_node->score_state_node_contexts.push_back(this->new_score_state_node_contexts[s_index][n_index]);
 				for (int c_index = 0; c_index < (int)branch_node->score_state_node_contexts.back().size()-1; c_index++) {
 					if (branch_node->score_state_node_contexts.back()[c_index] == -1) {
-						int inner_scope_id = branch_node->score_state_node_contexts.back()[c_index+1];
+						int inner_scope_id = branch_node->score_state_scope_contexts.back()[c_index+1];
 						ScopeNode* new_sequence_scope_node = sequence_scope_node_mappings[inner_scope_id];
 						branch_node->score_state_node_contexts.back()[c_index] = new_sequence_scope_node->id;
 						break;

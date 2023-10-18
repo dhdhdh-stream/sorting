@@ -275,8 +275,8 @@ void BranchExperiment::activate(int& curr_node_id,
 			}
 		} else {
 			// run_helper.phase == RUN_PHASE_NEW
-			if (!this->recursion_protection) {
-				if (run_helper.selected_branch_experiment == this) {
+			if (run_helper.selected_branch_experiment == this) {
+				if (!this->recursion_protection) {
 					switch (this->state) {
 					case BRANCH_EXPERIMENT_STATE_TRAIN_PRE:
 					case BRANCH_EXPERIMENT_STATE_TRAIN:
@@ -299,6 +299,8 @@ void BranchExperiment::activate(int& curr_node_id,
 						break;
 					}
 				}
+
+				this->need_recursion_protection = true;
 			}
 		}
 	}

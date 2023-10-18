@@ -83,6 +83,7 @@ public:
 	int best_exit_node_id;
 
 	bool recursion_protection;
+	bool need_recursion_protection;
 
 	double new_average_score;
 	double new_average_misguess;

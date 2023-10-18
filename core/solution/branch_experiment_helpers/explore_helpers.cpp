@@ -293,6 +293,9 @@ void BranchExperiment::explore_backprop(double target_val,
 			}
 			cout << endl;
 
+			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+			cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 			this->state_iter = 0;
 		} else {

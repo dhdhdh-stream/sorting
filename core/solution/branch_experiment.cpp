@@ -40,6 +40,7 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	} else {
 		this->recursion_protection = false;
 	}
+	this->need_recursion_protection = false;
 
 	this->new_average_score = parent_scope->average_score;
 	this->new_average_misguess = parent_scope->average_misguess;
