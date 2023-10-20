@@ -19,7 +19,7 @@ public:
 	int state_counter;
 	std::map<int, State*> states;
 	/**
-	 * - use map to track states as will be sparse
+	 * - use map to track states as may be sparse
 	 */
 	/**
 	 * TODO: track relations among states, e.g.:

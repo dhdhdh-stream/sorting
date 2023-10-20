@@ -78,7 +78,6 @@ void Scope::activate(vector<int>& starting_node_ids,
 
 	history->input_state_snapshots = context.back().input_state_vals;
 	history->local_state_snapshots = context.back().local_state_vals;
-	history->score_state_snapshots = context.back().score_state_vals;
 
 	if (run_helper.phase == RUN_PHASE_UPDATE) {
 		run_helper.scope_histories.push_back(history);

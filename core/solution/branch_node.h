@@ -53,20 +53,15 @@ public:
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;
 
-	std::vector<std::vector<int>> score_state_scope_contexts;
-	std::vector<std::vector<int>> score_state_node_contexts;
-	std::vector<State*> score_state_defs;
-	std::vector<int> score_state_network_indexes;
-
-	std::vector<std::vector<int>> experiment_hook_score_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_score_state_node_contexts;
-	std::vector<State*> experiment_hook_score_state_defs;
-	std::vector<int> experiment_hook_score_state_network_indexes;
+	std::vector<std::vector<int>> experiment_hook_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_hook_state_node_contexts;
+	std::vector<int> experiment_hook_state_indexes;
+	std::vector<State*> experiment_hook_state_defs;
+	std::vector<int> experiment_hook_state_network_indexes;
 
 	std::vector<std::vector<int>> test_hook_scope_contexts;
 	std::vector<std::vector<int>> test_hook_node_contexts;
 	std::vector<int> test_hook_indexes;
-	std::vector<void*> test_hook_keys;
 
 	BranchExperiment* experiment;
 	bool experiment_is_branch;
@@ -127,12 +122,10 @@ public:
 	std::vector<int> state_indexes;
 	std::vector<StateStatus> state_impacts;
 
-	std::vector<int> score_state_indexes;
-	std::vector<StateStatus> score_state_impacts;
-
 	BranchExperimentHistory* branch_experiment_history;
 
 	BranchNodeHistory(BranchNode* node);
+	BranchNodeHistory(BranchNodeHistory* original);
 	~BranchNodeHistory();
 };
 

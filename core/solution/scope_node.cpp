@@ -112,38 +112,6 @@ ScopeNode::ScopeNode(ifstream& input_file,
 		this->state_network_indexes.push_back(stoi(network_index_line));
 	}
 
-	string score_state_defs_size_line;
-	getline(input_file, score_state_defs_size_line);
-	int score_state_defs_size = stoi(score_state_defs_size_line);
-	for (int s_index = 0; s_index < score_state_defs_size; s_index++) {
-		string context_size_line;
-		getline(input_file, context_size_line);
-		int context_size = stoi(context_size_line);
-		this->score_state_scope_contexts.push_back(vector<int>());
-		this->score_state_node_contexts.push_back(vector<int>());
-		for (int c_index = 0; c_index < context_size; c_index++) {
-			string scope_context_line;
-			getline(input_file, scope_context_line);
-			this->score_state_scope_contexts.back().push_back(stoi(scope_context_line));
-
-			string node_context_line;
-			getline(input_file, node_context_line);
-			this->score_state_node_contexts.back().push_back(stoi(node_context_line));
-		}
-
-		string obs_index_line;
-		getline(input_file, obs_index_line);
-		this->score_state_obs_indexes.push_back(stoi(obs_index_line));
-
-		string def_id_line;
-		getline(input_file, def_id_line);
-		this->score_state_defs.push_back(solution->states[stoi(def_id_line)]);
-
-		string network_index_line;
-		getline(input_file, network_index_line);
-		this->score_state_network_indexes.push_back(stoi(network_index_line));
-	}
-
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
@@ -192,18 +160,6 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->state_network_indexes[s_index] << endl;
 	}
 
-	output_file << this->score_state_defs.size() << endl;
-	for (int s_index = 0; s_index < (int)this->score_state_defs.size(); s_index++) {
-		output_file << this->score_state_scope_contexts[s_index].size() << endl;
-		for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[s_index].size(); c_index++) {
-			output_file << this->score_state_scope_contexts[s_index][c_index] << endl;
-			output_file << this->score_state_node_contexts[s_index][c_index] << endl;
-		}
-		output_file << this->score_state_obs_indexes[s_index] << endl;
-		output_file << this->score_state_defs[s_index]->id << endl;
-		output_file << this->score_state_network_indexes[s_index] << endl;
-	}
-
 	output_file << this->next_node_id << endl;
 }
 
@@ -215,6 +171,19 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
+
+	this->branch_experiment_history = NULL;
+}
+
+ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
+	this->node = original->node;
+
+	this->is_halfway = original->is_halfway;
+	this->is_early_exit = original->is_early_exit;
+
+	this->inner_scope_history = new ScopeHistory(original->inner_scope_history);
+
+	this->obs_snapshots = original->obs_snapshots;
 
 	this->branch_experiment_history = NULL;
 }

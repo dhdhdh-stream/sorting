@@ -324,8 +324,6 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 			}
 		}
 
-		// don't worry about score_state
-
 		curr_num_nodes++;
 	}
 }
@@ -588,8 +586,6 @@ void ScopeNode::halfway_create_sequence_activate(
 				}
 			}
 		}
-
-		// don't worry about score_state
 
 		curr_num_nodes++;
 	}

@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 10000;
+const int EXPLORE_ITERS = 1000;
 
 const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
 /**
@@ -31,45 +31,27 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 										BranchExperimentHistory* history) {
 	double predicted_score = this->existing_average_score;
 
-	for (map<int, StateStatus>::iterator it = history->starting_input_state_snapshots.begin();
-			it != history->starting_input_state_snapshots.end(); it++) {
-		map<int, Scale*>::iterator scale_it = this->existing_starting_input_state_scales.find(it->first);
-		if (scale_it != this->existing_starting_input_state_scales.end()) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				predicted_score += scale_it->second->weight * normalized;
-			} else {
-				predicted_score += scale_it->second->weight * it->second.val;
-			}
-		}
-	}
-
-	for (map<int, StateStatus>::iterator it = history->starting_local_state_snapshots.begin();
-			it != history->starting_local_state_snapshots.end(); it++) {
-		map<int, Scale*>::iterator scale_it = this->existing_starting_local_state_scales.find(it->first);
-		if (scale_it != this->existing_starting_local_state_scales.end()) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				predicted_score += scale_it->second->weight * normalized;
-			} else {
-				predicted_score += scale_it->second->weight * it->second.val;
-			}
-		}
-	}
-
-	for (map<State*, StateStatus>::iterator it = history->starting_score_state_snapshots.begin();
-			it != history->starting_score_state_snapshots.end(); it++) {
-		map<State*, Scale*>::iterator scale_it = this->existing_starting_score_state_scales.find(it->first);
-		if (scale_it != this->existing_starting_score_state_scales.end()) {
-			StateNetwork* last_network = it->second.last_network;
-			// last_network != NULL
+	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+			it != context.back().input_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
 			double normalized = (it->second.val - last_network->ending_mean)
 				/ last_network->ending_standard_deviation;
-			predicted_score += scale_it->second->weight * normalized;
+			predicted_score += this->existing_starting_input_state_weights[it->first] * normalized;
+		} else {
+			predicted_score += this->existing_starting_input_state_weights[it->first] * it->second.val;
+		}
+	}
+
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+			predicted_score += this->existing_starting_local_state_weights[it->first] * normalized;
+		} else {
+			predicted_score += this->existing_starting_local_state_weights[it->first] * it->second.val;
 		}
 	}
 

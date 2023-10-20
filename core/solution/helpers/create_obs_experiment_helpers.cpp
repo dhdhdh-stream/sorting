@@ -220,7 +220,5 @@ ObsExperiment* create_obs_experiment(ScopeHistory* scope_history) {
 		possible_obs_indexes.erase(possible_obs_indexes.begin() + rand_obs);
 	}
 
-	obs_experiment->flat_network = new FlatNetwork(num_obs);
-
 	return obs_experiment;
 }

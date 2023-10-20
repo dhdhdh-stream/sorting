@@ -103,59 +103,138 @@ int main(int argc, char* argv[]) {
 	// explore_node->experiment->best_exit_node_id = -1;
 	// explore_node->experiment->recursion_protection = true;
 
-	int iter_index = 0;
-	// chrono::steady_clock::time_point display_previous_time = chrono::steady_clock::now();
 	uniform_int_distribution<int> explore_distribution(0, 2);
 	while (true) {
-		Problem problem;
+		// update
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+			Problem problem;
 
-		RunHelper run_helper;
-		if (solution->states.size() > 0 && explore_distribution(generator) != 0) {
-			run_helper.phase = RUN_PHASE_EXPLORE;
-		} else {
+			RunHelper run_helper;
 			run_helper.phase = RUN_PHASE_UPDATE;
+
+			vector<ContextLayer> context;
+			context.push_back(ContextLayer());
+
+			context.back().scope_id = 0;
+			context.back().node_id = -1;
+
+			ScopeHistory* root_history = new ScopeHistory(root);
+			context.back().scope_history = root_history;
+
+			vector<int> starting_node_ids{0};
+			vector<map<int, StateStatus>> starting_input_state_vals;
+			vector<map<int, StateStatus>> starting_local_state_vals;
+
+			// unused
+			int exit_depth = -1;
+			int exit_node_id = -1;
+
+			root->activate(starting_node_ids,
+						   starting_input_state_vals,
+						   starting_local_state_vals,
+						   problem,
+						   context,
+						   exit_depth,
+						   exit_node_id,
+						   run_helper,
+						   root_history);
+
+			double target_val;
+			if (!run_helper.exceeded_depth) {
+				target_val = problem.score_result();
+			} else {
+				target_val = -1.0;
+			}
+
+			solution->average_score = 0.999*solution->average_score + 0.001*target_val;
+
+			if (!run_helper.exceeded_depth) {
+				if (run_helper.max_depth > solution->max_depth) {
+					solution->max_depth = run_helper.max_depth;
+
+					if (solution->max_depth < 50) {
+						solution->depth_limit = solution->max_depth + 10;
+					} else {
+						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+					}
+				}
+			}
+
+			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
+				Scope* scope = run_helper.scope_histories[h_index]->scope;
+				scope->update_histories(target_val,
+										run_helper.scope_histories[h_index]);
+			}
+
+			delete root_history;
 		}
 
-		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
-
-		context.back().scope_id = 0;
-		context.back().node_id = -1;
-
-		ScopeHistory* root_history = new ScopeHistory(root);
-		context.back().scope_history = root_history;
-
-		vector<int> starting_node_ids{0};
-		vector<map<int, StateStatus>> starting_input_state_vals;
-		vector<map<int, StateStatus>> starting_local_state_vals;
-
-		// unused
-		int exit_depth = -1;
-		int exit_node_id = -1;
-
-		root->activate(starting_node_ids,
-					   starting_input_state_vals,
-					   starting_local_state_vals,
-					   problem,
-					   context,
-					   exit_depth,
-					   exit_node_id,
-					   run_helper,
-					   root_history);
-
-		double target_val;
-		if (!run_helper.exceeded_depth) {
-			target_val = problem.score_result();
-		} else {
-			target_val = -1.0;
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->update();
 		}
 
-		if (run_helper.phase == RUN_PHASE_EXPLORE) {
+		while (true) {
+			Problem problem;
+
+			RunHelper run_helper;
+			run_helper.phase = RUN_PHASE_EXPLORE;
+
+			vector<ContextLayer> context;
+			context.push_back(ContextLayer());
+
+			context.back().scope_id = 0;
+			context.back().node_id = -1;
+
+			ScopeHistory* root_history = new ScopeHistory(root);
+			context.back().scope_history = root_history;
+
+			vector<int> starting_node_ids{0};
+			vector<map<int, StateStatus>> starting_input_state_vals;
+			vector<map<int, StateStatus>> starting_local_state_vals;
+
+			// unused
+			int exit_depth = -1;
+			int exit_node_id = -1;
+
+			root->activate(starting_node_ids,
+						   starting_input_state_vals,
+						   starting_local_state_vals,
+						   problem,
+						   context,
+						   exit_depth,
+						   exit_node_id,
+						   run_helper,
+						   root_history);
+
+			double target_val;
+			if (!run_helper.exceeded_depth) {
+				target_val = problem.score_result();
+			} else {
+				target_val = -1.0;
+			}
+
+			bool updated = false;
 			if (run_helper.experiments_seen_counts.size() == 0) {
 				create_branch_experiment(root_history);
 			} else {
 				if (run_helper.selected_branch_experiment != NULL) {
 					run_helper.selected_branch_experiment->unhook();
+
+					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+						BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
+						experiment->average_remaining_experiments_from_start =
+							0.9 * experiment->average_remaining_experiments_from_start
+							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+								+ run_helper.selected_branch_experiment->average_remaining_experiments_from_start);
+					}
+
+					run_helper.selected_branch_experiment->average_instances_per_run
+						= 0.9 * run_helper.selected_branch_experiment->average_instances_per_run
+							+ 0.1 * (run_helper.selected_branch_experiment_count + 1);
+					/**
+					 * - set to 1 more than instances seen as exit might have skipped instances
+					 */
 
 					if (run_helper.branch_experiment_history != NULL) {
 						BranchExperiment* experiment = run_helper.branch_experiment_history->experiment;
@@ -176,76 +255,35 @@ int main(int argc, char* argv[]) {
 								branch_node->experiment = NULL;
 							}
 							delete experiment;
+
+							updated = true;
 						}
 					}
-				}
-			}
-		} else {
-			// run_helper.phase == RUN_PHASE_UPDATE
+				} else {
+					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+						BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
+						experiment->average_remaining_experiments_from_start =
+							0.9 * experiment->average_remaining_experiments_from_start
+							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
+					}
 
-			solution->average_score = 0.9999*solution->average_score + 0.0001*target_val;
-
-			if (!run_helper.exceeded_depth) {
-				if (run_helper.max_depth > solution->max_depth) {
-					solution->max_depth = run_helper.max_depth;
-
-					if (solution->max_depth < 50) {
-						solution->depth_limit = solution->max_depth + 10;
-					} else {
-						solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+					for (map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.begin();
+							it != run_helper.experiments_seen_counts.end(); it++) {
+						BranchExperiment* experiment = it->first;
+						experiment->average_instances_per_run = 0.9 * experiment->average_instances_per_run + 0.1 * it->second;
 					}
 				}
 			}
 
-			set<pair<State*, Scope*>> states_to_remove;
-			for (int h_index = 0; h_index < (int)run_helper.scope_histories.size(); h_index++) {
-				Scope* scope = run_helper.scope_histories[h_index]->scope;
-				scope->update_backprop(target_val,
-									   run_helper,
-									   run_helper.scope_histories[h_index],
-									   states_to_remove);
-			}
+			delete root_history;
 
-			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
-				experiment->average_remaining_experiments_from_start =
-					0.999 * experiment->average_remaining_experiments_from_start
-					+ 0.001 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-			}
-
-			for (map<BranchExperiment*, int>::iterator it = run_helper.experiments_seen_counts.begin();
-					it != run_helper.experiments_seen_counts.end(); it++) {
-				BranchExperiment* experiment = it->first;
-				experiment->average_instances_per_run = 0.999 * experiment->average_instances_per_run + 0.001 * it->second;
-			}
-
-			for (set<pair<State*, Scope*>>::iterator it = states_to_remove.begin(); it != states_to_remove.end(); it++) {
-				(*it).first->detach((*it).second);
-				delete (*it).first;
+			if (updated) {
+				break;
 			}
 		}
 
-		delete root_history;
-
-		iter_index++;
-		// if (iter_index%10000 == 0) {
-		// 	chrono::steady_clock::time_point curr_time = chrono::steady_clock::now();
-		// 	chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(curr_time - display_previous_time);
-		// 	if (time_span.count() > 120.0) {
-		// 		ofstream display_file;
-		// 		display_file.open("../display.txt");
-		// 		solution->save_for_display(display_file);
-		// 		display_file.close();
-
-		// 		display_previous_time = curr_time;
-		// 	}
-		// }
-
-		if (iter_index%1000000 == 0) {
-			cout << iter_index << endl;
-			cout << "solution->states.size(): " << solution->states.size() << endl;
-			cout << "solution->average_score: " << solution->average_score << endl;
-		}
+		cout << "solution->states.size(): " << solution->states.size() << endl;
+		cout << "solution->average_score: " << solution->average_score << endl;
 	}
 
 	delete solution;

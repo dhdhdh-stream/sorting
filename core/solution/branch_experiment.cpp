@@ -19,18 +19,24 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->node_context = node_context;
 
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
-	this->average_remaining_experiments_from_start = 0.0;
+	this->average_remaining_experiments_from_start = 1.0;
+	/**
+	 * - start with a 50% chance to bypass
+	 */
 	this->average_instances_per_run = 1.0;
 
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
-	this->existing_average_score = parent_scope->average_score;
-	this->existing_average_misguess = parent_scope->average_misguess;
-
-	this->new_scope_id = solution->scope_counter;
-	solution->scope_counter++;
+	this->existing_state_vals = new MatrixXd(NUM_DATAPOINTS, containing_scope->num_input_states + containing_scope->num_local_states);
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+		for (int s_index = 0; s_index < containing_scope->num_input_states + containing_scope->num_local_states; s_index++) {
+			(*this->existing_state_vals)(d_index, s_index) = 0.0;
+		}
+	}
+	this->existing_target_vals = vector<double>(NUM_DATAPOINTS);
 
 	this->best_surprise = 1.0;
 

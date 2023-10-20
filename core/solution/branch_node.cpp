@@ -103,34 +103,6 @@ BranchNode::BranchNode(ifstream& input_file,
 		this->state_network_indexes.push_back(stoi(network_index_line));
 	}
 
-	string score_state_defs_size_line;
-	getline(input_file, score_state_defs_size_line);
-	int score_state_defs_size = stoi(score_state_defs_size_line);
-	for (int s_index = 0; s_index < score_state_defs_size; s_index++) {
-		string context_size_line;
-		getline(input_file, context_size_line);
-		int context_size = stoi(context_size_line);
-		this->score_state_scope_contexts.push_back(vector<int>());
-		this->score_state_node_contexts.push_back(vector<int>());
-		for (int c_index = 0; c_index < context_size; c_index++) {
-			string scope_context_line;
-			getline(input_file, scope_context_line);
-			this->score_state_scope_contexts.back().push_back(stoi(scope_context_line));
-
-			string node_context_line;
-			getline(input_file, node_context_line);
-			this->score_state_node_contexts.back().push_back(stoi(node_context_line));
-		}
-
-		string def_id_line;
-		getline(input_file, def_id_line);
-		this->score_state_defs.push_back(solution->states[stoi(def_id_line)]);
-
-		string network_index_line;
-		getline(input_file, network_index_line);
-		this->score_state_network_indexes.push_back(stoi(network_index_line));
-	}
-
 	this->experiment = NULL;
 }
 
@@ -172,17 +144,6 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->state_defs[s_index]->id << endl;
 		output_file << this->state_network_indexes[s_index] << endl;
 	}
-
-	output_file << this->score_state_defs.size() << endl;
-	for (int s_index = 0; s_index < (int)this->score_state_defs.size(); s_index++) {
-		output_file << this->score_state_scope_contexts[s_index].size() << endl;
-		for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[s_index].size(); c_index++) {
-			output_file << this->score_state_scope_contexts[s_index][c_index] << endl;
-			output_file << this->score_state_node_contexts[s_index][c_index] << endl;
-		}
-		output_file << this->score_state_defs[s_index]->id << endl;
-		output_file << this->score_state_network_indexes[s_index] << endl;
-	}
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
@@ -194,6 +155,14 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
+
+	this->branch_experiment_history = NULL;
+}
+
+BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
+	this->node = original->node;
+
+	this->obs_snapshot = original->obs_snapshot;
 
 	this->branch_experiment_history = NULL;
 }

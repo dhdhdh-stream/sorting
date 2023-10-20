@@ -1,3 +1,6 @@
+// don't use score state
+// instead, when using input state, trace back to parent
+
 #include "helpers.h"
 
 #include <iostream>

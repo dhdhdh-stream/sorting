@@ -28,11 +28,6 @@ Scope::~Scope() {
 		delete this->local_state_scales[s_index];
 	}
 
-	for (map<State*, pair<Scale*, double>>::iterator it = this->score_state_scales.begin();
-			it != this->score_state_scales.end(); it++) {
-		delete it->second.first;
-	}
-
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
@@ -51,14 +46,6 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->num_local_states << endl;
 	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
 		output_file << this->local_state_scales[s_index]->weight << endl;
-	}
-
-	output_file << this->score_state_scales.size() << endl;
-	for (map<State*, pair<Scale*, double>>::iterator it = this->score_state_scales.begin();
-			it != this->score_state_scales.end(); it++) {
-		output_file << it->first->id << endl;
-		output_file << it->second.first->weight << endl;
-		output_file << it->second.second << endl;;
 	}
 
 	output_file << this->nodes.size() << endl;
@@ -98,28 +85,6 @@ void Scope::load(ifstream& input_file,
 		string weight_line;
 		getline(input_file, weight_line);
 		this->local_state_scales.push_back(new Scale(stod(weight_line)));
-	}
-
-	string num_score_states_line;
-	getline(input_file, num_score_states_line);
-	int num_score_states = stoi(num_score_states_line);
-	for (int s_index = 0; s_index < num_score_states; s_index++) {
-		string id_line;
-		getline(input_file, id_line);
-		State* state = solution->states[stoi(id_line)];
-
-		string weight_line;
-		getline(input_file, weight_line);
-
-		string resolved_standard_deviation_line;
-		getline(input_file, resolved_standard_deviation_line);
-
-		this->score_state_scales[state] = {new Scale(stod(weight_line)), stod(resolved_standard_deviation_line)};
-
-		this->score_state_nodes[state] = vector<AbstractNode*>(state->networks.size());
-		/**
-		 * - filled in on link_score_state_nodes()
-		 */
 	}
 
 	string num_nodes_line;
@@ -178,33 +143,6 @@ void Scope::load(ifstream& input_file,
 	}
 }
 
-void Scope::link_score_state_nodes() {
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		if (this->nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->nodes[n_index];
-
-			for (int s_index = 0; s_index < (int)action_node->score_state_defs.size(); s_index++) {
-				Scope* parent_scope = solution->scopes[action_node->score_state_scope_contexts[s_index][0]];
-				parent_scope->score_state_nodes[action_node->score_state_defs[s_index]][action_node->score_state_network_indexes[s_index]] = action_node;
-			}
-		} else if (this->nodes[n_index]->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)this->nodes[n_index];
-
-			for (int s_index = 0; s_index < (int)scope_node->score_state_defs.size(); s_index++) {
-				Scope* parent_scope = solution->scopes[scope_node->score_state_scope_contexts[s_index][0]];
-				parent_scope->score_state_nodes[scope_node->score_state_defs[s_index]][scope_node->score_state_network_indexes[s_index]] = scope_node;
-			}
-		} else if (this->nodes[n_index]->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)this->nodes[n_index];
-
-			for (int s_index = 0; s_index < (int)branch_node->score_state_defs.size(); s_index++) {
-				Scope* parent_scope = solution->scopes[branch_node->score_state_scope_contexts[s_index][0]];
-				parent_scope->score_state_nodes[branch_node->score_state_defs[s_index]][branch_node->score_state_network_indexes[s_index]] = branch_node;
-			}
-		}
-	}
-}
-
 void Scope::save_for_display(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
@@ -219,6 +157,30 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->inner_branch_experiment_history = NULL;
 
 	this->exceeded_depth = false;
+}
+
+ScopeHistory::ScopeHistory(ScopeHistory* original) {
+	this->scope = original->scope;
+
+	for (int i_index = 0; i_index < (int)original->node_histories.size(); i_index++) {
+		this->node_histories.push_back(vector<AbstractNodeHistory*>());
+		for (int h_index = 0; h_index < (int)original->node_histories[i_index].size(); h_index++) {
+			if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)original->node_histories[i_index][h_index];
+				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
+			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)original->node_histories[i_index][h_index];
+				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
+			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_BRANCH) {
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)original->node_histories[i_index][h_index];
+				this->node_histories.back().push_back(new BranchNodeHistory(branch_node_history));
+			}
+		}
+	}
+
+	this->inner_branch_experiment_history = NULL;
+
+	this->exceeded_depth = original->exceeded_depth;
 }
 
 ScopeHistory::~ScopeHistory() {

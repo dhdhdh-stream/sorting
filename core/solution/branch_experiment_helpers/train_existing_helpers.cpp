@@ -1,90 +1,101 @@
 #include "branch_experiment.h"
 
-#include "scale.h"
-#include "state_network.h"
-
 using namespace std;
 
-const int TRAIN_EXISTING_ITERS = 100000;
+void BranchExperiment::train_existing_activate(vector<ContextLayer>& context) {
+	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+			it != context.back().input_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+			(*this->existing_state_vals)(this->state_iter, it->first) = normalized;
+		} else {
+			(*this->existing_state_vals)(this->state_iter, it->first) = it->second.val;
+		}
+	}
 
-void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
-											   BranchExperimentHistory* history) {
-	history->starting_input_state_snapshots = context.back().input_state_vals;
-	history->starting_local_state_snapshots = context.back().local_state_vals;
-	history->starting_score_state_snapshots = context[context.size() - this->scope_context.size()].score_state_vals;
+	Scope* containing_scope = context.back().inner_scope_history->scope;
+	int num_input_states = containing_scope->num_input_states;
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		StateNetwork* last_network = it->second.last_network;
+		if (last_network != NULL) {
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+			(*this->existing_state_vals)(this->state_iter, num_input_states + it->first) = normalized;
+		} else {
+			(*this->existing_state_vals)(this->state_iter, num_input_states + it->first) = it->second.val;
+		}
+	}
 }
 
 void BranchExperiment::train_existing_backprop(double target_val,
 											   BranchExperimentHistory* history) {
-	double predicted_score = this->existing_average_score;
+	this->existing_average_score += target_val;
 
-	for (map<int, StateStatus>::iterator it = history->starting_input_state_snapshots.begin();
-			it != history->starting_input_state_snapshots.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			// set for backprop in the following
-			it->second.val = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
+	{
+		ScopeHistory* parent_scope_history = history->parent_scope_history;
+		Scope* parent_scope = parent_scope_history->scope;
+
+		double predicted_score = parent_scope->average_score;
+
+		for (map<int, StateStatus>::iterator it = parent_scope_history->input_state_snapshots.begin();
+				it != parent_scope_history->input_state_snapshots.end(); it++) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += parent_scope->input_state_weights[it->first] * normalized;
+			} else {
+				predicted_score += parent_scope->input_state_weights[it->first] * it->second.val;
+			}
 		}
-		map<int, Scale*>::iterator scale_it = this->existing_starting_input_state_scales.find(it->first);
-		if (scale_it == this->existing_starting_input_state_scales.end()) {
-			scale_it = this->existing_starting_input_state_scales.insert({it->first, new Scale(0.0)}).first;
+
+		for (map<int, StateStatus>::iterator it = parent_scope_history->local_state_snapshots.begin();
+				it != parent_scope_history->local_state_snapshots.end(); it++) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += parent_scope->local_state_weights[it->first] * normalized;
+			} else {
+				predicted_score += parent_scope->local_state_weights[it->first] * it->second.val;
+			}
 		}
-		predicted_score += scale_it->second->weight * it->second.val;
+
+		double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
+		this->existing_average_misguess += curr_misguess;
 	}
 
-	for (map<int, StateStatus>::iterator it = history->starting_local_state_snapshots.begin();
-			it != history->starting_local_state_snapshots.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			// set for backprop in the following
-			it->second.val = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
-		}
-		map<int, Scale*>::iterator scale_it = this->existing_starting_local_state_scales.find(it->first);
-		if (scale_it == this->existing_starting_local_state_scales.end()) {
-			scale_it = this->existing_starting_local_state_scales.insert({it->first, new Scale(0.0)}).first;
-		}
-		predicted_score += scale_it->second->weight * it->second.val;
-	}
-
-	for (map<State*, StateStatus>::iterator it = history->starting_score_state_snapshots.begin();
-			it != history->starting_score_state_snapshots.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		// set for backprop in the following
-		it->second.val = (it->second.val - last_network->ending_mean)
-			/ last_network->ending_standard_deviation;
-		map<State*, Scale*>::iterator scale_it = this->existing_starting_score_state_scales.find(it->first);
-		if (scale_it == this->existing_starting_score_state_scales.end()) {
-			scale_it = this->existing_starting_score_state_scales.insert({it->first, new Scale(0.0)}).first;
-		}
-		predicted_score += scale_it->second->weight * it->second.val;
-	}
-
-	this->existing_average_score = 0.9999*this->existing_average_score + 0.0001*target_val;
-	double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
-	this->existing_average_misguess = 0.9999*this->existing_average_misguess + 0.0001*curr_misguess;
-
-	double error = target_val - predicted_score;
-
-	for (map<int, StateStatus>::iterator it = history->starting_input_state_snapshots.begin();
-			it != history->starting_input_state_snapshots.end(); it++) {
-		this->existing_starting_input_state_scales[it->first]->backprop(it->second.val*error, 0.001);
-	}
-
-	for (map<int, StateStatus>::iterator it = history->starting_local_state_snapshots.begin();
-			it != history->starting_local_state_snapshots.end(); it++) {
-		this->existing_starting_local_state_scales[it->first]->backprop(it->second.val*error, 0.001);
-	}
-
-	for (map<State*, StateStatus>::iterator it = history->starting_score_state_snapshots.begin();
-			it != history->starting_score_state_snapshots.end(); it++) {
-		this->existing_starting_score_state_scales[it->first]->backprop(it->second.val*error, 0.001);
-	}
+	this->existing_target_vals[this->state_iter] = target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= TRAIN_EXISTING_ITERS) {
+	if (this->state_iter >= NUM_DATAPOINTS) {
+		this->existing_average_score /= NUM_DATAPOINTS;
+		this->existing_average_misguess /= NUM_DATAPOINTS;
+
+		VectorXd v_existing_target_vals(NUM_DATAPOINTS);
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+			v_existing_target_vals(d_index) = this->existing_target_vals[d_index] - this->existing_average_score;
+		}
+
+		VectorXd result = (*this->existing_state_vals).fullPivHouseholderQr().solve(v_existing_target_vals);
+
+		Scope* containing_scope = solution->scopes[this->scope_context.back()];
+		this->existing_starting_input_state_weights = vector<double>(containing_scope->num_input_states);
+		for (int s_index = 0; s_index < containing_scope->num_input_states; s_index++) {
+			this->existing_starting_input_state_weights[s_index] = result(s_index);
+		}
+		this->existing_starting_local_state_weights = vector<double>(containing_scope->num_local_states);
+		for (int s_index = 0; s_index < containing_scope->num_local_states; s_index++) {
+			this->existing_starting_local_state_weights[s_index] = result(containing_scope->num_input_states + s_index);
+		}
+
+		delete this->existing_state_vals;
+		this->existing_state_vals = NULL;
+		this->existing_target_vals.clear();
+
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 	}

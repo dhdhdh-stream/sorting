@@ -38,7 +38,6 @@ class AbstractNode;
 class AbstractNodeHistory;
 class BranchExperimentHistory;
 class ObsExperiment;
-class Scale;
 class Sequence;
 class State;
 
@@ -48,16 +47,9 @@ public:
 	int id;
 
 	int num_input_states;
-	std::vector<Scale*> input_state_scales;
+	std::vector<double> input_state_weights;
 	int num_local_states;
-	std::vector<Scale*> local_state_scales;
-
-	/**
-	 * - double is resolved standard deviation
-	 *   - if scale falls too low beneath, delete
-	 */
-	std::map<State*, std::pair<Scale*, double>> score_state_scales;
-	std::map<State*, std::vector<AbstractNode*>> score_state_nodes;
+	std::vector<double> local_state_weights;
 
 	std::vector<AbstractNode*> nodes;
 
@@ -76,7 +68,8 @@ public:
 	 * - for constructing new sequences
 	 */
 
-	ObsExperiment* obs_experiment;
+	std::list<ScopeHistory*> scope_histories;
+	std::list<double> target_val_histories;
 
 	Scope();
 	~Scope();
@@ -160,7 +153,6 @@ public:
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  int id);
-	void link_score_state_nodes();
 
 	void save_for_display(std::ofstream& output_file);
 };
@@ -174,17 +166,12 @@ public:
 	std::map<int, StateStatus> input_state_snapshots;
 	std::map<int, StateStatus> local_state_snapshots;
 
-	std::map<State*, StateStatus> score_state_snapshots;
-
-	// for ObsExperiment
-	std::vector<int> test_obs_indexes;
-	std::vector<double> test_obs_vals;
-
 	BranchExperimentHistory* inner_branch_experiment_history;
 
 	bool exceeded_depth;
 
 	ScopeHistory(Scope* scope);
+	ScopeHistory(ScopeHistory* original);
 	~ScopeHistory();
 };
 

@@ -1,3 +1,11 @@
+// - if decision making changes changes outside/simple, live with it
+//   - just regather 1000 samples
+
+// save 10 experiments, and only add best 1
+
+// TODO: switch back to combined rather than splitting
+// - measuring existing doesn't take multiple spots into account
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -25,11 +33,9 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 2;
 const int BRANCH_EXPERIMENT_STATE_TRAIN = 3;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 5;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_NEW = 6;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 7;
-const int BRANCH_EXPERIMENT_STATE_DONE = 8;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 5;
+const int BRANCH_EXPERIMENT_STATE_DONE = 6;
 
 class BranchExperimentHistory;
 class BranchExperiment {
@@ -43,7 +49,6 @@ public:
 	 * - when triggering an experiment, it becomes live everywhere
 	 *   - for one selected instance, always trigger branch and experiment
 	 *     - for everywhere else, trigger accordingly
-	 *       - so experiment score_state scales need to be adjusted after ObsExperiment
 	 * 
 	 * - set probabilities after average_instances_per_run to 50%
 	 */
@@ -53,18 +58,10 @@ public:
 
 	double existing_average_score;
 	double existing_average_misguess;
-	std::map<int, Scale*> existing_starting_input_state_scales;
-	std::map<int, Scale*> existing_starting_local_state_scales;
-	std::map<State*, Scale*> existing_starting_score_state_scales;
-
-	int new_scope_id;
-	/**
-	 * - always create as extra scope
-	 *   - good to create scopes in general for abstraction
-	 *   - but also may need extra scopes to capture correlated information, e.g.:
-	 *     - on outer, capture early to branch early
-	 *     - on inner, capture later so can be abstracted
-	 */
+	Eigen::MatrixXd* existing_state_vals;
+	std::vector<double> existing_target_vals;
+	std::vector<double> existing_starting_input_state_weights;
+	std::vector<double> existing_starting_local_state_weights;
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
@@ -73,9 +70,6 @@ public:
 	int curr_exit_node_id;
 
 	double best_surprise;
-	/**
-	 * - score improvement divided by average_misguess
-	 */
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<Sequence*> best_sequences;
@@ -86,24 +80,25 @@ public:
 	bool need_recursion_protection;
 
 	double new_average_score;
+	Eigen::MatrixXd* new_state_vals;
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_vals;
 	double new_average_misguess;
 	double new_misguess_variance;
 
-	std::map<int, Scale*> new_starting_input_state_scales;
-	std::map<int, Scale*> new_starting_local_state_scales;
-	std::map<State*, Scale*> new_starting_score_state_scales;
-	std::map<State*, Scale*> new_starting_experiment_score_state_scales;
+	std::vector<double> new_starting_input_state_weights;
+	std::vector<double> new_starting_local_state_weights;
+	std::vector<double> new_starting_experiment_state_weights;
 
-	std::map<int, Scale*> new_ending_input_state_scales;
-	std::map<int, Scale*> new_ending_local_state_scales;
-	std::map<State*, Scale*> new_ending_score_state_scales;
+	std::vector<double> new_ending_input_state_weights;
+	std::vector<double> new_ending_local_state_weights;
 
-	std::vector<State*> new_score_states;
-	std::vector<std::vector<AbstractNode*>> new_score_state_nodes;
-	std::vector<std::vector<std::vector<int>>> new_score_state_scope_contexts;
-	std::vector<std::vector<std::vector<int>>> new_score_state_node_contexts;
-	std::vector<std::vector<int>> new_score_state_obs_indexes;
-	std::map<State*, std::pair<Scale*, double>> new_score_state_scales;
+	std::vector<State*> new_states;
+	std::vector<std::vector<AbstractNode*>> new_state_nodes;
+	std::vector<std::vector<std::vector<int>>> new_state_scope_contexts;
+	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
+	std::vector<std::vector<int>> new_state_obs_indexes;
+	std::vector<double> new_state_weights;
 
 	double branch_existing_score;
 	int existing_branch_count;
@@ -213,15 +208,14 @@ public:
 
 	std::map<int, StateStatus> starting_input_state_snapshots;
 	std::map<int, StateStatus> starting_local_state_snapshots;
-	std::map<State*, StateStatus> starting_score_state_snapshots;
-	std::map<State*, StateStatus> starting_experiment_score_state_snapshots;
+	std::map<int, StateStatus> starting_experiment_state_snapshots;
 
 	std::vector<SequenceHistory*> sequence_histories;
 
 	double existing_predicted_score;
 
 	ScopeHistory* parent_scope_history;
-	std::map<State*, StateStatus> ending_experiment_score_state_snapshots;
+	std::map<int, StateStatus> ending_experiment_state_snapshots;
 
 	bool is_branch;
 
