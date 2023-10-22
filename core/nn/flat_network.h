@@ -28,7 +28,7 @@ public:
 	FlatNetwork(int num_inputs);
 	~FlatNetwork();
 
-	void activate(std::vector<double>& input_vals);
+	void activate();
 	void backprop(double error);
 };
 

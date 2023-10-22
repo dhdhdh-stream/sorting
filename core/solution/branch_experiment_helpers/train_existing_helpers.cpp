@@ -1,31 +1,39 @@
 #include "branch_experiment.h"
 
+#include "constants.h"
+#include "scope.h"
+#include "state_network.h"
+
 using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context) {
 	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
 			it != context.back().input_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
-			(*this->existing_state_vals)(this->state_iter, it->first) = normalized;
-		} else {
-			(*this->existing_state_vals)(this->state_iter, it->first) = it->second.val;
+		if (it->first < this->containing_scope_num_input_states) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				(*this->existing_starting_state_vals)(this->state_iter, it->first) = normalized;
+			} else {
+				(*this->existing_starting_state_vals)(this->state_iter, it->first) = it->second.val;
+			}
 		}
 	}
 
-	Scope* containing_scope = context.back().inner_scope_history->scope;
+	Scope* containing_scope = context.back().scope_history->scope;
 	int num_input_states = containing_scope->num_input_states;
 	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
 			it != context.back().local_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
-			(*this->existing_state_vals)(this->state_iter, num_input_states + it->first) = normalized;
-		} else {
-			(*this->existing_state_vals)(this->state_iter, num_input_states + it->first) = it->second.val;
+		if (it->first < this->containing_scope_num_local_states) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				(*this->existing_starting_state_vals)(this->state_iter, num_input_states + it->first) = normalized;
+			} else {
+				(*this->existing_starting_state_vals)(this->state_iter, num_input_states + it->first) = it->second.val;
+			}
 		}
 	}
 }
@@ -75,25 +83,24 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->existing_average_score /= NUM_DATAPOINTS;
 		this->existing_average_misguess /= NUM_DATAPOINTS;
 
-		VectorXd v_existing_target_vals(NUM_DATAPOINTS);
+		Eigen::VectorXd v_existing_target_vals(NUM_DATAPOINTS);
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			v_existing_target_vals(d_index) = this->existing_target_vals[d_index] - this->existing_average_score;
 		}
 
-		VectorXd result = (*this->existing_state_vals).fullPivHouseholderQr().solve(v_existing_target_vals);
+		Eigen::VectorXd result = (*this->existing_starting_state_vals).fullPivHouseholderQr().solve(v_existing_target_vals);
 
-		Scope* containing_scope = solution->scopes[this->scope_context.back()];
-		this->existing_starting_input_state_weights = vector<double>(containing_scope->num_input_states);
-		for (int s_index = 0; s_index < containing_scope->num_input_states; s_index++) {
+		this->existing_starting_input_state_weights = vector<double>(this->containing_scope_num_input_states);
+		for (int s_index = 0; s_index < this->containing_scope_num_input_states; s_index++) {
 			this->existing_starting_input_state_weights[s_index] = result(s_index);
 		}
-		this->existing_starting_local_state_weights = vector<double>(containing_scope->num_local_states);
-		for (int s_index = 0; s_index < containing_scope->num_local_states; s_index++) {
-			this->existing_starting_local_state_weights[s_index] = result(containing_scope->num_input_states + s_index);
+		this->existing_starting_local_state_weights = vector<double>(this->containing_scope_num_local_states);
+		for (int s_index = 0; s_index < this->containing_scope_num_local_states; s_index++) {
+			this->existing_starting_local_state_weights[s_index] = result(this->containing_scope_num_input_states + s_index);
 		}
 
-		delete this->existing_state_vals;
-		this->existing_state_vals = NULL;
+		delete this->existing_starting_state_vals;
+		this->existing_starting_state_vals = NULL;
 		this->existing_target_vals.clear();
 
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;

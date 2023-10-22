@@ -43,8 +43,8 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
-	int branch_next_node_id;
 	int original_next_node_id;
+	int branch_next_node_id;
 
 	bool recursion_protection;
 
@@ -103,12 +103,20 @@ public:
 							  int& num_nodes,
 							  std::vector<AbstractNodeHistory*>& node_histories);
 
+	void flat_vals_back_activate(std::vector<int>& scope_context,
+								 std::vector<int>& node_context,
+								 int d_index,
+								 int stride_size,
+								 std::vector<double>& flat_vals,
+								 BranchNodeHistory* history);
+	void rnn_vals_back_activate(std::vector<int>& scope_context,
+								std::vector<int>& node_context,
+								std::vector<int>& obs_indexes,
+								std::vector<double>& obs_vals,
+								BranchNodeHistory* history);
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<State*, StateStatus>& experiment_score_state_vals,
-								  std::vector<int>& test_obs_indexes,
-								  std::vector<double>& test_obs_vals,
-								  RunHelper& run_helper,
+								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  BranchNodeHistory* history);
 
 	void save(std::ofstream& output_file);

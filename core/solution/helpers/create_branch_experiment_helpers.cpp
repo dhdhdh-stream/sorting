@@ -1,6 +1,3 @@
-// don't use score state
-// instead, when using input state, trace back to parent
-
 #include "helpers.h"
 
 #include <iostream>
@@ -19,7 +16,9 @@
 
 using namespace std;
 
-void create_branch_experiment_helper(double& sum_weight,
+void create_branch_experiment_helper(vector<int>& scope_context,
+									 vector<int>& node_context,
+									 double& sum_weight,
 									 vector<double>& weights,
 									 vector<AbstractNode*>& possible_nodes,
 									 vector<vector<int>>& possible_scope_contexts,
@@ -27,6 +26,9 @@ void create_branch_experiment_helper(double& sum_weight,
 									 vector<bool>& possible_is_branch,
 									 ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
+
+	scope_context.push_back(scope_id);
+	node_context.push_back(-1);
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -42,21 +44,50 @@ void create_branch_experiment_helper(double& sum_weight,
 						weights.push_back(weight);
 
 						possible_nodes.push_back(action_node);
-						possible_scope_contexts.push_back(vector<int>{scope_id});
-						possible_node_contexts.push_back(vector<int>{action_node->id});
-						possible_is_branch.push_back(false);
-					}
+						if (action_node->state_is_local[action_node_history->state_indexes[s_index]]) {
+							possible_scope_contexts.push_back(vector<int>{scope_id});
+							possible_node_contexts.push_back(vector<int>{action_node->id});
+						} else {
+							vector<int> possible_scope_context;
+							vector<int> possible_node_context;
 
-					for (int s_index = 0; s_index < (int)action_node_history->score_state_indexes.size(); s_index++) {
-						StateStatus state_status = action_node_history->score_state_impacts[s_index];
-						StateNetwork* state_network = state_status.last_network;
-						double weight = abs(state_status.val / state_network->ending_standard_deviation);
-						sum_weight += weight;
-						weights.push_back(weight);
+							int curr_state_index = action_node_history->state_indexes[s_index];
+							int curr_context_index = (int)scope_context.size()-2;
+							possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+							possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+							while (true) {
+								Scope* scope = solution->scopes[scope_context[curr_context_index]];
+								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
 
-						possible_nodes.push_back(action_node);
-						possible_scope_contexts.push_back(action_node->score_state_scope_contexts[action_node_history->score_state_indexes[s_index]]);
-						possible_node_contexts.push_back(action_node->score_state_node_contexts[action_node_history->score_state_indexes[s_index]]);
+								int input_index;
+								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+									if (scope_node->input_inner_layers[i_index] == 0
+											&& scope_node->input_inner_is_local[i_index] == false
+											&& scope_node->input_inner_indexes[i_index] == curr_state_index) {
+										input_index = i_index;
+										break;
+									}
+								}
+
+								curr_state_index = scope_node->input_outer_indexes[input_index];
+								curr_context_index--;
+
+								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
+									break;
+								} else if (scope_node->input_outer_is_local[input_index]) {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+									break;
+								} else {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+								}
+							}
+
+							possible_scope_contexts.push_back(possible_scope_context);
+							possible_node_contexts.push_back(possible_node_context);
+						}
 						possible_is_branch.push_back(false);
 					}
 				}
@@ -64,13 +95,19 @@ void create_branch_experiment_helper(double& sum_weight,
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				create_branch_experiment_helper(sum_weight,
+				node_context.back() = scope_node->id;
+
+				create_branch_experiment_helper(scope_context,
+												node_context,
+												sum_weight,
 												weights,
 												possible_nodes,
 												possible_scope_contexts,
 												possible_node_contexts,
 												possible_is_branch,
 												scope_node_history->inner_scope_history);
+
+				node_context.back() = -1;
 
 				if (scope_node->experiment == NULL) {
 					for (int s_index = 0; s_index < (int)scope_node_history->state_indexes.size(); s_index++) {
@@ -81,21 +118,50 @@ void create_branch_experiment_helper(double& sum_weight,
 						weights.push_back(weight);
 
 						possible_nodes.push_back(scope_node);
-						possible_scope_contexts.push_back(vector<int>{scope_id});
-						possible_node_contexts.push_back(vector<int>{scope_node->id});
-						possible_is_branch.push_back(false);
-					}
+						if (scope_node->state_is_local[scope_node_history->state_indexes[s_index]]) {
+							possible_scope_contexts.push_back(vector<int>{scope_id});
+							possible_node_contexts.push_back(vector<int>{scope_node->id});
+						} else {
+							vector<int> possible_scope_context;
+							vector<int> possible_node_context;
 
-					for (int s_index = 0; s_index < (int)scope_node_history->score_state_indexes.size(); s_index++) {
-						StateStatus state_status = scope_node_history->score_state_impacts[s_index];
-						StateNetwork* state_network = state_status.last_network;
-						double weight = abs(state_status.val / state_network->ending_standard_deviation);
-						sum_weight += weight;
-						weights.push_back(weight);
+							int curr_state_index = scope_node_history->state_indexes[s_index];
+							int curr_context_index = (int)scope_context.size()-2;
+							possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+							possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+							while (true) {
+								Scope* scope = solution->scopes[scope_context[curr_context_index]];
+								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
 
-						possible_nodes.push_back(scope_node);
-						possible_scope_contexts.push_back(scope_node->score_state_scope_contexts[scope_node_history->score_state_indexes[s_index]]);
-						possible_node_contexts.push_back(scope_node->score_state_node_contexts[scope_node_history->score_state_indexes[s_index]]);
+								int input_index;
+								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+									if (scope_node->input_inner_layers[i_index] == 0
+											&& scope_node->input_inner_is_local[i_index] == false
+											&& scope_node->input_inner_indexes[i_index] == curr_state_index) {
+										input_index = i_index;
+										break;
+									}
+								}
+
+								curr_state_index = scope_node->input_outer_indexes[input_index];
+								curr_context_index--;
+
+								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
+									break;
+								} else if (scope_node->input_outer_is_local[input_index]) {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+									break;
+								} else {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+								}
+							}
+
+							possible_scope_contexts.push_back(possible_scope_context);
+							possible_node_contexts.push_back(possible_node_context);
+						}
 						possible_is_branch.push_back(false);
 					}
 				}
@@ -111,25 +177,50 @@ void create_branch_experiment_helper(double& sum_weight,
 						weights.push_back(weight);
 
 						possible_nodes.push_back(branch_node);
-						possible_scope_contexts.push_back(vector<int>{scope_id});
-						possible_node_contexts.push_back(vector<int>{branch_node->id});
-						if (branch_node_history->obs_snapshot == 1.0) {
-							possible_is_branch.push_back(false);
+						if (branch_node->state_is_local[branch_node_history->state_indexes[s_index]]) {
+							possible_scope_contexts.push_back(vector<int>{scope_id});
+							possible_node_contexts.push_back(vector<int>{branch_node->id});
 						} else {
-							possible_is_branch.push_back(true);
+							vector<int> possible_scope_context;
+							vector<int> possible_node_context;
+
+							int curr_state_index = branch_node_history->state_indexes[s_index];
+							int curr_context_index = (int)scope_context.size()-2;
+							possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+							possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+							while (true) {
+								Scope* scope = solution->scopes[scope_context[curr_context_index]];
+								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
+
+								int input_index;
+								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+									if (scope_node->input_inner_layers[i_index] == 0
+											&& scope_node->input_inner_is_local[i_index] == false
+											&& scope_node->input_inner_indexes[i_index] == curr_state_index) {
+										input_index = i_index;
+										break;
+									}
+								}
+
+								curr_state_index = scope_node->input_outer_indexes[input_index];
+								curr_context_index--;
+
+								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
+									break;
+								} else if (scope_node->input_outer_is_local[input_index]) {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+									break;
+								} else {
+									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+								}
+							}
+
+							possible_scope_contexts.push_back(possible_scope_context);
+							possible_node_contexts.push_back(possible_node_context);
 						}
-					}
-
-					for (int s_index = 0; s_index < (int)branch_node_history->score_state_indexes.size(); s_index++) {
-						StateStatus state_status = branch_node_history->score_state_impacts[s_index];
-						StateNetwork* state_network = state_status.last_network;
-						double weight = abs(state_status.val / state_network->ending_standard_deviation);
-						sum_weight += weight;
-						weights.push_back(weight);
-
-						possible_nodes.push_back(branch_node);
-						possible_scope_contexts.push_back(branch_node->score_state_scope_contexts[branch_node_history->score_state_indexes[s_index]]);
-						possible_node_contexts.push_back(branch_node->score_state_node_contexts[branch_node_history->score_state_indexes[s_index]]);
 						if (branch_node_history->obs_snapshot == 1.0) {
 							possible_is_branch.push_back(false);
 						} else {
@@ -140,6 +231,9 @@ void create_branch_experiment_helper(double& sum_weight,
 			}
 		}
 	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
 }
 
 void create_branch_experiment(ScopeHistory* root_history) {
@@ -157,7 +251,11 @@ void create_branch_experiment(ScopeHistory* root_history) {
 		vector<vector<int>> possible_node_contexts;
 		vector<bool> possible_is_branch;
 
-		create_branch_experiment_helper(sum_weight,
+		vector<int> scope_context;
+		vector<int> node_context;
+		create_branch_experiment_helper(scope_context,
+										node_context,
+										sum_weight,
 										weights,
 										possible_nodes,
 										possible_scope_contexts,
@@ -186,6 +284,8 @@ void create_branch_experiment(ScopeHistory* root_history) {
 						branch_node->experiment = new_branch_experiment;
 						branch_node->experiment_is_branch = possible_is_branch[p_index];
 					}
+
+					solution->branch_experiments.insert(new_branch_experiment);
 
 					break;
 				}

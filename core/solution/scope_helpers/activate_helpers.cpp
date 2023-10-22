@@ -34,11 +34,6 @@ void Scope::activate(vector<int>& starting_node_ids,
 	}
 	run_helper.curr_depth++;
 
-	if (run_helper.phase == RUN_PHASE_UPDATE
-			&& this->obs_experiment != NULL) {
-		this->obs_experiment->hook(history);
-	}
-
 	history->node_histories.push_back(vector<AbstractNodeHistory*>());
 
 	int curr_node_id = starting_node_ids[0];
@@ -85,12 +80,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 		 * - keep even if early exit, so that can learn good decisions even if early exit
 		 */
 	} else if (history->inner_branch_experiment_history != NULL) {
-		history->inner_branch_experiment_history->ending_experiment_score_state_snapshots = context.back().experiment_score_state_vals;
-	}
-
-	if (run_helper.phase == RUN_PHASE_UPDATE
-			&& this->obs_experiment != NULL) {
-		this->obs_experiment->unhook(history);
+		history->experiment_state_snapshots = context.back().experiment_state_vals;
 	}
 
 	run_helper.curr_depth--;

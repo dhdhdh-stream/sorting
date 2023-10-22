@@ -1,5 +1,8 @@
 #include "scope_node.h"
 
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void ScopeNode::flat_vals_back_activate(vector<int>& scope_context,
@@ -35,7 +38,7 @@ void ScopeNode::rnn_vals_back_activate(vector<int>& scope_context,
 									   vector<int>& node_context,
 									   vector<int>& obs_indexes,
 									   vector<double>& obs_vals,
-									   ActionNodeHistory* history) {
+									   ScopeNodeHistory* history) {
 	for (int h_index = 0; h_index < (int)this->test_hook_indexes.size(); h_index++) {
 		bool matches_context = true;
 		if (this->test_hook_scope_contexts[h_index].size() > scope_context.size()) {

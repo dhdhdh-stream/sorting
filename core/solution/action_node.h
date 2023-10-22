@@ -69,16 +69,24 @@ public:
 	void branch_experiment_train_activate(
 		Problem& problem,
 		std::vector<ContextLayer>& context,
-		RunHelper& run_helper);
+		ActionNodeHistory* history);
 	void branch_experiment_simple_activate(
 		Problem& problem);
 
+	void flat_vals_back_activate(std::vector<int>& scope_context,
+								 std::vector<int>& node_context,
+								 int d_index,
+								 int stride_size,
+								 std::vector<double>& flat_vals,
+								 ActionNodeHistory* history);
+	void rnn_vals_back_activate(std::vector<int>& scope_context,
+								std::vector<int>& node_context,
+								std::vector<int>& obs_indexes,
+								std::vector<double>& obs_vals,
+								ActionNodeHistory* history);
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<State*, StateStatus>& experiment_score_state_vals,
-								  std::vector<int>& test_obs_indexes,
-								  std::vector<double>& test_obs_vals,
-								  RunHelper& run_helper,
+								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  ActionNodeHistory* history);
 
 	void save(std::ofstream& output_file);

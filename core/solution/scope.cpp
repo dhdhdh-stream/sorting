@@ -8,7 +8,6 @@
 #include "branch_stub_node.h"
 #include "exit_node.h"
 #include "globals.h"
-#include "obs_experiment.h"
 #include "scale.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -17,35 +16,29 @@
 using namespace std;
 
 Scope::Scope() {
-	this->obs_experiment = NULL;
+	// do nothing
 }
 
 Scope::~Scope() {
-	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		delete this->input_state_scales[s_index];
-	}
-	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		delete this->local_state_scales[s_index];
-	}
-
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
 
-	if (this->obs_experiment != NULL) {
-		delete this->obs_experiment;
+	while (this->scope_histories.size() > 0) {
+		delete this->scope_histories.front();
+		this->scope_histories.pop_front();
 	}
 }
 
 void Scope::save(ofstream& output_file) {
 	output_file << this->num_input_states << endl;
 	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		output_file << this->input_state_scales[s_index]->weight << endl;
+		output_file << this->input_state_weights[s_index] << endl;
 	}
 
 	output_file << this->num_local_states << endl;
 	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		output_file << this->local_state_scales[s_index]->weight << endl;
+		output_file << this->local_state_weights[s_index] << endl;
 	}
 
 	output_file << this->nodes.size() << endl;
@@ -75,7 +68,7 @@ void Scope::load(ifstream& input_file,
 	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
 		string weight_line;
 		getline(input_file, weight_line);
-		this->input_state_scales.push_back(new Scale(stod(weight_line)));
+		this->input_state_weights.push_back(stod(weight_line));
 	}
 
 	string num_local_states_line;
@@ -84,7 +77,7 @@ void Scope::load(ifstream& input_file,
 	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
 		string weight_line;
 		getline(input_file, weight_line);
-		this->local_state_scales.push_back(new Scale(stod(weight_line)));
+		this->local_state_weights.push_back(stod(weight_line));
 	}
 
 	string num_nodes_line;

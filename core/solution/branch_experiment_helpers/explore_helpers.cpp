@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "helpers.h"
 #include "scale.h"
@@ -33,25 +34,29 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 
 	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
 			it != context.back().input_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
-			predicted_score += this->existing_starting_input_state_weights[it->first] * normalized;
-		} else {
-			predicted_score += this->existing_starting_input_state_weights[it->first] * it->second.val;
+		if (it->first < this->containing_scope_num_input_states) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += this->existing_starting_input_state_weights[it->first] * normalized;
+			} else {
+				predicted_score += this->existing_starting_input_state_weights[it->first] * it->second.val;
+			}
 		}
 	}
 
 	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
 			it != context.back().local_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		if (last_network != NULL) {
-			double normalized = (it->second.val - last_network->ending_mean)
-				/ last_network->ending_standard_deviation;
-			predicted_score += this->existing_starting_local_state_weights[it->first] * normalized;
-		} else {
-			predicted_score += this->existing_starting_local_state_weights[it->first] * it->second.val;
+		if (it->first < this->containing_scope_num_local_states) {
+			StateNetwork* last_network = it->second.last_network;
+			if (last_network != NULL) {
+				double normalized = (it->second.val - last_network->ending_mean)
+					/ last_network->ending_standard_deviation;
+				predicted_score += this->existing_starting_local_state_weights[it->first] * normalized;
+			} else {
+				predicted_score += this->existing_starting_local_state_weights[it->first] * it->second.val;
+			}
 		}
 	}
 
@@ -278,10 +283,30 @@ void BranchExperiment::explore_backprop(double target_val,
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
 
+			Scope* containing_scope = solution->scopes[this->scope_context.back()];
+			this->containing_scope_num_input_states = containing_scope->num_input_states;
+			this->containing_scope_num_local_states = containing_scope->num_local_states;
+
+			while ((int)this->existing_starting_input_state_weights.size() < this->containing_scope_num_input_states) {
+				this->existing_starting_input_state_weights.push_back(0.0);
+			}
+			while ((int)this->existing_starting_local_state_weights.size() < this->containing_scope_num_local_states) {
+				this->existing_starting_local_state_weights.push_back(0.0);
+			}
+
+			this->new_starting_state_vals = new Eigen::MatrixXd(NUM_DATAPOINTS,
+				this->containing_scope_num_input_states + this->containing_scope_num_local_states);
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+				for (int s_index = 0; s_index < this->containing_scope_num_input_states + this->containing_scope_num_local_states; s_index++) {
+					(*this->new_starting_state_vals)(d_index, s_index) = 0.0;
+				}
+			}
+			this->new_target_val_histories.reserve(NUM_DATAPOINTS);
+
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
 			this->state_iter = 0;
 		} else {
-			this->state = BRANCH_EXPERIMENT_STATE_DONE;
+			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}
 }

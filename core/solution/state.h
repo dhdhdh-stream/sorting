@@ -21,8 +21,6 @@ public:
 		  int id);
 	~State();
 
-	void detach(Scope* parent_scope);
-
 	void save(std::ofstream& output_file);
 };
 

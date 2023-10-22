@@ -8,9 +8,11 @@
 
 #include <iostream>
 #include <queue>
+#include <Eigen/Dense>
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "helpers.h"
 #include "obs_experiment.h"
@@ -32,6 +34,7 @@ void Scope::update_histories(double target_val,
 	new_scope_history->input_state_snapshots = history->input_state_snapshots;
 	new_scope_history->local_state_snapshots = history->local_state_snapshots;
 	if (this->scope_histories.size() >= NUM_DATAPOINTS) {
+		delete this->scope_histories.front();
 		this->scope_histories.pop_front();
 	}
 	this->scope_histories.push_back(new_scope_history);
@@ -62,7 +65,7 @@ void Scope::update() {
 		}
 		this->score_variance = sum_score_variance/NUM_DATAPOINTS;
 
-		MatrixXd state_vals(NUM_DATAPOINTS, this->num_input_states + this->num_local_states);
+		Eigen::MatrixXd state_vals(NUM_DATAPOINTS, this->num_input_states + this->num_local_states);
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			for (int s_index = 0; s_index < this->num_input_states + this->num_local_states; s_index++) {
 				state_vals(d_index, s_index) = 0.0;
@@ -100,7 +103,7 @@ void Scope::update() {
 			}
 		}
 
-		VectorXd target_vals(NUM_DATAPOINTS);
+		Eigen::VectorXd target_vals(NUM_DATAPOINTS);
 		{
 			int d_index = 0;
 			for (list<double>::iterator it = this->target_val_histories.begin();
@@ -111,7 +114,7 @@ void Scope::update() {
 			}
 		}
 
-		VectorXd weights = state_vals.fullPivHouseholderQr().solve(target_vals);
+		Eigen::VectorXd weights = state_vals.fullPivHouseholderQr().solve(target_vals);
 		for (int s_index = 0; s_index < this->num_input_states; s_index++) {
 			this->input_state_weights[s_index] = weights(s_index);
 		}
@@ -119,28 +122,35 @@ void Scope::update() {
 			this->local_state_weights[s_index] = weights(this->num_input_states + s_index);
 		}
 
-		VectorXd predicted_scores = state_vals * weights;
-		VectorXd v_diffs = target_vals - predicted_scores;
+		Eigen::VectorXd predicted_scores = state_vals * weights;
+		Eigen::VectorXd v_diffs = target_vals - predicted_scores;
 		vector<double> diffs(NUM_DATAPOINTS);
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			diffs[d_index] = v_diffs(d_index);
 		}
 
-		while (true) {
+		double sum_misguesses = 0.0;
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+			sum_misguesses += diffs[d_index] * diffs[d_index];
+		}
+		this->average_misguess = sum_misguesses / NUM_DATAPOINTS;
+
+		double sum_misguess_variance = 0.0;
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+			double curr_misguess = diffs[d_index] * diffs[d_index];
+			sum_misguess_variance += (curr_misguess - this->average_misguess) * (curr_misguess - this->average_misguess);
+		}
+		this->misguess_variance = sum_misguess_variance / NUM_DATAPOINTS;
+
+		{
 			ObsExperiment* obs_experiment = create_obs_experiment(this->scope_histories.back());
 			/**
 			 * - simply always use most recent run
 			 */
-
 			obs_experiment->experiment(this->scope_histories,
 									   diffs);
-			bool is_success = obs_experiment->scope_eval(this);
-
+			obs_experiment->scope_eval(this);
 			delete obs_experiment;
-
-			if (!is_success) {
-				break;
-			}
 		}
 	}
 }

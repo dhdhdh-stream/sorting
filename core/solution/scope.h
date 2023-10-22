@@ -24,6 +24,7 @@
 #define SCOPE_H
 
 #include <fstream>
+#include <list>
 #include <map>
 #include <set>
 #include <utility>
@@ -145,10 +146,9 @@ public:
 											  std::vector<AbstractNode*>& new_nodes,
 											  RunHelper& run_helper);
 
-	void update_backprop(double target_val,
-						 RunHelper& run_helper,
-						 ScopeHistory* history,
-						 std::set<std::pair<State*, Scope*>>& states_to_remove);
+	void update_histories(double target_val,
+						  ScopeHistory* history);
+	void update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -167,6 +167,7 @@ public:
 	std::map<int, StateStatus> local_state_snapshots;
 
 	BranchExperimentHistory* inner_branch_experiment_history;
+	std::map<int, StateStatus> experiment_state_snapshots;
 
 	bool exceeded_depth;
 

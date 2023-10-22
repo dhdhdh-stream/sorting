@@ -1,5 +1,8 @@
 #include "action_node.h"
 
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void ActionNode::flat_vals_back_activate(vector<int>& scope_context,

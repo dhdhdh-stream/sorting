@@ -11,18 +11,18 @@ using namespace std;
 void ActionNode::branch_experiment_train_activate(
 		Problem& problem,
 		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
+		ActionNodeHistory* history) {
 	problem.perform_action(this->action);
-	double obs_snapshot = problem.get_observation();
+	history->obs_snapshot = problem.get_observation();
 
-	for (int n_index = 0; n_index < (int)this->experiment_hook_score_state_defs.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->experiment_hook_state_defs.size(); n_index++) {
 		bool matches_context = true;
-		if (this->experiment_hook_score_state_scope_contexts[n_index].size() > context.size()) {
+		if (this->experiment_hook_state_scope_contexts[n_index].size() > context.size()) {
 			matches_context = false;
 		} else {
-			for (int c_index = 0; c_index < (int)this->experiment_hook_score_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->experiment_hook_score_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].scope_id
-						|| this->experiment_hook_score_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()+c_index].node_id) {
+			for (int c_index = 0; c_index < (int)this->experiment_hook_state_scope_contexts[n_index].size()-1; c_index++) {
+				if (this->experiment_hook_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index].scope_id
+						|| this->experiment_hook_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index].node_id) {
 					matches_context = false;
 					break;
 				}
@@ -30,14 +30,14 @@ void ActionNode::branch_experiment_train_activate(
 		}
 
 		if (matches_context) {
-			map<State*, StateStatus>::iterator it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()]
-				.experiment_score_state_vals.find(this->experiment_hook_score_state_defs[n_index]);
-			if (it == context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals.end()) {
-				it = context[context.size()-this->experiment_hook_score_state_scope_contexts[n_index].size()].experiment_score_state_vals
-					.insert({this->experiment_hook_score_state_defs[n_index], StateStatus()}).first;
+			map<int, StateStatus>::iterator it = context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()]
+				.experiment_state_vals.find(this->experiment_hook_state_indexes[n_index]);
+			if (it == context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()].experiment_state_vals.end()) {
+				it = context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()].experiment_state_vals
+					.insert({this->experiment_hook_state_indexes[n_index], StateStatus()}).first;
 			}
-			StateNetwork* state_network = this->experiment_hook_score_state_defs[n_index]->networks[this->experiment_hook_score_state_network_indexes[n_index]];
-			state_network->activate(obs_snapshot,
+			StateNetwork* state_network = this->experiment_hook_state_defs[n_index]->networks[this->experiment_hook_state_network_indexes[n_index]];
+			state_network->activate(history->obs_snapshot,
 									it->second);
 		}
 	}

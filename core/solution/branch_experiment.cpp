@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "obs_experiment.h"
 #include "scale.h"
@@ -18,7 +19,6 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 	this->average_remaining_experiments_from_start = 1.0;
@@ -30,10 +30,14 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
-	this->existing_state_vals = new MatrixXd(NUM_DATAPOINTS, containing_scope->num_input_states + containing_scope->num_local_states);
+	this->containing_scope_num_input_states = containing_scope->num_input_states;
+	this->containing_scope_num_local_states = containing_scope->num_local_states;
+
+	this->existing_starting_state_vals = new Eigen::MatrixXd(NUM_DATAPOINTS,
+		this->containing_scope_num_input_states + this->containing_scope_num_local_states);
 	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-		for (int s_index = 0; s_index < containing_scope->num_input_states + containing_scope->num_local_states; s_index++) {
-			(*this->existing_state_vals)(d_index, s_index) = 0.0;
+		for (int s_index = 0; s_index < this->containing_scope_num_input_states + this->containing_scope_num_local_states; s_index++) {
+			(*this->existing_starting_state_vals)(d_index, s_index) = 0.0;
 		}
 	}
 	this->existing_target_vals = vector<double>(NUM_DATAPOINTS);
@@ -48,35 +52,17 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	}
 	this->need_recursion_protection = false;
 
-	this->new_average_score = parent_scope->average_score;
-	this->new_average_misguess = parent_scope->average_misguess;
-	this->new_misguess_variance = parent_scope->misguess_variance;
+	this->new_starting_state_vals = NULL;
 
-	this->branch_existing_score = 0.0;
-	this->existing_branch_count = 0;
-	this->non_branch_existing_score = 0.0;
-
-	this->branch_new_score = 0.0;
-	this->new_branch_count = 0;
-	this->non_branch_new_score = 0.0;
+	this->combined_score = 0.0;
+	this->branch_count = 0;
 
 	this->pass_through_score = 0.0;
-
-	this->obs_experiment = NULL;
 }
 
 BranchExperiment::~BranchExperiment() {
-	for (map<int, Scale*>::iterator it = this->existing_starting_input_state_scales.begin();
-			it != this->existing_starting_input_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<int, Scale*>::iterator it = this->existing_starting_local_state_scales.begin();
-			it != this->existing_starting_local_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<State*, Scale*>::iterator it = this->existing_starting_score_state_scales.begin();
-			it != this->existing_starting_score_state_scales.end(); it++) {
-		delete it->second;
+	if (this->existing_starting_state_vals != NULL) {
+		delete this->existing_starting_state_vals;
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
@@ -91,47 +77,22 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
-	for (map<int, Scale*>::iterator it = this->new_starting_input_state_scales.begin();
-			it != this->new_starting_input_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<int, Scale*>::iterator it = this->new_starting_local_state_scales.begin();
-			it != this->new_starting_local_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<State*, Scale*>::iterator it = this->new_starting_score_state_scales.begin();
-			it != this->new_starting_score_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<State*, Scale*>::iterator it = this->new_starting_experiment_score_state_scales.begin();
-			it != this->new_starting_experiment_score_state_scales.end(); it++) {
-		delete it->second;
+	while (this->new_starting_scope_histories.size() > 0) {
+		delete this->new_starting_scope_histories.front();
+		this->new_starting_scope_histories.pop_front();
 	}
 
-	for (map<int, Scale*>::iterator it = this->new_ending_input_state_scales.begin();
-			it != this->new_ending_input_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<int, Scale*>::iterator it = this->new_ending_local_state_scales.begin();
-			it != this->new_ending_local_state_scales.end(); it++) {
-		delete it->second;
-	}
-	for (map<State*, Scale*>::iterator it = this->new_ending_score_state_scales.begin();
-			it != this->new_ending_score_state_scales.end(); it++) {
-		delete it->second;
+	if (this->new_starting_state_vals != NULL) {
+		delete this->new_starting_state_vals;
 	}
 
-	for (int s_index = 0; s_index < (int)this->new_score_states.size(); s_index++) {
-		delete this->new_score_states[s_index];
+	while (this->new_ending_scope_histories.size() > 0) {
+		delete this->new_ending_scope_histories.front();
+		this->new_ending_scope_histories.pop_front();
 	}
 
-	for (map<State*, pair<Scale*, double>>::iterator it = this->new_score_state_scales.begin();
-			it != this->new_score_state_scales.end(); it++) {
-		delete it->second.first;
-	}
-
-	if (this->obs_experiment != NULL) {
-		delete this->obs_experiment;
+	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+		delete this->new_states[s_index];
 	}
 }
 
@@ -140,6 +101,12 @@ BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 }
 
 BranchExperimentHistory::~BranchExperimentHistory() {
+	for (int s_index = 0; s_index < (int)this->action_histories.size(); s_index++) {
+		if (this->action_histories[s_index] != NULL) {
+			delete this->action_histories[s_index];
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->sequence_histories.size(); s_index++) {
 		if (this->sequence_histories[s_index] != NULL) {
 			delete this->sequence_histories[s_index];

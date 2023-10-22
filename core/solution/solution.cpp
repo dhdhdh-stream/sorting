@@ -85,10 +85,6 @@ void Solution::load(ifstream& input_file) {
 						 it->first);
 		scope_save_file.close();
 	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link_score_state_nodes();
-	}
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);

@@ -1,14 +1,11 @@
-// TODO: have to reduce scoping for efficiency
-// - which kind of means need a way to prevent infinite recursion
-// - so can have a mostly flat structure, and recurse on self, without going infinite
-//   - can add a flag to run helper on branch taken, and check if already set
-
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
 #include <fstream>
 #include <map>
+#include <set>
 
+class BranchExperiment;
 class Scope;
 class State;
 
@@ -34,7 +31,7 @@ public:
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
-	// TODO: add map of BranchExperiments, and reset measure counters if update happened
+	std::set<BranchExperiment*> branch_experiments;
 
 	Solution();
 	~Solution();

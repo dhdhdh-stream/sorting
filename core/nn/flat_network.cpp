@@ -32,11 +32,7 @@ FlatNetwork::~FlatNetwork() {
 	delete this->output;
 }
 
-void FlatNetwork::activate(vector<double>& input_vals) {
-	for (int i_index = 0; i_index < this->num_inputs; i_index++) {
-		this->input->acti_vals[i_index] = input_vals[i_index];
-	}
-
+void FlatNetwork::activate() {
 	this->hidden->activate();
 	this->output->activate();
 }

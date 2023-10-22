@@ -241,7 +241,12 @@ int main(int argc, char* argv[]) {
 						experiment->backprop(target_val,
 											 run_helper.branch_experiment_history);
 
-						if (experiment->state == BRANCH_EXPERIMENT_STATE_DONE) {
+						if (experiment->state == BRANCH_EXPERIMENT_STATE_FAIL
+								|| experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+							if (experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+								updated = true;
+							}
+
 							Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
 							AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
 							if (starting_node->type == NODE_TYPE_ACTION) {
@@ -254,9 +259,8 @@ int main(int argc, char* argv[]) {
 								BranchNode* branch_node = (BranchNode*)starting_node;
 								branch_node->experiment = NULL;
 							}
+							solution->branch_experiments.erase(experiment);
 							delete experiment;
-
-							updated = true;
 						}
 					}
 				} else {
@@ -280,6 +284,11 @@ int main(int argc, char* argv[]) {
 			if (updated) {
 				break;
 			}
+		}
+
+		for (set<BranchExperiment*>::iterator it = solution->branch_experiments.begin();
+				it != solution->branch_experiments.end(); it++) {
+			(*it)->reset_measure();
 		}
 
 		cout << "solution->states.size(): " << solution->states.size() << endl;

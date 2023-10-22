@@ -150,12 +150,20 @@ public:
 										  std::vector<AbstractNode*>& new_nodes,
 										  RunHelper& run_helper);
 
+	void flat_vals_back_activate(std::vector<int>& scope_context,
+								 std::vector<int>& node_context,
+								 int d_index,
+								 int stride_size,
+								 std::vector<double>& flat_vals,
+								 ScopeNodeHistory* history);
+	void rnn_vals_back_activate(std::vector<int>& scope_context,
+								std::vector<int>& node_context,
+								std::vector<int>& obs_indexes,
+								std::vector<double>& obs_vals,
+								ScopeNodeHistory* history);
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<State*, StateStatus>& experiment_score_state_vals,
-								  std::vector<int>& test_obs_indexes,
-								  std::vector<double>& test_obs_vals,
-								  RunHelper& run_helper,
+								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  ScopeNodeHistory* history);
 
 	void save(std::ofstream& output_file);

@@ -25,7 +25,7 @@ void add_state(Scope* parent_scope,
 			   vector<int>& obs_indexes) {
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
-	parent_scope->local_state_scales.push_back(new_weight);
+	parent_scope->local_state_weights.push_back(new_weight);
 
 	set<ScopeNode*> local_scope_nodes_to_mod;
 	set<Scope*> input_scopes_to_mod;
@@ -364,7 +364,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 
 void finalize_new_state(Scope* parent_scope,
 						map<int, ScopeNode*>& sequence_scope_node_mappings,
-						State* score_state,
+						State* new_state,
 						vector<AbstractNode*>& nodes,
 						vector<vector<int>>& scope_contexts,
 						vector<vector<int>>& node_contexts,
@@ -373,7 +373,7 @@ void finalize_new_state(Scope* parent_scope,
 						double new_branch_weight) {
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
-	parent_scope->local_state_scales.push_back(new Scale(0.0));
+	parent_scope->local_state_weights.push_back(0.0);
 
 	set<ScopeNode*> local_scope_nodes_to_mod;
 	set<Scope*> input_scopes_to_mod;
@@ -386,7 +386,7 @@ void finalize_new_state(Scope* parent_scope,
 			if (scope_contexts[n_index].size() == 1) {
 				action_node->state_is_local.push_back(true);
 				action_node->state_indexes.push_back(new_local_index);
-				action_node->state_defs.push_back(score_state);
+				action_node->state_defs.push_back(new_state);
 				action_node->state_network_indexes.push_back(n_index);
 			} else {
 				Scope* curr_scope = parent_scope;
@@ -425,7 +425,7 @@ void finalize_new_state(Scope* parent_scope,
 				int new_input_id = curr_scope->num_input_states;
 				action_node->state_is_local.push_back(false);
 				action_node->state_indexes.push_back(new_input_id);
-				action_node->state_defs.push_back(score_state);
+				action_node->state_defs.push_back(new_state);
 				action_node->state_network_indexes.push_back(n_index);
 			}
 		} else if (nodes[n_index]->type == NODE_TYPE_SCOPE) {
@@ -435,7 +435,7 @@ void finalize_new_state(Scope* parent_scope,
 				scope_node->state_is_local.push_back(true);
 				scope_node->state_indexes.push_back(new_local_index);
 				scope_node->state_obs_indexes.push_back(obs_indexes[n_index]);
-				scope_node->state_defs.push_back(score_state);
+				scope_node->state_defs.push_back(new_state);
 				scope_node->state_network_indexes.push_back(n_index);
 			} else {
 				Scope* curr_scope = parent_scope;
@@ -475,7 +475,7 @@ void finalize_new_state(Scope* parent_scope,
 				scope_node->state_is_local.push_back(false);
 				scope_node->state_indexes.push_back(new_input_id);
 				scope_node->state_obs_indexes.push_back(obs_indexes[n_index]);
-				scope_node->state_defs.push_back(score_state);
+				scope_node->state_defs.push_back(new_state);
 				scope_node->state_network_indexes.push_back(n_index);
 			}
 		} else {
@@ -484,7 +484,7 @@ void finalize_new_state(Scope* parent_scope,
 			if (scope_contexts[n_index].size() == 1) {
 				branch_node->state_is_local.push_back(true);
 				branch_node->state_indexes.push_back(new_local_index);
-				branch_node->state_defs.push_back(score_state);
+				branch_node->state_defs.push_back(new_state);
 				branch_node->state_network_indexes.push_back(n_index);
 			} else {
 				Scope* curr_scope = parent_scope;
@@ -523,7 +523,7 @@ void finalize_new_state(Scope* parent_scope,
 				int new_input_id = curr_scope->num_input_states;
 				branch_node->state_is_local.push_back(false);
 				branch_node->state_indexes.push_back(new_input_id);
-				branch_node->state_defs.push_back(score_state);
+				branch_node->state_defs.push_back(new_state);
 				branch_node->state_network_indexes.push_back(n_index);
 			}
 		}
@@ -592,8 +592,8 @@ void finalize_new_state(Scope* parent_scope,
 			it != input_scopes_to_mod.end(); it++) {
 		Scope* scope = *it;
 		scope->num_input_states++;
-		scope->input_state_scales.push_back(new Scale(0.0));
+		scope->input_state_weights.push_back(0.0);
 	}
 
-	solution->states[score_state->id] = score_state;
+	solution->states[new_state->id] = new_state;
 }

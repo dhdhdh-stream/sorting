@@ -21,6 +21,8 @@ void Sequence::activate(Problem& problem,
 						vector<ContextLayer>& context,
 						RunHelper& run_helper,
 						SequenceHistory* history) {
+	// no need to set context.back().node_id
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->scope->id;
@@ -85,6 +87,9 @@ void Sequence::activate(Problem& problem,
 		}
 	}
 
+	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
+		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
+	}
 	context.pop_back();
 
 	// no need to set context.back().node_id

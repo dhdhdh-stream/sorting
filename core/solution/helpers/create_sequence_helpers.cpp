@@ -791,7 +791,7 @@ Sequence* create_sequence(Problem& problem,
 
 	new_scope->num_input_states = new_num_input_states;
 	for (int s_index = 0; s_index < new_num_input_states; s_index++) {
-		new_scope->input_state_scales.push_back(new Scale(0.0));
+		new_scope->input_state_weights.push_back(0.0);
 	}
 	new_scope->num_local_states = 0;
 
