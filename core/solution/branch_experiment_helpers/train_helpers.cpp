@@ -113,7 +113,8 @@ void BranchExperiment::process_train() {
 	}
 
 	if (this->containing_scope_num_input_states + this->containing_scope_num_local_states + this->new_states.size() > 0) {
-		Eigen::VectorXd starting_weights = (*this->new_starting_state_vals).fullPivHouseholderQr().solve(target_vals);
+		// Eigen::VectorXd starting_weights = (*this->new_starting_state_vals).fullPivHouseholderQr().solve(target_vals);
+		Eigen::VectorXd starting_weights = (*this->new_starting_state_vals).bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(target_vals);
 
 		this->new_starting_input_state_weights = vector<double>(this->containing_scope_num_input_states);
 		for (int s_index = 0; s_index < this->containing_scope_num_input_states; s_index++) {
@@ -179,7 +180,8 @@ void BranchExperiment::process_train() {
 		}
 	}
 
-	Eigen::VectorXd ending_weights = ending_state_vals.fullPivHouseholderQr().solve(target_vals);
+	// Eigen::VectorXd ending_weights = ending_state_vals.fullPivHouseholderQr().solve(target_vals);
+	Eigen::VectorXd ending_weights = ending_state_vals.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(target_vals);
 
 	this->new_ending_input_state_weights = vector<double>(parent_scope->num_input_states);
 	for (int s_index = 0; s_index < parent_scope->num_input_states; s_index++) {

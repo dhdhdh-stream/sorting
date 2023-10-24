@@ -70,13 +70,13 @@ BranchNode::BranchNode(ifstream& input_file,
 		this->decision_branch_weights.push_back(stod(branch_weight_line));
 	}
 
-	string branch_next_node_id_line;
-	getline(input_file, branch_next_node_id_line);
-	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
+
+	string branch_next_node_id_line;
+	getline(input_file, branch_next_node_id_line);
+	this->branch_next_node_id = stoi(branch_next_node_id_line);
 
 	string recursion_protection_line;
 	getline(input_file, recursion_protection_line);
@@ -132,8 +132,8 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->decision_branch_weights[s_index] << endl;
 	}
 
-	output_file << this->branch_next_node_id << endl;
 	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
 
 	output_file << this->recursion_protection << endl;
 
@@ -149,8 +149,8 @@ void BranchNode::save(ofstream& output_file) {
 void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->branch_scope_context[0] << endl;
 
-	output_file << this->branch_next_node_id << endl;
 	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {

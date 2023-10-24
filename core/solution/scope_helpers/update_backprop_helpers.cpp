@@ -114,7 +114,8 @@ void Scope::update() {
 			}
 		}
 
-		Eigen::VectorXd weights = state_vals.fullPivHouseholderQr().solve(target_vals);
+		// Eigen::VectorXd weights = state_vals.fullPivHouseholderQr().solve(target_vals);
+		Eigen::VectorXd weights = state_vals.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(target_vals);
 		for (int s_index = 0; s_index < this->num_input_states; s_index++) {
 			this->input_state_weights[s_index] = weights(s_index);
 		}

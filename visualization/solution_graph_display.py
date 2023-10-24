@@ -43,13 +43,13 @@ for s_index in range(num_scopes):
 		elif node_type == NODE_TYPE_BRANCH:
 			scope_context = int(file.readline())
 
-			branch_next_node_id = int(file.readline())
 			original_next_node_id = int(file.readline())
+			branch_next_node_id = int(file.readline())
 
 			nodes.append([node_type,
 						  scope_context,
-						  branch_next_node_id,
-						  original_next_node_id])
+						  original_next_node_id,
+						  branch_next_node_id])
 		elif node_type == NODE_TYPE_BRANCH_STUB:
 			next_node_id = int(file.readline())
 

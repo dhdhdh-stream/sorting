@@ -74,5 +74,7 @@ void ActionNode::create_sequence_activate(
 
 	// don't worry about score_state
 
-	curr_num_nodes++;
+	if (this->action.move != ACTION_NOOP) {
+		curr_num_nodes++;
+	}
 }

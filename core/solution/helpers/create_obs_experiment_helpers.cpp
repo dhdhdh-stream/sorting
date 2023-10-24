@@ -76,16 +76,14 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-				if (action_node->action.move != ACTION_NOOP) {
-					node_context.back() = action_node->id;
+				node_context.back() = action_node->id;
 
-					possible_nodes.push_back(action_node);
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_obs_indexes.push_back(0);
+				possible_nodes.push_back(action_node);
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_obs_indexes.push_back(0);
 
-					node_context.back() = -1;
-				}
+				node_context.back() = -1;
 
 				if (action_node_history->branch_experiment_history != NULL) {
 					create_obs_experiment_branch_experiment_helper(

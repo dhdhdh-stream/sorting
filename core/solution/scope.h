@@ -49,6 +49,7 @@ public:
 
 	int num_input_states;
 	std::vector<double> input_state_weights;
+	// TODO: don't calculate weights if state unstable
 	int num_local_states;
 	std::vector<double> local_state_weights;
 

@@ -90,7 +90,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			v_existing_target_vals(d_index) = this->existing_target_vals[d_index] - this->existing_average_score;
 		}
 
-		Eigen::VectorXd result = (*this->existing_starting_state_vals).fullPivHouseholderQr().solve(v_existing_target_vals);
+		// Eigen::VectorXd result = (*this->existing_starting_state_vals).fullPivHouseholderQr().solve(v_existing_target_vals);
+		Eigen::VectorXd result = (*this->existing_starting_state_vals).bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(v_existing_target_vals);
 
 		this->existing_starting_input_state_weights = vector<double>(this->containing_scope_num_input_states);
 		for (int s_index = 0; s_index < this->containing_scope_num_input_states; s_index++) {
