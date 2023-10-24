@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void ActionNode::branch_experiment_train_activate(
+void ActionNode::branch_experiment_activate(
 		Problem& problem,
 		vector<ContextLayer>& context,
 		ActionNodeHistory* history) {
@@ -41,9 +41,4 @@ void ActionNode::branch_experiment_train_activate(
 									it->second);
 		}
 	}
-}
-
-void ActionNode::branch_experiment_simple_activate(
-		Problem& problem) {
-	problem.perform_action(this->action);
 }

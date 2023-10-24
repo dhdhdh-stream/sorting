@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "scope.h"
 #include "state_network.h"

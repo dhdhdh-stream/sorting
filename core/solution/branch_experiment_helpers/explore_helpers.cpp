@@ -62,6 +62,8 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 
 	history->existing_predicted_score = predicted_score;
 
+	// no need to worry about recursion_protection
+
 	{
 		// exit
 		int new_exit_depth;
@@ -270,6 +272,14 @@ void BranchExperiment::explore_backprop(double target_val,
 				}
 			}
 
+			cout << "this->scope_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				cout << c_index << ": " << this->scope_context[c_index] << endl;
+			}
+			cout << "this->node_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				cout << c_index << ": " << this->node_context[c_index] << endl;
+			}
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

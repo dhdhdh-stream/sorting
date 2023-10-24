@@ -18,6 +18,10 @@ BranchStubNode::BranchStubNode(ifstream& input_file,
 
 	this->id = id;
 
+	string was_branch_line;
+	getline(input_file, was_branch_line);
+	this->was_branch = stoi(was_branch_line);
+
 	string state_defs_size_line;
 	getline(input_file, state_defs_size_line);
 	int state_defs_size = stoi(state_defs_size_line);
@@ -49,6 +53,8 @@ BranchStubNode::~BranchStubNode() {
 }
 
 void BranchStubNode::save(ofstream& output_file) {
+	output_file << this->was_branch << endl;
+
 	output_file << this->state_defs.size() << endl;
 	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
 		output_file << this->state_is_local[s_index] << endl;

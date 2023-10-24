@@ -64,6 +64,9 @@ public:
 	std::vector<double> existing_starting_input_state_weights;
 	std::vector<double> existing_starting_local_state_weights;
 
+	int existing_selected_count;
+	double existing_selected_sum_score;
+
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<Sequence*> curr_sequences;
@@ -106,7 +109,11 @@ public:
 
 	double combined_score;
 	int branch_count;
+	int branch_possible;
 
+	double pass_through_misguess;
+
+	int pass_through_selected_count;
 	double pass_through_score;
 
 	BranchExperiment(std::vector<int> scope_context,
@@ -159,7 +166,14 @@ public:
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 int& exit_node_id,
-						 RunHelper& run_helper);
+						 RunHelper& run_helper,
+						 BranchExperimentHistory*& history);
+	void simple_combined_activate(int& curr_node_id,
+								  Problem& problem,
+								  std::vector<ContextLayer>& context,
+								  int& exit_depth,
+								  int& exit_node_id,
+								  RunHelper& run_helper);
 	void simple_pass_through_activate(int& curr_node_id,
 									  Problem& problem,
 									  std::vector<ContextLayer>& context,
@@ -167,23 +181,14 @@ public:
 									  int& exit_node_id,
 									  RunHelper& run_helper);
 
-	void measure_combined_activate(int& curr_node_id,
-								   Problem& problem,
-								   std::vector<ContextLayer>& context,
-								   int& exit_depth,
-								   int& exit_node_id,
-								   RunHelper& run_helper);
-	void measure_combined_backprop(double target_val);
-
 	void measure_pass_through_activate(int& curr_node_id,
 									   Problem& problem,
 									   std::vector<ContextLayer>& context,
 									   int& exit_depth,
 									   int& exit_node_id,
 									   RunHelper& run_helper);
-	void measure_pass_through_backprop(double target_val);
-
-	void reset_measure();
+	void measure_pass_through_backprop(double target_val,
+									   BranchExperimentHistory* history);
 
 	void eval();
 	void new_branch();

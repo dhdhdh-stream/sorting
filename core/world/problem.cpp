@@ -20,6 +20,13 @@ Problem::Problem() {
 	this->current_world = this->initial_world;
 }
 
+Problem::Problem(vector<double> initial_world) {
+	this->initial_world = initial_world;
+
+	this->current_pointer = 0;
+	this->current_world = this->initial_world;
+}
+
 Problem::~Problem() {
 	// do nothing
 }

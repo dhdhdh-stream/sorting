@@ -56,7 +56,8 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 
 	while (true) {
 		if (curr_num_nodes == target_num_nodes
-				|| curr_node_id == -1) {
+				|| curr_node_id == -1
+				|| run_helper.exceeded_depth) {
 			break;
 		}
 

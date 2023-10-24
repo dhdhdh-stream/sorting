@@ -34,6 +34,17 @@ void BranchExperiment::activate(int& curr_node_id,
 	}
 
 	if (matches_context) {
+		if (this->recursion_protection
+				&& run_helper.recursion_protection_flags.find(this) != run_helper.recursion_protection_flags.end()) {
+			matches_context = false;
+
+			if (this->state != BRANCH_EXPERIMENT_STATE_EXPLORE) {
+				this->need_recursion_protection = true;
+			}
+		}
+	}
+
+	if (matches_context) {
 		if (run_helper.phase == RUN_PHASE_EXPLORE) {
 			if (run_helper.selected_branch_experiment == this) {
 				// already hooked
@@ -84,12 +95,12 @@ void BranchExperiment::activate(int& curr_node_id,
 										   history);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-							measure_combined_activate(curr_node_id,
-													  problem,
-													  context,
-													  exit_depth,
-													  exit_node_id,
-													  run_helper);
+							simple_combined_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
 							measure_pass_through_activate(curr_node_id,
@@ -107,13 +118,21 @@ void BranchExperiment::activate(int& curr_node_id,
 						 */
 						case BRANCH_EXPERIMENT_STATE_TRAIN:
 						case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
-						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
 							simple_activate(curr_node_id,
 											problem,
 											context,
 											exit_depth,
 											exit_node_id,
-											run_helper);
+											run_helper,
+											history);
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+							simple_combined_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
 							simple_pass_through_activate(curr_node_id,
@@ -129,13 +148,21 @@ void BranchExperiment::activate(int& curr_node_id,
 					switch (this->state) {
 					case BRANCH_EXPERIMENT_STATE_TRAIN:
 					case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
-					case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
 						simple_activate(curr_node_id,
 										problem,
 										context,
 										exit_depth,
 										exit_node_id,
-										run_helper);
+										run_helper,
+										history);
+						break;
+					case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+						simple_combined_activate(curr_node_id,
+												 problem,
+												 context,
+												 exit_depth,
+												 exit_node_id,
+												 run_helper);
 						break;
 					case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
 						simple_pass_through_activate(curr_node_id,
@@ -208,7 +235,7 @@ void BranchExperiment::activate(int& curr_node_id,
 										   history);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-							measure_combined_activate(curr_node_id,
+							simple_combined_activate(curr_node_id,
 													  problem,
 													  context,
 													  exit_depth,
@@ -228,13 +255,21 @@ void BranchExperiment::activate(int& curr_node_id,
 						switch (this->state) {
 						case BRANCH_EXPERIMENT_STATE_TRAIN:
 						case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
-						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
 							simple_activate(curr_node_id,
 											problem,
 											context,
 											exit_depth,
 											exit_node_id,
-											run_helper);
+											run_helper,
+											history);
+							break;
+						case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+							simple_combined_activate(curr_node_id,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node_id,
+													 run_helper);
 							break;
 						case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
 							simple_pass_through_activate(curr_node_id,
@@ -260,30 +295,34 @@ void BranchExperiment::activate(int& curr_node_id,
 		} else {
 			// run_helper.phase == RUN_PHASE_NEW
 			if (run_helper.selected_branch_experiment == this) {
-				if (!this->recursion_protection) {
-					switch (this->state) {
-					case BRANCH_EXPERIMENT_STATE_TRAIN:
-					case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
-					case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-						simple_activate(curr_node_id,
-										problem,
-										context,
-										exit_depth,
-										exit_node_id,
-										run_helper);
-						break;
-					case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
-						simple_pass_through_activate(curr_node_id,
-													 problem,
-													 context,
-													 exit_depth,
-													 exit_node_id,
-													 run_helper);
-						break;
-					}
+				switch (this->state) {
+				case BRANCH_EXPERIMENT_STATE_TRAIN:
+				case BRANCH_EXPERIMENT_STATE_TRAIN_POST:
+					simple_activate(curr_node_id,
+									problem,
+									context,
+									exit_depth,
+									exit_node_id,
+									run_helper,
+									history);
+					break;
+				case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
+					simple_combined_activate(curr_node_id,
+											 problem,
+											 context,
+											 exit_depth,
+											 exit_node_id,
+											 run_helper);
+					break;
+				case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
+					simple_pass_through_activate(curr_node_id,
+												 problem,
+												 context,
+												 exit_depth,
+												 exit_node_id,
+												 run_helper);
+					break;
 				}
-
-				this->need_recursion_protection = true;
 			}
 		}
 	}
@@ -320,13 +359,10 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 
 				node_context.back() = -1;
 
-				if (i_index != (int)scope_history->node_histories.size()-1
-						|| h_index != (int)scope_history->node_histories[i_index].size()-1) {
-					scope_node->experiment_back_activate(scope_context,
-														 node_context,
-														 experiment_state_vals,
-														 scope_node_history);
-				}
+				scope_node->experiment_back_activate(scope_context,
+													 node_context,
+													 experiment_state_vals,
+													 scope_node_history);
 			} else {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)scope_history->node_histories[i_index][h_index];
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
@@ -432,11 +468,9 @@ void BranchExperiment::backprop(double target_val,
 		train_backprop(target_val,
 					   history);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED:
-		measure_combined_backprop(target_val);
-		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH:
-		measure_pass_through_backprop(target_val);
+		measure_pass_through_backprop(target_val,
+									  history);
 		break;
 	}
 }

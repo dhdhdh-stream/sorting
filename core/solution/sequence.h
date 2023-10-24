@@ -47,6 +47,7 @@ public:
 	// scope initially has no local state/obs_snapshots
 
 	SequenceHistory(Sequence* sequence);
+	SequenceHistory(SequenceHistory* original);
 	~SequenceHistory();
 };
 

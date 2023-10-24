@@ -73,7 +73,7 @@ void ActionNode::activate(int& curr_node_id,
 			}
 		}
 	}
- 
+
 	for (int n_index = 0; n_index < (int)this->experiment_hook_state_defs.size(); n_index++) {
 		bool matches_context = true;
 		if (this->experiment_hook_state_scope_contexts[n_index].size() > context.size()) {

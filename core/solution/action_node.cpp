@@ -91,7 +91,11 @@ ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
 
 	this->obs_snapshot = original->obs_snapshot;
 
-	this->branch_experiment_history = NULL;
+	if (original->branch_experiment_history != NULL) {
+		this->branch_experiment_history = new BranchExperimentHistory(original->branch_experiment_history);
+	} else {
+		this->branch_experiment_history = NULL;
+	}
 }
 
 ActionNodeHistory::~ActionNodeHistory() {

@@ -211,7 +211,7 @@ void ObsExperiment::flat(vector<double>& flat_vals,
 	int stride_size = (int)this->nodes.size();
 	FlatNetwork flat_network(stride_size);
 
-	uniform_int_distribution<int> distribution(0, 999);
+	uniform_int_distribution<int> distribution(0, NUM_DATAPOINTS-1);
 	for (int iter_index = 0; iter_index < FLAT_ITERS; iter_index++) {
 		int rand_index = distribution(generator);
 
@@ -399,12 +399,13 @@ void ObsExperiment::rnn_vals_helper(vector<int>& scope_context,
 }
 
 void ObsExperiment::rnn(vector<double>& diffs) {
-	uniform_int_distribution<int> distribution(0, 999);
+	uniform_real_distribution<double> starting_val_distribution(-1.0, 1.0);
+	uniform_int_distribution<int> distribution(0, NUM_DATAPOINTS-1);
 	for (int iter_index = 0; iter_index < FLAT_ITERS; iter_index++) {
 		int rand_index = distribution(generator);
 
 		if (this->d_obs_indexes[rand_index].size() > 0) {
-			double state_val = 0.0;
+			double state_val = starting_val_distribution(generator);
 
 			StateNetwork* last_network = NULL;
 			for (int o_index = 0; o_index < (int)this->d_obs_indexes[rand_index].size(); o_index++) {
@@ -563,10 +564,10 @@ bool ObsExperiment::scope_eval(Scope* parent) {
 				  this->node_contexts,
 				  this->obs_indexes);
 
-		ofstream solution_save_file;
-		solution_save_file.open("saves/solution.txt");
-		solution->save(solution_save_file);
-		solution_save_file.close();
+		// ofstream solution_save_file;
+		// solution_save_file.open("saves/solution.txt");
+		// solution->save(solution_save_file);
+		// solution_save_file.close();
 
 		return true;
 	} else {
@@ -594,9 +595,12 @@ bool ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment,
 	cout << "existing_misguess_standard_deviation: " << existing_misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
 	cout << "impact: " << sqrt(this->resolved_variance) << endl;
-	cout << endl;
 
+	bool result;
 	if (improvement_t_score > 2.326) {	// >99%
+		result = true;
+		cout << "success" << endl;
+
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)this->state_networks.size(); n_index++) {
@@ -624,11 +628,13 @@ bool ObsExperiment::branch_experiment_eval(BranchExperiment* branch_experiment,
 		branch_experiment->new_state_node_contexts.push_back(this->node_contexts);
 		branch_experiment->new_state_obs_indexes.push_back(this->obs_indexes);
 		branch_experiment->new_state_weights.push_back(sqrt(this->resolved_variance));
-
-		return true;
 	} else {
-		return false;
+		result = false;
 	}
+
+	cout << endl;
+
+	return result;
 }
 
 void ObsExperiment::update_diffs(vector<double>& diffs) {

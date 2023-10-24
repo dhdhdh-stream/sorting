@@ -22,7 +22,7 @@ public:
 	 *   - instead, on experiment, calculate from partial and resolved score_state_vals
 	 */
 
-	std::set<BranchNode*> recursion_protection_flags;
+	std::set<void*> recursion_protection_flags;
 
 	std::vector<ScopeHistory*> scope_histories;
 

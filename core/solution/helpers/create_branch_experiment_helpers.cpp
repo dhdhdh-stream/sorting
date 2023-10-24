@@ -48,8 +48,8 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 							possible_scope_contexts.push_back(vector<int>{scope_id});
 							possible_node_contexts.push_back(vector<int>{action_node->id});
 						} else {
-							vector<int> possible_scope_context;
-							vector<int> possible_node_context;
+							vector<int> possible_scope_context{scope_id};
+							vector<int> possible_node_context{action_node->id};
 
 							int curr_state_index = action_node_history->state_indexes[s_index];
 							int curr_context_index = (int)scope_context.size()-2;
@@ -59,7 +59,7 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 								Scope* scope = solution->scopes[scope_context[curr_context_index]];
 								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
 
-								int input_index;
+								int input_index = -1;
 								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 									if (scope_node->input_inner_layers[i_index] == 0
 											&& scope_node->input_inner_is_local[i_index] == false
@@ -69,19 +69,27 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 									}
 								}
 
-								curr_state_index = scope_node->input_outer_indexes[input_index];
-								curr_context_index--;
-
-								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
-									break;
-								} else if (scope_node->input_outer_is_local[input_index]) {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
-
+								/**
+								 * - may miss because of halfway
+								 */
+								if (input_index == -1) {
 									break;
 								} else {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									curr_state_index = scope_node->input_outer_indexes[input_index];
+									curr_context_index--;
+
+									if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT
+											|| curr_context_index < 0) {
+										break;
+									} else if (scope_node->input_outer_is_local[input_index]) {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+										break;
+									} else {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									}
 								}
 							}
 
@@ -122,8 +130,8 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 							possible_scope_contexts.push_back(vector<int>{scope_id});
 							possible_node_contexts.push_back(vector<int>{scope_node->id});
 						} else {
-							vector<int> possible_scope_context;
-							vector<int> possible_node_context;
+							vector<int> possible_scope_context{scope_id};
+							vector<int> possible_node_context{scope_node->id};
 
 							int curr_state_index = scope_node_history->state_indexes[s_index];
 							int curr_context_index = (int)scope_context.size()-2;
@@ -133,7 +141,7 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 								Scope* scope = solution->scopes[scope_context[curr_context_index]];
 								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
 
-								int input_index;
+								int input_index = -1;
 								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 									if (scope_node->input_inner_layers[i_index] == 0
 											&& scope_node->input_inner_is_local[i_index] == false
@@ -143,19 +151,27 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 									}
 								}
 
-								curr_state_index = scope_node->input_outer_indexes[input_index];
-								curr_context_index--;
-
-								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
-									break;
-								} else if (scope_node->input_outer_is_local[input_index]) {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
-
+								/**
+								 * - may miss because of halfway
+								 */
+								if (input_index == -1) {
 									break;
 								} else {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									curr_state_index = scope_node->input_outer_indexes[input_index];
+									curr_context_index--;
+
+									if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT
+											|| curr_context_index < 0) {
+										break;
+									} else if (scope_node->input_outer_is_local[input_index]) {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+										break;
+									} else {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									}
 								}
 							}
 
@@ -181,8 +197,8 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 							possible_scope_contexts.push_back(vector<int>{scope_id});
 							possible_node_contexts.push_back(vector<int>{branch_node->id});
 						} else {
-							vector<int> possible_scope_context;
-							vector<int> possible_node_context;
+							vector<int> possible_scope_context{scope_id};
+							vector<int> possible_node_context{branch_node->id};
 
 							int curr_state_index = branch_node_history->state_indexes[s_index];
 							int curr_context_index = (int)scope_context.size()-2;
@@ -192,7 +208,7 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 								Scope* scope = solution->scopes[scope_context[curr_context_index]];
 								ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[curr_context_index]];
 
-								int input_index;
+								int input_index = -1;
 								for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 									if (scope_node->input_inner_layers[i_index] == 0
 											&& scope_node->input_inner_is_local[i_index] == false
@@ -202,19 +218,27 @@ void create_branch_experiment_helper(vector<int>& scope_context,
 									}
 								}
 
-								curr_state_index = scope_node->input_outer_indexes[input_index];
-								curr_context_index--;
-
-								if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT) {
-									break;
-								} else if (scope_node->input_outer_is_local[input_index]) {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
-
+								/**
+								 * - may miss because of halfway
+								 */
+								if (input_index == -1) {
 									break;
 								} else {
-									possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
-									possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									curr_state_index = scope_node->input_outer_indexes[input_index];
+									curr_context_index--;
+
+									if (scope_node->input_types[input_index] == INPUT_TYPE_CONSTANT
+											|| curr_context_index < 0) {
+										break;
+									} else if (scope_node->input_outer_is_local[input_index]) {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+
+										break;
+									} else {
+										possible_scope_context.insert(possible_scope_context.begin(), scope_context[curr_context_index]);
+										possible_node_context.insert(possible_node_context.begin(), node_context[curr_context_index]);
+									}
 								}
 							}
 

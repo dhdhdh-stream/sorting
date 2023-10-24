@@ -14,13 +14,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main viewer
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+viewer: ${OBJECTS} viewer.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	viewer.o viewer.d viewer

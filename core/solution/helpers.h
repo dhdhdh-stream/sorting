@@ -19,7 +19,6 @@ class Sequence;
 class State;
 
 ObsExperiment* create_obs_experiment(ScopeHistory* scope_history);
-ObsExperiment* create_decision_obs_experiment(ScopeHistory* scope_history);
 
 void create_branch_experiment(ScopeHistory* root_history);
 

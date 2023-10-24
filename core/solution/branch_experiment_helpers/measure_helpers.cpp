@@ -18,97 +18,6 @@
 
 using namespace std;
 
-const int MEASURE_ITERS = 1000;
-
-void BranchExperiment::measure_combined_activate(
-		int& curr_node_id,
-		Problem& problem,
-		vector<ContextLayer>& context,
-		int& exit_depth,
-		int& exit_node_id,
-		RunHelper& run_helper) {
-	double original_score = this->existing_average_score;
-	double branch_score = this->new_average_score;
-
-	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-			it != context.back().input_state_vals.end(); it++) {
-		if (it->first < this->containing_scope_num_input_states) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				original_score += this->existing_starting_input_state_weights[it->first] * normalized;
-				branch_score += this->new_starting_input_state_weights[it->first] * normalized;
-			} else {
-				original_score += this->existing_starting_input_state_weights[it->first] * it->second.val;
-				branch_score += this->new_starting_input_state_weights[it->first] * it->second.val;
-			}
-		}
-	}
-
-	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-			it != context.back().local_state_vals.end(); it++) {
-		if (it->first < this->containing_scope_num_local_states) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				original_score += this->existing_starting_local_state_weights[it->first] * normalized;
-				branch_score += this->new_starting_local_state_weights[it->first] * normalized;
-			} else {
-				original_score += this->existing_starting_local_state_weights[it->first] * it->second.val;
-				branch_score += this->new_starting_local_state_weights[it->first] * it->second.val;
-			}
-		}
-	}
-
-	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size()].experiment_state_vals.begin();
-			it != context[context.size() - this->scope_context.size()].experiment_state_vals.end(); it++) {
-		StateNetwork* last_network = it->second.last_network;
-		// last_network != NULL
-		double normalized = (it->second.val - last_network->ending_mean)
-			/ last_network->ending_standard_deviation;
-		branch_score += this->new_starting_experiment_state_weights[it->first] * normalized;
-	}
-
-	if (branch_score > original_score) {
-		this->branch_count++;
-
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			// leave context.back().node_id as -1
-
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				this->best_actions[s_index]->branch_experiment_simple_activate(
-					problem);
-			} else {
-				SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-				this->best_sequences[s_index]->activate(problem,
-														context,
-														run_helper,
-														sequence_history);
-				delete sequence_history;
-			}
-		}
-
-		if (this->best_exit_depth == 0) {
-			curr_node_id = this->best_exit_node_id;
-		} else {
-			exit_depth = this->best_exit_depth-1;
-			exit_node_id = this->best_exit_node_id;
-		}
-	}
-}
-
-void BranchExperiment::measure_combined_backprop(double target_val) {
-	this->combined_score += target_val;
-
-	this->state_iter++;
-	if (this->state_iter >= MEASURE_ITERS) {
-		this->state = BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH;
-		this->state_iter = 0;
-	}
-}
-
 void BranchExperiment::measure_pass_through_activate(
 		int& curr_node_id,
 		Problem& problem,
@@ -116,12 +25,21 @@ void BranchExperiment::measure_pass_through_activate(
 		int& exit_depth,
 		int& exit_node_id,
 		RunHelper& run_helper) {
+	if (this->recursion_protection) {
+		context.back().added_recursion_protection_flags.push_back(this);
+		run_helper.recursion_protection_flags.insert(this);
+	}
+
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		// leave context.back().node_id as -1
 
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->branch_experiment_simple_activate(
-				problem);
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+			this->best_actions[s_index]->branch_experiment_activate(
+				problem,
+				context,
+				action_node_history);
+			delete action_node_history;
 		} else {
 			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
 			this->best_sequences[s_index]->activate(problem,
@@ -140,8 +58,53 @@ void BranchExperiment::measure_pass_through_activate(
 	}
 }
 
-void BranchExperiment::measure_pass_through_backprop(double target_val) {
-	this->pass_through_score += target_val;
+void BranchExperiment::measure_pass_through_backprop(double target_val,
+													 BranchExperimentHistory* history) {
+	{
+		ScopeHistory* parent_scope_history = history->parent_scope_history;
+
+		double predicted_score = this->new_average_score;
+
+		for (map<int, StateStatus>::iterator it = parent_scope_history->input_state_snapshots.begin();
+				it != parent_scope_history->input_state_snapshots.end(); it++) {
+			if (it->first < (int)this->new_ending_input_state_weights.size()) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					predicted_score += this->new_ending_input_state_weights[it->first] * normalized;
+				} else {
+					predicted_score += this->new_ending_input_state_weights[it->first] * it->second.val;
+				}
+			}
+		}
+
+		for (map<int, StateStatus>::iterator it = parent_scope_history->local_state_snapshots.begin();
+				it != parent_scope_history->local_state_snapshots.end(); it++) {
+			if (it->first < (int)this->new_ending_local_state_weights.size()) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					predicted_score += this->new_ending_local_state_weights[it->first] * normalized;
+				} else {
+					predicted_score += this->new_ending_local_state_weights[it->first] * it->second.val;
+				}
+			}
+		}
+
+		for (map<int, StateStatus>::iterator it = parent_scope_history->experiment_state_snapshots.begin();
+				it != parent_scope_history->experiment_state_snapshots.end(); it++) {
+			StateNetwork* last_network = it->second.last_network;
+			// last_network != NULL
+			double normalized = (it->second.val - last_network->ending_mean)
+				/ last_network->ending_standard_deviation;
+			predicted_score += new_state_weights[it->first] * normalized;
+		}
+
+		double curr_misguess = (target_val - predicted_score) * (target_val - predicted_score);
+		this->pass_through_misguess += curr_misguess;
+	}
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
@@ -149,15 +112,15 @@ void BranchExperiment::measure_pass_through_backprop(double target_val) {
 	}
 }
 
-void BranchExperiment::reset_measure() {
-	if (this->state == BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED
-			|| this->state == BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH) {
-		this->state = BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED;
-		this->state_iter = 0;
-	}
-}
-
 void BranchExperiment::eval() {
+	cout << "this->scope_context:" << endl;
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		cout << c_index << ": " << this->scope_context[c_index] << endl;
+	}
+	cout << "this->node_context:" << endl;
+	for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+		cout << c_index << ": " << this->node_context[c_index] << endl;
+	}
 	cout << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -175,42 +138,51 @@ void BranchExperiment::eval() {
 
 	double score_standard_deviation = sqrt(parent->score_variance);
 
-	double new_average_score = this->combined_score / MEASURE_ITERS;
+	double existing_selected_average_score = this->existing_selected_sum_score / this->existing_selected_count;
 
-	double combined_improvement = new_average_score - this->existing_average_score;
+	cout << "existing_selected_average_score: " << existing_selected_average_score << endl;
+	cout << "this->existing_selected_count: " << this->existing_selected_count << endl;
+
+	double combined_average_score = this->combined_score / MEASURE_ITERS;
+
+	double combined_improvement = combined_average_score - existing_selected_average_score;
 	double combined_improvement_t_score = combined_improvement
 		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
 
 	cout << "score_standard_deviation: " << score_standard_deviation << endl;
-	cout << "new_average_score: " << new_average_score << endl;
-	cout << "this->existing_average_score: " << this->existing_average_score << endl;
+	cout << "combined_average_score: " << combined_average_score << endl;
 	cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-	cout << "this->branch_count: " << this->branch_count << endl;
 
-	double pass_through_average_score = this->pass_through_score / MEASURE_ITERS;
+	double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+	cout << "branch_weight: " << branch_weight << endl;
 
-	double pass_through_improvement = pass_through_average_score - this->existing_average_score;
+	double pass_through_average_misguess = this->pass_through_misguess / MEASURE_ITERS;
+	double pass_through_average_score = this->pass_through_score / this->pass_through_selected_count;
+	double pass_through_improvement = pass_through_average_score - existing_selected_average_score;
 	double pass_through_improvement_t_score = pass_through_improvement
-		/ (score_standard_deviation / sqrt(MEASURE_ITERS));
+		/ (score_standard_deviation / sqrt(max(this->existing_selected_count, this->pass_through_selected_count)));
 
+	cout << "pass_through_average_score: " << pass_through_average_score << endl;
+	cout << "this->pass_through_selected_count: " << this->pass_through_selected_count << endl;
 	cout << "pass_through_improvement_t_score: " << pass_through_improvement_t_score << endl;
 
-	double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
+	double misguess_improvement = this->existing_average_misguess - pass_through_average_misguess;
 	double misguess_standard_deviation = sqrt(parent->misguess_variance);
 	double misguess_improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(NUM_DATAPOINTS));
 
 	cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-	cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+	cout << "pass_through_average_misguess: " << pass_through_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-	double branch_weight = branch_count / MEASURE_ITERS;
+	cout << "this->recursion_protection: " << this->recursion_protection << endl;
+	cout << "this->need_recursion_protection: " << this->need_recursion_protection << endl;
 
-	if (branch_weight > 0.05
+	if (branch_weight > 0.02
 			&& combined_improvement_t_score > 2.326) {	// >99%
-		if (branch_weight > 0.95
-				&& pass_through_improvement_t_score > 2.326) {
+		if (branch_weight > 0.98
+				|| pass_through_improvement_t_score - combined_improvement_t_score > -0.674) {
 			new_pass_through();
 		} else {
 			new_branch();
@@ -229,7 +201,8 @@ void BranchExperiment::eval() {
 		this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 	} else {
 		if (pass_through_improvement_t_score > -0.674
-				&& misguess_improvement_t_score > 2.326) {
+				&& misguess_improvement_t_score > 2.326
+				&& !this->need_recursion_protection) {
 			new_pass_through();
 
 			ofstream solution_save_file;

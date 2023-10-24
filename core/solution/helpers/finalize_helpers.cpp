@@ -230,6 +230,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 
 							int new_input_id = outer_scope->num_input_states;
 							outer_scope->num_input_states++;
+							outer_scope->input_state_weights.push_back(0.0);
 
 							scope_node->input_types.push_back(INPUT_TYPE_STATE);
 							scope_node->input_inner_layers.push_back(0);
@@ -245,6 +246,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 
 							int new_input_id = outer_scope->num_input_states;
 							outer_scope->num_input_states++;
+							outer_scope->input_state_weights.push_back(0.0);
 
 							new_sequence_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 							new_sequence_scope_node->input_inner_layers.push_back(0);
@@ -306,6 +308,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 					if (outer_index == -1) {
 						outer_index = outer_scope->num_input_states;
 						outer_scope->num_input_states++;
+						outer_scope->input_state_weights.push_back(0.0);
 					}
 
 					new_sequence_scope_node->output_inner_indexes.push_back(new_sequence->output_inner_indexes[o_index]);
@@ -335,6 +338,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 					if (outer_index == -1) {
 						outer_index = outer_scope->num_input_states;
 						outer_scope->num_input_states++;
+						outer_scope->input_state_weights.push_back(0.0);
 					}
 
 					scope_node->output_inner_indexes.push_back(inner_index);

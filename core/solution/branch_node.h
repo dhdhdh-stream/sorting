@@ -119,6 +119,13 @@ public:
 								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  BranchNodeHistory* history);
 
+	void view_activate(int& curr_node_id,
+					   Problem& problem,
+					   std::vector<ContextLayer>& context,
+					   int& exit_depth,
+					   int& exit_node_id,
+					   RunHelper& run_helper);
+
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);
 };

@@ -33,6 +33,8 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->containing_scope_num_input_states = containing_scope->num_input_states;
 	this->containing_scope_num_local_states = containing_scope->num_local_states;
 
+	this->existing_average_score = 0.0;
+	this->existing_average_misguess = 0.0;
 	this->existing_starting_state_vals = new Eigen::MatrixXd(NUM_DATAPOINTS,
 		this->containing_scope_num_input_states + this->containing_scope_num_local_states);
 	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
@@ -41,6 +43,9 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 		}
 	}
 	this->existing_target_vals = vector<double>(NUM_DATAPOINTS);
+
+	this->existing_selected_count = 0;
+	this->existing_selected_sum_score = 0.0;
 
 	this->best_surprise = 1.0;
 
@@ -56,7 +61,11 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 
 	this->combined_score = 0.0;
 	this->branch_count = 0;
+	this->branch_possible = 0;
 
+	this->pass_through_misguess = 0.0;
+
+	this->pass_through_selected_count = 0;
 	this->pass_through_score = 0.0;
 }
 
@@ -98,6 +107,20 @@ BranchExperiment::~BranchExperiment() {
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
+}
+
+BranchExperimentHistory::BranchExperimentHistory(BranchExperimentHistory* original) {
+	this->experiment = original->experiment;
+
+	this->action_histories = vector<ActionNodeHistory*>(this->experiment->best_step_types.size(), NULL);
+	this->sequence_histories = vector<SequenceHistory*>(this->experiment->best_step_types.size(), NULL);
+	for (int s_index = 0; s_index < (int)this->experiment->best_step_types.size(); s_index++) {
+		if (this->experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->action_histories[s_index] = new ActionNodeHistory(original->action_histories[s_index]);
+		} else {
+			this->sequence_histories[s_index] = new SequenceHistory(original->sequence_histories[s_index]);
+		}
+	}
 }
 
 BranchExperimentHistory::~BranchExperimentHistory() {

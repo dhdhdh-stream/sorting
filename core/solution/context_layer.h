@@ -23,7 +23,7 @@ public:
 	std::map<int, StateStatus> input_state_vals;
 	std::map<int, StateStatus> local_state_vals;
 
-	std::vector<BranchNode*> added_recursion_protection_flags;
+	std::vector<void*> added_recursion_protection_flags;
 
 	std::map<int, StateStatus> experiment_state_vals;
 

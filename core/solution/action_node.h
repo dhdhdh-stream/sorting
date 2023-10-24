@@ -66,12 +66,10 @@ public:
 								  int& new_num_input_states,
 								  std::vector<AbstractNode*>& new_nodes);
 
-	void branch_experiment_train_activate(
+	void branch_experiment_activate(
 		Problem& problem,
 		std::vector<ContextLayer>& context,
 		ActionNodeHistory* history);
-	void branch_experiment_simple_activate(
-		Problem& problem);
 
 	void flat_vals_back_activate(std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
@@ -88,6 +86,13 @@ public:
 								  std::vector<int>& node_context,
 								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  ActionNodeHistory* history);
+
+	void view_activate(int& curr_node_id,
+					   Problem& problem,
+					   std::vector<ContextLayer>& context,
+					   int& exit_depth,
+					   int& exit_node_id,
+					   RunHelper& run_helper);
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);

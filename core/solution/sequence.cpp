@@ -99,6 +99,12 @@ SequenceHistory::SequenceHistory(Sequence* sequence) {
 	this->sequence = sequence;
 }
 
+SequenceHistory::SequenceHistory(SequenceHistory* original) {
+	this->sequence = original->sequence;
+
+	this->scope_history = new ScopeHistory(original->scope_history);
+}
+
 SequenceHistory::~SequenceHistory() {
 	delete this->scope_history;
 }

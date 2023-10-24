@@ -57,7 +57,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 	}
 
 	while (true) {
-		if (curr_node_id == -1 || exit_depth != -1) {
+		if (curr_node_id == -1 || exit_depth != -1 || run_helper.exceeded_depth) {
 			break;
 		}
 

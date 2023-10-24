@@ -38,6 +38,8 @@ public:
 								  int& new_num_input_states,
 								  std::vector<AbstractNode*>& new_nodes);
 
+	void view_activate(std::vector<ContextLayer>& context);
+
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);
 };

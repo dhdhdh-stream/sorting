@@ -13,6 +13,7 @@ public:
 	std::vector<double> current_world;
 
 	Problem();
+	Problem(std::vector<double> initial_world);
 	~Problem();
 
 	double get_observation();

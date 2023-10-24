@@ -185,7 +185,11 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 
 	this->obs_snapshots = original->obs_snapshots;
 
-	this->branch_experiment_history = NULL;
+	if (original->branch_experiment_history != NULL) {
+		this->branch_experiment_history = new BranchExperimentHistory(original->branch_experiment_history);
+	} else {
+		this->branch_experiment_history = NULL;
+	}
 }
 
 ScopeNodeHistory::~ScopeNodeHistory() {

@@ -67,32 +67,32 @@ void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 										 vector<int>& node_context,
 										 map<int, StateStatus>& experiment_state_vals,
 										 ScopeNodeHistory* history) {
-	if (!history->is_early_exit) {
-		for (int n_index = 0; n_index < (int)this->experiment_hook_state_defs.size(); n_index++) {
-			bool matches_context = true;
-			if (this->experiment_hook_state_scope_contexts[n_index].size() > scope_context.size()) {
-				matches_context = false;
-			} else {
-				for (int c_index = 0; c_index < (int)this->experiment_hook_state_scope_contexts[n_index].size()-1; c_index++) {
-					if (this->experiment_hook_state_scope_contexts[n_index][c_index] != scope_context[scope_context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index]
-							|| this->experiment_hook_state_node_contexts[n_index][c_index] != node_context[scope_context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index]) {
-						matches_context = false;
-						break;
-					}
+	// don't need to check if is_early_exit as history->obs_snapshots will be empty if so
+
+	for (int n_index = 0; n_index < (int)this->experiment_hook_state_defs.size(); n_index++) {
+		bool matches_context = true;
+		if (this->experiment_hook_state_scope_contexts[n_index].size() > scope_context.size()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->experiment_hook_state_scope_contexts[n_index].size()-1; c_index++) {
+				if (this->experiment_hook_state_scope_contexts[n_index][c_index] != scope_context[scope_context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index]
+						|| this->experiment_hook_state_node_contexts[n_index][c_index] != node_context[scope_context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index]) {
+					matches_context = false;
+					break;
 				}
 			}
+		}
 
-			if (matches_context) {
-				map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->experiment_hook_state_obs_indexes[n_index]);
-				if (obs_it != history->obs_snapshots.end()) {
-					map<int, StateStatus>::iterator state_it = experiment_state_vals.find(this->experiment_hook_state_indexes[n_index]);
-					if (state_it == experiment_state_vals.end()) {
-						state_it = experiment_state_vals.insert({this->experiment_hook_state_indexes[n_index], StateStatus()}).first;
-					}
-					StateNetwork* state_network = this->experiment_hook_state_defs[n_index]->networks[this->experiment_hook_state_network_indexes[n_index]];
-					state_network->activate(obs_it->second.val,
-											state_it->second);
+		if (matches_context) {
+			map<int, StateStatus>::iterator obs_it = history->obs_snapshots.find(this->experiment_hook_state_obs_indexes[n_index]);
+			if (obs_it != history->obs_snapshots.end()) {
+				map<int, StateStatus>::iterator state_it = experiment_state_vals.find(this->experiment_hook_state_indexes[n_index]);
+				if (state_it == experiment_state_vals.end()) {
+					state_it = experiment_state_vals.insert({this->experiment_hook_state_indexes[n_index], StateStatus()}).first;
 				}
+				StateNetwork* state_network = this->experiment_hook_state_defs[n_index]->networks[this->experiment_hook_state_network_indexes[n_index]];
+				state_network->activate(obs_it->second.val,
+										state_it->second);
 			}
 		}
 	}

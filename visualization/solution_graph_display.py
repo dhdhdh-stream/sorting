@@ -94,16 +94,16 @@ for scope_id in scopes:
 		node_index = global_node_index
 		global_node_index += 1
 		if scopes[scope_id][n_index][0] == NODE_TYPE_ACTION:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + pretty_print_action(scopes[scope_id][n_index][1])))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(n_index) + '\n' + pretty_print_action(scopes[scope_id][n_index][1])))
 		elif scopes[scope_id][n_index][0] == NODE_TYPE_SCOPE:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'S ' + str(scopes[scope_id][n_index][1])))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(n_index) + '\n' + 'S ' + str(scopes[scope_id][n_index][1])))
 		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'C ' + str(scopes[scope_id][n_index][1])))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(n_index) + '\n' + 'C ' + str(scopes[scope_id][n_index][1])))
 		elif scopes[scope_id][n_index][0] == NODE_TYPE_BRANCH_STUB:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'STUB'))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(n_index) + '\n' + 'STUB'))
 		else:
 			# scopes[scope_id][n_index][0] == NODE_TYPE_EXIT
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + '\n' + 'EXIT'))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(n_index) + '\n' + 'EXIT'))
 		node_mappings[n_index] = node_index
 
 	for n_index in range(len(scopes[scope_id])):

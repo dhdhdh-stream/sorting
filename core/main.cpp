@@ -36,76 +36,20 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// ifstream solution_save_file;
-	// solution_save_file.open("saves/solution.txt");
-	// solution->load(solution_save_file);
-	// solution_save_file.close();
+	// solution->init();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution->load(solution_save_file);
+	solution_save_file.close();
 
 	Scope* root = solution->scopes[0];
 
-	// ActionNode* explore_node = (ActionNode*)root->nodes[0];
-	// vector<int> experiment_scope_context{0};
-	// vector<int> experiment_node_context{0};
-	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
-	// 												experiment_node_context);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
-	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_LEFT);
-	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_exit_depth = 0;
-	// explore_node->experiment->best_exit_node_id = -1;
-
-	// ActionNode* explore_node = (ActionNode*)root->nodes[2];
-	// vector<int> experiment_scope_context{0};
-	// vector<int> experiment_node_context{2};
-	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
-	// 												experiment_node_context);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
-	// explore_node->experiment->best_actions.push_back(new ActionNode());
-	// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
-	// explore_node->experiment->best_sequences.push_back(NULL);
-	// explore_node->experiment->best_exit_depth = 0;
-	// explore_node->experiment->best_exit_node_id = 3;
-
-	// // ActionNode* explore_node = (ActionNode*)root->nodes[3];
-	// ActionNode* explore_node = (ActionNode*)root->nodes[6];
-	// vector<int> experiment_scope_context{0};
-	// // vector<int> experiment_node_context{3};
-	// vector<int> experiment_node_context{6};
-	// explore_node->experiment = new BranchExperiment(experiment_scope_context,
-	// 												experiment_node_context);
-	// explore_node->experiment->best_step_types.push_back(STEP_TYPE_SEQUENCE);
-	// explore_node->experiment->best_actions.push_back(NULL);
-	// Scope* explore_scope = new Scope();
-	// explore_scope->id = solution->scope_counter;
-	// solution->scope_counter++;
-	// explore_scope->num_input_states = 0;
-	// explore_scope->num_local_states = 0;
-	// ScopeNode* new_explore_scope_node = new ScopeNode();
-	// new_explore_scope_node->id = 0;
-	// new_explore_scope_node->inner_scope = solution->scopes[0];
-	// new_explore_scope_node->starting_node_ids = vector<int>{0};
-	// new_explore_scope_node->next_node_id = -1;
-	// explore_scope->nodes.push_back(new_explore_scope_node);
-	// explore_scope->average_score = root->average_score;
-	// explore_scope->score_variance = root->score_variance;
-	// explore_scope->average_misguess = root->average_misguess;
-	// explore_scope->misguess_variance = root->misguess_variance;
-	// Sequence* explore_sequence = new Sequence();
-	// explore_sequence->scope = explore_scope;
-	// explore_node->experiment->best_sequences.push_back(explore_sequence);
-	// explore_node->experiment->best_exit_depth = 0;
-	// explore_node->experiment->best_exit_node_id = -1;
-	// explore_node->experiment->recursion_protection = true;
+	double best_score = -1.0;
 
 	uniform_int_distribution<int> explore_distribution(0, 2);
 	while (true) {
 		// update
+		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			Problem problem;
 
@@ -146,7 +90,7 @@ int main(int argc, char* argv[]) {
 				target_val = -1.0;
 			}
 
-			solution->average_score = 0.999*solution->average_score + 0.001*target_val;
+			sum_scores += target_val;
 
 			if (!run_helper.exceeded_depth) {
 				if (run_helper.max_depth > solution->max_depth) {
@@ -169,10 +113,77 @@ int main(int argc, char* argv[]) {
 			delete root_history;
 		}
 
+		solution->average_score = sum_scores / NUM_DATAPOINTS;
+		cout << "solution->states.size(): " << solution->states.size() << endl;
+		cout << "solution->average_score: " << solution->average_score << endl;
+		if (solution->average_score > best_score) {
+			best_score = solution->average_score;
+		}
+		// temp
+		if (solution->average_score < best_score - 0.1) {
+			cout << "ERROR" << endl;
+			exit(1);
+		}
+
 		for (map<int, Scope*>::iterator it = solution->scopes.begin();
 				it != solution->scopes.end(); it++) {
 			it->second->update();
 		}
+
+		// ActionNode* explore_node = (ActionNode*)root->nodes[0];
+		// vector<int> experiment_scope_context{0};
+		// vector<int> experiment_node_context{0};
+		// explore_node->experiment = new BranchExperiment(experiment_scope_context,
+		// 												experiment_node_context);
+		// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+		// explore_node->experiment->best_actions.push_back(new ActionNode());
+		// explore_node->experiment->best_actions.back()->action = Action(ACTION_RIGHT);
+		// explore_node->experiment->best_sequences.push_back(NULL);
+		// explore_node->experiment->best_exit_depth = 0;
+		// explore_node->experiment->best_exit_node_id = -1;
+
+		// ActionNode* explore_node = (ActionNode*)root->nodes[2];
+		// vector<int> experiment_scope_context{0};
+		// vector<int> experiment_node_context{2};
+		// explore_node->experiment = new BranchExperiment(experiment_scope_context,
+		// 												experiment_node_context);
+		// explore_node->experiment->best_step_types.push_back(STEP_TYPE_ACTION);
+		// explore_node->experiment->best_actions.push_back(new ActionNode());
+		// explore_node->experiment->best_actions.back()->action = Action(ACTION_SWAP);
+		// explore_node->experiment->best_sequences.push_back(NULL);
+		// explore_node->experiment->best_exit_depth = 0;
+		// explore_node->experiment->best_exit_node_id = 3;
+
+		// // ActionNode* explore_node = (ActionNode*)root->nodes[3];
+		// ActionNode* explore_node = (ActionNode*)root->nodes[6];
+		// vector<int> experiment_scope_context{0};
+		// // vector<int> experiment_node_context{3};
+		// vector<int> experiment_node_context{6};
+		// explore_node->experiment = new BranchExperiment(experiment_scope_context,
+		// 												experiment_node_context);
+		// explore_node->experiment->best_step_types.push_back(STEP_TYPE_SEQUENCE);
+		// explore_node->experiment->best_actions.push_back(NULL);
+		// Scope* explore_scope = new Scope();
+		// explore_scope->id = solution->scope_counter;
+		// solution->scope_counter++;
+		// explore_scope->num_input_states = 0;
+		// explore_scope->num_local_states = 0;
+		// ScopeNode* new_explore_scope_node = new ScopeNode();
+		// new_explore_scope_node->id = 0;
+		// new_explore_scope_node->inner_scope = solution->scopes[0];
+		// new_explore_scope_node->starting_node_ids = vector<int>{0};
+		// new_explore_scope_node->next_node_id = -1;
+		// explore_scope->nodes.push_back(new_explore_scope_node);
+		// explore_scope->average_score = root->average_score;
+		// explore_scope->score_variance = root->score_variance;
+		// explore_scope->average_misguess = root->average_misguess;
+		// explore_scope->misguess_variance = root->misguess_variance;
+		// Sequence* explore_sequence = new Sequence();
+		// explore_sequence->scope = explore_scope;
+		// explore_node->experiment->best_sequences.push_back(explore_sequence);
+		// explore_node->experiment->best_exit_depth = 0;
+		// explore_node->experiment->best_exit_node_id = -1;
+		// explore_node->experiment->recursion_protection = true;
 
 		while (true) {
 			Problem problem;
@@ -215,54 +226,72 @@ int main(int argc, char* argv[]) {
 			}
 
 			bool updated = false;
-			if (run_helper.experiments_seen_counts.size() == 0) {
-				create_branch_experiment(root_history);
-			} else {
-				if (run_helper.selected_branch_experiment != NULL) {
-					run_helper.selected_branch_experiment->unhook();
+			if (run_helper.selected_branch_experiment != NULL) {
+				run_helper.selected_branch_experiment->unhook();
 
-					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-						BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
-						experiment->average_remaining_experiments_from_start =
-							0.9 * experiment->average_remaining_experiments_from_start
-							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-								+ run_helper.selected_branch_experiment->average_remaining_experiments_from_start);
+				if (run_helper.selected_branch_experiment->state == BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING) {
+					run_helper.selected_branch_experiment->existing_selected_count++;
+					run_helper.selected_branch_experiment->existing_selected_sum_score += target_val;
+				}
+				if (run_helper.selected_branch_experiment->state == BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED) {
+					run_helper.selected_branch_experiment->combined_score += target_val;
+
+					run_helper.selected_branch_experiment->state_iter++;
+					if (run_helper.selected_branch_experiment->state_iter > MEASURE_ITERS) {
+						run_helper.selected_branch_experiment->state = BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH;
+						run_helper.selected_branch_experiment->state_iter = 0;
 					}
+				}
+				if (run_helper.selected_branch_experiment->state == BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH) {
+					run_helper.selected_branch_experiment->pass_through_selected_count++;
+					run_helper.selected_branch_experiment->pass_through_score += target_val;
+				}
 
-					run_helper.selected_branch_experiment->average_instances_per_run
-						= 0.9 * run_helper.selected_branch_experiment->average_instances_per_run
-							+ 0.1 * (run_helper.selected_branch_experiment_count + 1);
-					/**
-					 * - set to 1 more than instances seen as exit might have skipped instances
-					 */
+				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+					BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+							+ run_helper.selected_branch_experiment->average_remaining_experiments_from_start);
+				}
 
-					if (run_helper.branch_experiment_history != NULL) {
-						BranchExperiment* experiment = run_helper.branch_experiment_history->experiment;
-						experiment->backprop(target_val,
-											 run_helper.branch_experiment_history);
+				run_helper.selected_branch_experiment->average_instances_per_run
+					= 0.9 * run_helper.selected_branch_experiment->average_instances_per_run
+						+ 0.1 * (run_helper.selected_branch_experiment_count + 1);
+				/**
+				 * - set to 1 more than instances seen as exit might have skipped instances
+				 */
 
-						if (experiment->state == BRANCH_EXPERIMENT_STATE_FAIL
-								|| experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
-							if (experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
-								updated = true;
-							}
+				if (run_helper.branch_experiment_history != NULL) {
+					BranchExperiment* experiment = run_helper.branch_experiment_history->experiment;
+					experiment->backprop(target_val,
+										 run_helper.branch_experiment_history);
 
-							Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
-							AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
-							if (starting_node->type == NODE_TYPE_ACTION) {
-								ActionNode* action_node = (ActionNode*)starting_node;
-								action_node->experiment = NULL;
-							} else if (starting_node->type == NODE_TYPE_SCOPE) {
-								ScopeNode* scope_node = (ScopeNode*)starting_node;
-								scope_node->experiment = NULL;
-							} else {
-								BranchNode* branch_node = (BranchNode*)starting_node;
-								branch_node->experiment = NULL;
-							}
-							solution->branch_experiments.erase(experiment);
-							delete experiment;
+					if (experiment->state == BRANCH_EXPERIMENT_STATE_FAIL
+							|| experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+						if (experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+							updated = true;
 						}
+
+						Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
+						AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
+						if (starting_node->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)starting_node;
+							action_node->experiment = NULL;
+						} else if (starting_node->type == NODE_TYPE_SCOPE) {
+							ScopeNode* scope_node = (ScopeNode*)starting_node;
+							scope_node->experiment = NULL;
+						} else {
+							BranchNode* branch_node = (BranchNode*)starting_node;
+							branch_node->experiment = NULL;
+						}
+						solution->branch_experiments.erase(experiment);
+						delete experiment;
 					}
+				}
+			} else {
+				if (run_helper.experiments_seen_counts.size() == 0) {
+					create_branch_experiment(root_history);
 				} else {
 					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 						BranchExperiment* experiment = run_helper.experiments_seen_order[e_index];
@@ -288,11 +317,22 @@ int main(int argc, char* argv[]) {
 
 		for (set<BranchExperiment*>::iterator it = solution->branch_experiments.begin();
 				it != solution->branch_experiments.end(); it++) {
-			(*it)->reset_measure();
+			BranchExperiment* experiment = *it;
+			Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
+			AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
+			if (starting_node->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)starting_node;
+				action_node->experiment = NULL;
+			} else if (starting_node->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)starting_node;
+				scope_node->experiment = NULL;
+			} else {
+				BranchNode* branch_node = (BranchNode*)starting_node;
+				branch_node->experiment = NULL;
+			}
+			delete experiment;
 		}
-
-		cout << "solution->states.size(): " << solution->states.size() << endl;
-		cout << "solution->average_score: " << solution->average_score << endl;
+		solution->branch_experiments.clear();
 	}
 
 	delete solution;
