@@ -48,12 +48,27 @@ public:
 	int id;
 
 	int num_input_states;
-	std::vector<double> input_state_weights;
-	// TODO: don't calculate weights if state unstable
 	int num_local_states;
+
+	std::map<int, AbstractNode*> nodes;
+
+	std::list<ScopeHistory*> scope_histories;
+	std::list<std::map<int, StateStatus>> input_state_vals_histories;
+	std::list<std::map<int, StateStatus>> local_state_vals_histories;
+	std::list<double> target_val_histories;
+
+	std::vector<double> input_state_weights;
 	std::vector<double> local_state_weights;
 
-	std::vector<AbstractNode*> nodes;
+	/**
+	 * - clear after every update
+	 */
+	std::vector<State*> score_states;
+	std::vector<std::vector<AbstractNode*>> score_state_nodes;
+	std::vector<std::vector<std::vector<int>>> score_state_scope_contexts;
+	std::vector<std::vector<std::vector<int>>> score_state_node_contexts;
+	std::vector<std::vector<int>> score_state_obs_indexes;
+	std::vector<double> score_state_weights;
 
 	double average_score;
 	double score_variance;
@@ -67,11 +82,9 @@ public:
 
 	std::vector<Scope*> child_scopes;
 	/**
-	 * - for constructing new sequences
+	 * - don't remove even if can no longer reach
+	 *   - might have been a mistaken pass_through anyways
 	 */
-
-	std::list<ScopeHistory*> scope_histories;
-	std::list<double> target_val_histories;
 
 	Scope();
 	~Scope();
@@ -179,12 +192,6 @@ public:
 	Scope* scope;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
-
-	std::map<int, StateStatus> input_state_snapshots;
-	std::map<int, StateStatus> local_state_snapshots;
-
-	BranchExperimentHistory* inner_branch_experiment_history;
-	std::map<int, StateStatus> experiment_state_snapshots;
 
 	bool exceeded_depth;
 

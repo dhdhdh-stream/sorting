@@ -52,9 +52,6 @@ public:
 
 	void activate(double obs_val,
 				  StateStatus& state_status);
-	void activate(double obs_val,
-				  StateStatus& state_status,
-				  StateStatus& state_diff);
 
 	void save(std::ofstream& output_file);
 

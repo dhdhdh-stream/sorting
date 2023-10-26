@@ -53,6 +53,7 @@ public:
 	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
+	// TODO: if removed inside, remove outside too
 
 	std::vector<bool> state_is_local;
 	std::vector<int> state_indexes;

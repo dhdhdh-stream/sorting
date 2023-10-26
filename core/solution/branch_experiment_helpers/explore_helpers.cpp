@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 1000;
+const int EXPLORE_ITERS = 500;
 
 const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
 /**

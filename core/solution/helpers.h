@@ -21,6 +21,7 @@ class State;
 ObsExperiment* create_obs_experiment(ScopeHistory* scope_history);
 
 void create_branch_experiment(ScopeHistory* root_history);
+// TODO: select lowest layer with 50% probability, and 50% outwards
 
 Sequence* create_sequence(Problem& problem,
 						  std::vector<ContextLayer>& context,

@@ -26,62 +26,33 @@ void ActionNode::activate(int& curr_node_id,
 	problem.perform_action(this->action);
 	history->obs_snapshot = problem.get_observation();
 
-	if (run_helper.phase == RUN_PHASE_EXPLORE) {
-		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-			if (this->state_is_local[n_index]) {
-				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
-				if (it == context.back().local_state_vals.end()) {
-					it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
-				}
-				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-				StateStatus state_impact;
-				state_network->activate(history->obs_snapshot,
-										it->second,
-										state_impact);
-				history->state_indexes.push_back(n_index);
-				history->state_impacts.push_back(state_impact);
-			} else {
-				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
-				if (it != context.back().input_state_vals.end()) {
-					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-					StateStatus state_impact;
-					state_network->activate(history->obs_snapshot,
-											it->second,
-											state_impact);
-					history->state_indexes.push_back(n_index);
-					history->state_impacts.push_back(state_impact);
-				}
+	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
+		if (this->state_is_local[n_index]) {
+			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
+			if (it == context.back().local_state_vals.end()) {
+				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 			}
-		}
-	} else {
-		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-			if (this->state_is_local[n_index]) {
-				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
-				if (it == context.back().local_state_vals.end()) {
-					it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
-				}
+			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+			state_network->activate(history->obs_snapshot,
+									it->second);
+		} else {
+			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
+			if (it != context.back().input_state_vals.end()) {
 				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 				state_network->activate(history->obs_snapshot,
 										it->second);
-			} else {
-				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
-				if (it != context.back().input_state_vals.end()) {
-					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-					state_network->activate(history->obs_snapshot,
-											it->second);
-				}
 			}
 		}
 	}
 
-	for (int n_index = 0; n_index < (int)this->experiment_hook_state_defs.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->score_state_defs.size(); n_index++) {
 		bool matches_context = true;
-		if (this->experiment_hook_state_scope_contexts[n_index].size() > context.size()) {
+		if (this->score_state_scope_contexts[n_index].size() > context.size()) {
 			matches_context = false;
 		} else {
-			for (int c_index = 0; c_index < (int)this->experiment_hook_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->experiment_hook_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index].scope_id
-						|| this->experiment_hook_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()+c_index].node_id) {
+			for (int c_index = 0; c_index < (int)this->score_state_scope_contexts[n_index].size()-1; c_index++) {
+				if (this->score_state_scope_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].scope_id
+						|| this->score_state_node_contexts[n_index][c_index] != context[context.size()-this->score_state_scope_contexts[n_index].size()+c_index].node_id) {
 					matches_context = false;
 					break;
 				}
@@ -89,13 +60,43 @@ void ActionNode::activate(int& curr_node_id,
 		}
 
 		if (matches_context) {
-			map<int, StateStatus>::iterator it = context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()]
-				.experiment_state_vals.find(this->experiment_hook_state_indexes[n_index]);
-			if (it == context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()].experiment_state_vals.end()) {
-				it = context[context.size()-this->experiment_hook_state_scope_contexts[n_index].size()].experiment_state_vals
-					.insert({this->experiment_hook_state_indexes[n_index], StateStatus()}).first;
+			map<int, StateStatus>::iterator it = context[context.size()-this->score_state_scope_contexts[n_index].size()]
+				.score_state_vals.find(this->score_state_indexes[n_index]);
+			if (it == context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals.end()) {
+				it = context[context.size()-this->score_state_scope_contexts[n_index].size()].score_state_vals
+					.insert({this->score_state_indexes[n_index], StateStatus()}).first;
 			}
-			StateNetwork* state_network = this->experiment_hook_state_defs[n_index]->networks[this->experiment_hook_state_network_indexes[n_index]];
+			StateNetwork* state_network = this->score_state_defs[n_index]->networks[this->score_state_network_indexes[n_index]];
+			state_network->activate(history->obs_snapshot,
+									it->second);
+		}
+	}
+
+	if (run_helper.phase == RUN_PHASE_UPDATE) {
+
+	}
+	for (int n_index = 0; n_index < (int)this->experiment_state_defs.size(); n_index++) {
+		bool matches_context = true;
+		if (this->experiment_state_scope_contexts[n_index].size() > context.size()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->experiment_state_scope_contexts[n_index].size()-1; c_index++) {
+				if (this->experiment_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope_id
+						|| this->experiment_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].node_id) {
+					matches_context = false;
+					break;
+				}
+			}
+		}
+
+		if (matches_context) {
+			map<int, StateStatus>::iterator it = context[context.size()-this->experiment_state_scope_contexts[n_index].size()]
+				.experiment_state_vals.find(this->experiment_state_indexes[n_index]);
+			if (it == context[context.size()-this->experiment_state_scope_contexts[n_index].size()].experiment_state_vals.end()) {
+				it = context[context.size()-this->experiment_state_scope_contexts[n_index].size()].experiment_state_vals
+					.insert({this->experiment_state_indexes[n_index], StateStatus()}).first;
+			}
+			StateNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
 			state_network->activate(history->obs_snapshot,
 									it->second);
 		}

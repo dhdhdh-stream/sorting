@@ -21,16 +21,15 @@ class Sequence;
 class SequenceHistory;
 class State;
 
-const int STEP_TYPE_ACTION = 0;
-const int STEP_TYPE_SEQUENCE = 1;
-
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_PRE = 2;
-const int BRANCH_EXPERIMENT_STATE_TRAIN = 3;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 5;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 6;
+
+const int BRANCH_EXPERIMENT_STATE_TRAIN_STARTING = 2;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 3;
+
+const int BRANCH_EXPERIMENT_STATE_TRAIN_ENDING = 4;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 5;
+const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 7;
 
 const int BRANCH_EXPERIMENT_STATE_FAIL = 7;
 const int BRANCH_EXPERIMENT_STATE_SUCCESS = 8;
@@ -54,15 +53,16 @@ public:
 	int state;
 	int state_iter;
 
-	int containing_scope_num_input_states;
-	int containing_scope_num_local_states;
-
 	double existing_average_score;
 	double existing_average_misguess;
-	Eigen::MatrixXd* existing_starting_state_vals;
-	std::vector<double> existing_target_vals;
-	std::vector<double> existing_starting_input_state_weights;
-	std::vector<double> existing_starting_local_state_weights;
+
+	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_input_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_local_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_score_state_vals_histories;
+	std::vector<double> existing_target_val_histories;
+	std::vector<vector<double>> existing_starting_input_state_weights;
+	std::vector<vector<double>> existing_starting_local_state_weights;
+	std::vector<vector<double>> existing_starting_score_state_weights;
 
 	int existing_selected_count;
 	double existing_selected_sum_score;
@@ -80,25 +80,31 @@ public:
 	int best_exit_depth;
 	int best_exit_node_id;
 
-	bool recursion_protection;
-	bool need_recursion_protection;
-
-	std::list<ScopeHistory*> new_starting_scope_histories;
-	Eigen::MatrixXd* new_starting_state_vals;
-	std::list<ScopeHistory*> new_ending_scope_histories;
+	double new_average_score;
 	std::vector<double> new_target_val_histories;
 
-	double new_average_score;
-
-	std::vector<double> new_starting_input_state_weights;
-	std::vector<double> new_starting_local_state_weights;
+	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_input_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_local_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_score_state_vals_histories;
+	std::vector<std::map<int, StateStatus>> new_starting_experiment_state_vals_histories;
+	std::vector<std::vector<double>> new_starting_input_state_weights;
+	std::vector<std::vector<double>> new_starting_local_state_weights;
+	std::vector<std::vector<double>> new_starting_score_state_weights;
 	std::vector<double> new_starting_experiment_state_weights;
 
+	std::vector<std::map<int, StateStatus>> new_ending_input_state_vals_histories;
+	std::vector<std::map<int, StateStatus>> new_ending_local_state_vals_histories;
+	std::vector<std::map<int, StateStatus>> new_ending_score_state_vals_histories;
+	std::vector<std::map<int, StateStatus>> new_ending_experiment_state_vals_histories;
 	std::vector<double> new_ending_input_state_weights;
 	std::vector<double> new_ending_local_state_weights;
+	std::vector<double> new_ending_score_state_weights;
+	std::vector<double> new_ending_experiment_state_weights;
 
 	double new_average_misguess;
 	double new_misguess_variance;
+
+	
 
 	std::vector<State*> new_states;
 	std::vector<std::vector<AbstractNode*>> new_state_nodes;
@@ -115,6 +121,10 @@ public:
 
 	int pass_through_selected_count;
 	double pass_through_score;
+
+	std::vector<std::vector<int>> obs_experiment_obs_indexes;
+	std::vector<std::vector<double>> obs_experiment_obs_vals;
+	ObsExperiment* obs_experiment;
 
 	BranchExperiment(std::vector<int> scope_context,
 					 std::vector<int> node_context);

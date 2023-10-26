@@ -43,31 +43,10 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
+	// TODO: use all score state on experiment, from both within and without
+
 	int original_next_node_id;
 	int branch_next_node_id;
-
-	bool recursion_protection;
-
-	std::vector<bool> state_is_local;
-	std::vector<int> state_indexes;
-	std::vector<State*> state_defs;
-	std::vector<int> state_network_indexes;
-
-	std::vector<std::vector<int>> experiment_hook_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_state_node_contexts;
-	std::vector<int> experiment_hook_state_indexes;
-	std::vector<State*> experiment_hook_state_defs;
-	std::vector<int> experiment_hook_state_network_indexes;
-
-	std::vector<std::vector<int>> test_hook_scope_contexts;
-	std::vector<std::vector<int>> test_hook_node_contexts;
-	std::vector<int> test_hook_indexes;
-
-	BranchExperiment* experiment;
-	bool experiment_is_branch;
-	/**
-	 * - only trigger if on right branch
-	 */
 
 	BranchNode();
 	BranchNode(std::ifstream& input_file,
@@ -132,16 +111,7 @@ public:
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
-	double obs_snapshot;
-
-	std::vector<int> state_indexes;
-	std::vector<StateStatus> state_impacts;
-
-	BranchExperimentHistory* branch_experiment_history;
-
 	BranchNodeHistory(BranchNode* node);
-	BranchNodeHistory(BranchNodeHistory* original);
-	~BranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

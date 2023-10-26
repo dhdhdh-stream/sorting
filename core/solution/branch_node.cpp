@@ -155,24 +155,4 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
-
-	this->branch_experiment_history = NULL;
-}
-
-BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
-	this->node = original->node;
-
-	this->obs_snapshot = original->obs_snapshot;
-
-	if (original->branch_experiment_history != NULL) {
-		this->branch_experiment_history = new BranchExperimentHistory(original->branch_experiment_history);
-	} else {
-		this->branch_experiment_history = NULL;
-	}
-}
-
-BranchNodeHistory::~BranchNodeHistory() {
-	if (this->branch_experiment_history != NULL) {
-		delete this->branch_experiment_history;
-	}
 }

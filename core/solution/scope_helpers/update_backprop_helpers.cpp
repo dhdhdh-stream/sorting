@@ -45,6 +45,84 @@ void Scope::update_histories(double target_val,
 	this->target_val_histories.push_back(target_val);
 }
 
+void Scope::hook() {
+	for (int s_index = 0; s_index < (int)this->score_states.size(); s_index++) {
+		for (int n_index = 0; n_index < (int)this->score_state_nodes[s_index].size(); n_index++) {
+			if (this->score_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->score_state_nodes[s_index][n_index];
+
+				action_node->score_state_scope_contexts.push_back(this->score_state_scope_contexts[s_index][n_index]);
+				action_node->score_state_node_contexts.push_back(this->score_state_node_contexts[s_index][n_index]);
+				action_node->score_state_indexes.push_back(s_index);
+				action_node->score_state_defs.push_back(this->score_states[s_index]);
+				action_node->score_state_network_indexes.push_back(n_index);
+			} else if (this->score_state_nodes[s_index][n_index]->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)this->score_state_nodes[s_index][n_index];
+
+				scope_node->score_state_scope_contexts.push_back(this->score_state_scope_contexts[s_index][n_index]);
+				scope_node->score_state_node_contexts.push_back(this->score_state_node_contexts[s_index][n_index]);
+				scope_node->score_state_obs_indexes.push_back(this->score_state_obs_indexes[s_index][n_index]);
+				scope_node->score_state_indexes.push_back(s_index);
+				scope_node->score_state_defs.push_back(this->score_states[s_index]);
+				scope_node->score_state_network_indexes.push_back(n_index);
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->score_state_nodes[s_index][n_index];
+
+				branch_node->score_state_scope_contexts.push_back(this->score_state_scope_contexts[s_index][n_index]);
+				branch_node->score_state_node_contexts.push_back(this->score_state_node_contexts[s_index][n_index]);
+				branch_node->score_state_indexes.push_back(s_index);
+				branch_node->score_state_defs.push_back(this->score_states[s_index]);
+				branch_node->score_state_network_indexes.push_back(n_index);
+			}
+		}
+	}
+}
+
+void Scope::score_state_helper(vector<int>& scope_context,
+							   vector<int>& node_context,
+							   map<int, StateStatus>& score_state_vals,
+							   ScopeHistory* scope_history) {
+	int scope_id = scope_history->scope->id;
+
+	scope_context.push_back(scope_id);
+	node_context.push_back(-1);
+
+	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
+		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
+			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+				ActionNode* action_node = (ActionNode*)action_node_history->node;
+				action_node->score_state_back_activate(scope_context,
+													   node_context,
+													   score_state_vals,
+													   action_node_history);
+			} else {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+				node_context.back() = scope_node->id;
+
+				score_state_helper(scope_context,
+								   node_context,
+								   score_state_vals,
+								   scope_node_history->inner_scope_history);
+
+				node_context.back() = -1;
+
+				scope_node->score_state_back_activate(scope_context,
+													  node_context,
+													  score_state_vals,
+													  scope_node_history);
+			}
+		}
+	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
+}
+
+
+
 void Scope::update() {
 	if (this->scope_histories.size() >= NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
@@ -65,43 +143,72 @@ void Scope::update() {
 		}
 		this->score_variance = sum_score_variance/NUM_DATAPOINTS;
 
-		Eigen::MatrixXd state_vals(NUM_DATAPOINTS, this->num_input_states + this->num_local_states);
+		Eigen::MatrixXd state_vals(NUM_DATAPOINTS, this->num_input_states + this->num_local_states + (int)this->score_states.size());
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			for (int s_index = 0; s_index < this->num_input_states + this->num_local_states; s_index++) {
+			for (int s_index = 0; s_index < this->num_input_states + this->num_local_states + (int)this->score_states.size(); s_index++) {
 				state_vals(d_index, s_index) = 0.0;
 			}
 		}
+
+		hook();
+
 		{
 			int d_index = 0;
-			for (list<ScopeHistory*>::iterator it = this->scope_histories.begin();
-					it != this->scope_histories.end(); it++) {
-				for (map<int, StateStatus>::iterator input_it = (*it)->input_state_snapshots.begin();
-						input_it != (*it)->input_state_snapshots.end(); input_it++) {
-					StateNetwork* last_network = input_it->second.last_network;
-					if (last_network != NULL) {
-						double normalized = (input_it->second.val - last_network->ending_mean)
-							/ last_network->ending_standard_deviation;
-						state_vals(d_index, input_it->first) = normalized;
-					} else {
-						state_vals(d_index, input_it->first) = input_it->second.val;
-					}
-				}
+			list<ScopeHistory*>::iterator scope_it = this->scope_histories.begin();
+			list<map<int, StateStatus>>::iterator input_it = this->input_state_vals_histories.begin();
+			list<map<int, StateStatus>>::iterator local_it = this->local_state_vals_histories.begin();
 
-				for (map<int, StateStatus>::iterator local_it = (*it)->local_state_snapshots.begin();
-						local_it != (*it)->local_state_snapshots.end(); local_it++) {
-					StateNetwork* last_network = local_it->second.last_network;
-					if (last_network != NULL) {
-						double normalized = (local_it->second.val - last_network->ending_mean)
-							/ last_network->ending_standard_deviation;
-						state_vals(d_index, this->num_input_states + local_it->first) = normalized;
-					} else {
-						state_vals(d_index, this->num_input_states + local_it->first) = local_it->second.val;
-					}
+			for (map<int, StateStatus>::iterator it = (*input_it).begin();
+					it != (*input_it).end(); it++) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					state_vals(d_index, it->first) = normalized;
+				} else {
+					state_vals(d_index, it->first) = it->second.val;
 				}
-
-				d_index++;
 			}
+
+			for (map<int, StateStatus>::iterator it = (*input_it).begin();
+					it != (*input_it).end(); it++) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					state_vals(d_index, this->num_input_states + it->first) = normalized;
+				} else {
+					state_vals(d_index, this->num_input_states + it->first) = it->second.val;
+				}
+			}
+
+			vector<int> scope_context;
+			vector<int> node_context;
+			map<int, StateStatus>& score_state_vals;
+			score_state_helper(scope_context,
+							   node_context,
+							   score_state_vals,
+							   *scope_it);
+
+			for (map<int, StateStatus>::iterator it = score_state_vals.begin();
+					it != score_state_vals.end(); it++) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					state_vals(d_index, this->num_input_states + this->num_local_states + it->first) = normalized;
+				} else {
+					state_vals(d_index, this->num_input_states + this->num_local_states + it->first) = it->second.val;
+				}
+			}
+
+			d_index++;
+			scope_it++;
+			input_it++;
+			local_it++;
 		}
+
+		unhook();
 
 		Eigen::VectorXd target_vals(NUM_DATAPOINTS);
 		{

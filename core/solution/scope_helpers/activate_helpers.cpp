@@ -116,13 +116,16 @@ void Scope::node_activate_helper(int iter_index,
 							 history->node_histories[0]);
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
-		branch_node->activate(curr_node_id,
-							  problem,
-							  context,
-							  exit_depth,
-							  exit_node_id,
-							  run_helper,
-							  history->node_histories[0]);
+
+		bool is_branch;
+		branch_node->activate(is_branch,
+							  context);
+
+		if (is_branch) {
+			curr_node_id = branch_node->branch_next_node_id;
+		} else {
+			curr_node_id = branch_node->original_next_node_id;
+		}
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
 		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
 

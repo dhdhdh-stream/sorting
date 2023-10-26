@@ -13,24 +13,9 @@ class RunHelper {
 public:
 	int phase;
 
-	int curr_depth;	// need to track separate from context as context resets for experiments
+	int curr_depth;
 	int max_depth;
 	bool exceeded_depth;
-
-	/**
-	 * - don't need to track running tally of predicted score
-	 *   - instead, on experiment, calculate from partial and resolved score_state_vals
-	 */
-
-	std::set<void*> recursion_protection_flags;
-
-	std::vector<ScopeHistory*> scope_histories;
-
-	std::vector<BranchExperiment*> experiments_seen_order;
-	std::map<BranchExperiment*, int> experiments_seen_counts;
-	/**
-	 * - also use to track start for explore
-	 */
 
 	BranchExperiment* selected_branch_experiment;
 	int selected_branch_experiment_count;
@@ -38,6 +23,10 @@ public:
 	/**
 	 * - also use to track if already experimented (i.e., check if not NULL)
 	 */
+	ScopeHistory* branch_experiment_scope_history;
+
+	std::vector<BranchExperiment*> experiments_seen_order;
+	std::map<BranchExperiment*, int> experiments_seen_counts;
 
 	RunHelper() {
 		this->curr_depth = 0;
@@ -46,6 +35,7 @@ public:
 
 		this->selected_branch_experiment = NULL;
 		this->branch_experiment_history = NULL;
+		this->branch_experiment_scope_history = NULL;
 	}
 };
 

@@ -30,15 +30,25 @@ public:
 	 */
 	std::vector<int> state_network_indexes;
 
-	std::vector<std::vector<int>> experiment_hook_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_state_node_contexts;
-	std::vector<int> experiment_hook_state_indexes;
-	std::vector<State*> experiment_hook_state_defs;
-	std::vector<int> experiment_hook_state_network_indexes;
+	std::vector<std::vector<int>> score_state_scope_contexts;
+	std::vector<std::vector<int>> score_state_node_contexts;
+	std::vector<int> score_state_indexes;
+	std::vector<State*> score_state_defs;
+	std::vector<int> score_state_network_indexes;
 
-	std::vector<std::vector<int>> test_hook_scope_contexts;
-	std::vector<std::vector<int>> test_hook_node_contexts;
-	std::vector<int> test_hook_indexes;
+	std::vector<std::vector<int>> obs_experiment_scope_contexts;
+	std::vector<std::vector<int>> obs_experiment_node_contexts;
+	std::vector<int> obs_experiment_indexes;
+
+	std::vector<std::vector<int>> branch_experiment_state_scope_contexts;
+	std::vector<std::vector<int>> branch_experiment_state_node_contexts;
+	std::vector<int> branch_experiment_state_indexes;
+	std::vector<State*> branch_experiment_state_defs;
+	std::vector<int> branch_experiment_state_network_indexes;
+
+	std::vector<int> branch_obs_experiment_scope_contexts;
+	std::vector<int> branch_obs_experiment_node_contexts;
+	int branch_obs_index;
 
 	int next_node_id;
 
@@ -101,9 +111,6 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
-
-	std::vector<int> state_indexes;
-	std::vector<StateStatus> state_impacts;
 
 	BranchExperimentHistory* branch_experiment_history;
 

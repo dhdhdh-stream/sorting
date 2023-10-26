@@ -17,6 +17,9 @@ public:
 	// input_inner_layer always 0
 	// input_inner_is_local always false
 	std::vector<int> input_inner_indexes;
+	/**
+	 * - negative indexing
+	 */
 	std::vector<int> input_scope_depths;
 	std::vector<bool> input_outer_is_local;
 	std::vector<int> input_outer_indexes;
@@ -28,6 +31,8 @@ public:
 	std::vector<int> output_outer_indexes;
 
 	Scope* scope;
+	// TODO: if used score states, set to permanent at finalize
+	// TODO: set scope parent_scope_nodes at finalize
 
 	Sequence();
 	~Sequence();

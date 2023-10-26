@@ -161,35 +161,6 @@ void StateNetwork::activate(double obs_val,
 	state_status.last_network = this;
 }
 
-void StateNetwork::activate(double obs_val,
-							StateStatus& state_status,
-							StateStatus& state_diff) {
-	this->obs_input->acti_vals[0] = obs_val;
-
-	double starting_state_val;
-	StateNetwork* last_network = state_status.last_network;
-	if (last_network == NULL) {
-		starting_state_val = (state_status.val * this->starting_standard_deviation) + this->starting_mean;
-	} else if (this->parent_state != last_network->parent_state
-			|| this->preceding_network_indexes.find(last_network->index) == this->preceding_network_indexes.end()) {
-		double normalized = (state_status.val - last_network->ending_mean)
-			/ last_network->ending_standard_deviation;
-		starting_state_val = (normalized * this->starting_standard_deviation) + this->starting_mean;
-	} else {
-		starting_state_val = state_status.val;
-	}
-	this->state_input->acti_vals[0] = starting_state_val;
-
-	this->hidden->activate();
-	this->output->activate();
-
-	state_status.val = starting_state_val + this->output->acti_vals[0];
-	state_status.last_network = this;
-
-	state_diff.val = this->output->acti_vals[0];
-	state_diff.last_network = this;
-}
-
 void StateNetwork::save(ofstream& output_file) {
 	output_file << this->preceding_network_indexes.size() << endl;
 	for (set<int>::iterator it = preceding_network_indexes.begin();

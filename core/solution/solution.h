@@ -26,7 +26,8 @@ public:
 
 	int scope_counter;
 	std::map<int, Scope*> scopes;
-	// 0 is root, starts with ACTION_START
+
+	int root_id;
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
