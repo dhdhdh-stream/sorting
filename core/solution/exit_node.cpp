@@ -36,7 +36,3 @@ void ExitNode::save_for_display(ofstream& output_file) {
 	output_file << this->exit_depth << endl;
 	output_file << this->exit_node_id << endl;
 }
-
-ExitNodeHistory::ExitNodeHistory(ExitNode* node) {
-	this->node = node;
-}

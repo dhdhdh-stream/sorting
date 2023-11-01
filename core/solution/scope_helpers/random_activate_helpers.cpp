@@ -24,8 +24,6 @@ void Scope::random_activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
-		node_context.back() = curr_node_id;
-
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
 		int inner_exit_depth = -1;
@@ -47,8 +45,6 @@ void Scope::random_activate(vector<int>& starting_node_ids,
 			exit_depth = inner_exit_depth-1;
 			exit_node_id = inner_exit_node_id;
 		}
-
-		node_context.back() = -1;
 	}
 
 	while (true) {
@@ -73,13 +69,11 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 										int& exit_node_id,
 										int& num_nodes,
 										ScopeHistory* history) {
-	node_context.back() = curr_node_id;
-
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
-		ActionNodeHistory* node_history = new ActionNodeHistory(action_node);
-		history->node_histories[0].push_back(node_history);
+		ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
+		history->node_histories[0].push_back(action_node_history);
 
 		num_nodes++;
 
@@ -120,15 +114,6 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 		} else {
 			curr_node_id = branch_node->original_next_node_id;
 		}
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
-		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
-
-		BranchStubNodeHistory* node_history = new BranchStubNodeHistory(branch_stub_node);
-		history->node_histories[0].push_back(node_history);
-
-		num_nodes++;
-
-		curr_node_id = branch_stub_node->next_node_id;
 	} else {
 		ExitNode* exit_node = (ExitNode*)this->nodes[curr_node_id];
 
@@ -139,8 +124,6 @@ void Scope::node_random_activate_helper(int& curr_node_id,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
-
-	node_context.back() = -1;
 }
 
 void Scope::random_exit_activate(vector<int>& starting_node_ids,
@@ -157,8 +140,6 @@ void Scope::random_exit_activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
-		node_context.back() = curr_node_id;
-
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
 
 		int inner_exit_depth = -1;
@@ -180,8 +161,6 @@ void Scope::random_exit_activate(vector<int>& starting_node_ids,
 			exit_depth = inner_exit_depth-1;
 			exit_node_id = inner_exit_node_id;
 		}
-
-		node_context.back() = -1;
 	}
 
 	while (true) {
@@ -215,8 +194,6 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 											 int& exit_node_id,
 											 int& num_nodes,
 											 ScopeHistory* history) {
-	node_context.back() = curr_node_id;
-
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
@@ -244,33 +221,19 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
 		bool is_branch;
-		branch_node->random_exit_activate(is_branch,
-										  scope_context,
-										  node_context,
-										  num_nodes,
-										  history->node_histories[0]);
+		branch_node->random_activate(is_branch,
+									 scope_context,
+									 node_context,
+									 num_nodes,
+									 history->node_histories[0]);
 
 		if (is_branch) {
 			curr_node_id = branch_node->branch_next_node_id;
 		} else {
 			curr_node_id = branch_node->original_next_node_id;
 		}
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
-		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
-
-		BranchStubNodeHistory* node_history = new BranchStubNodeHistory(branch_stub_node);
-		history->node_histories[0].push_back(node_history);
-
-		num_nodes++;
-
-		curr_node_id = branch_stub_node->next_node_id;
 	} else {
 		ExitNode* exit_node = (ExitNode*)this->nodes[curr_node_id];
-
-		/**
-		 * - don't add node_history/increment num_nodes
-		 *   - i.e., don't halfway start from ExitNode
-		 */
 
 		if (exit_node->exit_depth == 0) {
 			curr_node_id = exit_node->exit_node_id;
@@ -279,6 +242,4 @@ void Scope::node_random_exit_activate_helper(int& curr_node_id,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
-
-	node_context.back() = -1;
 }

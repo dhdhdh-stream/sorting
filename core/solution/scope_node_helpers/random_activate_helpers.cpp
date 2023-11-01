@@ -24,6 +24,8 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 	uniform_int_distribution<int> distribution(0, 1);
 	// TODO: check inner_scope->is_loop
 	if (distribution(generator) == 0) {
+		node_context.back() = this->id;
+
 		scope_context.push_back(this->inner_scope->id);
 		node_context.push_back(-1);
 
@@ -39,6 +41,8 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 
 		scope_context.pop_back();
 		node_context.pop_back();
+
+		node_context.back() = -1;
 	}
 	/**
 	 * - don't worry about missing early exits
@@ -67,6 +71,8 @@ void ScopeNode::halfway_random_activate(vector<int>& starting_node_ids,
 	// inner_scope->is_loop == false
 	uniform_int_distribution<int> distribution(0, 1);
 	if (distribution(generator) == 0) {
+		node_context.back() = this->id;
+
 		scope_context.push_back(this->inner_scope->id);
 		node_context.push_back(-1);
 
@@ -80,6 +86,8 @@ void ScopeNode::halfway_random_activate(vector<int>& starting_node_ids,
 
 		scope_context.pop_back();
 		node_context.pop_back();
+
+		node_context.back() = -1;
 	}
 }
 
@@ -100,6 +108,8 @@ void ScopeNode::halfway_random_exit_activate(vector<int>& starting_node_ids,
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
 	history->inner_scope_history = inner_scope_history;
 
+	node_context.back() = this->id;
+
 	scope_context.push_back(this->inner_scope->id);
 	node_context.push_back(-1);
 
@@ -113,4 +123,6 @@ void ScopeNode::halfway_random_exit_activate(vector<int>& starting_node_ids,
 
 	scope_context.pop_back();
 	node_context.pop_back();
+
+	node_context.back() = -1;
 }

@@ -93,7 +93,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_sequence->input_inner_indexes.push_back(new_state_index);
 						new_sequence->input_scope_depths.push_back(-1);
-						new_sequence->input_outer_is_local.push_back(-1);
+						new_sequence->input_outer_is_local.push_back(false);
 						new_sequence->input_outer_indexes.push_back(-1);
 						new_sequence->input_init_vals.push_back(0.0);
 					}
@@ -115,7 +115,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 				new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_sequence->input_inner_indexes.push_back(new_state_index);
 				new_sequence->input_scope_depths.push_back(-1);
-				new_sequence->input_outer_is_local.push_back(-1);
+				new_sequence->input_outer_is_local.push_back(false);
 				new_sequence->input_outer_indexes.push_back(-1);
 				new_sequence->input_init_vals.push_back(this->input_init_vals[i_index]);
 			}
@@ -156,20 +156,45 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-				map<pair<bool,int>, int>::iterator it = state_mappings.back()
-					.find({this->input_outer_is_local[i_index], this->input_outer_indexes[i_index]});
-				if (it != state_mappings.back().end()) {
+				if (this->input_outer_is_local[i_index]) {
 					new_node->input_types.push_back(INPUT_TYPE_STATE);
 					new_node->input_inner_layers.push_back(this->input_inner_layers[i_index]);
 					new_node->input_inner_is_local.push_back(this->input_inner_is_local[i_index]);
 					new_node->input_inner_indexes.push_back(this->input_inner_indexes[i_index]);
 					new_node->input_outer_is_local.push_back(false);
-					new_node->input_outer_indexes.push_back(it->second);
+					map<pair<bool,int>, int>::iterator it = state_mappings.back()
+						.find({true, this->input_outer_indexes[i_index]});
+					if (it != state_mappings.back().end()) {
+						new_node->input_outer_indexes.push_back(it->second);
+					} else {
+						int new_state_index;
+						state_mappings.back()[{true, this->input_outer_indexes[i_index]}] = new_num_input_states;
+						new_state_index = new_num_input_states;
+						new_num_input_states++;
+
+						new_node->input_outer_indexes.push_back(new_state_index);
+
+						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
+						new_sequence->input_inner_indexes.push_back(new_state_index);
+						new_sequence->input_scope_depths.push_back(-1);
+						new_sequence->input_outer_is_local.push_back(false);
+						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_init_vals.push_back(0.0);
+					}
 					new_node->input_init_vals.push_back(0.0);
+				} else {
+					map<pair<bool,int>, int>::iterator it = state_mappings.back()
+						.find({this->input_outer_is_local[i_index], this->input_outer_indexes[i_index]});
+					if (it != state_mappings.back().end()) {
+						new_node->input_types.push_back(INPUT_TYPE_STATE);
+						new_node->input_inner_layers.push_back(this->input_inner_layers[i_index]);
+						new_node->input_inner_is_local.push_back(this->input_inner_is_local[i_index]);
+						new_node->input_inner_indexes.push_back(this->input_inner_indexes[i_index]);
+						new_node->input_outer_is_local.push_back(false);
+						new_node->input_outer_indexes.push_back(it->second);
+						new_node->input_init_vals.push_back(0.0);
+					}
 				}
-				/**
-				 * - if not found, then means never initialized in new sequence, and can be removed
-				 */
 			} else {
 				new_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_node->input_inner_layers.push_back(this->input_inner_layers[i_index]);
@@ -257,9 +282,6 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 			obs_snapshots = context.back().local_state_vals;
 		}
 
-		for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-			run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-		}
 		context.pop_back();
 
 		// no need to set context.back().node_id
@@ -522,9 +544,6 @@ void ScopeNode::halfway_create_sequence_activate(
 			obs_snapshots = context.back().local_state_vals;
 		}
 
-		for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-			run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-		}
 		context.pop_back();
 
 		if (!is_early_exit) {
@@ -588,108 +607,5 @@ void ScopeNode::halfway_create_sequence_activate(
 		}
 
 		curr_num_nodes++;
-	}
-}
-
-// for create_sequence()
-void ScopeNode::simple_halfway_activate(vector<int>& starting_node_ids,
-										vector<map<int, StateStatus>>& starting_input_state_vals,
-										vector<map<int, StateStatus>>& starting_local_state_vals,
-										Problem& problem,
-										vector<ContextLayer>& context,
-										RunHelper& run_helper) {
-	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
-		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			if (this->input_inner_layers[i_index] == 0
-					&& !this->input_inner_is_local[i_index]) {
-				if (this->input_outer_is_local[i_index]) {
-					StateStatus state_status;
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
-					if (it != context.back().local_state_vals.end()) {
-						state_status = it->second;
-					}
-					starting_input_state_vals[0][this->input_inner_indexes[i_index]] = state_status;
-				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
-					if (it != context.back().input_state_vals.end()) {
-						starting_input_state_vals[0][this->input_inner_indexes[i_index]] = it->second;
-					}
-				}
-			}
-		}
-	}
-
-	context.push_back(ContextLayer());
-
-	context.back().scope_id = this->inner_scope->id;
-	context.back().node_id = -1;
-
-	context.back().input_state_vals = starting_input_state_vals[0];
-	starting_input_state_vals.erase(starting_input_state_vals.begin());
-	context.back().local_state_vals = starting_local_state_vals[0];
-	starting_local_state_vals.erase(starting_local_state_vals.begin());
-
-	ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
-	// no need to set context.back().scope_history
-
-	// currently, starting_node_ids.size() == starting_state_vals.size()+1
-
-	// unused
-	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
-
-	this->inner_scope->activate(starting_node_ids,
-								starting_input_state_vals,
-								starting_local_state_vals,
-								problem,
-								context,
-								inner_exit_depth,
-								inner_exit_node_id,
-								run_helper,
-								inner_scope_history);
-
-	delete inner_scope_history;
-
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-		if (inner_it != context.back().input_state_vals.end()) {
-			if (this->output_outer_is_local[o_index]) {
-				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-			} else {
-				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-				if (outer_it != context[context.size()-2].input_state_vals.end()) {
-					outer_it->second = inner_it->second;
-				}
-			}
-		}
-	}
-
-	map<int, StateStatus> obs_snapshots = context.back().local_state_vals;
-
-	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-	}
-	context.pop_back();
-
-	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
-		map<int, StateStatus>::iterator obs_it = obs_snapshots.find(this->state_obs_indexes[n_index]);
-		if (obs_it != obs_snapshots.end()) {
-			if (this->state_is_local[n_index]) {
-				map<int, StateStatus>::iterator state_it = context.back().local_state_vals.find(this->state_indexes[n_index]);
-				if (state_it == context.back().local_state_vals.end()) {
-					state_it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
-				}
-				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-				state_network->activate(obs_it->second.val,
-										state_it->second);
-			} else {
-				map<int, StateStatus>::iterator state_it = context.back().input_state_vals.find(this->state_indexes[n_index]);
-				if (state_it != context.back().input_state_vals.end()) {
-					StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-					state_network->activate(obs_it->second.val,
-											state_it->second);
-				}
-			}
-		}
 	}
 }

@@ -1,8 +1,5 @@
 /**
  * - if original, 1.0; if branch, -1.0
- * 
- * - only have score networks, no misguess networks
- *   - difficult to maintain over branching anyways
  */
 
 #ifndef BRANCH_NODE_H
@@ -43,8 +40,6 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
-	// TODO: use all score state on experiment, from both within and without
-
 	int original_next_node_id;
 	int branch_next_node_id;
 
@@ -53,57 +48,17 @@ public:
 			   int id);
 	~BranchNode();
 
-	void activate(int& curr_node_id,
-				  Problem& problem,
-				  std::vector<ContextLayer>& context,
-				  int& exit_depth,
-				  int& exit_node_id,
-				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
-
-	void create_sequence_activate(bool& is_branch,
-								  std::vector<ContextLayer>& context,
-								  int target_num_nodes,
-								  int& curr_num_nodes,
-								  Sequence* new_sequence,
-								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes,
-								  RunHelper& run_helper);
+	void activate(bool& is_branch,
+				  std::vector<ContextLayer>& context);
 
 	void random_activate(bool& is_branch,
 						 std::vector<int>& scope_context,
 						 std::vector<int>& node_context,
 						 int& num_nodes,
 						 std::vector<AbstractNodeHistory*>& node_histories);
-	void random_exit_activate(bool& is_branch,
-							  std::vector<int>& scope_context,
-							  std::vector<int>& node_context,
-							  int& num_nodes,
-							  std::vector<AbstractNodeHistory*>& node_histories);
 
-	void flat_vals_back_activate(std::vector<int>& scope_context,
-								 std::vector<int>& node_context,
-								 int d_index,
-								 int stride_size,
-								 std::vector<double>& flat_vals,
-								 BranchNodeHistory* history);
-	void rnn_vals_back_activate(std::vector<int>& scope_context,
-								std::vector<int>& node_context,
-								std::vector<int>& obs_indexes,
-								std::vector<double>& obs_vals,
-								BranchNodeHistory* history);
-	void experiment_back_activate(std::vector<int>& scope_context,
-								  std::vector<int>& node_context,
-								  std::map<int, StateStatus>& experiment_score_state_vals,
-								  BranchNodeHistory* history);
-
-	void view_activate(int& curr_node_id,
-					   Problem& problem,
-					   std::vector<ContextLayer>& context,
-					   int& exit_depth,
-					   int& exit_node_id,
-					   RunHelper& run_helper);
+	void view_activate(bool& is_branch,
+					   std::vector<ContextLayer>& context);
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);

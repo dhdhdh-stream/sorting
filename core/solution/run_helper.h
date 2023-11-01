@@ -16,26 +16,33 @@ public:
 	int curr_depth;
 	int max_depth;
 	bool exceeded_depth;
-
-	BranchExperiment* selected_branch_experiment;
-	int selected_branch_experiment_count;
-	BranchExperimentHistory* branch_experiment_history;
 	/**
-	 * - also use to track if already experimented (i.e., check if not NULL)
+	 * - recursion possible even when exploring with only child scopes
+	 *   - should be less likely though so don't specifically check against it
+	 *     - (and don't have to rely on recursion with OuterExperiment)
 	 */
-	ScopeHistory* branch_experiment_scope_history;
 
-	std::vector<BranchExperiment*> experiments_seen_order;
-	std::map<BranchExperiment*, int> experiments_seen_counts;
+	std::map<AbstractExperiment*, int> experiments_seen;
+	/**
+	 * - keep track of counts for branch
+	 */
+	std::vector<AbstractExperiment*> experiments_seen_order;
+
+	AbstractExperiment* selected_experiment;
+
+	int branch_experiment_count;
+	AbstractExperimentHistory* experiment_history;
+	/**
+	 * - instance for branch, overall for passthrough
+	 */
 
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		this->selected_branch_experiment = NULL;
-		this->branch_experiment_history = NULL;
-		this->branch_experiment_scope_history = NULL;
+		this->selected_experiment = NULL;
+		this->experiment_history = NULL;
 	}
 };
 

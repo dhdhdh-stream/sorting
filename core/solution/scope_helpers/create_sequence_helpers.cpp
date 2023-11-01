@@ -87,8 +87,6 @@ void Scope::node_create_sequence_activate_helper(
 		int& new_num_input_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
-	// no need to set context.back().node_id
-
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
 
@@ -120,39 +118,18 @@ void Scope::node_create_sequence_activate_helper(
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
 		bool is_branch;
-		branch_node->create_sequence_activate(is_branch,
-											  context,
-											  target_num_nodes,
-											  curr_num_nodes,
-											  new_sequence,
-											  state_mappings,
-											  new_num_input_states,
-											  new_nodes,
-											  run_helper);
+		branch_node->activate(is_branch,
+							  context);
 
 		if (is_branch) {
 			curr_node_id = branch_node->branch_next_node_id;
 		} else {
 			curr_node_id = branch_node->original_next_node_id;
 		}
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
-		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
-
-		branch_stub_node->create_sequence_activate(context,
-												   target_num_nodes,
-												   curr_num_nodes,
-												   new_sequence,
-												   state_mappings,
-												   new_num_input_states,
-												   new_nodes);
-
-		curr_node_id = branch_stub_node->next_node_id;
 	} else {
 		// this->nodes[curr_node_id]->type == NODE_TYPE_EXIT
 
 		curr_node_id = -1;
 		// simply set to -1 to signal exit
 	}
-
-	// no need to set context.back().node_id
 }

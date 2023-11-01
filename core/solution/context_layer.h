@@ -23,8 +23,7 @@ public:
 	std::map<int, StateStatus> input_state_vals;
 	std::map<int, StateStatus> local_state_vals;
 
-	std::map<int, StateStatus> score_state_vals;
-	std::map<int, StateStatus> experiment_state_vals;
+	std::map<State*, StateStatus> temp_state_vals;
 
 	ScopeHistory* scope_history;
 };

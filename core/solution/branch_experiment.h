@@ -23,22 +23,24 @@ class State;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
+const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 
-const int BRANCH_EXPERIMENT_STATE_TRAIN_STARTING = 2;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_COMBINED = 3;
+const int BRANCH_EXPERIMENT_STATE_FAIL = 4;
+const int BRANCH_EXPERIMENT_STATE_SUCCESS = 5;
 
-const int BRANCH_EXPERIMENT_STATE_TRAIN_ENDING = 4;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_POST = 5;
-const int BRANCH_EXPERIMENT_STATE_MEASURE_PASS_THROUGH = 7;
-
-const int BRANCH_EXPERIMENT_STATE_FAIL = 7;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 8;
+const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
+/**
+ * - if surprise isn't better than what can be expected from random fluctuation, don't bother
+ */
 
 class BranchExperimentHistory;
 class BranchExperiment {
 public:
 	std::vector<int> scope_context;
 	std::vector<int> node_context;
+
+	PassThroughExperiment* parent_pass_through_experiment;
 
 	double average_remaining_experiments_from_start;
 	double average_instances_per_run;
@@ -54,15 +56,19 @@ public:
 	int state_iter;
 
 	double existing_average_score;
+	// TODO: add
 	double existing_average_misguess;
 
-	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_input_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_local_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> existing_starting_score_state_vals_histories;
-	std::vector<double> existing_target_val_histories;
-	std::vector<vector<double>> existing_starting_input_state_weights;
-	std::vector<vector<double>> existing_starting_local_state_weights;
-	std::vector<vector<double>> existing_starting_score_state_weights;
+	std::vector<std::vector<std::map<int, StateStatus>>> input_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> local_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> score_state_vals_histories;
+	std::vector<std::map<int, StateStatus>> experiment_state_vals_histories;
+	std::vector<double> target_val_histories;
+
+	std::vector<vector<double>> existing_input_state_weights;
+	std::vector<vector<double>> existing_local_state_weights;
+	std::vector<vector<double>> existing_score_state_weights;
+	std::vector<double> existing_experiment_state_weights;
 
 	int existing_selected_count;
 	double existing_selected_sum_score;
@@ -80,47 +86,20 @@ public:
 	int best_exit_depth;
 	int best_exit_node_id;
 
-	double new_average_score;
-	std::vector<double> new_target_val_histories;
-
-	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_input_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_local_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> new_starting_score_state_vals_histories;
-	std::vector<std::map<int, StateStatus>> new_starting_experiment_state_vals_histories;
-	std::vector<std::vector<double>> new_starting_input_state_weights;
-	std::vector<std::vector<double>> new_starting_local_state_weights;
-	std::vector<std::vector<double>> new_starting_score_state_weights;
-	std::vector<double> new_starting_experiment_state_weights;
-
-	std::vector<std::map<int, StateStatus>> new_ending_input_state_vals_histories;
-	std::vector<std::map<int, StateStatus>> new_ending_local_state_vals_histories;
-	std::vector<std::map<int, StateStatus>> new_ending_score_state_vals_histories;
-	std::vector<std::map<int, StateStatus>> new_ending_experiment_state_vals_histories;
-	std::vector<double> new_ending_input_state_weights;
-	std::vector<double> new_ending_local_state_weights;
-	std::vector<double> new_ending_score_state_weights;
-	std::vector<double> new_ending_experiment_state_weights;
-
-	double new_average_misguess;
-	double new_misguess_variance;
-
-	
+	std::vector<std::vector<double>> new_input_state_weights;
+	std::vector<std::vector<double>> new_local_state_weights;
+	std::vector<std::vector<double>> new_score_state_weights;
+	std::vector<double> new_experiment_state_weights;
 
 	std::vector<State*> new_states;
 	std::vector<std::vector<AbstractNode*>> new_state_nodes;
 	std::vector<std::vector<std::vector<int>>> new_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
 	std::vector<std::vector<int>> new_state_obs_indexes;
-	std::vector<double> new_state_weights;
 
 	double combined_score;
 	int branch_count;
 	int branch_possible;
-
-	double pass_through_misguess;
-
-	int pass_through_selected_count;
-	double pass_through_score;
 
 	std::vector<std::vector<int>> obs_experiment_obs_indexes;
 	std::vector<std::vector<double>> obs_experiment_obs_vals;
@@ -209,12 +188,10 @@ class BranchExperimentHistory {
 public:
 	BranchExperiment* experiment;
 
-	std::vector<ActionNodeHistory*> action_histories;
-	std::vector<SequenceHistory*> sequence_histories;
-
 	double existing_predicted_score;
 
-	ScopeHistory* parent_scope_history;
+	std::vector<ActionNodeHistory*> action_histories;
+	std::vector<SequenceHistory*> sequence_histories;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 	BranchExperimentHistory(BranchExperimentHistory* original);

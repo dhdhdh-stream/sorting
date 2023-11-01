@@ -30,29 +30,32 @@ public:
 	 */
 	std::vector<int> state_network_indexes;
 
-	std::vector<std::vector<int>> score_state_scope_contexts;
-	std::vector<std::vector<int>> score_state_node_contexts;
-	std::vector<int> score_state_indexes;
-	std::vector<State*> score_state_defs;
-	std::vector<int> score_state_network_indexes;
+	std::vector<std::vector<int>> temp_state_scope_contexts;
+	std::vector<std::vector<int>> temp_state_node_contexts;
+	std::vector<State*> temp_state_defs;
+	std::vector<int> temp_state_network_indexes;
 
-	std::vector<std::vector<int>> obs_experiment_scope_contexts;
-	std::vector<std::vector<int>> obs_experiment_node_contexts;
-	std::vector<int> obs_experiment_indexes;
-
-	std::vector<std::vector<int>> branch_experiment_state_scope_contexts;
-	std::vector<std::vector<int>> branch_experiment_state_node_contexts;
-	std::vector<int> branch_experiment_state_indexes;
-	std::vector<State*> branch_experiment_state_defs;
-	std::vector<int> branch_experiment_state_network_indexes;
-
-	std::vector<int> branch_obs_experiment_scope_contexts;
-	std::vector<int> branch_obs_experiment_node_contexts;
-	int branch_obs_index;
+	/**
+	 * - is also temp_state but keep separate for easier hook/clear
+	 */
+	std::vector<std::vector<int>> experiment_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_state_node_contexts;
+	std::vector<State*> experiment_state_defs;
+	std::vector<int> experiment_state_network_indexes;
 
 	int next_node_id;
 
-	BranchExperiment* experiment;
+	AbstractExperiment* experiment;
+	/**
+	 * - don't worry about possibility of having both PassThroughExperiment and BranchExperiment
+	 */
+
+	/**
+	 * - hook
+	 */
+	std::vector<int> obs_experiment_scope_contexts;
+	std::vector<int> obs_experiment_node_contexts;
+	int obs_experiment_index;
 
 	ActionNode();
 	ActionNode(std::ifstream& input_file,
@@ -65,7 +68,7 @@ public:
 				  int& exit_depth,
 				  int& exit_node_id,
 				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
+				  ActionNodeHistory* history);
 
 	void create_sequence_activate(Problem& problem,
 								  std::vector<ContextLayer>& context,
@@ -75,11 +78,6 @@ public:
 								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
 								  int& new_num_input_states,
 								  std::vector<AbstractNode*>& new_nodes);
-
-	void branch_experiment_activate(
-		Problem& problem,
-		std::vector<ContextLayer>& context,
-		ActionNodeHistory* history);
 
 	void flat_vals_back_activate(std::vector<int>& scope_context,
 								 std::vector<int>& node_context,

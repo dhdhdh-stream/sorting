@@ -50,41 +50,20 @@ public:
 	int num_input_states;
 	int num_local_states;
 
+	int node_counter;
 	std::map<int, AbstractNode*> nodes;
-
-	std::list<ScopeHistory*> scope_histories;
-	std::list<std::map<int, StateStatus>> input_state_vals_histories;
-	std::list<std::map<int, StateStatus>> local_state_vals_histories;
-	std::list<double> target_val_histories;
-
-	std::vector<double> input_state_weights;
-	std::vector<double> local_state_weights;
-
-	/**
-	 * - clear after every update
-	 */
-	std::vector<State*> score_states;
-	std::vector<std::vector<AbstractNode*>> score_state_nodes;
-	std::vector<std::vector<std::vector<int>>> score_state_scope_contexts;
-	std::vector<std::vector<std::vector<int>>> score_state_node_contexts;
-	std::vector<std::vector<int>> score_state_obs_indexes;
-	std::vector<double> score_state_weights;
-
-	double average_score;
-	double score_variance;
-	/**
-	 * - measure using sqr over abs
-	 *   - even though sqr may not measure true score improvement, it measures information improvement
-	 *     - which ultimately leads to better branching
-	 */
-	double average_misguess;
-	double misguess_variance;
 
 	std::vector<Scope*> child_scopes;
 	/**
 	 * - don't remove even if can no longer reach
-	 *   - might have been a mistaken pass_through anyways
+	 *   - might have been a mistaken change anyways
 	 */
+
+	std::vector<State*> temp_states;
+	std::vector<std::vector<AbstractNode*>> temp_state_nodes;
+	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;
+	std::vector<std::vector<std::vector<int>>> temp_state_node_contexts;
+	std::vector<std::vector<int>> temp_state_obs_indexes;
 
 	Scope();
 	~Scope();
@@ -176,10 +155,6 @@ public:
 								   int& exit_node_id,
 								   RunHelper& run_helper);
 
-	void update_histories(double target_val,
-						  ScopeHistory* history);
-	void update();
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  int id);
@@ -192,6 +167,8 @@ public:
 	Scope* scope;
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
+
+	PassThroughExperiment* inner_pass_through_experiment;
 
 	bool exceeded_depth;
 

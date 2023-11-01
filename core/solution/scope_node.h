@@ -53,7 +53,6 @@ public:
 	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
-	// TODO: if removed inside, remove outside too
 
 	std::vector<bool> state_is_local;
 	std::vector<int> state_indexes;
@@ -61,21 +60,26 @@ public:
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;
 
-	std::vector<std::vector<int>> experiment_hook_state_scope_contexts;
-	std::vector<std::vector<int>> experiment_hook_state_node_contexts;
-	std::vector<int> experiment_hook_state_obs_indexes;
-	std::vector<int> experiment_hook_state_indexes;
-	std::vector<State*> experiment_hook_state_defs;
-	std::vector<int> experiment_hook_state_network_indexes;
+	std::vector<std::vector<int>> temp_state_scope_contexts;
+	std::vector<std::vector<int>> temp_state_node_contexts;
+	std::vector<int> temp_state_obs_indexes;
+	std::vector<State*> temp_state_defs;
+	std::vector<int> temp_state_network_indexes;
 
-	std::vector<std::vector<int>> test_hook_scope_contexts;
-	std::vector<std::vector<int>> test_hook_node_contexts;
-	std::vector<int> test_hook_obs_indexes;
-	std::vector<int> test_hook_indexes;
+	std::vector<std::vector<int>> experiment_state_scope_contexts;
+	std::vector<std::vector<int>> experiment_state_node_contexts;
+	std::vector<int> experiment_state_obs_indexes;
+	std::vector<State*> experiment_state_defs;
+	std::vector<int> experiment_state_network_indexes;
 
 	int next_node_id;
 
-	BranchExperiment* experiment;
+	AbstractExperiment* experiment;
+
+	std::vector<std::vector<int>> obs_experiment_scope_contexts;
+	std::vector<std::vector<int>> obs_experiment_node_contexts;
+	std::vector<int> obs_experiment_obs_indexes;
+	std::vector<int> obs_experiment_indexes;
 
 	ScopeNode();
 	ScopeNode(std::ifstream& input_file,
@@ -196,10 +200,7 @@ public:
 
 	std::map<int, StateStatus> obs_snapshots;
 
-	std::vector<int> state_indexes;
-	std::vector<StateStatus> state_impacts;
-
-	BranchExperimentHistory* branch_experiment_history;
+	AbstractExperimentHistory* experiment_history;
 
 	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);

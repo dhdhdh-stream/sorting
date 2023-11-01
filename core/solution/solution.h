@@ -9,6 +9,8 @@ class BranchExperiment;
 class Scope;
 class State;
 
+const int STARTING_NUM_DATAPOINTS = 1000;
+
 class Solution {
 public:
 	double average_score;
@@ -32,7 +34,17 @@ public:
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
-	std::set<BranchExperiment*> branch_experiments;
+	/**
+	 * - for least squares, ObsExperiment, and measure
+	 * 
+	 * - double every 20 failures
+	 */
+	int curr_num_datapoints;
+
+	OuterExperiment* outer_experiment;
+	std::set<AbstractExperiment*> experiments;
+
+	int temp_state_counter;
 
 	Solution();
 	~Solution();

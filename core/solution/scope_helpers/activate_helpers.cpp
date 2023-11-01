@@ -39,9 +39,9 @@ void Scope::activate(vector<int>& starting_node_ids,
 	int curr_node_id = starting_node_ids[0];
 	starting_node_ids.erase(starting_node_ids.begin());
 	if (starting_node_ids.size() > 0) {
-		context.back().node_id = curr_node_id;
-
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
+		history->node_histories[0].push_back(scope_node_history);
 		scope_node->halfway_activate(starting_node_ids,
 									 starting_input_state_vals,
 									 starting_local_state_vals,
@@ -51,9 +51,7 @@ void Scope::activate(vector<int>& starting_node_ids,
 									 exit_depth,
 									 exit_node_id,
 									 run_helper,
-									 history->node_histories[0]);
-
-		context.back().node_id = -1;
+									 scope_node_history);
 	}
 
 	while (true) {
@@ -71,16 +69,11 @@ void Scope::activate(vector<int>& starting_node_ids,
 							 history);
 	}
 
-	history->input_state_snapshots = context.back().input_state_vals;
-	history->local_state_snapshots = context.back().local_state_vals;
-
-	if (run_helper.phase == RUN_PHASE_UPDATE) {
-		run_helper.scope_histories.push_back(history);
-		/**
-		 * - keep even if early exit, so that can learn good decisions even if early exit
-		 */
-	} else if (history->inner_branch_experiment_history != NULL) {
-		history->experiment_state_snapshots = context.back().experiment_state_vals;
+	if (history->inner_pass_through_experiment != NULL) {
+		history->inner_pass_through_experiment->parent_scope_end_activate(
+			context,
+			run_helper,
+			history);
 	}
 
 	run_helper.curr_depth--;
@@ -94,26 +87,28 @@ void Scope::node_activate_helper(int iter_index,
 								 int& exit_node_id,
 								 RunHelper& run_helper,
 								 ScopeHistory* history) {
-	context.back().node_id = curr_node_id;
-
 	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
+		ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
+		history->node_histories[iter_index].push_back(action_node_history);
 		action_node->activate(curr_node_id,
 							  problem,
 							  context,
 							  exit_depth,
 							  exit_node_id,
 							  run_helper,
-							  history->node_histories[0]);
+							  action_node_history);
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
+		history->node_histories[iter_index].push_back(scope_node_history);
 		scope_node->activate(curr_node_id,
 							 problem,
 							 context,
 							 exit_depth,
 							 exit_node_id,
 							 run_helper,
-							 history->node_histories[0]);
+							 scope_node_history);
 	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
 		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
 
@@ -126,12 +121,6 @@ void Scope::node_activate_helper(int iter_index,
 		} else {
 			curr_node_id = branch_node->original_next_node_id;
 		}
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH_STUB) {
-		BranchStubNode* branch_stub_node = (BranchStubNode*)this->nodes[curr_node_id];
-
-		branch_stub_node->activate(context);
-
-		curr_node_id = branch_stub_node->next_node_id;
 	} else {
 		ExitNode* exit_node = (ExitNode*)this->nodes[curr_node_id];
 
@@ -142,6 +131,4 @@ void Scope::node_activate_helper(int iter_index,
 			exit_node_id = exit_node->exit_node_id;
 		}
 	}
-
-	context.back().node_id = -1;
 }

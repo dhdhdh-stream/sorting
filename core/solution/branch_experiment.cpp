@@ -47,7 +47,7 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->existing_selected_count = 0;
 	this->existing_selected_sum_score = 0.0;
 
-	this->best_surprise = 1.0;
+	this->best_surprise = EXPERIMENT_SURPRISE_THRESHOLD;
 
 	uniform_int_distribution<int> recursion_protection_distribution(0, 4);
 	if (recursion_protection_distribution(generator) != 0) {

@@ -58,6 +58,8 @@ void ScopeNode::view_activate(int& curr_node_id,
 		}
 	}
 
+	context.back().node_id = this->id;
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
@@ -112,10 +114,9 @@ void ScopeNode::view_activate(int& curr_node_id,
 		obs_snapshots = context.back().local_state_vals;
 	}
 
-	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-	}
 	context.pop_back();
+
+	context.back().node_id = -1;
 
 	if (!is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
@@ -189,6 +190,8 @@ void ScopeNode::halfway_view_activate(vector<int>& starting_node_ids,
 		}
 	}
 
+	context.back().node_id = this->id;
+
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->inner_scope->id;
@@ -239,10 +242,9 @@ void ScopeNode::halfway_view_activate(vector<int>& starting_node_ids,
 		obs_snapshots = context.back().local_state_vals;
 	}
 
-	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-	}
 	context.pop_back();
+
+	context.back().node_id = -1;
 
 	if (!is_early_exit) {
 		for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {

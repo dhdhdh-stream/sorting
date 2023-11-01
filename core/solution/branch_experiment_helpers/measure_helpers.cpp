@@ -135,7 +135,6 @@ void BranchExperiment::eval() {
 	cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
 
 	Scope* parent = solution->scopes[this->scope_context[0]];
-
 	double score_standard_deviation = sqrt(parent->score_variance);
 
 	double existing_selected_average_score = this->existing_selected_sum_score / this->existing_selected_count;

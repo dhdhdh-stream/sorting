@@ -18,11 +18,6 @@ using namespace std;
 
 const int EXPLORE_ITERS = 500;
 
-const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
-/**
- * - if surprise isn't better than what can be expected from random fluctuation, don't bother
- */
-
 void BranchExperiment::explore_activate(int& curr_node_id,
 										Problem& problem,
 										vector<ContextLayer>& context,
@@ -160,6 +155,7 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 												   run_helper);
 					}
 
+					// TODO: can't retry as action already performed
 					bool should_retry = false;
 					if (sequence->scope->nodes.size() == 0) {
 						should_retry = true;
