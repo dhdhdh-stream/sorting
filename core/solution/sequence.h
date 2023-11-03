@@ -40,7 +40,8 @@ public:
 	std::vector<void*> output_outer_indexes;
 
 	Scope* scope;
-	// TODO: set scope parent_scope_nodes at finalize
+
+	BranchExperiment* experiment;
 
 	Sequence();
 	~Sequence();

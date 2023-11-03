@@ -25,8 +25,8 @@ void PassThroughExperiment::activate(int& curr_node_id,
 	if (matches_context) {
 		if (run_helper.selected_experiment == this) {
 			switch (this->state) {
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
-				measure_existing_activate(context);
+			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
+				measure_existing_score_activate(context);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 				explore_activate(curr_node_id,
@@ -36,13 +36,14 @@ void PassThroughExperiment::activate(int& curr_node_id,
 								 exit_node_id,
 								 run_helper);
 				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE:
-				measure_score_activate(curr_node_id,
-									   problem,
-									   context,
-									   exit_depth,
-									   exit_node_id,
-									   run_helper);
+			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
+				measure_new_score_activate(curr_node_id,
+										   problem,
+										   context,
+										   exit_depth,
+										   exit_node_id,
+										   run_helper,
+										   history);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_TRAIN:
 				train_activate(curr_node_id,
@@ -71,24 +72,34 @@ void PassThroughExperiment::activate(int& curr_node_id,
 				run_helper.experiment_history = new PassThroughExperimentOverallHistory(this);
 
 				switch (this->state) {
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
-					measure_existing_activate(context);
+				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
+					measure_existing_score_activate(context);
 					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
-					explore_initial_activate(curr_node_id,
-											 problem,
-											 context,
-											 exit_depth,
-											 exit_node_id,
-											 run_helper);
+					if (this->sub_state_iter == 0) {
+						explore_initial_activate(curr_node_id,
+												 problem,
+												 context,
+												 exit_depth,
+												 exit_node_id,
+												 run_helper);
+					} else {
+						explore_activate(curr_node_id,
+										 problem,
+										 context,
+										 exit_depth,
+										 exit_node_id,
+										 run_helper);
+					}
 					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE:
-					measure_score_activate(curr_node_id,
-										   problem,
-										   context,
-										   exit_depth,
-										   exit_node_id,
-										   run_helper);
+				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
+					measure_new_score_activate(curr_node_id,
+											   problem,
+											   context,
+											   exit_depth,
+											   exit_node_id,
+											   run_helper,
+											   history);
 					break;
 				}
 			} else {
@@ -119,10 +130,11 @@ void PassThroughExperiment::parent_scope_end_activate(
 		RunHelper& run_helper,
 		ScopeHistory* parent_scope_history) {
 	switch (this->state) {
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
-		measure_existing_parent_scope_end_activate(context,
-												   run_helper,
-												   parent_scope_history);
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
+		measure_existing_score_parent_scope_end_activate(
+			context,
+			run_helper,
+			parent_scope_history);
 		break;
 	}
 }
@@ -130,15 +142,16 @@ void PassThroughExperiment::parent_scope_end_activate(
 void PassThroughExperiment::backprop(double target_val,
 									 PassThroughExperimentOverallHistory* history) {
 	switch (this->state) {
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
-		measure_existing_backprop(target_val,
-								  history);
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
+		measure_existing_score_backprop(target_val,
+										history);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE:
-		measure_score_backprop(target_val);
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
+		measure_new_score_backprop(target_val,
+								   history);
 		break;
 	}
 }

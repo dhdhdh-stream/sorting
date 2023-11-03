@@ -1,3 +1,6 @@
+// TODO: to simplify, only branch from path
+// - so for information, also only check on path
+
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
@@ -28,10 +31,14 @@ public:
 
 	int state;
 	int state_iter;
+	int sub_state_iter;
 
 	double existing_average_score;
 	double existing_score_variance;
-	
+
+	std::vector<std::pair<int, int>> possible_exits;
+
+	double curr_score;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<Sequence*> curr_sequences;
@@ -58,20 +65,25 @@ public:
 	double existing_average_misguess;
 	double existing_misguess_variance;
 
-	std::map<int, double> new_input_state_weights;
-	std::map<int, double> new_local_state_weights;
-	std::map<State*, double> new_temp_state_weights;
+	std::vector<std::map<int, double>> new_input_state_weights;
+	std::vector<std::map<int, double>> new_local_state_weights;
+	std::vector<std::map<State*, double>> new_temp_state_weights;
 	double new_average_misguess;
 	/**
 	 * - won't be exact comparison, but only meant to support followup BranchExperiments
 	 *   - e.g., instances may be different due to path change, recursion
 	 */
 
+	std::map<int, int> node_id_to_step_index;
+
 	std::vector<State*> new_states;
 	std::vector<std::vector<AbstractNode*>> new_state_nodes;
 	std::vector<std::vector<std::vector<int>>> new_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
 	std::vector<std::vector<int>> new_state_obs_indexes;
+	/**
+	 * - upon success, add all to parent scope and handle from there
+	 */
 
 	std::vector<double> o_target_val_histories;
 	std::list<ScopeHistory*> i_scope_histories;
@@ -80,9 +92,9 @@ public:
 	 *   - not as efficient, but shouldn't be a big deal
 	 *     - would have to backtrack through anyways on experiment select
 	 */
-	std::list<std::map<int, StateStatus>> i_input_state_vals_histories;
-	std::list<std::map<int, StateStatus>> i_local_state_vals_histories;
-	std::list<std::map<State*, StateStatus>> i_temp_state_vals_histories;
+	std::list<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
+	std::list<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
+	std::list<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::list<double> i_target_val_histories;
 
 	/**
@@ -96,9 +108,8 @@ class PassThroughExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
 	PassThroughExperiment* experiment;
 
-	std::vector<ActionNodeHistory*> action_histories;
-	std::vector<SequenceHistory*> sequence_histories;
-
+	std::vector<int> step_indexes;
+	std::vector<void*> step_histories;
 
 };
 

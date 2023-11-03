@@ -146,6 +146,11 @@ void create_pass_through_experiment(ScopeHistory* root_history) {
 	}
 }
 
+void create_experiment_experiment_helper() {
+
+}
+
+// TODO: create after pass_through_experiment
 void pass_through_create_branch_experiment(
 		PassThroughExperiment* parent,
 		ScopeHistory* parent_scope_history) {

@@ -3,6 +3,7 @@
 using namespace std;
 
 const int EXPLORE_ITERS = 200;
+const int NUM_SAMPLES_PER_ITER = 10;
 
 void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
 													 Problem& problem,
@@ -12,15 +13,10 @@ void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
 													 RunHelper& run_helper) {
 	{
 		// exit
-		int new_exit_depth;
-		int new_exit_node_id;
-		random_exit(this->scope_context,
-					this->node_context,
-					new_exit_depth,
-					new_exit_node_id);
-
-		this->curr_exit_depth = new_exit_depth;
-		this->curr_exit_node_id = new_exit_node_id;
+		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
+		int rand_index = distribution(generator);
+		this->curr_exit_depth = this->possible_exits[rand_index].first;
+		this->curr_exit_node_id = this->possible_exits[rand_index].second;
 	}
 
 	{
@@ -121,78 +117,94 @@ void PassThroughExperiment::explore_activate(int& curr_node_id,
 }
 
 void PassThroughExperiment::explore_backprop(double target_val) {
-	double curr_score = target_val - this->existing_score;
-	if (curr_score > this->best_score) {
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->best_actions[s_index];
-			} else {
-				delete this->best_sequences[s_index];
-			}
-		}
+	this->curr_score += target_val - this->existing_average_score;
 
-		this->best_score = curr_score;
-		this->best_step_types = this->curr_step_types;
-		this->best_actions = this->curr_actions;
-		this->best_sequences = this->curr_sequences;
-		this->best_exit_depth = this->curr_exit_depth;
-		this->best_exit_node_id = this->curr_exit_node_id;
-
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_sequences.clear();
-	} else {
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->curr_actions[s_index];
-			} else {
-				delete this->curr_sequences[s_index];
-			}
-		}
-
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_sequences.clear();
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= EXPLORE_ITERS) {
-		cout << "PassThrough" << endl;
-		cout << "this->best_surprise: " << this->best_score << endl;
-		if (this->best_score > 0.0) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					this->best_sequences[s_index]->scope->id = solution->scope_counter;
-					solution->scope_counter++;
-				}
-			}
-			// TODO: increment and assign node IDs as well
-
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index] << endl;
-			}
-			cout << "new explore path:";
+	this->sub_state_iter++;
+	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
+		this->curr_score /= NUM_SAMPLES_PER_ITER;
+		if (this->curr_score > this->best_score) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
+					delete this->best_actions[s_index];
 				} else {
-					cout << " S";
+					delete this->best_sequences[s_index];
 				}
 			}
-			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+			this->best_score = curr_score;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_sequences = this->curr_sequences;
+			this->best_exit_depth = this->curr_exit_depth;
+			this->best_exit_node_id = this->curr_exit_node_id;
 
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE;
-			this->state_iter = 0;
+			this->curr_score = 0.0;
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_sequences.clear();
 		} else {
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
+				} else {
+					delete this->curr_sequences[s_index];
+				}
+			}
+
+			this->curr_score = 0.0;
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_sequences.clear();
+		}
+
+		this->state_iter++;
+		this->sub_state_iter = 0;
+		if (this->state_iter >= EXPLORE_ITERS) {
+			cout << "PassThrough" << endl;
+			cout << "this->best_surprise: " << this->best_score << endl;
+			if (this->best_score > 0.0) {
+				Scope* containing_scope = solution->scopes[this->scope_context.back()];
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						this->best_actions[s_index]->id = containing_scope->node_counter;
+						containing_scope->node_counter++;
+					} else {
+						this->best_sequences[s_index]->scope_node_id = containing_scope->node_counter;
+						containing_scope->node_counter++;
+
+						this->best_sequences[s_index]->scope->id = solution->scope_counter;
+						solution->scope_counter++;
+					}
+				}
+
+				cout << "this->scope_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					cout << c_index << ": " << this->scope_context[c_index] << endl;
+				}
+				cout << "this->node_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+					cout << c_index << ": " << this->node_context[c_index] << endl;
+				}
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index]->action.to_string();
+					} else {
+						cout << " S";
+					}
+				}
+				cout << endl;
+
+				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+
+				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE;
+				this->state_iter = 0;
+			} else {
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
+			}
 		}
 	}
 }

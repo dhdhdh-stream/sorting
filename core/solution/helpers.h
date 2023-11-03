@@ -18,47 +18,24 @@ class ScopeNode;
 class Sequence;
 class State;
 
-ObsExperiment* create_obs_experiment(ScopeHistory* scope_history);
-
 void create_branch_experiment(ScopeHistory* root_history);
-// TODO: select lowest layer with 50% probability, and 50% outwards
 
 Sequence* create_sequence(Problem& problem,
 						  std::vector<ContextLayer>& context,
 						  int explore_context_depth,
 						  Scope* containing_scope,
 						  RunHelper& run_helper);
-Sequence* create_root_sequence(Problem& problem,
-							   std::vector<ContextLayer>& context,
-							   int explore_context_depth,
-							   RunHelper& run_helper);
-
-void random_exit(std::vector<int>& starting_scope_context,
-				 std::vector<int>& starting_node_context,
-				 int& new_exit_depth,
-				 int& new_exit_node_id);
 
 void add_state(Scope* parent_scope,
-			   State* new_state,
-			   double new_weight,
-			   std::vector<AbstractNode*>& nodes,
-			   std::vector<std::vector<int>>& scope_contexts,
-			   std::vector<std::vector<int>>& node_contexts,
-			   std::vector<int>& obs_indexes);
-
-ScopeNode* finalize_sequence(std::vector<int>& scope_context,
-							 std::vector<int>& node_context,
+			   int temp_state_index,
+			   std::vector<int>& experiment_scope_context,
+			   std::vector<int>& experiment_node_context,
+			   int outer_scope_depth,
+			   std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings);
+ScopeNode* finalize_sequence(std::vector<int>& experiment_scope_context,
+							 std::vector<int>& experiment_node_context,
 							 Sequence* new_sequence,
 							 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 							 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
-void finalize_new_state(Scope* parent_scope,
-						std::map<int, ScopeNode*>& sequence_scope_node_mappings,
-						State* new_state,
-						std::vector<AbstractNode*>& nodes,
-						std::vector<std::vector<int>>& scope_contexts,
-						std::vector<std::vector<int>>& node_contexts,
-						std::vector<int>& obs_indexes,
-						BranchNode* new_branch_node,
-						double new_branch_weight);
 
 #endif /* HELPERS_H */

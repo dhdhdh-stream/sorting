@@ -39,18 +39,21 @@ void create_obs_experiment_experiment_helper(
 		BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)experiment_history;
 		BranchExperiment* branch_experiment = (BranchExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-			if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				node_context.back() = branch_experiment->best_actions[s_index]->id;
+		for (int h_index = 0; h_index < (int)branch_experiment_history->step_histories.size(); h_index++) {
+			int step_index = branch_experiment_history->step_indexes[h_index];
+			if (branch_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				node_context.back() = branch_experiment->best_actions[step_index]->id;
 
-				possible_nodes.push_back(branch_experiment->best_actions[s_index]);
+				possible_nodes.push_back(branch_experiment->best_actions[step_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_obs_indexes.push_back(0);
 
 				node_context.back() = -1;
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = branch_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[h_index];
 
 				create_obs_experiment_helper(scope_context,
 											 node_context,
@@ -58,7 +61,7 @@ void create_obs_experiment_experiment_helper(
 											 possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_obs_indexes,
-											 branch_experiment_history->sequence_histories[s_index]->scope_history);
+											 sequence_history->scope_history);
 
 				node_context.back() = -1;
 			}
@@ -67,18 +70,21 @@ void create_obs_experiment_experiment_helper(
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)pass_through_experiment->best_step_types.size(); s_index++) {
-			if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				node_context.back() = pass_through_experiment->best_actions[s_index]->id;
+		for (int h_index = 0; h_index < (int)pass_through_experiment_history->step_histories.size(); h_index++) {
+			int step_index = pass_through_experiment_history->step_indexes[h_index];
+			if (pass_through_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				node_context.back() = pass_through_experiment->best_actions[step_index]->id;
 
-				possible_nodes.push_back(pass_through_experiment->best_actions[s_index]);
+				possible_nodes.push_back(pass_through_experiment->best_actions[step_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_obs_indexes.push_back(0);
 
 				node_context.back() = -1;
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = pass_through_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->step_histories[h_index];
 
 				create_obs_experiment_helper(scope_context,
 											 node_context,
@@ -86,7 +92,7 @@ void create_obs_experiment_experiment_helper(
 											 possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_obs_indexes,
-											 pass_through_experiment_history->sequence_histories[s_index]->scope_history);
+											 sequence_history->scope_history);
 
 				node_context.back() = -1;
 			}
@@ -225,9 +231,10 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 		BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)experiment_history;
 		BranchExperiment* branch_experiment = (BranchExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-			if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = branch_experiment_history->action_histories[s_index];
+		for (int h_index = 0; h_index < (int)branch_experiment_history->step_histories.size(); h_index++) {
+			int step_index = branch_experiment_history->step_indexes[h_index];
+			if (branch_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = branch_experiment_history->action_histories[step_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->flat_vals_back_activate(scope_context,
 													 node_context,
@@ -236,11 +243,13 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 flat_vals,
 													 action_node_history);
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = branch_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[h_index];
 
 				flat_vals_helper(scope_context,
 								 node_context,
-								 branch_experiment_history->sequence_histories[s_index]->scope_history,
+								 sequence_history->scope_history,
 								 d_index,
 								 stride_size,
 								 flat_vals);
@@ -252,9 +261,10 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)pass_through_experiment->best_step_types.size(); s_index++) {
-			if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = pass_through_experiment_history->action_histories[s_index];
+		for (int h_index = 0; h_index < (int)pass_through_experiment_history->step_histories.size(); h_index++) {
+			int step_index = pass_through_experiment_history->step_indexes[h_index];
+			if (pass_through_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = pass_through_experiment_history->action_histories[step_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->flat_vals_back_activate(scope_context,
 													 node_context,
@@ -263,11 +273,13 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 flat_vals,
 													 action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = pass_through_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->step_histories[h_index];
 
 				flat_vals_helper(scope_context,
 								 node_context,
-								 pass_through_experiment_history->sequence_histories[s_index]->scope_history,
+								 sequence_history->scope_history,
 								 d_index,
 								 stride_size,
 								 flat_vals);
@@ -356,9 +368,10 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 		BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)experiment_history;
 		BranchExperiment* branch_experiment = (BranchExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-			if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = branch_experiment_history->action_histories[s_index];
+		for (int h_index = 0; h_index < (int)branch_experiment_history->step_histories.size(); h_index++) {
+			int step_index = branch_experiment_history->step_indexes[h_index];
+			if (branch_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = branch_experiment_history->action_histories[step_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->rnn_vals_back_activate(scope_context,
 													node_context,
@@ -366,11 +379,13 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_vals,
 													action_node_history);
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = branch_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[h_index];
 
 				rnn_vals_helper(scope_context,
 								node_context,
-								branch_experiment_history->sequence_histories[s_index]->scope_history,
+								sequence_history->scope_history,
 								rnn_obs_experiment_indexes,
 								rnn_vals);
 
@@ -381,9 +396,10 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
-		for (int s_index = 0; s_index < (int)pass_through_experiment->best_step_types.size(); s_index++) {
-			if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = pass_through_experiment_history->action_histories[s_index];
+		for (int h_index = 0; h_index < (int)pass_through_experiment_history->step_histories.size(); h_index++) {
+			int step_index = pass_through_experiment_history->step_indexes[h_index];
+			if (pass_through_experiment->best_step_types[step_index] == STEP_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = pass_through_experiment_history->action_histories[step_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->rnn_vals_back_activate(scope_context,
 													node_context,
@@ -391,11 +407,13 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_vals,
 													action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_id;
+				node_context.back() = pass_through_experiment->best_sequences[step_index]->scope_node_id;
+
+				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->step_histories[h_index];
 
 				rnn_vals_helper(scope_context,
 								node_context,
-								pass_through_experiment_history->sequence_histories[s_index]->scope_history,
+								sequence_history->scope_history,
 								rnn_obs_experiment_indexes,
 								rnn_vals);
 

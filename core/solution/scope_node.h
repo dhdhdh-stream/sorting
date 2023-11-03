@@ -118,20 +118,6 @@ public:
 								 int& num_nodes,
 								 std::vector<AbstractNodeHistory*>& node_histories);
 
-	void halfway_random_exit_activate(std::vector<int>& starting_node_ids,
-									  std::vector<int>& scope_context,
-									  std::vector<int>& node_context,
-									  int& inner_exit_depth,
-									  int& inner_exit_node_id,
-									  int& num_nodes,
-									  std::vector<AbstractNodeHistory*>& node_histories);
-
-	void simple_halfway_activate(std::vector<int>& starting_node_ids,
-								 std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-								 std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-								 Problem& problem,
-								 std::vector<ContextLayer>& context,
-								 RunHelper& run_helper);
 	void create_sequence_activate(Problem& problem,
 								  std::vector<ContextLayer>& context,
 								  int target_num_nodes,

@@ -149,6 +149,9 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->inner_branch_experiment_history = NULL;
 
+	this->experiment_iter_index = -1;
+	this->experiment_node_index = -1;
+
 	this->exceeded_depth = false;
 }
 

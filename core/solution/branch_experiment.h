@@ -26,6 +26,10 @@ const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 
+/**
+ * - for BranchExperiments, on end, hold off on doing anything, and let outside finalize
+ *   - for PassThroughExperiments
+ */
 const int BRANCH_EXPERIMENT_STATE_FAIL = 4;
 const int BRANCH_EXPERIMENT_STATE_SUCCESS = 5;
 

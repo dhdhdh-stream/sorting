@@ -44,8 +44,6 @@ public:
 	OuterExperiment* outer_experiment;
 	std::set<AbstractExperiment*> experiments;
 
-	int temp_state_counter;
-
 	Solution();
 	~Solution();
 

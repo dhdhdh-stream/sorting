@@ -16,21 +16,27 @@
 
 using namespace std;
 
+/**
+ * - for both branch node and sequence
+ */
 void add_state(Scope* parent_scope,
-			   State* new_state,
-			   double new_weight,
-			   vector<AbstractNode*>& nodes,
-			   vector<vector<int>>& scope_contexts,
-			   vector<vector<int>>& node_contexts,
-			   vector<int>& obs_indexes) {
+			   int temp_state_index,
+			   vector<int>& experiment_scope_context,
+			   vector<int>& experiment_node_context,
+			   int outer_scope_depth,
+			   map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings) {
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
-	parent_scope->local_state_weights.push_back(new_weight);
+	parent_scope->temp_state_new_local_indexes[temp_state_index] = new_local_index;
 
 	set<ScopeNode*> local_scope_nodes_to_mod;
 	set<Scope*> input_scopes_to_mod;
 	set<pair<Scope*, ScopeNode*>> input_scope_nodes_to_mod;
 
+	vector<AbstractNode*> nodes = parent_scope->temp_state_nodes[temp_state_index];
+	vector<vector<int>> scope_contexts = parent_scope->temp_state_scope_contexts[temp_state_index];
+	vector<vector<int>> node_contexts = parent_scope->temp_state_node_contexts[temp_state_index];
+	vector<int> obs_indexes = parent_scope->temp_state_obs_indexes[temp_state_index];
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)nodes[n_index];
@@ -58,7 +64,7 @@ void add_state(Scope* parent_scope,
 				}
 				input_scopes_to_mod.insert(containing_scope);
 			}
-		} else if (nodes[n_index]->type == NODE_TYPE_SCOPE) {
+		} else {
 			ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
 
 			if (scope_contexts[n_index].size() == 1) {
@@ -86,34 +92,28 @@ void add_state(Scope* parent_scope,
 				}
 				input_scopes_to_mod.insert(containing_scope);
 			}
-		} else {
-			BranchNode* branch_node = (BranchNode*)nodes[n_index];
-
-			if (scope_contexts[n_index].size() == 1) {
-				branch_node->state_is_local.push_back(true);
-				branch_node->state_indexes.push_back(new_local_index);
-				branch_node->state_defs.push_back(new_state);
-				branch_node->state_network_indexes.push_back(n_index);
-			} else {
-				Scope* containing_scope = solution->scopes[scope_contexts[n_index].back()];
-				int new_input_index = containing_scope->num_input_states;
-				branch_node->state_is_local.push_back(false);
-				branch_node->state_indexes.push_back(new_input_index);
-				branch_node->state_defs.push_back(new_state);
-				branch_node->state_network_indexes.push_back(n_index);
-
-				ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[node_contexts[n_index][0]];
-				local_scope_nodes_to_mod.insert(local_scope_node);
-				for (int c_index = 1; c_index < (int)scope_contexts[n_index].size()-1; c_index++) {
-					Scope* input_scope = solution->scopes[scope_contexts[n_index][c_index]];
-					ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[node_contexts[n_index][c_index]];
-					input_scopes_to_mod.insert(input_scope);
-					input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
-				}
-				input_scopes_to_mod.insert(containing_scope);
-			}
 		}
 	}
+
+	if (outer_scope_depth > 0) {
+		Scope* containing_scope = solution->scopes[experiment_scope_context.back()];
+		int new_input_index = containing_scope->num_input_states;
+		input_scope_depths_mappings[{outer_scope_depth, {true, new_local_index}}] = new_input_index;
+
+		ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[
+			experiment_node_context[experiment_scope_context.size()-1 - outer_scope_depth]];
+		local_scope_nodes_to_mod.insert(local_scope_node);
+		for (int c_index = outer_scope_depth-1; c_index >= 1; c_index--) {
+			Scope* input_scope = solution->scopes[experiment_scope_context[experiment_scope_context.size()-1 - c_index]];
+			ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[experiment_node_context[experiment_scope_context.size()-1 - c_index]];
+			input_scopes_to_mod.insert(input_scope);
+			input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
+		}
+		input_scopes_to_mod.insert(containing_scope);
+	}
+	/**
+	 * - for temp state, always at least added as input
+	 */
 
 	for (set<ScopeNode*>::iterator it = local_scope_nodes_to_mod.begin();
 			it != local_scope_nodes_to_mod.end(); it++) {
@@ -158,8 +158,11 @@ void add_state(Scope* parent_scope,
 	}
 }
 
-ScopeNode* finalize_sequence(vector<int>& scope_context,
-							 vector<int>& node_context,
+/**
+ * - at containing scope, new inner state corresponds 1-to-1 with outer across new sequences/branch
+ */
+ScopeNode* finalize_sequence(vector<int>& experiment_scope_context,
+							 vector<int>& experiment_node_context,
 							 Sequence* new_sequence,
 							 map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 							 map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
@@ -173,17 +176,50 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 
 	for (int i_index = 0; i_index < (int)new_sequence->input_types.size(); i_index++) {
 		if (new_sequence->input_types[i_index] == INPUT_TYPE_STATE) {
+			bool outer_is_local;
+			int outer_index;
+			if (new_sequence->input_outer_types == OUTER_TYPE_INPUT) {
+				outer_is_local = false;
+				outer_index = (int)new_sequence->input_outer_indexes[i_index];
+			} else if (new_sequence->input_outer_types == OUTER_TYPE_LOCAL) {
+				outer_is_local = true;
+				outer_index = (int)new_sequence->input_outer_indexes[i_index];
+			} else {
+				int context_index = (int)experiment_scope_context.size()-1 - new_sequence->input_scope_depths[i_index];
+				Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+
+				int temp_state_index;
+				for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
+					if (outer_scope->temp_states[t_index] == new_sequence->input_outer_indexes[i_index]) {
+						temp_state_index = t_index;
+						break;
+					}
+				}
+
+				if (outer_scope->temp_state_new_local_indexes[temp_state_index] == -1) {
+					add_state(outer_scope,
+							  temp_state_index,
+							  experiment_scope_context,
+							  experiment_node_context,
+							  new_sequence->input_scope_depths[i_index],
+							  input_scope_depths_mappings);
+				}
+
+				outer_is_local = true;
+				outer_index = outer_scope->temp_state_new_local_indexes[temp_state_index];
+			}
+
 			if (new_sequence->input_scope_depths[i_index] == 0) {
 				new_sequence_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 				new_sequence_scope_node->input_inner_layers.push_back(0);
 				new_sequence_scope_node->input_inner_is_local.push_back(false);
 				new_sequence_scope_node->input_inner_indexes.push_back(new_sequence->input_inner_indexes[i_index]);
-				new_sequence_scope_node->input_outer_is_local.push_back(new_sequence->input_outer_is_local[i_index]);
-				new_sequence_scope_node->input_outer_indexes.push_back(new_sequence->input_outer_indexes[i_index]);
+				new_sequence_scope_node->input_outer_is_local.push_back(outer_is_local);
+				new_sequence_scope_node->input_outer_indexes.push_back(outer_index);
 				new_sequence_scope_node->input_init_vals.push_back(0.0);
 			} else {
 				map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
-					.find({new_sequence->input_scope_depths[i_index], {new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}});
+					.find({new_sequence->input_scope_depths[i_index], {outer_is_local, outer_index}});
 				if (input_it != input_scope_depths_mappings.end()) {
 					new_sequence_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 					new_sequence_scope_node->input_inner_layers.push_back(0);
@@ -194,23 +230,63 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 					new_sequence_scope_node->input_init_vals.push_back(0.0);
 				} else {
 					map<pair<int, pair<bool,int>>, int>::iterator output_it = output_scope_depths_mappings
-						.find({new_sequence->input_scope_depths[i_index], {new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}});
+						.find({new_sequence->input_scope_depths[i_index], {outer_is_local, outer_index}});
 					if (output_it != output_scope_depths_mappings.end()) {
-						new_sequence_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-						new_sequence_scope_node->input_inner_layers.push_back(0);
-						new_sequence_scope_node->input_inner_is_local.push_back(false);
-						new_sequence_scope_node->input_inner_indexes.push_back(new_sequence->input_inner_indexes[i_index]);
-						new_sequence_scope_node->input_outer_is_local.push_back(false);
-						new_sequence_scope_node->input_outer_indexes.push_back(output_it->second);
-						new_sequence_scope_node->input_init_vals.push_back(0.0);
+						input_scope_depths_mappings[{new_sequence->input_scope_depths[i_index], {outer_is_local, outer_index}}] = output_it->second;
 
-						input_scope_depths_mappings[{new_sequence->input_scope_depths[i_index],
-							{new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}}] = output_it->second;
+						int curr_inner_index;
+						{
+							new_sequence_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+							new_sequence_scope_node->input_inner_layers.push_back(0);
+							new_sequence_scope_node->input_inner_is_local.push_back(false);
+							new_sequence_scope_node->input_inner_indexes.push_back(new_sequence->input_inner_indexes[i_index]);
+							new_sequence_scope_node->input_outer_is_local.push_back(false);
+							new_sequence_scope_node->input_outer_indexes.push_back(output_it->second);
+							new_sequence_scope_node->input_init_vals.push_back(0.0);
+
+							curr_inner_index = output_it->second;
+						}
+						for (int c_index = 1; c_index < new_sequence->input_scope_depths[i_index]-1; c_index++) {
+							int context_index = (int)experiment_scope_context.size()-1 - c_index;
+							Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
+
+							int curr_outer_index;
+							for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
+								if (scope_node->output_inner_indexes[o_index] == inner_index) {
+									curr_outer_index = scope_node->output_outer_indexes[o_index];
+									break;
+								}
+							}
+
+							scope_node->input_types.push_back(INPUT_TYPE_STATE);
+							scope_node->input_inner_layers.push_back(0);
+							scope_node->input_inner_is_local.push_back(false);
+							scope_node->input_inner_indexes.push_back(inner_index);
+							scope_node->input_outer_is_local.push_back(false);
+							scope_node->input_outer_indexes.push_back(curr_outer_index);
+							scope_node->input_init_vals.push_back(0.0);
+
+							curr_inner_index = curr_outer_index;
+						}
+						{
+							int context_index = (int)experiment_scope_context.size()-1 - new_sequence->input_scope_depths[i_index];
+							Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
+
+							scope_node->input_types.push_back(INPUT_TYPE_STATE);
+							scope_node->input_inner_layers.push_back(0);
+							scope_node->input_inner_is_local.push_back(false);
+							scope_node->input_inner_indexes.push_back(inner_index);
+							scope_node->input_outer_is_local.push_back(outer_is_local);
+							scope_node->input_outer_indexes.push_back(outer_index);
+							scope_node->input_init_vals.push_back(0.0);
+						}
 					} else {
 						{
-							int context_index = (int)scope_context.size()-1 - (new_sequence->input_scope_depths[i_index]);
-							Scope* outer_scope = solution->scopes[scope_context[context_index]];
-							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
+							int context_index = (int)experiment_scope_context.size()-1 - new_sequence->input_scope_depths[i_index];
+							Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
 							Scope* inner_scope = scope_node->inner_scope;
 
 							scope_node->input_types.push_back(INPUT_TYPE_STATE);
@@ -218,14 +294,14 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 							scope_node->input_inner_is_local.push_back(false);
 							scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
 							// not incremented yet
-							scope_node->input_outer_is_local.push_back(new_sequence->input_outer_is_local[i_index]);
-							scope_node->input_outer_indexes.push_back(new_sequence->input_outer_indexes[i_index]);
+							scope_node->input_outer_is_local.push_back(outer_is_local);
+							scope_node->input_outer_indexes.push_back(outer_index);
 							scope_node->input_init_vals.push_back(0.0);
 						}
 						for (int c_index = new_sequence->input_scope_depths[i_index]-1; c_index >= 1; c_index--) {
-							int context_index = (int)scope_context.size()-1 - c_index;
-							Scope* outer_scope = solution->scopes[scope_context[context_index]];
-							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
+							int context_index = (int)experiment_scope_context.size()-1 - c_index;
+							Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+							ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
 							Scope* inner_scope = scope_node->inner_scope;
 
 							int new_input_id = outer_scope->num_input_states;
@@ -242,7 +318,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 							scope_node->input_init_vals.push_back(0.0);
 						}
 						{
-							Scope* outer_scope = solution->scopes[scope_context.back()];
+							Scope* outer_scope = solution->scopes[experiment_scope_context.back()];
 
 							int new_input_id = outer_scope->num_input_states;
 							outer_scope->num_input_states++;
@@ -256,8 +332,7 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 							new_sequence_scope_node->input_outer_indexes.push_back(new_input_id);
 							new_sequence_scope_node->input_init_vals.push_back(0.0);
 
-							input_scope_depths_mappings[{new_sequence->input_scope_depths[i_index],
-								{new_sequence->input_outer_is_local[i_index], new_sequence->input_outer_indexes[i_index]}}] = new_input_id;
+							input_scope_depths_mappings[{new_sequence->input_scope_depths[i_index], {outer_is_local, outer_index}}] = new_input_id;
 						}
 					}
 				}
@@ -274,330 +349,126 @@ ScopeNode* finalize_sequence(vector<int>& scope_context,
 	}
 
 	for (int o_index = 0; o_index < (int)new_sequence->output_inner_indexes.size(); o_index++) {
+		bool outer_is_local;
+		int outer_index;
+		if (new_sequence->output_outer_types == OUTER_TYPE_INPUT) {
+			outer_is_local = false;
+			outer_index = (int)new_sequence->output_outer_indexes[o_index];
+		} else if (new_sequence->output_outer_types == OUTER_TYPE_LOCAL) {
+			outer_is_local = true;
+			outer_index = (int)new_sequence->output_outer_indexes[o_index];
+		} else {
+			int context_index = (int)experiment_scope_context.size()-1 - new_sequence->output_scope_depths[o_index];
+			Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+
+			int temp_state_index;
+			for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
+				if (outer_scope->temp_states[t_index] == new_sequence->output_outer_indexes[o_index]) {
+					temp_state_index = t_index;
+					break;
+				}
+			}
+			/**
+			 * - temp_state must already been added
+			 *   - i.e., outer_scope->temp_state_new_local_indexes[temp_state_index] != -1
+			 */
+
+			outer_is_local = true;
+			outer_index = outer_scope->temp_state_new_local_indexes[temp_state_index];
+		}
+
 		if (new_sequence->output_scope_depths[o_index] == 0) {
 			new_sequence_scope_node->output_inner_indexes.push_back(new_sequence->output_inner_indexes[o_index]);
-			new_sequence_scope_node->output_outer_is_local.push_back(new_sequence->output_outer_is_local[o_index]);
-			new_sequence_scope_node->output_outer_indexes.push_back(new_sequence->output_outer_indexes[o_index]);
+			new_sequence_scope_node->output_outer_is_local.push_back(outer_is_local);
+			new_sequence_scope_node->output_outer_indexes.push_back(outer_index);
 		} else {
-			map<pair<int, pair<bool,int>>, int>::iterator it = output_scope_depths_mappings
-				.find({new_sequence->output_scope_depths[o_index], {new_sequence->output_outer_is_local[o_index], new_sequence->output_outer_indexes[o_index]}});
-			if (it != output_scope_depths_mappings.end()) {
+			map<pair<int, pair<bool,int>>, int>::iterator output_it = output_scope_depths_mappings
+				.find({new_sequence->output_scope_depths[o_index], {outer_is_local, outer_index}});
+			if (output_it != output_scope_depths_mappings.end()) {
 				new_sequence_scope_node->output_inner_indexes.push_back(new_sequence->output_inner_indexes[o_index]);
 				new_sequence_scope_node->output_outer_is_local.push_back(false);
-				new_sequence_scope_node->output_outer_indexes.push_back(it->second);
+				new_sequence_scope_node->output_outer_indexes.push_back(output_it->second);
 			} else {
-				int containing_index;
-				int inner_index;
-				{
-					Scope* outer_scope = solution->scopes[scope_context.back()];
+				map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
+					.find({new_sequence->output_scope_depths[o_index], {outer_is_local, outer_index}});
+				if (input_it != input_scope_depths_mappings.end()) {
+					output_scope_depths_mappings[{new_sequence->output_scope_depths[o_index], {outer_is_local, outer_index}}] = input_it->second;
 
-					int outer_index = -1;
-					for (int i_index = 0; i_index < (int)new_sequence_scope_node->input_types.size(); i_index++) {
-						if (new_sequence_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
-							if (new_sequence_scope_node->input_inner_indexes[i_index] == new_sequence->output_inner_indexes[o_index]
-									&& !new_sequence_scope_node->input_outer_is_local[i_index]) {
-								outer_index = new_sequence_scope_node->input_outer_indexes[i_index];
-								break;
-							}
-							/**
-							 * - if was local but needs to be passed out, create new input
-							 */
-						}
+					int curr_inner_index;
+					{
+						new_sequence_scope_node->output_inner_indexes.push_back(new_sequence->output_inner_indexes[o_index]);
+						new_sequence_scope_node->output_outer_is_local.push_back(false);
+						new_sequence_scope_node->output_outer_indexes.push_back(input_it->second);
+
+						inner_index = input_it->second;
 					}
+					for (int c_index = 1; c_index < new_sequence->output_scope_depths[o_index]-1; c_index++) {
+						int context_index = (int)experiment_scope_context.size()-1 - c_index;
+						Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+						ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
 
-					if (outer_index == -1) {
-						outer_index = outer_scope->num_input_states;
-						outer_scope->num_input_states++;
-						outer_scope->input_state_weights.push_back(0.0);
-					}
-
-					new_sequence_scope_node->output_inner_indexes.push_back(new_sequence->output_inner_indexes[o_index]);
-					new_sequence_scope_node->output_outer_is_local.push_back(false);
-					new_sequence_scope_node->output_outer_indexes.push_back(outer_index);
-
-					containing_index = outer_index;
-
-					inner_index = outer_index;
-				}
-				for (int c_index = 1; c_index < new_sequence->output_scope_depths[o_index]-1; c_index++) {
-					int context_index = (int)scope_context.size()-1 - c_index;
-					Scope* outer_scope = solution->scopes[scope_context[context_index]];
-					ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
-
-					int outer_index = -1;
-					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
-						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
-							if (scope_node->input_inner_indexes[i_index] == inner_index
-									&& !scope_node->input_outer_is_local[i_index]) {
-								outer_index = scope_node->input_outer_indexes[i_index];
+						int curr_outer_index;
+						for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+							if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
+									&& scope_node->input_inner_indexes[i_index] == inner_index) {
+								curr_outer_index = scope_node->input_outer_indexes[i_index];
 								break;
 							}
 						}
-					}
 
-					if (outer_index == -1) {
-						outer_index = outer_scope->num_input_states;
+						scope_node->output_inner_indexes.push_back(inner_index);
+						scope_node->output_outer_is_local.push_back(false);
+						scope_node->output_outer_indexes.push_back(curr_outer_index);
+
+						curr_inner_index = curr_outer_index;
+					}
+					{
+						int context_index = (int)experiment_scope_context.size()-1 - new_sequence->output_scope_depths[o_index];
+						Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+						ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
+
+						scope_node->output_inner_indexes.push_back(inner_index);
+						scope_node->output_outer_is_local.push_back(outer_is_local);
+						scope_node->output_outer_indexes.push_back(outer_index);
+					}
+				} else {
+					{
+						int context_index = (int)experiment_scope_context.size()-1 - new_sequence->output_scope_depths[o_index];
+						Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+						ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
+						Scope* inner_scope = scope_node->inner_scope;
+
+						scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
+						scope_node->output_outer_is_local.push_back(outer_is_local);
+						scope_node->output_outer_indexes.push_back(outer_index);
+					}
+					for (int c_index = new_sequence->output_scope_depths[o_index]-1; c_index >= 1; c_index--) {
+						int context_index = (int)experiment_scope_context.size()-1 - c_index;
+						Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
+						ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[experiment_node_context[context_index]];
+						Scope* inner_scope = scope_node->inner_scope;
+
+						int new_input_id = outer_scope->num_input_states;
 						outer_scope->num_input_states++;
 						outer_scope->input_state_weights.push_back(0.0);
+
+						scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
+						scope_node->output_outer_is_local.push_back(false);
+						scope_node->output_outer_indexes.push_back(new_input_id);
 					}
+					{
+						Scope* outer_scope = solution->scopes[experiment_scope_context.back()];
 
-					scope_node->output_inner_indexes.push_back(inner_index);
-					scope_node->output_outer_is_local.push_back(false);
-					scope_node->output_outer_indexes.push_back(outer_index);
+						int new_input_id = outer_scope->num_input_states;
+						outer_scope->num_input_states++;
+						outer_scope->input_state_weights.push_back(0.0);
 
-					inner_index = outer_index;
+						output_scope_depths_mappings[{new_sequence->output_scope_depths[o_index], {outer_is_local, outer_index}}] = new_input_id;
+					}
 				}
-				{
-					int context_index = (int)scope_context.size()-1 - new_sequence->output_scope_depths[o_index];
-					Scope* outer_scope = solution->scopes[scope_context[context_index]];
-					ScopeNode* scope_node = (ScopeNode*)outer_scope->nodes[node_context[context_index]];
-
-					scope_node->output_inner_indexes.push_back(inner_index);
-					scope_node->output_outer_is_local.push_back(new_sequence->output_outer_is_local[o_index]);
-					scope_node->output_outer_indexes.push_back(new_sequence->output_outer_indexes[o_index]);
-				}
-
-				output_scope_depths_mappings[{new_sequence->output_scope_depths[o_index],
-					{new_sequence->output_outer_is_local[o_index], new_sequence->output_outer_indexes[o_index]}}] = containing_index;
 			}
 		}
 	}
 
 	return new_sequence_scope_node;
-}
-
-void finalize_new_state(Scope* parent_scope,
-						map<int, ScopeNode*>& sequence_scope_node_mappings,
-						State* new_state,
-						vector<AbstractNode*>& nodes,
-						vector<vector<int>>& scope_contexts,
-						vector<vector<int>>& node_contexts,
-						vector<int>& obs_indexes,
-						BranchNode* new_branch_node,
-						double new_branch_weight) {
-	int new_local_index = parent_scope->num_local_states;
-	parent_scope->num_local_states++;
-	parent_scope->local_state_weights.push_back(0.0);
-
-	set<ScopeNode*> local_scope_nodes_to_mod;
-	set<Scope*> input_scopes_to_mod;
-	set<pair<Scope*, ScopeNode*>> input_scope_nodes_to_mod;
-
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)nodes[n_index];
-
-			if (scope_contexts[n_index].size() == 1) {
-				action_node->state_is_local.push_back(true);
-				action_node->state_indexes.push_back(new_local_index);
-				action_node->state_defs.push_back(new_state);
-				action_node->state_network_indexes.push_back(n_index);
-			} else {
-				Scope* curr_scope = parent_scope;
-				{
-					if (node_contexts[n_index][0] == -1) {
-						int inner_scope_id = scope_contexts[n_index][1];
-						ScopeNode* local_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					} else {
-						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					}
-				}
-				for (int c_index = 1; c_index < (int)scope_contexts[n_index].size()-1; c_index++) {
-					input_scopes_to_mod.insert(curr_scope);
-
-					if (node_contexts[n_index][c_index] == -1) {
-						int inner_scope_id = scope_contexts[n_index][c_index+1];
-						ScopeNode* input_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					} else {
-						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					}
-				}
-				input_scopes_to_mod.insert(curr_scope);
-
-				int new_input_id = curr_scope->num_input_states;
-				action_node->state_is_local.push_back(false);
-				action_node->state_indexes.push_back(new_input_id);
-				action_node->state_defs.push_back(new_state);
-				action_node->state_network_indexes.push_back(n_index);
-			}
-		} else if (nodes[n_index]->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
-
-			if (scope_contexts[n_index].size() == 1) {
-				scope_node->state_is_local.push_back(true);
-				scope_node->state_indexes.push_back(new_local_index);
-				scope_node->state_obs_indexes.push_back(obs_indexes[n_index]);
-				scope_node->state_defs.push_back(new_state);
-				scope_node->state_network_indexes.push_back(n_index);
-			} else {
-				Scope* curr_scope = parent_scope;
-				{
-					if (node_contexts[n_index][0] == -1) {
-						int inner_scope_id = scope_contexts[n_index][1];
-						ScopeNode* local_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					} else {
-						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					}
-				}
-				for (int c_index = 1; c_index < (int)scope_contexts[n_index].size()-1; c_index++) {
-					input_scopes_to_mod.insert(curr_scope);
-
-					if (node_contexts[n_index][c_index] == -1) {
-						int inner_scope_id = scope_contexts[n_index][c_index+1];
-						ScopeNode* input_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					} else {
-						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					}
-				}
-				input_scopes_to_mod.insert(curr_scope);
-
-				int new_input_id = curr_scope->num_input_states;
-				scope_node->state_is_local.push_back(false);
-				scope_node->state_indexes.push_back(new_input_id);
-				scope_node->state_obs_indexes.push_back(obs_indexes[n_index]);
-				scope_node->state_defs.push_back(new_state);
-				scope_node->state_network_indexes.push_back(n_index);
-			}
-		} else {
-			BranchNode* branch_node = (BranchNode*)nodes[n_index];
-
-			if (scope_contexts[n_index].size() == 1) {
-				branch_node->state_is_local.push_back(true);
-				branch_node->state_indexes.push_back(new_local_index);
-				branch_node->state_defs.push_back(new_state);
-				branch_node->state_network_indexes.push_back(n_index);
-			} else {
-				Scope* curr_scope = parent_scope;
-				{
-					if (node_contexts[n_index][0] == -1) {
-						int inner_scope_id = scope_contexts[n_index][1];
-						ScopeNode* local_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					} else {
-						ScopeNode* local_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][0]];
-						local_scope_nodes_to_mod.insert(local_scope_node);
-
-						curr_scope = local_scope_node->inner_scope;
-					}
-				}
-				for (int c_index = 1; c_index < (int)scope_contexts[n_index].size()-1; c_index++) {
-					input_scopes_to_mod.insert(curr_scope);
-
-					if (node_contexts[n_index][c_index] == -1) {
-						int inner_scope_id = scope_contexts[n_index][c_index+1];
-						ScopeNode* input_scope_node = sequence_scope_node_mappings[inner_scope_id];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					} else {
-						ScopeNode* input_scope_node = (ScopeNode*)curr_scope->nodes[node_contexts[n_index][c_index]];
-						input_scope_nodes_to_mod.insert({curr_scope, input_scope_node});
-
-						curr_scope = input_scope_node->inner_scope;
-					}
-				}
-				input_scopes_to_mod.insert(curr_scope);
-
-				int new_input_id = curr_scope->num_input_states;
-				branch_node->state_is_local.push_back(false);
-				branch_node->state_indexes.push_back(new_input_id);
-				branch_node->state_defs.push_back(new_state);
-				branch_node->state_network_indexes.push_back(n_index);
-			}
-		}
-	}
-
-	if (new_branch_node->branch_scope_context.size() == 1) {
-		new_branch_node->decision_state_is_local.push_back(true);
-		new_branch_node->decision_state_indexes.push_back(new_local_index);
-		new_branch_node->decision_original_weights.push_back(0.0);
-		new_branch_node->decision_branch_weights.push_back(new_branch_weight);
-	} else {
-		Scope* containing_scope = solution->scopes[new_branch_node->branch_scope_context.back()];
-		int new_input_index = containing_scope->num_input_states;
-		new_branch_node->decision_state_is_local.push_back(false);
-		new_branch_node->decision_state_indexes.push_back(new_input_index);
-		new_branch_node->decision_original_weights.push_back(0.0);
-		new_branch_node->decision_branch_weights.push_back(new_branch_weight);
-
-		ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[new_branch_node->branch_node_context[0]];
-		local_scope_nodes_to_mod.insert(local_scope_node);
-		for (int c_index = 1; c_index < (int)new_branch_node->branch_scope_context.size()-1; c_index++) {
-			Scope* input_scope = solution->scopes[new_branch_node->branch_scope_context[c_index]];
-			ScopeNode* input_scope_node = (ScopeNode*)input_scope->nodes[new_branch_node->branch_node_context[c_index]];
-			input_scopes_to_mod.insert(input_scope);
-			input_scope_nodes_to_mod.insert({input_scope, input_scope_node});
-		}
-		input_scopes_to_mod.insert(containing_scope);
-	}
-
-	for (set<ScopeNode*>::iterator it = local_scope_nodes_to_mod.begin();
-			it != local_scope_nodes_to_mod.end(); it++) {
-		ScopeNode* scope_node = *it;
-		Scope* inner_scope = scope_node->inner_scope;
-
-		scope_node->input_types.push_back(INPUT_TYPE_STATE);
-		scope_node->input_inner_layers.push_back(0);
-		scope_node->input_inner_is_local.push_back(false);
-		scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
-		scope_node->input_outer_is_local.push_back(true);
-		scope_node->input_outer_indexes.push_back(new_local_index);
-		scope_node->input_init_vals.push_back(0.0);
-
-		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
-		scope_node->output_outer_is_local.push_back(true);
-		scope_node->output_outer_indexes.push_back(new_local_index);
-	}
-	for (set<pair<Scope*, ScopeNode*>>::iterator it = input_scope_nodes_to_mod.begin();
-			it != input_scope_nodes_to_mod.end(); it++) {
-		Scope* outer_scope = (*it).first;
-		ScopeNode* scope_node = (*it).second;
-		Scope* inner_scope = scope_node->inner_scope;
-
-		scope_node->input_types.push_back(INPUT_TYPE_STATE);
-		scope_node->input_inner_layers.push_back(0);
-		scope_node->input_inner_is_local.push_back(false);
-		scope_node->input_inner_indexes.push_back(inner_scope->num_input_states);
-		scope_node->input_outer_is_local.push_back(false);
-		scope_node->input_outer_indexes.push_back(outer_scope->num_input_states);
-		scope_node->input_init_vals.push_back(0.0);
-
-		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
-		scope_node->output_outer_is_local.push_back(false);
-		scope_node->output_outer_indexes.push_back(outer_scope->num_input_states);
-	}
-	for (set<Scope*>::iterator it = input_scopes_to_mod.begin();
-			it != input_scopes_to_mod.end(); it++) {
-		Scope* scope = *it;
-		scope->num_input_states++;
-		scope->input_state_weights.push_back(0.0);
-	}
-
-	solution->states[new_state->id] = new_state;
 }

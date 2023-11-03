@@ -842,32 +842,37 @@ Sequence* create_sequence(Problem& problem,
 					}
 				}
 
-				int input_index;
-				if (input_indexes.size() > 0 && reuse_distribution(generator) != 0) {
-					uniform_int_distribution<int> inner_distribution(0, (int)input_indexes.size()-1);
-					input_index = input_indexes[inner_distribution(generator)];
+				if (possible_output_outer_types[rand_target] == OUTER_TYPE_TEMP
+						&& input_indexes.size() == 0) {
+					// do nothing
 				} else {
-					uniform_int_distribution<int> inner_distribution(0, (int)possible_inner_output_ids.size()-1);
-					input_index = possible_inner_output_ids[inner_distribution(generator)];
+					int input_index;
+					if (input_indexes.size() > 0 && reuse_distribution(generator) != 0) {
+						uniform_int_distribution<int> inner_distribution(0, (int)input_indexes.size()-1);
+						input_index = input_indexes[inner_distribution(generator)];
+					} else {
+						uniform_int_distribution<int> inner_distribution(0, (int)possible_inner_output_ids.size()-1);
+						input_index = possible_inner_output_ids[inner_distribution(generator)];
+					}
+
+					if (possible_output_outer_types[rand_target] == OUTER_TYPE_INPUT) {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+					} else if (possible_output_outer_types[rand_target] == OUTER_TYPE_LOCAL) {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+					} else {
+						context[context.size()-1 - possible_output_scope_depths[rand_target]]
+							.temp_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+					}
+
+					new_sequence->output_inner_indexes.push_back(input_index);
+					new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
+					new_sequence->output_outer_types.push_back(possible_output_outer_types[rand_target]);
+					new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
+
+					// can duplicate possible_inner_outputs, so don't remove
 				}
-
-				if (possible_output_outer_types[rand_target] == OUTER_TYPE_INPUT) {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
-				} else if (possible_output_outer_types[rand_target] == OUTER_TYPE_LOCAL) {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
-				} else {
-					context[context.size()-1 - possible_output_scope_depths[rand_target]]
-						.temp_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
-				}
-
-				new_sequence->output_inner_indexes.push_back(input_index);
-				new_sequence->output_scope_depths.push_back(possible_output_scope_depths[rand_target]);
-				new_sequence->output_outer_types.push_back(possible_output_outer_types[rand_target]);
-				new_sequence->output_outer_indexes.push_back(possible_output_outer_indexes[rand_target]);
-
-				// can duplicate possible_inner_outputs, so don't remove
 			} else {
 				// do nothing
 			}

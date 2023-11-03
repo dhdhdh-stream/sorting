@@ -53,6 +53,10 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
+	int temp_num_input_states;
+	int temp_num_local_states;
+	std::map<int, AbstractNode*> temp_nodes;
+
 	std::vector<Scope*> child_scopes;
 	/**
 	 * - don't remove even if can no longer reach
@@ -64,6 +68,7 @@ public:
 	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> temp_state_node_contexts;
 	std::vector<std::vector<int>> temp_state_obs_indexes;
+	std::vector<int> temp_state_new_local_indexes;
 
 	Scope();
 	~Scope();
@@ -100,20 +105,6 @@ public:
 									 int& exit_node_id,
 									 int& num_nodes,
 									 ScopeHistory* history);
-	void random_exit_activate(std::vector<int>& starting_node_ids,
-							  std::vector<int>& scope_context,
-							  std::vector<int>& node_context,
-							  int& exit_depth,
-							  int& exit_node_id,
-							  int& num_nodes,
-							  ScopeHistory* history);
-	void node_random_exit_activate_helper(int& curr_node_id,
-										  std::vector<int>& scope_context,
-										  std::vector<int>& node_context,
-										  int& exit_depth,
-										  int& exit_node_id,
-										  int& num_nodes,
-										  ScopeHistory* history);
 
 	void create_sequence_activate(std::vector<int>& starting_node_ids,
 								  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
@@ -169,6 +160,12 @@ public:
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
 	PassThroughExperiment* inner_pass_through_experiment;
+
+	int experiment_iter_index;
+	int experiment_node_index;
+	/**
+	 * - for gathering possible_exits during measure_existing
+	 */
 
 	bool exceeded_depth;
 
