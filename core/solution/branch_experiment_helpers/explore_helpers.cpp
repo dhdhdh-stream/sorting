@@ -18,84 +18,94 @@ using namespace std;
 
 const int EXPLORE_ITERS = 500;
 
-void BranchExperiment::explore_activate(int& curr_node_id,
-										Problem& problem,
-										vector<ContextLayer>& context,
-										int& exit_depth,
-										int& exit_node_id,
-										RunHelper& run_helper,
-										BranchExperimentHistory* history) {
+void BranchExperiment::explore_target_activate(int& curr_node_id,
+											   Problem& problem,
+											   vector<ContextLayer>& context,
+											   int& exit_depth,
+											   int& exit_node_id,
+											   RunHelper& run_helper) {
 	double predicted_score = this->existing_average_score;
 
-	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-			it != context.back().input_state_vals.end(); it++) {
-		if (it->first < this->containing_scope_num_input_states) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				predicted_score += this->existing_starting_input_state_weights[it->first] * normalized;
-			} else {
-				predicted_score += this->existing_starting_input_state_weights[it->first] * it->second.val;
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
+				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
+			map<int, double>::iterator weight_it = this->existing_input_state_weights[c_index].find(it->first);
+			if (weight_it != this->existing_input_state_weights[c_index].end()) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					predicted_score += weight_it->second * normalized;
+				} else {
+					predicted_score += weight_it->second * it->second.val;
+				}
 			}
 		}
 	}
 
-	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-			it != context.back().local_state_vals.end(); it++) {
-		if (it->first < this->containing_scope_num_local_states) {
-			StateNetwork* last_network = it->second.last_network;
-			if (last_network != NULL) {
-				double normalized = (it->second.val - last_network->ending_mean)
-					/ last_network->ending_standard_deviation;
-				predicted_score += this->existing_starting_local_state_weights[it->first] * normalized;
-			} else {
-				predicted_score += this->existing_starting_local_state_weights[it->first] * it->second.val;
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
+				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
+			map<int, double>::iterator weight_it = this->existing_local_state_weights[c_index].find(it->first);
+			if (weight_it != this->existing_local_state_weights[c_index].end()) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					predicted_score += weight_it->second * normalized;
+				} else {
+					predicted_score += weight_it->second * it->second.val;
+				}
 			}
 		}
 	}
 
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
+				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
+			map<State*, double>::iterator weight_it = this->existing_temp_state_weights[c_index].find(it->first);
+			if (weight_it != this->existing_temp_state_weights[c_index].end()) {
+				StateNetwork* last_network = it->second.last_network;
+				if (last_network != NULL) {
+					double normalized = (it->second.val - last_network->ending_mean)
+						/ last_network->ending_standard_deviation;
+					predicted_score += weight_it->second * normalized;
+				} else {
+					predicted_score += weight_it->second * it->second.val;
+				}
+			}
+		}
+	}
+
+	BranchExperimentOverallHistory* history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
+	history->has_target = true;
 	history->existing_predicted_score = predicted_score;
-
-	// no need to worry about recursion_protection
 
 	{
 		// exit
-		int new_exit_depth;
-		int new_exit_node_id;
-		random_exit(this->scope_context,
-					this->node_context,
-					new_exit_depth,
-					new_exit_node_id);
-
-		this->curr_exit_depth = new_exit_depth;
-		this->curr_exit_node_id = new_exit_node_id;
+		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
+		int rand_index = distribution(generator);
+		this->curr_exit_depth = this->possible_exits[rand_index].first;
+		this->curr_exit_node_id = this->possible_exits[rand_index].second;
 	}
 
 	{
 		// new path
-		geometric_distribution<int> geometric_distribution(0.3);
-		uniform_int_distribution<int> allow_zero_distribution(0, 5);
 		int new_num_steps;
+		uniform_int_distribution<int> uniform_distribution(0, 2);
+		geometric_distribution<int> geometric_distribution(0.5);
 		if (this->curr_exit_depth == 0
 				&& this->curr_exit_node_id == curr_node_id) {
-			new_num_steps = 1 + geometric_distribution(generator);
+			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
-			if (allow_zero_distribution(generator) == 0) {
-				new_num_steps = geometric_distribution(generator);
-			} else {
-				new_num_steps = 1 + geometric_distribution(generator);
-			}
+			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		}
-		
+	
 		uniform_int_distribution<int> type_distribution(0, 1);
 		uniform_int_distribution<int> action_distribution(0, 2);
-		uniform_int_distribution<int> direction_distribution(0, 1);
 		uniform_int_distribution<int> next_distribution(0, 1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (type_distribution(generator) == 0
-					|| (this->scope_context.back() == 0
-						&& solution->scopes[0]->nodes.size() == 1)) {
+			if (type_distribution(generator) == 0) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 				this->curr_actions.push_back(new ActionNode());
 				this->curr_actions.back()->action = Action(action_distribution(generator));
@@ -106,104 +116,20 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 				this->curr_step_types.push_back(STEP_TYPE_SEQUENCE);
 				this->curr_actions.push_back(NULL);
 
-				Sequence* new_sequence;
+				Scope* containing_scope = solution->scopes[this->scope_context[0]];
 				while (true) {
-					Scope* containing_scope;
-					if (direction_distribution(generator) == 0) {
-						// higher
-						int context_index = (int)context.size() - (int)this->scope_context.size() - 1;
-						/**
-						 * - start from 1 above
-						 *   - current scope comes from lower
-						 */
-						while (true) {
-							if (context_index >= 0 && next_distribution(generator) == 0) {
-								context_index--;
-							} else {
-								break;
-							}
-						}
-						if (context_index == -1) {
-							containing_scope = NULL;
-						} else {
-							containing_scope = solution->scopes[context[context_index].scope_id];
-						}
+					if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
+						uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
+						containing_scope = containing_scope->child_scopes[child_distribution(generator)];
 					} else {
-						// lower
-						containing_scope = solution->scopes[this->scope_context[0]];
-						while (true) {
-							if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
-								uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
-								containing_scope = containing_scope->child_scopes[child_distribution(generator)];
-							} else {
-								break;
-							}
-						}
-					}
-
-					Sequence* sequence;
-					if (containing_scope == NULL) {
-						sequence = create_root_sequence(problem,
-														context,
-														(int)this->scope_context.size(),
-														run_helper);
-					} else {
-						sequence = create_sequence(problem,
-												   context,
-												   (int)this->scope_context.size(),
-												   containing_scope,
-												   run_helper);
-					}
-
-					// TODO: can't retry as action already performed
-					bool should_retry = false;
-					if (sequence->scope->nodes.size() == 0) {
-						should_retry = true;
-						/**
-						 * - can be empty sequence if, e.g., start from branch node into exit
-						 *   - in which case retry
-						 */
-					}
-					bool has_non_stub_node = false;
-					for (int n_index = 0; n_index < (int)sequence->scope->nodes.size(); n_index++) {
-						bool is_non_stub = true;
-						if (sequence->scope->nodes[n_index]->type == NODE_TYPE_BRANCH_STUB) {
-							is_non_stub = false;
-						} else if (sequence->scope->nodes[n_index]->type == NODE_TYPE_ACTION) {
-							ActionNode* action_node = (ActionNode*)sequence->scope->nodes[n_index];
-							if (action_node->action.move == ACTION_NOOP) {
-								is_non_stub = false;
-							}
-						}
-						if (is_non_stub) {
-							has_non_stub_node = true;
-							break;
-						}
-					}
-					if (!has_non_stub_node) {
-						should_retry = true;
-					}
-					bool ends_with_non_stub_node = true;
-					if (sequence->scope->nodes.size() > 0) {
-						if (sequence->scope->nodes.back()->type == NODE_TYPE_BRANCH_STUB) {
-							ends_with_non_stub_node = false;
-						} else if (sequence->scope->nodes.back()->type == NODE_TYPE_ACTION) {
-							ActionNode* action_node = (ActionNode*)sequence->scope->nodes.back();
-							if (action_node->action.move == ACTION_NOOP) {
-								ends_with_non_stub_node = false;
-							}
-						}
-					}
-					if (!ends_with_non_stub_node) {
-						should_retry = true;
-					}
-					if (should_retry) {
-						delete sequence;
-					} else {
-						new_sequence = sequence;
 						break;
 					}
 				}
+				Sequence* new_sequence = create_sequence(problem,
+														 context,
+														 (int)this->scope_context.size(),
+														 containing_scope,
+														 run_helper);
 				this->curr_sequences.push_back(new_sequence);
 			}
 		}
@@ -220,99 +146,88 @@ void BranchExperiment::explore_activate(int& curr_node_id,
 }
 
 void BranchExperiment::explore_backprop(double target_val,
-										BranchExperimentHistory* history) {
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-	double curr_surprise = (target_val - history->existing_predicted_score)
-		/ parent_scope->average_misguess;
-	if (curr_surprise > this->best_surprise) {
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->best_actions[s_index];
-			} else {
-				delete this->best_sequences[s_index];
-			}
-		}
-
-		this->best_surprise = curr_surprise;
-		this->best_step_types = this->curr_step_types;
-		this->best_actions = this->curr_actions;
-		this->best_sequences = this->curr_sequences;
-		this->best_exit_depth = this->curr_exit_depth;
-		this->best_exit_node_id = this->curr_exit_node_id;
-
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_sequences.clear();
-	} else {
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->curr_actions[s_index];
-			} else {
-				delete this->curr_sequences[s_index];
-			}
-		}
-
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_sequences.clear();
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= EXPLORE_ITERS) {
-		cout << "this->best_surprise: " << this->best_surprise << endl;
-		if (this->best_surprise > EXPERIMENT_SURPRISE_THRESHOLD) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					this->best_sequences[s_index]->scope->id = solution->scope_counter;
-					solution->scope_counter++;
-				}
-			}
-
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index] << endl;
-			}
-			cout << "new explore path:";
+										BranchExperimentOverallHistory* history) {
+	if (history->has_target) {
+		double curr_surprise = target_val - history->existing_predicted_score;
+		if (curr_surprise > this->best_surprise) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
+					delete this->best_actions[s_index];
 				} else {
-					cout << " S";
+					delete this->best_sequences[s_index];
 				}
 			}
-			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_sequences = this->curr_sequences;
+			this->best_exit_depth = this->curr_exit_depth;
+			this->best_exit_node_id = this->curr_exit_node_id;
 
-			Scope* containing_scope = solution->scopes[this->scope_context.back()];
-			this->containing_scope_num_input_states = containing_scope->num_input_states;
-			this->containing_scope_num_local_states = containing_scope->num_local_states;
-
-			while ((int)this->existing_starting_input_state_weights.size() < this->containing_scope_num_input_states) {
-				this->existing_starting_input_state_weights.push_back(0.0);
-			}
-			while ((int)this->existing_starting_local_state_weights.size() < this->containing_scope_num_local_states) {
-				this->existing_starting_local_state_weights.push_back(0.0);
-			}
-
-			this->new_starting_state_vals = new Eigen::MatrixXd(NUM_DATAPOINTS,
-				this->containing_scope_num_input_states + this->containing_scope_num_local_states);
-			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-				for (int s_index = 0; s_index < this->containing_scope_num_input_states + this->containing_scope_num_local_states; s_index++) {
-					(*this->new_starting_state_vals)(d_index, s_index) = 0.0;
-				}
-			}
-			this->new_target_val_histories.reserve(NUM_DATAPOINTS);
-
-			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_PRE;
-			this->state_iter = 0;
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_sequences.clear();
 		} else {
-			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
+				} else {
+					delete this->curr_sequences[s_index];
+				}
+			}
+
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_sequences.clear();
+		}
+
+		this->state_iter++;
+		if (this->state_iter >= EXPLORE_ITERS) {
+			/**
+			 * - if surprise isn't better than 0.0, don't bother
+			 */
+			cout << "this->best_surprise: " << this->best_surprise << endl;
+			if (this->best_surprise > 0.0) {
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+						this->best_sequences[s_index]->scope->id = solution->scope_counter;
+						solution->scope_counter++;
+					}
+				}
+
+				cout << "this->scope_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					cout << c_index << ": " << this->scope_context[c_index] << endl;
+				}
+				cout << "this->node_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+					cout << c_index << ": " << this->node_context[c_index] << endl;
+				}
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index]->action.to_string();
+					} else {
+						cout << " S";
+					}
+				}
+				cout << endl;
+
+				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+
+				this->i_scope_histories.reserve(solution->curr_num_datapoints);
+				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+
+				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE;
+				this->state_iter = 0;
+			} else {
+				this->state = BRANCH_EXPERIMENT_STATE_FAIL;
+			}
 		}
 	}
 }

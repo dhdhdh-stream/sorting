@@ -1,6 +1,3 @@
-// TODO: to simplify, only branch from path
-// - so for information, also only check on path
-
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
@@ -13,14 +10,16 @@ const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
 /**
  * - if positive, can simply add and skip rest
  */
-const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_EXISTING_MISGUESS = 3;
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 4;
-const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 5;
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 6;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 7;
+/**
+ * - don't train existing new state beyond MEASURE_EXISTING_SCORE
+ */
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 3;
+const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 5;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
 
-const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 8;
-const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 9;
+const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 7;
+const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 8;
 
 class PassThroughExperiment {
 public:
@@ -57,6 +56,7 @@ public:
 	std::map<int, double> existing_input_state_weights;
 	std::map<int, double> existing_local_state_weights;
 	std::map<State*, double> existing_temp_state_weights;
+
 	/**
 	 * - measure using sqr over abs
 	 *   - even though sqr may not measure true score improvement, it measures information improvement
@@ -68,6 +68,7 @@ public:
 	std::vector<std::map<int, double>> new_input_state_weights;
 	std::vector<std::map<int, double>> new_local_state_weights;
 	std::vector<std::map<State*, double>> new_temp_state_weights;
+
 	double new_average_misguess;
 	/**
 	 * - won't be exact comparison, but only meant to support followup BranchExperiments
@@ -86,21 +87,22 @@ public:
 	 */
 
 	std::vector<double> o_target_val_histories;
-	std::list<ScopeHistory*> i_scope_histories;
+
+	std::vector<ScopeHistory*> i_scope_histories;
 	/**
 	 * - simply save ScopeHistorys, instead of preprocessing them for ObsExperiment
 	 *   - not as efficient, but shouldn't be a big deal
 	 *     - would have to backtrack through anyways on experiment select
 	 */
-	std::list<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
-	std::list<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
-	std::list<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
-	std::list<double> i_target_val_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
+	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
+	std::vector<double> i_target_val_histories;
 
-	/**
-	 * - doesn't have to be on path
-	 */
-	std::set<BranchExperiment*> branch_experiments;
+	std::vector<double> i_misguess_histories;
+
+	int branch_experiment_step_index;
+	BranchExperiment* branch_experiment;
 
 };
 
@@ -118,14 +120,9 @@ public:
 	PassThroughExperiment* experiment;
 
 	int instance_count;
+	std::vector<double> predicted_scores;
 
-	std::map<BranchExperiment*, int> branch_experiments_seen;
-	std::vector<BranchExperiment*> branch_experiments_seen_order;
-
-	BranchExperiment* selected_branch_experiment;
-
-	int branch_experiment_count;
-	BranchExperimentHistory* branch_experiment_history;
+	BranchExperimentOverallHistory* branch_experiment_history;
 
 };
 

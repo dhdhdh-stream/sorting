@@ -1,7 +1,6 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
-#include <list>
 #include <map>
 #include <vector>
 #include <Eigen/Dense>
@@ -14,7 +13,6 @@
 class AbstractNode;
 class ActionNode;
 class ActionNodeHistory;
-class ObsExperiment;
 class Scale;
 class ScopeHistory;
 class Sequence;
@@ -23,20 +21,12 @@ class State;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN = 2;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE = 2;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
 
-/**
- * - for BranchExperiments, on end, hold off on doing anything, and let outside finalize
- *   - for PassThroughExperiments
- */
-const int BRANCH_EXPERIMENT_STATE_FAIL = 4;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 5;
-
-const int EXPERIMENT_SURPRISE_THRESHOLD = 1.0;
-/**
- * - if surprise isn't better than what can be expected from random fluctuation, don't bother
- */
+const int BRANCH_EXPERIMENT_STATE_FAIL = 5;
+const int BRANCH_EXPERIMENT_STATE_SUCCESS = 6;
 
 class BranchExperimentHistory;
 class BranchExperiment {
@@ -54,28 +44,25 @@ public:
 	 *     - for everywhere else, trigger accordingly
 	 * 
 	 * - set probabilities after average_instances_per_run to 50%
+	 * 
+	 * - average_instances_per_run changes between existing and new, as well as with new states
+	 *   - so constantly best effort update
 	 */
 
 	int state;
 	int state_iter;
 
 	double existing_average_score;
-	// TODO: add
-	double existing_average_misguess;
+	double existing_score_variance;
 
-	std::vector<std::vector<std::map<int, StateStatus>>> input_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> local_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> score_state_vals_histories;
-	std::vector<std::map<int, StateStatus>> experiment_state_vals_histories;
-	std::vector<double> target_val_histories;
+	std::vector<std::pair<int, int>> possible_exits;
 
-	std::vector<vector<double>> existing_input_state_weights;
-	std::vector<vector<double>> existing_local_state_weights;
-	std::vector<vector<double>> existing_score_state_weights;
-	std::vector<double> existing_experiment_state_weights;
+	double existing_average_score;
+	double existing_score_variance;
 
-	int existing_selected_count;
-	double existing_selected_sum_score;
+	std::vector<std::map<int, double>> existing_input_state_weights;
+	std::vector<std::map<int, double>> existing_local_state_weights;
+	std::vector<std::map<State*, double>> existing_temp_state_weights;
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
@@ -90,10 +77,11 @@ public:
 	int best_exit_depth;
 	int best_exit_node_id;
 
-	std::vector<std::vector<double>> new_input_state_weights;
-	std::vector<std::vector<double>> new_local_state_weights;
-	std::vector<std::vector<double>> new_score_state_weights;
-	std::vector<double> new_experiment_state_weights;
+	double new_average_score;
+
+	std::vector<std::map<int, double>> new_input_state_weights;
+	std::vector<std::map<int, double>> new_local_state_weights;
+	std::vector<std::map<State*, double>> new_temp_state_weights;
 
 	std::vector<State*> new_states;
 	std::vector<std::vector<AbstractNode*>> new_state_nodes;
@@ -105,9 +93,12 @@ public:
 	int branch_count;
 	int branch_possible;
 
-	std::vector<std::vector<int>> obs_experiment_obs_indexes;
-	std::vector<std::vector<double>> obs_experiment_obs_vals;
-	ObsExperiment* obs_experiment;
+	std::vector<double> o_target_val_histories;
+	std::vector<ScopeHistory*> i_scope_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
+	std::vector<std::vector<std::map<int, StateStatus>>> i_temp_state_vals_histories;
+	std::vector<double> i_target_val_histories;
 
 	BranchExperiment(std::vector<int> scope_context,
 					 std::vector<int> node_context);
@@ -188,18 +179,26 @@ public:
 	void new_pass_through();
 };
 
-class BranchExperimentHistory {
+class BranchExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
 	BranchExperiment* experiment;
 
+	std::vector<int> step_indexes;
+	std::vector<void*> step_histories;
+
+
+};
+
+class BranchExperimentOverallHistory : public AbstractExperimentHistory {
+public:
+	BranchExperiment* experiment;
+
+	int instance_count;
+
+	bool has_target;
 	double existing_predicted_score;
 
-	std::vector<ActionNodeHistory*> action_histories;
-	std::vector<SequenceHistory*> sequence_histories;
 
-	BranchExperimentHistory(BranchExperiment* experiment);
-	BranchExperimentHistory(BranchExperimentHistory* original);
-	~BranchExperimentHistory();
 };
 
 #endif /* BRANCH_EXPERIMENT_H */

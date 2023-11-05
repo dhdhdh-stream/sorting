@@ -13,9 +13,9 @@ void PassThroughExperiment::measure_new_score_activate(
 	history = new PassThroughExperimentInstanceHistory(this);
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		history->step_indexes.push_back(s_index);
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+			history->step_indexes.push_back(s_index);
 			history->step_histories.push_back(action_node_history);
 			this->best_actions[s_index]->activate(
 				curr_node_id
@@ -27,6 +27,7 @@ void PassThroughExperiment::measure_new_score_activate(
 				action_node_history);
 		} else {
 			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
+			history->step_indexes.push_back(s_index);
 			history->step_histories.push_back(sequence_history);
 			this->best_sequences[s_index]->activate(problem,
 													context,
@@ -46,11 +47,11 @@ void PassThroughExperiment::measure_new_score_activate(
 
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
-	vecotr<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
+	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
 	for (int c_index = 0; c_index < this->scope_context.size(); c_index++) {
-		input_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].input_state_vals;
-		local_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].local_state_vals;
-		temp_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].temp_state_vals;
+		input_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].input_state_vals;
+		local_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].local_state_vals;
+		temp_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].temp_state_vals;
 	}
 	this->i_input_state_vals_histories.push_back(context.back().input_state_vals);
 	this->i_local_state_vals_histories.push_back(context.back().local_state_vals);
@@ -202,115 +203,102 @@ void PassThroughExperiment::measure_new_score_backprop(
 			int num_instances = (int)this->i_target_val_histories.size();
 
 			vector<map<int, vector<double>>> p_input_state_vals(this->scope_context.size());
-			{
-				int d_index = 0;
-				for (list<vector<map<int, StateStatus>>>::iterator l_it = this->i_input_state_vals_histories.begin();
-						l_it != this->i_input_state_vals_histories.end(); l_it++) {
-					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-						for (map<int, StateStatus>::iterator m_it = (*l_it)[c_index].begin(); m_it != (*l_it)[c_index].end(); m_it++) {
-							map<int, vector<double>>::iterator p_it = p_input_state_vals[c_index].find(m_it->first);
-							if (p_it == p_input_state_vals[c_index].end()) {
-								p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
-							}
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, StateStatus>::iterator m_it = this->i_input_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_input_state_vals_histories[i_index][c_index].end(); m_it++) {
+						map<int, vector<double>>::iterator p_it = p_input_state_vals[c_index].find(m_it->first);
+						if (p_it == p_input_state_vals[c_index].end()) {
+							p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
+						}
 
-							StateNetwork* last_network = m_it->second.last_network;
-							if (last_network != NULL) {
-								double normalized = (m_it->second.val - last_network->ending_mean)
-									/ last_network->ending_standard_deviation;
-								p_it->second[d_index] = normalized;
-							} else {
-								p_it->second[d_index] = m_it->second.val;
-							}
+						StateNetwork* last_network = m_it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (m_it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							p_it->second[i_index] = normalized;
+						} else {
+							p_it->second[i_index] = m_it->second.val;
+						}
+					}
+				}
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				Scope* scope = solution->scopes[this->scope_context[c_index]];
+				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+
+				map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+				while (it != p_input_state_vals[c_index].end()) {
+					bool passed_down = false;
+					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
+								&& scope_node->input_inner_layers[i_index] == 0
+								&& !scope_node->input_outer_is_local[i_index]
+								&& scope_node->input_outer_indexes[i_index] == it->first) {
+							passed_down = true;
+							break;
 						}
 					}
 
-					d_index++;
-				}
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-					Scope* scope = solution->scopes[this->scope_context[c_index]];
-					ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
-
-					map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
-					while (it != p_input_state_vals[c_index].end()) {
-						bool passed_down = false;
-						for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
-							if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-									&& scope_node->input_inner_layers[i_index] == 0
-									&& !scope_node->input_outer_is_local[i_index]
-									&& scope_node->input_outer_indexes[i_index] == it->first) {
-								passed_down = true;
-								break;
-							}
-						}
-
-						if (passed_down) {
-							it = p_input_state_vals[c_index].erase(it);
-						} else {
-							it++;
-						}
+					if (passed_down) {
+						it = p_input_state_vals[c_index].erase(it);
+					} else {
+						it++;
 					}
 				}
 			}
 
 			vector<map<int, vector<double>>> p_local_state_vals(this->scope_context.size());
-			{
-				int d_index = 0;
-				for (list<vector<map<int, StateStatus>>>::iterator l_it = this->i_local_state_vals_histories.begin();
-						l_it != this->i_local_state_vals_histories.end(); l_it++) {
-					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-						for (map<int, StateStatus>::iterator m_it = (*l_it)[c_index].begin(); m_it != (*l_it)[c_index].end(); m_it++) {
-							map<int, vector<double>>::iterator p_it = p_local_state_vals[c_index].find(m_it->first);
-							if (p_it == p_local_state_vals[c_index].end()) {
-								p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
-							}
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, StateStatus>::iterator m_it = this->i_local_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_local_state_vals_histories[i_index][c_index].end(); m_it++) {
+						map<int, vector<double>>::iterator p_it = p_local_state_vals[c_index].find(m_it->first);
+						if (p_it == p_local_state_vals[c_index].end()) {
+							p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
+						}
 
-							StateNetwork* last_network = m_it->second.last_network;
-							if (last_network != NULL) {
-								double normalized = (m_it->second.val - last_network->ending_mean)
-									/ last_network->ending_standard_deviation;
-								p_it->second[d_index] = normalized;
-							} else {
-								p_it->second[d_index] = m_it->second.val;
-							}
+						StateNetwork* last_network = m_it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (m_it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							p_it->second[i_index] = normalized;
+						} else {
+							p_it->second[i_index] = m_it->second.val;
+						}
+					}
+				}
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				Scope* scope = solution->scopes[this->scope_context[c_index]];
+				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+
+				map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+				while (it != p_local_state_vals[c_index].end()) {
+					bool passed_down = false;
+					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
+								&& scope_node->input_inner_layers[i_index] == 0
+								&& scope_node->input_outer_is_local[i_index]
+								&& scope_node->input_outer_indexes[i_index] == it->first) {
+							passed_down = true;
+							break;
 						}
 					}
 
-					d_index++;
-				}
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-					Scope* scope = solution->scopes[this->scope_context[c_index]];
-					ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
-
-					map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
-					while (it != p_local_state_vals[c_index].end()) {
-						bool passed_down = false;
-						for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
-							if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-									&& scope_node->input_inner_layers[i_index] == 0
-									&& scope_node->input_outer_is_local[i_index]
-									&& scope_node->input_outer_indexes[i_index] == it->first) {
-								passed_down = true;
-								break;
-							}
-						}
-
-						if (passed_down) {
-							it = p_local_state_vals[c_index].erase(it);
-						} else {
-							it++;
-						}
+					if (passed_down) {
+						it = p_local_state_vals[c_index].erase(it);
+					} else {
+						it++;
 					}
 				}
 			}
 
 			map<State*, vector<double>> p_temp_state_vals;
-			{
-				int d_index = 0;
-				for (list<map<State*, StateStatus>>::iterator l_it = this->i_temp_state_vals_histories.begin();
-						l_it != this->i_temp_state_vals_histories.end(); l_it++) {
-					for (map<State*, StateStatus>::iterator m_it = (*l_it).begin(); m_it != (*l_it).end(); m_it++) {
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<State*, StateStatus>::iterator m_it = this->i_temp_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_temp_state_vals_histories[i_index][c_index].end(); m_it++) {
 						map<State*, vector<double>>::iterator p_it = p_temp_state_vals.find(m_it->first);
 						if (p_it == p_temp_state_vals.end()) {
 							p_it = p_temp_state_vals.insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
@@ -320,13 +308,11 @@ void PassThroughExperiment::measure_new_score_backprop(
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
-							p_it->second[d_index] = normalized;
+							p_it->second[i_index] = normalized;
 						} else {
-							p_it->second[d_index] = m_it->second.val;
+							p_it->second[i_index] = m_it->second.val;
 						}
 					}
-
-					d_index++;
 				}
 			}
 
@@ -342,13 +328,13 @@ void PassThroughExperiment::measure_new_score_backprop(
 			}
 
 			Eigen::MatrixXd inputs(num_instances, stride_size);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
+			for (int i_index = 0; i_index < num_instances; i_index++) {
 				int s_index = 0;
 
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 							it != p_input_state_vals[c_index].end(); it++) {
-						inputs(d_index, s_index) = it->second[d_index];
+						inputs(i_index, s_index) = it->second[i_index];
 						s_index++;
 					}
 				}
@@ -356,7 +342,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 							it != p_local_state_vals[c_index].end(); it++) {
-						inputs(d_index, s_index) = it->second[d_index];
+						inputs(i_index, s_index) = it->second[i_index];
 						s_index++;
 					}
 				}
@@ -364,21 +350,15 @@ void PassThroughExperiment::measure_new_score_backprop(
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
 							it != p_temp_state_vals[c_index].end(); it++) {
-						inputs(d_index, s_index) = it->second[d_index];
+						inputs(i_index, s_index) = it->second[i_index];
 						s_index++;
 					}
 				}
 			}
 
 			Eigen::VectorXd outputs(num_instances);
-			{
-				int d_index = 0;
-				for (list<double>::iterator l_it = this->i_target_val_histories.begin();
-						l_it != this->i_target_val_histories.end(); l_it++) {
-					outputs(d_index) = (*l_it) - this->new_average_score;
-
-					d_index++;
-				}
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				outputs(i_index) = this->i_target_val_histories[i_index] - this->new_average_score;
 			}
 
 			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
@@ -419,25 +399,43 @@ void PassThroughExperiment::measure_new_score_backprop(
 			Eigen::VectorXd predicted_scores = inputs * weights;
 			Eigen::VectorXd diffs = outputs - predicted_scores;
 			vector<double> obs_experiment_target_vals(num_instances);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				obs_experiment_target_vals[d_index] = diffs(d_index);
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				obs_experiment_target_vals[i_index] = diffs(i_index);
 			}
 
-			// HERE
-			existing_obs_experiment(this,
-									solution->scopes[this->scope_context[0]],
-									i_scope_histories,
-									obs_experiment_target_vals);
+			new_obs_experiment(this,
+							   i_scope_histories,
+							   obs_experiment_target_vals);
 
+			// reserve at least solution->curr_num_datapoints
+			this->i_misguess_histories.reserve(solution->curr_num_datapoints);
+
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
+			this->state_iter = 0;
 		} else {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->best_actions[s_index];
+				} else {
+					delete this->best_sequences[s_index];
+				}
+			}
+			this->best_actions.clear();
+			this->best_sequences.clear();
 
+			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+				delete this->new_states[s_index];
+			}
+			this->new_states.clear();
+
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 
 		this->o_target_val_histories.clear();
-		while (this->i_scope_histories.size() > 0) {
-			delete this->i_scope_histories.front();
-			this->i_scope_histories.pop_front();
+		for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {
+			delete this->i_scope_histories[i_index];
 		}
+		this->i_scope_histories.clear();
 		this->i_input_state_vals_histories.clear();
 		this->i_local_state_vals_histories.clear();
 		this->i_temp_state_vals_histories.clear();

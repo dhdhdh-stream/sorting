@@ -46,7 +46,8 @@ void BranchExperiment::activate(int& curr_node_id,
 
 	if (matches_context) {
 		if (run_helper.phase == RUN_PHASE_EXPLORE) {
-			if (run_helper.selected_branch_experiment == this) {
+			if (run_helper.selected_branch_experiment == this
+					|| run_helper.selected_experiment == this->parent_pass_through_experiment) {
 				// already hooked
 
 				run_helper.selected_branch_experiment_count++;

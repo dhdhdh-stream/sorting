@@ -41,8 +41,6 @@ public:
 
 	Scope* scope;
 
-	BranchExperiment* experiment;
-
 	Sequence();
 	~Sequence();
 

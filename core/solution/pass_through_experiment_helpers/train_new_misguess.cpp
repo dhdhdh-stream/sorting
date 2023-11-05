@@ -1,19 +1,55 @@
-#include "branch_experiment.h"
-
-#include <iostream>
-
-#include "constants.h"
-#include "scope.h"
-#include "state_network.h"
+#include "pass_through_experiment.h"
 
 using namespace std;
 
-void BranchExperiment::train_existing_activate(vector<ContextLayer>& context) {
+const int TRAIN_NEW_MISGUESS_ITERS = 2;
+
+void PassThroughExperiment::train_new_misguess_activate(
+		int& curr_node_id,
+		Problem& problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		int& exit_node_id,
+		RunHelper& run_helper,
+		AbstractExperimentHistory*& history) {
+	history = new PassThroughExperimentInstanceHistory(this);
+
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+			history->step_indexes.push_back(s_index);
+			history->step_histories.push_back(action_node_history);
+			this->best_actions[s_index]->activate(
+				curr_node_id
+				problem,
+				context,
+				exit_depth,
+				exit_node_id,
+				run_helper,
+				action_node_history);
+		} else {
+			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
+			history->step_indexes.push_back(s_index);
+			history->step_histories.push_back(sequence_history);
+			this->best_sequences[s_index]->activate(problem,
+													context,
+													run_helper,
+													sequence_history);
+		}
+	}
+
+	if (this->best_exit_depth == 0) {
+		curr_node_id = this->best_exit_node_id;
+	} else {
+		exit_depth = this->best_exit_depth-1;
+		exit_node_id = this->best_exit_node_id;
+	}
+
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
-	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
+	vecotr<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
 	for (int c_index = 0; c_index < this->scope_context.size(); c_index++) {
 		input_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].input_state_vals;
 		local_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].local_state_vals;
@@ -23,50 +59,20 @@ void BranchExperiment::train_existing_activate(vector<ContextLayer>& context) {
 	this->i_local_state_vals_histories.push_back(context.back().local_state_vals);
 	this->i_temp_state_vals_histories.push_back(context.back().temp_state_vals);
 
-	BranchExperimentOverallHistory* history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
+	PassThroughExperimentOverallHistory* history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
 	history->instance_count++;
 }
 
-void BranchExperiment::possible_exits_helper(set<pair<int, int>>& s_possible_exits,
-											 int curr_exit_depth,
-											 ScopeHistory* scope_history) {
-	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = scope_history->experiment_node_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			int node_id = scope_history->node_histories[i_index][h_index]->node->id;
-			s_possible_exits.insert({curr_exit_depth, node_id});
-		}
-	}
-
-	if (curr_exit_depth > 0) {
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history
-			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_node_index];
-		possible_exits_helper(curr_exit_depth-1,
-							  scope_node_history->inner_scope_history);
-	}
-}
-
-void BranchExperiment::train_existing_backprop(double target_val,
-											   BranchExperimentOverallHistory* history) {
-	this->o_target_val_histories.push_back(target_val);
-
+void PassThroughExperiment::train_new_misguess_backprop(
+		double target_val,
+		PassThroughExperimentOverallHistory* history) {
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
 	}
 
-	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
-
-	if (this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
-		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-			sum_scores += this->o_target_val_histories[d_index];
-		}
-		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
-
-		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
-		}
-		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+	this->sub_state_iter++;
+	if (this->sub_state_iter >= solution->curr_num_datapoints) {
+		this->sub_state_iter = 0;
 
 		int num_instances = (int)this->i_target_val_histories.size();
 
@@ -226,39 +232,39 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 		Eigen::VectorXd outputs(num_instances);
 		for (int i_index = 0; i_index < num_instances; i_index++) {
-			outputs(i_index) = this->i_target_val_histories[i_index] - this->existing_average_score;
+			outputs(i_index) = this->i_target_val_histories[i_index] - this->new_average_score;
 		}
 
 		Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
 		{
 			int s_index = 0;
 
-			this->existing_input_state_weights.clear();
-			this->existing_input_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->new_input_state_weights.clear();
+			this->new_input_state_weights = vector<map<int, double>>(this->scope_context.size());
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 				for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 						it != p_input_state_vals[c_index].end(); it++) {
-					this->existing_input_state_weights[c_index][it->first] = weights(s_index);
+					this->new_input_state_weights[c_index][it->first] = weights(s_index);
 					s_index++;
 				}
 			}
 
-			this->existing_local_state_weights.clear();
-			this->existing_local_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->new_local_state_weights.clear();
+			this->new_local_state_weights = vector<map<int, double>>(this->scope_context.size());
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 				for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 						it != p_local_state_vals[c_index].end(); it++) {
-					this->existing_local_state_weights[c_index][it->first] = weights(s_index);
+					this->new_local_state_weights[c_index][it->first] = weights(s_index);
 					s_index++;
 				}
 			}
 
-			this->existing_temp_state_weights.clear();
-			this->existing_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
+			this->new_temp_state_weights.clear();
+			this->new_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 				for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
 						it != p_temp_state_vals[c_index].end(); it++) {
-					this->existing_temp_state_weights[c_index][it->first] = weights(s_index);
+					this->new_temp_state_weights[c_index][it->first] = weights(s_index);
 					s_index++;
 				}
 			}
@@ -271,36 +277,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			obs_experiment_target_vals[i_index] = diffs(i_index);
 		}
 
-		existing_obs_experiment(this,
-								solution->scopes[this->scope_context[0]],
-								i_scope_histories,
-								obs_experiment_target_vals);
+		new_obs_experiment(this,
+						   i_scope_histories,
+						   obs_experiment_target_vals);
 
-		set<pair<int, int>> s_possible_exits;
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			possible_exits_helper(s_possible_exits,
-								  this->scope_context.size()-1,
-								  this->i_scope_histories[i_index]);
-		}
-		this->possible_exits.reserve(s_possible_exits.size());
-		for (set<pair<int, int>>::iterator it = s_possible_exits.begin();
-				it != s_possible_exits.end(); it++) {
-			this->possible_exits.push_back(*it);
-		}
-		if (this->parent_pass_through_experiment != NULL) {
-			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
-					s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
-				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					int node_id = this->parent_pass_through_experiment->best_actions[s_index]->id;
-					s_possible_exits.insert({0, node_id});
-				} else {
-					int node_id = this->parent_pass_through_experiment->best_sequences[s_index]->scope_node_id;
-					s_possible_exits.insert({0, node_id});
-				}
-			}
-		}
-
-		this->o_target_val_histories.clear();
 		for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {
 			delete this->i_scope_histories[i_index];
 		}
@@ -310,7 +290,17 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->i_temp_state_vals_histories.clear();
 		this->i_target_val_histories.clear();
 
-		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-		this->state_iter = 0;
+		this->state_iter++;
+		if (this->state_iter >= TRAIN_NEW_MISGUESS_ITERS) {
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS;
+			this->state_iter = 0;
+		} else {
+			// reserve at least solution->curr_num_datapoints
+			this->i_scope_histories.reserve(solution->curr_num_datapoints);
+			this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
+			this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
+			this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
+			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+		}
 	}
 }

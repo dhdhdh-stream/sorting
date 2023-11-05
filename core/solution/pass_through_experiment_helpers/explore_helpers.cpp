@@ -2,7 +2,7 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 200;
+const int EXPLORE_ITERS = 500;
 const int NUM_SAMPLES_PER_ITER = 10;
 
 void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
@@ -35,9 +35,7 @@ void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
 		uniform_int_distribution<int> action_distribution(0, 2);
 		uniform_int_distribution<int> next_distribution(0, 1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (type_distribution(generator) == 0
-					|| (this->scope_context.back() == 0
-						&& solution->scopes[0]->nodes.size() == 1)) {
+			if (type_distribution(generator) == 0) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 				this->curr_actions.push_back(new ActionNode());
 				this->curr_actions.back()->action = Action(action_distribution(generator));
@@ -199,6 +197,13 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
 
 				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+
+				// reserve at least solution->curr_num_datapoints
+				this->i_scope_histories.reserve(solution->curr_num_datapoints);
+				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
+				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE;
 				this->state_iter = 0;

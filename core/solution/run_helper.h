@@ -22,26 +22,16 @@ public:
 	 *     - (and don't have to rely on recursion with OuterExperiment)
 	 */
 
-	std::map<AbstractExperiment*, int> experiments_seen;
-	/**
-	 * - keep track of counts for branch
-	 */
+	std::set<AbstractExperiment*> experiments_seen;
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
-	AbstractExperiment* selected_experiment;
-
-	int branch_experiment_count;
 	AbstractExperimentHistory* experiment_history;
-	/**
-	 * - instance for branch, overall for passthrough
-	 */
 
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
-		this->selected_experiment = NULL;
 		this->experiment_history = NULL;
 	}
 };

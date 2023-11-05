@@ -472,3 +472,15 @@ ScopeNode* finalize_sequence(vector<int>& experiment_scope_context,
 
 	return new_sequence_scope_node;
 }
+
+void finalize_branch_node_state(BranchNode* branch_node,
+								vector<map<int, double>>& existing_input_state_weights,
+								vector<map<int, double>>& existing_local_state_weights,
+								vector<map<State*, double>>& existing_temp_state_weights,
+								vector<map<int, double>>& new_input_state_weights,
+								vector<map<int, double>>& new_local_state_weights,
+								vector<map<State*, double>>& new_temp_state_weights,
+								map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
+								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
+
+}
