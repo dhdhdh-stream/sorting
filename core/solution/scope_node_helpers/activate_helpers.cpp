@@ -10,17 +10,17 @@
 
 using namespace std;
 
-void ScopeNode::activate(int& curr_node_id,
+void ScopeNode::activate(AbstractNode*& curr_node,
 						 Problem& problem,
 						 vector<ContextLayer>& context,
 						 int& exit_depth,
-						 int& exit_node_id,
+						 AbstractNode*& exit_node,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
 	history->is_halfway = false;
 
-	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_node_ids.size());
-	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_node_ids.size());
+	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_nodes.size());
+	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_nodes.size());
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
@@ -69,20 +69,20 @@ void ScopeNode::activate(int& curr_node_id,
 	history->inner_scope_history = inner_scope_history;
 	context.back().scope_history = inner_scope_history;
 
-	vector<int> starting_node_ids_copy = this->starting_node_ids;
+	vector<AbstractNode*> starting_nodes_copy = this->starting_nodes;
 
-	// currently, starting_node_ids.size() == inner_state_vals.size()+1
+	// currently, starting_nodes_copy.size() == inner_state_vals.size()+1
 
 	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->activate(starting_node_ids_copy,
+	this->inner_scope->activate(starting_nodes_copy,
 								inner_input_state_vals,
 								inner_local_state_vals,
 								problem,
 								context,
 								inner_exit_depth,
-								inner_exit_node_id,
+								inner_exit_node,
 								run_helper,
 								inner_scope_history);
 
@@ -203,33 +203,33 @@ void ScopeNode::activate(int& curr_node_id,
 			}
 		}
 
-		curr_node_id = this->next_node_id;
+		curr_node = this->next_node;
 
 		if (this->experiment != NULL) {
-			this->experiment->activate(curr_node_id,
+			this->experiment->activate(curr_node,
 									   problem,
 									   context,
 									   exit_depth,
-									   exit_node_id,
+									   exit_node,
 									   run_helper,
 									   history->experiment_history);
 		}
 	} else if (inner_exit_depth == 0) {
-		curr_node_id = inner_exit_node_id;
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
-		exit_node_id = inner_exit_node_id;
+		exit_node = inner_exit_node;
 	}
 }
 
-void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
+void ScopeNode::halfway_activate(vector<AbstractNode*>& starting_nodes,
 								 vector<map<int, StateStatus>>& starting_input_state_vals,
 								 vector<map<int, StateStatus>>& starting_local_state_vals,
-								 int& curr_node_id,
+								 AbstractNode*& curr_node,
 								 Problem& problem,
 								 vector<ContextLayer>& context,
 								 int& exit_depth,
-								 int& exit_node_id,
+								 AbstractNode*& exit_node,
 								 RunHelper& run_helper,
 								 ScopeNodeHistory* history) {
 	history->is_halfway = true;
@@ -275,18 +275,18 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 	history->inner_scope_history = inner_scope_history;
 	context.back().scope_history = inner_scope_history;
 
-	// currently, starting_node_ids.size() == starting_state_vals.size()+1
+	// currently, starting_nodes.size() == starting_state_vals.size()+1
 
 	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->activate(starting_node_ids,
+	this->inner_scope->activate(starting_nodes,
 								starting_input_state_vals,
 								starting_local_state_vals,
 								problem,
 								context,
 								inner_exit_depth,
-								inner_exit_node_id,
+								inner_exit_node,
 								run_helper,
 								inner_scope_history);
 
@@ -401,21 +401,21 @@ void ScopeNode::halfway_activate(vector<int>& starting_node_ids,
 			}
 		}
 
-		curr_node_id = this->next_node_id;
+		curr_node = this->next_node;
 
 		if (this->experiment != NULL) {
-			this->experiment->activate(curr_node_id,
+			this->experiment->activate(curr_node,
 									   problem,
 									   context,
 									   exit_depth,
-									   exit_node_id,
+									   exit_node,
 									   run_helper,
 									   history->experiment_history);
 		}
 	} else if (inner_exit_depth == 0) {
-		curr_node_id = inner_exit_node_id;
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
-		exit_node_id = inner_exit_node_id;
+		exit_node = inner_exit_node;
 	}
 }

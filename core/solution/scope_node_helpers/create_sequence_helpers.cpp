@@ -19,8 +19,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 										 int& new_num_input_states,
 										 vector<AbstractNode*>& new_nodes,
 										 RunHelper& run_helper) {
-	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_node_ids.size());
-	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_node_ids.size());
+	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_nodes.size());
+	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_nodes.size());
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
@@ -65,14 +65,14 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 	context.back().local_state_vals = inner_local_state_vals[0];
 	inner_local_state_vals.erase(inner_local_state_vals.begin());
 
-	vector<int> starting_node_ids_copy = this->starting_node_ids;
+	vector<AbstractNode*> starting_nodes_copy = this->starting_nodes;
 
-	// currently, starting_node_ids.size() == inner_state_vals_copy.size()+1
+	// currently, starting_nodes.size() == inner_state_vals_copy.size()+1
 
 	uniform_int_distribution<int> distribution(0, 1);
 	// TODO: check inner_scope->is_loop
 	if (distribution(generator) == 0) {
-		vector<map<pair<bool,int>, int>> inner_state_mappings(this->starting_node_ids.size());
+		vector<map<pair<bool,int>, int>> inner_state_mappings(this->starting_nodes.size());
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 				if (this->input_outer_is_local[i_index]) {
@@ -128,7 +128,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 		inner_state_mappings.erase(inner_state_mappings.begin());
 
 		this->inner_scope->create_sequence_activate(
-			starting_node_ids_copy,
+			starting_nodes_copy,
 			inner_input_state_vals,
 			inner_local_state_vals,
 			inner_state_mappings,
@@ -152,7 +152,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 
 		new_node->inner_scope = this->inner_scope;
 
-		new_node->starting_node_ids = this->starting_node_ids;
+		new_node->starting_nodes = this->starting_nodes;
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -208,16 +208,16 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 
 		// unused
 		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
+		AbstractNode* inner_exit_node = NULL;
 
 		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
-		this->inner_scope->activate(starting_node_ids_copy,
+		this->inner_scope->activate(starting_nodes_copy,
 									inner_input_state_vals,
 									inner_local_state_vals,
 									problem,
 									context,
 									inner_exit_depth,
-									inner_exit_node_id,
+									inner_exit_node,
 									run_helper,
 									inner_scope_history);
 		delete inner_scope_history;
@@ -351,7 +351,7 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 }
 
 void ScopeNode::halfway_create_sequence_activate(
-		vector<int>& starting_node_ids,
+		vector<AbstractNode*>& starting_nodes,
 		vector<map<int, StateStatus>>& starting_input_state_vals,
 		vector<map<int, StateStatus>>& starting_local_state_vals,
 		vector<map<pair<bool,int>, int>>& starting_state_mappings,
@@ -420,7 +420,7 @@ void ScopeNode::halfway_create_sequence_activate(
 	context.back().local_state_vals = starting_local_state_vals[0];
 	starting_local_state_vals.erase(starting_local_state_vals.begin());
 
-	// currently, starting_node_ids.size() == starting_state_vals.size()+1
+	// currently, starting_nodes.size() == starting_state_vals.size()+1
 
 	uniform_int_distribution<int> distribution(0, 1);
 	// inner_scope->is_loop == false
@@ -429,7 +429,7 @@ void ScopeNode::halfway_create_sequence_activate(
 		starting_state_mappings.erase(starting_state_mappings.begin());
 
 		this->inner_scope->create_sequence_activate(
-			starting_node_ids,
+			starting_nodes,
 			starting_input_state_vals,
 			starting_local_state_vals,
 			starting_state_mappings,
@@ -453,7 +453,7 @@ void ScopeNode::halfway_create_sequence_activate(
 
 		new_node->inner_scope = this->inner_scope;
 
-		new_node->starting_node_ids = starting_node_ids;
+		new_node->starting_nodes = starting_nodes;
 
 		for (int l_index = 0; l_index < (int)starting_state_mappings.size(); l_index++) {
 			for (map<pair<bool,int>, int>::iterator it = starting_state_mappings[l_index].begin();
@@ -470,16 +470,16 @@ void ScopeNode::halfway_create_sequence_activate(
 
 		// unused
 		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
+		AbstractNode* inner_exit_node = NULL;
 
 		ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
-		this->inner_scope->activate(starting_node_ids,
+		this->inner_scope->activate(starting_nodes,
 									starting_input_state_vals,
 									starting_local_state_vals,
 									problem,
 									context,
 									inner_exit_depth,
-									inner_exit_node_id,
+									inner_exit_node,
 									run_helper,
 									inner_scope_history);
 		delete inner_scope_history;

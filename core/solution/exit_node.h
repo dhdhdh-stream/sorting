@@ -8,7 +8,7 @@
 class ExitNode : public AbstractNode {
 public:
 	int exit_depth;
-	int exit_node_id;
+	AbstractNode* exit_node;
 
 	ExitNode();
 	ExitNode(std::ifstream& input_file,

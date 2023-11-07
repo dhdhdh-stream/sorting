@@ -30,7 +30,7 @@ public:
 	 * - use id when saving/loading, but have direct reference for running
 	 */
 
-	std::vector<int> starting_node_ids;
+	std::vector<AbstractNode*> starting_nodes;
 
 	std::vector<int> input_types;
 	std::vector<int> input_inner_layers;
@@ -72,7 +72,7 @@ public:
 	std::vector<State*> experiment_state_defs;
 	std::vector<int> experiment_state_network_indexes;
 
-	int next_node_id;
+	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
 

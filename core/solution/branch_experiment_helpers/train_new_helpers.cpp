@@ -20,12 +20,58 @@ const int TRAIN_NEW_ITERS = 2;
 
 const double MIN_SCORE_IMPACT = 0.05;
 
-void BranchExperiment::train_new_target_activate(
-		int& curr_node_id,
+void BranchExperiment::train_new_activate(
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		int& exit_node_id,
+		AbstractNode*& exit_node,
+		RunHelper& run_helper,
+		AbstractExperimentHistory*& history) {
+	bool is_target = false;
+	PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	overall_history->instance_count++;
+	if (!overall_history->has_target) {
+		double target_probability;
+		if (overall_history->instance_count > this->average_instances_per_run) {
+			target_probability = 0.5;
+		} else {
+			target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - overall_history->instance_count));
+		}
+		uniform_real_distribution<double> distribution(0.0, 1.0);
+		if (distribution(generator) < target_probability) {
+			is_target = true;
+		}
+	}
+
+	if (is_target) {
+		overall_history->has_target = true;
+
+		train_new_target_activate(curr_node,
+								  problem,
+								  context,
+								  exit_depth,
+								  exit_node,
+								  run_helper);
+	} else {
+		if (this->state != BRANCH_EXPERIMENT_STATE_TRAIN_PRE) {
+			train_new_non_target_activate(curr_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  history);
+		}
+	}
+}
+
+void BranchExperiment::train_new_target_activate(
+		AbstractNode*& curr_node,
+		Problem& problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
@@ -41,18 +87,15 @@ void BranchExperiment::train_new_target_activate(
 	this->i_local_state_vals_histories.push_back(context.back().local_state_vals);
 	this->i_temp_state_vals_histories.push_back(context.back().temp_state_vals);
 
-	PassThroughExperimentOverallHistory* history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-	history->has_target = true;
-
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
 			this->best_actions[s_index]->activate(
-				curr_node_id
+				curr_node,
 				problem,
 				context,
 				exit_depth,
-				exit_node_id,
+				exit_node,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
@@ -67,19 +110,19 @@ void BranchExperiment::train_new_target_activate(
 	}
 
 	if (this->best_exit_depth == 0) {
-		curr_node_id = this->best_exit_node_id;
+		curr_node = this->best_exit_node;
 	} else {
 		exit_depth = this->best_exit_depth-1;
-		exit_node_id = this->best_exit_node_id;
+		exit_node = this->best_exit_node;
 	}
 }
 
 void BranchExperiment::train_new_non_target_activate(
-		int& curr_node_id,
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		int& exit_node_id,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
 	double original_score = this->existing_average_score;
@@ -175,19 +218,17 @@ void BranchExperiment::train_new_non_target_activate(
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-				history->step_indexes.push_back(s_index);
 				history->step_histories.push_back(action_node_history);
 				this->best_actions[s_index]->activate(
-					curr_node_id
+					curr_node,
 					problem,
 					context,
 					exit_depth,
-					exit_node_id,
+					exit_node,
 					run_helper,
 					action_node_history);
 			} else {
 				SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-				history->step_indexes.push_back(s_index);
 				history->step_histories.push_back(sequence_history);
 				this->best_sequences[s_index]->activate(problem,
 														context,
@@ -197,16 +238,18 @@ void BranchExperiment::train_new_non_target_activate(
 		}
 
 		if (this->best_exit_depth == 0) {
-			curr_node_id = this->best_exit_node_id;
+			curr_node = this->best_exit_node;
 		} else {
 			exit_depth = this->best_exit_depth-1;
-			exit_node_id = this->best_exit_node_id;
+			exit_node = this->best_exit_node;
 		}
 	}
 }
 
-void BranchExperiment::train_backprop(double target_val,
-									  BranchExperimentOverallHistory* history) {
+void BranchExperiment::train_new_backprop(double target_val,
+										  BranchExperimentOverallHistory* history) {
+	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+
 	if (history->has_target) {
 		this->i_target_val_histories.push_back(target_val);
 

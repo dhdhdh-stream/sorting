@@ -13,11 +13,11 @@
 
 using namespace std;
 
-void ActionNode::view_activate(int& curr_node_id,
+void ActionNode::view_activate(AbstractNode*& curr_node,
 							   Problem& problem,
 							   vector<ContextLayer>& context,
 							   int& exit_depth,
-							   int& exit_node_id,
+							   AbstractNode*& exit_node,
 							   RunHelper& run_helper) {
 	problem.perform_action(this->action);
 	double obs_snapshot = problem.get_observation();
@@ -49,5 +49,5 @@ void ActionNode::view_activate(int& curr_node_id,
 
 	cout << endl;
 
-	curr_node_id = this->next_node_id;
+	curr_node = this->next_node;
 }

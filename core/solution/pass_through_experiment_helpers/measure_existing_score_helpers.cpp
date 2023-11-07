@@ -28,10 +28,9 @@ void PassThroughExperiment::measure_existing_score_parent_scope_end_activate(
 	history->instance_count++;
 }
 
-void PassThroughExperiment::possible_exits_helper(
-		set<pair<int, int>>& s_possible_exits,
-		int curr_exit_depth,
-		ScopeHistory* scope_history) {
+void possible_exits_helper(set<pair<int, int>>& s_possible_exits,
+						   int curr_exit_depth,
+						   ScopeHistory* scope_history) {
 	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = scope_history->experiment_node_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			int node_id = scope_history->node_histories[i_index][h_index]->node->id;

@@ -8,6 +8,11 @@ class AbstractExperiment {
 public:
 	int type;
 
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+
+	double average_remaining_experiments_from_start;
+
 	virtual void activate(int& curr_node_id,
 						  Problem& problem,
 						  vector<ContextLayer>& context,
@@ -15,7 +20,6 @@ public:
 						  int& exit_node_id,
 						  RunHelper& run_helper,
 						  AbstractExperimentHistory*& history);
-
 };
 
 class AbstractExperimentHistory {

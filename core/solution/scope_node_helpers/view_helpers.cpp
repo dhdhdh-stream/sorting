@@ -10,16 +10,16 @@
 
 using namespace std;
 
-void ScopeNode::view_activate(int& curr_node_id,
+void ScopeNode::view_activate(AbstractNode*& curr_node,
 							  Problem& problem,
 							  vector<ContextLayer>& context,
 							  int& exit_depth,
-							  int& exit_node_id,
+							  AbstractNode*& exit_node,
 							  RunHelper& run_helper) {
 	cout << "scope node #" << this->id << endl;
 
-	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_node_ids.size());
-	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_node_ids.size());
+	vector<map<int, StateStatus>> inner_input_state_vals(this->starting_nodes.size());
+	vector<map<int, StateStatus>> inner_local_state_vals(this->starting_nodes.size());
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
@@ -70,20 +70,20 @@ void ScopeNode::view_activate(int& curr_node_id,
 	context.back().local_state_vals = inner_local_state_vals[0];
 	inner_local_state_vals.erase(inner_local_state_vals.begin());
 
-	vector<int> starting_node_ids_copy = this->starting_node_ids;
+	vector<AbstractNode*> starting_nodes_copy = this->starting_nodes;
 
-	// currently, starting_node_ids.size() == inner_state_vals.size()+1
+	// currently, starting_nodes.size() == inner_state_vals.size()+1
 
 	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->view_activate(starting_node_ids_copy,
+	this->inner_scope->view_activate(starting_nodes_copy,
 									 inner_input_state_vals,
 									 inner_local_state_vals,
 									 problem,
 									 context,
 									 inner_exit_depth,
-									 inner_exit_node_id,
+									 inner_exit_node,
 									 run_helper);
 
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
@@ -143,25 +143,25 @@ void ScopeNode::view_activate(int& curr_node_id,
 			}
 		}
 
-		curr_node_id = this->next_node_id;
+		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
-		curr_node_id = inner_exit_node_id;
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
-		exit_node_id = inner_exit_node_id;
+		exit_node = inner_exit_node;
 	}
 
 	cout << endl;
 }
 
-void ScopeNode::halfway_view_activate(vector<int>& starting_node_ids,
+void ScopeNode::halfway_view_activate(vector<AbstractNode*>& starting_nodes,
 									  vector<map<int, StateStatus>>& starting_input_state_vals,
 									  vector<map<int, StateStatus>>& starting_local_state_vals,
-									  int& curr_node_id,
+									  AbstractNode*& curr_node,
 									  Problem& problem,
 									  vector<ContextLayer>& context,
 									  int& exit_depth,
-									  int& exit_node_id,
+									  AbstractNode*& exit_node,
 									  RunHelper& run_helper) {
 	cout << "scope node #" << this->id << endl;
 
@@ -203,15 +203,15 @@ void ScopeNode::halfway_view_activate(vector<int>& starting_node_ids,
 	starting_local_state_vals.erase(starting_local_state_vals.begin());
 
 	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->view_activate(starting_node_ids,
+	this->inner_scope->view_activate(starting_nodes,
 									 starting_input_state_vals,
 									 starting_local_state_vals,
 									 problem,
 									 context,
 									 inner_exit_depth,
-									 inner_exit_node_id,
+									 inner_exit_node,
 									 run_helper);
 
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
@@ -271,11 +271,11 @@ void ScopeNode::halfway_view_activate(vector<int>& starting_node_ids,
 			}
 		}
 
-		curr_node_id = this->next_node_id;
+		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
-		curr_node_id = inner_exit_node_id;
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
-		exit_node_id = inner_exit_node_id;
+		exit_node = inner_exit_node;
 	}
 }

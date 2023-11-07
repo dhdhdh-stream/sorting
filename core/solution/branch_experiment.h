@@ -31,12 +31,8 @@ const int BRANCH_EXPERIMENT_STATE_SUCCESS = 6;
 class BranchExperimentHistory;
 class BranchExperiment {
 public:
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
-
 	PassThroughExperiment* parent_pass_through_experiment;
 
-	double average_remaining_experiments_from_start;
 	double average_instances_per_run;
 	/**
 	 * - when triggering an experiment, it becomes live everywhere
@@ -55,7 +51,7 @@ public:
 	double existing_average_score;
 	double existing_score_variance;
 
-	std::vector<std::pair<int, int>> possible_exits;
+	std::vector<std::pair<int, AbstractNode*>> possible_exits;
 
 	double existing_average_score;
 	double existing_score_variance;
@@ -68,14 +64,14 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<Sequence*> curr_sequences;
 	int curr_exit_depth;
-	int curr_exit_node_id;
+	AbstractNode* curr_exit_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<Sequence*> best_sequences;
 	int best_exit_depth;
-	int best_exit_node_id;
+	AbstractNode* best_exit_node;
 
 	double new_average_score;
 
@@ -183,7 +179,6 @@ class BranchExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
 	BranchExperiment* experiment;
 
-	std::vector<int> step_indexes;
 	std::vector<void*> step_histories;
 
 

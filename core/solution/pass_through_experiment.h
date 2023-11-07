@@ -23,11 +23,6 @@ const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 8;
 
 class PassThroughExperiment {
 public:
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
-
-	double average_remaining_experiments_from_start;
-
 	int state;
 	int state_iter;
 	int sub_state_iter;
@@ -75,7 +70,7 @@ public:
 	 *   - e.g., instances may be different due to path change, recursion
 	 */
 
-	std::map<int, int> node_id_to_step_index;
+	std::map<AbstractNode*, int> node_to_step_index;
 
 	std::vector<State*> new_states;
 	std::vector<std::vector<AbstractNode*>> new_state_nodes;
@@ -110,8 +105,11 @@ class PassThroughExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
 	PassThroughExperiment* experiment;
 
-	std::vector<int> step_indexes;
-	std::vector<void*> step_histories;
+	std::vector<void*> pre_step_histories;
+
+	BranchExperimentInstanceHistory* branch_experiment_history;
+
+	std::vector<void*> post_step_histories;
 
 };
 

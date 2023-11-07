@@ -3,22 +3,22 @@
 using namespace std;
 
 void PassThroughExperiment::measure_new_misguess_activate(
-		int& curr_node_id,
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		int& exit_node_id,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
 			this->best_actions[s_index]->activate(
-				curr_node_id
+				curr_node,
 				problem,
 				context,
 				exit_depth,
-				exit_node_id,
+				exit_node,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
@@ -33,10 +33,10 @@ void PassThroughExperiment::measure_new_misguess_activate(
 	}
 
 	if (this->best_exit_depth == 0) {
-		curr_node_id = this->best_exit_node_id;
+		curr_node = this->best_exit_node;
 	} else {
 		exit_depth = this->best_exit_depth-1;
-		exit_node_id = this->best_exit_node_id;
+		exit_node = this->best_exit_node;
 	}
 
 	double predicted_score = this->new_average_score;
@@ -132,9 +132,9 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		if (misguess_improvement_t_score > 2.326) {	// >99%
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->node_id_to_step_index[this->best_actions[s_index]->id] = s_index;
+					this->node_to_step_index[this->best_actions[s_index]] = s_index;
 				} else {
-					this->node_id_to_step_index[this->best_sequences[s_index]->scope_node_id] = s_index;
+					this->node_to_step_index[this->best_sequences[s_index]->scope_node_placeholder] = s_index;
 				}
 			}
 
@@ -147,12 +147,11 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			if (this->best_step_types[rand_step_index] == STEP_TYPE_ACTION) {
 				this->branch_experiment->node_context.back() = this->best_actions[rand_step_index]->id;
 			} else {
-				this->branch_experiment->node_context.back() = this->best_sequences[rand_step_index]->scope_node_id;
+				this->branch_experiment->node_context.back() = this->best_sequences[rand_step_index]->scope_node_placeholder->id;
 			}
 			this->branch_experiment->parent_pass_through_experiment = this;
-			this->branch_experiment->average_instances_per_run = this->average_instances_per_run;
 
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

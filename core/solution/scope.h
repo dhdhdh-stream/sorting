@@ -53,10 +53,6 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	int temp_num_input_states;
-	int temp_num_local_states;
-	std::map<int, AbstractNode*> temp_nodes;
-
 	std::vector<Scope*> child_scopes;
 	/**
 	 * - don't remove even if can no longer reach
@@ -162,7 +158,7 @@ public:
 	PassThroughExperiment* inner_pass_through_experiment;
 
 	int experiment_iter_index;
-	int experiment_node_index;
+	int experiment_index;
 	/**
 	 * - for gathering possible_exits during measure_existing
 	 */

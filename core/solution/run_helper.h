@@ -11,8 +11,6 @@ class ScopeHistory;
 
 class RunHelper {
 public:
-	int phase;
-
 	int curr_depth;
 	int max_depth;
 	bool exceeded_depth;

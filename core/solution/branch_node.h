@@ -40,8 +40,8 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
-	int original_next_node_id;
-	int branch_next_node_id;
+	AbstractNode* original_next_node;
+	AbstractNode* branch_next_node;
 
 	BranchNode();
 	BranchNode(std::ifstream& input_file,

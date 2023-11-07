@@ -30,48 +30,49 @@ const double SET_OUTPUT_PERCENTAGE = 0.2;
  *   - might have been a mistaken change anyways
  */
 void random_starting_node(Scope* containing_scope,
-						  int& starting_node_id) {
-	vector<int> possible_ids;
-	for (int n_index = 0; n_index < (int)containing_scope->nodes.size(); n_index++) {
+						  AbstractNode*& starting_node) {
+	vector<AbstractNode*> possible_nodes;
+	for (map<int, AbstractNode*>::iterator it = containing_scope->nodes.begin();
+			it != containing_scope->nodes.end(); it++) {
 		bool should_add = true;
-		if (containing_scope->nodes[n_index]->type == NODE_TYPE_EXIT) {
+		if (it->second->type == NODE_TYPE_EXIT) {
 			should_add = false;
 		}
 		if (should_add) {
-			possible_ids.push_back(n_index);
+			possible_nodes.push_back(it->second);
 		}
 	}
 
-	uniform_int_distribution<int> distribution(0, (int)possible_ids.size()-1);
+	uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
 	int rand_index = distribution(generator);
-	starting_node_id = possible_ids[rand_index];
+	starting_node = possible_nodes[rand_index];
 }
 
 void random_halfway_start_fetch_context_helper(
 		ScopeHistory* scope_history,
 		int target_index,
 		int& curr_index,
-		vector<int>& starting_halfway_node_context) {
+		vector<AbstractNode*>& starting_halfway_nodes) {
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 
-				starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
+				starting_halfway_nodes.push_back(scope_history->node_histories[i_index][h_index]->node);
 
 				random_halfway_start_fetch_context_helper(
 					scope_node_history->inner_scope_history,
 					target_index,
 					curr_index,
-					starting_halfway_node_context);
+					starting_halfway_nodes);
 
 				if (curr_index <= target_index) {
-					starting_halfway_node_context.pop_back();
+					starting_halfway_nodes.pop_back();
 
 					if (!scope_node_history->is_halfway) {
 						curr_index++;
 						if (curr_index > target_index) {
-							starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
+							starting_halfway_nodes.push_back(scope_history->node_histories[i_index][h_index]->node);
 							return;
 						}
 					}
@@ -81,7 +82,7 @@ void random_halfway_start_fetch_context_helper(
 			} else {
 				curr_index++;
 				if (curr_index > target_index) {
-					starting_halfway_node_context.push_back(scope_history->node_histories[i_index][h_index]->node->id);
+					starting_halfway_nodes.push_back(scope_history->node_histories[i_index][h_index]->node);
 					return;
 				}
 			}
@@ -90,26 +91,26 @@ void random_halfway_start_fetch_context_helper(
 }
 
 void random_halfway_start(ScopeNode* starting_scope_node,
-						  vector<int>& starting_halfway_node_context) {
+						  vector<AbstractNode*>& starting_halfway_nodes) {
 	while (true) {
 		vector<int> scope_context{-1};
 		vector<int> node_context{-1};
 
-		vector<int> starting_node_ids = starting_scope_node->starting_node_ids;
+		vector<AbstractNode*> starting_nodes = starting_scope_node->starting_nodes;
 
 		int num_nodes = 0;
 		ScopeHistory* scope_history = new ScopeHistory(starting_scope_node->inner_scope);
 
 		// unused
 		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
+		AbstractNode* inner_exit_node = NULL;
 
 		starting_scope_node->inner_scope->random_activate(
-			starting_node_ids,
+			starting_nodes,
 			scope_context,
 			node_context,
 			inner_exit_depth,
-			inner_exit_node_id,
+			inner_exit_node,
 			num_nodes,
 			scope_history);
 
@@ -123,7 +124,7 @@ void random_halfway_start(ScopeNode* starting_scope_node,
 				scope_history,
 				rand_index,
 				curr_index,
-				starting_halfway_node_context);
+				starting_halfway_nodes);
 
 			delete scope_history;
 
@@ -231,9 +232,9 @@ Sequence* create_sequence(Problem& problem,
 		}
 	}
 
-	int starting_node_id;
+	AbstractNode* starting_node;
 	random_starting_node(containing_scope,
-						 starting_node_id);
+						 starting_node);
 
 	vector<ContextLayer> temp_context;
 	temp_context.push_back(ContextLayer());
@@ -250,25 +251,25 @@ Sequence* create_sequence(Problem& problem,
 	starting_noop_node->action = Action(ACTION_NOOP);
 	new_nodes.push_back(starting_noop_node);
 
-	int curr_node_id;
+	AbstractNode* curr_node;
 	int target_num_nodes;
 
 	bool is_halfway_start = false;
-	if (containing_scope->nodes[starting_node_id]->type == NODE_TYPE_SCOPE) {
+	if (starting_node->type == NODE_TYPE_SCOPE) {
 		// TODO: check !original_starting_scope_node->inner_scope->is_loop
 		is_halfway_start = true;
 	}
 	if (is_halfway_start) {
-		ScopeNode* original_starting_scope_node = (ScopeNode*)containing_scope->nodes[starting_node_id];
+		ScopeNode* original_starting_scope_node = (ScopeNode*)starting_node;
 
-		vector<int> starting_halfway_node_context;
+		vector<AbstractNode*> starting_halfway_nodes;
 		random_halfway_start(original_starting_scope_node,
-							 starting_halfway_node_context);
+							 starting_halfway_nodes);
 
 		ScopeNode* new_starting_scope_node = new ScopeNode();
 
 		new_starting_scope_node->inner_scope = original_starting_scope_node->inner_scope;
-		new_starting_scope_node->starting_node_ids = starting_halfway_node_context;
+		new_starting_scope_node->starting_nodes = starting_halfway_nodes;
 
 		vector<int> possible_inner_layers;
 		vector<bool> possible_inner_is_local;
@@ -287,26 +288,26 @@ Sequence* create_sequence(Problem& problem,
 			}
 		}
 		Scope* curr_scope = original_starting_scope_node->inner_scope;
-		for (int l_index = 0; l_index < (int)starting_halfway_node_context.size()-1; l_index++) {
+		for (int l_index = 0; l_index < (int)starting_halfway_nodes.size()-1; l_index++) {
 			for (int s_index = 0; s_index < curr_scope->num_local_states; s_index++) {
 				possible_inner_layers.push_back(l_index);
 				possible_inner_is_local.push_back(true);
 				possible_inner_indexes.push_back(s_index);
 			}
 
-			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[starting_halfway_node_context[l_index]];
+			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[starting_halfway_nodes[l_index]];
 			curr_scope = scope_node->inner_scope;
 		}
 		{
 			for (int s_index = 0; s_index < curr_scope->num_local_states; s_index++) {
-				possible_inner_layers.push_back((int)starting_halfway_node_context.size()-1);
+				possible_inner_layers.push_back((int)starting_halfway_nodes.size()-1);
 				possible_inner_is_local.push_back(true);
 				possible_inner_indexes.push_back(s_index);
 			}
 		}
 
-		vector<map<int, StateStatus>> halfway_inner_input_state_vals(starting_halfway_node_context.size());
-		vector<map<int, StateStatus>> halfway_inner_local_state_vals(starting_halfway_node_context.size());
+		vector<map<int, StateStatus>> halfway_inner_input_state_vals(starting_halfway_nodes.size());
+		vector<map<int, StateStatus>> halfway_inner_local_state_vals(starting_halfway_nodes.size());
 
 		int num_inputs_to_consider = (int)(SET_INPUT_PERCENTAGE*(double)possible_inner_layers.size());
 
@@ -494,23 +495,23 @@ Sequence* create_sequence(Problem& problem,
 			possible_inner_indexes.erase(possible_inner_indexes.begin() + rand_target);
 		}
 
-		vector<int> starting_node_ids_copy = starting_halfway_node_context;
+		vector<AbstractNode*> starting_nodes_copy = starting_halfway_nodes;
 
 		// unused
-		int inner_curr_node_id;
+		AbstractNode* inner_curr_node;
 		int inner_exit_depth = -1;
-		int inner_exit_node_id = -1;
+		AbstractNode* inner_exit_node = NULL;
 
 		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(original_starting_scope_node);
 		original_starting_scope_node->halfway_activate(
-			starting_node_ids_copy,
+			starting_nodes_copy,
 			halfway_inner_input_state_vals,
 			halfway_inner_local_state_vals,
-			inner_curr_node_id,
+			inner_curr_node,
 			problem,
 			temp_context,
 			inner_exit_depth,
-			inner_exit_node_id,
+			inner_exit_node,
 			run_helper,
 			scope_node_history);
 		delete scope_node_history;
@@ -587,7 +588,7 @@ Sequence* create_sequence(Problem& problem,
 
 		new_nodes.push_back(new_starting_scope_node);
 
-		curr_node_id = original_starting_scope_node->next_node_id;
+		curr_node = original_starting_scope_node->next_node;
 		geometric_distribution<int> geometric_distribution(0.3);
 		target_num_nodes = geometric_distribution(generator);
 	} else {
@@ -695,18 +696,18 @@ Sequence* create_sequence(Problem& problem,
 			possible_inner_indexes.erase(possible_inner_indexes.begin() + rand_target);
 		}
 
-		curr_node_id = starting_node_id;
+		curr_node = starting_node;
 		geometric_distribution<int> geometric_distribution(0.3);
 		target_num_nodes = 1 + geometric_distribution(generator);
 	}
 
 	if (target_num_nodes != 0) {
-		vector<int> starting_node_ids{curr_node_id};
+		vector<AbstractNode*> starting_nodes{curr_node};
 		vector<map<int, StateStatus>> starting_input_state_vals;
 		vector<map<int, StateStatus>> starting_local_state_vals;
 		vector<map<pair<bool,int>, int>> starting_state_mappings;
 		int curr_num_nodes = 0;
-		containing_scope->create_sequence_activate(starting_node_ids,
+		containing_scope->create_sequence_activate(starting_nodes,
 												   starting_input_state_vals,
 												   starting_local_state_vals,
 												   starting_state_mappings,
@@ -890,29 +891,31 @@ Sequence* create_sequence(Problem& problem,
 	new_scope->num_input_states = new_num_input_states;
 	new_scope->num_local_states = 0;
 
-	new_scope->nodes = new_nodes;
-	for (int n_index = 0; n_index < (int)new_scope->nodes.size(); n_index++) {
-		new_scope->nodes[n_index]->id = n_index;
+	new_scope->node_counter = 0;
+	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
+		new_nodes[n_index]->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[new_nodes[n_index]->id] = new_nodes[n_index];
 
-		int next_node_id;
-		if (n_index == (int)new_scope->nodes.size()-1) {
-			next_node_id = -1;
+		AbstractNode* next_node;
+		if (n_index == (int)new_nodes.size()-1) {
+			next_node = NULL;
 		} else {
-			next_node_id = n_index+1;
+			next_node = new_nodes[n_index+1];
 		}
 
-		if (new_scope->nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)new_scope->nodes[n_index];
-			action_node->next_node_id = next_node_id;
+		if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+			action_node->next_node = next_node;
 		} else {
-			ScopeNode* scope_node = (ScopeNode*)new_scope->nodes[n_index];
-			scope_node->next_node_id = next_node_id;
+			ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+			scope_node->next_node = next_node;
 
 			new_scope->child_scopes.push_back(scope_node->inner_scope);
 		}
 	}
-	new_scope->node_counter = (int)new_scope->nodes.size();
 
+	new_sequence->starting_node = new_nodes[0];
 	new_sequence->scope = new_scope;
 
 	return new_sequence;

@@ -10,7 +10,7 @@
 
 using namespace std;
 
-void Scope::create_sequence_activate(vector<int>& starting_node_ids,
+void Scope::create_sequence_activate(vector<AbstractNode*>& starting_nodes,
 									 vector<map<int, StateStatus>>& starting_input_state_vals,
 									 vector<map<int, StateStatus>>& starting_local_state_vals,
 									 vector<map<pair<bool,int>, int>>& starting_state_mappings,
@@ -31,13 +31,13 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 
 	// this->is_loop == false
 
-	int curr_node_id = starting_node_ids[0];
-	starting_node_ids.erase(starting_node_ids.begin());
-	if (starting_node_ids.size() > 0) {
-		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+	AbstractNode* curr_node = starting_nodes[0];
+	starting_nodes.erase(starting_nodes.begin());
+	if (starting_nodes.size() > 0) {
+		ScopeNode* scope_node = (ScopeNode*)curr_node;
 
 		scope_node->halfway_create_sequence_activate(
-			starting_node_ids,
+			starting_nodes,
 			starting_input_state_vals,
 			starting_local_state_vals,
 			starting_state_mappings,
@@ -51,17 +51,17 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 			new_nodes,
 			run_helper);
 
-		curr_node_id = scope_node->next_node_id;
+		curr_node = scope_node->next_node;
 	}
 
 	while (true) {
 		if (curr_num_nodes == target_num_nodes
-				|| curr_node_id == -1
+				|| curr_node == NULL
 				|| run_helper.exceeded_depth) {
 			break;
 		}
 
-		node_create_sequence_activate_helper(curr_node_id,
+		node_create_sequence_activate_helper(curr_node,
 											 problem,
 											 context,
 											 target_num_nodes,
@@ -77,7 +77,7 @@ void Scope::create_sequence_activate(vector<int>& starting_node_ids,
 }
 
 void Scope::node_create_sequence_activate_helper(
-		int& curr_node_id,
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int target_num_nodes,
@@ -87,8 +87,8 @@ void Scope::node_create_sequence_activate_helper(
 		int& new_num_input_states,
 		vector<AbstractNode*>& new_nodes,
 		RunHelper& run_helper) {
-	if (this->nodes[curr_node_id]->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)this->nodes[curr_node_id];
+	if (curr_node->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)curr_node;
 
 		action_node->create_sequence_activate(problem,
 											  context,
@@ -99,9 +99,9 @@ void Scope::node_create_sequence_activate_helper(
 											  new_num_input_states,
 											  new_nodes);
 
-		curr_node_id = action_node->next_node_id;
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)this->nodes[curr_node_id];
+		curr_node = action_node->next_node;
+	} else if (curr_node->type == NODE_TYPE_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)curr_node;
 
 		scope_node->create_sequence_activate(problem,
 											 context,
@@ -113,23 +113,23 @@ void Scope::node_create_sequence_activate_helper(
 											 new_nodes,
 											 run_helper);
 
-		curr_node_id = scope_node->next_node_id;
-	} else if (this->nodes[curr_node_id]->type == NODE_TYPE_BRANCH) {
-		BranchNode* branch_node = (BranchNode*)this->nodes[curr_node_id];
+		curr_node = scope_node->next_node;
+	} else if (curr_node->type == NODE_TYPE_BRANCH) {
+		BranchNode* branch_node = (BranchNode*)curr_node;
 
 		bool is_branch;
 		branch_node->activate(is_branch,
 							  context);
 
 		if (is_branch) {
-			curr_node_id = branch_node->branch_next_node_id;
+			curr_node = branch_node->branch_next_node;
 		} else {
-			curr_node_id = branch_node->original_next_node_id;
+			curr_node = branch_node->original_next_node;
 		}
 	} else {
-		// this->nodes[curr_node_id]->type == NODE_TYPE_EXIT
+		// curr_node->type == NODE_TYPE_EXIT
 
-		curr_node_id = -1;
-		// simply set to -1 to signal exit
+		curr_node = NULL;
+		// simply set to NULL to signal exit
 	}
 }

@@ -5,18 +5,18 @@ using namespace std;
 const int EXPLORE_ITERS = 500;
 const int NUM_SAMPLES_PER_ITER = 10;
 
-void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
+void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 Problem& problem,
 													 vector<ContextLayer>& context,
 													 int& exit_depth,
-													 int& exit_node_id,
+													 AbstractNode*& exit_node,
 													 RunHelper& run_helper) {
 	{
 		// exit
 		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
 		int rand_index = distribution(generator);
 		this->curr_exit_depth = this->possible_exits[rand_index].first;
-		this->curr_exit_node_id = this->possible_exits[rand_index].second;
+		this->curr_exit_node = this->possible_exits[rand_index].second;
 	}
 
 	{
@@ -25,7 +25,7 @@ void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
 		if (this->curr_exit_depth == 0
-				&& this->curr_exit_node_id == curr_node_id) {
+				&& this->curr_exit_node == curr_node) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -72,28 +72,30 @@ void PassThroughExperiment::explore_initial_activate(int& curr_node_id,
 
 	{
 		if (this->curr_exit_depth == 0) {
-			curr_node_id = this->curr_exit_node_id;
+			curr_node = this->curr_exit_node;
 		} else {
 			exit_depth = this->curr_exit_depth-1;
-			exit_node_id = this->curr_exit_node_id;
+			exit_node = this->curr_exit_node;
 		}
 	}
 }
 
-void PassThroughExperiment::explore_activate(int& curr_node_id,
+void PassThroughExperiment::explore_activate(AbstractNode*& curr_node,
 											 Problem& problem,
 											 vector<ContextLayer>& context,
 											 int& exit_depth,
-											 int& exit_node_id,
+											 AbstractNode*& exit_node,
 											 RunHelper& run_helper) {
 	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-		// leave context.back().node_id as -1
-
 		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
-			this->curr_actions[s_index]->experiment_activate(
+			this->curr_actions[s_index]->activate(
+				curr_node,
 				problem,
 				context,
+				exit_depth,
+				exit_node,
+				run_helper,
 				action_node_history);
 			delete action_node_history;
 		} else {
@@ -107,10 +109,10 @@ void PassThroughExperiment::explore_activate(int& curr_node_id,
 	}
 
 	if (this->curr_exit_depth == 0) {
-		curr_node_id = this->curr_exit_node_id;
+		curr_node = this->curr_exit_node;
 	} else {
 		exit_depth = this->curr_exit_depth-1;
-		exit_node_id = this->curr_exit_node_id;
+		exit_node = this->curr_exit_node;
 	}
 }
 
@@ -134,7 +136,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			this->best_actions = this->curr_actions;
 			this->best_sequences = this->curr_sequences;
 			this->best_exit_depth = this->curr_exit_depth;
-			this->best_exit_node_id = this->curr_exit_node_id;
+			this->best_exit_node = this->curr_exit_node;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
@@ -167,7 +169,8 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 						this->best_actions[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 					} else {
-						this->best_sequences[s_index]->scope_node_id = containing_scope->node_counter;
+						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
+						this->best_sequences[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 
 						this->best_sequences[s_index]->scope->id = solution->scope_counter;
@@ -194,7 +197,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				cout << endl;
 
 				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 
 				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 

@@ -5,11 +5,11 @@ using namespace std;
 const int TRAIN_NEW_MISGUESS_ITERS = 2;
 
 void PassThroughExperiment::train_new_misguess_activate(
-		int& curr_node_id,
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		int& exit_node_id,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
 	history = new PassThroughExperimentInstanceHistory(this);
@@ -17,20 +17,18 @@ void PassThroughExperiment::train_new_misguess_activate(
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-			history->step_indexes.push_back(s_index);
-			history->step_histories.push_back(action_node_history);
+			history->pre_step_histories.push_back(action_node_history);
 			this->best_actions[s_index]->activate(
-				curr_node_id
+				curr_node,
 				problem,
 				context,
 				exit_depth,
-				exit_node_id,
+				exit_node,
 				run_helper,
 				action_node_history);
 		} else {
 			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			history->step_indexes.push_back(s_index);
-			history->step_histories.push_back(sequence_history);
+			history->pre_step_histories.push_back(sequence_history);
 			this->best_sequences[s_index]->activate(problem,
 													context,
 													run_helper,
@@ -39,10 +37,10 @@ void PassThroughExperiment::train_new_misguess_activate(
 	}
 
 	if (this->best_exit_depth == 0) {
-		curr_node_id = this->best_exit_node_id;
+		curr_node = this->best_exit_node;
 	} else {
 		exit_depth = this->best_exit_depth-1;
-		exit_node_id = this->best_exit_node_id;
+		exit_node = this->best_exit_node;
 	}
 
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));

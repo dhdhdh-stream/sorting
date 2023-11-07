@@ -21,7 +21,9 @@ void Sequence::activate(Problem& problem,
 						vector<ContextLayer>& context,
 						RunHelper& run_helper,
 						SequenceHistory* history) {
-	// no need to set context.back().node_id
+	if (this->scope_node_placeholder != NULL) {
+		context.back().node_id = this->scope_node_placeholder->id;
+	}
 
 	context.push_back(ContextLayer());
 
@@ -54,21 +56,21 @@ void Sequence::activate(Problem& problem,
 	history->scope_history = scope_history;
 	// no need to set context.back().scope_history
 
-	vector<int> starting_node_ids{0};
+	vector<AbstractNode*> starting_nodes{this->starting_node};
 	vector<map<int, StateStatus>> starting_input_state_vals;
 	vector<map<int, StateStatus>> starting_local_state_vals;
 
 	// unused
 	int inner_exit_depth = -1;
-	int inner_exit_node_id = -1;
+	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->activate(starting_node_ids,
+	this->scope->activate(starting_nodes,
 						  starting_input_state_vals,
 						  starting_local_state_vals,
 						  problem,
 						  context,
 						  inner_exit_depth,
-						  inner_exit_node_id,
+						  inner_exit_node,
 						  run_helper,
 						  scope_history);
 
@@ -87,12 +89,9 @@ void Sequence::activate(Problem& problem,
 		}
 	}
 
-	for (int n_index = 0; n_index < (int)context.back().added_recursion_protection_flags.size(); n_index++) {
-		run_helper.recursion_protection_flags.erase(context.back().added_recursion_protection_flags[n_index]);
-	}
 	context.pop_back();
 
-	// no need to set context.back().node_id
+	context.back().node_id = -1;
 }
 
 SequenceHistory::SequenceHistory(Sequence* sequence) {

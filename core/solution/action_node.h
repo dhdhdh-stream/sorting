@@ -30,14 +30,6 @@ public:
 	 */
 	std::vector<int> state_network_indexes;
 
-	/**
-	 * - for PassThroughExperiment
-	 */
-	std::vector<bool> experiment_state_is_local;
-	std::vector<int> experiment_state_indexes;
-	std::vector<State*> experiment_state_defs;
-	std::vector<int> experiment_state_network_indexes;
-
 	std::vector<std::vector<int>> temp_state_scope_contexts;
 	std::vector<std::vector<int>> temp_state_node_contexts;
 	std::vector<State*> temp_state_defs;
@@ -51,7 +43,7 @@ public:
 	std::vector<State*> experiment_state_defs;
 	std::vector<int> experiment_state_network_indexes;
 
-	int next_node_id;
+	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
 	/**
@@ -118,7 +110,7 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
 
-	BranchExperimentHistory* branch_experiment_history;
+	AbstractExperimentHistory* experiment_history;
 
 	ActionNodeHistory(ActionNode* node);
 	ActionNodeHistory(ActionNodeHistory* original);

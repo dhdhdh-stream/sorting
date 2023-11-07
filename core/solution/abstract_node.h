@@ -14,6 +14,7 @@ class AbstractNode {
 public:
 	int type;
 
+	Scope* parent;
 	int id;
 
 	virtual ~AbstractNode() {};

@@ -8,7 +8,7 @@ using namespace std;
 void ScopeNode::random_activate(vector<int>& scope_context,
 								vector<int>& node_context,
 								int& inner_exit_depth,
-								int& inner_exit_node_id,
+								AbstractNode*& inner_exit_node,
 								int& num_nodes,
 								vector<AbstractNodeHistory*>& node_histories) {
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -29,13 +29,13 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 		scope_context.push_back(this->inner_scope->id);
 		node_context.push_back(-1);
 
-		vector<int> starting_node_ids_copy = this->starting_node_ids;
+		vector<AbstractNode*> starting_nodes_copy = this->starting_nodes;
 
-		this->inner_scope->random_activate(starting_node_ids_copy,
+		this->inner_scope->random_activate(starting_nodes_copy,
 										   scope_context,
 										   node_context,
 										   inner_exit_depth,
-										   inner_exit_node_id,
+										   inner_exit_node,
 										   num_nodes,
 										   inner_scope_history);
 
@@ -51,11 +51,11 @@ void ScopeNode::random_activate(vector<int>& scope_context,
 	 */
 }
 
-void ScopeNode::halfway_random_activate(vector<int>& starting_node_ids,
+void ScopeNode::halfway_random_activate(vector<AbstractNode*>& starting_nodes,
 										vector<int>& scope_context,
 										vector<int>& node_context,
 										int& inner_exit_depth,
-										int& inner_exit_node_id,
+										AbstractNode*& inner_exit_node,
 										int& num_nodes,
 										vector<AbstractNodeHistory*>& node_histories) {
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -76,11 +76,11 @@ void ScopeNode::halfway_random_activate(vector<int>& starting_node_ids,
 		scope_context.push_back(this->inner_scope->id);
 		node_context.push_back(-1);
 
-		this->inner_scope->random_activate(starting_node_ids,
+		this->inner_scope->random_activate(starting_nodes,
 										   scope_context,
 										   node_context,
 										   inner_exit_depth,
-										   inner_exit_node_id,
+										   inner_exit_node,
 										   num_nodes,
 										   inner_scope_history);
 

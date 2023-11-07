@@ -17,11 +17,6 @@ class ScopeHistory;
 class SequenceHistory;
 class Sequence {
 public:
-	int scope_node_id;
-	/**
-	 * - increment/assign containing_scope ID to make follow-up state/branch changes easier
-	 */
-
 	std::vector<int> input_types;
 	// input_inner_layer always 0
 	// input_inner_is_local always false
@@ -39,7 +34,10 @@ public:
 	std::vector<int> output_outer_types;
 	std::vector<void*> output_outer_indexes;
 
+	ScopeNode* starting_node;
 	Scope* scope;
+
+	ScopeNode* scope_node_placeholder;
 
 	Sequence();
 	~Sequence();

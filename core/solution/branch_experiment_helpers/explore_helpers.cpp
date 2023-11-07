@@ -18,11 +18,51 @@ using namespace std;
 
 const int EXPLORE_ITERS = 500;
 
-void BranchExperiment::explore_target_activate(int& curr_node_id,
+void BranchExperiment::explore_activate(AbstractNode*& curr_node,
+										Problem& problem,
+										vector<ContextLayer>& context,
+										int& exit_depth,
+										AbstractNode*& exit_node,
+										RunHelper& run_helper) {
+	bool is_target = false;
+	PassThroughExperimentOverallHistory* overall_history;
+	if (this->parent_pass_through_experiment != NULL) {
+		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+		overall_history = parent_history->branch_experiment_history;
+	} else {
+		overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	}
+	overall_history->instance_count++;
+	if (!overall_history->has_target) {
+		double target_probability;
+		if (overall_history->instance_count > this->average_instances_per_run) {
+			target_probability = 0.5;
+		} else {
+			target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - overall_history->instance_count));
+		}
+		uniform_real_distribution<double> distribution(0.0, 1.0);
+		if (distribution(generator) < target_probability) {
+			is_target = true;
+		}
+	}
+
+	if (is_target) {
+		overall_history->has_target = true;
+
+		explore_target_activate(curr_node,
+								problem,
+								context,
+								exit_depth,
+								exit_node,
+								run_helper);
+	}
+}
+
+void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 											   Problem& problem,
 											   vector<ContextLayer>& context,
 											   int& exit_depth,
-											   int& exit_node_id,
+											   AbstractNode*& exit_node,
 											   RunHelper& run_helper) {
 	double predicted_score = this->existing_average_score;
 
@@ -77,16 +117,21 @@ void BranchExperiment::explore_target_activate(int& curr_node_id,
 		}
 	}
 
-	BranchExperimentOverallHistory* history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
-	history->has_target = true;
-	history->existing_predicted_score = predicted_score;
+	PassThroughExperimentOverallHistory* overall_history;
+	if (this->parent_pass_through_experiment != NULL) {
+		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+		overall_history = parent_history->branch_experiment_history;
+	} else {
+		overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	}
+	overall_history->existing_predicted_score = predicted_score;
 
 	{
 		// exit
 		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
 		int rand_index = distribution(generator);
 		this->curr_exit_depth = this->possible_exits[rand_index].first;
-		this->curr_exit_node_id = this->possible_exits[rand_index].second;
+		this->curr_exit_node = this->possible_exits[rand_index].second;
 	}
 
 	{
@@ -95,7 +140,7 @@ void BranchExperiment::explore_target_activate(int& curr_node_id,
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
 		if (this->curr_exit_depth == 0
-				&& this->curr_exit_node_id == curr_node_id) {
+				&& this->curr_exit_node == curr_node) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -137,10 +182,10 @@ void BranchExperiment::explore_target_activate(int& curr_node_id,
 
 	{
 		if (this->curr_exit_depth == 0) {
-			curr_node_id = this->curr_exit_node_id;
+			curr_node = this->curr_exit_node;
 		} else {
 			exit_depth = this->curr_exit_depth-1;
-			exit_node_id = this->curr_exit_node_id;
+			exit_node = this->curr_exit_node;
 		}
 	}
 }
@@ -163,7 +208,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_actions = this->curr_actions;
 			this->best_sequences = this->curr_sequences;
 			this->best_exit_depth = this->curr_exit_depth;
-			this->best_exit_node_id = this->curr_exit_node_id;
+			this->best_exit_node = this->curr_exit_node;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
@@ -189,8 +234,16 @@ void BranchExperiment::explore_backprop(double target_val,
 			 */
 			cout << "this->best_surprise: " << this->best_surprise << endl;
 			if (this->best_surprise > 0.0) {
+				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						this->best_actions[s_index]->id = containing_scope->node_counter;
+						containing_scope->node_counter++;
+					} else {
+						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
+						this->best_sequences[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
+						containing_scope->node_counter++;
+
 						this->best_sequences[s_index]->scope->id = solution->scope_counter;
 						solution->scope_counter++;
 					}
@@ -215,7 +268,7 @@ void BranchExperiment::explore_backprop(double target_val,
 				cout << endl;
 
 				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);

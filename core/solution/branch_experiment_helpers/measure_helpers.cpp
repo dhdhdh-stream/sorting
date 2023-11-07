@@ -19,11 +19,11 @@
 using namespace std;
 
 void BranchExperiment::measure_activate(
-		int& curr_node_id,
+		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		int& exit_node_id,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	double original_score = this->existing_average_score;
 	double branch_score = this->new_average_score;
@@ -111,11 +111,11 @@ void BranchExperiment::measure_activate(
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
 				this->best_actions[s_index]->activate(
-					curr_node_id
+					curr_node,
 					problem,
 					context,
 					exit_depth,
-					exit_node_id,
+					exit_node,
 					run_helper,
 					action_node_history);
 				delete action_node_history;
@@ -130,10 +130,10 @@ void BranchExperiment::measure_activate(
 		}
 
 		if (this->best_exit_depth == 0) {
-			curr_node_id = this->best_exit_node_id;
+			curr_node = this->best_exit_node;
 		} else {
 			exit_depth = this->best_exit_depth-1;
-			exit_node_id = this->best_exit_node_id;
+			exit_node = this->best_exit_node;
 		}
 	}
 }
@@ -164,7 +164,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 		cout << endl;
 
 		cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-		cout << "this->best_exit_node_id: " << this->best_exit_node_id << endl;
+		cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score / this->existing_average_score;

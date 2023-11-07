@@ -13,11 +13,11 @@
 
 using namespace std;
 
-void ActionNode::activate(int& curr_node_id,
+void ActionNode::activate(AbstractNode*& curr_node,
 						  Problem& problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
-						  int& exit_node_id,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	problem.perform_action(this->action);
@@ -96,14 +96,14 @@ void ActionNode::activate(int& curr_node_id,
 		}
 	}
 
-	curr_node_id = this->next_node_id;
+	curr_node = this->next_node;
 
 	if (this->experiment != NULL) {
-		this->experiment->activate(curr_node_id,
+		this->experiment->activate(curr_node,
 								   problem,
 								   context,
 								   exit_depth,
-								   exit_node_id,
+								   exit_node,
 								   run_helper,
 								   history->experiment_history);
 	}

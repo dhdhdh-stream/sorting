@@ -68,99 +68,95 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	new_branch_node->original_score_mod = this->existing_average_score;
 	new_branch_node->branch_score_mod = this->new_average_score;
 
-	// HERE
-
-	Scope* parent = solution->scopes[this->scope_context[0]];
-	double score_standard_deviation = sqrt(parent->score_variance);
-	for (int s_index = 0; s_index < this->containing_scope_num_input_states; s_index++) {
-		if (abs(this->existing_starting_input_state_weights[s_index] - this->new_starting_input_state_weights[s_index]) > MIN_SCORE_IMPACT*score_standard_deviation) {
-			new_branch_node->decision_state_is_local.push_back(false);
-			new_branch_node->decision_state_indexes.push_back(s_index);
-			new_branch_node->decision_original_weights.push_back(this->existing_starting_input_state_weights[s_index]);
-			new_branch_node->decision_branch_weights.push_back(this->new_starting_input_state_weights[s_index]);
-		}
-	}
-
-	for (int s_index = 0; s_index < this->containing_scope_num_local_states; s_index++) {
-		if (abs(this->existing_starting_local_state_weights[s_index] - this->new_starting_local_state_weights[s_index]) > MIN_SCORE_IMPACT*score_standard_deviation) {
-			new_branch_node->decision_state_is_local.push_back(true);
-			new_branch_node->decision_state_indexes.push_back(s_index);
-			new_branch_node->decision_original_weights.push_back(this->existing_starting_local_state_weights[s_index]);
-			new_branch_node->decision_branch_weights.push_back(this->new_starting_local_state_weights[s_index]);
-		}
-	}
+	finalize_branch_node_states(new_branch_node,
+								this->existing_input_state_weights,
+								this->existing_local_state_weights,
+								this->existing_temp_state_weights,
+								this->new_input_state_weights,
+								this->new_local_state_weights,
+								this->new_temp_state_weights,
+								input_scope_depths_mappings,
+								output_scope_depths_mappings);
 
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = action_node->next_node_id;
+		new_branch_node->original_next_node = action_node->next_node;
 
-		action_node->next_node_id = new_branch_node->id;
-	} else if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_SCOPE) {
+		action_node->next_node = new_branch_node;
+	} else {
 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = scope_node->next_node_id;
+		new_branch_node->original_next_node = scope_node->next_node;
 
-		scope_node->next_node_id = new_branch_node->id;
-	} else {
-		BranchNode* branch_node = (BranchNode*)containing_scope->nodes[this->node_context.back()];
-
-		if (branch_node->experiment_is_branch) {
-			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
-
-			branch_node->branch_next_node_id = new_branch_node->id;
-		} else {
-			new_branch_node->original_next_node_id = branch_node->original_next_node_id;
-
-			branch_node->original_next_node_id = new_branch_node->id;
-		}
+		scope_node->next_node = new_branch_node;
 	}
-	new_branch_node->branch_next_node_id = (int)containing_scope->nodes.size();
 
-	map<int, ScopeNode*> sequence_scope_node_mappings;
+	if (this->best_step_types.size() == 0) {
+		new_branch_node->branch_next_node = new_exit_node;
+	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+		new_branch_node->branch_next_node = this->best_actions[0]->id;
+	} else {
+		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder->id;
+	}
+
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = (int)containing_scope->nodes.size();
-			containing_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = (int)containing_scope->nodes.size();
+		AbstractNode* next_node;
+		if (s_index == (int)this->best_step_types.size()-1) {
+			next_node = new_exit_node;
 		} else {
-			ScopeNode* new_sequence_scope_node = finalize_sequence(
-				this->scope_context,
-				this->node_context,
-				this->best_sequences[s_index],
-				input_scope_depths_mappings,
-				output_scope_depths_mappings);
-			new_sequence_scope_node->id = (int)containing_scope->nodes.size();
-			containing_scope->nodes.push_back(new_sequence_scope_node);
+			if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+				next_node = this->best_actions[s_index+1];
+			} else {
+				next_node = this->best_sequences[s_index+1]->scope_node_placeholder;
+			}
+		}
 
-			new_sequence_scope_node->next_node_id = (int)containing_scope->nodes.size();
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			containing_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
+
+			this->best_actions[s_index]->next_node = next_node;
+		} else {
+			finalize_sequence(this->scope_context,
+							  this->node_context,
+							  this->best_sequences[s_index],
+							  input_scope_depths_mappings,
+							  output_scope_depths_mappings);
+			ScopeNode* new_sequence_scope_node = this->best_sequences[s_index]->scope_node_placeholder;
+			this->best_sequences[s_index]->scope_node_placeholder = NULL;
+			containing_scope->nodes[new_sequence_scope_node->id] = new_sequence_scope_node;
+
+			new_sequence_scope_node->next_node = next_node;
 
 			delete this->best_sequences[s_index];
 
 			containing_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
-
-			sequence_scope_node_mappings[new_sequence_scope_node->inner_scope->id] = new_sequence_scope_node;
 		}
 	}
 	this->best_actions.clear();
 	this->best_sequences.clear();
 
 	new_exit_node->exit_depth = this->best_exit_depth;
-	new_exit_node->exit_node_id = this->best_exit_node_id;
+	new_exit_node->exit_node = this->best_exit_node;
 }
 
-void BranchExperiment::new_pass_through() {
+void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
+										map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
 	cout << "new_pass_through" << endl;
 
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
-	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 
 	BranchNode* new_branch_node = new BranchNode();
-	new_branch_node->id = (int)containing_scope->nodes.size();
-	containing_scope->nodes.push_back(new_branch_node);
+	new_branch_node->id = containing_scope->node_counter;
+	containing_scope->node_counter++;
+	containing_scope->nodes[new_branch_node->id] = new_branch_node;
+
+	ExitNode* new_exit_node = new ExitNode();
+	new_exit_node->id = containing_scope->node_counter;
+	containing_scope->node_counter++;
+	containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 	new_branch_node->branch_scope_context = this->scope_context;
 	new_branch_node->branch_node_context = this->node_context;
@@ -174,99 +170,65 @@ void BranchExperiment::new_pass_through() {
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = action_node->next_node_id;
+		new_branch_node->original_next_node = action_node->next_node;
 
-		action_node->next_node_id = new_branch_node->id;
-	} else if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_SCOPE) {
+		action_node->next_node = new_branch_node;
+	} else {
 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = scope_node->next_node_id;
+		new_branch_node->original_next_node = scope_node->next_node;
 
-		scope_node->next_node_id = new_branch_node->id;
-	} else {
-		BranchNode* branch_node = (BranchNode*)containing_scope->nodes[this->node_context.back()];
-
-		if (branch_node->experiment_is_branch) {
-			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
-
-			branch_node->branch_next_node_id = new_branch_node->id;
-		} else {
-			new_branch_node->original_next_node_id = branch_node->original_next_node_id;
-
-			branch_node->original_next_node_id = new_branch_node->id;
-		}
+		scope_node->next_node = new_branch_node;
 	}
-	new_branch_node->branch_next_node_id = (int)containing_scope->nodes.size();
 
-	map<int, ScopeNode*> sequence_scope_node_mappings;
+	if (this->best_step_types.size() == 0) {
+		new_branch_node->branch_next_node = new_exit_node;
+	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+		new_branch_node->branch_next_node = this->best_actions[0]->id;
+	} else {
+		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder->id;
+	}
+
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->id = (int)containing_scope->nodes.size();
-			containing_scope->nodes.push_back(this->best_actions[s_index]);
-
-			this->best_actions[s_index]->next_node_id = (int)containing_scope->nodes.size();
+		AbstractNode* next_node;
+		if (s_index == (int)this->best_step_types.size()-1) {
+			next_node = new_exit_node;
 		} else {
-			ScopeNode* new_sequence_scope_node = finalize_sequence(
-				this->scope_context,
-				this->node_context,
-				this->best_sequences[s_index],
-				input_scope_depths_mappings,
-				output_scope_depths_mappings);
-			new_sequence_scope_node->id = (int)containing_scope->nodes.size();
-			containing_scope->nodes.push_back(new_sequence_scope_node);
+			if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+				next_node = this->best_actions[s_index+1];
+			} else {
+				next_node = this->best_sequences[s_index+1]->scope_node_placeholder;
+			}
+		}
 
-			new_sequence_scope_node->next_node_id = (int)containing_scope->nodes.size();
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			containing_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
+
+			this->best_actions[s_index]->next_node = next_node;
+		} else {
+			finalize_sequence(this->scope_context,
+							  this->node_context,
+							  this->best_sequences[s_index],
+							  input_scope_depths_mappings,
+							  output_scope_depths_mappings);
+			ScopeNode* new_sequence_scope_node = this->best_sequences[s_index]->scope_node_placeholder;
+			this->best_sequences[s_index]->scope_node_placeholder = NULL;
+			containing_scope->nodes[new_sequence_scope_node->id] = new_sequence_scope_node;
+
+			new_sequence_scope_node->next_node = next_node;
 
 			delete this->best_sequences[s_index];
 
 			containing_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
-
-			sequence_scope_node_mappings[new_sequence_scope_node->inner_scope->id] = new_sequence_scope_node;
 		}
 	}
 	this->best_actions.clear();
 	this->best_sequences.clear();
 
-	ExitNode* new_exit_node = new ExitNode();
-
-	new_exit_node->id = (int)containing_scope->nodes.size();
-	containing_scope->nodes.push_back(new_exit_node);
-
 	new_exit_node->exit_depth = this->best_exit_depth;
-	new_exit_node->exit_node_id = this->best_exit_node_id;
-
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			for (int c_index = 0; c_index < (int)this->new_state_node_contexts[s_index][n_index].size()-1; c_index++) {
-				if (this->new_state_node_contexts[s_index][n_index][c_index] == -1) {
-					int inner_scope_id = this->new_state_scope_contexts[s_index][n_index][c_index+1];
-					ScopeNode* new_sequence_scope_node = sequence_scope_node_mappings[inner_scope_id];
-					this->new_state_node_contexts[s_index][n_index][c_index] = new_sequence_scope_node->id;
-					break;
-				}
-			}
-
-			if (this->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->new_state_nodes[s_index][n_index];
-				if (this->new_state_node_contexts[s_index][n_index].back() == -1) {
-					this->new_state_node_contexts[s_index][n_index].back() = action_node->id;
-				}
-			}
-		}
-
-		add_state(parent_scope,
-				  this->new_states[s_index],
-				  this->new_state_weights[s_index],
-				  this->new_state_nodes[s_index],
-				  this->new_state_scope_contexts[s_index],
-				  this->new_state_node_contexts[s_index],
-				  this->new_state_obs_indexes[s_index]);
-
-		solution->states[this->new_states[s_index]->id] = this->new_states[s_index];
-	}
-	this->new_states.clear();
+	new_exit_node->exit_node = this->best_exit_node;
 
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		delete this->new_states[s_index];
