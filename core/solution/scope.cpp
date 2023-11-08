@@ -90,6 +90,9 @@ void Scope::load(ifstream& input_file,
 		if (type == NODE_TYPE_ACTION) {
 			ActionNode* node = new ActionNode(input_file,
 											  n_index);
+			// TODO: add
+			node->parent = this;
+			node->id = id;
 			this->nodes.push_back(node);
 		} else if (type == NODE_TYPE_SCOPE) {
 			ScopeNode* node = new ScopeNode(input_file,

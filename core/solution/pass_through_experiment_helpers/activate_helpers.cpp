@@ -288,12 +288,14 @@ void PassThroughExperiment::parent_scope_end_activate(
 }
 
 void PassThroughExperiment::backprop(double target_val,
+									 RunHelper& run_helper,
 									 PassThroughExperimentOverallHistory* history) {
 	unhook();
 
 	switch (this->state) {
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
 		measure_existing_score_backprop(target_val,
+										run_helper,
 										history);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
@@ -305,6 +307,7 @@ void PassThroughExperiment::backprop(double target_val,
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 		measure_existing_misguess_backprop(target_val,
+										   run_helper,
 										   history);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS:

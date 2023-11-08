@@ -23,6 +23,7 @@ void Solution::init() {
 	starting_scope->num_input_states = 0;
 	starting_scope->num_local_states = 0;
 	ActionNode* starting_noop_node = new ActionNode();
+	starting_noop_node->parent = starting_scope;
 	starting_noop_node->id = 0;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;

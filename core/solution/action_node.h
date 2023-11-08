@@ -12,8 +12,8 @@
 #include "run_helper.h"
 #include "state_status.h"
 
-class BranchExperiment;
-class BranchExperimentHistory;
+class AbstractExperiment;
+class AbstractExperimentHistory;
 class Sequence;
 class State;
 
@@ -58,15 +58,13 @@ public:
 	int obs_experiment_index;
 
 	ActionNode();
-	ActionNode(std::ifstream& input_file,
-			   int id);
 	~ActionNode();
 
-	void activate(int& curr_node_id,
+	void activate(AbstractNode*& curr_node,
 				  Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  int& exit_node_id,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
@@ -92,17 +90,18 @@ public:
 								ActionNodeHistory* history);
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<int, StateStatus>& experiment_score_state_vals,
+								  std::map<State*, StateStatus>& temp_state_vals,
 								  ActionNodeHistory* history);
 
-	void view_activate(int& curr_node_id,
+	void view_activate(AbstractNode*& curr_node,
 					   Problem& problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
-					   int& exit_node_id,
+					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
 	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
 	void save_for_display(std::ofstream& output_file);
 };
 

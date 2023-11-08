@@ -4,24 +4,26 @@ using namespace std;
 
 void BranchExperiment::finalize(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	double branch_weight = (double)this->branch_count / (double)this->branch_possible;
-	if (branch_weight > 0.99) {
-		new_pass_through(input_scope_depths_mappings,
-						 output_scope_depths_mappings);
-	} else {
-		new_branch(input_scope_depths_mappings,
-				   output_scope_depths_mappings);
+	if (this->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+		if (branch_weight > 0.99) {
+			new_pass_through(input_scope_depths_mappings,
+							 output_scope_depths_mappings);
+		} else {
+			new_branch(input_scope_depths_mappings,
+					   output_scope_depths_mappings);
+		}
+
+		ofstream solution_save_file;
+		solution_save_file.open("saves/solution.txt");
+		solution->save(solution_save_file);
+		solution_save_file.close();
+
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
 	}
-
-	ofstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->save(solution_save_file);
-	solution_save_file.close();
-
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
 }
 
 void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
@@ -50,11 +52,13 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 	BranchNode* new_branch_node = new BranchNode();
+	new_branch_node->parent = containing_scope;
 	new_branch_node->id = containing_scope->node_counter;
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_branch_node->id] = new_branch_node;
 
 	ExitNode* new_exit_node = new ExitNode();
+	new_exit_node->parent = containing_scope;
 	new_exit_node->id = containing_scope->node_counter;
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_exit_node->id] = new_exit_node;
@@ -95,9 +99,9 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	if (this->best_step_types.size() == 0) {
 		new_branch_node->branch_next_node = new_exit_node;
 	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-		new_branch_node->branch_next_node = this->best_actions[0]->id;
+		new_branch_node->branch_next_node = this->best_actions[0];
 	} else {
-		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder->id;
+		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
 	}
 
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -149,11 +153,13 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 	BranchNode* new_branch_node = new BranchNode();
+	new_branch_node->parent = containing_scope;
 	new_branch_node->id = containing_scope->node_counter;
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_branch_node->id] = new_branch_node;
 
 	ExitNode* new_exit_node = new ExitNode();
+	new_exit_node->parent = containing_scope;
 	new_exit_node->id = containing_scope->node_counter;
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_exit_node->id] = new_exit_node;
@@ -184,9 +190,9 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	if (this->best_step_types.size() == 0) {
 		new_branch_node->branch_next_node = new_exit_node;
 	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-		new_branch_node->branch_next_node = this->best_actions[0]->id;
+		new_branch_node->branch_next_node = this->best_actions[0];
 	} else {
-		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder->id;
+		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
 	}
 
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;

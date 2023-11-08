@@ -239,12 +239,14 @@ void BranchExperiment::unhook() {
 }
 
 void BranchExperiment::backprop(double target_val,
+								RunHelper& run_helper,
 								BranchExperimentOverallHistory* history) {
 	unhook();
 
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
+								run_helper,
 								history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:

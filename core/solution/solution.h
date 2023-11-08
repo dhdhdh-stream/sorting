@@ -13,8 +13,6 @@ const int STARTING_NUM_DATAPOINTS = 1000;
 
 class Solution {
 public:
-	double average_score;
-
 	int state_counter;
 	std::map<int, State*> states;
 	/**
@@ -36,8 +34,6 @@ public:
 	int depth_limit;
 
 	/**
-	 * - for least squares, ObsExperiment, and measure
-	 * 
 	 * - double every 20 failures
 	 */
 	int curr_num_datapoints;

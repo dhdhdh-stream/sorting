@@ -166,10 +166,12 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						this->best_actions[s_index]->parent = containing_scope;
 						this->best_actions[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 					} else {
 						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
+						this->best_sequences[s_index]->scope_node_placeholder->parent = containing_scope;
 						this->best_sequences[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 

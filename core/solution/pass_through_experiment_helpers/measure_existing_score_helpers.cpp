@@ -7,7 +7,7 @@ void PassThroughExperiment::measure_existing_score_activate(
 	context[context.size() - this->scope_context.size()]
 		.scope_history->inner_pass_through_experiment = this;
 
-	for (int c_index = 0; c_index < this->scope_context.size(); c_index++) {
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		ScopeHistory* scope_history = context[context.size()-1 - c_index].scope_history;
 		scope_history->experiment_iter_index = (int)scope_history.size()-1;
 		scope_history->experiment_node_index = (int)scope_history.back().size()-1;
@@ -28,13 +28,12 @@ void PassThroughExperiment::measure_existing_score_parent_scope_end_activate(
 	history->instance_count++;
 }
 
-void possible_exits_helper(set<pair<int, int>>& s_possible_exits,
+void possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
 						   int curr_exit_depth,
 						   ScopeHistory* scope_history) {
 	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = scope_history->experiment_node_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			int node_id = scope_history->node_histories[i_index][h_index]->node->id;
-			s_possible_exits.insert({curr_exit_depth, node_id});
+			s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
 		}
 	}
 
@@ -48,11 +47,24 @@ void possible_exits_helper(set<pair<int, int>>& s_possible_exits,
 
 void PassThroughExperiment::measure_existing_score_backprop(
 		double target_val,
+		RunHelper& run_helper,
 		PassThroughExperimentOverallHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
+	}
+
+	if (!run_helper.exceeded_depth) {
+		if (run_helper.max_depth > solution->max_depth) {
+			solution->max_depth = run_helper.max_depth;
+
+			if (solution->max_depth < 50) {
+				solution->depth_limit = solution->max_depth + 10;
+			} else {
+				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+			}
+		}
 	}
 
 	if (this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
@@ -196,16 +208,19 @@ void PassThroughExperiment::measure_existing_score_backprop(
 								i_scope_histories,
 								obs_experiment_target_vals);
 
-		set<pair<int, int>> s_possible_exits;
+		set<pair<int, AbstractNode*>> s_possible_exits;
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			possible_exits_helper(s_possible_exits,
 								  this->scope_context.size()-1,
 								  this->i_scope_histories[i_index]);
 		}
 		this->possible_exits.reserve(s_possible_exits.size());
-		for (set<pair<int, int>>::iterator it = s_possible_exits.begin();
+		for (set<pair<int, AbstractNode*>>::iterator it = s_possible_exits.begin();
 				it != s_possible_exits.end(); it++) {
 			this->possible_exits.push_back(*it);
+		}
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			this->possible_exits.push_back({c_index, NULL});
 		}
 
 		this->o_target_val_histories.clear();

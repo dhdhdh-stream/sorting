@@ -68,7 +68,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 		this->i_target_val_histories.push_back(target_val);
 	}
 
-	if (this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
@@ -110,11 +110,13 @@ void PassThroughExperiment::measure_new_score_backprop(
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 			BranchNode* new_branch_node = new BranchNode();
+			new_branch_node->parent = containing_scope;
 			new_branch_node->id = containing_scope->node_counter;
 			containing_scope->node_counter++;
 			containing_scope->nodes[new_branch_node->id] = new_branch_node;
 
 			ExitNode* new_exit_node = new ExitNode();
+			new_exit_node->parent = containing_scope;
 			new_exit_node->id = containing_scope->node_counter;
 			containing_scope->node_counter++;
 			containing_scope->nodes[new_exit_node->id] = new_exit_node;

@@ -9,6 +9,12 @@
 using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context) {
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		ScopeHistory* scope_history = context[context.size()-1 - c_index].scope_history;
+		scope_history->experiment_iter_index = (int)scope_history.size()-1;
+		scope_history->experiment_node_index = (int)scope_history.back().size()-1;
+	}
+
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
@@ -51,6 +57,7 @@ void possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
 }
 
 void BranchExperiment::train_existing_backprop(double target_val,
+											   RunHelper& run_helper,
 											   BranchExperimentOverallHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
@@ -59,6 +66,18 @@ void BranchExperiment::train_existing_backprop(double target_val,
 	}
 
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+
+	if (!run_helper.exceeded_depth) {
+		if (run_helper.max_depth > solution->max_depth) {
+			solution->max_depth = run_helper.max_depth;
+
+			if (solution->max_depth < 50) {
+				solution->depth_limit = solution->max_depth + 10;
+			} else {
+				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+			}
+		}
+	}
 
 	if (this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
@@ -291,6 +310,9 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		for (set<pair<int, AbstractNode*>>::iterator it = s_possible_exits.begin();
 				it != s_possible_exits.end(); it++) {
 			this->possible_exits.push_back(*it);
+		}
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			this->possible_exits.push_back({c_index, NULL});
 		}
 		if (this->parent_pass_through_experiment != NULL) {
 			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;

@@ -893,6 +893,7 @@ Sequence* create_sequence(Problem& problem,
 
 	new_scope->node_counter = 0;
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
+		new_nodes[n_index]->parent = new_scope;
 		new_nodes[n_index]->id = new_scope->node_counter;
 		new_scope->node_counter++;
 		new_scope->nodes[new_nodes[n_index]->id] = new_nodes[n_index];
@@ -919,4 +920,47 @@ Sequence* create_sequence(Problem& problem,
 	new_sequence->scope = new_scope;
 
 	return new_sequence;
+}
+
+ScopeNode* create_root_halfway_start(Problem& problem,
+									 vector<ContextLayer>& context,
+									 RunHelper& run_helper) {
+	vector<AbstractNode*> starting_halfway_nodes;
+	random_halfway_start(solution->root_starting_node,
+						 starting_halfway_nodes);
+
+	ScopeNode* new_starting_scope_node = new ScopeNode();
+
+	new_starting_scope_node->inner_scope = solution->root;
+	new_starting_scope_node->starting_nodes = starting_halfway_nodes;
+
+	vector<AbstractNode*> starting_nodes_copy = starting_halfway_nodes;
+
+	vector<map<int, StateStatus>> halfway_inner_input_state_vals(starting_halfway_nodes.size());
+	vector<map<int, StateStatus>> halfway_inner_local_state_vals(starting_halfway_nodes.size());
+
+	/**
+	 * - simply leave all state_vals as 0.0
+	 */
+
+	// unused
+	AbstractNode* inner_curr_node;
+	int inner_exit_depth = -1;
+	AbstractNode* inner_exit_node = NULL;
+
+	ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(solution->root_starting_node);
+	solution->root_starting_node->halfway_activate(
+		starting_nodes_copy,
+		halfway_inner_input_state_vals,
+		halfway_inner_local_state_vals,
+		inner_curr_node,
+		problem,
+		context,
+		inner_exit_depth,
+		inner_exit_node,
+		run_helper,
+		scope_node_history);
+	delete scope_node_history;
+
+	return scope_node;
 }
