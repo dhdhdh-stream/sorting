@@ -21,6 +21,7 @@ public:
 	std::set<AbstractExperiment*> experiments_seen;
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
+	void* selected_experiment;
 	AbstractExperimentHistory* experiment_history;
 
 	RunHelper() {

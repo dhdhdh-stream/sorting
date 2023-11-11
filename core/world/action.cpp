@@ -7,7 +7,7 @@
 using namespace std;
 
 Action::Action() {
-	this->move = ACTION_NONE;
+	this->move = ACTION_NOOP;
 }
 
 Action::Action(int move) {

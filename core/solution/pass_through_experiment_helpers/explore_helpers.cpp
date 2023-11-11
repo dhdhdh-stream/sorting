@@ -1,5 +1,17 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "abstract_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+
 using namespace std;
 
 const int EXPLORE_ITERS = 500;
@@ -210,7 +222,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
 				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_SCORE;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;

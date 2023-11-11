@@ -2,8 +2,11 @@
 #define BRANCH_EXPERIMENT_H
 
 #include <map>
+#include <set>
+#include <utility>
 #include <vector>
 
+#include "abstract_experiment.h"
 #include "context_layer.h"
 #include "problem.h"
 #include "run_helper.h"
@@ -12,6 +15,7 @@
 class AbstractNode;
 class ActionNode;
 class ActionNodeHistory;
+class PassThroughExperiment;
 class ScopeHistory;
 class Sequence;
 class SequenceHistory;
@@ -26,7 +30,7 @@ const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
 const int BRANCH_EXPERIMENT_STATE_FAIL = 5;
 const int BRANCH_EXPERIMENT_STATE_SUCCESS = 6;
 
-class BranchExperimentHistory;
+class BranchExperimentOverallHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
 	PassThroughExperiment* parent_pass_through_experiment;
@@ -50,9 +54,6 @@ public:
 	double existing_score_variance;
 
 	std::vector<std::pair<int, AbstractNode*>> possible_exits;
-
-	double existing_average_score;
-	double existing_score_variance;
 
 	std::vector<std::map<int, double>> existing_input_state_weights;
 	std::vector<std::map<int, double>> existing_local_state_weights;
@@ -91,7 +92,7 @@ public:
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
 	std::vector<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
-	std::vector<std::vector<std::map<int, StateStatus>>> i_temp_state_vals_histories;
+	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::vector<double> i_target_val_histories;
 
 	BranchExperiment(std::vector<int> scope_context,
@@ -106,15 +107,28 @@ public:
 				  RunHelper& run_helper,
 				  AbstractExperimentHistory*& history);
 	void hook(std::vector<ContextLayer>& context);
+	void hook_helper(std::vector<int>& scope_context,
+					 std::vector<int>& node_context,
+					 std::map<State*, StateStatus>& temp_state_vals,
+					 ScopeHistory* scope_history);
+	void hook_experiment_helper(std::vector<int>& scope_context,
+								std::vector<int>& node_context,
+								std::map<State*, StateStatus>& temp_state_vals,
+								AbstractExperimentHistory* experiment_history);
 	void unhook();
 	void backprop(double target_val,
 				  RunHelper& run_helper,
 				  BranchExperimentOverallHistory* history);
 
-	void train_existing_activate(std::vector<ContextLayer>& context);
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper,
 								 BranchExperimentOverallHistory* history);
+
+	void possible_exits_helper(std::set<std::pair<int, AbstractNode*>>& s_possible_exits,
+							   int curr_exit_depth,
+							   ScopeHistory* scope_history);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem& problem,
@@ -151,8 +165,8 @@ public:
 									   AbstractNode*& exit_node,
 									   RunHelper& run_helper,
 									   AbstractExperimentHistory*& history);
-	void train_backprop(double target_val,
-						BranchExperimentOverallHistory* history);
+	void train_new_backprop(double target_val,
+							BranchExperimentOverallHistory* history);
 
 	void measure_activate(AbstractNode*& curr_node,
 						  Problem& problem,

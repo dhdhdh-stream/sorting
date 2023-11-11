@@ -65,7 +65,7 @@ void ScopeNode::rnn_vals_back_activate(vector<int>& scope_context,
 
 void ScopeNode::experiment_back_activate(vector<int>& scope_context,
 										 vector<int>& node_context,
-										 map<State, StateStatus>& temp_state_vals,
+										 map<State*, StateStatus>& temp_state_vals,
 										 ScopeNodeHistory* history) {
 	// don't need to check if is_early_exit as history->obs_snapshots will be empty if so
 

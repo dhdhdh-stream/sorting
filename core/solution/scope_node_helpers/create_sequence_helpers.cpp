@@ -93,8 +93,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_sequence->input_inner_indexes.push_back(new_state_index);
 						new_sequence->input_scope_depths.push_back(-1);
-						new_sequence->input_outer_is_local.push_back(false);
-						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_outer_types.push_back(-1);
+						new_sequence->input_outer_indexes.push_back(NULL);
 						new_sequence->input_init_vals.push_back(0.0);
 					}
 				} else {
@@ -115,8 +115,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 				new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_sequence->input_inner_indexes.push_back(new_state_index);
 				new_sequence->input_scope_depths.push_back(-1);
-				new_sequence->input_outer_is_local.push_back(false);
-				new_sequence->input_outer_indexes.push_back(-1);
+				new_sequence->input_outer_types.push_back(-1);
+				new_sequence->input_outer_indexes.push_back(NULL);
 				new_sequence->input_init_vals.push_back(this->input_init_vals[i_index]);
 			}
 		}
@@ -177,8 +177,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_sequence->input_inner_indexes.push_back(new_state_index);
 						new_sequence->input_scope_depths.push_back(-1);
-						new_sequence->input_outer_is_local.push_back(false);
-						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_outer_types.push_back(-1);
+						new_sequence->input_outer_indexes.push_back(NULL);
 						new_sequence->input_init_vals.push_back(0.0);
 					}
 					new_node->input_init_vals.push_back(0.0);
@@ -255,8 +255,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 					new_sequence->input_inner_indexes.push_back(new_state_index);
 					new_sequence->input_scope_depths.push_back(-1);
-					new_sequence->input_outer_is_local.push_back(-1);
-					new_sequence->input_outer_indexes.push_back(-1);
+					new_sequence->input_outer_types.push_back(-1);
+					new_sequence->input_outer_indexes.push_back(NULL);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
 			} else {
@@ -327,8 +327,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 					new_sequence->input_inner_indexes.push_back(new_state_index);
 					new_sequence->input_scope_depths.push_back(-1);
-					new_sequence->input_outer_is_local.push_back(-1);
-					new_sequence->input_outer_indexes.push_back(-1);
+					new_sequence->input_outer_types.push_back(-1);
+					new_sequence->input_outer_indexes.push_back(NULL);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
 				new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);
@@ -391,8 +391,8 @@ void ScopeNode::halfway_create_sequence_activate(
 						new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_sequence->input_inner_indexes.push_back(new_state_index);
 						new_sequence->input_scope_depths.push_back(-1);
-						new_sequence->input_outer_is_local.push_back(-1);
-						new_sequence->input_outer_indexes.push_back(-1);
+						new_sequence->input_outer_types.push_back(-1);
+						new_sequence->input_outer_indexes.push_back(NULL);
 						new_sequence->input_init_vals.push_back(0.0);
 					}
 				} else {
@@ -517,8 +517,8 @@ void ScopeNode::halfway_create_sequence_activate(
 					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 					new_sequence->input_inner_indexes.push_back(new_state_index);
 					new_sequence->input_scope_depths.push_back(-1);
-					new_sequence->input_outer_is_local.push_back(-1);
-					new_sequence->input_outer_indexes.push_back(-1);
+					new_sequence->input_outer_types.push_back(-1);
+					new_sequence->input_outer_indexes.push_back(NULL);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
 			} else {
@@ -587,8 +587,8 @@ void ScopeNode::halfway_create_sequence_activate(
 					new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 					new_sequence->input_inner_indexes.push_back(new_state_index);
 					new_sequence->input_scope_depths.push_back(-1);
-					new_sequence->input_outer_is_local.push_back(-1);
-					new_sequence->input_outer_indexes.push_back(-1);
+					new_sequence->input_outer_types.push_back(-1);
+					new_sequence->input_outer_indexes.push_back(NULL);
 					new_sequence->input_init_vals.push_back(0.0);
 				}
 				new_node->state_obs_indexes.push_back(this->state_obs_indexes[n_index]);

@@ -37,8 +37,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
-class BranchExperimentHistory;
-class ObsExperiment;
+class PassThroughExperiment;
 class Sequence;
 class State;
 

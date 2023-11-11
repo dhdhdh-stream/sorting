@@ -1,5 +1,9 @@
 #include "exit_node.h"
 
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 ExitNode::ExitNode() {
@@ -26,7 +30,7 @@ void ExitNode::load(ifstream& input_file) {
 	getline(input_file, exit_node_parent_id_line);
 	this->exit_node_parent_id = stoi(exit_node_parent_id_line);
 
-	string exit_node_id_line
+	string exit_node_id_line;
 	getline(input_file, exit_node_id_line);
 	this->exit_node_id = stoi(exit_node_id_line);
 }

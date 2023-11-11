@@ -11,7 +11,9 @@ const int OUTER_TYPE_INPUT = 0;
 const int OUTER_TYPE_LOCAL = 1;
 const int OUTER_TYPE_TEMP = 2;
 
+class AbstractNode;
 class Scope;
+class ScopeNode;
 class ScopeHistory;
 
 class SequenceHistory;

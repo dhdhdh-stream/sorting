@@ -1,5 +1,14 @@
 #include "pass_through_experiment.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(
@@ -78,7 +87,8 @@ PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
 	if (original->branch_experiment_history == NULL) {
 		this->branch_experiment_history = NULL;
 	} else {
-		this->branch_experiment_history = new BranchExperimentInstanceHistory(original->branch_experiment_history);
+		BranchExperimentInstanceHistory* original_branch_experiment_history = (BranchExperimentInstanceHistory*)original->branch_experiment_history;
+		this->branch_experiment_history = new BranchExperimentInstanceHistory(original_branch_experiment_history);
 	}
 
 	this->post_step_histories = vector<void*>(original->post_step_histories.size());

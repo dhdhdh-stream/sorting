@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "scale.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "sequence.h"
@@ -25,12 +25,12 @@ void BranchExperiment::explore_activate(AbstractNode*& curr_node,
 										AbstractNode*& exit_node,
 										RunHelper& run_helper) {
 	bool is_target = false;
-	PassThroughExperimentOverallHistory* overall_history;
+	BranchExperimentOverallHistory* overall_history;
 	if (this->parent_pass_through_experiment != NULL) {
 		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
 		overall_history = parent_history->branch_experiment_history;
 	} else {
-		overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
 	}
 	overall_history->instance_count++;
 	if (!overall_history->has_target) {
@@ -117,12 +117,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	PassThroughExperimentOverallHistory* overall_history;
+	BranchExperimentOverallHistory* overall_history;
 	if (this->parent_pass_through_experiment != NULL) {
 		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
 		overall_history = parent_history->branch_experiment_history;
 	} else {
-		overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
 	}
 	overall_history->existing_predicted_score = predicted_score;
 

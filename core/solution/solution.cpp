@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
-#include "scale.h"
+#include "outer_experiment.h"
 #include "scope.h"
 #include "state.h"
 
@@ -43,8 +43,8 @@ void Solution::init() {
 	starting_noop_node->id = 0;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
-	starting_noop_node->next_node = NULL
-	starting_scope->nodes.push_back(starting_noop_node);
+	starting_noop_node->next_node = NULL;
+	starting_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;

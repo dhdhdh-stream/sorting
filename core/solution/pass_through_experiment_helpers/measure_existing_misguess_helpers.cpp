@@ -1,5 +1,10 @@
 #include "pass_through_experiment.h"
 
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
+#include "state_network.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_existing_misguess_activate(

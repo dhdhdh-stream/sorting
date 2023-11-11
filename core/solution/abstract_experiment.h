@@ -1,9 +1,18 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include <vector>
+
+#include "context_layer.h"
+#include "problem.h"
+#include "run_helper.h"
+
+class AbstractNode;
+
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 
+class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
 	int type;
@@ -14,11 +23,11 @@ public:
 	double average_remaining_experiments_from_start;
 
 	virtual ~AbstractExperiment() {};
-	virtual void activate(int& curr_node_id,
+	virtual void activate(AbstractNode*& curr_node,
 						  Problem& problem,
-						  vector<ContextLayer>& context,
+						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
-						  int& exit_node_id,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  AbstractExperimentHistory*& history) = 0;
 };

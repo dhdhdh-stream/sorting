@@ -1,6 +1,25 @@
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "problem.h"
+#include "run_helper.h"
+
+class ActionNode;
+class AbstractNode;
+class BranchExperiment;
+class BranchExperimentInstanceHistory;
+class BranchExperimentOverallHistory;
+class ScopeHistory;
+class Sequence;
+class State;
+
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
 /**
@@ -21,6 +40,7 @@ const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
 const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 7;
 const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 8;
 
+class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
 	int state;
@@ -37,14 +57,14 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<Sequence*> curr_sequences;
 	int curr_exit_depth;
-	int curr_exit_node_id;
+	AbstractNode* curr_exit_node;
 
 	double best_score;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<Sequence*> best_sequences;
 	int best_exit_depth;
-	int best_exit_node_id;
+	AbstractNode* best_exit_node;
 
 	double new_average_score;
 
@@ -111,6 +131,10 @@ public:
 				  RunHelper& run_helper,
 				  AbstractExperimentHistory*& history);
 	void hook(std::vector<ContextLayer>& context);
+	void hook_helper(std::vector<int>& scope_context,
+					 std::vector<int>& node_context,
+					 std::map<State*, StateStatus>& temp_state_vals,
+					 ScopeHistory* scope_history);
 	void unhook();
 	void parent_scope_end_activate(std::vector<ContextLayer>& context,
 								   RunHelper& run_helper,
@@ -127,6 +151,10 @@ public:
 	void measure_existing_score_backprop(double target_val,
 										 RunHelper& run_helper,
 										 PassThroughExperimentOverallHistory* history);
+
+	void possible_exits_helper(std::set<std::pair<int, AbstractNode*>>& s_possible_exits,
+							   int curr_exit_depth,
+							   ScopeHistory* scope_history);
 
 	void explore_initial_activate(AbstractNode*& curr_node,
 								  Problem& problem,
@@ -188,6 +216,7 @@ public:
 							 RunHelper& run_helper,
 							 AbstractExperimentHistory*& history);
 	void experiment_backprop(double target_val,
+							 RunHelper& run_helper,
 							 PassThroughExperimentOverallHistory* history);
 };
 
@@ -197,7 +226,7 @@ public:
 
 	std::vector<void*> pre_step_histories;
 
-	BranchExperimentInstanceHistory* branch_experiment_history;
+	AbstractExperimentHistory* branch_experiment_history;
 
 	std::vector<void*> post_step_histories;
 

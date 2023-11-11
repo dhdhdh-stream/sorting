@@ -1,5 +1,14 @@
 #include "pass_through_experiment.h"
 
+#include <Eigen/Dense>
+
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "state_network.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_existing_score_activate(
@@ -9,8 +18,8 @@ void PassThroughExperiment::measure_existing_score_activate(
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		ScopeHistory* scope_history = context[context.size()-1 - c_index].scope_history;
-		scope_history->experiment_iter_index = (int)scope_history.size()-1;
-		scope_history->experiment_node_index = (int)scope_history.back().size()-1;
+		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
+		scope_history->experiment_index = (int)scope_history->node_histories.back().size()-1;
 	}
 }
 
@@ -28,19 +37,20 @@ void PassThroughExperiment::measure_existing_score_parent_scope_end_activate(
 	history->instance_count++;
 }
 
-void possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
-						   int curr_exit_depth,
-						   ScopeHistory* scope_history) {
+void PassThroughExperiment::possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
+												  int curr_exit_depth,
+												  ScopeHistory* scope_history) {
 	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = scope_history->experiment_node_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
+		for (int h_index = scope_history->experiment_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
 		}
 	}
 
 	if (curr_exit_depth > 0) {
 		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history
-			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_node_index];
-		possible_exits_helper(curr_exit_depth-1,
+			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_index];
+		possible_exits_helper(s_possible_exits,
+							  curr_exit_depth-1,
 							  scope_node_history->inner_scope_history);
 	}
 }
@@ -67,7 +77,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 		}
 	}
 
-	if (this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];

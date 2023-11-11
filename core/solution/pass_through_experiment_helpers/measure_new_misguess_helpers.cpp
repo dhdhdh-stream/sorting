@@ -1,5 +1,18 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_new_misguess_activate(
@@ -92,8 +105,8 @@ void PassThroughExperiment::measure_new_misguess_activate(
 		}
 	}
 
-	PassThroughExperimentOverallHistory* history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-	history->predicted_scores.push_back(predicted_score);
+	PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	overall_history->predicted_scores.push_back(predicted_score);
 }
 
 void PassThroughExperiment::measure_new_misguess_backprop(
@@ -108,9 +121,8 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		int num_instances = (int)this->i_misguess_histories.size();
 
 		double sum_misguess = 0.0;
-		for (list<double>::iterator it = this->i_misguess_histories.begin();
-				it != this->i_misguess_histories.end(); it++) {
-			sum_misguess += *it;
+		for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+			sum_misguess += this->i_misguess_histories[i_index];
 		}
 		this->new_average_misguess = sum_misguess / num_instances;
 
@@ -144,10 +156,10 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			this->branch_experiment = new BranchExperiment(
 				this->scope_context,
 				this->node_context);
-			if (this->best_step_types[rand_step_index] == STEP_TYPE_ACTION) {
-				this->branch_experiment->node_context.back() = this->best_actions[rand_step_index]->id;
+			if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
+				this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index]->id;
 			} else {
-				this->branch_experiment->node_context.back() = this->best_sequences[rand_step_index]->scope_node_placeholder->id;
+				this->branch_experiment->node_context.back() = this->best_sequences[this->branch_experiment_step_index]->scope_node_placeholder->id;
 			}
 			this->branch_experiment->parent_pass_through_experiment = this;
 

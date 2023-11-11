@@ -4,10 +4,7 @@ using namespace std;
 
 void OuterExperiment::activate(Problem& problem,
 							   RunHelper& run_helper) {
-	run_helper.experiment_history = this;
-	/**
-	 * - to prevent other experiments
-	 */
+	run_helper.selected_experiment = this;
 
 	switch (this->state) {
 	case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:

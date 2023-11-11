@@ -52,6 +52,7 @@ public:
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
+	void link();
 	void save_for_display(std::ofstream& output_file);
 };
 

@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"

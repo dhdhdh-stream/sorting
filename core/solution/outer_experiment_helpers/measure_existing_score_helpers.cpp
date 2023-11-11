@@ -1,5 +1,9 @@
 #include "outer_experiment.h"
 
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 void OuterExperiment::measure_existing_score_activate(
@@ -22,15 +26,15 @@ void OuterExperiment::measure_existing_score_activate(
 	int exit_depth = -1;
 	AbstractNode* exit_node = NULL;
 
-	root->activate(starting_nodes,
-				   starting_input_state_vals,
-				   starting_local_state_vals,
-				   problem,
-				   context,
-				   exit_depth,
-				   exit_node,
-				   run_helper,
-				   root_history);
+	solution->root->activate(starting_nodes,
+							 starting_input_state_vals,
+							 starting_local_state_vals,
+							 problem,
+							 context,
+							 exit_depth,
+							 exit_node,
+							 run_helper,
+							 root_history);
 }
 
 void OuterExperiment::measure_existing_score_backprop(

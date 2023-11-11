@@ -1,5 +1,18 @@
 #include "pass_through_experiment.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 const int NUM_EXPERIMENTS = 20;
@@ -11,12 +24,13 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												AbstractNode*& exit_node,
 												RunHelper& run_helper,
 												AbstractExperimentHistory*& history) {
-	history = new PassThroughExperimentInstanceHistory(this);
+	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
+	history = instance_history;
 
 	for (int s_index = 0; s_index < this->branch_experiment_step_index+1; s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-			history->pre_step_histories.push_back(action_node_history);
+			instance_history->pre_step_histories.push_back(action_node_history);
 			this->best_actions[s_index]->activate(
 				curr_node,
 				problem,
@@ -27,7 +41,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				action_node_history);
 		} else {
 			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			history->pre_step_histories.push_back(sequence_history);
+			instance_history->pre_step_histories.push_back(sequence_history);
 			this->best_sequences[s_index]->activate(problem,
 													context,
 													run_helper,
@@ -41,7 +55,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 									  exit_depth,
 									  exit_node,
 									  run_helper,
-									  history->branch_experiment_history);
+									  instance_history->branch_experiment_history);
 
 	if (exit_depth == -1) {
 		map<AbstractNode*, int>::iterator it = this->node_to_step_index.find(curr_node);
@@ -49,7 +63,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 			for (int s_index = it->second; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-					history->post_step_histories.push_back(action_node_history);
+					instance_history->post_step_histories.push_back(action_node_history);
 					this->best_actions[s_index]->activate(
 						curr_node,
 						problem,
@@ -60,7 +74,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 						action_node_history);
 				} else {
 					SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-					history->post_step_histories.push_back(sequence_history);
+					instance_history->post_step_histories.push_back(sequence_history);
 					this->best_sequences[s_index]->activate(problem,
 															context,
 															run_helper,
@@ -80,9 +94,11 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 
 void PassThroughExperiment::experiment_backprop(
 		double target_val,
+		RunHelper& run_helper,
 		PassThroughExperimentOverallHistory* history) {
 	if (history->branch_experiment_history != NULL) {
 		this->branch_experiment->backprop(target_val,
+										  run_helper,
 										  history->branch_experiment_history);
 
 		if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
@@ -240,10 +256,10 @@ void PassThroughExperiment::experiment_backprop(
 				this->branch_experiment = new BranchExperiment(
 					this->scope_context,
 					this->node_context);
-				if (this->best_step_types[rand_step_index] == STEP_TYPE_ACTION) {
-					this->branch_experiment->node_context.back() = this->best_actions[rand_step_index]->id;
+				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
+					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index]->id;
 				} else {
-					this->branch_experiment->node_context.back() = this->best_sequences[rand_step_index]->scope_node_placeholder->id;
+					this->branch_experiment->node_context.back() = this->best_sequences[this->branch_experiment_step_index]->scope_node_placeholder->id;
 				}
 				this->branch_experiment->parent_pass_through_experiment = this;
 			}

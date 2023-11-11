@@ -1,5 +1,20 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 void BranchExperiment::finalize(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
@@ -109,8 +124,6 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
 	}
 
-	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
-	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		AbstractNode* next_node;
 		if (s_index == (int)this->best_step_types.size()-1) {
@@ -216,8 +229,6 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 		new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
 	}
 
-	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
-	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		AbstractNode* next_node;
 		if (s_index == (int)this->best_step_types.size()-1) {

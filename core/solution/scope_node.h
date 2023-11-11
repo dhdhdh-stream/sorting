@@ -152,7 +152,7 @@ public:
 								ScopeNodeHistory* history);
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
-								  std::map<int, StateStatus>& experiment_score_state_vals,
+								  std::map<State*, StateStatus>& experiment_score_state_vals,
 								  ScopeNodeHistory* history);
 
 	void view_activate(AbstractNode*& curr_node,

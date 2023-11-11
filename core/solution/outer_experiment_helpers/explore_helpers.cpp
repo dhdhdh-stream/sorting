@@ -1,5 +1,16 @@
 #include "outer_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+
 using namespace std;
 
 const int EXPLORE_ITERS = 500;
@@ -87,8 +98,6 @@ void OuterExperiment::explore_backprop(double target_val) {
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_sequences = this->curr_sequences;
-			this->best_exit_depth = this->curr_exit_depth;
-			this->best_exit_node = this->curr_exit_node;
 			this->best_root_scope_nodes = this->curr_root_scope_nodes;
 
 			this->curr_score = 0.0;
@@ -120,20 +129,16 @@ void OuterExperiment::explore_backprop(double target_val) {
 			cout << "Outer" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
 			if (this->best_score > 0.0) {
-				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						this->best_actions[s_index]->parent = containing_scope;
 						this->best_actions[s_index]->id = 1 + s_index;
 					} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
 						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
-						this->best_sequences[s_index]->scope_node_placeholder->parent = containing_scope;
 						this->best_sequences[s_index]->scope_node_placeholder->id = 1 + s_index;
 
 						this->best_sequences[s_index]->scope->id = solution->scope_counter;
 						solution->scope_counter++;
 					} else {
-						this->best_root_scope_nodes[s_index]->parent = containing_scope;
 						this->best_root_scope_nodes[s_index]->id = 1 + s_index;
 					}
 				}

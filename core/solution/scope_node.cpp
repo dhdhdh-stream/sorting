@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
 #include "state.h"

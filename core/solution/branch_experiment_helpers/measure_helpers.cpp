@@ -8,7 +8,6 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
-#include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "sequence.h"
@@ -25,8 +24,8 @@ void BranchExperiment::measure_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	double original_score = this->existing_average_score;
-	double branch_score = this->new_average_score;
+	double original_predicted_score = this->existing_average_score;
+	double branch_predicted_score = this->new_average_score;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();

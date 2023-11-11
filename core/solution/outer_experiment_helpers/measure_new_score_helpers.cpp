@@ -1,5 +1,16 @@
 #include "outer_experiment.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+
 using namespace std;
 
 void OuterExperiment::measure_new_score_activate(
@@ -97,7 +108,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			starting_noop_node->parent = new_root_scope;
 			starting_noop_node->id = 0;
 			starting_noop_node->action = Action(ACTION_NOOP);
-			new_root_scope->nodes[0] = starting_noop_node
+			new_root_scope->nodes[0] = starting_noop_node;
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
@@ -119,6 +130,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 				}
 
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					this->best_actions[s_index]->parent = new_root_scope;
 					new_root_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 
 					this->best_actions[s_index]->next_node_id = next_node_id;
@@ -126,6 +138,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 				} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
 					ScopeNode* new_sequence_scope_node = this->best_sequences[s_index]->scope_node_placeholder;
 					this->best_sequences[s_index]->scope_node_placeholder = NULL;
+					new_sequence_scope_node->parent = new_root_scope;
 					new_root_scope->nodes[new_sequence_scope_node->id] = new_sequence_scope_node;
 
 					solution->scopes[this->best_sequences[s_index]->scope->id] = this->best_sequences[s_index]->scope;
@@ -143,6 +156,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 
 					new_root_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
 				} else {
+					this->best_root_scope_nodes[s_index]->parent = new_root_scope;
 					new_root_scope->nodes[this->best_root_scope_nodes[s_index]->id] = this->best_root_scope_nodes[s_index];
 
 					this->best_root_scope_nodes[s_index]->next_node_id = next_node_id;

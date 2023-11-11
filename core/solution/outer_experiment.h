@@ -8,6 +8,15 @@
 #ifndef OUTER_EXPERIMENT_H
 #define OUTER_EXPERIMENT_H
 
+#include <vector>
+
+#include "problem.h"
+#include "run_helper.h"
+
+class ActionNode;
+class ScopeNode;
+class Sequence;
+
 const int OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 
 const int OUTER_EXPERIMENT_STATE_EXPLORE = 1;

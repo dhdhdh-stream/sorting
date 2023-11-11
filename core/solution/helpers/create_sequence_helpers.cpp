@@ -152,14 +152,14 @@ Sequence* create_sequence(Problem& problem,
 				it != context.back().input_state_vals.end(); it++) {
 			possible_input_scope_depths.push_back(0);
 			possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
-			possible_input_outer_indexes.push_back(it->first);
+			possible_input_outer_indexes.push_back((void*)((long)it->first));
 		}
 
 		for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
 				it != context.back().local_state_vals.end(); it++) {
 			possible_input_scope_depths.push_back(0);
 			possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
-			possible_input_outer_indexes.push_back(it->first);
+			possible_input_outer_indexes.push_back((void*)((long)it->first));
 		}
 
 		for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
@@ -196,7 +196,7 @@ Sequence* create_sequence(Problem& problem,
 			if (!passed_down) {
 				possible_input_scope_depths.push_back(c_index);
 				possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_input_outer_indexes.push_back(it->first);
+				possible_input_outer_indexes.push_back((void*)((long)it->first));
 			}
 		}
 
@@ -216,7 +216,7 @@ Sequence* create_sequence(Problem& problem,
 			if (!passed_down) {
 				possible_input_scope_depths.push_back(c_index);
 				possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_input_outer_indexes.push_back(it->first);
+				possible_input_outer_indexes.push_back((void*)((long)it->first));
 			}
 		}
 
@@ -297,7 +297,7 @@ Sequence* create_sequence(Problem& problem,
 				possible_inner_indexes.push_back(s_index);
 			}
 
-			ScopeNode* scope_node = (ScopeNode*)curr_scope->nodes[starting_halfway_nodes[l_index]];
+			ScopeNode* scope_node = (ScopeNode*)starting_halfway_nodes[l_index];
 			curr_scope = scope_node->inner_scope;
 		}
 		{
@@ -373,13 +373,13 @@ Sequence* create_sequence(Problem& problem,
 					StateStatus value;
 					if (possible_input_outer_types[rand_input] == OUTER_TYPE_INPUT) {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.input_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.input_state_vals.find((long)possible_input_outer_indexes[rand_input])->second;
 					} else if (possible_input_outer_types[rand_input] == OUTER_TYPE_LOCAL) {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.local_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.local_state_vals.find((long)possible_input_outer_indexes[rand_input])->second;
 					} else {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.temp_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.temp_state_vals.find((State*)possible_input_outer_indexes[rand_input])->second;
 					}
 
 					int new_state_index;
@@ -431,7 +431,7 @@ Sequence* create_sequence(Problem& problem,
 					new_sequence->input_types.push_back(INPUT_TYPE_STATE);
 					new_sequence->input_inner_indexes.push_back(new_state_index);
 					new_sequence->input_scope_depths.push_back(possible_input_scope_depths[rand_input]);
-					new_sequence->input_outer_types.push_back(possible_input_outer_typesl[rand_input]);
+					new_sequence->input_outer_types.push_back(possible_input_outer_types[rand_input]);
 					new_sequence->input_outer_indexes.push_back(possible_input_outer_indexes[rand_input]);
 					new_sequence->input_init_vals.push_back(0.0);
 
@@ -605,7 +605,7 @@ Sequence* create_sequence(Problem& problem,
 			possible_inner_indexes.push_back(s_index);
 		}
 
-		int num_inputs_to_consider = (int)(SET_INPUT_PERCENTAGE*(double)possible_inner_layers.size());
+		int num_inputs_to_consider = (int)(SET_INPUT_PERCENTAGE*(double)possible_inner_is_local.size());
 
 		uniform_int_distribution<int> empty_distribution(0, 1);
 		uniform_int_distribution<int> input_type_distribution(0, 1);
@@ -642,13 +642,13 @@ Sequence* create_sequence(Problem& problem,
 					StateStatus value;
 					if (possible_input_outer_types[rand_input] == OUTER_TYPE_INPUT) {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.input_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.input_state_vals.find((long)possible_input_outer_indexes[rand_input])->second;
 					} else if (possible_input_outer_types[rand_input] == OUTER_TYPE_LOCAL) {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.local_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.local_state_vals.find((long)possible_input_outer_indexes[rand_input])->second;
 					} else {
 						value = context[context.size()-1 - possible_input_scope_depths[rand_input]]
-							.temp_state_vals.find(possible_input_outer_indexes[rand_input])->second;
+							.temp_state_vals.find((State*)possible_input_outer_indexes[rand_input])->second;
 					}
 
 					if (possible_inner_is_local[rand_target]) {
@@ -752,13 +752,13 @@ Sequence* create_sequence(Problem& problem,
 					it != context.back().input_state_vals.end(); it++) {
 				possible_output_scope_depths.push_back(0);
 				possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_output_outer_indexes.push_back(it->first);
+				possible_output_outer_indexes.push_back((void*)((long)it->first));
 			}
 
 			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
 				possible_output_scope_depths.push_back(0);
 				possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_output_outer_indexes.push_back(s_index);
+				possible_output_outer_indexes.push_back((void*)((long)s_index));
 			}
 
 			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
@@ -788,7 +788,7 @@ Sequence* create_sequence(Problem& problem,
 				if (!passed_out) {
 					possible_output_scope_depths.push_back(c_index);
 					possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-					possible_output_outer_indexes.push_back(it->first);
+					possible_output_outer_indexes.push_back((void*)((long)it->first));
 				}
 			}
 
@@ -805,7 +805,7 @@ Sequence* create_sequence(Problem& problem,
 				if (!passed_out) {
 					possible_output_scope_depths.push_back(c_index);
 					possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-					possible_output_outer_indexes.push_back(s_index);
+					possible_output_outer_indexes.push_back((void*)((long)s_index));
 				}
 			}
 
@@ -838,7 +838,7 @@ Sequence* create_sequence(Problem& problem,
 				for (int i_index = 0; i_index < (int)new_sequence->input_types.size(); i_index++) {
 					if (new_sequence->input_types[i_index] == INPUT_TYPE_STATE) {
 						if (new_sequence->input_scope_depths[i_index] == possible_output_scope_depths[rand_target]
-								&& new_sequence->input_outer_is_local[i_index] == possible_output_outer_is_local[rand_target]
+								&& new_sequence->input_outer_types[i_index] == possible_output_outer_types[rand_target]
 								&& new_sequence->input_outer_indexes[i_index] == possible_output_outer_indexes[rand_target]) {
 							input_indexes.push_back(new_sequence->input_inner_indexes[i_index]);
 						}
@@ -860,13 +860,13 @@ Sequence* create_sequence(Problem& problem,
 
 					if (possible_output_outer_types[rand_target] == OUTER_TYPE_INPUT) {
 						context[context.size()-1 - possible_output_scope_depths[rand_target]]
-							.input_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+							.input_state_vals[(long)possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
 					} else if (possible_output_outer_types[rand_target] == OUTER_TYPE_LOCAL) {
 						context[context.size()-1 - possible_output_scope_depths[rand_target]]
-							.local_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+							.local_state_vals[(long)possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
 					} else {
 						context[context.size()-1 - possible_output_scope_depths[rand_target]]
-							.temp_state_vals[possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
+							.temp_state_vals[(State*)possible_output_outer_indexes[rand_target]] = possible_inner_outputs[input_index];
 					}
 
 					new_sequence->output_inner_indexes.push_back(input_index);
@@ -932,13 +932,16 @@ Sequence* create_sequence(Problem& problem,
 ScopeNode* create_root_halfway_start(Problem& problem,
 									 vector<ContextLayer>& context,
 									 RunHelper& run_helper) {
-	vector<AbstractNode*> starting_halfway_nodes;
-	random_halfway_start(solution->root_starting_node,
-						 starting_halfway_nodes);
-
 	ScopeNode* new_starting_scope_node = new ScopeNode();
 
 	new_starting_scope_node->inner_scope = solution->root;
+	new_starting_scope_node->starting_nodes = vector<AbstractNode*>{solution->root_starting_node};
+
+	vector<AbstractNode*> starting_halfway_nodes;
+	random_halfway_start(new_starting_scope_node,
+						 starting_halfway_nodes);
+
+	// reset starting_nodes
 	new_starting_scope_node->starting_nodes = starting_halfway_nodes;
 	for (int l_index = 0; l_index < (int)starting_halfway_nodes.size(); l_index++) {
 		new_starting_scope_node->starting_node_parent_ids.push_back(starting_halfway_nodes[l_index]->parent->id);
@@ -959,8 +962,8 @@ ScopeNode* create_root_halfway_start(Problem& problem,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(solution->root_starting_node);
-	solution->root_starting_node->halfway_activate(
+	ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_starting_scope_node);
+	new_starting_scope_node->halfway_activate(
 		starting_nodes_copy,
 		halfway_inner_input_state_vals,
 		halfway_inner_local_state_vals,
@@ -973,5 +976,5 @@ ScopeNode* create_root_halfway_start(Problem& problem,
 		scope_node_history);
 	delete scope_node_history;
 
-	return scope_node;
+	return new_starting_scope_node;
 }

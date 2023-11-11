@@ -11,6 +11,8 @@
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
+#include "outer_experiment.h"
+#include "pass_through_experiment.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -93,15 +95,15 @@ int main(int argc, char* argv[]) {
 				int exit_depth = -1;
 				AbstractNode* exit_node = NULL;
 
-				root->activate(starting_nodes,
-							   starting_input_state_vals,
-							   starting_local_state_vals,
-							   problem,
-							   context,
-							   exit_depth,
-							   exit_node,
-							   run_helper,
-							   root_history);
+				solution->root->activate(starting_nodes,
+										 starting_input_state_vals,
+										 starting_local_state_vals,
+										 problem,
+										 context,
+										 exit_depth,
+										 exit_node,
+										 run_helper,
+										 root_history);
 
 				double target_val;
 				if (!run_helper.exceeded_depth) {
@@ -123,7 +125,7 @@ int main(int argc, char* argv[]) {
 						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment_history->experiment;
 						branch_experiment->backprop(target_val,
 													run_helper,
-													run_helper.experiment_history);
+													(BranchExperimentOverallHistory*)run_helper.experiment_history);
 
 						if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
 							is_success = true;
@@ -153,7 +155,7 @@ int main(int argc, char* argv[]) {
 						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_history->experiment;
 						pass_through_experiment->backprop(target_val,
 														  run_helper,
-														  run_helper.experiment_history);
+														  (PassThroughExperimentOverallHistory*)run_helper.experiment_history);
 
 						if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
 							is_success = true;

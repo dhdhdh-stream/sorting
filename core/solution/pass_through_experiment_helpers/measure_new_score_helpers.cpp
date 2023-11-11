@@ -1,5 +1,21 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_new_score_activate(
@@ -10,12 +26,13 @@ void PassThroughExperiment::measure_new_score_activate(
 		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
-	history = new PassThroughExperimentInstanceHistory(this);
+	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
+	history = instance_history;
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-			history->pre_step_histories.push_back(action_node_history);
+			instance_history->pre_step_histories.push_back(action_node_history);
 			this->best_actions[s_index]->activate(
 				curr_node,
 				problem,
@@ -26,7 +43,7 @@ void PassThroughExperiment::measure_new_score_activate(
 				action_node_history);
 		} else {
 			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			history->pre_step_histories.push_back(sequence_history);
+			instance_history->pre_step_histories.push_back(sequence_history);
 			this->best_sequences[s_index]->activate(problem,
 													context,
 													run_helper,
@@ -46,17 +63,17 @@ void PassThroughExperiment::measure_new_score_activate(
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
 	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
-	for (int c_index = 0; c_index < this->scope_context.size(); c_index++) {
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		input_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].input_state_vals;
 		local_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].local_state_vals;
 		temp_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].temp_state_vals;
 	}
-	this->i_input_state_vals_histories.push_back(context.back().input_state_vals);
-	this->i_local_state_vals_histories.push_back(context.back().local_state_vals);
-	this->i_temp_state_vals_histories.push_back(context.back().temp_state_vals);
+	this->i_input_state_vals_histories.push_back(input_state_vals_snapshot);
+	this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);
+	this->i_temp_state_vals_histories.push_back(temp_state_vals_snapshot);
 
-	PassThroughExperimentOverallHistory* history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-	history->instance_count++;
+	PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	overall_history->instance_count++;
 }
 
 void PassThroughExperiment::measure_new_score_backprop(
@@ -152,11 +169,11 @@ void PassThroughExperiment::measure_new_score_backprop(
 				new_branch_node->branch_next_node_id = new_exit_node->id;
 				new_branch_node->branch_next_node = new_exit_node;
 			} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				new_branch_node->branch_next_node_id = this->best_actions[s_index]->id;
-				new_branch_node->branch_next_node = this->best_actions[s_index];
+				new_branch_node->branch_next_node_id = this->best_actions[0]->id;
+				new_branch_node->branch_next_node = this->best_actions[0];
 			} else {
-				new_branch_node->branch_next_node_id = this->best_sequences[s_index]->scope_node_placeholder->id;
-				new_branch_node->branch_next_node = this->best_sequences[s_index]->scope_node_placeholder;
+				new_branch_node->branch_next_node_id = this->best_sequences[0]->scope_node_placeholder->id;
+				new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
 			}
 
 			map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -241,7 +258,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			}
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
 				Scope* scope = solution->scopes[this->scope_context[c_index]];
-				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
 
 				map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 				while (it != p_input_state_vals[c_index].end()) {
@@ -287,7 +304,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			}
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
 				Scope* scope = solution->scopes[this->scope_context[c_index]];
-				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
 
 				map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 				while (it != p_local_state_vals[c_index].end()) {
@@ -310,14 +327,14 @@ void PassThroughExperiment::measure_new_score_backprop(
 				}
 			}
 
-			map<State*, vector<double>> p_temp_state_vals;
+			vector<map<State*, vector<double>>> p_temp_state_vals(this->scope_context.size());
 			for (int i_index = 0; i_index < num_instances; i_index++) {
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<State*, StateStatus>::iterator m_it = this->i_temp_state_vals_histories[i_index][c_index].begin();
 							m_it != this->i_temp_state_vals_histories[i_index][c_index].end(); m_it++) {
-						map<State*, vector<double>>::iterator p_it = p_temp_state_vals.find(m_it->first);
-						if (p_it == p_temp_state_vals.end()) {
-							p_it = p_temp_state_vals.insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
+						map<State*, vector<double>>::iterator p_it = p_temp_state_vals[c_index].find(m_it->first);
+						if (p_it == p_temp_state_vals[c_index].end()) {
+							p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 						}
 
 						StateNetwork* last_network = m_it->second.last_network;

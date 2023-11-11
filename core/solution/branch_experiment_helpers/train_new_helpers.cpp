@@ -1,14 +1,15 @@
 #include "branch_experiment.h"
 
 #include <iostream>
+#include <Eigen/Dense>
 
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "obs_experiment.h"
-#include "scale.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "sequence.h"
 #include "solution.h"
 #include "state.h"
@@ -29,7 +30,13 @@ void BranchExperiment::train_new_activate(
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
 	bool is_target = false;
-	PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+	BranchExperimentOverallHistory* overall_history;
+	if (this->parent_pass_through_experiment != NULL) {
+		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+		overall_history = parent_history->branch_experiment_history;
+	} else {
+		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
+	}
 	overall_history->instance_count++;
 	if (!overall_history->has_target) {
 		double target_probability;
@@ -54,7 +61,7 @@ void BranchExperiment::train_new_activate(
 								  exit_node,
 								  run_helper);
 	} else {
-		if (this->state != BRANCH_EXPERIMENT_STATE_TRAIN_PRE) {
+		if (this->state != BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE) {
 			train_new_non_target_activate(curr_node,
 										  problem,
 										  context,
@@ -77,15 +84,15 @@ void BranchExperiment::train_new_target_activate(
 
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
-	vecotr<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
+	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		input_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].input_state_vals;
 		local_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].local_state_vals;
 		temp_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].temp_state_vals;
 	}
-	this->i_input_state_vals_histories.push_back(context.back().input_state_vals);
-	this->i_local_state_vals_histories.push_back(context.back().local_state_vals);
-	this->i_temp_state_vals_histories.push_back(context.back().temp_state_vals);
+	this->i_input_state_vals_histories.push_back(input_state_vals_snapshot);
+	this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);
+	this->i_temp_state_vals_histories.push_back(temp_state_vals_snapshot);
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -125,8 +132,8 @@ void BranchExperiment::train_new_non_target_activate(
 		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		AbstractExperimentHistory*& history) {
-	double original_score = this->existing_average_score;
-	double branch_score = this->new_average_score;
+	double original_predicted_score = this->existing_average_score;
+	double branch_predicted_score = this->new_average_score;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
@@ -213,12 +220,13 @@ void BranchExperiment::train_new_non_target_activate(
 	}
 
 	if (branch_predicted_score > original_predicted_score) {
-		history = new BranchExperimentInstanceHistory(this);
+		BranchExperimentInstanceHistory* branch_experiment_history = new BranchExperimentInstanceHistory(this);
+		history = branch_experiment_history;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-				history->step_histories.push_back(action_node_history);
+				branch_experiment_history->step_histories.push_back(action_node_history);
 				this->best_actions[s_index]->activate(
 					curr_node,
 					problem,
@@ -229,7 +237,7 @@ void BranchExperiment::train_new_non_target_activate(
 					action_node_history);
 			} else {
 				SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-				history->step_histories.push_back(sequence_history);
+				branch_experiment_history->step_histories.push_back(sequence_history);
 				this->best_sequences[s_index]->activate(problem,
 														context,
 														run_helper,
@@ -253,7 +261,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 	if (history->has_target) {
 		this->i_target_val_histories.push_back(target_val);
 
-		if (this->i_target_val_histories.size() >= solution->curr_num_datapoints) {
+		if ((int)this->i_target_val_histories.size() >= solution->curr_num_datapoints) {
 			double sum_scores = 0.0;
 			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
 				sum_scores += this->i_target_val_histories[i_index];
@@ -283,7 +291,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 			}
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
 				Scope* scope = solution->scopes[this->scope_context[c_index]];
-				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
 
 				map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 				while (it != p_input_state_vals[c_index].end()) {
@@ -329,7 +337,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 			}
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
 				Scope* scope = solution->scopes[this->scope_context[c_index]];
-				ScopeNode* scope_node = scope->nodes[this->node_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
 
 				map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 				while (it != p_local_state_vals[c_index].end()) {
@@ -352,14 +360,14 @@ void BranchExperiment::train_new_backprop(double target_val,
 				}
 			}
 
-			map<State*, vector<double>> p_temp_state_vals;
+			vector<map<State*, vector<double>>> p_temp_state_vals(this->scope_context.size());
 			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<State*, StateStatus>::iterator m_it = this->i_temp_state_vals_histories[i_index][c_index].begin();
 							m_it != this->i_temp_state_vals_histories[i_index][c_index].end(); m_it++) {
-						map<State*, vector<double>>::iterator p_it = p_temp_state_vals.find(m_it->first);
-						if (p_it == p_temp_state_vals.end()) {
-							p_it = p_temp_state_vals.insert({m_it->first, vector<double>(solution->curr_num_datapoints, 0.0)}).first;
+						map<State*, vector<double>>::iterator p_it = p_temp_state_vals[c_index].find(m_it->first);
+						if (p_it == p_temp_state_vals[c_index].end()) {
+							p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(solution->curr_num_datapoints, 0.0)}).first;
 						}
 
 						StateNetwork* last_network = m_it->second.last_network;
@@ -474,17 +482,17 @@ void BranchExperiment::train_new_backprop(double target_val,
 			this->i_temp_state_vals_histories.clear();
 			this->i_target_val_histories.clear();
 
-			if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN_PRE) {
+			if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE) {
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
 				this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
 				this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
 				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-				this->state = BRANCH_EXPERIMENT_STATE_TRAIN;
+				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
-				// this->state == BRANCH_EXPERIMENT_STATE_TRAIN
+				// this->state == BRANCH_EXPERIMENT_STATE_TRAIN_NEW
 				this->state_iter++;
 				if (this->state_iter >= TRAIN_NEW_ITERS) {
 					double score_standard_deviation = sqrt(this->existing_score_variance);

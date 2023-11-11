@@ -7,61 +7,62 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
 
-void Scope::node_activate_helper(int iter_index,
-								 AbstractNode*& curr_node,
-								 Problem& problem,
-								 vector<ContextLayer>& context,
-								 int& exit_depth,
-								 AbstractNode*& exit_node,
-								 RunHelper& run_helper,
-								 ScopeHistory* history) {
+void node_activate_helper(int iter_index,
+						  AbstractNode*& curr_node,
+						  Problem& problem,
+						  vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper,
+						  ScopeHistory* history) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)curr_node;
-		ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
-		history->node_histories[iter_index].push_back(action_node_history);
-		action_node->activate(curr_node,
-							  problem,
-							  context,
-							  exit_depth,
-							  exit_node,
-							  run_helper,
-							  action_node_history);
+		ActionNode* node = (ActionNode*)curr_node;
+		ActionNodeHistory* node_history = new ActionNodeHistory(node);
+		history->node_histories[iter_index].push_back(node_history);
+		node->activate(curr_node,
+					   problem,
+					   context,
+					   exit_depth,
+					   exit_node,
+					   run_helper,
+					   node_history);
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)curr_node;
-		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
-		history->node_histories[iter_index].push_back(scope_node_history);
-		scope_node->activate(curr_node,
-							 problem,
-							 context,
-							 exit_depth,
-							 exit_node,
-							 run_helper,
-							 scope_node_history);
+		ScopeNode* node = (ScopeNode*)curr_node;
+		ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
+		history->node_histories[iter_index].push_back(node_history);
+		node->activate(curr_node,
+					   problem,
+					   context,
+					   exit_depth,
+					   exit_node,
+					   run_helper,
+					   node_history);
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
-		BranchNode* branch_node = (BranchNode*)curr_node;
+		BranchNode* node = (BranchNode*)curr_node;
 
 		bool is_branch;
-		branch_node->activate(is_branch,
-							  context);
+		node->activate(is_branch,
+					   context);
 
 		if (is_branch) {
-			curr_node = branch_node->branch_next_node;
+			curr_node = node->branch_next_node;
 		} else {
-			curr_node = branch_node->original_next_node;
+			curr_node = node->original_next_node;
 		}
 	} else {
-		ExitNode* exit_node = (ExitNode*)curr_node;
+		ExitNode* node = (ExitNode*)curr_node;
 
-		if (exit_node->exit_depth == 0) {
-			curr_node = exit_node->exit_node;
+		if (node->exit_depth == 0) {
+			curr_node = node->exit_node;
 		} else {
-			exit_depth = exit_node->exit_depth-1;
-			exit_node = exit_node->exit_node;
+			exit_depth = node->exit_depth-1;
+			exit_node = node->exit_node;
 		}
 	}
 }

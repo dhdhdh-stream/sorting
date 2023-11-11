@@ -1,5 +1,13 @@
 #include "helpers.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "globals.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void create_experiment_helper(vector<int>& scope_context,
@@ -76,7 +84,7 @@ void create_branch_experiment(ScopeHistory* root_history) {
 		uniform_int_distribution<int> next_distribution(0, 1);
 		int context_size = 1;
 		while (true) {
-			if (context_size < possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+			if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
 				context_size++;
 			} else {
 				break;
@@ -123,7 +131,7 @@ void create_pass_through_experiment(ScopeHistory* root_history) {
 		uniform_int_distribution<int> next_distribution(0, 1);
 		int context_size = 1;
 		while (true) {
-			if (context_size < possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+			if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
 				context_size++;
 			} else {
 				break;

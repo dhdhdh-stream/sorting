@@ -49,8 +49,8 @@ void ActionNode::create_sequence_activate(
 				new_sequence->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_sequence->input_inner_indexes.push_back(new_state_index);
 				new_sequence->input_scope_depths.push_back(-1);
-				new_sequence->input_outer_is_local.push_back(false);
-				new_sequence->input_outer_indexes.push_back(-1);
+				new_sequence->input_outer_types.push_back(-1);
+				new_sequence->input_outer_indexes.push_back(NULL);
 				new_sequence->input_init_vals.push_back(0.0);
 			}
 			new_node->state_defs.push_back(this->state_defs[n_index]);

@@ -1,5 +1,21 @@
 #include "helpers.h"
 
+#include <iostream>
+
+#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "flat_network.h"
+#include "globals.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "sequence.h"
+#include "solution.h"
+#include "state.h"
+#include "state_network.h"
+
 using namespace std;
 
 /**
@@ -607,7 +623,7 @@ void flat(vector<double>& flat_vals,
 	int stride_size = (int)nodes.size();
 	FlatNetwork flat_network(stride_size);
 
-	uniform_int_distribution<int> distribution(0, NUM_DATAPOINTS-1);
+	uniform_int_distribution<int> distribution(0, solution->curr_num_datapoints-1);
 	for (int iter_index = 0; iter_index < FLAT_ITERS; iter_index++) {
 		int rand_index = distribution(generator);
 
@@ -722,7 +738,7 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 			last_network->ending_mean = 0.999*last_network->ending_mean + 0.0;
 			last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*resolved_variance;
 
-			double error = diffs[rand_index] - state_val;
+			double error = target_vals[rand_index] - state_val;
 
 			for (int o_index = (int)rnn_obs_experiment_indexes[rand_index].size() - 1; o_index >= 0; o_index--) {
 				int network_index = rnn_obs_experiment_indexes[rand_index][o_index];
@@ -734,7 +750,7 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 
 void evaluate(double& existing_average_misguess,
 			  double& existing_misguess_variance,
-			  double& new_misguess,
+			  double& new_average_misguess,
 			  vector<vector<int>>& rnn_obs_experiment_indexes,
 			  vector<vector<double>>& rnn_vals,
 			  vector<double>& target_vals,
@@ -923,7 +939,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		parent_scope->temp_state_obs_indexes.push_back(obs_indexes);
 		parent_scope->temp_state_new_local_indexes.push_back(-1);
 
-		for (int n_index = 0; n_index < nodes.size(); n_index++) {
+		for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 			if (nodes[n_index]->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)nodes[n_index];
 
@@ -947,7 +963,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 			branch_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
 		} else {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
-			pass_through_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
+			pass_through_experiment->existing_temp_state_weights[new_state] = sqrt(resolved_variance);
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {

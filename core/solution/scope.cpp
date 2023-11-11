@@ -5,10 +5,8 @@
 #include "abstract_node.h"
 #include "action_node.h"
 #include "branch_node.h"
-#include "branch_stub_node.h"
 #include "exit_node.h"
 #include "globals.h"
-#include "scale.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
@@ -166,10 +164,10 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->inner_branch_experiment_history = NULL;
+	this->inner_pass_through_experiment = NULL;
 
 	this->experiment_iter_index = -1;
-	this->experiment_node_index = -1;
+	this->experiment_index = -1;
 
 	this->exceeded_depth = false;
 }
@@ -190,7 +188,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 		}
 	}
 
-	this->inner_branch_experiment_history = NULL;
+	this->inner_pass_through_experiment = NULL;
 
 	this->experiment_iter_index = original->experiment_iter_index;
 	this->experiment_index = original->experiment_index;

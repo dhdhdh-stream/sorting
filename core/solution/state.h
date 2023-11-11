@@ -6,7 +6,6 @@
 #include <vector>
 
 class AbstractNode;
-class Scale;
 class Scope;
 class StateNetwork;
 

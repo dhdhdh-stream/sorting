@@ -12,56 +12,56 @@
 
 using namespace std;
 
-void Scope::node_view_activate_helper(int iter_index,
-									  AbstractNode*& curr_node,
-									  Problem& problem,
-									  vector<ContextLayer>& context,
-									  int& exit_depth,
-									  AbstractNode*& exit_node,
-									  RunHelper& run_helper) {
+void node_view_activate_helper(int iter_index,
+							   AbstractNode*& curr_node,
+							   Problem& problem,
+							   vector<ContextLayer>& context,
+							   int& exit_depth,
+							   AbstractNode*& exit_node,
+							   RunHelper& run_helper) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)curr_node;
-		action_node->view_activate(curr_node,
-								   problem,
-								   context,
-								   exit_depth,
-								   exit_node,
-								   run_helper);
+		ActionNode* node = (ActionNode*)curr_node;
+		node->view_activate(curr_node,
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper);
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)curr_node;
-		scope_node->view_activate(curr_node,
-								  problem,
-								  context,
-								  exit_depth,
-								  exit_node,
-								  run_helper);
+		ScopeNode* node = (ScopeNode*)curr_node;
+		node->view_activate(curr_node,
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper);
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
-		BranchNode* branch_node = (BranchNode*)curr_node;
+		BranchNode* node = (BranchNode*)curr_node;
 
 		bool is_branch;
-		branch_node->view_activate(is_branch,
-								   context);
+		node->view_activate(is_branch,
+							context);
 
 		if (is_branch) {
-			curr_node = branch_node->branch_next_node;
+			curr_node = node->branch_next_node;
 		} else {
-			curr_node = branch_node->original_next_node;
+			curr_node = node->original_next_node;
 		}
 	} else {
-		ExitNode* exit_node = (ExitNode*)curr_node;
+		ExitNode* node = (ExitNode*)curr_node;
 
 		cout << "exit node #" << curr_node->id << endl;
 
-		cout << "exit_depth: " << exit_node->exit_depth << endl;
-		cout << "exit_node_id: " << exit_node->exit_node->id << endl;
+		cout << "exit_depth: " << node->exit_depth << endl;
+		cout << "exit_node_id: " << node->exit_node->id << endl;
 
 		cout << endl;
 
-		if (exit_node->exit_depth == 0) {
-			curr_node = exit_node->exit_node;
+		if (node->exit_depth == 0) {
+			curr_node = node->exit_node;
 		} else {
-			exit_depth = exit_node->exit_depth-1;
-			exit_node = exit_node->exit_node;
+			exit_depth = node->exit_depth-1;
+			exit_node = node->exit_node;
 		}
 	}
 }

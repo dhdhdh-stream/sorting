@@ -9,37 +9,37 @@
 
 using namespace std;
 
-void Scope::node_random_activate_helper(AbstractNode*& curr_node,
-										vector<int>& scope_context,
-										vector<int>& node_context,
-										int& exit_depth,
-										AbstractNode*& exit_node,
-										int& num_nodes,
-										ScopeHistory* history) {
+void node_random_activate_helper(AbstractNode*& curr_node,
+								 vector<int>& scope_context,
+								 vector<int>& node_context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 int& num_nodes,
+								 ScopeHistory* history) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)curr_node;
+		ActionNode* node = (ActionNode*)curr_node;
 
-		ActionNodeHistory* action_node_history = new ActionNodeHistory(action_node);
-		history->node_histories[0].push_back(action_node_history);
+		ActionNodeHistory* node_history = new ActionNodeHistory(node);
+		history->node_histories[0].push_back(node_history);
 
 		num_nodes++;
 
-		curr_node = action_node->next_node;
+		curr_node = node->next_node;
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)curr_node;
+		ScopeNode* node = (ScopeNode*)curr_node;
 
 		int inner_exit_depth = -1;
 		AbstractNode* inner_exit_node = NULL;
 
-		scope_node->random_activate(scope_context,
-									node_context,
-									inner_exit_depth,
-									inner_exit_node,
-									num_nodes,
-									history->node_histories[0]);
+		node->random_activate(scope_context,
+							  node_context,
+							  inner_exit_depth,
+							  inner_exit_node,
+							  num_nodes,
+							  history->node_histories[0]);
 
 		if (inner_exit_depth == -1) {
-			curr_node = scope_node->next_node;
+			curr_node = node->next_node;
 		} else if (inner_exit_depth == 0) {
 			curr_node = inner_exit_node;
 		} else {
@@ -47,28 +47,28 @@ void Scope::node_random_activate_helper(AbstractNode*& curr_node,
 			exit_node = inner_exit_node;
 		}
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
-		BranchNode* branch_node = (BranchNode*)curr_node;
+		BranchNode* node = (BranchNode*)curr_node;
 
 		bool is_branch;
-		branch_node->random_activate(is_branch,
-									 scope_context,
-									 node_context,
-									 num_nodes,
-									 history->node_histories[0]);
+		node->random_activate(is_branch,
+							  scope_context,
+							  node_context,
+							  num_nodes,
+							  history->node_histories[0]);
 
 		if (is_branch) {
-			curr_node = branch_node->branch_next_node;
+			curr_node = node->branch_next_node;
 		} else {
-			curr_node = branch_node->original_next_node;
+			curr_node = node->original_next_node;
 		}
 	} else {
-		ExitNode* exit_node = (ExitNode*)curr_node;
+		ExitNode* node = (ExitNode*)curr_node;
 
-		if (exit_node->exit_depth == 0) {
-			curr_node = exit_node->exit_node;
+		if (node->exit_depth == 0) {
+			curr_node = node->exit_node;
 		} else {
-			exit_depth = exit_node->exit_depth-1;
-			exit_node = exit_node->exit_node;
+			exit_depth = node->exit_depth-1;
+			exit_node = node->exit_node;
 		}
 	}
 }

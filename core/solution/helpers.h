@@ -36,11 +36,11 @@ void new_obs_experiment(AbstractExperiment* experiment,
 						std::vector<ScopeHistory*>& scope_histories,
 						std::vector<double>& target_vals);
 
-ScopeNode* finalize_sequence(std::vector<int>& experiment_scope_context,
-							 std::vector<int>& experiment_node_context,
-							 Sequence* new_sequence,
-							 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-							 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+void finalize_sequence(std::vector<int>& experiment_scope_context,
+					   std::vector<int>& experiment_node_context,
+					   Sequence* new_sequence,
+					   std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+					   std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 void finalize_branch_node_states(BranchNode* branch_node,
 								 std::vector<std::map<int, double>>& existing_input_state_weights,
 								 std::vector<std::map<int, double>>& existing_local_state_weights,
