@@ -3,9 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_stub_node.h"
 #include "globals.h"
-#include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "sequence.h"
@@ -270,6 +268,10 @@ Sequence* create_sequence(Problem& problem,
 
 		new_starting_scope_node->inner_scope = original_starting_scope_node->inner_scope;
 		new_starting_scope_node->starting_nodes = starting_halfway_nodes;
+		for (int l_index = 0; l_index < (int)starting_halfway_nodes.size(); l_index++) {
+			new_starting_scope_node->starting_node_parent_ids.push_back(starting_halfway_nodes[l_index]->parent->id);
+			new_starting_scope_node->starting_node_ids.push_back(starting_halfway_nodes[l_index]->id);
+		}
 
 		vector<int> possible_inner_layers;
 		vector<bool> possible_inner_is_local;
@@ -898,18 +900,23 @@ Sequence* create_sequence(Problem& problem,
 		new_scope->node_counter++;
 		new_scope->nodes[new_nodes[n_index]->id] = new_nodes[n_index];
 
+		int next_node_id;
 		AbstractNode* next_node;
 		if (n_index == (int)new_nodes.size()-1) {
+			next_node_id = -1;
 			next_node = NULL;
 		} else {
+			next_node_id = n_index+1;
 			next_node = new_nodes[n_index+1];
 		}
 
 		if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+			action_node->next_node_id = next_node_id;
 			action_node->next_node = next_node;
 		} else {
 			ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+			scope_node->next_node_id = next_node_id;
 			scope_node->next_node = next_node;
 
 			new_scope->child_scopes.push_back(scope_node->inner_scope);
@@ -933,6 +940,10 @@ ScopeNode* create_root_halfway_start(Problem& problem,
 
 	new_starting_scope_node->inner_scope = solution->root;
 	new_starting_scope_node->starting_nodes = starting_halfway_nodes;
+	for (int l_index = 0; l_index < (int)starting_halfway_nodes.size(); l_index++) {
+		new_starting_scope_node->starting_node_parent_ids.push_back(starting_halfway_nodes[l_index]->parent->id);
+		new_starting_scope_node->starting_node_ids.push_back(starting_halfway_nodes[l_index]->id);
+	}
 
 	vector<AbstractNode*> starting_nodes_copy = starting_halfway_nodes;
 

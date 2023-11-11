@@ -38,6 +38,26 @@ public:
 
 	std::vector<double> target_val_histories;
 
+	OuterExperiment();
+	~OuterExperiment();
+
+	void activate(Problem& problem,
+				  RunHelper& run_helper);
+	void backprop(double target_val,
+				  RunHelper& run_helper);
+
+	void measure_existing_score_activate(Problem& problem,
+										 RunHelper& run_helper);
+	void measure_existing_score_backprop(double target_val,
+										 RunHelper& run_helper);
+
+	void explore_activate(Problem& problem,
+						  RunHelper& run_helper);
+	void explore_backprop(double target_val);
+
+	void measure_new_score_activate(Problem& problem,
+									RunHelper& run_helper);
+	void measure_new_score_backprop(double target_val);
 };
 
 #endif /* OUTER_EXPERIMENT_H */

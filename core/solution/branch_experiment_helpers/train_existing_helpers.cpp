@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include <iostream>
+#include <Eigen/Dense>
 
 #include "constants.h"
 #include "scope.h"

@@ -133,22 +133,29 @@ void PassThroughExperiment::measure_new_score_backprop(
 			if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
+				new_branch_node->original_next_node_id = action_node->next_node_id;
 				new_branch_node->original_next_node = action_node->next_node;
 
+				action_node->next_node_id = new_branch_node->id;
 				action_node->next_node = new_branch_node;
 			} else {
 				ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
 
+				new_branch_node->original_next_node_id = scope_node->next_node_id;
 				new_branch_node->original_next_node = scope_node->next_node;
 
+				scope_node->next_node_id = new_branch_node->id;
 				scope_node->next_node = new_branch_node;
 			}
 
 			if (this->best_step_types.size() == 0) {
+				new_branch_node->branch_next_node_id = new_exit_node->id;
 				new_branch_node->branch_next_node = new_exit_node;
 			} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				new_branch_node->branch_next_node_id = this->best_actions[s_index]->id;
 				new_branch_node->branch_next_node = this->best_actions[s_index];
 			} else {
+				new_branch_node->branch_next_node_id = this->best_sequences[s_index]->scope_node_placeholder->id;
 				new_branch_node->branch_next_node = this->best_sequences[s_index]->scope_node_placeholder;
 			}
 
@@ -169,6 +176,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					containing_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 
+					this->best_actions[s_index]->next_node_id = next_node->id;
 					this->best_actions[s_index]->next_node = next_node;
 				} else {
 					finalize_sequence(this->scope_context,
@@ -180,6 +188,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 					this->best_sequences[s_index]->scope_node_placeholder = NULL;
 					containing_scope->nodes[new_sequence_scope_node->id] = new_sequence_scope_node;
 
+					new_sequence_scope_node->next_node_id = next_node->id;
 					new_sequence_scope_node->next_node = next_node;
 
 					delete this->best_sequences[s_index];
@@ -191,6 +200,13 @@ void PassThroughExperiment::measure_new_score_backprop(
 			this->best_sequences.clear();
 
 			new_exit_node->exit_depth = this->best_exit_depth;
+			if (this->best_exit_node == NULL) {
+				new_exit_node->exit_node_parent_id = -1;
+				new_exit_node->exit_node_id = -1;
+			} else {
+				new_exit_node->exit_node_parent_id = this->best_exit_node->parent->id;
+				new_exit_node->exit_node_id = this->best_exit_node->id;
+			}
 			new_exit_node->exit_node = this->best_exit_node;
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_SUCCESS;

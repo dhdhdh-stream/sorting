@@ -4,8 +4,6 @@
 #include <fstream>
 #include <string>
 
-const int ACTION_NONE = -2;
-
 const int ACTION_NOOP = -1;
 
 const int ACTION_LEFT = 0;

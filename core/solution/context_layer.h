@@ -5,7 +5,6 @@
 
 #include "state_status.h"
 
-class BranchNode;
 class ScopeHistory;
 class State;
 

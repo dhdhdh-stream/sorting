@@ -1,7 +1,5 @@
 #include "branch_node.h"
 
-#include "globals.h"
-
 using namespace std;
 
 void BranchNode::random_activate(bool& is_branch,

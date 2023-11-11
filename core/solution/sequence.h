@@ -34,7 +34,7 @@ public:
 	std::vector<int> output_outer_types;
 	std::vector<void*> output_outer_indexes;
 
-	ScopeNode* starting_node;
+	AbstractNode* starting_node;
 	Scope* scope;
 
 	ScopeNode* scope_node_placeholder;
@@ -53,8 +53,6 @@ public:
 	Sequence* sequence;
 
 	ScopeHistory* scope_history;
-
-	// scope initially has no local state/obs_snapshots
 
 	SequenceHistory(Sequence* sequence);
 	SequenceHistory(SequenceHistory* original);

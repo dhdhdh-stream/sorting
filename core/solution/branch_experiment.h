@@ -3,7 +3,6 @@
 
 #include <map>
 #include <vector>
-#include <Eigen/Dense>
 
 #include "context_layer.h"
 #include "problem.h"
@@ -13,7 +12,6 @@
 class AbstractNode;
 class ActionNode;
 class ActionNodeHistory;
-class Scale;
 class ScopeHistory;
 class Sequence;
 class SequenceHistory;
@@ -29,7 +27,7 @@ const int BRANCH_EXPERIMENT_STATE_FAIL = 5;
 const int BRANCH_EXPERIMENT_STATE_SUCCESS = 6;
 
 class BranchExperimentHistory;
-class BranchExperiment {
+class BranchExperiment : public AbstractExperiment {
 public:
 	PassThroughExperiment* parent_pass_through_experiment;
 
@@ -100,79 +98,76 @@ public:
 					 std::vector<int> node_context);
 	~BranchExperiment();
 
-	void activate(int& curr_node_id,
+	void activate(AbstractNode*& curr_node,
 				  Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  int& exit_node_id,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  BranchExperimentHistory*& history);
+				  AbstractExperimentHistory*& history);
 	void hook(std::vector<ContextLayer>& context);
-	void hook_helper(std::vector<int>& scope_context,
-					 std::vector<int>& node_context,
-					 std::map<int, StateStatus>& experiment_state_vals,
-					 ScopeHistory* scope_history);
 	void unhook();
 	void backprop(double target_val,
-				  BranchExperimentHistory* history);
+				  RunHelper& run_helper,
+				  BranchExperimentOverallHistory* history);
 
 	void train_existing_activate(std::vector<ContextLayer>& context);
 	void train_existing_backprop(double target_val,
-								 BranchExperimentHistory* history);
+								 RunHelper& run_helper,
+								 BranchExperimentOverallHistory* history);
 
-	void explore_activate(int& curr_node_id,
+	void explore_activate(AbstractNode*& curr_node,
 						  Problem& problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
-						  int& exit_node_id,
-						  RunHelper& run_helper,
-						  BranchExperimentHistory* history);
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_target_activate(AbstractNode*& curr_node,
+								 Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 RunHelper& run_helper);
 	void explore_backprop(double target_val,
-						  BranchExperimentHistory* history);
+						  BranchExperimentOverallHistory* history);
 
-	void train_activate(int& curr_node_id,
-						Problem& problem,
-						std::vector<ContextLayer>& context,
-						int& exit_depth,
-						int& exit_node_id,
-						RunHelper& run_helper,
-						BranchExperimentHistory* history);
-	void train_backprop(double target_val,
-						BranchExperimentHistory* history);
-	void process_train();
-
-	void simple_activate(int& curr_node_id,
-						 Problem& problem,
-						 std::vector<ContextLayer>& context,
-						 int& exit_depth,
-						 int& exit_node_id,
-						 RunHelper& run_helper,
-						 BranchExperimentHistory*& history);
-	void simple_combined_activate(int& curr_node_id,
-								  Problem& problem,
-								  std::vector<ContextLayer>& context,
-								  int& exit_depth,
-								  int& exit_node_id,
-								  RunHelper& run_helper);
-	void simple_pass_through_activate(int& curr_node_id,
-									  Problem& problem,
-									  std::vector<ContextLayer>& context,
-									  int& exit_depth,
-									  int& exit_node_id,
-									  RunHelper& run_helper);
-
-	void measure_pass_through_activate(int& curr_node_id,
+	void train_new_activate(AbstractNode*& curr_node,
+							Problem& problem,
+							std::vector<ContextLayer>& context,
+							int& exit_depth,
+							AbstractNode*& exit_node,
+							RunHelper& run_helper,
+							AbstractExperimentHistory*& history);
+	void train_new_target_activate(AbstractNode*& curr_node,
+								   Problem& problem,
+								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
+								   RunHelper& run_helper);
+	void train_new_non_target_activate(AbstractNode*& curr_node,
 									   Problem& problem,
 									   std::vector<ContextLayer>& context,
 									   int& exit_depth,
-									   int& exit_node_id,
-									   RunHelper& run_helper);
-	void measure_pass_through_backprop(double target_val,
-									   BranchExperimentHistory* history);
+									   AbstractNode*& exit_node,
+									   RunHelper& run_helper,
+									   AbstractExperimentHistory*& history);
+	void train_backprop(double target_val,
+						BranchExperimentOverallHistory* history);
 
-	void eval();
-	void new_branch();
-	void new_pass_through();
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem& problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void measure_backprop(double target_val);
+
+	void finalize(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+				  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+	void new_branch(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+					std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+	void new_pass_through(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+						  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 };
 
 class BranchExperimentInstanceHistory : public AbstractExperimentHistory {
@@ -181,7 +176,9 @@ public:
 
 	std::vector<void*> step_histories;
 
-
+	BranchExperimentInstanceHistory(BranchExperiment* experiment);
+	BranchExperimentInstanceHistory(BranchExperimentInstanceHistory* original);
+	~BranchExperimentInstanceHistory();
 };
 
 class BranchExperimentOverallHistory : public AbstractExperimentHistory {
@@ -193,7 +190,7 @@ public:
 	bool has_target;
 	double existing_predicted_score;
 
-
+	BranchExperimentOverallHistory(BranchExperiment* experiment);
 };
 
 #endif /* BRANCH_EXPERIMENT_H */

@@ -6,20 +6,10 @@
 #define BRANCH_NODE_H
 
 #include <fstream>
-#include <map>
-#include <utility>
 #include <vector>
 
 #include "abstract_node.h"
 #include "context_layer.h"
-#include "problem.h"
-#include "run_helper.h"
-#include "state_status.h"
-
-class Sequence;
-class State;
-class BranchExperiment;
-class BranchExperimentHistory;
 
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
@@ -40,12 +30,12 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
+	int original_next_node_id;
 	AbstractNode* original_next_node;
+	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
 	BranchNode();
-	BranchNode(std::ifstream& input_file,
-			   int id);
 	~BranchNode();
 
 	void activate(bool& is_branch,
@@ -61,6 +51,7 @@ public:
 					   std::vector<ContextLayer>& context);
 
 	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
 	void save_for_display(std::ofstream& output_file);
 };
 

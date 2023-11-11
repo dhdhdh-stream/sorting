@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 				if (solution->outer_experiment->state == OUTER_EXPERIMENT_STATE_SUCCESS) {
 					is_success = true;
 
-					// outer_experiment cleaned below
+					// outer_experiment cleaned in reset()
 				}
 			} else {
 				vector<ContextLayer> context;
@@ -125,18 +125,17 @@ int main(int argc, char* argv[]) {
 													run_helper,
 													run_helper.experiment_history);
 
-						if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_FAIL
-								|| branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
-							if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
-								is_success = true;
-							} else {
-								is_fail = true;
-							}
+						if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+							is_success = true;
 
 							map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 							map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 							branch_experiment->finalize(input_scope_depths_mappings,
 														output_scope_depths_mappings);
+
+							// experiment cleaned in reset()
+						} else if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_FAIL) {
+							is_fail = true;
 
 							Scope* starting_scope = solution->scopes[branch_experiment->scope_context.back()];
 							AbstractNode* starting_node = starting_scope->nodes[branch_experiment->node_context.back()];
@@ -156,13 +155,12 @@ int main(int argc, char* argv[]) {
 														  run_helper,
 														  run_helper.experiment_history);
 
-						if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_FAIL
-								|| pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
-							if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
-								is_success = true;
-							} else {
-								is_fail = true;
-							}
+						if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
+							is_success = true;
+
+							// experiment cleaned in reset()
+						} else if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_FAIL) {
+							is_fail = true;
 
 							Scope* starting_scope = solution->scopes[pass_through_experiment->scope_context.back()];
 							AbstractNode* starting_node = starting_scope->nodes[pass_through_experiment->node_context.back()];
@@ -198,34 +196,20 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (is_success) {
+				solution->success_reset();
+
 				solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 				break;
 			} else if (is_fail) {
 				num_fails++;
 				if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+					solution->fail_reset();
+
 					solution->curr_num_datapoints *= 2;
 					break;
 				}
 			}
 		}
-
-		delete solution->outer_experiment;
-		solution->outer_experiment = new OuterExperiment();
-		for (set<AbstractExperiment*>::iterator it = solution->experiments.begin();
-				it != solution->experiments.end(); it++) {
-			AbstractExperiment* experiment = *it;
-			Scope* starting_scope = solution->scopes[experiment->scope_context.back()];
-			AbstractNode* starting_node = starting_scope->nodes[experiment->node_context.back()];
-			if (starting_node->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)starting_node;
-				action_node->experiment = NULL;
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)starting_node;
-				scope_node->experiment = NULL;
-			}
-			delete experiment;
-		}
-		solution->experiments.clear();
 	}
 
 	delete solution;

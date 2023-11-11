@@ -24,33 +24,60 @@ Scope::~Scope() {
 		delete this->nodes[n_index];
 	}
 
-	while (this->scope_histories.size() > 0) {
-		delete this->scope_histories.front();
-		this->scope_histories.pop_front();
+	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
+		delete this->temp_states[s_index];
+	}
+}
+
+void Scope::success_reset() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)it->second;
+			action_node->success_reset();
+		} else if (it->second->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)it->second;
+			scope_node->success_reset();
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
+		delete this->temp_states[s_index];
+	}
+	this->temp_states.clear();
+	this->temp_state_nodes.clear();
+	this->temp_state_scope_contexts.clear();
+	this->temp_state_node_contexts.clear();
+	this->temp_state_obs_indexes.clear();
+	this->temp_state_new_local_indexes.clear();
+}
+
+void Scope::fail_reset() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)it->second;
+			action_node->fail_reset();
+		} else if (it->second->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)it->second;
+			scope_node->fail_reset();
+		}
 	}
 }
 
 void Scope::save(ofstream& output_file) {
 	output_file << this->num_input_states << endl;
-	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		output_file << this->input_state_weights[s_index] << endl;
-	}
-
 	output_file << this->num_local_states << endl;
-	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		output_file << this->local_state_weights[s_index] << endl;
-	}
+
+	output_file << this->node_counter << endl;
 
 	output_file << this->nodes.size() << endl;
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		output_file << this->nodes[n_index]->type << endl;
-		this->nodes[n_index]->save(output_file);
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second->type << endl;
+		it->second->save(output_file);
 	}
-
-	output_file << this->average_score << endl;
-	output_file << this->score_variance << endl;
-	output_file << this->average_misguess << endl;
-	output_file << this->misguess_variance << endl;
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
@@ -58,76 +85,56 @@ void Scope::save(ofstream& output_file) {
 	}
 }
 
-void Scope::load(ifstream& input_file,
-				 int id) {
-	this->id = id;
-
+void Scope::load(ifstream& input_file) {
 	string num_input_states_line;
 	getline(input_file, num_input_states_line);
 	this->num_input_states = stoi(num_input_states_line);
-	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		string weight_line;
-		getline(input_file, weight_line);
-		this->input_state_weights.push_back(stod(weight_line));
-	}
 
 	string num_local_states_line;
 	getline(input_file, num_local_states_line);
 	this->num_local_states = stoi(num_local_states_line);
-	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		string weight_line;
-		getline(input_file, weight_line);
-		this->local_state_weights.push_back(stod(weight_line));
-	}
+
+	string node_counter_line;
+	getline(input_file, node_counter_line);
+	this->node_counter = stoi(node_counter_line);
 
 	string num_nodes_line;
 	getline(input_file, num_nodes_line);
 	int num_nodes = stoi(num_nodes_line);
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
+		string id_line;
+		getline(input_file, id_line);
+		int id = stoi(id_line);
+
 		string type_line;
 		getline(input_file, type_line);
 		int type = stoi(type_line);
 		if (type == NODE_TYPE_ACTION) {
-			ActionNode* node = new ActionNode(input_file,
-											  n_index);
-			// TODO: add
-			node->parent = this;
-			node->id = id;
-			this->nodes.push_back(node);
+			ActionNode* action_node = new ActionNode();
+			action_node->parent = this;
+			action_node->id = id;
+			action_node->load(input_file);
+			this->nodes[action_node->id] = action_node;
 		} else if (type == NODE_TYPE_SCOPE) {
-			ScopeNode* node = new ScopeNode(input_file,
-											n_index);
-			this->nodes.push_back(node);
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = this;
+			scope_node->id = id;
+			scope_node->load(input_file);
+			this->nodes[scope_node->id] = scope_node;
 		} else if (type == NODE_TYPE_BRANCH) {
-			BranchNode* node = new BranchNode(input_file,
-											  n_index);
-			this->nodes.push_back(node);
-		} else if (type == NODE_TYPE_BRANCH_STUB) {
-			BranchStubNode* node = new BranchStubNode(input_file,
-													  n_index);
-			this->nodes.push_back(node);
+			BranchNode* branch_node = new BranchNode();
+			branch_node->parent = this;
+			branch_node->id = id;
+			branch_node->load(input_file);
+			this->nodes[branch_node->id] = branch_node;
 		} else {
-			ExitNode* node = new ExitNode(input_file,
-										  n_index);
-			this->nodes.push_back(node);
+			ExitNode* exit_node = new ExitNode();
+			exit_node->parent = this;
+			exit_node->id = id;
+			exit_node->load(input_file);
+			this->nodes[exit_node->id] = exit_node;
 		}
 	}
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
-	string score_variance_line;
-	getline(input_file, score_variance_line);
-	this->score_variance = stod(score_variance_line);
-
-	string average_misguess_line;
-	getline(input_file, average_misguess_line);
-	this->average_misguess = stod(average_misguess_line);
-
-	string misguess_variance_line;
-	getline(input_file, misguess_variance_line);
-	this->misguess_variance = stod(misguess_variance_line);
 
 	string child_scopes_size_line;
 	getline(input_file, child_scopes_size_line);
@@ -139,11 +146,20 @@ void Scope::load(ifstream& input_file,
 	}
 }
 
+void Scope::link() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->link();
+	}
+}
+
 void Scope::save_for_display(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		output_file << this->nodes[n_index]->type << endl;
-		this->nodes[n_index]->save_for_display(output_file);
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second->type << endl;
+		it->second->save_for_display(output_file);
 	}
 }
 
@@ -167,17 +183,17 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)original->node_histories[i_index][h_index];
 				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
-			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_SCOPE) {
+			} else {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)original->node_histories[i_index][h_index];
 				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
-			} else if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_BRANCH) {
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)original->node_histories[i_index][h_index];
-				this->node_histories.back().push_back(new BranchNodeHistory(branch_node_history));
 			}
 		}
 	}
 
 	this->inner_branch_experiment_history = NULL;
+
+	this->experiment_iter_index = original->experiment_iter_index;
+	this->experiment_index = original->experiment_index;
 
 	this->exceeded_depth = original->exceeded_depth;
 }

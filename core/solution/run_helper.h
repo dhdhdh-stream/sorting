@@ -1,13 +1,11 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
-#include <map>
 #include <set>
 #include <vector>
 
-class BranchExperiment;
-class BranchExperimentHistory;
-class ScopeHistory;
+class AbstractExperiment;
+class AbstractExperimentHistory;
 
 class RunHelper {
 public:

@@ -12,18 +12,37 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
-
-	this->id = -1;
-
-	this->experiment = NULL;
 }
 
-BranchNode::BranchNode(ifstream& input_file,
-					   int id) {
-	this->type = NODE_TYPE_BRANCH;
+BranchNode::~BranchNode() {
+	// do nothing
+}
 
-	this->id = id;
+void BranchNode::save(ofstream& output_file) {
+	output_file << this->branch_scope_context.size() << endl;
+	for (int c_index = 0; c_index < (int)this->branch_scope_context.size(); c_index++) {
+		output_file << this->branch_scope_context[c_index] << endl;
+		output_file << this->branch_node_context[c_index] << endl;
+	}
 
+	output_file << this->branch_is_pass_through << endl;
+
+	output_file << this->original_score_mod << endl;
+	output_file << this->branch_score_mod << endl;
+
+	output_file << this->decision_state_is_local.size() << endl;
+	for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
+		output_file << this->decision_state_is_local[s_index] << endl;
+		output_file << this->decision_state_indexes[s_index] << endl;
+		output_file << this->decision_original_weights[s_index] << endl;
+		output_file << this->decision_branch_weights[s_index] << endl;
+	}
+
+	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
+}
+
+void BranchNode::load(ifstream& input_file) {
 	string branch_scope_context_size_line;
 	getline(input_file, branch_scope_context_size_line);
 	int branch_scope_context_size = stoi(branch_scope_context_size_line);
@@ -77,72 +96,19 @@ BranchNode::BranchNode(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
-	string recursion_protection_line;
-	getline(input_file, recursion_protection_line);
-	this->recursion_protection = stoi(recursion_protection_line);
-
-	string state_defs_size_line;
-	getline(input_file, state_defs_size_line);
-	int state_defs_size = stoi(state_defs_size_line);
-	for (int s_index = 0; s_index < state_defs_size; s_index++) {
-		string is_local_line;
-		getline(input_file, is_local_line);
-		this->state_is_local.push_back(stoi(is_local_line));
-
-		string index_line;
-		getline(input_file, index_line);
-		this->state_indexes.push_back(stoi(index_line));
-
-		string def_id_line;
-		getline(input_file, def_id_line);
-		this->state_defs.push_back(solution->states[stoi(def_id_line)]);
-
-		string network_index_line;
-		getline(input_file, network_index_line);
-		this->state_network_indexes.push_back(stoi(network_index_line));
-	}
-
-	this->experiment = NULL;
 }
 
-BranchNode::~BranchNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-	}
-}
-
-void BranchNode::save(ofstream& output_file) {
-	output_file << this->branch_scope_context.size() << endl;
-	for (int c_index = 0; c_index < (int)this->branch_scope_context.size(); c_index++) {
-		output_file << this->branch_scope_context[c_index] << endl;
-		output_file << this->branch_node_context[c_index] << endl;
+void BranchNode::link() {
+	if (this->original_next_node_id == -1) {
+		this->original_next_node = NULL;
+	} else {
+		this->original_next_node = this->parent->nodes[this->original_next_node_id];
 	}
 
-	output_file << this->branch_is_pass_through << endl;
-
-	output_file << this->original_score_mod << endl;
-	output_file << this->branch_score_mod << endl;
-
-	output_file << this->decision_state_is_local.size() << endl;
-	for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
-		output_file << this->decision_state_is_local[s_index] << endl;
-		output_file << this->decision_state_indexes[s_index] << endl;
-		output_file << this->decision_original_weights[s_index] << endl;
-		output_file << this->decision_branch_weights[s_index] << endl;
-	}
-
-	output_file << this->original_next_node_id << endl;
-	output_file << this->branch_next_node_id << endl;
-
-	output_file << this->recursion_protection << endl;
-
-	output_file << this->state_defs.size() << endl;
-	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
-		output_file << this->state_is_local[s_index] << endl;
-		output_file << this->state_indexes[s_index] << endl;
-		output_file << this->state_defs[s_index]->id << endl;
-		output_file << this->state_network_indexes[s_index] << endl;
+	if (this->branch_next_node_id == -1) {
+		this->branch_next_node = NULL;
+	} else {
+		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
 	}
 }
 

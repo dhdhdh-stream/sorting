@@ -8,12 +8,16 @@
 using namespace std;
 
 Sequence::Sequence() {
-	// do nothing
+	this->scope_node_placeholder = NULL;
 }
 
 Sequence::~Sequence() {
 	if (this->scope != NULL) {
 		delete this->scope;
+	}
+
+	if (this->scope_node_placeholder != NULL) {
+		delete this->scope_node_placeholder;
 	}
 }
 

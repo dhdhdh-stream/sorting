@@ -48,29 +48,28 @@ int main(int argc, char* argv[]) {
 		// Problem problem(vector<double>{3.0, 1.0});
 
 		RunHelper run_helper;
-		run_helper.phase = RUN_PHASE_UPDATE;
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope_id = 0;
+		context.back().scope_id = solution->root->id;
 		context.back().node_id = -1;
 
-		vector<int> starting_node_ids{0};
+		vector<AbstractNode*> starting_nodes{solution->root_starting_node};
 		vector<map<int, StateStatus>> starting_input_state_vals;
 		vector<map<int, StateStatus>> starting_local_state_vals;
 
 		// unused
 		int exit_depth = -1;
-		int exit_node_id = -1;
+		AbstractNode* exit_node = NULL;
 
-		root->view_activate(starting_node_ids,
+		root->view_activate(starting_nodes,
 							starting_input_state_vals,
 							starting_local_state_vals,
 							problem,
 							context,
 							exit_depth,
-							exit_node_id,
+							exit_node,
 							run_helper);
 
 		double target_val;

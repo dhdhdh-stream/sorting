@@ -69,40 +69,25 @@ public:
 	Scope();
 	~Scope();
 
-	void activate(std::vector<int>& starting_node_ids,
+	void activate(std::vector<AbstractNode*>& starting_nodes,
 				  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 				  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
 				  Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  int& exit_node_id,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
-	void node_activate_helper(int iter_index,
-							  int& curr_node_id,
-							  Problem& problem,
-							  std::vector<ContextLayer>& context,
-							  int& exit_depth,
-							  int& exit_node_id,
-							  RunHelper& run_helper,
-							  ScopeHistory* history);
 
-	void random_activate(std::vector<int>& starting_node_ids,
+	void random_activate(std::vector<AbstractNode*>& starting_nodes,
 						 std::vector<int>& scope_context,
 						 std::vector<int>& node_context,
 						 int& exit_depth,
-						 int& exit_node_id,
+						 AbstractNode*& exit_node,
 						 int& num_nodes,
 						 ScopeHistory* history);
-	void node_random_activate_helper(int& curr_node_id,
-									 std::vector<int>& scope_context,
-									 std::vector<int>& node_context,
-									 int& exit_depth,
-									 int& exit_node_id,
-									 int& num_nodes,
-									 ScopeHistory* history);
 
-	void create_sequence_activate(std::vector<int>& starting_node_ids,
+	void create_sequence_activate(std::vector<AbstractNode*>& starting_nodes,
 								  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 								  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
 								  std::vector<std::map<std::pair<bool,int>, int>>& starting_state_mappings,
@@ -115,37 +100,22 @@ public:
 								  int& new_num_input_states,
 								  std::vector<AbstractNode*>& new_nodes,
 								  RunHelper& run_helper);
-	void node_create_sequence_activate_helper(int& curr_node_id,
-											  Problem& problem,
-											  std::vector<ContextLayer>& context,
-											  int target_num_nodes,
-											  int& curr_num_nodes,
-											  Sequence* new_sequence,
-											  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-											  int& new_num_input_states,
-											  std::vector<AbstractNode*>& new_nodes,
-											  RunHelper& run_helper);
 
-	void view_activate(std::vector<int>& starting_node_ids,
+	void view_activate(std::vector<AbstractNode*>& starting_nodes,
 					   std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 					   std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
 					   Problem& problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
-					   int& exit_node_id,
+					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
-	void node_view_activate_helper(int iter_index,
-								   int& curr_node_id,
-								   Problem& problem,
-								   std::vector<ContextLayer>& context,
-								   int& exit_depth,
-								   int& exit_node_id,
-								   RunHelper& run_helper);
+
+	void success_reset();
+	void fail_reset();
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file,
-			  int id);
-
+	void load(std::ifstream& input_file);
+	void link();
 	void save_for_display(std::ofstream& output_file);
 };
 

@@ -33,9 +33,6 @@ public:
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
 
-	/**
-	 * - double every 20 failures
-	 */
 	int curr_num_datapoints;
 
 	OuterExperiment* outer_experiment;
@@ -46,6 +43,9 @@ public:
 
 	void init();
 	void load(std::ifstream& input_file);
+
+	void success_reset();
+	void fail_reset();
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);

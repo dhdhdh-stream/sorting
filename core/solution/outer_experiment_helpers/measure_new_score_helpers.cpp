@@ -100,22 +100,28 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			new_root_scope->nodes[0] = starting_noop_node
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				int next_node_id;
 				AbstractNode* next_node;
 				if (s_index == (int)this->best_step_types.size()-1) {
+					next_node_id = -1;
 					next_node = NULL;
 				} else {
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+						next_node_id = this->best_actions[s_index+1]->id;
 						next_node = this->best_actions[s_index+1];
 					} else if (this->best_step_types[s_index+1] == STEP_TYPE_SEQUENCE) {
+						next_node_id = this->best_sequences[s_index+1]->scope_node_placeholder->id;
 						next_node = this->best_sequences[s_index+1]->scope_node_placeholder;
 					} else {
-						next_node = this->best_root_scope_nodes[s_index+1]->id;
+						next_node_id = this->best_root_scope_nodes[s_index+1]->id;
+						next_node = this->best_root_scope_nodes[s_index+1];
 					}
 				}
 
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					new_root_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 
+					this->best_actions[s_index]->next_node_id = next_node_id;
 					this->best_actions[s_index]->next_node = next_node;
 				} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
 					ScopeNode* new_sequence_scope_node = this->best_sequences[s_index]->scope_node_placeholder;
@@ -126,8 +132,11 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 					new_sequence_scope_node->inner_scope = this->best_sequences[s_index]->scope;
 					this->best_sequences[s_index]->scope = NULL;
 
-					new_sequence_scope_node->starting_nodes = vector<AbstractNode*>{this->best_sequences[s_index]->scope->nodes[0]};
+					new_sequence_scope_node->starting_node_parent_ids = vector<int>{new_sequence_scope_node->inner_scope->id};
+					new_sequence_scope_node->starting_node_ids = vector<int>{0};
+					new_sequence_scope_node->starting_nodes = vector<AbstractNode*>{new_sequence_scope_node->inner_scope->nodes[0]};
 
+					new_sequence_scope_node->next_node_id = next_node_id;
 					new_sequence_scope_node->next_node = next_node;
 
 					delete this->best_sequences[s_index];
@@ -136,6 +145,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 				} else {
 					new_root_scope->nodes[this->best_root_scope_nodes[s_index]->id] = this->best_root_scope_nodes[s_index];
 
+					this->best_root_scope_nodes[s_index]->next_node_id = next_node_id;
 					this->best_root_scope_nodes[s_index]->next_node = next_node;
 				}
 			}

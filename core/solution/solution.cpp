@@ -10,40 +10,47 @@
 using namespace std;
 
 Solution::Solution() {
-	// do nothing
+	this->outer_experiment = new OuterExperiment();
+}
+
+Solution::~Solution() {
+	for (map<int, State*>::iterator it = this->states.begin();
+			it != this->states.end(); it++) {
+		delete it->second;
+	}
+
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		delete it->second;
+	}
 }
 
 void Solution::init() {
-	this->average_score = 0.0;
-
 	this->state_counter = 0;
 
+	this->scope_counter = 0;
+
 	Scope* starting_scope = new Scope();
-	starting_scope->id = 0;
+	starting_scope->id = this->scope_counter;
+	this->scope_counter++;
+	this->scopes[starting_scope->id] = starting_scope;
+	
 	starting_scope->num_input_states = 0;
 	starting_scope->num_local_states = 0;
+	
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
 	starting_noop_node->id = 0;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
+	starting_noop_node->next_node = NULL
 	starting_scope->nodes.push_back(starting_noop_node);
-	starting_scope->average_score = 0.0;
-	starting_scope->score_variance = 1.0;
-	starting_scope->average_misguess = 0.0;
-	starting_scope->misguess_variance = 1.0;
-	this->scope_counter = 1;
-	this->scopes[0] = starting_scope;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
 }
 
 void Solution::load(ifstream& input_file) {
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
 	string state_counter_line;
 	getline(input_file, state_counter_line);
 	this->state_counter = stoi(state_counter_line);
@@ -76,15 +83,20 @@ void Solution::load(ifstream& input_file) {
 
 		Scope* scope = new Scope();
 
+		scope->id = scope_id;
+
 		this->scopes[scope_id] = scope;
 	}
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		ifstream scope_save_file;
 		scope_save_file.open("saves/scope_" + to_string(it->first) + ".txt");
-		it->second->load(scope_save_file,
-						 it->first);
+		it->second->load(scope_save_file);
 		scope_save_file.close();
+	}
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->link();
 	}
 
 	string max_depth_line;
@@ -98,21 +110,31 @@ void Solution::load(ifstream& input_file) {
 	}
 }
 
-Solution::~Solution() {
-	for (map<int, State*>::iterator it = this->states.begin();
-			it != this->states.end(); it++) {
-		delete it->second;
-	}
-
+void Solution::success_reset() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
-		delete it->second;
+		it->second->success_reset();
 	}
+
+	delete this->outer_experiment;
+	this->outer_experiment = new OuterExperiment();
+
+	this->experiments.clear();
+}
+
+void Solution::fail_reset() {
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->fail_reset();
+	}
+
+	delete this->outer_experiment;
+	this->outer_experiment = new OuterExperiment();
+
+	this->experiments.clear();
 }
 
 void Solution::save(ofstream& output_file) {
-	output_file << this->average_score << endl;
-
 	output_file << this->state_counter << endl;
 
 	output_file << this->states.size() << endl;

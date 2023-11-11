@@ -257,6 +257,12 @@ void unhook(vector<AbstractNode*>& nodes) {
 	}
 }
 
+void flat_vals_helper(vector<int>& scope_context,
+					  vector<int>& node_context,
+					  ScopeHistory* scope_history,
+					  int d_index,
+					  int stride_size,
+					  vector<double>& flat_vals);
 void flat_vals_experiment_helper(vector<int>& scope_context,
 								 vector<int>& node_context,
 								 AbstractExperimentHistory* experiment_history,
@@ -429,6 +435,11 @@ void flat_vals_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
+void rnn_vals_helper(vector<int>& scope_context,
+					 vector<int>& node_context,
+					 ScopeHistory* scope_history,
+					 vector<int>& rnn_obs_experiment_indexes,
+					 vector<double>& rnn_vals);
 void rnn_vals_experiment_helper(vector<int>& scope_context,
 								vector<int>& node_context,
 								AbstractExperimentHistory* experiment_history,
@@ -762,7 +773,7 @@ void evaluate(double& existing_average_misguess,
 
 void existing_obs_experiment(AbstractExperiment* experiment,
 							 Scope* parent_scope,
-							 list<ScopeHistory*>& scope_histories,
+							 vector<ScopeHistory*>& scope_histories,
 							 vector<double>& target_vals) {
 	vector<AbstractNode*> nodes;
 	vector<vector<int>> scope_contexts;
@@ -812,20 +823,16 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		 obs_indexes);
 
 	vector<double> flat_vals(num_instances * nodes.size(), 0.0);
-	{
-		int d_index = 0;
-		for (list<ScopeHistory*>::iterator it = scope_histories.begin();
-				it != scope_histories.end(); it++) {
-			vector<int> scope_context;
-			vector<int> node_context;
-			flat_vals_helper(scope_context,
-							 node_context,
-							 *it,
-							 d_index,
-							 nodes.size(),
-							 flat_vals);
-			d_index++;
-		}
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		flat_vals_helper(scope_context,
+						 node_context,
+						 scope_histories[d_index],
+						 d_index,
+						 (int)nodes.size(),
+						 flat_vals);
+		d_index++;
 	}
 
 	unhook(nodes);
@@ -844,19 +851,14 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 
 	vector<vector<int>> rnn_obs_experiment_indexes(num_instances);
 	vector<vector<double>> rnn_vals(num_instances);
-	{
-		int d_index = 0;
-		for (list<ScopeHistory*>::iterator it = scope_histories.begin();
-				it != scope_histories.end(); it++) {
-			vector<int> scope_context;
-			vector<int> node_context;
-			rnn_vals_helper(scope_context,
-							node_context,
-							*it,
-							rnn_obs_experiment_indexes[d_index],
-							rnn_vals[d_index]);
-			d_index++;
-		}
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		rnn_vals_helper(scope_context,
+						node_context,
+						scope_histories[d_index],
+						rnn_obs_experiment_indexes[d_index],
+						rnn_vals[d_index]);
 	}
 
 	unhook(nodes);
@@ -955,7 +957,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 }
 
 void new_obs_experiment(AbstractExperiment* experiment,
-						list<ScopeHistory*>& scope_histories,
+						vector<ScopeHistory*>& scope_histories,
 						vector<double>& target_vals) {
 	vector<AbstractNode*> nodes;
 	vector<vector<int>> scope_contexts;
@@ -1005,20 +1007,15 @@ void new_obs_experiment(AbstractExperiment* experiment,
 		 obs_indexes);
 
 	vector<double> flat_vals(num_instances * nodes.size(), 0.0);
-	{
-		int d_index = 0;
-		for (list<ScopeHistory*>::iterator it = scope_histories.begin();
-				it != scope_histories.end(); it++) {
-			vector<int> scope_context;
-			vector<int> node_context;
-			flat_vals_helper(scope_context,
-							 node_context,
-							 *it,
-							 d_index,
-							 nodes.size(),
-							 flat_vals);
-			d_index++;
-		}
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		flat_vals_helper(scope_context,
+						 node_context,
+						 scope_histories[d_index],
+						 d_index,
+						 (int)nodes.size(),
+						 flat_vals);
 	}
 
 	unhook(nodes);
@@ -1037,19 +1034,14 @@ void new_obs_experiment(AbstractExperiment* experiment,
 
 	vector<vector<int>> rnn_obs_experiment_indexes(num_instances);
 	vector<vector<double>> rnn_vals(num_instances);
-	{
-		int d_index = 0;
-		for (list<ScopeHistory*>::iterator it = scope_histories.begin();
-				it != scope_histories.end(); it++) {
-			vector<int> scope_context;
-			vector<int> node_context;
-			rnn_vals_helper(scope_context,
-							node_context,
-							*it,
-							rnn_obs_experiment_indexes[d_index],
-							rnn_vals[d_index]);
-			d_index++;
-		}
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		rnn_vals_helper(scope_context,
+						node_context,
+						scope_histories[d_index],
+						rnn_obs_experiment_indexes[d_index],
+						rnn_vals[d_index]);
 	}
 
 	unhook(nodes);

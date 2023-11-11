@@ -2,10 +2,6 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
-#include "constants.h"
-#include "scale.h"
-#include "scope.h"
 #include "state.h"
 #include "state_network.h"
 

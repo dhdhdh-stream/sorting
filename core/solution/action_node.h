@@ -43,6 +43,7 @@ public:
 	std::vector<State*> experiment_state_defs;
 	std::vector<int> experiment_state_network_indexes;
 
+	int next_node_id;
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
@@ -100,8 +101,12 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	void success_reset();
+	void fail_reset();
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
+	void link();
 	void save_for_display(std::ofstream& output_file);
 };
 

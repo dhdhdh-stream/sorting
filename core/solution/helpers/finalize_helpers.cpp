@@ -11,7 +11,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "scale.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "sequence.h"
@@ -26,6 +25,10 @@ void add_state(Scope* parent_scope,
 			   vector<int>& experiment_node_context,
 			   int outer_scope_depth,
 			   map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings) {
+	State* new_state = parent_scope->temp_states[temp_state_index];
+
+	solution->states[new_state->id] = new_state;
+
 	int new_local_index = parent_scope->num_local_states;
 	parent_scope->num_local_states++;
 	parent_scope->temp_state_new_local_indexes[temp_state_index] = new_local_index;
@@ -351,7 +354,9 @@ void finalize_sequence(vector<int>& experiment_scope_context,
 	new_sequence_scope_node->inner_scope = new_sequence->scope;
 	new_sequence->scope = NULL;
 
-	new_sequence_scope_node->starting_nodes = vector<AbstractNode*>{new_sequence->scope->nodes[0]};
+	new_sequence_scope_node->starting_node_parent_ids = vector<int>{new_sequence_scope_node->inner_scope->id};
+	new_sequence_scope_node->starting_node_ids = vector<int>{0};
+	new_sequence_scope_node->starting_nodes = vector<AbstractNode*>{new_sequence_scope_node->inner_scope->nodes[0]};
 
 	for (int i_index = 0; i_index < (int)new_sequence->input_types.size(); i_index++) {
 		if (new_sequence->input_types[i_index] == INPUT_TYPE_STATE) {

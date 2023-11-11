@@ -26,10 +26,9 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* inner_scope;
-	/**
-	 * - use id when saving/loading, but have direct reference for running
-	 */
 
+	std::vector<int> starting_node_parent_ids;
+	std::vector<int> starting_node_ids;
 	std::vector<AbstractNode*> starting_nodes;
 
 	std::vector<int> input_types;
@@ -72,6 +71,7 @@ public:
 	std::vector<State*> experiment_state_defs;
 	std::vector<int> experiment_state_network_indexes;
 
+	int next_node_id;
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
@@ -82,39 +82,37 @@ public:
 	std::vector<int> obs_experiment_indexes;
 
 	ScopeNode();
-	ScopeNode(std::ifstream& input_file,
-			  int id);
 	~ScopeNode();
 
-	void activate(int& curr_node_id,
+	void activate(AbstractNode*& curr_node,
 				  Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  int& exit_node_id,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
-	void halfway_activate(std::vector<int>& starting_node_ids,
+				  ScopeNodeHistory* history);
+	void halfway_activate(std::vector<AbstractNode*>& starting_nodes,
 						  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 						  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-						  int& curr_node_id,
+						  AbstractNode*& curr_node,
 						  Problem& problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
-						  int& exit_node_id,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
-						  std::vector<AbstractNodeHistory*>& node_histories);
+						  ScopeNodeHistory* history);
 
 	void random_activate(std::vector<int>& scope_context,
 						 std::vector<int>& node_context,
 						 int& inner_exit_depth,
-						 int& inner_exit_node_id,
+						 AbstractNode*& inner_exit_node,
 						 int& num_nodes,
 						 std::vector<AbstractNodeHistory*>& node_histories);
-	void halfway_random_activate(std::vector<int>& starting_node_ids,
+	void halfway_random_activate(std::vector<AbstractNode*>& starting_nodes,
 								 std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
 								 int& inner_exit_depth,
-								 int& inner_exit_node_id,
+								 AbstractNode*& inner_exit_node,
 								 int& num_nodes,
 								 std::vector<AbstractNodeHistory*>& node_histories);
 
@@ -127,7 +125,7 @@ public:
 								  int& new_num_input_states,
 								  std::vector<AbstractNode*>& new_nodes,
 								  RunHelper& run_helper);
-	void halfway_create_sequence_activate(std::vector<int>& starting_node_ids,
+	void halfway_create_sequence_activate(std::vector<AbstractNode*>& starting_nodes,
 										  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 										  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
 										  std::vector<std::map<std::pair<bool,int>, int>>& starting_state_mappings,
@@ -157,23 +155,28 @@ public:
 								  std::map<int, StateStatus>& experiment_score_state_vals,
 								  ScopeNodeHistory* history);
 
-	void view_activate(int& curr_node_id,
+	void view_activate(AbstractNode*& curr_node,
 					   Problem& problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
-					   int& exit_node_id,
+					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
-	void halfway_view_activate(std::vector<int>& starting_node_ids,
+	void halfway_view_activate(std::vector<AbstractNode*>& starting_nodes,
 							   std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
 							   std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-							   int& curr_node_id,
+							   AbstractNode*& curr_node,
 							   Problem& problem,
 							   std::vector<ContextLayer>& context,
 							   int& exit_depth,
-							   int& exit_node_id,
+							   AbstractNode*& exit_node,
 							   RunHelper& run_helper);
 
+	void success_reset();
+	void fail_reset();
+
 	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
+	void link();
 	void save_for_display(std::ofstream& output_file);
 };
 

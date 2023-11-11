@@ -21,7 +21,7 @@ const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
 const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 7;
 const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 8;
 
-class PassThroughExperiment {
+class PassThroughExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
@@ -99,6 +99,96 @@ public:
 	int branch_experiment_step_index;
 	BranchExperiment* branch_experiment;
 
+	PassThroughExperiment(std::vector<int> scope_context,
+						  std::vector<int> node_context);
+	~PassThroughExperiment();
+
+	void activate(AbstractNode*& curr_node,
+				  Problem& problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
+	void hook(std::vector<ContextLayer>& context);
+	void unhook();
+	void parent_scope_end_activate(std::vector<ContextLayer>& context,
+								   RunHelper& run_helper,
+								   ScopeHistory* parent_scope_history);
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  PassThroughExperimentOverallHistory* history);
+
+	void measure_existing_score_activate(std::vector<ContextLayer>& context);
+	void measure_existing_score_parent_scope_end_activate(
+		std::vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		ScopeHistory* parent_scope_history);
+	void measure_existing_score_backprop(double target_val,
+										 RunHelper& run_helper,
+										 PassThroughExperimentOverallHistory* history);
+
+	void explore_initial_activate(AbstractNode*& curr_node,
+								  Problem& problem,
+								  std::vector<ContextLayer>& context,
+								  int& exit_depth,
+								  AbstractNode*& exit_node,
+								  RunHelper& run_helper);
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem& problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_backprop(double target_val);
+
+	void measure_new_score_activate(AbstractNode*& curr_node,
+									Problem& problem,
+									std::vector<ContextLayer>& context,
+									int& exit_depth,
+									AbstractNode*& exit_node,
+									RunHelper& run_helper,
+									AbstractExperimentHistory*& history);
+	void measure_new_score_backprop(double target_val,
+									PassThroughExperimentOverallHistory* history);
+
+	void measure_existing_misguess_activate(std::vector<ContextLayer>& context);
+	void measure_existing_misguess_parent_scope_end_activate(
+		std::vector<ContextLayer>& context,
+		RunHelper& run_helper);
+	void measure_existing_misguess_backprop(double target_val,
+											RunHelper& run_helper,
+											PassThroughExperimentOverallHistory* history);
+
+	void train_new_misguess_activate(AbstractNode*& curr_node,
+									 Problem& problem,
+									 std::vector<ContextLayer>& context,
+									 int& exit_depth,
+									 AbstractNode*& exit_node,
+									 RunHelper& run_helper,
+									 AbstractExperimentHistory*& history);
+	void train_new_misguess_backprop(double target_val,
+									 PassThroughExperimentOverallHistory* history);
+
+	void measure_new_misguess_activate(AbstractNode*& curr_node,
+									   Problem& problem,
+									   std::vector<ContextLayer>& context,
+									   int& exit_depth,
+									   AbstractNode*& exit_node,
+									   RunHelper& run_helper,
+									   AbstractExperimentHistory*& history);
+	void measure_new_misguess_backprop(double target_val,
+									   PassThroughExperimentOverallHistory* history);
+
+	void experiment_activate(AbstractNode*& curr_node,
+							 Problem& problem,
+							 std::vector<ContextLayer>& context,
+							 int& exit_depth,
+							 AbstractNode*& exit_node,
+							 RunHelper& run_helper,
+							 AbstractExperimentHistory*& history);
+	void experiment_backprop(double target_val,
+							 PassThroughExperimentOverallHistory* history);
 };
 
 class PassThroughExperimentInstanceHistory : public AbstractExperimentHistory {
@@ -111,6 +201,9 @@ public:
 
 	std::vector<void*> post_step_histories;
 
+	PassThroughExperimentInstanceHistory(PassThroughExperiment* experiment);
+	PassThroughExperimentInstanceHistory(PassThroughExperimentInstanceHistory* original);
+	~PassThroughExperimentInstanceHistory();
 };
 
 class PassThroughExperimentOverallHistory : public AbstractExperimentHistory {
@@ -122,6 +215,8 @@ public:
 
 	BranchExperimentOverallHistory* branch_experiment_history;
 
+	PassThroughExperimentOverallHistory(PassThroughExperiment* experiment);
+	~PassThroughExperimentOverallHistory();
 };
 
 #endif /* PASS_THROUGH_EXPERIMENT_H */
