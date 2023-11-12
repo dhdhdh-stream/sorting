@@ -103,7 +103,9 @@ void Scope::view_activate(vector<AbstractNode*>& starting_nodes,
 	}
 
 	while (true) {
-		if (curr_node == NULL || exit_depth != -1 || run_helper.exceeded_depth) {
+		if (exit_depth != -1
+				|| curr_node == NULL
+				|| run_helper.exceeded_depth) {
 			break;
 		}
 

@@ -1,5 +1,6 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "globals.h"
@@ -152,65 +153,71 @@ void PassThroughExperiment::measure_existing_score_backprop(
 			}
 		}
 
-		Eigen::MatrixXd inputs(num_instances, (int)p_input_state_vals.size() + (int)p_local_state_vals.size() + (int)p_temp_state_vals.size());
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			int s_index = 0;
-
-			for (map<int, vector<double>>::iterator it = p_input_state_vals.begin();
-					it != p_input_state_vals.end(); it++) {
-				inputs(i_index, s_index) = it->second[i_index];
-				s_index++;
-			}
-
-			for (map<int, vector<double>>::iterator it = p_local_state_vals.begin();
-					it != p_local_state_vals.end(); it++) {
-				inputs(i_index, s_index) = it->second[i_index];
-				s_index++;
-			}
-
-			for (map<State*, vector<double>>::iterator it = p_temp_state_vals.begin();
-					it != p_temp_state_vals.end(); it++) {
-				inputs(i_index, s_index) = it->second[i_index];
-				s_index++;
-			}
-		}
-
-		Eigen::VectorXd outputs(num_instances);
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			outputs(i_index) = this->i_target_val_histories[i_index] - this->existing_average_score;
-		}
-
-		Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-		{
-			int s_index = 0;
-
-			this->existing_input_state_weights.clear();
-			for (map<int, vector<double>>::iterator it = p_input_state_vals.begin();
-					it != p_input_state_vals.end(); it++) {
-				this->existing_input_state_weights[it->first] = weights(s_index);
-				s_index++;
-			}
-
-			this->existing_local_state_weights.clear();
-			for (map<int, vector<double>>::iterator it = p_local_state_vals.begin();
-					it != p_local_state_vals.end(); it++) {
-				this->existing_local_state_weights[it->first] = weights(s_index);
-				s_index++;
-			}
-
-			this->existing_temp_state_weights.clear();
-			for (map<State*, vector<double>>::iterator it = p_temp_state_vals.begin();
-					it != p_temp_state_vals.end(); it++) {
-				this->existing_temp_state_weights[it->first] = weights(s_index);
-				s_index++;
-			}
-		}
-
-		Eigen::VectorXd predicted_scores = inputs * weights;
-		Eigen::VectorXd diffs = outputs - predicted_scores;
 		vector<double> obs_experiment_target_vals(num_instances);
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			obs_experiment_target_vals[i_index] = diffs(i_index);
+		if (p_input_state_vals.size() + p_local_state_vals.size() + p_temp_state_vals.size() > 0) {
+			Eigen::MatrixXd inputs(num_instances, (int)p_input_state_vals.size() + (int)p_local_state_vals.size() + (int)p_temp_state_vals.size());
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				int s_index = 0;
+
+				for (map<int, vector<double>>::iterator it = p_input_state_vals.begin();
+						it != p_input_state_vals.end(); it++) {
+					inputs(i_index, s_index) = it->second[i_index];
+					s_index++;
+				}
+
+				for (map<int, vector<double>>::iterator it = p_local_state_vals.begin();
+						it != p_local_state_vals.end(); it++) {
+					inputs(i_index, s_index) = it->second[i_index];
+					s_index++;
+				}
+
+				for (map<State*, vector<double>>::iterator it = p_temp_state_vals.begin();
+						it != p_temp_state_vals.end(); it++) {
+					inputs(i_index, s_index) = it->second[i_index];
+					s_index++;
+				}
+			}
+
+			Eigen::VectorXd outputs(num_instances);
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				outputs(i_index) = this->i_target_val_histories[i_index] - this->existing_average_score;
+			}
+
+			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+			{
+				int s_index = 0;
+
+				this->existing_input_state_weights.clear();
+				for (map<int, vector<double>>::iterator it = p_input_state_vals.begin();
+						it != p_input_state_vals.end(); it++) {
+					this->existing_input_state_weights[it->first] = weights(s_index);
+					s_index++;
+				}
+
+				this->existing_local_state_weights.clear();
+				for (map<int, vector<double>>::iterator it = p_local_state_vals.begin();
+						it != p_local_state_vals.end(); it++) {
+					this->existing_local_state_weights[it->first] = weights(s_index);
+					s_index++;
+				}
+
+				this->existing_temp_state_weights.clear();
+				for (map<State*, vector<double>>::iterator it = p_temp_state_vals.begin();
+						it != p_temp_state_vals.end(); it++) {
+					this->existing_temp_state_weights[it->first] = weights(s_index);
+					s_index++;
+				}
+			}
+
+			Eigen::VectorXd predicted_scores = inputs * weights;
+			Eigen::VectorXd diffs = outputs - predicted_scores;
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				obs_experiment_target_vals[i_index] = diffs(i_index);
+			}
+		} else {
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				obs_experiment_target_vals[i_index] = this->i_target_val_histories[i_index] - this->existing_average_score;
+			}
 		}
 
 		existing_obs_experiment(this,
@@ -245,5 +252,6 @@ void PassThroughExperiment::measure_existing_score_backprop(
 
 		this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
+		this->sub_state_iter = 0;
 	}
 }

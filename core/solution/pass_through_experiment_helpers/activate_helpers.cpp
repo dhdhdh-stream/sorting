@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
@@ -55,12 +57,16 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 					if (this->sub_state_iter == 0) {
+						this->sub_state_iter = -1;
+
 						explore_initial_activate(curr_node,
 												 problem,
 												 context,
 												 exit_depth,
 												 exit_node,
 												 run_helper);
+
+						this->sub_state_iter = 0;
 					} else {
 						explore_activate(curr_node,
 										 problem,
@@ -135,12 +141,18 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				measure_existing_score_activate(context);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
-				explore_activate(curr_node,
-								 problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper);
+				if (this->sub_state_iter != -1) {
+					/**
+					 * - handle edge case where hit in create_sequence()
+					 */
+					explore_activate(curr_node,
+									 problem,
+									 context,
+									 exit_depth,
+									 exit_node,
+									 run_helper);
+				}
+
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
 				measure_new_score_activate(curr_node,
@@ -346,4 +358,6 @@ void PassThroughExperiment::backprop(double target_val,
 							history);
 		break;
 	}
+
+	delete history;
 }

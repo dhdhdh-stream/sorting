@@ -31,12 +31,14 @@ void ScopeNode::success_reset() {
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
+		this->experiment = NULL;
 	}
 }
 
 void ScopeNode::fail_reset() {
 	if (this->experiment != NULL) {
 		delete this->experiment;
+		this->experiment = NULL;
 	}
 }
 
@@ -198,6 +200,11 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
+
+	this->is_early_exit = true;
+	/**
+	 * - initialize to true to prevent back if captured while recuring within
+	 */
 
 	this->experiment_history = NULL;
 }

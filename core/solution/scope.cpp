@@ -14,7 +14,10 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->id = -1;
+	/**
+	 * - initialize for create_sequence()
+	 */
 }
 
 Scope::~Scope() {
@@ -40,7 +43,9 @@ void Scope::success_reset() {
 	}
 
 	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
-		delete this->temp_states[s_index];
+		if (this->temp_state_new_local_indexes[s_index] == -1) {
+			delete this->temp_states[s_index];
+		}
 	}
 	this->temp_states.clear();
 	this->temp_state_nodes.clear();

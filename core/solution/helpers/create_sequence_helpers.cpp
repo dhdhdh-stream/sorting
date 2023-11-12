@@ -746,27 +746,33 @@ Sequence* create_sequence(Problem& problem,
 		vector<void*> possible_output_outer_indexes;
 		uniform_int_distribution<int> output_temp_distribution(0, 4);
 		{
-			Scope* scope = solution->scopes[context.back().scope_id];
+			/**
+			 * - check for OuterExperiment edge case
+			 *   - don't need to check below as explore_context_depth will be 1
+			 */
+			if (context.back().scope_id != -1) {
+				Scope* scope = solution->scopes[context.back().scope_id];
 
-			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-					it != context.back().input_state_vals.end(); it++) {
-				possible_output_scope_depths.push_back(0);
-				possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_output_outer_indexes.push_back((void*)((long)it->first));
-			}
-
-			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
-				possible_output_scope_depths.push_back(0);
-				possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_output_outer_indexes.push_back((void*)((long)s_index));
-			}
-
-			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
-					it != context.back().temp_state_vals.end(); it++) {
-				if (output_temp_distribution(generator) == 0) {
+				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+						it != context.back().input_state_vals.end(); it++) {
 					possible_output_scope_depths.push_back(0);
-					possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
-					possible_output_outer_indexes.push_back(it->first);
+					possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
+					possible_output_outer_indexes.push_back((void*)((long)it->first));
+				}
+
+				for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
+					possible_output_scope_depths.push_back(0);
+					possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
+					possible_output_outer_indexes.push_back((void*)((long)s_index));
+				}
+
+				for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
+						it != context.back().temp_state_vals.end(); it++) {
+					if (output_temp_distribution(generator) == 0) {
+						possible_output_scope_depths.push_back(0);
+						possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
+						possible_output_outer_indexes.push_back(it->first);
+					}
 				}
 			}
 		}

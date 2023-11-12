@@ -34,7 +34,8 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1699745967;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -47,6 +48,8 @@ int main(int argc, char* argv[]) {
 	// solution_save_file.close();
 
 	int num_fails = 0;
+
+	int epoch_index = 0;
 
 	uniform_int_distribution<int> outer_distribution(0, 9);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
@@ -111,6 +114,18 @@ int main(int argc, char* argv[]) {
 				} else {
 					target_val = -1.0;
 				}
+
+				if (run_helper.experiment_history == NULL) {
+					if (run_helper.experiments_seen.size() == 0) {
+						if (experiment_type_distribution(generator) == 0) {
+							create_branch_experiment(root_history);
+						} else {
+							create_pass_through_experiment(root_history);
+						}
+					}
+				}
+
+				delete root_history;
 
 				if (run_helper.experiment_history != NULL) {
 					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -178,27 +193,27 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				} else {
-					if (run_helper.experiments_seen.size() == 0) {
-						if (experiment_type_distribution(generator) == 0) {
-							create_branch_experiment(root_history);
-						} else {
-							create_pass_through_experiment(root_history);
-						}
-					} else {
-						for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-							AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-							experiment->average_remaining_experiments_from_start =
-								0.9 * experiment->average_remaining_experiments_from_start
-								+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-						}
+					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+						AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+						experiment->average_remaining_experiments_from_start =
+							0.9 * experiment->average_remaining_experiments_from_start
+							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 					}
 				}
-
-				delete root_history;
 			}
 
 			if (is_success) {
 				solution->success_reset();
+
+				ofstream solution_save_file;
+				solution_save_file.open("saves/solution.txt");
+				solution->save(solution_save_file);
+				solution_save_file.close();
+
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
 
 				solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 				break;
@@ -211,6 +226,12 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 			}
+		}
+
+		epoch_index++;
+		// temp
+		if (epoch_index > 50) {
+			break;
 		}
 	}
 

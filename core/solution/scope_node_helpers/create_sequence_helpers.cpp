@@ -152,6 +152,8 @@ void ScopeNode::create_sequence_activate(Problem& problem,
 
 		new_node->inner_scope = this->inner_scope;
 
+		new_node->starting_node_parent_ids = this->starting_node_parent_ids;
+		new_node->starting_node_ids = this->starting_node_ids;
 		new_node->starting_nodes = this->starting_nodes;
 
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
@@ -454,6 +456,10 @@ void ScopeNode::halfway_create_sequence_activate(
 		new_node->inner_scope = this->inner_scope;
 
 		new_node->starting_nodes = starting_nodes;
+		for (int l_index = 0; l_index < (int)starting_nodes.size(); l_index++) {
+			new_node->starting_node_parent_ids.push_back(starting_nodes[l_index]->parent->id);
+			new_node->starting_node_ids.push_back(starting_nodes[l_index]->id);
+		}
 
 		for (int l_index = 0; l_index < (int)starting_state_mappings.size(); l_index++) {
 			for (map<pair<bool,int>, int>::iterator it = starting_state_mappings[l_index].begin();

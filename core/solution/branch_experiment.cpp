@@ -14,8 +14,12 @@ using namespace std;
 
 BranchExperiment::BranchExperiment(vector<int> scope_context,
 								   vector<int> node_context) {
+	this->type = EXPERIMENT_TYPE_BRANCH;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
+
+	this->parent_pass_through_experiment = NULL;
 
 	this->average_remaining_experiments_from_start = 1.0;
 	/**
@@ -69,9 +73,10 @@ BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimen
 BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimentInstanceHistory* original) {
 	this->experiment = original->experiment;
 
-	this->step_histories = vector<void*>(this->experiment->best_step_types.size());
-	for (int s_index = 0; s_index < (int)this->experiment->best_step_types.size(); s_index++) {
-		if (this->experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+	BranchExperiment* branch_experiment = (BranchExperiment*)original->experiment;
+	this->step_histories = vector<void*>(branch_experiment->best_step_types.size());
+	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
+		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->step_histories[s_index];
 			this->step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
 		} else {
@@ -82,8 +87,9 @@ BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimen
 }
 
 BranchExperimentInstanceHistory::~BranchExperimentInstanceHistory() {
-	for (int s_index = 0; s_index < (int)this->experiment->best_step_types.size(); s_index++) {
-		if (this->experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
+	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
+		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->step_histories[s_index];
 			delete action_node_history;
 		} else {

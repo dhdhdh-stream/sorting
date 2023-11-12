@@ -222,8 +222,6 @@ public:
 
 class PassThroughExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
-	PassThroughExperiment* experiment;
-
 	std::vector<void*> pre_step_histories;
 
 	AbstractExperimentHistory* branch_experiment_history;
@@ -237,15 +235,12 @@ public:
 
 class PassThroughExperimentOverallHistory : public AbstractExperimentHistory {
 public:
-	PassThroughExperiment* experiment;
-
 	int instance_count;
 	std::vector<double> predicted_scores;
 
 	BranchExperimentOverallHistory* branch_experiment_history;
 
 	PassThroughExperimentOverallHistory(PassThroughExperiment* experiment);
-	~PassThroughExperimentOverallHistory();
 };
 
 #endif /* PASS_THROUGH_EXPERIMENT_H */

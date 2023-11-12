@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -15,7 +17,8 @@
 
 using namespace std;
 
-const int NUM_EXPERIMENTS = 20;
+// const int NUM_EXPERIMENTS = 20;
+const int NUM_EXPERIMENTS = 2;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												Problem& problem,
@@ -46,6 +49,16 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 													context,
 													run_helper,
 													sequence_history);
+		}
+	}
+
+	if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
+		curr_node = NULL;
+	} else {
+		if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
+			curr_node = this->best_actions[this->branch_experiment_step_index+1];
+		} else {
+			curr_node = this->best_sequences[this->branch_experiment_step_index+1]->scope_node_placeholder;
 		}
 	}
 
@@ -85,6 +98,8 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 			if (this->best_exit_depth == 0) {
 				curr_node = this->best_exit_node;
 			} else {
+				curr_node = NULL;
+
 				exit_depth = this->best_exit_depth-1;
 				exit_node = this->best_exit_node;
 			}
@@ -102,6 +117,8 @@ void PassThroughExperiment::experiment_backprop(
 										  history->branch_experiment_history);
 
 		if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+			cout << "PassThrough experiment success" << endl;
+
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 			BranchNode* new_branch_node = new BranchNode();
@@ -207,21 +224,22 @@ void PassThroughExperiment::experiment_backprop(
 			Scope* parent_scope = solution->scopes[this->scope_context[0]];
 			parent_scope->temp_states.insert(parent_scope->temp_states.end(),
 				this->new_states.begin(), this->new_states.end());
-			this->new_states.clear();
 			parent_scope->temp_state_nodes.insert(parent_scope->temp_state_nodes.end(),
 				this->new_state_nodes.begin(), this->new_state_nodes.end());
-			this->new_state_nodes.clear();
 			parent_scope->temp_state_scope_contexts.insert(parent_scope->temp_state_scope_contexts.end(),
 				this->new_state_scope_contexts.begin(), this->new_state_scope_contexts.end());
-			this->new_state_scope_contexts.clear();
 			parent_scope->temp_state_node_contexts.insert(parent_scope->temp_state_node_contexts.end(),
 				this->new_state_node_contexts.begin(), this->new_state_node_contexts.end());
-			this->new_state_node_contexts.clear();
 			parent_scope->temp_state_obs_indexes.insert(parent_scope->temp_state_obs_indexes.end(),
 				this->new_state_obs_indexes.begin(), this->new_state_obs_indexes.end());
-			this->new_state_obs_indexes.clear();
 			parent_scope->temp_state_new_local_indexes.insert(parent_scope->temp_state_new_local_indexes.end(),
 				this->new_states.size(), -1);
+
+			this->new_states.clear();
+			this->new_state_nodes.clear();
+			this->new_state_scope_contexts.clear();
+			this->new_state_node_contexts.clear();
+			this->new_state_obs_indexes.clear();
 
 			this->branch_experiment->finalize(input_scope_depths_mappings,
 											  output_scope_depths_mappings);

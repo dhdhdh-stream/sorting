@@ -60,7 +60,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 				is_selected = true;
 			}
 		}
-	} else if (run_helper.experiment_history->experiment == this) {
+	} else if (run_helper.selected_experiment == this) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -280,4 +280,6 @@ void BranchExperiment::backprop(double target_val,
 		measure_backprop(target_val);
 		break;
 	}
+
+	delete history;
 }

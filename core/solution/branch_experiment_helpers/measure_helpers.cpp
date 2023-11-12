@@ -103,7 +103,8 @@ void BranchExperiment::measure_activate(
 	}
 
 	this->branch_possible++;
-	if (branch_predicted_score > original_predicted_score) {
+	// if (branch_predicted_score > original_predicted_score) {
+	if (rand()%2 == 0) {
 		this->branch_count++;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -131,6 +132,8 @@ void BranchExperiment::measure_activate(
 		if (this->best_exit_depth == 0) {
 			curr_node = this->best_exit_node;
 		} else {
+			curr_node = NULL;
+
 			exit_depth = this->best_exit_depth-1;
 			exit_node = this->best_exit_node;
 		}
@@ -163,7 +166,11 @@ void BranchExperiment::measure_backprop(double target_val) {
 		cout << endl;
 
 		cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-		cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+		if (this->best_exit_node == NULL) {
+			cout << "this->best_exit_node_id: " << -1 << endl;
+		} else {
+			cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+		}
 
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score / this->existing_average_score;
@@ -177,7 +184,8 @@ void BranchExperiment::measure_backprop(double target_val) {
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 		cout << "branch_weight: " << branch_weight << endl;
 
-		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		// if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		if (rand()%2 == 0) {	// >99%
 			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

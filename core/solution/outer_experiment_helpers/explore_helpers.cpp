@@ -13,8 +13,10 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 500;
-const int NUM_SAMPLES_PER_ITER = 10;
+// const int EXPLORE_ITERS = 500;
+const int EXPLORE_ITERS = 5;
+// const int NUM_SAMPLES_PER_ITER = 10;
+const int NUM_SAMPLES_PER_ITER = 2;
 
 void OuterExperiment::explore_activate(Problem& problem,
 									   RunHelper& run_helper) {
@@ -83,7 +85,8 @@ void OuterExperiment::explore_backprop(double target_val) {
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
-		if (this->curr_score > this->best_score) {
+		// if (this->curr_score > this->best_score) {
+		if (true) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -128,7 +131,8 @@ void OuterExperiment::explore_backprop(double target_val) {
 		if (this->state_iter >= EXPLORE_ITERS) {
 			cout << "Outer" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
-			if (this->best_score > 0.0) {
+			// if (this->best_score > 0.0) {
+			if (rand()%2 == 0) {
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->id = 1 + s_index;

@@ -19,24 +19,15 @@ using namespace std;
 
 void BranchExperiment::finalize(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	double branch_weight = (double)this->branch_count / (double)this->branch_possible;
-	if (branch_weight > 0.99) {
+	// double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+	// if (branch_weight > 0.99) {
+	if (rand()%2 == 0) {
 		new_pass_through(input_scope_depths_mappings,
 						 output_scope_depths_mappings);
 	} else {
 		new_branch(input_scope_depths_mappings,
 				   output_scope_depths_mappings);
 	}
-
-	ofstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->save(solution_save_file);
-	solution_save_file.close();
-
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
 }
 
 void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
@@ -46,21 +37,22 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	parent_scope->temp_states.insert(parent_scope->temp_states.end(),
 		this->new_states.begin(), this->new_states.end());
-	this->new_states.clear();
 	parent_scope->temp_state_nodes.insert(parent_scope->temp_state_nodes.end(),
 		this->new_state_nodes.begin(), this->new_state_nodes.end());
-	this->new_state_nodes.clear();
 	parent_scope->temp_state_scope_contexts.insert(parent_scope->temp_state_scope_contexts.end(),
 		this->new_state_scope_contexts.begin(), this->new_state_scope_contexts.end());
-	this->new_state_scope_contexts.clear();
 	parent_scope->temp_state_node_contexts.insert(parent_scope->temp_state_node_contexts.end(),
 		this->new_state_node_contexts.begin(), this->new_state_node_contexts.end());
-	this->new_state_node_contexts.clear();
 	parent_scope->temp_state_obs_indexes.insert(parent_scope->temp_state_obs_indexes.end(),
 		this->new_state_obs_indexes.begin(), this->new_state_obs_indexes.end());
-	this->new_state_obs_indexes.clear();
 	parent_scope->temp_state_new_local_indexes.insert(parent_scope->temp_state_new_local_indexes.end(),
 		this->new_states.size(), -1);
+
+	this->new_states.clear();
+	this->new_state_nodes.clear();
+	this->new_state_scope_contexts.clear();
+	this->new_state_node_contexts.clear();
+	this->new_state_obs_indexes.clear();
 
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
@@ -98,7 +90,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = action_node->next_node->id;
+		new_branch_node->original_next_node_id = action_node->next_node_id;
 		new_branch_node->original_next_node = action_node->next_node;
 
 		action_node->next_node->id = new_branch_node->id;
@@ -106,7 +98,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = scope_node->next_node->id;
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
 		new_branch_node->original_next_node = scope_node->next_node;
 
 		scope_node->next_node->id = new_branch_node->id;
@@ -203,7 +195,7 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = action_node->next_node->id;
+		new_branch_node->original_next_node_id = action_node->next_node_id;
 		new_branch_node->original_next_node = action_node->next_node;
 
 		action_node->next_node_id = new_branch_node->id;
@@ -211,7 +203,7 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
 
-		new_branch_node->original_next_node_id = scope_node->next_node->id;
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
 		new_branch_node->original_next_node = scope_node->next_node;
 
 		scope_node->next_node_id = new_branch_node->id;

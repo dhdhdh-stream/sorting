@@ -48,6 +48,8 @@ void PassThroughExperiment::measure_new_misguess_activate(
 	if (this->best_exit_depth == 0) {
 		curr_node = this->best_exit_node;
 	} else {
+		curr_node = NULL;
+
 		exit_depth = this->best_exit_depth-1;
 		exit_node = this->best_exit_node;
 	}
@@ -141,7 +143,10 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		if (misguess_improvement_t_score > 2.326) {	// >99%
+		// if (misguess_improvement_t_score > 2.326) {	// >99%
+		if (rand()%2 == 0) {	// >99%
+			cout << "misguess success" << endl;
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->node_to_step_index[this->best_actions[s_index]] = s_index;

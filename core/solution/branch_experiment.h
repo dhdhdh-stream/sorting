@@ -186,8 +186,6 @@ public:
 
 class BranchExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
-	BranchExperiment* experiment;
-
 	std::vector<void*> step_histories;
 
 	BranchExperimentInstanceHistory(BranchExperiment* experiment);
@@ -197,8 +195,6 @@ public:
 
 class BranchExperimentOverallHistory : public AbstractExperimentHistory {
 public:
-	BranchExperiment* experiment;
-
 	int instance_count;
 
 	bool has_target;

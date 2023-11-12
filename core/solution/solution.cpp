@@ -23,6 +23,8 @@ Solution::~Solution() {
 			it != this->scopes.end(); it++) {
 		delete it->second;
 	}
+
+	delete this->outer_experiment;
 }
 
 void Solution::init() {
@@ -37,17 +39,24 @@ void Solution::init() {
 	
 	starting_scope->num_input_states = 0;
 	starting_scope->num_local_states = 0;
-	
+
+	starting_scope->node_counter = 0;
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
-	starting_noop_node->id = 0;
+	starting_noop_node->id = starting_scope->node_counter;
+	starting_scope->node_counter++;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
 	starting_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
+	this->root = starting_scope;
+	this->root_starting_node = starting_noop_node;
+
 	this->max_depth = 1;
 	this->depth_limit = 11;
+
+	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -108,6 +117,8 @@ void Solution::load(ifstream& input_file) {
 	} else {
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
+
+	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
 void Solution::success_reset() {

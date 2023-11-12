@@ -119,6 +119,8 @@ void BranchExperiment::train_new_target_activate(
 	if (this->best_exit_depth == 0) {
 		curr_node = this->best_exit_node;
 	} else {
+		curr_node = NULL;
+
 		exit_depth = this->best_exit_depth-1;
 		exit_node = this->best_exit_node;
 	}
@@ -393,80 +395,83 @@ void BranchExperiment::train_new_backprop(double target_val,
 				stride_size += p_temp_state_vals[c_index].size();
 			}
 
-			Eigen::MatrixXd inputs(solution->curr_num_datapoints, stride_size);
-			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
-				int s_index = 0;
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
-							it != p_input_state_vals[c_index].end(); it++) {
-						inputs(i_index, s_index) = it->second[i_index];
-						s_index++;
-					}
-				}
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
-							it != p_local_state_vals[c_index].end(); it++) {
-						inputs(i_index, s_index) = it->second[i_index];
-						s_index++;
-					}
-				}
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
-							it != p_temp_state_vals[c_index].end(); it++) {
-						inputs(i_index, s_index) = it->second[i_index];
-						s_index++;
-					}
-				}
-			}
-
-			Eigen::VectorXd outputs(solution->curr_num_datapoints);
-			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
-				outputs(i_index) = this->i_target_val_histories[i_index] - this->new_average_score;
-			}
-
-			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-			{
-				int s_index = 0;
-
-				this->new_input_state_weights.clear();
-				this->new_input_state_weights = vector<map<int, double>>(this->scope_context.size());
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
-							it != p_input_state_vals[c_index].end(); it++) {
-						this->new_input_state_weights[c_index][it->first] = weights(s_index);
-						s_index++;
-					}
-				}
-
-				this->new_local_state_weights.clear();
-				this->new_local_state_weights = vector<map<int, double>>(this->scope_context.size());
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
-							it != p_local_state_vals[c_index].end(); it++) {
-						this->new_local_state_weights[c_index][it->first] = weights(s_index);
-						s_index++;
-					}
-				}
-
-				this->new_temp_state_weights.clear();
-				this->new_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
-							it != p_temp_state_vals[c_index].end(); it++) {
-						this->new_temp_state_weights[c_index][it->first] = weights(s_index);
-						s_index++;
-					}
-				}
-			}
-
-			Eigen::VectorXd predicted_scores = inputs * weights;
-			Eigen::VectorXd diffs = outputs - predicted_scores;
+			this->new_input_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->new_local_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->new_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
 			vector<double> obs_experiment_target_vals(solution->curr_num_datapoints);
-			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
-				obs_experiment_target_vals[i_index] = diffs(i_index);
+			if (stride_size > 0) {
+				Eigen::MatrixXd inputs(solution->curr_num_datapoints, stride_size);
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					int s_index = 0;
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+								it != p_input_state_vals[c_index].end(); it++) {
+							inputs(i_index, s_index) = it->second[i_index];
+							s_index++;
+						}
+					}
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+								it != p_local_state_vals[c_index].end(); it++) {
+							inputs(i_index, s_index) = it->second[i_index];
+							s_index++;
+						}
+					}
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
+								it != p_temp_state_vals[c_index].end(); it++) {
+							inputs(i_index, s_index) = it->second[i_index];
+							s_index++;
+						}
+					}
+				}
+
+				Eigen::VectorXd outputs(solution->curr_num_datapoints);
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					outputs(i_index) = this->i_target_val_histories[i_index] - this->new_average_score;
+				}
+
+				Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+				{
+					int s_index = 0;
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+								it != p_input_state_vals[c_index].end(); it++) {
+							this->new_input_state_weights[c_index][it->first] = weights(s_index);
+							s_index++;
+						}
+					}
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+								it != p_local_state_vals[c_index].end(); it++) {
+							this->new_local_state_weights[c_index][it->first] = weights(s_index);
+							s_index++;
+						}
+					}
+
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
+								it != p_temp_state_vals[c_index].end(); it++) {
+							this->new_temp_state_weights[c_index][it->first] = weights(s_index);
+							s_index++;
+						}
+					}
+				}
+
+				Eigen::VectorXd predicted_scores = inputs * weights;
+				Eigen::VectorXd diffs = outputs - predicted_scores;
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					obs_experiment_target_vals[i_index] = diffs(i_index);
+				}
+			} else {
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					obs_experiment_target_vals[i_index] = this->i_target_val_histories[i_index] - this->new_average_score;
+				}
 			}
 
 			new_obs_experiment(this,
@@ -535,6 +540,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 
 									new_it++;
 								}
+							} else {
+								new_it++;
 							}
 						}
 					}
@@ -577,6 +584,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 
 									new_it++;
 								}
+							} else {
+								new_it++;
 							}
 						}
 					}
@@ -619,6 +628,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 
 									new_it++;
 								}
+							} else {
+								new_it++;
 							}
 						}
 					}

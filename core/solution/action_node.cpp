@@ -15,6 +15,8 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
+
+	this->obs_experiment_index = -1;
 }
 
 ActionNode::~ActionNode() {
@@ -31,12 +33,14 @@ void ActionNode::success_reset() {
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
+		this->experiment = NULL;
 	}
 }
 
 void ActionNode::fail_reset() {
 	if (this->experiment != NULL) {
 		delete this->experiment;
+		this->experiment = NULL;
 	}
 }
 

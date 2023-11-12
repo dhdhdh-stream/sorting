@@ -29,6 +29,7 @@ public:
 		this->max_depth = 0;
 		this->exceeded_depth = false;
 
+		this->selected_experiment = NULL;
 		this->experiment_history = NULL;
 	}
 };

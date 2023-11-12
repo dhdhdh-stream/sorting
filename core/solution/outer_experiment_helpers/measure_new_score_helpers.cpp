@@ -95,7 +95,10 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		cout << "new_average_score: " << new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		if (score_improvement_t_score > 2.326) {	// >99%
+		// if (score_improvement_t_score > 2.326) {	// >99%
+		if (rand()%2 == 0) {	// >99%
+			cout << "success" << endl;
+
 			Scope* new_root_scope = new Scope();
 			new_root_scope->id = solution->scope_counter;
 			solution->scope_counter++;
@@ -104,11 +107,24 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			new_root_scope->num_input_states = 0;
 			new_root_scope->num_local_states = 0;
 
+			new_root_scope->node_counter = 0;
 			ActionNode* starting_noop_node = new ActionNode();
 			starting_noop_node->parent = new_root_scope;
-			starting_noop_node->id = 0;
+			starting_noop_node->id = new_root_scope->node_counter;
+			new_root_scope->node_counter++;
 			starting_noop_node->action = Action(ACTION_NOOP);
-			new_root_scope->nodes[0] = starting_noop_node;
+			new_root_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				starting_noop_node->next_node_id = 1;
+				starting_noop_node->next_node = this->best_actions[0];
+			} else if (this->best_step_types[0] == STEP_TYPE_SEQUENCE) {
+				starting_noop_node->next_node_id = 1;
+				starting_noop_node->next_node = this->best_sequences[0]->scope_node_placeholder;
+			} else {
+				starting_noop_node->next_node_id = 1;
+				starting_noop_node->next_node = this->best_root_scope_nodes[0];
+			}
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;

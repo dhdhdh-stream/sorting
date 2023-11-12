@@ -111,7 +111,8 @@ void Scope::random_activate(vector<AbstractNode*>& starting_nodes,
 	}
 
 	while (true) {
-		if (curr_node == NULL || exit_depth != -1) {
+		if (exit_depth != -1
+				|| curr_node == NULL) {
 			break;
 		}
 

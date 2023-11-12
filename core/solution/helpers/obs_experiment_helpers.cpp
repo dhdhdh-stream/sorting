@@ -25,8 +25,10 @@ using namespace std;
  */
 const int NUM_INITIAL_OBS = 10;
 
-const int FLAT_ITERS = 500000;
-const int RNN_ITERS = 500000;
+// const int FLAT_ITERS = 500000;
+const int FLAT_ITERS = 50;
+// const int RNN_ITERS = 500000;
+const int RNN_ITERS = 50;
 
 /**
  * - practical limit
@@ -917,7 +919,8 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	cout << "improvement_t_score: " << improvement_t_score << endl;
 	cout << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
@@ -1100,7 +1103,8 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	cout << "improvement_t_score: " << improvement_t_score << endl;
 	cout << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {

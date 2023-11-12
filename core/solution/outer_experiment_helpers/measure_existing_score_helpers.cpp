@@ -35,6 +35,8 @@ void OuterExperiment::measure_existing_score_activate(
 							 exit_node,
 							 run_helper,
 							 root_history);
+
+	delete root_history;
 }
 
 void OuterExperiment::measure_existing_score_backprop(
@@ -71,5 +73,6 @@ void OuterExperiment::measure_existing_score_backprop(
 
 		this->state = OUTER_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
+		this->sub_state_iter = 0;
 	}
 }

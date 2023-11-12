@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
