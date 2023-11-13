@@ -9,6 +9,7 @@
 #include "problem.h"
 #include "run_helper.h"
 
+class BranchExperiment;
 class BranchNode;
 class Scope;
 class ScopeHistory;
@@ -35,6 +36,10 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 void new_obs_experiment(AbstractExperiment* experiment,
 						std::vector<ScopeHistory*>& scope_histories,
 						std::vector<double>& target_vals);
+void existing_pass_through_branch_obs_experiment(
+		BranchExperiment* experiment,
+		std::vector<ScopeHistory*>& scope_histories,
+		std::vector<double>& target_vals);
 
 void finalize_sequence(std::vector<int>& experiment_scope_context,
 					   std::vector<int>& experiment_node_context,

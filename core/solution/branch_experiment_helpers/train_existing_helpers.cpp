@@ -18,8 +18,11 @@ using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
+	context[context.size() - this->scope_context.size()]
+		.scope_history->inner_experiment = this;
+
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		ScopeHistory* scope_history = context[context.size()-1 - c_index].scope_history;
+		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
 		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
 		scope_history->experiment_index = (int)scope_history->node_histories.back().size()-1;
 	}
@@ -30,9 +33,9 @@ void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
 	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		input_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].input_state_vals;
-		local_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].local_state_vals;
-		temp_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].temp_state_vals;
+		input_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].input_state_vals;
+		local_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].local_state_vals;
+		temp_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].temp_state_vals;
 	}
 	this->i_input_state_vals_histories.push_back(input_state_vals_snapshot);
 	this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);
@@ -48,22 +51,25 @@ void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 	overall_history->instance_count++;
 }
 
-void BranchExperiment::possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
-											 int curr_exit_depth,
+void BranchExperiment::possible_exits_helper(int curr_exit_depth,
 											 ScopeHistory* scope_history) {
-	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
+	for (int i_index = scope_history->experiment_iter_index; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = scope_history->experiment_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
+			this->s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
 		}
 	}
 
 	if (curr_exit_depth > 0) {
 		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history
 			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_index];
-		possible_exits_helper(s_possible_exits,
-							  curr_exit_depth-1,
+		possible_exits_helper(curr_exit_depth-1,
 							  scope_node_history->inner_scope_history);
 	}
+}
+
+void BranchExperiment::train_existing_parent_scope_end_activate(ScopeHistory* parent_scope_history) {
+	possible_exits_helper(this->scope_context.size()-1,
+						  parent_scope_history);
 }
 
 void BranchExperiment::train_existing_backprop(double target_val,
@@ -97,6 +103,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			sum_scores += this->o_target_val_histories[d_index];
 		}
 		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+
+		cout << "Branch" << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -310,20 +320,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			}
 		}
 
-		existing_obs_experiment(this,
-								solution->scopes[this->scope_context[0]],
-								i_scope_histories,
-								obs_experiment_target_vals);
-
-		set<pair<int, AbstractNode*>> s_possible_exits;
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			possible_exits_helper(s_possible_exits,
-								  this->scope_context.size()-1,
-								  this->i_scope_histories[i_index]);
+		if (this->parent_pass_through_experiment == NULL) {
+			existing_obs_experiment(this,
+									solution->scopes[this->scope_context[0]],
+									i_scope_histories,
+									obs_experiment_target_vals);
+		} else {
+			existing_pass_through_branch_obs_experiment(
+				this,
+				i_scope_histories,
+				obs_experiment_target_vals);
 		}
-		this->possible_exits.reserve(s_possible_exits.size());
-		for (set<pair<int, AbstractNode*>>::iterator it = s_possible_exits.begin();
-				it != s_possible_exits.end(); it++) {
+
+		this->possible_exits.reserve(this->s_possible_exits.size());
+		for (set<pair<int, AbstractNode*>>::iterator it = this->s_possible_exits.begin();
+				it != this->s_possible_exits.end(); it++) {
 			this->possible_exits.push_back(*it);
 		}
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
@@ -333,9 +344,9 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
 					s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
 				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					s_possible_exits.insert({0, this->parent_pass_through_experiment->best_actions[s_index]});
+					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
 				} else {
-					s_possible_exits.insert({0, this->parent_pass_through_experiment->best_sequences[s_index]->scope_node_placeholder});
+					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_sequences[s_index]->scope_node_placeholder});
 				}
 			}
 		}

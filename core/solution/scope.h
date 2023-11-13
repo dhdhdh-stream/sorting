@@ -124,7 +124,7 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
-	PassThroughExperiment* inner_pass_through_experiment;
+	AbstractExperiment* inner_experiment;
 
 	int experiment_iter_index;
 	int experiment_index;

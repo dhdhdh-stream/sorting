@@ -14,11 +14,11 @@
 #include "sequence.h"
 #include "solution.h"
 #include "state.h"
+#include "state_network.h"
 
 using namespace std;
 
-// const int NUM_EXPERIMENTS = 20;
-const int NUM_EXPERIMENTS = 2;
+const int NUM_EXPERIMENTS = 20;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												Problem& problem,

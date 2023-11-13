@@ -139,12 +139,12 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		 *   - will be more conservative
 		 */
 
+		cout << "PassThrough" << endl;
 		cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 		cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		// if (misguess_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
+		if (misguess_improvement_t_score > 2.326) {	// >99%
 			cout << "misguess success" << endl;
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

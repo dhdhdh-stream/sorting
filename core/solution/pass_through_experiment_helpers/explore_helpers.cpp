@@ -14,10 +14,8 @@
 
 using namespace std;
 
-// const int EXPLORE_ITERS = 500;
-const int EXPLORE_ITERS = 5;
-// const int NUM_SAMPLES_PER_ITER = 10;
-const int NUM_SAMPLES_PER_ITER = 2;
+const int EXPLORE_ITERS = 500;
+const int NUM_SAMPLES_PER_ITER = 10;
 
 void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 Problem& problem,
@@ -29,8 +27,10 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 		// exit
 		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
 		int rand_index = distribution(generator);
+		// TODO: error with possible exit nodes?
 		this->curr_exit_depth = this->possible_exits[rand_index].first;
 		this->curr_exit_node = this->possible_exits[rand_index].second;
+		// TODO: if "success", add another try with more iterations
 	}
 
 	{
@@ -140,8 +140,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
-		// if (this->curr_score > this->best_score) {
-		if (true) {
+		if (this->curr_score > this->best_score) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -181,8 +180,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 		if (this->state_iter >= EXPLORE_ITERS) {
 			cout << "PassThrough" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
-			// if (this->best_score > 0.0) {
-			if (rand()%2 == 0) {
+			if (this->best_score > 0.0) {
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -224,6 +222,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				} else {
 					cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 				}
+				cout << endl;
 
 				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 

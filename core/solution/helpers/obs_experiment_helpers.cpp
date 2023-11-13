@@ -25,10 +25,8 @@ using namespace std;
  */
 const int NUM_INITIAL_OBS = 10;
 
-// const int FLAT_ITERS = 500000;
-const int FLAT_ITERS = 50;
-// const int RNN_ITERS = 500000;
-const int RNN_ITERS = 50;
+const int FLAT_ITERS = 500000;
+const int RNN_ITERS = 500000;
 
 /**
  * - practical limit
@@ -908,7 +906,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(num_instances));
 
-	cout << "existing experiment nodes:";
+	cout << "obs experiment nodes:";
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		cout << " " << nodes[n_index]->id;
 	}
@@ -917,10 +915,10 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	cout << "new_average_misguess: " << new_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
-	cout << endl;
 
-	// if (improvement_t_score > 2.326) {	// >99%
-	if (rand()%2 == 0) {	// >99%
+	if (improvement_t_score > 2.326) {	// >99%
+		cout << "obs success" << endl;
+
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
@@ -973,6 +971,8 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 			delete state_networks[n_index];
 		}
 	}
+
+	cout << endl;
 }
 
 void new_obs_experiment(AbstractExperiment* experiment,
@@ -1092,7 +1092,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(num_instances));
 
-	cout << "existing experiment nodes:";
+	cout << "obs experiment nodes:";
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		cout << " " << nodes[n_index]->id;
 	}
@@ -1101,10 +1101,10 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	cout << "new_average_misguess: " << new_average_misguess << endl;
 	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	cout << "improvement_t_score: " << improvement_t_score << endl;
-	cout << endl;
 
-	// if (improvement_t_score > 2.326) {	// >99%
-	if (rand()%2 == 0) {	// >99%
+	if (improvement_t_score > 2.326) {	// >99%
+		cout << "obs success" << endl;
+
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
@@ -1145,4 +1145,170 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			delete state_networks[n_index];
 		}
 	}
+
+	cout << endl;
+}
+
+void existing_pass_through_branch_obs_experiment(
+		BranchExperiment* experiment,
+		vector<ScopeHistory*>& scope_histories,
+		vector<double>& target_vals) {
+	vector<AbstractNode*> nodes;
+	vector<vector<int>> scope_contexts;
+	vector<vector<int>> node_contexts;
+	vector<int> obs_indexes;
+	{
+		vector<AbstractNode*> possible_nodes;
+		vector<vector<int>> possible_scope_contexts;
+		vector<vector<int>> possible_node_contexts;
+		vector<int> possible_obs_indexes;
+
+		vector<int> scope_context;
+		vector<int> node_context;
+		create_obs_experiment_helper(scope_context,
+									 node_context,
+									 possible_nodes,
+									 possible_scope_contexts,
+									 possible_node_contexts,
+									 possible_obs_indexes,
+									 scope_histories.back());
+		/**
+		 * - simply always use last ScopeHistory to create ObsExperiment
+		 */
+
+		int num_obs = min(NUM_INITIAL_OBS, (int)possible_nodes.size());
+		for (int o_index = 0; o_index < num_obs; o_index++) {
+			uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
+			int rand_obs = distribution(generator);
+
+			nodes.push_back(possible_nodes[rand_obs]);
+			scope_contexts.push_back(possible_scope_contexts[rand_obs]);
+			node_contexts.push_back(possible_node_contexts[rand_obs]);
+			obs_indexes.push_back(possible_obs_indexes[rand_obs]);
+
+			possible_nodes.erase(possible_nodes.begin() + rand_obs);
+			possible_scope_contexts.erase(possible_scope_contexts.begin() + rand_obs);
+			possible_node_contexts.erase(possible_node_contexts.begin() + rand_obs);
+			possible_obs_indexes.erase(possible_obs_indexes.begin() + rand_obs);
+		}
+	}
+
+	int num_instances = (int)scope_histories.size();
+
+	hook(nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
+	vector<double> flat_vals(num_instances * nodes.size(), 0.0);
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		flat_vals_helper(scope_context,
+						 node_context,
+						 scope_histories[d_index],
+						 d_index,
+						 (int)nodes.size(),
+						 flat_vals);
+		d_index++;
+	}
+
+	unhook(nodes);
+
+	flat(flat_vals,
+		 target_vals,
+		 nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
+	hook(nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
+	vector<vector<int>> rnn_obs_experiment_indexes(num_instances);
+	vector<vector<double>> rnn_vals(num_instances);
+	for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<int> scope_context;
+		vector<int> node_context;
+		rnn_vals_helper(scope_context,
+						node_context,
+						scope_histories[d_index],
+						rnn_obs_experiment_indexes[d_index],
+						rnn_vals[d_index]);
+	}
+
+	unhook(nodes);
+
+	vector<StateNetwork*> state_networks(nodes.size());
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		state_networks[n_index] = new StateNetwork(n_index);
+	}
+	double resolved_variance = 1.0;
+	rnn(rnn_obs_experiment_indexes,
+		rnn_vals,
+		target_vals,
+		state_networks,
+		resolved_variance);
+
+	double existing_average_misguess;
+	double existing_misguess_variance;
+	double new_average_misguess;
+	evaluate(existing_average_misguess,
+			 existing_misguess_variance,
+			 new_average_misguess,
+			 rnn_obs_experiment_indexes,
+			 rnn_vals,
+			 target_vals,
+			 state_networks);
+
+	double misguess_improvement = existing_average_misguess - new_average_misguess;
+	double misguess_standard_deviation = sqrt(existing_misguess_variance);
+	double improvement_t_score = misguess_improvement
+		/ (misguess_standard_deviation / sqrt(num_instances));
+
+	cout << "obs experiment nodes:";
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		cout << " " << nodes[n_index]->id;
+	}
+	cout << endl;
+	cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	cout << "new_average_misguess: " << new_average_misguess << endl;
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	cout << "improvement_t_score: " << improvement_t_score << endl;
+
+	if (improvement_t_score > 2.326) {	// >99%
+		cout << "obs success" << endl;
+
+		State* new_state = new State();
+
+		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
+			state_networks[n_index]->starting_standard_deviation = sqrt(state_networks[n_index]->starting_variance);
+
+			state_networks[n_index]->ending_standard_deviation = sqrt(state_networks[n_index]->ending_variance);
+
+			state_networks[n_index]->parent_state = new_state;
+		}
+		new_state->networks = state_networks;
+
+		new_state->id = solution->state_counter;
+		solution->state_counter++;
+
+		BranchExperiment* branch_experiment = (BranchExperiment*)experiment;
+
+		branch_experiment->new_states.push_back(new_state);
+		branch_experiment->new_state_nodes.push_back(nodes);
+		branch_experiment->new_state_scope_contexts.push_back(scope_contexts);
+		branch_experiment->new_state_node_contexts.push_back(node_contexts);
+		branch_experiment->new_state_obs_indexes.push_back(obs_indexes);
+
+		branch_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
+	} else {
+		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
+			delete state_networks[n_index];
+		}
+	}
+
+	cout << endl;
 }

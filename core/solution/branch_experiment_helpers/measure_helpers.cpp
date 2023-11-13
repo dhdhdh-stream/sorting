@@ -103,8 +103,7 @@ void BranchExperiment::measure_activate(
 	}
 
 	this->branch_possible++;
-	// if (branch_predicted_score > original_predicted_score) {
-	if (rand()%2 == 0) {
+	if (branch_predicted_score > original_predicted_score) {
 		this->branch_count++;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -147,6 +146,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
 
+		cout << "Branch" << endl;
 		cout << "this->scope_context:" << endl;
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 			cout << c_index << ": " << this->scope_context[c_index] << endl;
@@ -173,19 +173,21 @@ void BranchExperiment::measure_backprop(double target_val) {
 		}
 
 		double score_standard_deviation = sqrt(this->existing_score_variance);
-		double combined_improvement = this->combined_score / this->existing_average_score;
+		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
+		cout << "this->combined_score: " << this->combined_score << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
 		cout << "score_standard_deviation: " << score_standard_deviation << endl;
-		cout << "combined_improvement: " << combined_improvement << endl;
 		cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 		cout << "branch_weight: " << branch_weight << endl;
 
-		// if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
+		cout << endl;
+
+		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
 			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

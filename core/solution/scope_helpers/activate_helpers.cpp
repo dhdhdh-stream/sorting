@@ -123,8 +123,8 @@ void Scope::activate(vector<AbstractNode*>& starting_nodes,
 							 history);
 	}
 
-	if (history->inner_pass_through_experiment != NULL) {
-		history->inner_pass_through_experiment->parent_scope_end_activate(
+	if (history->inner_experiment != NULL) {
+		history->inner_experiment->parent_scope_end_activate(
 			context,
 			run_helper,
 			history);

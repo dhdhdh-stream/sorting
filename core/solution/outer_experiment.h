@@ -60,6 +60,8 @@ public:
 	void measure_existing_score_backprop(double target_val,
 										 RunHelper& run_helper);
 
+	void explore_initial_activate(Problem& problem,
+								  RunHelper& run_helper);
 	void explore_activate(Problem& problem,
 						  RunHelper& run_helper);
 	void explore_backprop(double target_val);

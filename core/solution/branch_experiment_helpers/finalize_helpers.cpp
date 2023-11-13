@@ -19,9 +19,8 @@ using namespace std;
 
 void BranchExperiment::finalize(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	// double branch_weight = (double)this->branch_count / (double)this->branch_possible;
-	// if (branch_weight > 0.99) {
-	if (rand()%2 == 0) {
+	double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+	if (branch_weight > 0.99) {
 		new_pass_through(input_scope_depths_mappings,
 						 output_scope_depths_mappings);
 	} else {
@@ -32,7 +31,7 @@ void BranchExperiment::finalize(map<pair<int, pair<bool,int>>, int>& input_scope
 
 void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 								  map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	cout << "new_branch" << endl;
+	cout << "new_branch" << endl << endl;
 
 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
 	parent_scope->temp_states.insert(parent_scope->temp_states.end(),
@@ -93,7 +92,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 		new_branch_node->original_next_node_id = action_node->next_node_id;
 		new_branch_node->original_next_node = action_node->next_node;
 
-		action_node->next_node->id = new_branch_node->id;
+		action_node->next_node_id = new_branch_node->id;
 		action_node->next_node = new_branch_node;
 	} else {
 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
@@ -101,7 +100,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 		new_branch_node->original_next_node_id = scope_node->next_node_id;
 		new_branch_node->original_next_node = scope_node->next_node;
 
-		scope_node->next_node->id = new_branch_node->id;
+		scope_node->next_node_id = new_branch_node->id;
 		scope_node->next_node = new_branch_node;
 	}
 
@@ -167,7 +166,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 
 void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 										map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	cout << "new_pass_through" << endl;
+	cout << "new_pass_through" << endl << endl;
 
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 

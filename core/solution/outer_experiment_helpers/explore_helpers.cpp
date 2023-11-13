@@ -13,13 +13,11 @@
 
 using namespace std;
 
-// const int EXPLORE_ITERS = 500;
-const int EXPLORE_ITERS = 5;
-// const int NUM_SAMPLES_PER_ITER = 10;
-const int NUM_SAMPLES_PER_ITER = 2;
+const int EXPLORE_ITERS = 500;
+const int NUM_SAMPLES_PER_ITER = 10;
 
-void OuterExperiment::explore_activate(Problem& problem,
-									   RunHelper& run_helper) {
+void OuterExperiment::explore_initial_activate(Problem& problem,
+											   RunHelper& run_helper) {
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
 
@@ -79,14 +77,60 @@ void OuterExperiment::explore_activate(Problem& problem,
 	}
 }
 
+void OuterExperiment::explore_activate(Problem& problem,
+									   RunHelper& run_helper) {
+	vector<ContextLayer> context;
+	context.push_back(ContextLayer());
+
+	context.back().scope_id = -1;
+	context.back().node_id = -1;
+
+	// unused
+	AbstractNode* curr_node = NULL;
+	int exit_depth = -1;
+	AbstractNode* exit_node = NULL;
+
+	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
+			this->curr_actions[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				action_node_history);
+			delete action_node_history;
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+			SequenceHistory* sequence_history = new SequenceHistory(this->curr_sequences[s_index]);
+			this->curr_sequences[s_index]->activate(problem,
+													context,
+													run_helper,
+													sequence_history);
+			delete sequence_history;
+		} else {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_root_scope_nodes[s_index]);
+			this->curr_root_scope_nodes[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
+		}
+	}
+}
+
 void OuterExperiment::explore_backprop(double target_val) {
 	this->curr_score += target_val - this->existing_average_score;
 
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
-		// if (this->curr_score > this->best_score) {
-		if (true) {
+		if (this->curr_score > this->best_score) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -131,8 +175,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 		if (this->state_iter >= EXPLORE_ITERS) {
 			cout << "Outer" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
-			// if (this->best_score > 0.0) {
-			if (rand()%2 == 0) {
+			if (this->best_score > 0.0) {
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->id = 1 + s_index;
@@ -157,6 +200,8 @@ void OuterExperiment::explore_backprop(double target_val) {
 						cout << " R";
 					}
 				}
+				cout << endl;
+
 				cout << endl;
 
 				this->target_val_histories.reserve(solution->curr_num_datapoints);

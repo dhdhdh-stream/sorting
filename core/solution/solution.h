@@ -11,8 +11,7 @@ class OuterExperiment;
 class Scope;
 class State;
 
-// const int STARTING_NUM_DATAPOINTS = 1000;
-const int STARTING_NUM_DATAPOINTS = 10;
+const int STARTING_NUM_DATAPOINTS = 2000;
 
 class Solution {
 public:

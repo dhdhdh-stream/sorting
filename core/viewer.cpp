@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	solution->load(solution_save_file);
 	solution_save_file.close();
 
-	Scope* root = solution->scopes[0];
+	cout << "solution->states.size(): " << solution->states.size() << endl;
 
 	{
 		Problem problem;
@@ -63,14 +63,14 @@ int main(int argc, char* argv[]) {
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		root->view_activate(starting_nodes,
-							starting_input_state_vals,
-							starting_local_state_vals,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper);
+		solution->root->view_activate(starting_nodes,
+									  starting_input_state_vals,
+									  starting_local_state_vals,
+									  problem,
+									  context,
+									  exit_depth,
+									  exit_node,
+									  run_helper);
 
 		double target_val;
 		if (!run_helper.exceeded_depth) {

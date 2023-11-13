@@ -256,6 +256,16 @@ void BranchExperiment::unhook() {
 	}
 }
 
+void BranchExperiment::parent_scope_end_activate(vector<ContextLayer>& context,
+												 RunHelper& run_helper,
+												 ScopeHistory* parent_scope_history) {
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_parent_scope_end_activate(parent_scope_history);
+		break;
+	}
+}
+
 void BranchExperiment::backprop(double target_val,
 								RunHelper& run_helper,
 								BranchExperimentOverallHistory* history) {

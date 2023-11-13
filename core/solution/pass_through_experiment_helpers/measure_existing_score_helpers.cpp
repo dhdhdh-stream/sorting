@@ -15,10 +15,10 @@ using namespace std;
 void PassThroughExperiment::measure_existing_score_activate(
 		vector<ContextLayer>& context) {
 	context[context.size() - this->scope_context.size()]
-		.scope_history->inner_pass_through_experiment = this;
+		.scope_history->inner_experiment = this;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		ScopeHistory* scope_history = context[context.size()-1 - c_index].scope_history;
+		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
 		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
 		scope_history->experiment_index = (int)scope_history->node_histories.back().size()-1;
 	}
@@ -41,7 +41,7 @@ void PassThroughExperiment::measure_existing_score_parent_scope_end_activate(
 void PassThroughExperiment::possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
 												  int curr_exit_depth,
 												  ScopeHistory* scope_history) {
-	for (int i_index = scope_history->experiment_iter_index + 1; i_index < (int)scope_history->node_histories.size(); i_index++) {
+	for (int i_index = scope_history->experiment_iter_index; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = scope_history->experiment_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
 			s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
 		}
@@ -84,6 +84,10 @@ void PassThroughExperiment::measure_existing_score_backprop(
 			sum_scores += this->o_target_val_histories[d_index];
 		}
 		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+
+		cout << "PassThrough" << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {

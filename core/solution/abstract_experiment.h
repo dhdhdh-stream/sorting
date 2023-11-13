@@ -30,6 +30,9 @@ public:
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  AbstractExperimentHistory*& history) = 0;
+	virtual void parent_scope_end_activate(std::vector<ContextLayer>& context,
+										   RunHelper& run_helper,
+										   ScopeHistory* parent_scope_history) = 0;
 };
 
 class AbstractExperimentHistory {

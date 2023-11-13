@@ -53,7 +53,7 @@ void node_view_activate_helper(int iter_index,
 		cout << "exit node #" << curr_node->id << endl;
 
 		cout << "exit_depth: " << node->exit_depth << endl;
-		cout << "exit_node_id: " << node->exit_node->id << endl;
+		cout << "exit_node_id: " << node->exit_node_id << endl;
 
 		cout << endl;
 

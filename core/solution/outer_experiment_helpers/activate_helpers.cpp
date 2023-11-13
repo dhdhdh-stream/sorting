@@ -12,8 +12,13 @@ void OuterExperiment::activate(Problem& problem,
 										run_helper);
 		break;
 	case OUTER_EXPERIMENT_STATE_EXPLORE:
-		explore_activate(problem,
-						 run_helper);
+		if (this->sub_state_iter == 0) {
+			explore_initial_activate(problem,
+									 run_helper);
+		} else {
+			explore_activate(problem,
+							 run_helper);
+		}
 		break;
 	case OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
 		measure_new_score_activate(problem,

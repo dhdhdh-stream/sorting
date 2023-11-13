@@ -169,7 +169,7 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->inner_pass_through_experiment = NULL;
+	this->inner_experiment = NULL;
 
 	this->experiment_iter_index = -1;
 	this->experiment_index = -1;
@@ -193,7 +193,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 		}
 	}
 
-	this->inner_pass_through_experiment = NULL;
+	this->inner_experiment = NULL;
 
 	this->experiment_iter_index = original->experiment_iter_index;
 	this->experiment_index = original->experiment_index;

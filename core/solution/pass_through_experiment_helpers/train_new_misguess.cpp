@@ -64,9 +64,9 @@ void PassThroughExperiment::train_new_misguess_activate(
 	vector<map<int, StateStatus>> local_state_vals_snapshot(this->scope_context.size());
 	vector<map<State*, StateStatus>> temp_state_vals_snapshot(this->scope_context.size());
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		input_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].input_state_vals;
-		local_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].local_state_vals;
-		temp_state_vals_snapshot[c_index] = context[context.size()-1 - c_index].temp_state_vals;
+		input_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].input_state_vals;
+		local_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].local_state_vals;
+		temp_state_vals_snapshot[c_index] = context[context.size() - this->scope_context.size() + c_index].temp_state_vals;
 	}
 	this->i_input_state_vals_histories.push_back(input_state_vals_snapshot);
 	this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);

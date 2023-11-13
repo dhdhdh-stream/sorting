@@ -53,6 +53,7 @@ public:
 	double existing_average_score;
 	double existing_score_variance;
 
+	std::set<std::pair<int, AbstractNode*>> s_possible_exits;
 	std::vector<std::pair<int, AbstractNode*>> possible_exits;
 
 	std::vector<std::map<int, double>> existing_input_state_weights;
@@ -116,19 +117,21 @@ public:
 								std::map<State*, StateStatus>& temp_state_vals,
 								AbstractExperimentHistory* experiment_history);
 	void unhook();
+	void parent_scope_end_activate(std::vector<ContextLayer>& context,
+								   RunHelper& run_helper,
+								   ScopeHistory* parent_scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper,
 				  BranchExperimentOverallHistory* history);
 
 	void train_existing_activate(std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
+	void possible_exits_helper(int curr_exit_depth,
+							   ScopeHistory* scope_history);
+	void train_existing_parent_scope_end_activate(ScopeHistory* parent_scope_history);
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper,
 								 BranchExperimentOverallHistory* history);
-
-	void possible_exits_helper(std::set<std::pair<int, AbstractNode*>>& s_possible_exits,
-							   int curr_exit_depth,
-							   ScopeHistory* scope_history);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem& problem,

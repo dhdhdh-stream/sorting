@@ -23,7 +23,7 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 50;
+const int NUM_FAILS_BEFORE_INCREASE = 100;
 
 default_random_engine generator;
 
@@ -34,22 +34,19 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1699745967;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// ifstream solution_save_file;
-	// solution_save_file.open("saves/solution.txt");
-	// solution->load(solution_save_file);
-	// solution_save_file.close();
+	// solution->init();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution->load(solution_save_file);
+	solution_save_file.close();
 
 	int num_fails = 0;
-
-	int epoch_index = 0;
 
 	uniform_int_distribution<int> outer_distribution(0, 9);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
@@ -203,6 +200,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (is_success) {
+				num_fails = 0;
 				solution->success_reset();
 
 				ofstream solution_save_file;
@@ -220,18 +218,15 @@ int main(int argc, char* argv[]) {
 			} else if (is_fail) {
 				num_fails++;
 				if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+					cout << "fail_reset" << endl << endl;
+
+					num_fails = 0;
 					solution->fail_reset();
 
 					solution->curr_num_datapoints *= 2;
 					break;
 				}
 			}
-		}
-
-		epoch_index++;
-		// temp
-		if (epoch_index > 50) {
-			break;
 		}
 	}
 

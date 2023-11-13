@@ -95,8 +95,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		cout << "new_average_score: " << new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		// if (score_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
+		if (score_improvement_t_score > 2.326) {	// >99%
 			cout << "success" << endl;
 
 			Scope* new_root_scope = new Scope();
@@ -209,5 +208,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		}
+
+		cout << endl;
 	}
 }

@@ -129,8 +129,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 		cout << "this->new_average_score: " << this->new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		// if (score_improvement_t_score > 2.326) {	// >99%
-		if (rand()%4 == 0) {	// >99%
+		if (score_improvement_t_score > 2.326) {	// >99%
 			cout << "score success" << endl;
 
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
@@ -236,8 +235,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			new_exit_node->exit_node = this->best_exit_node;
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_SUCCESS;
-		// } else if (score_improvement_t_score > -0.674) {	// <75%
-		} else if (rand()%2 == 0) {	// <75%
+		} else if (this->best_step_types.size() > 0 && score_improvement_t_score > -0.674) {	// <75%
 			/**
 			 * - TODO: consider other conditions
 			 *   - e.g., small number of particularly high scoring instances

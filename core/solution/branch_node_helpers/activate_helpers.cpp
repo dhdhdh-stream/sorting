@@ -61,8 +61,7 @@ void BranchNode::activate(bool& is_branch,
 				}
 			}
 
-			// if (branch_score > original_score) {
-			if (rand()%2 == 0) {
+			if (branch_score > original_score) {
 				is_branch = true;
 			} else {
 				is_branch = false;
