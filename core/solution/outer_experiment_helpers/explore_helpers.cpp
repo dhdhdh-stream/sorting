@@ -13,8 +13,8 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 500;
-const int NUM_SAMPLES_PER_ITER = 10;
+const int EXPLORE_ITERS = 100;
+const int NUM_SAMPLES_PER_ITER = 100;
 
 void OuterExperiment::explore_initial_activate(Problem& problem,
 											   RunHelper& run_helper) {
@@ -173,9 +173,15 @@ void OuterExperiment::explore_backprop(double target_val) {
 		this->state_iter++;
 		this->sub_state_iter = 0;
 		if (this->state_iter >= EXPLORE_ITERS) {
+			double score_standard_deviation = sqrt(this->existing_score_variance);
+			double score_improvement_t_score = this->best_score
+				/ (score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
+
 			cout << "Outer" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
-			if (this->best_score > 0.0) {
+			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+
+			if (score_improvement_t_score > 1.645) {	// >95%
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->id = 1 + s_index;
@@ -202,16 +208,32 @@ void OuterExperiment::explore_backprop(double target_val) {
 				}
 				cout << endl;
 
-				cout << endl;
-
 				this->target_val_histories.reserve(solution->curr_num_datapoints);
 
 				this->state = OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
+				this->best_score = 0.0;
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->best_actions[s_index];
+					} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+						delete this->best_sequences[s_index];
+					} else {
+						delete this->best_root_scope_nodes[s_index];
+					}
+				}
+				this->best_step_types.clear();
+				this->best_actions.clear();
+				this->best_sequences.clear();
+				this->best_root_scope_nodes.clear();
+
 				// leave this->state as OUTER_EXPERIMENT_STATE_EXPLORE
 				this->state_iter = 0;
+				this->sub_state_iter = 0;
 			}
+
+			cout << endl;
 		}
 	}
 }

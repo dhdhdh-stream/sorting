@@ -44,5 +44,8 @@ void ExitNode::link() {
 }
 
 void ExitNode::save_for_display(ofstream& output_file) {
-	// do nothing
+	output_file << this->exit_depth << endl;
+
+	output_file << this->exit_node_parent_id << endl;
+	output_file << this->exit_node_id << endl;
 }

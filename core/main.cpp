@@ -23,7 +23,7 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 200;
+const int NUM_FAILS_BEFORE_INCREASE = 50;
 
 default_random_engine generator;
 
@@ -217,6 +217,7 @@ int main(int argc, char* argv[]) {
 				break;
 			} else if (is_fail) {
 				num_fails++;
+				cout << "num_fails: " << num_fails << endl << endl;
 				if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
 					cout << "fail_reset" << endl << endl;
 

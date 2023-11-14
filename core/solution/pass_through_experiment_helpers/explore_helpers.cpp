@@ -14,8 +14,8 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 500;
-const int NUM_SAMPLES_PER_ITER = 10;
+const int EXPLORE_ITERS = 100;
+const int NUM_SAMPLES_PER_ITER = 100;
 
 void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 Problem& problem,
@@ -27,10 +27,8 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 		// exit
 		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
 		int rand_index = distribution(generator);
-		// TODO: error with possible exit nodes?
 		this->curr_exit_depth = this->possible_exits[rand_index].first;
 		this->curr_exit_node = this->possible_exits[rand_index].second;
-		// TODO: if "success", add another try with more iterations
 	}
 
 	{
