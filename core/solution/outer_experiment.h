@@ -21,8 +21,10 @@ const int OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 
 const int OUTER_EXPERIMENT_STATE_EXPLORE = 1;
 const int OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
+const int OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
+const int OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
 
-const int OUTER_EXPERIMENT_STATE_SUCCESS = 3;
+const int OUTER_EXPERIMENT_STATE_SUCCESS = 5;
 
 class OuterExperiment {
 public:
@@ -69,6 +71,15 @@ public:
 	void measure_new_score_activate(Problem& problem,
 									RunHelper& run_helper);
 	void measure_new_score_backprop(double target_val);
+
+	void verify_existing_score_activate(Problem& problem,
+										RunHelper& run_helper);
+	void verify_existing_score_backprop(double target_val,
+										RunHelper& run_helper);
+
+	void verify_new_score_activate(Problem& problem,
+								   RunHelper& run_helper);
+	void verify_new_score_backprop(double target_val);
 };
 
 #endif /* OUTER_EXPERIMENT_H */

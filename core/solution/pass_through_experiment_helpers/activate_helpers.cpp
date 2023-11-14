@@ -85,6 +85,14 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											   run_helper,
 											   history);
 					break;
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+					verify_new_score_activate(curr_node,
+											  problem,
+											  context,
+											  exit_depth,
+											  exit_node,
+											  run_helper);
+					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 					measure_existing_misguess_activate(context);
 					break;
@@ -162,6 +170,14 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										   exit_node,
 										   run_helper,
 										   history);
+				break;
+			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+				verify_new_score_activate(curr_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 				measure_existing_misguess_activate(context);
@@ -317,7 +333,26 @@ void PassThroughExperiment::unhook() {
 	}
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-		this->branch_experiment->unhook();
+		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
+			for (int n_index = 0; n_index < (int)this->branch_experiment->new_state_nodes[s_index].size(); n_index++) {
+				if (this->branch_experiment->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
+
+					action_node->experiment_state_scope_contexts.clear();
+					action_node->experiment_state_node_contexts.clear();
+					action_node->experiment_state_defs.clear();
+					action_node->experiment_state_network_indexes.clear();
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
+
+					scope_node->experiment_state_scope_contexts.clear();
+					scope_node->experiment_state_node_contexts.clear();
+					scope_node->experiment_state_obs_indexes.clear();
+					scope_node->experiment_state_defs.clear();
+					scope_node->experiment_state_network_indexes.clear();
+				}
+			}
+		}
 	}
 }
 
@@ -357,6 +392,13 @@ void PassThroughExperiment::backprop(double target_val,
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
 		measure_new_score_backprop(target_val,
 								   history);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE:
+		verify_existing_score_backprop(target_val,
+									   run_helper);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+		verify_new_score_backprop(target_val);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 		measure_existing_misguess_backprop(target_val,

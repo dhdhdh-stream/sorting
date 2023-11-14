@@ -22,23 +22,16 @@ class State;
 
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
-/**
- * - simply choose highest score
- */
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
-/**
- * - if positive, can simply add and skip rest
- */
-/**
- * - don't train existing new state beyond MEASURE_EXISTING_SCORE
- */
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 3;
-const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 4;
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 5;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 5;
+const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 6;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 7;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 8;
 
-const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 7;
-const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 8;
+const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 9;
+const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 10;
 
 class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
@@ -179,6 +172,17 @@ public:
 									AbstractExperimentHistory*& history);
 	void measure_new_score_backprop(double target_val,
 									PassThroughExperimentOverallHistory* history);
+
+	void verify_existing_score_backprop(double target_val,
+										RunHelper& run_helper);
+
+	void verify_new_score_activate(AbstractNode*& curr_node,
+								   Problem& problem,
+								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
+								   RunHelper& run_helper);
+	void verify_new_score_backprop(double target_val);
 
 	void measure_existing_misguess_activate(std::vector<ContextLayer>& context);
 	void measure_existing_misguess_parent_scope_end_activate(

@@ -1,15 +1,11 @@
 #include "branch_experiment.h"
 
+#include <cmath>
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
-#include "helpers.h"
-#include "scope.h"
-#include "scope_node.h"
 #include "sequence.h"
 #include "solution.h"
 #include "state.h"
@@ -17,7 +13,7 @@
 
 using namespace std;
 
-void BranchExperiment::measure_activate(
+void BranchExperiment::verify_activate(
 		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
@@ -139,27 +135,57 @@ void BranchExperiment::measure_activate(
 	}
 }
 
-void BranchExperiment::measure_backprop(double target_val) {
+void BranchExperiment::verify_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= solution->curr_num_datapoints) {
-		this->combined_score /= solution->curr_num_datapoints;
+	if (this->state_iter >= 2 * solution->curr_num_datapoints) {
+		this->combined_score /= (2 * solution->curr_num_datapoints);
+
+		cout << "Branch" << endl;
+		cout << "verify" << endl;
+		cout << "this->scope_context:" << endl;
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			cout << c_index << ": " << this->scope_context[c_index] << endl;
+		}
+		cout << "this->node_context:" << endl;
+		for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+			cout << c_index << ": " << this->node_context[c_index] << endl;
+		}
+		cout << "new explore path:";
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				cout << " " << this->best_actions[s_index]->action.to_string();
+			} else {
+				cout << " S";
+			}
+		}
+		cout << endl;
+
+		cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+		if (this->best_exit_node == NULL) {
+			cout << "this->best_exit_node_id: " << -1 << endl;
+		} else {
+			cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+		}
 
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
+
+		cout << "this->combined_score: " << this->combined_score << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << "score_standard_deviation: " << score_standard_deviation << endl;
+		cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+		cout << "branch_weight: " << branch_weight << endl;
+
+		cout << endl;
 
 		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
-			this->combined_score = 0.0;
-			this->branch_count = 0;
-			this->branch_possible = 0;
-
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
-			this->state_iter = 0;
+			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

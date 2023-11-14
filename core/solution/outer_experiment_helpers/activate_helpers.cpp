@@ -24,6 +24,14 @@ void OuterExperiment::activate(Problem& problem,
 		measure_new_score_activate(problem,
 								   run_helper);
 		break;
+	case OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE:
+		verify_existing_score_activate(problem,
+									   run_helper);
+		break;
+	case OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+		verify_new_score_activate(problem,
+								  run_helper);
+		break;
 	}
 }
 
@@ -39,6 +47,13 @@ void OuterExperiment::backprop(double target_val,
 		break;
 	case OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
 		measure_new_score_backprop(target_val);
+		break;
+	case OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE:
+		verify_existing_score_backprop(target_val,
+									   run_helper);
+		break;
+	case OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+		verify_new_score_backprop(target_val);
 		break;
 	}
 }
