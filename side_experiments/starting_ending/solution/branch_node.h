@@ -52,9 +52,4 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
-class BranchNodeHistory : public AbstractNodeHistory {
-public:
-	BranchNodeHistory(BranchNode* node);
-};
-
 #endif /* BRANCH_NODE_H */
