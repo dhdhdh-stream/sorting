@@ -363,47 +363,136 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 uniform_int_distribution<int> input_non_empty_distribution(0, 2);
 uniform_int_distribution<int> input_type_distribution(0, 1);
 uniform_int_distribution<int> init_distribution(-1, 1);
-uniform_int_distribution<int> output_non_empty_distribution(0, 3);
-uniform_int_distribution<int> reuse_distribution(0, 4);
+uniform_int_distribution<int> reuse_distribution(0, 3);
 int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 						   bool is_local,
 						   int index,
+						   map<pair<bool,int>, int>& potential_new_state_mappings,
+						   vector<int>& potential_to_final_states,
 						   vector<int>& possible_input_scope_depths,
 						   vector<int>& possible_input_outer_types,
 						   vector<void*>& possible_input_outer_indexes,
-						   vector<int>& possible_output_scope_depths,
-						   vector<int>& possible_output_outer_types,
-						   vector<void*>& possible_output_outer_indexes,
 						   int& num_input_states,
 						   PotentialScopeNode* new_potential_scope_node) {
 	map<pair<bool,int>, int>::iterator it = state_mappings.find({is_local, index});
 	if (it != state_mappings.end()) {
 		return it->second;
 	} else {
-		int new_state_index = -1;
-
-		if (is_local || input_non_empty_distribution(generator) == 0) {
-
-		}
-
-		if (output_non_empty_distribution(generator) == 0) {
-			if (new_state_index != -1
-					&& new_potential_scope_node->input_types.back() == INPUT_TYPE_STATE
-					&& reuse_distribution(generator) != 0) {
-				new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
-				new_potential_scope_node->output_scope_depths.push_back(new_potential_scope_node->input_scope_depths.back());
-				new_potential_scope_node->output_outer_types.push_back(new_potential_scope_node->input_outer_types.back());
-				new_potential_scope_node->output_outer_indexes.push_back(new_potential_scope_node->input_outer_indexes.back());
-			} else {
-				new_state_index = num_input_states;
+		int potential_index = potential_new_state_mappings[{is_local, index}];
+		if (potential_to_final_states[potential_index] == -1) {
+			if (is_local || input_non_empty_distribution(generator) == 0) {
+				int new_state_index = num_input_states;
 				num_input_states++;
 
-				
-			}
-		}
+				if (input_type_distribution(generator) == 0) {
+					// state
+					uniform_int_distribution<int> outer_distribution(0, possible_input_scope_depths.size()-1);
+					int outer_index = outer_distribution(generator);
 
-		state_mappings[{is_local, index}] = new_state_index;
-		return new_state_index;
+					new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+					new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+					new_potential_scope_node->input_scope_depths.push_back(possible_input_scope_depths[outer_index]);
+					new_potential_scope_node->input_outer_types.push_back(possible_input_outer_types[outer_index]);
+					new_potential_scope_node->input_outer_indexes.push_back(possible_input_outer_indexes[outer_index]);
+					new_potential_scope_node->input_init_vals.push_back(0.0);
+				} else {
+					// constant
+					new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+					new_potential_scope_node->input_scope_depths.push_back(-1);
+					new_potential_scope_node->input_outer_types.push_back(-1);
+					new_potential_scope_node->input_outer_indexes.push_back(NULL);
+					new_potential_scope_node->input_init_vals.push_back(init_distribution(generator));
+				}
+
+				// no need to set potential_to_final_states
+
+				state_mappings[{is_local, index}] = new_state_index;
+				return new_state_index;
+			} else {
+				state_mappings[{is_local, index}] = -1;
+				return -1;
+			}
+		} else {
+			if (reuse_distribution(generator) != 0) {
+				/**
+				 * - simply reuse earliest
+				 */
+				new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+				new_potential_scope_node->input_inner_indexes.push_back(potential_to_final_states[potential_index]);
+				new_potential_scope_node->input_scope_depths.push_back(
+					new_potential_scope_node->output_scope_depths[potential_to_final_states[potential_index]]);
+				new_potential_scope_node->input_outer_types.push_back(
+					new_potential_scope_node->output_outer_types[potential_to_final_states[potential_index]]);
+				new_potential_scope_node->input_outer_indexes.push_back(
+					new_potential_scope_node->output_outer_indexes[potential_to_final_states[potential_index]]);
+			} else {
+				if (input_type_distribution(generator) == 0) {
+					// state
+					uniform_int_distribution<int> outer_distribution(0, possible_input_scope_depths.size()-1);
+					int outer_index = outer_distribution(generator);
+
+					new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+					new_potential_scope_node->input_inner_indexes.push_back(potential_to_final_states[potential_index]);
+					new_potential_scope_node->input_scope_depths.push_back(possible_input_scope_depths[outer_index]);
+					new_potential_scope_node->input_outer_types.push_back(possible_input_outer_types[outer_index]);
+					new_potential_scope_node->input_outer_indexes.push_back(possible_input_outer_indexes[outer_index]);
+					new_potential_scope_node->input_init_vals.push_back(0.0);
+				} else {
+					// constant
+					new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+					new_potential_scope_node->input_inner_indexes.push_back(potential_to_final_states[potential_index]);
+					new_potential_scope_node->input_scope_depths.push_back(-1);
+					new_potential_scope_node->input_outer_types.push_back(-1);
+					new_potential_scope_node->input_outer_indexes.push_back(NULL);
+					new_potential_scope_node->input_init_vals.push_back(init_distribution(generator));
+				}
+			}
+
+			state_mappings[{is_local, index}] = potential_to_final_states[potential_index];
+			return potential_to_final_states[potential_index];
+		}
+	}
+}
+
+int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
+						 bool is_local,
+						 int index,
+						 map<pair<bool,int>, int>& potential_new_state_mappings,
+						 vector<int>& potential_to_final_states,
+						 int& num_input_states,
+						 PotentialScopeNode* new_potential_scope_node) {
+	map<pair<bool,int>, int>::iterator it = state_mappings.find({is_local, index});
+	if (it != state_mappings.end()) {
+		return it->second;
+	} else {
+		int potential_index = potential_new_state_mappings[{is_local, index}];
+		if (potential_to_final_states[potential_index] == -1) {
+			if (is_local) {
+				int new_state_index = num_input_states;
+				num_input_states++;
+
+				new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+				new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+				new_potential_scope_node->input_scope_depths.push_back(-1);
+				new_potential_scope_node->input_outer_types.push_back(-1);
+				new_potential_scope_node->input_outer_indexes.push_back(NULL);
+				new_potential_scope_node->input_init_vals.push_back(0.0);
+			} else {
+				state_mappings[{is_local, index}] = -1;
+				return -1;
+			}
+		} else {
+			new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+			new_potential_scope_node->input_inner_indexes.push_back(potential_to_final_states[potential_index]);
+			new_potential_scope_node->input_scope_depths.push_back(-1);
+			new_potential_scope_node->input_outer_types.push_back(-1);
+			new_potential_scope_node->input_outer_indexes.push_back(NULL);
+			new_potential_scope_node->input_init_vals.push_back(0.0);
+
+			state_mappings[{is_local, index}] = potential_to_final_states[potential_index];
+			return potential_to_final_states[potential_index];
+		}
 	}
 }
 
@@ -412,6 +501,8 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								 Scope* scope) {
 	int num_input_states = 0;
 	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
+
+	// determine start and end
 
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<Scope*>> possible_scope_contexts;
@@ -452,6 +543,8 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		}
 	}
 
+	// find and create needed nodes
+
 	int starting_depth = 0;
 	while (true) {
 		if (starting_depth + 1 >= start_scope_context.size()
@@ -467,35 +560,45 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		}
 	}
 
+	AbstractNode* new_starting_node;
+
 	vector<map<AbstractNode*, pair<bool,AbstractNode*>>> end_node_mappings(end_scope_context.size());
 	vector<map<AbstractNode*, AbstractNode*>> end_new_node_reverse_mappings(end_scope_context.size());
 	{
 		end_node_mappings.back()[end_node_context.back()] = {true, NULL};
-		end_node_helper(end_scope_context,
-						end_node_context,
-						(int)end_scope_context.size()-1,
-						end_scope_context.back()->starting_node,
-						end_node_mappings.back(),
-						end_new_node_reverse_mappings.back());
+		if (end_scope_context.back()->starting_node != end_node_context.back()) {
+			end_node_helper(end_scope_context,
+							end_node_context,
+							(int)end_scope_context.size()-1,
+							end_scope_context.back()->starting_node,
+							end_node_mappings.back(),
+							end_new_node_reverse_mappings.back());
+
+			new_starting_node = end_node_mappings.back()[end_scope_context.back()->starting_node]->second;
+		}
 	}
 	for (int l_index = (int)end_scope_context.size()-2; l_index > starting_depth; l_index--) {
 		AbstractNode* next_layer_start = end_node_mappings[l_index + 1]
 			.find(end_scope_context[l_index + 1]->starting_node)->second;
 		end_node_mappings[l_index][end_node_context[l_index]] = {true, next_layer_start};
-		end_node_helper(end_scope_context,
-						end_node_context,
-						l_index,
-						end_scope_context[l_index]->starting_node,
-						end_node_mappings[l_index],
-						end_new_node_reverse_mappings[l_index]);
+		if (end_scope_context[l_index]->starting_node != end_node_context[l_index]) {
+			end_node_helper(end_scope_context,
+							end_node_context,
+							l_index,
+							end_scope_context[l_index]->starting_node,
+							end_node_mappings[l_index],
+							end_new_node_reverse_mappings[l_index]);
+
+			new_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->starting_node]->second;
+		}
 	}
 
 	vector<map<AbstractNode*, pair<bool,AbstractNode*>>> start_node_mappings(start_scope_context.size());
 	vector<map<AbstractNode*, AbstractNode*>> start_new_node_reverse_mappings(start_scope_context.size());
-	if (start_scope_context.size() != 0) {
+	if (start_scope_context.size() > starting_depth) {
 		AbstractNode* end_node = end_node_mappings[starting_depth + 1]
 			.find(end_scope_context[starting_depth + 1]->starting_node)->second;
-		start_node_mappings[0][end_node_context[0]] = {true, end_node};
+		start_node_mappings[starting_depth][end_node_context[starting_depth]] = {true, end_node};
 		start_node_helper(start_scope_context,
 						  start_node_context,
 						  (int)start_scope_context.size()-1,
@@ -503,236 +606,55 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						  start_node_context.back(),
 						  start_node_mappings,
 						  start_new_node_reverse_mappings);
+
+		new_starting_node = start_node_mappings.back()[start_node_context.back()]->second;
 	}
 
+	// gather potential states
 
+	int potential_new_state_counter = 0;
 
-	vector<int> possible_input_scope_depths;
-	vector<int> possible_input_outer_types;
-	vector<void*> possible_input_outer_indexes;
-	uniform_int_distribution<int> input_temp_distribution(0, 2);
-	{
-		for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-				it != context.back().input_state_vals.end(); it++) {
-			possible_input_scope_depths.push_back(0);
-			possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
-			possible_input_outer_indexes.push_back((void*)((long)it->first));
-		}
-
-		for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-				it != context.back().local_state_vals.end(); it++) {
-			possible_input_scope_depths.push_back(0);
-			possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
-			possible_input_outer_indexes.push_back((void*)((long)it->first));
-		}
-
-		for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
-				it != context.back().temp_state_vals.end(); it++) {
-			if (input_temp_distribution(generator) == 0) {
-				possible_input_scope_depths.push_back(0);
-				possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-				possible_input_outer_indexes.push_back(it->first);
-			}
-		}
-	}
-	for (int c_index = 1; c_index < explore_context_depth; c_index++) {
-		ScopeNode* scope_node = context[context.size()-1 - c_index].node;
-
-		for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
-				it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
-			bool passed_down = false;
-			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
-				if (scope_node->input_outer_is_local[i_index] == false
-						&& scope_node->input_outer_indexes[i_index] == it->first) {
-					passed_down = true;
-					break;
-				}
-			}
-
-			if (!passed_down) {
-				possible_input_scope_depths.push_back(c_index);
-				possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_input_outer_indexes.push_back((void*)((long)it->first));
-			}
-		}
-
-		for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].local_state_vals.begin();
-				it != context[context.size()-1 - c_index].local_state_vals.end(); it++) {
-			bool passed_down = false;
-			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
-				if (scope_node->input_outer_is_local[i_index] == true
-						&& scope_node->input_outer_indexes[i_index] == it->first) {
-					passed_down = true;
-					break;
-				}
-			}
-
-			if (!passed_down) {
-				possible_input_scope_depths.push_back(c_index);
-				possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_input_outer_indexes.push_back((void*)((long)it->first));
-			}
-		}
-
-		for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
-				it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
-			if (input_temp_distribution(generator) == 0) {
-				possible_input_scope_depths.push_back(c_index);
-				possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-				possible_input_outer_indexes.push_back(it->first);
-			}
-		}
-	}
-
-	vector<int> possible_output_scope_depths;
-	vector<int> possible_output_outer_types;
-	vector<void*> possible_output_outer_indexes;
-	uniform_int_distribution<int> output_temp_distribution(0, 4);
-	{
-		Scope* scope = context.back().scope;
-
-		for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-				it != context.back().input_state_vals.end(); it++) {
-			possible_output_scope_depths.push_back(0);
-			possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-			possible_output_outer_indexes.push_back((void*)((long)it->first));
-		}
-
-		for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
-			possible_output_scope_depths.push_back(0);
-			possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-			possible_output_outer_indexes.push_back((void*)((long)s_index));
-		}
-
-		for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
-				it != context.back().temp_state_vals.end(); it++) {
-			if (output_temp_distribution(generator) == 0) {
-				possible_output_scope_depths.push_back(0);
-				possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
-				possible_output_outer_indexes.push_back(it->first);
-			}
-		}
-	}
-	for (int c_index = 1; c_index < explore_context_depth; c_index++) {
-		Scope* scope = context[context.size()-1 - c_index].scope;
-		ScopeNode* scope_node = context[context.size()-1 - c_index].node;
-
-		for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
-				it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
-			bool passed_out = false;
-			for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
-				if (scope_node->output_outer_is_local[o_index] == false
-						&& scope_node->output_outer_indexes[o_index] == it->first) {
-					passed_out = true;
-					break;
-				}
-			}
-
-			if (!passed_out) {
-				possible_output_scope_depths.push_back(c_index);
-				possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_output_outer_indexes.push_back((void*)((long)it->first));
-			}
-		}
-
-		for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
-			bool passed_out = false;
-			for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
-				if (scope_node->output_outer_is_local[o_index] == true
-						&& scope_node->output_outer_indexes[o_index] == s_index) {
-					passed_out = true;
-					break;
-				}
-			}
-
-			if (!passed_out) {
-				possible_output_scope_depths.push_back(c_index);
-				possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_output_outer_indexes.push_back((void*)((long)s_index));
-			}
-		}
-
-		for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
-				it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
-			if (output_temp_distribution(generator) == 0) {
-				possible_output_scope_depths.push_back(c_index);
-				possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
-				possible_output_outer_indexes.push_back(it->first);
-			}
-		}
-	}
-
-	/**
-	 * - don't have to worry about duplicate scopes/nodes in context
-	 *   - new nodes/states created for each copy
-	 */
-	vector<map<pair<bool,int>, int>> start_state_mappings(start_scope_context.size());
+	vector<map<pair<bool,int>, int>> start_potential_new_state_mappings(start_scope_context.size());
 	for (int l_index = (int)start_new_node_reverse_mappings.size()-1; l_index >= starting_depth; l_index--) {
 		for (map<AbstractNode*, AbstractNode*>::iterator node_it = start_new_node_reverse_mappings[l_index].begin();
 				node_it != start_new_node_reverse_mappings[l_index].end(); node_it++) {
 			if (node_it->second->type == NODE_TYPE_ACTION) {
 				ActionNode* original_action_node = (ActionNode*)node_it->second;
-				
-				vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
 				for (int n_index = 0; n_index < (int)original_action_node->state_is_local.size(); n_index++) {
-					int new_state_index = start_new_state_helper(start_state_mappings[l_index],
-																 original_action_node->state_is_local[n_index],
-																 original_action_node->state_indexes[n_index],
-																 possible_input_scope_depths,
-																 possible_input_outer_types,
-																 possible_input_outer_indexes,
-																 possible_output_scope_depths,
-																 possible_output_outer_types,
-																 possible_output_outer_indexes,
-																 num_input_states,
-																 new_potential_scope_node);
-					if (new_state_index != -1) {
-						if (original_action_node->state_obs_indexes[n_index] == -1) {
-							obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
-
-							new_action_node->state_is_local.push_back(false);
-							new_action_node->state_indexes.push_back(new_state_index);
-							new_action_node->state_obs_indexes.push_back(-1);
-							new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
-							new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
-						} else {
-							if (obs_index_mapping[original_action_node->state_obs_indexes[n_index]] != -1) {
-								obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
-
-								new_action_node->state_is_local.push_back(false);
-								new_action_node->state_indexes.push_back(new_state_index);
-								new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[n_index]]);
-								new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
-								new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
-							}
-						}
+					map<pair<bool,int>, int>::iterator state_it = start_potential_new_state_mappings[l_index]
+						.find({original_action_node->state_is_local[n_index], original_action_node->state_indexes[n_index]});
+					if (state_it == start_potential_new_state_mappings[l_index].end()) {
+						start_potential_new_state_mappings[l_index][{original_action_node->state_is_local[n_index], original_action_node->state_indexes[n_index]}] = potential_new_state_counter;
+						potential_new_state_counter++;
 					}
 				}
 			} else if (node_it->second->type == NODE_TYPE_SCOPE) {
 				ScopeNode* original_scope_node = (ScopeNode*)node_it->second;
 				for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
-					map<pair<bool,int>, int>::iterator state_it = potential_start_states[l_index]
-						.find({original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]});
-					if (state_it == potential_start_states[l_index].end()) {
-						potential_start_states[l_index][{original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]}] = potential_new_state_counter;
-						potential_new_state_counter++;
+					if (original_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
+						map<pair<bool,int>, int>::iterator state_it = start_potential_new_state_mappings[l_index]
+							.find({original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]});
+						if (state_it == start_potential_new_state_mappings[l_index].end()) {
+							start_potential_new_state_mappings[l_index][{original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]}] = potential_new_state_counter;
+							potential_new_state_counter++;
+						}
 					}
 				}
 				for (int o_index = 0; o_index < (int)original_scope_node->output_inner_indexes.size(); o_index++) {
-					map<pair<bool,int>, int>::iterator state_it = potential_start_states[l_index]
+					map<pair<bool,int>, int>::iterator state_it = start_potential_new_state_mappings[l_index]
 						.find({original_scope_node->output_outer_is_local[o_index], original_scope_node->output_outer_indexes[o_index]});
-					if (state_it == potential_start_states[l_index].end()) {
-						potential_start_states[l_index][{original_scope_node->output_outer_is_local[o_index], original_scope_node->output_outer_indexes[o_index]}] = potential_new_state_counter;
+					if (state_it == start_potential_new_state_mappings[l_index].end()) {
+						start_potential_new_state_mappings[l_index][{original_scope_node->output_outer_is_local[o_index], original_scope_node->output_outer_indexes[o_index]}] = potential_new_state_counter;
 						potential_new_state_counter++;
 					}
 				}
 			} else {
 				BranchNode* original_branch_node = (BranchNode*)node_it->second;
 				for (int s_index = 0; s_index < (int)original_branch_node->decision_state_is_local.size(); s_index++) {
-					map<pair<bool,int>, int>::iterator state_it = potential_start_states[l_index]
+					map<pair<bool,int>, int>::iterator state_it = start_potential_new_state_mappings[l_index]
 						.find({original_branch_node->decision_state_is_local[s_index], original_branch_node->decision_state_indexes[s_index]});
-					if (state_it == potential_start_states[l_index].end()) {
-						potential_start_states[l_index][{original_branch_node->decision_state_is_local[s_index], original_branch_node->decision_state_indexes[s_index]}] = potential_new_state_counter;
+					if (state_it == start_potential_new_state_mappings[l_index].end()) {
+						start_potential_new_state_mappings[l_index][{original_branch_node->decision_state_is_local[s_index], original_branch_node->decision_state_indexes[s_index]}] = potential_new_state_counter;
 						potential_new_state_counter++;
 					}
 				}
@@ -742,32 +664,32 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		if (l_index != starting_depth) {
 			ScopeNode* outer_scope_node = (ScopeNode*)start_node_context[l_index-1];
 			for (int o_index = 0; o_index < (int)outer_scope_node->output_inner_indexes.size(); o_index++) {
-				map<pair<bool,int>, int>::iterator it = potential_start_states[l_index]
+				map<pair<bool,int>, int>::iterator it = start_potential_new_state_mappings[l_index]
 					.find({false, scope_node->output_inner_indexes[o_index]});
-				if (it != potential_start_states[l_index].end()) {
-					potential_start_states[l_index-1][{scope_node->output_outer_is_local[o_index], scope_node->output_outer_indexes[o_index]}] = it->second;
+				if (it != start_potential_new_state_mappings[l_index].end()) {
+					start_potential_new_state_mappings[l_index-1][{scope_node->output_outer_is_local[o_index], scope_node->output_outer_indexes[o_index]}] = it->second;
 				}
 			}
 		}
 	}
 
-	vector<map<pair<bool,int>, int>> end_state_mappings(end_scope_context.size());
+	vector<map<pair<bool,int>, int>> end_potential_new_state_mappings(end_scope_context.size());
 	for (int l_index = starting_depth+1; l_index < (int)end_scope_context.size(); l_index++) {
 		ScopeNode* outer_scope_node = (ScopeNode*)end_node_context[l_index-1];
 		if (l_index == starting_depth+1) {
 			for (int i_index = 0; i_index < (int)outer_scope_node->input_types.size(); i_index++) {
-				map<pair<bool,int>, int>::iterator it = potential_start_states[starting_depth]
+				map<pair<bool,int>, int>::iterator it = start_potential_new_state_mappings[starting_depth]
 					.find({outer_scope_node->input_outer_is_local[i_index], outer_scope_node->input_outer_indexes[i_index]});
-				if (it != potential_start_states[starting_depth].end()) {
-					potential_end_states[starting_depth+1][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
+				if (it != start_potential_new_state_mappings[starting_depth].end()) {
+					start_potential_new_state_mappings[starting_depth+1][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
 				}
 			}
 		} else {
 			for (int i_index = 0; i_index < (int)outer_scope_node->input_types.size(); i_index++) {
-				map<pair<bool,int>, int>::iterator it = potential_end_states[l_index-1]
+				map<pair<bool,int>, int>::iterator it = end_potential_new_state_mappings[l_index-1]
 					.find({outer_scope_node->input_outer_is_local[i_index], outer_scope_node->input_outer_indexes[i_index]});
-				if (it != potential_end_states[l_index-1].end()) {
-					potential_end_states[l_index][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
+				if (it != end_potential_new_state_mappings[l_index-1].end()) {
+					end_potential_new_state_mappings[l_index][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
 				}
 			}
 		}
@@ -775,72 +697,559 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		for (map<AbstractNode*, AbstractNode*>::iterator node_it = end_new_node_reverse_mappings[l_index].begin();
 				node_it != end_new_node_reverse_mappings[l_index].end(); node_it++) {
 			if (node_it->second->type == NODE_TYPE_ACTION) {
-
+				ActionNode* original_action_node = (ActionNode*)node_it->second;
+				for (int n_index = 0; n_index < (int)original_action_node->state_is_local.size(); n_index++) {
+					map<pair<bool,int>, int>::iterator state_it = end_potential_new_state_mappings[l_index]
+						.find({original_action_node->state_is_local[n_index], original_action_node->state_indexes[n_index]});
+					if (state_it == end_potential_new_state_mappings[l_index].end()) {
+						end_potential_new_state_mappings[l_index][{original_action_node->state_is_local[n_index], original_action_node->state_indexes[n_index]}] = potential_new_state_counter;
+						potential_new_state_counter++;
+					}
+				}
 			} else if (node_it->second->type == NODE_TYPE_SCOPE) {
-
-			} else if (node_it->second->type == NODE_TYPE_BRANCH) {
-
+				ScopeNode* original_scope_node = (ScopeNode*)node_it->second;
+				for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
+					map<pair<bool,int>, int>::iterator state_it = end_potential_new_state_mappings[l_index]
+						.find({original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]});
+					if (state_it == end_potential_new_state_mappings[l_index].end()) {
+						end_potential_new_state_mappings[l_index][{original_scope_node->input_outer_is_local[i_index], original_scope_node->input_outer_indexes[i_index]}] = potential_new_state_counter;
+						potential_new_state_counter++;
+					}
+				}
+				for (int o_index = 0; o_index < (int)original_scope_node->output_inner_indexes.size(); o_index++) {
+					map<pair<bool,int>, int>::iterator state_it = end_potential_new_state_mappings[l_index]
+						.find({original_scope_node->output_outer_is_local[o_index], original_scope_node->output_outer_indexes[o_index]});
+					if (state_it == end_potential_new_state_mappings[l_index].end()) {
+						end_potential_new_state_mappings[l_index][{original_scope_node->output_outer_is_local[o_index], original_scope_node->output_outer_indexes[o_index]}] = potential_new_state_counter;
+						potential_new_state_counter++;
+					}
+				}
 			} else {
-
+				BranchNode* original_branch_node = (BranchNode*)node_it->second;
+				for (int s_index = 0; s_index < (int)original_branch_node->decision_state_is_local.size(); s_index++) {
+					map<pair<bool,int>, int>::iterator state_it = end_potential_new_state_mappings[l_index]
+						.find({original_branch_node->decision_state_is_local[s_index], original_branch_node->decision_state_indexes[s_index]});
+					if (state_it == end_potential_new_state_mappings[l_index].end()) {
+						end_potential_new_state_mappings[l_index][{original_branch_node->decision_state_is_local[s_index], original_branch_node->decision_state_indexes[s_index]}] = potential_new_state_counter;
+						potential_new_state_counter++;
+					}
+				}
 			}
 		}
 	}
 
+	if (potential_new_state_counter > 0) {
+		// assign outputs
 
-	
-	
-	for (int l_index = starting_depth; l_index < (int)start_new_node_reverse_mappings.size(); l_index++) {
-		for (map<AbstractNode*, AbstractNode*>::iterator node_it = start_new_node_reverse_mappings[l_index].begin();
-				node_it != start_new_node_reverse_mappings[l_index].end(); node_it++) {
-			if (node_it->second->type == NODE_TYPE_ACTION) {
-				ActionNode* new_action_node = (ActionNode*)node_it->first;
-				ActionNode* original_action_node = (ActionNode*)node_it->second;
+		vector<int> possible_output_scope_depths;
+		vector<int> possible_output_outer_types;
+		vector<void*> possible_output_outer_indexes;
+		uniform_int_distribution<int> output_temp_distribution(0, 4);
+		{
+			Scope* scope = context.back().scope;
 
-				vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
-				for (int n_index = 0; n_index < (int)original_action_node->state_is_local.size(); n_index++) {
-					int new_state_index = potential_start_states[l_index][{original_action_node->state_is_local[n_index], original_action_node->state_indexes[n_index]}];
-					if (new_state_index != -1) {
-						if (original_action_node->state_obs_indexes[n_index] == -1) {
-							obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
+			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+					it != context.back().input_state_vals.end(); it++) {
+				possible_output_scope_depths.push_back(0);
+				possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
+				possible_output_outer_indexes.push_back((void*)((long)it->first));
+			}
 
-							new_action_node->state_is_local.push_back(false);
-							new_action_node->state_indexes.push_back(new_state_index);
-							new_action_node->state_obs_indexes.push_back(-1);
-							new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
-							new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
-						} else {
-							if (obs_index_mapping[original_action_node->state_obs_indexes[n_index]] != -1) {
+			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
+				possible_output_scope_depths.push_back(0);
+				possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
+				possible_output_outer_indexes.push_back((void*)((long)s_index));
+			}
+
+			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
+					it != context.back().temp_state_vals.end(); it++) {
+				if (output_temp_distribution(generator) == 0) {
+					possible_output_scope_depths.push_back(0);
+					possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
+					possible_output_outer_indexes.push_back(it->first);
+				}
+			}
+		}
+		for (int c_index = 1; c_index < explore_context_depth; c_index++) {
+			Scope* scope = context[context.size()-1 - c_index].scope;
+			ScopeNode* scope_node = context[context.size()-1 - c_index].node;
+
+			for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
+					it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
+				bool passed_out = false;
+				for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
+					if (scope_node->output_outer_is_local[o_index] == false
+							&& scope_node->output_outer_indexes[o_index] == it->first) {
+						passed_out = true;
+						break;
+					}
+				}
+
+				if (!passed_out) {
+					possible_output_scope_depths.push_back(c_index);
+					possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
+					possible_output_outer_indexes.push_back((void*)((long)it->first));
+				}
+			}
+
+			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
+				bool passed_out = false;
+				for (int o_index = 0; o_index < (int)scope_node->output_inner_indexes.size(); o_index++) {
+					if (scope_node->output_outer_is_local[o_index] == true
+							&& scope_node->output_outer_indexes[o_index] == s_index) {
+						passed_out = true;
+						break;
+					}
+				}
+
+				if (!passed_out) {
+					possible_output_scope_depths.push_back(c_index);
+					possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
+					possible_output_outer_indexes.push_back((void*)((long)s_index));
+				}
+			}
+
+			for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
+					it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
+				if (output_temp_distribution(generator) == 0) {
+					possible_output_scope_depths.push_back(c_index);
+					possible_output_outer_types.push_back(OUTER_TYPE_TEMP);
+					possible_output_outer_indexes.push_back(it->first);
+				}
+			}
+		}
+
+		uniform_int_distribution<int> output_consider_distribution(0, possible_output_scope_depths.size()-1);
+		int num_outputs_to_consider = output_consider_distribution(generator);
+
+		vector<int> potential_to_final_states(potential_new_state_counter, -1);
+		uniform_int_distribution<int> output_non_empty_distribution(0, 2);
+		uniform_int_distribution<int> potential_distribution(0, potential_new_state_counter-1);
+		for (int c_index = 0; c_index < num_outputs_to_consider; c_index++) {
+			uniform_int_distribution<int> outer_distribution(0, possible_output_scope_depths.size()-1);
+			int outer_index = outer_distribution(generator);
+
+			if (output_non_empty_distribution(generator) == 0) {
+				int potential_index = potential_distribution(generator);
+				if (potential_to_final_states[potential_index] == -1) {
+					potential_to_final_states[potential_index] = num_input_states;
+					num_input_states++;
+				}
+
+				new_potential_scope_node->output_inner_indexes.push_back(potential_to_final_states[potential_index]);
+				new_potential_scope_node->output_scope_depths.push_back(possible_output_scope_depths[outer_index]);
+				new_potential_scope_node->output_outer_types.push_back(possible_output_outer_types[outer_index]);
+				new_potential_scope_node->output_outer_indexes.push_back(possible_output_outer_indexes[outer_index]);
+			}
+
+			possible_output_scope_depths.erase(possible_output_scope_depths.begin() + outer_index);
+			possible_output_outer_types.erase(possible_output_outer_types.begin() + outer_index);
+			possible_output_outer_indexes.erase(possible_output_outer_indexes.begin() + outer_index);
+		}
+
+		// add state
+
+		vector<int> possible_input_scope_depths;
+		vector<int> possible_input_outer_types;
+		vector<void*> possible_input_outer_indexes;
+		uniform_int_distribution<int> input_temp_distribution(0, 2);
+		{
+			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+					it != context.back().input_state_vals.end(); it++) {
+				possible_input_scope_depths.push_back(0);
+				possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
+				possible_input_outer_indexes.push_back((void*)((long)it->first));
+			}
+
+			for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+					it != context.back().local_state_vals.end(); it++) {
+				possible_input_scope_depths.push_back(0);
+				possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
+				possible_input_outer_indexes.push_back((void*)((long)it->first));
+			}
+
+			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
+					it != context.back().temp_state_vals.end(); it++) {
+				if (input_temp_distribution(generator) == 0) {
+					possible_input_scope_depths.push_back(0);
+					possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+					possible_input_outer_indexes.push_back(it->first);
+				}
+			}
+		}
+		for (int c_index = 1; c_index < explore_context_depth; c_index++) {
+			ScopeNode* scope_node = context[context.size()-1 - c_index].node;
+
+			for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].input_state_vals.begin();
+					it != context[context.size()-1 - c_index].input_state_vals.end(); it++) {
+				bool passed_down = false;
+				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+					if (scope_node->input_outer_is_local[i_index] == false
+							&& scope_node->input_outer_indexes[i_index] == it->first) {
+						passed_down = true;
+						break;
+					}
+				}
+
+				if (!passed_down) {
+					possible_input_scope_depths.push_back(c_index);
+					possible_input_outer_types.push_back(OUTER_TYPE_INPUT);
+					possible_input_outer_indexes.push_back((void*)((long)it->first));
+				}
+			}
+
+			for (map<int, StateStatus>::iterator it = context[context.size()-1 - c_index].local_state_vals.begin();
+					it != context[context.size()-1 - c_index].local_state_vals.end(); it++) {
+				bool passed_down = false;
+				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+					if (scope_node->input_outer_is_local[i_index] == true
+							&& scope_node->input_outer_indexes[i_index] == it->first) {
+						passed_down = true;
+						break;
+					}
+				}
+
+				if (!passed_down) {
+					possible_input_scope_depths.push_back(c_index);
+					possible_input_outer_types.push_back(OUTER_TYPE_LOCAL);
+					possible_input_outer_indexes.push_back((void*)((long)it->first));
+				}
+			}
+
+			for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
+					it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
+				if (input_temp_distribution(generator) == 0) {
+					possible_input_scope_depths.push_back(c_index);
+					possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+					possible_input_outer_indexes.push_back(it->first);
+				}
+			}
+		}
+
+		/**
+		 * - don't have to worry about duplicate scopes/nodes in context
+		 *   - new nodes/states created for each copy
+		 */
+		vector<map<pair<bool,int>, int>> start_state_mappings(start_scope_context.size());
+		for (int l_index = (int)start_new_node_reverse_mappings.size()-1; l_index >= starting_depth; l_index--) {
+			for (map<AbstractNode*, AbstractNode*>::iterator node_it = start_new_node_reverse_mappings[l_index].begin();
+					node_it != start_new_node_reverse_mappings[l_index].end(); node_it++) {
+				if (node_it->first->type == NODE_TYPE_ACTION) {
+					ActionNode* new_action_node = (ActionNode*)node_it->first;
+					ActionNode* original_action_node = (ActionNode*)node_it->second;
+
+					vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
+					for (int n_index = 0; n_index < (int)original_action_node->state_is_local.size(); n_index++) {
+						int new_state_index = start_new_state_helper(start_state_mappings[l_index],
+																	 original_action_node->state_is_local[n_index],
+																	 original_action_node->state_indexes[n_index],
+																	 start_potential_new_state_mappings[l_index],
+																	 potential_to_final_states,
+																	 possible_input_scope_depths,
+																	 possible_input_outer_types,
+																	 possible_input_outer_indexes,
+																	 num_input_states,
+																	 new_potential_scope_node);
+						if (new_state_index != -1) {
+							if (original_action_node->state_obs_indexes[n_index] == -1) {
 								obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
 
 								new_action_node->state_is_local.push_back(false);
 								new_action_node->state_indexes.push_back(new_state_index);
-								new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[n_index]]);
+								new_action_node->state_obs_indexes.push_back(-1);
 								new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
 								new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
+							} else {
+								if (obs_index_mapping[original_action_node->state_obs_indexes[n_index]] != -1) {
+									obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
+
+									new_action_node->state_is_local.push_back(false);
+									new_action_node->state_indexes.push_back(new_state_index);
+									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[n_index]]);
+									new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
+									new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
+								}
 							}
 						}
 					}
+				} else if (node_it->first->type == NODE_TYPE_SCOPE) {
+					ScopeNode* new_scope_node = (ScopeNode*)node_it->first;
+					ScopeNode* original_scope_node = (ScopeNode*)node_it->second;
+
+					for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
+						if (original_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
+							int new_state_index = start_new_state_helper(start_state_mappings[l_index],
+																		 original_scope_node->input_outer_is_local[i_index],
+																		 original_scope_node->input_outer_indexes[i_index],
+																		 start_potential_new_state_mappings[l_index],
+																		 potential_to_final_states,
+																		 possible_input_scope_depths,
+																		 possible_input_outer_types,
+																		 possible_input_outer_indexes,
+																		 num_input_states,
+																		 new_potential_scope_node);
+
+							if (new_state_index != -1) {
+								new_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+								new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
+								new_scope_node->input_outer_is_local.push_back(false);
+								new_scope_node->input_outer_indexes.push_back(new_state_index);
+								new_scope_node->input_init_vals.push_back(0.0);
+							}
+						} else {
+							new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+							new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
+							new_scope_node->input_outer_is_local.push_back(false);
+							new_scope_node->input_outer_indexes.push_back(-1);
+							new_scope_node->input_init_vals.push_back(original_scope_node->input_init_vals[i_index]);
+						}
+					}
+
+					for (int o_index = 0; o_index < (int)original_scope_node->output_inner_indexes.size(); o_index++) {
+						int new_state_index = start_new_state_helper(start_state_mappings[l_index],
+																	 original_scope_node->output_outer_is_local[o_index],
+																	 original_scope_node->output_outer_indexes[o_index],
+																	 start_potential_new_state_mappings[l_index],
+																	 potential_to_final_states,
+																	 possible_input_scope_depths,
+																	 possible_input_outer_types,
+																	 possible_input_outer_indexes,
+																	 num_input_states,
+																	 new_potential_scope_node);
+
+						if (new_state_index != -1) {
+							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
+							new_scope_node->output_outer_is_local.push_back(false);
+							new_scope_node->output_outer_indexes.push_back(new_state_index);
+						}
+					}
+				} else {
+					BranchNode* new_branch_node = (BranchNode*)node_it->first;
+					BranchNode* original_branch_node = (BranchNode*)node_it->second;
+
+					for (int s_index = 0; s_index < (int)original_branch_node->decision_state_is_local.size(); s_index++) {
+						int new_state_index = start_new_state_helper(start_state_mappings[l_index],
+																	 original_branch_node->decision_state_is_local[s_index],
+																	 original_branch_node->decision_state_indexes[s_index],
+																	 start_potential_new_state_mappings[l_index],
+																	 potential_to_final_states,
+																	 possible_input_scope_depths,
+																	 possible_input_outer_types,
+																	 possible_input_outer_indexes,
+																	 num_input_states,
+																	 new_potential_scope_node);
+
+						if (new_state_index != -1) {
+							new_branch_node->decision_state_is_local.push_back(false);
+							new_branch_node->decision_state_indexes.push_back(new_state_index);
+							new_branch_node->decision_original_weights.push_back(original_branch_node->decision_original_weights[s_index]);
+							new_branch_node->decision_branch_weights.push_back(original_branch_node->decision_branch_weights[s_index]);
+						}
+					}
 				}
-			} else if (node_it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* new_scope_node = (ScopeNode*)node_it->first;
-				ScopeNode* original_scope_node = (ScopeNode*)node_it->second;
+			}
 
-				for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
-					int new_state_index = 
+			if (l_index != starting_depth) {
+				ScopeNode* outer_scope_node = (ScopeNode*)start_node_context[l_index-1];
+				for (int o_index = 0; o_index < (int)outer_scope_node->output_inner_indexes.size(); o_index++) {
+					map<pair<bool,int>, int>::iterator it = start_state_mappings[l_index]
+						.find({false, scope_node->output_inner_indexes[o_index]});
+					if (it != start_state_mappings[l_index].end()) {
+						start_state_mappings[l_index-1][{scope_node->output_outer_is_local[o_index], scope_node->output_outer_indexes[o_index]}] = it->second;
+					}
 				}
+			}
+		}
 
-				for (int o_index = 0; o_index < (int)original_scope_node->output_inner_indexes.size(); o_index++) {
-
+		vector<map<pair<bool,int>, int>> end_state_mappings(end_scope_context.size());
+		for (int l_index = starting_depth+1; l_index < (int)end_new_node_reverse_mappings.size(); l_index++) {
+			ScopeNode* outer_scope_node = (ScopeNode*)end_node_context[l_index-1];
+			if (l_index == starting_depth+1) {
+				for (int i_index = 0; i_index < (int)outer_scope_node->input_types.size(); i_index++) {
+					map<pair<bool,int>, int>::iterator it = start_state_mappings[starting_depth]
+						.find({outer_scope_node->input_outer_is_local[i_index], outer_scope_node->input_outer_indexes[i_index]});
+					if (it != start_state_mappings[starting_depth].end()) {
+						end_state_mappings[starting_depth+1][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
+					}
 				}
 			} else {
+				for (int i_index = 0; i_index < (int)outer_scope_node->input_types.size(); i_index++) {
+					map<pair<bool,int>, int>::iterator it = end_state_mappings[l_index-1]
+						.find({outer_scope_node->input_outer_is_local[i_index], outer_scope_node->input_outer_indexes[i_index]});
+					if (it != end_state_mappings[l_index-1].end()) {
+						end_state_mappings[l_index][{false, outer_scope_node->input_inner_indexes[i_index]}] = it->second;
+					}
+				}
+			}
 
+			for (map<AbstractNode*, AbstractNode*>::iterator node_it = end_new_node_reverse_mappings[l_index].begin();
+					node_it != end_new_node_reverse_mappings[l_index].end(); node_it++) {
+				if (node_it->second->type == NODE_TYPE_ACTION) {
+					ActionNode* new_action_node = (ActionNode*)node_it->first;
+					ActionNode* original_action_node = (ActionNode*)node_it->second;
+
+					vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
+					for (int n_index = 0; n_index < (int)original_action_node->state_is_local.size(); n_index++) {
+						int new_state_index = end_new_state_helper(end_state_mappings[l_index],
+																   original_action_node->state_is_local[n_index],
+																   original_action_node->state_indexes[n_index],
+																   end_potential_new_state_mappings[l_index],
+																   potential_to_final_states,
+																   num_input_states,
+																   new_potential_scope_node);
+
+						if (new_state_index != -1) {
+							if (original_action_node->state_obs_indexes[n_index] == -1) {
+								obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
+
+								new_action_node->state_is_local.push_back(false);
+								new_action_node->state_indexes.push_back(new_state_index);
+								new_action_node->state_obs_indexes.push_back(-1);
+								new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
+								new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
+							} else {
+								if (obs_index_mapping[original_action_node->state_obs_indexes[n_index]] != -1) {
+									obs_index_mapping[n_index] = (int)new_action_node->state_is_local.size();
+
+									new_action_node->state_is_local.push_back(false);
+									new_action_node->state_indexes.push_back(new_state_index);
+									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[n_index]]);
+									new_action_node->state_defs.push_back(original_action_node->state_defs[n_index]);
+									new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[n_index]);
+								}
+							}
+						}
+					}
+				} else if (node_it->second->type == NODE_TYPE_SCOPE) {
+					ScopeNode* new_scope_node = (ScopeNode*)node_it->first;
+					ScopeNode* original_scope_node = (ScopeNode*)node_it->second;
+
+					for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
+						if (original_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
+							int new_state_index = end_new_state_helper(end_state_mappings[l_index],
+																	   original_scope_node->input_outer_is_local[i_index],
+																	   original_scope_node->input_outer_indexes[i_index],
+																	   end_potential_new_state_mappings[l_index],
+																	   potential_to_final_states,
+																	   num_input_states,
+																	   new_potential_scope_node);
+
+							if (new_state_index != -1) {
+								new_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+								new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
+								new_scope_node->input_outer_is_local.push_back(false);
+								new_scope_node->input_outer_indexes.push_back(new_state_index);
+								new_scope_node->input_init_vals.push_back(0.0);
+							}
+						} else {
+							new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+							new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
+							new_scope_node->input_outer_is_local.push_back(false);
+							new_scope_node->input_outer_indexes.push_back(-1);
+							new_scope_node->input_init_vals.push_back(original_scope_node->input_init_vals[i_index]);
+						}
+					}
+
+					for (int o_index = 0; o_index < (int)original_scope_node->output_inner_indexes.size(); o_index++) {
+						int new_state_index = end_new_state_helper(end_state_mappings[l_index],
+																   original_scope_node->output_outer_is_local[o_index],
+																   original_scope_node->output_outer_indexes[o_index],
+																   end_potential_new_state_mappings[l_index],
+																   potential_to_final_states,
+																   num_input_states,
+																   new_potential_scope_node);
+
+						if (new_state_index != -1) {
+							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
+							new_scope_node->output_outer_is_local.push_back(false);
+							new_scope_node->output_outer_indexes.push_back(new_state_index);
+						}
+					}
+				} else {
+					BranchNode* new_branch_node = (BranchNode*)node_it->first;
+					BranchNode* original_branch_node = (BranchNode*)node_it->second;
+
+					for (int s_index = 0; s_index < (int)original_branch_node->decision_state_is_local.size(); s_index++) {
+						int new_state_index = end_new_state_helper(end_state_mappings[l_index],
+																   original_branch_node->decision_state_is_local[s_index],
+																   original_branch_node->decision_state_indexes[s_index],
+																   end_potential_new_state_mappings[l_index],
+																   potential_to_final_states,
+																   num_input_states,
+																   new_potential_scope_node);
+
+						if (new_state_index != -1) {
+							new_branch_node->decision_state_is_local.push_back(false);
+							new_branch_node->decision_state_indexes.push_back(new_state_index);
+							new_branch_node->decision_original_weights.push_back(original_branch_node->decision_original_weights[s_index]);
+							new_branch_node->decision_branch_weights.push_back(original_branch_node->decision_branch_weights[s_index]);
+						}
+					}
+				}
 			}
 		}
 	}
-	for (int l_index = starting_depth+1; l_index < (int)end_new_node_reverse_mappings.size(); l_index++) {
+	
+	Scope* new_scope = new Scope();
 
+	// don't set id/increment scope_counter until train
+
+	new_scope->num_input_states = num_input_states;
+	new_scope->num_local_states = 0;
+
+	new_scope->node_counter = 0;
+	for (int l_index = (int)start_new_node_reverse_mappings.size()-1; l_index >= starting_depth; l_index--) {
+		for (map<AbstractNode*, AbstractNode*>::iterator node_it = start_new_node_reverse_mappings[l_index].begin();
+				node_it != start_new_node_reverse_mappings[l_index].end(); node_it++) {
+			node_it->first->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[node_it->first->id] = node_it->first;
+		}
+	}
+	for (int l_index = starting_depth+1; l_index < (int)end_new_node_reverse_mappings.size(); l_index++) {
+		for (map<AbstractNode*, AbstractNode*>::iterator node_it = end_new_node_reverse_mappings[l_index].begin();
+				node_it != end_new_node_reverse_mappings[l_index].end(); node_it++) {
+			node_it->first->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[node_it->first->id] = node_it->first;
+		}
 	}
 
+	for (map<int, AbstractNode*>::iterator it = new_scope->nodes.begin();
+			it != new_scope->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)it->second;
+			if (action_node->next_node == NULL) {
+				action_node->next_node_id = -1;
+			} else {
+				action_node->next_node_id = action_node->next_node->id;
+			}
+		} else if (it->second->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)it->second;
+			if (scope_node->next_node == NULL) {
+				scope_node->next_node_id = -1;
+			} else {
+				scope_node->next_node_id = scope_node->next_node->id;
+			}
+		} else {
+			BranchNode* branch_node = (BranchNode*)it->second;
+			if (branch_node->original_next_node == NULL) {
+				branch_node->original_next_node_id = -1;
+			} else {
+				branch_node->original_next_node_id = branch_node->original_next_node->id;
+			}
+			if (branch_node->branch_next_node == NULL) {
+				branch_node->branch_next_node_id = -1;
+			} else {
+				branch_node->branch_next_node_id = branch_node->branch_next_node->id;
+			}
+		}
+	}
+
+	new_scope->starting_node_id = new_starting_node->id;
+	new_scope->starting_node = new_starting_node;
+
+	new_potential_scope_node->scope = new_scope;
 
 	return new_potential_scope_node;
 }
