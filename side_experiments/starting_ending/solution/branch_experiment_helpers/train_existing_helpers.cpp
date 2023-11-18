@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -145,7 +146,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& !scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;
@@ -191,7 +191,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;
@@ -345,7 +344,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
 				} else {
-					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_sequences[s_index]->scope_node_placeholder});
+					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder});
 				}
 			}
 		}

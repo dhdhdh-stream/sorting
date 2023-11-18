@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -59,8 +60,8 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->temp_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->temp_state_scope_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].scope_id
-						|| this->temp_state_node_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].node_id) {
+				if (this->temp_state_scope_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].scope->id
+						|| this->temp_state_node_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -91,8 +92,8 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->experiment_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->experiment_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope_id
-						|| this->experiment_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].node_id) {
+				if (this->experiment_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope->id
+						|| this->experiment_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}

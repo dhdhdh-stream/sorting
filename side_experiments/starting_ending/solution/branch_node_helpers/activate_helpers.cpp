@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "scope.h"
+#include "scope_node.h"
 #include "state.h"
 #include "state_network.h"
 

@@ -23,8 +23,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -111,8 +111,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 												  context,
 												  exit_depth,
 												  exit_node,
-												  run_helper,
-												  history);
+												  run_helper);
 					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
@@ -135,8 +134,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -197,8 +196,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											  context,
 											  exit_depth,
 											  exit_node,
-											  run_helper,
-											  history);
+											  run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 				experiment_activate(curr_node,

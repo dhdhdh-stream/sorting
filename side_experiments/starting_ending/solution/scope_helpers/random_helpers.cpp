@@ -20,7 +20,7 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 	if (curr_node->type == NODE_TYPE_ACTION) {
 		ActionNode* node = (ActionNode*)curr_node;
 
-		node_context.back() = this;
+		node_context.back() = node;
 
 		possible_nodes.push_back(node);
 		possible_scope_contexts.push_back(scope_context);
@@ -70,7 +70,7 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
 
-		node_context.back() = this;
+		node_context.back() = node;
 
 		possible_nodes.push_back(node);
 		possible_scope_contexts.push_back(scope_context);

@@ -37,6 +37,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class ActionNode;
 class PassThroughExperiment;
 class State;
 
@@ -71,8 +72,8 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void random_activate(std::vector<int>& scope_context,
-						 std::vector<int>& node_context,
+	void random_activate(std::vector<Scope*>& scope_context,
+						 std::vector<AbstractNode*>& node_context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 std::vector<AbstractNode*>& possible_nodes,

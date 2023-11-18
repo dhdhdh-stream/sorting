@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -299,7 +300,6 @@ void BranchExperiment::train_new_backprop(double target_val,
 					bool passed_down = false;
 					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-								&& scope_node->input_inner_layers[i_index] == 0
 								&& !scope_node->input_outer_is_local[i_index]
 								&& scope_node->input_outer_indexes[i_index] == it->first) {
 							passed_down = true;
@@ -345,7 +345,6 @@ void BranchExperiment::train_new_backprop(double target_val,
 					bool passed_down = false;
 					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-								&& scope_node->input_inner_layers[i_index] == 0
 								&& scope_node->input_outer_is_local[i_index]
 								&& scope_node->input_outer_indexes[i_index] == it->first) {
 							passed_down = true;

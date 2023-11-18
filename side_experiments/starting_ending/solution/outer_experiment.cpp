@@ -1,8 +1,8 @@
 #include "outer_experiment.h"
 
 #include "action_node.h"
+#include "potential_scope_node.h"
 #include "scope_node.h"
-#include "sequence.h"
 
 using namespace std;
 

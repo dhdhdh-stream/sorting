@@ -9,6 +9,7 @@
 #include "flat_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -234,7 +235,7 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
-void hook(vector<AbstractNode*>& nodes,
+void hook(vector<ActionNode*>& nodes,
 		  vector<vector<int>>& scope_contexts,
 		  vector<vector<int>>& node_contexts,
 		  vector<int>& obs_indexes) {
@@ -246,7 +247,7 @@ void hook(vector<AbstractNode*>& nodes,
 	}
 }
 
-void unhook(vector<AbstractNode*>& nodes) {
+void unhook(vector<ActionNode*>& nodes) {
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
 		nodes[n_index]->obs_experiment_scope_contexts.clear();
 		nodes[n_index]->obs_experiment_node_contexts.clear();

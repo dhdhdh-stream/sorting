@@ -207,8 +207,7 @@ public:
 									   std::vector<ContextLayer>& context,
 									   int& exit_depth,
 									   AbstractNode*& exit_node,
-									   RunHelper& run_helper,
-									   AbstractExperimentHistory*& history);
+									   RunHelper& run_helper);
 	void measure_new_misguess_backprop(double target_val,
 									   PassThroughExperimentOverallHistory* history);
 

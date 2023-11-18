@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "constants.h"
 #include "scope.h"
 #include "state.h"

@@ -38,10 +38,11 @@ public:
 				  std::vector<ContextLayer>& context);
 
 	void random_activate(bool& is_branch,
-						 std::vector<int>& scope_context,
-						 std::vector<int>& node_context,
-						 int& num_nodes,
-						 std::vector<AbstractNodeHistory*>& node_histories);
+						 std::vector<Scope*>& scope_context,
+						 std::vector<AbstractNode*>& node_context,
+						 std::vector<AbstractNode*>& possible_nodes,
+						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
+						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 
 	void view_activate(bool& is_branch,
 					   std::vector<ContextLayer>& context);

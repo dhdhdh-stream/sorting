@@ -11,6 +11,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -36,7 +37,7 @@ void add_state(Scope* parent_scope,
 	set<Scope*> input_scopes_to_mod;
 	set<pair<Scope*, ScopeNode*>> input_scope_nodes_to_mod;
 
-	vector<AbstractNode*> nodes = parent_scope->temp_state_nodes[temp_state_index];
+	vector<ActionNode*> nodes = parent_scope->temp_state_nodes[temp_state_index];
 	vector<vector<int>> scope_contexts = parent_scope->temp_state_scope_contexts[temp_state_index];
 	vector<vector<int>> node_contexts = parent_scope->temp_state_node_contexts[temp_state_index];
 	vector<int> obs_indexes = parent_scope->temp_state_obs_indexes[temp_state_index];

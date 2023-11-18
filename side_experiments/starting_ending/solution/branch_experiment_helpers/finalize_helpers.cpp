@@ -9,6 +9,7 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -235,11 +236,11 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 			this->best_actions[s_index]->next_node_id = next_node->id;
 			this->best_actions[s_index]->next_node = next_node;
 		} else {
-			finalize_sequence(this->scope_context,
-							  this->node_context,
-							  this->best_potential_scopes[s_index],
-							  input_scope_depths_mappings,
-							  output_scope_depths_mappings);
+			finalize_potential_scope(this->scope_context,
+									 this->node_context,
+									 this->best_potential_scopes[s_index],
+									 input_scope_depths_mappings,
+									 output_scope_depths_mappings);
 			ScopeNode* new_scope_node = this->best_potential_scopes[s_index]->scope_node_placeholder;
 			this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 			containing_scope->nodes[new_scope_node->id] = new_scope_node;

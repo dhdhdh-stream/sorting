@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -149,7 +150,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->node_to_step_index[this->best_actions[s_index]] = s_index;
 				} else {
-					this->node_to_step_index[this->best_sequences[s_index]->scope_node_placeholder] = s_index;
+					this->node_to_step_index[this->best_potential_scopes[s_index]->scope_node_placeholder] = s_index;
 				}
 			}
 

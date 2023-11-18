@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"

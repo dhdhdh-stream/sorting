@@ -1,10 +1,20 @@
 #ifndef POTENTIAL_SCOPE_NODE_H
 #define POTENTIAL_SCOPE_NODE_H
 
+#include <vector>
+
+#include "context_layer.h"
+#include "problem.h"
+#include "run_helper.h"
+
+class Scope;
+class ScopeNode;
+
 const int OUTER_TYPE_INPUT = 0;
 const int OUTER_TYPE_LOCAL = 1;
 const int OUTER_TYPE_TEMP = 2;
 
+class PotentialScopeNodeHistory;
 class PotentialScopeNode {
 public:
 	std::vector<int> input_types;

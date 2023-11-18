@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -18,8 +19,8 @@ void OuterExperiment::measure_new_score_activate(
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = -1;
-	context.back().node_id = -1;
+	context.back().scope = NULL;
+	context.back().node = NULL;
 
 	// unused
 	AbstractNode* curr_node = NULL;

@@ -10,9 +10,9 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 
 using namespace std;

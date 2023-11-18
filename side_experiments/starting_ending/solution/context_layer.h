@@ -5,7 +5,9 @@
 
 #include "state_status.h"
 
+class Scope;
 class ScopeHistory;
+class ScopeNode;
 class State;
 
 class ContextLayer {

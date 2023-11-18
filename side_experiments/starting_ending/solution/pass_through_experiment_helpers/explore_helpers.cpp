@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"

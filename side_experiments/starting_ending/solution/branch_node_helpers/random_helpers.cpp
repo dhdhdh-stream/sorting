@@ -1,6 +1,7 @@
 #include "branch_node.h"
 
 #include "globals.h"
+#include "scope.h"
 
 using namespace std;
 

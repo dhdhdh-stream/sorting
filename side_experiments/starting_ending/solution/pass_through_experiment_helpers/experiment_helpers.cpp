@@ -9,9 +9,9 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -44,7 +44,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				action_node_history);
 		} else {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-			branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+			instance_history->pre_step_histories.push_back(potential_scope_node_history);
 			this->best_potential_scopes[s_index]->activate(problem,
 														   context,
 														   run_helper,
@@ -87,7 +87,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 						action_node_history);
 				} else {
 					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-					branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+					instance_history->post_step_histories.push_back(potential_scope_node_history);
 					this->best_potential_scopes[s_index]->activate(problem,
 																   context,
 																   run_helper,

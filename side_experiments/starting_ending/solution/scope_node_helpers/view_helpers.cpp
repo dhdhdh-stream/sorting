@@ -78,7 +78,7 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 
 	context.pop_back();
 
-	context.back().node_id = -1;
+	context.back().node = NULL;
 
 	if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
