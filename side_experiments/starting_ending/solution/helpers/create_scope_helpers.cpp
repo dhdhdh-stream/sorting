@@ -7,7 +7,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 										 int curr_depth,
 										 AbstractNode* curr_node,
 										 map<AbstractNode*, pair<bool,AbstractNode*>>& node_mappings,
-										 map<AbstractNode*, AbstractNode*>& new_node_reverse_mappings) {
+										 map<AbstractNode*, AbstractNode*>& new_node_reverse_mappings,
+										 Scope* new_scope) {
 	map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it = node_mappings.find(curr_node);
 	if (it != node_mappings.end()) {
 		return it->second;
@@ -29,14 +30,25 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 					curr_depth,
 					action_node->next_node,
 					node_mappings,
-					new_node_reverse_mappings);
+					new_node_reverse_mappings,
+					new_scope);
 
 				if (next_mapping->first) {
 					ActionNode* new_action_node = new ActionNode();
+
+					new_action_node->id = new_scope->node_counter;
+					new_scope->node_counter++;
+					new_scope->nodes[new_action_node->id] = new_action_node;
+
 					new_node_reverse_mappings[new_action_node] = action_node;
 
 					new_action_node->action = action_node->action;
 
+					if (next_mapping->second == NULL) {
+						new_action_node->next_node_id = -1;
+					} else {
+						new_action_node->next_node_id = next_mapping->second->id;
+					}
 					new_action_node->next_node = next_mapping->second;
 
 					mapping = {true, new_action_node};
@@ -54,14 +66,25 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 					curr_depth,
 					scope_node->next_node,
 					node_mappings,
-					new_node_reverse_mappings);
+					new_node_reverse_mappings,
+					new_scope);
 
 				if (next_mapping->first) {
 					ScopeNode* new_scope_node = new ScopeNode();
+					
+					new_scope_node->id = new_scope->node_counter;
+					new_scope->node_counter++;
+					new_scope->nodes[new_scope_node->id] = new_scope_node;
+
 					new_node_reverse_mappings[new_scope_node] = scope_node;
 
 					new_scope_node->inner_scope = scope_node->inner_scope;
 
+					if (next_mapping->second == NULL) {
+						new_scope_node->next_node_id = -1;
+					} else {
+						new_scope_node->next_node_id = next_mapping->second->id;
+					}
 					new_scope_node->next_node = next_mapping->second;
 
 					mapping = {true, new_scope_node};
@@ -94,7 +117,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 							curr_depth,
 							branch_node->branch_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						mapping = branch_mapping;
 					} else {
@@ -104,7 +128,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 							curr_depth,
 							branch_node->original_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						pair<bool,AbstractNode*> branch_mapping = end_node_helper(
 							scope_context,
@@ -112,14 +137,20 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 							curr_depth,
 							branch_node->branch_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						if (original_mapping->first && branch_mapping->first) {
 							BranchNode* new_branch_node = new BranchNode();
+							
+							new_branch_node->id = new_scope->node_counter;
+							new_scope->node_counter++;
+							new_scope->nodes[new_branch_node->id] = new_branch_node;
+
 							new_node_reverse_mappings[new_branch_node] = branch_node;
 
 							/**
-							 * - can leave context empty to always match for explore
+							 * - leave context empty to always match
 							 */
 
 							new_branch_node->branch_is_pass_through = false;
@@ -127,7 +158,17 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 							new_branch_node->original_score_mod = branch_node->original_score_mod;
 							new_branch_node->branch_score_mod = branch_node->branch_score_mod;
 
+							if (original_mapping->second == NULL) {
+								new_branch_node->original_next_node_id = -1;
+							} else {
+								new_branch_node->original_next_node_id = original_mapping->second->id;
+							}
 							new_branch_node->original_next_node = original_mapping->second;
+							if (branch_mapping->second == NULL) {
+								new_branch_node->branch_next_node_id = -1;
+							} else {
+								new_branch_node->branch_next_node_id = branch_mapping->second->id;
+							}
 							new_branch_node->branch_next_node = branch_mapping->second;
 
 							mapping = {true, new_branch_node};
@@ -146,7 +187,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 						curr_depth,
 						branch_node->original_next_node,
 						node_mappings,
-						new_node_reverse_mappings);
+						new_node_reverse_mappings,
+						new_scope);
 
 					mapping = original_mapping;
 				}
@@ -173,7 +215,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 										   int starting_depth,
 										   AbstractNode* curr_node,
 										   vector<map<AbstractNode*, pair<bool,AbstractNode*>>>& node_mappings,
-										   vector<map<AbstractNode*, AbstractNode*>>& new_node_reverse_mappings) {
+										   vector<map<AbstractNode*, AbstractNode*>>& new_node_reverse_mappings,
+										   Scope* new_scope) {
 	map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it = node_mappings[curr_depth].find(curr_node);
 	if (it != node_mappings[curr_depth].end()) {
 		return it->second;
@@ -190,7 +233,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 					starting_depth,
 					node_context[curr_depth-1],
 					node_mappings,
-					new_node_reverse_mappings);
+					new_node_reverse_mappings,
+					new_scope);
 				mapping = next_mapping;
 			}
 		} else {
@@ -205,14 +249,25 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 					starting_depth,
 					action_node->next_node,
 					node_mappings,
-					new_node_reverse_mappings);
+					new_node_reverse_mappings,
+					new_scope);
 
 				if (next_mapping->first) {
 					ActionNode* new_action_node = new ActionNode();
+					
+					new_action_node->id = new_scope->node_counter;
+					new_scope->node_counter++;
+					new_scope->nodes[new_action_node->id] = new_action_node;
+
 					new_node_reverse_mappings[curr_depth][new_action_node] = action_node;
 
 					new_action_node->action = action_node->action;
 
+					if (next_mapping->second == NULL) {
+						new_action_node->next_node_id = -1;
+					} else {
+						new_action_node->next_node_id = next_mapping->second->id;
+					}
 					new_action_node->next_node = next_mapping->second;
 
 					mapping = {true, new_action_node};
@@ -231,14 +286,25 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 					starting_depth,
 					scope_node->next_node,
 					node_mappings,
-					new_node_reverse_mappings);
+					new_node_reverse_mappings,
+					new_scope);
 
 				if (next_mapping->first) {
 					ScopeNode* new_scope_node = new ScopeNode();
+					
+					new_scope_node->id = new_scope->node_counter;
+					new_scope->node_counter++;
+					new_scope->nodes[new_scope_node->id] =new_scope_node;
+
 					new_node_reverse_mappings[curr_depth][new_scope_node] = scope_node;
 
 					new_scope_node->inner_scope = scope_node->inner_scope;
 
+					if (next_mapping->second == NULL) {
+						new_scope_node->next_node_id = -1;
+					} else {
+						new_scope_node->next_node_id = next_mapping->second->id;
+					}
 					new_scope_node->next_node = next_mapping->second;
 
 					mapping = {true, new_scope_node};
@@ -272,7 +338,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 							starting_depth,
 							branch_node->branch_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						mapping = branch_mapping;
 					} else {
@@ -283,7 +350,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 							starting_depth,
 							branch_node->original_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						pair<bool,AbstractNode*> branch_mapping = start_node_helper(
 							scope_context,
@@ -292,10 +360,16 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 							starting_depth,
 							branch_node->branch_next_node,
 							node_mappings,
-							new_node_reverse_mappings);
+							new_node_reverse_mappings,
+							new_scope);
 
 						if (original_mapping->first && branch_mapping->first) {
 							BranchNode* new_branch_node = new BranchNode();
+							
+							new_branch_node->id = new_scope->node_counter;
+							new_scope->node_counter++;
+							new_scope->nodes[new_branch_node->id] = new_branch_node;
+
 							new_node_reverse_mappings[curr_depth][new_branch_node] = branch_node;
 
 							/**
@@ -307,7 +381,17 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 							new_branch_node->original_score_mod = branch_node->original_score_mod;
 							new_branch_node->branch_score_mod = branch_node->branch_score_mod;
 
+							if (original_mapping->second == NULL) {
+								new_branch_node->original_node_id = -1;
+							} else {
+								new_branch_node->original_node_id = original_mapping->second->id;
+							}
 							new_branch_node->original_next_node = original_mapping->second;
+							if (branch_mapping->second == NULL) {
+								new_branch_node->branch_node_id = -1;
+							} else {
+								new_branch_node->branch_next_node_id = branch_mapping->second->id;
+							}
 							new_branch_node->branch_next_node = branch_mapping->second;
 
 							mapping = {true, new_branch_node};
@@ -327,7 +411,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						starting_depth,
 						branch_node->original_next_node,
 						node_mappings,
-						new_node_reverse_mappings);
+						new_node_reverse_mappings,
+						new_scope);
 
 					mapping = original_mapping;
 				}
@@ -347,7 +432,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						starting_depth,
 						exit_node->exit_node,
 						node_mappings,
-						new_node_reverse_mappings);
+						new_node_reverse_mappings,
+						new_scope);
 					mapping = exit_mapping;
 				}
 
@@ -372,7 +458,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 						   vector<int>& possible_input_scope_depths,
 						   vector<int>& possible_input_outer_types,
 						   vector<void*>& possible_input_outer_indexes,
-						   int& num_input_states,
+						   Scope* new_scope,
 						   PotentialScopeNode* new_potential_scope_node) {
 	map<pair<bool,int>, int>::iterator it = state_mappings.find({is_local, index});
 	if (it != state_mappings.end()) {
@@ -381,8 +467,8 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 		int potential_index = potential_new_state_mappings[{is_local, index}];
 		if (potential_to_final_states[potential_index] == -1) {
 			if (is_local || input_non_empty_distribution(generator) == 0) {
-				int new_state_index = num_input_states;
-				num_input_states++;
+				int new_state_index = new_scope->num_input_states;
+				new_scope->num_input_states++;
 
 				if (input_type_distribution(generator) == 0) {
 					// state
@@ -460,7 +546,7 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 						 int index,
 						 map<pair<bool,int>, int>& potential_new_state_mappings,
 						 vector<int>& potential_to_final_states,
-						 int& num_input_states,
+						 Scope* new_scope,
 						 PotentialScopeNode* new_potential_scope_node) {
 	map<pair<bool,int>, int>::iterator it = state_mappings.find({is_local, index});
 	if (it != state_mappings.end()) {
@@ -469,8 +555,8 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 		int potential_index = potential_new_state_mappings[{is_local, index}];
 		if (potential_to_final_states[potential_index] == -1) {
 			if (is_local) {
-				int new_state_index = num_input_states;
-				num_input_states++;
+				int new_state_index = new_scope->num_input_states;
+				new_scope->num_input_states++;
 
 				new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
@@ -499,8 +585,13 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								 int explore_context_depth,
 								 Scope* scope) {
-	int num_input_states = 0;
+	Scope* new_scope = new Scope();
+	// don't set id/increment scope_counter until train
+	new_scope->num_input_states = 0;
+	new_scope->num_local_states = 0;
+	new_scope->node_counter = 0;
 	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
+	new_potential_scope_node->scope = new_scope;
 
 	// determine start and end
 
@@ -572,7 +663,8 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 							(int)end_scope_context.size()-1,
 							end_scope_context.back()->starting_node,
 							end_node_mappings.back(),
-							end_new_node_reverse_mappings.back());
+							end_new_node_reverse_mappings.back(),
+							new_scope);
 
 			new_starting_node = end_node_mappings.back()[end_scope_context.back()->starting_node]->second;
 		}
@@ -587,7 +679,8 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 							l_index,
 							end_scope_context[l_index]->starting_node,
 							end_node_mappings[l_index],
-							end_new_node_reverse_mappings[l_index]);
+							end_new_node_reverse_mappings[l_index],
+							new_scope);
 
 			new_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->starting_node]->second;
 		}
@@ -605,10 +698,14 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						  starting_depth,
 						  start_node_context.back(),
 						  start_node_mappings,
-						  start_new_node_reverse_mappings);
+						  start_new_node_reverse_mappings,
+						  new_scope);
 
 		new_starting_node = start_node_mappings.back()[start_node_context.back()]->second;
 	}
+
+	new_scope->starting_node_id = new_starting_node->id;
+	new_scope->starting_node = new_starting_node;
 
 	// gather potential states
 
@@ -832,8 +929,8 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 			if (output_non_empty_distribution(generator) == 0) {
 				int potential_index = potential_distribution(generator);
 				if (potential_to_final_states[potential_index] == -1) {
-					potential_to_final_states[potential_index] = num_input_states;
-					num_input_states++;
+					potential_to_final_states[potential_index] = new_scope->num_input_states;
+					new_scope->num_input_states++;
 				}
 
 				new_potential_scope_node->output_inner_indexes.push_back(potential_to_final_states[potential_index]);
@@ -948,7 +1045,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																	 possible_input_scope_depths,
 																	 possible_input_outer_types,
 																	 possible_input_outer_indexes,
-																	 num_input_states,
+																	 new_scope,
 																	 new_potential_scope_node);
 						if (new_state_index != -1) {
 							if (original_action_node->state_obs_indexes[n_index] == -1) {
@@ -986,7 +1083,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																		 possible_input_scope_depths,
 																		 possible_input_outer_types,
 																		 possible_input_outer_indexes,
-																		 num_input_states,
+																		 new_scope,
 																		 new_potential_scope_node);
 
 							if (new_state_index != -1) {
@@ -1014,7 +1111,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																	 possible_input_scope_depths,
 																	 possible_input_outer_types,
 																	 possible_input_outer_indexes,
-																	 num_input_states,
+																	 new_scope,
 																	 new_potential_scope_node);
 
 						if (new_state_index != -1) {
@@ -1036,7 +1133,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																	 possible_input_scope_depths,
 																	 possible_input_outer_types,
 																	 possible_input_outer_indexes,
-																	 num_input_states,
+																	 new_scope,
 																	 new_potential_scope_node);
 
 						if (new_state_index != -1) {
@@ -1095,7 +1192,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																   original_action_node->state_indexes[n_index],
 																   end_potential_new_state_mappings[l_index],
 																   potential_to_final_states,
-																   num_input_states,
+																   new_scope,
 																   new_potential_scope_node);
 
 						if (new_state_index != -1) {
@@ -1131,7 +1228,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																	   original_scope_node->input_outer_indexes[i_index],
 																	   end_potential_new_state_mappings[l_index],
 																	   potential_to_final_states,
-																	   num_input_states,
+																	   new_scope,
 																	   new_potential_scope_node);
 
 							if (new_state_index != -1) {
@@ -1156,7 +1253,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																   original_scope_node->output_outer_indexes[o_index],
 																   end_potential_new_state_mappings[l_index],
 																   potential_to_final_states,
-																   num_input_states,
+																   new_scope,
 																   new_potential_scope_node);
 
 						if (new_state_index != -1) {
@@ -1175,7 +1272,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 																   original_branch_node->decision_state_indexes[s_index],
 																   end_potential_new_state_mappings[l_index],
 																   potential_to_final_states,
-																   num_input_states,
+																   new_scope,
 																   new_potential_scope_node);
 
 						if (new_state_index != -1) {
@@ -1189,67 +1286,6 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 			}
 		}
 	}
-	
-	Scope* new_scope = new Scope();
-
-	// don't set id/increment scope_counter until train
-
-	new_scope->num_input_states = num_input_states;
-	new_scope->num_local_states = 0;
-
-	new_scope->node_counter = 0;
-	for (int l_index = (int)start_new_node_reverse_mappings.size()-1; l_index >= starting_depth; l_index--) {
-		for (map<AbstractNode*, AbstractNode*>::iterator node_it = start_new_node_reverse_mappings[l_index].begin();
-				node_it != start_new_node_reverse_mappings[l_index].end(); node_it++) {
-			node_it->first->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[node_it->first->id] = node_it->first;
-		}
-	}
-	for (int l_index = starting_depth+1; l_index < (int)end_new_node_reverse_mappings.size(); l_index++) {
-		for (map<AbstractNode*, AbstractNode*>::iterator node_it = end_new_node_reverse_mappings[l_index].begin();
-				node_it != end_new_node_reverse_mappings[l_index].end(); node_it++) {
-			node_it->first->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[node_it->first->id] = node_it->first;
-		}
-	}
-
-	for (map<int, AbstractNode*>::iterator it = new_scope->nodes.begin();
-			it != new_scope->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)it->second;
-			if (action_node->next_node == NULL) {
-				action_node->next_node_id = -1;
-			} else {
-				action_node->next_node_id = action_node->next_node->id;
-			}
-		} else if (it->second->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)it->second;
-			if (scope_node->next_node == NULL) {
-				scope_node->next_node_id = -1;
-			} else {
-				scope_node->next_node_id = scope_node->next_node->id;
-			}
-		} else {
-			BranchNode* branch_node = (BranchNode*)it->second;
-			if (branch_node->original_next_node == NULL) {
-				branch_node->original_next_node_id = -1;
-			} else {
-				branch_node->original_next_node_id = branch_node->original_next_node->id;
-			}
-			if (branch_node->branch_next_node == NULL) {
-				branch_node->branch_next_node_id = -1;
-			} else {
-				branch_node->branch_next_node_id = branch_node->branch_next_node->id;
-			}
-		}
-	}
-
-	new_scope->starting_node_id = new_starting_node->id;
-	new_scope->starting_node = new_starting_node;
-
-	new_potential_scope_node->scope = new_scope;
 
 	return new_potential_scope_node;
 }

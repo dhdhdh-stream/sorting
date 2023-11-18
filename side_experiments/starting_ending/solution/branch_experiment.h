@@ -16,9 +16,8 @@ class AbstractNode;
 class ActionNode;
 class ActionNodeHistory;
 class PassThroughExperiment;
+class PotentialScopeNode;
 class ScopeHistory;
-class Sequence;
-class SequenceHistory;
 class State;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
@@ -64,14 +63,14 @@ public:
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
-	std::vector<Sequence*> curr_sequences;
+	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
-	std::vector<Sequence*> best_sequences;
+	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
 
@@ -82,7 +81,7 @@ public:
 	std::vector<std::map<State*, double>> new_temp_state_weights;
 
 	std::vector<State*> new_states;
-	std::vector<std::vector<AbstractNode*>> new_state_nodes;
+	std::vector<std::vector<ActionNode*>> new_state_nodes;
 	std::vector<std::vector<std::vector<int>>> new_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
 	std::vector<std::vector<int>> new_state_obs_indexes;

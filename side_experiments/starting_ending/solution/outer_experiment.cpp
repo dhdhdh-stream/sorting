@@ -22,9 +22,9 @@ OuterExperiment::~OuterExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->curr_sequences.size(); s_index++) {
-		if (this->curr_sequences[s_index] != NULL) {
-			delete this->curr_sequences[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_potential_scopes.size(); s_index++) {
+		if (this->curr_potential_scopes[s_index] != NULL) {
+			delete this->curr_potential_scopes[s_index];
 		}
 	}
 
@@ -40,9 +40,9 @@ OuterExperiment::~OuterExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_sequences.size(); s_index++) {
-		if (this->best_sequences[s_index] != NULL) {
-			delete this->best_sequences[s_index];
+	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
+		if (this->best_potential_scopes[s_index] != NULL) {
+			delete this->best_potential_scopes[s_index];
 		}
 	}
 

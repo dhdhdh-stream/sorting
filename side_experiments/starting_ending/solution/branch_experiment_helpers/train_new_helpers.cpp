@@ -10,7 +10,6 @@
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -107,12 +106,12 @@ void BranchExperiment::train_new_target_activate(
 				action_node_history);
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		}
 	}
 
@@ -238,12 +237,12 @@ void BranchExperiment::train_new_non_target_activate(
 					run_helper,
 					action_node_history);
 			} else {
-				SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-				branch_experiment_history->step_histories.push_back(sequence_history);
-				this->best_sequences[s_index]->activate(problem,
-														context,
-														run_helper,
-														sequence_history);
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+				branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+				this->best_potential_scopes[s_index]->activate(problem,
+															   context,
+															   run_helper,
+															   potential_scope_node_history);
 			}
 		}
 

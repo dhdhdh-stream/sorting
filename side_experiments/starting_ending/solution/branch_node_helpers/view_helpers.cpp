@@ -7,8 +7,8 @@
 
 using namespace std;
 
-void BranchNode::activate(bool& is_branch,
-						  vector<ContextLayer>& context) {
+void BranchNode::view_activate(bool& is_branch,
+							   vector<ContextLayer>& context) {
 	bool matches_context = true;
 	if (this->branch_scope_context.size() > context.size()) {
 		matches_context = false;
@@ -22,9 +22,12 @@ void BranchNode::activate(bool& is_branch,
 		}
 	}
 
+	cout << "branch node #" << this->id << endl;
+
 	if (matches_context) {
 		if (this->branch_is_pass_through) {
 			is_branch = true;
+			cout << "pass_through" << endl;
 		} else {
 			double original_score = this->original_score_mod;
 			double branch_score = this->branch_score_mod;
@@ -61,13 +64,21 @@ void BranchNode::activate(bool& is_branch,
 				}
 			}
 
+			cout << "original_score: " << original_score << endl;
+			cout << "branch_score: " << branch_score << endl;
+
 			if (branch_score > original_score) {
 				is_branch = true;
+				cout << "branch" << endl;
 			} else {
 				is_branch = false;
+				cout << "original" << endl;
 			}
 		}
 	} else {
 		is_branch = false;
+		cout << "context mismatch" << endl;
 	}
+
+	cout << endl;
 }

@@ -8,7 +8,6 @@
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -21,8 +20,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
+		RunHelper& run_helper) {
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -36,12 +34,12 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				action_node_history);
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		}
 	}
 
@@ -164,7 +162,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
 				this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index]->id;
 			} else {
-				this->branch_experiment->node_context.back() = this->best_sequences[this->branch_experiment_step_index]->scope_node_placeholder->id;
+				this->branch_experiment->node_context.back() = this->best_potential_scopes[this->branch_experiment_step_index]->scope_node_placeholder->id;
 			}
 			this->branch_experiment->parent_pass_through_experiment = this;
 
@@ -175,11 +173,11 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
 				} else {
-					delete this->best_sequences[s_index];
+					delete this->best_potential_scopes[s_index];
 				}
 			}
 			this->best_actions.clear();
-			this->best_sequences.clear();
+			this->best_potential_scopes.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 				delete this->new_states[s_index];

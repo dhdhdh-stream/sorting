@@ -23,7 +23,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	problem.perform_action(this->action);
 	history->obs_snapshot = problem.get_observation();
 
-	history->state_snapshots = vector<double>(this->state_is_local.size());
+	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);

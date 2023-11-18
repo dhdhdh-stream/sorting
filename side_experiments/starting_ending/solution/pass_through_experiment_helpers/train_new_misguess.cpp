@@ -40,12 +40,12 @@ void PassThroughExperiment::train_new_misguess_activate(
 				run_helper,
 				action_node_history);
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			instance_history->pre_step_histories.push_back(sequence_history);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
 		}
 	}
 

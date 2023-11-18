@@ -58,69 +58,14 @@ public:
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ScopeNodeHistory* history);
-	void halfway_activate(std::vector<AbstractNode*>& starting_nodes,
-						  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-						  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-						  AbstractNode*& curr_node,
-						  Problem& problem,
-						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
-						  RunHelper& run_helper,
-						  ScopeNodeHistory* history);
 
-	void random_activate(std::vector<int>& scope_context,
-						 std::vector<int>& node_context,
+	void random_activate(std::vector<Scope*>& scope_context,
+						 std::vector<AbstractNode*>& node_context,
 						 int& inner_exit_depth,
 						 AbstractNode*& inner_exit_node,
-						 int& num_nodes,
-						 std::vector<AbstractNodeHistory*>& node_histories);
-	void halfway_random_activate(std::vector<AbstractNode*>& starting_nodes,
-								 std::vector<int>& scope_context,
-								 std::vector<int>& node_context,
-								 int& inner_exit_depth,
-								 AbstractNode*& inner_exit_node,
-								 int& num_nodes,
-								 std::vector<AbstractNodeHistory*>& node_histories);
-
-	void create_sequence_activate(Problem& problem,
-								  std::vector<ContextLayer>& context,
-								  int target_num_nodes,
-								  int& curr_num_nodes,
-								  Sequence* new_sequence,
-								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes,
-								  RunHelper& run_helper);
-	void halfway_create_sequence_activate(std::vector<AbstractNode*>& starting_nodes,
-										  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-										  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-										  std::vector<std::map<std::pair<bool,int>, int>>& starting_state_mappings,
-										  Problem& problem,
-										  std::vector<ContextLayer>& context,
-										  int target_num_nodes,
-										  int& curr_num_nodes,
-										  Sequence* new_sequence,
-										  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-										  int& new_num_input_states,
-										  std::vector<AbstractNode*>& new_nodes,
-										  RunHelper& run_helper);
-
-	void flat_vals_back_activate(std::vector<int>& scope_context,
-								 std::vector<int>& node_context,
-								 int d_index,
-								 int stride_size,
-								 std::vector<double>& flat_vals,
-								 ScopeNodeHistory* history);
-	void rnn_vals_back_activate(std::vector<int>& scope_context,
-								std::vector<int>& node_context,
-								std::vector<int>& obs_indexes,
-								std::vector<double>& obs_vals,
-								ScopeNodeHistory* history);
-	void experiment_back_activate(std::vector<int>& scope_context,
-								  std::vector<int>& node_context,
-								  std::map<State*, StateStatus>& experiment_score_state_vals,
-								  ScopeNodeHistory* history);
+						 std::vector<AbstractNode*>& possible_nodes,
+						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
+						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 
 	void view_activate(AbstractNode*& curr_node,
 					   Problem& problem,
@@ -128,15 +73,6 @@ public:
 					   int& exit_depth,
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
-	void halfway_view_activate(std::vector<AbstractNode*>& starting_nodes,
-							   std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-							   std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-							   AbstractNode*& curr_node,
-							   Problem& problem,
-							   std::vector<ContextLayer>& context,
-							   int& exit_depth,
-							   AbstractNode*& exit_node,
-							   RunHelper& run_helper);
 
 	void success_reset();
 	void fail_reset();

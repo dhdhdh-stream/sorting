@@ -11,7 +11,6 @@
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -42,12 +41,12 @@ void PassThroughExperiment::measure_new_score_activate(
 				run_helper,
 				action_node_history);
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			instance_history->pre_step_histories.push_back(sequence_history);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
 		}
 	}
 
@@ -328,11 +327,11 @@ void PassThroughExperiment::measure_new_score_backprop(
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
 				} else {
-					delete this->best_sequences[s_index];
+					delete this->best_potential_scopes[s_index];
 				}
 			}
 			this->best_actions.clear();
-			this->best_sequences.clear();
+			this->best_potential_scopes.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 				delete this->new_states[s_index];

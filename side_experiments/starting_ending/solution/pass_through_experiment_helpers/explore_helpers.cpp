@@ -9,7 +9,6 @@
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 
 using namespace std;
@@ -49,35 +48,38 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			if (type_distribution(generator) == 0) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
-				this->curr_actions.push_back(new ActionNode());
-				this->curr_actions.back()->action = Action(action_distribution(generator));
-				this->curr_sequences.push_back(NULL);
+				
+				ActionNode* new_action_node = new ActionNode();
+				new_action_node->action = Action(action_distribution(generator));
+				this->curr_actions.push_back(new_action_node);
 
-				problem.perform_action(this->curr_actions.back()->action);
+				this->curr_potential_scopes.push_back(NULL);
+
+				ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+				new_action_node->activate(curr_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  action_node_history);
+				delete action_node_history;
 			} else {
-				this->curr_step_types.push_back(STEP_TYPE_SEQUENCE);
+				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				Scope* containing_scope = solution->scopes[this->scope_context[0]];
-				while (true) {
-					if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
-						uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
-						containing_scope = containing_scope->child_scopes[child_distribution(generator)];
-					} else {
-						break;
-					}
-				}
-				Sequence* new_sequence = create_sequence(problem,
-														 context,
-														 (int)this->scope_context.size(),
-														 containing_scope,
-														 run_helper);
-				/**
-				 * - falling part of new_sequence will be tied to initial instance
-				 *   - but OK as there may not be a branch, and even if so, only minor impact
-				 *     - doesn't impact state
-				 */
-				this->curr_sequences.push_back(new_sequence);
+				PotentialScopeNode* new_potential_scope_node = create_scope(
+					context,
+					(int)this->scope_context.size(),
+					context[context.size() - this->scope_context.size()].scope);
+				this->curr_potential_scopes.push_back(new_potential_scope_node);
+
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+				new_potential_scope_node->activate(problem,
+												   context,
+												   run_helper,
+												   potential_scope_node_history);
+				delete potential_scope_node_history;
 			}
 		}
 	}
@@ -113,12 +115,12 @@ void PassThroughExperiment::explore_activate(AbstractNode*& curr_node,
 				action_node_history);
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->curr_sequences[s_index]);
-			this->curr_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			this->curr_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		}
 	}
 
@@ -143,34 +145,34 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
 				} else {
-					delete this->best_sequences[s_index];
+					delete this->best_potential_scopes[s_index];
 				}
 			}
 
 			this->best_score = curr_score;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
-			this->best_sequences = this->curr_sequences;
+			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
-			this->curr_sequences.clear();
+			this->curr_potential_scopes.clear();
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->curr_actions[s_index];
 				} else {
-					delete this->curr_sequences[s_index];
+					delete this->curr_potential_scopes[s_index];
 				}
 			}
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
-			this->curr_sequences.clear();
+			this->curr_potential_scopes.clear();
 		}
 
 		this->state_iter++;
@@ -186,12 +188,12 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 						this->best_actions[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 					} else {
-						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
-						this->best_sequences[s_index]->scope_node_placeholder->parent = containing_scope;
-						this->best_sequences[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
+						this->best_potential_scopes[s_index]->scope_node_placeholder = new ScopeNode();
+						this->best_potential_scopes[s_index]->scope_node_placeholder->parent = containing_scope;
+						this->best_potential_scopes[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 
-						this->best_sequences[s_index]->scope->id = solution->scope_counter;
+						this->best_potential_scopes[s_index]->scope->id = solution->scope_counter;
 						solution->scope_counter++;
 					}
 				}

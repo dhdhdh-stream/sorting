@@ -16,7 +16,6 @@
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_status.h"
@@ -81,24 +80,17 @@ int main(int argc, char* argv[]) {
 				vector<ContextLayer> context;
 				context.push_back(ContextLayer());
 
-				context.back().scope_id = solution->root->id;
-				context.back().node_id = -1;
+				context.back().scope = solution->root;
+				context.back().node = NULL;
 
 				ScopeHistory* root_history = new ScopeHistory(solution->root);
 				context.back().scope_history = root_history;
-
-				vector<AbstractNode*> starting_nodes{solution->root_starting_node};
-				vector<map<int, StateStatus>> starting_input_state_vals;
-				vector<map<int, StateStatus>> starting_local_state_vals;
 
 				// unused
 				int exit_depth = -1;
 				AbstractNode* exit_node = NULL;
 
-				solution->root->activate(starting_nodes,
-										 starting_input_state_vals,
-										 starting_local_state_vals,
-										 problem,
+				solution->root->activate(problem,
 										 context,
 										 exit_depth,
 										 exit_node,

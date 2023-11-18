@@ -70,15 +70,6 @@ public:
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
-	void create_sequence_activate(Problem& problem,
-								  std::vector<ContextLayer>& context,
-								  int target_num_nodes,
-								  int& curr_num_nodes,
-								  Sequence* new_sequence,
-								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes);
-
 	void flat_vals_back_activate(std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
 								 int d_index,

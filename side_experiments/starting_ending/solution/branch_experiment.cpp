@@ -51,9 +51,9 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_sequences.size(); s_index++) {
-		if (this->best_sequences[s_index] != NULL) {
-			delete this->best_sequences[s_index];
+	for (int s_index = 0; s_index < (int)this->best_possible_scopes.size(); s_index++) {
+		if (this->best_possible_scopes[s_index] != NULL) {
+			delete this->best_possible_scopes[s_index];
 		}
 	}
 
@@ -80,8 +80,8 @@ BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimen
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->step_histories[s_index];
 			this->step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
 		} else {
-			SequenceHistory* original_sequence_history = (SequenceHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new SequenceHistory(original_sequence_history);
+			PossibleScopeNodeHistory* original_possible_scope_node_history = (PossibleScopeNodeHistory*)original->step_histories[s_index];
+			this->step_histories[s_index] = new PossibleScopeNodeHistory(original_possible_scope_node_history);
 		}
 	}
 }
@@ -93,8 +93,8 @@ BranchExperimentInstanceHistory::~BranchExperimentInstanceHistory() {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->step_histories[s_index];
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = (SequenceHistory*)this->step_histories[s_index];
-			delete sequence_history;
+			PossibleScopeNodeHistory* possible_scope_node_history = (PossibleScopeNodeHistory*)this->step_histories[s_index];
+			delete possible_scope_node_history;
 		}
 	}
 }

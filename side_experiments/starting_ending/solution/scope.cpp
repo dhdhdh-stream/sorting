@@ -14,10 +14,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->id = -1;
-	/**
-	 * - initialize for create_sequence()
-	 */
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -82,10 +79,7 @@ void Scope::save(ofstream& output_file) {
 		it->second->save(output_file);
 	}
 
-	output_file << this->child_scopes.size() << endl;
-	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
-		output_file << this->child_scopes[c_index]->id << endl;
-	}
+	output_file << this->starting_node_id << endl;
 }
 
 void Scope::load(ifstream& input_file) {
@@ -139,14 +133,9 @@ void Scope::load(ifstream& input_file) {
 		}
 	}
 
-	string child_scopes_size_line;
-	getline(input_file, child_scopes_size_line);
-	int child_scopes_size = stoi(child_scopes_size_line);
-	for (int c_index = 0; c_index < child_scopes_size; c_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		this->child_scopes.push_back(solution->scopes[stoi(scope_id_line)]);
-	}
+	string starting_node_id_line;
+	getline(input_file, starting_node_id_line);
+	this->starting_node_id = stoi(starting_node_id_line);
 }
 
 void Scope::link() {
@@ -154,6 +143,8 @@ void Scope::link() {
 			it != this->nodes.end(); it++) {
 		it->second->link();
 	}
+
+	this->starting_node = this->nodes[this->starting_node_id];
 }
 
 void Scope::save_for_display(ofstream& output_file) {

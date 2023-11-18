@@ -37,12 +37,12 @@ void PassThroughExperiment::verify_new_score_activate(
 				action_node_history);
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		}
 	}
 
@@ -153,8 +153,8 @@ void PassThroughExperiment::verify_new_score_backprop(
 				new_branch_node->branch_next_node_id = this->best_actions[0]->id;
 				new_branch_node->branch_next_node = this->best_actions[0];
 			} else {
-				new_branch_node->branch_next_node_id = this->best_sequences[0]->scope_node_placeholder->id;
-				new_branch_node->branch_next_node = this->best_sequences[0]->scope_node_placeholder;
+				new_branch_node->branch_next_node_id = this->best_potential_scopes[0]->scope_node_placeholder->id;
+				new_branch_node->branch_next_node = this->best_potential_scopes[0]->scope_node_placeholder;
 			}
 
 			map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -167,7 +167,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node = this->best_actions[s_index+1];
 					} else {
-						next_node = this->best_sequences[s_index+1]->scope_node_placeholder;
+						next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
 					}
 				}
 
@@ -177,25 +177,23 @@ void PassThroughExperiment::verify_new_score_backprop(
 					this->best_actions[s_index]->next_node_id = next_node->id;
 					this->best_actions[s_index]->next_node = next_node;
 				} else {
-					finalize_sequence(this->scope_context,
-									  this->node_context,
-									  this->best_sequences[s_index],
-									  input_scope_depths_mappings,
-									  output_scope_depths_mappings);
-					ScopeNode* new_sequence_scope_node = this->best_sequences[s_index]->scope_node_placeholder;
-					this->best_sequences[s_index]->scope_node_placeholder = NULL;
-					containing_scope->nodes[new_sequence_scope_node->id] = new_sequence_scope_node;
+					finalize_potential_scope(this->scope_context,
+											 this->node_context,
+											 this->best_potential_scopes[s_index],
+											 input_scope_depths_mappings,
+											 output_scope_depths_mappings);
+					ScopeNode* new_scope_node = this->best_potential_scopes[s_index]->scope_node_placeholder;
+					this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
+					containing_scope->nodes[new_scope_node->id] = new_scope_node;
 
-					new_sequence_scope_node->next_node_id = next_node->id;
-					new_sequence_scope_node->next_node = next_node;
+					new_scope_node->next_node_id = next_node->id;
+					new_scope_node->next_node = next_node;
 
-					delete this->best_sequences[s_index];
-
-					containing_scope->child_scopes.push_back(new_sequence_scope_node->inner_scope);
+					delete this->best_potential_scopes[s_index];
 				}
 			}
 			this->best_actions.clear();
-			this->best_sequences.clear();
+			this->best_potential_scopes.clear();
 
 			new_exit_node->exit_depth = this->best_exit_depth;
 			if (this->best_exit_node == NULL) {

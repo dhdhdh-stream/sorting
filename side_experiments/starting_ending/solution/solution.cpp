@@ -51,7 +51,6 @@ void Solution::init() {
 	starting_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 	this->root = starting_scope;
-	this->root_starting_node = starting_noop_node;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
@@ -111,10 +110,6 @@ void Solution::load(ifstream& input_file) {
 	string root_id_line;
 	getline(input_file, root_id_line);
 	this->root = this->scopes[stoi(root_id_line)];
-
-	string depth_limit;
-	getline(input_file, depth_limit);
-	this->root_starting_node = this->root->nodes[stoi(depth_limit)];
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -177,7 +172,6 @@ void Solution::save(ofstream& output_file) {
 	}
 
 	output_file << this->root->id << endl;
-	output_file << this->root_starting_node->id << endl;
 
 	output_file << this->max_depth << endl;
 }

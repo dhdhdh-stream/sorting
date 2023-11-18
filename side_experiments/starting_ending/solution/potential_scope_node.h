@@ -26,7 +26,24 @@ public:
 
 	ScopeNode* scope_node_placeholder;
 
-	
+	PotentialScopeNode();
+	~PotentialScopeNode();
+
+	void activate(Problem& problem,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper,
+				  PotentialScopeNodeHistory* history);
+};
+
+class PotentialScopeNodeHistory {
+public:
+	PotentialScopeNode* potential_scope_node;
+
+	ScopeHistory* scope_history;
+
+	PotentialScopeNodeHistory(PotentialScopeNode* potential_scope_node);
+	PotentialScopeNodeHistory(PotentialScopeNodeHistory* original);
+	~PotentialScopeNodeHistory();
 };
 
 #endif /* POTENTIAL_SCOPE_NODE_H */

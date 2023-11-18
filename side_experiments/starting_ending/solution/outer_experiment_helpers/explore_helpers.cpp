@@ -8,7 +8,6 @@
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 
 using namespace std;
@@ -24,6 +23,11 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 	context.back().scope_id = -1;
 	context.back().node_id = -1;
 
+	// unused
+	AbstractNode* curr_node = NULL;
+	int exit_depth = -1;
+	AbstractNode* exit_node = NULL;
+
 	uniform_int_distribution<int> uniform_distribution(0, 2);
 	geometric_distribution<int> geometric_distribution(0.5);
 	int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
@@ -35,43 +39,60 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
 		if (type_distribution(generator) == 0) {
 			this->curr_step_types.push_back(STEP_TYPE_ACTION);
-			this->curr_actions.push_back(new ActionNode());
-			this->curr_actions.back()->action = Action(action_distribution(generator));
-			this->curr_sequences.push_back(NULL);
+
+			ActionNode* new_action_node = new ActionNode();
+			new_action_node->action = Action(action_distribution(generator));
+			this->curr_actions.push_back(new_action_node);
+
+			this->curr_potential_scopes.push_back(NULL);
 			this->curr_root_scope_nodes.push_back(NULL);
 
-			problem.perform_action(this->curr_actions.back()->action);
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+			new_action_node->activate(curr_node,
+									  problem,
+									  context,
+									  exit_depth,
+									  exit_node,
+									  run_helper,
+									  action_node_history);
+			delete action_node_history;
 		} else {
 			if (root_distribution(generator) == 0) {
 				this->curr_step_types.push_back(STEP_TYPE_ROOT);
 				this->curr_actions.push_back(NULL);
-				this->curr_sequences.push_back(NULL);
+				this->curr_potential_scopes.push_back(NULL);
 
-				ScopeNode* new_scope_node = create_root_halfway_start(problem,
-																	  context,
-																	  run_helper);
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->inner_scope = solution->root;
 				this->curr_root_scope_nodes.push_back(new_scope_node);
+
+				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
+				new_scope_node->activate(curr_node,
+										 problem,
+										 context,
+										 exit_depth,
+										 exit_node,
+										 run_helper,
+										 scope_node_history);
+				delete scope_node_history;
 			} else {
-				this->curr_step_types.push_back(STEP_TYPE_SEQUENCE);
+				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				Scope* containing_scope = solution->root;
-				while (true) {
-					if (containing_scope->child_scopes.size() > 0 && next_distribution(generator) == 0) {
-						uniform_int_distribution<int> child_distribution(0, (int)containing_scope->child_scopes.size()-1);
-						containing_scope = containing_scope->child_scopes[child_distribution(generator)];
-					} else {
-						break;
-					}
-				}
-				Sequence* new_sequence = create_sequence(problem,
-														 context,
-														 1,
-														 containing_scope,
-														 run_helper);
-				this->curr_sequences.push_back(new_sequence);
+				PotentialScopeNode* new_potential_scope_node = create_scope(
+					context,
+					1,
+					solution->root);
+				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				this->curr_root_scope_nodes.push_back(NULL);
+
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+				new_potential_scope_node->activate(problem,
+												   context,
+												   run_helper,
+												   potential_scope_node_history);
+				delete potential_scope_node_history;
 			}
 		}
 	}
@@ -102,13 +123,13 @@ void OuterExperiment::explore_activate(Problem& problem,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else if (this->curr_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-			SequenceHistory* sequence_history = new SequenceHistory(this->curr_sequences[s_index]);
-			this->curr_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			this->curr_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		} else {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_root_scope_nodes[s_index]);
 			this->curr_root_scope_nodes[s_index]->activate(
@@ -134,8 +155,8 @@ void OuterExperiment::explore_backprop(double target_val) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
-				} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					delete this->best_sequences[s_index];
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					delete this->best_potential_scopes[s_index];
 				} else {
 					delete this->best_root_scope_nodes[s_index];
 				}
@@ -144,20 +165,20 @@ void OuterExperiment::explore_backprop(double target_val) {
 			this->best_score = curr_score;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
-			this->best_sequences = this->curr_sequences;
+			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_root_scope_nodes = this->curr_root_scope_nodes;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
-			this->curr_sequences.clear();
+			this->curr_potential_scopes.clear();
 			this->curr_root_scope_nodes.clear();
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->curr_actions[s_index];
-				} else if (this->curr_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					delete this->curr_sequences[s_index];
+				} else if (this->curr_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					delete this->curr_potential_scopes[s_index];
 				} else {
 					delete this->curr_root_scope_nodes[s_index];
 				}
@@ -166,7 +187,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
-			this->curr_sequences.clear();
+			this->curr_potential_scopes.clear();
 			this->curr_root_scope_nodes.clear();
 		}
 
@@ -185,11 +206,11 @@ void OuterExperiment::explore_backprop(double target_val) {
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->id = 1 + s_index;
-					} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-						this->best_sequences[s_index]->scope_node_placeholder = new ScopeNode();
-						this->best_sequences[s_index]->scope_node_placeholder->id = 1 + s_index;
+					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+						this->best_potential_scopes[s_index]->scope_node_placeholder = new ScopeNode();
+						this->best_potential_scopes[s_index]->scope_node_placeholder->id = 1 + s_index;
 
-						this->best_sequences[s_index]->scope->id = solution->scope_counter;
+						this->best_potential_scopes[s_index]->scope->id = solution->scope_counter;
 						solution->scope_counter++;
 					} else {
 						this->best_root_scope_nodes[s_index]->id = 1 + s_index;
@@ -200,7 +221,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						cout << " " << this->best_actions[s_index]->action.to_string();
-					} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 						cout << " S";
 					} else {
 						cout << " R";
@@ -217,15 +238,15 @@ void OuterExperiment::explore_backprop(double target_val) {
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
-					} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-						delete this->best_sequences[s_index];
+					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+						delete this->best_potential_scopes[s_index];
 					} else {
 						delete this->best_root_scope_nodes[s_index];
 					}
 				}
 				this->best_step_types.clear();
 				this->best_actions.clear();
-				this->best_sequences.clear();
+				this->best_potential_scopes.clear();
 				this->best_root_scope_nodes.clear();
 
 				// leave this->state as OUTER_EXPERIMENT_STATE_EXPLORE

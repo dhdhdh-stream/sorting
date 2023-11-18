@@ -8,7 +8,6 @@
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 
 using namespace std;
@@ -39,13 +38,13 @@ void OuterExperiment::measure_new_score_activate(
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
-			delete sequence_history;
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			delete potential_scope_node_history;
 		} else {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_root_scope_nodes[s_index]);
 			this->best_root_scope_nodes[s_index]->activate(
@@ -78,7 +77,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				cout << " " << this->best_actions[s_index]->action.to_string();
-			} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
+			} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				cout << " S";
 			} else {
 				cout << " R";
@@ -105,15 +104,15 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
-				} else if (this->best_step_types[s_index] == STEP_TYPE_SEQUENCE) {
-					delete this->best_sequences[s_index];
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					delete this->best_potential_scopes[s_index];
 				} else {
 					delete this->best_root_scope_nodes[s_index];
 				}
 			}
 			this->best_step_types.clear();
 			this->best_actions.clear();
-			this->best_sequences.clear();
+			this->best_potential_scopes.clear();
 			this->best_root_scope_nodes.clear();
 
 			this->state = OUTER_EXPERIMENT_STATE_EXPLORE;
