@@ -36,7 +36,7 @@ void ExitNode::load(ifstream& input_file) {
 }
 
 void ExitNode::link() {
-	if (this->exit_node_parent_id == -1) {
+	if (this->exit_node_id == -1) {
 		this->exit_node = NULL;
 	} else {
 		this->exit_node = solution->scopes[this->exit_node_parent_id]->nodes[this->exit_node_id];

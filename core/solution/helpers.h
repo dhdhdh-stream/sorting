@@ -9,25 +9,26 @@
 #include "problem.h"
 #include "run_helper.h"
 
+class AbstractNode;
 class BranchExperiment;
 class BranchNode;
+class PotentialScopeNode;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
-class Sequence;
 class State;
 
 void create_branch_experiment(ScopeHistory* root_history);
 void create_pass_through_experiment(ScopeHistory* root_history);
 
-Sequence* create_sequence(Problem& problem,
-						  std::vector<ContextLayer>& context,
-						  int explore_context_depth,
-						  Scope* containing_scope,
-						  RunHelper& run_helper);
-ScopeNode* create_root_halfway_start(Problem& problem,
-									 std::vector<ContextLayer>& context,
-									 RunHelper& run_helper);
+PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
+								 int explore_context_depth,
+								 Scope* scope);
+
+void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
+						   std::vector<ContextLayer>& context,
+						   std::vector<int>& scope_context,
+						   std::vector<int>& node_context);
 
 void existing_obs_experiment(AbstractExperiment* experiment,
 							 Scope* parent_scope,
@@ -41,11 +42,11 @@ void existing_pass_through_branch_obs_experiment(
 		std::vector<ScopeHistory*>& scope_histories,
 		std::vector<double>& target_vals);
 
-void finalize_sequence(std::vector<int>& experiment_scope_context,
-					   std::vector<int>& experiment_node_context,
-					   Sequence* new_sequence,
-					   std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-					   std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+void finalize_potential_scope(std::vector<int>& experiment_scope_context,
+							  std::vector<int>& experiment_node_context,
+							  PotentialScopeNode* potential_scope_node,
+							  std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+							  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 void finalize_branch_node_states(BranchNode* branch_node,
 								 std::vector<std::map<int, double>>& existing_input_state_weights,
 								 std::vector<std::map<int, double>>& existing_local_state_weights,

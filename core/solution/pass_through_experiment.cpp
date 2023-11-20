@@ -4,8 +4,8 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "scope.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 
@@ -45,9 +45,9 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->curr_sequences.size(); s_index++) {
-		if (this->curr_sequences[s_index] != NULL) {
-			delete this->curr_sequences[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_potential_scopes.size(); s_index++) {
+		if (this->curr_potential_scopes[s_index] != NULL) {
+			delete this->curr_potential_scopes[s_index];
 		}
 	}
 
@@ -57,9 +57,9 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_sequences.size(); s_index++) {
-		if (this->best_sequences[s_index] != NULL) {
-			delete this->best_sequences[s_index];
+	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
+		if (this->best_potential_scopes[s_index] != NULL) {
+			delete this->best_potential_scopes[s_index];
 		}
 	}
 
@@ -94,8 +94,8 @@ PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->pre_step_histories[s_index];
 			this->pre_step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
 		} else {
-			SequenceHistory* original_sequence_history = (SequenceHistory*)original->pre_step_histories[s_index];
-			this->pre_step_histories[s_index] = new SequenceHistory(original_sequence_history);
+			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->pre_step_histories[s_index];
+			this->pre_step_histories[s_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
 		}
 	}
 
@@ -113,8 +113,8 @@ PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->post_step_histories[h_index];
 			this->post_step_histories[h_index] = new ActionNodeHistory(original_action_node_history);
 		} else {
-			SequenceHistory* original_sequence_history = (SequenceHistory*)original->post_step_histories[h_index];
-			this->post_step_histories[h_index] = new SequenceHistory(original_sequence_history);
+			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->post_step_histories[h_index];
+			this->post_step_histories[h_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
 		}
 	}
 }
@@ -127,8 +127,8 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->pre_step_histories[s_index];
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = (SequenceHistory*)this->pre_step_histories[s_index];
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->pre_step_histories[s_index];
+			delete potential_scope_node_history;
 		}
 	}
 
@@ -142,8 +142,8 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->post_step_histories[h_index];
 			delete action_node_history;
 		} else {
-			SequenceHistory* sequence_history = (SequenceHistory*)this->post_step_histories[h_index];
-			delete sequence_history;
+			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->post_step_histories[h_index];
+			delete potential_scope_node_history;
 		}
 	}
 }

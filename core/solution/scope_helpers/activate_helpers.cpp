@@ -1,6 +1,7 @@
 #include "scope.h"
 
 #include <iostream>
+#include <stdexcept>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -67,10 +68,7 @@ void node_activate_helper(int iter_index,
 	}
 }
 
-void Scope::activate(vector<AbstractNode*>& starting_nodes,
-					 vector<map<int, StateStatus>>& starting_input_state_vals,
-					 vector<map<int, StateStatus>>& starting_local_state_vals,
-					 Problem& problem,
+void Scope::activate(Problem& problem,
 					 vector<ContextLayer>& context,
 					 int& exit_depth,
 					 AbstractNode*& exit_node,
@@ -88,24 +86,7 @@ void Scope::activate(vector<AbstractNode*>& starting_nodes,
 
 	history->node_histories.push_back(vector<AbstractNodeHistory*>());
 
-	AbstractNode* curr_node = starting_nodes[0];
-	starting_nodes.erase(starting_nodes.begin());
-	if (starting_nodes.size() > 0) {
-		ScopeNode* scope_node = (ScopeNode*)curr_node;
-		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
-		history->node_histories[0].push_back(scope_node_history);
-		scope_node->halfway_activate(starting_nodes,
-									 starting_input_state_vals,
-									 starting_local_state_vals,
-									 curr_node,
-									 problem,
-									 context,
-									 exit_depth,
-									 exit_node,
-									 run_helper,
-									 scope_node_history);
-	}
-
+	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (exit_depth != -1
 				|| curr_node == NULL
@@ -123,8 +104,8 @@ void Scope::activate(vector<AbstractNode*>& starting_nodes,
 							 history);
 	}
 
-	if (history->inner_experiment != NULL) {
-		history->inner_experiment->parent_scope_end_activate(
+	if (history->inner_pass_through_experiment != NULL) {
+		history->inner_pass_through_experiment->parent_scope_end_activate(
 			context,
 			run_helper,
 			history);

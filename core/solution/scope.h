@@ -37,8 +37,8 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class ActionNode;
 class PassThroughExperiment;
-class Sequence;
 class State;
 
 class ScopeHistory;
@@ -52,14 +52,11 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	std::vector<Scope*> child_scopes;
-	/**
-	 * - don't remove even if can no longer reach
-	 *   - might have been a mistaken change anyways
-	 */
+	int starting_node_id;
+	AbstractNode* starting_node;
 
 	std::vector<State*> temp_states;
-	std::vector<std::vector<AbstractNode*>> temp_state_nodes;
+	std::vector<std::vector<ActionNode*>> temp_state_nodes;
 	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> temp_state_node_contexts;
 	std::vector<std::vector<int>> temp_state_obs_indexes;
@@ -68,42 +65,27 @@ public:
 	Scope();
 	~Scope();
 
-	void activate(std::vector<AbstractNode*>& starting_nodes,
-				  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-				  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-				  Problem& problem,
+	void activate(Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void random_activate(std::vector<AbstractNode*>& starting_nodes,
-						 std::vector<int>& scope_context,
-						 std::vector<int>& node_context,
+	void random_activate(std::vector<Scope*>& scope_context,
+						 std::vector<AbstractNode*>& node_context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
-						 int& num_nodes,
-						 ScopeHistory* history);
+						 std::vector<AbstractNode*>& possible_nodes,
+						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
+						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+	void random_exit_activate(int starting_node_id,
+							  std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
 
-	void create_sequence_activate(std::vector<AbstractNode*>& starting_nodes,
-								  std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-								  std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-								  std::vector<std::map<std::pair<bool,int>, int>>& starting_state_mappings,
-								  Problem& problem,
-								  std::vector<ContextLayer>& context,
-								  int target_num_nodes,
-								  int& curr_num_nodes,
-								  Sequence* new_sequence,
-								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes,
-								  RunHelper& run_helper);
-
-	void view_activate(std::vector<AbstractNode*>& starting_nodes,
-					   std::vector<std::map<int, StateStatus>>& starting_input_state_vals,
-					   std::vector<std::map<int, StateStatus>>& starting_local_state_vals,
-					   Problem& problem,
+	void view_activate(Problem& problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
 					   AbstractNode*& exit_node,
@@ -124,7 +106,7 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
-	AbstractExperiment* inner_experiment;
+	PassThroughExperiment* inner_pass_through_experiment;
 
 	int experiment_iter_index;
 	int experiment_index;

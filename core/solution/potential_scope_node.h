@@ -1,5 +1,5 @@
-#ifndef SEQUENCE_H
-#define SEQUENCE_H
+#ifndef POTENTIAL_SCOPE_NODE_H
+#define POTENTIAL_SCOPE_NODE_H
 
 #include <vector>
 
@@ -7,21 +7,17 @@
 #include "problem.h"
 #include "run_helper.h"
 
+class Scope;
+class ScopeNode;
+
 const int OUTER_TYPE_INPUT = 0;
 const int OUTER_TYPE_LOCAL = 1;
 const int OUTER_TYPE_TEMP = 2;
 
-class AbstractNode;
-class Scope;
-class ScopeNode;
-class ScopeHistory;
-
-class SequenceHistory;
-class Sequence {
+class PotentialScopeNodeHistory;
+class PotentialScopeNode {
 public:
 	std::vector<int> input_types;
-	// input_inner_layer always 0
-	// input_inner_is_local always false
 	std::vector<int> input_inner_indexes;
 	/**
 	 * - negative indexing
@@ -36,29 +32,28 @@ public:
 	std::vector<int> output_outer_types;
 	std::vector<void*> output_outer_indexes;
 
-	AbstractNode* starting_node;
 	Scope* scope;
 
 	ScopeNode* scope_node_placeholder;
 
-	Sequence();
-	~Sequence();
+	PotentialScopeNode();
+	~PotentialScopeNode();
 
 	void activate(Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
-				  SequenceHistory* history);
+				  PotentialScopeNodeHistory* history);
 };
 
-class SequenceHistory {
+class PotentialScopeNodeHistory {
 public:
-	Sequence* sequence;
+	PotentialScopeNode* potential_scope_node;
 
 	ScopeHistory* scope_history;
 
-	SequenceHistory(Sequence* sequence);
-	SequenceHistory(SequenceHistory* original);
-	~SequenceHistory();
+	PotentialScopeNodeHistory(PotentialScopeNode* potential_scope_node);
+	PotentialScopeNodeHistory(PotentialScopeNodeHistory* original);
+	~PotentialScopeNodeHistory();
 };
 
-#endif /* SEQUENCE_H */
+#endif /* POTENTIAL_SCOPE_NODE_H */

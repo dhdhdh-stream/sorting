@@ -16,9 +16,8 @@ class AbstractNode;
 class ActionNode;
 class ActionNodeHistory;
 class PassThroughExperiment;
+class PotentialScopeNode;
 class ScopeHistory;
-class Sequence;
-class SequenceHistory;
 class State;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
@@ -55,23 +54,20 @@ public:
 	double existing_average_score;
 	double existing_score_variance;
 
-	std::set<std::pair<int, AbstractNode*>> s_possible_exits;
-	std::vector<std::pair<int, AbstractNode*>> possible_exits;
-
 	std::vector<std::map<int, double>> existing_input_state_weights;
 	std::vector<std::map<int, double>> existing_local_state_weights;
 	std::vector<std::map<State*, double>> existing_temp_state_weights;
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
-	std::vector<Sequence*> curr_sequences;
+	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
-	std::vector<Sequence*> best_sequences;
+	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
 
@@ -82,7 +78,7 @@ public:
 	std::vector<std::map<State*, double>> new_temp_state_weights;
 
 	std::vector<State*> new_states;
-	std::vector<std::vector<AbstractNode*>> new_state_nodes;
+	std::vector<std::vector<ActionNode*>> new_state_nodes;
 	std::vector<std::vector<std::vector<int>>> new_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
 	std::vector<std::vector<int>> new_state_obs_indexes;
@@ -115,18 +111,12 @@ public:
 					 std::map<State*, StateStatus>& temp_state_vals,
 					 ScopeHistory* scope_history);
 	void unhook();
-	void parent_scope_end_activate(std::vector<ContextLayer>& context,
-								   RunHelper& run_helper,
-								   ScopeHistory* parent_scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper,
 				  BranchExperimentOverallHistory* history);
 
 	void train_existing_activate(std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
-	void possible_exits_helper(int curr_exit_depth,
-							   ScopeHistory* scope_history);
-	void train_existing_parent_scope_end_activate(ScopeHistory* parent_scope_history);
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper,
 								 BranchExperimentOverallHistory* history);

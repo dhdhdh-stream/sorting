@@ -24,6 +24,7 @@ public:
 
 	std::vector<bool> state_is_local;
 	std::vector<int> state_indexes;
+	std::vector<int> state_obs_indexes;
 	std::vector<State*> state_defs;
 	/**
 	 * - use id when saving/loading, but have direct reference for running
@@ -32,6 +33,7 @@ public:
 
 	std::vector<std::vector<int>> temp_state_scope_contexts;
 	std::vector<std::vector<int>> temp_state_node_contexts;
+	std::vector<int> temp_state_obs_indexes;
 	std::vector<State*> temp_state_defs;
 	std::vector<int> temp_state_network_indexes;
 
@@ -40,6 +42,7 @@ public:
 	 */
 	std::vector<std::vector<int>> experiment_state_scope_contexts;
 	std::vector<std::vector<int>> experiment_state_node_contexts;
+	std::vector<int> experiment_state_obs_indexes;
 	std::vector<State*> experiment_state_defs;
 	std::vector<int> experiment_state_network_indexes;
 
@@ -47,16 +50,14 @@ public:
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
-	/**
-	 * - don't worry about possibility of having both PassThroughExperiment and BranchExperiment
-	 */
 
 	/**
 	 * - hook
 	 */
-	std::vector<int> obs_experiment_scope_contexts;
-	std::vector<int> obs_experiment_node_contexts;
-	int obs_experiment_index;
+	std::vector<std::vector<int>> obs_experiment_scope_contexts;
+	std::vector<std::vector<int>> obs_experiment_node_contexts;
+	std::vector<int> obs_experiment_obs_indexes;
+	std::vector<int> obs_experiment_indexes;
 
 	ActionNode();
 	~ActionNode();
@@ -68,15 +69,6 @@ public:
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
-
-	void create_sequence_activate(Problem& problem,
-								  std::vector<ContextLayer>& context,
-								  int target_num_nodes,
-								  int& curr_num_nodes,
-								  Sequence* new_sequence,
-								  std::vector<std::map<std::pair<bool,int>, int>>& state_mappings,
-								  int& new_num_input_states,
-								  std::vector<AbstractNode*>& new_nodes);
 
 	void flat_vals_back_activate(std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
@@ -113,6 +105,8 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
+
+	std::vector<double> state_snapshots;
 
 	AbstractExperimentHistory* experiment_history;
 

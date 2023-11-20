@@ -6,9 +6,9 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state_network.h"
 
@@ -40,12 +40,12 @@ void PassThroughExperiment::train_new_misguess_activate(
 				run_helper,
 				action_node_history);
 		} else {
-			SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-			instance_history->pre_step_histories.push_back(sequence_history);
-			this->best_sequences[s_index]->activate(problem,
-													context,
-													run_helper,
-													sequence_history);
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			instance_history->pre_step_histories.push_back(potential_scope_node_history);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
 		}
 	}
 
@@ -119,7 +119,6 @@ void PassThroughExperiment::train_new_misguess_backprop(
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& !scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;
@@ -165,7 +164,6 @@ void PassThroughExperiment::train_new_misguess_backprop(
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;

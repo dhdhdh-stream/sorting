@@ -1,4 +1,4 @@
-#include "sequence.h"
+#include "potential_scope_node.h"
 
 #include <iostream>
 
@@ -7,11 +7,11 @@
 
 using namespace std;
 
-Sequence::Sequence() {
+PotentialScopeNode::PotentialScopeNode() {
 	this->scope_node_placeholder = NULL;
 }
 
-Sequence::~Sequence() {
+PotentialScopeNode::~PotentialScopeNode() {
 	if (this->scope != NULL) {
 		delete this->scope;
 	}
@@ -21,26 +21,18 @@ Sequence::~Sequence() {
 	}
 }
 
-void Sequence::activate(Problem& problem,
-						vector<ContextLayer>& context,
-						RunHelper& run_helper,
-						SequenceHistory* history) {
-	if (this->scope_node_placeholder != NULL) {
-		context.back().node_id = this->scope_node_placeholder->id;
-	}
-
-	context.push_back(ContextLayer());
-
-	context.back().scope_id = this->scope->id;
-	context.back().node_id = -1;
-
+void PotentialScopeNode::activate(Problem& problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper,
+								  PotentialScopeNodeHistory* history) {
+	map<int, StateStatus> input_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_types[i_index] == OUTER_TYPE_INPUT) {
 				map<int, StateStatus>::iterator it = context[context.size()-1
 					- this->input_scope_depths[i_index]].input_state_vals.find((long)this->input_outer_indexes[i_index]);
 				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].input_state_vals.end()) {
-					context.back().input_state_vals[this->input_inner_indexes[i_index]] = it->second;
+					input_state_vals[this->input_inner_indexes[i_index]] = it->second;
 				}
 			} else if (this->input_outer_types[i_index] == OUTER_TYPE_LOCAL) {
 				StateStatus state_status;
@@ -49,35 +41,37 @@ void Sequence::activate(Problem& problem,
 				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].local_state_vals.end()) {
 					state_status = it->second;
 				}
-				context.back().input_state_vals[this->input_inner_indexes[i_index]] = state_status;
+				input_state_vals[this->input_inner_indexes[i_index]] = state_status;
 			} else {
 				map<State*, StateStatus>::iterator it = context[context.size()-1
 					- this->input_scope_depths[i_index]].temp_state_vals.find((State*)this->input_outer_indexes[i_index]);
 				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].temp_state_vals.end()) {
-					context.back().input_state_vals[this->input_inner_indexes[i_index]] = it->second;
+					input_state_vals[this->input_inner_indexes[i_index]] = it->second;
 				}
 			}
 		} else {
-			context.back().input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 		}
 	}
+
+	context.back().node = this->scope_node_placeholder;
+
+	context.push_back(ContextLayer());
+
+	context.back().scope = this->scope;
+	context.back().node = NULL;
+
+	context.back().input_state_vals = input_state_vals;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	history->scope_history = scope_history;
 	// no need to set context.back().scope_history
 
-	vector<AbstractNode*> starting_nodes{this->starting_node};
-	vector<map<int, StateStatus>> starting_input_state_vals;
-	vector<map<int, StateStatus>> starting_local_state_vals;
-
 	// unused
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->activate(starting_nodes,
-						  starting_input_state_vals,
-						  starting_local_state_vals,
-						  problem,
+	this->scope->activate(problem,
 						  context,
 						  inner_exit_depth,
 						  inner_exit_node,
@@ -103,19 +97,19 @@ void Sequence::activate(Problem& problem,
 
 	context.pop_back();
 
-	context.back().node_id = -1;
+	context.back().node = NULL;
 }
 
-SequenceHistory::SequenceHistory(Sequence* sequence) {
-	this->sequence = sequence;
+PotentialScopeNodeHistory::PotentialScopeNodeHistory(PotentialScopeNode* potential_scope_node) {
+	this->potential_scope_node = potential_scope_node;
 }
 
-SequenceHistory::SequenceHistory(SequenceHistory* original) {
-	this->sequence = original->sequence;
+PotentialScopeNodeHistory::PotentialScopeNodeHistory(PotentialScopeNodeHistory* original) {
+	this->potential_scope_node = original->potential_scope_node;
 
 	this->scope_history = new ScopeHistory(original->scope_history);
 }
 
-SequenceHistory::~SequenceHistory() {
+PotentialScopeNodeHistory::~PotentialScopeNodeHistory() {
 	delete this->scope_history;
 }

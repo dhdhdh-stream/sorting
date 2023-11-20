@@ -24,6 +24,7 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 	cout << "action: " << this->action.to_string() << endl;
 	cout << "obs: " << obs_snapshot << endl;
 
+	vector<double> state_snapshots(this->state_is_local.size(), 0.0);
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
@@ -31,15 +32,25 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 			}
 			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-			state_network->activate(obs_snapshot,
-									it->second);
+			if (this->state_obs_indexes[n_index] == -1) {
+				state_network->activate(obs_snapshot,
+										it->second);
+			} else {
+				state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
+										it->second);
+			}
 			cout << "local state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
 				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
-				state_network->activate(obs_snapshot,
-										it->second);
+				if (this->state_obs_indexes[n_index] == -1) {
+					state_network->activate(obs_snapshot,
+											it->second);
+				} else {
+					state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
+											it->second);
+				}
 				cout << "input state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 			}
 		}

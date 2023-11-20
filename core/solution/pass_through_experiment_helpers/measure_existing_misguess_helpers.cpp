@@ -10,7 +10,7 @@ using namespace std;
 void PassThroughExperiment::measure_existing_misguess_activate(
 		vector<ContextLayer>& context) {
 	context[context.size() - this->scope_context.size()]
-		.scope_history->inner_experiment = this;
+		.scope_history->inner_pass_through_experiment = this;
 }
 
 void PassThroughExperiment::measure_existing_misguess_parent_scope_end_activate(

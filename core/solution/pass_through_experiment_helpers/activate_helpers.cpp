@@ -23,8 +23,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -111,8 +111,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 												  context,
 												  exit_depth,
 												  exit_node,
-												  run_helper,
-												  history);
+												  run_helper);
 					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
@@ -135,8 +134,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -197,8 +196,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											  context,
 											  exit_depth,
 											  exit_node,
-											  run_helper,
-											  history);
+											  run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 				experiment_activate(curr_node,
@@ -244,11 +242,6 @@ void PassThroughExperiment::hook_helper(vector<int>& scope_context,
 							scope_node_history->inner_scope_history);
 
 				node_context.back() = -1;
-
-				scope_node->experiment_back_activate(scope_context,
-													 node_context,
-													 temp_state_vals,
-													 scope_node_history);
 			}
 		}
 	}
@@ -260,44 +253,22 @@ void PassThroughExperiment::hook_helper(vector<int>& scope_context,
 void PassThroughExperiment::hook(vector<ContextLayer>& context) {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			if (this->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->new_state_nodes[s_index][n_index];
-
-				action_node->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-				action_node->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-				action_node->experiment_state_defs.push_back(this->new_states[s_index]);
-				action_node->experiment_state_network_indexes.push_back(n_index);
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)this->new_state_nodes[s_index][n_index];
-
-				scope_node->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-				scope_node->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-				scope_node->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
-				scope_node->experiment_state_defs.push_back(this->new_states[s_index]);
-				scope_node->experiment_state_network_indexes.push_back(n_index);
-			}
+			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
 		}
 	}
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
 		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
 			for (int n_index = 0; n_index < (int)this->branch_experiment->new_state_nodes[s_index].size(); n_index++) {
-				if (this->branch_experiment->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
-
-					action_node->experiment_state_scope_contexts.push_back(this->branch_experiment->new_state_scope_contexts[s_index][n_index]);
-					action_node->experiment_state_node_contexts.push_back(this->branch_experiment->new_state_node_contexts[s_index][n_index]);
-					action_node->experiment_state_defs.push_back(this->branch_experiment->new_states[s_index]);
-					action_node->experiment_state_network_indexes.push_back(n_index);
-				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
-
-					scope_node->experiment_state_scope_contexts.push_back(this->branch_experiment->new_state_scope_contexts[s_index][n_index]);
-					scope_node->experiment_state_node_contexts.push_back(this->branch_experiment->new_state_node_contexts[s_index][n_index]);
-					scope_node->experiment_state_obs_indexes.push_back(this->branch_experiment->new_state_obs_indexes[s_index][n_index]);
-					scope_node->experiment_state_defs.push_back(this->branch_experiment->new_states[s_index]);
-					scope_node->experiment_state_network_indexes.push_back(n_index);
-				}
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->branch_experiment->new_state_scope_contexts[s_index][n_index]);
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->branch_experiment->new_state_node_contexts[s_index][n_index]);
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->branch_experiment->new_state_obs_indexes[s_index][n_index]);
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->branch_experiment->new_states[s_index]);
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
 			}
 		}
 	}
@@ -313,44 +284,22 @@ void PassThroughExperiment::hook(vector<ContextLayer>& context) {
 void PassThroughExperiment::unhook() {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			if (this->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->new_state_nodes[s_index][n_index];
-
-				action_node->experiment_state_scope_contexts.clear();
-				action_node->experiment_state_node_contexts.clear();
-				action_node->experiment_state_defs.clear();
-				action_node->experiment_state_network_indexes.clear();
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)this->new_state_nodes[s_index][n_index];
-
-				scope_node->experiment_state_scope_contexts.clear();
-				scope_node->experiment_state_node_contexts.clear();
-				scope_node->experiment_state_obs_indexes.clear();
-				scope_node->experiment_state_defs.clear();
-				scope_node->experiment_state_network_indexes.clear();
-			}
+			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
 		}
 	}
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
 		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
 			for (int n_index = 0; n_index < (int)this->branch_experiment->new_state_nodes[s_index].size(); n_index++) {
-				if (this->branch_experiment->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
-
-					action_node->experiment_state_scope_contexts.clear();
-					action_node->experiment_state_node_contexts.clear();
-					action_node->experiment_state_defs.clear();
-					action_node->experiment_state_network_indexes.clear();
-				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->branch_experiment->new_state_nodes[s_index][n_index];
-
-					scope_node->experiment_state_scope_contexts.clear();
-					scope_node->experiment_state_node_contexts.clear();
-					scope_node->experiment_state_obs_indexes.clear();
-					scope_node->experiment_state_defs.clear();
-					scope_node->experiment_state_network_indexes.clear();
-				}
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
+				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
 			}
 		}
 	}

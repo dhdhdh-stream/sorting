@@ -66,10 +66,7 @@ void node_view_activate_helper(int iter_index,
 	}
 }
 
-void Scope::view_activate(vector<AbstractNode*>& starting_nodes,
-						  vector<map<int, StateStatus>>& starting_input_state_vals,
-						  vector<map<int, StateStatus>>& starting_local_state_vals,
-						  Problem& problem,
+void Scope::view_activate(Problem& problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
@@ -87,21 +84,7 @@ void Scope::view_activate(vector<AbstractNode*>& starting_nodes,
 	}
 	run_helper.curr_depth++;
 
-	AbstractNode* curr_node = starting_nodes[0];
-	starting_nodes.erase(starting_nodes.begin());
-	if (starting_nodes.size() > 0) {
-		ScopeNode* scope_node = (ScopeNode*)curr_node;
-		scope_node->halfway_view_activate(starting_nodes,
-										  starting_input_state_vals,
-										  starting_local_state_vals,
-										  curr_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper);
-	}
-
+	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (exit_depth != -1
 				|| curr_node == NULL

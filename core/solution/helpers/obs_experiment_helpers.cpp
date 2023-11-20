@@ -9,9 +9,9 @@
 #include "flat_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -38,7 +38,7 @@ const double MIN_IMPACT_SCALE = 0.3;
 
 void create_obs_experiment_helper(vector<int>& scope_context,
 								  vector<int>& node_context,
-								  vector<AbstractNode*>& possible_nodes,
+								  vector<ActionNode*>& possible_nodes,
 								  vector<vector<int>>& possible_scope_contexts,
 								  vector<vector<int>>& possible_node_contexts,
 								  vector<int>& possible_obs_indexes,
@@ -46,7 +46,7 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 void create_obs_experiment_experiment_helper(
 		vector<int>& scope_context,
 		vector<int>& node_context,
-		vector<AbstractNode*>& possible_nodes,
+		vector<ActionNode*>& possible_nodes,
 		vector<vector<int>>& possible_scope_contexts,
 		vector<vector<int>>& possible_node_contexts,
 		vector<int>& possible_obs_indexes,
@@ -62,13 +62,13 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(branch_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 
 				create_obs_experiment_helper(scope_context,
 											 node_context,
@@ -76,7 +76,7 @@ void create_obs_experiment_experiment_helper(
 											 possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_obs_indexes,
-											 sequence_history->scope_history);
+											 potential_scope_node_history->scope_history);
 
 				node_context.back() = -1;
 			}
@@ -92,13 +92,13 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(pass_through_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 
 				create_obs_experiment_helper(scope_context,
 											 node_context,
@@ -106,7 +106,7 @@ void create_obs_experiment_experiment_helper(
 											 possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_obs_indexes,
-											 sequence_history->scope_history);
+											 potential_scope_node_history->scope_history);
 
 				node_context.back() = -1;
 			}
@@ -130,13 +130,13 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(pass_through_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
 
 				create_obs_experiment_helper(scope_context,
 											 node_context,
@@ -144,7 +144,7 @@ void create_obs_experiment_experiment_helper(
 											 possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_obs_indexes,
-											 sequence_history->scope_history);
+											 potential_scope_node_history->scope_history);
 
 				node_context.back() = -1;
 			}
@@ -154,7 +154,7 @@ void create_obs_experiment_experiment_helper(
 
 void create_obs_experiment_helper(vector<int>& scope_context,
 								  vector<int>& node_context,
-								  vector<AbstractNode*>& possible_nodes,
+								  vector<ActionNode*>& possible_nodes,
 								  vector<vector<int>>& possible_scope_contexts,
 								  vector<vector<int>>& possible_node_contexts,
 								  vector<int>& possible_obs_indexes,
@@ -175,7 +175,16 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 				possible_nodes.push_back(action_node);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
+
+				for (int n_index = 0; n_index < (int)action_node_history->state_snapshots.size(); n_index++) {
+					if (action_node_history->state_snapshots[n_index] != 0.0) {
+						possible_nodes.push_back(action_node);
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_obs_indexes.push_back(n_index);
+					}
+				}
 
 				node_context.back() = -1;
 
@@ -206,16 +215,6 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 												 scope_node_history->inner_scope_history);
 				}
 
-				if (!scope_node_history->is_early_exit) {
-					for (map<int, StateStatus>::iterator it = scope_node_history->obs_snapshots.begin();
-							it != scope_node_history->obs_snapshots.end(); it++) {
-						possible_nodes.push_back(scope_node);
-						possible_scope_contexts.push_back(scope_context);
-						possible_node_contexts.push_back(node_context);
-						possible_obs_indexes.push_back(it->first);
-					}
-				}
-
 				node_context.back() = -1;
 
 				if (scope_node_history->experiment_history != NULL) {
@@ -236,40 +235,24 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
-void hook(vector<AbstractNode*>& nodes,
+void hook(vector<ActionNode*>& nodes,
 		  vector<vector<int>>& scope_contexts,
 		  vector<vector<int>>& node_contexts,
 		  vector<int>& obs_indexes) {
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)nodes[n_index];
-			action_node->obs_experiment_scope_contexts = scope_contexts[n_index];
-			action_node->obs_experiment_node_contexts = node_contexts[n_index];
-			action_node->obs_experiment_index = n_index;
-		} else {
-			ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
-			scope_node->obs_experiment_scope_contexts.push_back(scope_contexts[n_index]);
-			scope_node->obs_experiment_node_contexts.push_back(node_contexts[n_index]);
-			scope_node->obs_experiment_obs_indexes.push_back(obs_indexes[n_index]);
-			scope_node->obs_experiment_indexes.push_back(n_index);
-		}
+		nodes[n_index]->obs_experiment_scope_contexts.push_back(scope_contexts[n_index]);
+		nodes[n_index]->obs_experiment_node_contexts.push_back(node_contexts[n_index]);
+		nodes[n_index]->obs_experiment_obs_indexes.push_back(obs_indexes[n_index]);
+		nodes[n_index]->obs_experiment_indexes.push_back(n_index);
 	}
 }
 
-void unhook(vector<AbstractNode*>& nodes) {
+void unhook(vector<ActionNode*>& nodes) {
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		if (nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)nodes[n_index];
-			action_node->obs_experiment_scope_contexts.clear();
-			action_node->obs_experiment_node_contexts.clear();
-			action_node->obs_experiment_index = -1;
-		} else {
-			ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
-			scope_node->obs_experiment_scope_contexts.clear();
-			scope_node->obs_experiment_node_contexts.clear();
-			scope_node->obs_experiment_obs_indexes.clear();
-			scope_node->obs_experiment_indexes.clear();
-		}
+		nodes[n_index]->obs_experiment_scope_contexts.clear();
+		nodes[n_index]->obs_experiment_node_contexts.clear();
+		nodes[n_index]->obs_experiment_obs_indexes.clear();
+		nodes[n_index]->obs_experiment_indexes.clear();
 	}
 }
 
@@ -300,13 +283,13 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 flat_vals,
 													 action_node_history);
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 
 				flat_vals_helper(scope_context,
 								 node_context,
-								 sequence_history->scope_history,
+								 potential_scope_node_history->scope_history,
 								 d_index,
 								 stride_size,
 								 flat_vals);
@@ -329,13 +312,13 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 flat_vals,
 													 action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 
 				flat_vals_helper(scope_context,
 								 node_context,
-								 sequence_history->scope_history,
+								 potential_scope_node_history->scope_history,
 								 d_index,
 								 stride_size,
 								 flat_vals);
@@ -365,13 +348,13 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 flat_vals,
 													 action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
 
 				flat_vals_helper(scope_context,
 								 node_context,
-								 sequence_history->scope_history,
+								 potential_scope_node_history->scope_history,
 								 d_index,
 								 stride_size,
 								 flat_vals);
@@ -428,13 +411,6 @@ void flat_vals_helper(vector<int>& scope_context,
 
 				node_context.back() = -1;
 
-				scope_node->flat_vals_back_activate(scope_context,
-													node_context,
-													d_index,
-													stride_size,
-													flat_vals,
-													scope_node_history);
-
 				if (scope_node_history->experiment_history != NULL) {
 					flat_vals_experiment_helper(scope_context,
 												node_context,
@@ -475,13 +451,13 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_vals,
 													action_node_history);
 			} else {
-				node_context.back() = branch_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)branch_experiment_history->step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 
 				rnn_vals_helper(scope_context,
 								node_context,
-								sequence_history->scope_history,
+								potential_scope_node_history->scope_history,
 								rnn_obs_experiment_indexes,
 								rnn_vals);
 
@@ -502,13 +478,13 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_vals,
 													action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 
 				rnn_vals_helper(scope_context,
 								node_context,
-								sequence_history->scope_history,
+								potential_scope_node_history->scope_history,
 								rnn_obs_experiment_indexes,
 								rnn_vals);
 
@@ -535,13 +511,13 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_vals,
 													action_node_history);
 			} else {
-				node_context.back() = pass_through_experiment->best_sequences[s_index]->scope_node_placeholder->id;
+				node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
 
-				SequenceHistory* sequence_history = (SequenceHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
 
 				rnn_vals_helper(scope_context,
 								node_context,
-								sequence_history->scope_history,
+								potential_scope_node_history->scope_history,
 								rnn_obs_experiment_indexes,
 								rnn_vals);
 
@@ -593,12 +569,6 @@ void rnn_vals_helper(vector<int>& scope_context,
 
 				node_context.back() = -1;
 
-				scope_node->rnn_vals_back_activate(scope_context,
-												   node_context,
-												   rnn_obs_experiment_indexes,
-												   rnn_vals,
-												   scope_node_history);
-
 				if (scope_node_history->experiment_history != NULL) {
 					rnn_vals_experiment_helper(scope_context,
 											   node_context,
@@ -616,7 +586,7 @@ void rnn_vals_helper(vector<int>& scope_context,
 
 void flat(vector<double>& flat_vals,
 		  vector<double>& target_vals,
-		  vector<AbstractNode*>& nodes,
+		  vector<ActionNode*>& nodes,
 		  vector<vector<int>>& scope_contexts,
 		  vector<vector<int>>& node_contexts,
 		  vector<int>& obs_indexes) {
@@ -658,7 +628,7 @@ void flat(vector<double>& flat_vals,
 		remaining_obs_indexes[n_index] = n_index;
 	}
 
-	vector<AbstractNode*> new_nodes;
+	vector<ActionNode*> new_nodes;
 	vector<vector<int>> new_scope_contexts;
 	vector<vector<int>> new_node_contexts;
 	vector<int> new_obs_indexes;
@@ -791,12 +761,12 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 							 Scope* parent_scope,
 							 vector<ScopeHistory*>& scope_histories,
 							 vector<double>& target_vals) {
-	vector<AbstractNode*> nodes;
+	vector<ActionNode*> nodes;
 	vector<vector<int>> scope_contexts;
 	vector<vector<int>> node_contexts;
 	vector<int> obs_indexes;
 	{
-		vector<AbstractNode*> possible_nodes;
+		vector<ActionNode*> possible_nodes;
 		vector<vector<int>> possible_scope_contexts;
 		vector<vector<int>> possible_node_contexts;
 		vector<int> possible_obs_indexes;
@@ -906,15 +876,15 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(num_instances));
 
-	cout << "obs experiment nodes:";
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		cout << " " << nodes[n_index]->id;
-	}
-	cout << endl;
-	cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	cout << "new_average_misguess: " << new_average_misguess << endl;
-	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	cout << "improvement_t_score: " << improvement_t_score << endl;
+	// cout << "obs experiment nodes:";
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	// 	cout << " " << nodes[n_index]->id;
+	// }
+	// cout << endl;
+	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	// cout << "new_average_misguess: " << new_average_misguess << endl;
+	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
 		cout << "obs success" << endl;
@@ -941,22 +911,11 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		parent_scope->temp_state_new_local_indexes.push_back(-1);
 
 		for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-			if (nodes[n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)nodes[n_index];
-
-				action_node->temp_state_scope_contexts.push_back(scope_contexts[n_index]);
-				action_node->temp_state_node_contexts.push_back(node_contexts[n_index]);
-				action_node->temp_state_defs.push_back(new_state);
-				action_node->temp_state_network_indexes.push_back(n_index);
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)nodes[n_index];
-
-				scope_node->temp_state_scope_contexts.push_back(scope_contexts[n_index]);
-				scope_node->temp_state_node_contexts.push_back(node_contexts[n_index]);
-				scope_node->temp_state_obs_indexes.push_back(obs_indexes[n_index]);
-				scope_node->temp_state_defs.push_back(new_state);
-				scope_node->temp_state_network_indexes.push_back(n_index);
-			}
+			nodes[n_index]->temp_state_scope_contexts.push_back(scope_contexts[n_index]);
+			nodes[n_index]->temp_state_node_contexts.push_back(node_contexts[n_index]);
+			nodes[n_index]->temp_state_obs_indexes.push_back(obs_indexes[n_index]);
+			nodes[n_index]->temp_state_defs.push_back(new_state);
+			nodes[n_index]->temp_state_network_indexes.push_back(n_index);
 		}
 
 		if (experiment->type == EXPERIMENT_TYPE_BRANCH) {
@@ -978,12 +937,12 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 void new_obs_experiment(AbstractExperiment* experiment,
 						vector<ScopeHistory*>& scope_histories,
 						vector<double>& target_vals) {
-	vector<AbstractNode*> nodes;
+	vector<ActionNode*> nodes;
 	vector<vector<int>> scope_contexts;
 	vector<vector<int>> node_contexts;
 	vector<int> obs_indexes;
 	{
-		vector<AbstractNode*> possible_nodes;
+		vector<ActionNode*> possible_nodes;
 		vector<vector<int>> possible_scope_contexts;
 		vector<vector<int>> possible_node_contexts;
 		vector<int> possible_obs_indexes;
@@ -1092,15 +1051,15 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(num_instances));
 
-	cout << "obs experiment nodes:";
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		cout << " " << nodes[n_index]->id;
-	}
-	cout << endl;
-	cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	cout << "new_average_misguess: " << new_average_misguess << endl;
-	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	cout << "improvement_t_score: " << improvement_t_score << endl;
+	// cout << "obs experiment nodes:";
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	// 	cout << " " << nodes[n_index]->id;
+	// }
+	// cout << endl;
+	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	// cout << "new_average_misguess: " << new_average_misguess << endl;
+	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
 		cout << "obs success" << endl;
@@ -1153,12 +1112,12 @@ void existing_pass_through_branch_obs_experiment(
 		BranchExperiment* experiment,
 		vector<ScopeHistory*>& scope_histories,
 		vector<double>& target_vals) {
-	vector<AbstractNode*> nodes;
+	vector<ActionNode*> nodes;
 	vector<vector<int>> scope_contexts;
 	vector<vector<int>> node_contexts;
 	vector<int> obs_indexes;
 	{
-		vector<AbstractNode*> possible_nodes;
+		vector<ActionNode*> possible_nodes;
 		vector<vector<int>> possible_scope_contexts;
 		vector<vector<int>> possible_node_contexts;
 		vector<int> possible_obs_indexes;
@@ -1268,15 +1227,15 @@ void existing_pass_through_branch_obs_experiment(
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(num_instances));
 
-	cout << "obs experiment nodes:";
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		cout << " " << nodes[n_index]->id;
-	}
-	cout << endl;
-	cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	cout << "new_average_misguess: " << new_average_misguess << endl;
-	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	cout << "improvement_t_score: " << improvement_t_score << endl;
+	// cout << "obs experiment nodes:";
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	// 	cout << " " << nodes[n_index]->id;
+	// }
+	// cout << endl;
+	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	// cout << "new_average_misguess: " << new_average_misguess << endl;
+	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
 		cout << "obs success" << endl;

@@ -8,9 +8,9 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -119,12 +119,12 @@ void BranchExperiment::measure_activate(
 					action_node_history);
 				delete action_node_history;
 			} else {
-				SequenceHistory* sequence_history = new SequenceHistory(this->best_sequences[s_index]);
-				this->best_sequences[s_index]->activate(problem,
-														context,
-														run_helper,
-														sequence_history);
-				delete sequence_history;
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+				this->best_potential_scopes[s_index]->activate(problem,
+															   context,
+															   run_helper,
+															   potential_scope_node_history);
+				delete potential_scope_node_history;
 			}
 		}
 
@@ -146,12 +146,48 @@ void BranchExperiment::measure_backprop(double target_val) {
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
 
+		// cout << "Branch" << endl;
+		// cout << "measure" << endl;
+		// cout << "this->scope_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
+		// }
+		// cout << "this->node_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->node_context[c_index] << endl;
+		// }
+		// cout << "new explore path:";
+		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+		// 		cout << " " << this->best_actions[s_index]->action.to_string();
+		// 	} else {
+		// 		cout << " S";
+		// 	}
+		// }
+		// cout << endl;
+
+		// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+		// if (this->best_exit_node == NULL) {
+		// 	cout << "this->best_exit_node_id: " << -1 << endl;
+		// } else {
+		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+		// }
+
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
+		// cout << "this->combined_score: " << this->combined_score << endl;
+		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		// cout << "score_standard_deviation: " << score_standard_deviation << endl;
+		// cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+
+		// cout << "branch_weight: " << branch_weight << endl;
+
+		cout << endl;
 
 		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
 			this->combined_score = 0.0;
@@ -165,11 +201,11 @@ void BranchExperiment::measure_backprop(double target_val) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
 				} else {
-					delete this->best_sequences[s_index];
+					delete this->best_potential_scopes[s_index];
 				}
 			}
 			this->best_actions.clear();
-			this->best_sequences.clear();
+			this->best_potential_scopes.clear();
 
 			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 				delete this->new_states[s_index];

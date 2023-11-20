@@ -30,7 +30,6 @@ public:
 	std::map<int, Scope*> scopes;
 
 	Scope* root;
-	AbstractNode* root_starting_node;
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;

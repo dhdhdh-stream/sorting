@@ -9,7 +9,6 @@
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 
 using namespace std;
@@ -30,8 +29,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -66,8 +65,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope_id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node_id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;
 				}
@@ -153,11 +152,6 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 							scope_node_history->inner_scope_history);
 
 				node_context.back() = -1;
-
-				scope_node->experiment_back_activate(scope_context,
-													 node_context,
-													 temp_state_vals,
-													 scope_node_history);
 			}
 		}
 	}
@@ -169,22 +163,11 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 void BranchExperiment::hook(vector<ContextLayer>& context) {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			if (this->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->new_state_nodes[s_index][n_index];
-
-				action_node->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-				action_node->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-				action_node->experiment_state_defs.push_back(this->new_states[s_index]);
-				action_node->experiment_state_network_indexes.push_back(n_index);
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)this->new_state_nodes[s_index][n_index];
-
-				scope_node->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-				scope_node->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-				scope_node->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
-				scope_node->experiment_state_defs.push_back(this->new_states[s_index]);
-				scope_node->experiment_state_network_indexes.push_back(n_index);
-			}
+			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
 		}
 	}
 
@@ -199,33 +182,12 @@ void BranchExperiment::hook(vector<ContextLayer>& context) {
 void BranchExperiment::unhook() {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			if (this->new_state_nodes[s_index][n_index]->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->new_state_nodes[s_index][n_index];
-
-				action_node->experiment_state_scope_contexts.clear();
-				action_node->experiment_state_node_contexts.clear();
-				action_node->experiment_state_defs.clear();
-				action_node->experiment_state_network_indexes.clear();
-			} else {
-				ScopeNode* scope_node = (ScopeNode*)this->new_state_nodes[s_index][n_index];
-
-				scope_node->experiment_state_scope_contexts.clear();
-				scope_node->experiment_state_node_contexts.clear();
-				scope_node->experiment_state_obs_indexes.clear();
-				scope_node->experiment_state_defs.clear();
-				scope_node->experiment_state_network_indexes.clear();
-			}
+			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
+			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
 		}
-	}
-}
-
-void BranchExperiment::parent_scope_end_activate(vector<ContextLayer>& context,
-												 RunHelper& run_helper,
-												 ScopeHistory* parent_scope_history) {
-	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_parent_scope_end_activate(parent_scope_history);
-		break;
 	}
 }
 

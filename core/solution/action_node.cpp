@@ -15,8 +15,6 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
-
-	this->obs_experiment_index = -1;
 }
 
 ActionNode::~ActionNode() {
@@ -28,6 +26,7 @@ ActionNode::~ActionNode() {
 void ActionNode::success_reset() {
 	this->temp_state_scope_contexts.clear();
 	this->temp_state_node_contexts.clear();
+	this->temp_state_obs_indexes.clear();
 	this->temp_state_defs.clear();
 	this->temp_state_network_indexes.clear();
 
@@ -51,6 +50,7 @@ void ActionNode::save(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->state_defs.size(); s_index++) {
 		output_file << this->state_is_local[s_index] << endl;
 		output_file << this->state_indexes[s_index] << endl;
+		output_file << this->state_obs_indexes[s_index] << endl;
 		output_file << this->state_defs[s_index]->id << endl;
 		output_file << this->state_network_indexes[s_index] << endl;
 	}
@@ -72,6 +72,10 @@ void ActionNode::load(ifstream& input_file) {
 		string index_line;
 		getline(input_file, index_line);
 		this->state_indexes.push_back(stoi(index_line));
+
+		string obs_index_line;
+		getline(input_file, obs_index_line);
+		this->state_obs_indexes.push_back(stoi(obs_index_line));
 
 		string def_id_line;
 		getline(input_file, def_id_line);
@@ -111,6 +115,8 @@ ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
 	this->node = original->node;
 
 	this->obs_snapshot = original->obs_snapshot;
+
+	this->state_snapshots = original->state_snapshots;
 
 	if (original->experiment_history != NULL) {
 		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {

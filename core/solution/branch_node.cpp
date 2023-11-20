@@ -113,12 +113,12 @@ void BranchNode::link() {
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
-	output_file << this->branch_scope_context[0] << endl;
+	if (this->branch_scope_context.size() == 0) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->branch_scope_context[0] << endl;
+	}
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
-}
-
-BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
-	this->node = node;
 }

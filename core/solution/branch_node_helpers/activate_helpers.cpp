@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "scope.h"
+#include "scope_node.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -14,8 +16,10 @@ void BranchNode::activate(bool& is_branch,
 		matches_context = false;
 	} else {
 		for (int c_index = 0; c_index < (int)this->branch_scope_context.size()-1; c_index++) {
-			if (this->branch_scope_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].scope_id
-					|| this->branch_node_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].node_id) {
+			if (context[context.size()-this->branch_scope_context.size()+c_index].scope	== NULL			// OuterExperiment edge case
+					|| this->branch_scope_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].scope->id
+					|| context[context.size()-this->branch_scope_context.size()+c_index].node == NULL	// explore edge case
+					|| this->branch_node_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].node->id) {
 				matches_context = false;
 				break;
 			}

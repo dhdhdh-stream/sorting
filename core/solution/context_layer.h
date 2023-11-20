@@ -5,13 +5,15 @@
 
 #include "state_status.h"
 
+class Scope;
 class ScopeHistory;
+class ScopeNode;
 class State;
 
 class ContextLayer {
 public:
-	int scope_id;
-	int node_id;
+	Scope* scope;
+	ScopeNode* node;
 
 	/**
 	 * - for inputs, initialize by adding to state_vals at scope node

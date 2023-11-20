@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include <iostream>
+#include <stdexcept>
 #include <Eigen/Dense>
 
 #include "action_node.h"
@@ -8,9 +9,9 @@
 #include "globals.h"
 #include "helpers.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "sequence.h"
 #include "solution.h"
 #include "state_network.h"
 
@@ -18,15 +19,6 @@ using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
-	context[context.size() - this->scope_context.size()]
-		.scope_history->inner_experiment = this;
-
-	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
-		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
-		scope_history->experiment_index = (int)scope_history->node_histories.back().size()-1;
-	}
-
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
 	vector<map<int, StateStatus>> input_state_vals_snapshot(this->scope_context.size());
@@ -49,27 +41,6 @@ void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
 	}
 	overall_history->instance_count++;
-}
-
-void BranchExperiment::possible_exits_helper(int curr_exit_depth,
-											 ScopeHistory* scope_history) {
-	for (int i_index = scope_history->experiment_iter_index; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = scope_history->experiment_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			this->s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
-		}
-	}
-
-	if (curr_exit_depth > 0) {
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history
-			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_index];
-		possible_exits_helper(curr_exit_depth-1,
-							  scope_node_history->inner_scope_history);
-	}
-}
-
-void BranchExperiment::train_existing_parent_scope_end_activate(ScopeHistory* parent_scope_history) {
-	possible_exits_helper(this->scope_context.size()-1,
-						  parent_scope_history);
 }
 
 void BranchExperiment::train_existing_backprop(double target_val,
@@ -146,7 +117,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& !scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;
@@ -192,7 +162,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				bool passed_down = false;
 				for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 					if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
-							&& scope_node->input_inner_layers[i_index] == 0
 							&& scope_node->input_outer_is_local[i_index]
 							&& scope_node->input_outer_indexes[i_index] == it->first) {
 						passed_down = true;
@@ -330,25 +299,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				this,
 				i_scope_histories,
 				obs_experiment_target_vals);
-		}
-
-		this->possible_exits.reserve(this->s_possible_exits.size());
-		for (set<pair<int, AbstractNode*>>::iterator it = this->s_possible_exits.begin();
-				it != this->s_possible_exits.end(); it++) {
-			this->possible_exits.push_back(*it);
-		}
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			this->possible_exits.push_back({c_index, NULL});
-		}
-		if (this->parent_pass_through_experiment != NULL) {
-			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
-					s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
-				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
-				} else {
-					this->possible_exits.push_back({0, this->parent_pass_through_experiment->best_sequences[s_index]->scope_node_placeholder});
-				}
-			}
 		}
 
 		this->o_target_val_histories.clear();
