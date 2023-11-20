@@ -210,11 +210,10 @@ void PassThroughExperiment::experiment_backprop(
 			this->best_potential_scopes.clear();
 
 			new_exit_node->exit_depth = this->best_exit_depth;
+			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 			if (this->best_exit_node == NULL) {
-				new_exit_node->exit_node_parent_id = -1;
 				new_exit_node->exit_node_id = -1;
 			} else {
-				new_exit_node->exit_node_parent_id = this->best_exit_node->parent->id;
 				new_exit_node->exit_node_id = this->best_exit_node->id;
 			}
 			new_exit_node->exit_node = this->best_exit_node;

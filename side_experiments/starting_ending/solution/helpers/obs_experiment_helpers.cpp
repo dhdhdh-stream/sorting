@@ -62,7 +62,7 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(branch_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {
@@ -92,7 +92,7 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(pass_through_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {
@@ -130,7 +130,7 @@ void create_obs_experiment_experiment_helper(
 				possible_nodes.push_back(pass_through_experiment->best_actions[s_index]);
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(0);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
 			} else {

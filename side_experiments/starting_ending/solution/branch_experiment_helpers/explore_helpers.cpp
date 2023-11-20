@@ -128,10 +128,32 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	{
 		// exit
-		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
-		int rand_index = distribution(generator);
-		this->curr_exit_depth = this->possible_exits[rand_index].first;
-		this->curr_exit_node = this->possible_exits[rand_index].second;
+		vector<pair<int,AbstractNode*>> possible_exits;
+		if (this->parent_pass_through_experiment == NULL) {
+			gather_possible_exits(possible_exits,
+								  context,
+								  this->scope_context,
+								  this->node_context);
+		} else {
+			gather_possible_exits(possible_exits,
+								  context,
+								  this->parent_pass_through_experiment->scope_context,
+								  this->parent_pass_through_experiment->node_context);
+
+			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
+					s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
+				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
+				} else {
+					possible_exits.push_back({0, this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder});
+				}
+			}
+		}
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->curr_exit_depth = possible_exits[random_index].first;
+		this->curr_exit_node = possible_exits[random_index].second;
 	}
 
 	{

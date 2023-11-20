@@ -60,7 +60,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->temp_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->temp_state_scope_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].scope->id
+				if (context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].scope == NULL			// OuterExperiment edge case
+						|| this->temp_state_scope_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].scope->id
+						|| context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].node == NULL		// explore edge case
 						|| this->temp_state_node_contexts[n_index][c_index] != context[context.size()-this->temp_state_scope_contexts[n_index].size()+c_index].node->id) {
 					matches_context = false;
 					break;
@@ -92,7 +94,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->experiment_state_scope_contexts[n_index].size()-1; c_index++) {
-				if (this->experiment_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope->id
+				if (context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope == NULL
+						|| this->experiment_state_scope_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].scope->id
+						|| context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].node == NULL
 						|| this->experiment_state_node_contexts[n_index][c_index] != context[context.size()-this->experiment_state_scope_contexts[n_index].size()+c_index].node->id) {
 					matches_context = false;
 					break;

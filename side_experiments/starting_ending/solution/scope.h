@@ -79,6 +79,11 @@ public:
 						 std::vector<AbstractNode*>& possible_nodes,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+	void random_exit_activate(int starting_node_id,
+							  std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
 
 	void view_activate(Problem& problem,
 					   std::vector<ContextLayer>& context,
@@ -101,7 +106,7 @@ public:
 
 	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
 
-	AbstractExperiment* inner_experiment;
+	PassThroughExperiment* inner_pass_through_experiment;
 
 	int experiment_iter_index;
 	int experiment_index;

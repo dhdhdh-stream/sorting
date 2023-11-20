@@ -43,8 +43,6 @@ public:
 	double existing_average_score;
 	double existing_score_variance;
 
-	std::vector<std::pair<int, AbstractNode*>> possible_exits;
-
 	double curr_score;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;

@@ -15,7 +15,7 @@ using namespace std;
 void PassThroughExperiment::measure_existing_score_activate(
 		vector<ContextLayer>& context) {
 	context[context.size() - this->scope_context.size()]
-		.scope_history->inner_experiment = this;
+		.scope_history->inner_pass_through_experiment = this;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
@@ -36,24 +36,6 @@ void PassThroughExperiment::measure_existing_score_parent_scope_end_activate(
 
 	PassThroughExperimentOverallHistory* history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
 	history->instance_count++;
-}
-
-void PassThroughExperiment::possible_exits_helper(set<pair<int, AbstractNode*>>& s_possible_exits,
-												  int curr_exit_depth,
-												  ScopeHistory* scope_history) {
-	for (int i_index = scope_history->experiment_iter_index; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = scope_history->experiment_index + 1; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			s_possible_exits.insert({curr_exit_depth, scope_history->node_histories[i_index][h_index]->node});
-		}
-	}
-
-	if (curr_exit_depth > 0) {
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history
-			->node_histories[scope_history->experiment_iter_index][scope_history->experiment_index];
-		possible_exits_helper(s_possible_exits,
-							  curr_exit_depth-1,
-							  scope_node_history->inner_scope_history);
-	}
 }
 
 void PassThroughExperiment::measure_existing_score_backprop(
@@ -228,21 +210,6 @@ void PassThroughExperiment::measure_existing_score_backprop(
 								solution->scopes[this->scope_context[0]],
 								i_scope_histories,
 								obs_experiment_target_vals);
-
-		set<pair<int, AbstractNode*>> s_possible_exits;
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			possible_exits_helper(s_possible_exits,
-								  this->scope_context.size()-1,
-								  this->i_scope_histories[i_index]);
-		}
-		this->possible_exits.reserve(s_possible_exits.size());
-		for (set<pair<int, AbstractNode*>>::iterator it = s_possible_exits.begin();
-				it != s_possible_exits.end(); it++) {
-			this->possible_exits.push_back(*it);
-		}
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			this->possible_exits.push_back({c_index, NULL});
-		}
 
 		this->o_target_val_histories.clear();
 		for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {

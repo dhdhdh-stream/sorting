@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include <iostream>
+#include <stdexcept>
 
 #include "abstract_node.h"
 #include "action_node.h"
@@ -9,6 +10,7 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "helpers.h"
+#include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -152,11 +154,10 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	this->best_potential_scopes.clear();
 
 	new_exit_node->exit_depth = this->best_exit_depth;
+	new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 	if (this->best_exit_node == NULL) {
-		new_exit_node->exit_node_parent_id = -1;
 		new_exit_node->exit_node_id = -1;
 	} else {
-		new_exit_node->exit_node_parent_id = this->best_exit_node->parent->id;
 		new_exit_node->exit_node_id = this->best_exit_node->id;
 	}
 	new_exit_node->exit_node = this->best_exit_node;
@@ -165,6 +166,26 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 										map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
 	cout << "new_pass_through" << endl << endl;
+
+	Scope* parent_scope = solution->scopes[this->scope_context[0]];
+	parent_scope->temp_states.insert(parent_scope->temp_states.end(),
+		this->new_states.begin(), this->new_states.end());
+	parent_scope->temp_state_nodes.insert(parent_scope->temp_state_nodes.end(),
+		this->new_state_nodes.begin(), this->new_state_nodes.end());
+	parent_scope->temp_state_scope_contexts.insert(parent_scope->temp_state_scope_contexts.end(),
+		this->new_state_scope_contexts.begin(), this->new_state_scope_contexts.end());
+	parent_scope->temp_state_node_contexts.insert(parent_scope->temp_state_node_contexts.end(),
+		this->new_state_node_contexts.begin(), this->new_state_node_contexts.end());
+	parent_scope->temp_state_obs_indexes.insert(parent_scope->temp_state_obs_indexes.end(),
+		this->new_state_obs_indexes.begin(), this->new_state_obs_indexes.end());
+	parent_scope->temp_state_new_local_indexes.insert(parent_scope->temp_state_new_local_indexes.end(),
+		this->new_states.size(), -1);
+
+	this->new_states.clear();
+	this->new_state_nodes.clear();
+	this->new_state_scope_contexts.clear();
+	this->new_state_node_contexts.clear();
+	this->new_state_obs_indexes.clear();
 
 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
@@ -255,17 +276,11 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	this->best_potential_scopes.clear();
 
 	new_exit_node->exit_depth = this->best_exit_depth;
+	new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 	if (this->best_exit_node == NULL) {
-		new_exit_node->exit_node_parent_id = -1;
 		new_exit_node->exit_node_id = -1;
 	} else {
-		new_exit_node->exit_node_parent_id = this->best_exit_node->parent->id;
 		new_exit_node->exit_node_id = this->best_exit_node->id;
 	}
 	new_exit_node->exit_node = this->best_exit_node;
-
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		delete this->new_states[s_index];
-	}
-	this->new_states.clear();
 }

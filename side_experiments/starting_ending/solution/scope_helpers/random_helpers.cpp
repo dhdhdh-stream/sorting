@@ -113,9 +113,81 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 									possible_node_contexts);
 	}
 
-	if (curr_node == NULL) {
+	if (exit_depth == -1) {
 		possible_nodes.push_back(NULL);
 		possible_scope_contexts.push_back(scope_context);
 		possible_node_contexts.push_back(node_context);
 	}
+}
+
+void node_random_exit_activate_helper(AbstractNode*& curr_node,
+									  vector<int>& scope_context,
+									  vector<int>& node_context,
+									  int curr_depth,
+									  vector<pair<int,AbstractNode*>>& possible_exits) {
+	if (curr_node->type == NODE_TYPE_ACTION) {
+		ActionNode* node = (ActionNode*)curr_node;
+
+		possible_exits.push_back({curr_depth, curr_node});
+
+		curr_node = node->next_node;
+	} else if (curr_node->type == NODE_TYPE_SCOPE) {
+		ScopeNode* node = (ScopeNode*)curr_node;
+
+		possible_exits.push_back({curr_depth, curr_node});
+
+		curr_node = node->next_node;
+	} else if (curr_node->type == NODE_TYPE_BRANCH) {
+		BranchNode* node = (BranchNode*)curr_node;
+
+		bool is_branch;
+		node->random_exit_activate(is_branch,
+								   scope_context,
+								   node_context,
+								   curr_depth,
+								   possible_exits);
+
+		if (is_branch) {
+			curr_node = node->branch_next_node;
+		} else {
+			curr_node = node->original_next_node;
+		}
+	} else {
+		// curr_node->type == NODE_TYPE_EXIT
+
+		curr_node = NULL;
+		/**
+		 * - simply set curr_node to NULL to trigger exit
+		 */
+	}
+}
+
+void Scope::random_exit_activate(int starting_node_id,
+								 vector<int>& scope_context,
+								 vector<int>& node_context,
+								 int curr_depth,
+								 vector<pair<int,AbstractNode*>>& possible_exits) {
+	AbstractNode* curr_node;
+	AbstractNode* starting_node = this->nodes[starting_node_id];
+	if (starting_node->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)starting_node;
+		curr_node = action_node->next_node;
+	} else {
+		ScopeNode* scope_node = (ScopeNode*)starting_node;
+		curr_node = scope_node->next_node;
+	}
+
+	while (true) {
+		if (curr_node == NULL) {
+			break;
+		}
+
+		node_random_exit_activate_helper(curr_node,
+										 scope_context,
+										 node_context,
+										 curr_depth,
+										 possible_exits);
+	}
+
+	possible_exits.push_back({curr_depth, NULL});
 }

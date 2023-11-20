@@ -321,6 +321,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 				int context_index = (int)experiment_scope_context.size()-1 - potential_scope_node->input_scope_depths[i_index];
 				Scope* outer_scope = solution->scopes[experiment_scope_context[context_index]];
 
+
 				int temp_state_index;
 				for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
 					if (outer_scope->temp_states[t_index] == potential_scope_node->input_outer_indexes[i_index]) {

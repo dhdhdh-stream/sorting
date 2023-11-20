@@ -9,6 +9,7 @@
 #include "problem.h"
 #include "run_helper.h"
 
+class AbstractNode;
 class BranchExperiment;
 class BranchNode;
 class PotentialScopeNode;
@@ -23,6 +24,11 @@ void create_pass_through_experiment(ScopeHistory* root_history);
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
 								 Scope* scope);
+
+void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
+						   std::vector<ContextLayer>& context,
+						   std::vector<int>& scope_context,
+						   std::vector<int>& node_context);
 
 void existing_obs_experiment(AbstractExperiment* experiment,
 							 Scope* parent_scope,

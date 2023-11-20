@@ -43,6 +43,11 @@ public:
 						 std::vector<AbstractNode*>& possible_nodes,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+	void random_exit_activate(bool& is_branch,
+							  std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
 
 	void view_activate(bool& is_branch,
 					   std::vector<ContextLayer>& context);

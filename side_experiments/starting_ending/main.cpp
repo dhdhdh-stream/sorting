@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->init();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->load(solution_save_file);
+	// solution_save_file.close();
 
 	int num_fails = 0;
 

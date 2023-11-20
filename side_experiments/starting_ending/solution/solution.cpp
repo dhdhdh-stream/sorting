@@ -40,15 +40,16 @@ void Solution::init() {
 	starting_scope->num_input_states = 0;
 	starting_scope->num_local_states = 0;
 
-	starting_scope->node_counter = 0;
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
-	starting_noop_node->id = starting_scope->node_counter;
-	starting_scope->node_counter++;
+	starting_noop_node->id = 0;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
-	starting_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	starting_scope->nodes[0] = starting_noop_node;
+	starting_scope->starting_node_id = 0;
+	starting_scope->starting_node = starting_noop_node;
+	starting_scope->node_counter = 1;
 
 	this->root = starting_scope;
 

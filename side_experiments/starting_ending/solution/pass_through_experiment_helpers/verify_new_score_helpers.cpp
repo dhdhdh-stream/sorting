@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
 #include "abstract_node.h"
 #include "action_node.h"
@@ -14,6 +15,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 
 using namespace std;
 
@@ -196,22 +198,40 @@ void PassThroughExperiment::verify_new_score_backprop(
 			this->best_potential_scopes.clear();
 
 			new_exit_node->exit_depth = this->best_exit_depth;
+			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 			if (this->best_exit_node == NULL) {
-				new_exit_node->exit_node_parent_id = -1;
 				new_exit_node->exit_node_id = -1;
 			} else {
-				new_exit_node->exit_node_parent_id = this->best_exit_node->parent->id;
 				new_exit_node->exit_node_id = this->best_exit_node->id;
 			}
 			new_exit_node->exit_node = this->best_exit_node;
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_SUCCESS;
 		} else {
-			// reserve at least solution->curr_num_datapoints
-			this->i_misguess_histories.reserve(solution->curr_num_datapoints);
+			if (this->best_step_types.size() > 0) {
+				// reserve at least solution->curr_num_datapoints
+				this->i_misguess_histories.reserve(solution->curr_num_datapoints);
 
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
-			this->state_iter = 0;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
+				this->state_iter = 0;
+			} else {
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->best_actions[s_index];
+					} else {
+						delete this->best_potential_scopes[s_index];
+					}
+				}
+				this->best_actions.clear();
+				this->best_potential_scopes.clear();
+
+				for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+					delete this->new_states[s_index];
+				}
+				this->new_states.clear();
+
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
+			}
 		}
 
 		this->o_target_val_histories.clear();

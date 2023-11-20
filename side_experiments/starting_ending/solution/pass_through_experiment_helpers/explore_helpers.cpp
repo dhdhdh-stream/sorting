@@ -25,10 +25,16 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 RunHelper& run_helper) {
 	{
 		// exit
-		uniform_int_distribution<int> distribution(0, this->possible_exits.size()-1);
-		int rand_index = distribution(generator);
-		this->curr_exit_depth = this->possible_exits[rand_index].first;
-		this->curr_exit_node = this->possible_exits[rand_index].second;
+		vector<pair<int,AbstractNode*>> possible_exits;
+		gather_possible_exits(possible_exits,
+							  context,
+							  this->scope_context,
+							  this->node_context);
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->curr_exit_depth = possible_exits[random_index].first;
+		this->curr_exit_node = possible_exits[random_index].second;
 	}
 
 	{

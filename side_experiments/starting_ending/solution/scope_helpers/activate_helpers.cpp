@@ -1,6 +1,7 @@
 #include "scope.h"
 
 #include <iostream>
+#include <stdexcept>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -103,8 +104,8 @@ void Scope::activate(Problem& problem,
 							 history);
 	}
 
-	if (history->inner_experiment != NULL) {
-		history->inner_experiment->parent_scope_end_activate(
+	if (history->inner_pass_through_experiment != NULL) {
+		history->inner_pass_through_experiment->parent_scope_end_activate(
 			context,
 			run_helper,
 			history);
