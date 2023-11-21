@@ -33,17 +33,18 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1700565436;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->init();
+	// ifstream solution_save_file;
+	// solution_save_file.open("saves/solution.txt");
+	// solution->load(solution_save_file);
+	// solution_save_file.close();
 
 	int num_fails = 0;
 
@@ -192,8 +193,34 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (is_success) {
-				num_fails = 0;
 				solution->success_reset();
+				// TODO: issue with success_reset
+
+				for (int p_index = 0; p_index < (int)solution->verify_problems.size(); p_index++) {
+					Problem problem = solution->verify_problems[p_index];
+
+					RunHelper run_helper;
+					run_helper.verify_key = solution->verify_key;
+
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
+
+					context.back().scope = solution->root;
+					context.back().node = NULL;
+
+					// unused
+					int exit_depth = -1;
+					AbstractNode* exit_node = NULL;
+
+					solution->root->verify_activate(problem,
+													context,
+													exit_depth,
+													exit_node,
+													run_helper);
+				}
+				solution->clear_verify();
+
+				num_fails = 0;
 
 				ofstream solution_save_file;
 				solution_save_file.open("saves/solution.txt");

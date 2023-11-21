@@ -27,6 +27,28 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												AbstractNode*& exit_node,
 												RunHelper& run_helper,
 												AbstractExperimentHistory*& history) {
+	if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+		if (this->branch_experiment->state_iter == 0) {
+			cout << "outer" << endl;
+			cout << "input_state_vals" << endl;
+			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+					it != context.back().input_state_vals.end(); it++) {
+				cout << it->second.val << endl;
+			}
+			cout << "local_state_vals" << endl;
+			for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+					it != context.back().local_state_vals.end(); it++) {
+				cout << it->second.val << endl;
+			}
+			cout << "temp_state_vals" << endl;
+			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
+					it != context.back().temp_state_vals.end(); it++) {
+				cout << "it->first->id: " << it->first->id << endl;
+				cout << it->second.val << endl;
+			}
+		}
+	}
+
 	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
 	history = instance_history;
 

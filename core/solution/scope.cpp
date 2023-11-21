@@ -27,6 +27,19 @@ Scope::~Scope() {
 	}
 }
 
+void Scope::clear_verify() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)it->second;
+			scope_node->clear_verify();
+		} else if (it->second->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)it->second;
+			branch_node->clear_verify();
+		}
+	}
+}
+
 void Scope::success_reset() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {

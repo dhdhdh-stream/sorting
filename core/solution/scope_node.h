@@ -48,6 +48,9 @@ public:
 
 	AbstractExperiment* experiment;
 
+	void* verify_key;
+	std::vector<std::map<int, StateStatus>> verify_input_state_vals;
+
 	ScopeNode();
 	~ScopeNode();
 
@@ -74,8 +77,17 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	void verify_activate(AbstractNode*& curr_node,
+						 Problem& problem,
+						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 AbstractNode*& exit_node,
+						 RunHelper& run_helper);
+
 	void success_reset();
 	void fail_reset();
+
+	void clear_verify();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

@@ -4,6 +4,9 @@
 #include <fstream>
 #include <map>
 #include <set>
+#include <vector>
+
+#include "problem.h"
 
 class AbstractExperiment;
 class AbstractNode;
@@ -11,7 +14,8 @@ class OuterExperiment;
 class Scope;
 class State;
 
-const int STARTING_NUM_DATAPOINTS = 2000;
+// const int STARTING_NUM_DATAPOINTS = 2000;
+const int STARTING_NUM_DATAPOINTS = 10;
 
 class Solution {
 public:
@@ -39,6 +43,9 @@ public:
 	OuterExperiment* outer_experiment;
 	std::set<AbstractExperiment*> experiments;
 
+	void* verify_key;
+	std::vector<Problem> verify_problems;
+
 	Solution();
 	~Solution();
 
@@ -47,6 +54,8 @@ public:
 
 	void success_reset();
 	void fail_reset();
+
+	void clear_verify();
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);

@@ -6,6 +6,8 @@
 
 #include "abstract_node.h"
 #include "context_layer.h"
+#include "problem.h"
+#include "run_helper.h"
 
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
@@ -31,6 +33,11 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	void* verify_key;
+	std::vector<double> verify_original_scores;
+	std::vector<double> verify_branch_scores;
+	std::vector<std::vector<double>> verify_factors;
+
 	BranchNode();
 	~BranchNode();
 
@@ -51,6 +58,13 @@ public:
 
 	void view_activate(bool& is_branch,
 					   std::vector<ContextLayer>& context);
+
+	void verify_activate(Problem& problem,
+						 bool& is_branch,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
+
+	void clear_verify();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

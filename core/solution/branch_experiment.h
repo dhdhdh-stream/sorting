@@ -27,9 +27,10 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING = 5;
 const int BRANCH_EXPERIMENT_STATE_VERIFY = 6;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
 
-const int BRANCH_EXPERIMENT_STATE_FAIL = 7;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 8;
+const int BRANCH_EXPERIMENT_STATE_FAIL = 8;
+const int BRANCH_EXPERIMENT_STATE_SUCCESS = 9;
 
 class BranchExperimentOverallHistory;
 class BranchExperiment : public AbstractExperiment {
@@ -93,6 +94,11 @@ public:
 	std::vector<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
 	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::vector<double> i_target_val_histories;
+
+	std::vector<Problem> verify_problems;
+	std::vector<double> verify_original_scores;
+	std::vector<double> verify_branch_scores;
+	std::vector<std::vector<double>> verify_factors;
 
 	BranchExperiment(std::vector<int> scope_context,
 					 std::vector<int> node_context);
@@ -177,6 +183,14 @@ public:
 						 AbstractNode*& exit_node,
 						 RunHelper& run_helper);
 	void verify_backprop(double target_val);
+
+	void capture_verify_activate(AbstractNode*& curr_node,
+								 Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 RunHelper& run_helper);
+	void capture_verify_backprop();
 
 	void finalize(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 				  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);

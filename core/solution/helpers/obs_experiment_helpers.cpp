@@ -25,8 +25,10 @@ using namespace std;
  */
 const int NUM_INITIAL_OBS = 10;
 
-const int FLAT_ITERS = 500000;
-const int RNN_ITERS = 500000;
+// const int FLAT_ITERS = 500000;
+const int FLAT_ITERS = 50;
+// const int RNN_ITERS = 500000;
+const int RNN_ITERS = 50;
 
 /**
  * - practical limit
@@ -871,10 +873,10 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 			 target_vals,
 			 state_networks);
 
-	double misguess_improvement = existing_average_misguess - new_average_misguess;
-	double misguess_standard_deviation = sqrt(existing_misguess_variance);
-	double improvement_t_score = misguess_improvement
-		/ (misguess_standard_deviation / sqrt(num_instances));
+	// double misguess_improvement = existing_average_misguess - new_average_misguess;
+	// double misguess_standard_deviation = sqrt(existing_misguess_variance);
+	// double improvement_t_score = misguess_improvement
+	// 	/ (misguess_standard_deviation / sqrt(num_instances));
 
 	// cout << "obs experiment nodes:";
 	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
@@ -886,7 +888,8 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		cout << "obs success" << endl;
 
 		State* new_state = new State();
@@ -1046,10 +1049,10 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			 target_vals,
 			 state_networks);
 
-	double misguess_improvement = existing_average_misguess - new_average_misguess;
-	double misguess_standard_deviation = sqrt(existing_misguess_variance);
-	double improvement_t_score = misguess_improvement
-		/ (misguess_standard_deviation / sqrt(num_instances));
+	// double misguess_improvement = existing_average_misguess - new_average_misguess;
+	// double misguess_standard_deviation = sqrt(existing_misguess_variance);
+	// double improvement_t_score = misguess_improvement
+	// 	/ (misguess_standard_deviation / sqrt(num_instances));
 
 	// cout << "obs experiment nodes:";
 	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
@@ -1061,7 +1064,8 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		cout << "obs success" << endl;
 
 		State* new_state = new State();
@@ -1222,10 +1226,10 @@ void existing_pass_through_branch_obs_experiment(
 			 target_vals,
 			 state_networks);
 
-	double misguess_improvement = existing_average_misguess - new_average_misguess;
-	double misguess_standard_deviation = sqrt(existing_misguess_variance);
-	double improvement_t_score = misguess_improvement
-		/ (misguess_standard_deviation / sqrt(num_instances));
+	// double misguess_improvement = existing_average_misguess - new_average_misguess;
+	// double misguess_standard_deviation = sqrt(existing_misguess_variance);
+	// double improvement_t_score = misguess_improvement
+	// 	/ (misguess_standard_deviation / sqrt(num_instances));
 
 	// cout << "obs experiment nodes:";
 	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
@@ -1237,7 +1241,8 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	// if (improvement_t_score > 2.326) {	// >99%
+	if (rand()%2 == 0) {	// >99%
 		cout << "obs success" << endl;
 
 		State* new_state = new State();

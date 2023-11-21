@@ -123,6 +123,8 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 void node_random_exit_activate_helper(AbstractNode*& curr_node,
 									  vector<int>& scope_context,
 									  vector<int>& node_context,
+									  int& exit_depth,
+									  AbstractNode*& exit_node,
 									  int curr_depth,
 									  vector<pair<int,AbstractNode*>>& possible_exits) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
@@ -153,41 +155,42 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 			curr_node = node->original_next_node;
 		}
 	} else {
-		// curr_node->type == NODE_TYPE_EXIT
+		ExitNode* node = (ExitNode*)curr_node;
 
-		curr_node = NULL;
-		/**
-		 * - simply set curr_node to NULL to trigger exit
-		 */
+		possible_exits.push_back({curr_depth, curr_node});
+
+		if (node->exit_depth == 0) {
+			curr_node = node->exit_node;
+		} else {
+			exit_depth = node->exit_depth-1;
+			exit_node = node->exit_node;
+		}
 	}
 }
 
-void Scope::random_exit_activate(int starting_node_id,
+void Scope::random_exit_activate(AbstractNode* starting_node,
 								 vector<int>& scope_context,
 								 vector<int>& node_context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
 								 int curr_depth,
 								 vector<pair<int,AbstractNode*>>& possible_exits) {
-	AbstractNode* curr_node;
-	AbstractNode* starting_node = this->nodes[starting_node_id];
-	if (starting_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)starting_node;
-		curr_node = action_node->next_node;
-	} else {
-		ScopeNode* scope_node = (ScopeNode*)starting_node;
-		curr_node = scope_node->next_node;
-	}
-
+	AbstractNode* curr_node = starting_node;
 	while (true) {
-		if (curr_node == NULL) {
+		if (exit_depth != -1 || curr_node == NULL) {
 			break;
 		}
 
 		node_random_exit_activate_helper(curr_node,
 										 scope_context,
 										 node_context,
+										 exit_depth,
+										 exit_node,
 										 curr_depth,
 										 possible_exits);
 	}
 
-	possible_exits.push_back({curr_depth, NULL});
+	if (exit_depth == -1) {
+		possible_exits.push_back({curr_depth, NULL});
+	}
 }

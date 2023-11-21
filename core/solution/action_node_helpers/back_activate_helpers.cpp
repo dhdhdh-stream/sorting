@@ -15,7 +15,7 @@ void ActionNode::flat_vals_back_activate(vector<int>& scope_context,
 										 ActionNodeHistory* history) {
 	for (int h_index = 0; h_index < (int)this->obs_experiment_indexes.size(); h_index++) {
 		bool matches_context = true;
-		if (this->obs_experiment_scope_contexts[h_index].size() > scope_context.size()) {
+		if (this->obs_experiment_scope_contexts[h_index].size() != scope_context.size()) {
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->obs_experiment_scope_contexts[h_index].size()-1; c_index++) {
@@ -44,7 +44,7 @@ void ActionNode::rnn_vals_back_activate(vector<int>& scope_context,
 										ActionNodeHistory* history) {
 	for (int h_index = 0; h_index < (int)this->obs_experiment_indexes.size(); h_index++) {
 		bool matches_context = true;
-		if (this->obs_experiment_scope_contexts[h_index].size() > scope_context.size()) {
+		if (this->obs_experiment_scope_contexts[h_index].size() != scope_context.size()) {
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->obs_experiment_scope_contexts[h_index].size()-1; c_index++) {
@@ -73,7 +73,11 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 										  ActionNodeHistory* history) {
 	for (int n_index = 0; n_index < (int)this->experiment_state_defs.size(); n_index++) {
 		bool matches_context = true;
-		if (this->experiment_state_scope_contexts[n_index].size() > scope_context.size()) {
+		/**
+		 * - check for inequality as if recursive, can lead to errors
+		 *   - context size should match
+		 */
+		if (this->experiment_state_scope_contexts[n_index].size() != scope_context.size()) {
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->experiment_state_scope_contexts[n_index].size()-1; c_index++) {

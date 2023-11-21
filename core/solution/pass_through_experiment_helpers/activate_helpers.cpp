@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "state.h"
 
 using namespace std;
 
@@ -93,6 +94,14 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											  exit_node,
 											  run_helper);
 					break;
+				case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+					capture_verify_activate(curr_node,
+											problem,
+											context,
+											exit_depth,
+											exit_node,
+											run_helper);
+					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 					measure_existing_misguess_activate(context);
 					break;
@@ -177,6 +186,14 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										  exit_depth,
 										  exit_node,
 										  run_helper);
+				break;
+			case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+				capture_verify_activate(curr_node,
+										problem,
+										context,
+										exit_depth,
+										exit_node,
+										run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 				measure_existing_misguess_activate(context);
@@ -348,6 +365,9 @@ void PassThroughExperiment::backprop(double target_val,
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
 		verify_new_score_backprop(target_val);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 		measure_existing_misguess_backprop(target_val,

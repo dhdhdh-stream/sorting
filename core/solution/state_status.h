@@ -17,6 +17,10 @@ public:
 		this->val = val;
 		this->last_network = NULL;
 	}
+
+	bool operator==(const StateStatus& rhs) const {
+		return this->val == rhs.val && this->last_network == rhs.last_network;
+	}
 };
 
 #endif /* STATE_STATUS_H */

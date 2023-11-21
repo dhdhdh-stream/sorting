@@ -12,10 +12,19 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
+
+	this->verify_key = NULL;
 }
 
 BranchNode::~BranchNode() {
 	// do nothing
+}
+
+void BranchNode::clear_verify() {
+	this->verify_key = NULL;
+	this->verify_original_scores.clear();
+	this->verify_branch_scores.clear();
+	this->verify_factors.clear();
 }
 
 void BranchNode::save(ofstream& output_file) {

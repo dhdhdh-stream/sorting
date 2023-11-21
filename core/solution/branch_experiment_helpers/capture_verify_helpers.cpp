@@ -1,27 +1,65 @@
 #include "branch_experiment.h"
 
-#include <cmath>
 #include <iostream>
 
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "potential_scope_node.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
 using namespace std;
 
-void BranchExperiment::verify_activate(
+void BranchExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem& problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
+	if (this->state_iter == 0) {
+		cout << "input_state_vals" << endl;
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			cout << "c_index: " << c_index << endl;
+			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
+					it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
+				map<int, double>::iterator original_weight_it = this->existing_input_state_weights[c_index].find(it->first);
+				if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
+					cout << it->second.val << endl;
+				}
+			}
+		}
+		cout << "local_state_vals" << endl;
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			cout << "c_index: " << c_index << endl;
+			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
+					it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
+				map<int, double>::iterator original_weight_it = this->existing_local_state_weights[c_index].find(it->first);
+				if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
+					cout << it->second.val << endl;
+				}
+			}
+		}
+		cout << "temp_state_vals" << endl;
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			cout << "c_index: " << c_index << endl;
+			for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
+					it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
+				map<State*, double>::iterator original_weight_it = this->existing_temp_state_weights[c_index].find(it->first);
+				if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
+					cout << it->first->id << " " << it->second.val << endl;
+				}
+			}
+		}
+	}
+
 	double original_predicted_score = this->existing_average_score;
 	double branch_predicted_score = this->new_average_score;
+
+	vector<double> factors;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
@@ -43,9 +81,17 @@ void BranchExperiment::verify_activate(
 					/ last_network->ending_standard_deviation;
 				original_predicted_score += original_weight * normalized;
 				branch_predicted_score += branch_weight * normalized;
+
+				if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
+					factors.push_back(normalized);
+				}
 			} else {
 				original_predicted_score += original_weight * it->second.val;
 				branch_predicted_score += branch_weight * it->second.val;
+
+				if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
+					factors.push_back(it->second.val);
+				}
 			}
 		}
 	}
@@ -70,14 +116,33 @@ void BranchExperiment::verify_activate(
 					/ last_network->ending_standard_deviation;
 				original_predicted_score += original_weight * normalized;
 				branch_predicted_score += branch_weight * normalized;
+
+				if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
+					factors.push_back(normalized);
+				}
 			} else {
 				original_predicted_score += original_weight * it->second.val;
 				branch_predicted_score += branch_weight * it->second.val;
+
+				if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
+					factors.push_back(it->second.val);
+				}
 			}
 		}
 	}
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		/**
+		 * - insert val to match behavior after finalize
+		 */
+		for (map<State*, double>::iterator weight_it = this->existing_temp_state_weights[c_index].begin();
+				weight_it != this->existing_temp_state_weights[c_index].end(); weight_it++) {
+			map<State*, StateStatus>::iterator val_it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.find(weight_it->first);
+			if (val_it == context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end()) {
+				context[context.size() - this->scope_context.size() + c_index].temp_state_vals[weight_it->first] = StateStatus();
+			}
+		}
+
 		for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
 			double original_weight = 0.0;
@@ -97,17 +162,31 @@ void BranchExperiment::verify_activate(
 					/ last_network->ending_standard_deviation;
 				original_predicted_score += original_weight * normalized;
 				branch_predicted_score += branch_weight * normalized;
+
+				if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
+					factors.push_back(normalized);
+				}
 			} else {
 				original_predicted_score += original_weight * it->second.val;
 				branch_predicted_score += branch_weight * it->second.val;
+
+				if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
+					factors.push_back(it->second.val);
+				}
 			}
 		}
 	}
 
-	this->branch_possible++;
-	if (branch_predicted_score > original_predicted_score) {
-		this->branch_count++;
+	Problem curr_problem = problem;
+	curr_problem.current_world = curr_problem.initial_world;
+	curr_problem.current_pointer = 0;
+	this->verify_problems[this->state_iter] = curr_problem;
 
+	this->verify_original_scores.push_back(original_predicted_score);
+	this->verify_branch_scores.push_back(branch_predicted_score);
+	this->verify_factors.push_back(factors);
+
+	if (branch_predicted_score > original_predicted_score) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -121,12 +200,10 @@ void BranchExperiment::verify_activate(
 					action_node_history);
 				delete action_node_history;
 			} else {
-				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-				this->best_potential_scopes[s_index]->activate(problem,
-															   context,
-															   run_helper,
-															   potential_scope_node_history);
-				delete potential_scope_node_history;
+				this->best_potential_scopes[s_index]->capture_verify_activate(
+					problem,
+					context,
+					run_helper);
 			}
 		}
 
@@ -141,78 +218,17 @@ void BranchExperiment::verify_activate(
 	}
 }
 
-void BranchExperiment::verify_backprop(double target_val) {
-	this->combined_score += target_val;
-
+void BranchExperiment::capture_verify_backprop() {
 	this->state_iter++;
-	if (this->state_iter >= 2 * solution->curr_num_datapoints) {
-		this->combined_score /= (2 * solution->curr_num_datapoints);
-
-		cout << "Branch" << endl;
-		cout << "verify" << endl;
-		cout << "this->scope_context:" << endl;
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			cout << c_index << ": " << this->scope_context[c_index] << endl;
-		}
-		cout << "this->node_context:" << endl;
-		for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-			cout << c_index << ": " << this->node_context[c_index] << endl;
-		}
-		cout << "new explore path:";
+	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				cout << " " << this->best_actions[s_index]->action.to_string();
-			} else {
-				cout << " S";
+			if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
 			}
 		}
-		cout << endl;
+		solution->verify_key = this;
+		solution->verify_problems = this->verify_problems;
 
-		cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-		if (this->best_exit_node == NULL) {
-			cout << "this->best_exit_node_id: " << -1 << endl;
-		} else {
-			cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-		}
-
-		double score_standard_deviation = sqrt(this->existing_score_variance);
-		double combined_improvement = this->combined_score - this->existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
-
-		cout << "this->combined_score: " << this->combined_score << endl;
-		cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		cout << "score_standard_deviation: " << score_standard_deviation << endl;
-		cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-
-		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
-		cout << "branch_weight: " << branch_weight << endl;
-
-		cout << endl;
-
-		// if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
-			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
-
-			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
-		} else {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else {
-					delete this->best_potential_scopes[s_index];
-				}
-			}
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-
-			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-				delete this->new_states[s_index];
-			}
-			this->new_states.clear();
-
-			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
-		}
+		this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 	}
 }

@@ -93,6 +93,13 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	void verify_activate(AbstractNode*& curr_node,
+						 Problem& problem,
+						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 AbstractNode*& exit_node,
+						 RunHelper& run_helper);
+
 	void success_reset();
 	void fail_reset();
 

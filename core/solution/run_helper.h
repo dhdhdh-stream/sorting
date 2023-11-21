@@ -24,6 +24,8 @@ public:
 	void* selected_experiment;
 	AbstractExperimentHistory* experiment_history;
 
+	void* verify_key;
+
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;

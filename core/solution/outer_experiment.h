@@ -23,8 +23,9 @@ const int OUTER_EXPERIMENT_STATE_EXPLORE = 1;
 const int OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
 const int OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
 const int OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+const int OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 
-const int OUTER_EXPERIMENT_STATE_SUCCESS = 5;
+const int OUTER_EXPERIMENT_STATE_SUCCESS = 6;
 
 class OuterExperiment {
 public:
@@ -48,6 +49,8 @@ public:
 	std::vector<ScopeNode*> best_root_scope_nodes;
 
 	std::vector<double> target_val_histories;
+
+	std::vector<Problem> verify_problems;
 
 	OuterExperiment();
 	~OuterExperiment();
@@ -80,6 +83,10 @@ public:
 	void verify_new_score_activate(Problem& problem,
 								   RunHelper& run_helper);
 	void verify_new_score_backprop(double target_val);
+
+	void capture_verify_activate(Problem& problem,
+								 RunHelper& run_helper);
+	void capture_verify_backprop();
 };
 
 #endif /* OUTER_EXPERIMENT_H */

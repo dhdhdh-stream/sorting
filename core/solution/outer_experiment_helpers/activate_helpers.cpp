@@ -32,6 +32,10 @@ void OuterExperiment::activate(Problem& problem,
 		verify_new_score_activate(problem,
 								  run_helper);
 		break;
+	case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_activate(problem,
+								run_helper);
+		break;
 	}
 }
 
@@ -54,6 +58,9 @@ void OuterExperiment::backprop(double target_val,
 		break;
 	case OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
 		verify_new_score_backprop(target_val);
+		break;
+	case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
 		break;
 	}
 }

@@ -30,8 +30,16 @@ void BranchExperiment::measure_activate(
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
-			double original_weight = this->existing_input_state_weights[c_index][it->first];
-			double branch_weight = this->new_input_state_weights[c_index][it->first];
+			double original_weight = 0.0;
+			map<int, double>::iterator original_weight_it = this->existing_input_state_weights[c_index].find(it->first);
+			if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
+				original_weight = original_weight_it->second;
+			}
+			double branch_weight = 0.0;
+			map<int, double>::iterator branch_weight_it = this->new_input_state_weights[c_index].find(it->first);
+			if (branch_weight_it != this->new_input_state_weights[c_index].end()) {
+				branch_weight = branch_weight_it->second;
+			}
 
 			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
@@ -54,7 +62,6 @@ void BranchExperiment::measure_activate(
 			if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
 				original_weight = original_weight_it->second;
 			}
-
 			double branch_weight = 0.0;
 			map<int, double>::iterator branch_weight_it = this->new_local_state_weights[c_index].find(it->first);
 			if (branch_weight_it != this->new_local_state_weights[c_index].end()) {
@@ -82,7 +89,6 @@ void BranchExperiment::measure_activate(
 			if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
 				original_weight = original_weight_it->second;
 			}
-
 			double branch_weight = 0.0;
 			map<State*, double>::iterator branch_weight_it = this->new_temp_state_weights[c_index].find(it->first);
 			if (branch_weight_it != this->new_temp_state_weights[c_index].end()) {
@@ -173,23 +179,24 @@ void BranchExperiment::measure_backprop(double target_val) {
 		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 		// }
 
-		double score_standard_deviation = sqrt(this->existing_score_variance);
-		double combined_improvement = this->combined_score - this->existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+		// double score_standard_deviation = sqrt(this->existing_score_variance);
+		// double combined_improvement = this->combined_score - this->existing_average_score;
+		// double combined_improvement_t_score = combined_improvement
+		// 	/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		// cout << "this->combined_score: " << this->combined_score << endl;
 		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
 		// cout << "score_standard_deviation: " << score_standard_deviation << endl;
 		// cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
-		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+		// double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 
 		// cout << "branch_weight: " << branch_weight << endl;
 
-		cout << endl;
+		// cout << endl;
 
-		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		// if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		if (rand()%2 == 0) {	// >99%
 			this->combined_score = 0.0;
 			this->branch_count = 0;
 			this->branch_possible = 0;

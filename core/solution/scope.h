@@ -79,9 +79,11 @@ public:
 						 std::vector<AbstractNode*>& possible_nodes,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
-	void random_exit_activate(int starting_node_id,
+	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<int>& scope_context,
 							  std::vector<int>& node_context,
+							  int& exit_depth,
+							  AbstractNode*& exit_node,
 							  int curr_depth,
 							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
 
@@ -91,8 +93,16 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	void verify_activate(Problem& problem,
+						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 AbstractNode*& exit_node,
+						 RunHelper& run_helper);
+
 	void success_reset();
 	void fail_reset();
+
+	void clear_verify();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

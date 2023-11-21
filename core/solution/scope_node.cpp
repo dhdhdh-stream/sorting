@@ -17,6 +17,8 @@ ScopeNode::ScopeNode() {
 	this->id = -1;
 
 	this->experiment = NULL;
+
+	this->verify_key = NULL;
 }
 
 ScopeNode::~ScopeNode() {
@@ -37,6 +39,11 @@ void ScopeNode::fail_reset() {
 		delete this->experiment;
 		this->experiment = NULL;
 	}
+}
+
+void ScopeNode::clear_verify() {
+	this->verify_key = NULL;
+	this->verify_input_state_vals.clear();
 }
 
 void ScopeNode::save(ofstream& output_file) {

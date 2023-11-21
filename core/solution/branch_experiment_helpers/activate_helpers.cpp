@@ -10,6 +10,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 
 using namespace std;
 
@@ -118,6 +119,14 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							exit_node,
 							run_helper);
 			break;
+		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+			capture_verify_activate(curr_node,
+									problem,
+									context,
+									exit_depth,
+									exit_node,
+									run_helper);
+			break;
 		}
 	}
 }
@@ -136,10 +145,37 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
+				if (this->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+					if (this->state_iter == 0) {
+						for (map<State*, StateStatus>::iterator it = temp_state_vals.begin();
+								it != temp_state_vals.end(); it++) {
+							if (it->first->id == 54) {
+								cout << "context scope" << endl;
+								for (int c_index = 0; c_index < (int)scope_context.size(); c_index++) {
+									cout << c_index << ": " << scope_context[c_index] << endl;
+								}
+
+								cout << "action_node->id: " << action_node->id << endl;
+
+								cout << "start " << it->second.val << endl;
+							}
+						}
+					}
+				}
 				action_node->experiment_back_activate(scope_context,
 													  node_context,
 													  temp_state_vals,
 													  action_node_history);
+				if (this->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+					if (this->state_iter == 0) {
+						for (map<State*, StateStatus>::iterator it = temp_state_vals.begin();
+								it != temp_state_vals.end(); it++) {
+							if (it->first->id == 54) {
+								cout << "end " << it->second.val << endl;
+							}
+						}
+					}
+				}
 			} else {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
@@ -220,6 +256,9 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_VERIFY:
 		verify_backprop(target_val);
+		break;
+	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
 		break;
 	}
 

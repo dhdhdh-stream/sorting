@@ -16,7 +16,8 @@
 
 using namespace std;
 
-const int EXPLORE_ITERS = 500;
+// const int EXPLORE_ITERS = 500;
+const int EXPLORE_ITERS = 5;
 
 void BranchExperiment::explore_activate(AbstractNode*& curr_node,
 										Problem& problem,

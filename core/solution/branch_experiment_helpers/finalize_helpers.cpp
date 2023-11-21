@@ -63,6 +63,11 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_branch_node->id] = new_branch_node;
 
+	new_branch_node->verify_key = this;
+	new_branch_node->verify_original_scores = this->verify_original_scores;
+	new_branch_node->verify_branch_scores = this->verify_branch_scores;
+	new_branch_node->verify_factors = this->verify_factors;
+
 	ExitNode* new_exit_node = new ExitNode();
 	new_exit_node->parent = containing_scope;
 	new_exit_node->id = containing_scope->node_counter;

@@ -125,6 +125,16 @@ void Solution::load(ifstream& input_file) {
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
+void Solution::clear_verify() {
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->clear_verify();
+	}
+
+	this->verify_key = NULL;
+	this->verify_problems.clear();
+}
+
 void Solution::success_reset() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {

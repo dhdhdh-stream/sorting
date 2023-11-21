@@ -43,6 +43,10 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  PotentialScopeNodeHistory* history);
+
+	void capture_verify_activate(Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
 };
 
 class PotentialScopeNodeHistory {
