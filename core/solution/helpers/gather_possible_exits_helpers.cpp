@@ -29,7 +29,7 @@ void gather_possible_exits_helper(int l_index,
 									 inner_exit_node);
 	}
 
-	if (exit_depth == -1) {
+	if (inner_exit_depth == -1) {
 		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
 		
 		AbstractNode* starting_node;
@@ -49,7 +49,7 @@ void gather_possible_exits_helper(int l_index,
 									exit_node,
 									scope_context.size()-1 - l_index,
 									possible_exits);
-	} else if (exit_depth == 0) {
+	} else if (inner_exit_depth == 0) {
 		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
 		scope->random_exit_activate(inner_exit_node,
 									scope_context,

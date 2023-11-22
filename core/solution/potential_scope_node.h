@@ -32,6 +32,9 @@ public:
 	std::vector<int> output_outer_types;
 	std::vector<void*> output_outer_indexes;
 
+	int experiment_scope_depth;
+	std::set<State*> used_experiment_states;
+
 	Scope* scope;
 
 	ScopeNode* scope_node_placeholder;

@@ -6,7 +6,9 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "potential_scope_node.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "state.h"
 #include "state_network.h"
@@ -190,9 +192,139 @@ void BranchExperiment::verify_backprop(double target_val) {
 
 		cout << endl;
 
-		// if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
+		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
 			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
+
+			if (this->parent_pass_through_experiment != NULL) {
+				set<int> needed_state;
+				set<int> needed_parent_state;
+
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+						for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
+							if (this->best_potential_scopes[s_index]->input_types[i_index] == INPUT_TYPE_STATE
+									&& this->best_potential_scopes[s_index]->input_outer_types[i_index] == OUTER_TYPE_TEMP) {
+								State* state = (State*)this->best_potential_scopes[s_index]->input_outer_indexes[i_index];
+								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
+									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
+										needed_parent_state.insert(ns_index);
+									}
+								}
+							}
+						}
+
+						for (int o_index = 0; o_index < (int)this->best_potential_scopes[s_index]->output_inner_indexes.size(); o_index++) {
+							if (this->best_potential_scopes[s_index]->output_outer_types[o_index] == OUTER_TYPE_TEMP) {
+								State* state = (State*)this->best_potential_scopes[s_index]->output_outer_indexes[o_index];
+								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
+									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
+										needed_parent_state.insert(ns_index);
+									}
+								}
+							}
+						}
+					}
+				}
+
+				/**
+				 * - not pass_through
+				 */
+				if (branch_weight <= 0.99) {
+					for (map<State*, double>::iterator it = this->existing_temp_state_weights[0].begin();
+							it != this->existing_temp_state_weights[0].end(); it++) {
+						for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
+							if (this->new_states[ns_index] == it->first) {
+								needed_state.insert(ns_index);
+								break;
+							}
+						}
+						for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
+							if (this->parent_pass_through_experiment->new_states[ns_index] == it->first) {
+								needed_parent_state.insert(ns_index);
+								break;
+							}
+						}
+					}
+				}
+
+				for (set<int>::iterator it = needed_state.begin(); it != needed_state.end(); it++) {
+					for (int n_index = 0; n_index < (int)this->new_state_nodes[*it].size(); n_index++) {
+						bool matches_scope = true;
+						if (this->new_state_scope_contexts[*it][n_index].size() < this->scope_context.size()) {
+							matches_scope = false;
+						} else {
+							for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+								if (this->new_state_scope_contexts[*it][n_index][c_index] != this->scope_context[c_index]) {
+									matches_scope = false;
+									break;
+								}
+							}
+							for (int c_index = 0; c_index < (int)this->node_context.size()-1; c_index++) {
+								if (this->new_state_node_contexts[*it][n_index][c_index] != this->node_context[c_index]) {
+									matches_scope = false;
+									break;
+								}
+							}
+						}
+
+						if (matches_scope) {
+							PotentialScopeNode* potential_scope_node = NULL;
+							for (int s_index = 0; s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
+								if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+									if (this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id
+											== this->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
+										potential_scope_node = this->parent_pass_through_experiment->best_potential_scopes[s_index];
+										break;
+									}
+								}
+							}
+
+							if (potential_scope_node != NULL) {
+								potential_scope_node->used_experiment_states.insert(this->new_states[*it]);
+							}
+						}
+					}
+				}
+
+				for (set<int>::iterator it = needed_parent_state.begin(); it != needed_parent_state.end(); it++) {
+					for (int n_index = 0; n_index < (int)this->parent_pass_through_experiment->new_state_nodes[*it].size(); n_index++) {
+						bool matches_scope = true;
+						if (this->parent_pass_through_experiment->new_state_scope_contexts[*it][n_index].size() < this->scope_context.size()) {
+							matches_scope = false;
+						} else {
+							for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+								if (this->parent_pass_through_experiment->new_state_scope_contexts[*it][n_index][c_index] != this->scope_context[c_index]) {
+									matches_scope = false;
+									break;
+								}
+							}
+							for (int c_index = 0; c_index < (int)this->node_context.size()-1; c_index++) {
+								if (this->parent_pass_through_experiment->new_state_node_contexts[*it][n_index][c_index] != this->node_context[c_index]) {
+									matches_scope = false;
+									break;
+								}
+							}
+						}
+
+						if (matches_scope) {
+							PotentialScopeNode* potential_scope_node = NULL;
+							for (int s_index = 0; s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
+								if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+									if (this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id
+											== this->parent_pass_through_experiment->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
+										potential_scope_node = this->parent_pass_through_experiment->best_potential_scopes[s_index];
+										break;
+									}
+								}
+							}
+
+							if (potential_scope_node != NULL) {
+								potential_scope_node->used_experiment_states.insert(this->parent_pass_through_experiment->new_states[*it]);
+							}
+						}
+					}
+				}
+			}
 
 			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;

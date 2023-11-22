@@ -27,28 +27,6 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												AbstractNode*& exit_node,
 												RunHelper& run_helper,
 												AbstractExperimentHistory*& history) {
-	if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
-		if (this->branch_experiment->state_iter == 0) {
-			cout << "outer" << endl;
-			cout << "input_state_vals" << endl;
-			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-					it != context.back().input_state_vals.end(); it++) {
-				cout << it->second.val << endl;
-			}
-			cout << "local_state_vals" << endl;
-			for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-					it != context.back().local_state_vals.end(); it++) {
-				cout << it->second.val << endl;
-			}
-			cout << "temp_state_vals" << endl;
-			for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
-					it != context.back().temp_state_vals.end(); it++) {
-				cout << "it->first->id: " << it->first->id << endl;
-				cout << it->second.val << endl;
-			}
-		}
-	}
-
 	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
 	history = instance_history;
 
@@ -65,12 +43,20 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				run_helper,
 				action_node_history);
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-			instance_history->pre_step_histories.push_back(potential_scope_node_history);
-			this->best_potential_scopes[s_index]->activate(problem,
-														   context,
-														   run_helper,
-														   potential_scope_node_history);
+			if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+				instance_history->pre_step_histories.push_back(NULL);
+				this->best_potential_scopes[s_index]->capture_verify_activate(
+					problem,
+					context,
+					run_helper);
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+				instance_history->pre_step_histories.push_back(potential_scope_node_history);
+				this->best_potential_scopes[s_index]->activate(problem,
+															   context,
+															   run_helper,
+															   potential_scope_node_history);
+			}
 		}
 	}
 
@@ -108,12 +94,20 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 						run_helper,
 						action_node_history);
 				} else {
-					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-					instance_history->post_step_histories.push_back(potential_scope_node_history);
-					this->best_potential_scopes[s_index]->activate(problem,
-																   context,
-																   run_helper,
-																   potential_scope_node_history);
+					if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+						instance_history->post_step_histories.push_back(NULL);
+						this->best_potential_scopes[s_index]->capture_verify_activate(
+							problem,
+							context,
+							run_helper);
+					} else {
+						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+						instance_history->post_step_histories.push_back(potential_scope_node_history);
+						this->best_potential_scopes[s_index]->activate(problem,
+																	   context,
+																	   run_helper,
+																	   potential_scope_node_history);
+					}
 				}
 			}
 
@@ -139,6 +133,12 @@ void PassThroughExperiment::experiment_backprop(
 										  history->branch_experiment_history);
 
 		if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this->branch_experiment;
+				}
+			}
+
 			cout << "PassThrough experiment success" << endl;
 
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];

@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #include "scope.h"
@@ -78,26 +80,42 @@ void BranchNode::verify_activate(Problem& problem,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				cout << "problem:";
-				for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-					cout << " " << problem.initial_world[s_index];
-				}
-				cout << endl;
+				// cout << "problem:";
+				// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+				// 	cout << " " << problem.initial_world[s_index];
+				// }
+				// cout << endl;
 
-				cout << "input_state_vals" << endl;
-				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-						it != context.back().input_state_vals.end(); it++) {
-					cout << it->second.val << endl;
-				}
-				cout << "local_state_vals" << endl;
-				for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-						it != context.back().local_state_vals.end(); it++) {
-					cout << it->second.val << endl;
-				}
+				// cout << "current_world:";
+				// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
+				// 	cout << " " << problem.current_world[s_index];
+				// }
+				// cout << endl;
+				// cout << "problem.current_pointer: " << problem.current_pointer << endl;
+
+				// cout << "input_state_vals" << endl;
+				// for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+				// 		it != context.back().input_state_vals.end(); it++) {
+				// 	int state_id;
+				// 	if (it->second.last_network != NULL) {
+				// 		state_id = it->second.last_network->parent_state->id;
+				// 	} else {
+				// 		state_id = -1;
+				// 	}
+				// 	cout << it->second.val << " " << state_id << endl;
+				// }
+				// cout << "local_state_vals" << endl;
+				// for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+				// 		it != context.back().local_state_vals.end(); it++) {
+				// 	cout << it->second.val << endl;
+				// }
+
+				sort(factors.begin(), factors.end());
+				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
 
 				if (this->verify_original_scores[0] != original_score
 						|| this->verify_branch_scores[0] != branch_score
-						|| this->verify_factors[0].size() != factors.size()) {
+						|| this->verify_factors[0] != factors) {
 					cout << "this->verify_original_scores[0]: " << this->verify_original_scores[0] << endl;
 					cout << "original_score: " << original_score << endl;
 

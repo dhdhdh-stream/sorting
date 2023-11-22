@@ -104,8 +104,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 		cout << "this->new_average_score: " << this->new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		// if (score_improvement_t_score > 2.326) {	// >99%
-		if (rand()%2 == 0) {	// >99%
+		if (score_improvement_t_score > 2.326) {	// >99%
 			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;

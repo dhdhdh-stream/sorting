@@ -5,6 +5,8 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
+#include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -20,42 +22,6 @@ void BranchExperiment::capture_verify_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	if (this->state_iter == 0) {
-		cout << "input_state_vals" << endl;
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			cout << "c_index: " << c_index << endl;
-			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
-				map<int, double>::iterator original_weight_it = this->existing_input_state_weights[c_index].find(it->first);
-				if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
-					cout << it->second.val << endl;
-				}
-			}
-		}
-		cout << "local_state_vals" << endl;
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			cout << "c_index: " << c_index << endl;
-			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
-				map<int, double>::iterator original_weight_it = this->existing_local_state_weights[c_index].find(it->first);
-				if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
-					cout << it->second.val << endl;
-				}
-			}
-		}
-		cout << "temp_state_vals" << endl;
-		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			cout << "c_index: " << c_index << endl;
-			for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
-				map<State*, double>::iterator original_weight_it = this->existing_temp_state_weights[c_index].find(it->first);
-				if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
-					cout << it->first->id << " " << it->second.val << endl;
-				}
-			}
-		}
-	}
-
 	double original_predicted_score = this->existing_average_score;
 	double branch_predicted_score = this->new_average_score;
 
@@ -132,17 +98,6 @@ void BranchExperiment::capture_verify_activate(
 	}
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		/**
-		 * - insert val to match behavior after finalize
-		 */
-		for (map<State*, double>::iterator weight_it = this->existing_temp_state_weights[c_index].begin();
-				weight_it != this->existing_temp_state_weights[c_index].end(); weight_it++) {
-			map<State*, StateStatus>::iterator val_it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.find(weight_it->first);
-			if (val_it == context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end()) {
-				context[context.size() - this->scope_context.size() + c_index].temp_state_vals[weight_it->first] = StateStatus();
-			}
-		}
-
 		for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
 			double original_weight = 0.0;

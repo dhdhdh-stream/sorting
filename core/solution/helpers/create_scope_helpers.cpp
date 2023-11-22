@@ -645,6 +645,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 	new_scope->node_counter = 0;
 	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
 	new_potential_scope_node->scope = new_scope;
+	new_potential_scope_node->experiment_scope_depth = explore_context_depth;
 
 	// determine start and end
 

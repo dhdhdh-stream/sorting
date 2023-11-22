@@ -49,7 +49,8 @@ public:
 	AbstractExperiment* experiment;
 
 	void* verify_key;
-	std::vector<std::map<int, StateStatus>> verify_input_state_vals;
+	std::vector<std::vector<double>> verify_input_state_vals;
+	std::vector<std::vector<double>> verify_output_state_vals;
 
 	ScopeNode();
 	~ScopeNode();

@@ -14,8 +14,7 @@ class OuterExperiment;
 class Scope;
 class State;
 
-// const int STARTING_NUM_DATAPOINTS = 2000;
-const int STARTING_NUM_DATAPOINTS = 10;
+const int STARTING_NUM_DATAPOINTS = 2000;
 
 class Solution {
 public:
@@ -45,6 +44,7 @@ public:
 
 	void* verify_key;
 	std::vector<Problem> verify_problems;
+	// TODO: potentially check for exceed max_depth
 
 	Solution();
 	~Solution();

@@ -1,5 +1,6 @@
 #include "scope_node.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "abstract_experiment.h"
@@ -17,6 +18,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 								AbstractNode*& exit_node,
 								RunHelper& run_helper) {
 	map<int, StateStatus> input_state_vals;
+	vector<double> verify_input_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
@@ -26,33 +28,42 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 					state_status = it->second;
 				}
 				input_state_vals[this->input_inner_indexes[i_index]] = state_status;
+				verify_input_state_vals.push_back(state_status.val);
 			} else {
 				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context.back().input_state_vals.end()) {
 					input_state_vals[this->input_inner_indexes[i_index]] = it->second;
+					verify_input_state_vals.push_back(it->second.val);
 				}
 			}
 		} else {
 			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			verify_input_state_vals.push_back(this->input_init_vals[i_index]);
 		}
 	}
 
 	if (this->verify_key == run_helper.verify_key) {
-		if (this->verify_input_state_vals[0] != input_state_vals) {
+		// cout << "problem:";
+		// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+		// 	cout << " " << problem.initial_world[s_index];
+		// }
+		// cout << endl;
+
+		sort(verify_input_state_vals.begin(), verify_input_state_vals.end());
+		sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());
+
+		if (this->verify_input_state_vals[0] != verify_input_state_vals) {
+			cout << "this->parent->id: " << this->parent->id << endl;
+			cout << "this->id: " << this->id << endl;
+
 			cout << "this->verify_input_state_vals[0]" << endl;
-			for (map<int, StateStatus>::iterator it = this->verify_input_state_vals[0].begin();
-					it != this->verify_input_state_vals[0].end(); it++) {
-				cout << "it->first: " << it->first << endl;
-				cout << "it->second.val: " << it->second.val << endl;
-				cout << "it->second.last_network: " << it->second.last_network << endl;
+			for (int v_index = 0; v_index < (int)this->verify_input_state_vals[0].size(); v_index++) {
+				cout << v_index << ": " << this->verify_input_state_vals[0][v_index] << endl;
 			}
 
-			cout << "input_state_vals" << endl;
-			for (map<int, StateStatus>::iterator it = input_state_vals.begin();
-					it != input_state_vals.end(); it++) {
-				cout << "it->first: " << it->first << endl;
-				cout << "it->second.val: " << it->second.val << endl;
-				cout << "it->second.last_network: " << it->second.last_network << endl;
+			cout << "verify_input_state_vals" << endl;
+			for (int v_index = 0; v_index < (int)verify_input_state_vals.size(); v_index++) {
+				cout << v_index << ": " << verify_input_state_vals[v_index] << endl;
 			}
 
 			throw invalid_argument("scope node verify fail");
@@ -79,15 +90,18 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 									   inner_exit_node,
 									   run_helper);
 
+	vector<double> output_state_vals;
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 		if (inner_it != context.back().input_state_vals.end()) {
 			if (this->output_outer_is_local[o_index]) {
 				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+				output_state_vals.push_back(inner_it->second.val);
 			} else {
 				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
 				if (outer_it != context[context.size()-2].input_state_vals.end()) {
 					outer_it->second = inner_it->second;
+					output_state_vals.push_back(inner_it->second.val);
 				}
 			}
 		}
@@ -98,6 +112,27 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	 * 
 	 * - also will be how inner branches affect outer scopes on early exit
 	 */
+
+	if (this->verify_key == run_helper.verify_key) {
+		sort(output_state_vals.begin(), output_state_vals.end());
+		sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
+
+		if (this->verify_output_state_vals[0] != output_state_vals) {
+			cout << "this->verify_output_state_vals[0]" << endl;
+			for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
+				cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;
+			}
+
+			cout << "output_state_vals" << endl;
+			for (int v_index = 0; v_index < (int)output_state_vals.size(); v_index++) {
+				cout << v_index << ": " << output_state_vals[v_index] << endl;
+			}
+
+			throw invalid_argument("scope node verify fail");
+		}
+
+		this->verify_output_state_vals.erase(this->verify_output_state_vals.begin());
+	}
 
 	context.pop_back();
 

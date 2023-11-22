@@ -33,8 +33,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1700565436;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -194,7 +193,6 @@ int main(int argc, char* argv[]) {
 
 			if (is_success) {
 				solution->success_reset();
-				// TODO: issue with success_reset
 
 				for (int p_index = 0; p_index < (int)solution->verify_problems.size(); p_index++) {
 					Problem problem = solution->verify_problems[p_index];

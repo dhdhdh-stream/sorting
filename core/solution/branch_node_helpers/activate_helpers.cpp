@@ -1,5 +1,6 @@
 #include "branch_node.h"
 
+#include <cmath>
 #include <iostream>
 
 #include "scope.h"
