@@ -4,8 +4,11 @@
 #include <cmath>
 #include <iostream>
 
+#include "constants.h"
+#include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -116,6 +119,8 @@ void BranchNode::verify_activate(Problem& problem,
 				if (this->verify_original_scores[0] != original_score
 						|| this->verify_branch_scores[0] != branch_score
 						|| this->verify_factors[0] != factors) {
+					cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
 					cout << "this->verify_original_scores[0]: " << this->verify_original_scores[0] << endl;
 					cout << "original_score: " << original_score << endl;
 

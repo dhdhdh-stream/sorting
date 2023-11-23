@@ -39,6 +39,7 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 				state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 										it->second);
 			}
+			state_snapshots[n_index] = it->second.val;
 			cout << "local state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
@@ -51,6 +52,7 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 					state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 											it->second);
 				}
+				state_snapshots[n_index] = it->second.val;
 				cout << "input state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 			}
 		}

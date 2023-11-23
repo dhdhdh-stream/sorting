@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"

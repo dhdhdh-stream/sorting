@@ -99,7 +99,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 				state_network->activate(history->obs_snapshot,
 										it->second);
 			} else {
-				state_network->activate(history->state_snapshots[this->obs_experiment_obs_indexes[n_index]],
+				state_network->activate(history->state_snapshots[this->experiment_state_obs_indexes[n_index]],
 										it->second);
 			}
 		}

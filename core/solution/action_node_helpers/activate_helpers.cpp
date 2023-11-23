@@ -39,6 +39,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				state_network->activate(history->state_snapshots[this->state_obs_indexes[n_index]],
 										it->second);
 			}
+			history->state_snapshots[n_index] = it->second.val;
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
@@ -50,6 +51,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 					state_network->activate(history->state_snapshots[this->state_obs_indexes[n_index]],
 											it->second);
 				}
+				history->state_snapshots[n_index] = it->second.val;
 			}
 		}
 	}

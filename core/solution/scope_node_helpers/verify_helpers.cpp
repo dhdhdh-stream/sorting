@@ -5,7 +5,9 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "globals.h"
 #include "scope.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -53,6 +55,8 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());
 
 		if (this->verify_input_state_vals[0] != verify_input_state_vals) {
+			cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
 			cout << "this->parent->id: " << this->parent->id << endl;
 			cout << "this->id: " << this->id << endl;
 
@@ -118,6 +122,8 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
 
 		if (this->verify_output_state_vals[0] != output_state_vals) {
+			cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
 			cout << "this->verify_output_state_vals[0]" << endl;
 			for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
 				cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;

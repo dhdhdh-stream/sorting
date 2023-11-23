@@ -194,8 +194,8 @@ int main(int argc, char* argv[]) {
 			if (is_success) {
 				solution->success_reset();
 
-				for (int p_index = 0; p_index < (int)solution->verify_problems.size(); p_index++) {
-					Problem problem = solution->verify_problems[p_index];
+				while (solution->verify_problems.size() > 0) {
+					Problem problem = solution->verify_problems[0];
 
 					RunHelper run_helper;
 					run_helper.verify_key = solution->verify_key;
@@ -215,6 +215,8 @@ int main(int argc, char* argv[]) {
 													exit_depth,
 													exit_node,
 													run_helper);
+
+					solution->verify_problems.erase(solution->verify_problems.begin());
 				}
 				solution->clear_verify();
 
