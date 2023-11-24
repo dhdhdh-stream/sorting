@@ -49,7 +49,8 @@ void node_activate_helper(int iter_index,
 
 		bool is_branch;
 		node->activate(is_branch,
-					   context);
+					   context,
+					   run_helper);
 
 		if (is_branch) {
 			curr_node = node->branch_next_node;

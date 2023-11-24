@@ -3,15 +3,20 @@
 #include <cmath>
 #include <iostream>
 
+#include "branch_experiment.h"
+#include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "state.h"
 #include "state_network.h"
 
 using namespace std;
 
 void BranchNode::activate(bool& is_branch,
-						  vector<ContextLayer>& context) {
+						  vector<ContextLayer>& context,
+						  RunHelper& run_helper) {
 	bool matches_context = true;
 	if (this->branch_scope_context.size() > context.size()) {
 		matches_context = false;

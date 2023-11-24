@@ -83,7 +83,7 @@ void BranchNode::verify_activate(Problem& problem,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				// cout << "problem:";
+				// cout << "branch problem:";
 				// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
 				// 	cout << " " << problem.initial_world[s_index];
 				// }

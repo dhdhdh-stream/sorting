@@ -45,11 +45,26 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	}
 
 	if (this->verify_key == run_helper.verify_key) {
-		// cout << "problem:";
+		// cout << "scope problem:";
 		// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
 		// 	cout << " " << problem.initial_world[s_index];
 		// }
 		// cout << endl;
+
+		// cout << "context scope" << endl;
+		// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+		// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+		// }
+		// cout << "context node" << endl;
+		// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+		// 	cout << c_index << ": " << context[c_index].node->id << endl;
+		// }
+		// cout << "current_world";
+		// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
+		// 	cout << " " << problem.current_world[s_index];
+		// }
+		// cout << endl;
+		// cout << "problem.current_pointer: " << problem.current_pointer << endl;
 
 		sort(verify_input_state_vals.begin(), verify_input_state_vals.end());
 		sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());

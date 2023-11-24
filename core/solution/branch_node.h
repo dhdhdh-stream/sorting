@@ -42,7 +42,8 @@ public:
 	~BranchNode();
 
 	void activate(bool& is_branch,
-				  std::vector<ContextLayer>& context);
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper);
 
 	void random_activate(bool& is_branch,
 						 std::vector<Scope*>& scope_context,

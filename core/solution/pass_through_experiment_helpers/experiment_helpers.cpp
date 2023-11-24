@@ -61,7 +61,14 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 	}
 
 	if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
-		curr_node = NULL;
+		if (this->best_exit_depth == 0) {
+			curr_node = this->best_exit_node;
+		} else {
+			curr_node = NULL;
+
+			exit_depth = this->best_exit_depth-1;
+			exit_node = this->best_exit_node;
+		}
 	} else {
 		if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[this->branch_experiment_step_index+1];
