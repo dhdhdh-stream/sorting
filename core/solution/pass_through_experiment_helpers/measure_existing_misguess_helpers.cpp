@@ -1,9 +1,9 @@
 #include "pass_through_experiment.h"
 
+#include "full_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"
-#include "state_network.h"
 
 using namespace std;
 
@@ -22,7 +22,7 @@ void PassThroughExperiment::measure_existing_misguess_parent_scope_end_activate(
 			it != context.back().input_state_vals.end(); it++) {
 		map<int, double>::iterator weight_it = this->existing_input_state_weights.find(it->first);
 		if (weight_it != this->existing_input_state_weights.end()) {
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -37,7 +37,7 @@ void PassThroughExperiment::measure_existing_misguess_parent_scope_end_activate(
 			it != context.back().local_state_vals.end(); it++) {
 		map<int, double>::iterator weight_it = this->existing_local_state_weights.find(it->first);
 		if (weight_it != this->existing_local_state_weights.end()) {
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -52,7 +52,7 @@ void PassThroughExperiment::measure_existing_misguess_parent_scope_end_activate(
 			it != context.back().temp_state_vals.end(); it++) {
 		map<State*, double>::iterator weight_it = this->existing_temp_state_weights.find(it->first);
 		if (weight_it != this->existing_temp_state_weights.end()) {
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;

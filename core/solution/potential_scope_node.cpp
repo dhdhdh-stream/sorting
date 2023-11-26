@@ -51,7 +51,8 @@ void PotentialScopeNode::activate(Problem& problem,
 				}
 			}
 		} else {
-			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
+																			   this->input_init_index_vals[i_index]);
 		}
 	}
 
@@ -138,7 +139,8 @@ void PotentialScopeNode::capture_verify_activate(Problem& problem,
 				}
 			}
 		} else {
-			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
+			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
+																			   this->input_init_index_vals[i_index]);
 			full_input_state_vals.push_back(this->input_init_vals[i_index]);
 		}
 	}

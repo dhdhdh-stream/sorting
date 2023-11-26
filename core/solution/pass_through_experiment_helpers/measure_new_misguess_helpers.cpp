@@ -5,13 +5,13 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
+#include "full_network.h"
 #include "globals.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "state_network.h"
 
 using namespace std;
 
@@ -60,7 +60,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->new_input_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_input_state_weights[c_index].end()) {
-				StateNetwork* last_network = it->second.last_network;
+				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -77,7 +77,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->new_local_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_local_state_weights[c_index].end()) {
-				StateNetwork* last_network = it->second.last_network;
+				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -94,7 +94,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
 			map<State*, double>::iterator weight_it = this->new_temp_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_temp_state_weights[c_index].end()) {
-				StateNetwork* last_network = it->second.last_network;
+				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;

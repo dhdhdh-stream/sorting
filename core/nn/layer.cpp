@@ -83,7 +83,8 @@ void Layer::load_weights_from(ifstream& input_file) {
 }
 
 void Layer::activate() {
-	if (this->type == LINEAR_LAYER) {
+	switch (this->type) {
+	case LINEAR_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			double sum_val = this->constants[n_index];
 
@@ -97,7 +98,9 @@ void Layer::activate() {
 
 			this->acti_vals[n_index] = sum_val;
 		}
-	} else if (this->type == RELU_LAYER) {
+
+		break;
+	case RELU_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			double sum_val = this->constants[n_index];
 
@@ -115,8 +118,9 @@ void Layer::activate() {
 				this->acti_vals[n_index] = 0.0;
 			}
 		}
-	} else {
-		// this->type == LEAKY_LAYER
+
+		break;
+	case LEAKY_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			double sum_val = this->constants[n_index];
 
@@ -134,11 +138,30 @@ void Layer::activate() {
 				this->acti_vals[n_index] = 0.01*sum_val;
 			}
 		}
+
+		break;
+	case SIGMOID_LAYER:
+		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+			double sum_val = this->constants[n_index];
+
+			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+					sum_val += this->input_layers[l_index]->acti_vals[ln_index]
+							   *this->weights[n_index][l_index][ln_index];
+				}
+			}
+
+			this->acti_vals[n_index] = 1.0 / (1.0 + exp(-sum_val));
+		}
+
+		break;
 	}
 }
 
 void Layer::backprop() {
-	if (this->type == LINEAR_LAYER) {
+	switch (this->type) {
+	case LINEAR_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
 				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
@@ -155,7 +178,9 @@ void Layer::backprop() {
 
 			this->errors[n_index] = 0.0;
 		}
-	} else if (this->type == RELU_LAYER) {
+
+		break;
+	case RELU_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			if (this->acti_vals[n_index] > 0.0) {
 				for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
@@ -174,8 +199,9 @@ void Layer::backprop() {
 
 			this->errors[n_index] = 0.0;
 		}
-	} else {
-		// this->type == LEAKY_LAYER
+
+		break;
+	case LEAKY_LAYER:
 		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 			if (this->acti_vals[n_index] < 0.0) {
 				this->errors[n_index] *= 0.01;
@@ -196,6 +222,29 @@ void Layer::backprop() {
 
 			this->errors[n_index] = 0.0;
 		}
+
+		break;
+	case SIGMOID_LAYER:
+		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+			this->errors[n_index] *= (this->acti_vals[n_index] * (1.0 - this->acti_vals[n_index]));
+
+			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
+				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+					this->input_layers[l_index]->errors[ln_index] +=
+						this->errors[n_index]*this->weights[n_index][l_index][ln_index];
+					// multiply by this->errors[n_index] for MSE weight updates
+					this->weight_updates[n_index][l_index][ln_index] +=
+						this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
+				}
+			}
+
+			this->constant_updates[n_index] += this->errors[n_index];
+
+			this->errors[n_index] = 0.0;
+		}
+
+		break;
 	}
 }
 
@@ -234,109 +283,6 @@ void Layer::update_weights(double learning_rate) {
 						*learning_rate;
 		this->constant_updates[n_index] = 0.0;
 		this->constants[n_index] += update;
-	}
-}
-
-void Layer::backprop_errors_with_no_weight_change() {
-	if (this->type == LINEAR_LAYER) {
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-					this->input_layers[l_index]->errors[ln_index] +=
-						this->errors[n_index]*this->weights[n_index][l_index][ln_index];
-				}
-			}
-
-			this->errors[n_index] = 0.0;
-		}
-	} else if (this->type == RELU_LAYER) {
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			if (this->acti_vals[n_index] > 0.0) {
-				for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-					int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-					for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-						this->input_layers[l_index]->errors[ln_index] +=
-							this->errors[n_index]*this->weights[n_index][l_index][ln_index];
-					}
-				}
-			}
-
-			this->errors[n_index] = 0.0;
-		}
-	} else {
-		// this->type == LEAKY_LAYER
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			if (this->acti_vals[n_index] < 0.0) {
-				this->errors[n_index] *= 0.01;
-			}
-
-			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-					this->input_layers[l_index]->errors[ln_index] +=
-						this->errors[n_index]*this->weights[n_index][l_index][ln_index];
-				}
-			}
-
-			this->errors[n_index] = 0.0;
-		}
-	}
-}
-
-void Layer::backprop_weights_with_no_error_signal() {
-	if (this->type == LINEAR_LAYER) {
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-					// multiply by this->errors[n_index] for MSE weight updates
-					this->weight_updates[n_index][l_index][ln_index] +=
-						this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
-				}
-			}
-
-			this->constant_updates[n_index] += this->errors[n_index];
-
-			this->errors[n_index] = 0.0;
-		}
-	} else if (this->type == RELU_LAYER) {
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			if (this->acti_vals[n_index] > 0.0) {
-				for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-					int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-					for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-						// multiply by this->errors[n_index] for MSE weight updates
-						this->weight_updates[n_index][l_index][ln_index] +=
-							this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
-					}
-				}
-
-				this->constant_updates[n_index] += this->errors[n_index];
-			}
-
-			this->errors[n_index] = 0.0;
-		}
-	} else {
-		// this->type == LEAKY_LAYER
-		for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-			if (this->acti_vals[n_index] < 0.0) {
-				this->errors[n_index] *= 0.01;
-			}
-
-			for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-				int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-				for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-					// multiply by this->errors[n_index] for MSE weight updates
-					this->weight_updates[n_index][l_index][ln_index] +=
-						this->errors[n_index]*this->input_layers[l_index]->acti_vals[ln_index];
-				}
-			}
-
-			this->constant_updates[n_index] += this->errors[n_index];
-
-			this->errors[n_index] = 0.0;
-		}
 	}
 }
 

@@ -25,7 +25,9 @@ public:
 	std::vector<int> input_scope_depths;
 	std::vector<int> input_outer_types;
 	std::vector<void*> input_outer_indexes;
+	std::vector<State*> input_states;
 	std::vector<double> input_init_vals;
+	std::vector<double> input_init_index_vals;
 
 	std::vector<int> output_inner_indexes;
 	std::vector<int> output_scope_depths;

@@ -31,9 +31,15 @@ public:
 	std::vector<int> input_outer_indexes;
 	std::vector<double> input_init_vals;
 	/**
+	 * - random between -1.0 and 1.0
+	 * 
 	 * - don't worry about reversing signs
 	 *   - can only be an issue with perfect XORs
 	 *     - otherwise, can align state polarity when constructing
+	 */
+	std::vector<double> input_init_index_vals;
+	/**
+	 * - random between -1.0 and 1.0
 	 */
 
 	/**

@@ -72,9 +72,8 @@ public:
 
 	void flat_vals_back_activate(std::vector<int>& scope_context,
 								 std::vector<int>& node_context,
-								 int d_index,
-								 int stride_size,
-								 std::vector<double>& flat_vals,
+								 std::vector<double>& sum_vals,
+								 std::vector<int>& counts,
 								 ActionNodeHistory* history);
 	void rnn_vals_back_activate(std::vector<int>& scope_context,
 								std::vector<int>& node_context,

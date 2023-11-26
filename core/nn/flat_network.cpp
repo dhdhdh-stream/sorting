@@ -41,7 +41,7 @@ void FlatNetwork::backprop(double error) {
 	this->output->errors[0] = error;
 
 	this->output->backprop();
-	this->hidden->backprop_weights_with_no_error_signal();
+	this->hidden->backprop();
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 20) {

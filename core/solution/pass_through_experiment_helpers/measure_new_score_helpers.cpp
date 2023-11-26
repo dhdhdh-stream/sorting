@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
+#include "full_network.h"
 #include "globals.h"
 #include "helpers.h"
 #include "potential_scope_node.h"
@@ -14,7 +15,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "state_network.h"
 
 using namespace std;
 
@@ -120,7 +120,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 							p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 						}
 
-						StateNetwork* last_network = m_it->second.last_network;
+						FullNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
@@ -165,7 +165,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 							p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 						}
 
-						StateNetwork* last_network = m_it->second.last_network;
+						FullNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
@@ -210,7 +210,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 							p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 						}
 
-						StateNetwork* last_network = m_it->second.last_network;
+						FullNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;

@@ -14,7 +14,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "state_network.h"
 
 using namespace std;
 

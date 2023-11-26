@@ -56,6 +56,7 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->input_outer_is_local[i_index] << endl;
 		output_file << this->input_outer_indexes[i_index] << endl;
 		output_file << this->input_init_vals[i_index] << endl;
+		output_file << this->input_init_index_vals[i_index] << endl;
 	}
 
 	output_file << this->output_inner_indexes.size() << endl;
@@ -96,6 +97,10 @@ void ScopeNode::load(ifstream& input_file) {
 		string init_val_line;
 		getline(input_file, init_val_line);
 		this->input_init_vals.push_back(stod(init_val_line));
+
+		string init_index_val_line;
+		getline(input_file, init_index_val_line);
+		this->input_init_index_vals.push_back(stod(init_index_val_line));
 	}
 
 	string num_outputs_line;

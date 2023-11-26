@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "full_network.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -9,9 +10,8 @@ using namespace std;
 
 void ActionNode::flat_vals_back_activate(vector<int>& scope_context,
 										 vector<int>& node_context,
-										 int d_index,
-										 int stride_size,
-										 vector<double>& flat_vals,
+										 vector<double>& sum_vals,
+										 vector<int>& counts,
 										 ActionNodeHistory* history) {
 	for (int h_index = 0; h_index < (int)this->obs_experiment_indexes.size(); h_index++) {
 		bool matches_context = true;
@@ -29,10 +29,11 @@ void ActionNode::flat_vals_back_activate(vector<int>& scope_context,
 
 		if (matches_context) {
 			if (this->obs_experiment_obs_indexes[h_index] == -1) {
-				flat_vals[d_index*stride_size + this->obs_experiment_indexes[h_index]] = history->obs_snapshot;
+				sum_vals[this->obs_experiment_indexes[h_index]] += history->obs_snapshot;
 			} else {
-				flat_vals[d_index*stride_size + this->obs_experiment_indexes[h_index]] = history->state_snapshots[this->obs_experiment_obs_indexes[h_index]];
+				sum_vals[this->obs_experiment_indexes[h_index]] += history->state_snapshots[this->obs_experiment_obs_indexes[h_index]];
 			}
+			counts[this->obs_experiment_indexes[h_index]] += 1;
 		}
 	}
 }
@@ -94,7 +95,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 			if (it == temp_state_vals.end()) {
 				it = temp_state_vals.insert({this->experiment_state_defs[n_index], StateStatus()}).first;
 			}
-			StateNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
+			FullNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
 			if (this->experiment_state_obs_indexes[n_index] == -1) {
 				state_network->activate(history->obs_snapshot,
 										it->second);

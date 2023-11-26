@@ -5,6 +5,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
@@ -12,7 +13,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "state_network.h"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -67,7 +67,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -94,7 +94,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			StateNetwork* last_network = it->second.last_network;
+			FullNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;

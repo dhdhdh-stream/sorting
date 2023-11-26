@@ -4,11 +4,11 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "full_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "state_network.h"
 
 using namespace std;
 
@@ -26,9 +26,9 @@ State::State(ifstream& input_file,
 	for (int n_index = 0; n_index < num_networks; n_index++) {
 		ifstream network_save_file;
 		network_save_file.open("saves/nns/" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
-		this->networks.push_back(new StateNetwork(network_save_file,
-												  this,
-												  n_index));
+		this->networks.push_back(new FullNetwork(network_save_file,
+												 this,
+												 n_index));
 		network_save_file.close();
 	}
 }

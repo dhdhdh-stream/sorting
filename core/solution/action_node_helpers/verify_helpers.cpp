@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -30,7 +31,7 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 			if (it == context.back().local_state_vals.end()) {
 				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 			}
-			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+			FullNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 			if (this->state_obs_indexes[n_index] == -1) {
 				state_network->activate(obs_snapshot,
 										it->second);
@@ -42,7 +43,7 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
-				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+				FullNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 				if (this->state_obs_indexes[n_index] == -1) {
 					state_network->activate(obs_snapshot,
 											it->second);

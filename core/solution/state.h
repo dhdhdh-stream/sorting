@@ -6,14 +6,14 @@
 #include <vector>
 
 class AbstractNode;
+class FullNetwork;
 class Scope;
-class StateNetwork;
 
 class State {
 public:
 	int id;
 
-	std::vector<StateNetwork*> networks;
+	std::vector<FullNetwork*> networks;
 
 	State();
 	State(std::ifstream& input_file,

@@ -497,7 +497,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 
 uniform_int_distribution<int> input_non_empty_distribution(0, 2);
 uniform_int_distribution<int> input_type_distribution(0, 1);
-uniform_int_distribution<int> init_distribution(-1, 1);
+uniform_real_distribution<double> init_distribution(-1.0, 1.0);
+uniform_real_distribution<double> init_index_distribution(-1.0, 1.0);
 uniform_int_distribution<int> reuse_distribution(0, 3);
 int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 						   bool is_local,
@@ -530,6 +531,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 					new_potential_scope_node->input_outer_types.push_back(possible_input_outer_types[outer_index]);
 					new_potential_scope_node->input_outer_indexes.push_back(possible_input_outer_indexes[outer_index]);
 					new_potential_scope_node->input_init_vals.push_back(0.0);
+					new_potential_scope_node->input_init_index_vals.push_back(0.0);
 				} else {
 					// constant
 					new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -538,6 +540,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 					new_potential_scope_node->input_outer_types.push_back(-1);
 					new_potential_scope_node->input_outer_indexes.push_back(NULL);
 					new_potential_scope_node->input_init_vals.push_back(init_distribution(generator));
+					new_potential_scope_node->input_init_index_vals.push_back(init_index_distribution(generator));
 				}
 
 				// no need to set potential_to_final_states
@@ -562,6 +565,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 				new_potential_scope_node->input_outer_indexes.push_back(
 					new_potential_scope_node->output_outer_indexes[potential_to_final_states[potential_index]]);
 				new_potential_scope_node->input_init_vals.push_back(0.0);
+				new_potential_scope_node->input_init_index_vals.push_back(0.0);
 			} else {
 				if (possible_input_scope_depths.size() > 0 && input_type_distribution(generator) == 0) {
 					// state
@@ -574,6 +578,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 					new_potential_scope_node->input_outer_types.push_back(possible_input_outer_types[outer_index]);
 					new_potential_scope_node->input_outer_indexes.push_back(possible_input_outer_indexes[outer_index]);
 					new_potential_scope_node->input_init_vals.push_back(0.0);
+					new_potential_scope_node->input_init_index_vals.push_back(0.0);
 				} else {
 					// constant
 					new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -582,6 +587,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 					new_potential_scope_node->input_outer_types.push_back(-1);
 					new_potential_scope_node->input_outer_indexes.push_back(NULL);
 					new_potential_scope_node->input_init_vals.push_back(init_distribution(generator));
+					new_potential_scope_node->input_init_index_vals.push_back(init_index_distribution(generator));
 				}
 			}
 
@@ -614,6 +620,7 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 				new_potential_scope_node->input_outer_types.push_back(-1);
 				new_potential_scope_node->input_outer_indexes.push_back(NULL);
 				new_potential_scope_node->input_init_vals.push_back(0.0);
+				new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 				state_mappings[{is_local, index}] = new_state_index;
 				return new_state_index;
@@ -628,6 +635,7 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 			new_potential_scope_node->input_outer_types.push_back(-1);
 			new_potential_scope_node->input_outer_indexes.push_back(NULL);
 			new_potential_scope_node->input_init_vals.push_back(0.0);
+			new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 			state_mappings[{is_local, index}] = potential_to_final_states[potential_index];
 			return potential_to_final_states[potential_index];
@@ -1222,6 +1230,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								new_scope_node->input_outer_is_local.push_back(false);
 								new_scope_node->input_outer_indexes.push_back(new_state_index);
 								new_scope_node->input_init_vals.push_back(0.0);
+								new_scope_node->input_init_index_vals.push_back(0.0);
 							}
 						} else {
 							new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -1229,6 +1238,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 							new_scope_node->input_outer_is_local.push_back(false);
 							new_scope_node->input_outer_indexes.push_back(-1);
 							new_scope_node->input_init_vals.push_back(original_scope_node->input_init_vals[i_index]);
+							new_scope_node->input_init_index_vals.push_back(original_scope_node->input_init_index_vals[i_index]);
 						}
 					}
 
@@ -1370,6 +1380,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								new_scope_node->input_outer_is_local.push_back(false);
 								new_scope_node->input_outer_indexes.push_back(new_state_index);
 								new_scope_node->input_init_vals.push_back(0.0);
+								new_scope_node->input_init_index_vals.push_back(0.0);
 							}
 						} else {
 							new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -1377,6 +1388,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 							new_scope_node->input_outer_is_local.push_back(false);
 							new_scope_node->input_outer_indexes.push_back(-1);
 							new_scope_node->input_init_vals.push_back(original_scope_node->input_init_vals[i_index]);
+							new_scope_node->input_init_index_vals.push_back(original_scope_node->input_init_index_vals[i_index]);
 						}
 					}
 
