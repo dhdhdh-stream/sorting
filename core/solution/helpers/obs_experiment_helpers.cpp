@@ -718,6 +718,7 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 				network->backprop(state_error,
 								  index_error,
 								  network_histories[o_index]);
+				delete network_histories[o_index];
 			}
 		}
 	}

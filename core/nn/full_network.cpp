@@ -248,6 +248,7 @@ void FullNetwork::save(std::ofstream& output_file) {
 	output_file << this->starting_standard_deviation << endl;
 	output_file << this->ending_mean << endl;
 	output_file << this->ending_standard_deviation << endl;
+	output_file << this->average_index << endl;
 }
 
 FullNetworkHistory::FullNetworkHistory(FullNetwork* network) {

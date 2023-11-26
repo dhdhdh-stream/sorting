@@ -30,6 +30,7 @@ void add_state_local_scope_node_helper(ScopeNode* scope_node,
 		scope_node->input_outer_is_local.push_back(true);
 		scope_node->input_outer_indexes.push_back(local_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 
 		scope_node->output_inner_indexes.push_back(inner_index);
 		scope_node->output_outer_is_local.push_back(true);
@@ -57,6 +58,7 @@ void add_state_input_scope_node_helper(int c_index,
 		scope_node->input_outer_is_local.push_back(false);
 		scope_node->input_outer_indexes.push_back(outer_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 
 		scope_node->output_inner_indexes.push_back(inner_index);
 		scope_node->output_outer_is_local.push_back(false);
@@ -233,6 +235,7 @@ void add_new_input(vector<int>& experiment_scope_context,
 		scope_node->input_outer_is_local.push_back(outer_is_local);
 		scope_node->input_outer_indexes.push_back(outer_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 	}
 	for (int c_index = scope_depth-1; c_index >= 1; c_index--) {
 		int context_index = (int)experiment_scope_context.size()-1 - c_index;
@@ -249,6 +252,7 @@ void add_new_input(vector<int>& experiment_scope_context,
 		scope_node->input_outer_is_local.push_back(false);
 		scope_node->input_outer_indexes.push_back(new_input_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 	}
 	{
 		Scope* outer_scope = solution->scopes[experiment_scope_context.back()];
@@ -318,6 +322,7 @@ void add_new_output(vector<int>& experiment_scope_context,
 		scope_node->input_outer_is_local.push_back(outer_is_local);
 		scope_node->input_outer_indexes.push_back(outer_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 
 		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->output_outer_is_local.push_back(outer_is_local);
@@ -337,6 +342,7 @@ void add_new_output(vector<int>& experiment_scope_context,
 		scope_node->input_outer_is_local.push_back(false);
 		scope_node->input_outer_indexes.push_back(new_input_index);
 		scope_node->input_init_vals.push_back(0.0);
+		scope_node->input_init_index_vals.push_back(0.0);
 
 		scope_node->output_inner_indexes.push_back(inner_scope->num_input_states);
 		scope_node->output_outer_is_local.push_back(false);
@@ -404,6 +410,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 				new_scope_node->input_outer_is_local.push_back(outer_is_local);
 				new_scope_node->input_outer_indexes.push_back(outer_index);
 				new_scope_node->input_init_vals.push_back(0.0);
+				new_scope_node->input_init_index_vals.push_back(0.0);
 			} else {
 				int new_state_index;
 				map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
@@ -426,6 +433,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 				new_scope_node->input_outer_is_local.push_back(false);
 				new_scope_node->input_outer_indexes.push_back(new_state_index);
 				new_scope_node->input_init_vals.push_back(0.0);
+				new_scope_node->input_init_index_vals.push_back(0.0);
 			}
 		} else {
 			new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -433,6 +441,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 			new_scope_node->input_outer_is_local.push_back(false);
 			new_scope_node->input_outer_indexes.push_back(-1);
 			new_scope_node->input_init_vals.push_back(potential_scope_node->input_init_vals[i_index]);
+			new_scope_node->input_init_index_vals.push_back(potential_scope_node->input_init_index_vals[i_index]);
 		}
 	}
 
@@ -540,6 +549,7 @@ void duplicate_temp_state_helper(vector<int>& experiment_scope_context,
 			scope_node->input_outer_is_local.push_back(true);
 			scope_node->input_outer_indexes.push_back(outer_index);
 			scope_node->input_init_vals.push_back(0.0);
+			scope_node->input_init_index_vals.push_back(0.0);
 
 			// leave curr_index as -1
 		} else {
@@ -581,6 +591,7 @@ void duplicate_temp_state_helper(vector<int>& experiment_scope_context,
 			scope_node->input_outer_is_local.push_back(false);
 			scope_node->input_outer_indexes.push_back(new_input_index);
 			scope_node->input_init_vals.push_back(0.0);
+			scope_node->input_init_index_vals.push_back(0.0);
 
 			curr_index = -1;
 		} else {

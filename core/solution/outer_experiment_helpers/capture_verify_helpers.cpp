@@ -142,6 +142,7 @@ void OuterExperiment::capture_verify_backprop() {
 					new_scope_node->input_outer_is_local.push_back(false);
 					new_scope_node->input_outer_indexes.push_back(-1);
 					new_scope_node->input_init_vals.push_back(this->best_potential_scopes[s_index]->input_init_vals[i_index]);
+					new_scope_node->input_init_index_vals.push_back(this->best_potential_scopes[s_index]->input_init_index_vals[i_index]);
 				}
 
 				new_scope_node->next_node_id = next_node_id;

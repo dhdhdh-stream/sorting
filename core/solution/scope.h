@@ -1,25 +1,3 @@
-/**
- * TODO: to handle loops, average values for flat into index network
- * - for flat even if only one iter is relevant, and that iter changes, will still be correlation
- * - for index network:
- *   - keep track of 2 states, a val state, and an index state
- *     - val state directly tied to ending score as usual
- *     - index state tied to time
- *       - minus by 1.0 each iteration so roughly acts as a counter until state update is needed
- *       - measure activation*index to normalize
- *   - have 4 sub-networks:
- *     - a val state update network as usual
- *       - can depend on self
- *     - an index state update network
- *       - depends on obs, but not on self
- *     - a forget network to erase index state
- *       - implemented as summing negative of index state times sigmoid
- *         - so error signals still pass through
- *       - initialize output constant to -10.0 so never forgets initially
- *     - an update size network to control val state update size
- *       - sigmoid times state update
- */
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
