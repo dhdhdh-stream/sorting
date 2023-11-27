@@ -12,7 +12,7 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 	this->o_target_val_histories.push_back(target_val);
 
 	if (this->parent_pass_through_experiment == NULL) {
-		if (!run_helper.exceeded_depth) {
+		if (!run_helper.exceeded_limit) {
 			if (run_helper.max_depth > solution->max_depth) {
 				solution->max_depth = run_helper.max_depth;
 

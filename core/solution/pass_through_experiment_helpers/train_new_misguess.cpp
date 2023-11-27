@@ -292,7 +292,7 @@ void PassThroughExperiment::train_new_misguess_backprop(
 		}
 
 		new_obs_experiment(this,
-						   i_scope_histories,
+						   this->i_scope_histories,
 						   obs_experiment_target_vals);
 
 		for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {

@@ -39,7 +39,7 @@ void OuterExperiment::measure_existing_score_backprop(
 		RunHelper& run_helper) {
 	this->target_val_histories.push_back(target_val);
 
-	if (!run_helper.exceeded_depth) {
+	if (!run_helper.exceeded_limit) {
 		if (run_helper.max_depth > solution->max_depth) {
 			solution->max_depth = run_helper.max_depth;
 

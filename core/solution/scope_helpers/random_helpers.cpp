@@ -94,7 +94,9 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 							vector<AbstractNode*>& possible_nodes,
 							vector<vector<Scope*>>& possible_scope_contexts,
 							vector<vector<AbstractNode*>>& possible_node_contexts) {
-	// this->is_loop == false
+	/**
+	 * - go through exactly once if loop
+	 */
 
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {

@@ -139,7 +139,20 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 								new_node_reverse_mappings,
 								new_scope);
 
-							mapping = branch_mapping;
+							if (branch_mapping.first) {
+								mapping = branch_mapping;
+							} else {
+								pair<bool,AbstractNode*> original_mapping = end_node_helper(
+									scope_context,
+									node_context,
+									curr_depth,
+									branch_node->original_next_node,
+									node_mappings,
+									new_node_reverse_mappings,
+									new_scope);
+
+								mapping = original_mapping;
+							}
 						} else {
 							pair<bool,AbstractNode*> original_mapping = end_node_helper(
 								scope_context,

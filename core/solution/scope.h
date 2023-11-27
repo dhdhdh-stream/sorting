@@ -33,12 +33,26 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
+	bool is_loop;
+
+	std::vector<bool> loop_state_is_local;
+	std::vector<int> loop_state_indexes;
+	std::vector<double> loop_continue_weights;
+	std::vector<double> loop_halt_weights;
+
+	int max_iters;
+
 	std::vector<State*> temp_states;
 	std::vector<std::vector<ActionNode*>> temp_state_nodes;
 	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> temp_state_node_contexts;
 	std::vector<std::vector<int>> temp_state_obs_indexes;
 	std::vector<int> temp_state_new_local_indexes;
+
+	void* verify_key;
+	std::vector<double> verify_continue_scores;
+	std::vector<double> verify_halt_scores;
+	std::vector<std::vector<double>> verify_factors;
 
 	Scope();
 	~Scope();
@@ -101,8 +115,6 @@ public:
 	/**
 	 * - for gathering possible_exits during measure_existing
 	 */
-
-	bool exceeded_depth;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

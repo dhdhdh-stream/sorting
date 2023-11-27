@@ -177,8 +177,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->experiment_iter_index = -1;
 	this->experiment_index = -1;
-
-	this->exceeded_depth = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -201,8 +199,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->experiment_iter_index = original->experiment_iter_index;
 	this->experiment_index = original->experiment_index;
-
-	this->exceeded_depth = original->exceeded_depth;
 }
 
 ScopeHistory::~ScopeHistory() {

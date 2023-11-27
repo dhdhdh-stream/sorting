@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 									  run_helper);
 
 		double target_val;
-		if (!run_helper.exceeded_depth) {
+		if (!run_helper.exceeded_limit) {
 			target_val = problem.score_result();
 		} else {
 			target_val = -1.0;

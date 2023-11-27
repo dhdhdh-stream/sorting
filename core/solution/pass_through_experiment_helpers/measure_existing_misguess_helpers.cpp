@@ -75,7 +75,7 @@ void PassThroughExperiment::measure_existing_misguess_backprop(
 		this->i_misguess_histories.push_back((history->predicted_scores[i_index] - target_val) * (history->predicted_scores[i_index] - target_val));
 	}
 
-	if (!run_helper.exceeded_depth) {
+	if (!run_helper.exceeded_limit) {
 		if (run_helper.max_depth > solution->max_depth) {
 			solution->max_depth = run_helper.max_depth;
 

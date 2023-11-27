@@ -19,7 +19,6 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 	possible_node_contexts.push_back(node_context);
 
 	uniform_int_distribution<int> distribution(0, 1);
-	// TODO: check inner_scope->is_loop
 	if (distribution(generator) == 0) {
 		scope_context.push_back(this->inner_scope);
 		node_context.push_back(NULL);

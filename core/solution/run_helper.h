@@ -11,8 +11,11 @@ class RunHelper {
 public:
 	int curr_depth;
 	int max_depth;
-	bool exceeded_depth;
+
+	bool exceeded_limit;
 	/**
+	 * - for both recursion and loops
+	 * 
 	 * - recursion possible even when exploring with only child scopes
 	 *   - should be less likely though so don't specifically check against it
 	 *     - (and don't have to rely on recursion with OuterExperiment)
@@ -29,7 +32,8 @@ public:
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;
-		this->exceeded_depth = false;
+
+		this->exceeded_limit = false;
 
 		this->selected_experiment = NULL;
 		this->experiment_history = NULL;

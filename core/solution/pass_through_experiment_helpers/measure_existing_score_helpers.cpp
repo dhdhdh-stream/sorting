@@ -17,6 +17,9 @@ void PassThroughExperiment::measure_existing_score_activate(
 	context[context.size() - this->scope_context.size()]
 		.scope_history->inner_pass_through_experiment = this;
 
+	/**
+	 * - don't allow exit to earlier if loop
+	 */
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
 		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
@@ -48,7 +51,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 		this->i_target_val_histories.push_back(target_val);
 	}
 
-	if (!run_helper.exceeded_depth) {
+	if (!run_helper.exceeded_limit) {
 		if (run_helper.max_depth > solution->max_depth) {
 			solution->max_depth = run_helper.max_depth;
 
@@ -208,7 +211,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 
 		existing_obs_experiment(this,
 								solution->scopes[this->scope_context[0]],
-								i_scope_histories,
+								this->i_scope_histories,
 								obs_experiment_target_vals);
 
 		this->o_target_val_histories.clear();

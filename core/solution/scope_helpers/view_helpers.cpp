@@ -78,7 +78,7 @@ void Scope::view_activate(Problem& problem,
 		run_helper.max_depth = run_helper.curr_depth;
 	}
 	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_depth = true;
+		run_helper.exceeded_limit = true;
 		cout << "exceeded_depth" << endl;
 		return;
 	}
@@ -88,7 +88,7 @@ void Scope::view_activate(Problem& problem,
 	while (true) {
 		if (exit_depth != -1
 				|| curr_node == NULL
-				|| run_helper.exceeded_depth) {
+				|| run_helper.exceeded_limit) {
 			break;
 		}
 

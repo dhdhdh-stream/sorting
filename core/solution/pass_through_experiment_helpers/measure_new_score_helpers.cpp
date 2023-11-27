@@ -313,7 +313,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			}
 
 			new_obs_experiment(this,
-							   i_scope_histories,
+							   this->i_scope_histories,
 							   obs_experiment_target_vals);
 
 			// reserve at least solution->curr_num_datapoints
