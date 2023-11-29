@@ -46,6 +46,8 @@ void PassThroughExperiment::verify_existing_score_backprop(
 
 		this->o_target_val_histories.clear();
 
+		this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+
 		this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE;
 		this->state_iter = 0;
 	}

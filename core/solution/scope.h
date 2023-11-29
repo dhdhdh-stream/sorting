@@ -35,7 +35,10 @@ public:
 
 	bool is_loop;
 
-	std::vector<bool> loop_state_is_local;
+	double continue_score_mod;
+	double halt_score_mod;
+
+	// loop_state_is_local = true
 	std::vector<int> loop_state_indexes;
 	std::vector<double> loop_continue_weights;
 	std::vector<double> loop_halt_weights;

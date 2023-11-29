@@ -73,6 +73,8 @@ void OuterExperiment::verify_existing_score_backprop(
 
 		this->target_val_histories.clear();
 
+		this->target_val_histories.reserve(solution->curr_num_datapoints);
+
 		this->state = OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE;
 		this->state_iter = 0;
 	}

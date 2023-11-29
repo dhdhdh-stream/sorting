@@ -143,8 +143,6 @@ void Solution::success_reset() {
 
 	delete this->outer_experiment;
 	this->outer_experiment = new OuterExperiment();
-
-	this->experiments.clear();
 }
 
 void Solution::fail_reset() {
@@ -155,8 +153,6 @@ void Solution::fail_reset() {
 
 	delete this->outer_experiment;
 	this->outer_experiment = new OuterExperiment();
-
-	this->experiments.clear();
 }
 
 void Solution::save(ofstream& output_file) {

@@ -40,7 +40,6 @@ public:
 	int curr_num_datapoints;
 
 	OuterExperiment* outer_experiment;
-	std::set<AbstractExperiment*> experiments;
 
 	void* verify_key;
 	std::vector<Problem> verify_problems;

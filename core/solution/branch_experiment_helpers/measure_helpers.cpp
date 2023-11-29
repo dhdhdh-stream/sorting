@@ -200,6 +200,8 @@ void BranchExperiment::measure_backprop(double target_val) {
 			this->branch_count = 0;
 			this->branch_possible = 0;
 
+			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
 			this->state_iter = 0;
 		} else {

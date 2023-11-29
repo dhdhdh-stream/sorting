@@ -92,8 +92,8 @@ void Scope::activate(Problem& problem,
 				break;
 			}
 
-			double continue_score = 0.0;
-			double halt_score = 0.0;
+			double continue_score = this->continue_score_mod;
+			double halt_score = this->halt_score_mod;
 
 			for (int s_index = 0; s_index < (int)this->loop_state_is_local.size(); s_index++) {
 				if (this->loop_state_is_local[s_index]) {

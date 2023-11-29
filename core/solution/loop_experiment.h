@@ -5,11 +5,9 @@ const int LOOP_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int LOOP_EXPERIMENT_STATE_EXPLORE = 1;
 
 const int LOOP_EXPERIMENT_STATE_TRAIN_PRE = 2;
-const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_CONTINUE = 0;
-const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_HALT = 1;
 const int LOOP_EXPERIMENT_STATE_TRAIN = 3;
-const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE = 0;
-const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT = 1;
+const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT = 0;
+const int LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE = 1;
 
 const int LOOP_EXPERIMENT_STATE_MEASURE = 4;
 const int LOOP_EXPERIMENT_STATE_VERIFY_EXISTING = 5;
@@ -25,6 +23,7 @@ const int LOOP_EXPERIMENT_STATE_SUCCESS = 9;
  *     - but hopefully, after finalized, can generalize to go past limit when correct
  */
 const int TRAIN_ITER_LIMIT = 8;
+const int NUM_SAMPLES_MULTIPLIER = 2;
 
 class LoopExperimentOverallHistory;
 class LoopExperiment : public AbstractExperiment {
@@ -32,6 +31,7 @@ public:
 	double average_instances_per_run;
 
 	int state;
+	int sub_state;
 	int state_iter;
 	int sub_state_iter;
 
@@ -40,17 +40,19 @@ public:
 	double existing_average_score;
 	double existing_score_variance;
 
-	std::vector<std::map<int, double>> starting_input_state_weights;
-	std::vector<std::map<int, double>> starting_local_state_weights;
-	std::vector<std::map<State*, double>> starting_temp_state_weights;
+	std::vector<std::map<int, double>> start_input_state_weights;
+	std::vector<std::map<int, double>> start_local_state_weights;
+	std::vector<std::map<State*, double>> start_temp_state_weights;
 
 	std::vector<std::map<int, double>> halt_input_state_weights;
 	std::vector<std::map<int, double>> halt_local_state_weights;
 	std::vector<std::map<State*, double>> halt_temp_state_weights;
+	int halt_constant;
 
 	std::vector<std::map<int, double>> continue_input_state_weights;
 	std::vector<std::map<int, double>> continue_local_state_weights;
 	std::vector<std::map<State*, double>> continue_temp_state_weights;
+	int continue_constant;
 
 	std::vector<State*> new_states;
 	std::vector<std::vector<ActionNode*>> new_state_nodes;
@@ -58,8 +60,9 @@ public:
 	std::vector<std::vector<std::vector<int>>> new_state_node_contexts;
 	std::vector<std::vector<int>> new_state_obs_indexes;
 
-	double new_score;
-	double average_iters;
+	double measure_score;
+	int measure_num_instances;
+	int measure_sum_iters;
 
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;
@@ -67,7 +70,7 @@ public:
 	std::vector<std::vector<std::map<int, StateStatus>>> i_local_state_vals_histories;
 	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::vector<double> i_target_val_histories;
-	std::vector<double> i_starting_predicted_score_histories;
+	std::vector<double> i_start_predicted_score_histories;
 
 	std::vector<Problem> verify_problems;
 	std::vector<double> verify_continue_scores;
@@ -90,7 +93,8 @@ public:
 	int instance_count;
 
 	bool has_target;
-	double existing_predicted_score;
+	double start_predicted_score;
+	std::vector<double> halt_predicted_scores;
 
 	LoopExperimentOverallHistory(LoopExperiment* experiment);
 };

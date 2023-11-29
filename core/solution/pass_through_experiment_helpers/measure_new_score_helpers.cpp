@@ -100,6 +100,8 @@ void PassThroughExperiment::measure_new_score_backprop(
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		if (score_improvement_t_score > 2.326) {	// >99%
+			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE;
 			this->state_iter = 0;
 		} else if (this->best_step_types.size() > 0 && score_improvement_t_score > -0.674) {	// <75%

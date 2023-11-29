@@ -48,20 +48,20 @@ void LoopExperiment::train_halt_target_activate(
 	LoopExperimentInstanceHistory* loop_experiment_history = new LoopExperimentInstanceHistory(this);
 	history = loop_experiment_history;
 
-	double starting_score = this->existing_average_score;
+	double start_score = this->existing_average_score;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
-			map<int, double>::iterator weight_it = this->starting_input_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_input_state_weights[c_index].end()) {
+			map<int, double>::iterator weight_it = this->start_input_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_input_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
@@ -70,15 +70,15 @@ void LoopExperiment::train_halt_target_activate(
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
-			map<int, double>::iterator weight_it = this->starting_local_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_local_state_weights[c_index].end()) {
+			map<int, double>::iterator weight_it = this->start_local_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_local_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
@@ -87,15 +87,15 @@ void LoopExperiment::train_halt_target_activate(
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
-			map<State*, double>::iterator weight_it = this->starting_temp_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_temp_state_weights[c_index].end()) {
+			map<State*, double>::iterator weight_it = this->start_temp_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_temp_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
@@ -128,7 +128,7 @@ void LoopExperiment::train_halt_target_activate(
 	this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);
 	this->i_temp_state_vals_histories.push_back(temp_state_vals_snapshot);
 
-	this->i_starting_predicted_score_histories.push_back(starting_score);
+	this->i_start_predicted_score_histories.push_back(start_score);
 }
 
 void LoopExperiment::train_halt_non_target_activate(
@@ -146,8 +146,8 @@ void LoopExperiment::train_halt_non_target_activate(
 			break;
 		}
 
-		double continue_score = 0.0;
-		double halt_score = 0.0;
+		double continue_score = this->continue_constant;
+		double halt_score = this->halt_constant;
 
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
@@ -239,13 +239,13 @@ void LoopExperiment::train_halt_non_target_activate(
 										   context,
 										   run_helper,
 										   potential_scope_node_history);
-		}
 
-		if (run_helper.exceeded_limit) {
-			break;
-		} else {
-			iter_index++;
-			// continue
+			if (run_helper.exceeded_limit) {
+				break;
+			} else {
+				iter_index++;
+				// continue
+			}
 		}
 	}
 }
@@ -255,7 +255,250 @@ void LoopExperiment::train_halt_backprop(double target_val,
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
 	if (history->has_target) {
-		
+		this->i_target_val_histories.push_back(target_val);
 
+		this->sub_state_iter++;
+
+		if ((int)this->i_target_val_histories.size() >= solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER) {
+			/**
+			 * - don't bother retraining start
+			 *   - much fewer samples to use here anyways
+			 * - instead adjust by adding a constant
+			 */
+
+			int num_samples = this->i_target_val_histories.size();
+
+			vector<map<int, vector<double>>> p_input_state_vals(this->scope_context.size());
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, StateStatus>::iterator m_it = this->i_input_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_input_state_vals_histories[i_index][c_index].end(); m_it++) {
+						map<int, vector<double>>::iterator p_it = p_input_state_vals[c_index].find(m_it->first);
+						if (p_it == p_input_state_vals[c_index].end()) {
+							p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(num_samples, 0.0)}).first;
+						}
+
+						FullNetwork* last_network = m_it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (m_it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							p_it->second[i_index] = normalized;
+						} else {
+							p_it->second[i_index] = m_it->second.val;
+						}
+					}
+				}
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				Scope* scope = solution->scopes[this->scope_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
+
+				map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+				while (it != p_input_state_vals[c_index].end()) {
+					bool passed_down = false;
+					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
+								&& !scope_node->input_outer_is_local[i_index]
+								&& scope_node->input_outer_indexes[i_index] == it->first) {
+							passed_down = true;
+							break;
+						}
+					}
+
+					if (passed_down) {
+						it = p_input_state_vals[c_index].erase(it);
+					} else {
+						it++;
+					}
+				}
+			}
+
+			vector<map<int, vector<double>>> p_local_state_vals(this->scope_context.size());
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, StateStatus>::iterator m_it = this->i_local_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_local_state_vals_histories[i_index][c_index].end(); m_it++) {
+						map<int, vector<double>>::iterator p_it = p_local_state_vals[c_index].find(m_it->first);
+						if (p_it == p_local_state_vals[c_index].end()) {
+							p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(num_samples, 0.0)}).first;
+						}
+
+						FullNetwork* last_network = m_it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (m_it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							p_it->second[i_index] = normalized;
+						} else {
+							p_it->second[i_index] = m_it->second.val;
+						}
+					}
+				}
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				Scope* scope = solution->scopes[this->scope_context[c_index]];
+				ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->node_context[c_index]];
+
+				map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+				while (it != p_local_state_vals[c_index].end()) {
+					bool passed_down = false;
+					for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
+						if (scope_node->input_types[i_index] == INPUT_TYPE_STATE
+								&& scope_node->input_outer_is_local[i_index]
+								&& scope_node->input_outer_indexes[i_index] == it->first) {
+							passed_down = true;
+							break;
+						}
+					}
+
+					if (passed_down) {
+						it = p_local_state_vals[c_index].erase(it);
+					} else {
+						it++;
+					}
+				}
+			}
+
+			vector<map<State*, vector<double>>> p_temp_state_vals(this->scope_context.size());
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<State*, StateStatus>::iterator m_it = this->i_temp_state_vals_histories[i_index][c_index].begin();
+							m_it != this->i_temp_state_vals_histories[i_index][c_index].end(); m_it++) {
+						map<State*, vector<double>>::iterator p_it = p_temp_state_vals[c_index].find(m_it->first);
+						if (p_it == p_temp_state_vals[c_index].end()) {
+							p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(num_samples, 0.0)}).first;
+						}
+
+						FullNetwork* last_network = m_it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (m_it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							p_it->second[i_index] = normalized;
+						} else {
+							p_it->second[i_index] = m_it->second.val;
+						}
+					}
+				}
+			}
+
+			int stride_size = 0;
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				stride_size += p_input_state_vals[c_index].size();
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				stride_size += p_local_state_vals[c_index].size();
+			}
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				stride_size += p_temp_state_vals[c_index].size();
+			}
+			stride_size += 1;	// for constant
+
+			Eigen::MatrixXd inputs(num_samples, stride_size);
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				int s_index = 0;
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+							it != p_input_state_vals[c_index].end(); it++) {
+						inputs(i_index, s_index) = it->second[i_index];
+						s_index++;
+					}
+				}
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+							it != p_local_state_vals[c_index].end(); it++) {
+						inputs(i_index, s_index) = it->second[i_index];
+						s_index++;
+					}
+				}
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
+							it != p_temp_state_vals[c_index].end(); it++) {
+						inputs(i_index, s_index) = it->second[i_index];
+						s_index++;
+					}
+				}
+
+				inputs(i_index, s_index) = 1.0;		// for constant
+			}
+
+			Eigen::VectorXd outputs(num_samples);
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				outputs(i_index) = this->i_target_val_histories[i_index]
+					- this->i_start_predicted_score_histories[i_index];
+			}
+
+			this->halt_input_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->halt_local_state_weights = vector<map<int, double>>(this->scope_context.size());
+			this->halt_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
+			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+			{
+				int s_index = 0;
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
+							it != p_input_state_vals[c_index].end(); it++) {
+						this->halt_input_state_weights[c_index][it->first] = weights(s_index);
+						s_index++;
+					}
+				}
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
+							it != p_local_state_vals[c_index].end(); it++) {
+						this->halt_local_state_weights[c_index][it->first] = weights(s_index);
+						s_index++;
+					}
+				}
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
+							it != p_temp_state_vals[c_index].end(); it++) {
+						this->halt_temp_state_weights[c_index][it->first] = weights(s_index);
+						s_index++;
+					}
+				}
+
+				this->halt_constant = weights(s_index);
+			}
+
+			Eigen::VectorXd predicted_scores = inputs * weights;
+			Eigen::VectorXd diffs = outputs - predicted_scores;
+			vector<double> obs_experiment_target_vals(num_samples);
+			for (int i_index = 0; i_index < num_samples; i_index++) {
+				obs_experiment_target_vals[i_index] = diffs(i_index);
+			}
+
+			new_obs_experiment(this,
+							   this->i_scope_histories,
+							   obs_experiment_target_vals);
+
+			for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {
+				delete this->i_scope_histories[i_index];
+			}
+			this->i_scope_histories.clear();
+			this->i_input_state_vals_histories.clear();
+			this->i_local_state_vals_histories.clear();
+			this->i_temp_state_vals_histories.clear();
+			this->i_target_val_histories.clear();
+			this->i_start_predicted_score_histories.clear();
+
+			this->i_scope_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_target_val_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_start_predicted_score_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+
+			if (this->state == LOOP_EXPERIMENT_STATE_TRAIN_PRE) {
+				this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_CONTINUE;
+				this->sub_state_iter = 0;
+			} else {
+				// this->state == LOOP_EXPERIMENT_STATE_TRAIN
+				this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE;
+				this->sub_state_iter = 0;
+			}
+		}
 	}
 }

@@ -37,20 +37,20 @@ void LoopExperiment::explore_activate(Problem& problem,
 void LoopExperiment::explore_target_activate(Problem& problem,
 											 vector<ContextLayer>& context,
 											 RunHelper& run_helper) {
-	double starting_score = this->existing_average_score;
+	double start_score = this->existing_average_score;
 
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
-			map<int, double>::iterator weight_it = this->starting_input_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_input_state_weights[c_index].end()) {
+			map<int, double>::iterator weight_it = this->start_input_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_input_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
@@ -59,15 +59,15 @@ void LoopExperiment::explore_target_activate(Problem& problem,
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
-			map<int, double>::iterator weight_it = this->starting_local_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_local_state_weights[c_index].end()) {
+			map<int, double>::iterator weight_it = this->start_local_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_local_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
@@ -76,22 +76,22 @@ void LoopExperiment::explore_target_activate(Problem& problem,
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
-			map<State*, double>::iterator weight_it = this->starting_temp_state_weights[c_index].find(it->first);
-			if (weight_it != this->starting_temp_state_weights[c_index].end()) {
+			map<State*, double>::iterator weight_it = this->start_temp_state_weights[c_index].find(it->first);
+			if (weight_it != this->start_temp_state_weights[c_index].end()) {
 				FullNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
-					predicted_score += weight_it->second * normalized;
+					start_score += weight_it->second * normalized;
 				} else {
-					predicted_score += weight_it->second * it->second.val;
+					start_score += weight_it->second * it->second.val;
 				}
 			}
 		}
 	}
 
 	LoopExperimentOverallHistory* overall_history = (LoopExperimentOverallHistory*)run_helper.experiment_history;
-	overall_history->existing_predicted_score = predicted_score;
+	overall_history->start_predicted_score = start_score;
 
 	for (int iter_index = 0; iter_index < 1 + this->state_iter; iter_index++) {
 		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
@@ -117,14 +117,15 @@ void LoopExperiment::explore_backprop(double target_val,
 			this->potential_loop->scope->id = solution->scope_counter;
 			solution->scope_counter++;
 
-			this->i_scope_histories.reserve(solution->curr_num_datapoints);
-			this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
-			this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
-			this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
-			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
-			this->i_starting_predicted_score_histories.reserve(solution->curr_num_datapoints);
+			this->i_scope_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_target_val_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
+			this->i_start_predicted_score_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
 
 			this->state = LOOP_EXPERIMENT_STATE_TRAIN_PRE;
+			this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_HALT;
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {

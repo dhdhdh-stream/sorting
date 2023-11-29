@@ -98,6 +98,8 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		if (score_improvement_t_score > 2.326) {	// >99%
 			cout << "proceed to verify" << endl;
 
+			this->target_val_histories.reserve(solution->curr_num_datapoints);
+
 			this->state = OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE;
 			this->state_iter = 0;
 		} else {

@@ -37,6 +37,7 @@ public:
 	std::vector<double> verify_original_scores;
 	std::vector<double> verify_branch_scores;
 	std::vector<std::vector<double>> verify_factors;
+	// TODO: capture and reuse branch decision (for better debugging)
 
 	BranchNode();
 	~BranchNode();

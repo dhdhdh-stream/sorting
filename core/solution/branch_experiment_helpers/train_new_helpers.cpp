@@ -19,8 +19,6 @@ using namespace std;
 
 const int TRAIN_NEW_ITERS = 2;
 
-const double MIN_SCORE_IMPACT = 0.1;
-
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		Problem& problem,
@@ -511,7 +509,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 								new_weight = new_it->second;
 							}
 
-							if (abs(existing_weight - new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+							if (abs(existing_weight - new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 								if (new_it != this->new_input_state_weights[c_index].end()) {
 									this->new_input_state_weights[c_index].erase(new_it);
 								}
@@ -531,7 +529,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 							map<int, double>::iterator existing_it = this->existing_input_state_weights[c_index].find(new_it->first);
 							if (existing_it == this->existing_input_state_weights[c_index].end()) {
 								double new_weight = new_it->second;
-								if (abs(new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+								if (abs(new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 									new_it = this->new_input_state_weights[c_index].erase(new_it);
 								} else {
 									this->existing_input_state_weights[c_index][new_it->first] = 0.0;
@@ -555,7 +553,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 								new_weight = new_it->second;
 							}
 
-							if (abs(existing_weight - new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+							if (abs(existing_weight - new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 								if (new_it != this->new_local_state_weights[c_index].end()) {
 									this->new_local_state_weights[c_index].erase(new_it);
 								}
@@ -575,7 +573,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 							map<int, double>::iterator existing_it = this->existing_local_state_weights[c_index].find(new_it->first);
 							if (existing_it == this->existing_local_state_weights[c_index].end()) {
 								double new_weight = new_it->second;
-								if (abs(new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+								if (abs(new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 									new_it = this->new_local_state_weights[c_index].erase(new_it);
 								} else {
 									this->existing_local_state_weights[c_index][new_it->first] = 0.0;
@@ -599,7 +597,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 								new_weight = new_it->second;
 							}
 
-							if (abs(existing_weight - new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+							if (abs(existing_weight - new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 								if (new_it != this->new_temp_state_weights[c_index].end()) {
 									this->new_temp_state_weights[c_index].erase(new_it);
 								}
@@ -619,7 +617,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 							map<State*, double>::iterator existing_it = this->existing_temp_state_weights[c_index].find(new_it->first);
 							if (existing_it == this->existing_temp_state_weights[c_index].end()) {
 								double new_weight = new_it->second;
-								if (abs(new_weight) < MIN_SCORE_IMPACT * score_standard_deviation) {
+								if (abs(new_weight) < WEIGHT_MIN_SCORE_IMPACT * score_standard_deviation) {
 									new_it = this->new_temp_state_weights[c_index].erase(new_it);
 								} else {
 									this->existing_temp_state_weights[c_index][new_it->first] = 0.0;

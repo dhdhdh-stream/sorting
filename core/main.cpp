@@ -22,7 +22,7 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 50;
+const int NUM_FAILS_BEFORE_INCREASE = 30;
 
 default_random_engine generator;
 
@@ -106,10 +106,12 @@ int main(int argc, char* argv[]) {
 
 				if (run_helper.experiment_history == NULL) {
 					if (run_helper.experiments_seen.size() == 0) {
-						if (experiment_type_distribution(generator) == 0) {
-							create_branch_experiment(root_history);
-						} else {
-							create_pass_through_experiment(root_history);
+						if (!run_helper.exceeded_limit) {
+							if (experiment_type_distribution(generator) == 0) {
+								create_branch_experiment(root_history);
+							} else {
+								create_pass_through_experiment(root_history);
+							}
 						}
 					}
 				}
@@ -152,7 +154,6 @@ int main(int argc, char* argv[]) {
 								ScopeNode* scope_node = (ScopeNode*)starting_node;
 								scope_node->experiment = NULL;
 							}
-							solution->experiments.erase(branch_experiment);
 							delete branch_experiment;
 						}
 					} else {
@@ -177,7 +178,6 @@ int main(int argc, char* argv[]) {
 								ScopeNode* scope_node = (ScopeNode*)starting_node;
 								scope_node->experiment = NULL;
 							}
-							solution->experiments.erase(pass_through_experiment);
 							delete pass_through_experiment;
 						}
 					}

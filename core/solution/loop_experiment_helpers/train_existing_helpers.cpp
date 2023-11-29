@@ -190,9 +190,9 @@ void LoopExperiment::train_existing_backprop(double target_val,
 			stride_size += p_temp_state_vals[c_index].size();
 		}
 
-		this->starting_input_state_weights = vector<map<int, double>>(this->scope_context.size());
-		this->starting_local_state_weights = vector<map<int, double>>(this->scope_context.size());
-		this->starting_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
+		this->start_input_state_weights = vector<map<int, double>>(this->scope_context.size());
+		this->start_local_state_weights = vector<map<int, double>>(this->scope_context.size());
+		this->start_temp_state_weights = vector<map<State*, double>>(this->scope_context.size());
 		vector<double> obs_experiment_target_vals(num_instances);
 		if (stride_size > 0) {
 			Eigen::MatrixXd inputs(num_instances, stride_size);
@@ -236,7 +236,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 							it != p_input_state_vals[c_index].end(); it++) {
-						this->starting_input_state_weights[c_index][it->first] = weights(s_index);
+						this->start_input_state_weights[c_index][it->first] = weights(s_index);
 						s_index++;
 					}
 				}
@@ -244,7 +244,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 							it != p_local_state_vals[c_index].end(); it++) {
-						this->starting_local_state_weights[c_index][it->first] = weights(s_index);
+						this->start_local_state_weights[c_index][it->first] = weights(s_index);
 						s_index++;
 					}
 				}
@@ -252,7 +252,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
 							it != p_temp_state_vals[c_index].end(); it++) {
-						this->starting_temp_state_weights[c_index][it->first] = weights(s_index);
+						this->start_temp_state_weights[c_index][it->first] = weights(s_index);
 						s_index++;
 					}
 				}

@@ -1,3 +1,5 @@
+// TODO: split between train and test samples
+
 #include "helpers.h"
 
 #include <iostream>
