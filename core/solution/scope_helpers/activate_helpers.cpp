@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
+#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope_node.h"
@@ -95,34 +96,18 @@ void Scope::activate(Problem& problem,
 			double continue_score = this->continue_score_mod;
 			double halt_score = this->halt_score_mod;
 
-			for (int s_index = 0; s_index < (int)this->loop_state_is_local.size(); s_index++) {
-				if (this->loop_state_is_local[s_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->loop_state_indexes[s_index]);
-					if (it != context.back().local_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							continue_score += this->loop_continue_weights[s_index] * normalized;
-							halt_score += this->loop_halt_weights[s_index] * normalized;
-						} else {
-							continue_score += this->loop_continue_weights[s_index] * it->second.val;
-							halt_score += this->loop_halt_weights[s_index] * it->second.val;
-						}
-					}
-				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->loop_state_indexes[s_index]);
-					if (it != context.back().input_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							continue_score += this->loop_continue_weights[s_index] * normalized;
-							halt_score += this->loop_halt_weights[s_index] * normalized;
-						} else {
-							continue_score += this->loop_continue_weights[s_index] * it->second.val;
-							halt_score += this->loop_halt_weights[s_index] * it->second.val;
-						}
+			for (int s_index = 0; s_index < (int)this->loop_state_indexes.size(); s_index++) {
+				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->loop_state_indexes[s_index]);
+				if (it != context.back().input_state_vals.end()) {
+					FullNetwork* last_network = it->second.last_network;
+					if (last_network != NULL) {
+						double normalized = (it->second.val - last_network->ending_mean)
+							/ last_network->ending_standard_deviation;
+						continue_score += this->loop_continue_weights[s_index] * normalized;
+						halt_score += this->loop_halt_weights[s_index] * normalized;
+					} else {
+						continue_score += this->loop_continue_weights[s_index] * it->second.val;
+						halt_score += this->loop_halt_weights[s_index] * it->second.val;
 					}
 				}
 			}

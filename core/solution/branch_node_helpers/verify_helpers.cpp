@@ -139,15 +139,28 @@ void BranchNode::verify_activate(Problem& problem,
 					throw invalid_argument("branch node verify fail");
 				}
 
+				// if (this->verify_decision_is_branch[0]) {
+				// 	is_branch = true;
+				// } else {
+				// 	is_branch = false;
+				// }
+
+				if (branch_score > original_score) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+
 				this->verify_original_scores.erase(this->verify_original_scores.begin());
 				this->verify_branch_scores.erase(this->verify_branch_scores.begin());
 				this->verify_factors.erase(this->verify_factors.begin());
-			}
-
-			if (branch_score > original_score) {
-				is_branch = true;
+				this->verify_decision_is_branch.erase(this->verify_decision_is_branch.begin());
 			} else {
-				is_branch = false;
+				if (branch_score > original_score) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
 			}
 		}
 	} else {

@@ -1,5 +1,15 @@
 #include "loop_experiment.h"
 
+#include <Eigen/Dense>
+
+#include "full_network.h"
+#include "globals.h"
+#include "helpers.h"
+#include "potential_scope_node.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void LoopExperiment::train_halt_activate(
@@ -492,7 +502,7 @@ void LoopExperiment::train_halt_backprop(double target_val,
 			this->i_start_predicted_score_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
 
 			if (this->state == LOOP_EXPERIMENT_STATE_TRAIN_PRE) {
-				this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_CONTINUE;
+				this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE;
 				this->sub_state_iter = 0;
 			} else {
 				// this->state == LOOP_EXPERIMENT_STATE_TRAIN

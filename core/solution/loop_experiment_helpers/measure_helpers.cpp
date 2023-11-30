@@ -1,5 +1,14 @@
 #include "loop_experiment.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "full_network.h"
+#include "globals.h"
+#include "potential_scope_node.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 void LoopExperiment::measure_activate(Problem& problem,

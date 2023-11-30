@@ -3,6 +3,13 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+#include "full_network.h"
+#include "globals.h"
+#include "helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void LoopExperiment::train_existing_activate(vector<ContextLayer>& context,

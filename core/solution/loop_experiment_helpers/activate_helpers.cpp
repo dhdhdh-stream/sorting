@@ -1,5 +1,10 @@
 #include "loop_experiment.h"
 
+#include "action_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void LoopExperiment::activate(AbstractNode*& curr_node,
@@ -68,34 +73,46 @@ void LoopExperiment::activate(AbstractNode*& curr_node,
 	if (is_selected) {
 		switch (this->state) {
 		case LOOP_EXPERIMENT_STATE_TRAIN_EXISTING:
-
+			train_existing_activate(context,
+									run_helper);
 			break;
 		case LOOP_EXPERIMENT_STATE_EXPLORE:
-
+			explore_activate(problem,
+							 context,
+							 run_helper);
 			break;
 		case LOOP_EXPERIMENT_STATE_TRAIN_PRE:
 		case LOOP_EXPERIMENT_STATE_TRAIN:
 			switch (this->sub_state) {
 			case LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT:
-
+				train_halt_activate(problem,
+									context,
+									run_helper,
+									history);
 				break;
 			case LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE:
-
+				train_continue_activate(problem,
+										context,
+										run_helper,
+										history);
 				break;
 			}
 
 			break;
 		case LOOP_EXPERIMENT_STATE_MEASURE:
-
-			break;
-		case LOOP_EXPERIMENT_STATE_VERIFY_EXISTING:
-
+			measure_activate(problem,
+							 context,
+							 run_helper);
 			break;
 		case LOOP_EXPERIMENT_STATE_VERIFY:
-
+			verify_activate(problem,
+							context,
+							run_helper);
 			break;
 		case LOOP_EXPERIMENT_STATE_CAPTURE_VERIFY:
-
+			capture_verify_activate(problem,
+									context,
+									run_helper);
 			break;
 		}
 	}
@@ -177,34 +194,40 @@ void LoopExperiment::backprop(double target_val,
 
 	switch (this->state) {
 	case LOOP_EXPERIMENT_STATE_TRAIN_EXISTING:
-
+		train_existing_backprop(target_val,
+								run_helper,
+								history);
 		break;
 	case LOOP_EXPERIMENT_STATE_EXPLORE:
-
+		explore_backprop(target_val,
+						 history);
 		break;
 	case LOOP_EXPERIMENT_STATE_TRAIN_PRE:
 	case LOOP_EXPERIMENT_STATE_TRAIN:
 		switch (this->sub_state) {
 		case LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT:
-
+			train_halt_backprop(target_val,
+								history);
 			break;
 		case LOOP_EXPERIMENT_SUB_STATE_TRAIN_CONTINUE:
-
+			train_continue_backprop(target_val,
+									history);
 			break;
 		}
 
 		break;
 	case LOOP_EXPERIMENT_STATE_MEASURE:
-
+		measure_backprop(target_val);
 		break;
 	case LOOP_EXPERIMENT_STATE_VERIFY_EXISTING:
-
+		verify_existing_backprop(target_val,
+								 run_helper);
 		break;
-	case LOOP_EXPERIMENT_STATE_VERIFY:
-
+	case LOOP_EXPERIMENT_STATE_VERIFY:		
+		verify_backprop(target_val);
 		break;
 	case LOOP_EXPERIMENT_STATE_CAPTURE_VERIFY:
-
+		capture_verify_backprop();
 		break;
 	}
 

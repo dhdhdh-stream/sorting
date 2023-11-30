@@ -1,5 +1,10 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
+#include "globals.h"
+#include "solution.h"
+
 using namespace std;
 
 void LoopExperiment::verify_existing_backprop(double target_val,

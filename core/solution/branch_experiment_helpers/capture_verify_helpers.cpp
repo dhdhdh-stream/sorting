@@ -174,6 +174,8 @@ void BranchExperiment::capture_verify_activate(
 		this->verify_factors.push_back(factors);
 
 		if (branch_predicted_score > original_predicted_score) {
+			this->verify_decision_is_branch.push_back(true);
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -202,6 +204,8 @@ void BranchExperiment::capture_verify_activate(
 				exit_depth = this->best_exit_depth-1;
 				exit_node = this->best_exit_node;
 			}
+		} else {
+			this->verify_decision_is_branch.push_back(false);
 		}
 	}
 }

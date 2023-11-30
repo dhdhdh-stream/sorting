@@ -1,5 +1,16 @@
 #include "loop_experiment.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "constants.h"
+#include "full_network.h"
+#include "globals.h"
+#include "potential_scope_node.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "state.h"
+
 using namespace std;
 
 void LoopExperiment::verify_activate(Problem& problem,
@@ -183,7 +194,7 @@ void LoopExperiment::verify_backprop(double target_val) {
 					if (matches_scope) {
 						if (this->potential_loop->scope_node_placeholder->id
 								== this->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
-							this->potential_loop->scope_node_placeholder->used_experiment_states.insert(this->new_states[*it]);
+							this->potential_loop->used_experiment_states.insert(this->new_states[*it]);
 						}
 					}
 				}

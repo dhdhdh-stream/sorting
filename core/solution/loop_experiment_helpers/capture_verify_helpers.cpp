@@ -1,5 +1,17 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "constants.h"
+#include "full_network.h"
+#include "globals.h"
+#include "helpers.h"
+#include "potential_scope_node.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void LoopExperiment::capture_verify_activate(
@@ -133,8 +145,11 @@ void LoopExperiment::capture_verify_activate(
 		this->verify_factors.push_back(factors);
 
 		if (halt_score > continue_score) {
+			this->verify_decision_is_halt.push_back(true);
 			break;
 		} else {
+			this->verify_decision_is_halt.push_back(false);
+
 			this->potential_loop->capture_verify_activate(
 				problem,
 				context,
@@ -213,10 +228,10 @@ void LoopExperiment::capture_verify_backprop() {
 		this->potential_loop->scope_node_placeholder = NULL;
 		delete this->potential_loop;
 
-		new_loop_scope_node->is_loop = true;
-		new_loop_scope_node->continue_score_mod = this->continue_constant;
-		new_loop_scope_node->halt_score_mod = this->halt_constant;
-		new_loop_scope_node->max_iters = 4;
+		new_loop_scope_node->inner_scope->is_loop = true;
+		new_loop_scope_node->inner_scope->continue_score_mod = this->continue_constant;
+		new_loop_scope_node->inner_scope->halt_score_mod = this->halt_constant;
+		new_loop_scope_node->inner_scope->max_iters = 4;
 
 		finalize_loop_scope_states(new_loop_scope_node,
 								   this->scope_context,
@@ -230,10 +245,11 @@ void LoopExperiment::capture_verify_backprop() {
 								   input_scope_depths_mappings,
 								   output_scope_depths_mappings);
 
-		new_loop_scope_node->verify_key = this;
-		new_loop_scope_node->verify_continue_scores = this->verify_continue_scores;
-		new_loop_scope_node->verify_halt_scores = this->verify_halt_scores;
-		new_loop_scope_node->verify_factors = this->verify_factors;
+		new_loop_scope_node->inner_scope->verify_key = this;
+		new_loop_scope_node->inner_scope->verify_continue_scores = this->verify_continue_scores;
+		new_loop_scope_node->inner_scope->verify_halt_scores = this->verify_halt_scores;
+		new_loop_scope_node->inner_scope->verify_factors = this->verify_factors;
+		new_loop_scope_node->inner_scope->verify_decision_is_halt = this->verify_decision_is_halt;
 
 		this->state = LOOP_EXPERIMENT_STATE_SUCCESS;
 	}

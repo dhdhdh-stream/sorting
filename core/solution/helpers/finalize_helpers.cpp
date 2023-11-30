@@ -987,7 +987,7 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 			int temp_state_index;
 			for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
-				if (outer_scope->temp_states[t_index] == existing_it->first) {
+				if (outer_scope->temp_states[t_index] == continue_it->first) {
 					temp_state_index = t_index;
 					break;
 				}
@@ -1060,7 +1060,7 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 			int temp_state_index;
 			for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
-				if (outer_scope->temp_states[t_index] == existing_it->first) {
+				if (outer_scope->temp_states[t_index] == continue_it->first) {
 					temp_state_index = t_index;
 					break;
 				}

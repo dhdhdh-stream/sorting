@@ -1,5 +1,6 @@
 #include "scope.h"
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 
@@ -7,6 +8,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
+#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope_node.h"
@@ -77,21 +79,144 @@ void Scope::verify_activate(Problem& problem,
 	}
 	run_helper.curr_depth++;
 
-	AbstractNode* curr_node = this->starting_node;
-	while (true) {
-		if (exit_depth != -1
-				|| curr_node == NULL
-				|| run_helper.exceeded_limit) {
-			break;
-		}
+	if (this->is_loop) {
+		int iter_index = 0;
+		while (true) {
+			if (iter_index > this->max_iters+3) {
+				run_helper.exceeded_limit = true;
+				break;
+			}
 
-		node_verify_activate_helper(0,
-									curr_node,
-									problem,
-									context,
-									exit_depth,
-									exit_node,
-									run_helper);
+			double continue_score = this->continue_score_mod;
+			double halt_score = this->halt_score_mod;
+
+			vector<double> factors;
+
+			for (int s_index = 0; s_index < (int)this->loop_state_indexes.size(); s_index++) {
+				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->loop_state_indexes[s_index]);
+				if (it != context.back().input_state_vals.end()) {
+					FullNetwork* last_network = it->second.last_network;
+					if (last_network != NULL) {
+						double normalized = (it->second.val - last_network->ending_mean)
+							/ last_network->ending_standard_deviation;
+						continue_score += this->loop_continue_weights[s_index] * normalized;
+						halt_score += this->loop_halt_weights[s_index] * normalized;
+
+						factors.push_back(normalized);
+					} else {
+						continue_score += this->loop_continue_weights[s_index] * it->second.val;
+						halt_score += this->loop_halt_weights[s_index] * it->second.val;
+
+						factors.push_back(it->second.val);
+					}
+				}
+			}
+
+			bool decision_is_halt;
+			if (this->verify_key == run_helper.verify_key) {
+				sort(factors.begin(), factors.end());
+				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
+
+				if (this->verify_continue_scores[0] != continue_score
+						|| this->verify_halt_scores[0] != halt_score
+						|| this->verify_factors[0] != factors) {
+					cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
+					cout << "this->verify_continue_scores[0]: " << this->verify_continue_scores[0] << endl;
+					cout << "continue_score: " << continue_score << endl;
+
+					cout << "this->verify_halt_scores[0]: " << this->verify_halt_scores[0] << endl;
+					cout << "halt_score: " << halt_score << endl;
+
+					cout << "this->verify_factors[0]" << endl;
+					for (int f_index = 0; f_index < (int)this->verify_factors[0].size(); f_index++) {
+						cout << f_index << ": " << this->verify_factors[0][f_index] << endl;
+					}
+					cout << "factors" << endl;
+					for (int f_index = 0; f_index < (int)factors.size(); f_index++) {
+						cout << f_index << ": " << factors[f_index] << endl;
+					}
+
+					throw invalid_argument("loop verify fail");
+				}
+
+				// if (this->verify_decision_is_halt[0]) {
+				// 	decision_is_halt = true;
+				// } else {
+				// 	decision_is_halt = false;
+				// }
+
+				if (halt_score > continue_score) {
+					decision_is_halt = true;
+				} else {
+					decision_is_halt = false;
+				}
+
+				this->verify_continue_scores.erase(this->verify_continue_scores.begin());
+				this->verify_halt_scores.erase(this->verify_halt_scores.begin());
+				this->verify_factors.erase(this->verify_factors.begin());
+				this->verify_decision_is_halt.erase(this->verify_decision_is_halt.begin());
+			} else {
+				if (halt_score > continue_score) {
+					decision_is_halt = true;
+				} else {
+					decision_is_halt = false;
+				}
+			}
+
+			if (decision_is_halt) {
+				/**
+				 * - update even if explore
+				 *   - cannot result in worst performance as would previously be -1.0 anyways
+				 */
+				if (iter_index > this->max_iters) {
+					this->max_iters = iter_index;
+				}
+				break;
+			} else {
+				AbstractNode* curr_node = this->starting_node;
+				while (true) {
+					if (exit_depth != -1
+							|| curr_node == NULL
+							|| run_helper.exceeded_limit) {
+						break;
+					}
+
+					node_verify_activate_helper(iter_index,
+												curr_node,
+												problem,
+												context,
+												exit_depth,
+												exit_node,
+												run_helper);
+				}
+
+				if (exit_depth != -1
+						|| run_helper.exceeded_limit) {
+					break;
+				} else {
+					iter_index++;
+					// continue
+				}
+			}
+		}
+	} else {
+		AbstractNode* curr_node = this->starting_node;
+		while (true) {
+			if (exit_depth != -1
+					|| curr_node == NULL
+					|| run_helper.exceeded_limit) {
+				break;
+			}
+
+			node_verify_activate_helper(0,
+										curr_node,
+										problem,
+										context,
+										exit_depth,
+										exit_node,
+										run_helper);
+		}
 	}
 
 	run_helper.curr_depth--;

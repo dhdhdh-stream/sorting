@@ -20,6 +20,7 @@ class State;
 
 void create_branch_experiment(ScopeHistory* root_history);
 void create_pass_through_experiment(ScopeHistory* root_history);
+void create_loop_experiment(ScopeHistory* root_history);
 
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
@@ -56,5 +57,16 @@ void finalize_branch_node_states(BranchNode* branch_node,
 								 std::vector<std::map<State*, double>>& new_temp_state_weights,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
+								std::vector<int>& experiment_scope_context,
+								std::vector<int>& experiment_node_context,
+								std::vector<std::map<int, double>>& continue_input_state_weights,
+								std::vector<std::map<int, double>>& continue_local_state_weights,
+								std::vector<std::map<State*, double>>& continue_temp_state_weights,
+								std::vector<std::map<int, double>>& halt_input_state_weights,
+								std::vector<std::map<int, double>>& halt_local_state_weights,
+								std::vector<std::map<State*, double>>& halt_temp_state_weights,
+								std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+								std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 
 #endif /* HELPERS_H */

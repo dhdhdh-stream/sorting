@@ -12,16 +12,14 @@ void PassThroughExperiment::verify_existing_score_backprop(
 		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
-	if (this->parent_pass_through_experiment == NULL) {
-		if (!run_helper.exceeded_limit) {
-			if (run_helper.max_depth > solution->max_depth) {
-				solution->max_depth = run_helper.max_depth;
+	if (!run_helper.exceeded_limit) {
+		if (run_helper.max_depth > solution->max_depth) {
+			solution->max_depth = run_helper.max_depth;
 
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
+			if (solution->max_depth < 50) {
+				solution->depth_limit = solution->max_depth + 10;
+			} else {
+				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 			}
 		}
 	}

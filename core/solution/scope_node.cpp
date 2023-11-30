@@ -43,7 +43,10 @@ void ScopeNode::fail_reset() {
 
 void ScopeNode::clear_verify() {
 	this->verify_key = NULL;
-	this->verify_input_state_vals.clear();
+	if (this->verify_input_state_vals.size() > 0
+			|| this->verify_output_state_vals.size() > 0) {
+		throw invalid_argument("scope node remaining verify");
+	}
 }
 
 void ScopeNode::save(ofstream& output_file) {

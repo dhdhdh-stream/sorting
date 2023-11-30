@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
+#include "loop_experiment.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "run_helper.h"
@@ -48,7 +49,7 @@ int main(int argc, char* argv[]) {
 	int num_fails = 0;
 
 	uniform_int_distribution<int> outer_distribution(0, 9);
-	uniform_int_distribution<int> experiment_type_distribution(0, 1);
+	uniform_int_distribution<int> experiment_type_distribution(0, 2);
 	while (true) {
 		while (true) {
 			Problem problem;
@@ -107,10 +108,13 @@ int main(int argc, char* argv[]) {
 				if (run_helper.experiment_history == NULL) {
 					if (run_helper.experiments_seen.size() == 0) {
 						if (!run_helper.exceeded_limit) {
-							if (experiment_type_distribution(generator) == 0) {
+							int experiment_type = experiment_type_distribution(generator);
+							if (experiment_type == 0) {
 								create_branch_experiment(root_history);
-							} else {
+							} else if (experiment_type == 1) {
 								create_pass_through_experiment(root_history);
+							} else {
+								create_loop_experiment(root_history);
 							}
 						}
 					}
@@ -156,7 +160,7 @@ int main(int argc, char* argv[]) {
 							}
 							delete branch_experiment;
 						}
-					} else {
+					} else if (run_helper.experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_history->experiment;
 						pass_through_experiment->backprop(target_val,
 														  run_helper,
@@ -179,6 +183,30 @@ int main(int argc, char* argv[]) {
 								scope_node->experiment = NULL;
 							}
 							delete pass_through_experiment;
+						}
+					} else {
+						LoopExperiment* loop_experiment = (LoopExperiment*)run_helper.experiment_history->experiment;
+						loop_experiment->backprop(target_val,
+												  run_helper,
+												  (LoopExperimentOverallHistory*)run_helper.experiment_history);
+
+						if (loop_experiment->state == LOOP_EXPERIMENT_STATE_SUCCESS) {
+							is_success = true;
+
+							// experiment cleaned in reset()
+						} else if (loop_experiment->state == LOOP_EXPERIMENT_STATE_FAIL) {
+							is_fail = true;
+
+							Scope* starting_scope = solution->scopes[loop_experiment->scope_context.back()];
+							AbstractNode* starting_node = starting_scope->nodes[loop_experiment->node_context.back()];
+							if (starting_node->type == NODE_TYPE_ACTION) {
+								ActionNode* action_node = (ActionNode*)starting_node;
+								action_node->experiment = NULL;
+							} else {
+								ScopeNode* scope_node = (ScopeNode*)starting_node;
+								scope_node->experiment = NULL;
+							}
+							delete loop_experiment;
 						}
 					}
 				} else {

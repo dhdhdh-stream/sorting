@@ -22,9 +22,12 @@ BranchNode::~BranchNode() {
 
 void BranchNode::clear_verify() {
 	this->verify_key = NULL;
-	this->verify_original_scores.clear();
-	this->verify_branch_scores.clear();
-	this->verify_factors.clear();
+	if (this->verify_original_scores.size() > 0
+			|| this->verify_branch_scores.size() > 0
+			|| this->verify_factors.size() > 0
+			|| this->verify_decision_is_branch.size() > 0) {
+		throw invalid_argument("branch node remaining verify");
+	}
 }
 
 void BranchNode::save(ofstream& output_file) {

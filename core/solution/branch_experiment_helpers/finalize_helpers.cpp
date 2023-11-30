@@ -67,6 +67,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	new_branch_node->verify_original_scores = this->verify_original_scores;
 	new_branch_node->verify_branch_scores = this->verify_branch_scores;
 	new_branch_node->verify_factors = this->verify_factors;
+	new_branch_node->verify_decision_is_branch = this->verify_decision_is_branch;
 
 	ExitNode* new_exit_node = new ExitNode();
 	new_exit_node->parent = containing_scope;

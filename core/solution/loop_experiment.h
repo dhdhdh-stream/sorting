@@ -1,6 +1,22 @@
 #ifndef LOOP_EXPERIMENT_H
 #define LOOP_EXPERIMENT_H
 
+#include <map>
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "problem.h"
+#include "run_helper.h"
+#include "state_status.h"
+
+class AbstractNode;
+class ActionNode;
+class PotentialScopeNode;
+class PotentialScopeNodeHistory;
+class ScopeHistory;
+class State;
+
 const int LOOP_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int LOOP_EXPERIMENT_STATE_EXPLORE = 1;
 
@@ -76,7 +92,92 @@ public:
 	std::vector<double> verify_continue_scores;
 	std::vector<double> verify_halt_scores;
 	std::vector<std::vector<double>> verify_factors;
+	std::vector<bool> verify_decision_is_halt;
 
+	LoopExperiment(std::vector<int> scope_context,
+				   std::vector<int> node_context,
+				   PotentialScopeNode* potential_loop);
+	~LoopExperiment();
+
+	void activate(AbstractNode*& curr_node,
+				  Problem& problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
+	void hook(std::vector<ContextLayer>& context);
+	void hook_helper(std::vector<int>& scope_context,
+					 std::vector<int>& node_context,
+					 std::map<State*, StateStatus>& temp_state_vals,
+					 ScopeHistory* scope_history);
+	void unhook();
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  LoopExperimentOverallHistory* history);
+
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void train_existing_backprop(double target_val,
+								 RunHelper& run_helper,
+								 LoopExperimentOverallHistory* history);
+
+	void explore_activate(Problem& problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
+	void explore_target_activate(Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void explore_backprop(double target_val,
+						  LoopExperimentOverallHistory* history);
+
+	void train_halt_activate(Problem& problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 AbstractExperimentHistory*& history);
+	void train_halt_target_activate(Problem& problem,
+									std::vector<ContextLayer>& context,
+									RunHelper& run_helper,
+									AbstractExperimentHistory*& history);
+	void train_halt_non_target_activate(Problem& problem,
+										std::vector<ContextLayer>& context,
+										RunHelper& run_helper,
+										AbstractExperimentHistory*& history);
+	void train_halt_backprop(double target_val,
+							 LoopExperimentOverallHistory* history);
+
+	void train_continue_activate(Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper,
+								 AbstractExperimentHistory*& history);
+	void train_continue_target_activate(Problem& problem,
+										std::vector<ContextLayer>& context,
+										RunHelper& run_helper,
+										AbstractExperimentHistory*& history);
+	void train_continue_non_target_activate(Problem& problem,
+											std::vector<ContextLayer>& context,
+											RunHelper& run_helper,
+											AbstractExperimentHistory*& history);
+	void train_continue_backprop(double target_val,
+								 LoopExperimentOverallHistory* history);
+
+	void measure_activate(Problem& problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
+	void measure_backprop(double target_val);
+
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper);
+
+	void verify_activate(Problem& problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
+	void verify_backprop(double target_val);
+
+	void capture_verify_activate(Problem& problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void capture_verify_backprop();
 };
 
 class LoopExperimentInstanceHistory : public AbstractExperimentHistory {

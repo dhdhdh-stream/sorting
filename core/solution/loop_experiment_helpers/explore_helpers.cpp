@@ -1,5 +1,12 @@
 #include "loop_experiment.h"
 
+#include "full_network.h"
+#include "globals.h"
+#include "potential_scope_node.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 const int NUM_SAMPLES = 100;
@@ -107,7 +114,7 @@ void LoopExperiment::explore_backprop(double target_val,
 									  LoopExperimentOverallHistory* history) {
 	if (history->has_target) {
 		double score_standard_deviation = sqrt(this->existing_score_variance);
-		if (target_val - history->existing_predicted_score > score_standard_deviation) {
+		if (target_val - history->start_predicted_score > score_standard_deviation) {
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 			this->potential_loop->scope_node_placeholder = new ScopeNode();
 			this->potential_loop->scope_node_placeholder->parent = containing_scope;
@@ -125,7 +132,7 @@ void LoopExperiment::explore_backprop(double target_val,
 			this->i_start_predicted_score_histories.reserve(solution->curr_num_datapoints*NUM_SAMPLES_MULTIPLIER);
 
 			this->state = LOOP_EXPERIMENT_STATE_TRAIN_PRE;
-			this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_PRE_HALT;
+			this->sub_state = LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT;
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
