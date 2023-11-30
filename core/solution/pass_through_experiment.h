@@ -112,6 +112,9 @@ public:
 	BranchExperiment* branch_experiment;
 
 	std::vector<Problem> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
 
 	PassThroughExperiment(std::vector<int> scope_context,
 						  std::vector<int> node_context);

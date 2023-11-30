@@ -14,7 +14,11 @@ class OuterExperiment;
 class Scope;
 class State;
 
+#if defined(MDEBUG) && MDEBUG
+const int STARTING_NUM_DATAPOINTS = 20;
+#else
 const int STARTING_NUM_DATAPOINTS = 2000;
+#endif /* MDEBUG */
 
 class Solution {
 public:
@@ -42,8 +46,11 @@ public:
 	OuterExperiment* outer_experiment;
 
 	void* verify_key;
-	std::vector<Problem> verify_problems;
 	// TODO: potentially check for exceed max_depth
+	std::vector<Problem> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
 
 	Solution();
 	~Solution();

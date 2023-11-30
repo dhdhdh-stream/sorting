@@ -9,6 +9,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -240,7 +241,19 @@ void LoopExperiment::train_halt_non_target_activate(
 			}
 		}
 
-		if (halt_score > continue_score) {
+		#if defined(MDEBUG) && MDEBUG
+		bool decision_is_halt;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_halt = true;
+		} else {
+			decision_is_halt = false;
+		}
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
+		bool decision_is_halt = halt_score > continue_score;
+		#endif /* MDEBUG */
+
+		if (decision_is_halt) {
 			break;
 		} else {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);

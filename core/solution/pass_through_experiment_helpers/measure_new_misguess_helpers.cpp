@@ -143,7 +143,11 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (misguess_improvement_t_score > 2.326) {	// >99%
+		#endif /* MDEBUG */
 			cout << "misguess success" << endl;
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

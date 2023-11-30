@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -22,6 +23,9 @@ void LoopExperiment::capture_verify_activate(
 	curr_problem.current_world = curr_problem.initial_world;
 	curr_problem.current_pointer = 0;
 	this->verify_problems[this->state_iter] = curr_problem;
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	#endif /* MDEBUG */
 
 	int iter_index = 0;
 	while (true) {
@@ -144,12 +148,21 @@ void LoopExperiment::capture_verify_activate(
 		this->verify_halt_scores.push_back(halt_score);
 		this->verify_factors.push_back(factors);
 
-		if (halt_score > continue_score) {
-			this->verify_decision_is_halt.push_back(true);
+		#if defined(MDEBUG) && MDEBUG
+		bool decision_is_halt;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_halt = true;
+		} else {
+			decision_is_halt = false;
+		}
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
+		bool decision_is_halt = halt_score > continue_score;
+		#endif /* MDEBUG */
+
+		if (decision_is_halt) {
 			break;
 		} else {
-			this->verify_decision_is_halt.push_back(false);
-
 			this->potential_loop->capture_verify_activate(
 				problem,
 				context,
@@ -171,6 +184,9 @@ void LoopExperiment::capture_verify_backprop() {
 		this->potential_loop->scope_node_placeholder->verify_key = this;
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		#if defined(MDEBUG) && MDEBUG
+		solution->verify_seeds = this->verify_seeds;
+		#endif /* MDEBUG */
 
 		cout << "loop success" << endl;
 
@@ -227,6 +243,7 @@ void LoopExperiment::capture_verify_backprop() {
 								 output_scope_depths_mappings);
 		this->potential_loop->scope_node_placeholder = NULL;
 		delete this->potential_loop;
+		this->potential_loop = NULL;
 
 		new_loop_scope_node->inner_scope->is_loop = true;
 		new_loop_scope_node->inner_scope->continue_score_mod = this->continue_constant;
@@ -249,7 +266,6 @@ void LoopExperiment::capture_verify_backprop() {
 		new_loop_scope_node->inner_scope->verify_continue_scores = this->verify_continue_scores;
 		new_loop_scope_node->inner_scope->verify_halt_scores = this->verify_halt_scores;
 		new_loop_scope_node->inner_scope->verify_factors = this->verify_factors;
-		new_loop_scope_node->inner_scope->verify_decision_is_halt = this->verify_decision_is_halt;
 
 		this->state = LOOP_EXPERIMENT_STATE_SUCCESS;
 	}

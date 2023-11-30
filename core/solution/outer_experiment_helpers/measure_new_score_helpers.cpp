@@ -95,7 +95,11 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		cout << "new_average_score: " << new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (score_improvement_t_score > 2.326) {	// >99%
+		#endif /* MDEBUG */
 			cout << "proceed to verify" << endl;
 
 			this->target_val_histories.reserve(solution->curr_num_datapoints);

@@ -27,14 +27,13 @@ const int NUM_FAILS_BEFORE_INCREASE = 30;
 
 default_random_engine generator;
 
-bool global_debug_flag = false;
-
 Solution* solution;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1701331299;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -48,6 +47,10 @@ int main(int argc, char* argv[]) {
 
 	int num_fails = 0;
 
+	#if defined(MDEBUG) && MDEBUG
+	int run_index = 0;
+	#endif /* MDEBUG */
+
 	uniform_int_distribution<int> outer_distribution(0, 9);
 	uniform_int_distribution<int> experiment_type_distribution(0, 2);
 	while (true) {
@@ -55,6 +58,12 @@ int main(int argc, char* argv[]) {
 			Problem problem;
 
 			RunHelper run_helper;
+
+			#if defined(MDEBUG) && MDEBUG
+			run_helper.starting_run_seed = run_index;
+			run_helper.curr_run_seed = run_index;
+			run_index++;
+			#endif /* MDEBUG */
 
 			bool is_success = false;
 			bool is_fail = false;
@@ -224,9 +233,16 @@ int main(int argc, char* argv[]) {
 
 				while (solution->verify_problems.size() > 0) {
 					Problem problem = solution->verify_problems[0];
+					solution->verify_problems.erase(solution->verify_problems.begin());
 
 					RunHelper run_helper;
 					run_helper.verify_key = solution->verify_key;
+
+					#if defined(MDEBUG) && MDEBUG
+					run_helper.starting_run_seed = solution->verify_seeds[0];
+					run_helper.curr_run_seed = solution->verify_seeds[0];
+					solution->verify_seeds.erase(solution->verify_seeds.begin());
+					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
@@ -243,8 +259,6 @@ int main(int argc, char* argv[]) {
 													exit_depth,
 													exit_node,
 													run_helper);
-
-					solution->verify_problems.erase(solution->verify_problems.begin());
 				}
 				solution->clear_verify();
 

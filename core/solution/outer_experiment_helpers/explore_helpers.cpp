@@ -13,8 +13,13 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPLORE_ITERS = 2;
+const int NUM_SAMPLES_PER_ITER = 2;
+#else
 const int EXPLORE_ITERS = 100;
 const int NUM_SAMPLES_PER_ITER = 100;
+#endif /* MDEBUG */
 
 void OuterExperiment::explore_initial_activate(Problem& problem,
 											   RunHelper& run_helper) {
@@ -152,7 +157,11 @@ void OuterExperiment::explore_backprop(double target_val) {
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (this->curr_score > this->best_score) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -203,7 +212,11 @@ void OuterExperiment::explore_backprop(double target_val) {
 			cout << "this->best_surprise: " << this->best_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (score_improvement_t_score > 1.645) {	// >95%
+			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->id = 1 + s_index;

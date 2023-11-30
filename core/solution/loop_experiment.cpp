@@ -20,6 +20,11 @@ LoopExperiment::LoopExperiment(vector<int> scope_context,
 	 */
 	this->average_instances_per_run = 1.0;
 
+	this->state = LOOP_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state_iter = 0;
+
+	this->potential_loop = potential_loop;
+
 	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 	this->i_scope_histories.reserve(solution->curr_num_datapoints);
 	this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
@@ -27,16 +32,15 @@ LoopExperiment::LoopExperiment(vector<int> scope_context,
 	this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
 	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-	this->state = LOOP_EXPERIMENT_STATE_TRAIN_EXISTING;
-	this->state_iter = 0;
-
 	this->measure_score = 0.0;
 	this->measure_num_instances = 0;
 	this->measure_sum_iters = 0;
 }
 
 LoopExperiment::~LoopExperiment() {
-	delete this->potential_loop;
+	if (this->potential_loop != NULL) {
+		delete this->potential_loop;
+	}
 }
 
 LoopExperimentInstanceHistory::LoopExperimentInstanceHistory(LoopExperiment* experiment) {

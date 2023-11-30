@@ -8,6 +8,7 @@
 #include "potential_scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -107,7 +108,19 @@ void LoopExperiment::measure_activate(Problem& problem,
 			}
 		}
 
-		if (halt_score > continue_score) {
+		#if defined(MDEBUG) && MDEBUG
+		bool decision_is_halt;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_halt = true;
+		} else {
+			decision_is_halt = false;
+		}
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
+		bool decision_is_halt = halt_score > continue_score;
+		#endif /* MDEBUG */
+
+		if (decision_is_halt) {
 			break;
 		} else {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
@@ -155,7 +168,11 @@ void LoopExperiment::measure_backprop(double target_val) {
 
 		cout << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (average_num_iters > 0.1 && score_improvement_t_score > 2.326) {
+		#endif /* MDEBUG */
 			this->measure_score = 0.0;
 			this->measure_num_instances = 0;
 			this->measure_sum_iters = 0;
@@ -166,6 +183,7 @@ void LoopExperiment::measure_backprop(double target_val) {
 			this->state_iter = 0;
 		} else {
 			delete this->potential_loop;
+			this->potential_loop = NULL;
 
 			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 				delete this->new_states[s_index];

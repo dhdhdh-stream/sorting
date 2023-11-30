@@ -11,6 +11,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -71,7 +72,19 @@ void BranchNode::activate(bool& is_branch,
 				}
 			}
 
-			if (branch_score > original_score) {
+			#if defined(MDEBUG) && MDEBUG
+			bool decision_is_branch;
+			if (run_helper.curr_run_seed%2 == 0) {
+				decision_is_branch = true;
+			} else {
+				decision_is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			bool decision_is_branch = branch_score > original_score;
+			#endif /* MDEBUG */
+
+			if (decision_is_branch) {
 				is_branch = true;
 			} else {
 				is_branch = false;

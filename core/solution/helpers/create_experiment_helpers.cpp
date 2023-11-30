@@ -335,13 +335,18 @@ void create_loop_experiment(ScopeHistory* root_history) {
 	}
 
 	vector<AbstractNode*> new_nodes;
+
+	ActionNode* new_noop_action_node = new ActionNode();
+	new_noop_action_node->action = Action(ACTION_NOOP);
+	new_nodes.push_back(new_noop_action_node);
+
 	/**
 	 * - assign to -1 if not going to use
 	 */
 	map<int, int> potential_to_final_mapping;
 	uniform_int_distribution<int> include_state_distribution(0, 1);
 	uniform_int_distribution<int> output_distribution(0, 1);
-	for (int n_index = start_index; n_index < (int)possible_scope_contexts.size()+1; n_index++) {
+	for (int n_index = start_index; n_index < (int)possible_scope_contexts.size(); n_index++) {
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
 
@@ -563,6 +568,9 @@ void create_loop_experiment(ScopeHistory* root_history) {
 			scope_node->next_node = next_node;
 		}
 	}
+
+	new_scope->starting_node_id = 0;
+	new_scope->starting_node = new_nodes[0];
 
 	LoopExperiment* new_loop_experiment = new LoopExperiment(
 		vector<int>(experiment_scope_context.end() - context_size, experiment_scope_context.end()),

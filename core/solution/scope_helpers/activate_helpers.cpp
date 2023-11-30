@@ -12,6 +12,7 @@
 #include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -112,7 +113,19 @@ void Scope::activate(Problem& problem,
 				}
 			}
 
-			if (halt_score > continue_score) {
+			#if defined(MDEBUG) && MDEBUG
+			bool decision_is_halt;
+			if (run_helper.curr_run_seed%2 == 0) {
+				decision_is_halt = true;
+			} else {
+				decision_is_halt = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			bool decision_is_halt = halt_score > continue_score;
+			#endif /* MDEBUG */
+
+			if (decision_is_halt) {
 				/**
 				 * - update even if explore
 				 *   - cannot result in worst performance as would previously be -1.0 anyways

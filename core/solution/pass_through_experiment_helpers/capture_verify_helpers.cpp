@@ -27,6 +27,9 @@ void PassThroughExperiment::capture_verify_activate(
 	curr_problem.current_world = curr_problem.initial_world;
 	curr_problem.current_pointer = 0;
 	this->verify_problems[this->state_iter] = curr_problem;
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	#endif /* MDEBUG */
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -68,6 +71,9 @@ void PassThroughExperiment::capture_verify_backprop() {
 		}
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		#if defined(MDEBUG) && MDEBUG
+		solution->verify_seeds = this->verify_seeds;
+		#endif /* MDEBUG */
 
 		cout << "score success" << endl;
 

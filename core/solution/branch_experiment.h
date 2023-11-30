@@ -88,6 +88,8 @@ public:
 	int branch_count;
 	int branch_possible;
 
+	bool is_pass_through;
+
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<std::vector<std::map<int, StateStatus>>> i_input_state_vals_histories;
@@ -96,10 +98,12 @@ public:
 	std::vector<double> i_target_val_histories;
 
 	std::vector<Problem> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
 	std::vector<double> verify_original_scores;
 	std::vector<double> verify_branch_scores;
 	std::vector<std::vector<double>> verify_factors;
-	std::vector<bool> verify_decision_is_branch;
 
 	BranchExperiment(std::vector<int> scope_context,
 					 std::vector<int> node_context);

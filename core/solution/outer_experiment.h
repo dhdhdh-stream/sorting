@@ -51,6 +51,9 @@ public:
 	std::vector<double> target_val_histories;
 
 	std::vector<Problem> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
 
 	OuterExperiment();
 	~OuterExperiment();

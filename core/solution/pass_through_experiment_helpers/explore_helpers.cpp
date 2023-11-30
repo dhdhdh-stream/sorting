@@ -14,8 +14,13 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPLORE_ITERS = 2;
+const int NUM_SAMPLES_PER_ITER = 2;
+#else
 const int EXPLORE_ITERS = 100;
 const int NUM_SAMPLES_PER_ITER = 100;
+#endif /* MDEBUG */
 
 void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 Problem& problem,
@@ -147,7 +152,11 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (this->curr_score > this->best_score) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -187,7 +196,11 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 		if (this->state_iter >= EXPLORE_ITERS) {
 			cout << "PassThrough" << endl;
 			cout << "this->best_surprise: " << this->best_score << endl;
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (this->best_score > 0.0) {
+			#endif /* MDEBUG */
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

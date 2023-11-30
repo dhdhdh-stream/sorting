@@ -56,17 +56,5 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->temp_state_defs.size() != 0) {
-		throw invalid_argument("this->temp_state_defs.size() != 0");
-	}
-
-	if (this->experiment_state_defs.size() != 0) {
-		throw invalid_argument("this->experiment_state_defs.size() != 0");
-	}
-
-	if (this->experiment != NULL) {
-		throw invalid_argument("this->experiment != NULL");
-	}
-
 	curr_node = this->next_node;
 }

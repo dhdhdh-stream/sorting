@@ -56,7 +56,6 @@ public:
 	std::vector<double> verify_continue_scores;
 	std::vector<double> verify_halt_scores;
 	std::vector<std::vector<double>> verify_factors;
-	std::vector<bool> verify_decision_is_halt;
 
 	Scope();
 	~Scope();

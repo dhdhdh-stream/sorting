@@ -13,6 +13,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -27,9 +28,11 @@ void BranchExperiment::capture_verify_activate(
 	curr_problem.current_world = curr_problem.initial_world;
 	curr_problem.current_pointer = 0;
 	this->verify_problems[this->state_iter] = curr_problem;
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	#endif /* MDEBUG */
 
-	double branch_weight = (double)this->branch_count / (double)this->branch_possible;
-	if (branch_weight > 0.99) {
+	if (this->is_pass_through) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -173,9 +176,19 @@ void BranchExperiment::capture_verify_activate(
 		this->verify_branch_scores.push_back(branch_predicted_score);
 		this->verify_factors.push_back(factors);
 
-		if (branch_predicted_score > original_predicted_score) {
-			this->verify_decision_is_branch.push_back(true);
+		#if defined(MDEBUG) && MDEBUG
+		bool decision_is_branch;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
+		bool decision_is_branch = branch_predicted_score > original_predicted_score;
+		#endif /* MDEBUG */
 
+		if (decision_is_branch) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -204,8 +217,6 @@ void BranchExperiment::capture_verify_activate(
 				exit_depth = this->best_exit_depth-1;
 				exit_node = this->best_exit_node;
 			}
-		} else {
-			this->verify_decision_is_branch.push_back(false);
 		}
 	}
 }
@@ -220,6 +231,9 @@ void BranchExperiment::capture_verify_backprop() {
 		}
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		#if defined(MDEBUG) && MDEBUG
+		solution->verify_seeds = this->verify_seeds;
+		#endif /* MDEBUG */
 
 		this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 	}

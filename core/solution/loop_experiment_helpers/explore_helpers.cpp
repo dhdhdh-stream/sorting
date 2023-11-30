@@ -9,7 +9,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_SAMPLES = 2;
+#else
 const int NUM_SAMPLES = 100;
+#endif /* MDEBUG */
 
 const int EXPLORE_ITER_LIMIT = 6;
 
@@ -113,8 +117,12 @@ void LoopExperiment::explore_target_activate(Problem& problem,
 void LoopExperiment::explore_backprop(double target_val,
 									  LoopExperimentOverallHistory* history) {
 	if (history->has_target) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%4 == 0) {
+		#else
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		if (target_val - history->start_predicted_score > score_standard_deviation) {
+		#endif /* MDEBUG */
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 			this->potential_loop->scope_node_placeholder = new ScopeNode();
 			this->potential_loop->scope_node_placeholder->parent = containing_scope;
@@ -142,6 +150,7 @@ void LoopExperiment::explore_backprop(double target_val,
 				this->sub_state_iter = 0;
 				if (this->state_iter >= EXPLORE_ITER_LIMIT) {
 					delete this->potential_loop;
+					this->potential_loop = NULL;
 					this->state = LOOP_EXPERIMENT_STATE_FAIL;
 				}
 			}

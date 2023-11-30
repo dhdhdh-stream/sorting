@@ -16,7 +16,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPLORE_ITERS = 5;
+#else
 const int EXPLORE_ITERS = 500;
+#endif /* MDEBUG */
 
 void BranchExperiment::explore_activate(AbstractNode*& curr_node,
 										Problem& problem,
@@ -226,7 +230,11 @@ void BranchExperiment::explore_backprop(double target_val,
 										BranchExperimentOverallHistory* history) {
 	if (history->has_target) {
 		double curr_surprise = target_val - history->existing_predicted_score;
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -266,7 +274,11 @@ void BranchExperiment::explore_backprop(double target_val,
 			 * - if surprise isn't better than 0.0, don't bother
 			 */
 			cout << "this->best_surprise: " << this->best_surprise << endl;
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (this->best_surprise > 0.0) {
+			#endif /* MDEBUG */
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

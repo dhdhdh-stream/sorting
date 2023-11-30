@@ -29,6 +29,11 @@ public:
 
 	void* verify_key;
 
+	#if defined(MDEBUG) && MDEBUG
+	unsigned long starting_run_seed;
+	unsigned long curr_run_seed;
+	#endif /* MDEBUG */
+
 	RunHelper() {
 		this->curr_depth = 0;
 		this->max_depth = 0;

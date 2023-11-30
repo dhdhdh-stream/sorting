@@ -104,8 +104,15 @@ void PassThroughExperiment::verify_new_score_backprop(
 		cout << "this->new_average_score: " << this->new_average_score << endl;
 		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (score_improvement_t_score > 2.326) {	// >99%
+		#endif /* MDEBUG */
 			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
+			#if defined(MDEBUG) && MDEBUG
+			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+			#endif /* MDEBUG */
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;

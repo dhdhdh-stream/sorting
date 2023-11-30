@@ -94,17 +94,24 @@ void PassThroughExperiment::measure_new_score_backprop(
 		}
 		this->new_average_score = sum_scores / solution->curr_num_datapoints;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%4 == 0) {
+		#else
 		double score_improvement = this->new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
-
 		if (score_improvement_t_score > 2.326) {	// >99%
+		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE;
 			this->state_iter = 0;
+		#if defined(MDEBUG) && MDEBUG
+		} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+		#else
 		} else if (this->best_step_types.size() > 0 && score_improvement_t_score > -0.674) {	// <75%
+		#endif /* MDEBUG */
 			/**
 			 * - TODO: consider other conditions
 			 *   - e.g., small number of particularly high scoring instances

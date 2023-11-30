@@ -26,8 +26,13 @@ using namespace std;
  */
 const int NUM_INITIAL_OBS = 10;
 
+#if defined(MDEBUG) && MDEBUG
+const int FLAT_ITERS = 30;
+const int RNN_ITERS = 30;
+#else
 const int FLAT_ITERS = 300000;
 const int RNN_ITERS = 300000;
+#endif /* MDEBUG */
 
 /**
  * - practical limit
@@ -965,6 +970,9 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 			 test_target_vals,
 			 state_networks);
 
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%4 == 0) {
+	#else
 	double misguess_improvement = existing_average_misguess - new_average_misguess;
 	double misguess_standard_deviation = sqrt(existing_misguess_variance);
 	double improvement_t_score = misguess_improvement
@@ -981,6 +989,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
+	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 
 		State* new_state = new State();
@@ -1180,6 +1189,9 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			 test_target_vals,
 			 state_networks);
 
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%4 == 0) {
+	#else
 	double misguess_improvement = existing_average_misguess - new_average_misguess;
 	double misguess_standard_deviation = sqrt(existing_misguess_variance);
 	double improvement_t_score = misguess_improvement
@@ -1196,6 +1208,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
+	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 
 		State* new_state = new State();
@@ -1406,6 +1419,9 @@ void existing_pass_through_branch_obs_experiment(
 			 test_target_vals,
 			 state_networks);
 
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%4 == 0) {
+	#else
 	double misguess_improvement = existing_average_misguess - new_average_misguess;
 	double misguess_standard_deviation = sqrt(existing_misguess_variance);
 	double improvement_t_score = misguess_improvement
@@ -1422,6 +1438,7 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 2.326) {	// >99%
+	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 
 		State* new_state = new State();

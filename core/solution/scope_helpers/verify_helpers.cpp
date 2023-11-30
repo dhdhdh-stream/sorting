@@ -13,6 +13,7 @@
 #include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -112,7 +113,6 @@ void Scope::verify_activate(Problem& problem,
 				}
 			}
 
-			bool decision_is_halt;
 			if (this->verify_key == run_helper.verify_key) {
 				sort(factors.begin(), factors.end());
 				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
@@ -140,29 +140,22 @@ void Scope::verify_activate(Problem& problem,
 					throw invalid_argument("loop verify fail");
 				}
 
-				// if (this->verify_decision_is_halt[0]) {
-				// 	decision_is_halt = true;
-				// } else {
-				// 	decision_is_halt = false;
-				// }
-
-				if (halt_score > continue_score) {
-					decision_is_halt = true;
-				} else {
-					decision_is_halt = false;
-				}
-
 				this->verify_continue_scores.erase(this->verify_continue_scores.begin());
 				this->verify_halt_scores.erase(this->verify_halt_scores.begin());
 				this->verify_factors.erase(this->verify_factors.begin());
-				this->verify_decision_is_halt.erase(this->verify_decision_is_halt.begin());
-			} else {
-				if (halt_score > continue_score) {
-					decision_is_halt = true;
-				} else {
-					decision_is_halt = false;
-				}
 			}
+
+			#if defined(MDEBUG) && MDEBUG
+			bool decision_is_halt;
+			if (run_helper.curr_run_seed%2 == 0) {
+				decision_is_halt = true;
+			} else {
+				decision_is_halt = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			bool decision_is_halt = halt_score > continue_score;
+			#endif /* MDEBUG */
 
 			if (decision_is_halt) {
 				/**

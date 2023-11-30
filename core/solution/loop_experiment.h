@@ -89,10 +89,12 @@ public:
 	std::vector<double> i_start_predicted_score_histories;
 
 	std::vector<Problem> verify_problems;
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
 	std::vector<double> verify_continue_scores;
 	std::vector<double> verify_halt_scores;
 	std::vector<std::vector<double>> verify_factors;
-	std::vector<bool> verify_decision_is_halt;
 
 	LoopExperiment(std::vector<int> scope_context,
 				   std::vector<int> node_context,

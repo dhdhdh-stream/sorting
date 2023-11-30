@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "globals.h"
+#include "loop_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
@@ -157,9 +158,12 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {
 			BranchExperimentInstanceHistory* branch_experiment_history = (BranchExperimentInstanceHistory*)original->experiment_history;
 			this->experiment_history = new BranchExperimentInstanceHistory(branch_experiment_history);
-		} else {
+		} else if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 			PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)original->experiment_history;
 			this->experiment_history = new PassThroughExperimentInstanceHistory(pass_through_experiment_history);
+		} else {
+			LoopExperimentInstanceHistory* loop_experiment_history = (LoopExperimentInstanceHistory*)original->experiment_history;
+			this->experiment_history = new LoopExperimentInstanceHistory(loop_experiment_history);
 		}
 	} else {
 		this->experiment_history = NULL;

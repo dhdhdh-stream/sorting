@@ -49,8 +49,7 @@ void Scope::clear_verify() {
 	this->verify_key = NULL;
 	if (this->verify_continue_scores.size() > 0
 			|| this->verify_halt_scores.size() > 0
-			|| this->verify_factors.size() > 0
-			|| this->verify_decision_is_halt.size() > 0) {
+			|| this->verify_factors.size() > 0) {
 		throw invalid_argument("loop remaining verify");
 	}
 }

@@ -19,6 +19,9 @@ void OuterExperiment::capture_verify_activate(
 	curr_problem.current_world = curr_problem.initial_world;
 	curr_problem.current_pointer = 0;
 	this->verify_problems[this->state_iter] = curr_problem;
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	#endif /* MDEBUG */
 
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
@@ -73,6 +76,9 @@ void OuterExperiment::capture_verify_backprop() {
 		}
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		#if defined(MDEBUG) && MDEBUG
+		solution->verify_seeds = this->verify_seeds;
+		#endif /* MDEBUG */
 
 		cout << "success" << endl;
 

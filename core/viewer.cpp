@@ -22,8 +22,6 @@ using namespace std;
 
 default_random_engine generator;
 
-bool global_debug_flag = false;
-
 Solution* solution;
 
 int main(int argc, char* argv[]) {

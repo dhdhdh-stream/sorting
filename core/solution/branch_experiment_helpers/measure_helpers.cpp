@@ -14,6 +14,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -108,8 +109,20 @@ void BranchExperiment::measure_activate(
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	bool decision_is_branch;
+	if (run_helper.curr_run_seed%2 == 0) {
+		decision_is_branch = true;
+	} else {
+		decision_is_branch = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+	#else
+	bool decision_is_branch = branch_predicted_score > original_predicted_score;
+	#endif /* MDEBUG */
+
 	this->branch_possible++;
-	if (branch_predicted_score > original_predicted_score) {
+	if (decision_is_branch) {
 		this->branch_count++;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -179,6 +192,9 @@ void BranchExperiment::measure_backprop(double target_val) {
 		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 		// }
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
@@ -196,6 +212,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 		// cout << endl;
 
 		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 			this->branch_count = 0;
 			this->branch_possible = 0;

@@ -293,5 +293,6 @@ void LoopExperiment::train_existing_backprop(double target_val,
 
 		this->state = LOOP_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
+		this->sub_state_iter = 0;
 	}
 }
