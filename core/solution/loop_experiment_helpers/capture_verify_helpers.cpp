@@ -28,6 +28,10 @@ void LoopExperiment::capture_verify_activate(
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 	#endif /* MDEBUG */
 
+	PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+	ScopeHistory* scope_history = new ScopeHistory(this->potential_loop->scope);
+	potential_scope_node_history->scope_history = scope_history;
+
 	int iter_index = 0;
 	while (true) {
 		if (iter_index > TRAIN_ITER_LIMIT) {
@@ -188,12 +192,11 @@ void LoopExperiment::capture_verify_activate(
 		if (decision_is_halt) {
 			break;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
 			this->potential_loop->activate(problem,
 										   context,
 										   run_helper,
+										   iter_index,
 										   potential_scope_node_history);
-			delete potential_scope_node_history;
 
 			if (run_helper.exceeded_limit) {
 				break;
@@ -203,6 +206,8 @@ void LoopExperiment::capture_verify_activate(
 			}
 		}
 	}
+
+	delete potential_scope_node_history;
 }
 
 void LoopExperiment::capture_verify_backprop() {
@@ -271,10 +276,10 @@ void LoopExperiment::capture_verify_backprop() {
 		delete this->potential_loop;
 		this->potential_loop = NULL;
 
-		new_loop_scope_node->inner_scope->is_loop = true;
-		new_loop_scope_node->inner_scope->continue_score_mod = this->continue_constant;
-		new_loop_scope_node->inner_scope->halt_score_mod = this->halt_constant;
-		new_loop_scope_node->inner_scope->max_iters = 4;
+		new_loop_scope_node->is_loop = true;
+		new_loop_scope_node->continue_score_mod = this->continue_constant;
+		new_loop_scope_node->halt_score_mod = this->halt_constant;
+		new_loop_scope_node->max_iters = 4;
 
 		finalize_loop_scope_states(new_loop_scope_node,
 								   this->scope_context,
@@ -288,10 +293,10 @@ void LoopExperiment::capture_verify_backprop() {
 								   input_scope_depths_mappings,
 								   output_scope_depths_mappings);
 
-		new_loop_scope_node->inner_scope->verify_key = this;
-		new_loop_scope_node->inner_scope->verify_continue_scores = this->verify_continue_scores;
-		new_loop_scope_node->inner_scope->verify_halt_scores = this->verify_halt_scores;
-		new_loop_scope_node->inner_scope->verify_factors = this->verify_factors;
+		new_loop_scope_node->verify_key = this;
+		new_loop_scope_node->verify_continue_scores = this->verify_continue_scores;
+		new_loop_scope_node->verify_halt_scores = this->verify_halt_scores;
+		new_loop_scope_node->verify_factors = this->verify_factors;
 
 		this->state = LOOP_EXPERIMENT_STATE_SUCCESS;
 	}

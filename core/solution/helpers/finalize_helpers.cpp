@@ -813,8 +813,6 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 								vector<map<State*, double>>& halt_temp_state_weights,
 								map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
-	Scope* loop_scope = new_loop_scope_node->inner_scope;
-
 	for (int c_index = 0; c_index < (int)experiment_scope_context.size()-1; c_index++) {
 		int scope_depth = experiment_scope_context.size()-1 - c_index;
 		for (map<int, double>::iterator continue_it = continue_input_state_weights[c_index].begin();
@@ -822,28 +820,15 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 			double continue_weight = continue_it->second;
 			double halt_weight = halt_input_state_weights[c_index][continue_it->first];
 
-			int new_state_index;
 			map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
 				.find({scope_depth, {false, continue_it->first}});
 			if (input_it != input_scope_depths_mappings.end()) {
-				new_state_index = input_it->second;
-
-				/**
-				 * - potential_loop input/output
-				 */
-				int new_loop_scope_state_index;
-				for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-					if (new_loop_scope_node->input_outer_is_local[i_index] == false
-							&& new_loop_scope_node->input_outer_indexes[i_index] == new_state_index) {
-						new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-						break;
-					}
-				}
-
-				loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-				loop_scope->loop_continue_weights.push_back(continue_weight);
-				loop_scope->loop_halt_weights.push_back(halt_weight);
+				new_loop_scope_node->loop_state_is_local.push_back(false);
+				new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
+				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 			} else {
+				int new_state_index;
 				add_new_input(experiment_scope_context,
 							  experiment_node_context,
 							  scope_depth,
@@ -853,19 +838,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 				// no longer need to update input_scope_depths_mappings
 
-				int new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(false);
-				new_loop_scope_node->input_outer_indexes.push_back(new_state_index);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-
-				loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-				loop_scope->loop_continue_weights.push_back(continue_weight);
-				loop_scope->loop_halt_weights.push_back(halt_weight);
+				new_loop_scope_node->loop_state_is_local.push_back(false);
+				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 			}
 		}
 	}
@@ -875,30 +851,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 			double continue_weight = continue_it->second;
 			double halt_weight = halt_input_state_weights.back()[continue_it->first];
 
-			int new_loop_scope_state_index = -1;
-			for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-				if (new_loop_scope_node->input_outer_is_local[i_index] == false
-						&& new_loop_scope_node->input_outer_indexes[i_index] == continue_it->first) {
-					new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-					break;
-				}
-			}
-
-			if (new_loop_scope_state_index == -1) {
-				new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(false);
-				new_loop_scope_node->input_outer_indexes.push_back(continue_it->first);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-			}
-
-			loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-			loop_scope->loop_continue_weights.push_back(continue_weight);
-			loop_scope->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_state_is_local.push_back(false);
+			new_loop_scope_node->loop_state_indexes.push_back(continue_it->first);
+			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 		}
 	}
 
@@ -909,28 +865,15 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 			double continue_weight = continue_it->second;
 			double halt_weight = halt_local_state_weights[c_index][continue_it->first];
 
-			int new_state_index;
 			map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
 				.find({scope_depth, {true, continue_it->first}});
 			if (input_it != input_scope_depths_mappings.end()) {
-				new_state_index = input_it->second;
-
-				/**
-				 * - potential_loop input/output
-				 */
-				int new_loop_scope_state_index;
-				for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-					if (new_loop_scope_node->input_outer_is_local[i_index] == false
-							&& new_loop_scope_node->input_outer_indexes[i_index] == new_state_index) {
-						new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-						break;
-					}
-				}
-
-				loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-				loop_scope->loop_continue_weights.push_back(continue_weight);
-				loop_scope->loop_halt_weights.push_back(halt_weight);
+				new_loop_scope_node->loop_state_is_local.push_back(false);
+				new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
+				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 			} else {
+				int new_state_index;
 				add_new_input(experiment_scope_context,
 							  experiment_node_context,
 							  scope_depth,
@@ -940,19 +883,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 				// no longer need to update input_scope_depths_mappings
 
-				int new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(false);
-				new_loop_scope_node->input_outer_indexes.push_back(new_state_index);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-
-				loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-				loop_scope->loop_continue_weights.push_back(continue_weight);
-				loop_scope->loop_halt_weights.push_back(halt_weight);
+				new_loop_scope_node->loop_state_is_local.push_back(false);
+				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 			}
 		}
 	}
@@ -962,30 +896,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 			double continue_weight = continue_it->second;
 			double halt_weight = halt_local_state_weights.back()[continue_it->first];
 
-			int new_loop_scope_state_index = -1;
-			for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-				if (new_loop_scope_node->input_outer_is_local[i_index] == true
-						&& new_loop_scope_node->input_outer_indexes[i_index] == continue_it->first) {
-					new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-					break;
-				}
-			}
-
-			if (new_loop_scope_state_index == -1) {
-				new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(true);
-				new_loop_scope_node->input_outer_indexes.push_back(continue_it->first);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-			}
-
-			loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-			loop_scope->loop_continue_weights.push_back(continue_weight);
-			loop_scope->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_state_is_local.push_back(true);
+			new_loop_scope_node->loop_state_indexes.push_back(continue_it->first);
+			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 		}
 	}
 
@@ -1010,23 +924,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 				map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
 					.find({scope_depth, {true, outer_scope->temp_state_new_local_indexes[temp_state_index]}});
 				if (input_it != input_scope_depths_mappings.end()) {
-					int new_state_index = input_it->second;
-
-					/**
-					 * - potential_loop input/output
-					 */
-					int new_loop_scope_state_index;
-					for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-						if (new_loop_scope_node->input_outer_is_local[i_index] == false
-								&& new_loop_scope_node->input_outer_indexes[i_index] == new_state_index) {
-							new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-							break;
-						}
-					}
-
-					loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-					loop_scope->loop_continue_weights.push_back(continue_weight);
-					loop_scope->loop_halt_weights.push_back(halt_weight);
+					new_loop_scope_node->loop_state_is_local.push_back(false);
+					new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
+					new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+					new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 				} else {
 					int new_state_index;
 					duplicate_temp_state_helper(experiment_scope_context,
@@ -1037,19 +938,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 					// no longer need to update input_scope_depths_mappings
 
-					int new_loop_scope_state_index = loop_scope->num_input_states;
-					loop_scope->num_input_states++;
-
-					new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-					new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-					new_loop_scope_node->input_outer_is_local.push_back(false);
-					new_loop_scope_node->input_outer_indexes.push_back(new_state_index);
-					new_loop_scope_node->input_init_vals.push_back(0.0);
-					new_loop_scope_node->input_init_index_vals.push_back(0.0);
-
-					loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-					loop_scope->loop_continue_weights.push_back(continue_weight);
-					loop_scope->loop_halt_weights.push_back(halt_weight);
+					new_loop_scope_node->loop_state_is_local.push_back(false);
+					new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+					new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+					new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 				}
 			} else {
 				int new_state_index;
@@ -1062,19 +954,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 				// no longer need to update input_scope_depths_mappings
 
-				int new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(false);
-				new_loop_scope_node->input_outer_indexes.push_back(new_state_index);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-
-				loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-				loop_scope->loop_continue_weights.push_back(continue_weight);
-				loop_scope->loop_halt_weights.push_back(halt_weight);
+				new_loop_scope_node->loop_state_is_local.push_back(false);
+				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 			}
 		}
 	}
@@ -1106,30 +989,10 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 			int outer_index = outer_scope->temp_state_new_local_indexes[temp_state_index];
 
-			int new_loop_scope_state_index = -1;
-			for (int i_index = 0; i_index < (int)new_loop_scope_node->input_types.size(); i_index++) {
-				if (new_loop_scope_node->input_outer_is_local[i_index] == true
-						&& new_loop_scope_node->input_outer_indexes[i_index] == outer_index) {
-					new_loop_scope_state_index = new_loop_scope_node->input_inner_indexes[i_index];
-					break;
-				}
-			}
-
-			if (new_loop_scope_state_index == -1) {
-				new_loop_scope_state_index = loop_scope->num_input_states;
-				loop_scope->num_input_states++;
-
-				new_loop_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-				new_loop_scope_node->input_inner_indexes.push_back(new_loop_scope_state_index);
-				new_loop_scope_node->input_outer_is_local.push_back(true);
-				new_loop_scope_node->input_outer_indexes.push_back(outer_index);
-				new_loop_scope_node->input_init_vals.push_back(0.0);
-				new_loop_scope_node->input_init_index_vals.push_back(0.0);
-			}
-
-			loop_scope->loop_state_indexes.push_back(new_loop_scope_state_index);
-			loop_scope->loop_continue_weights.push_back(continue_weight);
-			loop_scope->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_state_is_local.push_back(true);
+			new_loop_scope_node->loop_state_indexes.push_back(outer_index);
+			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
 		}
 	}
 }

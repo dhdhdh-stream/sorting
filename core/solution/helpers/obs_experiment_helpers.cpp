@@ -163,15 +163,13 @@ void create_obs_experiment_experiment_helper(
 
 		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
 
-		for (int i_index = 0; i_index < (int)loop_experiment_history->iter_histories.size(); i_index++) {
-			create_obs_experiment_helper(scope_context,
-										 node_context,
-										 possible_nodes,
-										 possible_scope_contexts,
-										 possible_node_contexts,
-										 possible_obs_indexes,
-										 loop_experiment_history->iter_histories[i_index]->scope_history);
-		}
+		create_obs_experiment_helper(scope_context,
+									 node_context,
+									 possible_nodes,
+									 possible_scope_contexts,
+									 possible_node_contexts,
+									 possible_obs_indexes,
+									 loop_experiment_history->potential_loop_history->scope_history);
 
 		node_context.back() = -1;
 	}
@@ -384,13 +382,11 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 
 		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
 
-		for (int i_index = 0; i_index < (int)loop_experiment_history->iter_histories.size(); i_index++) {
-			flat_vals_helper(scope_context,
-							 node_context,
-							 loop_experiment_history->iter_histories[i_index]->scope_history,
-							 sum_vals,
-							 counts);
-		}
+		flat_vals_helper(scope_context,
+						 node_context,
+						 loop_experiment_history->potential_loop_history->scope_history,
+						 sum_vals,
+						 counts);
 
 		node_context.back() = -1;
 	}
@@ -556,13 +552,11 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 
 		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
 
-		for (int i_index = 0; i_index < (int)loop_experiment_history->iter_histories.size(); i_index++) {
-			rnn_vals_helper(scope_context,
-							node_context,
-							loop_experiment_history->iter_histories[i_index]->scope_history,
-							rnn_obs_experiment_indexes,
-							rnn_vals);
-		}
+		rnn_vals_helper(scope_context,
+						node_context,
+						loop_experiment_history->potential_loop_history->scope_history,
+						rnn_obs_experiment_indexes,
+						rnn_vals);
 
 		node_context.back() = -1;
 	}

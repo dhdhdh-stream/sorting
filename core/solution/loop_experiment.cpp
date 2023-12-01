@@ -50,15 +50,11 @@ LoopExperimentInstanceHistory::LoopExperimentInstanceHistory(LoopExperiment* exp
 LoopExperimentInstanceHistory::LoopExperimentInstanceHistory(LoopExperimentInstanceHistory* original) {
 	this->experiment = original->experiment;
 
-	for (int i_index = 0; i_index < (int)original->iter_histories.size(); i_index++) {
-		this->iter_histories.push_back(new PotentialScopeNodeHistory(original->iter_histories[i_index]));
-	}
+	this->potential_loop_history = new PotentialScopeNodeHistory(original->potential_loop_history);
 }
 
 LoopExperimentInstanceHistory::~LoopExperimentInstanceHistory() {
-	for (int i_index = 0; i_index < (int)this->iter_histories.size(); i_index++) {
-		delete this->iter_histories[i_index];
-	}
+	delete this->potential_loop_history;
 }
 
 LoopExperimentOverallHistory::LoopExperimentOverallHistory(LoopExperiment* experiment) {

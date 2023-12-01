@@ -51,6 +51,10 @@ public:
 	int state_iter;
 	int sub_state_iter;
 
+	/**
+	 * - when creating potential_loop, only use INPUT_TYPE_STATE so inputs don't get reset between iters
+	 *   - (and only either use matching state or empty)
+	 */
 	PotentialScopeNode* potential_loop;
 
 	double existing_average_score;
@@ -184,7 +188,7 @@ public:
 
 class LoopExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
-	std::vector<PotentialScopeNodeHistory*> iter_histories;
+	PotentialScopeNodeHistory* potential_loop_history;
 
 	LoopExperimentInstanceHistory(LoopExperiment* experiment);
 	LoopExperimentInstanceHistory(LoopExperimentInstanceHistory* original);

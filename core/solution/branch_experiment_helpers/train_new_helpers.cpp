@@ -107,9 +107,12 @@ void BranchExperiment::train_new_target_activate(
 			delete action_node_history;
 		} else {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			ScopeHistory* scope_history = new ScopeHistory(this->best_potential_scopes[s_index]->scope);
+			potential_scope_node_history->scope_history = scope_history;
 			this->best_potential_scopes[s_index]->activate(problem,
 														   context,
 														   run_helper,
+														   0,
 														   potential_scope_node_history);
 			delete potential_scope_node_history;
 		}
@@ -250,10 +253,13 @@ void BranchExperiment::train_new_non_target_activate(
 					action_node_history);
 			} else {
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+				ScopeHistory* scope_history = new ScopeHistory(this->best_potential_scopes[s_index]->scope);
+				potential_scope_node_history->scope_history = scope_history;
 				branch_experiment_history->step_histories.push_back(potential_scope_node_history);
 				this->best_potential_scopes[s_index]->activate(problem,
 															   context,
 															   run_helper,
+															   0,
 															   potential_scope_node_history);
 			}
 		}

@@ -112,16 +112,15 @@ void LoopExperiment::train_halt_target_activate(
 		}
 	}
 
+	PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+	ScopeHistory* scope_history = new ScopeHistory(this->potential_loop->scope);
+	potential_scope_node_history->scope_history = scope_history;
+	loop_experiment_history->potential_loop_history = potential_scope_node_history;
 	for (int iter_index = 0; iter_index < this->sub_state_iter%TRAIN_ITER_LIMIT; iter_index++) {
-		/**
-		 * - when creating potential_loop, only use INPUT_TYPE_STATE so inputs don't get reset between iters
-		 *   - (and only either use matching state or empty)
-		 */
-		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
-		loop_experiment_history->iter_histories.push_back(potential_scope_node_history);
 		this->potential_loop->activate(problem,
 									   context,
 									   run_helper,
+									   iter_index,
 									   potential_scope_node_history);
 	}
 
@@ -149,6 +148,11 @@ void LoopExperiment::train_halt_non_target_activate(
 		AbstractExperimentHistory*& history) {
 	LoopExperimentInstanceHistory* loop_experiment_history = new LoopExperimentInstanceHistory(this);
 	history = loop_experiment_history;
+
+	PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+	ScopeHistory* scope_history = new ScopeHistory(this->potential_loop->scope);
+	potential_scope_node_history->scope_history = scope_history;
+	loop_experiment_history->potential_loop_history = potential_scope_node_history;
 
 	int iter_index = 0;
 	while (true) {
@@ -256,11 +260,10 @@ void LoopExperiment::train_halt_non_target_activate(
 		if (decision_is_halt) {
 			break;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
-			loop_experiment_history->iter_histories.push_back(potential_scope_node_history);
 			this->potential_loop->activate(problem,
 										   context,
 										   run_helper,
+										   iter_index,
 										   potential_scope_node_history);
 
 			if (run_helper.exceeded_limit) {

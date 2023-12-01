@@ -29,6 +29,7 @@ void OuterExperiment::measure_existing_score_activate(
 							 exit_depth,
 							 exit_node,
 							 run_helper,
+							 0,
 							 root_history);
 
 	delete root_history;

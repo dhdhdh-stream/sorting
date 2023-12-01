@@ -49,6 +49,18 @@ public:
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
 
+	bool is_loop;
+
+	double continue_score_mod;
+	double halt_score_mod;
+
+	std::vector<bool> loop_state_is_local;
+	std::vector<int> loop_state_indexes;
+	std::vector<double> loop_continue_weights;
+	std::vector<double> loop_halt_weights;
+
+	int max_iters;
+
 	int next_node_id;
 	AbstractNode* next_node;
 
@@ -57,6 +69,9 @@ public:
 	void* verify_key;
 	std::vector<std::vector<double>> verify_input_state_vals;
 	std::vector<std::vector<double>> verify_output_state_vals;
+	std::vector<double> verify_continue_scores;
+	std::vector<double> verify_halt_scores;
+	std::vector<std::vector<double>> verify_factors;
 
 	ScopeNode();
 	~ScopeNode();

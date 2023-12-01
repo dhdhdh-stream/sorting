@@ -5,10 +5,12 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "full_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -103,56 +105,215 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->verify_activate(problem,
-									   context,
-									   inner_exit_depth,
-									   inner_exit_node,
-									   run_helper);
+	if (this->is_loop) {
+		int iter_index = 0;
+		while (true) {
+			if (iter_index > this->max_iters+3) {
+				run_helper.exceeded_limit = true;
+				break;
+			}
 
-	vector<double> output_state_vals;
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-		if (inner_it != context.back().input_state_vals.end()) {
-			if (this->output_outer_is_local[o_index]) {
-				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-				output_state_vals.push_back(inner_it->second.val);
+			double continue_score = this->continue_score_mod;
+			double halt_score = this->halt_score_mod;
+
+			vector<double> factors;
+
+			for (int s_index = 0; s_index < (int)this->loop_state_is_local.size(); s_index++) {
+				if (this->loop_state_is_local[s_index]) {
+					map<int, StateStatus>::iterator it = context[context.size()-2].local_state_vals.find(this->loop_state_indexes[s_index]);
+					if (it != context[context.size()-2].local_state_vals.end()) {
+						FullNetwork* last_network = it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							continue_score += this->loop_continue_weights[s_index] * normalized;
+							halt_score += this->loop_halt_weights[s_index] * normalized;
+
+							factors.push_back(normalized);
+						} else {
+							continue_score += this->loop_continue_weights[s_index] * it->second.val;
+							halt_score += this->loop_halt_weights[s_index] * it->second.val;
+
+							factors.push_back(it->second.val);
+						}
+					}
+				} else {
+					map<int, StateStatus>::iterator it = context[context.size()-2].input_state_vals.find(this->loop_state_indexes[s_index]);
+					if (it != context[context.size()-2].input_state_vals.end()) {
+						FullNetwork* last_network = it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							continue_score += this->loop_continue_weights[s_index] * normalized;
+							halt_score += this->loop_halt_weights[s_index] * normalized;
+
+							factors.push_back(normalized);
+						} else {
+							continue_score += this->loop_continue_weights[s_index] * it->second.val;
+							halt_score += this->loop_halt_weights[s_index] * it->second.val;
+
+							factors.push_back(it->second.val);
+						}
+					}
+				}
+			}
+
+			if (this->verify_key == run_helper.verify_key) {
+				cout << "loop problem:";
+				for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+					cout << " " << problem.initial_world[s_index];
+				}
+				cout << endl;
+
+				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
+				sort(factors.begin(), factors.end());
+				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
+
+				if (this->verify_continue_scores[0] != continue_score
+						|| this->verify_halt_scores[0] != halt_score
+						|| this->verify_factors[0] != factors) {
+					cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
+					cout << "this->verify_continue_scores[0]: " << this->verify_continue_scores[0] << endl;
+					cout << "continue_score: " << continue_score << endl;
+
+					cout << "this->verify_halt_scores[0]: " << this->verify_halt_scores[0] << endl;
+					cout << "halt_score: " << halt_score << endl;
+
+					cout << "this->verify_factors[0]" << endl;
+					for (int f_index = 0; f_index < (int)this->verify_factors[0].size(); f_index++) {
+						cout << f_index << ": " << this->verify_factors[0][f_index] << endl;
+					}
+					cout << "factors" << endl;
+					for (int f_index = 0; f_index < (int)factors.size(); f_index++) {
+						cout << f_index << ": " << factors[f_index] << endl;
+					}
+
+					throw invalid_argument("loop verify fail");
+				}
+
+				this->verify_continue_scores.erase(this->verify_continue_scores.begin());
+				this->verify_halt_scores.erase(this->verify_halt_scores.begin());
+				this->verify_factors.erase(this->verify_factors.begin());
+			}
+
+			#if defined(MDEBUG) && MDEBUG
+			bool decision_is_halt;
+			if (run_helper.curr_run_seed%2 == 0) {
+				decision_is_halt = true;
 			} else {
-				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-				if (outer_it != context[context.size()-2].input_state_vals.end()) {
-					outer_it->second = inner_it->second;
-					output_state_vals.push_back(inner_it->second.val);
+				decision_is_halt = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			bool decision_is_halt = halt_score > continue_score;
+			#endif /* MDEBUG */
+
+			if (decision_is_halt) {
+				break;
+			} else {
+				this->inner_scope->verify_activate(problem,
+												   context,
+												   inner_exit_depth,
+												   inner_exit_node,
+												   run_helper);
+
+				vector<double> output_state_vals;
+				for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+					map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+					if (inner_it != context.back().input_state_vals.end()) {
+						if (this->output_outer_is_local[o_index]) {
+							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+							output_state_vals.push_back(inner_it->second.val);
+						} else {
+							map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+							if (outer_it != context[context.size()-2].input_state_vals.end()) {
+								outer_it->second = inner_it->second;
+								output_state_vals.push_back(inner_it->second.val);
+							}
+						}
+					}
+				}
+
+				if (this->verify_key == run_helper.verify_key) {
+					sort(output_state_vals.begin(), output_state_vals.end());
+					sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
+
+					if (this->verify_output_state_vals[0] != output_state_vals) {
+						cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
+						cout << "this->verify_output_state_vals[0]" << endl;
+						for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
+							cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;
+						}
+
+						cout << "output_state_vals" << endl;
+						for (int v_index = 0; v_index < (int)output_state_vals.size(); v_index++) {
+							cout << v_index << ": " << output_state_vals[v_index] << endl;
+						}
+
+						throw invalid_argument("scope node verify fail");
+					}
+
+					this->verify_output_state_vals.erase(this->verify_output_state_vals.begin());
+				}
+
+				if (inner_exit_depth != -1
+						|| run_helper.exceeded_limit) {
+					break;
+				} else {
+					iter_index++;
+					// continue
 				}
 			}
 		}
-	}
-	/**
-	 * - intuitively, pass by reference out
-	 *   - so keep even if early exit
-	 * 
-	 * - also will be how inner branches affect outer scopes on early exit
-	 */
+	} else {
+		this->inner_scope->verify_activate(problem,
+										   context,
+										   inner_exit_depth,
+										   inner_exit_node,
+										   run_helper);
 
-	if (this->verify_key == run_helper.verify_key) {
-		sort(output_state_vals.begin(), output_state_vals.end());
-		sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
-
-		if (this->verify_output_state_vals[0] != output_state_vals) {
-			cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
-			cout << "this->verify_output_state_vals[0]" << endl;
-			for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
-				cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;
+		vector<double> output_state_vals;
+		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+					output_state_vals.push_back(inner_it->second.val);
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
+						output_state_vals.push_back(inner_it->second.val);
+					}
+				}
 			}
-
-			cout << "output_state_vals" << endl;
-			for (int v_index = 0; v_index < (int)output_state_vals.size(); v_index++) {
-				cout << v_index << ": " << output_state_vals[v_index] << endl;
-			}
-
-			throw invalid_argument("scope node verify fail");
 		}
 
-		this->verify_output_state_vals.erase(this->verify_output_state_vals.begin());
+		if (this->verify_key == run_helper.verify_key) {
+			sort(output_state_vals.begin(), output_state_vals.end());
+			sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
+
+			if (this->verify_output_state_vals[0] != output_state_vals) {
+				cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
+				cout << "this->verify_output_state_vals[0]" << endl;
+				for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
+					cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;
+				}
+
+				cout << "output_state_vals" << endl;
+				for (int v_index = 0; v_index < (int)output_state_vals.size(); v_index++) {
+					cout << v_index << ": " << output_state_vals[v_index] << endl;
+				}
+
+				throw invalid_argument("scope node verify fail");
+			}
+
+			this->verify_output_state_vals.erase(this->verify_output_state_vals.begin());
+		}
 	}
 
 	context.pop_back();

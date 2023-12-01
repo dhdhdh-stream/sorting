@@ -205,9 +205,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+				ScopeHistory* scope_history = new ScopeHistory(new_potential_scope_node->scope);
+				potential_scope_node_history->scope_history = scope_history;
 				new_potential_scope_node->activate(problem,
 												   context,
 												   run_helper,
+												   0,
 												   potential_scope_node_history);
 				delete potential_scope_node_history;
 			}

@@ -25,6 +25,7 @@ PotentialScopeNode::~PotentialScopeNode() {
 void PotentialScopeNode::activate(Problem& problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
+								  int iter_index,
 								  PotentialScopeNodeHistory* history) {
 	map<int, StateStatus> input_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
@@ -65,8 +66,6 @@ void PotentialScopeNode::activate(Problem& problem,
 
 	context.back().input_state_vals = input_state_vals;
 
-	ScopeHistory* scope_history = new ScopeHistory(this->scope);
-	history->scope_history = scope_history;
 	// no need to set context.back().scope_history
 
 	// unused
@@ -78,7 +77,8 @@ void PotentialScopeNode::activate(Problem& problem,
 						  inner_exit_depth,
 						  inner_exit_node,
 						  run_helper,
-						  scope_history);
+						  iter_index,
+						  history->scope_history);
 
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
@@ -176,6 +176,7 @@ void PotentialScopeNode::capture_verify_activate(Problem& problem,
 						  inner_exit_depth,
 						  inner_exit_node,
 						  run_helper,
+						  0,
 						  scope_history);
 	delete scope_history;
 

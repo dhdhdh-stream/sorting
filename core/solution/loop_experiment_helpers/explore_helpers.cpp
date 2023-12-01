@@ -104,14 +104,17 @@ void LoopExperiment::explore_target_activate(Problem& problem,
 	LoopExperimentOverallHistory* overall_history = (LoopExperimentOverallHistory*)run_helper.experiment_history;
 	overall_history->start_predicted_score = start_score;
 
+	PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+	ScopeHistory* scope_history = new ScopeHistory(this->potential_loop->scope);
+	potential_scope_node_history->scope_history = scope_history;
 	for (int iter_index = 0; iter_index < 1 + this->state_iter; iter_index++) {
-		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
 		this->potential_loop->activate(problem,
 									   context,
 									   run_helper,
+									   iter_index,
 									   potential_scope_node_history);
-		delete potential_scope_node_history;
 	}
+	delete potential_scope_node_history;
 }
 
 void LoopExperiment::explore_backprop(double target_val,

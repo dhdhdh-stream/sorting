@@ -105,6 +105,7 @@ int main(int argc, char* argv[]) {
 										 exit_depth,
 										 exit_node,
 										 run_helper,
+										 0,
 										 root_history);
 
 				double target_val;

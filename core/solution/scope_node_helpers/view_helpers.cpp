@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
+#include "full_network.h"
 #include "scope.h"
 #include "state.h"
 
@@ -54,23 +55,113 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->inner_scope->view_activate(problem,
-									 context,
-									 inner_exit_depth,
-									 inner_exit_node,
-									 run_helper);
+	if (this->is_loop) {
+		int iter_index = 0;
+		while (true) {
+			cout << "iter_index: " << iter_index << endl;
 
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-		if (inner_it != context.back().input_state_vals.end()) {
-			if (this->output_outer_is_local[o_index]) {
-				context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-				cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+			if (iter_index > this->max_iters+3) {
+				run_helper.exceeded_limit = true;
+				cout << "loop exceeded limit" << endl;
+				break;
+			}
+
+			double continue_score = this->continue_score_mod;
+			double halt_score = this->halt_score_mod;
+
+			for (int s_index = 0; s_index < (int)this->loop_state_is_local.size(); s_index++) {
+				cout << "s_index: " << s_index << endl;
+				if (this->loop_state_is_local[s_index]) {
+					map<int, StateStatus>::iterator it = context[context.size()-2].local_state_vals.find(this->loop_state_indexes[s_index]);
+					if (it != context[context.size()-2].local_state_vals.end()) {
+						FullNetwork* last_network = it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							continue_score += this->loop_continue_weights[s_index] * normalized;
+							halt_score += this->loop_halt_weights[s_index] * normalized;
+							cout << "local normalized: " << normalized << endl;
+						} else {
+							continue_score += this->loop_continue_weights[s_index] * it->second.val;
+							halt_score += this->loop_halt_weights[s_index] * it->second.val;
+							cout << "local it->second.val: " << it->second.val << endl;
+						}
+					}
+				} else {
+					map<int, StateStatus>::iterator it = context[context.size()-2].input_state_vals.find(this->loop_state_indexes[s_index]);
+					if (it != context[context.size()-2].input_state_vals.end()) {
+						FullNetwork* last_network = it->second.last_network;
+						if (last_network != NULL) {
+							double normalized = (it->second.val - last_network->ending_mean)
+								/ last_network->ending_standard_deviation;
+							continue_score += this->loop_continue_weights[s_index] * normalized;
+							halt_score += this->loop_halt_weights[s_index] * normalized;
+							cout << "input normalized: " << normalized << endl;
+						} else {
+							continue_score += this->loop_continue_weights[s_index] * it->second.val;
+							halt_score += this->loop_halt_weights[s_index] * it->second.val;
+							cout << "input it->second.val: " << it->second.val << endl;
+						}
+					}
+				}
+			}
+
+			cout << "continue_score: " << continue_score << endl;
+			cout << "halt_score: " << halt_score << endl;
+
+			if (halt_score > continue_score) {
+				break;
 			} else {
-				map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-				if (outer_it != context[context.size()-2].input_state_vals.end()) {
-					outer_it->second = inner_it->second;
-					cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+				this->inner_scope->view_activate(problem,
+												 context,
+												 inner_exit_depth,
+												 inner_exit_node,
+												 run_helper);
+
+				for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+					map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+					if (inner_it != context.back().input_state_vals.end()) {
+						if (this->output_outer_is_local[o_index]) {
+							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+							cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+						} else {
+							map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+							if (outer_it != context[context.size()-2].input_state_vals.end()) {
+								outer_it->second = inner_it->second;
+								cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+							}
+						}
+					}
+				}
+
+				if (inner_exit_depth != -1
+						|| run_helper.exceeded_limit) {
+					break;
+				} else {
+					iter_index++;
+					// continue
+				}
+			}
+		}
+	} else {
+		this->inner_scope->view_activate(problem,
+										 context,
+										 inner_exit_depth,
+										 inner_exit_node,
+										 run_helper);
+
+		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+					cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
+						cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+					}
 				}
 			}
 		}

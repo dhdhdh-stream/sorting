@@ -87,9 +87,12 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+				ScopeHistory* scope_history = new ScopeHistory(new_potential_scope_node->scope);
+				potential_scope_node_history->scope_history = scope_history;
 				new_potential_scope_node->activate(problem,
 												   context,
 												   run_helper,
+												   0,
 												   potential_scope_node_history);
 				delete potential_scope_node_history;
 			}
@@ -128,9 +131,12 @@ void PassThroughExperiment::explore_activate(AbstractNode*& curr_node,
 			delete action_node_history;
 		} else {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			ScopeHistory* scope_history = new ScopeHistory(this->curr_potential_scopes[s_index]->scope);
+			potential_scope_node_history->scope_history = scope_history;
 			this->curr_potential_scopes[s_index]->activate(problem,
 														   context,
 														   run_helper,
+														   0,
 														   potential_scope_node_history);
 			delete potential_scope_node_history;
 		}

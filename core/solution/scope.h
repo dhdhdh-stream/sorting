@@ -33,31 +33,12 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
-	// TODO: move loop code to scope node
-	// - otherwise, if decision needs state that is not needed in scope, will be conflict
-	bool is_loop;
-
-	double continue_score_mod;
-	double halt_score_mod;
-
-	// loop_state_is_local = true
-	std::vector<int> loop_state_indexes;
-	std::vector<double> loop_continue_weights;
-	std::vector<double> loop_halt_weights;
-
-	int max_iters;
-
 	std::vector<State*> temp_states;
 	std::vector<std::vector<ActionNode*>> temp_state_nodes;
 	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;
 	std::vector<std::vector<std::vector<int>>> temp_state_node_contexts;
 	std::vector<std::vector<int>> temp_state_obs_indexes;
 	std::vector<int> temp_state_new_local_indexes;
-
-	void* verify_key;
-	std::vector<double> verify_continue_scores;
-	std::vector<double> verify_halt_scores;
-	std::vector<std::vector<double>> verify_factors;
 
 	Scope();
 	~Scope();
@@ -67,6 +48,7 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
+				  int iter_index,
 				  ScopeHistory* history);
 
 	void random_activate(std::vector<Scope*>& scope_context,

@@ -50,10 +50,13 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 					run_helper);
 			} else {
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+				ScopeHistory* scope_history = new ScopeHistory(this->best_potential_scopes[s_index]->scope);
+				potential_scope_node_history->scope_history = scope_history;
 				instance_history->pre_step_histories.push_back(potential_scope_node_history);
 				this->best_potential_scopes[s_index]->activate(problem,
 															   context,
 															   run_helper,
+															   0,
 															   potential_scope_node_history);
 			}
 		}
@@ -108,10 +111,13 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 							run_helper);
 					} else {
 						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+						ScopeHistory* scope_history = new ScopeHistory(this->best_potential_scopes[s_index]->scope);
+						potential_scope_node_history->scope_history = scope_history;
 						instance_history->post_step_histories.push_back(potential_scope_node_history);
 						this->best_potential_scopes[s_index]->activate(problem,
 																	   context,
 																	   run_helper,
+																	   0,
 																	   potential_scope_node_history);
 					}
 				}

@@ -7,6 +7,7 @@
 #include "full_network.h"
 #include "globals.h"
 #include "potential_scope_node.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
@@ -18,6 +19,10 @@ void LoopExperiment::verify_activate(Problem& problem,
 									 vector<ContextLayer>& context,
 									 RunHelper& run_helper) {
 	this->measure_num_instances++;
+
+	PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+	ScopeHistory* scope_history = new ScopeHistory(this->potential_loop->scope);
+	potential_scope_node_history->scope_history = scope_history;
 
 	int iter_index = 0;
 	while (true) {
@@ -125,12 +130,11 @@ void LoopExperiment::verify_activate(Problem& problem,
 		if (decision_is_halt) {
 			break;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
 			this->potential_loop->activate(problem,
 										   context,
 										   run_helper,
+										   iter_index,
 										   potential_scope_node_history);
-			delete potential_scope_node_history;
 
 			if (run_helper.exceeded_limit) {
 				break;
@@ -140,6 +144,8 @@ void LoopExperiment::verify_activate(Problem& problem,
 			}
 		}
 	}
+
+	delete potential_scope_node_history;
 
 	this->measure_sum_iters += iter_index;
 }

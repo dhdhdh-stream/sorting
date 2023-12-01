@@ -17,6 +17,11 @@ ScopeNode::ScopeNode() {
 
 	this->id = -1;
 
+	this->is_loop = false;
+	this->continue_score_mod = 0.0;
+	this->halt_score_mod = 0.0;
+	this->max_iters = 0;
+
 	this->experiment = NULL;
 
 	this->verify_key = NULL;
@@ -45,7 +50,10 @@ void ScopeNode::fail_reset() {
 void ScopeNode::clear_verify() {
 	this->verify_key = NULL;
 	if (this->verify_input_state_vals.size() > 0
-			|| this->verify_output_state_vals.size() > 0) {
+			|| this->verify_output_state_vals.size() > 0
+			|| this->verify_continue_scores.size() > 0
+			|| this->verify_halt_scores.size() > 0
+			|| this->verify_factors.size() > 0) {
 		throw invalid_argument("scope node remaining verify");
 	}
 }
@@ -69,6 +77,21 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->output_outer_is_local[o_index] << endl;
 		output_file << this->output_outer_indexes[o_index] << endl;
 	}
+
+	output_file << this->is_loop << endl;
+
+	output_file << this->continue_score_mod << endl;
+	output_file << this->halt_score_mod << endl;
+
+	output_file << this->loop_state_indexes.size() << endl;
+	for (int s_index = 0; s_index < (int)this->loop_state_indexes.size(); s_index++) {
+		output_file << this->loop_state_is_local[s_index] << endl;
+		output_file << this->loop_state_indexes[s_index] << endl;
+		output_file << this->loop_continue_weights[s_index] << endl;
+		output_file << this->loop_halt_weights[s_index] << endl;
+	}
+
+	output_file << this->max_iters << endl;
 
 	output_file << this->next_node_id << endl;
 }
@@ -123,6 +146,43 @@ void ScopeNode::load(ifstream& input_file) {
 		getline(input_file, outer_index_line);
 		this->output_outer_indexes.push_back(stoi(outer_index_line));
 	}
+
+	string is_loop_line;
+	getline(input_file, is_loop_line);
+	this->is_loop = stoi(is_loop_line);
+
+	string continue_score_mod_line;
+	getline(input_file, continue_score_mod_line);
+	this->continue_score_mod = stod(continue_score_mod_line);
+
+	string halt_score_mod_line;
+	getline(input_file, halt_score_mod_line);
+	this->halt_score_mod = stod(halt_score_mod_line);
+
+	string loop_state_size_line;
+	getline(input_file, loop_state_size_line);
+	int loop_state_size = stoi(loop_state_size_line);
+	for (int s_index = 0; s_index < loop_state_size; s_index++) {
+		string is_local_line;
+		getline(input_file, is_local_line);
+		this->loop_state_is_local.push_back(stoi(is_local_line));
+
+		string index_line;
+		getline(input_file, index_line);
+		this->loop_state_indexes.push_back(stoi(index_line));
+
+		string continue_weight_line;
+		getline(input_file, continue_weight_line);
+		this->loop_continue_weights.push_back(stod(continue_weight_line));
+
+		string halt_weight_line;
+		getline(input_file, halt_weight_line);
+		this->loop_halt_weights.push_back(stod(halt_weight_line));
+	}
+
+	string max_iters_line;
+	getline(input_file, max_iters_line);
+	this->max_iters = stoi(max_iters_line);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
