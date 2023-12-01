@@ -233,7 +233,6 @@ int main(int argc, char* argv[]) {
 
 				while (solution->verify_problems.size() > 0) {
 					Problem problem = solution->verify_problems[0];
-					solution->verify_problems.erase(solution->verify_problems.begin());
 
 					RunHelper run_helper;
 					run_helper.verify_key = solution->verify_key;
@@ -259,6 +258,8 @@ int main(int argc, char* argv[]) {
 													exit_depth,
 													exit_node,
 													run_helper);
+
+					solution->verify_problems.erase(solution->verify_problems.begin());
 				}
 				solution->clear_verify();
 

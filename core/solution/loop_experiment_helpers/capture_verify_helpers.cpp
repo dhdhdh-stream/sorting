@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 #include "utilities.h"
 
 using namespace std;
@@ -33,6 +34,33 @@ void LoopExperiment::capture_verify_activate(
 			run_helper.exceeded_limit = true;
 			break;
 		}
+
+		// cout << "problem:";
+		// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+		// 	cout << " " << problem.initial_world[s_index];
+		// }
+		// cout << endl;
+
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
+		// 			it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
+		// 		cout << "input " << c_index << " " << it->first << " " << it->second.val << endl;
+		// 	}
+		// }
+
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
+		// 			it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
+		// 		cout << "local " << c_index << " " << it->first << " " << it->second.val << endl;
+		// 	}
+		// }
+
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
+		// 			it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
+		// 		cout << "temp " << c_index << " " << it->first->id << " " << it->second.val << endl;
+		// 	}
+		// }
 
 		double continue_score = this->continue_constant;
 		double halt_score = this->halt_constant;
@@ -110,36 +138,32 @@ void LoopExperiment::capture_verify_activate(
 		}
 
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
-				double continue_weight = 0.0;
-				map<State*, double>::iterator continue_weight_it = this->continue_temp_state_weights[c_index].find(it->first);
-				if (continue_weight_it != this->continue_temp_state_weights[c_index].end()) {
-					continue_weight = continue_weight_it->second;
-				}
-				double halt_weight = 0.0;
-				map<State*, double>::iterator halt_weight_it = this->halt_temp_state_weights[c_index].find(it->first);
-				if (halt_weight_it != this->halt_temp_state_weights[c_index].end()) {
-					halt_weight = halt_weight_it->second;
-				}
+			/**
+			 * -switch order to match finalize
+			 */
+			for (map<State*, double>::iterator continue_weight_it = this->continue_temp_state_weights[c_index].begin();
+					continue_weight_it != this->continue_temp_state_weights[c_index].end(); continue_weight_it++) {
+				map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.find(continue_weight_it->first);
+				if (it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end()) {
+					double continue_weight = continue_weight_it->second;
+					double halt_weight = this->halt_temp_state_weights[c_index][continue_weight_it->first];
 
-				FullNetwork* last_network = it->second.last_network;
-				if (last_network != NULL) {
-					double normalized = (it->second.val - last_network->ending_mean)
-						/ last_network->ending_standard_deviation;
-					continue_score += continue_weight * normalized;
-					halt_score += halt_weight * normalized;
+					FullNetwork* last_network = it->second.last_network;
+					if (last_network != NULL) {
+						double normalized = (it->second.val - last_network->ending_mean)
+							/ last_network->ending_standard_deviation;
+						continue_score += continue_weight * normalized;
+						halt_score += halt_weight * normalized;
 
-					if (continue_weight_it != this->continue_temp_state_weights[c_index].end()) {
 						factors.push_back(normalized);
-					}
-				} else {
-					continue_score += continue_weight * it->second.val;
-					halt_score += halt_weight * it->second.val;
+					} else {
+						continue_score += continue_weight * it->second.val;
+						halt_score += halt_weight * it->second.val;
 
-					if (continue_weight_it != this->continue_temp_state_weights[c_index].end()) {
 						factors.push_back(it->second.val);
 					}
+				} else {
+					factors.push_back(0.0);
 				}
 			}
 		}
@@ -149,6 +173,7 @@ void LoopExperiment::capture_verify_activate(
 		this->verify_factors.push_back(factors);
 
 		#if defined(MDEBUG) && MDEBUG
+		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		bool decision_is_halt;
 		if (run_helper.curr_run_seed%2 == 0) {
 			decision_is_halt = true;
@@ -163,10 +188,12 @@ void LoopExperiment::capture_verify_activate(
 		if (decision_is_halt) {
 			break;
 		} else {
-			this->potential_loop->capture_verify_activate(
-				problem,
-				context,
-				run_helper);
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->potential_loop);
+			this->potential_loop->activate(problem,
+										   context,
+										   run_helper,
+										   potential_scope_node_history);
+			delete potential_scope_node_history;
 
 			if (run_helper.exceeded_limit) {
 				break;
@@ -181,7 +208,6 @@ void LoopExperiment::capture_verify_activate(
 void LoopExperiment::capture_verify_backprop() {
 	this->state_iter++;
 	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-		this->potential_loop->scope_node_placeholder->verify_key = this;
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
 		#if defined(MDEBUG) && MDEBUG

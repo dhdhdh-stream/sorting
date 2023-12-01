@@ -45,11 +45,11 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	}
 
 	if (this->verify_key == run_helper.verify_key) {
-		// cout << "scope problem:";
-		// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-		// 	cout << " " << problem.initial_world[s_index];
-		// }
-		// cout << endl;
+		cout << "scope problem:";
+		for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+			cout << " " << problem.initial_world[s_index];
+		}
+		cout << endl;
 
 		// cout << "context scope" << endl;
 		// for (int c_index = 0; c_index < (int)context.size(); c_index++) {

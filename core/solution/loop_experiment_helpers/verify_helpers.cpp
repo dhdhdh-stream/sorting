@@ -180,46 +180,6 @@ void LoopExperiment::verify_backprop(double target_val) {
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 			#endif /* MDEBUG */
 
-			set<int> needed_state;
-			for (map<State*, double>::iterator it = this->continue_temp_state_weights[0].begin();
-					it != this->continue_temp_state_weights[0].end(); it++) {
-				for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
-					if (this->new_states[ns_index] == it->first) {
-						needed_state.insert(ns_index);
-						break;
-					}
-				}
-			}
-
-			for (set<int>::iterator it = needed_state.begin(); it != needed_state.end(); it++) {
-				for (int n_index = 0; n_index < (int)this->new_state_nodes[*it].size(); n_index++) {
-					bool matches_scope = true;
-					if (this->new_state_scope_contexts[*it][n_index].size() < this->scope_context.size()) {
-						matches_scope = false;
-					} else {
-						for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-							if (this->new_state_scope_contexts[*it][n_index][c_index] != this->scope_context[c_index]) {
-								matches_scope = false;
-								break;
-							}
-						}
-						for (int c_index = 0; c_index < (int)this->node_context.size()-1; c_index++) {
-							if (this->new_state_node_contexts[*it][n_index][c_index] != this->node_context[c_index]) {
-								matches_scope = false;
-								break;
-							}
-						}
-					}
-
-					if (matches_scope) {
-						if (this->potential_loop->scope_node_placeholder->id
-								== this->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
-							this->potential_loop->used_experiment_states.insert(this->new_states[*it]);
-						}
-					}
-				}
-			}
-
 			this->state = LOOP_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
 		} else {

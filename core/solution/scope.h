@@ -33,6 +33,8 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
+	// TODO: move loop code to scope node
+	// - otherwise, if decision needs state that is not needed in scope, will be conflict
 	bool is_loop;
 
 	double continue_score_mod;

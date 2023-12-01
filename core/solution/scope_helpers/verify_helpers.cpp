@@ -114,6 +114,27 @@ void Scope::verify_activate(Problem& problem,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
+				cout << "loop problem:";
+				for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+					cout << " " << problem.initial_world[s_index];
+				}
+				cout << endl;
+
+				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
+				// temp
+				cout << "this->loop_state_indexes.size(): " << this->loop_state_indexes.size() << endl;
+				cout << "input state" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+						it != context.back().input_state_vals.end(); it++) {
+					cout << it->second.val << endl;
+				}
+				cout << "local state" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+						it != context.back().local_state_vals.end(); it++) {
+					cout << it->second.val << endl;
+				}
+
 				sort(factors.begin(), factors.end());
 				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
 
@@ -190,6 +211,19 @@ void Scope::verify_activate(Problem& problem,
 				} else {
 					iter_index++;
 					// continue
+				}
+			}
+
+			if (this->verify_key == run_helper.verify_key) {
+				cout << "end input state" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+						it != context.back().input_state_vals.end(); it++) {
+					cout << it->second.val << endl;
+				}
+				cout << "end local state" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+						it != context.back().local_state_vals.end(); it++) {
+					cout << it->second.val << endl;
 				}
 			}
 		}
