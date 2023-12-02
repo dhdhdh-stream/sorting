@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "full_network.h"
 #include "globals.h"
@@ -45,6 +46,9 @@ void LoopExperiment::capture_verify_activate(
 		// }
 		// cout << endl;
 
+		// cout << "curr_problem:" << endl;
+		// problem.print();
+
 		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		// 	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
 		// 			it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
@@ -72,70 +76,59 @@ void LoopExperiment::capture_verify_activate(
 		vector<double> factors;
 
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
-				double continue_weight = 0.0;
-				map<int, double>::iterator continue_weight_it = this->continue_input_state_weights[c_index].find(it->first);
-				if (continue_weight_it != this->continue_input_state_weights[c_index].end()) {
-					continue_weight = continue_weight_it->second;
-				}
-				double halt_weight = 0.0;
-				map<int, double>::iterator halt_weight_it = this->halt_input_state_weights[c_index].find(it->first);
-				if (halt_weight_it != this->halt_input_state_weights[c_index].end()) {
-					halt_weight = halt_weight_it->second;
-				}
+			for (map<int, double>::iterator continue_weight_it = this->continue_input_state_weights[c_index].begin();
+					continue_weight_it != this->continue_input_state_weights[c_index].end(); continue_weight_it++) {
+				map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.find(continue_weight_it->first);
+				if (it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end()) {
+					double continue_weight = continue_weight_it->second;
+					double halt_weight = this->halt_input_state_weights[c_index][continue_weight_it->first];
 
-				FullNetwork* last_network = it->second.last_network;
-				if (last_network != NULL) {
-					double normalized = (it->second.val - last_network->ending_mean)
-						/ last_network->ending_standard_deviation;
-					continue_score += continue_weight * normalized;
-					halt_score += halt_weight * normalized;
+					FullNetwork* last_network = it->second.last_network;
+					if (last_network != NULL) {
+						double normalized = (it->second.val - last_network->ending_mean)
+							/ last_network->ending_standard_deviation;
+						continue_score += continue_weight * normalized;
+						halt_score += halt_weight * normalized;
 
-					if (continue_weight_it != this->continue_input_state_weights[c_index].end()) {
 						factors.push_back(normalized);
-					}
-				} else {
-					continue_score += continue_weight * it->second.val;
-					halt_score += halt_weight * it->second.val;
+					} else {
+						continue_score += continue_weight * it->second.val;
+						halt_score += halt_weight * it->second.val;
 
-					if (continue_weight_it != this->continue_input_state_weights[c_index].end()) {
-						factors.push_back(it->second.val);
+						if (it->second.val != 0.0) {
+							factors.push_back(it->second.val);
+						}
 					}
 				}
 			}
 		}
 
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-			for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
-					it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
-				double continue_weight = 0.0;
-				map<int, double>::iterator continue_weight_it = this->continue_local_state_weights[c_index].find(it->first);
-				if (continue_weight_it != this->continue_local_state_weights[c_index].end()) {
-					continue_weight = continue_weight_it->second;
-				}
-				double halt_weight = 0.0;
-				map<int, double>::iterator halt_weight_it = this->halt_local_state_weights[c_index].find(it->first);
-				if (halt_weight_it != this->halt_local_state_weights[c_index].end()) {
-					halt_weight = halt_weight_it->second;
-				}
+			for (map<int, double>::iterator continue_weight_it = this->continue_local_state_weights[c_index].begin();
+					continue_weight_it != this->continue_local_state_weights[c_index].end(); continue_weight_it++) {
+				map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.find(continue_weight_it->first);
+				if (it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end()) {
+					double continue_weight = continue_weight_it->second;
+					double halt_weight = this->halt_local_state_weights[c_index][continue_weight_it->first];
 
-				FullNetwork* last_network = it->second.last_network;
-				if (last_network != NULL) {
-					double normalized = (it->second.val - last_network->ending_mean)
-						/ last_network->ending_standard_deviation;
-					continue_score += continue_weight * normalized;
-					halt_score += halt_weight * normalized;
+					FullNetwork* last_network = it->second.last_network;
+					if (last_network != NULL) {
+						double normalized = (it->second.val - last_network->ending_mean)
+							/ last_network->ending_standard_deviation;
+						continue_score += continue_weight * normalized;
+						halt_score += halt_weight * normalized;
 
-					if (continue_weight_it != this->continue_local_state_weights[c_index].end()) {
 						factors.push_back(normalized);
-					}
-				} else {
-					continue_score += continue_weight * it->second.val;
-					halt_score += halt_weight * it->second.val;
+					} else {
+						continue_score += continue_weight * it->second.val;
+						halt_score += halt_weight * it->second.val;
 
-					if (continue_weight_it != this->continue_local_state_weights[c_index].end()) {
-						factors.push_back(it->second.val);
+						if (it->second.val != 0.0) {
+							factors.push_back(it->second.val);
+						}
+						/**
+						 * - can be 0.0 from earlier scope outer
+						 */
 					}
 				}
 			}
@@ -143,7 +136,7 @@ void LoopExperiment::capture_verify_activate(
 
 		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 			/**
-			 * -switch order to match finalize
+			 * - originally switched order to match finalize
 			 */
 			for (map<State*, double>::iterator continue_weight_it = this->continue_temp_state_weights[c_index].begin();
 					continue_weight_it != this->continue_temp_state_weights[c_index].end(); continue_weight_it++) {
@@ -166,8 +159,6 @@ void LoopExperiment::capture_verify_activate(
 
 						factors.push_back(it->second.val);
 					}
-				} else {
-					factors.push_back(0.0);
 				}
 			}
 		}
@@ -177,7 +168,6 @@ void LoopExperiment::capture_verify_activate(
 		this->verify_factors.push_back(factors);
 
 		#if defined(MDEBUG) && MDEBUG
-		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		bool decision_is_halt;
 		if (run_helper.curr_run_seed%2 == 0) {
 			decision_is_halt = true;
@@ -243,25 +233,49 @@ void LoopExperiment::capture_verify_backprop() {
 
 		Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
+		BranchNode* new_branch_node = new BranchNode();
+		new_branch_node->parent = containing_scope;
+		new_branch_node->id = containing_scope->node_counter;
+		containing_scope->node_counter++;
+		containing_scope->nodes[new_branch_node->id] = new_branch_node;
+
+		new_branch_node->branch_scope_context = this->scope_context;
+		new_branch_node->branch_node_context = this->node_context;
+		new_branch_node->branch_node_context.back() = new_branch_node->id;
+
+		new_branch_node->branch_is_pass_through = true;
+
+		new_branch_node->original_score_mod = 0.0;
+		new_branch_node->branch_score_mod = 0.0;
+
 		ScopeNode* new_loop_scope_node = this->potential_loop->scope_node_placeholder;
 		containing_scope->nodes[new_loop_scope_node->id] = new_loop_scope_node;
+
+		new_branch_node->branch_next_node_id = new_loop_scope_node->id;
+		new_branch_node->branch_next_node = new_loop_scope_node;
 
 		if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
+			new_branch_node->original_next_node_id = action_node->next_node_id;
+			new_branch_node->original_next_node = action_node->next_node;
+
 			new_loop_scope_node->next_node_id = action_node->next_node_id;
 			new_loop_scope_node->next_node = action_node->next_node;
 
-			action_node->next_node_id = new_loop_scope_node->id;
-			action_node->next_node = new_loop_scope_node;
+			action_node->next_node_id = new_branch_node->id;
+			action_node->next_node = new_branch_node;
 		} else {
 			ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
+
+			new_branch_node->original_next_node_id = scope_node->next_node_id;
+			new_branch_node->original_next_node = scope_node->next_node;
 
 			new_loop_scope_node->next_node_id = scope_node->next_node_id;
 			new_loop_scope_node->next_node = scope_node->next_node;
 
-			scope_node->next_node_id = new_loop_scope_node->id;
-			scope_node->next_node = new_loop_scope_node;
+			scope_node->next_node_id = new_branch_node->id;
+			scope_node->next_node = new_branch_node;
 		}
 
 		map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -279,7 +293,7 @@ void LoopExperiment::capture_verify_backprop() {
 		new_loop_scope_node->is_loop = true;
 		new_loop_scope_node->continue_score_mod = this->continue_constant;
 		new_loop_scope_node->halt_score_mod = this->halt_constant;
-		new_loop_scope_node->max_iters = 4;
+		new_loop_scope_node->max_iters = 5;
 
 		finalize_loop_scope_states(new_loop_scope_node,
 								   this->scope_context,

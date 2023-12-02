@@ -215,6 +215,8 @@ void FullNetwork::activate(double obs_val,
 		+ this->forget_network->output->acti_vals[0] * (-starting_index_val)
 		+ this->index_network->output->acti_vals[0]
 		- 0.1;
+
+	state_status.last_network = this;
 }
 
 void FullNetwork::save(std::ofstream& output_file) {

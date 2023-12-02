@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
@@ -14,14 +16,17 @@ using namespace std;
 
 void create_experiment_helper(vector<int>& scope_context,
 							  vector<int>& node_context,
+							  vector<int>& iter_indexes,
 							  vector<AbstractNode*>& possible_nodes,
 							  vector<vector<int>>& possible_scope_contexts,
 							  vector<vector<int>>& possible_node_contexts,
+							  vector<vector<int>>& possible_iter_indexes,
 							  ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
+	iter_indexes.push_back(-1);
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
@@ -30,53 +35,66 @@ void create_experiment_helper(vector<int>& scope_context,
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				if (action_node->experiment == NULL) {
 					node_context.back() = action_node->id;
+					iter_indexes.back() = i_index;
 
 					possible_nodes.push_back(action_node);
 					possible_scope_contexts.push_back(scope_context);
 					possible_node_contexts.push_back(node_context);
+					possible_iter_indexes.push_back(iter_indexes);
 
 					node_context.back() = -1;
+					iter_indexes.back() = -1;
 				}
 			} else {
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				node_context.back() = scope_node->id;
+				iter_indexes.back() = i_index;
 
 				create_experiment_helper(scope_context,
 										 node_context,
+										 iter_indexes,
 										 possible_nodes,
 										 possible_scope_contexts,
 										 possible_node_contexts,
+										 possible_iter_indexes,
 										 scope_node_history->inner_scope_history);
 
 				if (scope_node->experiment == NULL) {
 					possible_nodes.push_back(scope_node);
 					possible_scope_contexts.push_back(scope_context);
 					possible_node_contexts.push_back(node_context);
+					possible_iter_indexes.push_back(iter_indexes);
 				}
 
 				node_context.back() = -1;
+				iter_indexes.back() = -1;
 			}
 		}
 	}
 
 	scope_context.pop_back();
 	node_context.pop_back();
+	iter_indexes.pop_back();
 }
 
 void create_branch_experiment(ScopeHistory* root_history) {
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
+	vector<vector<int>> possible_iter_indexes;
 
 	vector<int> scope_context;
 	vector<int> node_context;
+	vector<int> iter_indexes;
 	create_experiment_helper(scope_context,
 							 node_context,
+							 iter_indexes,
 							 possible_nodes,
 							 possible_scope_contexts,
 							 possible_node_contexts,
+							 possible_iter_indexes,
 							 root_history);
 
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_nodes.size()-1);
@@ -109,14 +127,18 @@ void create_pass_through_experiment(ScopeHistory* root_history) {
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<int>> possible_scope_contexts;
 	vector<vector<int>> possible_node_contexts;
+	vector<vector<int>> possible_iter_indexes;
 
 	vector<int> scope_context;
 	vector<int> node_context;
+	vector<int> iter_indexes;
 	create_experiment_helper(scope_context,
 							 node_context,
+							 iter_indexes,
 							 possible_nodes,
 							 possible_scope_contexts,
 							 possible_node_contexts,
+							 possible_iter_indexes,
 							 root_history);
 
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_nodes.size()-1);
@@ -150,69 +172,65 @@ void create_loop_experiment_helper(int curr_depth,
 								   vector<AbstractNode*>& node_context,
 								   vector<int>& target_scope_context,
 								   vector<int>& target_node_context,
+								   vector<int>& target_iter_indexes,
 								   vector<vector<Scope*>>& possible_scope_contexts,
 								   vector<vector<AbstractNode*>>& possible_node_contexts,
 								   ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
+	int iter_index = target_iter_indexes[curr_depth];
 
-				node_context.back() = action_node;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories[iter_index].size(); h_index++) {
+		if (scope_history->node_histories[iter_index][h_index]->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[iter_index][h_index];
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
+			node_context.back() = action_node;
 
-				if (action_node->id == target_node_context[curr_depth]) {
-					// curr_depth == (int)target_scope_context.size()-1
-					return;
-				}
+			possible_scope_contexts.push_back(scope_context);
+			possible_node_contexts.push_back(node_context);
 
-				node_context.back() = NULL;
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+			if (action_node->id == target_node_context[curr_depth]) {
+				// curr_depth == (int)target_scope_context.size()-1
+				return;
+			}
 
-				node_context.back() = scope_node;
+			node_context.back() = NULL;
+		} else {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[iter_index][h_index];
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				if (scope_node->id == target_node_context[curr_depth]) {
-					if (curr_depth+1 < (int)target_scope_context.size()) {
-						create_loop_experiment_helper(curr_depth+1,
-													  scope_context,
-													  node_context,
-													  target_scope_context,
-													  target_node_context,
-													  possible_scope_contexts,
-													  possible_node_contexts,
-													  scope_node_history->inner_scope_history);
-					} else {
-						possible_scope_contexts.push_back(scope_context);
-						possible_node_contexts.push_back(node_context);
-					}
+			node_context.back() = scope_node;
 
-					/**
-					 * - simply return without worrying about cleanup
-					 */
-					return;
+			if (scope_node->id == target_node_context[curr_depth]) {
+				if (curr_depth+1 < (int)target_scope_context.size()) {
+					create_loop_experiment_helper(curr_depth+1,
+												  scope_context,
+												  node_context,
+												  target_scope_context,
+												  target_node_context,
+												  target_iter_indexes,
+												  possible_scope_contexts,
+												  possible_node_contexts,
+												  scope_node_history->inner_scope_history);
 				} else {
 					possible_scope_contexts.push_back(scope_context);
 					possible_node_contexts.push_back(node_context);
 				}
 
-				node_context.back() = NULL;
+				/**
+				 * - simply return without worrying about cleanup
+				 */
+				return;
+			} else {
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
 			}
+
+			node_context.back() = NULL;
 		}
 	}
-	/**
-	 * - don't worry about matching iter_index
-	 *   - would need to track iter_index across all contexts
-	 *   - minor impact anyways
-	 *   - possible for all paths to be represented anyways depending on branching
-	 */
 
 	// no need to pop_back context
 }
@@ -221,18 +239,23 @@ void create_loop_experiment(ScopeHistory* root_history) {
 	AbstractNode* experiment_node;
 	vector<int> experiment_scope_context;
 	vector<int> experiment_node_context;
+	vector<int> experiment_iter_indexes;
 	{
 		vector<AbstractNode*> possible_nodes;
 		vector<vector<int>> possible_scope_contexts;
 		vector<vector<int>> possible_node_contexts;
+		vector<vector<int>> possible_iter_indexes;
 
 		vector<int> scope_context;
 		vector<int> node_context;
+		vector<int> iter_indexes;
 		create_experiment_helper(scope_context,
 								 node_context,
+								 iter_indexes,
 								 possible_nodes,
 								 possible_scope_contexts,
 								 possible_node_contexts,
+								 possible_iter_indexes,
 								 root_history);
 
 		uniform_int_distribution<int> possible_distribution(0, (int)possible_nodes.size()-1);
@@ -241,6 +264,7 @@ void create_loop_experiment(ScopeHistory* root_history) {
 		experiment_node = possible_nodes[rand_index];
 		experiment_scope_context = possible_scope_contexts[rand_index];
 		experiment_node_context = possible_node_contexts[rand_index];
+		experiment_iter_indexes = possible_iter_indexes[rand_index];
 	}
 
 	vector<vector<Scope*>> possible_scope_contexts;
@@ -253,6 +277,7 @@ void create_loop_experiment(ScopeHistory* root_history) {
 								  node_context,
 								  experiment_scope_context,
 								  experiment_node_context,
+								  experiment_iter_indexes,
 								  possible_scope_contexts,
 								  possible_node_contexts,
 								  root_history);
@@ -354,58 +379,126 @@ void create_loop_experiment(ScopeHistory* root_history) {
 
 			new_action_node->action = original_action_node->action;
 
+			vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
 			for (int s_index = 0; s_index < (int)original_action_node->state_is_local.size(); s_index++) {
-				map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
-					.find({original_action_node->state_is_local[s_index], original_action_node->state_indexes[s_index]});
-				if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
-					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
-					if (final_it != potential_to_final_mapping.end()) {
-						if (final_it->second != -1) {
-							new_action_node->state_is_local.push_back(false);
-							new_action_node->state_indexes.push_back(final_it->second);
-							new_action_node->state_obs_indexes.push_back(original_action_node->state_obs_indexes[s_index]);
-							new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
-							new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
-						}
-					} else {
-						if (include_state_distribution(generator) == 0) {
-							potential_to_final_mapping[potential_it->second] = -1;
+				if (original_action_node->state_obs_indexes[s_index] == -1) {
+					map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
+						.find({original_action_node->state_is_local[s_index], original_action_node->state_indexes[s_index]});
+					if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
+						map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
+						if (final_it != potential_to_final_mapping.end()) {
+							if (final_it->second != -1) {
+								obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
+
+								new_action_node->state_is_local.push_back(false);
+								new_action_node->state_indexes.push_back(final_it->second);
+								new_action_node->state_obs_indexes.push_back(-1);
+								new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
+								new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
+							}
 						} else {
-							int new_state_index = new_scope->num_input_states;
-							new_scope->num_input_states++;
-
-							potential_to_final_mapping[potential_it->second] = new_state_index;
-
-							new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-							new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
-							new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-							if (potential_to_outer_mapping[potential_it->second].second.first) {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
+							if (include_state_distribution(generator) == 0) {
+								potential_to_final_mapping[potential_it->second] = -1;
 							} else {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-							}
-							new_potential_scope_node->input_outer_indexes.push_back(
-								(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
-							new_potential_scope_node->input_init_vals.push_back(0.0);
-							new_potential_scope_node->input_init_index_vals.push_back(0.0);
+								int new_state_index = new_scope->num_input_states;
+								new_scope->num_input_states++;
 
-							if (output_distribution(generator) == 0) {
-								new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
-								new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+								potential_to_final_mapping[potential_it->second] = new_state_index;
+
+								new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+								new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+								new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
 								if (potential_to_outer_mapping[potential_it->second].second.first) {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
+									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
 								} else {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
+									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
 								}
-								new_potential_scope_node->output_outer_indexes.push_back(
+								new_potential_scope_node->input_outer_indexes.push_back(
 									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
-							}
+								new_potential_scope_node->input_init_vals.push_back(0.0);
+								new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
-							new_action_node->state_is_local.push_back(false);
-							new_action_node->state_indexes.push_back(new_state_index);
-							new_action_node->state_obs_indexes.push_back(original_action_node->state_obs_indexes[s_index]);
-							new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
-							new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
+								if (output_distribution(generator) == 0) {
+									new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
+									new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+									if (potential_to_outer_mapping[potential_it->second].second.first) {
+										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
+									} else {
+										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
+									}
+									new_potential_scope_node->output_outer_indexes.push_back(
+										(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+								}
+
+								obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
+
+								new_action_node->state_is_local.push_back(false);
+								new_action_node->state_indexes.push_back(new_state_index);
+								new_action_node->state_obs_indexes.push_back(-1);
+								new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
+								new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
+							}
+						}
+					}
+				} else {
+					if (obs_index_mapping[original_action_node->state_obs_indexes[s_index]] != -1) {
+						map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
+							.find({original_action_node->state_is_local[s_index], original_action_node->state_indexes[s_index]});
+						if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
+							map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
+							if (final_it != potential_to_final_mapping.end()) {
+								if (final_it->second != -1) {
+									obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
+
+									new_action_node->state_is_local.push_back(false);
+									new_action_node->state_indexes.push_back(final_it->second);
+									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[s_index]]);
+									new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
+									new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
+								}
+							} else {
+								if (include_state_distribution(generator) == 0) {
+									potential_to_final_mapping[potential_it->second] = -1;
+								} else {
+									int new_state_index = new_scope->num_input_states;
+									new_scope->num_input_states++;
+
+									potential_to_final_mapping[potential_it->second] = new_state_index;
+
+									new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+									new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+									new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+									if (potential_to_outer_mapping[potential_it->second].second.first) {
+										new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
+									} else {
+										new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
+									}
+									new_potential_scope_node->input_outer_indexes.push_back(
+										(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+									new_potential_scope_node->input_init_vals.push_back(0.0);
+									new_potential_scope_node->input_init_index_vals.push_back(0.0);
+
+									if (output_distribution(generator) == 0) {
+										new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
+										new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+										if (potential_to_outer_mapping[potential_it->second].second.first) {
+											new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
+										} else {
+											new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
+										}
+										new_potential_scope_node->output_outer_indexes.push_back(
+											(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+									}
+
+									obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
+
+									new_action_node->state_is_local.push_back(false);
+									new_action_node->state_indexes.push_back(new_state_index);
+									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[s_index]]);
+									new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
+									new_action_node->state_network_indexes.push_back(original_action_node->state_network_indexes[s_index]);
+								}
+							}
 						}
 					}
 				}

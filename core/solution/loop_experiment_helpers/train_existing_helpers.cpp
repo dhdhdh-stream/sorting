@@ -9,6 +9,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 
 using namespace std;
 
@@ -244,6 +245,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 					for (map<int, vector<double>>::iterator it = p_input_state_vals[c_index].begin();
 							it != p_input_state_vals[c_index].end(); it++) {
 						this->start_input_state_weights[c_index][it->first] = weights(s_index);
+						cout << "input " << c_index << " " << it->first << " " << weights(s_index) << endl;
 						s_index++;
 					}
 				}
@@ -252,6 +254,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 					for (map<int, vector<double>>::iterator it = p_local_state_vals[c_index].begin();
 							it != p_local_state_vals[c_index].end(); it++) {
 						this->start_local_state_weights[c_index][it->first] = weights(s_index);
+						cout << "local " << c_index << " " << it->first << " " << weights(s_index) << endl;
 						s_index++;
 					}
 				}
@@ -260,6 +263,7 @@ void LoopExperiment::train_existing_backprop(double target_val,
 					for (map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
 							it != p_temp_state_vals[c_index].end(); it++) {
 						this->start_temp_state_weights[c_index][it->first] = weights(s_index);
+						cout << "temp " << c_index << " " << it->first->id << " " << weights(s_index) << endl;
 						s_index++;
 					}
 				}

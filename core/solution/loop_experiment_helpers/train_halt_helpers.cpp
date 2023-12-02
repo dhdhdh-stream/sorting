@@ -1,5 +1,6 @@
 #include "loop_experiment.h"
 
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "full_network.h"
@@ -9,6 +10,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "state.h"
 #include "utilities.h"
 
 using namespace std;
@@ -58,6 +60,27 @@ void LoopExperiment::train_halt_target_activate(
 		AbstractExperimentHistory*& history) {
 	LoopExperimentInstanceHistory* loop_experiment_history = new LoopExperimentInstanceHistory(this);
 	history = loop_experiment_history;
+
+	// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+	// 	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].input_state_vals.begin();
+	// 			it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
+	// 		cout << "input " << c_index << " " << it->first << " " << it->second.val << endl;
+	// 	}
+	// }
+
+	// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+	// 	for (map<int, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].local_state_vals.begin();
+	// 			it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
+	// 		cout << "local " << c_index << " " << it->first << " " << it->second.val << endl;
+	// 	}
+	// }
+
+	// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+	// 	for (map<State*, StateStatus>::iterator it = context[context.size() - this->scope_context.size() + c_index].temp_state_vals.begin();
+	// 			it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
+	// 		cout << "temp " << c_index << " " << it->first->id << " " << it->second.val << endl;
+	// 	}
+	// }
 
 	double start_score = this->existing_average_score;
 

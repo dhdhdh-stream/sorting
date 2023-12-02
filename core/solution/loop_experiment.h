@@ -1,3 +1,8 @@
+// TODO: actually, loops can simply be repeating previous
+// - so initially 1 + 1
+//   - then (1 + 1) + (1 + 1)
+//     - ...
+
 #ifndef LOOP_EXPERIMENT_H
 #define LOOP_EXPERIMENT_H
 
@@ -38,7 +43,8 @@ const int LOOP_EXPERIMENT_STATE_SUCCESS = 9;
  *   - so won't train to go past limit (to receive -1.0 score)
  *     - but hopefully, after finalized, can generalize to go past limit when correct
  */
-const int TRAIN_ITER_LIMIT = 8;
+// const int TRAIN_ITER_LIMIT = 8;
+const int TRAIN_ITER_LIMIT = 4;
 const int NUM_SAMPLES_MULTIPLIER = 2;
 
 class LoopExperimentOverallHistory;

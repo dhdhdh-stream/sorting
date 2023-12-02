@@ -160,61 +160,81 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		this->curr_exit_node = possible_exits[random_index].second;
 	}
 
-	{
-		// new path
-		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 2);
-		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0
-				&& this->curr_exit_node == curr_node) {
-			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-		} else {
-			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-		}
+	// {
+	// 	// new path
+	// 	int new_num_steps;
+	// 	uniform_int_distribution<int> uniform_distribution(0, 2);
+	// 	geometric_distribution<int> geometric_distribution(0.5);
+	// 	if (this->curr_exit_depth == 0
+	// 			&& this->curr_exit_node == curr_node) {
+	// 		new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+	// 	} else {
+	// 		new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+	// 	}
 	
-		uniform_int_distribution<int> type_distribution(0, 1);
-		uniform_int_distribution<int> action_distribution(0, 2);
-		uniform_int_distribution<int> next_distribution(0, 1);
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (type_distribution(generator) == 0) {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
+	// 	uniform_int_distribution<int> type_distribution(0, 1);
+	// 	uniform_int_distribution<int> action_distribution(0, 2);
+	// 	uniform_int_distribution<int> next_distribution(0, 1);
+	// 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
+	// 		if (type_distribution(generator) == 0) {
+	// 			this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = Action(action_distribution(generator));
-				this->curr_actions.push_back(new_action_node);
+	// 			ActionNode* new_action_node = new ActionNode();
+	// 			new_action_node->action = Action(action_distribution(generator));
+	// 			this->curr_actions.push_back(new_action_node);
 
-				this->curr_potential_scopes.push_back(NULL);
+	// 			this->curr_potential_scopes.push_back(NULL);
 
-				ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-				new_action_node->activate(curr_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper,
-										  action_node_history);
-				delete action_node_history;
-			} else {
-				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-				this->curr_actions.push_back(NULL);
+	// 			ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+	// 			new_action_node->activate(curr_node,
+	// 									  problem,
+	// 									  context,
+	// 									  exit_depth,
+	// 									  exit_node,
+	// 									  run_helper,
+	// 									  action_node_history);
+	// 			delete action_node_history;
+	// 		} else {
+	// 			this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+	// 			this->curr_actions.push_back(NULL);
 
-				PotentialScopeNode* new_potential_scope_node = create_scope(
-					context,
-					(int)this->scope_context.size(),
-					context[context.size() - this->scope_context.size()].scope);
-				this->curr_potential_scopes.push_back(new_potential_scope_node);
+	// 			PotentialScopeNode* new_potential_scope_node = create_scope(
+	// 				context,
+	// 				(int)this->scope_context.size(),
+	// 				context[context.size() - this->scope_context.size()].scope);
+	// 			this->curr_potential_scopes.push_back(new_potential_scope_node);
 
-				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
-				ScopeHistory* scope_history = new ScopeHistory(new_potential_scope_node->scope);
-				potential_scope_node_history->scope_history = scope_history;
-				new_potential_scope_node->activate(problem,
-												   context,
-												   run_helper,
-												   0,
-												   potential_scope_node_history);
-				delete potential_scope_node_history;
-			}
-		}
+	// 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+	// 			ScopeHistory* scope_history = new ScopeHistory(new_potential_scope_node->scope);
+	// 			potential_scope_node_history->scope_history = scope_history;
+	// 			new_potential_scope_node->activate(problem,
+	// 											   context,
+	// 											   run_helper,
+	// 											   0,
+	// 											   potential_scope_node_history);
+	// 			delete potential_scope_node_history;
+	// 		}
+	// 	}
+	// }
+
+	{
+		this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+		ActionNode* new_action_node = new ActionNode();
+		new_action_node->action = Action(ACTION_SWAP);
+		this->curr_actions.push_back(new_action_node);
+
+		this->curr_potential_scopes.push_back(NULL);
+
+		ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+		new_action_node->activate(curr_node,
+								  problem,
+								  context,
+								  exit_depth,
+								  exit_node,
+								  run_helper,
+								  action_node_history);
+		delete action_node_history;
 	}
 
 	{

@@ -830,13 +830,14 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 
 		vector<int> scope_context;
 		vector<int> node_context;
+		uniform_int_distribution<int> distribution(0, scope_histories.size()-1);
 		create_obs_experiment_helper(scope_context,
 									 node_context,
 									 possible_nodes,
 									 possible_scope_contexts,
 									 possible_node_contexts,
 									 possible_obs_indexes,
-									 scope_histories.back());
+									 scope_histories[distribution(generator)]);
 		/**
 		 * - simply always use last ScopeHistory to create ObsExperiment
 		 */
@@ -940,6 +941,11 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		state_networks,
 		resolved_variance);
 
+	hook(nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
 	vector<vector<int>> test_rnn_obs_experiment_indexes(test_instances);
 	vector<vector<double>> test_rnn_vals(test_instances);
 	for (int d_index = 0; d_index < test_instances; d_index++) {
@@ -951,6 +957,8 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 						test_rnn_obs_experiment_indexes[d_index],
 						test_rnn_vals[d_index]);
 	}
+
+	unhook(nodes);
 
 	double existing_average_misguess;
 	double existing_misguess_variance;
@@ -972,17 +980,17 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(test_instances));
 
-	// cout << "obs experiment nodes:";
-	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-	// 	cout << " " << nodes[n_index]->id;
-	// }
-	// cout << endl;
-	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	// cout << "new_average_misguess: " << new_average_misguess << endl;
-	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	// cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << "obs experiment nodes:";
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		cout << " " << nodes[n_index]->id;
+	}
+	cout << endl;
+	cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	cout << "new_average_misguess: " << new_average_misguess << endl;
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 
@@ -1049,16 +1057,14 @@ void new_obs_experiment(AbstractExperiment* experiment,
 
 		vector<int> scope_context;
 		vector<int> node_context;
+		uniform_int_distribution<int> distribution(0, scope_histories.size()-1);
 		create_obs_experiment_helper(scope_context,
 									 node_context,
 									 possible_nodes,
 									 possible_scope_contexts,
 									 possible_node_contexts,
 									 possible_obs_indexes,
-									 scope_histories.back());
-		/**
-		 * - simply always use last ScopeHistory to create ObsExperiment
-		 */
+									 scope_histories[distribution(generator)]);
 
 		int num_obs = min(NUM_INITIAL_OBS, (int)possible_nodes.size());
 		for (int o_index = 0; o_index < num_obs; o_index++) {
@@ -1159,6 +1165,11 @@ void new_obs_experiment(AbstractExperiment* experiment,
 		state_networks,
 		resolved_variance);
 
+	hook(nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
 	vector<vector<int>> test_rnn_obs_experiment_indexes(test_instances);
 	vector<vector<double>> test_rnn_vals(test_instances);
 	for (int d_index = 0; d_index < test_instances; d_index++) {
@@ -1170,6 +1181,8 @@ void new_obs_experiment(AbstractExperiment* experiment,
 						test_rnn_obs_experiment_indexes[d_index],
 						test_rnn_vals[d_index]);
 	}
+
+	unhook(nodes);
 
 	double existing_average_misguess;
 	double existing_misguess_variance;
@@ -1191,17 +1204,17 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(test_instances));
 
-	// cout << "obs experiment nodes:";
-	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-	// 	cout << " " << nodes[n_index]->id;
-	// }
-	// cout << endl;
-	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	// cout << "new_average_misguess: " << new_average_misguess << endl;
-	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	// cout << "improvement_t_score: " << improvement_t_score << endl;
+	cout << "obs experiment nodes:";
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		cout << " " << nodes[n_index]->id;
+	}
+	cout << endl;
+	cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	cout << "new_average_misguess: " << new_average_misguess << endl;
+	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 
@@ -1279,13 +1292,14 @@ void existing_pass_through_branch_obs_experiment(
 
 		vector<int> scope_context;
 		vector<int> node_context;
+		uniform_int_distribution<int> distribution(0, scope_histories.size()-1);
 		create_obs_experiment_helper(scope_context,
 									 node_context,
 									 possible_nodes,
 									 possible_scope_contexts,
 									 possible_node_contexts,
 									 possible_obs_indexes,
-									 scope_histories.back());
+									 scope_histories[distribution(generator)]);
 		/**
 		 * - simply always use last ScopeHistory to create ObsExperiment
 		 */
@@ -1389,6 +1403,11 @@ void existing_pass_through_branch_obs_experiment(
 		state_networks,
 		resolved_variance);
 
+	hook(nodes,
+		 scope_contexts,
+		 node_contexts,
+		 obs_indexes);
+
 	vector<vector<int>> test_rnn_obs_experiment_indexes(test_instances);
 	vector<vector<double>> test_rnn_vals(test_instances);
 	for (int d_index = 0; d_index < test_instances; d_index++) {
@@ -1400,6 +1419,8 @@ void existing_pass_through_branch_obs_experiment(
 						test_rnn_obs_experiment_indexes[d_index],
 						test_rnn_vals[d_index]);
 	}
+
+	unhook(nodes);
 
 	double existing_average_misguess;
 	double existing_misguess_variance;
@@ -1431,7 +1452,7 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 2.326) {	// >99%
+	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
 		cout << "obs success" << endl;
 

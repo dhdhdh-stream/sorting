@@ -113,6 +113,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			#endif /* MDEBUG */
 
 			if (decision_is_halt) {
+				#if !defined(MDEBUG)
 				/**
 				 * - update even if explore
 				 *   - cannot result in worst performance as would previously be -1.0 anyways
@@ -120,6 +121,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 				if (iter_index > this->max_iters) {
 					this->max_iters = iter_index;
 				}
+				#endif /* MDEBUG */
 				break;
 			} else {
 				this->inner_scope->activate(problem,

@@ -155,7 +155,7 @@ void LoopExperiment::measure_backprop(double target_val) {
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->measure_score /= solution->curr_num_datapoints;
 
-		cout << "Branch" << endl;
+		cout << "Loop" << endl;
 		cout << "measure" << endl;
 
 		double score_standard_deviation = sqrt(this->existing_score_variance);

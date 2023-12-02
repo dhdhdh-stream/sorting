@@ -1,3 +1,5 @@
+// TODO: verify full copy
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -14,6 +16,7 @@
 #include "loop_experiment.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
+#include "potential_scope_node.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -32,24 +35,65 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1701331299;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// ifstream solution_save_file;
-	// solution_save_file.open("saves/solution.txt");
-	// solution->load(solution_save_file);
-	// solution_save_file.close();
+	// solution->init();
+	ifstream solution_save_file;
+	solution_save_file.open("saves/solution.txt");
+	solution->load(solution_save_file);
+	solution_save_file.close();
 
 	int num_fails = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
 	#endif /* MDEBUG */
+
+	// PassThroughExperiment* experiment = new PassThroughExperiment(
+	// 	vector<int>{0},
+	// 	vector<int>{0});
+	// ActionNode* explore_node = (ActionNode*)solution->scopes[0]->nodes[0];
+	// explore_node->experiment = experiment;
+
+	{
+		Scope* scope = new Scope();
+		scope->num_input_states = 0;
+		scope->num_local_states = 0;
+		ActionNode* starting_noop_node = new ActionNode();
+		ActionNode* action_node = new ActionNode();
+		starting_noop_node->parent = scope;
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = 1;
+		starting_noop_node->next_node = action_node;
+		scope->nodes[0] = starting_noop_node;
+		action_node->parent = scope;
+		action_node->id = 1;
+		action_node->action = Action(ACTION_SWAP);
+		action_node->next_node_id = -1;
+		action_node->next_node = NULL;
+		scope->nodes[1] = action_node;
+
+		scope->starting_node_id = 0;
+		scope->starting_node = starting_noop_node;
+		scope->node_counter = 2;
+
+		PotentialScopeNode* potential_loop = new PotentialScopeNode();
+		potential_loop->scope = scope;
+		potential_loop->experiment_scope_depth = 1;
+
+		LoopExperiment* experiment = new LoopExperiment(
+			vector<int>{0},
+			vector<int>{2},
+			potential_loop);
+
+		ActionNode* explore_node = (ActionNode*)solution->scopes[0]->nodes[2];
+		explore_node->experiment = experiment;
+	}
 
 	uniform_int_distribution<int> outer_distribution(0, 9);
 	uniform_int_distribution<int> experiment_type_distribution(0, 2);
@@ -67,7 +111,8 @@ int main(int argc, char* argv[]) {
 
 			bool is_success = false;
 			bool is_fail = false;
-			if (outer_distribution(generator) == 0) {
+			// if (outer_distribution(generator) == 0) {
+			if (false) {
 				solution->outer_experiment->activate(problem,
 													 run_helper);
 
@@ -108,6 +153,13 @@ int main(int argc, char* argv[]) {
 										 0,
 										 root_history);
 
+				if (root_history->inner_pass_through_experiment != NULL) {
+					root_history->inner_pass_through_experiment->parent_scope_end_activate(
+						context,
+						run_helper,
+						root_history);
+				}
+
 				double target_val;
 				if (!run_helper.exceeded_limit) {
 					target_val = problem.score_result();
@@ -115,20 +167,20 @@ int main(int argc, char* argv[]) {
 					target_val = -1.0;
 				}
 
-				if (run_helper.experiment_history == NULL) {
-					if (run_helper.experiments_seen.size() == 0) {
-						if (!run_helper.exceeded_limit) {
-							int experiment_type = experiment_type_distribution(generator);
-							if (experiment_type == 0) {
-								create_branch_experiment(root_history);
-							} else if (experiment_type == 1) {
-								create_pass_through_experiment(root_history);
-							} else {
-								create_loop_experiment(root_history);
-							}
-						}
-					}
-				}
+				// if (run_helper.experiment_history == NULL) {
+				// 	if (run_helper.experiments_seen.size() == 0) {
+				// 		if (!run_helper.exceeded_limit) {
+				// 			int experiment_type = experiment_type_distribution(generator);
+				// 			if (experiment_type == 0) {
+				// 				create_branch_experiment(root_history);
+				// 			} else if (experiment_type == 1) {
+				// 				create_pass_through_experiment(root_history);
+				// 			} else {
+				// 				create_loop_experiment(root_history);
+				// 			}
+				// 		}
+				// 	}
+				// }
 
 				delete root_history;
 
@@ -266,15 +318,15 @@ int main(int argc, char* argv[]) {
 
 				num_fails = 0;
 
-				ofstream solution_save_file;
-				solution_save_file.open("saves/solution.txt");
-				solution->save(solution_save_file);
-				solution_save_file.close();
+				// ofstream solution_save_file;
+				// solution_save_file.open("saves/solution.txt");
+				// solution->save(solution_save_file);
+				// solution_save_file.close();
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				solution->save_for_display(display_file);
-				display_file.close();
+				// ofstream display_file;
+				// display_file.open("../display.txt");
+				// solution->save_for_display(display_file);
+				// display_file.close();
 
 				solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 				break;

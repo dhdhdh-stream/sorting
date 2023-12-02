@@ -1,5 +1,7 @@
 #include "loop_experiment.h"
 
+#include <iostream>
+
 #include "full_network.h"
 #include "globals.h"
 #include "potential_scope_node.h"

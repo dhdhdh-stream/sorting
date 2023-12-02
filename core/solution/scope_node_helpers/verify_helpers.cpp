@@ -46,53 +46,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->verify_key == run_helper.verify_key) {
-		cout << "scope problem:";
-		for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-			cout << " " << problem.initial_world[s_index];
-		}
-		cout << endl;
-
-		// cout << "context scope" << endl;
-		// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		// 	cout << c_index << ": " << context[c_index].scope->id << endl;
-		// }
-		// cout << "context node" << endl;
-		// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		// 	cout << c_index << ": " << context[c_index].node->id << endl;
-		// }
-		// cout << "current_world";
-		// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
-		// 	cout << " " << problem.current_world[s_index];
-		// }
-		// cout << endl;
-		// cout << "problem.current_pointer: " << problem.current_pointer << endl;
-
-		sort(verify_input_state_vals.begin(), verify_input_state_vals.end());
-		sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());
-
-		if (this->verify_input_state_vals[0] != verify_input_state_vals) {
-			cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
-			cout << "this->parent->id: " << this->parent->id << endl;
-			cout << "this->id: " << this->id << endl;
-
-			cout << "this->verify_input_state_vals[0]" << endl;
-			for (int v_index = 0; v_index < (int)this->verify_input_state_vals[0].size(); v_index++) {
-				cout << v_index << ": " << this->verify_input_state_vals[0][v_index] << endl;
-			}
-
-			cout << "verify_input_state_vals" << endl;
-			for (int v_index = 0; v_index < (int)verify_input_state_vals.size(); v_index++) {
-				cout << v_index << ": " << verify_input_state_vals[v_index] << endl;
-			}
-
-			throw invalid_argument("scope node verify fail");
-		}
-
-		this->verify_input_state_vals.erase(this->verify_input_state_vals.begin());
-	}
-
 	context.back().node = this;
 
 	context.push_back(ContextLayer());
@@ -134,7 +87,9 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 							continue_score += this->loop_continue_weights[s_index] * it->second.val;
 							halt_score += this->loop_halt_weights[s_index] * it->second.val;
 
-							factors.push_back(it->second.val);
+							if (it->second.val != 0.0) {
+								factors.push_back(it->second.val);
+							}
 						}
 					}
 				} else {
@@ -152,20 +107,25 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 							continue_score += this->loop_continue_weights[s_index] * it->second.val;
 							halt_score += this->loop_halt_weights[s_index] * it->second.val;
 
-							factors.push_back(it->second.val);
+							if (it->second.val != 0.0) {
+								factors.push_back(it->second.val);
+							}
 						}
 					}
 				}
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				cout << "loop problem:";
-				for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-					cout << " " << problem.initial_world[s_index];
-				}
-				cout << endl;
+				// cout << "loop problem:";
+				// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+				// 	cout << " " << problem.initial_world[s_index];
+				// }
+				// cout << endl;
 
-				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+				// cout << "curr_problem:" << endl;
+				// problem.print();
+
+				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
 				sort(factors.begin(), factors.end());
 				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
@@ -236,29 +196,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 					}
 				}
 
-				if (this->verify_key == run_helper.verify_key) {
-					sort(output_state_vals.begin(), output_state_vals.end());
-					sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());
-
-					if (this->verify_output_state_vals[0] != output_state_vals) {
-						cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
-						cout << "this->verify_output_state_vals[0]" << endl;
-						for (int v_index = 0; v_index < (int)this->verify_output_state_vals[0].size(); v_index++) {
-							cout << v_index << ": " << this->verify_output_state_vals[0][v_index] << endl;
-						}
-
-						cout << "output_state_vals" << endl;
-						for (int v_index = 0; v_index < (int)output_state_vals.size(); v_index++) {
-							cout << v_index << ": " << output_state_vals[v_index] << endl;
-						}
-
-						throw invalid_argument("scope node verify fail");
-					}
-
-					this->verify_output_state_vals.erase(this->verify_output_state_vals.begin());
-				}
-
 				if (inner_exit_depth != -1
 						|| run_helper.exceeded_limit) {
 					break;
@@ -269,6 +206,53 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 			}
 		}
 	} else {
+		if (this->verify_key == run_helper.verify_key) {
+			// cout << "scope problem:";
+			// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
+			// 	cout << " " << problem.initial_world[s_index];
+			// }
+			// cout << endl;
+
+			// cout << "context scope" << endl;
+			// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+			// }
+			// cout << "context node" << endl;
+			// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+			// 	cout << c_index << ": " << context[c_index].node->id << endl;
+			// }
+			// cout << "current_world";
+			// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
+			// 	cout << " " << problem.current_world[s_index];
+			// }
+			// cout << endl;
+			// cout << "problem.current_pointer: " << problem.current_pointer << endl;
+
+			sort(verify_input_state_vals.begin(), verify_input_state_vals.end());
+			sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());
+
+			if (this->verify_input_state_vals[0] != verify_input_state_vals) {
+				cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+
+				cout << "this->parent->id: " << this->parent->id << endl;
+				cout << "this->id: " << this->id << endl;
+
+				cout << "this->verify_input_state_vals[0]" << endl;
+				for (int v_index = 0; v_index < (int)this->verify_input_state_vals[0].size(); v_index++) {
+					cout << v_index << ": " << this->verify_input_state_vals[0][v_index] << endl;
+				}
+
+				cout << "verify_input_state_vals" << endl;
+				for (int v_index = 0; v_index < (int)verify_input_state_vals.size(); v_index++) {
+					cout << v_index << ": " << verify_input_state_vals[v_index] << endl;
+				}
+
+				throw invalid_argument("scope node verify fail");
+			}
+
+			this->verify_input_state_vals.erase(this->verify_input_state_vals.begin());
+		}
+
 		this->inner_scope->verify_activate(problem,
 										   context,
 										   inner_exit_depth,

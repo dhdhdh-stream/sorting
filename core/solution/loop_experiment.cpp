@@ -2,7 +2,9 @@
 
 #include "globals.h"
 #include "potential_scope_node.h"
+#include "scope.h"
 #include "solution.h"
+#include "state.h"
 
 using namespace std;
 
@@ -40,6 +42,14 @@ LoopExperiment::LoopExperiment(vector<int> scope_context,
 LoopExperiment::~LoopExperiment() {
 	if (this->potential_loop != NULL) {
 		delete this->potential_loop;
+	}
+
+	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+		delete this->new_states[s_index];
+	}
+
+	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
+		delete this->i_scope_histories[h_index];
 	}
 }
 
