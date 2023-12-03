@@ -131,9 +131,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	overall_history->existing_predicted_score = predicted_score;
 
 	uniform_int_distribution<int> loop_distribution(0, 1);
-	if (loop_distribution(generator)) {
+	if (this->parent_pass_through_experiment == NULL && loop_distribution(generator)) {
 		this->curr_exit_depth = 0;
 		this->curr_exit_node = curr_node;
+
+		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+		this->curr_actions.push_back(NULL);
 
 		PotentialScopeNode* new_potential_loop = create_loop(context,
 															 (int)this->scope_context.size());
@@ -344,6 +347,8 @@ void BranchExperiment::explore_backprop(double target_val,
 					cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 				}
 				cout << endl;
+
+				cout << "this->best_is_loop: " << this->best_is_loop << endl;
 
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);

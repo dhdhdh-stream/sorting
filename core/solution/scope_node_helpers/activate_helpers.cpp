@@ -102,10 +102,13 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			#if defined(MDEBUG) && MDEBUG
 			bool decision_is_halt;
 			if (run_helper.curr_run_seed%2 == 0) {
-				decision_is_halt = true;
-			} else {
 				decision_is_halt = false;
+			} else {
+				decision_is_halt = true;
 			}
+			/**
+			 * - reverse to match BranchExperiment capture_verify()
+			 */
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 			#else
 			bool decision_is_halt = halt_score > continue_score;

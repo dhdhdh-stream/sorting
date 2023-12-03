@@ -191,6 +191,8 @@ void BranchExperiment::verify_backprop(double target_val) {
 			cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 		}
 
+		cout << "this->best_is_loop: " << this->best_is_loop << endl;
+
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
@@ -217,7 +219,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			#endif /* MDEBUG */
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (!this->best_is_loop && rand()%2 == 0) {
 			#else
 			if (!this->best_is_loop && branch_weight > 0.99) {
 			#endif /* MDEBUG */

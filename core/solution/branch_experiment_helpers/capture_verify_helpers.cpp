@@ -96,7 +96,9 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * it->second.val;
 
 					if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
-						factors.push_back(it->second.val);
+						if (it->second.val != 0.0) {
+							factors.push_back(it->second.val);
+						}
 					}
 				}
 			}
@@ -131,7 +133,9 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * it->second.val;
 
 					if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
-						factors.push_back(it->second.val);
+						if (it->second.val != 0.0) {
+							factors.push_back(it->second.val);
+						}
 					}
 				}
 			}
@@ -202,19 +206,10 @@ void BranchExperiment::capture_verify_activate(
 						action_node_history);
 					delete action_node_history;
 				} else {
-					if (this->best_is_loop) {
-						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-						this->best_potential_scopes[s_index]->activate(problem,
-																	   context,
-																	   run_helper,
-																	   potential_scope_node_history);
-						delete potential_scope_node_history;
-					} else {
-						this->best_potential_scopes[s_index]->capture_verify_activate(
-							problem,
-							context,
-							run_helper);
-					}
+					this->best_potential_scopes[s_index]->capture_verify_activate(
+						problem,
+						context,
+						run_helper);
 				}
 			}
 
@@ -233,11 +228,9 @@ void BranchExperiment::capture_verify_activate(
 void BranchExperiment::capture_verify_backprop() {
 	this->state_iter++;
 	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-		if (!this->best_is_loop) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-					this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
-				}
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
 			}
 		}
 		solution->verify_key = this;

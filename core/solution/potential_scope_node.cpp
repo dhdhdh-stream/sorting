@@ -2,8 +2,10 @@
 
 #include <iostream>
 
+#include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "state.h"
 
 using namespace std;

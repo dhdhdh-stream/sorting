@@ -59,7 +59,9 @@ void BranchNode::verify_activate(Problem& problem,
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;
 
-							factors.push_back(it->second.val);
+							if (it->second.val != 0.0) {
+								factors.push_back(it->second.val);
+							}
 						}
 					}
 				} else {
@@ -77,7 +79,9 @@ void BranchNode::verify_activate(Problem& problem,
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;
 
-							factors.push_back(it->second.val);
+							if (it->second.val != 0.0) {
+								factors.push_back(it->second.val);
+							}
 						}
 					}
 				}

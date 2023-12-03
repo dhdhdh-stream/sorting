@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "globals.h"
 #include "potential_scope_node.h"
@@ -13,7 +15,8 @@ using namespace std;
  * 
  * - special case last node outside
  */
-void create_loop_experiment_helper(vector<Scope*>& scope_context,
+void create_loop_experiment_helper(int target_depth,
+								   vector<Scope*>& scope_context,
 								   vector<AbstractNode*>& node_context,
 								   vector<vector<Scope*>>& possible_scope_contexts,
 								   vector<vector<AbstractNode*>>& possible_node_contexts,
@@ -40,8 +43,10 @@ void create_loop_experiment_helper(vector<Scope*>& scope_context,
 				node_context.back() = scope_node;
 
 				if (i_index == (int)scope_history->node_histories.size()-1
-						&& h_index == (int)scope_history->node_histories[i_index].size()-1) {
-					create_loop_experiment_helper(scope_context,
+						&& h_index == (int)scope_history->node_histories[i_index].size()-1
+						&& (int)scope_context.size()+1 <= target_depth) {
+					create_loop_experiment_helper(target_depth,
+												  scope_context,
 												  node_context,
 												  possible_scope_contexts,
 												  possible_node_contexts,
@@ -56,7 +61,7 @@ void create_loop_experiment_helper(vector<Scope*>& scope_context,
 		}
 	}
 
-	// don't pop_back context
+	// no need to pop_back context
 }
 
 PotentialScopeNode* create_loop(vector<ContextLayer>& context,
@@ -68,20 +73,12 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	create_loop_experiment_helper(scope_context,
+	create_loop_experiment_helper(explore_context_depth,
+								  scope_context,
 								  node_context,
 								  possible_scope_contexts,
 								  possible_node_contexts,
 								  scope_history);
-	{
-		AbstractNodeHistory* last_node_history = context.back().scope_history->node_histories.back().back();
-		if (last_node_history->node->type == NODE_TYPE_SCOPE) {
-			node_context.back() = last_node_history->node;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-		}
-	}
 
 	geometric_distribution<int> length_distribution(0.2);
 	int loop_length = 1 + length_distribution(generator);
