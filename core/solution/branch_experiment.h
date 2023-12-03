@@ -64,6 +64,7 @@ public:
 	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
+	bool curr_is_loop;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
@@ -71,6 +72,7 @@ public:
 	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
+	bool best_is_loop;
 
 	double new_average_score;
 
@@ -203,6 +205,8 @@ public:
 					std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 	void new_pass_through(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 						  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+	void new_loop(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
+				  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 };
 
 class BranchExperimentInstanceHistory : public AbstractExperimentHistory {

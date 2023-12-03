@@ -61,8 +61,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	if (this->is_loop) {
 		int iter_index = 0;
 		while (true) {
-			if (iter_index > this->max_iters+3) {
-				run_helper.exceeded_limit = true;
+			if (iter_index >= this->max_iters) {
 				break;
 			}
 

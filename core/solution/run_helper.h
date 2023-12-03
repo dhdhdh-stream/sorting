@@ -14,8 +14,6 @@ public:
 
 	bool exceeded_limit;
 	/**
-	 * - for both recursion and loops
-	 * 
 	 * - recursion possible even when exploring with only child scopes
 	 *   - should be less likely though so don't specifically check against it
 	 *     - (and don't have to rely on recursion with OuterExperiment)

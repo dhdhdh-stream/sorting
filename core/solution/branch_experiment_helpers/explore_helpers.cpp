@@ -130,121 +130,120 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	}
 	overall_history->existing_predicted_score = predicted_score;
 
-	{
-		// exit
-		vector<pair<int,AbstractNode*>> possible_exits;
-		if (this->parent_pass_through_experiment == NULL) {
-			gather_possible_exits(possible_exits,
-								  context,
-								  this->scope_context,
-								  this->node_context);
-		} else {
-			gather_possible_exits(possible_exits,
-								  context,
-								  this->parent_pass_through_experiment->scope_context,
-								  this->parent_pass_through_experiment->node_context);
+	uniform_int_distribution<int> loop_distribution(0, 1);
+	if (loop_distribution(generator)) {
+		this->curr_exit_depth = 0;
+		this->curr_exit_node = curr_node;
 
-			for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
-					s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
-				if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
+		PotentialScopeNode* new_potential_loop = create_loop(context,
+															 (int)this->scope_context.size());
+		this->curr_potential_scopes.push_back(new_potential_loop);
+
+		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_loop);
+		new_potential_loop->activate(problem,
+									 context,
+									 run_helper,
+									 potential_scope_node_history);
+		delete potential_scope_node_history;
+
+		this->curr_is_loop = true;
+
+		curr_node = this->curr_exit_node;
+	} else {
+		{
+			// exit
+			vector<pair<int,AbstractNode*>> possible_exits;
+			if (this->parent_pass_through_experiment == NULL) {
+				gather_possible_exits(possible_exits,
+									  context,
+									  this->scope_context,
+									  this->node_context);
+			} else {
+				gather_possible_exits(possible_exits,
+									  context,
+									  this->parent_pass_through_experiment->scope_context,
+									  this->parent_pass_through_experiment->node_context);
+
+				for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
+						s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
+					if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						possible_exits.push_back({0, this->parent_pass_through_experiment->best_actions[s_index]});
+					} else {
+						possible_exits.push_back({0, this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder});
+					}
+				}
+			}
+
+			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+			int random_index = distribution(generator);
+			this->curr_exit_depth = possible_exits[random_index].first;
+			this->curr_exit_node = possible_exits[random_index].second;
+		}
+
+		{
+			// new path
+			int new_num_steps;
+			uniform_int_distribution<int> uniform_distribution(0, 2);
+			geometric_distribution<int> geometric_distribution(0.5);
+			if (this->curr_exit_depth == 0
+					&& this->curr_exit_node == curr_node) {
+				new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+			} else {
+				new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+			}
+		
+			uniform_int_distribution<int> type_distribution(0, 1);
+			uniform_int_distribution<int> action_distribution(0, 2);
+			uniform_int_distribution<int> next_distribution(0, 1);
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				if (type_distribution(generator) == 0) {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->action = Action(action_distribution(generator));
+					this->curr_actions.push_back(new_action_node);
+
+					this->curr_potential_scopes.push_back(NULL);
+
+					ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+					new_action_node->activate(curr_node,
+											  problem,
+											  context,
+											  exit_depth,
+											  exit_node,
+											  run_helper,
+											  action_node_history);
+					delete action_node_history;
 				} else {
-					possible_exits.push_back({0, this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder});
+					this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+					this->curr_actions.push_back(NULL);
+
+					PotentialScopeNode* new_potential_scope_node = create_scope(
+						context,
+						(int)this->scope_context.size(),
+						context[context.size() - this->scope_context.size()].scope);
+					this->curr_potential_scopes.push_back(new_potential_scope_node);
+
+					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+					new_potential_scope_node->activate(problem,
+													   context,
+													   run_helper,
+													   potential_scope_node_history);
+					delete potential_scope_node_history;
 				}
 			}
 		}
+		this->curr_is_loop = false;
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_node = possible_exits[random_index].second;
-	}
+		{
+			if (this->curr_exit_depth == 0) {
+				curr_node = this->curr_exit_node;
+			} else {
+				curr_node = NULL;
 
-	// {
-	// 	// new path
-	// 	int new_num_steps;
-	// 	uniform_int_distribution<int> uniform_distribution(0, 2);
-	// 	geometric_distribution<int> geometric_distribution(0.5);
-	// 	if (this->curr_exit_depth == 0
-	// 			&& this->curr_exit_node == curr_node) {
-	// 		new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-	// 	} else {
-	// 		new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-	// 	}
-	
-	// 	uniform_int_distribution<int> type_distribution(0, 1);
-	// 	uniform_int_distribution<int> action_distribution(0, 2);
-	// 	uniform_int_distribution<int> next_distribution(0, 1);
-	// 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
-	// 		if (type_distribution(generator) == 0) {
-	// 			this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-	// 			ActionNode* new_action_node = new ActionNode();
-	// 			new_action_node->action = Action(action_distribution(generator));
-	// 			this->curr_actions.push_back(new_action_node);
-
-	// 			this->curr_potential_scopes.push_back(NULL);
-
-	// 			ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-	// 			new_action_node->activate(curr_node,
-	// 									  problem,
-	// 									  context,
-	// 									  exit_depth,
-	// 									  exit_node,
-	// 									  run_helper,
-	// 									  action_node_history);
-	// 			delete action_node_history;
-	// 		} else {
-	// 			this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-	// 			this->curr_actions.push_back(NULL);
-
-	// 			PotentialScopeNode* new_potential_scope_node = create_scope(
-	// 				context,
-	// 				(int)this->scope_context.size(),
-	// 				context[context.size() - this->scope_context.size()].scope);
-	// 			this->curr_potential_scopes.push_back(new_potential_scope_node);
-
-	// 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
-	// 			ScopeHistory* scope_history = new ScopeHistory(new_potential_scope_node->scope);
-	// 			potential_scope_node_history->scope_history = scope_history;
-	// 			new_potential_scope_node->activate(problem,
-	// 											   context,
-	// 											   run_helper,
-	// 											   0,
-	// 											   potential_scope_node_history);
-	// 			delete potential_scope_node_history;
-	// 		}
-	// 	}
-	// }
-
-	{
-		this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-		ActionNode* new_action_node = new ActionNode();
-		new_action_node->action = Action(ACTION_SWAP);
-		this->curr_actions.push_back(new_action_node);
-
-		this->curr_potential_scopes.push_back(NULL);
-
-		ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-		new_action_node->activate(curr_node,
-								  problem,
-								  context,
-								  exit_depth,
-								  exit_node,
-								  run_helper,
-								  action_node_history);
-		delete action_node_history;
-	}
-
-	{
-		if (this->curr_exit_depth == 0) {
-			curr_node = this->curr_exit_node;
-		} else {
-			curr_node = NULL;
-
-			exit_depth = this->curr_exit_depth-1;
-			exit_node = this->curr_exit_node;
+				exit_depth = this->curr_exit_depth-1;
+				exit_node = this->curr_exit_node;
+			}
 		}
 	}
 }
@@ -272,6 +271,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
+			this->best_is_loop = this->curr_is_loop;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();

@@ -60,8 +60,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	if (this->is_loop) {
 		int iter_index = 0;
 		while (true) {
-			if (iter_index > this->max_iters+3) {
-				run_helper.exceeded_limit = true;
+			if (iter_index >= this->max_iters) {
 				break;
 			}
 
@@ -113,15 +112,6 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			#endif /* MDEBUG */
 
 			if (decision_is_halt) {
-				#if !defined(MDEBUG)
-				/**
-				 * - update even if explore
-				 *   - cannot result in worst performance as would previously be -1.0 anyways
-				 */
-				if (iter_index > this->max_iters) {
-					this->max_iters = iter_index;
-				}
-				#endif /* MDEBUG */
 				break;
 			} else {
 				this->inner_scope->activate(problem,

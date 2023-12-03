@@ -60,8 +60,7 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 		while (true) {
 			cout << "iter_index: " << iter_index << endl;
 
-			if (iter_index > this->max_iters+3) {
-				run_helper.exceeded_limit = true;
+			if (iter_index >= this->max_iters) {
 				cout << "loop exceeded limit" << endl;
 				break;
 			}

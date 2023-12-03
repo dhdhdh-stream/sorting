@@ -138,12 +138,9 @@ void BranchExperiment::verify_activate(
 				delete action_node_history;
 			} else {
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-				ScopeHistory* scope_history = new ScopeHistory(this->best_potential_scopes[s_index]->scope);
-				potential_scope_node_history->scope_history = scope_history;
 				this->best_potential_scopes[s_index]->activate(problem,
 															   context,
 															   run_helper,
-															   0,
 															   potential_scope_node_history);
 				delete potential_scope_node_history;
 			}
@@ -222,7 +219,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (branch_weight > 0.99) {
+			if (!this->best_is_loop && branch_weight > 0.99) {
 			#endif /* MDEBUG */
 				this->is_pass_through = true;
 			} else {

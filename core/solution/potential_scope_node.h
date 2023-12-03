@@ -47,7 +47,6 @@ public:
 	void activate(Problem& problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
-				  int iter_index,
 				  PotentialScopeNodeHistory* history);
 
 	void capture_verify_activate(Problem& problem,

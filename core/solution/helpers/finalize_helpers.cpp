@@ -802,148 +802,116 @@ void finalize_branch_node_states(BranchNode* new_branch_node,
 	}
 }
 
-void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
-								vector<int>& experiment_scope_context,
-								vector<int>& experiment_node_context,
-								vector<map<int, double>>& continue_input_state_weights,
-								vector<map<int, double>>& continue_local_state_weights,
-								vector<map<State*, double>>& continue_temp_state_weights,
-								vector<map<int, double>>& halt_input_state_weights,
-								vector<map<int, double>>& halt_local_state_weights,
-								vector<map<State*, double>>& halt_temp_state_weights,
-								map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
-								map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
+void finalize_loop_scope_node_states(ScopeNode* new_loop_scope_node,
+									 vector<int>& experiment_scope_context,
+									 vector<int>& experiment_node_context,
+									 vector<map<int, double>>& existing_input_state_weights,
+									 vector<map<int, double>>& existing_local_state_weights,
+									 vector<map<State*, double>>& existing_temp_state_weights,
+									 vector<map<int, double>>& new_input_state_weights,
+									 vector<map<int, double>>& new_local_state_weights,
+									 vector<map<State*, double>>& new_temp_state_weights,
+									 map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
+									 map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
 	for (int c_index = 0; c_index < (int)experiment_scope_context.size()-1; c_index++) {
 		int scope_depth = experiment_scope_context.size()-1 - c_index;
-		for (map<int, double>::iterator continue_it = continue_input_state_weights[c_index].begin();
-				continue_it != continue_input_state_weights[c_index].end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_input_state_weights[c_index][continue_it->first];
-
+		for (map<int, double>::iterator existing_it = existing_input_state_weights[c_index].begin();
+				existing_it != existing_input_state_weights[c_index].end(); existing_it++) {
+			int new_state_index;
 			map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
-				.find({scope_depth, {false, continue_it->first}});
+				.find({scope_depth, {false, existing_it->first}});
 			if (input_it != input_scope_depths_mappings.end()) {
-				new_loop_scope_node->loop_state_is_local.push_back(false);
-				new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
-				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+				new_state_index = input_it->second;
 			} else {
-				int new_state_index;
 				add_new_input(experiment_scope_context,
 							  experiment_node_context,
 							  scope_depth,
 							  false,
-							  continue_it->first,
+							  existing_it->first,
 							  new_state_index);
 
-				// no longer need to update input_scope_depths_mappings
-
-				new_loop_scope_node->loop_state_is_local.push_back(false);
-				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
-				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+				input_scope_depths_mappings[{scope_depth, {false, existing_it->first}}] = new_state_index;
 			}
+
+			double existing_weight = existing_it->second;
+			double new_weight = new_input_state_weights[c_index][existing_it->first];
+
+			new_loop_scope_node->loop_state_is_local.push_back(false);
+			new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 	{
-		for (map<int, double>::iterator continue_it = continue_input_state_weights.back().begin();
-				continue_it != continue_input_state_weights.back().end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_input_state_weights.back()[continue_it->first];
+		for (map<int, double>::iterator existing_it = existing_input_state_weights.back().begin();
+				existing_it != existing_input_state_weights.back().end(); existing_it++) {
+			double existing_weight = existing_it->second;
+			double new_weight = new_input_state_weights.back()[existing_it->first];
 
 			new_loop_scope_node->loop_state_is_local.push_back(false);
-			new_loop_scope_node->loop_state_indexes.push_back(continue_it->first);
-			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_state_indexes.push_back(existing_it->first);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 
 	for (int c_index = 0; c_index < (int)experiment_scope_context.size()-1; c_index++) {
 		int scope_depth = experiment_scope_context.size()-1 - c_index;
-		for (map<int, double>::iterator continue_it = continue_local_state_weights[c_index].begin();
-				continue_it != continue_local_state_weights[c_index].end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_local_state_weights[c_index][continue_it->first];
-
+		for (map<int, double>::iterator existing_it = existing_local_state_weights[c_index].begin();
+				existing_it != existing_local_state_weights[c_index].end(); existing_it++) {
+			int new_state_index;
 			map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
-				.find({scope_depth, {true, continue_it->first}});
+				.find({scope_depth, {true, existing_it->first}});
 			if (input_it != input_scope_depths_mappings.end()) {
-				new_loop_scope_node->loop_state_is_local.push_back(false);
-				new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
-				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+				new_state_index = input_it->second;
 			} else {
-				int new_state_index;
 				add_new_input(experiment_scope_context,
 							  experiment_node_context,
 							  scope_depth,
 							  true,
-							  continue_it->first,
+							  existing_it->first,
 							  new_state_index);
 
-				// no longer need to update input_scope_depths_mappings
-
-				new_loop_scope_node->loop_state_is_local.push_back(false);
-				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
-				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+				input_scope_depths_mappings[{scope_depth, {true, existing_it->first}}] = new_state_index;
 			}
+
+			double existing_weight = existing_it->second;
+			double new_weight = new_local_state_weights[c_index][existing_it->first];
+
+			new_loop_scope_node->loop_state_is_local.push_back(false);
+			new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 	{
-		for (map<int, double>::iterator continue_it = continue_local_state_weights.back().begin();
-				continue_it != continue_local_state_weights.back().end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_local_state_weights.back()[continue_it->first];
+		for (map<int, double>::iterator existing_it = existing_local_state_weights.back().begin();
+				existing_it != existing_local_state_weights.back().end(); existing_it++) {
+			double existing_weight = existing_it->second;
+			double new_weight = new_local_state_weights.back()[existing_it->first];
 
 			new_loop_scope_node->loop_state_is_local.push_back(true);
-			new_loop_scope_node->loop_state_indexes.push_back(continue_it->first);
-			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_state_indexes.push_back(existing_it->first);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 
 	for (int c_index = 0; c_index < (int)experiment_scope_context.size()-1; c_index++) {
 		int scope_depth = experiment_scope_context.size()-1 - c_index;
-		for (map<State*, double>::iterator continue_it = continue_temp_state_weights[c_index].begin();
-				continue_it != continue_temp_state_weights[c_index].end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_temp_state_weights[c_index][continue_it->first];
-
+		for (map<State*, double>::iterator existing_it = existing_temp_state_weights[c_index].begin();
+				existing_it != existing_temp_state_weights[c_index].end(); existing_it++) {
 			Scope* outer_scope = solution->scopes[experiment_scope_context[c_index]];
 
 			int temp_state_index;
 			for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
-				if (outer_scope->temp_states[t_index] == continue_it->first) {
+				if (outer_scope->temp_states[t_index] == existing_it->first) {
 					temp_state_index = t_index;
 					break;
 				}
 			}
 
-			if (outer_scope->temp_state_new_local_indexes[temp_state_index] != -1) {
-				map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
-					.find({scope_depth, {true, outer_scope->temp_state_new_local_indexes[temp_state_index]}});
-				if (input_it != input_scope_depths_mappings.end()) {
-					new_loop_scope_node->loop_state_is_local.push_back(false);
-					new_loop_scope_node->loop_state_indexes.push_back(input_it->second);
-					new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-					new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
-				} else {
-					int new_state_index;
-					duplicate_temp_state_helper(experiment_scope_context,
-												experiment_node_context,
-												scope_depth,
-												outer_scope->temp_state_new_local_indexes[temp_state_index],
-												new_state_index);
-
-					// no longer need to update input_scope_depths_mappings
-
-					new_loop_scope_node->loop_state_is_local.push_back(false);
-					new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
-					new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-					new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
-				}
-			} else {
+			if (outer_scope->temp_state_new_local_indexes[temp_state_index] == -1) {
 				int new_state_index;
 				add_state(outer_scope,
 						  temp_state_index,
@@ -952,26 +920,46 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 						  scope_depth,
 						  new_state_index);
 
-				// no longer need to update input_scope_depths_mappings
-
-				new_loop_scope_node->loop_state_is_local.push_back(false);
-				new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
-				new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-				new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+				if (scope_depth > 0) {
+					input_scope_depths_mappings[{scope_depth,
+						{true, outer_scope->temp_state_new_local_indexes[temp_state_index]}}] = new_state_index;
+				}
 			}
+
+			int outer_index = outer_scope->temp_state_new_local_indexes[temp_state_index];
+
+			int new_state_index;
+			map<pair<int, pair<bool,int>>, int>::iterator input_it = input_scope_depths_mappings
+				.find({scope_depth, {true, outer_index}});
+			if (input_it != input_scope_depths_mappings.end()) {
+				new_state_index = input_it->second;
+			} else {
+				duplicate_temp_state_helper(experiment_scope_context,
+											experiment_node_context,
+											scope_depth,
+											outer_index,
+											new_state_index);
+
+				input_scope_depths_mappings[{scope_depth, {true, outer_index}}] = new_state_index;
+			}
+
+			double existing_weight = existing_it->second;
+			double new_weight = new_temp_state_weights[c_index][existing_it->first];
+
+			new_loop_scope_node->loop_state_is_local.push_back(false);
+			new_loop_scope_node->loop_state_indexes.push_back(new_state_index);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 	{
-		for (map<State*, double>::iterator continue_it = continue_temp_state_weights.back().begin();
-				continue_it != continue_temp_state_weights.back().end(); continue_it++) {
-			double continue_weight = continue_it->second;
-			double halt_weight = halt_temp_state_weights.back()[continue_it->first];
-
+		for (map<State*, double>::iterator existing_it = existing_temp_state_weights.back().begin();
+				existing_it != existing_temp_state_weights.back().end(); existing_it++) {
 			Scope* outer_scope = solution->scopes[experiment_scope_context.back()];
 
 			int temp_state_index;
 			for (int t_index = 0; t_index < (int)outer_scope->temp_states.size(); t_index++) {
-				if (outer_scope->temp_states[t_index] == continue_it->first) {
+				if (outer_scope->temp_states[t_index] == existing_it->first) {
 					temp_state_index = t_index;
 					break;
 				}
@@ -989,10 +977,13 @@ void finalize_loop_scope_states(ScopeNode* new_loop_scope_node,
 
 			int outer_index = outer_scope->temp_state_new_local_indexes[temp_state_index];
 
+			double existing_weight = existing_it->second;
+			double new_weight = new_temp_state_weights.back()[existing_it->first];
+
 			new_loop_scope_node->loop_state_is_local.push_back(true);
 			new_loop_scope_node->loop_state_indexes.push_back(outer_index);
-			new_loop_scope_node->loop_continue_weights.push_back(continue_weight);
-			new_loop_scope_node->loop_halt_weights.push_back(halt_weight);
+			new_loop_scope_node->loop_continue_weights.push_back(new_weight);
+			new_loop_scope_node->loop_halt_weights.push_back(existing_weight);
 		}
 	}
 }

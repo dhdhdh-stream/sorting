@@ -9,7 +9,6 @@
 #include "flat_network.h"
 #include "full_network.h"
 #include "globals.h"
-#include "loop_experiment.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "scope.h"
@@ -89,7 +88,7 @@ void create_obs_experiment_experiment_helper(
 				node_context.back() = -1;
 			}
 		}
-	} else if (experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+	} else {
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
@@ -157,21 +156,6 @@ void create_obs_experiment_experiment_helper(
 				node_context.back() = -1;
 			}
 		}
-	} else {
-		LoopExperimentInstanceHistory* loop_experiment_history = (LoopExperimentInstanceHistory*)experiment_history;
-		LoopExperiment* loop_experiment = (LoopExperiment*)experiment_history->experiment;
-
-		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
-
-		create_obs_experiment_helper(scope_context,
-									 node_context,
-									 possible_nodes,
-									 possible_scope_contexts,
-									 possible_node_contexts,
-									 possible_obs_indexes,
-									 loop_experiment_history->potential_loop_history->scope_history);
-
-		node_context.back() = -1;
 	}
 }
 
@@ -316,7 +300,7 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 				node_context.back() = -1;
 			}
 		}
-	} else if (experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+	} else {
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
@@ -376,19 +360,6 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 				node_context.back() = -1;
 			}
 		}
-	} else {
-		LoopExperimentInstanceHistory* loop_experiment_history = (LoopExperimentInstanceHistory*)experiment_history;
-		LoopExperiment* loop_experiment = (LoopExperiment*)experiment_history->experiment;
-
-		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
-
-		flat_vals_helper(scope_context,
-						 node_context,
-						 loop_experiment_history->potential_loop_history->scope_history,
-						 sum_vals,
-						 counts);
-
-		node_context.back() = -1;
 	}
 }
 
@@ -486,7 +457,7 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 				node_context.back() = -1;
 			}
 		}
-	} else if (experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+	} else {
 		PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)experiment_history;
 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment_history->experiment;
 
@@ -546,19 +517,6 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 				node_context.back() = -1;
 			}
 		}
-	} else {
-		LoopExperimentInstanceHistory* loop_experiment_history = (LoopExperimentInstanceHistory*)experiment_history;
-		LoopExperiment* loop_experiment = (LoopExperiment*)experiment_history->experiment;
-
-		node_context.back() = loop_experiment->potential_loop->scope_node_placeholder->id;
-
-		rnn_vals_helper(scope_context,
-						node_context,
-						loop_experiment_history->potential_loop_history->scope_history,
-						rnn_obs_experiment_indexes,
-						rnn_vals);
-
-		node_context.back() = -1;
 	}
 }
 
@@ -1026,12 +984,9 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		if (experiment->type == EXPERIMENT_TYPE_BRANCH) {
 			BranchExperiment* branch_experiment = (BranchExperiment*)experiment;
 			branch_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else if (experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+		} else {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
 			pass_through_experiment->existing_temp_state_weights[new_state] = sqrt(resolved_variance);
-		} else {
-			LoopExperiment* loop_experiment = (LoopExperiment*)experiment;
-			loop_experiment->start_temp_state_weights[0][new_state] = sqrt(resolved_variance);
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
@@ -1242,7 +1197,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			branch_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			branch_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else if (experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+		} else {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
 
 			pass_through_experiment->new_states.push_back(new_state);
@@ -1252,20 +1207,6 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			pass_through_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			pass_through_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else {
-			LoopExperiment* loop_experiment = (LoopExperiment*)experiment;
-
-			loop_experiment->new_states.push_back(new_state);
-			loop_experiment->new_state_nodes.push_back(nodes);
-			loop_experiment->new_state_scope_contexts.push_back(scope_contexts);
-			loop_experiment->new_state_node_contexts.push_back(node_contexts);
-			loop_experiment->new_state_obs_indexes.push_back(obs_indexes);
-
-			if (loop_experiment->sub_state == LOOP_EXPERIMENT_SUB_STATE_TRAIN_HALT) {
-				loop_experiment->halt_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-			} else {
-				loop_experiment->continue_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-			}
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {

@@ -11,7 +11,6 @@ class AbstractNode;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
-const int EXPERIMENT_TYPE_LOOP = 2;
 
 class AbstractExperimentHistory;
 class AbstractExperiment {
