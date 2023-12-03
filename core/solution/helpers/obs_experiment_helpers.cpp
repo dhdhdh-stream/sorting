@@ -938,15 +938,15 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(test_instances));
 
-	cout << "obs experiment nodes:";
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		cout << " " << nodes[n_index]->id;
-	}
-	cout << endl;
-	cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	cout << "new_average_misguess: " << new_average_misguess << endl;
-	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	cout << "improvement_t_score: " << improvement_t_score << endl;
+	// cout << "obs experiment nodes:";
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	// 	cout << " " << nodes[n_index]->id;
+	// }
+	// cout << endl;
+	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	// cout << "new_average_misguess: " << new_average_misguess << endl;
+	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
@@ -1159,15 +1159,15 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	double improvement_t_score = misguess_improvement
 		/ (misguess_standard_deviation / sqrt(test_instances));
 
-	cout << "obs experiment nodes:";
-	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		cout << " " << nodes[n_index]->id;
-	}
-	cout << endl;
-	cout << "existing_average_misguess: " << existing_average_misguess << endl;
-	cout << "new_average_misguess: " << new_average_misguess << endl;
-	cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
-	cout << "improvement_t_score: " << improvement_t_score << endl;
+	// cout << "obs experiment nodes:";
+	// for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+	// 	cout << " " << nodes[n_index]->id;
+	// }
+	// cout << endl;
+	// cout << "existing_average_misguess: " << existing_average_misguess << endl;
+	// cout << "new_average_misguess: " << new_average_misguess << endl;
+	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */

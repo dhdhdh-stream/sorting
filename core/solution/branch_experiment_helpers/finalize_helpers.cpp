@@ -151,6 +151,11 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 			this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 			containing_scope->nodes[new_scope_node->id] = new_scope_node;
 
+			new_scope_node->is_loop = false;
+			new_scope_node->continue_score_mod = 0.0;
+			new_scope_node->halt_score_mod = 0.0;
+			new_scope_node->max_iters = 0;
+
 			new_scope_node->next_node_id = next_node->id;
 			new_scope_node->next_node = next_node;
 
@@ -273,6 +278,11 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 			this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 			containing_scope->nodes[new_scope_node->id] = new_scope_node;
 
+			new_scope_node->is_loop = false;
+			new_scope_node->continue_score_mod = 0.0;
+			new_scope_node->halt_score_mod = 0.0;
+			new_scope_node->max_iters = 0;
+
 			new_scope_node->next_node_id = next_node->id;
 			new_scope_node->next_node = next_node;
 
@@ -354,11 +364,6 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	new_branch_node->branch_next_node_id = this->best_potential_scopes[0]->scope_node_placeholder->id;
 	new_branch_node->branch_next_node = this->best_potential_scopes[0]->scope_node_placeholder;
 
-	this->best_potential_scopes[0]->scope_node_placeholder->is_loop = true;
-	this->best_potential_scopes[0]->scope_node_placeholder->continue_score_mod = this->new_average_score;
-	this->best_potential_scopes[0]->scope_node_placeholder->halt_score_mod = this->existing_average_score;
-	this->best_potential_scopes[0]->scope_node_placeholder->max_iters = 1;
-
 	finalize_loop_scope_node_states(this->best_potential_scopes[0]->scope_node_placeholder,
 									this->scope_context,
 									this->node_context,
@@ -371,11 +376,6 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 									input_scope_depths_mappings,
 									output_scope_depths_mappings);
 
-	this->best_potential_scopes[0]->scope_node_placeholder->verify_key = this;
-	this->best_potential_scopes[0]->scope_node_placeholder->verify_continue_scores = this->verify_branch_scores;
-	this->best_potential_scopes[0]->scope_node_placeholder->verify_halt_scores = this->verify_original_scores;
-	this->best_potential_scopes[0]->scope_node_placeholder->verify_factors = this->verify_factors;
-
 	finalize_potential_scope(this->scope_context,
 							 this->node_context,
 							 this->best_potential_scopes[0],
@@ -384,6 +384,16 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	ScopeNode* new_scope_node = this->best_potential_scopes[0]->scope_node_placeholder;
 	this->best_potential_scopes[0]->scope_node_placeholder = NULL;
 	containing_scope->nodes[new_scope_node->id] = new_scope_node;
+
+	new_scope_node->is_loop = true;
+	new_scope_node->continue_score_mod = this->new_average_score;
+	new_scope_node->halt_score_mod = this->existing_average_score;
+	new_scope_node->max_iters = 1;
+
+	new_scope_node->verify_key = this;
+	new_scope_node->verify_continue_scores = this->verify_branch_scores;
+	new_scope_node->verify_halt_scores = this->verify_original_scores;
+	new_scope_node->verify_factors = this->verify_factors;
 
 	if (this->best_exit_node == NULL) {
 		new_scope_node->next_node_id = -1;

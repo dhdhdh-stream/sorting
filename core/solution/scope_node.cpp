@@ -16,11 +16,6 @@ ScopeNode::ScopeNode() {
 
 	this->id = -1;
 
-	this->is_loop = false;
-	this->continue_score_mod = 0.0;
-	this->halt_score_mod = 0.0;
-	this->max_iters = 0;
-
 	this->experiment = NULL;
 
 	this->verify_key = NULL;

@@ -418,6 +418,64 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 				}
 			}
 
+			new_scope_node->is_loop = original_scope_node->is_loop;
+			new_scope_node->continue_score_mod = original_scope_node->continue_score_mod;
+			new_scope_node->halt_score_mod = original_scope_node->halt_score_mod;
+			new_scope_node->max_iters = original_scope_node->max_iters;
+
+			for (int s_index = 0; s_index < (int)original_scope_node->loop_state_is_local.size(); s_index++) {
+				map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
+					.find({original_scope_node->loop_state_is_local[s_index], original_scope_node->loop_state_indexes[s_index]});
+				if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
+					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
+					if (final_it != potential_to_final_mapping.end()) {
+						new_scope_node->loop_state_is_local.push_back(false);
+						new_scope_node->loop_state_indexes.push_back(final_it->second);
+						new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
+						new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
+					} else {
+						if (include_state_distribution(generator) == 0) {
+							potential_to_final_mapping[potential_it->second] = -1;
+						} else {
+							int new_state_index = new_scope->num_input_states;
+							new_scope->num_input_states++;
+
+							potential_to_final_mapping[potential_it->second] = new_state_index;
+
+							new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
+							new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
+							new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+							if (potential_to_outer_mapping[potential_it->second].second.first) {
+								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
+							} else {
+								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
+							}
+							new_potential_scope_node->input_outer_indexes.push_back(
+								(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+							new_potential_scope_node->input_init_vals.push_back(0.0);
+							new_potential_scope_node->input_init_index_vals.push_back(0.0);
+
+							if (output_distribution(generator) == 0) {
+								new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
+								new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
+								if (potential_to_outer_mapping[potential_it->second].second.first) {
+									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
+								} else {
+									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
+								}
+								new_potential_scope_node->output_outer_indexes.push_back(
+									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+							}
+
+							new_scope_node->loop_state_is_local.push_back(false);
+							new_scope_node->loop_state_indexes.push_back(new_state_index);
+							new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
+							new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
+						}
+					}
+				}
+			}
+
 			new_nodes.push_back(new_scope_node);
 		}
 	}

@@ -151,6 +151,11 @@ void OuterExperiment::capture_verify_backprop() {
 					new_scope_node->input_init_index_vals.push_back(this->best_potential_scopes[s_index]->input_init_index_vals[i_index]);
 				}
 
+				new_scope_node->is_loop = false;
+				new_scope_node->continue_score_mod = 0.0;
+				new_scope_node->halt_score_mod = 0.0;
+				new_scope_node->max_iters = 0;
+
 				new_scope_node->next_node_id = next_node_id;
 				new_scope_node->next_node = next_node;
 

@@ -72,6 +72,11 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 				new_scope_node->inner_scope = solution->root;
 				this->curr_root_scope_nodes.push_back(new_scope_node);
 
+				new_scope_node->is_loop = false;
+				new_scope_node->continue_score_mod = 0.0;
+				new_scope_node->halt_score_mod = 0.0;
+				new_scope_node->max_iters = 0;
+
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
 				new_scope_node->activate(curr_node,
 										 problem,

@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
-		   -DMDEBUG=0 \
+		   -DMDEBUG=1 \
 		   `pkg-config --cflags eigen3` \
 		   -Inn \
 		   -Isolution \

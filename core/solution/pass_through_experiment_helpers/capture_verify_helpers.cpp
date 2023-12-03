@@ -158,6 +158,11 @@ void PassThroughExperiment::capture_verify_backprop() {
 				this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 				containing_scope->nodes[new_scope_node->id] = new_scope_node;
 
+				new_scope_node->is_loop = false;
+				new_scope_node->continue_score_mod = 0.0;
+				new_scope_node->halt_score_mod = 0.0;
+				new_scope_node->max_iters = 0;
+
 				new_scope_node->next_node_id = next_node->id;
 				new_scope_node->next_node = next_node;
 

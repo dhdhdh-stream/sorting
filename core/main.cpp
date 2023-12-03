@@ -1,5 +1,3 @@
-// TODO: verify full copy
-
 #include <chrono>
 #include <iostream>
 #include <map>
