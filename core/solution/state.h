@@ -20,7 +20,8 @@ public:
 		  int id);
 	~State();
 
-	void save(std::ofstream& output_file);
+	void save(std::ofstream& output_file,
+			  std::string name);
 };
 
 #endif /* STATE_H */

@@ -22,6 +22,8 @@ const int STARTING_NUM_DATAPOINTS = 2000;
 
 class Solution {
 public:
+	int id;
+
 	int state_counter;
 	std::map<int, State*> states;
 	/**
@@ -63,7 +65,7 @@ public:
 
 	void clear_verify();
 
-	void save(std::ofstream& output_file);
+	void save(std::string name);
 	void save_for_display(std::ofstream& output_file);
 };
 

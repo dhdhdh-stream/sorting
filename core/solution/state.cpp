@@ -25,7 +25,7 @@ State::State(ifstream& input_file,
 	int num_networks = stoi(num_networks_line);
 	for (int n_index = 0; n_index < num_networks; n_index++) {
 		ifstream network_save_file;
-		network_save_file.open("saves/nns/" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		network_save_file.open("saves/main/nns/" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
 		this->networks.push_back(new FullNetwork(network_save_file,
 												 this,
 												 n_index));
@@ -39,11 +39,12 @@ State::~State() {
 	}
 }
 
-void State::save(ofstream& output_file) {
+void State::save(ofstream& output_file,
+				 string name) {
 	output_file << this->networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		ofstream network_save_file;
-		network_save_file.open("saves/nns/" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
+		network_save_file.open("saves/" + name + "/nns/" + to_string(this->id) + "_" + to_string(n_index) + ".txt");
 		this->networks[n_index]->save(network_save_file);
 		network_save_file.close();
 	}

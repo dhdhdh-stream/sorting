@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer
+all: main viewer worker
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -23,9 +23,13 @@ main: ${OBJECTS} main.o
 viewer: ${OBJECTS} viewer.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
 
--include ${DEPENDS} main.d viewer.d
+worker: ${OBJECTS} worker.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} worker.o -o worker ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	main.o main.d main \
-	viewer.o viewer.d viewer
+	viewer.o viewer.d viewer \
+	worker.o worker.d worker

@@ -28,6 +28,8 @@ Solution::~Solution() {
 }
 
 void Solution::init() {
+	this->id = (unsigned)time(NULL);
+
 	this->state_counter = 0;
 
 	this->scope_counter = 0;
@@ -60,6 +62,10 @@ void Solution::init() {
 }
 
 void Solution::load(ifstream& input_file) {
+	string id_line;
+	getline(input_file, id_line);
+	this->id = stoi(id_line);
+
 	string state_counter_line;
 	getline(input_file, state_counter_line);
 	this->state_counter = stoi(state_counter_line);
@@ -99,7 +105,7 @@ void Solution::load(ifstream& input_file) {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		ifstream scope_save_file;
-		scope_save_file.open("saves/scope_" + to_string(it->first) + ".txt");
+		scope_save_file.open("saves/main/scope_" + to_string(it->first) + ".txt");
 		it->second->load(scope_save_file);
 		scope_save_file.close();
 	}
@@ -155,14 +161,20 @@ void Solution::fail_reset() {
 	this->outer_experiment = new OuterExperiment();
 }
 
-void Solution::save(ofstream& output_file) {
+void Solution::save(string name) {
+	ofstream output_file;
+	output_file.open("saves/" + name + "/solution.txt");
+
+	output_file << this->id << endl;
+
 	output_file << this->state_counter << endl;
 
 	output_file << this->states.size() << endl;
 	for (map<int, State*>::iterator it = this->states.begin();
 			it != this->states.end(); it++) {
 		output_file << it->first << endl;
-		it->second->save(output_file);
+		it->second->save(output_file,
+						 name);
 	}
 
 	output_file << this->scope_counter << endl;
@@ -173,7 +185,7 @@ void Solution::save(ofstream& output_file) {
 		output_file << it->first << endl;
 
 		ofstream scope_save_file;
-		scope_save_file.open("saves/scope_" + to_string(it->first) + ".txt");
+		scope_save_file.open("saves/" + name + "/scope_" + to_string(it->first) + ".txt");
 		it->second->save(scope_save_file);
 		scope_save_file.close();
 	}
@@ -181,6 +193,8 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->root->id << endl;
 
 	output_file << this->max_depth << endl;
+
+	output_file.close();
 }
 
 void Solution::save_for_display(ofstream& output_file) {
