@@ -146,30 +146,30 @@ void PassThroughExperiment::experiment_backprop(
 			}
 
 			cout << "PassThrough experiment success" << endl;
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index] << endl;
-			}
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
-				} else {
-					cout << " S";
-				}
-			}
-			cout << endl;
+			// cout << "this->scope_context:" << endl;
+			// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
+			// }
+			// cout << "this->node_context:" << endl;
+			// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+			// 	cout << c_index << ": " << this->node_context[c_index] << endl;
+			// }
+			// cout << "new explore path:";
+			// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			// 		cout << " " << this->best_actions[s_index]->action.to_string();
+			// 	} else {
+			// 		cout << " S";
+			// 	}
+			// }
+			// cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_node == NULL) {
-				cout << "this->best_exit_node_id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-			}
+			// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+			// if (this->best_exit_node == NULL) {
+			// 	cout << "this->best_exit_node_id: " << -1 << endl;
+			// } else {
+			// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+			// }
 
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 

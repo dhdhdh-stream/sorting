@@ -194,8 +194,8 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 		this->state_iter++;
 		this->sub_state_iter = 0;
 		if (this->state_iter >= EXPLORE_ITERS) {
-			cout << "PassThrough" << endl;
-			cout << "this->best_surprise: " << this->best_score << endl;
+			// cout << "PassThrough" << endl;
+			// cout << "this->best_surprise: " << this->best_score << endl;
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
@@ -218,31 +218,31 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 					}
 				}
 
-				cout << "this->scope_context:" << endl;
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					cout << c_index << ": " << this->scope_context[c_index] << endl;
-				}
-				cout << "this->node_context:" << endl;
-				for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-					cout << c_index << ": " << this->node_context[c_index] << endl;
-				}
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index]->action.to_string();
-					} else {
-						cout << " S";
-					}
-				}
-				cout << endl;
+				// cout << "this->scope_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
+				// }
+				// cout << "this->node_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->node_context[c_index] << endl;
+				// }
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_actions[s_index]->action.to_string();
+				// 	} else {
+				// 		cout << " S";
+				// 	}
+				// }
+				// cout << endl;
 
-				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				if (this->best_exit_node == NULL) {
-					cout << "this->best_exit_node_id: " << -1 << endl;
-				} else {
-					cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-				}
-				cout << endl;
+				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				// if (this->best_exit_node == NULL) {
+				// 	cout << "this->best_exit_node_id: " << -1 << endl;
+				// } else {
+				// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				// }
+				// cout << endl;
 
 				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 

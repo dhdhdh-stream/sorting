@@ -39,10 +39,7 @@ int main(int argc, char* argv[]) {
 
 	solution = new Solution();
 	solution->init();
-	// ifstream solution_save_file;
-	// solution_save_file.open("saves/solution.txt");
-	// solution->load(solution_save_file);
-	// solution_save_file.close();
+	// solution->load("", "main");
 
 	int num_fails = 0;
 
@@ -245,7 +242,7 @@ int main(int argc, char* argv[]) {
 			num_fails = 0;
 
 			solution->id = (unsigned)time(NULL);
-			solution->save("main");
+			solution->save("", "main");
 
 			ofstream display_file;
 			display_file.open("../display.txt");
@@ -253,7 +250,6 @@ int main(int argc, char* argv[]) {
 			display_file.close();
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
-			break;
 		} else if (is_fail) {
 			num_fails++;
 			cout << "num_fails: " << num_fails << endl << endl;
@@ -264,7 +260,6 @@ int main(int argc, char* argv[]) {
 				solution->fail_reset();
 
 				solution->curr_num_datapoints *= 2;
-				break;
 			}
 		}
 	}

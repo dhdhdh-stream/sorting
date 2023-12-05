@@ -35,13 +35,13 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	cout << "solution->states.size(): " << solution->states.size() << endl;
+	double sum_vals = 0.0;
 
-	{
+	for (int i_index = 0; i_index < 2000; i_index++) {
 		Problem problem;
-		// Problem problem(vector<double>{3.0, 1.0});
 
 		RunHelper run_helper;
+		run_helper.selected_experiment = (void*)-1;
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
@@ -49,15 +49,20 @@ int main(int argc, char* argv[]) {
 		context.back().scope = solution->root;
 		context.back().node = NULL;
 
+		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		context.back().scope_history = root_history;
+
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->view_activate(problem,
-									  context,
-									  exit_depth,
-									  exit_node,
-									  run_helper);
+		solution->root->activate(problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper,
+								 0,
+								 root_history);
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -65,18 +70,12 @@ int main(int argc, char* argv[]) {
 		} else {
 			target_val = -1.0;
 		}
-		cout << "initial_world:";
-		for (int p_index = 0; p_index < (int)problem.initial_world.size(); p_index++) {
-			cout << " " << problem.initial_world[p_index];
-		}
-		cout << endl;
-		cout << "ending_world:";
-		for (int p_index = 0; p_index < (int)problem.current_world.size(); p_index++) {
-			cout << " " << problem.current_world[p_index];
-		}
-		cout << endl;
-		cout << "target_val: " << target_val << endl;
+		sum_vals += target_val;
+
+		delete root_history;
 	}
+
+	cout << "average score: " << sum_vals/2000 << endl;
 
 	ofstream display_file;
 	display_file.open("../display.txt");

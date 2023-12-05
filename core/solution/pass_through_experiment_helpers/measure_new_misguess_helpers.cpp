@@ -138,17 +138,17 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		 *   - will be more conservative
 		 */
 
-		cout << "PassThrough" << endl;
-		cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-		cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
-		cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
+		// cout << "PassThrough" << endl;
+		// cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+		// cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+		// cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
 		if (misguess_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
-			cout << "misguess success" << endl;
+			// cout << "misguess success" << endl;
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -192,6 +192,6 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 
-		cout << endl;
+		// cout << endl;
 	}
 }

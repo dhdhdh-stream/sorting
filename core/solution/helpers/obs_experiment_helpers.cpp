@@ -950,7 +950,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
-		cout << "obs success" << endl;
+		// cout << "obs success" << endl;
 
 		State* new_state = new State();
 
@@ -994,7 +994,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		}
 	}
 
-	cout << endl;
+	// cout << endl;
 }
 
 void new_obs_experiment(AbstractExperiment* experiment,
@@ -1171,7 +1171,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
-		cout << "obs success" << endl;
+		// cout << "obs success" << endl;
 
 		State* new_state = new State();
 
@@ -1214,7 +1214,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 		}
 	}
 
-	cout << endl;
+	// cout << endl;
 }
 
 void existing_pass_through_branch_obs_experiment(
@@ -1395,7 +1395,7 @@ void existing_pass_through_branch_obs_experiment(
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
-		cout << "obs success" << endl;
+		// cout << "obs success" << endl;
 
 		State* new_state = new State();
 
@@ -1426,5 +1426,5 @@ void existing_pass_through_branch_obs_experiment(
 		}
 	}
 
-	cout << endl;
+	// cout << endl;
 }

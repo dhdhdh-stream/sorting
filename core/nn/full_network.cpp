@@ -27,26 +27,30 @@ FullNetwork::FullNetwork(int index) {
 	this->average_index = 0.0;
 }
 
-FullNetwork::FullNetwork(ifstream& input_file,
+FullNetwork::FullNetwork(string path,
+						 string name,
 						 State* parent_state,
 						 int index) {
+	ifstream input_file;
+	input_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + ".txt");
+
 	ifstream update_size_network_save_file;
-	update_size_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_update_size.txt");
+	update_size_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_update_size.txt");
 	this->update_size_network = new UpdateSizeNetwork(update_size_network_save_file);
 	update_size_network_save_file.close();
 
 	ifstream state_network_save_file;
-	state_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_state.txt");
+	state_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_state.txt");
 	this->state_network = new StateNetwork(state_network_save_file);
 	state_network_save_file.close();
 
 	ifstream forget_network_save_file;
-	forget_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_forget.txt");
+	forget_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_forget.txt");
 	this->forget_network = new ForgetNetwork(forget_network_save_file);
 	forget_network_save_file.close();
 
 	ifstream index_network_save_file;
-	index_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_index.txt");
+	index_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_index.txt");
 	this->index_network = new IndexNetwork(index_network_save_file);
 	index_network_save_file.close();
 
@@ -81,6 +85,8 @@ FullNetwork::FullNetwork(ifstream& input_file,
 	string average_index_line;
 	getline(input_file, average_index_line);
 	this->average_index = stod(average_index_line);
+
+	input_file.close();
 }
 
 FullNetwork::~FullNetwork() {
@@ -219,24 +225,28 @@ void FullNetwork::activate(double obs_val,
 	state_status.last_network = this;
 }
 
-void FullNetwork::save(std::ofstream& output_file) {
+void FullNetwork::save(string path,
+					   string name) {
+	ofstream output_file;
+	output_file.open(path + "saves/" + name + "/nns/" + to_string(this->parent_state->id) + "_" + to_string(this->index) + ".txt");
+
 	ofstream update_size_network_save_file;
-	update_size_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_update_size.txt");
+	update_size_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_update_size.txt");
 	this->update_size_network->save(update_size_network_save_file);
 	update_size_network_save_file.close();
 
 	ofstream state_network_save_file;
-	state_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_state.txt");
+	state_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_state.txt");
 	this->state_network->save(state_network_save_file);
 	state_network_save_file.close();
 
 	ofstream forget_network_save_file;
-	forget_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_forget.txt");
+	forget_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_forget.txt");
 	this->forget_network->save(forget_network_save_file);
 	forget_network_save_file.close();
 
 	ofstream index_network_save_file;
-	index_network_save_file.open("saves/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_index.txt");
+	index_network_save_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + "_index.txt");
 	this->index_network->save(index_network_save_file);
 	index_network_save_file.close();
 
@@ -251,6 +261,8 @@ void FullNetwork::save(std::ofstream& output_file) {
 	output_file << this->ending_mean << endl;
 	output_file << this->ending_standard_deviation << endl;
 	output_file << this->average_index << endl;
+
+	output_file.close();
 }
 
 FullNetworkHistory::FullNetworkHistory(FullNetwork* network) {

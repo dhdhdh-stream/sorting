@@ -48,7 +48,8 @@ public:
 	double average_index;
 
 	FullNetwork(int index);
-	FullNetwork(std::ifstream& input_file,
+	FullNetwork(std::string path,
+				std::string name,
 				State* parent_state,
 				int index);
 	~FullNetwork();
@@ -68,7 +69,8 @@ public:
 	void activate(double obs_val,
 				  StateStatus& state_status);
 
-	void save(std::ofstream& output_file);
+	void save(std::string name,
+			  std::string path);
 };
 
 class FullNetworkHistory {

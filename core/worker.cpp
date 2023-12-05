@@ -30,11 +30,12 @@ default_random_engine generator;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
-	if (argc != 2) {
-		cout << "Usage: ./worker [name]" << endl;
+	if (argc != 3) {
+		cout << "Usage: ./worker [path] [name]" << endl;
 		exit(1);
 	}
-	string name = argv[1];
+	string path = argv[1];
+	string name = argv[2];
 
 	/**
 	 * - worker directories need to have already been created
@@ -48,10 +49,7 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	ifstream solution_save_file;
-	solution_save_file.open("saves/main/solution.txt");
-	solution->load(solution_save_file);
-	solution_save_file.close();
+	solution->load(path, "main");
 
 	int num_fails = 0;
 
@@ -59,6 +57,7 @@ int main(int argc, char* argv[]) {
 	int run_index = 0;
 	#endif /* MDEBUG */
 
+	int iter_index = 0;
 	uniform_int_distribution<int> outer_distribution(0, 9);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
@@ -216,12 +215,64 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		if (is_success || is_fail) {
-			/**
-			 * - use experiment ending as trigger to check if solution updated
-			 */
+		if (is_success) {
+			solution->success_reset();
+
+			while (solution->verify_problems.size() > 0) {
+				Problem problem = solution->verify_problems[0];
+
+				RunHelper run_helper;
+				run_helper.verify_key = solution->verify_key;
+
+				#if defined(MDEBUG) && MDEBUG
+				run_helper.starting_run_seed = solution->verify_seeds[0];
+				run_helper.curr_run_seed = solution->verify_seeds[0];
+				solution->verify_seeds.erase(solution->verify_seeds.begin());
+				#endif /* MDEBUG */
+
+				vector<ContextLayer> context;
+				context.push_back(ContextLayer());
+
+				context.back().scope = solution->root;
+				context.back().node = NULL;
+
+				// unused
+				int exit_depth = -1;
+				AbstractNode* exit_node = NULL;
+
+				solution->root->verify_activate(problem,
+												context,
+												exit_depth,
+												exit_node,
+												run_helper);
+
+				solution->verify_problems.erase(solution->verify_problems.begin());
+			}
+			solution->clear_verify();
+
+			num_fails = 0;
+
+			solution->id = (unsigned)time(NULL);
+			solution->save(path, name);
+
+			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
+		} else if (is_fail) {
+			num_fails++;
+			cout << "num_fails: " << num_fails << endl << endl;
+			if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+				cout << "fail_reset" << endl << endl;
+
+				num_fails = 0;
+				solution->fail_reset();
+
+				solution->curr_num_datapoints *= 2;
+			}
+		}
+
+		iter_index++;
+		if (iter_index%10000 == 0) {
 			ifstream solution_save_file;
-			solution_save_file.open("saves/main/solution.txt");
+			solution_save_file.open(path + "saves/main/solution.txt");
 			string id_line;
 			getline(solution_save_file, id_line);
 			int curr_id = stoi(id_line);
@@ -231,68 +282,11 @@ int main(int argc, char* argv[]) {
 				delete solution;
 
 				solution = new Solution();
-				ifstream solution_save_file;
-				solution_save_file.open("saves/main/solution.txt");
-				solution->load(solution_save_file);
-				solution_save_file.close();
+				solution->load(path, "main");
+
+				cout << "updated from main" << endl;
 
 				num_fails = 0;
-			} else {
-				if (is_success) {
-					solution->success_reset();
-
-					while (solution->verify_problems.size() > 0) {
-						Problem problem = solution->verify_problems[0];
-
-						RunHelper run_helper;
-						run_helper.verify_key = solution->verify_key;
-
-						#if defined(MDEBUG) && MDEBUG
-						run_helper.starting_run_seed = solution->verify_seeds[0];
-						run_helper.curr_run_seed = solution->verify_seeds[0];
-						solution->verify_seeds.erase(solution->verify_seeds.begin());
-						#endif /* MDEBUG */
-
-						vector<ContextLayer> context;
-						context.push_back(ContextLayer());
-
-						context.back().scope = solution->root;
-						context.back().node = NULL;
-
-						// unused
-						int exit_depth = -1;
-						AbstractNode* exit_node = NULL;
-
-						solution->root->verify_activate(problem,
-														context,
-														exit_depth,
-														exit_node,
-														run_helper);
-
-						solution->verify_problems.erase(solution->verify_problems.begin());
-					}
-					solution->clear_verify();
-
-					num_fails = 0;
-
-					solution->id = (unsigned)time(NULL);
-					solution->save(name);
-
-					solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
-					break;
-				} else if (is_fail) {
-					num_fails++;
-					cout << "num_fails: " << num_fails << endl << endl;
-					if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
-						cout << "fail_reset" << endl << endl;
-
-						num_fails = 0;
-						solution->fail_reset();
-
-						solution->curr_num_datapoints *= 2;
-						break;
-					}
-				}
 			}
 		}
 	}

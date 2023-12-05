@@ -21,18 +21,25 @@ def download_files(sftp_client, remote_dir, local_dir):
 			# uses '/' path delimiter for remote server
 			download_files(sftp_client, remote_dir + filename + '/', os.path.join(local_dir, filename))
 		else:
-			if not os.path.isfile(os.path.join(local_dir, filename)):
-				sftp_client.get(remote_dir + filename, os.path.join(local_dir, filename))
+			sftp_client.get(remote_dir + filename, os.path.join(local_dir, filename))
 
 def exists_remote(sftp_client, path):
 	try:
 		sftp_client.stat(path)
-	except IOError, e:
+	except IOError as e:
 		if e.errno == errno.ENOENT:
 			return False
 		raise
 	else:
 		return True
+
+workers = []
+
+workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
+for line in workers_file:
+	arr = line.strip().split()
+	workers.append([arr[0], arr[1], arr[2], arr[3]])
+workers_file.close()
 
 solution_file = open('saves/main/solution.txt', 'r')
 curr_id = int(solution_file.readline())
@@ -41,64 +48,51 @@ solution_file.close()
 while True:
 	updated = False
 
-	workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
-	for line in workers_file:
-		arr = line.strip().split()
-		name = arr[0]
-		host = arr[1]
-		username = arr[2]
-		password = arr[3]
-
+	for worker in workers:
 		client = paramiko.SSHClient()
 		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		client.connect(host,
-					   username=username,
-					   password=password)
+		client.connect(worker[1],
+					   username=worker[2],
+					   password=worker[3])
 
 		client_sftp = client.open_sftp()
 
 		try:
-			worker_solution_file = client_sftp.file('saves/' + name + '/solution.txt', 'r')
+			worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '/solution.txt', 'r')
 			worker_curr_id = int(worker_solution_file.readline())
 			worker_solution_file.close()
 
 			if worker_curr_id > curr_id:
-				download_files(client_sftp, 'saves/' + name + '/', 'saves/main/')
+				print(worker[0] + ' updated')
+
+				download_files(client_sftp, 'workers/' + worker[0] + '/saves/' + worker[0] + '/', 'saves/main/')
 
 				curr_id = worker_curr_id
 
 				updated = True
 
-				break
-
 		except IOError:
-			# do nothing
+			pass
 
 		client_sftp.close()
 		client.close()
 
-	workers_file.close()
+		if updated:
+			break
 
 	if updated:
-		workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
-		for line in workers_file:
-			arr = line.strip().split()
-			name = arr[0]
-			host = arr[1]
-			username = arr[2]
-			password = arr[3]
-
+		for worker in workers:
 			client = paramiko.SSHClient()
 			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-			client.connect(host,
-						   username=username,
-						   password=password)
+			client.connect(worker[1],
+						   username=worker[2],
+						   password=worker[3])
 
 			client_sftp = client.open_sftp()
 
 			parent = 'saves/main'
 			for dirpath, dirnames, filenames in os.walk(parent):
-				remote_path = os.path.join('saves/main', dirpath[len(parent)+1:])
+				remote_path = os.path.join('workers/' + worker[0] + '/saves/main', dirpath[len(parent)+1:])
 				try:
 					client_sftp.listdir(remote_path)
 				except IOError:

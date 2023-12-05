@@ -58,14 +58,16 @@ public:
 	~Solution();
 
 	void init();
-	void load(std::ifstream& input_file);
+	void load(std::string path,
+			  std::string name);
 
 	void success_reset();
 	void fail_reset();
 
 	void clear_verify();
 
-	void save(std::string name);
+	void save(std::string path,
+			  std::string name);
 	void save_for_display(std::ofstream& output_file);
 };
 

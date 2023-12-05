@@ -213,9 +213,9 @@ void OuterExperiment::explore_backprop(double target_val) {
 			double score_improvement_t_score = this->best_score
 				/ (score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
 
-			cout << "Outer" << endl;
-			cout << "this->best_surprise: " << this->best_score << endl;
-			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+			// cout << "Outer" << endl;
+			// cout << "this->best_surprise: " << this->best_score << endl;
+			// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
@@ -236,17 +236,17 @@ void OuterExperiment::explore_backprop(double target_val) {
 					}
 				}
 
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index]->action.to_string();
-					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-						cout << " S";
-					} else {
-						cout << " R";
-					}
-				}
-				cout << endl;
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_actions[s_index]->action.to_string();
+				// 	} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				// 		cout << " S";
+				// 	} else {
+				// 		cout << " R";
+				// 	}
+				// }
+				// cout << endl;
 
 				this->target_val_histories.reserve(solution->curr_num_datapoints);
 
@@ -273,7 +273,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				this->sub_state_iter = 0;
 			}
 
-			cout << endl;
+			// cout << endl;
 		}
 	}
 }

@@ -61,7 +61,11 @@ void Solution::init() {
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
-void Solution::load(ifstream& input_file) {
+void Solution::load(string path,
+					string name) {
+	ifstream input_file;
+	input_file.open(path + "saves/" + name + "/solution.txt");
+
 	string id_line;
 	getline(input_file, id_line);
 	this->id = stoi(id_line);
@@ -79,7 +83,9 @@ void Solution::load(ifstream& input_file) {
 		int state_id = stoi(state_id_line);
 
 		State* state = new State(input_file,
-								 state_id);
+								 state_id,
+								 path,
+								 name);
 
 		this->states[state_id] = state;
 	}
@@ -105,7 +111,7 @@ void Solution::load(ifstream& input_file) {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		ifstream scope_save_file;
-		scope_save_file.open("saves/main/scope_" + to_string(it->first) + ".txt");
+		scope_save_file.open(path + "saves/" + name + "/scope_" + to_string(it->first) + ".txt");
 		it->second->load(scope_save_file);
 		scope_save_file.close();
 	}
@@ -127,6 +133,8 @@ void Solution::load(ifstream& input_file) {
 	} else {
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
+
+	input_file.close();
 
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
@@ -161,9 +169,10 @@ void Solution::fail_reset() {
 	this->outer_experiment = new OuterExperiment();
 }
 
-void Solution::save(string name) {
+void Solution::save(string path,
+					string name) {
 	ofstream output_file;
-	output_file.open("saves/" + name + "/solution.txt");
+	output_file.open(path + "saves/" + name + "/solution.txt");
 
 	output_file << this->id << endl;
 
@@ -174,6 +183,7 @@ void Solution::save(string name) {
 			it != this->states.end(); it++) {
 		output_file << it->first << endl;
 		it->second->save(output_file,
+						 path,
 						 name);
 	}
 
@@ -185,7 +195,7 @@ void Solution::save(string name) {
 		output_file << it->first << endl;
 
 		ofstream scope_save_file;
-		scope_save_file.open("saves/" + name + "/scope_" + to_string(it->first) + ".txt");
+		scope_save_file.open(path + "saves/" + name + "/scope_" + to_string(it->first) + ".txt");
 		it->second->save(scope_save_file);
 		scope_save_file.close();
 	}
