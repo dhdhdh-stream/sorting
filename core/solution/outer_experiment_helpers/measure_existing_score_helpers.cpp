@@ -59,9 +59,9 @@ void OuterExperiment::measure_existing_score_backprop(
 		}
 		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
 
-		// cout << "Outer" << endl;
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		// cout << endl;
+		cout << "Outer" << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {

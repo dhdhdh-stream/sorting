@@ -33,7 +33,8 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->load("", "main");
+	// solution->load("", "main");
+	solution->load("", "12_5_2023");
 
 	double sum_vals = 0.0;
 

@@ -73,34 +73,34 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 
 		this->target_val_histories.clear();
 
-		// cout << "Outer" << endl;
-		// cout << "verify" << endl;
-		// cout << "new explore path:";
-		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-		// 		cout << " " << this->best_actions[s_index]->action.to_string();
-		// 	} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-		// 		cout << " S";
-		// 	} else {
-		// 		cout << " R";
-		// 	}
-		// }
-		// cout << endl;
-
 		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
-
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		// cout << "new_average_score: " << new_average_score << endl;
-		// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
 		if (score_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
+			cout << "Outer" << endl;
+			cout << "verify" << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index]->action.to_string();
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					cout << " S";
+				} else {
+					cout << " R";
+				}
+			}
+			cout << endl;
+
+			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			cout << "new_average_score: " << new_average_score << endl;
+			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+
 			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);

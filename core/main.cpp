@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 	int run_index = 0;
 	#endif /* MDEBUG */
 
-	uniform_int_distribution<int> outer_distribution(0, 9);
+	uniform_int_distribution<int> outer_distribution(0, 7);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
 		Problem problem;

@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	int iter_index = 0;
-	uniform_int_distribution<int> outer_distribution(0, 9);
+	uniform_int_distribution<int> outer_distribution(0, 7);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
 		Problem problem;
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		iter_index++;
-		if (iter_index%10000 == 0) {
+		if (iter_index%20000 == 0) {
 			ifstream solution_save_file;
 			solution_save_file.open(path + "saves/main/solution.txt");
 			string id_line;
