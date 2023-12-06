@@ -22,7 +22,7 @@ const int TRAIN_NEW_ITERS = 2;
 
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -74,7 +74,7 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_target_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -127,7 +127,7 @@ void BranchExperiment::train_new_target_activate(
 
 void BranchExperiment::train_new_non_target_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,

@@ -85,6 +85,8 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	new_branch_node->original_score_mod = this->existing_average_score;
 	new_branch_node->branch_score_mod = this->new_average_score;
 
+	new_branch_node->decision_standard_deviation = this->existing_standard_deviation;
+
 	finalize_branch_node_states(new_branch_node,
 								this->existing_input_state_weights,
 								this->existing_local_state_weights,
@@ -154,6 +156,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 			new_scope_node->is_loop = false;
 			new_scope_node->continue_score_mod = 0.0;
 			new_scope_node->halt_score_mod = 0.0;
+			new_scope_node->decision_standard_deviation = 0.0;
 			new_scope_node->max_iters = 0;
 
 			new_scope_node->next_node_id = next_node->id;
@@ -222,6 +225,8 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	new_branch_node->original_score_mod = 0.0;
 	new_branch_node->branch_score_mod = 0.0;
 
+	new_branch_node->decision_standard_deviation = 0.0;
+
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
@@ -281,6 +286,7 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 			new_scope_node->is_loop = false;
 			new_scope_node->continue_score_mod = 0.0;
 			new_scope_node->halt_score_mod = 0.0;
+			new_scope_node->decision_standard_deviation = 0.0;
 			new_scope_node->max_iters = 0;
 
 			new_scope_node->next_node_id = next_node->id;
@@ -343,6 +349,8 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	new_branch_node->original_score_mod = 0.0;
 	new_branch_node->branch_score_mod = 0.0;
 
+	new_branch_node->decision_standard_deviation = 0.0;
+
 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
 
@@ -388,6 +396,7 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	new_scope_node->is_loop = true;
 	new_scope_node->continue_score_mod = this->new_average_score;
 	new_scope_node->halt_score_mod = this->existing_average_score;
+	new_scope_node->decision_standard_deviation = this->existing_standard_deviation;
 	new_scope_node->max_iters = 1;
 
 	new_scope_node->verify_key = this;

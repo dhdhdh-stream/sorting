@@ -15,7 +15,7 @@
 
 using namespace std;
 
-void BranchNode::verify_activate(Problem& problem,
+void BranchNode::verify_activate(Problem* problem,
 								 bool& is_branch,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper) {
@@ -88,18 +88,7 @@ void BranchNode::verify_activate(Problem& problem,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				// cout << "branch problem:";
-				// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-				// 	cout << " " << problem.initial_world[s_index];
-				// }
-				// cout << endl;
-
-				// cout << "current_world:";
-				// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
-				// 	cout << " " << problem.current_world[s_index];
-				// }
-				// cout << endl;
-				// cout << "problem.current_pointer: " << problem.current_pointer << endl;
+				// problem->print();
 
 				// cout << "input_state_vals" << endl;
 				// for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
@@ -159,6 +148,9 @@ void BranchNode::verify_activate(Problem& problem,
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 			#else
 			bool decision_is_branch = branch_score > original_score;
+			/**
+			 * - fix for determinism
+			 */
 			#endif /* MDEBUG */
 
 			if (decision_is_branch) {

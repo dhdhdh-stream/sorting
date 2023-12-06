@@ -21,7 +21,7 @@ const int EXPLORE_ITERS = 100;
 const int NUM_SAMPLES_PER_ITER = 100;
 #endif /* MDEBUG */
 
-void OuterExperiment::explore_initial_activate(Problem& problem,
+void OuterExperiment::explore_initial_activate(Problem* problem,
 											   RunHelper& run_helper) {
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
@@ -39,7 +39,6 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 	int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 
 	uniform_int_distribution<int> type_distribution(0, 1);
-	uniform_int_distribution<int> action_distribution(0, 2);
 	uniform_int_distribution<int> root_distribution(0, 1);
 	uniform_int_distribution<int> next_distribution(0, 1);
 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
@@ -47,7 +46,7 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 			this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 			ActionNode* new_action_node = new ActionNode();
-			new_action_node->action = Action(action_distribution(generator));
+			new_action_node->action = problem->random_action();
 			this->curr_actions.push_back(new_action_node);
 
 			this->curr_potential_scopes.push_back(NULL);
@@ -109,7 +108,7 @@ void OuterExperiment::explore_initial_activate(Problem& problem,
 	}
 }
 
-void OuterExperiment::explore_activate(Problem& problem,
+void OuterExperiment::explore_activate(Problem* problem,
 									   RunHelper& run_helper) {
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
@@ -239,7 +238,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				// cout << "new explore path:";
 				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				// 		cout << " " << this->best_actions[s_index]->action.to_string();
+				// 		cout << " " << this->best_actions[s_index]->action.move;
 				// 	} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				// 		cout << " S";
 				// 	} else {

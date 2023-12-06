@@ -2,7 +2,9 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "full_network.h"
+#include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "state.h"
@@ -75,7 +77,15 @@ void BranchNode::view_activate(bool& is_branch,
 			cout << "original_score: " << original_score << endl;
 			cout << "branch_score: " << branch_score << endl;
 
-			if (branch_score > original_score) {
+			bool decision_is_branch;
+			if (abs(branch_score - original_score) > DECISION_MIN_SCORE_IMPACT * this->decision_standard_deviation) {
+				decision_is_branch = branch_score > original_score;
+			} else {
+				uniform_int_distribution<int> distribution(0, 1);
+				decision_is_branch = distribution(generator);
+			}
+
+			if (decision_is_branch) {
 				is_branch = true;
 				cout << "branch" << endl;
 			} else {

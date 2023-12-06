@@ -49,6 +49,8 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->decision_branch_weights[s_index] << endl;
 	}
 
+	output_file << this->decision_standard_deviation << endl;
+
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }
@@ -99,6 +101,10 @@ void BranchNode::load(ifstream& input_file) {
 		getline(input_file, branch_weight_line);
 		this->decision_branch_weights.push_back(stod(branch_weight_line));
 	}
+
+	string decision_standard_deviation_line;
+	getline(input_file, decision_standard_deviation_line);
+	this->decision_standard_deviation = stod(decision_standard_deviation_line);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

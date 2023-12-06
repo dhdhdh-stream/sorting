@@ -24,7 +24,7 @@ public:
 
 	virtual ~AbstractExperiment() {};
 	virtual void activate(AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,

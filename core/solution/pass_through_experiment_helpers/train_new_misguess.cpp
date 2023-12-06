@@ -18,7 +18,7 @@ const int TRAIN_NEW_MISGUESS_ITERS = 2;
 
 void PassThroughExperiment::train_new_misguess_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,

@@ -20,7 +20,7 @@ using namespace std;
 
 void BranchExperiment::measure_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -118,7 +118,13 @@ void BranchExperiment::measure_activate(
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 	#else
-	bool decision_is_branch = branch_predicted_score > original_predicted_score;
+	bool decision_is_branch;
+	if (abs(branch_predicted_score - original_predicted_score) > DECISION_MIN_SCORE_IMPACT * this->existing_standard_deviation) {
+		decision_is_branch = branch_predicted_score > original_predicted_score;
+	} else {
+		uniform_int_distribution<int> distribution(0, 1);
+		decision_is_branch = distribution(generator);
+	}
 	#endif /* MDEBUG */
 
 	this->branch_possible++;
@@ -178,7 +184,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 		// cout << "new explore path:";
 		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-		// 		cout << " " << this->best_actions[s_index]->action.to_string();
+		// 		cout << " " << this->best_actions[s_index]->action.move;
 		// 	} else {
 		// 		cout << " S";
 		// 	}

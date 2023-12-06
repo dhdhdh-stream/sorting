@@ -16,14 +16,14 @@
 using namespace std;
 
 void ActionNode::activate(AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
-	problem.perform_action(this->action);
-	history->obs_snapshot = problem.get_observation();
+	problem->perform_action(this->action);
+	history->obs_snapshot = problem->get_observation();
 
 	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {

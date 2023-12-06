@@ -100,6 +100,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 						new_scope_node->is_loop = scope_node->is_loop;
 						new_scope_node->continue_score_mod = scope_node->continue_score_mod;
 						new_scope_node->halt_score_mod = scope_node->halt_score_mod;
+						new_scope_node->decision_standard_deviation = scope_node->decision_standard_deviation;
 						new_scope_node->max_iters = scope_node->max_iters;
 
 						if (next_mapping.second == NULL) {
@@ -363,6 +364,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						new_scope_node->is_loop = scope_node->is_loop;
 						new_scope_node->continue_score_mod = scope_node->continue_score_mod;
 						new_scope_node->halt_score_mod = scope_node->halt_score_mod;
+						new_scope_node->decision_standard_deviation = scope_node->decision_standard_deviation;
 						new_scope_node->max_iters = scope_node->max_iters;
 
 						if (next_mapping.second == NULL) {

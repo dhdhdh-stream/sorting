@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "context_layer.h"
-#include "problem.h"
 #include "run_helper.h"
 
 class AbstractNode;

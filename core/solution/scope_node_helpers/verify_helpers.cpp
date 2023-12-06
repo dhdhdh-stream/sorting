@@ -15,7 +15,7 @@
 using namespace std;
 
 void ScopeNode::verify_activate(AbstractNode*& curr_node,
-								Problem& problem,
+								Problem* problem,
 								vector<ContextLayer>& context,
 								int& exit_depth,
 								AbstractNode*& exit_node,
@@ -115,14 +115,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				// cout << "loop problem:";
-				// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-				// 	cout << " " << problem.initial_world[s_index];
-				// }
-				// cout << endl;
-
-				// cout << "curr_problem:" << endl;
-				// problem.print();
+				// problem->print();
 
 				// cout << "solution->max_depth: " << solution->max_depth << endl;
 
@@ -178,14 +171,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 				break;
 			} else {
 				if (this->verify_key == run_helper.verify_key) {
-					// cout << "loop problem:";
-					// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-					// 	cout << " " << problem.initial_world[s_index];
-					// }
-					// cout << endl;
-
-					// cout << "curr_problem:" << endl;
-					// problem.print();
+					// problem->print();
 
 					// cout << "solution->max_depth: " << solution->max_depth << endl;
 
@@ -240,11 +226,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 				}
 
 				if (this->verify_key == run_helper.verify_key) {
-					// cout << "scope problem:";
-					// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-					// 	cout << " " << problem.initial_world[s_index];
-					// }
-					// cout << endl;
+					// problem->print();
 
 					// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
@@ -283,11 +265,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		}
 	} else {
 		if (this->verify_key == run_helper.verify_key) {
-			// cout << "scope problem:";
-			// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-			// 	cout << " " << problem.initial_world[s_index];
-			// }
-			// cout << endl;
+			// problem->print();
 
 			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
@@ -299,12 +277,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 			// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
 			// 	cout << c_index << ": " << context[c_index].node->id << endl;
 			// }
-			// cout << "current_world";
-			// for (int s_index = 0; s_index < (int)problem.current_world.size(); s_index++) {
-			// 	cout << " " << problem.current_world[s_index];
-			// }
-			// cout << endl;
-			// cout << "problem.current_pointer: " << problem.current_pointer << endl;
 
 			sort(verify_input_state_vals.begin(), verify_input_state_vals.end());
 			sort(this->verify_input_state_vals[0].begin(), this->verify_input_state_vals[0].end());
@@ -355,11 +327,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		}
 
 		if (this->verify_key == run_helper.verify_key) {
-			// cout << "scope problem:";
-			// for (int s_index = 0; s_index < (int)problem.initial_world.size(); s_index++) {
-			// 	cout << " " << problem.initial_world[s_index];
-			// }
-			// cout << endl;
+			// problem->print();
 
 			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 

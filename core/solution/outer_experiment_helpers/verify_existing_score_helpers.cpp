@@ -9,7 +9,7 @@
 using namespace std;
 
 void OuterExperiment::verify_existing_score_activate(
-		Problem& problem,
+		Problem* problem,
 		RunHelper& run_helper) {
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());

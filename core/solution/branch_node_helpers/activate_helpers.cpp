@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "branch_experiment.h"
+#include "constants.h"
 #include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
@@ -81,7 +82,13 @@ void BranchNode::activate(bool& is_branch,
 			}
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 			#else
-			bool decision_is_branch = branch_score > original_score;
+			bool decision_is_branch;
+			if (abs(branch_score - original_score) > DECISION_MIN_SCORE_IMPACT * this->decision_standard_deviation) {
+				decision_is_branch = branch_score > original_score;
+			} else {
+				uniform_int_distribution<int> distribution(0, 1);
+				decision_is_branch = distribution(generator);
+			}
 			#endif /* MDEBUG */
 
 			if (decision_is_branch) {

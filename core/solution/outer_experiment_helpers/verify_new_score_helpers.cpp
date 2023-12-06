@@ -14,7 +14,7 @@
 using namespace std;
 
 void OuterExperiment::verify_new_score_activate(
-		Problem& problem,
+		Problem* problem,
 		RunHelper& run_helper) {
 	vector<ContextLayer> context;
 	context.push_back(ContextLayer());
@@ -88,7 +88,7 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
+					cout << " " << this->best_actions[s_index]->action.move;
 				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					cout << " S";
 				} else {
@@ -101,7 +101,7 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 			cout << "new_average_score: " << new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 			#endif /* MDEBUG */

@@ -59,6 +59,8 @@ public:
 	std::vector<double> loop_continue_weights;
 	std::vector<double> loop_halt_weights;
 
+	double decision_standard_deviation;
+
 	int max_iters;
 
 	int next_node_id;
@@ -77,7 +79,7 @@ public:
 	~ScopeNode();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem& problem,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
@@ -93,14 +95,14 @@ public:
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 
 	void view_activate(AbstractNode*& curr_node,
-					   Problem& problem,
+					   Problem* problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
 	void verify_activate(AbstractNode*& curr_node,
-						 Problem& problem,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,

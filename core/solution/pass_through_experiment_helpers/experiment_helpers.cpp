@@ -20,7 +20,7 @@ using namespace std;
 const int NUM_EXPERIMENTS = 20;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
-												Problem& problem,
+												Problem* problem,
 												vector<ContextLayer>& context,
 												int& exit_depth,
 												AbstractNode*& exit_node,
@@ -157,7 +157,7 @@ void PassThroughExperiment::experiment_backprop(
 			// cout << "new explore path:";
 			// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			// 		cout << " " << this->best_actions[s_index]->action.to_string();
+			// 		cout << " " << this->best_actions[s_index]->action.move;
 			// 	} else {
 			// 		cout << " S";
 			// 	}
@@ -255,6 +255,7 @@ void PassThroughExperiment::experiment_backprop(
 					new_scope_node->is_loop = false;
 					new_scope_node->continue_score_mod = 0.0;
 					new_scope_node->halt_score_mod = 0.0;
+					new_scope_node->decision_standard_deviation = 0.0;
 					new_scope_node->max_iters = 0;
 
 					new_scope_node->next_node_id = next_node->id;

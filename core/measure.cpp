@@ -15,6 +15,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "sorting.h"
 #include "state.h"
 #include "state_status.h"
 
@@ -39,7 +40,7 @@ int main(int argc, char* argv[]) {
 	double sum_vals = 0.0;
 
 	for (int i_index = 0; i_index < 2000; i_index++) {
-		Problem problem;
+		Problem* problem = new Sorting();
 
 		RunHelper run_helper;
 		run_helper.selected_experiment = (void*)-1;
@@ -67,13 +68,15 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem.score_result();
+			target_val = problem->score_result();
 		} else {
 			target_val = -1.0;
 		}
 		sum_vals += target_val;
 
 		delete root_history;
+
+		delete problem;
 	}
 
 	cout << "average score: " << sum_vals/2000 << endl;

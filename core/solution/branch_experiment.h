@@ -54,6 +54,7 @@ public:
 
 	double existing_average_score;
 	double existing_score_variance;
+	double existing_standard_deviation;
 
 	std::vector<std::map<int, double>> existing_input_state_weights;
 	std::vector<std::map<int, double>> existing_local_state_weights;
@@ -90,6 +91,12 @@ public:
 	int branch_count;
 	int branch_possible;
 
+	/**
+	 * - don't reuse previous to not affect decision making
+	 */
+	double verify_existing_average_score;
+	double verify_existing_score_variance;
+
 	bool is_pass_through;
 
 	std::vector<double> o_target_val_histories;
@@ -99,7 +106,7 @@ public:
 	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::vector<double> i_target_val_histories;
 
-	std::vector<Problem> verify_problems;
+	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
@@ -112,7 +119,7 @@ public:
 	~BranchExperiment();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem& problem,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
@@ -135,13 +142,13 @@ public:
 								 BranchExperimentOverallHistory* history);
 
 	void explore_activate(AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper);
 	void explore_target_activate(AbstractNode*& curr_node,
-								 Problem& problem,
+								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
@@ -150,20 +157,20 @@ public:
 						  BranchExperimentOverallHistory* history);
 
 	void train_new_activate(AbstractNode*& curr_node,
-							Problem& problem,
+							Problem* problem,
 							std::vector<ContextLayer>& context,
 							int& exit_depth,
 							AbstractNode*& exit_node,
 							RunHelper& run_helper,
 							AbstractExperimentHistory*& history);
 	void train_new_target_activate(AbstractNode*& curr_node,
-								   Problem& problem,
+								   Problem* problem,
 								   std::vector<ContextLayer>& context,
 								   int& exit_depth,
 								   AbstractNode*& exit_node,
 								   RunHelper& run_helper);
 	void train_new_non_target_activate(AbstractNode*& curr_node,
-									   Problem& problem,
+									   Problem* problem,
 									   std::vector<ContextLayer>& context,
 									   int& exit_depth,
 									   AbstractNode*& exit_node,
@@ -173,7 +180,7 @@ public:
 							BranchExperimentOverallHistory* history);
 
 	void measure_activate(AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
@@ -184,7 +191,7 @@ public:
 								  RunHelper& run_helper);
 
 	void verify_activate(AbstractNode*& curr_node,
-						 Problem& problem,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
@@ -192,7 +199,7 @@ public:
 	void verify_backprop(double target_val);
 
 	void capture_verify_activate(AbstractNode*& curr_node,
-								 Problem& problem,
+								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,

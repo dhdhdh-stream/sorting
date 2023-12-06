@@ -421,6 +421,7 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 			new_scope_node->is_loop = original_scope_node->is_loop;
 			new_scope_node->continue_score_mod = original_scope_node->continue_score_mod;
 			new_scope_node->halt_score_mod = original_scope_node->halt_score_mod;
+			new_scope_node->decision_standard_deviation = original_scope_node->decision_standard_deviation;
 			new_scope_node->max_iters = original_scope_node->max_iters;
 
 			for (int s_index = 0; s_index < (int)original_scope_node->loop_state_is_local.size(); s_index++) {

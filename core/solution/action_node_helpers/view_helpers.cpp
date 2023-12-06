@@ -13,16 +13,16 @@
 using namespace std;
 
 void ActionNode::view_activate(AbstractNode*& curr_node,
-							   Problem& problem,
+							   Problem* problem,
 							   vector<ContextLayer>& context,
 							   int& exit_depth,
 							   AbstractNode*& exit_node,
 							   RunHelper& run_helper) {
-	problem.perform_action(this->action);
-	double obs_snapshot = problem.get_observation();
+	problem->perform_action(this->action);
+	double obs_snapshot = problem->get_observation();
 
 	cout << "action node #" << this->id << endl;
-	cout << "action: " << this->action.to_string() << endl;
+	cout << "action: " << this->action.move << endl;
 	cout << "obs: " << obs_snapshot << endl;
 
 	vector<double> state_snapshots(this->state_is_local.size(), 0.0);

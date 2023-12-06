@@ -63,7 +63,7 @@ public:
 	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem& problem,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
@@ -86,14 +86,14 @@ public:
 								  ActionNodeHistory* history);
 
 	void view_activate(AbstractNode*& curr_node,
-					   Problem& problem,
+					   Problem* problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
 	void verify_activate(AbstractNode*& curr_node,
-						 Problem& problem,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,

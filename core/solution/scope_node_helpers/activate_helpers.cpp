@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "full_network.h"
+#include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "state.h"
@@ -13,7 +14,7 @@
 using namespace std;
 
 void ScopeNode::activate(AbstractNode*& curr_node,
-						 Problem& problem,
+						 Problem* problem,
 						 vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
@@ -111,7 +112,13 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			 */
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 			#else
-			bool decision_is_halt = halt_score > continue_score;
+			bool decision_is_halt;
+			if (abs(halt_score - continue_score) > DECISION_MIN_SCORE_IMPACT * this->decision_standard_deviation) {
+				decision_is_halt = halt_score > continue_score;
+			} else {
+				uniform_int_distribution<int> distribution(0, 1);
+				decision_is_halt = distribution(generator);
+			}
 			#endif /* MDEBUG */
 
 			if (decision_is_halt) {

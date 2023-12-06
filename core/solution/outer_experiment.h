@@ -50,7 +50,7 @@ public:
 
 	std::vector<double> target_val_histories;
 
-	std::vector<Problem> verify_problems;
+	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
@@ -58,36 +58,36 @@ public:
 	OuterExperiment();
 	~OuterExperiment();
 
-	void activate(Problem& problem,
+	void activate(Problem* problem,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
-	void measure_existing_score_activate(Problem& problem,
+	void measure_existing_score_activate(Problem* problem,
 										 RunHelper& run_helper);
 	void measure_existing_score_backprop(double target_val,
 										 RunHelper& run_helper);
 
-	void explore_initial_activate(Problem& problem,
+	void explore_initial_activate(Problem* problem,
 								  RunHelper& run_helper);
-	void explore_activate(Problem& problem,
+	void explore_activate(Problem* problem,
 						  RunHelper& run_helper);
 	void explore_backprop(double target_val);
 
-	void measure_new_score_activate(Problem& problem,
+	void measure_new_score_activate(Problem* problem,
 									RunHelper& run_helper);
 	void measure_new_score_backprop(double target_val);
 
-	void verify_existing_score_activate(Problem& problem,
+	void verify_existing_score_activate(Problem* problem,
 										RunHelper& run_helper);
 	void verify_existing_score_backprop(double target_val,
 										RunHelper& run_helper);
 
-	void verify_new_score_activate(Problem& problem,
+	void verify_new_score_activate(Problem* problem,
 								   RunHelper& run_helper);
 	void verify_new_score_backprop(double target_val);
 
-	void capture_verify_activate(Problem& problem,
+	void capture_verify_activate(Problem* problem,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
 };

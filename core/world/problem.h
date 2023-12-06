@@ -1,26 +1,26 @@
 #ifndef PROBLEM_H
 #define PROBLEM_H
 
-#include <vector>
-
 #include "action.h"
+
+const int PROBLEM_TYPE_SORTING = 0;
+const int PROBLEM_TYPE_MINESWEEPER = 1;
 
 class Problem {
 public:
-	std::vector<double> initial_world;
-	
-	int current_pointer;
-	std::vector<double> current_world;
+	int type;
 
-	Problem();
-	Problem(std::vector<double> initial_world);
-	~Problem();
+	virtual ~Problem() {};
 
-	double get_observation();
-	void perform_action(Action action);
-	double score_result();
+	virtual Action random_action() = 0;
 
-	void print();
+	virtual double get_observation() = 0;
+	virtual void perform_action(Action action) = 0;
+	virtual double score_result() = 0;
+
+	virtual Problem* copy_and_reset() = 0;
+
+	virtual void print() = 0;
 };
 
 #endif /* PROBLEM_H */

@@ -19,7 +19,7 @@ using namespace std;
 
 void BranchExperiment::verify_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -117,7 +117,13 @@ void BranchExperiment::verify_activate(
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 	#else
-	bool decision_is_branch = branch_predicted_score > original_predicted_score;
+	bool decision_is_branch;
+	if (abs(branch_predicted_score - original_predicted_score) > DECISION_MIN_SCORE_IMPACT * this->existing_standard_deviation) {
+		decision_is_branch = branch_predicted_score > original_predicted_score;
+	} else {
+		uniform_int_distribution<int> distribution(0, 1);
+		decision_is_branch = distribution(generator);
+	}
 	#endif /* MDEBUG */
 
 	this->branch_possible++;
@@ -164,8 +170,8 @@ void BranchExperiment::verify_backprop(double target_val) {
 	if (this->state_iter >= 2 * solution->curr_num_datapoints) {
 		this->combined_score /= (2 * solution->curr_num_datapoints);
 
-		double score_standard_deviation = sqrt(this->existing_score_variance);
-		double combined_improvement = this->combined_score - this->existing_average_score;
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
 
@@ -189,7 +195,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
+					cout << " " << this->best_actions[s_index]->action.move;
 				} else {
 					cout << " S";
 				}
@@ -206,7 +212,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			cout << "this->best_is_loop: " << this->best_is_loop << endl;
 
 			cout << "this->combined_score: " << this->combined_score << endl;
-			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
 			cout << "score_standard_deviation: " << score_standard_deviation << endl;
 			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
@@ -214,7 +220,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 
 			cout << endl;
 
-			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 			#endif /* MDEBUG */
@@ -222,7 +228,9 @@ void BranchExperiment::verify_backprop(double target_val) {
 			#if defined(MDEBUG) && MDEBUG
 			if (!this->best_is_loop && rand()%2 == 0) {
 			#else
-			if (!this->best_is_loop && branch_weight > 0.99) {
+			if (!this->best_is_loop
+					&& branch_weight > 0.99
+					&& this->new_average_score > this->existing_average_score) {
 			#endif /* MDEBUG */
 				this->is_pass_through = true;
 			} else {

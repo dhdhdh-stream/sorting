@@ -20,7 +20,7 @@ using namespace std;
 
 void PassThroughExperiment::measure_new_score_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,

@@ -6,10 +6,6 @@
 
 const int ACTION_NOOP = -1;
 
-const int ACTION_LEFT = 0;
-const int ACTION_RIGHT = 1;
-const int ACTION_SWAP = 2;
-
 class Action {
 public:
 	int move;
@@ -20,8 +16,6 @@ public:
 	~Action();
 
 	void save(std::ofstream& save_file);
-
-	std::string to_string();
 };
 
 #endif /* ACTION_H */

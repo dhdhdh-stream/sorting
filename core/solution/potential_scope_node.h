@@ -44,12 +44,12 @@ public:
 	PotentialScopeNode();
 	~PotentialScopeNode();
 
-	void activate(Problem& problem,
+	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  PotentialScopeNodeHistory* history);
 
-	void capture_verify_activate(Problem& problem,
+	void capture_verify_activate(Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
 };

@@ -24,7 +24,7 @@ PotentialScopeNode::~PotentialScopeNode() {
 	}
 }
 
-void PotentialScopeNode::activate(Problem& problem,
+void PotentialScopeNode::activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
 								  PotentialScopeNodeHistory* history) {
@@ -105,7 +105,7 @@ void PotentialScopeNode::activate(Problem& problem,
 	context.back().node = NULL;
 }
 
-void PotentialScopeNode::capture_verify_activate(Problem& problem,
+void PotentialScopeNode::capture_verify_activate(Problem* problem,
 												 vector<ContextLayer>& context,
 												 RunHelper& run_helper) {
 	map<int, StateStatus> input_state_vals;

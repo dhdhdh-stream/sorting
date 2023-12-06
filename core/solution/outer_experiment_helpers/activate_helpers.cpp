@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void OuterExperiment::activate(Problem& problem,
+void OuterExperiment::activate(Problem* problem,
 							   RunHelper& run_helper) {
 	run_helper.selected_experiment = this;
 

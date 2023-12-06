@@ -21,7 +21,7 @@ using namespace std;
 
 void PassThroughExperiment::verify_new_score_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -91,7 +91,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.to_string();
+					cout << " " << this->best_actions[s_index]->action.move;
 				} else {
 					cout << " S";
 				}
@@ -109,7 +109,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 			cout << "this->new_average_score: " << this->new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-			this->verify_problems = vector<Problem>(NUM_VERIFY_SAMPLES);
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 			#endif /* MDEBUG */

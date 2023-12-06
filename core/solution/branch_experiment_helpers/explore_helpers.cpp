@@ -23,7 +23,7 @@ const int EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_activate(AbstractNode*& curr_node,
-										Problem& problem,
+										Problem* problem,
 										vector<ContextLayer>& context,
 										int& exit_depth,
 										AbstractNode*& exit_node,
@@ -63,7 +63,7 @@ void BranchExperiment::explore_activate(AbstractNode*& curr_node,
 }
 
 void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
-											   Problem& problem,
+											   Problem* problem,
 											   vector<ContextLayer>& context,
 											   int& exit_depth,
 											   AbstractNode*& exit_node,
@@ -196,14 +196,13 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 			}
 		
 			uniform_int_distribution<int> type_distribution(0, 1);
-			uniform_int_distribution<int> action_distribution(0, 2);
 			uniform_int_distribution<int> next_distribution(0, 1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				if (type_distribution(generator) == 0) {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 					ActionNode* new_action_node = new ActionNode();
-					new_action_node->action = Action(action_distribution(generator));
+					new_action_node->action = problem->random_action();
 					this->curr_actions.push_back(new_action_node);
 
 					this->curr_potential_scopes.push_back(NULL);
@@ -333,7 +332,7 @@ void BranchExperiment::explore_backprop(double target_val,
 				// cout << "new explore path:";
 				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				// 		cout << " " << this->best_actions[s_index]->action.to_string();
+				// 		cout << " " << this->best_actions[s_index]->action.move;
 				// 	} else {
 				// 		cout << " S";
 				// 	}

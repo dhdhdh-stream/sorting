@@ -18,6 +18,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "sorting.h"
 #include "state.h"
 #include "state_status.h"
 
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]) {
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
-		Problem problem;
+		Problem* problem = new Sorting();
 
 		RunHelper run_helper;
 
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem.score_result();
+				target_val = problem->score_result();
 			} else {
 				target_val = -1.0;
 			}
@@ -112,7 +113,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem.score_result();
+				target_val = problem->score_result();
 			} else {
 				target_val = -1.0;
 			}
@@ -204,11 +205,13 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		delete problem;
+
 		if (is_success) {
 			solution->success_reset();
 
 			while (solution->verify_problems.size() > 0) {
-				Problem problem = solution->verify_problems[0];
+				Problem* problem = solution->verify_problems[0];
 
 				RunHelper run_helper;
 				run_helper.verify_key = solution->verify_key;
@@ -235,6 +238,7 @@ int main(int argc, char* argv[]) {
 												exit_node,
 												run_helper);
 
+				delete solution->verify_problems[0];
 				solution->verify_problems.erase(solution->verify_problems.begin());
 			}
 			solution->clear_verify();

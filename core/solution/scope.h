@@ -43,7 +43,7 @@ public:
 	Scope();
 	~Scope();
 
-	void activate(Problem& problem,
+	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
@@ -66,13 +66,13 @@ public:
 							  int curr_depth,
 							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
 
-	void view_activate(Problem& problem,
+	void view_activate(Problem* problem,
 					   std::vector<ContextLayer>& context,
 					   int& exit_depth,
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
-	void verify_activate(Problem& problem,
+	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,

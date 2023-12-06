@@ -111,7 +111,7 @@ public:
 	int branch_experiment_step_index;
 	BranchExperiment* branch_experiment;
 
-	std::vector<Problem> verify_problems;
+	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
@@ -121,7 +121,7 @@ public:
 	~PassThroughExperiment();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem& problem,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
@@ -154,13 +154,13 @@ public:
 							   ScopeHistory* scope_history);
 
 	void explore_initial_activate(AbstractNode*& curr_node,
-								  Problem& problem,
+								  Problem* problem,
 								  std::vector<ContextLayer>& context,
 								  int& exit_depth,
 								  AbstractNode*& exit_node,
 								  RunHelper& run_helper);
 	void explore_activate(AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
@@ -168,7 +168,7 @@ public:
 	void explore_backprop(double target_val);
 
 	void measure_new_score_activate(AbstractNode*& curr_node,
-									Problem& problem,
+									Problem* problem,
 									std::vector<ContextLayer>& context,
 									int& exit_depth,
 									AbstractNode*& exit_node,
@@ -181,7 +181,7 @@ public:
 										RunHelper& run_helper);
 
 	void verify_new_score_activate(AbstractNode*& curr_node,
-								   Problem& problem,
+								   Problem* problem,
 								   std::vector<ContextLayer>& context,
 								   int& exit_depth,
 								   AbstractNode*& exit_node,
@@ -189,7 +189,7 @@ public:
 	void verify_new_score_backprop(double target_val);
 
 	void capture_verify_activate(AbstractNode*& curr_node,
-								 Problem& problem,
+								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
@@ -205,7 +205,7 @@ public:
 											PassThroughExperimentOverallHistory* history);
 
 	void train_new_misguess_activate(AbstractNode*& curr_node,
-									 Problem& problem,
+									 Problem* problem,
 									 std::vector<ContextLayer>& context,
 									 int& exit_depth,
 									 AbstractNode*& exit_node,
@@ -215,7 +215,7 @@ public:
 									 PassThroughExperimentOverallHistory* history);
 
 	void measure_new_misguess_activate(AbstractNode*& curr_node,
-									   Problem& problem,
+									   Problem* problem,
 									   std::vector<ContextLayer>& context,
 									   int& exit_depth,
 									   AbstractNode*& exit_node,
@@ -224,7 +224,7 @@ public:
 									   PassThroughExperimentOverallHistory* history);
 
 	void experiment_activate(AbstractNode*& curr_node,
-							 Problem& problem,
+							 Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 int& exit_depth,
 							 AbstractNode*& exit_node,

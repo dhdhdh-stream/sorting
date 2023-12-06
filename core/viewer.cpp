@@ -15,6 +15,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "sorting.h"
 #include "state.h"
 #include "state_status.h"
 
@@ -33,13 +34,13 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->load("", "main");
+	// solution->load("", "main");
+	solution->load("", "12_5_2023");
 
 	cout << "solution->states.size(): " << solution->states.size() << endl;
 
 	{
-		Problem problem;
-		// Problem problem(vector<double>{3.0, 1.0});
+		Problem* problem = new Sorting();
 
 		RunHelper run_helper;
 
@@ -61,21 +62,15 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem.score_result();
+			target_val = problem->score_result();
 		} else {
 			target_val = -1.0;
 		}
-		cout << "initial_world:";
-		for (int p_index = 0; p_index < (int)problem.initial_world.size(); p_index++) {
-			cout << " " << problem.initial_world[p_index];
-		}
-		cout << endl;
-		cout << "ending_world:";
-		for (int p_index = 0; p_index < (int)problem.current_world.size(); p_index++) {
-			cout << " " << problem.current_world[p_index];
-		}
-		cout << endl;
 		cout << "target_val: " << target_val << endl;
+
+		problem->print();
+
+		delete problem;
 	}
 
 	ofstream display_file;

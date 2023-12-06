@@ -49,7 +49,7 @@ public:
 
 	void* verify_key;
 	// TODO: potentially check for exceed max_depth
-	std::vector<Problem> verify_problems;
+	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */

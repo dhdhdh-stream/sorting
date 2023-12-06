@@ -28,6 +28,8 @@ public:
 	std::vector<double> decision_original_weights;
 	std::vector<double> decision_branch_weights;
 
+	double decision_standard_deviation;
+
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
@@ -60,7 +62,7 @@ public:
 	void view_activate(bool& is_branch,
 					   std::vector<ContextLayer>& context);
 
-	void verify_activate(Problem& problem,
+	void verify_activate(Problem* problem,
 						 bool& is_branch,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);

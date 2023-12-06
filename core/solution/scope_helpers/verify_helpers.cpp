@@ -19,7 +19,7 @@ using namespace std;
 
 void node_verify_activate_helper(int iter_index,
 								 AbstractNode*& curr_node,
-								 Problem& problem,
+								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
@@ -66,7 +66,7 @@ void node_verify_activate_helper(int iter_index,
 	}
 }
 
-void Scope::verify_activate(Problem& problem,
+void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							int& exit_depth,
 							AbstractNode*& exit_node,

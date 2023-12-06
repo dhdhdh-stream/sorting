@@ -18,15 +18,14 @@ using namespace std;
 
 void PassThroughExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
-		Problem& problem,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	Problem curr_problem = problem;
-	curr_problem.current_world = curr_problem.initial_world;
-	curr_problem.current_pointer = 0;
-	this->verify_problems[this->state_iter] = curr_problem;
+	if (this->verify_problems[this->state_iter] == NULL) {
+		this->verify_problems[this->state_iter] = problem->copy_and_reset();
+	}
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 	#endif /* MDEBUG */
@@ -161,6 +160,7 @@ void PassThroughExperiment::capture_verify_backprop() {
 				new_scope_node->is_loop = false;
 				new_scope_node->continue_score_mod = 0.0;
 				new_scope_node->halt_score_mod = 0.0;
+				new_scope_node->decision_standard_deviation = 0.0;
 				new_scope_node->max_iters = 0;
 
 				new_scope_node->next_node_id = next_node->id;

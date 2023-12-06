@@ -18,7 +18,7 @@ using namespace std;
 
 void node_activate_helper(int iter_index,
 						  AbstractNode*& curr_node,
-						  Problem& problem,
+						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
@@ -71,7 +71,7 @@ void node_activate_helper(int iter_index,
 	}
 }
 
-void Scope::activate(Problem& problem,
+void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 int& exit_depth,
 					 AbstractNode*& exit_node,

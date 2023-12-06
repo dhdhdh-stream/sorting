@@ -5,13 +5,14 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "full_network.h"
+#include "globals.h"
 #include "scope.h"
 #include "state.h"
 
 using namespace std;
 
 void ScopeNode::view_activate(AbstractNode*& curr_node,
-							  Problem& problem,
+							  Problem* problem,
 							  vector<ContextLayer>& context,
 							  int& exit_depth,
 							  AbstractNode*& exit_node,
@@ -108,7 +109,15 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 			cout << "continue_score: " << continue_score << endl;
 			cout << "halt_score: " << halt_score << endl;
 
-			if (halt_score > continue_score) {
+			bool decision_is_halt;
+			if (abs(halt_score - continue_score) > DECISION_MIN_SCORE_IMPACT * this->decision_standard_deviation) {
+				decision_is_halt = halt_score > continue_score;
+			} else {
+				uniform_int_distribution<int> distribution(0, 1);
+				decision_is_halt = distribution(generator);
+			}
+
+			if (decision_is_halt) {
 				break;
 			} else {
 				this->inner_scope->view_activate(problem,

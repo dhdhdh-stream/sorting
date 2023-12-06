@@ -85,6 +85,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		}
 		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
 
+		this->existing_standard_deviation = sqrt(this->existing_score_variance);
+
 		int num_instances = (int)this->i_target_val_histories.size();
 
 		vector<map<int, vector<double>>> p_input_state_vals(this->scope_context.size());
