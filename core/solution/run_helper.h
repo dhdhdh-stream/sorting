@@ -9,6 +9,8 @@ class AbstractExperimentHistory;
 
 class RunHelper {
 public:
+	int num_actions;
+
 	int curr_depth;
 	int max_depth;
 
@@ -25,14 +27,15 @@ public:
 	void* selected_experiment;
 	AbstractExperimentHistory* experiment_history;
 
-	void* verify_key;
-
 	#if defined(MDEBUG) && MDEBUG
+	void* verify_key;
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
 	RunHelper() {
+		this->num_actions = 0;
+
 		this->curr_depth = 0;
 		this->max_depth = 0;
 

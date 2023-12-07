@@ -27,7 +27,9 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING = 5;
 const int BRANCH_EXPERIMENT_STATE_VERIFY = 6;
+#if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
+#endif /* MDEBUG */
 
 const int BRANCH_EXPERIMENT_STATE_FAIL = 8;
 const int BRANCH_EXPERIMENT_STATE_SUCCESS = 9;
@@ -106,13 +108,13 @@ public:
 	std::vector<std::vector<std::map<State*, StateStatus>>> i_temp_state_vals_histories;
 	std::vector<double> i_target_val_histories;
 
-	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	#endif /* MDEBUG */
 	std::vector<double> verify_original_scores;
 	std::vector<double> verify_branch_scores;
 	std::vector<std::vector<double>> verify_factors;
+	#endif /* MDEBUG */
 
 	BranchExperiment(std::vector<int> scope_context,
 					 std::vector<int> node_context);
@@ -198,6 +200,7 @@ public:
 						 RunHelper& run_helper);
 	void verify_backprop(double target_val);
 
+	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
@@ -205,6 +208,7 @@ public:
 								 AbstractNode*& exit_node,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
+	#endif /* MDEBUG */
 
 	void finalize(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 				  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);

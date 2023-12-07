@@ -109,13 +109,15 @@ void PassThroughExperiment::verify_new_score_backprop(
 			cout << "this->new_average_score: " << this->new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			#if defined(MDEBUG) && MDEBUG
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-			#endif /* MDEBUG */
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
+			#else
+			score_finalize();
+			#endif /* MDEBUG */
 		} else {
 			if (this->best_step_types.size() > 0) {
 				// reserve at least solution->curr_num_datapoints

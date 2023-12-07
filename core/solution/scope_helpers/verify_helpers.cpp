@@ -1,3 +1,5 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "scope.h"
 
 #include <algorithm>
@@ -99,3 +101,5 @@ void Scope::verify_activate(Problem* problem,
 
 	run_helper.curr_depth--;
 }
+
+#endif /* MDEBUG */

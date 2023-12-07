@@ -27,6 +27,7 @@ Scope::~Scope() {
 	}
 }
 
+#if defined(MDEBUG) && MDEBUG
 void Scope::clear_verify() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -39,6 +40,7 @@ void Scope::clear_verify() {
 		}
 	}
 }
+#endif /* MDEBUG */
 
 void Scope::success_reset() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();

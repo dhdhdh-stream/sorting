@@ -139,6 +139,7 @@ void Solution::load(string path,
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
+#if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
@@ -148,6 +149,7 @@ void Solution::clear_verify() {
 	this->verify_key = NULL;
 	this->verify_problems.clear();
 }
+#endif /* MDEBUG */
 
 void Solution::success_reset() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();

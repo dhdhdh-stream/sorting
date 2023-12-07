@@ -197,6 +197,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 								new_branch_node->original_score_mod = branch_node->original_score_mod;
 								new_branch_node->branch_score_mod = branch_node->branch_score_mod;
 
+								new_branch_node->decision_standard_deviation = branch_node->decision_standard_deviation;
+
 								if (original_mapping.second == NULL) {
 									new_branch_node->original_next_node_id = -1;
 								} else {
@@ -468,6 +470,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 
 								new_branch_node->original_score_mod = branch_node->original_score_mod;
 								new_branch_node->branch_score_mod = branch_node->branch_score_mod;
+
+								new_branch_node->decision_standard_deviation = branch_node->decision_standard_deviation;
 
 								if (original_mapping.second == NULL) {
 									new_branch_node->original_next_node_id = -1;

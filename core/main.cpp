@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
+#include "minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
@@ -39,8 +40,8 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
 	int num_fails = 0;
 
@@ -51,7 +52,8 @@ int main(int argc, char* argv[]) {
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result();
+				target_val = problem->score_result(run_helper.num_actions);
 			} else {
 				target_val = -1.0;
 			}
@@ -113,7 +115,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result();
+				target_val = problem->score_result(run_helper.num_actions);
 			} else {
 				target_val = -1.0;
 			}
@@ -210,17 +212,16 @@ int main(int argc, char* argv[]) {
 		if (is_success) {
 			solution->success_reset();
 
+			#if defined(MDEBUG) && MDEBUG
 			while (solution->verify_problems.size() > 0) {
 				Problem* problem = solution->verify_problems[0];
 
 				RunHelper run_helper;
 				run_helper.verify_key = solution->verify_key;
 
-				#if defined(MDEBUG) && MDEBUG
 				run_helper.starting_run_seed = solution->verify_seeds[0];
 				run_helper.curr_run_seed = solution->verify_seeds[0];
 				solution->verify_seeds.erase(solution->verify_seeds.begin());
-				#endif /* MDEBUG */
 
 				vector<ContextLayer> context;
 				context.push_back(ContextLayer());
@@ -242,6 +243,7 @@ int main(int argc, char* argv[]) {
 				solution->verify_problems.erase(solution->verify_problems.begin());
 			}
 			solution->clear_verify();
+			#endif /* MDEBUG */
 
 			num_fails = 0;
 

@@ -129,6 +129,9 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 
 		this->i_misguess_histories.clear();
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 		double misguess_standard_deviation = sqrt(this->existing_misguess_variance);
 		double misguess_improvement_t_score = misguess_improvement
@@ -143,9 +146,6 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		// cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		// cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		if (misguess_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
 			// cout << "misguess success" << endl;

@@ -99,7 +99,10 @@ while True:
 					client_sftp.mkdir(remote_path)
 
 				for filename in filenames:
-					client_sftp.put(os.path.join(dirpath, filename), os.path.join(remote_path, filename))
+					if filename != 'solution.txt':
+						client_sftp.put(os.path.join(dirpath, filename), os.path.join(remote_path, filename))
+			# update solution.txt last
+			client_sftp.put('saves/main/solution.txt', 'workers/' + worker[0] + '/saves/main/solution.txt')
 
 			client_sftp.close()
 			client.close()

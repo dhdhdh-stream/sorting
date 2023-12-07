@@ -32,10 +32,12 @@ void OuterExperiment::activate(Problem* problem,
 		verify_new_score_activate(problem,
 								  run_helper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
 	case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_activate(problem,
 								run_helper);
 		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -59,8 +61,10 @@ void OuterExperiment::backprop(double target_val,
 	case OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
 		verify_new_score_backprop(target_val);
 		break;
+	#if defined(MDEBUG) && MDEBUG
 	case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop();
 		break;
+	#endif /* MDEBUG */
 	}
 }

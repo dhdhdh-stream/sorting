@@ -7,11 +7,17 @@
 
 using namespace std;
 
+const int WIDTH = 5;
+const int HEIGHT = 5;
+const int NUM_MINES = 3;
+const int STARTING_X = 2;
+const int STARTING_Y = 2;
+
 Minesweeper::Minesweeper() {
-	this->world = vector<vector<int>>(9, vector<int>(9, 0));
+	this->world = vector<vector<int>>(WIDTH, vector<int>(HEIGHT, 0));
 	int num_mines = 0;
-	uniform_int_distribution<int> x_distribution(0, 8);
-	uniform_int_distribution<int> y_distribution(0, 8);
+	uniform_int_distribution<int> x_distribution(0, WIDTH-1);
+	uniform_int_distribution<int> y_distribution(0, HEIGHT-1);
 	while (true) {
 		int new_x = x_distribution(generator);
 		int new_y = y_distribution(generator);
@@ -19,42 +25,42 @@ Minesweeper::Minesweeper() {
 		if (this->world[new_x][new_y] != -1) {
 			this->world[new_x][new_y] = -1;
 			num_mines++;
-			if (num_mines > 10) {
+			if (num_mines >= NUM_MINES) {
 				break;
 			}
 		}
 	}
 
-	for (int x_index = 0; x_index < 9; x_index++) {
-		for (int y_index = 0; y_index < 9; y_index++) {
+	for (int x_index = 0; x_index < WIDTH; x_index++) {
+		for (int y_index = 0; y_index < HEIGHT; y_index++) {
 			if (this->world[x_index][y_index] != -1) {
 				int num_surrounding = 0;
 
-				if (x_index > 0 && y_index < 8) {
+				if (x_index > 0 && y_index < HEIGHT-1) {
 					if (this->world[x_index-1][y_index+1] == -1) {
 						num_surrounding++;
 					}
 				}
 
-				if (y_index < 8) {
+				if (y_index < HEIGHT-1) {
 					if (this->world[x_index][y_index+1] == -1) {
 						num_surrounding++;
 					}
 				}
 
-				if (x_index < 8 && y_index < 8) {
+				if (x_index < WIDTH-1 && y_index < HEIGHT-1) {
 					if (this->world[x_index+1][y_index+1] == -1) {
 						num_surrounding++;
 					}
 				}
 
-				if (x_index < 8) {
+				if (x_index < WIDTH-1) {
 					if (this->world[x_index+1][y_index] == -1) {
 						num_surrounding++;
 					}
 				}
 
-				if (x_index < 8 && y_index > 0) {
+				if (x_index < WIDTH-1 && y_index > 0) {
 					if (this->world[x_index+1][y_index-1] == -1) {
 						num_surrounding++;
 					}
@@ -77,14 +83,16 @@ Minesweeper::Minesweeper() {
 						num_surrounding++;
 					}
 				}
+
+				this->world[x_index][y_index] = num_surrounding;
 			}
 		}
 	}
 
-	this->revealed = vector<vector<bool>>(9, vector<bool>(9, false));
+	this->revealed = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
 
-	this->current_x = 4;
-	this->current_y = 4;
+	this->current_x = STARTING_X;
+	this->current_y = STARTING_Y;
 
 	this->num_revealed = 0;
 
@@ -98,9 +106,9 @@ Action Minesweeper::random_action() {
 
 double Minesweeper::get_observation() {
 	if (this->current_x < 0
-			|| this->current_x > 8
+			|| this->current_x > WIDTH-1
 			|| this->current_y < 0
-			|| this->current_y > 8) {
+			|| this->current_y > HEIGHT-1) {
 		return -10.0;
 	} else {
 		if (this->revealed[this->current_x][this->current_y]) {
@@ -117,11 +125,11 @@ void Minesweeper::perform_action(Action action) {
 	}
 
 	if (action.move == MINESWEEPER_ACTION_UP) {
-		if (this->current_y <= 8) {
+		if (this->current_y <= HEIGHT-1) {
 			this->current_y++;
 		}
 	} else if (action.move == MINESWEEPER_ACTION_RIGHT) {
-		if (this->current_x <= 8) {
+		if (this->current_x <= WIDTH-1) {
 			this->current_x++;
 		}
 	} else if (action.move == MINESWEEPER_ACTION_DOWN) {
@@ -134,29 +142,27 @@ void Minesweeper::perform_action(Action action) {
 		}
 	} else if (action.move == MINESWEEPER_ACTION_CLICK) {
 		if (this->current_x >= 0
-				|| this->current_x <= 8
-				|| this->current_y >= 0
-				|| this->current_y <= 8) {
+				&& this->current_x <= WIDTH-1
+				&& this->current_y >= 0
+				&& this->current_y <= HEIGHT-1) {
 			if (!this->revealed[this->current_x][this->current_y]) {
+				this->revealed[this->current_x][this->current_y] = true;
+
 				if (this->world[this->current_x][this->current_y] == -1) {
 					this->ended = true;
 				} else {
-					this->revealed[this->current_x][this->current_y] = true;
 					this->num_revealed++;
-					if (this->num_revealed >= 71) {
-						this->ended = true;
-					}
 				}
 			}
 		}
 	}
 }
 
-double Minesweeper::score_result() {
-	if (this->num_revealed >= 71) {
-		return 10.0;
+double Minesweeper::score_result(int num_actions) {
+	if (this->num_revealed >= WIDTH*HEIGHT - NUM_MINES) {
+		return 10.0 - 0.001*num_actions;
 	} else {
-		return this->num_revealed/10.0;
+		return this->num_revealed/10.0 - 0.001*num_actions;
 	}
 }
 
@@ -169,15 +175,19 @@ Problem* Minesweeper::copy_and_reset() {
 }
 
 void Minesweeper::print() {
-	for (int y_index = 8; y_index >= 0; y_index--) {
-		for (int x_index = 0; x_index < 9; x_index++) {
+	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
+		for (int x_index = 0; x_index < WIDTH; x_index++) {
 			if (this->revealed[x_index][y_index]) {
-				cout << this->world[x_index][y_index] << " ";
+				if (this->world[x_index][y_index] == -1) {
+					cout << "X ";
+				} else {
+					cout << this->world[x_index][y_index] << " ";
+				}
 			} else {
 				cout << "- ";
 			}
-			cout << endl;
 		}
+		cout << endl;
 	}
 
 	cout << "current_x: " << current_x << endl;

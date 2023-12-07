@@ -220,11 +220,6 @@ void BranchExperiment::verify_backprop(double target_val) {
 
 			cout << endl;
 
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-			#endif /* MDEBUG */
-
 			#if defined(MDEBUG) && MDEBUG
 			if (!this->best_is_loop && rand()%2 == 0) {
 			#else
@@ -236,6 +231,10 @@ void BranchExperiment::verify_backprop(double target_val) {
 			} else {
 				this->is_pass_through = false;
 			}
+
+			#if defined(MDEBUG) && MDEBUG
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
 			if (this->parent_pass_through_experiment != NULL) {
 				set<int> needed_state;
@@ -367,6 +366,9 @@ void BranchExperiment::verify_backprop(double target_val) {
 
 			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
+			#else
+			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
+			#endif /* MDEBUG */
 		} else {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

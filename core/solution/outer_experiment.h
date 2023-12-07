@@ -23,7 +23,9 @@ const int OUTER_EXPERIMENT_STATE_EXPLORE = 1;
 const int OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
 const int OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
 const int OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+#if defined(MDEBUG) && MDEBUG
 const int OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+#endif /* MDEBUG */
 
 const int OUTER_EXPERIMENT_STATE_SUCCESS = 6;
 
@@ -50,8 +52,8 @@ public:
 
 	std::vector<double> target_val_histories;
 
-	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
 
@@ -87,9 +89,13 @@ public:
 								   RunHelper& run_helper);
 	void verify_new_score_backprop(double target_val);
 
+	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(Problem* problem,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
+	#endif /* MDEBUG */
+
+	void finalize();
 };
 
 #endif /* OUTER_EXPERIMENT_H */

@@ -49,9 +49,11 @@ public:
 				  RunHelper& run_helper,
 				  PotentialScopeNodeHistory* history);
 
+	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
+	#endif /* MDEBUG */
 };
 
 class PotentialScopeNodeHistory {

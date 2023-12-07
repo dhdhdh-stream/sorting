@@ -119,6 +119,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							exit_node,
 							run_helper);
 			break;
+		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 			capture_verify_activate(curr_node,
 									problem,
@@ -127,6 +128,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 									exit_node,
 									run_helper);
 			break;
+		#endif /* MDEBUG */
 		}
 	}
 }
@@ -230,9 +232,11 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_VERIFY:
 		verify_backprop(target_val);
 		break;
+	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop();
 		break;
+	#endif /* MDEBUG */
 	}
 
 	delete history;

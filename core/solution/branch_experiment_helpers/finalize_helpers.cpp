@@ -65,10 +65,12 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	containing_scope->node_counter++;
 	containing_scope->nodes[new_branch_node->id] = new_branch_node;
 
+	#if defined(MDEBUG) && MDEBUG
 	new_branch_node->verify_key = this;
 	new_branch_node->verify_original_scores = this->verify_original_scores;
 	new_branch_node->verify_branch_scores = this->verify_branch_scores;
 	new_branch_node->verify_factors = this->verify_factors;
+	#endif /* MDEBUG */
 
 	ExitNode* new_exit_node = new ExitNode();
 	new_exit_node->parent = containing_scope;
@@ -399,10 +401,12 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	new_scope_node->decision_standard_deviation = this->existing_standard_deviation;
 	new_scope_node->max_iters = 1;
 
+	#if defined(MDEBUG) && MDEBUG
 	new_scope_node->verify_key = this;
 	new_scope_node->verify_continue_scores = this->verify_branch_scores;
 	new_scope_node->verify_halt_scores = this->verify_original_scores;
 	new_scope_node->verify_factors = this->verify_factors;
+	#endif /* MDEBUG */
 
 	if (this->best_exit_node == NULL) {
 		new_scope_node->next_node_id = -1;

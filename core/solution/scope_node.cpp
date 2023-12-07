@@ -18,7 +18,9 @@ ScopeNode::ScopeNode() {
 
 	this->experiment = NULL;
 
+	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
+	#endif /* MDEBUG */
 }
 
 ScopeNode::~ScopeNode() {
@@ -41,6 +43,7 @@ void ScopeNode::fail_reset() {
 	}
 }
 
+#if defined(MDEBUG) && MDEBUG
 void ScopeNode::clear_verify() {
 	this->verify_key = NULL;
 	if (this->verify_input_state_vals.size() > 0
@@ -51,6 +54,7 @@ void ScopeNode::clear_verify() {
 		throw invalid_argument("scope node remaining verify");
 	}
 }
+#endif /* MDEBUG */
 
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->inner_scope->id << endl;

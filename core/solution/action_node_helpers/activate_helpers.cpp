@@ -23,6 +23,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	problem->perform_action(this->action);
+	if (this->action.move != ACTION_NOOP) {
+		run_helper.num_actions++;
+	}
 	history->obs_snapshot = problem->get_observation();
 
 	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);

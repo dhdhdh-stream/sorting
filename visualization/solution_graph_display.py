@@ -1,9 +1,15 @@
 import pydot
 
+# ACTION_NOOP = -1
+# ACTION_LEFT = 0
+# ACTION_STAY = 1
+# ACTION_RIGHT = 2
 ACTION_NOOP = -1
-ACTION_LEFT = 0
-ACTION_STAY = 1
-ACTION_RIGHT = 2
+ACTION_UP = 0
+ACTION_RIGHT = 1
+ACTION_DOWN = 2
+ACTION_LEFT = 3
+ACTION_CLICK = 4
 
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
@@ -70,16 +76,31 @@ file.close()
 
 print(scopes)
 
+# def pretty_print_action(action):
+# 	result = ''
+# 	if action == -1:
+# 		result = 'NOOP'
+# 	elif action == 0:
+# 		result = 'LEFT'
+# 	elif action == 1:
+# 		result = 'RIGHT'
+# 	elif action == 2:
+# 		result = 'SWAP'
+# 	return result
 def pretty_print_action(action):
 	result = ''
 	if action == -1:
 		result = 'NOOP'
 	elif action == 0:
-		result = 'LEFT'
+		result = 'UP'
 	elif action == 1:
 		result = 'RIGHT'
 	elif action == 2:
-		result = 'SWAP'
+		result = 'DOWN'
+	elif action == 3:
+		result = 'LEFT'
+	elif action == 4:
+		result = 'CLICK'
 	return result
 
 graph = pydot.Dot(graph_type='digraph', strict=True)

@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
+#include "minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
@@ -62,7 +63,8 @@ int main(int argc, char* argv[]) {
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -80,7 +82,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result();
+				target_val = problem->score_result(run_helper.num_actions);
 			} else {
 				target_val = -1.0;
 			}
@@ -124,7 +126,7 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result();
+				target_val = problem->score_result(run_helper.num_actions);
 			} else {
 				target_val = -1.0;
 			}
@@ -166,7 +168,16 @@ int main(int argc, char* argv[]) {
 						branch_experiment->finalize(input_scope_depths_mappings,
 													output_scope_depths_mappings);
 
-						// experiment cleaned in reset()
+						Scope* starting_scope = solution->scopes[branch_experiment->scope_context.back()];
+						AbstractNode* starting_node = starting_scope->nodes[branch_experiment->node_context.back()];
+						if (starting_node->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)starting_node;
+							action_node->experiment = NULL;
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)starting_node;
+							scope_node->experiment = NULL;
+						}
+						delete branch_experiment;
 					} else if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_FAIL) {
 						is_fail = true;
 
@@ -190,7 +201,16 @@ int main(int argc, char* argv[]) {
 					if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
 						is_success = true;
 
-						// experiment cleaned in reset()
+						Scope* starting_scope = solution->scopes[pass_through_experiment->scope_context.back()];
+						AbstractNode* starting_node = starting_scope->nodes[pass_through_experiment->node_context.back()];
+						if (starting_node->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)starting_node;
+							action_node->experiment = NULL;
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)starting_node;
+							scope_node->experiment = NULL;
+						}
+						delete pass_through_experiment;
 					} else if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_FAIL) {
 						is_fail = true;
 
@@ -219,62 +239,6 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
-			solution->success_reset();
-
-			while (solution->verify_problems.size() > 0) {
-				Problem* problem = solution->verify_problems[0];
-
-				RunHelper run_helper;
-				run_helper.verify_key = solution->verify_key;
-
-				#if defined(MDEBUG) && MDEBUG
-				run_helper.starting_run_seed = solution->verify_seeds[0];
-				run_helper.curr_run_seed = solution->verify_seeds[0];
-				solution->verify_seeds.erase(solution->verify_seeds.begin());
-				#endif /* MDEBUG */
-
-				vector<ContextLayer> context;
-				context.push_back(ContextLayer());
-
-				context.back().scope = solution->root;
-				context.back().node = NULL;
-
-				// unused
-				int exit_depth = -1;
-				AbstractNode* exit_node = NULL;
-
-				solution->root->verify_activate(problem,
-												context,
-												exit_depth,
-												exit_node,
-												run_helper);
-
-				delete solution->verify_problems[0];
-				solution->verify_problems.erase(solution->verify_problems.begin());
-			}
-			solution->clear_verify();
-
-			num_fails = 0;
-
-			solution->id = (unsigned)time(NULL);
-			solution->save(path, name);
-
-			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
-		} else if (is_fail) {
-			num_fails++;
-			cout << "num_fails: " << num_fails << endl << endl;
-			if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
-				cout << "fail_reset" << endl << endl;
-
-				num_fails = 0;
-				solution->fail_reset();
-
-				solution->curr_num_datapoints *= 2;
-			}
-		}
-
-		iter_index++;
-		if (iter_index%20000 == 0) {
 			ifstream solution_save_file;
 			solution_save_file.open(path + "saves/main/solution.txt");
 			string id_line;
@@ -291,6 +255,47 @@ int main(int argc, char* argv[]) {
 				cout << "updated from main" << endl;
 
 				num_fails = 0;
+			} else {
+				solution->success_reset();
+
+				num_fails = 0;
+
+				solution->id = (unsigned)time(NULL);
+				solution->save(path, name);
+
+				solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
+			}
+		} else if (is_fail) {
+			num_fails++;
+			cout << "num_fails: " << num_fails << endl << endl;
+			if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+				cout << "fail_reset" << endl << endl;
+
+				num_fails = 0;
+				solution->fail_reset();
+
+				solution->curr_num_datapoints *= 2;
+			}
+		} else {
+			iter_index++;
+			if (iter_index%20000 == 0) {
+				ifstream solution_save_file;
+				solution_save_file.open(path + "saves/main/solution.txt");
+				string id_line;
+				getline(solution_save_file, id_line);
+				int curr_id = stoi(id_line);
+				solution_save_file.close();
+
+				if (curr_id > solution->id) {
+					delete solution;
+
+					solution = new Solution();
+					solution->load(path, "main");
+
+					cout << "updated from main" << endl;
+
+					num_fails = 0;
+				}
 			}
 		}
 	}

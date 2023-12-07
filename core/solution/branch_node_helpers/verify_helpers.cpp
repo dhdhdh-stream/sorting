@@ -1,3 +1,5 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "branch_node.h"
 
 #include <algorithm>
@@ -138,7 +140,6 @@ void BranchNode::verify_activate(Problem* problem,
 				this->verify_factors.erase(this->verify_factors.begin());
 			}
 
-			#if defined(MDEBUG) && MDEBUG
 			bool decision_is_branch;
 			if (run_helper.curr_run_seed%2 == 0) {
 				decision_is_branch = true;
@@ -146,12 +147,6 @@ void BranchNode::verify_activate(Problem* problem,
 				decision_is_branch = false;
 			}
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
-			bool decision_is_branch = branch_score > original_score;
-			/**
-			 * - fix for determinism
-			 */
-			#endif /* MDEBUG */
 
 			if (decision_is_branch) {
 				is_branch = true;
@@ -163,3 +158,5 @@ void BranchNode::verify_activate(Problem* problem,
 		is_branch = false;
 	}
 }
+
+#endif /* MDEBUG */

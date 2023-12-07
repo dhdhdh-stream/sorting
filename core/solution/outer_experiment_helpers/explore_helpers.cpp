@@ -208,6 +208,9 @@ void OuterExperiment::explore_backprop(double target_val) {
 		this->state_iter++;
 		this->sub_state_iter = 0;
 		if (this->state_iter >= EXPLORE_ITERS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			double score_standard_deviation = sqrt(this->existing_score_variance);
 			double score_improvement_t_score = this->best_score
 				/ (score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
@@ -216,9 +219,6 @@ void OuterExperiment::explore_backprop(double target_val) {
 			// cout << "this->best_surprise: " << this->best_score << endl;
 			// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

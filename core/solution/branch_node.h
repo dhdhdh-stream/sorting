@@ -35,10 +35,12 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_original_scores;
 	std::vector<double> verify_branch_scores;
 	std::vector<std::vector<double>> verify_factors;
+	#endif /* MDEBUG */
 
 	BranchNode();
 	~BranchNode();
@@ -62,12 +64,16 @@ public:
 	void view_activate(bool& is_branch,
 					   std::vector<ContextLayer>& context);
 
+	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 bool& is_branch,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
+	#endif /* MDEBUG */
 
+	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
+	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

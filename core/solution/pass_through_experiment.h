@@ -25,7 +25,9 @@ const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
 const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
 const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+#if defined(MDEBUG) && MDEBUG
 const int PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+#endif /* MDEBUG */
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 6;
 const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 7;
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 8;
@@ -111,8 +113,8 @@ public:
 	int branch_experiment_step_index;
 	BranchExperiment* branch_experiment;
 
-	std::vector<Problem*> verify_problems;
 	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
 
@@ -188,6 +190,7 @@ public:
 								   RunHelper& run_helper);
 	void verify_new_score_backprop(double target_val);
 
+	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
@@ -195,6 +198,9 @@ public:
 								 AbstractNode*& exit_node,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
+	#endif /* MDEBUG */
+
+	void score_finalize();
 
 	void measure_existing_misguess_activate(std::vector<ContextLayer>& context);
 	void measure_existing_misguess_parent_scope_end_activate(

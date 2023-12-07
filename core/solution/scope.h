@@ -72,16 +72,20 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 RunHelper& run_helper);
+	#endif /* MDEBUG */
 
 	void success_reset();
 	void fail_reset();
 
+	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
+	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

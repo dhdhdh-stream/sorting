@@ -1,3 +1,5 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "scope_node.h"
 
 #include <algorithm>
@@ -152,7 +154,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 				this->verify_factors.erase(this->verify_factors.begin());
 			}
 
-			#if defined(MDEBUG) && MDEBUG
 			bool decision_is_halt;
 			if (run_helper.curr_run_seed%2 == 0) {
 				decision_is_halt = false;
@@ -163,9 +164,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 			 * - reverse to match BranchExperiment capture_verify()
 			 */
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
-			bool decision_is_halt = halt_score > continue_score;
-			#endif /* MDEBUG */
 
 			if (decision_is_halt) {
 				break;
@@ -369,3 +367,5 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		exit_node = inner_exit_node;
 	}
 }
+
+#endif /* MDEBUG */

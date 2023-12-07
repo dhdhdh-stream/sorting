@@ -105,6 +105,7 @@ void PotentialScopeNode::activate(Problem* problem,
 	context.back().node = NULL;
 }
 
+#if defined(MDEBUG) && MDEBUG
 void PotentialScopeNode::capture_verify_activate(Problem* problem,
 												 vector<ContextLayer>& context,
 												 RunHelper& run_helper) {
@@ -220,6 +221,7 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 
 	this->scope_node_placeholder->verify_output_state_vals.push_back(output_state_vals);
 }
+#endif /* MDEBUG */
 
 PotentialScopeNodeHistory::PotentialScopeNodeHistory(PotentialScopeNode* potential_scope_node) {
 	this->potential_scope_node = potential_scope_node;

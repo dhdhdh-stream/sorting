@@ -68,12 +68,14 @@ public:
 
 	AbstractExperiment* experiment;
 
+	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<std::vector<double>> verify_input_state_vals;
 	std::vector<std::vector<double>> verify_output_state_vals;
 	std::vector<double> verify_continue_scores;
 	std::vector<double> verify_halt_scores;
 	std::vector<std::vector<double>> verify_factors;
+	#endif /* MDEBUG */
 
 	ScopeNode();
 	~ScopeNode();
@@ -101,17 +103,21 @@ public:
 					   AbstractNode*& exit_node,
 					   RunHelper& run_helper);
 
+	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 RunHelper& run_helper);
+	#endif /* MDEBUG */
 
 	void success_reset();
 	void fail_reset();
 
+	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
+	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

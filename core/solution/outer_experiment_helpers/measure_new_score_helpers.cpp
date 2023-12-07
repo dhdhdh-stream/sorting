@@ -65,6 +65,11 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 	this->target_val_histories.push_back(target_val);
 
 	if ((int)this->target_val_histories.size() >= solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->target_val_histories.clear();
+
+		if (rand()%2 == 0) {
+		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
@@ -95,9 +100,6 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		// cout << "new_average_score: " << new_average_score << endl;
 		// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		if (score_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
 			// cout << "proceed to verify" << endl;

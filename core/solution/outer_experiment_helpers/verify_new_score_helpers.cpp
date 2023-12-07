@@ -101,13 +101,17 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 			cout << "new_average_score: " << new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+			cout << endl;
+
 			#if defined(MDEBUG) && MDEBUG
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-			#endif /* MDEBUG */
 
 			this->state = OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
+			#else
+			finalize();
+			#endif /* MDEBUG */
 		} else {
 			this->best_score = 0.0;
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -128,7 +132,5 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		}
-
-		// cout << endl;
 	}
 }

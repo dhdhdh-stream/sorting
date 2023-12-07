@@ -94,6 +94,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											  exit_node,
 											  run_helper);
 					break;
+				#if defined(MDEBUG) && MDEBUG
 				case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 					capture_verify_activate(curr_node,
 											problem,
@@ -102,6 +103,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											exit_node,
 											run_helper);
 					break;
+				#endif /* MDEBUG */
 				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 					measure_existing_misguess_activate(context);
 					break;
@@ -187,6 +189,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										  exit_node,
 										  run_helper);
 				break;
+			#if defined(MDEBUG) && MDEBUG
 			case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 				capture_verify_activate(curr_node,
 										problem,
@@ -195,6 +198,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										exit_node,
 										run_helper);
 				break;
+			#endif /* MDEBUG */
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 				measure_existing_misguess_activate(context);
 				break;
@@ -366,9 +370,11 @@ void PassThroughExperiment::backprop(double target_val,
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
 		verify_new_score_backprop(target_val);
 		break;
+	#if defined(MDEBUG) && MDEBUG
 	case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop();
 		break;
+	#endif /* MDEBUG */
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
 		measure_existing_misguess_backprop(target_val,
 										   run_helper,

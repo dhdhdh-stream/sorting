@@ -42,6 +42,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				run_helper,
 				action_node_history);
 		} else {
+			#if defined(MDEBUG) && MDEBUG
 			if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
 				instance_history->pre_step_histories.push_back(NULL);
 				this->best_potential_scopes[s_index]->capture_verify_activate(
@@ -56,6 +57,14 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 															   run_helper,
 															   potential_scope_node_history);
 			}
+			#else
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+			instance_history->pre_step_histories.push_back(potential_scope_node_history);
+			this->best_potential_scopes[s_index]->activate(problem,
+														   context,
+														   run_helper,
+														   potential_scope_node_history);
+			#endif /* MDEBUG */
 		}
 	}
 
@@ -100,6 +109,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 						run_helper,
 						action_node_history);
 				} else {
+					#if defined(MDEBUG) && MDEBUG
 					if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
 						instance_history->post_step_histories.push_back(NULL);
 						this->best_potential_scopes[s_index]->capture_verify_activate(
@@ -114,6 +124,14 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 																	   run_helper,
 																	   potential_scope_node_history);
 					}
+					#else
+					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+					instance_history->post_step_histories.push_back(potential_scope_node_history);
+					this->best_potential_scopes[s_index]->activate(problem,
+																   context,
+																   run_helper,
+																   potential_scope_node_history);
+					#endif /* MDEBUG */
 				}
 			}
 
@@ -139,11 +157,13 @@ void PassThroughExperiment::experiment_backprop(
 										  history->branch_experiment_history);
 
 		if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_SUCCESS) {
+			#if defined(MDEBUG) && MDEBUG
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this->branch_experiment;
 				}
 			}
+			#endif /* MDEBUG */
 
 			cout << "PassThrough experiment success" << endl;
 			// cout << "this->scope_context:" << endl;
@@ -193,6 +213,8 @@ void PassThroughExperiment::experiment_backprop(
 
 			new_branch_node->original_score_mod = 0.0;
 			new_branch_node->branch_score_mod = 0.0;
+
+			new_branch_node->decision_standard_deviation = 0.0;
 
 			if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];

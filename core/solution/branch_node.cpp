@@ -13,13 +13,16 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
+	#endif /* MDEBUG */
 }
 
 BranchNode::~BranchNode() {
 	// do nothing
 }
 
+#if defined(MDEBUG) && MDEBUG
 void BranchNode::clear_verify() {
 	this->verify_key = NULL;
 	if (this->verify_original_scores.size() > 0
@@ -28,6 +31,7 @@ void BranchNode::clear_verify() {
 		throw invalid_argument("branch node remaining verify");
 	}
 }
+#endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->branch_scope_context.size() << endl;

@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "globals.h"
 #include "helpers.h"
+#include "minesweeper.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -34,13 +35,14 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->load("", "main");
-	solution->load("", "12_5_2023");
+	solution->load("", "main");
+	// solution->load("", "12_5_2023");
 
 	cout << "solution->states.size(): " << solution->states.size() << endl;
 
 	{
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -62,7 +64,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result();
+			target_val = problem->score_result(run_helper.num_actions);
 		} else {
 			target_val = -1.0;
 		}

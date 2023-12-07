@@ -19,6 +19,9 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 							   AbstractNode*& exit_node,
 							   RunHelper& run_helper) {
 	problem->perform_action(this->action);
+	if (this->action.move != ACTION_NOOP) {
+		run_helper.num_actions++;
+	}
 	double obs_snapshot = problem->get_observation();
 
 	cout << "action node #" << this->id << endl;
