@@ -26,8 +26,9 @@ void create_loop_experiment_helper(int target_depth,
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 
 				node_context.back() = action_node;
@@ -36,8 +37,8 @@ void create_loop_experiment_helper(int target_depth,
 				possible_node_contexts.push_back(node_context);
 
 				node_context.back() = NULL;
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				node_context.back() = scope_node;

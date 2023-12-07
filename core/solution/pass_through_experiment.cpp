@@ -74,6 +74,12 @@ PassThroughExperiment::~PassThroughExperiment() {
 	if (this->branch_experiment != NULL) {
 		delete this->branch_experiment;
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(

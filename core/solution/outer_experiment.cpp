@@ -51,4 +51,10 @@ OuterExperiment::~OuterExperiment() {
 			delete this->best_root_scope_nodes[s_index];
 		}
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }

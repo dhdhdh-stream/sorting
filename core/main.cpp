@@ -50,7 +50,6 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	uniform_int_distribution<int> outer_distribution(0, 7);
-	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -123,11 +122,7 @@ int main(int argc, char* argv[]) {
 			if (run_helper.experiment_history == NULL) {
 				if (run_helper.experiments_seen.size() == 0) {
 					if (!run_helper.exceeded_limit) {
-						if (experiment_type_distribution(generator) == 0) {
-							create_branch_experiment(root_history);
-						} else {
-							create_pass_through_experiment(root_history);
-						}
+						create_experiment(root_history);
 					}
 				}
 			}

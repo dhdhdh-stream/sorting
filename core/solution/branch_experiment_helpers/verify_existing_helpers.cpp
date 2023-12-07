@@ -33,12 +33,12 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 		this->verify_existing_average_score = sum_scores / (2 * solution->curr_num_datapoints);
 
 		// cout << "Branch" << endl;
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		// cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
 		// cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < 2 * solution->curr_num_datapoints; d_index++) {
-			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
+			sum_score_variance += (this->o_target_val_histories[d_index] - this->verify_existing_average_score) * (this->o_target_val_histories[d_index] - this->verify_existing_average_score);
 		}
 		this->verify_existing_score_variance = sum_score_variance / (2 * solution->curr_num_datapoints);
 

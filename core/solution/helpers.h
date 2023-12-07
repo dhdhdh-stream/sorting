@@ -17,8 +17,7 @@ class ScopeHistory;
 class ScopeNode;
 class State;
 
-void create_branch_experiment(ScopeHistory* root_history);
-void create_pass_through_experiment(ScopeHistory* root_history);
+void create_experiment(ScopeHistory* root_history);
 
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,

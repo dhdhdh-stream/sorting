@@ -1,3 +1,5 @@
+// TODO: try transfer learning
+
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 

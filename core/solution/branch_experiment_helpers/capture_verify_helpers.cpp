@@ -230,6 +230,7 @@ void BranchExperiment::capture_verify_backprop() {
 		}
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		this->verify_problems.clear();
 		solution->verify_seeds = this->verify_seeds;
 
 		this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;

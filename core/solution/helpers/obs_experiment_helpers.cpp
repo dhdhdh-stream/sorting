@@ -173,8 +173,9 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 
 				node_context.back() = action_node->id;
@@ -205,8 +206,8 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 						possible_obs_indexes,
 						action_node_history->experiment_history);
 				}
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				node_context.back() = scope_node->id;
@@ -375,8 +376,9 @@ void flat_vals_helper(vector<int>& scope_context,
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->flat_vals_back_activate(scope_context,
 													 node_context,
@@ -391,8 +393,8 @@ void flat_vals_helper(vector<int>& scope_context,
 												sum_vals,
 												counts);
 				}
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				node_context.back() = scope_node->id;
@@ -532,8 +534,9 @@ void rnn_vals_helper(vector<int>& scope_context,
 
 	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
 		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			if (scope_history->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)scope_history->node_histories[i_index][h_index];
+			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
 				action_node->rnn_vals_back_activate(scope_context,
 													node_context,
@@ -548,8 +551,8 @@ void rnn_vals_helper(vector<int>& scope_context,
 											   rnn_obs_experiment_indexes,
 											   rnn_vals);
 				}
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[i_index][h_index];
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
 				node_context.back() = scope_node->id;

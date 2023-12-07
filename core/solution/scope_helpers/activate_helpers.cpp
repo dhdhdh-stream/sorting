@@ -49,8 +49,12 @@ void node_activate_helper(int iter_index,
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
 		BranchNode* node = (BranchNode*)curr_node;
 
+		BranchNodeHistory* node_history = new BranchNodeHistory(node);
+		history->node_histories[iter_index].push_back(node_history);
+
 		bool is_branch;
 		node->activate(is_branch,
+					   problem,
 					   context,
 					   run_helper);
 

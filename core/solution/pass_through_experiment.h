@@ -39,6 +39,9 @@ const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 11;
 class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+
 	int state;
 	int state_iter;
 	int sub_state_iter;

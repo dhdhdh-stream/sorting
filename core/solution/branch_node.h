@@ -9,6 +9,8 @@
 #include "problem.h"
 #include "run_helper.h"
 
+class RetrainBranchExperiment;
+
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
@@ -35,6 +37,8 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	RetrainBranchExperiment* experiment;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_original_scores;
@@ -46,6 +50,7 @@ public:
 	~BranchNode();
 
 	void activate(bool& is_branch,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
@@ -79,6 +84,12 @@ public:
 	void load(std::ifstream& input_file);
 	void link();
 	void save_for_display(std::ofstream& output_file);
+};
+
+class BranchNodeHistory : public AbstractNodeHistory {
+public:
+	BranchNodeHistory(BranchNode* node);
+	BranchNodeHistory(BranchNodeHistory* original);
 };
 
 #endif /* BRANCH_NODE_H */

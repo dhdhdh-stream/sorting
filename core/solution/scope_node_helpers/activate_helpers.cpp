@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "branch_experiment.h"
 #include "constants.h"
 #include "full_network.h"
 #include "globals.h"
@@ -207,13 +208,25 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		curr_node = this->next_node;
 
 		if (this->experiment != NULL) {
-			this->experiment->activate(curr_node,
-									   problem,
-									   context,
-									   exit_depth,
-									   exit_node,
-									   run_helper,
-									   history->experiment_history);
+			if (this->experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
+				branch_experiment->activate(curr_node,
+											problem,
+											context,
+											exit_depth,
+											exit_node,
+											run_helper,
+											history->experiment_history);
+			} else {
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
+				pass_through_experiment->activate(curr_node,
+												  problem,
+												  context,
+												  exit_depth,
+												  exit_node,
+												  run_helper,
+												  history->experiment_history);
+			}
 		}
 	} else if (inner_exit_depth == 0) {
 		curr_node = inner_exit_node;

@@ -61,7 +61,6 @@ int main(int argc, char* argv[]) {
 
 	int iter_index = 0;
 	uniform_int_distribution<int> outer_distribution(0, 7);
-	uniform_int_distribution<int> experiment_type_distribution(0, 1);
 	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -134,11 +133,7 @@ int main(int argc, char* argv[]) {
 			if (run_helper.experiment_history == NULL) {
 				if (run_helper.experiments_seen.size() == 0) {
 					if (!run_helper.exceeded_limit) {
-						if (experiment_type_distribution(generator) == 0) {
-							create_branch_experiment(root_history);
-						} else {
-							create_pass_through_experiment(root_history);
-						}
+						create_experiment(root_history);
 					}
 				}
 			}
@@ -253,18 +248,16 @@ int main(int argc, char* argv[]) {
 				solution->load(path, "main");
 
 				cout << "updated from main" << endl;
-
-				num_fails = 0;
 			} else {
 				solution->success_reset();
 
-				num_fails = 0;
-
 				solution->id = (unsigned)time(NULL);
 				solution->save(path, name);
-
-				solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 			}
+
+			num_fails = 0;
+
+			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 		} else if (is_fail) {
 			num_fails++;
 			cout << "num_fails: " << num_fails << endl << endl;
@@ -295,6 +288,8 @@ int main(int argc, char* argv[]) {
 					cout << "updated from main" << endl;
 
 					num_fails = 0;
+
+					solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 				}
 			}
 		}

@@ -37,6 +37,9 @@ const int BRANCH_EXPERIMENT_STATE_SUCCESS = 9;
 class BranchExperimentOverallHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+
 	PassThroughExperiment* parent_pass_through_experiment;
 
 	double average_instances_per_run;

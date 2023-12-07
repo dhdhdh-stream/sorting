@@ -143,3 +143,11 @@ void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }
+
+BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
+	this->node = node;
+}
+
+BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
+	this->node = original->node;
+}
