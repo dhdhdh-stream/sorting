@@ -61,6 +61,10 @@ void BranchExperiment::capture_verify_activate(
 			exit_node = this->best_exit_node;
 		}
 	} else {
+		// problem->print();
+
+		// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
 		double original_predicted_score = this->existing_average_score;
 		double branch_predicted_score = this->new_average_score;
 

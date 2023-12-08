@@ -2,6 +2,8 @@
 
 #include "retrain_branch_experiment.h"
 
+#include <iostream>
+
 #include "branch_node.h"
 #include "constants.h"
 #include "full_network.h"
@@ -159,6 +161,7 @@ void RetrainBranchExperiment::capture_verify_backprop() {
 	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
 		solution->verify_key = this;
 		solution->verify_problems = this->verify_problems;
+		this->verify_problems.clear();
 		solution->verify_seeds = this->verify_seeds;
 
 		finalize();

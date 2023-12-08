@@ -1,5 +1,8 @@
 // TODO: try transfer learning
 
+// TODO: actually, if world modeling, don't have to execute full actions, but can abstract
+// - another way in which world modeling can make exploring much faster
+
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 

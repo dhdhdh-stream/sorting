@@ -189,7 +189,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 								new_node_reverse_mappings[new_branch_node] = branch_node;
 
 								/**
-								 * - leave context empty to always match
+								 * - can leave context empty intially to always match
 								 */
 
 								new_branch_node->branch_is_pass_through = false;
@@ -463,7 +463,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 								new_node_reverse_mappings[curr_depth][new_branch_node] = branch_node;
 
 								/**
-								 * - can leave context empty to always match for explore
+								 * - can leave context empty intially to always match
 								 */
 
 								new_branch_node->branch_is_pass_through = false;

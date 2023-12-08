@@ -109,6 +109,14 @@ void PotentialScopeNode::activate(Problem* problem,
 void PotentialScopeNode::capture_verify_activate(Problem* problem,
 												 vector<ContextLayer>& context,
 												 RunHelper& run_helper) {
+	// cout << "this->scope_node_placeholder->id: " << this->scope_node_placeholder->id << endl;
+
+	// problem->print();
+
+	// cout << "solution->max_depth: " << solution->max_depth << endl;
+
+	// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
 	map<int, StateStatus> input_state_vals;
 	vector<double> full_input_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {

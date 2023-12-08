@@ -92,6 +92,17 @@ void BranchNode::verify_activate(Problem* problem,
 			if (this->verify_key == run_helper.verify_key) {
 				// problem->print();
 
+				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
+				// cout << "context scope" << endl;
+				// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+				// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+				// }
+				// cout << "context node" << endl;
+				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+				// 	cout << c_index << ": " << context[c_index].node->id << endl;
+				// }
+
 				// cout << "input_state_vals" << endl;
 				// for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
 				// 		it != context.back().input_state_vals.end(); it++) {

@@ -11,6 +11,7 @@
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
+#include "retrain_branch_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -987,9 +988,16 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 		if (experiment->type == EXPERIMENT_TYPE_BRANCH) {
 			BranchExperiment* branch_experiment = (BranchExperiment*)experiment;
 			branch_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else {
+		} else if (experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
 			pass_through_experiment->existing_temp_state_weights[new_state] = sqrt(resolved_variance);
+		} else {
+			RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)experiment;
+			if (retrain_branch_experiment->state == RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL) {
+				retrain_branch_experiment->original_temp_state_weights[0][new_state] = sqrt(resolved_variance);
+			} else {
+				retrain_branch_experiment->branch_temp_state_weights[0][new_state] = sqrt(resolved_variance);
+			}
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {

@@ -1,10 +1,12 @@
 #include "retrain_branch_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 
 using namespace std;
 
-void RetrainBranchExperiment::activate(bool& is_branch,
+bool RetrainBranchExperiment::activate(bool& is_branch,
 									   Problem* problem,
 									   vector<ContextLayer>& context,
 									   RunHelper& run_helper) {
@@ -73,6 +75,10 @@ void RetrainBranchExperiment::activate(bool& is_branch,
 			break;
 		#endif /* MDEBUG */
 		}
+
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -108,4 +114,6 @@ void RetrainBranchExperiment::backprop(double target_val,
 		break;
 	#endif /* MDEBUG */
 	}
+
+	delete history;
 }

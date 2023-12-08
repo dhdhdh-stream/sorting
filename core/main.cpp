@@ -15,6 +15,7 @@
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
+#include "retrain_branch_experiment.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -40,8 +41,8 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
 	int num_fails = 0;
 
@@ -51,8 +52,8 @@ int main(int argc, char* argv[]) {
 
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -152,7 +153,16 @@ int main(int argc, char* argv[]) {
 						branch_experiment->finalize(input_scope_depths_mappings,
 													output_scope_depths_mappings);
 
-						// experiment cleaned in reset()
+						Scope* starting_scope = solution->scopes[branch_experiment->scope_context.back()];
+						AbstractNode* starting_node = starting_scope->nodes[branch_experiment->node_context.back()];
+						if (starting_node->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)starting_node;
+							action_node->experiment = NULL;
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)starting_node;
+							scope_node->experiment = NULL;
+						}
+						delete branch_experiment;
 					} else if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_FAIL) {
 						is_fail = true;
 
@@ -167,7 +177,7 @@ int main(int argc, char* argv[]) {
 						}
 						delete branch_experiment;
 					}
-				} else {
+				} else if (run_helper.experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 					PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_history->experiment;
 					pass_through_experiment->backprop(target_val,
 													  run_helper,
@@ -176,7 +186,16 @@ int main(int argc, char* argv[]) {
 					if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_SUCCESS) {
 						is_success = true;
 
-						// experiment cleaned in reset()
+						Scope* starting_scope = solution->scopes[pass_through_experiment->scope_context.back()];
+						AbstractNode* starting_node = starting_scope->nodes[pass_through_experiment->node_context.back()];
+						if (starting_node->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)starting_node;
+							action_node->experiment = NULL;
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)starting_node;
+							scope_node->experiment = NULL;
+						}
+						delete pass_through_experiment;
 					} else if (pass_through_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_FAIL) {
 						is_fail = true;
 
@@ -190,6 +209,25 @@ int main(int argc, char* argv[]) {
 							scope_node->experiment = NULL;
 						}
 						delete pass_through_experiment;
+					}
+				} else {
+					RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)run_helper.experiment_history->experiment;
+					retrain_branch_experiment->backprop(target_val,
+														run_helper,
+														(RetrainBranchExperimentOverallHistory*)run_helper.experiment_history);
+
+					if (retrain_branch_experiment->state == RETRAIN_BRANCH_EXPERIMENT_STATE_SUCCESS) {
+						is_success = true;
+
+						BranchNode* branch_node = retrain_branch_experiment->branch_node;
+						branch_node->experiment = NULL;
+						delete retrain_branch_experiment;
+					} else if (retrain_branch_experiment->state == RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL) {
+						is_fail = true;
+
+						BranchNode* branch_node = retrain_branch_experiment->branch_node;
+						branch_node->experiment = NULL;
+						delete retrain_branch_experiment;
 					}
 				}
 			} else {

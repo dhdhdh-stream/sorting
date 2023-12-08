@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
@@ -228,8 +229,18 @@ void OuterExperiment::explore_backprop(double target_val) {
 						this->best_potential_scopes[s_index]->scope_node_placeholder = new ScopeNode();
 						this->best_potential_scopes[s_index]->scope_node_placeholder->id = 1 + s_index;
 
-						this->best_potential_scopes[s_index]->scope->id = solution->scope_counter;
+						int new_scope_id = solution->scope_counter;
 						solution->scope_counter++;
+						this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+
+						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+							if (it->second->type == NODE_TYPE_BRANCH) {
+								BranchNode* branch_node = (BranchNode*)it->second;
+								branch_node->branch_scope_context = vector<int>{new_scope_id};
+								branch_node->branch_node_context = vector<int>{branch_node->id};
+							}
+						}
 					} else {
 						this->best_root_scope_nodes[s_index]->id = 1 + s_index;
 					}

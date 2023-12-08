@@ -80,6 +80,9 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	void success_reset();
+	void fail_reset();
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link();

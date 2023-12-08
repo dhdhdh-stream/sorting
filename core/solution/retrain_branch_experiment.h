@@ -14,9 +14,9 @@ class Problem;
 class ScopeHistory;
 class State;
 
-const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL = 0;
-const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH = 1;
-const int RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 2;
+const int RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
+const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL = 1;
+const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH = 2;
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING = 4;
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY = 5;
@@ -76,7 +76,7 @@ public:
 	RetrainBranchExperiment(BranchNode* branch_node);
 	~RetrainBranchExperiment();
 
-	void activate(bool& is_branch,
+	bool activate(bool& is_branch,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);

@@ -493,9 +493,7 @@ void RetrainBranchExperiment::train_branch_backprop(
 				}
 			}
 
-			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
-
-			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING;
+			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		}
 	}

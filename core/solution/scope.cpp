@@ -45,12 +45,25 @@ void Scope::clear_verify() {
 void Scope::success_reset() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)it->second;
-			action_node->success_reset();
-		} else if (it->second->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)it->second;
-			scope_node->success_reset();
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				action_node->success_reset();
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				scope_node->success_reset();
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->success_reset();
+			}
+			break;
 		}
 	}
 
@@ -70,12 +83,25 @@ void Scope::success_reset() {
 void Scope::fail_reset() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)it->second;
-			action_node->fail_reset();
-		} else if (it->second->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)it->second;
-			scope_node->fail_reset();
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				action_node->fail_reset();
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				scope_node->fail_reset();
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->fail_reset();
+			}
+			break;
 		}
 	}
 }
@@ -187,12 +213,16 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	for (int i_index = 0; i_index < (int)original->node_histories.size(); i_index++) {
 		this->node_histories.push_back(vector<AbstractNodeHistory*>());
 		for (int h_index = 0; h_index < (int)original->node_histories[i_index].size(); h_index++) {
-			if (original->node_histories[i_index][h_index]->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)original->node_histories[i_index][h_index];
+			AbstractNodeHistory* node_history = original->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
-			} else {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)original->node_histories[i_index][h_index];
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
+			} else {
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
+				this->node_histories.back().push_back(new BranchNodeHistory(branch_node_history));
 			}
 		}
 	}

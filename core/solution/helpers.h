@@ -29,6 +29,13 @@ void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_e
 						   std::vector<ContextLayer>& context,
 						   std::vector<int>& scope_context,
 						   std::vector<int>& node_context);
+void parent_pass_through_gather_possible_exits(
+	std::vector<std::pair<int,AbstractNode*>>& possible_exits,
+	std::vector<ContextLayer>& context,
+	std::vector<int>& scope_context,
+	std::vector<int>& node_context,
+	int parent_exit_depth,
+	AbstractNode* parent_exit_node);
 
 void existing_obs_experiment(AbstractExperiment* experiment,
 							 Scope* parent_scope,

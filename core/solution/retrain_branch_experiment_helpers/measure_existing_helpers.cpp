@@ -109,7 +109,13 @@ void RetrainBranchExperiment::measure_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE;
+		this->i_scope_histories.reserve(solution->curr_num_datapoints);
+		this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
+		this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
+		this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
+		this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+
+		this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL;
 		this->state_iter = 0;
 	}
 }

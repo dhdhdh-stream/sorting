@@ -16,13 +16,9 @@ RetrainBranchExperiment::RetrainBranchExperiment(BranchNode* branch_node) {
 	 */
 	this->average_instances_per_run = 1.0;
 
-	this->i_scope_histories.reserve(solution->curr_num_datapoints);
-	this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 
-	this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL;
+	this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;
 
 	this->combined_score = 0.0;

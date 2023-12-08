@@ -11,6 +11,11 @@ void RetrainBranchExperiment::finalize() {
 
 	this->branch_node->decision_standard_deviation = this->existing_standard_deviation;
 
+	this->branch_node->decision_state_is_local.clear();
+	this->branch_node->decision_state_indexes.clear();
+	this->branch_node->decision_original_weights.clear();
+	this->branch_node->decision_branch_weights.clear();
+
 	map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
 	map<pair<int, pair<bool,int>>, int> output_scope_depths_mappings;
 	finalize_branch_node_states(this->branch_node,
@@ -29,4 +34,6 @@ void RetrainBranchExperiment::finalize() {
 	this->branch_node->verify_branch_scores = this->verify_branch_scores;
 	this->branch_node->verify_factors = this->verify_factors;
 	#endif /* MDEBUG */
+
+	this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_SUCCESS;
 }

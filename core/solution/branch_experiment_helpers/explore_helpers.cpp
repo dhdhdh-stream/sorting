@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "full_network.h"
 #include "globals.h"
@@ -162,10 +163,13 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 									  this->scope_context,
 									  this->node_context);
 			} else {
-				gather_possible_exits(possible_exits,
-									  context,
-									  this->parent_pass_through_experiment->scope_context,
-									  this->parent_pass_through_experiment->node_context);
+				parent_pass_through_gather_possible_exits(
+					possible_exits,
+					context,
+					this->parent_pass_through_experiment->scope_context,
+					this->parent_pass_through_experiment->node_context,
+					this->parent_pass_through_experiment->best_exit_depth,
+					this->parent_pass_through_experiment->best_exit_node);
 
 				for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
 						s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
@@ -316,8 +320,18 @@ void BranchExperiment::explore_backprop(double target_val,
 						this->best_potential_scopes[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 
-						this->best_potential_scopes[s_index]->scope->id = solution->scope_counter;
+						int new_scope_id = solution->scope_counter;
 						solution->scope_counter++;
+						this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+
+						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+							if (it->second->type == NODE_TYPE_BRANCH) {
+								BranchNode* branch_node = (BranchNode*)it->second;
+								branch_node->branch_scope_context = vector<int>{new_scope_id};
+								branch_node->branch_node_context = vector<int>{branch_node->id};
+							}
+						}
 					}
 				}
 

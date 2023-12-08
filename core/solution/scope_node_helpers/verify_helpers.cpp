@@ -263,7 +263,11 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		}
 	} else {
 		if (this->verify_key == run_helper.verify_key) {
+			// cout << "this->id: " << this->id << endl;
+
 			// problem->print();
+
+			// cout << "solution->max_depth: " << solution->max_depth << endl;
 
 			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 

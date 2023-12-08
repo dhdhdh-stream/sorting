@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
 #include "globals.h"
+#include "retrain_branch_experiment.h"
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
@@ -13,13 +13,17 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->experiment = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
 }
 
 BranchNode::~BranchNode() {
-	// do nothing
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -32,6 +36,20 @@ void BranchNode::clear_verify() {
 	}
 }
 #endif /* MDEBUG */
+
+void BranchNode::success_reset() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+		this->experiment = NULL;
+	}
+}
+
+void BranchNode::fail_reset() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+		this->experiment = NULL;
+	}
+}
 
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->branch_scope_context.size() << endl;
