@@ -1,7 +1,6 @@
-#ifndef EXPERIMENT_H
-#define EXPERIMENT_H
+#ifndef CONNECTION_EXPERIMENT_H
+#define CONNECTION_EXPERIMENT_H
 
-#include <map>
 #include <vector>
 
 #include "abstract_experiment.h"
@@ -9,18 +8,14 @@
 
 class HiddenState;
 
-const int EXPERIMENT_STATE_MEASURE_EXISTING = 0;
-const int EXPERIMENT_STATE_TRAIN = 1;
-const int EXPERIMENT_STATE_MEASURE = 2;
-const int EXPERIMENT_STATE_VERIFY_EXISTING = 3;
-const int EXPERIMENT_STATE_VERIFY = 4;
+const int CONNECTION_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
+const int CONNECTION_EXPERIMENT_STATE_MEASURE = 1;
+const int CONNECTION_EXPERIMENT_STATE_VERIFY_EXISTING = 2;
+const int CONNECTION_EXPERIMENT_STATE_VERIFY = 3;
 
-class Experiment : public AbstractExperiment {
+class ConnectionExperiment : public AbstractExperiment {
 public:
-	std::vector<HiddenState*> experiment_states;
-	/**
-	 * - starting is experiment_states[0]
-	 */
+	HiddenState* target;
 
 	int state;
 	int state_iter;
@@ -28,19 +23,12 @@ public:
 	double existing_average_misguess;
 	double existing_misguess_variance;
 
-	/**
-	 * - for new experiment_states only
-	 */
-	std::map<HiddenState*, std::vector<double>> ending_state_vals;
-	std::map<HiddenState*, double> ending_state_means;
-
 	double new_misguess;
 
 	std::vector<double> misguess_histories;
 
-	Experiment(HiddenState* parent,
-			   std::vector<HiddenState*> experiment_states);
-	~Experiment();
+	ConnectionExperiment(HiddenState* parent,
+						 HiddenState* target);
 
 	void activate(HiddenState*& curr_state,
 				  std::vector<int>& action_sequence,
@@ -50,11 +38,6 @@ public:
 
 	void measure_existing_backprop(double target_val,
 								   HiddenState* ending_state);
-
-	void train_activate(HiddenState*& curr_state,
-						std::vector<int>& action_sequence);
-	void train_backprop(double target_val,
-						HiddenState* ending_state);
 
 	void measure_activate(HiddenState*& curr_state,
 						  std::vector<int>& action_sequence);
@@ -70,4 +53,4 @@ public:
 						 HiddenState* ending_state);
 };
 
-#endif /* EXPERIMENT_H */
+#endif /* CONNECTION_EXPERIMENT_H */

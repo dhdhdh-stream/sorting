@@ -7,17 +7,6 @@
 
 using namespace std;
 
-void Experiment::measure_existing_activate(HiddenState*& curr_state,
-										   vector<int>& action_sequence) {
-	int curr_action = action_sequence[0];
-	action_sequence.erase(action_sequence.begin());
-	map<int, HiddenState*>::iterator it = this->parent->transitions.find(curr_action);
-	if (it != this->parent->transitions.end()) {
-		curr_state = it->second;
-	}
-	// else leave curr_state as is
-}
-
 void Experiment::measure_existing_backprop(double target_val,
 										   HiddenState* ending_state) {
 	double curr_misguess = (target_val - ending_state->average_val)*(target_val - ending_state->average_val);

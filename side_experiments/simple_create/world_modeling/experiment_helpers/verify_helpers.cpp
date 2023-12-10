@@ -12,8 +12,6 @@ using namespace std;
 
 void Experiment::verify_activate(HiddenState*& curr_state,
 								 vector<int>& action_sequence) {
-	// action_sequence[0] == this->starting_action;
-	action_sequence.erase(action_sequence.begin());
 	curr_state = this->experiment_states[0];
 }
 
@@ -46,16 +44,23 @@ void Experiment::verify_backprop(double target_val,
 				it->first->average_val = it->second;
 			}
 
-			this->parent->transitions[this->starting_action] = this->experiment_states[0];
+			map<int, AbstractExperiment*>::iterator it = this->parent->experiments.begin();
+			while (true) {
+				if (it->second == this) {
+					break;
+				}
+				it++;
+			}
+			this->parent->transitions[it->first] = this->experiment_states[0];
 
 			for (int s_index = 0; s_index < (int)this->experiment_states.size(); s_index++) {
 				hmm->hidden_states.push_back(this->experiment_states[s_index]);
 			}
 			this->experiment_states.clear();
 
-			this->state = EXPERIMENT_STATE_SUCCESS;
+			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			this->state = EXPERIMENT_STATE_FAIL;
+			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}
 }

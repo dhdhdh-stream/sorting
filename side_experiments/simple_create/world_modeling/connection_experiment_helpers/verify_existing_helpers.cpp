@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "connection_experiment.h"
 
 #include <iostream>
 
@@ -7,8 +7,9 @@
 
 using namespace std;
 
-void Experiment::verify_existing_backprop(double target_val,
-										  HiddenState* ending_state) {
+void ConnectionExperiment::verify_existing_backprop(
+		double target_val,
+		HiddenState* ending_state) {
 	double curr_misguess = (target_val - ending_state->average_val)*(target_val - ending_state->average_val);
 	this->misguess_histories.push_back(curr_misguess);
 
@@ -30,7 +31,7 @@ void Experiment::verify_existing_backprop(double target_val,
 
 		this->misguess_histories.clear();
 
-		this->state = EXPERIMENT_STATE_VERIFY;
+		this->state = CONNECTION_EXPERIMENT_STATE_VERIFY;
 		this->state_iter = 0;
 	}
 }

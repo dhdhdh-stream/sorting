@@ -6,10 +6,10 @@
 using namespace std;
 
 Experiment::Experiment(HiddenState* parent,
-					   int starting_action,
 					   vector<HiddenState*> experiment_states) {
+	this->type = EXPERIMENT_TYPE_EXPERIMENT;
+
 	this->parent = parent;
-	this->starting_action = starting_action;
 	this->experiment_states = experiment_states;
 
 	this->average_remaining_experiments_from_start = 1.0;
@@ -18,6 +18,8 @@ Experiment::Experiment(HiddenState* parent,
 
 	this->state = EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;
+
+	this->result = EXPERIMENT_RESULT_NA;
 
 	this->new_misguess = 0.0;
 }

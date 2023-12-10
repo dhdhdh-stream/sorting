@@ -14,7 +14,7 @@ public:
 
 	std::map<int, HiddenState*> transitions;
 
-	Experiment* experiment;
+	std::map<int, AbstractExperiment*> experiments;
 
 	HiddenState();
 	~HiddenState();
@@ -22,6 +22,8 @@ public:
 	void activate(HiddenState*& curr_state,
 				  std::vector<int>& action_sequence,
 				  RunHelper& run_helper);
+
+	void success_reset();
 };
 
 #endif /* HIDDEN_STATE_H */

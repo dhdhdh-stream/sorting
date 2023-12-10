@@ -7,6 +7,8 @@ class HiddenState;
 
 class HMM {
 public:
+	double average_misguess;
+
 	std::vector<HiddenState*> hidden_states;
 	/**
 	 * - simply starting at hidden_states[0]

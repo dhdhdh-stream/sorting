@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "connection_experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -8,21 +8,15 @@
 
 using namespace std;
 
-void Experiment::measure_activate(HiddenState*& curr_state,
-								  vector<int>& action_sequence) {
-	curr_state = this->experiment_states[0];
+void ConnectionExperiment::measure_activate(HiddenState*& curr_state,
+											vector<int>& action_sequence) {
+	curr_state = this->target;
 }
 
-void Experiment::measure_backprop(double target_val,
-								  HiddenState* ending_state) {
-	map<HiddenState*, double>::iterator it = this->ending_state_means.find(ending_state);
-	if (it != this->ending_state_means.end()) {
-		double curr_misguess = (target_val - it->second)*(target_val - it->second);
-		this->new_misguess += curr_misguess;
-	} else {
-		double curr_misguess = (target_val - ending_state->average_val)*(target_val - ending_state->average_val);
-		this->new_misguess += curr_misguess;
-	}
+void ConnectionExperiment::measure_backprop(double target_val,
+											HiddenState* ending_state) {
+	double curr_misguess = (target_val - ending_state->average_val)*(target_val - ending_state->average_val);
+	this->new_misguess += curr_misguess;
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_NUM_SAMPLES) {
@@ -41,7 +35,7 @@ void Experiment::measure_backprop(double target_val,
 
 			this->misguess_histories.reserve(MEASURE_NUM_SAMPLES);
 
-			this->state = EXPERIMENT_STATE_VERIFY_EXISTING;
+			this->state = CONNECTION_EXPERIMENT_STATE_VERIFY_EXISTING;
 			this->state_iter = 0;
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;

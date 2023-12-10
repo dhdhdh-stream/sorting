@@ -11,8 +11,6 @@ const int TRAIN_NUM_SAMPLES = 2000;
 
 void Experiment::train_activate(HiddenState*& curr_state,
 								vector<int>& action_sequence) {
-	// action_sequence[0] == this->starting_action;
-	action_sequence.erase(action_sequence.begin());
 	curr_state = this->experiment_states[0];
 }
 

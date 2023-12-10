@@ -1,16 +1,12 @@
-#include "experiment.h"
-
-#include <iostream>
-#include <set>
+#include "connection_experiment.h"
 
 #include "globals.h"
-#include "run_helper.h"
 
 using namespace std;
 
-void Experiment::activate(HiddenState*& curr_state,
-						  vector<int>& action_sequence,
-						  RunHelper& run_helper) {
+void ConnectionExperiment::activate(HiddenState*& curr_state,
+									vector<int>& action_sequence,
+									RunHelper& run_helper) {
 	bool is_selected = false;
 	if (run_helper.selected_experiment == NULL) {
 		bool select = false;
@@ -36,47 +32,39 @@ void Experiment::activate(HiddenState*& curr_state,
 
 	if (is_selected) {
 		switch (this->state) {
-		case EXPERIMENT_STATE_MEASURE_EXISTING:
+		case CONNECTION_EXPERIMENT_STATE_MEASURE_EXISTING:
 			// leave curr_state as is
 			break;
-		case EXPERIMENT_STATE_TRAIN:
-			train_activate(curr_state,
-						   action_sequence);
-			break;
-		case EXPERIMENT_STATE_MEASURE:
+		case CONNECTION_EXPERIMENT_STATE_MEASURE:
 			measure_activate(curr_state,
 							 action_sequence);
 			break;
-		case EXPERIMENT_STATE_VERIFY_EXISTING:
+		case CONNECTION_EXPERIMENT_STATE_VERIFY_EXISTING:
 			// leave curr_state as is
 			break;
-		case EXPERIMENT_STATE_VERIFY:
+		case CONNECTION_EXPERIMENT_STATE_VERIFY:
 			verify_activate(curr_state,
 							action_sequence);
 		}
 	}
 }
 
-void Experiment::backprop(double target_val,
-						  HiddenState* ending_state) {
+void ConnectionExperiment::backprop(double target_val,
+									HiddenState* ending_state) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_MEASURE_EXISTING:
+	case CONNECTION_EXPERIMENT_STATE_MEASURE_EXISTING:
 		measure_existing_backprop(target_val,
 								  ending_state);
 		break;
-	case EXPERIMENT_STATE_TRAIN:
-		train_backprop(target_val,
-					   ending_state);
-		break;
-	case EXPERIMENT_STATE_MEASURE:
+	case CONNECTION_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 ending_state);
 		break;
-	case EXPERIMENT_STATE_VERIFY_EXISTING:
+	case CONNECTION_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_backprop(target_val,
 								 ending_state);
 		break;
-	case EXPERIMENT_STATE_VERIFY:
+	case CONNECTION_EXPERIMENT_STATE_VERIFY:
 		verify_backprop(target_val,
 						ending_state);
 		break;
