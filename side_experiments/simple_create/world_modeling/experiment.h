@@ -50,29 +50,33 @@ public:
 			   std::vector<HiddenState*> experiment_states);
 	~Experiment();
 
-	bool activate(HiddenState* curr_state,
+	bool activate(HiddenState*& curr_state,
 				  std::vector<int>& action_sequence,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  HiddenState* ending_state);
 
+	void measure_existing_activate(HiddenState*& curr_state,
+								   std::vector<int>& action_sequence);
 	void measure_existing_backprop(double target_val,
 								   HiddenState* ending_state);
 
-	void train_activate(HiddenState* curr_state,
+	void train_activate(HiddenState*& curr_state,
 						std::vector<int>& action_sequence);
 	void train_backprop(double target_val,
 						HiddenState* ending_state);
 
-	void measure_activate(HiddenState* curr_state,
+	void measure_activate(HiddenState*& curr_state,
 						  std::vector<int>& action_sequence);
 	void measure_backprop(double target_val,
 						  HiddenState* ending_state);
 
+	void verify_existing_activate(HiddenState*& curr_state,
+								  std::vector<int>& action_sequence);
 	void verify_existing_backprop(double target_val,
 								  HiddenState* ending_state);
 
-	void verify_activate(HiddenState* curr_state,
+	void verify_activate(HiddenState*& curr_state,
 						 std::vector<int>& action_sequence);
 	void verify_backprop(double target_val,
 						 HiddenState* ending_state);

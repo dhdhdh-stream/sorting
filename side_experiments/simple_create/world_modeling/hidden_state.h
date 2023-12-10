@@ -19,7 +19,7 @@ public:
 	HiddenState();
 	~HiddenState();
 
-	void activate(HiddenState* curr_state,
+	void activate(HiddenState*& curr_state,
 				  std::vector<int>& action_sequence,
 				  RunHelper& run_helper);
 };

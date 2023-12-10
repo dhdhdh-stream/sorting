@@ -1,5 +1,6 @@
 #include "experiment.h"
 
+#include <iostream>
 #include <set>
 
 #include "globals.h"
@@ -7,7 +8,7 @@
 
 using namespace std;
 
-bool Experiment::activate(HiddenState* curr_state,
+bool Experiment::activate(HiddenState*& curr_state,
 						  vector<int>& action_sequence,
 						  RunHelper& run_helper) {
 	if (action_sequence[0] != this->starting_action) {
@@ -40,7 +41,8 @@ bool Experiment::activate(HiddenState* curr_state,
 	if (is_selected) {
 		switch (this->state) {
 		case EXPERIMENT_STATE_MEASURE_EXISTING:
-			// do nothing
+			measure_existing_activate(curr_state,
+									  action_sequence);
 			break;
 		case EXPERIMENT_STATE_TRAIN:
 			train_activate(curr_state,
@@ -51,7 +53,8 @@ bool Experiment::activate(HiddenState* curr_state,
 							 action_sequence);
 			break;
 		case EXPERIMENT_STATE_VERIFY_EXISTING:
-			// do nothing
+			verify_existing_activate(curr_state,
+									 action_sequence);
 			break;
 		case EXPERIMENT_STATE_VERIFY:
 			verify_activate(curr_state,

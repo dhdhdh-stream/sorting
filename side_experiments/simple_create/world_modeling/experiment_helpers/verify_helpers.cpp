@@ -1,6 +1,7 @@
 #include "experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -9,7 +10,7 @@
 
 using namespace std;
 
-void Experiment::verify_activate(HiddenState* curr_state,
+void Experiment::verify_activate(HiddenState*& curr_state,
 								 vector<int>& action_sequence) {
 	// action_sequence[0] == this->starting_action;
 	action_sequence.erase(action_sequence.begin());
@@ -20,10 +21,10 @@ void Experiment::verify_backprop(double target_val,
 								 HiddenState* ending_state) {
 	map<HiddenState*, double>::iterator it = this->ending_state_means.find(ending_state);
 	if (it != this->ending_state_means.end()) {
-		double curr_misguess = abs(target_val - it->second);
+		double curr_misguess = (target_val - it->second)*(target_val - it->second);
 		this->new_misguess += curr_misguess;
 	} else {
-		double curr_misguess = abs(target_val - ending_state->average_val);
+		double curr_misguess = (target_val - ending_state->average_val)*(target_val - ending_state->average_val);
 		this->new_misguess += curr_misguess;
 	}
 
@@ -35,6 +36,9 @@ void Experiment::verify_backprop(double target_val,
 		double new_improvement = this->existing_average_misguess - this->new_misguess;
 		double new_improvement_t_score = new_improvement
 			/ (misguess_standard_deviation / sqrt(2 * MEASURE_NUM_SAMPLES));
+
+		cout << "this->new_misguess: " << this->new_misguess << endl;
+		cout << "new_improvement_t_score: " << new_improvement_t_score << endl;
 
 		if (new_improvement_t_score > 2.326) {
 			for (map<HiddenState*, double>::iterator it = this->ending_state_means.begin();
@@ -50,6 +54,8 @@ void Experiment::verify_backprop(double target_val,
 			this->experiment_states.clear();
 
 			this->state = EXPERIMENT_STATE_SUCCESS;
+		} else {
+			this->state = EXPERIMENT_STATE_FAIL;
 		}
 	}
 }

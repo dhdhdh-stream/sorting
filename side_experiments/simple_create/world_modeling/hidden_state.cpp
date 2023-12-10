@@ -1,5 +1,7 @@
 #include "hidden_state.h"
 
+#include <iostream>
+
 #include "experiment.h"
 
 using namespace std;
@@ -14,7 +16,7 @@ HiddenState::~HiddenState() {
 	}
 }
 
-void HiddenState::activate(HiddenState* curr_state,
+void HiddenState::activate(HiddenState*& curr_state,
 						   vector<int>& action_sequence,
 						   RunHelper& run_helper) {
 	if (run_helper.type == RUN_TYPE_EXPLORE && this->experiment != NULL) {

@@ -1,5 +1,7 @@
 #include "hmm.h"
 
+#include <iostream>
+
 #include "experiment.h"
 #include "hidden_state.h"
 #include "run_helper.h"

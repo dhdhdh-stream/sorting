@@ -17,6 +17,10 @@ public:
 	std::vector<Experiment*> experiments_seen_order;
 
 	Experiment* selected_experiment;
+
+	RunHelper() {
+		this->selected_experiment = NULL;
+	}
 };
 
 #endif /* RUN_HELPER_H */
