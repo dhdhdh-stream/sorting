@@ -26,9 +26,6 @@ void ConnectionExperiment::verify_existing_backprop(
 		}
 		this->existing_misguess_variance = sum_variance / (2 * MEASURE_NUM_SAMPLES);
 
-		cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-		cout << "this->existing_misguess_variance: " << this->existing_misguess_variance << endl;
-
 		this->misguess_histories.clear();
 
 		this->state = CONNECTION_EXPERIMENT_STATE_VERIFY;

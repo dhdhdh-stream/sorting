@@ -27,9 +27,6 @@ void ConnectionExperiment::measure_backprop(double target_val,
 		double new_improvement_t_score = new_improvement
 			/ (misguess_standard_deviation / sqrt(MEASURE_NUM_SAMPLES));
 
-		cout << "this->new_misguess: " << this->new_misguess << endl;
-		cout << "new_improvement_t_score: " << new_improvement_t_score << endl;
-
 		if (new_improvement_t_score > 2.326) {
 			this->new_misguess = 0.0;
 

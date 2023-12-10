@@ -27,9 +27,6 @@ void ConnectionExperiment::verify_backprop(double target_val,
 		double new_improvement_t_score = new_improvement
 			/ (misguess_standard_deviation / sqrt(2 * MEASURE_NUM_SAMPLES));
 
-		cout << "this->new_misguess: " << this->new_misguess << endl;
-		cout << "new_improvement_t_score: " << new_improvement_t_score << endl;
-
 		if (new_improvement_t_score > 2.326) {
 			map<int, AbstractExperiment*>::iterator it = this->parent->experiments.begin();
 			while (true) {
@@ -39,6 +36,11 @@ void ConnectionExperiment::verify_backprop(double target_val,
 				it++;
 			}
 			this->parent->transitions[it->first] = this->target;
+
+			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+			cout << "this->existing_misguess_variance: " << this->existing_misguess_variance << endl;
+			cout << "this->new_misguess: " << this->new_misguess << endl;
+			cout << "new_improvement_t_score: " << new_improvement_t_score << endl;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {

@@ -25,9 +25,6 @@ void Experiment::measure_existing_backprop(double target_val,
 		}
 		this->existing_misguess_variance = sum_variance / MEASURE_NUM_SAMPLES;
 
-		cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-		cout << "this->existing_misguess_variance: " << this->existing_misguess_variance << endl;
-
 		this->misguess_histories.clear();
 
 		for (int s_index = 0; s_index < (int)this->experiment_states.size(); s_index++) {

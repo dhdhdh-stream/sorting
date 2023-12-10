@@ -38,9 +38,8 @@ void HMM::update(vector<int>& action_sequence,
 							 run_helper);
 	}
 
-	curr_state->average_val = 0.999*curr_state->average_val + 0.001*target_val;
 	double curr_misguess = (target_val - curr_state->average_val) * (target_val - curr_state->average_val);
-	this->average_misguess = 0.999*this->average_misguess + 0.001*curr_misguess;
+	this->average_misguess = 0.9999*this->average_misguess + 0.0001*curr_misguess;
 }
 
 void HMM::explore(vector<int>& action_sequence,
@@ -76,6 +75,11 @@ void HMM::explore(vector<int>& action_sequence,
 			for (int h_index = 0; h_index < (int)this->hidden_states.size(); h_index++) {
 				this->hidden_states[h_index]->success_reset();
 			}
+
+			ofstream output_file;
+			output_file.open("display.txt");
+			save_for_display(output_file);
+			output_file.close();
 		} else if (run_helper.selected_experiment->result == EXPERIMENT_RESULT_FAIL) {
 			map<int, AbstractExperiment*>::iterator it = run_helper.selected_experiment->parent->experiments.begin();
 			while (true) {
@@ -99,5 +103,13 @@ void HMM::explore(vector<int>& action_sequence,
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 			}
 		}
+	}
+}
+
+void HMM::save_for_display(ofstream& output_file) {
+	output_file << this->hidden_states.size() << endl;
+	for (int s_index = 0; s_index < (int)this->hidden_states.size(); s_index++) {
+		output_file << s_index << endl;
+		this->hidden_states[s_index]->save_for_display(output_file);
 	}
 }

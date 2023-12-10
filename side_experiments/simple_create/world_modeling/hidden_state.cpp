@@ -45,3 +45,14 @@ void HiddenState::success_reset() {
 	}
 	this->experiments.clear();
 }
+
+void HiddenState::save_for_display(ofstream& output_file) {
+	output_file << this->average_val << endl;
+
+	output_file << this->transitions.size() << endl;
+	for (map<int, HiddenState*>::iterator it = this->transitions.begin();
+			it != this->transitions.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second->id << endl;
+	}
+}
