@@ -1,3 +1,25 @@
+// - world model can't pay attention to observations because won't be focused?
+//   - unless experiments train world model and solution jointly
+
+// - on solution experiment, also create cancel world model experiment?
+
+// - how do obs/state line up/get shared between world model and solution?
+
+// - in solutions, actions have an effect on state in specific contexts
+//   - how can this align with world model?
+//     - actions will be performed out-of-context, so can't affect state?
+//       - so maybe don't share states?
+
+// - compound actions depend on state given to them
+//   - so can't model compound actions without taking into account state
+
+// - maybe world model matches solution, except has extra for when going off track?
+
+// - perhaps simply predict obs
+//   - and treat raw actions as is
+
+// - then for compound actions, learn custom
+
 #ifndef EXPERIMENT_H
 #define EXPERIMENT_H
 
