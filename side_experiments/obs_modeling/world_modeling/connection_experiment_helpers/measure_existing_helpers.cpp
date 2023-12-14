@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "connection_experiment.h"
 
 #include <iostream>
 
@@ -9,9 +9,10 @@
 
 using namespace std;
 
-void Experiment::measure_existing_backprop(double target_val,
-										   WorldState* ending_state,
-										   vector<double>& ending_state_vals) {
+void ConnectionExperiment::measure_existing_backprop(
+		double target_val,
+		WorldState* ending_state,
+		vector<double>& ending_state_vals) {
 	double predicted_score = ending_state->val_average;
 	for (int s_index = 0; s_index < world_model->num_states; s_index++) {
 		predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
@@ -35,13 +36,7 @@ void Experiment::measure_existing_backprop(double target_val,
 
 		this->misguess_histories.clear();
 
-		for (int a_index = 0; a_index < (int)this->experiment_state_reverse_mapping.size(); a_index++) {
-			this->experiment_state_reverse_mapping[this->experiment_states[a_index]] = a_index;
-		}
-		this->ending_vals = vector<vector<double>>(this->experiment_state_reverse_mapping.size());
-		this->ending_state_vals = vector<vector<vector<double>>>(this->experiment_state_reverse_mapping.size());
-
-		this->state = EXPERIMENT_STATE_TRAIN;
+		this->state = CONNECTION_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;
 	}
 }

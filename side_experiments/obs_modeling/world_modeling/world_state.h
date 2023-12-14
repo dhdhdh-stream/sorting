@@ -1,6 +1,17 @@
 #ifndef WORLD_STATE_H
 #define WORLD_STATE_H
 
+#include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
+
+#include "run_helper.h"
+
+class AbstractExperiment;
+class Action;
+class Transform;
+
 class WorldState {
 public:
 	int id;
@@ -41,9 +52,31 @@ public:
 	AbstractExperiment* experiment_hook;
 	std::vector<double> hook_obs;
 	std::vector<std::vector<double>> hook_state_vals;
-	std::vector<std::pair<Action*, std::vector<std::vector<std::pair<double, double>>>>> hook_impact_vals;
-	// HERE
+	std::map<Action*, std::vector<std::vector<std::pair<double, double>>>> hook_impact_vals;
 
+	WorldState();
+	~WorldState();
+
+	void activate(WorldState*& curr_state,
+				  int& curr_sequence_index,
+				  std::vector<double>& obs_sequence,
+				  std::vector<Action*>& action_sequence,
+				  std::vector<std::vector<int>>& action_state_sequence,
+				  std::vector<std::vector<double>>& state_vals_sequence,
+				  RunHelper& run_helper);
+
+	void measure_activate(WorldState*& curr_state,
+						  int& curr_sequence_index,
+						  std::vector<double>& obs_sequence,
+						  std::vector<Action*>& action_sequence,
+						  std::vector<std::vector<int>>& action_state_sequence,
+						  std::vector<std::vector<double>>& state_vals_sequence);
+
+	void generate();
+
+	void success_reset();
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_STATE_H */

@@ -3,7 +3,11 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+#include "action.h"
 #include "constants.h"
+#include "globals.h"
+#include "transform.h"
+#include "world_model.h"
 #include "world_state.h"
 
 using namespace std;
@@ -95,6 +99,37 @@ void Experiment::train_backprop(double target_val,
 				}
 				this->experiment_states[a_index]->state_averages[s_index] = sum_vals / num_instances;
 			}
+
+			for (map<Action*, vector<vector<pair<double, double>>>>::iterator it = this->experiment_states[a_index]->hook_impact_vals.begin();
+					it != this->experiment_states[a_index]->hook_impact_vals.end(); it++) {
+				this->experiment_states[a_index]->action_impacts[it->first] = vector<Transform*>(it->first->num_inputs, NULL);
+				for (int i_index = 0; i_index < it->first->num_inputs; i_index++) {
+					int num_impact_instances = it->second[i_index].size();
+					if (num_impact_instances > 0) {
+						Eigen::MatrixXd inputs(num_impact_instances, 2);
+						for (int d_index = 0; d_index < num_impact_instances; d_index++) {
+							inputs(d_index, 0) = it->second[i_index][d_index].first;
+							inputs(d_index, 1) = 1.0;
+						}
+
+						Eigen::VectorXd outputs(num_impact_instances);
+						for (int d_index = 0; d_index < num_impact_instances; d_index++) {
+							outputs(d_index) = it->second[i_index][d_index].second;
+						}
+
+						Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+						Transform* transform = new Transform(weights(0), weights(1));
+						this->experiment_states[a_index]->action_impacts[it->first][i_index] = transform;
+					}
+				}
+			}
+		}
+
+		for (int a_index = 0; a_index < (int)this->experiment_states.size(); a_index++) {
+			this->experiment_states[a_index]->experiment_hook = NULL;
+			this->experiment_states[a_index]->hook_obs.clear();
+			this->experiment_states[a_index]->hook_state_vals.clear();
+			this->experiment_states[a_index]->hook_impact_vals.clear();
 		}
 
 		this->state = EXPERIMENT_STATE_MEASURE;

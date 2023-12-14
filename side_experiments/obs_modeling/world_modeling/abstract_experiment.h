@@ -5,7 +5,8 @@
 
 #include "run_helper.h"
 
-class HiddenState;
+class Action;
+class WorldState;
 
 const int EXPERIMENT_TYPE_EXPERIMENT = 0;
 const int EXPERIMENT_TYPE_CONNECTION = 1;
@@ -18,7 +19,7 @@ class AbstractExperiment {
 public:
 	int type;
 
-	HiddenState* parent;
+	WorldState* parent;
 	bool is_obs;
 	int obs_index;
 	bool obs_is_greater;
@@ -30,11 +31,11 @@ public:
 
 	virtual ~AbstractExperiment() {};
 
-	virtual void activate(HiddenState*& curr_state,
-						  std::vector<int>& action_sequence,
+	virtual bool activate(WorldState*& curr_state,
 						  RunHelper& run_helper) = 0;
 	virtual void backprop(double target_val,
-						  HiddenState* ending_state) = 0;
+						  WorldState* ending_state,
+						  std::vector<double>& ending_state_vals) = 0;
 };
 
 #endif /* ABSTRACT_EXPERIMENT_H */

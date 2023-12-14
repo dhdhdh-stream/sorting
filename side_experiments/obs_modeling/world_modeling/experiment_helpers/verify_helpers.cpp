@@ -5,8 +5,8 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "world_model.h"
 #include "world_state.h"
-#include "hmm.h"
 
 using namespace std;
 
@@ -61,8 +61,8 @@ void Experiment::verify_backprop(double target_val,
 			}
 
 			for (int s_index = 0; s_index < (int)this->experiment_states.size(); s_index++) {
-				this->experiment_states[s_index]->id = (int)hmm->hidden_states.size();
-				hmm->hidden_states.push_back(this->experiment_states[s_index]);
+				this->experiment_states[s_index]->id = (int)world_model->world_states.size();
+				world_model->world_states.push_back(this->experiment_states[s_index]);
 			}
 			this->experiment_states.clear();
 

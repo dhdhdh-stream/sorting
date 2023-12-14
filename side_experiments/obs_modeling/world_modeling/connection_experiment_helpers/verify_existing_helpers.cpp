@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "connection_experiment.h"
 
 #include <iostream>
 
@@ -9,9 +9,10 @@
 
 using namespace std;
 
-void Experiment::verify_existing_backprop(double target_val,
-										  WorldState* ending_state,
-										  vector<double>& ending_state_vals) {
+void ConnectionExperiment::verify_existing_backprop(
+		double target_val,
+		WorldState* ending_state,
+		vector<double>& ending_state_vals) {
 	double predicted_score = ending_state->val_average;
 	for (int s_index = 0; s_index < world_model->num_states; s_index++) {
 		predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
@@ -35,7 +36,7 @@ void Experiment::verify_existing_backprop(double target_val,
 
 		this->misguess_histories.clear();
 
-		this->state = EXPERIMENT_STATE_VERIFY;
+		this->state = CONNECTION_EXPERIMENT_STATE_VERIFY;
 		this->state_iter = 0;
 	}
 }
