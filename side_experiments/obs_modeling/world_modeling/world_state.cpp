@@ -324,4 +324,6 @@ void WorldState::save_for_display(ofstream& output_file) {
 		output_file << this->action_transition_actions[t_index]->id << endl;
 		output_file << this->action_transitions[t_index]->id << endl;
 	}
+
+	output_file << this->default_transition->id << endl;
 }

@@ -1,5 +1,7 @@
 #include "world_model.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "helpers.h"
 #include "world_state.h"

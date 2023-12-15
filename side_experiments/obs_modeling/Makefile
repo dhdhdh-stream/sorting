@@ -13,13 +13,13 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: repeat
+all: simple_sort
 
-repeat: ${OBJECTS} repeat.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} repeat.o -o repeat ${LIBS}
+simple_sort: ${OBJECTS} simple_sort.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} simple_sort.o -o simple_sort ${LIBS}
 
--include ${DEPENDS} repeat.d
+-include ${DEPENDS} simple_sort.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	repeat.o repeat.d repeat
+	simple_sort.o simple_sort.d simple_sort

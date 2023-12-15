@@ -1,5 +1,7 @@
 #include "connection_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 
 using namespace std;

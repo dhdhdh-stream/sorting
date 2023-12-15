@@ -119,9 +119,16 @@ void create_cancel(vector<WorldState*>& state_history,
 				 * - don't copy obs_transitions so will take experiment path
 				 *   - obs/state averages might be different anyways because new spot
 				 */
-				experiment_states[l_index]->action_transitions = original_state->action_transitions;
-				experiment_states[l_index]->action_transition_actions = original_state->action_transition_actions;
-				experiment_states[l_index]->action_transition_states = original_state->action_transition_states;
+				for (int s_index = 0; s_index < (int)original_state->action_transitions.size(); s_index++) {
+					if (original_state->action_transition_actions[s_index] != action_sequence[curr_sequence_index+1]) {
+						experiment_states[l_index]->action_transitions.push_back(
+							original_state->action_transitions[s_index]);
+						experiment_states[l_index]->action_transition_actions.push_back(
+							original_state->action_transition_actions[s_index]);
+						experiment_states[l_index]->action_transition_states.push_back(
+							original_state->action_transition_states[s_index]);
+					}
+				}
 				experiment_states[l_index]->default_transition = original_state->default_transition;
 
 				l_index++;

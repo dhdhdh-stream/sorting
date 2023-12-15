@@ -60,22 +60,26 @@ void Experiment::verify_backprop(double target_val,
 				int t_index = 0;
 				while (true) {
 					if (t_index >= (int)this->parent->action_transitions.size()) {
-						return;
+						break;
 					}
 
 					bool is_match = true;
-					for (int s_index = 0; s_index < (int)this->action_states.size(); s_index++) {
-						bool is_input_match = false;
-						for (int is_index = 0; is_index < (int)this->parent->action_transition_states[t_index].size(); is_index++) {
-							if (this->parent->action_transition_states[t_index][is_index] == this->action_states[s_index]) {
-								is_input_match = true;
+					if (this->parent->action_transition_actions[t_index] != this->action) {
+						is_match = false;
+					} else {
+						for (int s_index = 0; s_index < (int)this->action_states.size(); s_index++) {
+							bool is_input_match = false;
+							for (int is_index = 0; is_index < (int)this->parent->action_transition_states[t_index].size(); is_index++) {
+								if (this->parent->action_transition_states[t_index][is_index] == this->action_states[s_index]) {
+									is_input_match = true;
+									break;
+								}
+							}
+
+							if (!is_input_match) {
+								is_match = false;
 								break;
 							}
-						}
-
-						if (!is_input_match) {
-							is_match = false;
-							break;
 						}
 					}
 

@@ -13,6 +13,7 @@ public:
 	/**
 	 * - simply starting at world_states[0]
 	 */
+	// TODO: remove if no longer accessible
 
 	int num_states;
 
