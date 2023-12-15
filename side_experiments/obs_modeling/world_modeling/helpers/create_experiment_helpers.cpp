@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <iostream>
+
 #include "connection_experiment.h"
 #include "experiment.h"
 #include "globals.h"
@@ -20,46 +22,48 @@ void create_commit(vector<WorldState*>& state_history,
 		experiment_states.back()->default_transition = experiment_states.back();
 	}
 
-	int l_index = 0;
-	int curr_h_index = h_index;
-	int curr_sequence_index = sequence_index_history[h_index];
-	while (true) {
-		if (sequence_index_history[curr_h_index+1] > curr_sequence_index) {
-			experiment_states[l_index]->action_transitions.push_back(experiment_states[l_index+1]);
-			experiment_states[l_index]->action_transition_actions.push_back(action_sequence[curr_sequence_index+1]);
+	if (experiment_length > 1) {
+		int l_index = 0;
+		int curr_h_index = h_index;
+		int curr_sequence_index = sequence_index_history[h_index];
+		while (true) {
+			if (sequence_index_history[curr_h_index+1] > curr_sequence_index) {
+				experiment_states[l_index]->action_transitions.push_back(experiment_states[l_index+1]);
+				experiment_states[l_index]->action_transition_actions.push_back(action_sequence[curr_sequence_index+1]);
 
-			vector<pair<int, int>> action_states;
+				vector<pair<int, int>> action_states;
 
-			vector<pair<int, int>> possible_assignments;
-			for (int s_index = 0; s_index < (int)action_state_sequence[curr_sequence_index+1].size(); s_index++) {
-				if (action_state_sequence[curr_sequence_index+1][s_index] != -1) {
-					possible_assignments.push_back({s_index, action_state_sequence[curr_sequence_index+1][s_index]});
+				vector<pair<int, int>> possible_assignments;
+				for (int s_index = 0; s_index < (int)action_state_sequence[curr_sequence_index+1].size(); s_index++) {
+					if (action_state_sequence[curr_sequence_index+1][s_index] != -1) {
+						possible_assignments.push_back({s_index, action_state_sequence[curr_sequence_index+1][s_index]});
+					}
+				}
+
+				geometric_distribution<int> num_assignments_distribution(0.5);
+				int num_assignments = num_assignments_distribution(generator);
+				if (num_assignments > (int)possible_assignments.size()) {
+					num_assignments = (int)possible_assignments.size();
+				}
+
+				for (int a_index = 0; a_index < num_assignments; a_index++) {
+					uniform_int_distribution<int> assignment_distribution(0, possible_assignments.size()-1);
+					int index = assignment_distribution(generator);
+					action_states.push_back(possible_assignments[index]);
+					possible_assignments.erase(possible_assignments.begin() + index);
+				}
+
+				experiment_states[l_index]->action_transition_states.push_back(action_states);
+
+				l_index++;
+				curr_sequence_index = sequence_index_history[curr_h_index+1];
+				if (l_index >= experiment_length-1) {
+					break;
 				}
 			}
 
-			geometric_distribution<int> num_assignments_distribution(0.5);
-			int num_assignments = num_assignments_distribution(generator);
-			if (num_assignments > (int)possible_assignments.size()) {
-				num_assignments = (int)possible_assignments.size();
-			}
-
-			for (int a_index = 0; a_index < num_assignments; a_index++) {
-				uniform_int_distribution<int> assignment_distribution(0, possible_assignments.size()-1);
-				int index = assignment_distribution(generator);
-				action_states.push_back(possible_assignments[index]);
-				possible_assignments.erase(possible_assignments.begin() + index);
-			}
-
-			experiment_states[l_index]->action_transition_states.push_back(action_states);
-
-			l_index++;
-			curr_sequence_index = sequence_index_history[curr_h_index+1];
-			if (l_index >= experiment_length-1) {
-				break;
-			}
+			curr_h_index++;
 		}
-
-		curr_h_index++;
 	}
 }
 
@@ -74,59 +78,61 @@ void create_cancel(vector<WorldState*>& state_history,
 		experiment_states.push_back(new WorldState());
 	}
 
-	int l_index = 0;
-	int curr_h_index = h_index;
-	int curr_sequence_index = sequence_index_history[h_index];
-	while (true) {
-		if (sequence_index_history[curr_h_index+1] > curr_sequence_index) {
-			/**
-			 * - simply insert new transition earliest so takes priority
-			 */
-			experiment_states[l_index]->action_transitions.push_back(experiment_states[l_index+1]);
-			experiment_states[l_index]->action_transition_actions.push_back(action_sequence[curr_sequence_index+1]);
+	if (experiment_length > 1) {
+		int l_index = 0;
+		int curr_h_index = h_index;
+		int curr_sequence_index = sequence_index_history[h_index];
+		while (true) {
+			if (sequence_index_history[curr_h_index+1] > curr_sequence_index) {
+				/**
+				 * - simply insert new transition earliest so takes priority
+				 */
+				experiment_states[l_index]->action_transitions.push_back(experiment_states[l_index+1]);
+				experiment_states[l_index]->action_transition_actions.push_back(action_sequence[curr_sequence_index+1]);
 
-			vector<pair<int, int>> action_states;
+				vector<pair<int, int>> action_states;
 
-			vector<pair<int, int>> possible_assignments;
-			for (int s_index = 0; s_index < (int)action_state_sequence[curr_sequence_index+1].size(); s_index++) {
-				if (action_state_sequence[curr_sequence_index+1][s_index] != -1) {
-					possible_assignments.push_back({s_index, action_state_sequence[curr_sequence_index+1][s_index]});
+				vector<pair<int, int>> possible_assignments;
+				for (int s_index = 0; s_index < (int)action_state_sequence[curr_sequence_index+1].size(); s_index++) {
+					if (action_state_sequence[curr_sequence_index+1][s_index] != -1) {
+						possible_assignments.push_back({s_index, action_state_sequence[curr_sequence_index+1][s_index]});
+					}
+				}
+
+				geometric_distribution<int> num_assignments_distribution(0.5);
+				int num_assignments = num_assignments_distribution(generator);
+				if (num_assignments > (int)possible_assignments.size()) {
+					num_assignments = (int)possible_assignments.size();
+				}
+
+				for (int a_index = 0; a_index < num_assignments; a_index++) {
+					uniform_int_distribution<int> assignment_distribution(0, possible_assignments.size()-1);
+					int index = assignment_distribution(generator);
+					action_states.push_back(possible_assignments[index]);
+					possible_assignments.erase(possible_assignments.begin() + index);
+				}
+
+				experiment_states[l_index]->action_transition_states.push_back(action_states);
+
+				WorldState* original_state = state_history[curr_h_index+1];
+				/**
+				 * - don't copy obs_transitions so will take experiment path
+				 *   - obs/state averages might be different anyways because new spot
+				 */
+				experiment_states[l_index]->action_transitions = original_state->action_transitions;
+				experiment_states[l_index]->action_transition_actions = original_state->action_transition_actions;
+				experiment_states[l_index]->action_transition_states = original_state->action_transition_states;
+				experiment_states[l_index]->default_transition = original_state->default_transition;
+
+				l_index++;
+				curr_sequence_index = sequence_index_history[curr_h_index+1];
+				if (l_index >= experiment_length-1) {
+					break;
 				}
 			}
 
-			geometric_distribution<int> num_assignments_distribution(0.5);
-			int num_assignments = num_assignments_distribution(generator);
-			if (num_assignments > (int)possible_assignments.size()) {
-				num_assignments = (int)possible_assignments.size();
-			}
-
-			for (int a_index = 0; a_index < num_assignments; a_index++) {
-				uniform_int_distribution<int> assignment_distribution(0, possible_assignments.size()-1);
-				int index = assignment_distribution(generator);
-				action_states.push_back(possible_assignments[index]);
-				possible_assignments.erase(possible_assignments.begin() + index);
-			}
-
-			experiment_states[l_index]->action_transition_states.push_back(action_states);
-
-			WorldState* original_state = state_history[curr_h_index+1];
-			/**
-			 * - don't copy obs_transitions so will take experiment path
-			 *   - obs/state averages might be different anyways because new spot
-			 */
-			experiment_states[l_index]->action_transitions = original_state->action_transitions;
-			experiment_states[l_index]->action_transition_actions = original_state->action_transition_actions;
-			experiment_states[l_index]->action_transition_states = original_state->action_transition_states;
-			experiment_states[l_index]->default_transition = original_state->default_transition;
-
-			l_index++;
-			curr_sequence_index = sequence_index_history[curr_h_index+1];
-			if (l_index >= experiment_length-1) {
-				break;
-			}
+			curr_h_index++;
 		}
-
-		curr_h_index++;
 	}
 
 	experiment_states.back()->default_transition = experiment_states.back();
@@ -141,7 +147,8 @@ void create_experiment(vector<WorldState*>& state_history,
 	int sequence_index = sequence_index_history[h_index];
 
 	uniform_int_distribution<int> is_bool_distribution(0, 1);
-	bool is_obs = is_bool_distribution(generator) == 0;
+	// bool is_obs = is_bool_distribution(generator) == 0;
+	bool is_obs = false;
 	int obs_index;
 	bool obs_is_greater;
 	Action* action;

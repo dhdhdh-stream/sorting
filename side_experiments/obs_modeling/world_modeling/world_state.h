@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -63,6 +64,7 @@ public:
 				  std::vector<Action*>& action_sequence,
 				  std::vector<std::vector<int>>& action_state_sequence,
 				  std::vector<std::vector<double>>& state_vals_sequence,
+				  std::set<WorldState*>& repeat_tracker,
 				  RunHelper& run_helper);
 
 	void measure_activate(WorldState*& curr_state,
@@ -70,7 +72,8 @@ public:
 						  std::vector<double>& obs_sequence,
 						  std::vector<Action*>& action_sequence,
 						  std::vector<std::vector<int>>& action_state_sequence,
-						  std::vector<std::vector<double>>& state_vals_sequence);
+						  std::vector<std::vector<double>>& state_vals_sequence,
+						  std::set<WorldState*>& repeat_tracker);
 
 	void generate();
 

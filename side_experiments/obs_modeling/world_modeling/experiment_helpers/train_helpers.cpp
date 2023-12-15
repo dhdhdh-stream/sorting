@@ -43,7 +43,7 @@ void Experiment::train_backprop(double target_val,
 		this->ending_state_val_impacts = vector<vector<double>>(this->experiment_states.size(),
 			vector<double>(world_model->num_states, 0.0));
 		for (int a_index = 0; a_index < (int)this->experiment_states.size(); a_index++) {
-			if (this->ending_vals[a_index].size() > 0) {
+			if (this->ending_vals[a_index].size() > 0 && world_model->num_states > 0) {
 				Eigen::MatrixXd inputs(this->ending_vals[a_index].size(), world_model->num_states);
 				for (int d_index = 0; d_index < (int)this->ending_vals[a_index].size(); d_index++) {
 					for (int s_index = 0; s_index < world_model->num_states; s_index++) {
@@ -72,23 +72,25 @@ void Experiment::train_backprop(double target_val,
 			}
 			this->experiment_states[a_index]->obs_average = sum_obs / num_instances;
 
-			Eigen::MatrixXd inputs(num_instances, world_model->num_states);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-					inputs(d_index, s_index) = this->experiment_states[a_index]->hook_state_vals[d_index][s_index];
+			this->experiment_states[a_index]->state_obs_impacts = vector<double>(world_model->num_states, 0.0);
+			if (num_instances > 0 && world_model->num_states > 0) {
+				Eigen::MatrixXd inputs(num_instances, world_model->num_states);
+				for (int d_index = 0; d_index < num_instances; d_index++) {
+					for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+						inputs(d_index, s_index) = this->experiment_states[a_index]->hook_state_vals[d_index][s_index];
+					}
 				}
-			}
 
-			Eigen::VectorXd outputs(num_instances);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				outputs(d_index) = this->experiment_states[a_index]->hook_obs[d_index]
-					- this->experiment_states[a_index]->obs_average;
-			}
+				Eigen::VectorXd outputs(num_instances);
+				for (int d_index = 0; d_index < num_instances; d_index++) {
+					outputs(d_index) = this->experiment_states[a_index]->hook_obs[d_index]
+						- this->experiment_states[a_index]->obs_average;
+				}
 
-			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-			this->experiment_states[a_index]->state_obs_impacts = vector<double>(world_model->num_states);
-			for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-				this->experiment_states[a_index]->state_obs_impacts[s_index] = weights(s_index);
+				Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+				for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+					this->experiment_states[a_index]->state_obs_impacts[s_index] = weights(s_index);
+				}
 			}
 
 			this->experiment_states[a_index]->state_averages = vector<double>(world_model->num_states);

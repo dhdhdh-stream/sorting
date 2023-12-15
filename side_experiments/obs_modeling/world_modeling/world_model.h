@@ -27,11 +27,11 @@ public:
 				  std::vector<std::vector<double>>& state_vals_sequence,
 				  double target_val);
 
-	void measure_activate(std::vector<double>& obs_sequence,
-						  std::vector<Action*>& action_sequence,
-						  std::vector<std::vector<int>>& action_state_sequence,
-						  std::vector<std::vector<double>>& state_vals_sequence,
-						  double target_val);
+	double measure_activate(std::vector<double>& obs_sequence,
+							std::vector<Action*>& action_sequence,
+							std::vector<std::vector<int>>& action_state_sequence,
+							std::vector<std::vector<double>>& state_vals_sequence,
+							double target_val);
 
 	void generate();
 

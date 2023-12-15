@@ -21,6 +21,7 @@ void WorldModel::init() {
 	this->num_states = 0;
 
 	WorldState* world_state = new WorldState();
+	world_state->id = 0;
 	world_state->val_average = 0.0;
 	world_state->state_val_impacts = vector<double>(this->num_states, 0.0);
 	world_state->obs_average = 0.0;
@@ -43,6 +44,7 @@ bool WorldModel::activate(vector<double>& obs_sequence,
 
 	WorldState* curr_state = this->world_states[0];
 	int curr_sequence_index = 0;
+	set<WorldState*> repeat_tracker;
 	while (curr_sequence_index < (int)obs_sequence.size()) {
 		state_history.push_back(curr_state);
 		sequence_index_history.push_back(curr_sequence_index);
@@ -52,6 +54,7 @@ bool WorldModel::activate(vector<double>& obs_sequence,
 							 action_sequence,
 							 action_state_sequence,
 							 state_vals_sequence,
+							 repeat_tracker,
 							 run_helper);
 	}
 	// don't need to add ending
@@ -122,22 +125,31 @@ bool WorldModel::activate(vector<double>& obs_sequence,
 	return false;
 }
 
-void WorldModel::measure_activate(vector<double>& obs_sequence,
-								  vector<Action*>& action_sequence,
-								  vector<vector<int>>& action_state_sequence,
-								  vector<vector<double>>& state_vals_sequence,
-								  double target_val) {
+double WorldModel::measure_activate(vector<double>& obs_sequence,
+									vector<Action*>& action_sequence,
+									vector<vector<int>>& action_state_sequence,
+									vector<vector<double>>& state_vals_sequence,
+									double target_val) {
 	WorldState* curr_state = this->world_states[0];
 	int curr_sequence_index = 0;
+	set<WorldState*> repeat_tracker;
 	while (curr_sequence_index < (int)obs_sequence.size()) {
 		curr_state->measure_activate(curr_state,
 									 curr_sequence_index,
 									 obs_sequence,
 									 action_sequence,
 									 action_state_sequence,
-									 state_vals_sequence);
+									 state_vals_sequence,
+									 repeat_tracker);
 	}
-	// don't need to add ending
+
+	double predicted_score = curr_state->val_average;
+	// for (int s_index = 0; s_index < this->num_states; s_index++) {
+	// 	predicted_score += curr_state->state_val_impacts[s_index] * state_vals_sequence.back()[s_index];
+	// }
+
+	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
+	return misguess;
 }
 
 void WorldModel::generate() {

@@ -18,9 +18,9 @@ void ConnectionExperiment::verify_backprop(double target_val,
 										   WorldState* ending_state,
 										   vector<double>& ending_state_vals) {
 	double predicted_score = ending_state->val_average;
-	for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-		predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
-	}
+	// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+	// 	predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
+	// }
 
 	double curr_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->new_misguess += curr_misguess;
@@ -36,16 +36,21 @@ void ConnectionExperiment::verify_backprop(double target_val,
 
 		if (new_improvement_t_score > 2.326) {
 			if (this->is_obs) {
+				// TODO: insert at front to take priority + clear unused
 				this->parent->obs_transitions.push_back(this->target);
 				this->parent->obs_indexes.push_back(this->obs_index);
 				this->parent->obs_is_greater.push_back(this->obs_is_greater);
 			} else {
-				this->parent->action_transitions.push_back(this->target);
-				this->parent->action_transition_actions.push_back(this->action);
-				this->parent->action_transition_states.push_back(
-					this->parent->action_experiments[this->action].first);
+				/**
+				 * - insert at front to take priority
+				 */
+				this->parent->action_transitions.insert(this->parent->action_transitions.begin(), this->target);
+				this->parent->action_transition_actions.insert(this->parent->action_transition_actions.begin(), this->action);
+				this->parent->action_transition_states.insert(this->parent->action_transition_states.begin(), this->parent->action_experiments[this->action].first);
+				// TODO: clear unused
 			}
 
+			cout << "connection_experiment" << endl;
 			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 			cout << "this->existing_misguess_variance: " << this->existing_misguess_variance << endl;
 			cout << "this->new_misguess: " << this->new_misguess << endl;

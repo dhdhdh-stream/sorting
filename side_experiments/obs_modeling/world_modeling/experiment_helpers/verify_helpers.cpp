@@ -21,14 +21,14 @@ void Experiment::verify_backprop(double target_val,
 	map<WorldState*, int>::iterator it = this->experiment_state_reverse_mapping.find(ending_state);
 	if (it != this->experiment_state_reverse_mapping.end()) {
 		predicted_score = this->ending_val_averages[it->second];
-		for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-			predicted_score += this->ending_state_val_impacts[it->second][s_index] * ending_state_vals[s_index];
-		}
+		// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+		// 	predicted_score += this->ending_state_val_impacts[it->second][s_index] * ending_state_vals[s_index];
+		// }
 	} else {
 		predicted_score = ending_state->val_average;
-		for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-			predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
-		}
+		// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+		// 	predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
+		// }
 	}
 
 	double curr_misguess = (target_val - predicted_score)*(target_val - predicted_score);
@@ -54,10 +54,12 @@ void Experiment::verify_backprop(double target_val,
 				this->parent->obs_indexes.push_back(this->obs_index);
 				this->parent->obs_is_greater.push_back(this->obs_is_greater);
 			} else {
-				this->parent->action_transitions.push_back(this->experiment_states[0]);
-				this->parent->action_transition_actions.push_back(this->action);
-				this->parent->action_transition_states.push_back(
-					this->parent->action_experiments[this->action].first);
+				/**
+				 * - insert at front to take priority
+				 */
+				this->parent->action_transitions.insert(this->parent->action_transitions.begin(), this->experiment_states[0]);
+				this->parent->action_transition_actions.insert(this->parent->action_transition_actions.begin(), this->action);
+				this->parent->action_transition_states.insert(this->parent->action_transition_states.begin(), this->parent->action_experiments[this->action].first);
 			}
 
 			for (int s_index = 0; s_index < (int)this->experiment_states.size(); s_index++) {
@@ -66,6 +68,7 @@ void Experiment::verify_backprop(double target_val,
 			}
 			this->experiment_states.clear();
 
+			cout << "experiment" << endl;
 			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 			cout << "this->existing_misguess_variance: " << this->existing_misguess_variance << endl;
 			cout << "this->new_misguess: " << this->new_misguess << endl;

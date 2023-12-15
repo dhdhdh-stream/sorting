@@ -1,5 +1,7 @@
 #include "world_state.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "action.h"
 #include "globals.h"
@@ -9,7 +11,7 @@
 using namespace std;
 
 WorldState::WorldState() {
-	// do nothing
+	this->experiment_hook = NULL;
 }
 
 WorldState::~WorldState() {
@@ -38,73 +40,87 @@ void WorldState::activate(WorldState*& curr_state,
 						  vector<Action*>& action_sequence,
 						  vector<vector<int>>& action_state_sequence,
 						  vector<vector<double>>& state_vals_sequence,
+						  set<WorldState*>& repeat_tracker,
 						  RunHelper& run_helper) {
-	/**
-	 * - use curr obs, but past state_vals
-	 */
-	for (int t_index = 0; t_index < (int)this->obs_transitions.size(); t_index++) {
-		if (this->obs_indexes[t_index] == -1) {
-			if (this->obs_is_greater[t_index]) {
-				if (obs_sequence[curr_sequence_index] > this->obs_average) {
-					curr_state = this->obs_transitions[t_index];
-					return;
-				}
-			} else {
-				if (obs_sequence[curr_sequence_index] < this->obs_average) {
-					curr_state = this->obs_transitions[t_index];
-					return;
-				}
-			}
+	bool is_repeat;
+	{
+		set<WorldState*>::iterator it = repeat_tracker.find(this);
+		if (it == repeat_tracker.end()) {
+			is_repeat = false;
+			repeat_tracker.insert(this);
 		} else {
-			if (curr_sequence_index > 0) {
-				if (this->obs_is_greater[t_index]) {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] > this->state_averages[this->obs_indexes[t_index]]) {
-						curr_state = this->obs_transitions[t_index];
-						return;
-					}
-				} else {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] < this->state_averages[this->obs_indexes[t_index]]) {
-						curr_state = this->obs_transitions[t_index];
-						return;
-					}
-				}
-			}
+			is_repeat = true;
 		}
 	}
 
-	for (int e_index = 0; e_index < (int)this->obs_experiments.size(); e_index++) {
-		bool is_match = false;
-		if (this->obs_experiment_indexes[e_index] == -1) {
-			if (this->obs_experiment_is_greater[e_index]) {
-				if (obs_sequence[curr_sequence_index] > this->obs_average) {
-					is_match = true;
-				}
-			} else {
-				if (obs_sequence[curr_sequence_index] < this->obs_average) {
-					is_match = true;
-				}
-			}
-		} else {
-			if (curr_sequence_index > 0) {
-				if (this->obs_experiment_is_greater[e_index]) {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[e_index]] > this->state_averages[this->obs_indexes[e_index]]) {
-						is_match = true;
+	if (!is_repeat) {
+		/**
+		 * - use curr obs, but past state_vals
+		 */
+		for (int t_index = 0; t_index < (int)this->obs_transitions.size(); t_index++) {
+			if (this->obs_indexes[t_index] == -1) {
+				if (this->obs_is_greater[t_index]) {
+					if (obs_sequence[curr_sequence_index] > this->obs_average) {
+						curr_state = this->obs_transitions[t_index];
+						return;
 					}
 				} else {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[e_index]] < this->state_averages[this->obs_indexes[e_index]]) {
-						is_match = true;
+					if (obs_sequence[curr_sequence_index] < this->obs_average) {
+						curr_state = this->obs_transitions[t_index];
+						return;
+					}
+				}
+			} else {
+				if (curr_sequence_index > 0) {
+					if (this->obs_is_greater[t_index]) {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] > this->state_averages[this->obs_indexes[t_index]]) {
+							curr_state = this->obs_transitions[t_index];
+							return;
+						}
+					} else {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] < this->state_averages[this->obs_indexes[t_index]]) {
+							curr_state = this->obs_transitions[t_index];
+							return;
+						}
 					}
 				}
 			}
 		}
 
-		if (is_match) {
-			bool is_selected = this->obs_experiments[e_index]->activate(
-				curr_state,
-				run_helper);
+		for (int e_index = 0; e_index < (int)this->obs_experiments.size(); e_index++) {
+			bool is_match = false;
+			if (this->obs_experiment_indexes[e_index] == -1) {
+				if (this->obs_experiment_is_greater[e_index]) {
+					if (obs_sequence[curr_sequence_index] > this->obs_average) {
+						is_match = true;
+					}
+				} else {
+					if (obs_sequence[curr_sequence_index] < this->obs_average) {
+						is_match = true;
+					}
+				}
+			} else {
+				if (curr_sequence_index > 0) {
+					if (this->obs_experiment_is_greater[e_index]) {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[e_index]] > this->state_averages[this->obs_indexes[e_index]]) {
+							is_match = true;
+						}
+					} else {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[e_index]] < this->state_averages[this->obs_indexes[e_index]]) {
+							is_match = true;
+						}
+					}
+				}
+			}
 
-			if (is_selected) {
-				return;
+			if (is_match) {
+				bool is_selected = this->obs_experiments[e_index]->activate(
+					curr_state,
+					run_helper);
+
+				if (is_selected) {
+					return;
+				}
 			}
 		}
 	}
@@ -179,6 +195,7 @@ void WorldState::activate(WorldState*& curr_state,
 	}
 
 	curr_sequence_index++;
+	repeat_tracker.clear();
 }
 
 void WorldState::measure_activate(WorldState*& curr_state,
@@ -186,34 +203,48 @@ void WorldState::measure_activate(WorldState*& curr_state,
 								  vector<double>& obs_sequence,
 								  vector<Action*>& action_sequence,
 								  vector<vector<int>>& action_state_sequence,
-								  vector<vector<double>>& state_vals_sequence) {
-	/**
-	 * - use curr obs, but past state_vals
-	 */
-	for (int t_index = 0; t_index < (int)this->obs_transitions.size(); t_index++) {
-		if (this->obs_indexes[t_index] == -1) {
-			if (this->obs_is_greater[t_index]) {
-				if (obs_sequence[curr_sequence_index] > this->obs_average) {
-					curr_state = this->obs_transitions[t_index];
-					return;
-				}
-			} else {
-				if (obs_sequence[curr_sequence_index] < this->obs_average) {
-					curr_state = this->obs_transitions[t_index];
-					return;
-				}
-			}
+								  vector<vector<double>>& state_vals_sequence,
+								  set<WorldState*>& repeat_tracker) {
+	bool is_repeat;
+	{
+		set<WorldState*>::iterator it = repeat_tracker.find(this);
+		if (it == repeat_tracker.end()) {
+			is_repeat = false;
+			repeat_tracker.insert(this);
 		} else {
-			if (curr_sequence_index > 0) {
+			is_repeat = true;
+		}
+	}
+
+	if (!is_repeat) {
+		/**
+		 * - use curr obs, but past state_vals
+		 */
+		for (int t_index = 0; t_index < (int)this->obs_transitions.size(); t_index++) {
+			if (this->obs_indexes[t_index] == -1) {
 				if (this->obs_is_greater[t_index]) {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] > this->state_averages[this->obs_indexes[t_index]]) {
+					if (obs_sequence[curr_sequence_index] > this->obs_average) {
 						curr_state = this->obs_transitions[t_index];
 						return;
 					}
 				} else {
-					if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] < this->state_averages[this->obs_indexes[t_index]]) {
+					if (obs_sequence[curr_sequence_index] < this->obs_average) {
 						curr_state = this->obs_transitions[t_index];
 						return;
+					}
+				}
+			} else {
+				if (curr_sequence_index > 0) {
+					if (this->obs_is_greater[t_index]) {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] > this->state_averages[this->obs_indexes[t_index]]) {
+							curr_state = this->obs_transitions[t_index];
+							return;
+						}
+					} else {
+						if (state_vals_sequence[curr_sequence_index-1][this->obs_indexes[t_index]] < this->state_averages[this->obs_indexes[t_index]]) {
+							curr_state = this->obs_transitions[t_index];
+							return;
+						}
 					}
 				}
 			}
@@ -246,6 +277,7 @@ void WorldState::measure_activate(WorldState*& curr_state,
 	}
 
 	curr_sequence_index++;
+	repeat_tracker.clear();
 }
 
 void WorldState::generate() {
