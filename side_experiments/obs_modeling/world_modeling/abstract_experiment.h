@@ -24,6 +24,7 @@ public:
 	int obs_index;
 	bool obs_is_greater;
 	Action* action;
+	std::vector<std::pair<int, int>> action_states;
 
 	double average_remaining_experiments_from_start;
 

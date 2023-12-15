@@ -147,8 +147,7 @@ void create_experiment(vector<WorldState*>& state_history,
 	int sequence_index = sequence_index_history[h_index];
 
 	uniform_int_distribution<int> is_bool_distribution(0, 1);
-	// bool is_obs = is_bool_distribution(generator) == 0;
-	bool is_obs = false;
+	bool is_obs = is_bool_distribution(generator) == 0;
 	int obs_index;
 	bool obs_is_greater;
 	Action* action;
@@ -234,6 +233,7 @@ void create_experiment(vector<WorldState*>& state_history,
 									obs_index,
 									obs_is_greater,
 									action,
+									action_states,
 									experiment_states);
 	} else {
 		uniform_int_distribution<int> state_distribution(0, world_model->world_states.size()-1);
@@ -242,6 +242,7 @@ void create_experiment(vector<WorldState*>& state_history,
 											  obs_index,
 											  obs_is_greater,
 											  action,
+											  action_states,
 											  world_model->world_states[state_distribution(generator)]);
 	}
 

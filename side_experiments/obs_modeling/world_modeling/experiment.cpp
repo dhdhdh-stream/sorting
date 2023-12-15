@@ -10,6 +10,7 @@ Experiment::Experiment(WorldState* parent,
 					   int obs_index,
 					   bool obs_is_greater,
 					   Action* action,
+					   vector<pair<int, int>> action_states,
 					   vector<WorldState*> experiment_states) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
@@ -18,6 +19,7 @@ Experiment::Experiment(WorldState* parent,
 	this->obs_index = obs_index;
 	this->obs_is_greater = obs_is_greater;
 	this->action = action;
+	this->action_states = action_states;
 
 	this->experiment_states = experiment_states;
 

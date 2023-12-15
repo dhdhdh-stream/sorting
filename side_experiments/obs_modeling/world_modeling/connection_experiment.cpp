@@ -9,6 +9,7 @@ ConnectionExperiment::ConnectionExperiment(WorldState* parent,
 										   int obs_index,
 										   bool obs_is_greater,
 										   Action* action,
+										   vector<pair<int, int>> action_states,
 										   WorldState* target) {
 	this->type = EXPERIMENT_TYPE_CONNECTION;
 
@@ -17,6 +18,7 @@ ConnectionExperiment::ConnectionExperiment(WorldState* parent,
 	this->obs_index = obs_index;
 	this->obs_is_greater = obs_is_greater;
 	this->action = action;
+	this->action_states = action_states;
 
 	this->target = target;
 

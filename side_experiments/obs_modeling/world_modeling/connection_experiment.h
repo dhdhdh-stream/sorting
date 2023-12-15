@@ -32,6 +32,7 @@ public:
 						 int obs_index,
 						 bool obs_is_greater,
 						 Action* action,
+						 std::vector<std::pair<int, int>> action_states,
 						 WorldState* target);
 
 	bool activate(WorldState*& curr_state,

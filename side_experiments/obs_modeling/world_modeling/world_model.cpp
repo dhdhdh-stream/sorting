@@ -144,9 +144,9 @@ double WorldModel::measure_activate(vector<double>& obs_sequence,
 	}
 
 	double predicted_score = curr_state->val_average;
-	// for (int s_index = 0; s_index < this->num_states; s_index++) {
-	// 	predicted_score += curr_state->state_val_impacts[s_index] * state_vals_sequence.back()[s_index];
-	// }
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		predicted_score += curr_state->state_val_impacts[s_index] * state_vals_sequence.back()[s_index];
+	}
 
 	double misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	return misguess;

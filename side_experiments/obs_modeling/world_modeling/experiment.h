@@ -46,6 +46,7 @@ public:
 			   int obs_index,
 			   bool obs_is_greater,
 			   Action* action,
+			   std::vector<std::pair<int, int>> action_states,
 			   std::vector<WorldState*> experiment_states);
 	~Experiment();
 

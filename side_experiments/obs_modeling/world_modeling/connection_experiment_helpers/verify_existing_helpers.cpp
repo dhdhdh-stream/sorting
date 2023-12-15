@@ -14,9 +14,9 @@ void ConnectionExperiment::verify_existing_backprop(
 		WorldState* ending_state,
 		vector<double>& ending_state_vals) {
 	double predicted_score = ending_state->val_average;
-	// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-	// 	predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
-	// }
+	for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+		predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
+	}
 
 	double curr_misguess = (target_val - predicted_score)*(target_val - predicted_score);
 	this->misguess_histories.push_back(curr_misguess);

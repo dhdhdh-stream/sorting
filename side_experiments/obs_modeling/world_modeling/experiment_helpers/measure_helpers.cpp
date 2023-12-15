@@ -21,14 +21,14 @@ void Experiment::measure_backprop(double target_val,
 	map<WorldState*, int>::iterator it = this->experiment_state_reverse_mapping.find(ending_state);
 	if (it != this->experiment_state_reverse_mapping.end()) {
 		predicted_score = this->ending_val_averages[it->second];
-		// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-		// 	predicted_score += this->ending_state_val_impacts[it->second][s_index] * ending_state_vals[s_index];
-		// }
+		for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+			predicted_score += this->ending_state_val_impacts[it->second][s_index] * ending_state_vals[s_index];
+		}
 	} else {
 		predicted_score = ending_state->val_average;
-		// for (int s_index = 0; s_index < world_model->num_states; s_index++) {
-		// 	predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
-		// }
+		for (int s_index = 0; s_index < world_model->num_states; s_index++) {
+			predicted_score += ending_state->state_val_impacts[s_index] * ending_state_vals[s_index];
+		}
 	}
 
 	double curr_misguess = (target_val - predicted_score)*(target_val - predicted_score);
