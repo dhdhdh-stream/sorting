@@ -1,3 +1,37 @@
+// - should not think of sequences for world modeling
+//   - so just the impact of counts of actions
+
+// - same things with obs?
+
+// - use solution building to expand graph?
+
+// - need state somehow, but probably not from solution building
+//   - that state can be connected to sequences
+//     - but solution state can be used to initialize world state
+
+// - maybe use world state to predict outcome
+//   - but also predict when predictions begin to be inaccurate and branch
+
+// - probably don't worry about state assignment for compound actions
+
+// - maybe world modeling is just saving failures
+//   - "what happens if you do so and so when so and so?"
+//     - if tried, then can say exactly
+//     - otherwise, not sure, and can potentially try
+
+// - should something be done about minor variations?
+//   - extra action added or removed here or there?
+//     - probably not, because can never know?
+//       - but there's also likely some correlation
+//   - or like alternating order
+
+// - maybe have a similarity score, and use it to weigh exploration?
+//   - Damerau–Levenshtein distance
+
+// - maybe when you're thinking, you're just searching for something that has good distance characteristics?
+
+// - perhaps difference between natural selection and learning is that can't capture the impact of failures
+
 /**
  * 0: focus left
  * 1: focus right
