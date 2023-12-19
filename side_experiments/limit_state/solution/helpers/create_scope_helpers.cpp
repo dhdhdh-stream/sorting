@@ -821,6 +821,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 		if (0 != (int)start_scope_context.size()-1) {
 			ScopeNode* scope_node = (ScopeNode*)start_node_context[0];
+			Scope* inner_scope = start_scope_context[1];
 
 			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 				if (scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -828,6 +829,11 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						.find({scope_node->input_outer_is_local[i_index], scope_node->input_outer_indexes[i_index]});
 					// it != input_potential_mapping[0].end()
 					input_potential_mapping[1][{scope_node->input_inner_is_local[i_index], scope_node->input_inner_indexes[i_index]}] = it->second;
+					if (scope_node->input_inner_is_local[i_index]) {
+						potential_innermost_state_ids[it->second] = inner_scope->original_local_state_ids[scope_node->input_inner_indexes[i_index]];
+					} else {
+						potential_innermost_state_ids[it->second] = inner_scope->original_input_state_ids[scope_node->input_inner_indexes[i_index]];
+					}
 				}
 				// else inner_is_local, and let inner handle
 			}
@@ -846,6 +852,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 		if (c_index != (int)start_scope_context.size()-1) {
 			ScopeNode* scope_node = (ScopeNode*)start_node_context[c_index];
+			Scope* inner_scope = start_scope_context[c_index+1];
 
 			for (int i_index = 0; i_index < (int)scope_node->input_types.size(); i_index++) {
 				if (scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -853,6 +860,11 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						.find({scope_node->input_outer_is_local[i_index], scope_node->input_outer_indexes[i_index]});
 					if (it != input_potential_mapping[c_index].end()) {
 						input_potential_mapping[c_index+1][{scope_node->input_inner_is_local[i_index], scope_node->input_inner_indexes[i_index]}] = it->second;
+						if (scope_node->input_inner_is_local[i_index]) {
+							potential_innermost_state_ids[it->second] = inner_scope->original_local_state_ids[scope_node->input_inner_indexes[i_index]];
+						} else {
+							potential_innermost_state_ids[it->second] = inner_scope->original_input_state_ids[scope_node->input_inner_indexes[i_index]];
+						}
 					}
 				}
 				// else inner_is_local, and let inner handle

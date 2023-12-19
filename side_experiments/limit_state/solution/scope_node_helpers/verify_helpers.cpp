@@ -54,7 +54,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 				}
 			}
 		} else {
-			if (this->input_inner_is_local) {
+			if (this->input_inner_is_local[i_index]) {
 				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
 																				   this->input_init_index_vals[i_index]);
 				verify_input_local_state_vals.push_back(this->input_init_vals[i_index]);
