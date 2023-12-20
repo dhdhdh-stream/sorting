@@ -559,7 +559,7 @@ int start_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 			state_mappings[{is_local, index}] = -1;
 			return -1;
 		} else {
-			int potential_index = it->second;
+			int potential_index = potential_it->second;
 			if (potential_to_final_states[potential_index] == -1) {
 				if (potential_is_local[potential_index]) {
 					int new_state_index = new_scope->num_local_states;
@@ -606,7 +606,8 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 }
 
 PotentialScopeNode* create_scope(vector<ContextLayer>& context,
-								 int explore_context_depth) {
+								 int explore_context_depth,
+								 Scope* parent_scope) {
 	Scope* new_scope = new Scope();
 	// don't set id/increment scope_counter until train
 	new_scope->num_input_states = 0;
@@ -621,8 +622,6 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 	vector<AbstractNode*> possible_nodes;
 	vector<vector<Scope*>> possible_scope_contexts;
 	vector<vector<AbstractNode*>> possible_node_contexts;
-
-	Scope* parent_scope = context[context.size() - explore_context_depth].scope;
 
 	vector<Scope*> scope_context{parent_scope};
 	vector<AbstractNode*> node_context{NULL};
@@ -840,7 +839,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		}
 	}
 	for (int c_index = 1; c_index < (int)start_scope_context.size(); c_index++) {
-		for (int s_index = 0; s_index < start_scope_context[c_index]->num_input_states; s_index++) {
+		for (int s_index = 0; s_index < start_scope_context[c_index]->num_local_states; s_index++) {
 			map<pair<bool,int>, int>::iterator it = input_potential_mapping[c_index].find({true, s_index});
 			if (it == input_potential_mapping[c_index].end()) {
 				input_potential_mapping[c_index][{true, s_index}] = potential_new_state_counter;
@@ -1429,24 +1428,29 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		{
 			Scope* scope = context.back().scope;
 
-			for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-					it != context.back().input_state_vals.end(); it++) {
-				possible_output_scope_depths.push_back(0);
-				possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
-				possible_output_outer_indexes.push_back((void*)((long)it->first));
-				possible_output_state_ids.push_back(scope->original_input_state_ids[it->first]);
-			}
-
-			for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
-				possible_output_scope_depths.push_back(0);
-				possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
-				possible_output_outer_indexes.push_back((void*)((long)s_index));
-				possible_output_state_ids.push_back(scope->original_local_state_ids[s_index]);
-			}
-
 			/**
-			 * - simply don't output to temp states
+			 * - check for OuterExperiment edge case
 			 */
+			if (scope != NULL) {
+				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+						it != context.back().input_state_vals.end(); it++) {
+					possible_output_scope_depths.push_back(0);
+					possible_output_outer_types.push_back(OUTER_TYPE_INPUT);
+					possible_output_outer_indexes.push_back((void*)((long)it->first));
+					possible_output_state_ids.push_back(scope->original_input_state_ids[it->first]);
+				}
+
+				for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
+					possible_output_scope_depths.push_back(0);
+					possible_output_outer_types.push_back(OUTER_TYPE_LOCAL);
+					possible_output_outer_indexes.push_back((void*)((long)s_index));
+					possible_output_state_ids.push_back(scope->original_local_state_ids[s_index]);
+				}
+
+				/**
+				 * - simply don't output to temp states
+				 */
+			}
 		}
 		for (int c_index = 1; c_index < explore_context_depth; c_index++) {
 			Scope* scope = context[context.size()-1 - c_index].scope;

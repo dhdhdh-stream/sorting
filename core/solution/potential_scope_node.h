@@ -18,6 +18,9 @@ class PotentialScopeNodeHistory;
 class PotentialScopeNode {
 public:
 	std::vector<int> input_types;
+	/**
+	 * - inner always local
+	 */
 	std::vector<int> input_inner_indexes;
 	/**
 	 * - negative indexing
@@ -25,17 +28,21 @@ public:
 	std::vector<int> input_scope_depths;
 	std::vector<int> input_outer_types;
 	std::vector<void*> input_outer_indexes;
-	std::vector<State*> input_states;
 	std::vector<double> input_init_vals;
 	std::vector<double> input_init_index_vals;
 
+	/**
+	 * - inner always locale
+	 */
 	std::vector<int> output_inner_indexes;
 	std::vector<int> output_scope_depths;
 	std::vector<int> output_outer_types;
 	std::vector<void*> output_outer_indexes;
 
 	int experiment_scope_depth;
+	#if defined(MDEBUG) && MDEBUG
 	std::set<State*> used_experiment_states;
+	#endif /* MDEBUG */
 
 	Scope* scope;
 

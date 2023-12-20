@@ -108,7 +108,14 @@ void Scope::fail_reset() {
 
 void Scope::save(ofstream& output_file) {
 	output_file << this->num_input_states << endl;
+	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
+		output_file << this->original_input_state_ids[s_index] << endl;
+	}
+
 	output_file << this->num_local_states << endl;
+	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
+		output_file << this->original_local_state_ids[s_index] << endl;
+	}
 
 	output_file << this->node_counter << endl;
 
@@ -127,10 +134,20 @@ void Scope::load(ifstream& input_file) {
 	string num_input_states_line;
 	getline(input_file, num_input_states_line);
 	this->num_input_states = stoi(num_input_states_line);
+	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
+		string state_id_line;
+		getline(input_file, state_id_line);
+		this->original_input_state_ids.push_back(stoi(state_id_line));
+	}
 
 	string num_local_states_line;
 	getline(input_file, num_local_states_line);
 	this->num_local_states = stoi(num_local_states_line);
+	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
+		string state_id_line;
+		getline(input_file, state_id_line);
+		this->original_local_state_ids.push_back(stoi(state_id_line));
+	}
 
 	string node_counter_line;
 	getline(input_file, node_counter_line);

@@ -46,8 +46,10 @@ void ScopeNode::fail_reset() {
 #if defined(MDEBUG) && MDEBUG
 void ScopeNode::clear_verify() {
 	this->verify_key = NULL;
-	if (this->verify_input_state_vals.size() > 0
-			|| this->verify_output_state_vals.size() > 0
+	if (this->verify_input_input_state_vals.size() > 0
+			|| this->verify_input_local_state_vals.size() > 0
+			|| this->verify_output_input_state_vals.size() > 0
+			|| this->verify_output_local_state_vals.size() > 0
 			|| this->verify_continue_scores.size() > 0
 			|| this->verify_halt_scores.size() > 0
 			|| this->verify_factors.size() > 0) {
@@ -62,6 +64,7 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->input_types.size() << endl;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		output_file << this->input_types[i_index] << endl;
+		output_file << this->input_inner_is_local[i_index] << endl;
 		output_file << this->input_inner_indexes[i_index] << endl;
 		output_file << this->input_outer_is_local[i_index] << endl;
 		output_file << this->input_outer_indexes[i_index] << endl;
@@ -71,6 +74,7 @@ void ScopeNode::save(ofstream& output_file) {
 
 	output_file << this->output_inner_indexes.size() << endl;
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+		output_file << this->output_inner_is_local[o_index] << endl;
 		output_file << this->output_inner_indexes[o_index] << endl;
 		output_file << this->output_outer_is_local[o_index] << endl;
 		output_file << this->output_outer_indexes[o_index] << endl;
@@ -107,6 +111,10 @@ void ScopeNode::load(ifstream& input_file) {
 		getline(input_file, type_line);
 		this->input_types.push_back(stoi(type_line));
 
+		string inner_is_local_line;
+		getline(input_file, inner_is_local_line);
+		this->input_inner_is_local.push_back(stoi(inner_is_local_line));
+
 		string inner_index_line;
 		getline(input_file, inner_index_line);
 		this->input_inner_indexes.push_back(stoi(inner_index_line));
@@ -132,6 +140,10 @@ void ScopeNode::load(ifstream& input_file) {
 	getline(input_file, num_outputs_line);
 	int num_outputs = stoi(num_outputs_line);
 	for (int o_index = 0; o_index < num_outputs; o_index++) {
+		string inner_is_local_line;
+		getline(input_file, inner_is_local_line);
+		this->output_inner_is_local.push_back(stoi(inner_is_local_line));
+
 		string inner_index_line;
 		getline(input_file, inner_index_line);
 		this->output_inner_indexes.push_back(stoi(inner_index_line));

@@ -90,12 +90,10 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				vector<ContextLayer> temp_context{ContextLayer()};
-				context.back().scope = solution->root;
-				context.back().node = NULL;
 				PotentialScopeNode* new_potential_scope_node = create_scope(
-					temp_context,
-					1);
+					context,
+					1,
+					solution->root);
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				this->curr_root_scope_nodes.push_back(NULL);

@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
 	cout << "solution->states.size(): " << solution->states.size() << endl;
 
 	{
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

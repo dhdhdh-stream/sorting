@@ -226,7 +226,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 					PotentialScopeNode* new_potential_scope_node = create_scope(
 						context,
-						(int)this->scope_context.size());
+						(int)this->scope_context.size(),
+						context[context.size() - this->scope_context.size()].scope);
 					this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);

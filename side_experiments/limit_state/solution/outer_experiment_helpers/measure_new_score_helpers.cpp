@@ -78,31 +78,31 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 
 		this->target_val_histories.clear();
 
-		// cout << "Outer" << endl;
-		// cout << "new explore path:";
-		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-		// 		cout << " " << this->best_actions[s_index]->action.move;
-		// 	} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-		// 		cout << " S";
-		// 	} else {
-		// 		cout << " R";
-		// 	}
-		// }
-		// cout << endl;
+		cout << "Outer" << endl;
+		cout << "new explore path:";
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				cout << " " << this->best_actions[s_index]->action.move;
+			} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				cout << " S";
+			} else {
+				cout << " R";
+			}
+		}
+		cout << endl;
 
 		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		// cout << "new_average_score: " << new_average_score << endl;
-		// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+		cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		cout << "new_average_score: " << new_average_score << endl;
+		cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
 		if (score_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
-			// cout << "proceed to verify" << endl;
+			cout << "proceed to verify" << endl;
 
 			this->target_val_histories.reserve(solution->curr_num_datapoints);
 
@@ -129,6 +129,6 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			this->sub_state_iter = 0;
 		}
 
-		// cout << endl;
+		cout << endl;
 	}
 }

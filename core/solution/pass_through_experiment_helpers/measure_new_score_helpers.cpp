@@ -101,6 +101,41 @@ void PassThroughExperiment::measure_new_score_backprop(
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+		
+		// cout << "PassThrough" << endl;
+		// cout << "measure" << endl;
+		// cout << "this->scope_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
+		// }
+		// cout << "this->node_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->node_context[c_index] << endl;
+		// }
+		// cout << "new explore path:";
+		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+		// 		cout << " " << this->best_actions[s_index]->action.move;
+		// 	} else {
+		// 		cout << " S";
+		// 	}
+		// }
+		// cout << endl;
+
+		// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+		// if (this->best_exit_node == NULL) {
+		// 	cout << "this->best_exit_node_id: " << -1 << endl;
+		// } else {
+		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+		// }
+
+		// cout << "this->new_average_score: " << this->new_average_score << endl;
+		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		// cout << "score_standard_deviation: " << score_standard_deviation << endl;
+		// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+
+		// cout << endl;
+
 		if (score_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(solution->curr_num_datapoints);

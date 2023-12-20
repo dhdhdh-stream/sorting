@@ -21,7 +21,7 @@ void create_experiment(ScopeHistory* root_history);
 
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
-								 Scope* scope);
+								 Scope* parent_scope);
 PotentialScopeNode* create_loop(std::vector<ContextLayer>& context,
 								int explore_context_depth);
 

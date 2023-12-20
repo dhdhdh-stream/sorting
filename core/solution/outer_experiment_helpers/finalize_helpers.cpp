@@ -77,6 +77,7 @@ void OuterExperiment::finalize() {
 
 			for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
 				new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+				new_scope_node->input_inner_is_local.push_back(true);
 				new_scope_node->input_inner_indexes.push_back(this->best_potential_scopes[s_index]->input_inner_indexes[i_index]);
 				new_scope_node->input_outer_is_local.push_back(false);
 				new_scope_node->input_outer_indexes.push_back(-1);

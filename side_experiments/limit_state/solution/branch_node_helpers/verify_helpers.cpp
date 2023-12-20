@@ -90,35 +90,35 @@ void BranchNode::verify_activate(Problem* problem,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				// problem->print();
+				problem->print();
 
-				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
-				// cout << "context scope" << endl;
-				// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-				// 	cout << c_index << ": " << context[c_index].scope->id << endl;
-				// }
-				// cout << "context node" << endl;
-				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-				// 	cout << c_index << ": " << context[c_index].node->id << endl;
-				// }
+				cout << "context scope" << endl;
+				for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+					cout << c_index << ": " << context[c_index].scope->id << endl;
+				}
+				cout << "context node" << endl;
+				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+					cout << c_index << ": " << context[c_index].node->id << endl;
+				}
 
-				// cout << "input_state_vals" << endl;
-				// for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-				// 		it != context.back().input_state_vals.end(); it++) {
-				// 	int state_id;
-				// 	if (it->second.last_network != NULL) {
-				// 		state_id = it->second.last_network->parent_state->id;
-				// 	} else {
-				// 		state_id = -1;
-				// 	}
-				// 	cout << it->second.val << " " << state_id << endl;
-				// }
-				// cout << "local_state_vals" << endl;
-				// for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-				// 		it != context.back().local_state_vals.end(); it++) {
-				// 	cout << it->second.val << endl;
-				// }
+				cout << "input_state_vals" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+						it != context.back().input_state_vals.end(); it++) {
+					int state_id;
+					if (it->second.last_network != NULL) {
+						state_id = it->second.last_network->parent_state->id;
+					} else {
+						state_id = -1;
+					}
+					cout << it->second.val << " " << state_id << endl;
+				}
+				cout << "local_state_vals" << endl;
+				for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+						it != context.back().local_state_vals.end(); it++) {
+					cout << it->second.val << endl;
+				}
 
 				sort(factors.begin(), factors.end());
 				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());

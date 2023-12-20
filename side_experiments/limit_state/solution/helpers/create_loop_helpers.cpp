@@ -387,10 +387,12 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 				if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
 					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
 					if (final_it != potential_to_final_mapping.end()) {
-						new_scope_node->output_inner_is_local.push_back(original_scope_node->output_inner_is_local[o_index]);
-						new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
-						new_scope_node->output_outer_is_local.push_back(true);
-						new_scope_node->output_outer_indexes.push_back(final_it->second);
+						if (final_it->second != -1) {
+							new_scope_node->output_inner_is_local.push_back(original_scope_node->output_inner_is_local[o_index]);
+							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
+							new_scope_node->output_outer_is_local.push_back(true);
+							new_scope_node->output_outer_indexes.push_back(final_it->second);
+						}
 					} else {
 						if (include_state_distribution(generator) == 0) {
 							potential_to_final_mapping[potential_it->second] = -1;
@@ -447,10 +449,12 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 				if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
 					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
 					if (final_it != potential_to_final_mapping.end()) {
-						new_scope_node->loop_state_is_local.push_back(true);
-						new_scope_node->loop_state_indexes.push_back(final_it->second);
-						new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
-						new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
+						if (final_it->second != -1) {
+							new_scope_node->loop_state_is_local.push_back(true);
+							new_scope_node->loop_state_indexes.push_back(final_it->second);
+							new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
+							new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
+						}
 					} else {
 						if (include_state_distribution(generator) == 0) {
 							potential_to_final_mapping[potential_it->second] = -1;

@@ -1,3 +1,13 @@
+// TODO: maybe each worker tracks tries separately
+// - each will have different "experiences", so will go different directions
+// - means that won't have to sync
+
+// TODO: don't spend effort fully trying to match scope in tries
+// - even small variations in nodes can cause big differences in state
+// - instead, try to have the random variation lead to more similar outcomes
+//   - i.e., types
+//   - so scope tries will tend to match, even though they are unlikely to fully match
+
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 
@@ -26,6 +36,7 @@ public:
 	Scope* inner_scope;
 
 	std::vector<int> input_types;
+	std::vector<bool> input_inner_is_local;
 	std::vector<int> input_inner_indexes;
 	std::vector<bool> input_outer_is_local;
 	std::vector<int> input_outer_indexes;
@@ -42,9 +53,7 @@ public:
 	 * - random between -1.0 and 1.0
 	 */
 
-	/**
-	 * - from input states
-	 */
+	std::vector<bool> output_inner_is_local;
 	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
@@ -70,8 +79,10 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	std::vector<std::vector<double>> verify_input_state_vals;
-	std::vector<std::vector<double>> verify_output_state_vals;
+	std::vector<std::vector<double>> verify_input_input_state_vals;
+	std::vector<std::vector<double>> verify_input_local_state_vals;
+	std::vector<std::vector<double>> verify_output_input_state_vals;
+	std::vector<std::vector<double>> verify_output_local_state_vals;
 	std::vector<double> verify_continue_scores;
 	std::vector<double> verify_halt_scores;
 	std::vector<std::vector<double>> verify_factors;

@@ -44,6 +44,12 @@ int main(int argc, char* argv[]) {
 	solution->init();
 	// solution->load("", "main");
 
+	// ActionNode* explore_node = (ActionNode*)solution->scopes[0]->nodes[0];
+	// PassThroughExperiment* experiment = new PassThroughExperiment(
+	// 	vector<int>{0},
+	// 	vector<int>{0});
+	// explore_node->experiment = experiment;
+
 	int num_fails = 0;
 
 	#if defined(MDEBUG) && MDEBUG

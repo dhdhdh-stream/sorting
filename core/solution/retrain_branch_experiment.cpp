@@ -1,6 +1,7 @@
 #include "retrain_branch_experiment.h"
 
 #include "globals.h"
+#include "scope.h"
 #include "solution.h"
 
 using namespace std;
@@ -25,6 +26,10 @@ RetrainBranchExperiment::RetrainBranchExperiment(BranchNode* branch_node) {
 }
 
 RetrainBranchExperiment::~RetrainBranchExperiment() {
+	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
+		delete this->i_scope_histories[h_index];
+	}
+
 	#if defined(MDEBUG) && MDEBUG
 	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
 		delete this->verify_problems[p_index];

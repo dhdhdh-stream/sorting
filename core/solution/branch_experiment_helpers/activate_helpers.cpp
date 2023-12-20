@@ -67,6 +67,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
 				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
+						|| context[context.size()-this->scope_context.size()+c_index].node == NULL	// within explore edge case
 						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
 					matches_context = false;
 					break;

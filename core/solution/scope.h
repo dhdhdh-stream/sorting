@@ -25,7 +25,9 @@ public:
 	int id;
 
 	int num_input_states;
+	std::vector<int> original_input_state_ids;
 	int num_local_states;
+	std::vector<int> original_local_state_ids;
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
