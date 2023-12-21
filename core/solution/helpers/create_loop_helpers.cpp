@@ -164,7 +164,7 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 	 * - assign to -1 if not going to use
 	 */
 	map<int, int> potential_to_final_mapping;
-	uniform_int_distribution<int> include_state_distribution(0, 1);
+	uniform_int_distribution<int> include_state_distribution(0, 3);
 	uniform_int_distribution<int> output_distribution(0, 1);
 	for (int n_index = start_index; n_index < (int)possible_scope_contexts.size(); n_index++) {
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {

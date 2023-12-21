@@ -52,7 +52,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 				run_helper.experiments_seen.insert(this);
 			}
 			if (select) {
-				hook(context);
+				hook();
 
 				run_helper.selected_experiment = this;
 				run_helper.experiment_history = new BranchExperimentOverallHistory(this);
@@ -81,6 +81,13 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 	}
 
 	if (is_selected) {
+		if (this->parent_pass_through_experiment == NULL) {
+			/**
+			 * - always back_activate as may have been hooked inner, but earlier node needed for current
+			 */
+			back_activate(context);
+		}
+
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(context,
@@ -134,10 +141,22 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 	}
 }
 
-void BranchExperiment::hook_helper(vector<int>& scope_context,
-								   vector<int>& node_context,
-								   map<State*, StateStatus>& temp_state_vals,
-								   ScopeHistory* scope_history) {
+void BranchExperiment::hook() {
+	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
+			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
+			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
+		}
+	}
+}
+
+void BranchExperiment::back_activate_helper(vector<int>& scope_context,
+											vector<int>& node_context,
+											map<State*, StateStatus>& temp_state_vals,
+											ScopeHistory* scope_history) {
 	int scope_id = scope_history->scope->id;
 
 	scope_context.push_back(scope_id);
@@ -159,10 +178,10 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 
 				node_context.back() = scope_node->id;
 
-				hook_helper(scope_context,
-							node_context,
-							temp_state_vals,
-							scope_node_history->inner_scope_history);
+				back_activate_helper(scope_context,
+									 node_context,
+									 temp_state_vals,
+									 scope_node_history->inner_scope_history);
 
 				node_context.back() = -1;
 			}
@@ -173,23 +192,18 @@ void BranchExperiment::hook_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
-void BranchExperiment::hook(vector<ContextLayer>& context) {
+void BranchExperiment::back_activate(vector<ContextLayer>& context) {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
-		}
+		context[context.size() - this->scope_context.size()].temp_state_vals
+			.erase(this->new_states[s_index]);
 	}
 
 	vector<int> scope_context;
 	vector<int> node_context;
-	hook_helper(scope_context,
-				node_context,
-				context[context.size() - this->scope_context.size()].temp_state_vals,
-				context[context.size() - this->scope_context.size()].scope_history);
+	back_activate_helper(scope_context,
+						 node_context,
+						 context[context.size() - this->scope_context.size()].temp_state_vals,
+						 context[context.size() - this->scope_context.size()].scope_history);
 }
 
 void BranchExperiment::unhook() {

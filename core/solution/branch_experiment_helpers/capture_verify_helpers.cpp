@@ -61,9 +61,9 @@ void BranchExperiment::capture_verify_activate(
 			exit_node = this->best_exit_node;
 		}
 	} else {
-		problem->print();
+		// problem->print();
 
-		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+		// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
 		double original_predicted_score = this->existing_average_score;
 		double branch_predicted_score = this->new_average_score;
@@ -92,7 +92,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * normalized;
 
 					if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
-						cout << c_index << " input " << it->first << " " << normalized << endl;
+						// cout << c_index << " input " << it->first << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -101,7 +101,7 @@ void BranchExperiment::capture_verify_activate(
 
 					if (original_weight_it != this->existing_input_state_weights[c_index].end()) {
 						if (it->second.val != 0.0) {
-							cout << c_index << " input " << it->first << " " << it->second.val << endl;
+							// cout << c_index << " input " << it->first << " " << it->second.val << endl;
 							factors.push_back(it->second.val);
 						}
 					}
@@ -131,7 +131,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * normalized;
 
 					if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
-						cout << c_index << " local " << it->first << " " << normalized << endl;
+						// cout << c_index << " local " << it->first << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -140,7 +140,7 @@ void BranchExperiment::capture_verify_activate(
 
 					if (original_weight_it != this->existing_local_state_weights[c_index].end()) {
 						if (it->second.val != 0.0) {
-							cout << c_index << " local " << it->first << " " << it->second.val << endl;
+							// cout << c_index << " local " << it->first << " " << it->second.val << endl;
 							factors.push_back(it->second.val);
 						}
 					}
@@ -170,7 +170,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * normalized;
 
 					if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
-						cout << c_index << " temp " << it->first->id << " " << normalized << endl;
+						// cout << c_index << " temp " << it->first->id << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -178,7 +178,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_predicted_score += branch_weight * it->second.val;
 
 					if (original_weight_it != this->existing_temp_state_weights[c_index].end()) {
-						cout << c_index << " temp " << it->first->id << " " << it->second.val << endl;
+						// cout << c_index << " temp " << it->first->id << " " << it->second.val << endl;
 						factors.push_back(it->second.val);
 					}
 				}

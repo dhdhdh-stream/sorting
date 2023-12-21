@@ -271,6 +271,10 @@ int main(int argc, char* argv[]) {
 			} else {
 				solution->success_reset();
 
+				/**
+				 * - possible race condition
+				 *   - but just means that previous update from another worker dropped
+				 */
 				solution->id = (unsigned)time(NULL);
 				solution->save(path, name);
 			}
@@ -308,8 +312,6 @@ int main(int argc, char* argv[]) {
 					cout << "updated from main" << endl;
 
 					num_fails = 0;
-
-					solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 				}
 			}
 		}

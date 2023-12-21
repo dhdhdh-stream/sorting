@@ -90,6 +90,7 @@ while True:
 
 			client_sftp = client.open_sftp()
 
+			# TODO: potential issue where worker is just reading in previous update while new update is being written
 			parent = 'saves/main'
 			for dirpath, dirnames, filenames in os.walk(parent):
 				remote_path = os.path.join('workers/' + worker[0] + '/saves/main', dirpath[len(parent)+1:])
@@ -106,6 +107,9 @@ while True:
 
 			client_sftp.close()
 			client.close()
+
+		# extra sleep to give workers time to update to help avoid a race condition
+		time.sleep(40)
 
 	time.sleep(20)
 

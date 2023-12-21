@@ -46,11 +46,13 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				run_helper.experiments_seen.insert(this);
 			}
 			if (select) {
-				hook(context);
+				hook();
 
 				run_helper.selected_experiment = this;
 				PassThroughExperimentOverallHistory* overall_history = new PassThroughExperimentOverallHistory(this);
 				run_helper.experiment_history = overall_history;
+
+				back_activate(context);
 
 				switch (this->state) {
 				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
@@ -155,6 +157,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 		}
 
 		if (matches_context) {
+			back_activate(context);
+
 			switch (this->state) {
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
 				measure_existing_score_activate(context);
@@ -234,46 +238,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 	}
 }
 
-void PassThroughExperiment::hook_helper(vector<int>& scope_context,
-										vector<int>& node_context,
-										map<State*, StateStatus>& temp_state_vals,
-										ScopeHistory* scope_history) {
-	int scope_id = scope_history->scope->id;
-
-	scope_context.push_back(scope_id);
-	node_context.push_back(-1);
-
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				action_node->experiment_back_activate(scope_context,
-													  node_context,
-													  temp_state_vals,
-													  action_node_history);
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-				node_context.back() = scope_node->id;
-
-				hook_helper(scope_context,
-							node_context,
-							temp_state_vals,
-							scope_node_history->inner_scope_history);
-
-				node_context.back() = -1;
-			}
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
-void PassThroughExperiment::hook(vector<ContextLayer>& context) {
+void PassThroughExperiment::hook() {
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
 			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
@@ -295,13 +260,66 @@ void PassThroughExperiment::hook(vector<ContextLayer>& context) {
 			}
 		}
 	}
+}
+
+void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
+												 vector<int>& node_context,
+												 map<State*, StateStatus>& temp_state_vals,
+												 ScopeHistory* scope_history) {
+	int scope_id = scope_history->scope->id;
+
+	scope_context.push_back(scope_id);
+	node_context.push_back(-1);
+
+	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
+		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
+			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
+			if (node_history->node->type == NODE_TYPE_ACTION) {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+				ActionNode* action_node = (ActionNode*)action_node_history->node;
+				action_node->experiment_back_activate(scope_context,
+													  node_context,
+													  temp_state_vals,
+													  action_node_history);
+			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+				node_context.back() = scope_node->id;
+
+				back_activate_helper(scope_context,
+									 node_context,
+									 temp_state_vals,
+									 scope_node_history->inner_scope_history);
+
+				node_context.back() = -1;
+			}
+		}
+	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
+}
+
+void PassThroughExperiment::back_activate(vector<ContextLayer>& context) {
+	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+		context[context.size() - this->scope_context.size()].temp_state_vals
+			.erase(this->new_states[s_index]);
+	}
+
+	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
+		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
+			context[context.size() - this->scope_context.size()].temp_state_vals
+				.erase(this->branch_experiment->new_states[s_index]);
+		}
+	}
 
 	vector<int> scope_context;
 	vector<int> node_context;
-	hook_helper(scope_context,
-				node_context,
-				context[context.size() - this->scope_context.size()].temp_state_vals,
-				context[context.size() - this->scope_context.size()].scope_history);
+	back_activate_helper(scope_context,
+						 node_context,
+						 context[context.size() - this->scope_context.size()].temp_state_vals,
+						 context[context.size() - this->scope_context.size()].scope_history);
 }
 
 void PassThroughExperiment::unhook() {

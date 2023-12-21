@@ -132,11 +132,12 @@ public:
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  AbstractExperimentHistory*& history);
-	void hook(std::vector<ContextLayer>& context);
-	void hook_helper(std::vector<int>& scope_context,
-					 std::vector<int>& node_context,
-					 std::map<State*, StateStatus>& temp_state_vals,
-					 ScopeHistory* scope_history);
+	void hook();
+	void back_activate_helper(std::vector<int>& scope_context,
+							  std::vector<int>& node_context,
+							  std::map<State*, StateStatus>& temp_state_vals,
+							  ScopeHistory* scope_history);
+	void back_activate(std::vector<ContextLayer>& context);
 	void unhook();
 	void parent_scope_end_activate(std::vector<ContextLayer>& context,
 								   RunHelper& run_helper,

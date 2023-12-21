@@ -246,9 +246,19 @@ void BranchExperiment::verify_backprop(double target_val) {
 							if (this->best_potential_scopes[s_index]->input_types[i_index] == INPUT_TYPE_STATE
 									&& this->best_potential_scopes[s_index]->input_outer_types[i_index] == OUTER_TYPE_TEMP) {
 								State* state = (State*)this->best_potential_scopes[s_index]->input_outer_indexes[i_index];
+								/**
+								 * - possibly added to new_states through train_existing
+								 */
+								for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
+									if (this->new_states[ns_index] == state) {
+										needed_state.insert(ns_index);
+										break;
+									}
+								}
 								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
 									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
 										needed_parent_state.insert(ns_index);
+										break;
 									}
 								}
 							}
@@ -257,9 +267,16 @@ void BranchExperiment::verify_backprop(double target_val) {
 						for (int o_index = 0; o_index < (int)this->best_potential_scopes[s_index]->output_inner_indexes.size(); o_index++) {
 							if (this->best_potential_scopes[s_index]->output_outer_types[o_index] == OUTER_TYPE_TEMP) {
 								State* state = (State*)this->best_potential_scopes[s_index]->output_outer_indexes[o_index];
+								for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
+									if (this->new_states[ns_index] == state) {
+										needed_state.insert(ns_index);
+										break;
+									}
+								}
 								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
 									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
 										needed_parent_state.insert(ns_index);
+										break;
 									}
 								}
 							}
