@@ -142,6 +142,15 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 
 				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
+				// cout << "context scope" << endl;
+				// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+				// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+				// }
+				// cout << "context node" << endl;
+				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+				// 	cout << c_index << ": " << context[c_index].node->id << endl;
+				// }
+
 				sort(factors.begin(), factors.end());
 				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
 

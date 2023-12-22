@@ -11,6 +11,7 @@
 class AbstractNode;
 class BranchExperiment;
 class BranchNode;
+class PassThroughExperiment;
 class PotentialScopeNode;
 class Scope;
 class ScopeHistory;
@@ -21,7 +22,8 @@ void create_experiment(ScopeHistory* root_history);
 
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
-								 Scope* parent_scope);
+								 Scope* parent_scope,
+								 PassThroughExperiment* parent_pass_through_experiment);
 PotentialScopeNode* create_loop(std::vector<ContextLayer>& context,
 								int explore_context_depth);
 

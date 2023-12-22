@@ -93,7 +93,8 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				PotentialScopeNode* new_potential_scope_node = create_scope(
 					context,
 					1,
-					solution->root);
+					solution->root,
+					NULL);
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				this->curr_root_scope_nodes.push_back(NULL);

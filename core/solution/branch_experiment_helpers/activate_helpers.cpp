@@ -153,6 +153,7 @@ void BranchExperiment::hook() {
 	}
 }
 
+// TODO: back activate other layers?
 void BranchExperiment::back_activate_helper(vector<int>& scope_context,
 											vector<int>& node_context,
 											map<State*, StateStatus>& temp_state_vals,

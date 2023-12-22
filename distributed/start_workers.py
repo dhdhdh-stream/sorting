@@ -85,6 +85,7 @@ while True:
 	for w_index in range(len(workers)):
 		rl, wl, xl = select.select([channels[w_index]],[],[],0.0)
 		if len(rl) > 0:
+			print(workers[w_index][0])
 			print(channels[w_index].recv(1024))
 
 	time.sleep(10)

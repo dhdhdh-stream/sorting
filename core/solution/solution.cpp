@@ -1,6 +1,7 @@
 #include "solution.h"
 
 #include <iostream>
+#include <stdio.h>
 
 #include "action_node.h"
 #include "outer_experiment.h"
@@ -174,7 +175,7 @@ void Solution::fail_reset() {
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
-	output_file.open(path + "saves/" + name + "/solution.txt");
+	output_file.open(path + "saves/" + name + "/solution_temp.txt");
 
 	output_file << this->id << endl;
 
@@ -207,6 +208,10 @@ void Solution::save(string path,
 	output_file << this->max_depth << endl;
 
 	output_file.close();
+
+	string oldname = path + "saves/" + name + "/solution_temp.txt";
+	string newname = path + "saves/" + name + "/solution.txt";
+	rename(oldname.c_str(), newname.c_str());
 }
 
 void Solution::save_for_display(ofstream& output_file) {

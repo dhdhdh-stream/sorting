@@ -392,6 +392,37 @@ void BranchExperiment::train_new_backprop(double target_val,
 					}
 				}
 			}
+			/**
+			 * - simply remove new state not at layer 0
+			 *   - not trained for other layers anyways
+			 *     - otherwise makes back_activate() more difficult
+			 */
+			for (int c_index = 1; c_index < (int)this->scope_context.size(); c_index++) {
+				map<State*, vector<double>>::iterator it = p_temp_state_vals[c_index].begin();
+				while (it != p_temp_state_vals[c_index].end()) {
+					bool is_new_state = false;
+					for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+						if (it->first == this->new_states[s_index]) {
+							is_new_state = true;
+							break;
+						}
+					}
+					if (this->parent_pass_through_experiment != NULL) {
+						for (int s_index = 0; s_index < (int)this->parent_pass_through_experiment->new_states.size(); s_index++) {
+							if (it->first == this->parent_pass_through_experiment->new_states[s_index]) {
+								is_new_state = true;
+								break;
+							}
+						}
+					}
+
+					if (is_new_state) {
+						it = p_temp_state_vals[c_index].erase(it);
+					} else {
+						it++;
+					}
+				}
+			}
 
 			int stride_size = 0;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {

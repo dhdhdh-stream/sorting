@@ -265,6 +265,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 					}
 				}
 			}
+			// no new state yet
 
 			int stride_size = 0;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {

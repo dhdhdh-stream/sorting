@@ -65,6 +65,7 @@ while True:
 			if worker_curr_id > curr_id:
 				print(worker[0] + ' updated')
 
+				# TODO: potential issue where copied before worker has fully saved
 				download_files(client_sftp, 'workers/' + worker[0] + '/saves/' + worker[0] + '/', 'saves/main/')
 
 				curr_id = worker_curr_id

@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -608,11 +609,12 @@ int end_new_state_helper(map<pair<bool,int>, int>& state_mappings,
 
 PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								 int explore_context_depth,
-								 Scope* parent_scope) {
+								 Scope* parent_scope,
+								 PassThroughExperiment* parent_pass_through_experiment) {
 	Scope* new_scope = new Scope();
 	// don't set id/increment scope_counter until train
 	new_scope->num_input_states = 0;
-	new_scope->num_local_states = 0;	// TODO: swap to all local states
+	new_scope->num_local_states = 0;
 	new_scope->node_counter = 0;
 	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
 	new_potential_scope_node->scope = new_scope;
@@ -988,9 +990,21 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 							for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
 									it != context.back().temp_state_vals.end(); it++) {
-								possible_input_scope_depths.push_back(0);
-								possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-								possible_input_outer_indexes.push_back(it->first);
+								bool not_is_off_new = true;
+								if (parent_pass_through_experiment != NULL && 0 != explore_context_depth-1) {
+									for (int s_index = 0; s_index < (int)parent_pass_through_experiment->new_states.size(); s_index++) {
+										if (it->first == parent_pass_through_experiment->new_states[s_index]) {
+											not_is_off_new = false;
+											break;
+										}
+									}
+								}
+
+								if (not_is_off_new) {
+									possible_input_scope_depths.push_back(0);
+									possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+									possible_input_outer_indexes.push_back(it->first);
+								}
 							}
 						}
 						for (int c_index = 1; c_index < explore_context_depth; c_index++) {
@@ -1034,9 +1048,21 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 							for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
 									it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
-								possible_input_scope_depths.push_back(c_index);
-								possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-								possible_input_outer_indexes.push_back(it->first);
+								bool not_is_off_new = true;
+								if (parent_pass_through_experiment != NULL && c_index != explore_context_depth-1) {
+									for (int s_index = 0; s_index < (int)parent_pass_through_experiment->new_states.size(); s_index++) {
+										if (it->first == parent_pass_through_experiment->new_states[s_index]) {
+											not_is_off_new = false;
+											break;
+										}
+									}
+								}
+
+								if (not_is_off_new) {
+									possible_input_scope_depths.push_back(c_index);
+									possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+									possible_input_outer_indexes.push_back(it->first);
+								}
 							}
 						}
 
@@ -1205,9 +1231,21 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 							for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
 									it != context.back().temp_state_vals.end(); it++) {
-								possible_input_scope_depths.push_back(0);
-								possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-								possible_input_outer_indexes.push_back(it->first);
+								bool not_is_off_new = true;
+								if (parent_pass_through_experiment != NULL && 0 != explore_context_depth-1) {
+									for (int s_index = 0; s_index < (int)parent_pass_through_experiment->new_states.size(); s_index++) {
+										if (it->first == parent_pass_through_experiment->new_states[s_index]) {
+											not_is_off_new = false;
+											break;
+										}
+									}
+								}
+
+								if (not_is_off_new) {
+									possible_input_scope_depths.push_back(0);
+									possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+									possible_input_outer_indexes.push_back(it->first);
+								}
 							}
 						}
 						for (int c_index = 1; c_index < explore_context_depth; c_index++) {
@@ -1251,9 +1289,21 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 							for (map<State*, StateStatus>::iterator it = context[context.size()-1 - c_index].temp_state_vals.begin();
 									it != context[context.size()-1 - c_index].temp_state_vals.end(); it++) {
-								possible_input_scope_depths.push_back(c_index);
-								possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
-								possible_input_outer_indexes.push_back(it->first);
+								bool not_is_off_new = true;
+								if (parent_pass_through_experiment != NULL && c_index != explore_context_depth-1) {
+									for (int s_index = 0; s_index < (int)parent_pass_through_experiment->new_states.size(); s_index++) {
+										if (it->first == parent_pass_through_experiment->new_states[s_index]) {
+											not_is_off_new = false;
+											break;
+										}
+									}
+								}
+
+								if (not_is_off_new) {
+									possible_input_scope_depths.push_back(c_index);
+									possible_input_outer_types.push_back(OUTER_TYPE_TEMP);
+									possible_input_outer_indexes.push_back(it->first);
+								}
 							}
 						}
 
