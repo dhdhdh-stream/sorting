@@ -11,13 +11,21 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: repeat
+all: repeat sequence mix
 
 repeat: ${OBJECTS} repeat.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} repeat.o -o repeat ${LIBS}
 
--include ${DEPENDS} repeat.d
+sequence: ${OBJECTS} sequence.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} sequence.o -o sequence ${LIBS}
+
+mix: ${OBJECTS} mix.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} mix.o -o mix ${LIBS}
+
+-include ${DEPENDS} repeat.d sequence.d mix.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	repeat.o repeat.d repeat
+	repeat.o repeat.d repeat \
+	sequence.o sequence.d sequence \
+	mix.o mix.d mix
