@@ -1,3 +1,5 @@
+// this setup doesn't pay attention to locality well
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -26,17 +28,22 @@ int main(int argc, char* argv[]) {
 	{
 		vector<int> action_sequence;
 		int instance_length = 1 + geometric_distribution(generator);
-		int num_0s = 0;
 		for (int l_index = 0; l_index < instance_length; l_index++) {
 			int action = action_distribution(generator);
 			action_sequence.push_back(action);
-			if (action == 0) {
-				num_0s++;
+		}
+
+		bool found_sequence = false;
+		for (int a_index = 0; a_index < (int)action_sequence.size()-2; a_index++) {
+			if (action_sequence[a_index] == 0
+					&& action_sequence[a_index+1] == 1
+					&& action_sequence[a_index+2] == 1) {
+				found_sequence = true;
 			}
 		}
 
 		double target_val;
-		if (num_0s >= 3) {
+		if (found_sequence) {
 			target_val = 1.0;
 		} else {
 			target_val = -1.0;
@@ -55,17 +62,22 @@ int main(int argc, char* argv[]) {
 			// random
 			vector<int> action_sequence;
 			int instance_length = 1 + geometric_distribution(generator);
-			int num_0s = 0;
 			for (int l_index = 0; l_index < instance_length; l_index++) {
 				int action = action_distribution(generator);
 				action_sequence.push_back(action);
-				if (action == 0) {
-					num_0s++;
+			}
+
+			bool found_sequence = false;
+			for (int a_index = 0; a_index < (int)action_sequence.size()-2; a_index++) {
+				if (action_sequence[a_index] == 0
+						&& action_sequence[a_index+1] == 1
+						&& action_sequence[a_index+2] == 1) {
+					found_sequence = true;
 				}
 			}
 
 			double target_val;
-			if (num_0s >= 3) {
+			if (found_sequence) {
 				target_val = 1.0;
 			} else {
 				target_val = -1.0;
@@ -102,17 +114,22 @@ int main(int argc, char* argv[]) {
 			vector<pair<int, int>> furthest_diffs;
 			for (int t_index = 0; t_index < 10; t_index++) {
 				vector<int> action_sequence;
-				int num_0s = 0;
 				for (int l_index = 0; l_index < instance_length; l_index++) {
 					int action = action_distribution(generator);
 					action_sequence.push_back(action);
-					if (action == 0) {
-						num_0s++;
+				}
+
+				bool found_sequence = false;
+				for (int a_index = 0; a_index < (int)action_sequence.size()-2; a_index++) {
+					if (action_sequence[a_index] == 0
+							&& action_sequence[a_index+1] == 1
+							&& action_sequence[a_index+2] == 1) {
+						found_sequence = true;
 					}
 				}
 
 				double target_val;
-				if (num_0s >= 3) {
+				if (found_sequence) {
 					target_val = 1.0;
 				} else {
 					target_val = -1.0;
@@ -164,17 +181,22 @@ int main(int argc, char* argv[]) {
 			for (int t_index = 0; t_index < 10; t_index++) {
 				vector<int> action_sequence;
 				int instance_length = 1 + geometric_distribution(generator);
-				int num_0s = 0;
 				for (int l_index = 0; l_index < instance_length; l_index++) {
 					int action = action_distribution(generator);
 					action_sequence.push_back(action);
-					if (action == 0) {
-						num_0s++;
+				}
+
+				bool found_sequence = false;
+				for (int a_index = 0; a_index < (int)action_sequence.size()-2; a_index++) {
+					if (action_sequence[a_index] == 0
+							&& action_sequence[a_index+1] == 1
+							&& action_sequence[a_index+2] == 1) {
+						found_sequence = true;
 					}
 				}
 
 				double target_val;
-				if (num_0s >= 3) {
+				if (found_sequence) {
 					target_val = 1.0;
 				} else {
 					target_val = -1.0;
@@ -228,126 +250,6 @@ int main(int argc, char* argv[]) {
 		try_tracker->random_backprop();
 	}
 
-	// // random
-	// for (int iter_index = 0; iter_index < 100; iter_index++) {
-	// 	vector<int> action_sequence;
-	// 	int instance_length = 1 + geometric_distribution(generator);
-	// 	int num_0s = 0;
-	// 	for (int l_index = 0; l_index < instance_length; l_index++) {
-	// 		int action = action_distribution(generator);
-	// 		action_sequence.push_back(action);
-	// 		if (action == 0) {
-	// 			num_0s++;
-	// 		}
-	// 	}
-
-	// 	double target_val;
-	// 	if (num_0s >= 3) {
-	// 		target_val = 1.0;
-	// 	} else {
-	// 		target_val = -1.0;
-	// 	}
-
-	// 	cout << iter_index << endl;
-	// 	for (int a_index = 0; a_index < (int)action_sequence.size(); a_index++) {
-	// 		cout << action_sequence[a_index] << " ";
-	// 	}
-	// 	cout << endl;
-	// 	cout << "target_val: " << target_val << endl;
-
-	// 	Try* new_try = new Try();
-	// 	new_try->sequence = action_sequence;
-	// 	new_try->result = target_val;
-
-	// 	Try* closest_match;
-	// 	double predicted_impact;
-	// 	try_tracker->verify_potential(new_try,
-	// 								  closest_match,
-	// 								  predicted_impact);
-	// 	cout << "closest_match:";
-	// 	for (int a_index = 0; a_index < (int)closest_match->sequence.size(); a_index++) {
-	// 		cout << " " << closest_match->sequence[a_index];
-	// 	}
-	// 	cout << endl;
-
-	// 	cout << "predicted_impact: " << predicted_impact << endl;
-
-	// 	cout << endl;
-
-	// 	delete new_try;
-	// }
-
-	// // furthest distance
-	// for (int iter_index = 0; iter_index < 20; iter_index++) {
-	// 	int instance_length = 1 + geometric_distribution(generator);
-
-	// 	Try* furthest_try = NULL;
-	// 	vector<pair<int, int>> furthest_diffs;
-	// 	for (int t_index = 0; t_index < 20; t_index++) {
-	// 		vector<int> action_sequence;
-	// 		int num_0s = 0;
-	// 		for (int l_index = 0; l_index < instance_length; l_index++) {
-	// 			int action = action_distribution(generator);
-	// 			action_sequence.push_back(action);
-	// 			if (action == 0) {
-	// 				num_0s++;
-	// 			}
-	// 		}
-
-	// 		double target_val;
-	// 		if (num_0s >= 3) {
-	// 			target_val = 1.0;
-	// 		} else {
-	// 			target_val = -1.0;
-	// 		}
-
-	// 		Try* new_try = new Try();
-	// 		new_try->sequence = action_sequence;
-	// 		new_try->result = target_val;
-
-	// 		Try* closest_match;
-	// 		double predicted_impact;
-	// 		vector<pair<int, int>> closest_diffs;
-	// 		try_tracker->evaluate_potential(new_try,
-	// 										closest_match,
-	// 										predicted_impact,
-	// 										closest_diffs);
-
-	// 		if (furthest_try == NULL) {
-	// 			furthest_try = new_try;
-	// 			furthest_diffs = closest_diffs;
-	// 		} else if (furthest_diffs.size() < closest_diffs.size()) {
-	// 			delete furthest_try;
-
-	// 			furthest_try = new_try;
-	// 			furthest_diffs = closest_diffs;
-	// 		}
-	// 	}
-
-	// 	cout << "furthest_try:" << endl;
-	// 	for (int a_index = 0; a_index < (int)furthest_try->sequence.size(); a_index++) {
-	// 		cout << furthest_try->sequence[a_index] << " ";
-	// 	}
-	// 	cout << endl;
-
-	// 	Try* closest_match;
-	// 	double predicted_impact;
-	// 	try_tracker->verify_potential(furthest_try,
-	// 								  closest_match,
-	// 								  predicted_impact);
-	// 	cout << "closest_match:";
-	// 	for (int a_index = 0; a_index < (int)closest_match->sequence.size(); a_index++) {
-	// 		cout << " " << closest_match->sequence[a_index];
-	// 	}
-	// 	cout << endl;
-
-	// 	cout << "predicted_impact: " << predicted_impact << endl;
-
-	// 	cout << endl;
-
-	// 	delete furthest_try;
-	// }
-
 	// highest potential
 	for (int iter_index = 0; iter_index < 20; iter_index++) {
 		Try* best_try = NULL;
@@ -356,17 +258,22 @@ int main(int argc, char* argv[]) {
 		for (int t_index = 0; t_index < 10; t_index++) {
 			vector<int> action_sequence;
 			int instance_length = 1 + geometric_distribution(generator);
-			int num_0s = 0;
 			for (int l_index = 0; l_index < instance_length; l_index++) {
 				int action = action_distribution(generator);
 				action_sequence.push_back(action);
-				if (action == 0) {
-					num_0s++;
+			}
+
+			bool found_sequence = false;
+			for (int a_index = 0; a_index < (int)action_sequence.size()-2; a_index++) {
+				if (action_sequence[a_index] == 0
+						&& action_sequence[a_index+1] == 1
+						&& action_sequence[a_index+2] == 1) {
+					found_sequence = true;
 				}
 			}
 
 			double target_val;
-			if (num_0s >= 3) {
+			if (found_sequence) {
 				target_val = 1.0;
 			} else {
 				target_val = -1.0;

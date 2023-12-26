@@ -31,6 +31,11 @@ public:
 				  Try* closest_match,
 				  double predicted_impact,
 				  std::vector<std::pair<int, int>>& closest_diffs);
+	// void random_backprop(Try* potential);
+	void random_backprop();
+	void verify_potential(Try* potential,
+						  Try*& closest_match,
+						  double& predicted_impact);
 };
 
 #endif /* TRY_TRACKER_H */
