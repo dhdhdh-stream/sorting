@@ -1,5 +1,20 @@
 // this setup doesn't pay attention to locality well
 
+// RNNs don't work well either
+// - or at least will take a lot of fiddling with the number of states to save, etc.
+//   - and not reliable, requires training time, etc.
+
+// the reason why doesn't pay attention to locality well is because of duplicates
+// - actions are ahead and behind, and also ahead multiple times, etc.
+//   - makes it difficult to clearly identify sequences/ordering
+
+// - like, if want ABC, something like BABC makes things difficult
+//   - or actually, BACB is indistinguishable from ABC
+//     - also ABDC is not indistinguisable
+
+// - but actually, scopes/compound actions capture locality
+//   - so maybe don't need analysis to be good at it as well
+
 #include <chrono>
 #include <iostream>
 #include <map>
