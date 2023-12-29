@@ -400,6 +400,8 @@ void BranchExperiment::new_loop(map<pair<int, pair<bool,int>>, int>& input_scope
 	new_scope_node->halt_score_mod = this->existing_average_score;
 	new_scope_node->decision_standard_deviation = this->existing_standard_deviation;
 	new_scope_node->max_iters = 1;
+	new_scope_node->loop_scope_context = this->scope_context;
+	new_scope_node->loop_node_context = this->node_context;
 
 	#if defined(MDEBUG) && MDEBUG
 	new_scope_node->verify_key = this;

@@ -16,6 +16,7 @@
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "retrain_branch_experiment.h"
+#include "retrain_loop_experiment.h"
 #include "run_helper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -210,7 +211,7 @@ int main(int argc, char* argv[]) {
 						}
 						delete pass_through_experiment;
 					}
-				} else {
+				} else if (run_helper.experiment_history->experiment->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
 					RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)run_helper.experiment_history->experiment;
 					retrain_branch_experiment->backprop(target_val,
 														run_helper,
@@ -228,6 +229,25 @@ int main(int argc, char* argv[]) {
 						BranchNode* branch_node = retrain_branch_experiment->branch_node;
 						branch_node->experiment = NULL;
 						delete retrain_branch_experiment;
+					}
+				} else {
+					RetrainLoopExperiment* retrain_loop_experiment = (RetrainLoopExperiment*)run_helper.experiment_history->experiment;
+					retrain_loop_experiment->backprop(target_val,
+													  run_helper,
+													  (RetrainLoopExperimentOverallHistory*)run_helper.experiment_history);
+
+					if (retrain_loop_experiment->state == RETRAIN_LOOP_EXPERIMENT_STATE_SUCCESS) {
+						is_success = true;
+
+						ScopeNode* scope_node = retrain_loop_experiment->scope_node;
+						scope_node->experiment = NULL;
+						delete retrain_loop_experiment;
+					} else if (retrain_loop_experiment->state == RETRAIN_LOOP_EXPERIMENT_STATE_FAIL) {
+						is_fail = true;
+
+						ScopeNode* scope_node = retrain_loop_experiment->scope_node;
+						scope_node->experiment = NULL;
+						delete retrain_loop_experiment;
 					}
 				}
 			} else {

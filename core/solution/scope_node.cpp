@@ -95,6 +95,12 @@ void ScopeNode::save(ofstream& output_file) {
 
 	output_file << this->max_iters << endl;
 
+	output_file << this->loop_scope_context.size() << endl;
+	for (int c_index = 0; c_index < (int)this->loop_scope_context.size(); c_index++) {
+		output_file << this->loop_scope_context[c_index] << endl;
+		output_file << this->loop_node_context[c_index] << endl;
+	}
+
 	output_file << this->next_node_id << endl;
 }
 
@@ -194,6 +200,19 @@ void ScopeNode::load(ifstream& input_file) {
 	getline(input_file, max_iters_line);
 	this->max_iters = stoi(max_iters_line);
 
+	string loop_scope_context_size_line;
+	getline(input_file, loop_scope_context_size_line);
+	int loop_scope_context_size = stoi(loop_scope_context_size_line);
+	for (int c_index = 0; c_index < loop_scope_context_size; c_index++) {
+		string scope_context_line;
+		getline(input_file, scope_context_line);
+		this->loop_scope_context.push_back(stoi(scope_context_line));
+
+		string node_context_line;
+		getline(input_file, node_context_line);
+		this->loop_node_context.push_back(stoi(node_context_line));
+	}
+
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
@@ -228,9 +247,12 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {
 			BranchExperimentInstanceHistory* branch_experiment_history = (BranchExperimentInstanceHistory*)original->experiment_history;
 			this->experiment_history = new BranchExperimentInstanceHistory(branch_experiment_history);
-		} else {
+		} else if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 			PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)original->experiment_history;
 			this->experiment_history = new PassThroughExperimentInstanceHistory(pass_through_experiment_history);
+		} else {
+			// original->experiment_history->experiment->type == EXPERIMENT_TYPE_RETRAIN_LOOP
+			this->experiment_history = NULL;
 		}
 	} else {
 		this->experiment_history = NULL;

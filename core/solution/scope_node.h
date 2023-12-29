@@ -1,7 +1,3 @@
-// TODO: maybe each worker tracks tries separately
-// - each will have different "experiences", so will go different directions
-// - means that won't have to sync
-
 // TODO: don't spend effort fully trying to match scope in tries
 // - even small variations in nodes can cause big differences in state
 // - instead, try to have the random variation lead to more similar outcomes
@@ -71,6 +67,12 @@ public:
 	double decision_standard_deviation;
 
 	int max_iters;
+
+	/**
+	 * - for RetrainLoopExperiment
+	 */
+	std::vector<int> loop_scope_context;
+	std::vector<int> loop_node_context;
 
 	int next_node_id;
 	AbstractNode* next_node;
