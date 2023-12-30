@@ -1,5 +1,5 @@
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef SOLUTION_HELPERS_H
+#define SOLUTION_HELPERS_H
 
 #include <map>
 #include <utility>
@@ -77,4 +77,4 @@ void finalize_loop_scope_node_states(ScopeNode* new_loop_scope_node,
 									 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 									 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 
-#endif /* HELPERS_H */
+#endif /* SOLUTION_HELPERS_H */

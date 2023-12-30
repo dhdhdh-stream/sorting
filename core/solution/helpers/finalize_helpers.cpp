@@ -2,7 +2,7 @@
  * - at containing scope, new inner state corresponds 1-to-1 with outer across new sequences/branch
  */
 
-#include "helpers.h"
+#include "solution_helpers.h"
 
 #include <iostream>
 #include <set>

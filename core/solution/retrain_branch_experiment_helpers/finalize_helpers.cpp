@@ -1,7 +1,7 @@
 #include "retrain_branch_experiment.h"
 
 #include "branch_node.h"
-#include "helpers.h"
+#include "solution_helpers.h"
 
 using namespace std;
 

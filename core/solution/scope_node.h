@@ -1,9 +1,3 @@
-// TODO: don't spend effort fully trying to match scope in tries
-// - even small variations in nodes can cause big differences in state
-// - instead, try to have the random variation lead to more similar outcomes
-//   - i.e., types
-//   - so scope tries will tend to match, even though they are unlikely to fully match
-
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 
@@ -78,6 +72,7 @@ public:
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
+	std::map<std::pair<std::vector<int>, std::vector<int>>, TryTracker*> tries;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

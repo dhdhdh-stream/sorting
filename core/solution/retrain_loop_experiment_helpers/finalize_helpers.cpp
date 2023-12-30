@@ -1,6 +1,6 @@
 #include "retrain_loop_experiment.h"
 
-#include "helpers.h"
+#include "solution_helpers.h"
 #include "scope_node.h"
 
 using namespace std;

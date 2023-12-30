@@ -8,7 +8,7 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
-#include "helpers.h"
+#include "solution_helpers.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"

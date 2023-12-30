@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "full_network.h"
 #include "globals.h"
-#include "helpers.h"
+#include "solution_helpers.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
