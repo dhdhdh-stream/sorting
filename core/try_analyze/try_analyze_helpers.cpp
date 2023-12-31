@@ -103,3 +103,36 @@ void try_distance(TryInstance* original,
 	distance = d.back().back();
 	diffs = d_diffs.back().back();
 }
+
+void try_scope_step_diff(TryScopeStep* original,
+						 TryScopeStep* potential,
+						 vector<AbstractNode*>& additions,
+						 vector<AbstractNode*>& removals) {
+	for (int o_index = 0; o_index < (int)original->original_nodes.size(); o_index++) {
+		bool is_match = false;
+		for (int p_index = 0; p_index < (int)potential->original_nodes.size(); p_index++) {
+			if (original->original_nodes[o_index] == potential->original_nodes[p_index]) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (!is_match) {
+			removals.push_back(original->original_nodes[o_index]);
+		}
+	}
+
+	for (int p_index = 0; p_index < (int)potential->original_nodes.size(); p_index++) {
+		bool is_match = false;
+		for (int o_index = 0; o_index < (int)original->original_nodes.size(); o_index++) {
+			if (original->original_nodes[o_index] == potential->original_nodes[p_index]) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (!is_match) {
+			additions.push_back(potential->original_nodes[p_index]);
+		}
+	}
+}

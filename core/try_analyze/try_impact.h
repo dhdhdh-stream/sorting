@@ -16,11 +16,13 @@ public:
 	std::map<int, std::pair<int, double>> action_post_impacts;
 	std::map<AbstractNode*, std::pair<int, double>> node_post_impacts;
 
-
+	TryImpact();
 
 	double calc_impact(TryInstance* try_instance,
 					   int index);
-
+	void backprop(double impact_diff,
+				  TryInstance* try_instance,
+				  int index);
 };
 
 #endif /* TRY_IMPACT_H */
