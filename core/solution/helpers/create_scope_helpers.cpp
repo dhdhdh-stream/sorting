@@ -12,6 +12,7 @@
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "try_scope_step.h"
 
 using namespace std;
 
@@ -68,7 +69,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 						}
 						new_action_node->next_node = next_mapping.second;
 
-						new_try_scope_step->original_nodes.push_back(action_node);
+						new_try_scope_step->original_nodes.push_back({action_node->parent->id, action_node->id});
 
 						mapping = {true, new_action_node};
 					} else {
@@ -116,7 +117,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 						}
 						new_scope_node->next_node = next_mapping.second;
 
-						new_try_scope_step->original_nodes.push_back(scope_node);
+						new_try_scope_step->original_nodes.push_back({scope_node->parent->id, scope_node->id});
 
 						mapping = {true, new_scope_node};
 					} else {
@@ -224,7 +225,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 								}
 								new_branch_node->branch_next_node = branch_mapping.second;
 
-								new_try_scope_step->original_nodes.push_back(branch_node);
+								new_try_scope_step->original_nodes.push_back({branch_node->parent->id, branch_node->id});
 
 								mapping = {true, new_branch_node};
 							} else if (original_mapping.first) {
@@ -349,7 +350,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						}
 						new_action_node->next_node = next_mapping.second;
 
-						new_try_scope_step->original_nodes.push_back(action_node);
+						new_try_scope_step->original_nodes.push_back({action_node->parent->id, action_node->id});
 
 						mapping = {true, new_action_node};
 					} else {
@@ -398,7 +399,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						}
 						new_scope_node->next_node = next_mapping.second;
 
-						new_try_scope_step->original_nodes.push_back(scope_node);
+						new_try_scope_step->original_nodes.push_back({scope_node->parent->id, scope_node->id});
 
 						mapping = {true, new_scope_node};
 					} else {
@@ -514,7 +515,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 								}
 								new_branch_node->branch_next_node = branch_mapping.second;
 
-								new_try_scope_step->original_nodes.push_back(branch_node);
+								new_try_scope_step->original_nodes.push_back({branch_node->parent->id, branch_node->id});
 
 								mapping = {true, new_branch_node};
 							} else if (original_mapping.first) {
@@ -1963,6 +1964,4 @@ void create_scope(vector<ContextLayer>& context,
 			}
 		}
 	}
-
-	return new_potential_scope_node;
 }

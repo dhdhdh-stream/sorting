@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "try_scope_step.h"
 
 using namespace std;
 
@@ -90,11 +91,15 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				PotentialScopeNode* new_potential_scope_node = create_scope(
-					context,
-					1,
-					solution->root,
-					NULL);
+				PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
+				TryScopeStep* new_try_scope_step = new TryScopeStep();
+				create_scope(context,
+							 1,
+							 solution->root,
+							 NULL,
+							 new_potential_scope_node,
+							 new_try_scope_step);
+				delete new_try_scope_step;
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				this->curr_root_scope_nodes.push_back(NULL);

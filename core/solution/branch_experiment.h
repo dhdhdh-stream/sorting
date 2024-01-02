@@ -19,6 +19,7 @@ class PassThroughExperiment;
 class PotentialScopeNode;
 class ScopeHistory;
 class State;
+class TryInstance;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
@@ -71,6 +72,7 @@ public:
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
 	bool curr_is_loop;
+	TryInstance* curr_try_instance;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
@@ -79,6 +81,7 @@ public:
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
 	bool best_is_loop;
+	TryInstance* best_try_instance;
 
 	double new_average_score;
 

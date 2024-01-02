@@ -4,20 +4,14 @@
 #include <thread>
 #include <random>
 
-#include "action_node.h"
-#include "branch_experiment.h"
-#include "branch_node.h"
-#include "constants.h"
 #include "context_layer.h"
 #include "globals.h"
-#include "helpers.h"
+#include "solution_helpers.h"
 #include "minesweeper.h"
 #include "run_helper.h"
 #include "scope.h"
-#include "scope_node.h"
 #include "solution.h"
 #include "sorting.h"
-#include "state.h"
 #include "state_status.h"
 
 using namespace std;

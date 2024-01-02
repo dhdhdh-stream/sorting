@@ -1,8 +1,17 @@
 #include "try_analyze_helpers.h"
 
+#include <set>
+
+#include "constants.h"
+#include "try_instance.h"
+#include "try_scope_step.h"
+#include "try_tracker.h"
+
+using namespace std;
+
 double try_scope_step_cost(TryScopeStep* first,
 						   TryScopeStep* second) {
-	vector<AbstractNode*> shared;
+	vector<pair<int, int>> shared;
 	for (int f_index = 0; f_index < (int)first->original_nodes.size(); f_index++) {
 		bool is_match = false;
 		for (int s_index = 0; s_index < (int)second->original_nodes.size(); s_index++) {
@@ -17,7 +26,7 @@ double try_scope_step_cost(TryScopeStep* first,
 		}
 	}
 
-	set<AbstractNode*> all;
+	set<pair<int, int>> all;
 	for (int f_index = 0; f_index < (int)first->original_nodes.size(); f_index++) {
 		all.insert(first->original_nodes[f_index]);
 	}
@@ -48,7 +57,7 @@ void try_distance(TryInstance* original,
 		}
 	}
 
-	vector<vector<double>> d(original_length+1, vector<int>(potential_length+1));
+	vector<vector<double>> d(original_length+1, vector<double>(potential_length+1));
 	vector<vector<vector<pair<int, pair<int, int>>>>> d_diffs(original_length+1, vector<vector<pair<int, pair<int, int>>>>(potential_length+1));
 
 	d[0][0] = 0.0;
@@ -88,7 +97,7 @@ void try_distance(TryInstance* original,
 						&& potential->step_types[p_index-1] == STEP_TYPE_POTENTIAL_SCOPE) {
 					d_diffs[o_index][p_index].push_back({TRY_SUBSTITUTE, {o_index-1, p_index-1}});
 				}
-			} else if (insertion < deletion) {
+			} else if (insertion_cost < deletion_cost) {
 				d[o_index][p_index] = insertion_cost;
 				d_diffs[o_index][p_index] = d_diffs[o_index][p_index-1];
 				d_diffs[o_index][p_index].push_back({TRY_INSERT, {o_index-1, p_index-1}});
@@ -106,8 +115,8 @@ void try_distance(TryInstance* original,
 
 void try_scope_step_diff(TryScopeStep* original,
 						 TryScopeStep* potential,
-						 vector<AbstractNode*>& additions,
-						 vector<AbstractNode*>& removals) {
+						 vector<pair<int, int>>& additions,
+						 vector<pair<int, int>>& removals) {
 	for (int o_index = 0; o_index < (int)original->original_nodes.size(); o_index++) {
 		bool is_match = false;
 		for (int p_index = 0; p_index < (int)potential->original_nodes.size(); p_index++) {

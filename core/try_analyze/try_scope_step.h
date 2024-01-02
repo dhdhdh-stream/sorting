@@ -6,11 +6,18 @@
 #ifndef TRY_SCOPE_STEP_H
 #define TRY_SCOPE_STEP_H
 
+#include <fstream>
+#include <utility>
+#include <vector>
+
 class TryScopeStep {
 public:
-	std::vector<AbstractNode*> original_nodes;
+	std::vector<std::pair<int, int>> original_nodes;
 
+	TryScopeStep();
+	TryScopeStep(std::ifstream& input_file);
 
+	void save(std::ofstream& output_file);
 };
 
 #endif /* TRY_SCOPE_STEP_H */

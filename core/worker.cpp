@@ -10,7 +10,7 @@
 #include "constants.h"
 #include "context_layer.h"
 #include "globals.h"
-#include "helpers.h"
+#include "solution_helpers.h"
 #include "minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"

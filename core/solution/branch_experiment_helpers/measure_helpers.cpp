@@ -14,6 +14,8 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "try_instance.h"
+#include "try_tracker.h"
 #include "utilities.h"
 
 using namespace std;
@@ -170,6 +172,32 @@ void BranchExperiment::measure_backprop(double target_val) {
 	this->state_iter++;
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
+
+		if (this->parent_pass_through_experiment == NULL) {
+			this->best_try_instance->result = this->combined_score;
+
+			Scope* containing_scope = solution->scopes[this->scope_context.back()];
+			if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
+
+				map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = action_node->tries.find(
+					{this->scope_context, this->node_context});
+				if (it == action_node->tries.end()) {
+					it = action_node->tries.insert({{this->scope_context, this->node_context}, new TryTracker()}).first;
+				}
+				it->second->backprop(this->best_try_instance);
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
+
+				map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = scope_node->tries.find(
+					{this->scope_context, this->node_context});
+				if (it == scope_node->tries.end()) {
+					it = scope_node->tries.insert({{this->scope_context, this->node_context}, new TryTracker()}).first;
+				}
+				it->second->backprop(this->best_try_instance);
+			}
+			this->best_try_instance = NULL;
+		}
 
 		// cout << "Branch" << endl;
 		// cout << "measure" << endl;

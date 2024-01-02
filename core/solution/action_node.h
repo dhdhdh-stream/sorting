@@ -16,6 +16,7 @@ class AbstractExperiment;
 class AbstractExperimentHistory;
 class Sequence;
 class State;
+class TryTracker;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {

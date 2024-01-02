@@ -17,15 +17,20 @@ class Scope;
 class ScopeHistory;
 class ScopeNode;
 class State;
+class TryScopeStep;
 
 void create_experiment(ScopeHistory* root_history);
 
-PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
-								 int explore_context_depth,
-								 Scope* parent_scope,
-								 PassThroughExperiment* parent_pass_through_experiment);
-PotentialScopeNode* create_loop(std::vector<ContextLayer>& context,
-								int explore_context_depth);
+void create_scope(std::vector<ContextLayer>& context,
+				  int explore_context_depth,
+				  Scope* parent_scope,
+				  PassThroughExperiment* parent_pass_through_experiment,
+				  PotentialScopeNode* new_potential_scope_node,
+				  TryScopeStep* new_try_scope_step);
+void create_loop(std::vector<ContextLayer>& context,
+				 int explore_context_depth,
+				 PotentialScopeNode* new_potential_scope_node,
+				 TryScopeStep* new_try_scope_step);
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<ContextLayer>& context,

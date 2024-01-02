@@ -7,6 +7,7 @@
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "try_scope_step.h"
 
 using namespace std;
 
@@ -65,8 +66,10 @@ void create_loop_experiment_helper(int target_depth,
 	// no need to pop_back context
 }
 
-PotentialScopeNode* create_loop(vector<ContextLayer>& context,
-								int explore_context_depth) {
+void create_loop(vector<ContextLayer>& context,
+				 int explore_context_depth,
+				 PotentialScopeNode* new_potential_scope_node,
+				 TryScopeStep* new_try_scope_step) {
 	ScopeHistory* scope_history = context[context.size() - explore_context_depth].scope_history;
 
 	vector<vector<Scope*>> possible_scope_contexts;
@@ -93,7 +96,6 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 	new_scope->num_input_states = 0;
 	new_scope->num_local_states = 0;
 	new_scope->node_counter = 0;
-	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
 	new_potential_scope_node->scope = new_scope;
 	new_potential_scope_node->experiment_scope_depth = explore_context_depth;
 
@@ -173,6 +175,8 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 			ActionNode* new_action_node = new ActionNode();
 
 			new_action_node->action = original_action_node->action;
+
+			new_try_scope_step->original_nodes.push_back({original_action_node->parent->id, original_action_node->id});
 
 			vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
 			for (int s_index = 0; s_index < (int)original_action_node->state_is_local.size(); s_index++) {
@@ -308,6 +312,8 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 			ScopeNode* new_scope_node = new ScopeNode();
 
 			new_scope_node->inner_scope = original_scope_node->inner_scope;
+
+			new_try_scope_step->original_nodes.push_back({original_scope_node->parent->id, original_scope_node->id});
 
 			for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
 				if (original_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -532,6 +538,4 @@ PotentialScopeNode* create_loop(vector<ContextLayer>& context,
 
 	new_scope->starting_node_id = 0;
 	new_scope->starting_node = new_nodes[0];
-
-	return new_potential_scope_node;
 }

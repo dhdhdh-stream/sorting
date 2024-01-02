@@ -14,6 +14,9 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "try_instance.h"
+#include "try_scope_step.h"
+#include "try_tracker.h"
 
 using namespace std;
 
@@ -131,6 +134,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	}
 	overall_history->existing_predicted_score = predicted_score;
 
+	this->curr_try_instance = new TryInstance();
+
 	uniform_int_distribution<int> loop_distribution(0, 1);
 	if (this->parent_pass_through_experiment == NULL && loop_distribution(generator)) {
 		this->curr_exit_depth = 0;
@@ -139,9 +144,17 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 		this->curr_actions.push_back(NULL);
 
-		PotentialScopeNode* new_potential_loop = create_loop(context,
-															 (int)this->scope_context.size());
+		this->curr_try_instance->step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+		this->curr_try_instance->actions.push_back(-1);
+
+		PotentialScopeNode* new_potential_loop = new PotentialScopeNode();
+		TryScopeStep* new_try_scope_step = new TryScopeStep();
+		create_loop(context,
+					(int)this->scope_context.size(),
+					new_potential_loop,
+					new_try_scope_step);
 		this->curr_potential_scopes.push_back(new_potential_loop);
+		this->curr_try_instance->potential_scopes.push_back(new_try_scope_step);
 
 		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_loop);
 		new_potential_loop->activate(problem,
@@ -211,6 +224,10 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 					this->curr_potential_scopes.push_back(NULL);
 
+					this->curr_try_instance->step_types.push_back(STEP_TYPE_ACTION);
+					this->curr_try_instance->actions.push_back(new_action_node->action.move);
+					this->curr_try_instance->potential_scopes.push_back(NULL);
+
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
 					new_action_node->activate(curr_node,
 											  problem,
@@ -224,12 +241,19 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 					this->curr_actions.push_back(NULL);
 
-					PotentialScopeNode* new_potential_scope_node = create_scope(
-						context,
-						(int)this->scope_context.size(),
-						context[context.size() - this->scope_context.size()].scope,
-						this->parent_pass_through_experiment);
+					this->curr_try_instance->step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+					this->curr_try_instance->actions.push_back(-1);
+
+					PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
+					TryScopeStep* new_try_scope_step = new TryScopeStep();
+					create_scope(context,
+								 (int)this->scope_context.size(),
+								 context[context.size() - this->scope_context.size()].scope,
+								 this->parent_pass_through_experiment,
+								 new_potential_scope_node,
+								 new_try_scope_step);
 					this->curr_potential_scopes.push_back(new_potential_scope_node);
+					this->curr_try_instance->potential_scopes.push_back(new_try_scope_step);
 
 					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
 					new_potential_scope_node->activate(problem,
@@ -241,6 +265,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 			}
 		}
 		this->curr_is_loop = false;
+
+		if (this->curr_exit_node == NULL) {
+			this->curr_try_instance->exit = {this->curr_exit_depth, {-1, -1}};
+		} else {
+			this->curr_try_instance->exit = {this->curr_exit_depth, {this->curr_exit_node->parent->id, this->curr_exit_node->id}};
+		}
 
 		{
 			if (this->curr_exit_depth == 0) {
@@ -271,6 +301,9 @@ void BranchExperiment::explore_backprop(double target_val,
 					delete this->best_potential_scopes[s_index];
 				}
 			}
+			if (this->best_try_instance != NULL) {
+				delete this->best_try_instance;
+			}
 
 			this->best_surprise = curr_surprise;
 			this->best_step_types = this->curr_step_types;
@@ -279,10 +312,12 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
 			this->best_is_loop = this->curr_is_loop;
+			this->best_try_instance = this->curr_try_instance;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
+			this->curr_try_instance = NULL;
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -291,10 +326,12 @@ void BranchExperiment::explore_backprop(double target_val,
 					delete this->curr_potential_scopes[s_index];
 				}
 			}
+			delete this->curr_try_instance;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
+			this->curr_try_instance = NULL;
 		}
 
 		this->state_iter++;
@@ -309,6 +346,39 @@ void BranchExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
+				if (this->parent_pass_through_experiment == NULL) {
+					Scope* containing_scope = solution->scopes[this->scope_context.back()];
+					if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
+
+						map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = action_node->tries.find(
+							{this->scope_context, this->node_context});
+						if (it != action_node->tries.end()) {
+							double predicted_impact;
+							double closest_distance;
+							it->second->evaluate_potential(this->best_try_instance,
+														   predicted_impact,
+														   closest_distance);
+							cout << "predicted_impact: " << predicted_impact << endl;
+							cout << "closest_distance: " << closest_distance << endl;
+						}
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
+
+						map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = scope_node->tries.find(
+							{this->scope_context, this->node_context});
+						if (it != scope_node->tries.end()) {
+							double predicted_impact;
+							double closest_distance;
+							it->second->evaluate_potential(this->best_try_instance,
+														   predicted_impact,
+														   closest_distance);
+							cout << "predicted_impact: " << predicted_impact << endl;
+							cout << "closest_distance: " << closest_distance << endl;
+						}
+					}
+				}
+
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

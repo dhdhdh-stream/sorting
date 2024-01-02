@@ -16,6 +16,7 @@ class Scope;
 class ScopeHistory;
 class Sequence;
 class State;
+class TryTracker;
 
 const int INPUT_TYPE_STATE = 0;
 const int INPUT_TYPE_CONSTANT = 1;
