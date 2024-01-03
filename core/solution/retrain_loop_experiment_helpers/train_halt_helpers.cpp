@@ -1,5 +1,6 @@
 #include "retrain_loop_experiment.h"
 
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "full_network.h"
@@ -20,6 +21,9 @@ void RetrainLoopExperiment::train_halt_activate(
 		ScopeNodeHistory* parent_scope_node_history) {
 	RetrainLoopExperimentOverallHistory* overall_history = (RetrainLoopExperimentOverallHistory*)run_helper.experiment_history;
 
+	overall_history->instance_iters.push_back(0);
+	overall_history->existing_halt_vals.push_back(vector<double>());
+
 	int iter_index = 0;
 	while (true) {
 		this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - 1 - this->scope_node->loop_scope_context.size()].scope_history));
@@ -36,7 +40,7 @@ void RetrainLoopExperiment::train_halt_activate(
 		this->i_local_state_vals_histories.push_back(local_state_vals_snapshot);
 		this->i_temp_state_vals_histories.push_back(temp_state_vals_snapshot);
 
-		overall_history->num_iters++;
+		overall_history->instance_iters.back()++;
 
 		if (iter_index >= this->scope_node->max_iters) {
 			break;
@@ -75,7 +79,7 @@ void RetrainLoopExperiment::train_halt_activate(
 			}
 		}
 
-		this->i_target_val_histories.push_back(halt_score);
+		overall_history->existing_halt_vals.back().push_back(halt_score);
 
 		this->scope_node->inner_scope->activate(problem,
 												context,
@@ -126,8 +130,13 @@ void RetrainLoopExperiment::train_halt_activate(
 void RetrainLoopExperiment::train_halt_backprop(
 		double target_val,
 		RetrainLoopExperimentOverallHistory* history) {
-	if (history->num_iters == this->scope_node->max_iters) {
-		this->i_target_val_histories.push_back(target_val - this->scope_node->halt_score_mod);
+	for (int i_index = 0; i_index < (int)history->existing_halt_vals.size(); i_index++) {
+		for (int iter_index = 0; iter_index < (int)history->existing_halt_vals[i_index].size(); iter_index++) {
+			this->i_target_val_histories.push_back(history->existing_halt_vals[i_index][iter_index]);
+		}
+		if (history->instance_iters[i_index] > (int)history->existing_halt_vals[i_index].size()) {
+			this->i_target_val_histories.push_back(target_val - this->scope_node->halt_score_mod);
+		}
 	}
 
 	this->state_iter++;
@@ -368,7 +377,7 @@ void RetrainLoopExperiment::train_halt_backprop(
 		this->i_temp_state_vals_histories.clear();
 		this->i_target_val_histories.clear();
 
-		this->state = RETRAIN_LOOP_EXPERIMENT_STATE_TRAIN_CONTINUE;
+		this->state = RETRAIN_LOOP_EXPERIMENT_STATE_TRAIN_CONTINUE_PRE;
 		this->state_iter = 0;
 		this->sub_state_iter = 0;
 	}

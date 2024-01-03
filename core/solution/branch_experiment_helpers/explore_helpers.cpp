@@ -397,7 +397,13 @@ void BranchExperiment::explore_backprop(double target_val,
 
 						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
 								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-							if (it->second->type == NODE_TYPE_BRANCH) {
+							if (it->second->type == NODE_TYPE_SCOPE) {
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->is_loop) {
+									scope_node->loop_scope_context = vector<int>{new_scope_id};
+									scope_node->loop_node_context = vector<int>{scope_node->id};
+								}
+							} else if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->branch_scope_context = vector<int>{new_scope_id};
 								branch_node->branch_node_context = vector<int>{branch_node->id};

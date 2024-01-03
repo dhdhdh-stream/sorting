@@ -191,6 +191,9 @@ class RetrainLoopExperimentOverallHistory : public AbstractExperimentHistory {
 public:
 	int instance_count;
 
+	std::vector<int> instance_iters;
+	std::vector<std::vector<double>> existing_halt_vals;
+
 	bool has_target;
 	int num_iters;
 

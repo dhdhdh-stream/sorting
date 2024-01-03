@@ -106,6 +106,9 @@ TryTracker::~TryTracker() {
 	}
 }
 
+/**
+ * - this->tries.size() != 0
+ */
 void TryTracker::evaluate_potential(TryInstance* potential,
 									double& predicted_impact,
 									double& closest_distance) {
@@ -238,7 +241,8 @@ void TryTracker::backprop(TryInstance* new_add) {
 		int num_compare = ceil(log(this->tries.size()));
 		for (int c_index = 0; c_index < num_compare; c_index++) {
 			uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-			int original_index = remaining_indexes[distribution(generator)];
+			int remaining_index = distribution(generator);
+			int original_index = remaining_indexes[remaining_index];
 
 			double distance;
 			vector<pair<int, pair<int, int>>> diffs;
@@ -443,7 +447,7 @@ void TryTracker::backprop(TryInstance* new_add) {
 				}
 			}
 
-			remaining_indexes.erase(remaining_indexes.begin() + original_index);
+			remaining_indexes.erase(remaining_indexes.begin() + remaining_index);
 		}
 	}
 

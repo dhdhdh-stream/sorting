@@ -9,6 +9,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -179,7 +180,7 @@ void RetrainLoopExperiment::train_continue_non_target_activate(
 		ScopeNodeHistory* parent_scope_node_history) {
 	int iter_index = 0;
 	while (true) {
-		if (iter_index >= this->scope_node->max_iters) {
+		if (iter_index >= this->scope_node->max_iters + 1) {
 			break;
 		}
 
@@ -392,7 +393,7 @@ void RetrainLoopExperiment::train_continue_backprop(
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
 	if (history->has_target) {
-		if (history->num_iters == this->scope_node->max_iters) {
+		if (history->num_iters == this->scope_node->max_iters + 1) {
 			this->i_target_val_histories.push_back(target_val - this->scope_node->continue_score_mod);
 		}
 		for (int h_index = 0; h_index < history->num_iters; h_index++) {

@@ -12,6 +12,7 @@
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "retrain_branch_experiment.h"
+#include "retrain_loop_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -1208,7 +1209,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			branch_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			branch_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else {
+		} else if (experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
 
 			pass_through_experiment->new_states.push_back(new_state);
@@ -1218,6 +1219,16 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			pass_through_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			pass_through_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
+		} else {
+			RetrainLoopExperiment* retrain_loop_experiment = (RetrainLoopExperiment*)experiment;
+
+			retrain_loop_experiment->new_states.push_back(new_state);
+			retrain_loop_experiment->new_state_nodes.push_back(nodes);
+			retrain_loop_experiment->new_state_scope_contexts.push_back(scope_contexts);
+			retrain_loop_experiment->new_state_node_contexts.push_back(node_contexts);
+			retrain_loop_experiment->new_state_obs_indexes.push_back(obs_indexes);
+
+			retrain_loop_experiment->continue_temp_state_weights[0][new_state] = sqrt(resolved_variance);
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {

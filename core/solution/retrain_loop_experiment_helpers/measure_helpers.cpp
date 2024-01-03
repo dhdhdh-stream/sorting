@@ -9,6 +9,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ void RetrainLoopExperiment::measure_activate(
 		ScopeNodeHistory* parent_scope_node_history) {
 	int iter_index = 0;
 	while (true) {
-		if (iter_index >= this->scope_node->max_iters) {
+		if (iter_index >= this->scope_node->max_iters + 1) {
 			break;
 		}
 

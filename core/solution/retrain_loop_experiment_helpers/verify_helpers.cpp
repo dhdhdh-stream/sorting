@@ -10,6 +10,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -22,7 +23,7 @@ void RetrainLoopExperiment::verify_activate(
 		ScopeNodeHistory* parent_scope_node_history) {
 	int iter_index = 0;
 	while (true) {
-		if (iter_index >= this->scope_node->max_iters) {
+		if (iter_index >= this->scope_node->max_iters + 1) {
 			break;
 		}
 
@@ -185,14 +186,14 @@ void RetrainLoopExperiment::verify_backprop(double target_val) {
 	if (this->state_iter >= 2 * solution->curr_num_datapoints) {
 		this->combined_score /= (2 * solution->curr_num_datapoints);
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (combined_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
 			cout << "Retrain Loop" << endl;

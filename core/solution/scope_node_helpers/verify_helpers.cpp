@@ -196,52 +196,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 			if (decision_is_halt) {
 				break;
 			} else {
-				if (this->verify_key == run_helper.verify_key) {
-					// problem->print();
-
-					// cout << "solution->max_depth: " << solution->max_depth << endl;
-
-					// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-
-					sort(verify_input_input_state_vals.begin(), verify_input_input_state_vals.end());
-					sort(this->verify_input_input_state_vals[0].begin(), this->verify_input_input_state_vals[0].end());
-					sort(verify_input_local_state_vals.begin(), verify_input_local_state_vals.end());
-					sort(this->verify_input_local_state_vals[0].begin(), this->verify_input_local_state_vals[0].end());
-
-					if (this->verify_input_input_state_vals[0] != verify_input_input_state_vals
-							|| this->verify_input_local_state_vals[0] != verify_input_local_state_vals) {
-						cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
-						cout << "this->parent->id: " << this->parent->id << endl;
-						cout << "this->id: " << this->id << endl;
-
-						cout << "this->verify_input_input_state_vals[0]" << endl;
-						for (int v_index = 0; v_index < (int)this->verify_input_input_state_vals[0].size(); v_index++) {
-							cout << v_index << ": " << this->verify_input_input_state_vals[0][v_index] << endl;
-						}
-
-						cout << "verify_input_input_state_vals" << endl;
-						for (int v_index = 0; v_index < (int)verify_input_input_state_vals.size(); v_index++) {
-							cout << v_index << ": " << verify_input_input_state_vals[v_index] << endl;
-						}
-
-						cout << "this->verify_input_local_state_vals[0]" << endl;
-						for (int v_index = 0; v_index < (int)this->verify_input_local_state_vals[0].size(); v_index++) {
-							cout << v_index << ": " << this->verify_input_local_state_vals[0][v_index] << endl;
-						}
-
-						cout << "verify_input_local_state_vals" << endl;
-						for (int v_index = 0; v_index < (int)verify_input_local_state_vals.size(); v_index++) {
-							cout << v_index << ": " << verify_input_local_state_vals[v_index] << endl;
-						}
-
-						throw invalid_argument("scope node verify fail");
-					}
-
-					this->verify_input_input_state_vals.erase(this->verify_input_input_state_vals.begin());
-					this->verify_input_local_state_vals.erase(this->verify_input_local_state_vals.begin());
-				}
-
 				this->inner_scope->verify_activate(problem,
 												   context,
 												   inner_exit_depth,
@@ -280,49 +234,6 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 							}
 						}
 					}
-				}
-
-				if (this->verify_key == run_helper.verify_key) {
-					// problem->print();
-
-					// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-
-					// cout << "this->id: " << this->id << endl;
-
-					sort(output_input_state_vals.begin(), output_input_state_vals.end());
-					sort(this->verify_output_input_state_vals[0].begin(), this->verify_output_input_state_vals[0].end());
-					sort(output_local_state_vals.begin(), output_local_state_vals.end());
-					sort(this->verify_output_local_state_vals[0].begin(), this->verify_output_local_state_vals[0].end());
-
-					if (this->verify_output_input_state_vals[0] != output_input_state_vals
-							|| this->verify_output_local_state_vals[0] != output_local_state_vals) {
-						cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
-						cout << "this->verify_output_input_state_vals[0]" << endl;
-						for (int v_index = 0; v_index < (int)this->verify_output_input_state_vals[0].size(); v_index++) {
-							cout << v_index << ": " << this->verify_output_input_state_vals[0][v_index] << endl;
-						}
-
-						cout << "output_input_state_vals" << endl;
-						for (int v_index = 0; v_index < (int)output_input_state_vals.size(); v_index++) {
-							cout << v_index << ": " << output_input_state_vals[v_index] << endl;
-						}
-
-						cout << "this->verify_output_local_state_vals[0]" << endl;
-						for (int v_index = 0; v_index < (int)this->verify_output_local_state_vals[0].size(); v_index++) {
-							cout << v_index << ": " << this->verify_output_local_state_vals[0][v_index] << endl;
-						}
-
-						cout << "output_local_state_vals" << endl;
-						for (int v_index = 0; v_index < (int)output_local_state_vals.size(); v_index++) {
-							cout << v_index << ": " << output_local_state_vals[v_index] << endl;
-						}
-
-						throw invalid_argument("scope node verify fail");
-					}
-
-					this->verify_output_input_state_vals.erase(this->verify_output_input_state_vals.begin());
-					this->verify_output_local_state_vals.erase(this->verify_output_local_state_vals.begin());
 				}
 
 				if (inner_exit_depth != -1

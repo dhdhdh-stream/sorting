@@ -2,6 +2,17 @@
 
 #include "retrain_loop_experiment.h"
 
+#include <iostream>
+
+#include "constants.h"
+#include "full_network.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "state.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainLoopExperiment::capture_verify_activate(
@@ -18,9 +29,13 @@ void RetrainLoopExperiment::capture_verify_activate(
 
 	int iter_index = 0;
 	while (true) {
-		if (iter_index >= this->scope_node->max_iters) {
+		if (iter_index >= this->scope_node->max_iters + 1) {
 			break;
 		}
+
+		// problem->print();
+
+		// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
 		double continue_score = this->scope_node->continue_score_mod;
 		double halt_score = this->scope_node->halt_score_mod;
@@ -49,6 +64,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 					halt_score += halt_weight * normalized;
 
 					if (continue_weight_it != this->continue_input_state_weights[c_index].end()) {
+						// cout << c_index << " input " << it->first << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -57,6 +73,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 
 					if (continue_weight_it != this->continue_input_state_weights[c_index].end()) {
 						if (it->second.val != 0.0) {
+							// cout << c_index << " input " << it->first << " " << it->second.val << endl;
 							factors.push_back(it->second.val);
 						}
 					}
@@ -86,6 +103,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 					halt_score += halt_weight * normalized;
 
 					if (continue_weight_it != this->continue_local_state_weights[c_index].end()) {
+						// cout << c_index << " local " << it->first << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -94,6 +112,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 
 					if (continue_weight_it != this->continue_local_state_weights[c_index].end()) {
 						if (it->second.val != 0.0) {
+							// cout << c_index << " local " << it->first << " " << it->second.val << endl;
 							factors.push_back(it->second.val);
 						}
 					}
@@ -123,6 +142,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 					halt_score += halt_weight * normalized;
 
 					if (continue_weight_it != this->continue_temp_state_weights[c_index].end()) {
+						// cout << c_index << " temp " << it->first->id << " " << normalized << endl;
 						factors.push_back(normalized);
 					}
 				} else {
@@ -130,6 +150,7 @@ void RetrainLoopExperiment::capture_verify_activate(
 					halt_score += halt_weight * it->second.val;
 
 					if (continue_weight_it != this->continue_temp_state_weights[c_index].end()) {
+						// cout << c_index << " temp " << it->first->id << " " << it->second.val << endl;
 						factors.push_back(it->second.val);
 					}
 				}
