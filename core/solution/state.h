@@ -1,3 +1,7 @@
+/**
+ * TODO: in addition to state, have memory that can free form draw in?
+ */
+
 #ifndef STATE_H
 #define STATE_H
 

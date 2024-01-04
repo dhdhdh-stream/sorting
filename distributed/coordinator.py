@@ -44,7 +44,7 @@ def download_tries(sftp_client, worker_name):
 		main_file = open('saves/main/tries.txt', 'a+')
 		new_file = open(local_filename, 'r')
 
-		main_file.write(new_file)
+		main_file.write(new_file.read())
 
 		main_file.close()
 		new_file.close()

@@ -62,17 +62,17 @@ void PassThroughExperiment::verify_new_score_backprop(
 		double target_val) {
 	this->o_target_val_histories.push_back(target_val);
 
-	if ((int)this->o_target_val_histories.size() >= 2 * solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < 2 * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / (2 * solution->curr_num_datapoints);
+		this->new_average_score = sum_scores / solution->curr_num_datapoints;
 
 		double score_improvement = this->new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
-			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
+			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {

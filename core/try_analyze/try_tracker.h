@@ -1,3 +1,8 @@
+/**
+ * - TODO: use tries to guide what to explore
+ *   - "what if I take this try, but swap order/add step/remove step"
+ */
+
 #ifndef TRY_TRACKER_H
 #define TRY_TRACKER_H
 

@@ -96,14 +96,14 @@ void PassThroughExperiment::measure_new_score_backprop(
 		}
 		this->new_average_score = sum_scores / solution->curr_num_datapoints;
 
-		this->best_try_instance->result = this->new_average_score;
-		ofstream output_file;
-		output_file.open(path + "saves/tries/" + to_string(time(NULL)) + "_t.txt");
-		this->best_try_instance->save(output_file);
-		output_file.close();
-		Scope* parent_scope = solution->scopes[this->scope_context[0]];
-		parent_scope->tries->update(this->best_try_instance);
-		this->best_try_instance = NULL;
+		// this->best_try_instance->result = this->new_average_score;
+		// ofstream output_file;
+		// output_file.open(path + "saves/tries/" + to_string(time(NULL)) + "_t.txt");
+		// this->best_try_instance->save(output_file);
+		// output_file.close();
+		// Scope* parent_scope = solution->scopes[this->scope_context[0]];
+		// parent_scope->tries->update(this->best_try_instance);
+		// this->best_try_instance = NULL;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%4 == 0) {

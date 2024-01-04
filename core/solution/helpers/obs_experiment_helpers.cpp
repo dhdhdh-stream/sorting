@@ -43,7 +43,7 @@ const int OBS_LIMIT = 4;
 
 const double MIN_IMPACT_SCALE = 0.3;
 
-const double TEST_SAMPLES_PERCENTAGE = 0.2;
+const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
 void create_obs_experiment_helper(vector<int>& scope_context,
 								  vector<int>& node_context,

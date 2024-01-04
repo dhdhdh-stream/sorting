@@ -114,8 +114,8 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 	}
 
 	this->curr_try_instance->start = {this->scope_context, this->node_context};
-	vector<int> exit_scope_context(this->scope_context.end() - this->curr_exit_depth, this->scope_context.end());
-	vector<int> exit_node_context(this->node_context.end() - this->curr_exit_depth, this->node_context.end());
+	vector<int> exit_scope_context(this->scope_context.begin() + this->curr_exit_depth, this->scope_context.end());
+	vector<int> exit_node_context(this->node_context.begin() + this->curr_exit_depth, this->node_context.end());
 	if (this->curr_exit_node == NULL) {
 		exit_node_context.back() = -1;
 	} else {
@@ -236,14 +236,16 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			if (this->best_score > 0.0) {
 			#endif /* MDEBUG */
 				Scope* parent_scope = solution->scopes[this->scope_context[0]];
-				double predicted_impact;
-				double closest_distance;
-				parent_scope->tries->evaluate_potential(
-					this->best_try_instance,
-					predicted_impact,
-					closest_distance);
-				cout << "predicted_impact: " << predicted_impact << endl;
-				cout << "closest_distance: " << closest_distance << endl;
+				if (parent_scope->tries->tries.size() > 0) {
+					double predicted_impact;
+					double closest_distance;
+					parent_scope->tries->evaluate_potential(
+						this->best_try_instance,
+						predicted_impact,
+						closest_distance);
+					cout << "predicted_impact: " << predicted_impact << endl;
+					cout << "closest_distance: " << closest_distance << endl;
+				}
 
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

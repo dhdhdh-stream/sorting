@@ -167,13 +167,13 @@ void BranchExperiment::verify_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= 2 * solution->curr_num_datapoints) {
-		this->combined_score /= (2 * solution->curr_num_datapoints);
+	if (this->state_iter >= solution->curr_num_datapoints) {
+		this->combined_score /= solution->curr_num_datapoints;
 
 		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(2 * solution->curr_num_datapoints));
+			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 

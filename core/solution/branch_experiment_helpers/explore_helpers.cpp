@@ -275,8 +275,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		this->curr_is_loop = false;
 
 		this->curr_try_instance->start = {this->scope_context, this->node_context};
-		vector<int> exit_scope_context(this->scope_context.end() - this->curr_exit_depth, this->scope_context.end());
-		vector<int> exit_node_context(this->node_context.end() - this->curr_exit_depth, this->node_context.end());
+		vector<int> exit_scope_context(this->scope_context.begin() + this->curr_exit_depth, this->scope_context.end());
+		vector<int> exit_node_context(this->node_context.begin() + this->curr_exit_depth, this->node_context.end());
 		if (this->curr_exit_node == NULL) {
 			exit_node_context.back() = -1;
 		} else {
@@ -360,14 +360,16 @@ void BranchExperiment::explore_backprop(double target_val,
 			#endif /* MDEBUG */
 				if (this->parent_pass_through_experiment == NULL) {
 					Scope* parent_scope = solution->scopes[this->scope_context[0]];
-					double predicted_impact;
-					double closest_distance;
-					parent_scope->tries->evaluate_potential(
-						this->best_try_instance,
-						predicted_impact,
-						closest_distance);
-					cout << "predicted_impact: " << predicted_impact << endl;
-					cout << "closest_distance: " << closest_distance << endl;
+					if (parent_scope->tries->tries.size() > 0) {
+						double predicted_impact;
+						double closest_distance;
+						parent_scope->tries->evaluate_potential(
+							this->best_try_instance,
+							predicted_impact,
+							closest_distance);
+						cout << "predicted_impact: " << predicted_impact << endl;
+						cout << "closest_distance: " << closest_distance << endl;
+					}
 				}
 
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];

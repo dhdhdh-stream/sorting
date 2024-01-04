@@ -40,12 +40,14 @@ TryTracker::~TryTracker() {
 	}
 }
 
-/**
- * - this->tries.size() != 0
- */
 void TryTracker::evaluate_potential(TryInstance* potential,
 									double& predicted_impact,
 									double& closest_distance) {
+	/**
+	 * - TODO: only save like last 200 tries
+	 *   - though also save successes
+	 */
+
 	int best_index;
 	double best_distance = numeric_limits<double>::max();
 	vector<pair<int, pair<int,int>>> best_diffs;

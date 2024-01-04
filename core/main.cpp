@@ -322,6 +322,14 @@ int main(int argc, char* argv[]) {
 				solution->curr_num_datapoints *= 2;
 			}
 		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (run_index%1000 == 0) {
+			delete solution;
+			solution = new Solution();
+			solution->load("main");
+		}
+		#endif /* MDEBUG */
 	}
 
 	delete solution;

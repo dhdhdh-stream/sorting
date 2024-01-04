@@ -24,12 +24,12 @@ void PassThroughExperiment::verify_existing_score_backprop(
 		}
 	}
 
-	if ((int)this->o_target_val_histories.size() >= 2 * solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < 2 * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / (2 * solution->curr_num_datapoints);
+		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
 
 		// cout << "PassThrough" << endl;
 		// cout << "verify" << endl;
@@ -37,10 +37,10 @@ void PassThroughExperiment::verify_existing_score_backprop(
 		// cout << endl;
 
 		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < 2 * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_variance = sum_score_variance / (2 * solution->curr_num_datapoints);
+		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
 
 		this->o_target_val_histories.clear();
 

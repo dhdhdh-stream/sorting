@@ -275,8 +275,7 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
-			// TODO: free(): invalid size
-			// TODO: include saving/loading in debugging
+			solution->success_reset();
 
 			ifstream solution_save_file;
 			solution_save_file.open(path + "saves/main/solution.txt");
@@ -293,8 +292,6 @@ int main(int argc, char* argv[]) {
 
 				cout << "updated from main" << endl;
 			} else {
-				solution->success_reset();
-
 				/**
 				 * - possible race condition
 				 *   - but just means that previous update from another worker dropped
@@ -319,7 +316,8 @@ int main(int argc, char* argv[]) {
 			}
 		} else {
 			iter_index++;
-			if (iter_index%20000 == 0) {
+			// if (iter_index%20000 == 0) {
+			if (iter_index%10000 == 0) {
 				ifstream solution_save_file;
 				solution_save_file.open(path + "saves/main/solution.txt");
 				string id_line;

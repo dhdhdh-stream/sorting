@@ -14,6 +14,12 @@ class OuterExperiment;
 class Scope;
 class State;
 
+/**
+ * - lowering num datapoints increases speed, but:
+ *   - makes NNs less likely to generalize/be useful
+ *   - leads to more irrelevant/wrong updates
+ *   - makes it more difficult to notice small improvements
+ */
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 20;
 #else
