@@ -96,31 +96,14 @@ void PassThroughExperiment::measure_new_score_backprop(
 		}
 		this->new_average_score = sum_scores / solution->curr_num_datapoints;
 
-		// {
-		// 	this->best_try_instance->result = this->new_average_score;
-
-		// 	Scope* containing_scope = solution->scopes[this->scope_context.back()];
-		// 	if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
-		// 		ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
-
-		// 		map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = action_node->tries.find(
-		// 			{this->scope_context, this->node_context});
-		// 		if (it == action_node->tries.end()) {
-		// 			it = action_node->tries.insert({{this->scope_context, this->node_context}, new TryTracker()}).first;
-		// 		}
-		// 		it->second->backprop(this->best_try_instance);
-		// 	} else {
-		// 		ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
-
-		// 		map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = scope_node->tries.find(
-		// 			{this->scope_context, this->node_context});
-		// 		if (it == scope_node->tries.end()) {
-		// 			it = scope_node->tries.insert({{this->scope_context, this->node_context}, new TryTracker()}).first;
-		// 		}
-		// 		it->second->backprop(this->best_try_instance);
-		// 	}
-		// 	this->best_try_instance = NULL;
-		// }
+		this->best_try_instance->result = this->new_average_score;
+		ofstream output_file;
+		output_file.open(path + "saves/tries/" + to_string(time(NULL)) + "_t.txt");
+		this->best_try_instance->save(output_file);
+		output_file.close();
+		Scope* parent_scope = solution->scopes[this->scope_context[0]];
+		parent_scope->tries->update(this->best_try_instance);
+		this->best_try_instance = NULL;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%4 == 0) {

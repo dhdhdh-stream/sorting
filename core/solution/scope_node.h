@@ -73,7 +73,6 @@ public:
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
-	std::map<std::pair<std::vector<int>, std::vector<int>>, TryTracker*> tries;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

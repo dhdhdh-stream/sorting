@@ -4,9 +4,12 @@
 #include <stdio.h>
 
 #include "action_node.h"
+#include "globals.h"
 #include "outer_experiment.h"
 #include "scope.h"
 #include "state.h"
+#include "try_instance.h"
+#include "try_tracker.h"
 
 using namespace std;
 
@@ -62,8 +65,7 @@ void Solution::init() {
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
-void Solution::load(string path,
-					string name) {
+void Solution::load(string name) {
 	ifstream input_file;
 	input_file.open(path + "saves/" + name + "/solution.txt");
 
@@ -137,6 +139,20 @@ void Solution::load(string path,
 
 	input_file.close();
 
+	ifstream tries_file;
+	tries_file.open(path + "saves/" + name + "/tries.txt");
+	while (true) {
+		if (tries_file.peek() == EOF) {
+			break;
+		}
+
+		TryInstance* try_instance = new TryInstance(tries_file);
+
+		Scope* parent_scope = this->scopes[try_instance->start.first[0]];
+		parent_scope->tries->update(try_instance);
+	}
+	tries_file.close();
+
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
@@ -172,8 +188,7 @@ void Solution::fail_reset() {
 	this->outer_experiment = new OuterExperiment();
 }
 
-void Solution::save(string path,
-					string name) {
+void Solution::save(string name) {
 	ofstream output_file;
 	output_file.open(path + "saves/" + name + "/solution_temp.txt");
 

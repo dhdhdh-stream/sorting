@@ -69,6 +69,10 @@ for w_index in range(len(workers)):
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
 
+	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves/tries')
+	for line in iter(lambda:stdout.readline(2048), ''):
+		print(line, end='')
+
 	client_sftp.close()
 
 	transport = client.get_transport()

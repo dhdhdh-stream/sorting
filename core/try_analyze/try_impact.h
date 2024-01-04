@@ -4,16 +4,16 @@
 #include <fstream>
 #include <map>
 #include <utility>
+#include <vector>
 
 class TryInstance;
 
 class TryImpact {
 public:
-	/**
-	 * - if over 100, rolling
-	 */
 	int overall_count;
 	double overall_impact;
+
+	std::map<std::pair<std::vector<int>,std::vector<int>>, std::pair<int,double>> start_impacts;
 
 	/**
 	 * - if insert, use new; if remove, use original
@@ -27,23 +27,17 @@ public:
 	 * - have alongside TryExitImpact
 	 *   - will trigger all the time, while TryExitImpact will trigger if exit is different
 	 */
-	std::map<std::pair<int, std::pair<int,int>>, std::pair<int,double>> exit_impacts;
+	std::map<std::pair<std::vector<int>,std::vector<int>>, std::pair<int,double>> exit_impacts;
 
 	TryImpact();
-	TryImpact(std::ifstream& input_file);
 
 	void calc_impact(TryInstance* try_instance,
 					 int index,
 					 double& sum_impacts);
-	void calc_impact(TryInstance* try_instance,
-					 int index,
-					 int& num_impacts,
-					 double& sum_impacts);
-	void backprop(double impact_diff,
-				  TryInstance* try_instance,
-				  int index);
 
-	void save(std::ofstream& output_file);
+	void update(double impact_diff,
+				TryInstance* try_instance,
+				int index);
 };
 
 #endif /* TRY_IMPACT_H */

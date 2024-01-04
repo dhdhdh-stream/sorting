@@ -113,11 +113,15 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 		}
 	}
 
+	this->curr_try_instance->start = {this->scope_context, this->node_context};
+	vector<int> exit_scope_context(this->scope_context.end() - this->curr_exit_depth, this->scope_context.end());
+	vector<int> exit_node_context(this->node_context.end() - this->curr_exit_depth, this->node_context.end());
 	if (this->curr_exit_node == NULL) {
-		this->curr_try_instance->exit = {this->curr_exit_depth, {-1, -1}};
+		exit_node_context.back() = -1;
 	} else {
-		this->curr_try_instance->exit = {this->curr_exit_depth, {this->curr_exit_node->parent->id, this->curr_exit_node->id}};
+		exit_node_context.back() = this->curr_exit_node->id;
 	}
+	this->curr_try_instance->exit = {exit_scope_context, exit_node_context};
 
 	{
 		if (this->curr_exit_depth == 0) {
@@ -231,38 +235,17 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			#else
 			if (this->best_score > 0.0) {
 			#endif /* MDEBUG */
+				Scope* parent_scope = solution->scopes[this->scope_context[0]];
+				double predicted_impact;
+				double closest_distance;
+				parent_scope->tries->evaluate_potential(
+					this->best_try_instance,
+					predicted_impact,
+					closest_distance);
+				cout << "predicted_impact: " << predicted_impact << endl;
+				cout << "closest_distance: " << closest_distance << endl;
+
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
-
-				if (containing_scope->nodes[this->node_context.back()]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)containing_scope->nodes[this->node_context.back()];
-
-					map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = action_node->tries.find(
-						{this->scope_context, this->node_context});
-					if (it != action_node->tries.end()) {
-						double predicted_impact;
-						double closest_distance;
-						it->second->evaluate_potential(this->best_try_instance,
-													   predicted_impact,
-													   closest_distance);
-						cout << "predicted_impact: " << predicted_impact << endl;
-						cout << "closest_distance: " << closest_distance << endl;
-					}
-				} else {
-					ScopeNode* scope_node = (ScopeNode*)containing_scope->nodes[this->node_context.back()];
-
-					map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = scope_node->tries.find(
-						{this->scope_context, this->node_context});
-					if (it != scope_node->tries.end()) {
-						double predicted_impact;
-						double closest_distance;
-						it->second->evaluate_potential(this->best_try_instance,
-													   predicted_impact,
-													   closest_distance);
-						cout << "predicted_impact: " << predicted_impact << endl;
-						cout << "closest_distance: " << closest_distance << endl;
-					}
-				}
-
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->parent = containing_scope;

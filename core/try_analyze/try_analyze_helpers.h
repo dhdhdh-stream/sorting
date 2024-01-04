@@ -12,6 +12,10 @@ void try_distance(TryInstance* original,
 				  double& distance,
 				  std::vector<std::pair<int, std::pair<int,int>>>& diffs);
 
+int try_step_num_factors(TryInstance* try_instance,
+						 int index);
+int try_end_num_factors(TryInstance* try_instance);
+
 void try_scope_step_diff(TryScopeStep* original,
 						 TryScopeStep* potential,
 						 std::vector<std::pair<int, int>>& additions,

@@ -9,11 +9,13 @@ class TryScopeStep;
 
 class TryInstance {
 public:
+	std::pair<std::vector<int>, std::vector<int>> start;
+
 	std::vector<int> step_types;
 	std::vector<int> actions;
 	std::vector<TryScopeStep*> potential_scopes;
 
-	std::pair<int, std::pair<int,int>> exit;
+	std::pair<std::vector<int>, std::vector<int>> exit;
 
 	double result;
 

@@ -18,6 +18,7 @@ class AbstractNodeHistory;
 class ActionNode;
 class PassThroughExperiment;
 class State;
+class TryTracker;
 
 class ScopeHistory;
 class Scope {
@@ -34,6 +35,8 @@ public:
 
 	int starting_node_id;
 	AbstractNode* starting_node;
+
+	TryTracker* tries;
 
 	std::vector<State*> temp_states;
 	std::vector<std::vector<ActionNode*>> temp_state_nodes;

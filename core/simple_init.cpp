@@ -11,6 +11,7 @@ using namespace std;
 default_random_engine generator;
 
 Solution* solution;
+string path = "";
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -23,7 +24,12 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 
-	solution->save("", "main");
+	solution->save("main");
+
+	// clear tries
+	ofstream output_file;
+	output_file.open("saves/main/tries.txt");
+	output_file.close();
 
 	delete solution;
 

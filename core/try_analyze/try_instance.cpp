@@ -10,6 +10,24 @@ TryInstance::TryInstance() {
 };
 
 TryInstance::TryInstance(ifstream& input_file) {
+	{
+		string start_context_size_line;
+		getline(input_file, start_context_size_line);
+		int start_context_size = stoi(start_context_size_line);
+		vector<int> scope_context;
+		vector<int> node_context;
+		for (int c_index = 0; c_index < start_context_size; c_index++) {
+			string scope_id_line;
+			getline(input_file, scope_id_line);
+			scope_context.push_back(stoi(scope_id_line));
+
+			string node_id_line;
+			getline(input_file, node_id_line);
+			node_context.push_back(stoi(node_id_line));
+		}
+		this->start = {scope_context, node_context};
+	}
+
 	string num_steps_line;
 	getline(input_file, num_steps_line);
 	int num_steps = stoi(num_steps_line);
@@ -30,19 +48,21 @@ TryInstance::TryInstance(ifstream& input_file) {
 	}
 
 	{
-		string exit_depth_line;
-		getline(input_file, exit_depth_line);
-		int exit_depth = stoi(exit_depth_line);
+		string exit_context_size_line;
+		getline(input_file, exit_context_size_line);
+		int exit_context_size = stoi(exit_context_size_line);
+		vector<int> scope_context;
+		vector<int> node_context;
+		for (int c_index = 0; c_index < exit_context_size; c_index++) {
+			string scope_id_line;
+			getline(input_file, scope_id_line);
+			scope_context.push_back(stoi(scope_id_line));
 
-		string exit_parent_id_line;
-		getline(input_file, exit_parent_id_line);
-		int exit_parent_id = stoi(exit_parent_id_line);
-
-		string exit_node_id_line;
-		getline(input_file, exit_node_id_line);
-		int exit_node_id = stoi(exit_node_id_line);
-
-		this->exit = {exit_depth, {exit_parent_id, exit_node_id}};
+			string node_id_line;
+			getline(input_file, node_id_line);
+			node_context.push_back(stoi(node_id_line));
+		}
+		this->exit = {scope_context, node_context};
 	}
 
 	string result_line;
@@ -59,6 +79,14 @@ TryInstance::~TryInstance() {
 }
 
 void TryInstance::save(ofstream& output_file) {
+	{
+		output_file << this->start.first.size() << endl;
+		for (int c_index = 0; c_index < (int)this->start.first.size(); c_index++) {
+			output_file << this->start.first[c_index] << endl;
+			output_file << this->start.second[c_index] << endl;
+		}
+	}
+
 	output_file << this->step_types.size() << endl;
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		output_file << this->step_types[s_index] << endl;
@@ -70,9 +98,13 @@ void TryInstance::save(ofstream& output_file) {
 		}
 	}
 
-	output_file << this->exit.first << endl;
-	output_file << this->exit.second.first << endl;
-	output_file << this->exit.second.second << endl;
+	{
+		output_file << this->exit.first.size() << endl;
+		for (int c_index = 0; c_index < (int)this->exit.first.size(); c_index++) {
+			output_file << this->exit.first[c_index] << endl;
+			output_file << this->exit.second[c_index] << endl;
+		}
+	}
 
 	output_file << this->result << endl;
 }

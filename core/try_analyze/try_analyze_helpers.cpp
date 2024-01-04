@@ -37,6 +37,66 @@ double try_scope_step_cost(TryScopeStep* first,
 	return ((double)shared.size())/((double)all.size());
 }
 
+int try_step_num_factors(TryInstance* try_instance,
+						 int index) {
+	int num_factors = 0;
+
+	// overall
+	num_factors++;
+
+	// start
+	num_factors++;
+
+	for (int s_index = 0; s_index < index; s_index++) {
+		if (try_instance->step_types[s_index] == STEP_TYPE_ACTION) {
+			num_factors++;
+		} else {
+			TryScopeStep* try_scope_step = try_instance->potential_scopes[s_index];
+			num_factors += (int)try_scope_step->original_nodes.size();
+		}
+	}
+	for (int s_index = index + 1; s_index < (int)try_instance->step_types.size(); s_index++) {
+		if (try_instance->step_types[s_index] == STEP_TYPE_ACTION) {
+			num_factors++;
+		} else {
+			TryScopeStep* try_scope_step = try_instance->potential_scopes[s_index];
+			num_factors += (int)try_scope_step->original_nodes.size();
+		}
+	}
+
+	// exit
+	num_factors++;
+
+	return num_factors;
+}
+
+int try_end_num_factors(TryInstance* try_instance) {
+	int num_factors = 0;
+
+	// overall
+	num_factors++;
+
+	// start
+	num_factors++;
+
+	// other end
+	num_factors++;
+
+	for (int s_index = 0; s_index < (int)try_instance->step_types.size(); s_index++) {
+		if (try_instance->step_types[s_index] == STEP_TYPE_ACTION) {
+			num_factors++;
+		} else {
+			TryScopeStep* try_scope_step = try_instance->potential_scopes[s_index];
+			num_factors += (int)try_scope_step->original_nodes.size();
+		}
+	}
+
+	// exit
+	num_factors++;
+
+	return num_factors;
+}
+
 void try_distance(TryInstance* original,
 				  TryInstance* potential,
 				  double& distance,

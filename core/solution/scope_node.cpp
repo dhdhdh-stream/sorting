@@ -28,11 +28,6 @@ ScopeNode::~ScopeNode() {
 	if (this->experiment != NULL) {
 		delete this->experiment;
 	}
-
-	for (map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = this->tries.begin();
-			it != this->tries.end(); it++) {
-		delete it->second;
-	}
 }
 
 void ScopeNode::success_reset() {
@@ -108,18 +103,6 @@ void ScopeNode::save(ofstream& output_file) {
 	}
 
 	output_file << this->next_node_id << endl;
-
-	output_file << this->tries.size() << endl;
-	for (map<pair<vector<int>,vector<int>>, TryTracker*>::iterator it = this->tries.begin();
-			it != this->tries.end(); it++) {
-		output_file << it->first.first.size() << endl;
-		for (int l_index = 0; l_index < (int)it->first.first.size(); l_index++) {
-			output_file << it->first.first[l_index] << endl;
-			output_file << it->first.second[l_index] << endl;
-		}
-
-		it->second->save(output_file);
-	}
 }
 
 void ScopeNode::load(ifstream& input_file) {
@@ -234,30 +217,6 @@ void ScopeNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	string num_tries_contexts_line;
-	getline(input_file, num_tries_contexts_line);
-	int num_tries_contexts = stoi(num_tries_contexts_line);
-	for (int c_index = 0; c_index < num_tries_contexts; c_index++) {
-		string context_size_line;
-		getline(input_file, context_size_line);
-		int context_size = stoi(context_size_line);
-		vector<int> scope_context;
-		vector<int> node_context;
-		for (int l_index = 0; l_index < context_size; l_index++) {
-			string scope_id_line;
-			getline(input_file, scope_id_line);
-			scope_context.push_back(stoi(scope_id_line));
-
-			string node_id_line;
-			getline(input_file, node_id_line);
-			node_context.push_back(stoi(node_id_line));
-		}
-
-		TryTracker* try_tracker = new TryTracker(input_file);
-
-		this->tries[{scope_context, node_context}] = try_tracker;
-	}
 }
 
 void ScopeNode::link() {

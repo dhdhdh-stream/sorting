@@ -9,6 +9,16 @@ import time
 
 print('Starting...')
 
+def exists_remote(sftp_client, path):
+	try:
+		sftp_client.stat(path)
+	except IOError as e:
+		if e.errno == errno.ENOENT:
+			return False
+		raise
+	else:
+		return True
+
 def download_files(sftp_client, remote_dir, local_dir):
 	if not exists_remote(sftp_client, remote_dir):
 		return
@@ -23,15 +33,23 @@ def download_files(sftp_client, remote_dir, local_dir):
 		else:
 			sftp_client.get(remote_dir + filename, os.path.join(local_dir, filename))
 
-def exists_remote(sftp_client, path):
-	try:
-		sftp_client.stat(path)
-	except IOError as e:
-		if e.errno == errno.ENOENT:
-			return False
-		raise
-	else:
-		return True
+def download_tries(sftp_client, worker_name):
+	remote_dir = 'workers/' + worker_name + '/saves/tries/'
+	local_dir = 'saves/tries/'
+	for filename in sftp_client.listdir(remote_dir):
+		local_filename = os.path.join(local_dir, filename)
+		sftp_client.get(remote_dir + filename, local_filename)
+		sftp_client.remove(remote_dir + filename)
+
+		main_file = open('saves/main/tries.txt', 'a+')
+		new_file = open(local_filename, 'r')
+
+		main_file.write(new_file)
+
+		main_file.close()
+		new_file.close()
+
+		os.remove(local_filename)
 
 workers = []
 
@@ -56,6 +74,8 @@ while True:
 					   password=worker[3])
 
 		client_sftp = client.open_sftp()
+
+		download_tries(client_sftp, worker[0])
 
 		try:
 			worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '/solution.txt', 'r')

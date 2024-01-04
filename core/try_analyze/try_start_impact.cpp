@@ -1,4 +1,4 @@
-#include "try_exit_impact.h"
+#include "try_start_impact.h"
 
 #include "constants.h"
 #include "try_instance.h"
@@ -6,21 +6,14 @@
 
 using namespace std;
 
-TryExitImpact::TryExitImpact() {
+TryStartImpact::TryStartImpact() {
 	this->overall_count = 0;
 	this->overall_impact = 0.0;
 }
 
-void TryExitImpact::calc_impact(TryInstance* try_instance,
-								double& sum_impacts) {
+void TryStartImpact::calc_impact(TryInstance* try_instance,
+								 double& sum_impacts) {
 	sum_impacts += this->overall_impact;
-
-	{
-		map<pair<vector<int>,vector<int>>, pair<int,double>>::iterator it = this->start_impacts.find(try_instance->start);
-		if (it != this->start_impacts.end()) {
-			sum_impacts += it->second.second;
-		}
-	}
 
 	for (int s_index = 0; s_index < (int)try_instance->step_types.size(); s_index++) {
 		if (try_instance->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -39,23 +32,20 @@ void TryExitImpact::calc_impact(TryInstance* try_instance,
 			}
 		}
 	}
+
+	{
+		map<pair<vector<int>,vector<int>>, pair<int,double>>::iterator it = this->exit_impacts.find(try_instance->exit);
+		if (it != this->exit_impacts.end()) {
+			sum_impacts += it->second.second;
+		}
+	}
 }
 
-void TryExitImpact::update(double impact_diff,
-						   TryInstance* try_instance) {
+void TryStartImpact::update(double impact_diff,
+						    TryInstance* try_instance) {
 	this->overall_count++;
 	this->overall_impact = (1.0 - 1.0 / this->overall_count) * this->overall_impact
 		+ 1.0 / this->overall_count * impact_diff;
-
-	{
-		map<pair<vector<int>,vector<int>>, pair<int,double>>::iterator it = this->start_impacts.find(try_instance->start);
-		if (it == this->start_impacts.end()) {
-			it = this->start_impacts.insert({try_instance->start, {0, 0.0}}).first;
-		}
-		it->second.first++;
-		it->second.second = (1.0 - 1.0 / it->second.first) * it->second.second
-			+ 1.0 / it->second.first * impact_diff;
-	}
 
 	for (int s_index = 0; s_index < (int)try_instance->step_types.size(); s_index++) {
 		if (try_instance->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -79,5 +69,15 @@ void TryExitImpact::update(double impact_diff,
 					+ 1.0 / it->second.first * impact_diff;
 			}
 		}
+	}
+
+	{
+		map<pair<vector<int>,vector<int>>, pair<int,double>>::iterator it = this->exit_impacts.find(try_instance->exit);
+		if (it == this->exit_impacts.end()) {
+			it = this->exit_impacts.insert({try_instance->exit, {0, 0.0}}).first;
+		}
+		it->second.first++;
+		it->second.second = (1.0 - 1.0 / it->second.first) * it->second.second
+			+ 1.0 / it->second.first * impact_diff;
 	}
 }

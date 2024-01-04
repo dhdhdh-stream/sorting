@@ -32,13 +32,14 @@ const int NUM_FAILS_BEFORE_INCREASE = 30;
 default_random_engine generator;
 
 Solution* solution;
+string path;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
 		cout << "Usage: ./worker [path] [name]" << endl;
 		exit(1);
 	}
-	string path = argv[1];
+	path = argv[1];
 	string name = argv[2];
 
 	/**
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->load(path, "main");
+	solution->load("main");
 
 	int num_fails = 0;
 
@@ -274,6 +275,9 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
+			// TODO: free(): invalid size
+			// TODO: include saving/loading in debugging
+
 			ifstream solution_save_file;
 			solution_save_file.open(path + "saves/main/solution.txt");
 			string id_line;
@@ -285,7 +289,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 
 				solution = new Solution();
-				solution->load(path, "main");
+				solution->load("main");
 
 				cout << "updated from main" << endl;
 			} else {
@@ -296,7 +300,7 @@ int main(int argc, char* argv[]) {
 				 *   - but just means that previous update from another worker dropped
 				 */
 				solution->id = (unsigned)time(NULL);
-				solution->save(path, name);
+				solution->save(name);
 			}
 
 			num_fails = 0;
@@ -327,7 +331,7 @@ int main(int argc, char* argv[]) {
 					delete solution;
 
 					solution = new Solution();
-					solution->load(path, "main");
+					solution->load("main");
 
 					cout << "updated from main" << endl;
 

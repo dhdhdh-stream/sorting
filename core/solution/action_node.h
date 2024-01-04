@@ -51,10 +51,6 @@ public:
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
-	/**
-	 * - context -> tries
-	 */
-	std::map<std::pair<std::vector<int>, std::vector<int>>, TryTracker*> tries;
 
 	/**
 	 * - hook

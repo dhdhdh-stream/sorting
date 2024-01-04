@@ -32,6 +32,7 @@ const int NUM_FAILS_BEFORE_INCREASE = 30;
 default_random_engine generator;
 
 Solution* solution;
+string path = "";
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
 
 	solution = new Solution();
 	solution->init();
-	// solution->load("", "main");
+	// solution->load("main");
 
 	int num_fails = 0;
 
@@ -301,7 +302,7 @@ int main(int argc, char* argv[]) {
 			num_fails = 0;
 
 			solution->id = (unsigned)time(NULL);
-			solution->save("", "main");
+			solution->save("main");
 
 			ofstream display_file;
 			display_file.open("../display.txt");

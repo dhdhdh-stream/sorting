@@ -18,6 +18,7 @@ using namespace std;
 default_random_engine generator;
 
 Solution* solution;
+string path = "";
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -28,8 +29,7 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->load("", "main");
-	// solution->load("", "12_5_2023");
+	solution->load("main");
 
 	double sum_vals = 0.0;
 

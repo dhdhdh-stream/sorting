@@ -10,17 +10,22 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
+#include "try_tracker.h"
 
 using namespace std;
 
 Scope::Scope() {
 	this->id = -1;
+
+	this->tries = new TryTracker();
 }
 
 Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
+
+	delete this->tries;
 
 	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
 		delete this->temp_states[s_index];
