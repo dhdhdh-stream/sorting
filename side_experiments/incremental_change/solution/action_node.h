@@ -3,6 +3,8 @@
 
 class ActionNode : public AbstractNode {
 public:
+	bool is_off;
+
 	Action action;
 
 	std::vector<int> state_scope_contexts;
@@ -12,6 +14,8 @@ public:
 	std::vector<State*> state_defs;
 	std::vector<int> state_network_indexes;
 
+
+	bool experiment_is_off;
 
 
 };
