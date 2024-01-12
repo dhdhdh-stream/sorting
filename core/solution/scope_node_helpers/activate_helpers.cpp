@@ -5,10 +5,9 @@
 #include "abstract_experiment.h"
 #include "branch_experiment.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
-#include "retrain_loop_experiment.h"
 #include "scope.h"
 #include "state.h"
 #include "utilities.h"
@@ -31,6 +30,10 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 				map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context.back().local_state_vals.end()) {
 					state_status = it->second;
+
+					if (this->is_potential) {
+						it->second.impacted_potential_scopes[this->parent] = set<int>({this->input_outer_indexes[i_index]});
+					}
 				}
 				if (this->input_inner_is_local[i_index]) {
 					local_state_vals[this->input_inner_indexes[i_index]] = state_status;
@@ -49,11 +52,9 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			}
 		} else {
 			if (this->input_inner_is_local[i_index]) {
-				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																				   this->input_init_index_vals[i_index]);
+				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 			} else {
-				input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																				   this->input_init_index_vals[i_index]);
+				input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 			}
 		}
 	}
@@ -75,189 +76,105 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	if (this->is_loop) {
-		bool is_selected = false;
-		if (this->experiment != NULL
-				&& this->experiment->type == EXPERIMENT_TYPE_RETRAIN_LOOP) {
-			RetrainLoopExperiment* retrain_loop_experiment = (RetrainLoopExperiment*)this->experiment;
-			is_selected = retrain_loop_experiment->activate(
-				problem,
-				context,
-				inner_exit_depth,
-				inner_exit_node,
-				run_helper,
-				history);
-		}
+	this->inner_scope->activate(problem,
+								context,
+								inner_exit_depth,
+								inner_exit_node,
+								run_helper,
+								inner_scope_history);
 
-		if (!is_selected) {
-			int iter_index = 0;
-			while (true) {
-				if (iter_index >= this->max_iters) {
-					break;
-				}
+	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+		if (this->output_inner_is_local[o_index]) {
+			map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
+			if (inner_it != context.back().local_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
-				double continue_score = this->continue_score_mod;
-				double halt_score = this->halt_score_mod;
-
-				for (int s_index = 0; s_index < (int)this->loop_state_is_local.size(); s_index++) {
-					if (this->loop_state_is_local[s_index]) {
-						map<int, StateStatus>::iterator it = context[context.size()-2].local_state_vals.find(this->loop_state_indexes[s_index]);
-						if (it != context[context.size()-2].local_state_vals.end()) {
-							FullNetwork* last_network = it->second.last_network;
-							if (last_network != NULL) {
-								double normalized = (it->second.val - last_network->ending_mean)
-									/ last_network->ending_standard_deviation;
-								continue_score += this->loop_continue_weights[s_index] * normalized;
-								halt_score += this->loop_halt_weights[s_index] * normalized;
-							} else {
-								continue_score += this->loop_continue_weights[s_index] * it->second.val;
-								halt_score += this->loop_halt_weights[s_index] * it->second.val;
-							}
-						}
-					} else {
-						map<int, StateStatus>::iterator it = context[context.size()-2].input_state_vals.find(this->loop_state_indexes[s_index]);
-						if (it != context[context.size()-2].input_state_vals.end()) {
-							FullNetwork* last_network = it->second.last_network;
-							if (last_network != NULL) {
-								double normalized = (it->second.val - last_network->ending_mean)
-									/ last_network->ending_standard_deviation;
-								continue_score += this->loop_continue_weights[s_index] * normalized;
-								halt_score += this->loop_halt_weights[s_index] * normalized;
-							} else {
-								continue_score += this->loop_continue_weights[s_index] * it->second.val;
-								halt_score += this->loop_halt_weights[s_index] * it->second.val;
-							}
-						}
-					}
-				}
-
-				#if defined(MDEBUG) && MDEBUG
-				bool decision_is_halt;
-				if (run_helper.curr_run_seed%2 == 0) {
-					decision_is_halt = false;
-				} else {
-					decision_is_halt = true;
-				}
-				/**
-				 * - reverse to match BranchExperiment capture_verify()
-				 */
-				run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-				#else
-				bool decision_is_halt;
-				if (abs(halt_score - continue_score) > DECISION_MIN_SCORE_IMPACT * this->decision_standard_deviation) {
-					decision_is_halt = halt_score > continue_score;
-				} else {
-					uniform_int_distribution<int> distribution(0, 1);
-					decision_is_halt = distribution(generator);
-				}
-				#endif /* MDEBUG */
-
-				if (decision_is_halt) {
-					break;
-				} else {
-					this->inner_scope->activate(problem,
-												context,
-												inner_exit_depth,
-												inner_exit_node,
-												run_helper,
-												iter_index,
-												inner_scope_history);
-
-					for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-						if (this->output_inner_is_local[o_index]) {
-							map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-							if (inner_it != context.back().local_state_vals.end()) {
-								if (this->output_outer_is_local[o_index]) {
-									context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-								} else {
-									map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-									if (outer_it != context[context.size()-2].input_state_vals.end()) {
-										outer_it->second = inner_it->second;
-									}
-								}
-							}
+					if (this->is_potential) {
+						map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
+							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
+						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
+							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+								.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
 						} else {
-							map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-							if (inner_it != context.back().input_state_vals.end()) {
-								if (this->output_outer_is_local[o_index]) {
-									context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-								} else {
-									map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-									if (outer_it != context[context.size()-2].input_state_vals.end()) {
-										outer_it->second = inner_it->second;
-									}
-								}
-							}
+							scope_it->second.insert(this->output_outer_indexes[o_index]);
 						}
 					}
-					/**
-					 * - set back after each iter for decision
-					 */
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
+					}
+				}
+			}
+		} else {
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
-					if (inner_exit_depth != -1
-							|| run_helper.exceeded_limit) {
-						break;
-					} else {
-						iter_index++;
-						// continue
+					if (this->is_potential) {
+						map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
+							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
+						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
+							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+								.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
+						} else {
+							scope_it->second.insert(this->output_outer_indexes[o_index]);
+						}
+					}
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
 					}
 				}
 			}
 		}
-	} else {
-		this->inner_scope->activate(problem,
-									context,
-									inner_exit_depth,
-									inner_exit_node,
-									run_helper,
-									0,
-									inner_scope_history);
-
-		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-			if (this->output_inner_is_local[o_index]) {
-				map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-				if (inner_it != context.back().local_state_vals.end()) {
-					if (this->output_outer_is_local[o_index]) {
-						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					} else {
-						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-						if (outer_it != context[context.size()-2].input_state_vals.end()) {
-							outer_it->second = inner_it->second;
-						}
-					}
-				}
-			} else {
-				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-				if (inner_it != context.back().input_state_vals.end()) {
-					if (this->output_outer_is_local[o_index]) {
-						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					} else {
-						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-						if (outer_it != context[context.size()-2].input_state_vals.end()) {
-							outer_it->second = inner_it->second;
-						}
-					}
-				}
-			}
-		}
-		/**
-		 * - intuitively, pass by reference out
-		 *   - so keep even if early exit
-		 * 
-		 * - also will be how inner branches affect outer scopes on early exit
-		 */
-	}
-
-	if (inner_scope_history->inner_pass_through_experiment != NULL) {
-		inner_scope_history->inner_pass_through_experiment->parent_scope_end_activate(
-			context,
-			run_helper,
-			inner_scope_history);
 	}
 	/**
-	 * - triggers once even if multiple due to loops
-	 *   - may lead to misguesses not aligning (even more), but hopefully won't be big impact
+	 * - intuitively, pass by reference out
+	 *   - so keep even if early exit
+	 * 
+	 * - also will be how inner branches affect outer scopes on early exit
 	 */
+
+	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
+			it != context.back().input_state_vals.end(); it++) {
+		if (it->second.used) {
+			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+				for (set<int>::iterator index_it = scope_it->second.begin();
+						index_it != scope_it->second.end(); index_it++) {
+					scope_it->first->used_states[*index_it] = true;
+				}
+			}
+		}
+	}
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		if (it->second.used) {
+			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+				for (set<int>::iterator index_it = scope_it->second.begin();
+						index_it != scope_it->second.end(); index_it++) {
+					scope_it->first->used_states[*index_it] = true;
+				}
+			}
+		}
+	}
+	for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
+			it != context.back().temp_state_vals.end(); it++) {
+		if (it->second.used) {
+			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+				for (set<int>::iterator index_it = scope_it->second.begin();
+						index_it != scope_it->second.end(); index_it++) {
+					scope_it->first->used_states[*index_it] = true;
+				}
+			}
+		}
+	}
 
 	context.pop_back();
 
@@ -276,7 +193,8 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 											exit_node,
 											run_helper,
 											history->experiment_history);
-			} else if (this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+			} else {
+				// this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH
 				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
 				pass_through_experiment->activate(curr_node,
 												  problem,

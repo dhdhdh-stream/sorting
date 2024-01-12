@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "retrain_branch_experiment.h"
 #include "scope.h"
@@ -56,12 +56,14 @@ void BranchNode::activate(bool& is_branch,
 				if (this->decision_state_is_local[s_index]) {
 					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->decision_state_indexes[s_index]);
 					if (it != context.back().local_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
+						StateNetwork* last_network = it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
 							original_score += this->decision_original_weights[s_index] * normalized;
 							branch_score += this->decision_branch_weights[s_index] * normalized;
+
+							it->second.used = true;
 						} else {
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;
@@ -70,12 +72,14 @@ void BranchNode::activate(bool& is_branch,
 				} else {
 					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->decision_state_indexes[s_index]);
 					if (it != context.back().input_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
+						StateNetwork* last_network = it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
 							original_score += this->decision_original_weights[s_index] * normalized;
 							branch_score += this->decision_branch_weights[s_index] * normalized;
+
+							it->second.used = true;
 						} else {
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;

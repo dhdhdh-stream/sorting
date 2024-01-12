@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "full_network.h"
+#include "state_network.h"
 #include "state.h"
 #include "state_network.h"
 
@@ -95,7 +95,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 			if (it == temp_state_vals.end()) {
 				it = temp_state_vals.insert({this->experiment_state_defs[n_index], StateStatus()}).first;
 			}
-			FullNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
+			StateNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
 			if (this->experiment_state_obs_indexes[n_index] == -1) {
 				state_network->activate(history->obs_snapshot,
 										it->second);

@@ -5,7 +5,7 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "potential_scope_node.h"
 #include "scope.h"
@@ -60,7 +60,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->new_input_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_input_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -77,7 +77,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->new_local_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_local_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -94,7 +94,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
 			map<State*, double>::iterator weight_it = this->new_temp_state_weights[c_index].find(it->first);
 			if (weight_it != this->new_temp_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -146,7 +146,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		// cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		// cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		if (misguess_improvement_t_score > 2.326) {	// >99%
+		if (misguess_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			// cout << "misguess success" << endl;
 
@@ -174,21 +174,6 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;
 		} else {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else {
-					delete this->best_potential_scopes[s_index];
-				}
-			}
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-
-			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-				delete this->new_states[s_index];
-			}
-			this->new_states.clear();
-
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 

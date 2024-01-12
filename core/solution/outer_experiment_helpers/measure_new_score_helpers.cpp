@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "solution_helpers.h"
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -100,33 +101,22 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 		// cout << "new_average_score: " << new_average_score << endl;
 		// cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
-		if (score_improvement_t_score > 2.326) {	// >99%
+		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			// cout << "proceed to verify" << endl;
 
-			this->target_val_histories.reserve(solution->curr_num_datapoints);
-
-			this->state = OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE;
-			this->state_iter = 0;
-		} else {
-			this->best_score = 0.0;
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-					delete this->best_potential_scopes[s_index];
-				} else {
-					delete this->best_root_scope_nodes[s_index];
+				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					clean_state(this->best_potential_scopes[s_index]);
 				}
 			}
-			this->best_step_types.clear();
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-			this->best_root_scope_nodes.clear();
 
-			this->state = OUTER_EXPERIMENT_STATE_EXPLORE;
+			this->target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+		} else {
+			this->state = OUTER_EXPERIMENT_STATE_FAIL;
 		}
 
 		// cout << endl;

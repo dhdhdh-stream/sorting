@@ -9,7 +9,6 @@
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
-#include "try_instance.h"
 
 using namespace std;
 
@@ -39,7 +38,6 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->state_iter = 0;
 
 	this->best_surprise = 0.0;
-	this->best_try_instance = NULL;
 
 	this->combined_score = 0.0;
 	this->branch_count = 0;
@@ -57,10 +55,6 @@ BranchExperiment::~BranchExperiment() {
 		if (this->best_potential_scopes[s_index] != NULL) {
 			delete this->best_potential_scopes[s_index];
 		}
-	}
-
-	if (this->best_try_instance != NULL) {
-		delete this->best_try_instance;
 	}
 
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {

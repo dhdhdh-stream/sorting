@@ -24,18 +24,20 @@ class TryInstance;
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE = 3;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE = 5;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE = 6;
 #if defined(MDEBUG) && MDEBUG
-const int PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
 #endif /* MDEBUG */
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 6;
-const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 7;
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 8;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 9;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS = 8;
+const int PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS = 9;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS = 10;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT =11;
 
-const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 10;
-const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 11;
+const int PASS_THROUGH_EXPERIMENT_STATE_FAIL = 12;
+const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 13;
 
 class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
@@ -56,7 +58,6 @@ public:
 	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
-	TryInstance* curr_try_instance;
 
 	double best_score;
 	std::vector<int> best_step_types;
@@ -64,7 +65,6 @@ public:
 	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
-	TryInstance* best_try_instance;
 
 	double new_average_score;
 

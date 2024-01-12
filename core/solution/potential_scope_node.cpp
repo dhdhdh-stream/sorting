@@ -12,6 +12,8 @@ using namespace std;
 
 PotentialScopeNode::PotentialScopeNode() {
 	this->scope_node_placeholder = NULL;
+
+	this->is_cleaned = true;
 }
 
 PotentialScopeNode::~PotentialScopeNode() {
@@ -31,30 +33,35 @@ void PotentialScopeNode::activate(Problem* problem,
 	map<int, StateStatus> local_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			if (this->input_outer_types[i_index] == OUTER_TYPE_INPUT) {
-				map<int, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].input_state_vals.find((long)this->input_outer_indexes[i_index]);
-				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].input_state_vals.end()) {
-					local_state_vals[this->input_inner_indexes[i_index]] = it->second;
-				}
-			} else if (this->input_outer_types[i_index] == OUTER_TYPE_LOCAL) {
+			if (this->input_outer_is_local[i_index]) {
 				StateStatus state_status;
 				map<int, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].local_state_vals.find((long)this->input_outer_indexes[i_index]);
+					- this->input_scope_depths[i_index]].local_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].local_state_vals.end()) {
 					state_status = it->second;
 				}
 				local_state_vals[this->input_inner_indexes[i_index]] = state_status;
+
+				if (!this->is_cleaned) {
+					it->second.impacted_potential_scopes[this->scope] = set<int>({this->input_inner_indexes[i_index]});
+				}
 			} else {
-				map<State*, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].temp_state_vals.find((State*)this->input_outer_indexes[i_index]);
-				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].temp_state_vals.end()) {
+				map<int, StateStatus>::iterator it = context[context.size()-1
+					- this->input_scope_depths[i_index]].input_state_vals.find(this->input_outer_indexes[i_index]);
+				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].input_state_vals.end()) {
 					local_state_vals[this->input_inner_indexes[i_index]] = it->second;
+
+					if (!this->is_cleaned) {
+						it->second.impacted_potential_scopes[this->scope] = set<int>({this->input_inner_indexes[i_index]});
+					}
 				}
 			}
 		} else {
-			local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																			   this->input_init_index_vals[i_index]);
+			local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
+
+			if (!this->is_cleaned) {
+				local_state_vals[this->input_inner_indexes[i_index]].impacted_potential_scopes[this->scope] = set<int>({this->input_inner_indexes[i_index]});
+			}
 		}
 	}
 
@@ -80,22 +87,32 @@ void PotentialScopeNode::activate(Problem* problem,
 						  inner_exit_depth,
 						  inner_exit_node,
 						  run_helper,
-						  0,
 						  scope_history);
 
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 		map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
 		if (inner_it != context.back().local_state_vals.end()) {
-			if (this->output_outer_types[o_index] == OUTER_TYPE_INPUT) {
-				map<int, StateStatus>::iterator outer_it  = context[context.size()-2
-					- this->output_scope_depths[o_index]].input_state_vals.find((long)this->output_outer_indexes[o_index]);
-				if (outer_it != context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals.end()) {
-					context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals[(long)this->output_outer_indexes[o_index]] = inner_it->second;
-				}
-			} else if (this->output_outer_types[o_index] == OUTER_TYPE_LOCAL) {
-				context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[(long)this->output_outer_indexes[o_index]] = inner_it->second;
+			if (this->output_outer_is_local[o_index]) {
+				context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 			} else {
-				context[context.size()-2 - this->output_scope_depths[o_index]].temp_state_vals[(State*)this->output_outer_indexes[o_index]] = inner_it->second;
+				map<int, StateStatus>::iterator outer_it  = context[context.size()-2
+					- this->output_scope_depths[o_index]].input_state_vals.find(this->output_outer_indexes[o_index]);
+				if (outer_it != context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals.end()) {
+					outer_it->second = inner_it->second;
+				}
+			}
+		}
+	}
+
+	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
+			it != context.back().local_state_vals.end(); it++) {
+		if (it->second.used) {
+			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+				for (set<int>::iterator index_it = scope_it->second.begin();
+						index_it != scope_it->second.end(); index_it++) {
+					scope_it->first->used_states[*index_it] = true;
+				}
 			}
 		}
 	}
@@ -121,33 +138,25 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 	vector<double> full_local_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
-			if (this->input_outer_types[i_index] == OUTER_TYPE_INPUT) {
-				map<int, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].input_state_vals.find((long)this->input_outer_indexes[i_index]);
-				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].input_state_vals.end()) {
-					local_state_vals[this->input_inner_indexes[i_index]] = it->second;
-					full_local_state_vals.push_back(it->second.val);
-				}
-			} else if (this->input_outer_types[i_index] == OUTER_TYPE_LOCAL) {
+			if (this->input_outer_is_local[i_index]) {
 				StateStatus state_status;
 				map<int, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].local_state_vals.find((long)this->input_outer_indexes[i_index]);
+					- this->input_scope_depths[i_index]].local_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].local_state_vals.end()) {
 					state_status = it->second;
 				}
 				local_state_vals[this->input_inner_indexes[i_index]] = state_status;
 				full_local_state_vals.push_back(state_status.val);
 			} else {
-				map<State*, StateStatus>::iterator it = context[context.size()-1
-					- this->input_scope_depths[i_index]].temp_state_vals.find((State*)this->input_outer_indexes[i_index]);
-				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].temp_state_vals.end()) {
+				map<int, StateStatus>::iterator it = context[context.size()-1
+					- this->input_scope_depths[i_index]].input_state_vals.find(this->input_outer_indexes[i_index]);
+				if (it != context[context.size()-1 - this->input_scope_depths[i_index]].input_state_vals.end()) {
 					local_state_vals[this->input_inner_indexes[i_index]] = it->second;
 					full_local_state_vals.push_back(it->second.val);
 				}
 			}
 		} else {
-			local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																			   this->input_init_index_vals[i_index]);
+			local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 			full_local_state_vals.push_back(this->input_init_vals[i_index]);
 		}
 	}
@@ -185,7 +194,6 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 						  inner_exit_depth,
 						  inner_exit_node,
 						  run_helper,
-						  0,
 						  scope_history);
 	delete scope_history;
 
@@ -193,19 +201,16 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 		map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
 		if (inner_it != context.back().local_state_vals.end()) {
-			if (this->output_outer_types[o_index] == OUTER_TYPE_INPUT) {
-				map<int, StateStatus>::iterator outer_it  = context[context.size()-2
-					- this->output_scope_depths[o_index]].input_state_vals.find((long)this->output_outer_indexes[o_index]);
-				if (outer_it != context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals.end()) {
-					context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals[(long)this->output_outer_indexes[o_index]] = inner_it->second;
-					output_local_state_vals.push_back(inner_it->second.val);
-				}
-			} else if (this->output_outer_types[o_index] == OUTER_TYPE_LOCAL) {
-				context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[(long)this->output_outer_indexes[o_index]] = inner_it->second;
+			if (this->output_outer_is_local[o_index]) {
+				context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 				output_local_state_vals.push_back(inner_it->second.val);
 			} else {
-				context[context.size()-2 - this->output_scope_depths[o_index]].temp_state_vals[(State*)this->output_outer_indexes[o_index]] = inner_it->second;
-				output_local_state_vals.push_back(inner_it->second.val);
+				map<int, StateStatus>::iterator outer_it  = context[context.size()-2
+					- this->output_scope_depths[o_index]].input_state_vals.find(this->output_outer_indexes[o_index]);
+				if (outer_it != context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals.end()) {
+					outer_it->second = inner_it->second;
+					output_local_state_vals.push_back(inner_it->second.val);
+				}
 			}
 		}
 	}

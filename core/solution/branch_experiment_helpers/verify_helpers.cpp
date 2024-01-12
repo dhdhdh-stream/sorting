@@ -5,7 +5,7 @@
 
 #include "action_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
@@ -41,7 +41,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -68,7 +68,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -95,7 +95,7 @@ void BranchExperiment::verify_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -167,20 +167,47 @@ void BranchExperiment::verify_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= solution->curr_num_datapoints) {
-		this->combined_score /= solution->curr_num_datapoints;
+	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
+			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+
+		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
+
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
+			this->combined_score = 0.0;
+			this->branch_count = 0;
+			this->branch_possible = 0;
+
+			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
+			this->state_iter = 0;
+		} else {
+			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
+		}
+	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			cout << "Branch" << endl;
 			cout << "verify" << endl;
@@ -209,8 +236,6 @@ void BranchExperiment::verify_backprop(double target_val) {
 				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 			}
 
-			cout << "this->best_is_loop: " << this->best_is_loop << endl;
-
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
 			cout << "score_standard_deviation: " << score_standard_deviation << endl;
@@ -221,10 +246,9 @@ void BranchExperiment::verify_backprop(double target_val) {
 			cout << endl;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (!this->best_is_loop && rand()%2 == 0) {
+			if (rand()%2 == 0) {
 			#else
-			if (!this->best_is_loop
-					&& branch_weight > 0.99
+			if (branch_weight > 0.99
 					&& this->new_average_score > this->existing_average_score) {
 			#endif /* MDEBUG */
 				this->is_pass_through = true;
@@ -236,68 +260,26 @@ void BranchExperiment::verify_backprop(double target_val) {
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
-			if (this->parent_pass_through_experiment != NULL) {
+			/**
+			 * - if parent_pass_through_experiment == NULL, no earlier PotentialScopeNodes for new state to be added in
+			 * 
+			 * - if is_pass_through, no new state will be added
+			 */
+			if (this->parent_pass_through_experiment != NULL && !this->is_pass_through) {
 				set<int> needed_state;
 				set<int> needed_parent_state;
-
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-						for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
-							if (this->best_potential_scopes[s_index]->input_types[i_index] == INPUT_TYPE_STATE
-									&& this->best_potential_scopes[s_index]->input_outer_types[i_index] == OUTER_TYPE_TEMP) {
-								State* state = (State*)this->best_potential_scopes[s_index]->input_outer_indexes[i_index];
-								/**
-								 * - possibly added to new_states through train_existing
-								 */
-								for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
-									if (this->new_states[ns_index] == state) {
-										needed_state.insert(ns_index);
-										break;
-									}
-								}
-								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
-									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
-										needed_parent_state.insert(ns_index);
-										break;
-									}
-								}
-							}
-						}
-
-						for (int o_index = 0; o_index < (int)this->best_potential_scopes[s_index]->output_inner_indexes.size(); o_index++) {
-							if (this->best_potential_scopes[s_index]->output_outer_types[o_index] == OUTER_TYPE_TEMP) {
-								State* state = (State*)this->best_potential_scopes[s_index]->output_outer_indexes[o_index];
-								for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
-									if (this->new_states[ns_index] == state) {
-										needed_state.insert(ns_index);
-										break;
-									}
-								}
-								for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
-									if (this->parent_pass_through_experiment->new_states[ns_index] == state) {
-										needed_parent_state.insert(ns_index);
-										break;
-									}
-								}
-							}
+				for (map<State*, double>::iterator it = this->existing_temp_state_weights[0].begin();
+						it != this->existing_temp_state_weights[0].end(); it++) {
+					for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
+						if (this->new_states[ns_index] == it->first) {
+							needed_state.insert(ns_index);
+							break;
 						}
 					}
-				}
-
-				if (!this->is_pass_through) {
-					for (map<State*, double>::iterator it = this->existing_temp_state_weights[0].begin();
-							it != this->existing_temp_state_weights[0].end(); it++) {
-						for (int ns_index = 0; ns_index < (int)this->new_states.size(); ns_index++) {
-							if (this->new_states[ns_index] == it->first) {
-								needed_state.insert(ns_index);
-								break;
-							}
-						}
-						for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
-							if (this->parent_pass_through_experiment->new_states[ns_index] == it->first) {
-								needed_parent_state.insert(ns_index);
-								break;
-							}
+					for (int ns_index = 0; ns_index < (int)this->parent_pass_through_experiment->new_states.size(); ns_index++) {
+						if (this->parent_pass_through_experiment->new_states[ns_index] == it->first) {
+							needed_parent_state.insert(ns_index);
+							break;
 						}
 					}
 				}
@@ -387,21 +369,6 @@ void BranchExperiment::verify_backprop(double target_val) {
 			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else {
-					delete this->best_potential_scopes[s_index];
-				}
-			}
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-
-			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-				delete this->new_states[s_index];
-			}
-			this->new_states.clear();
-
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

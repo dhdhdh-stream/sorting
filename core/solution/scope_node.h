@@ -14,9 +14,7 @@
 
 class Scope;
 class ScopeHistory;
-class Sequence;
 class State;
-class TryTracker;
 
 const int INPUT_TYPE_STATE = 0;
 const int INPUT_TYPE_CONSTANT = 1;
@@ -39,40 +37,18 @@ public:
 	 *   - can only be an issue with perfect XORs
 	 *     - otherwise, can align state polarity when constructing
 	 */
-	std::vector<double> input_init_index_vals;
-	/**
-	 * - random between -1.0 and 1.0
-	 */
 
 	std::vector<bool> output_inner_is_local;
 	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
 
-	bool is_loop;
-
-	double continue_score_mod;
-	double halt_score_mod;
-
-	std::vector<bool> loop_state_is_local;
-	std::vector<int> loop_state_indexes;
-	std::vector<double> loop_continue_weights;
-	std::vector<double> loop_halt_weights;
-
-	double decision_standard_deviation;
-
-	int max_iters;
-
-	/**
-	 * - for RetrainLoopExperiment
-	 */
-	std::vector<int> loop_scope_context;
-	std::vector<int> loop_node_context;
-
 	int next_node_id;
 	AbstractNode* next_node;
 
 	AbstractExperiment* experiment;
+
+	bool is_potential;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
@@ -80,9 +56,6 @@ public:
 	std::vector<std::vector<double>> verify_input_local_state_vals;
 	std::vector<std::vector<double>> verify_output_input_state_vals;
 	std::vector<std::vector<double>> verify_output_local_state_vals;
-	std::vector<double> verify_continue_scores;
-	std::vector<double> verify_halt_scores;
-	std::vector<std::vector<double>> verify_factors;
 	#endif /* MDEBUG */
 
 	ScopeNode();

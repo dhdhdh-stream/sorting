@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "globals.h"
 #include "solution.h"
 
@@ -24,12 +25,39 @@ void PassThroughExperiment::verify_existing_score_backprop(
 		}
 	}
 
-	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE) {
+		if ((int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+			double sum_scores = 0.0;
+			for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+				sum_scores += this->o_target_val_histories[d_index];
+			}
+			this->existing_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			// cout << "PassThrough" << endl;
+			// cout << "verify" << endl;
+			// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			// cout << endl;
+
+			double sum_score_variance = 0.0;
+			for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+				sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
+			}
+			this->existing_score_variance = sum_score_variance / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->o_target_val_histories.clear();
+
+			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE;
+			this->state_iter = 0;
+		}
+	} else {
+		// this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+		this->existing_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		// cout << "PassThrough" << endl;
 		// cout << "verify" << endl;
@@ -37,16 +65,16 @@ void PassThroughExperiment::verify_existing_score_backprop(
 		// cout << endl;
 
 		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+		this->existing_score_variance = sum_score_variance / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+		this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
-		this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE;
+		this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE;
 		this->state_iter = 0;
 	}
 }

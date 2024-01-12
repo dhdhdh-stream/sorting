@@ -10,22 +10,17 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "try_tracker.h"
 
 using namespace std;
 
 Scope::Scope() {
 	this->id = -1;
-
-	this->tries = new TryTracker();
 }
 
 Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
-
-	delete this->tries;
 
 	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
 		delete this->temp_states[s_index];
@@ -225,40 +220,33 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->inner_pass_through_experiment = NULL;
 
-	this->experiment_iter_index = -1;
 	this->experiment_index = -1;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	this->scope = original->scope;
 
-	for (int i_index = 0; i_index < (int)original->node_histories.size(); i_index++) {
-		this->node_histories.push_back(vector<AbstractNodeHistory*>());
-		for (int h_index = 0; h_index < (int)original->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = original->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				this->node_histories.back().push_back(new ActionNodeHistory(action_node_history));
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				this->node_histories.back().push_back(new ScopeNodeHistory(scope_node_history));
-			} else {
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
-				this->node_histories.back().push_back(new BranchNodeHistory(branch_node_history));
-			}
+	for (int h_index = 0; h_index < (int)original->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = original->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			this->node_histories.push_back(new ActionNodeHistory(action_node_history));
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			this->node_histories.push_back(new ScopeNodeHistory(scope_node_history));
+		} else {
+			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
+			this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
 		}
 	}
 
 	this->inner_pass_through_experiment = NULL;
 
-	this->experiment_iter_index = original->experiment_iter_index;
 	this->experiment_index = original->experiment_index;
 }
 
 ScopeHistory::~ScopeHistory() {
-	for (int i_index = 0; i_index < (int)this->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)this->node_histories[i_index].size(); h_index++) {
-			delete this->node_histories[i_index][h_index];
-		}
+	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
+		delete this->node_histories[h_index];
 	}
 }

@@ -6,7 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "potential_scope_node.h"
@@ -14,8 +14,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "try_instance.h"
-#include "try_tracker.h"
 #include "utilities.h"
 
 using namespace std;
@@ -44,7 +42,7 @@ void BranchExperiment::measure_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -71,7 +69,7 @@ void BranchExperiment::measure_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -98,7 +96,7 @@ void BranchExperiment::measure_activate(
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -173,17 +171,6 @@ void BranchExperiment::measure_backprop(double target_val) {
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
 
-		// if (this->parent_pass_through_experiment == NULL) {
-		// 	this->best_try_instance->result = this->new_average_score;
-		// 	ofstream output_file;
-		// 	output_file.open(path + "saves/tries/" + to_string(time(NULL)) + "_t.txt");
-		// 	this->best_try_instance->save(output_file);
-		// 	output_file.close();
-		// 	Scope* parent_scope = solution->scopes[this->scope_context[0]];
-		// 	parent_scope->tries->update(this->best_try_instance);
-		// 	this->best_try_instance = NULL;
-		// }
-
 		// cout << "Branch" << endl;
 		// cout << "measure" << endl;
 		// cout << "this->scope_context:" << endl;
@@ -230,32 +217,17 @@ void BranchExperiment::measure_backprop(double target_val) {
 
 		// cout << endl;
 
-		if (branch_weight > 0.01 && combined_improvement_t_score > 2.326) {	// >99%
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 			this->branch_count = 0;
 			this->branch_possible = 0;
 
-			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else {
-					delete this->best_potential_scopes[s_index];
-				}
-			}
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-
-			for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-				delete this->new_states[s_index];
-			}
-			this->new_states.clear();
-
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

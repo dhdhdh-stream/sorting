@@ -10,7 +10,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
-#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope_node.h"
@@ -19,8 +18,7 @@
 
 using namespace std;
 
-void node_verify_activate_helper(int iter_index,
-								 AbstractNode*& curr_node,
+void node_verify_activate_helper(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 int& exit_depth,
@@ -90,8 +88,7 @@ void Scope::verify_activate(Problem* problem,
 			break;
 		}
 
-		node_verify_activate_helper(0,
-									curr_node,
+		node_verify_activate_helper(curr_node,
 									problem,
 									context,
 									exit_depth,

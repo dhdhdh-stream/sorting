@@ -160,9 +160,9 @@ void Minesweeper::perform_action(Action action) {
 
 double Minesweeper::score_result(int num_actions) {
 	if (this->num_revealed >= WIDTH*HEIGHT - NUM_MINES) {
-		return 10.0 - 0.001*num_actions;
+		return 10.0 - 0.005*num_actions;
 	} else {
-		return this->num_revealed/10.0 - 0.001*num_actions;
+		return this->num_revealed/10.0 - 0.005*num_actions;
 	}
 }
 

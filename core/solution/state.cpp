@@ -4,7 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -26,10 +26,10 @@ State::State(ifstream& input_file,
 	getline(input_file, num_networks_line);
 	int num_networks = stoi(num_networks_line);
 	for (int n_index = 0; n_index < num_networks; n_index++) {
-		this->networks.push_back(new FullNetwork(path,
-												 name,
-												 this,
-												 n_index));
+		this->networks.push_back(new StateNetwork(path,
+												  name,
+												  this,
+												  n_index));
 	}
 }
 

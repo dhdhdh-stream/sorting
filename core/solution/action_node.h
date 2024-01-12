@@ -14,9 +14,7 @@
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
-class Sequence;
 class State;
-class TryTracker;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
@@ -59,6 +57,8 @@ public:
 	std::vector<std::vector<int>> obs_experiment_node_contexts;
 	std::vector<int> obs_experiment_obs_indexes;
 	std::vector<int> obs_experiment_indexes;
+
+	bool is_potential;
 
 	ActionNode();
 	~ActionNode();

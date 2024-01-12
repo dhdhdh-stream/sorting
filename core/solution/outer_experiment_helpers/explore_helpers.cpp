@@ -11,7 +11,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "try_scope_step.h"
 
 using namespace std;
 
@@ -20,7 +19,7 @@ const int EXPLORE_ITERS = 2;
 const int NUM_SAMPLES_PER_ITER = 2;
 #else
 const int EXPLORE_ITERS = 100;
-const int NUM_SAMPLES_PER_ITER = 100;
+const int NUM_SAMPLES_PER_ITER = 20;
 #endif /* MDEBUG */
 
 void OuterExperiment::explore_initial_activate(Problem* problem,
@@ -40,66 +39,56 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 	geometric_distribution<int> geometric_distribution(0.5);
 	int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 
-	uniform_int_distribution<int> type_distribution(0, 1);
-	uniform_int_distribution<int> root_distribution(0, 1);
-	uniform_int_distribution<int> next_distribution(0, 1);
+	uniform_int_distribution<int> root_distribution(0, 2);
 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
-		if (type_distribution(generator) == 0) {
-			this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->action = problem->random_action();
-			this->curr_actions.push_back(new_action_node);
-
+		if (root_distribution(generator) == 0) {
+			this->curr_step_types.push_back(STEP_TYPE_ROOT);
+			this->curr_actions.push_back(NULL);
 			this->curr_potential_scopes.push_back(NULL);
-			this->curr_root_scope_nodes.push_back(NULL);
 
-			ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-			new_action_node->activate(curr_node,
-									  problem,
-									  context,
-									  exit_depth,
-									  exit_node,
-									  run_helper,
-									  action_node_history);
-			delete action_node_history;
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->inner_scope = solution->root;
+			this->curr_root_scope_nodes.push_back(new_scope_node);
+
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
+			new_scope_node->activate(curr_node,
+									 problem,
+									 context,
+									 exit_depth,
+									 exit_node,
+									 run_helper,
+									 scope_node_history);
+			delete scope_node_history;
 		} else {
-			if (root_distribution(generator) == 0) {
-				this->curr_step_types.push_back(STEP_TYPE_ROOT);
-				this->curr_actions.push_back(NULL);
+			PotentialScopeNode* new_potential_scope_node = create_scope(
+				context,
+				1,
+				solution->root,
+				NULL);
+
+			if (new_potential_scope_node == NULL) {
+				this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+				ActionNode* new_action_node = new ActionNode();
+				new_action_node->action = problem->random_action();
+				this->curr_actions.push_back(new_action_node);
+
 				this->curr_potential_scopes.push_back(NULL);
+				this->curr_root_scope_nodes.push_back(NULL);
 
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->inner_scope = solution->root;
-				this->curr_root_scope_nodes.push_back(new_scope_node);
-
-				new_scope_node->is_loop = false;
-				new_scope_node->continue_score_mod = 0.0;
-				new_scope_node->halt_score_mod = 0.0;
-				new_scope_node->max_iters = 0;
-
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-				new_scope_node->activate(curr_node,
-										 problem,
-										 context,
-										 exit_depth,
-										 exit_node,
-										 run_helper,
-										 scope_node_history);
-				delete scope_node_history;
+				ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
+				new_action_node->activate(curr_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  action_node_history);
+				delete action_node_history;
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
-				TryScopeStep* new_try_scope_step = new TryScopeStep();
-				create_scope(context,
-							 1,
-							 solution->root,
-							 NULL,
-							 new_potential_scope_node,
-							 new_try_scope_step);
-				delete new_try_scope_step;
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
 
 				this->curr_root_scope_nodes.push_back(NULL);
@@ -241,18 +230,20 @@ void OuterExperiment::explore_backprop(double target_val) {
 
 						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
 								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-							if (it->second->type == NODE_TYPE_SCOPE) {
+							if (it->second->type == NODE_TYPE_ACTION) {
+								ActionNode* action_node = (ActionNode*)it->second;
+								action_node->is_potential = true;
+							} else if (it->second->type == NODE_TYPE_SCOPE) {
 								ScopeNode* scope_node = (ScopeNode*)it->second;
-								if (scope_node->is_loop) {
-									scope_node->loop_scope_context = vector<int>{new_scope_id};
-									scope_node->loop_node_context = vector<int>{scope_node->id};
-								}
+								scope_node->is_potential = true;
 							} else if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->branch_scope_context = vector<int>{new_scope_id};
 								branch_node->branch_node_context = vector<int>{branch_node->id};
 							}
 						}
+
+						this->best_potential_scopes[s_index]->is_cleaned = false;
 					} else {
 						this->best_root_scope_nodes[s_index]->id = 1 + s_index;
 					}
@@ -275,24 +266,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				this->state = OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
-				this->best_score = 0.0;
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-						delete this->best_potential_scopes[s_index];
-					} else {
-						delete this->best_root_scope_nodes[s_index];
-					}
-				}
-				this->best_step_types.clear();
-				this->best_actions.clear();
-				this->best_potential_scopes.clear();
-				this->best_root_scope_nodes.clear();
-
-				// leave this->state as OUTER_EXPERIMENT_STATE_EXPLORE
-				this->state_iter = 0;
-				this->sub_state_iter = 0;
+				this->state = OUTER_EXPERIMENT_STATE_FAIL;
 			}
 
 			// cout << endl;

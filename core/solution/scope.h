@@ -18,7 +18,6 @@ class AbstractNodeHistory;
 class ActionNode;
 class PassThroughExperiment;
 class State;
-class TryTracker;
 
 class ScopeHistory;
 class Scope {
@@ -36,7 +35,7 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
-	TryTracker* tries;
+	std::vector<bool> used_states;
 
 	std::vector<State*> temp_states;
 	std::vector<std::vector<ActionNode*>> temp_state_nodes;
@@ -53,7 +52,6 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  int iter_index,
 				  ScopeHistory* history);
 
 	void random_activate(std::vector<Scope*>& scope_context,
@@ -102,11 +100,10 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
-	std::vector<std::vector<AbstractNodeHistory*>> node_histories;
+	std::vector<AbstractNodeHistory*> node_histories;
 
 	PassThroughExperiment* inner_pass_through_experiment;
 
-	int experiment_iter_index;
 	int experiment_index;
 	/**
 	 * - for gathering possible_exits during measure_existing

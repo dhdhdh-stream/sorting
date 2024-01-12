@@ -1,33 +1,3 @@
-// TODO: try transfer learning
-
-// TODO: actually, if world modeling, don't have to execute full actions, but can abstract
-// - another way in which world modeling can make exploring much faster
-
-// - maybe, initially, average everything
-//   - both obs and context
-//     - so actions simply transform state
-//       - state is what's been determined to matter through solution building
-//     - however there are "edge cases" that don't fit
-//       - where state changes in a way far from expectation
-//         - could be something special was seen through obs
-
-// - so world modeling is building Markov model
-//   - for each state, depending on the action, it has probability to transition to other states
-//     - select randomly at runtime
-//     - 
-
-// - add state if variables are correlated
-//   - or bimodel?
-//     - both can be solved together using k-means
-//       - or EM is better
-
-// - or use Kalman filters instead of as Markov models?
-//   - probably not since Kalman filters are continuous
-//     - looking for discrete
-
-// - for correlated/covariance, can measure on variable*target_val
-//   - instead of just variable
-
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 

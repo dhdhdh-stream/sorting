@@ -45,7 +45,7 @@ void clean_state(PotentialScopeNode* potential_scope_node) {
 						obs_index_mapping[n_index] = (int)new_state_is_local.size();
 
 						new_state_is_local.push_back(true);
-						new_state_is_local.push_back(new_state_index);
+						new_state_indexes.push_back(new_state_index);
 						new_state_obs_indexes.push_back(-1);
 						new_state_defs.push_back(action_node->state_defs[n_index]);
 						new_state_network_indexes.push_back(action_node->state_network_indexes[n_index]);
@@ -54,7 +54,7 @@ void clean_state(PotentialScopeNode* potential_scope_node) {
 							obs_index_mapping[n_index] = (int)new_state_is_local.size();
 
 							new_state_is_local.push_back(true);
-							new_state_is_local.push_back(new_state_index);
+							new_state_indexes.push_back(new_state_index);
 							new_state_obs_indexes.push_back(obs_index_mapping[action_node->state_obs_indexes[n_index]]);
 							new_state_defs.push_back(action_node->state_defs[n_index]);
 							new_state_network_indexes.push_back(action_node->state_network_indexes[n_index]);

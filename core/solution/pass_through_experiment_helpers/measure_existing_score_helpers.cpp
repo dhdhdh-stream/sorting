@@ -3,7 +3,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "scope.h"
@@ -22,8 +22,7 @@ void PassThroughExperiment::measure_existing_score_activate(
 	 */
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 		ScopeHistory* scope_history = context[context.size() - this->scope_context.size() + c_index].scope_history;
-		scope_history->experiment_iter_index = (int)scope_history->node_histories.size()-1;
-		scope_history->experiment_index = (int)scope_history->node_histories.back().size()-1;
+		scope_history->experiment_index = (int)scope_history->node_histories.size()-1;
 	}
 }
 
@@ -91,7 +90,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 					p_it = p_input_state_vals.insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 				}
 
-				FullNetwork* last_network = m_it->second.last_network;
+				StateNetwork* last_network = m_it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (m_it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -111,7 +110,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 					p_it = p_local_state_vals.insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 				}
 
-				FullNetwork* last_network = m_it->second.last_network;
+				StateNetwork* last_network = m_it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (m_it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -131,7 +130,7 @@ void PassThroughExperiment::measure_existing_score_backprop(
 					p_it = p_temp_state_vals.insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 				}
 
-				FullNetwork* last_network = m_it->second.last_network;
+				StateNetwork* last_network = m_it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (m_it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;

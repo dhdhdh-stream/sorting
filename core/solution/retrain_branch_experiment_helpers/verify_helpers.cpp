@@ -5,7 +5,7 @@
 
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution.h"
 #include "utilities.h"
@@ -32,7 +32,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -59,7 +59,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -86,7 +86,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -128,18 +128,42 @@ void RetrainBranchExperiment::verify_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= solution->curr_num_datapoints) {
-		this->combined_score /= solution->curr_num_datapoints;
-
-		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
-		double combined_improvement = this->combined_score - this->verify_existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+	if (this->state == RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST
+			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (combined_improvement_t_score > 2.326) {	// >99%
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+
+		if (combined_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
+			this->combined_score = 0.0;
+
+			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
+			this->state_iter = 0;
+		} else {
+			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL;
+		}
+	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		// this->state == RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND
+		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		if (combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			cout << "Retrain Branch" << endl;
 			cout << "verify" << endl;

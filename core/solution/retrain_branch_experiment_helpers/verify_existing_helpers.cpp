@@ -2,7 +2,7 @@
 
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution.h"
 #include "utilities.h"
@@ -20,7 +20,7 @@ void RetrainBranchExperiment::verify_existing_activate(
 		if (this->branch_node->decision_state_is_local[s_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->branch_node->decision_state_indexes[s_index]);
 			if (it != context.back().local_state_vals.end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -34,7 +34,7 @@ void RetrainBranchExperiment::verify_existing_activate(
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->branch_node->decision_state_indexes[s_index]);
 			if (it != context.back().input_state_vals.end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -90,22 +90,41 @@ void RetrainBranchExperiment::verify_existing_backprop(
 		}
 	}
 
-	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if (this->state == RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
+			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->verify_existing_average_score = sum_scores / solution->curr_num_datapoints;
+		this->verify_existing_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->verify_existing_average_score) * (this->o_target_val_histories[d_index] - this->verify_existing_average_score);
 		}
-		this->verify_existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+		this->verify_existing_score_variance = sum_score_variance / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY;
+		this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST;
+		this->state_iter = 0;
+	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		// this->state == RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+			sum_scores += this->o_target_val_histories[d_index];
+		}
+		this->verify_existing_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+		double sum_score_variance = 0.0;
+		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+			sum_score_variance += (this->o_target_val_histories[d_index] - this->verify_existing_average_score) * (this->o_target_val_histories[d_index] - this->verify_existing_average_score);
+		}
+		this->verify_existing_score_variance = sum_score_variance / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+		this->o_target_val_histories.clear();
+
+		this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND;
 		this->state_iter = 0;
 	}
 }

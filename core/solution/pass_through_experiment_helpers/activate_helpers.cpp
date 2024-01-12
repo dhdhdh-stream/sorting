@@ -18,7 +18,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 AbstractNode*& exit_node,
 									 RunHelper& run_helper,
 									 AbstractExperimentHistory*& history) {
-	if (run_helper.selected_experiment == NULL) {
+	if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -48,7 +48,6 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			if (select) {
 				hook();
 
-				run_helper.selected_experiment = this;
 				PassThroughExperimentOverallHistory* overall_history = new PassThroughExperimentOverallHistory(this);
 				run_helper.experiment_history = overall_history;
 
@@ -88,7 +87,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											   run_helper,
 											   history);
 					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
 					verify_new_score_activate(curr_node,
 											  problem,
 											  context,
@@ -141,7 +141,7 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				}
 			}
 		}
-	} else if (run_helper.selected_experiment == this) {
+	} else if (run_helper.experiment_history->experiment == this) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -186,7 +186,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										   run_helper,
 										   history);
 				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
+			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
 				verify_new_score_activate(curr_node,
 										  problem,
 										  context,
@@ -271,29 +272,27 @@ void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				action_node->experiment_back_activate(scope_context,
-													  node_context,
-													  temp_state_vals,
-													  action_node_history);
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			action_node->experiment_back_activate(scope_context,
+												  node_context,
+												  temp_state_vals,
+												  action_node_history);
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				node_context.back() = scope_node->id;
+			node_context.back() = scope_node->id;
 
-				back_activate_helper(scope_context,
-									 node_context,
-									 temp_state_vals,
-									 scope_node_history->inner_scope_history);
+			back_activate_helper(scope_context,
+								 node_context,
+								 temp_state_vals,
+								 scope_node_history->inner_scope_history);
 
-				node_context.back() = -1;
-			}
+			node_context.back() = -1;
 		}
 	}
 
@@ -383,11 +382,13 @@ void PassThroughExperiment::backprop(double target_val,
 		measure_new_score_backprop(target_val,
 								   history);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE:
 		verify_existing_score_backprop(target_val,
 									   run_helper);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW_SCORE:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
 		verify_new_score_backprop(target_val);
 		break;
 	#if defined(MDEBUG) && MDEBUG

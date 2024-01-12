@@ -1,32 +1,25 @@
 #ifndef STATE_STATUS_H
 #define STATE_STATUS_H
 
-class FullNetwork;
+#include <map>
+#include <set>
+
+class Scope;
+class StateNetwork;
 
 class StateStatus {
 public:
 	double val;
-	double index;
-	FullNetwork* last_network;
+	StateNetwork* last_network;
 
-	StateStatus() {
-		this->val = 0.0;
-		this->index = 0.0;
-		this->last_network = NULL;
-	}
+	std::map<Scope*, std::set<int>> impacted_potential_scopes;
+	bool used;
 
-	StateStatus(double val,
-				double index) {
-		this->val = val;
-		this->index = index;
-		this->last_network = NULL;
-	}
+	StateStatus();
+	StateStatus(double val);
 
-	bool operator==(const StateStatus& rhs) const {
-		return this->val == rhs.val
-			&& this->index == rhs.index
-			&& this->last_network == rhs.last_network;
-	}
+	void update_impacted_potential_scopes(
+		std::map<Scope*, std::set<int>>& new_impacted_potential_scopes);
 };
 
 #endif /* STATE_STATUS_H */

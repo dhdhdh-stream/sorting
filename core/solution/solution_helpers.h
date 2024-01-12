@@ -17,20 +17,15 @@ class Scope;
 class ScopeHistory;
 class ScopeNode;
 class State;
-class TryScopeStep;
 
 void create_experiment(ScopeHistory* root_history);
 
-void create_scope(std::vector<ContextLayer>& context,
-				  int explore_context_depth,
-				  Scope* parent_scope,
-				  PassThroughExperiment* parent_pass_through_experiment,
-				  PotentialScopeNode* new_potential_scope_node,
-				  TryScopeStep* new_try_scope_step);
-void create_loop(std::vector<ContextLayer>& context,
-				 int explore_context_depth,
-				 PotentialScopeNode* new_potential_scope_node,
-				 TryScopeStep* new_try_scope_step);
+PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
+								 int explore_context_depth,
+								 Scope* parent_scope,
+								 PassThroughExperiment* parent_pass_through_experiment);
+PotentialScopeNode* create_repeat(std::vector<ContextLayer>& context,
+								  int explore_context_depth);
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<ContextLayer>& context,
@@ -56,6 +51,8 @@ void existing_pass_through_branch_obs_experiment(
 		std::vector<ScopeHistory*>& scope_histories,
 		std::vector<double>& target_vals);
 
+void clean_state(PotentialScopeNode* potential_scope_node);
+
 void finalize_potential_scope(std::vector<int>& experiment_scope_context,
 							  std::vector<int>& experiment_node_context,
 							  PotentialScopeNode* potential_scope_node,
@@ -70,16 +67,5 @@ void finalize_branch_node_states(BranchNode* branch_node,
 								 std::vector<std::map<State*, double>>& new_temp_state_weights,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
-void finalize_loop_scope_node_states(ScopeNode* new_loop_scope_node,
-									 std::vector<int>& experiment_scope_context,
-									 std::vector<int>& experiment_node_context,
-									 std::vector<std::map<int, double>>& existing_input_state_weights,
-									 std::vector<std::map<int, double>>& existing_local_state_weights,
-									 std::vector<std::map<State*, double>>& existing_temp_state_weights,
-									 std::vector<std::map<int, double>>& new_input_state_weights,
-									 std::vector<std::map<int, double>>& new_local_state_weights,
-									 std::vector<std::map<State*, double>>& new_temp_state_weights,
-									 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-									 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 
 #endif /* SOLUTION_HELPERS_H */

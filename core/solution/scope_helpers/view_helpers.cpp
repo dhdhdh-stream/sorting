@@ -12,8 +12,7 @@
 
 using namespace std;
 
-void node_view_activate_helper(int iter_index,
-							   AbstractNode*& curr_node,
+void node_view_activate_helper(AbstractNode*& curr_node,
 							   Problem* problem,
 							   vector<ContextLayer>& context,
 							   int& exit_depth,
@@ -92,8 +91,7 @@ void Scope::view_activate(Problem* problem,
 			break;
 		}
 
-		node_view_activate_helper(0,
-								  curr_node,
+		node_view_activate_helper(curr_node,
 								  problem,
 								  context,
 								  exit_depth,

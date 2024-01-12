@@ -7,7 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope_node.h"
@@ -16,8 +16,7 @@
 
 using namespace std;
 
-void node_activate_helper(int iter_index,
-						  AbstractNode*& curr_node,
+void node_activate_helper(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
@@ -27,7 +26,7 @@ void node_activate_helper(int iter_index,
 	if (curr_node->type == NODE_TYPE_ACTION) {
 		ActionNode* node = (ActionNode*)curr_node;
 		ActionNodeHistory* node_history = new ActionNodeHistory(node);
-		history->node_histories[iter_index].push_back(node_history);
+		history->node_histories.push_back(node_history);
 		node->activate(curr_node,
 					   problem,
 					   context,
@@ -38,7 +37,7 @@ void node_activate_helper(int iter_index,
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* node = (ScopeNode*)curr_node;
 		ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-		history->node_histories[iter_index].push_back(node_history);
+		history->node_histories.push_back(node_history);
 		node->activate(curr_node,
 					   problem,
 					   context,
@@ -50,7 +49,7 @@ void node_activate_helper(int iter_index,
 		BranchNode* node = (BranchNode*)curr_node;
 
 		BranchNodeHistory* node_history = new BranchNodeHistory(node);
-		history->node_histories[iter_index].push_back(node_history);
+		history->node_histories.push_back(node_history);
 
 		bool is_branch;
 		node->activate(is_branch,
@@ -80,7 +79,6 @@ void Scope::activate(Problem* problem,
 					 int& exit_depth,
 					 AbstractNode*& exit_node,
 					 RunHelper& run_helper,
-					 int iter_index,
 					 ScopeHistory* history) {
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
@@ -91,8 +89,6 @@ void Scope::activate(Problem* problem,
 	}
 	run_helper.curr_depth++;
 
-	history->node_histories.push_back(vector<AbstractNodeHistory*>());
-
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (exit_depth != -1
@@ -101,14 +97,20 @@ void Scope::activate(Problem* problem,
 			break;
 		}
 
-		node_activate_helper(iter_index,
-							 curr_node,
+		node_activate_helper(curr_node,
 							 problem,
 							 context,
 							 exit_depth,
 							 exit_node,
 							 run_helper,
 							 history);
+	}
+
+	if (history->inner_pass_through_experiment != NULL) {
+		history->inner_pass_through_experiment->parent_scope_end_activate(
+			context,
+			run_helper,
+			history);
 	}
 
 	run_helper.curr_depth--;

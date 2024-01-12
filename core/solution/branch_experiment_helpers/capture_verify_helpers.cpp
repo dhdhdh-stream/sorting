@@ -6,7 +6,7 @@
 
 #include "action_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "pass_through_experiment.h"
@@ -84,7 +84,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_weight = branch_weight_it->second;
 				}
 
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -123,7 +123,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_weight = branch_weight_it->second;
 				}
 
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -162,7 +162,7 @@ void BranchExperiment::capture_verify_activate(
 					branch_weight = branch_weight_it->second;
 				}
 
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -211,19 +211,10 @@ void BranchExperiment::capture_verify_activate(
 						action_node_history);
 					delete action_node_history;
 				} else {
-					if (this->best_is_loop) {
-						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-						this->best_potential_scopes[s_index]->activate(problem,
-																	   context,
-																	   run_helper,
-																	   potential_scope_node_history);
-						delete potential_scope_node_history;
-					} else {
-						this->best_potential_scopes[s_index]->capture_verify_activate(
-							problem,
-							context,
-							run_helper);
-					}
+					this->best_potential_scopes[s_index]->capture_verify_activate(
+						problem,
+						context,
+						run_helper);
 				}
 			}
 
@@ -242,11 +233,9 @@ void BranchExperiment::capture_verify_activate(
 void BranchExperiment::capture_verify_backprop() {
 	this->state_iter++;
 	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-		if (!this->best_is_loop) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-					this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
-				}
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
 			}
 		}
 		solution->verify_key = this;

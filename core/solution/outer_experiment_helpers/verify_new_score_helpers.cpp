@@ -64,24 +64,53 @@ void OuterExperiment::verify_new_score_activate(
 void OuterExperiment::verify_new_score_backprop(double target_val) {
 	this->target_val_histories.push_back(target_val);
 
-	if ((int)this->target_val_histories.size() >= solution->curr_num_datapoints) {
+	if (this->state == OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE
+			&& (int)this->target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->target_val_histories.clear();
+
+		if (rand()%2 == 0) {
+		#else
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / solution->curr_num_datapoints;
+		double new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->target_val_histories.clear();
 
 		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+
+		if (score_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
+			this->target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
+			this->state_iter = 0;
+		} else {
+			this->state = OUTER_EXPERIMENT_STATE_FAIL;
+		}
+	} else if ((int)this->target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+			sum_scores += this->target_val_histories[d_index];
+		}
+		double new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+		this->target_val_histories.clear();
+
+		double score_improvement = new_average_score - this->existing_average_score;
+		double score_standard_deviation = sqrt(this->existing_score_variance);
+		double score_improvement_t_score = score_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (score_improvement_t_score > 2.326) {	// >99%
+		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			cout << "Outer" << endl;
 			cout << "verify" << endl;
@@ -113,24 +142,7 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 			finalize();
 			#endif /* MDEBUG */
 		} else {
-			this->best_score = 0.0;
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					delete this->best_actions[s_index];
-				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-					delete this->best_potential_scopes[s_index];
-				} else {
-					delete this->best_root_scope_nodes[s_index];
-				}
-			}
-			this->best_step_types.clear();
-			this->best_actions.clear();
-			this->best_potential_scopes.clear();
-			this->best_root_scope_nodes.clear();
-
-			this->state = OUTER_EXPERIMENT_STATE_EXPLORE;
-			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->state = OUTER_EXPERIMENT_STATE_FAIL;
 		}
 	}
 }

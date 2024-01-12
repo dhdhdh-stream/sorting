@@ -19,21 +19,22 @@ class PassThroughExperiment;
 class PotentialScopeNode;
 class ScopeHistory;
 class State;
-class TryInstance;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE = 2;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING = 5;
-const int BRANCH_EXPERIMENT_STATE_VERIFY = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
 #endif /* MDEBUG */
 
-const int BRANCH_EXPERIMENT_STATE_FAIL = 8;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 9;
+const int BRANCH_EXPERIMENT_STATE_FAIL = 10;
+const int BRANCH_EXPERIMENT_STATE_SUCCESS = 11;
 
 class BranchExperimentOverallHistory;
 class BranchExperiment : public AbstractExperiment {
@@ -71,8 +72,6 @@ public:
 	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
-	bool curr_is_loop;
-	TryInstance* curr_try_instance;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
@@ -80,8 +79,6 @@ public:
 	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
-	bool best_is_loop;
-	TryInstance* best_try_instance;
 
 	double new_average_score;
 
@@ -223,8 +220,6 @@ public:
 					std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 	void new_pass_through(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 						  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
-	void new_loop(std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-				  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
 };
 
 class BranchExperimentInstanceHistory : public AbstractExperimentHistory {

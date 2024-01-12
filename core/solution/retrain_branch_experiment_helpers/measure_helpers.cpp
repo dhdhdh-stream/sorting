@@ -4,7 +4,7 @@
 
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution.h"
 #include "utilities.h"
@@ -31,7 +31,7 @@ void RetrainBranchExperiment::measure_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -58,7 +58,7 @@ void RetrainBranchExperiment::measure_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -85,7 +85,7 @@ void RetrainBranchExperiment::measure_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -138,13 +138,13 @@ void RetrainBranchExperiment::measure_backprop(double target_val) {
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		if (combined_improvement_t_score > 2.326) {	// >99%
+		if (combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 
-			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
+			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL;

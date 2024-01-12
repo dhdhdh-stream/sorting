@@ -12,9 +12,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "try_instance.h"
-#include "try_scope_step.h"
-#include "try_tracker.h"
 
 using namespace std;
 
@@ -23,7 +20,7 @@ const int EXPLORE_ITERS = 2;
 const int NUM_SAMPLES_PER_ITER = 2;
 #else
 const int EXPLORE_ITERS = 100;
-const int NUM_SAMPLES_PER_ITER = 100;
+const int NUM_SAMPLES_PER_ITER = 20;
 #endif /* MDEBUG */
 
 void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
@@ -32,8 +29,6 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 													 int& exit_depth,
 													 AbstractNode*& exit_node,
 													 RunHelper& run_helper) {
-	this->curr_try_instance = new TryInstance();
-
 	{
 		// exit
 		vector<pair<int,AbstractNode*>> possible_exits;
@@ -50,20 +45,22 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 
 	{
 		// new path
-		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0
-				&& this->curr_exit_node == curr_node) {
-			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-		} else {
-			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-		}
+		int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+		/**
+		 * - always at least 1
+		 *   - leave 0 for CleanExperiment
+		 */
 
-		uniform_int_distribution<int> type_distribution(0, 1);
-		uniform_int_distribution<int> next_distribution(0, 1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (type_distribution(generator) == 0) {
+			PotentialScopeNode* new_potential_scope_node = create_scope(
+				context,
+				(int)this->scope_context.size(),
+				context[context.size() - this->scope_context.size()].scope,
+				NULL);
+
+			if (new_potential_scope_node == NULL) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
@@ -71,10 +68,6 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 				this->curr_actions.push_back(new_action_node);
 
 				this->curr_potential_scopes.push_back(NULL);
-
-				this->curr_try_instance->step_types.push_back(STEP_TYPE_ACTION);
-				this->curr_try_instance->actions.push_back(new_action_node->action.move);
-				this->curr_try_instance->potential_scopes.push_back(NULL);
 
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
 				new_action_node->activate(curr_node,
@@ -89,19 +82,7 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 				this->curr_actions.push_back(NULL);
 
-				this->curr_try_instance->step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-				this->curr_try_instance->actions.push_back(-1);
-
-				PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
-				TryScopeStep* new_try_scope_step = new TryScopeStep();
-				create_scope(context,
-							 (int)this->scope_context.size(),
-							 context[context.size() - this->scope_context.size()].scope,
-							 NULL,
-							 new_potential_scope_node,
-							 new_try_scope_step);
 				this->curr_potential_scopes.push_back(new_potential_scope_node);
-				this->curr_try_instance->potential_scopes.push_back(new_try_scope_step);
 
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
 				new_potential_scope_node->activate(problem,
@@ -112,16 +93,6 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 			}
 		}
 	}
-
-	this->curr_try_instance->start = {this->scope_context, this->node_context};
-	vector<int> exit_scope_context(this->scope_context.begin() + this->curr_exit_depth, this->scope_context.end());
-	vector<int> exit_node_context(this->node_context.begin() + this->curr_exit_depth, this->node_context.end());
-	if (this->curr_exit_node == NULL) {
-		exit_node_context.back() = -1;
-	} else {
-		exit_node_context.back() = this->curr_exit_node->id;
-	}
-	this->curr_try_instance->exit = {exit_scope_context, exit_node_context};
 
 	{
 		if (this->curr_exit_depth == 0) {
@@ -191,9 +162,6 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 					delete this->best_potential_scopes[s_index];
 				}
 			}
-			if (this->best_try_instance != NULL) {
-				delete this->best_try_instance;
-			}
 
 			this->best_score = curr_score;
 			this->best_step_types = this->curr_step_types;
@@ -201,13 +169,11 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
-			this->best_try_instance = this->curr_try_instance;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
-			this->curr_try_instance = NULL;
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -216,13 +182,11 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 					delete this->curr_potential_scopes[s_index];
 				}
 			}
-			delete this->curr_try_instance;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
-			this->curr_try_instance = NULL;
 		}
 
 		this->state_iter++;
@@ -235,18 +199,6 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			#else
 			if (this->best_score > 0.0) {
 			#endif /* MDEBUG */
-				Scope* parent_scope = solution->scopes[this->scope_context[0]];
-				if (parent_scope->tries->tries.size() > 0) {
-					double predicted_impact;
-					double closest_distance;
-					parent_scope->tries->evaluate_potential(
-						this->best_try_instance,
-						predicted_impact,
-						closest_distance);
-					cout << "predicted_impact: " << predicted_impact << endl;
-					cout << "closest_distance: " << closest_distance << endl;
-				}
-
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -265,18 +217,20 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 
 						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
 								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-							if (it->second->type == NODE_TYPE_SCOPE) {
+							if (it->second->type == NODE_TYPE_ACTION) {
+								ActionNode* action_node = (ActionNode*)it->second;
+								action_node->is_potential = true;
+							} else if (it->second->type == NODE_TYPE_SCOPE) {
 								ScopeNode* scope_node = (ScopeNode*)it->second;
-								if (scope_node->is_loop) {
-									scope_node->loop_scope_context = vector<int>{new_scope_id};
-									scope_node->loop_node_context = vector<int>{scope_node->id};
-								}
+								scope_node->is_potential = true;
 							} else if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->branch_scope_context = vector<int>{new_scope_id};
 								branch_node->branch_node_context = vector<int>{branch_node->id};
 							}
 						}
+
+						this->best_potential_scopes[s_index]->is_cleaned = false;
 					}
 				}
 
@@ -307,13 +261,6 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				// cout << endl;
 
 				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
-
-				// reserve at least solution->curr_num_datapoints
-				this->i_scope_histories.reserve(solution->curr_num_datapoints);
-				this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
-				this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
-				this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
-				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;

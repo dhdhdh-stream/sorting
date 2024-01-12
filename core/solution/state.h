@@ -1,7 +1,3 @@
-/**
- * TODO: in addition to state, have memory that can free form draw in?
- */
-
 #ifndef STATE_H
 #define STATE_H
 
@@ -10,14 +6,14 @@
 #include <vector>
 
 class AbstractNode;
-class FullNetwork;
+class StateNetwork;
 class Scope;
 
 class State {
 public:
 	int id;
 
-	std::vector<FullNetwork*> networks;
+	std::vector<StateNetwork*> networks;
 
 	State();
 	State(std::ifstream& input_file,

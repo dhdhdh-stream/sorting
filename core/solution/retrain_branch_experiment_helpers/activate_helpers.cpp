@@ -11,7 +11,7 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 									   vector<ContextLayer>& context,
 									   RunHelper& run_helper) {
 	bool is_selected = false;
-	if (run_helper.selected_experiment == NULL) {
+	if (run_helper.experiment_history == NULL) {
 		bool select = false;
 		set<AbstractExperiment*>::iterator it = run_helper.experiments_seen.find(this);
 		if (it == run_helper.experiments_seen.end()) {
@@ -25,12 +25,11 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 			run_helper.experiments_seen.insert(this);
 		}
 		if (select) {
-			run_helper.selected_experiment = this;
 			run_helper.experiment_history = new RetrainBranchExperimentOverallHistory(this);
 
 			is_selected = true;
 		}
-	} else if (run_helper.selected_experiment == this) {
+	} else if (run_helper.experiment_history->experiment == this) {
 		is_selected = true;
 	}
 
@@ -56,12 +55,14 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 							 context,
 							 run_helper);
 			break;
-		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING:
+		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 			verify_existing_activate(is_branch,
 									 context,
 									 run_helper);
 			break;
-		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY:
+		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+		case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 			verify_activate(is_branch,
 							context,
 							run_helper);
@@ -101,11 +102,13 @@ void RetrainBranchExperiment::backprop(double target_val,
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val);
 		break;
-	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING:
+	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 		verify_existing_backprop(target_val,
 								 run_helper);
 		break;
-	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY:
+	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+	case RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 		verify_backprop(target_val);
 		break;
 	#if defined(MDEBUG) && MDEBUG

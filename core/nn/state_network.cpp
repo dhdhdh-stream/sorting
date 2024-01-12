@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "state.h"
+#include "state_status.h"
+
 using namespace std;
 
 /**
@@ -30,15 +33,59 @@ void StateNetwork::construct() {
 	this->output_average_max_update = 0.0;
 }
 
-StateNetwork::StateNetwork() {
+StateNetwork::StateNetwork(int index) {
+	this->index = index;
+
+	this->starting_mean = 0.0;
+	this->starting_variance = 1.0;
+
+	this->ending_mean = 0.0;
+	this->ending_variance = 1.0;
+
 	construct();
 }
 
-StateNetwork::StateNetwork(ifstream& input_file) {
+StateNetwork::StateNetwork(string path,
+						   string name,
+						   State* parent_state,
+						   int index) {
+	ifstream input_file;
+	input_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + ".txt");
+
+	this->parent_state = parent_state;
+	this->index = index;
+
+	string preceding_network_indexes_size_line;
+	getline(input_file, preceding_network_indexes_size_line);
+	int preceding_network_indexes_size = stoi(preceding_network_indexes_size_line);
+	for (int n_index = 0; n_index < preceding_network_indexes_size; n_index++) {
+		string network_index_line;
+		getline(input_file, network_index_line);
+		this->preceding_network_indexes.insert(stoi(network_index_line));
+	}
+
+	string starting_mean_line;
+	getline(input_file, starting_mean_line);
+	this->starting_mean = stod(starting_mean_line);
+
+	string starting_standard_deviation_line;
+	getline(input_file, starting_standard_deviation_line);
+	this->starting_standard_deviation = stod(starting_standard_deviation_line);
+
+	string ending_mean_line;
+	getline(input_file, ending_mean_line);
+	this->ending_mean = stod(ending_mean_line);
+
+	string ending_standard_deviation_line;
+	getline(input_file, ending_standard_deviation_line);
+	this->ending_standard_deviation = stod(ending_standard_deviation_line);
+
 	construct();
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
+
+	input_file.close();
 }
 
 StateNetwork::~StateNetwork() {
@@ -49,25 +96,24 @@ StateNetwork::~StateNetwork() {
 }
 
 void StateNetwork::activate(double obs_val,
-							double state_val,
-							StateNetworkHistory* history) {
+							double& state_val) {
 	this->obs_input->acti_vals[0] = obs_val;
 	this->state_input->acti_vals[0] = state_val;
 
 	this->hidden->activate();
 	this->output->activate();
 
-	history->save_weights();
+	state_val += this->output->acti_vals[0];
 }
 
-void StateNetwork::backprop(double error,
-							StateNetworkHistory* history) {
-	history->reset_weights();
-
-	this->output->errors[0] = error;
+void StateNetwork::backprop(double& state_error) {
+	this->output->errors[0] = state_error;
 
 	this->output->backprop();
 	this->hidden->backprop();
+
+	state_error += this->state_input->errors[0];
+	this->state_input->errors[0] = 0.0;
 
 	this->epoch_iter++;
 	if (this->epoch_iter == 20) {
@@ -98,38 +144,49 @@ void StateNetwork::backprop(double error,
 }
 
 void StateNetwork::activate(double obs_val,
-							 double state_val) {
+							StateStatus& state_status) {
+	double starting_state_val;
+	StateNetwork* last_network = state_status.last_network;
+	if (last_network == NULL) {
+		starting_state_val = (state_status.val * this->starting_standard_deviation) + this->starting_mean;
+	} else if (this->parent_state != last_network->parent_state
+			|| this->preceding_network_indexes.find(last_network->index) == this->preceding_network_indexes.end()) {
+		double normalized = (state_status.val - last_network->ending_mean)
+			/ last_network->ending_standard_deviation;
+		starting_state_val = (normalized * this->starting_standard_deviation) + this->starting_mean;
+	} else {
+		starting_state_val = state_status.val;
+	}
+
 	this->obs_input->acti_vals[0] = obs_val;
-	this->state_input->acti_vals[0] = state_val;
+	this->state_input->acti_vals[0] = starting_state_val;
 
 	this->hidden->activate();
 	this->output->activate();
+
+	state_status.val += this->output->acti_vals[0];
+
+	state_status.last_network = this;
 }
 
-void StateNetwork::save(ofstream& output_file) {
+void StateNetwork::save(string path,
+						string name) {
+	ofstream output_file;
+	output_file.open(path + "saves/" + name + "/nns/" + to_string(this->parent_state->id) + "_" + to_string(this->index) + ".txt");
+
+	output_file << this->preceding_network_indexes.size() << endl;
+	for (set<int>::iterator it = preceding_network_indexes.begin();
+			it != preceding_network_indexes.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->starting_mean << endl;
+	output_file << this->starting_standard_deviation << endl;
+	output_file << this->ending_mean << endl;
+	output_file << this->ending_standard_deviation << endl;
+
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
-}
 
-StateNetworkHistory::StateNetworkHistory(StateNetwork* network) {
-	this->network = network;
-}
-
-void StateNetworkHistory::save_weights() {
-	this->obs_input_history = network->obs_input->acti_vals[0];
-	this->state_input_history = network->state_input->acti_vals[0];
-
-	this->hidden_history.reserve(HIDDEN_SIZE);
-	for (int n_index = 0; n_index < HIDDEN_SIZE; n_index++) {
-		this->hidden_history.push_back(network->hidden->acti_vals[n_index]);
-	}
-}
-
-void StateNetworkHistory::reset_weights() {
-	network->obs_input->acti_vals[0] = this->obs_input_history;
-	network->state_input->acti_vals[0] = this->state_input_history;
-
-	for (int n_index = 0; n_index < HIDDEN_SIZE; n_index++) {
-		this->network->hidden->acti_vals[n_index] = this->hidden_history[n_index];
-	}
+	output_file.close();
 }

@@ -23,10 +23,6 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 		scope_context.push_back(this->inner_scope);
 		node_context.push_back(NULL);
 
-		/**
-		 * - simply go through at most once if loop
-		 */
-
 		this->inner_scope->random_activate(scope_context,
 										   node_context,
 										   inner_exit_depth,
