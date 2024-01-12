@@ -5,7 +5,7 @@
 #include "abstract_experiment.h"
 #include "branch_experiment.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -30,7 +30,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	history->obs_snapshot = problem->get_observation();
 
 	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);
-	vector<map<Scope*, vector<bool>>> obs_impacted_potential_scopes;
+	vector<map<Scope*, set<int>>> obs_impacted_potential_scopes;
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
@@ -38,10 +38,10 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 
 				if (this->is_potential) {
-					it->second.impacted_potential_scopes[this->parent] = set<int>{this->state_indexes[n_index]};
+					it->second.impacted_potential_scopes[this->parent] = set<int>({this->state_indexes[n_index]});
 				}
 			}
-			FullNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 			if (this->state_obs_indexes[n_index] == -1) {
 				state_network->activate(history->obs_snapshot,
 										it->second);
@@ -57,7 +57,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
-				FullNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
+				StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
 				if (this->state_obs_indexes[n_index] == -1) {
 					state_network->activate(history->obs_snapshot,
 											it->second);
@@ -97,7 +97,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				it = context[context.size()-this->temp_state_scope_contexts[n_index].size()].temp_state_vals
 					.insert({this->temp_state_defs[n_index], StateStatus()}).first;
 			}
-			FullNetwork* state_network = this->temp_state_defs[n_index]->networks[this->temp_state_network_indexes[n_index]];
+			StateNetwork* state_network = this->temp_state_defs[n_index]->networks[this->temp_state_network_indexes[n_index]];
 			if (this->temp_state_obs_indexes[n_index] == -1) {
 				state_network->activate(history->obs_snapshot,
 										it->second);
@@ -134,7 +134,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				it = context[context.size()-this->experiment_state_scope_contexts[n_index].size()].temp_state_vals
 					.insert({this->experiment_state_defs[n_index], StateStatus()}).first;
 			}
-			FullNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
+			StateNetwork* state_network = this->experiment_state_defs[n_index]->networks[this->experiment_state_network_indexes[n_index]];
 			if (this->experiment_state_obs_indexes[n_index] == -1) {
 				state_network->activate(history->obs_snapshot,
 										it->second);

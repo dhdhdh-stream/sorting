@@ -58,7 +58,6 @@ public:
 	std::vector<PotentialScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
-	TryInstance* curr_try_instance;
 
 	double best_score;
 	std::vector<int> best_step_types;
@@ -66,7 +65,6 @@ public:
 	std::vector<PotentialScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
-	TryInstance* best_try_instance;
 
 	double new_average_score;
 

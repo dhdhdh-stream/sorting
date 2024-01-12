@@ -10,7 +10,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
-#include "full_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope_node.h"

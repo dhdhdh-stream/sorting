@@ -7,13 +7,10 @@
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "try_scope_step.h"
 
 using namespace std;
 
 /**
- * - if loop, simply include every node
- * 
  * - special case last node outside
  */
 void create_loop_experiment_helper(int target_depth,
@@ -25,40 +22,37 @@ void create_loop_experiment_helper(int target_depth,
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-				node_context.back() = action_node;
+			node_context.back() = action_node;
 
+			possible_scope_contexts.push_back(scope_context);
+			possible_node_contexts.push_back(node_context);
+
+			node_context.back() = NULL;
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+			node_context.back() = scope_node;
+
+			if (h_index == (int)scope_history->node_histories.size()-1
+					&& (int)scope_context.size()+1 <= target_depth) {
+				create_loop_experiment_helper(target_depth,
+											  scope_context,
+											  node_context,
+											  possible_scope_contexts,
+											  possible_node_contexts,
+											  scope_node_history->inner_scope_history);
+			} else {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 
 				node_context.back() = NULL;
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-				node_context.back() = scope_node;
-
-				if (i_index == (int)scope_history->node_histories.size()-1
-						&& h_index == (int)scope_history->node_histories[i_index].size()-1
-						&& (int)scope_context.size()+1 <= target_depth) {
-					create_loop_experiment_helper(target_depth,
-												  scope_context,
-												  node_context,
-												  possible_scope_contexts,
-												  possible_node_contexts,
-												  scope_node_history->inner_scope_history);
-				} else {
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-
-					node_context.back() = NULL;
-				}
 			}
 		}
 	}
@@ -66,10 +60,8 @@ void create_loop_experiment_helper(int target_depth,
 	// no need to pop_back context
 }
 
-void create_loop(vector<ContextLayer>& context,
-				 int explore_context_depth,
-				 PotentialScopeNode* new_potential_scope_node,
-				 TryScopeStep* new_try_scope_step) {
+PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
+								  int explore_context_depth) {
 	ScopeHistory* scope_history = context[context.size() - explore_context_depth].scope_history;
 
 	vector<vector<Scope*>> possible_scope_contexts;
@@ -96,6 +88,7 @@ void create_loop(vector<ContextLayer>& context,
 	new_scope->num_input_states = 0;
 	new_scope->num_local_states = 0;
 	new_scope->node_counter = 0;
+	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
 	new_potential_scope_node->scope = new_scope;
 	new_potential_scope_node->experiment_scope_depth = explore_context_depth;
 
@@ -176,8 +169,6 @@ void create_loop(vector<ContextLayer>& context,
 
 			new_action_node->action = original_action_node->action;
 
-			new_try_scope_step->original_nodes.push_back({original_action_node->parent->id, original_action_node->id});
-
 			vector<int> obs_index_mapping(original_action_node->state_is_local.size(), -1);
 			for (int s_index = 0; s_index < (int)original_action_node->state_is_local.size(); s_index++) {
 				if (original_action_node->state_obs_indexes[s_index] == -1) {
@@ -208,26 +199,19 @@ void create_loop(vector<ContextLayer>& context,
 								new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 								new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
 								new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-								if (potential_to_outer_mapping[potential_it->second].second.first) {
-									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
-								} else {
-									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-								}
+								new_potential_scope_node->input_outer_is_local.push_back(
+									potential_to_outer_mapping[potential_it->second].second.first);
 								new_potential_scope_node->input_outer_indexes.push_back(
-									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+									potential_to_outer_mapping[potential_it->second].second.second);
 								new_potential_scope_node->input_init_vals.push_back(0.0);
-								new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 								if (output_distribution(generator) == 0) {
 									new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
 									new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-									if (potential_to_outer_mapping[potential_it->second].second.first) {
-										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
-									} else {
-										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
-									}
+									new_potential_scope_node->output_outer_is_local.push_back(
+										potential_to_outer_mapping[potential_it->second].second.first);
 									new_potential_scope_node->output_outer_indexes.push_back(
-										(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+										potential_to_outer_mapping[potential_it->second].second.second);
 								}
 
 								obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
@@ -269,26 +253,19 @@ void create_loop(vector<ContextLayer>& context,
 									new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 									new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
 									new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-									if (potential_to_outer_mapping[potential_it->second].second.first) {
-										new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
-									} else {
-										new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-									}
+									new_potential_scope_node->input_outer_is_local.push_back(
+										potential_to_outer_mapping[potential_it->second].second.first);
 									new_potential_scope_node->input_outer_indexes.push_back(
-										(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+										potential_to_outer_mapping[potential_it->second].second.second);
 									new_potential_scope_node->input_init_vals.push_back(0.0);
-									new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 									if (output_distribution(generator) == 0) {
 										new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
 										new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-										if (potential_to_outer_mapping[potential_it->second].second.first) {
-											new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
-										} else {
-											new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
-										}
+										new_potential_scope_node->output_outer_is_local.push_back(
+											potential_to_outer_mapping[potential_it->second].second.first);
 										new_potential_scope_node->output_outer_indexes.push_back(
-											(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+											potential_to_outer_mapping[potential_it->second].second.second);
 									}
 
 									obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
@@ -313,8 +290,6 @@ void create_loop(vector<ContextLayer>& context,
 
 			new_scope_node->inner_scope = original_scope_node->inner_scope;
 
-			new_try_scope_step->original_nodes.push_back({original_scope_node->parent->id, original_scope_node->id});
-
 			for (int i_index = 0; i_index < (int)original_scope_node->input_types.size(); i_index++) {
 				if (original_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
 					map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
@@ -329,7 +304,6 @@ void create_loop(vector<ContextLayer>& context,
 								new_scope_node->input_outer_is_local.push_back(true);
 								new_scope_node->input_outer_indexes.push_back(final_it->second);
 								new_scope_node->input_init_vals.push_back(0.0);
-								new_scope_node->input_init_index_vals.push_back(0.0);
 							}
 						} else {
 							if (include_state_distribution(generator) == 0) {
@@ -344,26 +318,19 @@ void create_loop(vector<ContextLayer>& context,
 								new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 								new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
 								new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-								if (potential_to_outer_mapping[potential_it->second].second.first) {
-									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
-								} else {
-									new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-								}
+								new_potential_scope_node->input_outer_is_local.push_back(
+									potential_to_outer_mapping[potential_it->second].second.first);
 								new_potential_scope_node->input_outer_indexes.push_back(
-									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+									potential_to_outer_mapping[potential_it->second].second.second);
 								new_potential_scope_node->input_init_vals.push_back(0.0);
-								new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 								if (output_distribution(generator) == 0) {
 									new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
 									new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-									if (potential_to_outer_mapping[potential_it->second].second.first) {
-										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
-									} else {
-										new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
-									}
+									new_potential_scope_node->output_outer_is_local.push_back(
+										potential_to_outer_mapping[potential_it->second].second.first);
 									new_potential_scope_node->output_outer_indexes.push_back(
-										(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+										potential_to_outer_mapping[potential_it->second].second.second);
 								}
 
 								new_scope_node->input_types.push_back(INPUT_TYPE_STATE);
@@ -372,7 +339,6 @@ void create_loop(vector<ContextLayer>& context,
 								new_scope_node->input_outer_is_local.push_back(true);
 								new_scope_node->input_outer_indexes.push_back(new_state_index);
 								new_scope_node->input_init_vals.push_back(0.0);
-								new_scope_node->input_init_index_vals.push_back(0.0);
 							}
 						}
 					}
@@ -383,7 +349,6 @@ void create_loop(vector<ContextLayer>& context,
 					new_scope_node->input_outer_is_local.push_back(false);
 					new_scope_node->input_outer_indexes.push_back(-1);
 					new_scope_node->input_init_vals.push_back(original_scope_node->input_init_vals[i_index]);
-					new_scope_node->input_init_index_vals.push_back(original_scope_node->input_init_index_vals[i_index]);
 				}
 			}
 
@@ -412,94 +377,25 @@ void create_loop(vector<ContextLayer>& context,
 							new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
 							new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
 							new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-							if (potential_to_outer_mapping[potential_it->second].second.first) {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
-							} else {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-							}
+							new_potential_scope_node->input_outer_is_local.push_back(
+								potential_to_outer_mapping[potential_it->second].second.first);
 							new_potential_scope_node->input_outer_indexes.push_back(
-								(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+								potential_to_outer_mapping[potential_it->second].second.second);
 							new_potential_scope_node->input_init_vals.push_back(0.0);
-							new_potential_scope_node->input_init_index_vals.push_back(0.0);
 
 							if (output_distribution(generator) == 0) {
 								new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
 								new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-								if (potential_to_outer_mapping[potential_it->second].second.first) {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
-								} else {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
-								}
+								new_potential_scope_node->output_outer_is_local.push_back(
+									potential_to_outer_mapping[potential_it->second].second.first);
 								new_potential_scope_node->output_outer_indexes.push_back(
-									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
+									potential_to_outer_mapping[potential_it->second].second.second);
 							}
 
 							new_scope_node->output_inner_is_local.push_back(original_scope_node->output_inner_is_local[o_index]);
 							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
 							new_scope_node->output_outer_is_local.push_back(true);
 							new_scope_node->output_outer_indexes.push_back(new_state_index);
-						}
-					}
-				}
-			}
-
-			new_scope_node->is_loop = original_scope_node->is_loop;
-			new_scope_node->continue_score_mod = original_scope_node->continue_score_mod;
-			new_scope_node->halt_score_mod = original_scope_node->halt_score_mod;
-			new_scope_node->decision_standard_deviation = original_scope_node->decision_standard_deviation;
-			new_scope_node->max_iters = original_scope_node->max_iters;
-
-			for (int s_index = 0; s_index < (int)original_scope_node->loop_state_is_local.size(); s_index++) {
-				map<pair<bool,int>, int>::iterator potential_it = potential_state_mappings[possible_scope_contexts[n_index].size()-1]
-					.find({original_scope_node->loop_state_is_local[s_index], original_scope_node->loop_state_indexes[s_index]});
-				if (potential_it != potential_state_mappings[possible_scope_contexts[n_index].size()-1].end()) {
-					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
-					if (final_it != potential_to_final_mapping.end()) {
-						if (final_it->second != -1) {
-							new_scope_node->loop_state_is_local.push_back(true);
-							new_scope_node->loop_state_indexes.push_back(final_it->second);
-							new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
-							new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
-						}
-					} else {
-						if (include_state_distribution(generator) == 0) {
-							potential_to_final_mapping[potential_it->second] = -1;
-						} else {
-							int new_state_index = new_scope->num_local_states;
-							new_scope->num_local_states++;
-							new_scope->original_local_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
-
-							potential_to_final_mapping[potential_it->second] = new_state_index;
-
-							new_potential_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-							new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
-							new_potential_scope_node->input_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-							if (potential_to_outer_mapping[potential_it->second].second.first) {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_LOCAL);
-							} else {
-								new_potential_scope_node->input_outer_types.push_back(OUTER_TYPE_INPUT);
-							}
-							new_potential_scope_node->input_outer_indexes.push_back(
-								(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
-							new_potential_scope_node->input_init_vals.push_back(0.0);
-							new_potential_scope_node->input_init_index_vals.push_back(0.0);
-
-							if (output_distribution(generator) == 0) {
-								new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
-								new_potential_scope_node->output_scope_depths.push_back(potential_to_outer_mapping[potential_it->second].first);
-								if (potential_to_outer_mapping[potential_it->second].second.first) {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_LOCAL);
-								} else {
-									new_potential_scope_node->output_outer_types.push_back(OUTER_TYPE_INPUT);
-								}
-								new_potential_scope_node->output_outer_indexes.push_back(
-									(void*)((long)potential_to_outer_mapping[potential_it->second].second.second));
-							}
-
-							new_scope_node->loop_state_is_local.push_back(true);
-							new_scope_node->loop_state_indexes.push_back(new_state_index);
-							new_scope_node->loop_continue_weights.push_back(original_scope_node->loop_continue_weights[s_index]);
-							new_scope_node->loop_halt_weights.push_back(original_scope_node->loop_halt_weights[s_index]);
 						}
 					}
 				}
@@ -538,4 +434,8 @@ void create_loop(vector<ContextLayer>& context,
 
 	new_scope->starting_node_id = 0;
 	new_scope->starting_node = new_nodes[0];
+
+	new_scope->used_states = vector<bool>(new_scope->num_local_states, false);
+
+	return new_potential_scope_node;
 }

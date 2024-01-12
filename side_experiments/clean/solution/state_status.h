@@ -1,6 +1,10 @@
 #ifndef STATE_STATUS_H
 #define STATE_STATUS_H
 
+#include <map>
+#include <set>
+
+class Scope;
 class StateNetwork;
 
 class StateStatus {

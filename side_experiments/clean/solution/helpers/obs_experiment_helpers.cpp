@@ -7,12 +7,11 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "flat_network.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "potential_scope_node.h"
 #include "retrain_branch_experiment.h"
-#include "retrain_loop_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -173,13 +172,12 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
 				node_context.back() = action_node->id;
 
 				possible_nodes.push_back(action_node);
@@ -208,35 +206,35 @@ void create_obs_experiment_helper(vector<int>& scope_context,
 						possible_obs_indexes,
 						action_node_history->experiment_history);
 				}
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+			}
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				node_context.back() = scope_node->id;
+			node_context.back() = scope_node->id;
 
-				uniform_int_distribution<int> distribution(0, 1);
-				if (distribution(generator) == 0) {
-					create_obs_experiment_helper(scope_context,
-												 node_context,
-												 possible_nodes,
-												 possible_scope_contexts,
-												 possible_node_contexts,
-												 possible_obs_indexes,
-												 scope_node_history->inner_scope_history);
-				}
+			uniform_int_distribution<int> distribution(0, 2);
+			if (distribution(generator) != 0) {
+				create_obs_experiment_helper(scope_context,
+											 node_context,
+											 possible_nodes,
+											 possible_scope_contexts,
+											 possible_node_contexts,
+											 possible_obs_indexes,
+											 scope_node_history->inner_scope_history);
+			}
 
-				node_context.back() = -1;
+			node_context.back() = -1;
 
-				if (scope_node_history->experiment_history != NULL) {
-					create_obs_experiment_experiment_helper(
-						scope_context,
-						node_context,
-						possible_nodes,
-						possible_scope_contexts,
-						possible_node_contexts,
-						possible_obs_indexes,
-						scope_node_history->experiment_history);
-				}
+			if (scope_node_history->experiment_history != NULL) {
+				create_obs_experiment_experiment_helper(
+					scope_context,
+					node_context,
+					possible_nodes,
+					possible_scope_contexts,
+					possible_node_contexts,
+					possible_obs_indexes,
+					scope_node_history->experiment_history);
 			}
 		}
 	}
@@ -376,46 +374,44 @@ void flat_vals_helper(vector<int>& scope_context,
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				action_node->flat_vals_back_activate(scope_context,
-													 node_context,
-													 sum_vals,
-													 counts,
-													 action_node_history);
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			action_node->flat_vals_back_activate(scope_context,
+												 node_context,
+												 sum_vals,
+												 counts,
+												 action_node_history);
 
-				if (action_node_history->experiment_history != NULL) {
-					flat_vals_experiment_helper(scope_context,
-												node_context,
-												action_node_history->experiment_history,
-												sum_vals,
-												counts);
-				}
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+			if (action_node_history->experiment_history != NULL) {
+				flat_vals_experiment_helper(scope_context,
+											node_context,
+											action_node_history->experiment_history,
+											sum_vals,
+											counts);
+			}
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				node_context.back() = scope_node->id;
+			node_context.back() = scope_node->id;
 
-				flat_vals_helper(scope_context,
-								 node_context,
-								 scope_node_history->inner_scope_history,
-								 sum_vals,
-								 counts);
+			flat_vals_helper(scope_context,
+							 node_context,
+							 scope_node_history->inner_scope_history,
+							 sum_vals,
+							 counts);
 
-				node_context.back() = -1;
+			node_context.back() = -1;
 
-				if (scope_node_history->experiment_history != NULL) {
-					flat_vals_experiment_helper(scope_context,
-												node_context,
-												scope_node_history->experiment_history,
-												sum_vals,
-												counts);
-				}
+			if (scope_node_history->experiment_history != NULL) {
+				flat_vals_experiment_helper(scope_context,
+											node_context,
+											scope_node_history->experiment_history,
+											sum_vals,
+											counts);
 			}
 		}
 	}
@@ -534,46 +530,44 @@ void rnn_vals_helper(vector<int>& scope_context,
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				action_node->rnn_vals_back_activate(scope_context,
-													node_context,
-													rnn_obs_experiment_indexes,
-													rnn_vals,
-													action_node_history);
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			action_node->rnn_vals_back_activate(scope_context,
+												node_context,
+												rnn_obs_experiment_indexes,
+												rnn_vals,
+												action_node_history);
 
-				if (action_node_history->experiment_history != NULL) {
-					rnn_vals_experiment_helper(scope_context,
-											   node_context,
-											   action_node_history->experiment_history,
-											   rnn_obs_experiment_indexes,
-											   rnn_vals);
-				}
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+			if (action_node_history->experiment_history != NULL) {
+				rnn_vals_experiment_helper(scope_context,
+										   node_context,
+										   action_node_history->experiment_history,
+										   rnn_obs_experiment_indexes,
+										   rnn_vals);
+			}
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				node_context.back() = scope_node->id;
+			node_context.back() = scope_node->id;
 
-				rnn_vals_helper(scope_context,
-								node_context,
-								scope_node_history->inner_scope_history,
-								rnn_obs_experiment_indexes,
-								rnn_vals);
+			rnn_vals_helper(scope_context,
+							node_context,
+							scope_node_history->inner_scope_history,
+							rnn_obs_experiment_indexes,
+							rnn_vals);
 
-				node_context.back() = -1;
+			node_context.back() = -1;
 
-				if (scope_node_history->experiment_history != NULL) {
-					rnn_vals_experiment_helper(scope_context,
-											   node_context,
-											   scope_node_history->experiment_history,
-											   rnn_obs_experiment_indexes,
-											   rnn_vals);
-				}
+			if (scope_node_history->experiment_history != NULL) {
+				rnn_vals_experiment_helper(scope_context,
+										   node_context,
+										   scope_node_history->experiment_history,
+										   rnn_obs_experiment_indexes,
+										   rnn_vals);
 			}
 		}
 	}
@@ -612,6 +606,18 @@ void flat(vector<vector<double>>& flat_vals,
 			obs_impacts[n_index] += abs(flat_network.hidden->weights[h_index][0][n_index]
 				* flat_network.output->weights[0][0][h_index]);
 		}
+
+		double average_val = 0.0;
+		for (int i_index = 0; i_index < (int)flat_vals.size(); i_index++) {
+			average_val += flat_vals[i_index][n_index];
+		}
+		average_val /= flat_vals.size();
+		double average_diff = 0.0;
+		for (int i_index = 0; i_index < (int)flat_vals.size(); i_index++) {
+			average_diff += abs(flat_vals[i_index][n_index] - average_val);
+		}
+		average_diff /= flat_vals.size();
+		obs_impacts[n_index] *= average_diff;
 	}
 
 	double max_impact = 0.0;
@@ -668,7 +674,7 @@ void flat(vector<vector<double>>& flat_vals,
 void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 		 vector<vector<double>>& rnn_vals,
 		 vector<double>& target_vals,
-		 vector<FullNetwork*>& state_networks,
+		 vector<StateNetwork*>& state_networks,
 		 double& resolved_variance) {
 	uniform_int_distribution<int> add_noise_distribution(0, 1);
 	uniform_real_distribution<double> noise_distribution(-1.0, 1.0);
@@ -687,11 +693,8 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 			} else {
 				state_val = 0.0;
 			}
-			double index_val = 0.0;
 
-			vector<FullNetworkHistory*> network_histories;
-
-			FullNetwork* last_network = NULL;
+			StateNetwork* last_network = NULL;
 			for (int o_index = 0; o_index < (int)rnn_obs_experiment_indexes[rand_index].size(); o_index++) {
 				int network_index = rnn_obs_experiment_indexes[rand_index][o_index];
 
@@ -706,12 +709,8 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 					state_networks[network_index]->preceding_network_indexes.insert(last_network->index);
 				}
 
-				FullNetworkHistory* network_history = new FullNetworkHistory(state_networks[network_index]);
-				network_histories.push_back(network_history);
 				state_networks[network_index]->activate(rnn_vals[rand_index][o_index],
-														state_val,
-														index_val,
-														network_history);
+														state_val);
 
 				last_network = state_networks[network_index];
 			}
@@ -723,14 +722,10 @@ void rnn(vector<vector<int>>& rnn_obs_experiment_indexes,
 			last_network->ending_variance = 0.999*last_network->ending_variance + 0.001*resolved_variance;
 
 			double state_error = target_vals[rand_index] - state_val;
-			double index_error = 0.0;
 
-			for (int o_index = (int)network_histories.size() - 1; o_index >= 0; o_index--) {
-				FullNetwork* network = network_histories[o_index]->network;
-				network->backprop(state_error,
-								  index_error,
-								  network_histories[o_index]);
-				delete network_histories[o_index];
+			for (int o_index = (int)rnn_obs_experiment_indexes[rand_index].size() - 1; o_index >= 0; o_index--) {
+				int network_index = rnn_obs_experiment_indexes[rand_index][o_index];
+				state_networks[network_index]->backprop(state_error);
 			}
 		}
 	}
@@ -742,19 +737,17 @@ void evaluate(double& existing_average_misguess,
 			  vector<vector<int>>& test_rnn_obs_experiment_indexes,
 			  vector<vector<double>>& test_rnn_vals,
 			  vector<double>& target_vals,
-			  vector<FullNetwork*>& state_networks) {
+			  vector<StateNetwork*>& state_networks) {
 	double sum_existing_misguess = 0.0;
 	double sum_new_misguess = 0.0;
 	for (int d_index = 0; d_index < (int)test_rnn_obs_experiment_indexes.size(); d_index++) {
 		if (test_rnn_obs_experiment_indexes[d_index].size() > 0) {
 			double state_val = 0.0;
-			double index_val = 0.0;
 
 			for (int o_index = 0; o_index < (int)test_rnn_obs_experiment_indexes[d_index].size(); o_index++) {
 				int network_index = test_rnn_obs_experiment_indexes[d_index][o_index];
 				state_networks[network_index]->activate(test_rnn_vals[d_index][o_index],
-														state_val,
-														index_val);
+														state_val);
 			}
 
 			sum_new_misguess += (target_vals[d_index] - state_val) * (target_vals[d_index] - state_val);
@@ -810,23 +803,12 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 			uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
 			int rand_obs = distribution(generator);
 
-			bool is_duplicate = false;
-			for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-				if (nodes[n_index] == possible_nodes[rand_obs]
-						&& scope_contexts[n_index] == possible_scope_contexts[rand_obs]
-						&& node_contexts[n_index] == possible_node_contexts[rand_obs]
-						&& obs_indexes[n_index] == possible_obs_indexes[rand_obs]) {
-					is_duplicate = true;
-					break;
-				}
-			}
+			// can't be duplicate without loops
 
-			if (!is_duplicate) {
-				nodes.push_back(possible_nodes[rand_obs]);
-				scope_contexts.push_back(possible_scope_contexts[rand_obs]);
-				node_contexts.push_back(possible_node_contexts[rand_obs]);
-				obs_indexes.push_back(possible_obs_indexes[rand_obs]);
-			}
+			nodes.push_back(possible_nodes[rand_obs]);
+			scope_contexts.push_back(possible_scope_contexts[rand_obs]);
+			node_contexts.push_back(possible_node_contexts[rand_obs]);
+			obs_indexes.push_back(possible_obs_indexes[rand_obs]);
 
 			possible_nodes.erase(possible_nodes.begin() + rand_obs);
 			possible_scope_contexts.erase(possible_scope_contexts.begin() + rand_obs);
@@ -893,9 +875,9 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 
 	unhook(nodes);
 
-	vector<FullNetwork*> state_networks(nodes.size());
+	vector<StateNetwork*> state_networks(nodes.size());
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		state_networks[n_index] = new FullNetwork(n_index);
+		state_networks[n_index] = new StateNetwork(n_index);
 	}
 	double resolved_variance = 1.0;
 	rnn(rnn_obs_experiment_indexes,
@@ -1038,23 +1020,10 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
 			int rand_obs = distribution(generator);
 
-			bool is_duplicate = false;
-			for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-				if (nodes[n_index] == possible_nodes[rand_obs]
-						&& scope_contexts[n_index] == possible_scope_contexts[rand_obs]
-						&& node_contexts[n_index] == possible_node_contexts[rand_obs]
-						&& obs_indexes[n_index] == possible_obs_indexes[rand_obs]) {
-					is_duplicate = true;
-					break;
-				}
-			}
-
-			if (!is_duplicate) {
-				nodes.push_back(possible_nodes[rand_obs]);
-				scope_contexts.push_back(possible_scope_contexts[rand_obs]);
-				node_contexts.push_back(possible_node_contexts[rand_obs]);
-				obs_indexes.push_back(possible_obs_indexes[rand_obs]);
-			}
+			nodes.push_back(possible_nodes[rand_obs]);
+			scope_contexts.push_back(possible_scope_contexts[rand_obs]);
+			node_contexts.push_back(possible_node_contexts[rand_obs]);
+			obs_indexes.push_back(possible_obs_indexes[rand_obs]);
 
 			possible_nodes.erase(possible_nodes.begin() + rand_obs);
 			possible_scope_contexts.erase(possible_scope_contexts.begin() + rand_obs);
@@ -1121,9 +1090,9 @@ void new_obs_experiment(AbstractExperiment* experiment,
 
 	unhook(nodes);
 
-	vector<FullNetwork*> state_networks(nodes.size());
+	vector<StateNetwork*> state_networks(nodes.size());
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		state_networks[n_index] = new FullNetwork(n_index);
+		state_networks[n_index] = new StateNetwork(n_index);
 	}
 	double resolved_variance = 1.0;
 	rnn(rnn_obs_experiment_indexes,
@@ -1209,7 +1178,7 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			branch_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			branch_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else if (experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+		} else {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiment;
 
 			pass_through_experiment->new_states.push_back(new_state);
@@ -1219,16 +1188,6 @@ void new_obs_experiment(AbstractExperiment* experiment,
 			pass_through_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 			pass_through_experiment->new_temp_state_weights[0][new_state] = sqrt(resolved_variance);
-		} else {
-			RetrainLoopExperiment* retrain_loop_experiment = (RetrainLoopExperiment*)experiment;
-
-			retrain_loop_experiment->new_states.push_back(new_state);
-			retrain_loop_experiment->new_state_nodes.push_back(nodes);
-			retrain_loop_experiment->new_state_scope_contexts.push_back(scope_contexts);
-			retrain_loop_experiment->new_state_node_contexts.push_back(node_contexts);
-			retrain_loop_experiment->new_state_obs_indexes.push_back(obs_indexes);
-
-			retrain_loop_experiment->continue_temp_state_weights[0][new_state] = sqrt(resolved_variance);
 		}
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
@@ -1272,23 +1231,10 @@ void existing_pass_through_branch_obs_experiment(
 			uniform_int_distribution<int> distribution(0, (int)possible_nodes.size()-1);
 			int rand_obs = distribution(generator);
 
-			bool is_duplicate = false;
-			for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-				if (nodes[n_index] == possible_nodes[rand_obs]
-						&& scope_contexts[n_index] == possible_scope_contexts[rand_obs]
-						&& node_contexts[n_index] == possible_node_contexts[rand_obs]
-						&& obs_indexes[n_index] == possible_obs_indexes[rand_obs]) {
-					is_duplicate = true;
-					break;
-				}
-			}
-
-			if (!is_duplicate) {
-				nodes.push_back(possible_nodes[rand_obs]);
-				scope_contexts.push_back(possible_scope_contexts[rand_obs]);
-				node_contexts.push_back(possible_node_contexts[rand_obs]);
-				obs_indexes.push_back(possible_obs_indexes[rand_obs]);
-			}
+			nodes.push_back(possible_nodes[rand_obs]);
+			scope_contexts.push_back(possible_scope_contexts[rand_obs]);
+			node_contexts.push_back(possible_node_contexts[rand_obs]);
+			obs_indexes.push_back(possible_obs_indexes[rand_obs]);
 
 			possible_nodes.erase(possible_nodes.begin() + rand_obs);
 			possible_scope_contexts.erase(possible_scope_contexts.begin() + rand_obs);
@@ -1355,9 +1301,9 @@ void existing_pass_through_branch_obs_experiment(
 
 	unhook(nodes);
 
-	vector<FullNetwork*> state_networks(nodes.size());
+	vector<StateNetwork*> state_networks(nodes.size());
 	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
-		state_networks[n_index] = new FullNetwork(n_index);
+		state_networks[n_index] = new StateNetwork(n_index);
 	}
 	double resolved_variance = 1.0;
 	rnn(rnn_obs_experiment_indexes,
@@ -1434,12 +1380,13 @@ void existing_pass_through_branch_obs_experiment(
 		solution->state_counter++;
 
 		BranchExperiment* branch_experiment = (BranchExperiment*)experiment;
+		PassThroughExperiment* parent_pass_through_experiment = branch_experiment->parent_pass_through_experiment;
 
-		branch_experiment->new_states.push_back(new_state);
-		branch_experiment->new_state_nodes.push_back(nodes);
-		branch_experiment->new_state_scope_contexts.push_back(scope_contexts);
-		branch_experiment->new_state_node_contexts.push_back(node_contexts);
-		branch_experiment->new_state_obs_indexes.push_back(obs_indexes);
+		parent_pass_through_experiment->new_states.push_back(new_state);
+		parent_pass_through_experiment->new_state_nodes.push_back(nodes);
+		parent_pass_through_experiment->new_state_scope_contexts.push_back(scope_contexts);
+		parent_pass_through_experiment->new_state_node_contexts.push_back(node_contexts);
+		parent_pass_through_experiment->new_state_obs_indexes.push_back(obs_indexes);
 
 		branch_experiment->existing_temp_state_weights[0][new_state] = sqrt(resolved_variance);
 	} else {

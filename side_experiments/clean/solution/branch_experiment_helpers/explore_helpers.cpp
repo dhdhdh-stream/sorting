@@ -5,7 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "pass_through_experiment.h"
@@ -14,9 +14,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "try_instance.h"
-#include "try_scope_step.h"
-#include "try_tracker.h"
 
 using namespace std;
 
@@ -79,7 +76,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				it != context[context.size() - this->scope_context.size() + c_index].input_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->existing_input_state_weights[c_index].find(it->first);
 			if (weight_it != this->existing_input_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -96,7 +93,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				it != context[context.size() - this->scope_context.size() + c_index].local_state_vals.end(); it++) {
 			map<int, double>::iterator weight_it = this->existing_local_state_weights[c_index].find(it->first);
 			if (weight_it != this->existing_local_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -113,7 +110,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				it != context[context.size() - this->scope_context.size() + c_index].temp_state_vals.end(); it++) {
 			map<State*, double>::iterator weight_it = this->existing_temp_state_weights[c_index].find(it->first);
 			if (weight_it != this->existing_temp_state_weights[c_index].end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -134,8 +131,6 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	}
 	overall_history->existing_predicted_score = predicted_score;
 
-	this->curr_try_instance = new TryInstance();
-
 	uniform_int_distribution<int> loop_distribution(0, 1);
 	if (this->parent_pass_through_experiment == NULL && loop_distribution(generator)) {
 		this->curr_exit_depth = 0;
@@ -144,36 +139,17 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 		this->curr_actions.push_back(NULL);
 
-		this->curr_try_instance->step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-		this->curr_try_instance->actions.push_back(-1);
+		PotentialScopeNode* new_potential_scope_node = create_repeat(
+			context,
+			(int)this->scope_context.size());
+		this->curr_potential_scopes.push_back(new_potential_scope_node);
 
-		PotentialScopeNode* new_potential_loop = new PotentialScopeNode();
-		TryScopeStep* new_try_scope_step = new TryScopeStep();
-		create_loop(context,
-					(int)this->scope_context.size(),
-					new_potential_loop,
-					new_try_scope_step);
-		this->curr_potential_scopes.push_back(new_potential_loop);
-		this->curr_try_instance->potential_scopes.push_back(new_try_scope_step);
-
-		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_loop);
-		new_potential_loop->activate(problem,
-									 context,
-									 run_helper,
-									 potential_scope_node_history);
+		PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
+		new_potential_scope_node->activate(problem,
+										   context,
+										   run_helper,
+										   potential_scope_node_history);
 		delete potential_scope_node_history;
-
-		this->curr_is_loop = true;
-
-		this->curr_try_instance->start = {this->scope_context, this->node_context};
-		vector<int> exit_scope_context = this->scope_context;
-		vector<int> exit_node_context = this->node_context;
-		if (this->curr_exit_node == NULL) {
-			exit_node_context.back() = -1;
-		} else {
-			exit_node_context.back() = this->curr_exit_node->id;
-		}
-		this->curr_try_instance->exit = {exit_scope_context, exit_node_context};
 	} else {
 		{
 			// exit
@@ -220,10 +196,14 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 			}
 		
-			uniform_int_distribution<int> type_distribution(0, 1);
-			uniform_int_distribution<int> next_distribution(0, 1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				if (type_distribution(generator) == 0) {
+				PotentialScopeNode* new_potential_scope_node = create_scope(
+					context,
+					(int)this->scope_context.size(),
+					context[context.size() - this->scope_context.size()].scope,
+					this->parent_pass_through_experiment);
+
+				if (new_potential_scope_node == NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 					ActionNode* new_action_node = new ActionNode();
@@ -231,10 +211,6 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					this->curr_actions.push_back(new_action_node);
 
 					this->curr_potential_scopes.push_back(NULL);
-
-					this->curr_try_instance->step_types.push_back(STEP_TYPE_ACTION);
-					this->curr_try_instance->actions.push_back(new_action_node->action.move);
-					this->curr_try_instance->potential_scopes.push_back(NULL);
 
 					ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
 					new_action_node->activate(curr_node,
@@ -249,19 +225,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 					this->curr_actions.push_back(NULL);
 
-					this->curr_try_instance->step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-					this->curr_try_instance->actions.push_back(-1);
-
-					PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
-					TryScopeStep* new_try_scope_step = new TryScopeStep();
-					create_scope(context,
-								 (int)this->scope_context.size(),
-								 context[context.size() - this->scope_context.size()].scope,
-								 this->parent_pass_through_experiment,
-								 new_potential_scope_node,
-								 new_try_scope_step);
 					this->curr_potential_scopes.push_back(new_potential_scope_node);
-					this->curr_try_instance->potential_scopes.push_back(new_try_scope_step);
 
 					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(new_potential_scope_node);
 					new_potential_scope_node->activate(problem,
@@ -272,17 +236,6 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				}
 			}
 		}
-		this->curr_is_loop = false;
-
-		this->curr_try_instance->start = {this->scope_context, this->node_context};
-		vector<int> exit_scope_context(this->scope_context.begin() + this->curr_exit_depth, this->scope_context.end());
-		vector<int> exit_node_context(this->node_context.begin() + this->curr_exit_depth, this->node_context.end());
-		if (this->curr_exit_node == NULL) {
-			exit_node_context.back() = -1;
-		} else {
-			exit_node_context.back() = this->curr_exit_node->id;
-		}
-		this->curr_try_instance->exit = {exit_scope_context, exit_node_context};
 
 		{
 			if (this->curr_exit_depth == 0) {
@@ -313,9 +266,6 @@ void BranchExperiment::explore_backprop(double target_val,
 					delete this->best_potential_scopes[s_index];
 				}
 			}
-			if (this->best_try_instance != NULL) {
-				delete this->best_try_instance;
-			}
 
 			this->best_surprise = curr_surprise;
 			this->best_step_types = this->curr_step_types;
@@ -323,13 +273,10 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
-			this->best_is_loop = this->curr_is_loop;
-			this->best_try_instance = this->curr_try_instance;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
-			this->curr_try_instance = NULL;
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -338,12 +285,10 @@ void BranchExperiment::explore_backprop(double target_val,
 					delete this->curr_potential_scopes[s_index];
 				}
 			}
-			delete this->curr_try_instance;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
-			this->curr_try_instance = NULL;
 		}
 
 		this->state_iter++;
@@ -358,20 +303,6 @@ void BranchExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
-				if (this->parent_pass_through_experiment == NULL) {
-					Scope* parent_scope = solution->scopes[this->scope_context[0]];
-					if (parent_scope->tries->tries.size() > 0) {
-						double predicted_impact;
-						double closest_distance;
-						parent_scope->tries->evaluate_potential(
-							this->best_try_instance,
-							predicted_impact,
-							closest_distance);
-						cout << "predicted_impact: " << predicted_impact << endl;
-						cout << "closest_distance: " << closest_distance << endl;
-					}
-				}
-
 				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -390,18 +321,20 @@ void BranchExperiment::explore_backprop(double target_val,
 
 						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
 								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-							if (it->second->type == NODE_TYPE_SCOPE) {
+							if (it->second->type == NODE_TYPE_ACTION) {
+								ActionNode* action_node = (ActionNode*)it->second;
+								action_node->is_potential = true;
+							} else if (it->second->type == NODE_TYPE_SCOPE) {
 								ScopeNode* scope_node = (ScopeNode*)it->second;
-								if (scope_node->is_loop) {
-									scope_node->loop_scope_context = vector<int>{new_scope_id};
-									scope_node->loop_node_context = vector<int>{scope_node->id};
-								}
+								scope_node->is_potential = true;
 							} else if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->branch_scope_context = vector<int>{new_scope_id};
 								branch_node->branch_node_context = vector<int>{branch_node->id};
 							}
 						}
+
+						this->best_potential_scopes[s_index]->is_cleaned = false;
 					}
 				}
 

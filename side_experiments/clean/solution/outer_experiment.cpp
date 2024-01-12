@@ -7,6 +7,10 @@
 using namespace std;
 
 OuterExperiment::OuterExperiment() {
+	this->type = EXPERIMENT_TYPE_OUTER;
+
+	this->average_remaining_experiments_from_start = 1.0;
+
 	this->state = OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE;
 	this->state_iter = 0;
 
@@ -57,4 +61,9 @@ OuterExperiment::~OuterExperiment() {
 		delete this->verify_problems[p_index];
 	}
 	#endif /* MDEBUG */
+}
+
+OuterExperimentOverallHistory::OuterExperimentOverallHistory(
+		OuterExperiment* experiment) {
+	this->experiment = experiment;
 }

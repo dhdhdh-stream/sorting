@@ -24,7 +24,6 @@ public:
 	std::set<AbstractExperiment*> experiments_seen;
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
-	void* selected_experiment;
 	AbstractExperimentHistory* experiment_history;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -41,7 +40,6 @@ public:
 
 		this->exceeded_limit = false;
 
-		this->selected_experiment = NULL;
 		this->experiment_history = NULL;
 	}
 };

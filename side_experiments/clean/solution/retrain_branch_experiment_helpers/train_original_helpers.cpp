@@ -5,7 +5,7 @@
 
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "scope.h"
@@ -78,7 +78,7 @@ void RetrainBranchExperiment::train_original_non_target_activate(
 		if (this->branch_node->decision_state_is_local[s_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->branch_node->decision_state_indexes[s_index]);
 			if (it != context.back().local_state_vals.end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -92,7 +92,7 @@ void RetrainBranchExperiment::train_original_non_target_activate(
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->branch_node->decision_state_indexes[s_index]);
 			if (it != context.back().input_state_vals.end()) {
-				FullNetwork* last_network = it->second.last_network;
+				StateNetwork* last_network = it->second.last_network;
 				if (last_network != NULL) {
 					double normalized = (it->second.val - last_network->ending_mean)
 						/ last_network->ending_standard_deviation;
@@ -156,7 +156,7 @@ void RetrainBranchExperiment::train_original_backprop(
 							p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(solution->curr_num_datapoints, 0.0)}).first;
 						}
 
-						FullNetwork* last_network = m_it->second.last_network;
+						StateNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
@@ -201,7 +201,7 @@ void RetrainBranchExperiment::train_original_backprop(
 							p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(solution->curr_num_datapoints, 0.0)}).first;
 						}
 
-						FullNetwork* last_network = m_it->second.last_network;
+						StateNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
@@ -246,7 +246,7 @@ void RetrainBranchExperiment::train_original_backprop(
 							p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(solution->curr_num_datapoints, 0.0)}).first;
 						}
 
-						FullNetwork* last_network = m_it->second.last_network;
+						StateNetwork* last_network = m_it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (m_it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;

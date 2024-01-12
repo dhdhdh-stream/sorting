@@ -2,7 +2,11 @@
 #define STATE_NETWORK_H
 
 #include <fstream>
+#include <set>
 #include <vector>
+
+class State;
+class StateStatus;
 
 #include "layer.h"
 

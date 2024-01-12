@@ -8,7 +8,6 @@
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
-#include "try_tracker.h"
 
 using namespace std;
 
@@ -16,6 +15,8 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
+
+	this->is_potential = false;
 }
 
 ActionNode::~ActionNode() {

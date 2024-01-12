@@ -20,14 +20,12 @@ class State;
 
 void create_experiment(ScopeHistory* root_history);
 
-void create_scope(std::vector<ContextLayer>& context,
-				  int explore_context_depth,
-				  Scope* parent_scope,
-				  PassThroughExperiment* parent_pass_through_experiment,
-				  PotentialScopeNode* new_potential_scope_node);
-void create_repeat(std::vector<ContextLayer>& context,
-				   int explore_context_depth,
-				   PotentialScopeNode* new_potential_scope_node);
+PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
+								 int explore_context_depth,
+								 Scope* parent_scope,
+								 PassThroughExperiment* parent_pass_through_experiment);
+PotentialScopeNode* create_repeat(std::vector<ContextLayer>& context,
+								  int explore_context_depth);
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<ContextLayer>& context,
@@ -52,6 +50,8 @@ void existing_pass_through_branch_obs_experiment(
 		BranchExperiment* experiment,
 		std::vector<ScopeHistory*>& scope_histories,
 		std::vector<double>& target_vals);
+
+void clean_state(PotentialScopeNode* potential_scope_node);
 
 void finalize_potential_scope(std::vector<int>& experiment_scope_context,
 							  std::vector<int>& experiment_node_context,

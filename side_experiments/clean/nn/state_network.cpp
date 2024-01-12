@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "state.h"
+#include "state_status.h"
+
 using namespace std;
 
 /**

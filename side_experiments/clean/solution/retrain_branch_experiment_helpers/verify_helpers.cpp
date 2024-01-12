@@ -5,7 +5,7 @@
 
 #include "branch_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution.h"
 #include "utilities.h"
@@ -32,7 +32,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -59,7 +59,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -86,7 +86,7 @@ void RetrainBranchExperiment::verify_activate(bool& is_branch,
 				branch_weight = branch_weight_it->second;
 			}
 
-			FullNetwork* last_network = it->second.last_network;
+			StateNetwork* last_network = it->second.last_network;
 			if (last_network != NULL) {
 				double normalized = (it->second.val - last_network->ending_mean)
 					/ last_network->ending_standard_deviation;
@@ -142,6 +142,10 @@ void RetrainBranchExperiment::verify_backprop(double target_val) {
 		#else
 		if (combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
+			this->combined_score = 0.0;
+
+			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {

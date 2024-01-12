@@ -8,7 +8,6 @@
 #include "scope.h"
 #include "solution.h"
 #include "state.h"
-#include "try_instance.h"
 
 using namespace std;
 
@@ -33,10 +32,8 @@ PassThroughExperiment::PassThroughExperiment(
 	this->state_iter = 0;
 
 	this->curr_score = 0.0;
-	this->curr_try_instance = NULL;
 
 	this->best_score = 0.0;
-	this->best_try_instance = NULL;
 
 	this->branch_experiment = NULL;
 }
@@ -54,10 +51,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	if (this->curr_try_instance != NULL) {
-		delete this->curr_try_instance;
-	}
-
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
 		if (this->best_actions[s_index] != NULL) {
 			delete this->best_actions[s_index];
@@ -68,10 +61,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 		if (this->best_potential_scopes[s_index] != NULL) {
 			delete this->best_potential_scopes[s_index];
 		}
-	}
-
-	if (this->best_try_instance != NULL) {
-		delete this->best_try_instance;
 	}
 
 	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {

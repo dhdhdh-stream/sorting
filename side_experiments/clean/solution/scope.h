@@ -35,6 +35,8 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
+	std::vector<bool> used_states;
+
 	std::vector<State*> temp_states;
 	std::vector<std::vector<ActionNode*>> temp_state_nodes;
 	std::vector<std::vector<std::vector<int>>> temp_state_scope_contexts;

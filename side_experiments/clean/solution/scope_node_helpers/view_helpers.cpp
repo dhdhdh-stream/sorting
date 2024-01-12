@@ -4,7 +4,6 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
-#include "full_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "state.h"
@@ -50,12 +49,10 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 			}
 		} else {
 			if (this->input_inner_is_local[i_index]) {
-				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																				   this->input_init_index_vals[i_index]);
+				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 				cout << "inner local #" << this->input_inner_indexes[i_index] << ": " << this->input_init_vals[i_index] << endl;
 			} else {
-				input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index],
-																				   this->input_init_index_vals[i_index]);
+				input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 				cout << "inner input #" << this->input_inner_indexes[i_index] << ": " << this->input_init_vals[i_index] << endl;
 			}
 		}

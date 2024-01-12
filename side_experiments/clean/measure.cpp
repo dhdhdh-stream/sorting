@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
-		run_helper.selected_experiment = (void*)-1;
+		run_helper.experiment_history = (AbstractExperimentHistory*)-1;
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
@@ -58,7 +58,6 @@ int main(int argc, char* argv[]) {
 								 exit_depth,
 								 exit_node,
 								 run_helper,
-								 0,
 								 root_history);
 
 		double target_val;

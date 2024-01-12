@@ -4,7 +4,7 @@
 
 #include "action_node.h"
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "potential_scope_node.h"
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-const int TRAIN_NEW_MISGUESS_ITERS = 2;
+const int TRAIN_NEW_MISGUESS_ITERS = 3;
 
 void PassThroughExperiment::train_new_misguess_activate(
 		AbstractNode*& curr_node,
@@ -99,7 +99,7 @@ void PassThroughExperiment::train_new_misguess_backprop(
 						p_it = p_input_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 					}
 
-					FullNetwork* last_network = m_it->second.last_network;
+					StateNetwork* last_network = m_it->second.last_network;
 					if (last_network != NULL) {
 						double normalized = (m_it->second.val - last_network->ending_mean)
 							/ last_network->ending_standard_deviation;
@@ -144,7 +144,7 @@ void PassThroughExperiment::train_new_misguess_backprop(
 						p_it = p_local_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 					}
 
-					FullNetwork* last_network = m_it->second.last_network;
+					StateNetwork* last_network = m_it->second.last_network;
 					if (last_network != NULL) {
 						double normalized = (m_it->second.val - last_network->ending_mean)
 							/ last_network->ending_standard_deviation;
@@ -189,7 +189,7 @@ void PassThroughExperiment::train_new_misguess_backprop(
 						p_it = p_temp_state_vals[c_index].insert({m_it->first, vector<double>(num_instances, 0.0)}).first;
 					}
 
-					FullNetwork* last_network = m_it->second.last_network;
+					StateNetwork* last_network = m_it->second.last_network;
 					if (last_network != NULL) {
 						double normalized = (m_it->second.val - last_network->ending_mean)
 							/ last_network->ending_standard_deviation;

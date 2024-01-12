@@ -25,7 +25,6 @@ public:
 	std::vector<bool> input_outer_is_local;
 	std::vector<int> input_outer_indexes;
 	std::vector<double> input_init_vals;
-	std::vector<bool> input_used;
 
 	/**
 	 * - inner always locale
@@ -34,7 +33,8 @@ public:
 	std::vector<int> output_scope_depths;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
-	std::vector<bool> output_used;
+
+	bool is_cleaned;
 
 	int experiment_scope_depth;
 	#if defined(MDEBUG) && MDEBUG
@@ -42,7 +42,6 @@ public:
 	#endif /* MDEBUG */
 
 	Scope* scope;
-	std::vector<bool> used_states;
 
 	ScopeNode* scope_node_placeholder;
 

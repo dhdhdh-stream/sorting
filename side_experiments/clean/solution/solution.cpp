@@ -8,13 +8,11 @@
 #include "outer_experiment.h"
 #include "scope.h"
 #include "state.h"
-#include "try_instance.h"
-#include "try_tracker.h"
 
 using namespace std;
 
 Solution::Solution() {
-	this->outer_experiment = new OuterExperiment();
+	this->outer_experiment = NULL;
 }
 
 Solution::~Solution() {
@@ -28,7 +26,9 @@ Solution::~Solution() {
 		delete it->second;
 	}
 
-	delete this->outer_experiment;
+	if (this->outer_experiment != NULL) {
+		delete this->outer_experiment;
+	}
 }
 
 void Solution::init() {
@@ -139,20 +139,6 @@ void Solution::load(string name) {
 
 	input_file.close();
 
-	ifstream tries_file;
-	tries_file.open(path + "saves/" + name + "/tries.txt");
-	while (true) {
-		if (tries_file.peek() == EOF) {
-			break;
-		}
-
-		TryInstance* try_instance = new TryInstance(tries_file);
-
-		Scope* parent_scope = this->scopes[try_instance->start.first[0]];
-		parent_scope->tries->update(try_instance);
-	}
-	tries_file.close();
-
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
@@ -174,8 +160,10 @@ void Solution::success_reset() {
 		it->second->success_reset();
 	}
 
-	delete this->outer_experiment;
-	this->outer_experiment = new OuterExperiment();
+	if (this->outer_experiment != NULL) {
+		delete this->outer_experiment;
+		this->outer_experiment = NULL;
+	}
 }
 
 void Solution::fail_reset() {
@@ -184,8 +172,10 @@ void Solution::fail_reset() {
 		it->second->fail_reset();
 	}
 
-	delete this->outer_experiment;
-	this->outer_experiment = new OuterExperiment();
+	if (this->outer_experiment != NULL) {
+		delete this->outer_experiment;
+		this->outer_experiment = NULL;
+	}
 }
 
 void Solution::save(string name) {

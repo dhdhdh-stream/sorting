@@ -1,8 +1,6 @@
 /**
  * - don't worry about misguess
- *   - unlikely to learn enough information for new path
- * 
- * - run MEASURE_EXISTING_SCORE once, then repeatedly run EXPLORE and MEASURE_NEW_SCORE
+ *   - unlikely to learn enough information for new path compared to existing
  */
 
 #ifndef OUTER_EXPERIMENT_H
@@ -10,6 +8,7 @@
 
 #include <vector>
 
+#include "abstract_experiment.h"
 #include "problem.h"
 #include "run_helper.h"
 
@@ -21,15 +20,18 @@ const int OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
 
 const int OUTER_EXPERIMENT_STATE_EXPLORE = 1;
 const int OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE = 2;
-const int OUTER_EXPERIMENT_STATE_VERIFY_EXISTING_SCORE = 3;
-const int OUTER_EXPERIMENT_STATE_VERIFY_NEW_SCORE = 4;
+const int OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE = 3;
+const int OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE = 4;
+const int OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE = 5;
+const int OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE = 6;
 #if defined(MDEBUG) && MDEBUG
-const int OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
 #endif /* MDEBUG */
 
-const int OUTER_EXPERIMENT_STATE_SUCCESS = 6;
+const int OUTER_EXPERIMENT_STATE_FAIL = 8;
+const int OUTER_EXPERIMENT_STATE_SUCCESS = 9;
 
-class OuterExperiment {
+class OuterExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
@@ -60,7 +62,7 @@ public:
 	OuterExperiment();
 	~OuterExperiment();
 
-	void activate(Problem* problem,
+	bool activate(Problem* problem,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
@@ -96,6 +98,11 @@ public:
 	#endif /* MDEBUG */
 
 	void finalize();
+};
+
+class OuterExperimentOverallHistory : public AbstractExperimentHistory {
+public:
+	OuterExperimentOverallHistory(OuterExperiment* experiment);
 };
 
 #endif /* OUTER_EXPERIMENT_H */

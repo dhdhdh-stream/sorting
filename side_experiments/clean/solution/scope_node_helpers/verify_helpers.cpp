@@ -7,7 +7,6 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
-#include "full_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"

@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NUM_EXPERIMENTS = 20;
+const int NUM_EXPERIMENTS = 10;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												Problem* problem,
@@ -274,12 +274,6 @@ void PassThroughExperiment::experiment_backprop(
 					this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 					containing_scope->nodes[new_scope_node->id] = new_scope_node;
 
-					new_scope_node->is_loop = false;
-					new_scope_node->continue_score_mod = 0.0;
-					new_scope_node->halt_score_mod = 0.0;
-					new_scope_node->decision_standard_deviation = 0.0;
-					new_scope_node->max_iters = 0;
-
 					new_scope_node->next_node_id = next_node->id;
 					new_scope_node->next_node = next_node;
 
@@ -328,21 +322,6 @@ void PassThroughExperiment::experiment_backprop(
 
 			this->state_iter++;
 			if (this->state_iter >= NUM_EXPERIMENTS) {
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_potential_scopes[s_index];
-					}
-				}
-				this->best_actions.clear();
-				this->best_potential_scopes.clear();
-
-				for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-					delete this->new_states[s_index];
-				}
-				this->new_states.clear();
-
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			} else {
 				uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);

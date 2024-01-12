@@ -14,16 +14,11 @@
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
-class Sequence;
 class State;
-class TryTracker;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
-	bool is_stub;
-	int last_check_timestamp;
-
 	Action action;
 
 	std::vector<bool> state_is_local;

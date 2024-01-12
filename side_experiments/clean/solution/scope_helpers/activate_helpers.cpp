@@ -110,7 +110,7 @@ void Scope::activate(Problem* problem,
 		history->inner_pass_through_experiment->parent_scope_end_activate(
 			context,
 			run_helper,
-			inner_scope_history);
+			history);
 	}
 
 	run_helper.curr_depth--;

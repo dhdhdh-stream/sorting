@@ -24,7 +24,7 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 	bool is_selected = false;
 	if (this->parent_pass_through_experiment != NULL) {
 		is_selected = true;
-	} else if (run_helper.selected_experiment == NULL) {
+	} else if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -54,13 +54,12 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			if (select) {
 				hook();
 
-				run_helper.selected_experiment = this;
 				run_helper.experiment_history = new BranchExperimentOverallHistory(this);
 
 				is_selected = true;
 			}
 		}
-	} else if (run_helper.selected_experiment == this) {
+	} else if (run_helper.experiment_history->experiment == this) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -119,7 +118,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							 exit_node,
 							 run_helper);
 			break;
-		case BRANCH_EXPERIMENT_STATE_VERIFY:
+		case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+		case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 			verify_activate(curr_node,
 							problem,
 							context,
@@ -153,7 +153,6 @@ void BranchExperiment::hook() {
 	}
 }
 
-// TODO: back activate other layers?
 void BranchExperiment::back_activate_helper(vector<int>& scope_context,
 											vector<int>& node_context,
 											map<State*, StateStatus>& temp_state_vals,
@@ -163,29 +162,27 @@ void BranchExperiment::back_activate_helper(vector<int>& scope_context,
 	scope_context.push_back(scope_id);
 	node_context.push_back(-1);
 
-	for (int i_index = 0; i_index < (int)scope_history->node_histories.size(); i_index++) {
-		for (int h_index = 0; h_index < (int)scope_history->node_histories[i_index].size(); h_index++) {
-			AbstractNodeHistory* node_history = scope_history->node_histories[i_index][h_index];
-			if (node_history->node->type == NODE_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				action_node->experiment_back_activate(scope_context,
-													  node_context,
-													  temp_state_vals,
-													  action_node_history);
-			} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			action_node->experiment_back_activate(scope_context,
+												  node_context,
+												  temp_state_vals,
+												  action_node_history);
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
 
-				node_context.back() = scope_node->id;
+			node_context.back() = scope_node->id;
 
-				back_activate_helper(scope_context,
-									 node_context,
-									 temp_state_vals,
-									 scope_node_history->inner_scope_history);
+			back_activate_helper(scope_context,
+								 node_context,
+								 temp_state_vals,
+								 scope_node_history->inner_scope_history);
 
-				node_context.back() = -1;
-			}
+			node_context.back() = -1;
 		}
 	}
 
@@ -242,11 +239,13 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val);
 		break;
-	case BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 		verify_existing_backprop(target_val,
 								 run_helper);
 		break;
-	case BRANCH_EXPERIMENT_STATE_VERIFY:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 		verify_backprop(target_val);
 		break;
 	#if defined(MDEBUG) && MDEBUG

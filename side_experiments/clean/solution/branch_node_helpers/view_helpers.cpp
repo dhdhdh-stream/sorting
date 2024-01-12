@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
-#include "full_network.h"
+#include "state_network.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -42,7 +42,7 @@ void BranchNode::view_activate(bool& is_branch,
 				if (this->decision_state_is_local[s_index]) {
 					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->decision_state_indexes[s_index]);
 					if (it != context.back().local_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
+						StateNetwork* last_network = it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
@@ -58,7 +58,7 @@ void BranchNode::view_activate(bool& is_branch,
 				} else {
 					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->decision_state_indexes[s_index]);
 					if (it != context.back().input_state_vals.end()) {
-						FullNetwork* last_network = it->second.last_network;
+						StateNetwork* last_network = it->second.last_network;
 						if (last_network != NULL) {
 							double normalized = (it->second.val - last_network->ending_mean)
 								/ last_network->ending_standard_deviation;
