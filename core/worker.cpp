@@ -4,7 +4,11 @@
  * - TODO: to parallelize further:
  *   - have new instances that don't sync, but draw from existing
  *     - initially, they may be much worse, but if they ever become better, swap to
+ * 
+ * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
+
+// TODO: merge save files into single large one
 
 #include <chrono>
 #include <iostream>

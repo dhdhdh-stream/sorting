@@ -105,14 +105,25 @@ void create_experiment(ScopeHistory* root_history) {
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_nodes.size()-1);
 	int rand_index = possible_distribution(generator);
 
-	if (possible_nodes[rand_index]->type == NODE_TYPE_ACTION) {
-		uniform_int_distribution<int> context_size_distribution(0, possible_scope_contexts[rand_index].size());
-		int context_size = context_size_distribution(generator);
+	uniform_int_distribution<int> outer_distribution(0, max(7, (int)possible_scope_contexts[rand_index].size()));
+	if (outer_distribution(generator) == 0) {
+		solution->outer_experiment = new OuterExperiment();
+	} else {
+		if (possible_nodes[rand_index]->type == NODE_TYPE_ACTION) {
+			uniform_int_distribution<int> next_distribution(0, 1);
+			int context_size = 1;
+			while (true) {
+				if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+					context_size++;
+				} else {
+					break;
+				}
+			}
+			/**
+			 * - try to minimize context to generalize/maximize impact
+			 */
 
-		if (context_size == 0) {
-			solution->outer_experiment = new OuterExperiment();
-		} else {
-			uniform_int_distribution<int> clean_distribution(0, 9);
+			uniform_int_distribution<int> clean_distribution(0, 7);
 			uniform_int_distribution<int> pass_through_distribution(0, 3);
 			if (clean_distribution(generator) == 0) {
 				CleanExperiment* clean_experiment = new CleanExperiment(
@@ -138,15 +149,18 @@ void create_experiment(ScopeHistory* root_history) {
 					action_node->experiment = new_branch_experiment;
 				}
 			}
-		}
-	} else if (possible_nodes[rand_index]->type == NODE_TYPE_SCOPE) {
-		uniform_int_distribution<int> context_size_distribution(0, possible_scope_contexts[rand_index].size());
-		int context_size = context_size_distribution(generator);
+		} else if (possible_nodes[rand_index]->type == NODE_TYPE_SCOPE) {
+			uniform_int_distribution<int> next_distribution(0, 1);
+			int context_size = 1;
+			while (true) {
+				if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+					context_size++;
+				} else {
+					break;
+				}
+			}
 
-		if (context_size == 0) {
-			solution->outer_experiment = new OuterExperiment();
-		} else {
-			uniform_int_distribution<int> clean_distribution(0, 9);
+			uniform_int_distribution<int> clean_distribution(0, 7);
 			uniform_int_distribution<int> pass_through_distribution(0, 3);
 			if (clean_distribution(generator) == 0) {
 				CleanExperiment* clean_experiment = new CleanExperiment(
@@ -172,24 +186,28 @@ void create_experiment(ScopeHistory* root_history) {
 					scope_node->experiment = new_branch_experiment;
 				}
 			}
-		}
-	} else {
-		/**
-		 * TODO: add branch and passthrough for BranchNodes too
-		 */
-		uniform_int_distribution<int> clean_distribution(0, 2);
-		if (clean_distribution(generator) == 0) {
-			BranchNode* branch_node = (BranchNode*)possible_nodes[rand_index];
-			CleanExperiment* clean_experiment = new CleanExperiment(
-				branch_node->branch_scope_context,
-				branch_node->branch_node_context);
-			branch_node->experiment = clean_experiment;
-			uniform_int_distribution<int> is_branch_distribution(0, 1);
-			branch_node->experiment_is_branch = (is_branch_distribution(generator) == 0);
 		} else {
-			BranchNode* branch_node = (BranchNode*)possible_nodes[rand_index];
-			RetrainBranchExperiment* new_retrain_branch_experiment = new RetrainBranchExperiment(branch_node);
-			branch_node->experiment = new_retrain_branch_experiment;
+			/**
+			 * TODO: add branch and passthrough for BranchNodes too
+			 */
+			uniform_int_distribution<int> clean_distribution(0, 2);
+			if (clean_distribution(generator) == 0) {
+				BranchNode* branch_node = (BranchNode*)possible_nodes[rand_index];
+				CleanExperiment* clean_experiment = new CleanExperiment(
+					branch_node->branch_scope_context,
+					branch_node->branch_node_context);
+				/**
+				 * - simply use existing context
+				 *   - otherwise would need to track exit context
+				 */
+				branch_node->experiment = clean_experiment;
+				uniform_int_distribution<int> is_branch_distribution(0, 1);
+				branch_node->experiment_is_branch = (is_branch_distribution(generator) == 0);
+			} else {
+				BranchNode* branch_node = (BranchNode*)possible_nodes[rand_index];
+				RetrainBranchExperiment* new_retrain_branch_experiment = new RetrainBranchExperiment(branch_node);
+				branch_node->experiment = new_retrain_branch_experiment;
+			}
 		}
 	}
 }

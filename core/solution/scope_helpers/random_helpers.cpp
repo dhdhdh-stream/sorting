@@ -155,7 +155,9 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
 
-		possible_exits.push_back({curr_depth, curr_node});
+		if (node->exit_depth != 0 || node->exit_node != NULL) {
+			possible_exits.push_back({curr_depth, curr_node});
+		}
 
 		if (node->exit_depth == 0) {
 			curr_node = node->exit_node;

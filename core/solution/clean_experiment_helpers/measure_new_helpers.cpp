@@ -1,5 +1,8 @@
 #include "clean_experiment.h"
 
+#include <iostream>
+
+#include "abstract_node.h"
 #include "globals.h"
 #include "solution_helpers.h"
 #include "solution.h"
@@ -18,6 +21,28 @@ void CleanExperiment::measure_new_initial_activate(
 							  context,
 							  this->scope_context,
 							  this->node_context);
+
+		// cout << "Clean" << endl;
+		// cout << "explore" << endl;
+		// cout << "this->scope_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
+		// }
+		// cout << "this->node_context:" << endl;
+		// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+		// 	cout << c_index << ": " << this->node_context[c_index] << endl;
+		// }
+		// cout << "possible_exits.size(): " << possible_exits.size() << endl;
+		// for (int e_index = 0; e_index < (int)possible_exits.size(); e_index++) {
+		// 	int node_id;
+		// 	if (possible_exits[e_index].second == NULL) {
+		// 		node_id = -1;
+		// 	} else {
+		// 		node_id = possible_exits[e_index].second->id;
+		// 	}
+		// 	cout << e_index << ": " << possible_exits[e_index].first << " " << node_id << endl;
+		// }
+		// cout << endl;
 
 		if (possible_exits.size() == 1) {
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;

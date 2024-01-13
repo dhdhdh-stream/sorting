@@ -1,3 +1,10 @@
+/**
+ * - the way "practice" works is:
+ *   - scope shared between expensive instance and cheap instance
+ *   - scope improved using cheap instances (i.e., practice)
+ *   - benefits expensive instance
+ */
+
 #ifndef SCOPE_H
 #define SCOPE_H
 

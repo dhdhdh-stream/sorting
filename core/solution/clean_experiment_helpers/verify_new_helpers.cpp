@@ -1,5 +1,7 @@
 #include "clean_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "action_node.h"
 #include "branch_node.h"
@@ -46,6 +48,30 @@ void CleanExperiment::verify_new_backprop(double target_val) {
 		this->new_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		if (this->new_score >= this->existing_score) {
+			cout << "Clean" << endl;
+			cout << "verify" << endl;
+			cout << "this->scope_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				cout << c_index << ": " << this->scope_context[c_index] << endl;
+			}
+			cout << "this->node_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				cout << c_index << ": " << this->node_context[c_index] << endl;
+			}
+			cout << "this->clean_exit_depth: " << this->clean_exit_depth << endl;
+			if (this->clean_exit_node == NULL) {
+				cout << "this->clean_exit_node_id: " << -1 << endl;
+			} else {
+				cout << "this->clean_exit_node_id: " << this->clean_exit_node->id << endl;
+			}
+
+			cout << "this->existing_score: " << this->existing_score << endl;
+			cout << "this->new_score: " << this->new_score << endl;
+
+			cout << "success" << endl;
+
+			cout << endl;
+
 			Scope* containing_scope = solution->scopes[this->scope_context.back()];
 
 			BranchNode* new_branch_node = new BranchNode();

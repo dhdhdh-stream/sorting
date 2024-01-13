@@ -18,8 +18,12 @@ using namespace std;
 const int EXPLORE_ITERS = 2;
 const int NUM_SAMPLES_PER_ITER = 2;
 #else
-const int EXPLORE_ITERS = 100;
-const int NUM_SAMPLES_PER_ITER = 20;
+/**
+ * - higher iters than PassThroughExperient as OuterExperiment needs significantly beter
+ */
+const int EXPLORE_ITERS = 200;
+// const int NUM_SAMPLES_PER_ITER = 20;
+const int NUM_SAMPLES_PER_ITER = 100;
 #endif /* MDEBUG */
 
 void OuterExperiment::explore_initial_activate(Problem* problem,

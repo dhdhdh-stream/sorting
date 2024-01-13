@@ -26,11 +26,6 @@ int main(int argc, char* argv[]) {
 
 	solution->save("main");
 
-	// clear tries
-	ofstream output_file;
-	output_file.open("saves/main/tries.txt");
-	output_file.close();
-
 	delete solution;
 
 	cout << "Done" << endl;

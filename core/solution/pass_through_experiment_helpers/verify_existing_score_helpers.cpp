@@ -48,7 +48,7 @@ void PassThroughExperiment::verify_existing_score_backprop(
 
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE;
+			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE;
 			this->state_iter = 0;
 		}
 	} else {

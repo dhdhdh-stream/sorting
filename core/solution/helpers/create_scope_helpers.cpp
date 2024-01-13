@@ -620,7 +620,20 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								  possible_scope_contexts,
 								  possible_node_contexts);
 
-	uniform_int_distribution<int> action_distribution(0, possible_nodes.size()-1);
+	int num_meaningful_actions = 0;
+	for (int n_index = 0; n_index < (int)possible_nodes.size(); n_index++) {
+		if (possible_nodes[n_index] != NULL) {
+			if (possible_nodes[n_index]->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)possible_nodes[n_index];
+				if (action_node->action.move != ACTION_NOOP) {
+					num_meaningful_actions++;
+				}
+			} else if (possible_nodes[n_index]->type == NODE_TYPE_SCOPE) {
+				num_meaningful_actions++;
+			}
+		}
+	}
+	uniform_int_distribution<int> action_distribution(0, num_meaningful_actions);
 	if (action_distribution(generator) == 0) {
 		return NULL;
 	}
