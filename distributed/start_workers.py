@@ -38,7 +38,7 @@ for w_index in range(len(workers)):
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
 
-	client_sftp.put('../core/worker', 'workers/' + workers[w_index][0] + '/worker')
+	client_sftp.put('worker', 'workers/' + workers[w_index][0] + '/worker')
 	stdin, stdout, stderr = client.exec_command('chmod +x workers/' + workers[w_index][0] + '/worker')
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
@@ -47,31 +47,7 @@ for w_index in range(len(workers)):
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
 
-	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves/main')
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
-
-	parent = 'saves/main'
-	for dirpath, dirnames, filenames in os.walk(parent):
-		remote_path = os.path.join('workers/' + workers[w_index][0] + '/saves/main', dirpath[len(parent)+1:])
-		try:
-			client_sftp.listdir(remote_path)
-		except IOError:
-			client_sftp.mkdir(remote_path)
-
-		for filename in filenames:
-			client_sftp.put(os.path.join(dirpath, filename), os.path.join(remote_path, filename))
-
-	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves/' + workers[w_index][0])
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
-	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves/' + workers[w_index][0] + '/nns')
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
-
-	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves/tries')
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
+	client_sftp.put('saves/main.txt', 'workers/' + workers[w_index][0] + '/saves/main.txt')
 
 	client_sftp.close()
 

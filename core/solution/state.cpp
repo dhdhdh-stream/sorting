@@ -17,17 +17,14 @@ State::State() {
 }
 
 State::State(ifstream& input_file,
-			 int id,
-			 string path,
-			 string name) {
+			 int id) {
 	this->id = id;
 
 	string num_networks_line;
 	getline(input_file, num_networks_line);
 	int num_networks = stoi(num_networks_line);
 	for (int n_index = 0; n_index < num_networks; n_index++) {
-		this->networks.push_back(new StateNetwork(path,
-												  name,
+		this->networks.push_back(new StateNetwork(input_file,
 												  this,
 												  n_index));
 	}
@@ -39,12 +36,9 @@ State::~State() {
 	}
 }
 
-void State::save(ofstream& output_file,
-				 string path,
-				 string name) {
+void State::save(ofstream& output_file) {
 	output_file << this->networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
-		this->networks[n_index]->save(path,
-									  name);
+		this->networks[n_index]->save(output_file);
 	}
 }

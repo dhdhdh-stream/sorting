@@ -8,8 +8,6 @@
  * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
 
-// TODO: merge save files into single large one
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -44,14 +42,13 @@ const int NUM_FAILS_BEFORE_INCREASE = 20;
 default_random_engine generator;
 
 Solution* solution;
-string path;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
 		cout << "Usage: ./worker [path] [name]" << endl;
 		exit(1);
 	}
-	path = argv[1];
+	string path = argv[1];
 	string name = argv[2];
 
 	/**
@@ -66,7 +63,7 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->load("main");
+	solution->load(path, "main");
 
 	int num_fails = 0;
 
@@ -258,7 +255,7 @@ int main(int argc, char* argv[]) {
 			solution->success_reset();
 
 			ifstream solution_save_file;
-			solution_save_file.open(path + "saves/main/solution.txt");
+			solution_save_file.open(path + "saves/main.txt");
 			string id_line;
 			getline(solution_save_file, id_line);
 			int curr_id = stoi(id_line);
@@ -268,7 +265,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 
 				solution = new Solution();
-				solution->load("main");
+				solution->load(path, "main");
 
 				cout << "updated from main" << endl;
 			} else {
@@ -277,7 +274,7 @@ int main(int argc, char* argv[]) {
 				 *   - but just means that previous update from another worker dropped
 				 */
 				solution->id = (unsigned)time(NULL);
-				solution->save(name);
+				solution->save(path, name);
 			}
 
 			num_fails = 0;
@@ -308,7 +305,7 @@ int main(int argc, char* argv[]) {
 					delete solution;
 
 					solution = new Solution();
-					solution->load("main");
+					solution->load(path, "main");
 
 					cout << "updated from main" << endl;
 

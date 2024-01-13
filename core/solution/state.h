@@ -17,14 +17,10 @@ public:
 
 	State();
 	State(std::ifstream& input_file,
-		  int id,
-		  std::string path,
-		  std::string name);
+		  int id);
 	~State();
 
-	void save(std::ofstream& output_file,
-			  std::string path,
-			  std::string name);
+	void save(std::ofstream& output_file);
 };
 
 #endif /* STATE_H */

@@ -45,13 +45,9 @@ StateNetwork::StateNetwork(int index) {
 	construct();
 }
 
-StateNetwork::StateNetwork(string path,
-						   string name,
+StateNetwork::StateNetwork(ifstream& input_file,
 						   State* parent_state,
 						   int index) {
-	ifstream input_file;
-	input_file.open(path + "saves/" + name + "/nns/" + to_string(parent_state->id) + "_" + to_string(index) + ".txt");
-
 	this->parent_state = parent_state;
 	this->index = index;
 
@@ -84,8 +80,6 @@ StateNetwork::StateNetwork(string path,
 
 	this->hidden->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
-
-	input_file.close();
 }
 
 StateNetwork::~StateNetwork() {
@@ -169,11 +163,7 @@ void StateNetwork::activate(double obs_val,
 	state_status.last_network = this;
 }
 
-void StateNetwork::save(string path,
-						string name) {
-	ofstream output_file;
-	output_file.open(path + "saves/" + name + "/nns/" + to_string(this->parent_state->id) + "_" + to_string(this->index) + ".txt");
-
+void StateNetwork::save(ofstream& output_file) {
 	output_file << this->preceding_network_indexes.size() << endl;
 	for (set<int>::iterator it = preceding_network_indexes.begin();
 			it != preceding_network_indexes.end(); it++) {
@@ -187,6 +177,4 @@ void StateNetwork::save(string path,
 
 	this->hidden->save_weights(output_file);
 	this->output->save_weights(output_file);
-
-	output_file.close();
 }

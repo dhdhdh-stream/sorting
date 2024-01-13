@@ -58,7 +58,8 @@ public:
 	~Solution();
 
 	void init();
-	void load(std::string name);
+	void load(std::string path,
+			  std::string name);
 
 	void success_reset();
 	void fail_reset();
@@ -67,7 +68,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void save(std::string name);
+	void save(std::string path,
+			  std::string name);
 	void save_for_display(std::ofstream& output_file);
 };
 

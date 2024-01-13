@@ -43,8 +43,7 @@ public:
 	double output_average_max_update;
 
 	StateNetwork(int index);
-	StateNetwork(std::string path,
-				 std::string name,
+	StateNetwork(std::ifstream& input_file,
 				 State* parent_state,
 				 int index);
 	~StateNetwork();
@@ -56,8 +55,7 @@ public:
 	void activate(double obs_val,
 				  StateStatus& state_status);
 
-	void save(std::string name,
-			  std::string path);
+	void save(std::ofstream& output_file);
 
 private:
 	void construct();

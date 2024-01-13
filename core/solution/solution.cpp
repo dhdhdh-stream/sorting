@@ -65,9 +65,10 @@ void Solution::init() {
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
-void Solution::load(string name) {
+void Solution::load(string path,
+					string name) {
 	ifstream input_file;
-	input_file.open(path + "saves/" + name + "/solution.txt");
+	input_file.open(path + "saves/" + name + ".txt");
 
 	string id_line;
 	getline(input_file, id_line);
@@ -86,9 +87,7 @@ void Solution::load(string name) {
 		int state_id = stoi(state_id_line);
 
 		State* state = new State(input_file,
-								 state_id,
-								 path,
-								 name);
+								 state_id);
 
 		this->states[state_id] = state;
 	}
@@ -113,10 +112,7 @@ void Solution::load(string name) {
 	}
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
-		ifstream scope_save_file;
-		scope_save_file.open(path + "saves/" + name + "/scope_" + to_string(it->first) + ".txt");
-		it->second->load(scope_save_file);
-		scope_save_file.close();
+		it->second->load(input_file);
 	}
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
@@ -178,9 +174,10 @@ void Solution::fail_reset() {
 	}
 }
 
-void Solution::save(string name) {
+void Solution::save(string path,
+					string name) {
 	ofstream output_file;
-	output_file.open(path + "saves/" + name + "/solution_temp.txt");
+	output_file.open(path + "saves/" + name + "_temp.txt");
 
 	output_file << this->id << endl;
 
@@ -190,9 +187,7 @@ void Solution::save(string name) {
 	for (map<int, State*>::iterator it = this->states.begin();
 			it != this->states.end(); it++) {
 		output_file << it->first << endl;
-		it->second->save(output_file,
-						 path,
-						 name);
+		it->second->save(output_file);
 	}
 
 	output_file << this->scope_counter << endl;
@@ -201,11 +196,7 @@ void Solution::save(string name) {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		output_file << it->first << endl;
-
-		ofstream scope_save_file;
-		scope_save_file.open(path + "saves/" + name + "/scope_" + to_string(it->first) + ".txt");
-		it->second->save(scope_save_file);
-		scope_save_file.close();
+		it->second->save(output_file);
 	}
 
 	output_file << this->root->id << endl;
@@ -214,8 +205,8 @@ void Solution::save(string name) {
 
 	output_file.close();
 
-	string oldname = path + "saves/" + name + "/solution_temp.txt";
-	string newname = path + "saves/" + name + "/solution.txt";
+	string oldname = path + "saves/" + name + "_temp.txt";
+	string newname = path + "saves/" + name + ".txt";
 	rename(oldname.c_str(), newname.c_str());
 }
 
