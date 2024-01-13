@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
@@ -37,9 +38,19 @@ void gather_possible_exits_helper(int l_index,
 		if (experiment_node->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)experiment_node;
 			starting_node = action_node->next_node;
-		} else {
+		} else if (experiment_node->type == NODE_TYPE_SCOPE) {
 			ScopeNode* scope_node = (ScopeNode*)experiment_node;
 			starting_node = scope_node->next_node;
+		} else {
+			/**
+			 * - CleanExperiment on BranchNode edge case
+			 */
+			BranchNode* branch_node = (BranchNode*)experiment_node;
+			if (branch_node->experiment_is_branch) {
+				starting_node = branch_node->branch_next_node;
+			} else {
+				starting_node = branch_node->original_next_node;
+			}
 		}
 
 		scope->random_exit_activate(starting_node,

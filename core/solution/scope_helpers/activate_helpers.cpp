@@ -50,18 +50,12 @@ void node_activate_helper(AbstractNode*& curr_node,
 
 		BranchNodeHistory* node_history = new BranchNodeHistory(node);
 		history->node_histories.push_back(node_history);
-
-		bool is_branch;
-		node->activate(is_branch,
+		node->activate(curr_node,
 					   problem,
 					   context,
+					   exit_depth,
+					   exit_node,
 					   run_helper);
-
-		if (is_branch) {
-			curr_node = node->branch_next_node;
-		} else {
-			curr_node = node->original_next_node;
-		}
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
 

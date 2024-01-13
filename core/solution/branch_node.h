@@ -37,7 +37,8 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	RetrainBranchExperiment* experiment;
+	AbstractExperiment* experiment;
+	bool experiment_is_branch;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
@@ -49,9 +50,11 @@ public:
 	BranchNode();
 	~BranchNode();
 
-	void activate(bool& is_branch,
+	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper);
 
 	void random_activate(bool& is_branch,

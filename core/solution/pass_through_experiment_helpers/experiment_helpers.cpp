@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NUM_EXPERIMENTS = 10;
+const int NUM_EXPERIMENTS = 20;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												Problem* problem,

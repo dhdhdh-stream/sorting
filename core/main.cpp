@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
+#include "clean_experiment.h"
 #include "constants.h"
 #include "context_layer.h"
 #include "globals.h"
@@ -185,7 +186,7 @@ int main(int argc, char* argv[]) {
 					}
 					delete pass_through_experiment;
 				}
-			} else {
+			} else if (run_helper.experiment_history->experiment->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
 				RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)run_helper.experiment_history->experiment;
 				retrain_branch_experiment->backprop(target_val,
 													run_helper,
@@ -200,6 +201,32 @@ int main(int argc, char* argv[]) {
 					BranchNode* branch_node = retrain_branch_experiment->branch_node;
 					branch_node->experiment = NULL;
 					delete retrain_branch_experiment;
+				}
+			} else {
+				CleanExperiment* clean_experiment = (CleanExperiment*)run_helper.experiment_history->experiment;
+				clean_experiment->backprop(target_val,
+										   run_helper,
+										   (CleanExperimentOverallHistory*)run_helper.experiment_history);
+
+				if (clean_experiment->state == CLEAN_EXPERIMENT_STATE_SUCCESS) {
+					is_success = true;
+					// experiment cleaned in reset()
+				} else if (clean_experiment->state == CLEAN_EXPERIMENT_STATE_FAIL) {
+					is_fail = true;
+
+					Scope* starting_scope = solution->scopes[clean_experiment->scope_context.back()];
+					AbstractNode* starting_node = starting_scope->nodes[clean_experiment->node_context.back()];
+					if (starting_node->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)starting_node;
+						action_node->experiment = NULL;
+					} else if (starting_node->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)starting_node;
+						scope_node->experiment = NULL;
+					} else {
+						BranchNode* branch_node = (BranchNode*)starting_node;
+						branch_node->experiment = NULL;
+					}
+					delete clean_experiment;
 				}
 			}
 		} else {

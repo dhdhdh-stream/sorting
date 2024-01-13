@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "clean_experiment.h"
 #include "constants.h"
 #include "state_network.h"
 #include "globals.h"
@@ -15,9 +16,11 @@
 
 using namespace std;
 
-void BranchNode::activate(bool& is_branch,
+void BranchNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper) {
 	bool matches_context = true;
 	if (this->branch_scope_context.size() > context.size()) {
@@ -36,15 +39,24 @@ void BranchNode::activate(bool& is_branch,
 
 	if (matches_context) {
 		if (this->branch_is_pass_through) {
-			is_branch = true;
+			curr_node = this->branch_next_node;
 		} else {
-			if (this->experiment != NULL) {
-				bool is_selected = this->experiment->activate(is_branch,
-															  problem,
-															  context,
-															  run_helper);
+			if (this->experiment != NULL
+					&& this->experiment->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
+				RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)this->experiment;
+				bool is_branch;
+				bool is_selected = retrain_branch_experiment->activate(
+					is_branch,
+					problem,
+					context,
+					run_helper);
 
 				if (is_selected) {
+					if (is_branch) {
+						curr_node = this->branch_next_node;
+					} else {
+						curr_node = this->original_next_node;
+					}
 					return;
 				}
 			}
@@ -63,7 +75,13 @@ void BranchNode::activate(bool& is_branch,
 							original_score += this->decision_original_weights[s_index] * normalized;
 							branch_score += this->decision_branch_weights[s_index] * normalized;
 
-							it->second.used = true;
+							for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+									scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+								for (set<int>::iterator index_it = scope_it->second.begin();
+										index_it != scope_it->second.end(); index_it++) {
+									scope_it->first->used_states[*index_it] = true;
+								}
+							}
 						} else {
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;
@@ -79,7 +97,13 @@ void BranchNode::activate(bool& is_branch,
 							original_score += this->decision_original_weights[s_index] * normalized;
 							branch_score += this->decision_branch_weights[s_index] * normalized;
 
-							it->second.used = true;
+							for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
+									scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
+								for (set<int>::iterator index_it = scope_it->second.begin();
+										index_it != scope_it->second.end(); index_it++) {
+									scope_it->first->used_states[*index_it] = true;
+								}
+							}
 						} else {
 							original_score += this->decision_original_weights[s_index] * it->second.val;
 							branch_score += this->decision_branch_weights[s_index] * it->second.val;
@@ -107,12 +131,34 @@ void BranchNode::activate(bool& is_branch,
 			#endif /* MDEBUG */
 
 			if (decision_is_branch) {
-				is_branch = true;
+				curr_node = this->branch_next_node;
+
+				if (this->experiment != NULL
+						&& this->experiment->type == EXPERIMENT_TYPE_CLEAN
+						&& this->experiment_is_branch) {
+					CleanExperiment* clean_experiment = (CleanExperiment*)this->experiment;
+					clean_experiment->activate(curr_node,
+											   context,
+											   exit_depth,
+											   exit_node,
+											   run_helper);
+				}
 			} else {
-				is_branch = false;
+				curr_node = this->original_next_node;
+
+				if (this->experiment != NULL
+						&& this->experiment->type == EXPERIMENT_TYPE_CLEAN
+						&& !this->experiment_is_branch) {
+					CleanExperiment* clean_experiment = (CleanExperiment*)this->experiment;
+					clean_experiment->activate(curr_node,
+											   context,
+											   exit_depth,
+											   exit_node,
+											   run_helper);
+				}
 			}
 		}
 	} else {
-		is_branch = false;
+		curr_node = this->original_next_node;
 	}
 }

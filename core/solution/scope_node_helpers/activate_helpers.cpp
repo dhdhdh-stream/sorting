@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "branch_experiment.h"
+#include "clean_experiment.h"
 #include "constants.h"
 #include "state_network.h"
 #include "globals.h"
@@ -139,43 +140,6 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	 * - also will be how inner branches affect outer scopes on early exit
 	 */
 
-	for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-			it != context.back().input_state_vals.end(); it++) {
-		if (it->second.used) {
-			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
-					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
-				for (set<int>::iterator index_it = scope_it->second.begin();
-						index_it != scope_it->second.end(); index_it++) {
-					scope_it->first->used_states[*index_it] = true;
-				}
-			}
-		}
-	}
-	for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-			it != context.back().local_state_vals.end(); it++) {
-		if (it->second.used) {
-			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
-					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
-				for (set<int>::iterator index_it = scope_it->second.begin();
-						index_it != scope_it->second.end(); index_it++) {
-					scope_it->first->used_states[*index_it] = true;
-				}
-			}
-		}
-	}
-	for (map<State*, StateStatus>::iterator it = context.back().temp_state_vals.begin();
-			it != context.back().temp_state_vals.end(); it++) {
-		if (it->second.used) {
-			for (map<Scope*, set<int>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
-					scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
-				for (set<int>::iterator index_it = scope_it->second.begin();
-						index_it != scope_it->second.end(); index_it++) {
-					scope_it->first->used_states[*index_it] = true;
-				}
-			}
-		}
-	}
-
 	context.pop_back();
 
 	context.back().node = NULL;
@@ -193,8 +157,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 											exit_node,
 											run_helper,
 											history->experiment_history);
-			} else {
-				// this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH
+			} else if (this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
 				pass_through_experiment->activate(curr_node,
 												  problem,
@@ -203,6 +166,13 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 												  exit_node,
 												  run_helper,
 												  history->experiment_history);
+			} else {
+				CleanExperiment* clean_experiment = (CleanExperiment*)this->experiment;
+				clean_experiment->activate(curr_node,
+										   context,
+										   exit_depth,
+										   exit_node,
+										   run_helper);
 			}
 		}
 	} else if (inner_exit_depth == 0) {

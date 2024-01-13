@@ -13,6 +13,7 @@ const int EXPERIMENT_TYPE_OUTER = 0;
 const int EXPERIMENT_TYPE_BRANCH = 1;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 2;
 const int EXPERIMENT_TYPE_RETRAIN_BRANCH = 3;
+const int EXPERIMENT_TYPE_CLEAN = 4;
 
 class AbstractExperimentHistory;
 class AbstractExperiment {

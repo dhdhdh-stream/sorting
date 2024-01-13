@@ -13,7 +13,6 @@ public:
 	StateNetwork* last_network;
 
 	std::map<Scope*, std::set<int>> impacted_potential_scopes;
-	bool used;
 
 	StateStatus();
 	StateStatus(double val);

@@ -5,15 +5,11 @@ using namespace std;
 StateStatus::StateStatus() {
 	this->val = 0.0;
 	this->last_network = NULL;
-
-	this->used = false;
 }
 
 StateStatus::StateStatus(double val) {
 	this->val = val;
 	this->last_network = NULL;
-
-	this->used = false;
 }
 
 void StateStatus::update_impacted_potential_scopes(

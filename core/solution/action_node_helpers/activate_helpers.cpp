@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "branch_experiment.h"
+#include "clean_experiment.h"
 #include "constants.h"
 #include "state_network.h"
 #include "globals.h"
@@ -160,7 +161,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 										exit_node,
 										run_helper,
 										history->experiment_history);
-		} else {
+		} else if (this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
 			pass_through_experiment->activate(curr_node,
 											  problem,
@@ -169,6 +170,13 @@ void ActionNode::activate(AbstractNode*& curr_node,
 											  exit_node,
 											  run_helper,
 											  history->experiment_history);
+		} else {
+			CleanExperiment* clean_experiment = (CleanExperiment*)this->experiment;
+			clean_experiment->activate(curr_node,
+									   context,
+									   exit_depth,
+									   exit_node,
+									   run_helper);
 		}
 	}
 }
