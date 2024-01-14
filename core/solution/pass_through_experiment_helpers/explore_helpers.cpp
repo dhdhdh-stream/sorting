@@ -54,11 +54,23 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 		 */
 
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			PotentialScopeNode* new_potential_scope_node = create_scope(
-				context,
-				(int)this->scope_context.size(),
-				context[context.size() - this->scope_context.size()].scope,
-				NULL);
+			PotentialScopeNode* new_potential_scope_node;
+			uniform_int_distribution<int> random_scope_distribution(0, 1);
+			if (random_scope_distribution(generator) == 0) {
+				uniform_int_distribution<int> distribution(0, context.size()-1);
+				Scope* scope = context[distribution(generator)].scope;
+				new_potential_scope_node = create_scope(
+					context,
+					(int)this->scope_context.size(),
+					scope,
+					NULL);
+			} else {
+				new_potential_scope_node = create_scope(
+					context,
+					(int)this->scope_context.size(),
+					context[context.size() - this->scope_context.size()].scope,
+					NULL);
+			}
 
 			if (new_potential_scope_node == NULL) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
@@ -265,6 +277,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
+				cout << "PassThrough explore fail" << endl;
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}

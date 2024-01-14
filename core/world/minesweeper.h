@@ -10,15 +10,17 @@ const int MINESWEEPER_ACTION_RIGHT = 1;
 const int MINESWEEPER_ACTION_DOWN = 2;
 const int MINESWEEPER_ACTION_LEFT = 3;
 const int MINESWEEPER_ACTION_CLICK = 4;
+const int MINESWEEPER_ACTION_FLAG = 5;
 
 class Minesweeper : public Problem {
 public:
 	std::vector<std::vector<int>> world;
 	std::vector<std::vector<bool>> revealed;
+	std::vector<std::vector<bool>> flagged;
 	int current_x;
 	int current_y;
 
-	int num_revealed;
+	int num_correct;
 
 	bool ended;
 

@@ -10,6 +10,7 @@ ACTION_RIGHT = 2
 # ACTION_DOWN = 2
 # ACTION_LEFT = 3
 # ACTION_CLICK = 4
+# ACTION_FLAG = 5;
 
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
@@ -48,6 +49,8 @@ for s_index in range(num_scopes):
 							  next_node_id]
 		elif node_type == NODE_TYPE_BRANCH:
 			scope_context = int(file.readline())
+
+			is_pass_through = bool(file.readline())
 
 			original_next_node_id = int(file.readline())
 			branch_next_node_id = int(file.readline())
@@ -101,6 +104,8 @@ def pretty_print_action(action):
 # 		result = 'LEFT'
 # 	elif action == 4:
 # 		result = 'CLICK'
+# 	elif action == 5:
+# 		result = 'FLAG'
 # 	return result
 
 graph = pydot.Dot(graph_type='digraph', strict=True)

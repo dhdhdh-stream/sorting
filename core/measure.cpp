@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
 	solution->load("", "main");
 
 	double sum_vals = 0.0;
+	double sum_actions = 0.0;
 
 	for (int i_index = 0; i_index < 2000; i_index++) {
 		Problem* problem = new Sorting();
@@ -66,6 +67,7 @@ int main(int argc, char* argv[]) {
 			target_val = -1.0;
 		}
 		sum_vals += target_val;
+		sum_actions += run_helper.num_actions;
 
 		delete root_history;
 
@@ -73,6 +75,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "average score: " << sum_vals/2000 << endl;
+	cout << "average actions: " << sum_actions/2000.0 << endl;
 
 	ofstream display_file;
 	display_file.open("../display.txt");

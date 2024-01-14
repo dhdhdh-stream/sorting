@@ -105,7 +105,7 @@ void create_experiment(ScopeHistory* root_history) {
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_nodes.size()-1);
 	int rand_index = possible_distribution(generator);
 
-	uniform_int_distribution<int> outer_distribution(0, max(7, (int)possible_scope_contexts[rand_index].size()));
+	uniform_int_distribution<int> outer_distribution(0, max(4, (int)possible_scope_contexts[rand_index].size()));
 	if (outer_distribution(generator) == 0) {
 		solution->outer_experiment = new OuterExperiment();
 	} else {
@@ -124,7 +124,7 @@ void create_experiment(ScopeHistory* root_history) {
 			 */
 
 			uniform_int_distribution<int> clean_distribution(0, 7);
-			uniform_int_distribution<int> pass_through_distribution(0, 3);
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (clean_distribution(generator) == 0) {
 				CleanExperiment* clean_experiment = new CleanExperiment(
 					vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
@@ -161,7 +161,7 @@ void create_experiment(ScopeHistory* root_history) {
 			}
 
 			uniform_int_distribution<int> clean_distribution(0, 7);
-			uniform_int_distribution<int> pass_through_distribution(0, 3);
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (clean_distribution(generator) == 0) {
 				CleanExperiment* clean_experiment = new CleanExperiment(
 					vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
@@ -190,7 +190,7 @@ void create_experiment(ScopeHistory* root_history) {
 			/**
 			 * TODO: add branch and passthrough for BranchNodes too
 			 */
-			uniform_int_distribution<int> clean_distribution(0, 2);
+			uniform_int_distribution<int> clean_distribution(0, 1);
 			if (clean_distribution(generator) == 0) {
 				BranchNode* branch_node = (BranchNode*)possible_nodes[rand_index];
 				CleanExperiment* clean_experiment = new CleanExperiment(

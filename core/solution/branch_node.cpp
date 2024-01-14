@@ -158,6 +158,8 @@ void BranchNode::save_for_display(ofstream& output_file) {
 		output_file << this->branch_scope_context[0] << endl;
 	}
 
+	output_file << this->branch_is_pass_through << endl;
+
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }

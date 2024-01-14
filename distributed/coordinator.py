@@ -9,13 +9,15 @@ import time
 
 print('Starting...')
 
+workers = []
+
 workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
 for line in workers_file:
 	arr = line.strip().split()
 	workers.append([arr[0], arr[1], arr[2], arr[3]])
 workers_file.close()
 
-solution_file = open('saves/main/solution.txt', 'r')
+solution_file = open('saves/main.txt', 'r')
 curr_id = int(solution_file.readline())
 solution_file.close()
 
@@ -39,7 +41,7 @@ while True:
 			if worker_curr_id > curr_id:
 				print(worker[0] + ' updated')
 
-				sftp_client.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
+				client_sftp.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
 								'saves/main.txt')
 
 				curr_id = worker_curr_id
@@ -65,8 +67,10 @@ while True:
 
 			client_sftp = client.open_sftp()
 
-			client_sftp.put('saves/main.txt', 'workers/' + workers[w_index][0] + '/saves/main_temp.txt')
-			client_sftp.rename('workers/' + workers[w_index][0] + '/saves/main_temp.txt', 'workers/' + workers[w_index][0] + '/saves/main.txt');
+			client_sftp.put('saves/main.txt', 'workers/' + worker[0] + '/saves/main_temp.txt')
+			stdin, stdout, stderr = client.exec_command('mv workers/' + worker[0] + '/saves/main_temp.txt workers/' + worker[0] + '/saves/main.txt')
+			for line in iter(lambda:stdout.readline(2048), ''):
+				print(line, end='')
 
 			client_sftp.close()
 			client.close()

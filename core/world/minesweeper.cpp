@@ -90,17 +90,18 @@ Minesweeper::Minesweeper() {
 	}
 
 	this->revealed = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
+	this->flagged = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
 
 	this->current_x = STARTING_X;
 	this->current_y = STARTING_Y;
 
-	this->num_revealed = 0;
+	this->num_correct = 0;
 
 	this->ended = false;
 }
 
 Action Minesweeper::random_action() {
-	uniform_int_distribution<int> action_distribution(0, 4);
+	uniform_int_distribution<int> action_distribution(0, 5);
 	return Action(action_distribution(generator));
 }
 
@@ -111,7 +112,9 @@ double Minesweeper::get_observation() {
 			|| this->current_y > HEIGHT-1) {
 		return -10.0;
 	} else {
-		if (this->revealed[this->current_x][this->current_y]) {
+		if (this->flagged[this->current_x][this->current_y]) {
+			return 10.0;
+		} else if (this->revealed[this->current_x][this->current_y]) {
 			return this->world[this->current_x][this->current_y];
 		} else {
 			return -5.0;
@@ -151,7 +154,21 @@ void Minesweeper::perform_action(Action action) {
 				if (this->world[this->current_x][this->current_y] == -1) {
 					this->ended = true;
 				} else {
-					this->num_revealed++;
+					this->num_correct++;
+				}
+			}
+		}
+	} else if (action.move == MINESWEEPER_ACTION_FLAG) {
+		if (this->current_x >= 0
+				&& this->current_x <= WIDTH-1
+				&& this->current_y >= 0
+				&& this->current_y <= HEIGHT-1) {
+			if (!this->revealed[this->current_x][this->current_y]
+					&& !this->flagged[this->current_x][this->current_y]) {
+				this->flagged[this->current_x][this->current_y] = true;
+
+				if (this->world[this->current_x][this->current_y] == -1) {
+					this->num_correct++;
 				}
 			}
 		}
@@ -159,10 +176,10 @@ void Minesweeper::perform_action(Action action) {
 }
 
 double Minesweeper::score_result(int num_actions) {
-	if (this->num_revealed >= WIDTH*HEIGHT - NUM_MINES) {
+	if (this->num_correct >= WIDTH*HEIGHT) {
 		return 10.0 - 0.005*num_actions;
 	} else {
-		return this->num_revealed/10.0 - 0.005*num_actions;
+		return this->num_correct/10.0 - 0.005*num_actions;
 	}
 }
 
@@ -177,7 +194,13 @@ Problem* Minesweeper::copy_and_reset() {
 void Minesweeper::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {
-			if (this->revealed[x_index][y_index]) {
+			if (this->flagged[x_index][y_index]) {
+				if (this->world[x_index][y_index] == -1) {
+					cout << "F ";
+				} else {
+					cout << "M ";
+				}
+			} else if (this->revealed[x_index][y_index]) {
 				if (this->world[x_index][y_index] == -1) {
 					cout << "X ";
 				} else {

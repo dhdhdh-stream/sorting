@@ -116,6 +116,7 @@ void OuterExperiment::measure_new_score_backprop(double target_val) {
 			this->state = OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE;
 			this->state_iter = 0;
 		} else {
+			cout << "Outer measure fail" << endl;
 			this->state = OUTER_EXPERIMENT_STATE_FAIL;
 		}
 

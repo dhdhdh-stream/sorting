@@ -146,7 +146,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		// cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
 		// cout << "misguess_improvement_t_score: " << misguess_improvement_t_score << endl;
 
-		if (misguess_improvement_t_score > 1.645) {	// >95%
+		if (misguess_improvement_t_score > 2.326) {	// >99%
 		#endif /* MDEBUG */
 			// cout << "misguess success" << endl;
 
@@ -174,6 +174,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;
 		} else {
+			cout << "PassThrough measure misguess fail" << endl;
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 

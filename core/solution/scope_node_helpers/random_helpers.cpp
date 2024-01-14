@@ -18,8 +18,8 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 	possible_scope_contexts.push_back(scope_context);
 	possible_node_contexts.push_back(node_context);
 
-	uniform_int_distribution<int> distribution(0, 1);
-	if (distribution(generator) == 0) {
+	uniform_int_distribution<int> distribution(0, 2);
+	if (distribution(generator) != 0) {
 		scope_context.push_back(this->inner_scope);
 		node_context.push_back(NULL);
 

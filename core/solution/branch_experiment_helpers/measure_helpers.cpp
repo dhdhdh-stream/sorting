@@ -228,6 +228,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
+			cout << "Branch measure fail" << endl;
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

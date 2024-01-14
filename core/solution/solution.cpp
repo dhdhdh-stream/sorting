@@ -196,6 +196,9 @@ void Solution::save(string path,
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		output_file << it->first << endl;
+	}
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
 		it->second->save(output_file);
 	}
 

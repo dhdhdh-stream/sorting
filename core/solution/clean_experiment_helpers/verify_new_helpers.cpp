@@ -42,6 +42,7 @@ void CleanExperiment::verify_new_backprop(double target_val) {
 			this->state = CLEAN_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
+			cout << "Clean verify 1st fail" << endl;
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -144,6 +145,7 @@ void CleanExperiment::verify_new_backprop(double target_val) {
 
 			this->state = CLEAN_EXPERIMENT_STATE_SUCCESS;
 		} else {
+			cout << "Clean verify 2nd fail" << endl;
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;
 		}
 	}

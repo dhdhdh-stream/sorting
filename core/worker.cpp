@@ -8,6 +8,10 @@
  * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
 
+// TODO: add full exits
+// TODO: add back loops again alongside full exits
+// - may enable reorienting itself
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -37,7 +41,7 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 20;
+const int NUM_FAILS_BEFORE_INCREASE = 30;
 
 default_random_engine generator;
 
@@ -295,7 +299,7 @@ int main(int argc, char* argv[]) {
 			iter_index++;
 			if (iter_index%10000 == 0) {
 				ifstream solution_save_file;
-				solution_save_file.open(path + "saves/main/solution.txt");
+				solution_save_file.open(path + "saves/main.txt");
 				string id_line;
 				getline(solution_save_file, id_line);
 				int curr_id = stoi(id_line);

@@ -621,7 +621,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 								  possible_node_contexts);
 
 	int num_meaningful_actions = 0;
-	for (int n_index = 0; n_index < (int)possible_nodes.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)possible_nodes.size()-1; n_index++) {
 		if (possible_nodes[n_index] != NULL) {
 			if (possible_nodes[n_index]->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)possible_nodes[n_index];
@@ -629,7 +629,9 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 					num_meaningful_actions++;
 				}
 			} else if (possible_nodes[n_index]->type == NODE_TYPE_SCOPE) {
-				num_meaningful_actions++;
+				if (possible_scope_contexts[n_index].size() == possible_scope_contexts[n_index+1].size()) {
+					num_meaningful_actions++;
+				}
 			}
 		}
 	}
@@ -653,8 +655,11 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 			for (int n_index = start_index; n_index < end_index; n_index++) {
 				if (possible_nodes[n_index] != NULL) {
 					if (possible_nodes[n_index]->type == NODE_TYPE_ACTION) {
-						empty_path = false;
-						break;
+						ActionNode* action_node = (ActionNode*)possible_nodes[n_index];
+						if (action_node->action.move != ACTION_NOOP) {
+							empty_path = false;
+							break;
+						}
 					} else if (possible_nodes[n_index]->type == NODE_TYPE_SCOPE) {
 						if (possible_scope_contexts[n_index].size() == possible_scope_contexts[n_index+1].size()) {
 							// same depth means that entire scope node included

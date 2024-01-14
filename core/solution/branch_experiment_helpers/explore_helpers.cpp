@@ -197,11 +197,26 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 			}
 		
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				PotentialScopeNode* new_potential_scope_node = create_scope(
-					context,
-					(int)this->scope_context.size(),
-					context[context.size() - this->scope_context.size()].scope,
-					this->parent_pass_through_experiment);
+				PotentialScopeNode* new_potential_scope_node;
+				uniform_int_distribution<int> random_scope_distribution(0, 1);
+				if (random_scope_distribution(generator) == 0) {
+					/**
+					 * - random from context as they are guaranteed to still be relevant
+					 */
+					uniform_int_distribution<int> distribution(0, context.size()-1);
+					Scope* scope = context[distribution(generator)].scope;
+					new_potential_scope_node = create_scope(
+						context,
+						(int)this->scope_context.size(),
+						scope,
+						this->parent_pass_through_experiment);
+				} else {
+					new_potential_scope_node = create_scope(
+						context,
+						(int)this->scope_context.size(),
+						context[context.size() - this->scope_context.size()].scope,
+						this->parent_pass_through_experiment);
+				}
 
 				if (new_potential_scope_node == NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
@@ -375,6 +390,7 @@ void BranchExperiment::explore_backprop(double target_val,
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE;
 				this->state_iter = 0;
 			} else {
+				cout << "Branch explore fail" << endl;
 				this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 			}
 		}

@@ -31,6 +31,8 @@ PassThroughExperiment::PassThroughExperiment(
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE;
 	this->state_iter = 0;
 
+	this->new_is_better = true;
+
 	this->curr_score = 0.0;
 
 	this->best_score = 0.0;

@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
 		if (run_index%1000 == 0) {
 			delete solution;
 			solution = new Solution();
-			solution->load("main");
+			solution->load("", "main");
 		}
 		#endif /* MDEBUG */
 	}

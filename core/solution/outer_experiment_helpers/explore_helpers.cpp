@@ -22,8 +22,7 @@ const int NUM_SAMPLES_PER_ITER = 2;
  * - higher iters than PassThroughExperient as OuterExperiment needs significantly beter
  */
 const int EXPLORE_ITERS = 200;
-// const int NUM_SAMPLES_PER_ITER = 20;
-const int NUM_SAMPLES_PER_ITER = 100;
+const int NUM_SAMPLES_PER_ITER = 50;
 #endif /* MDEBUG */
 
 void OuterExperiment::explore_initial_activate(Problem* problem,
@@ -270,6 +269,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				this->state = OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
+				cout << "Outer explore fail" << endl;
 				this->state = OUTER_EXPERIMENT_STATE_FAIL;
 			}
 

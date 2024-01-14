@@ -5,6 +5,11 @@
  *   - benefits expensive instance
  */
 
+/**
+ * - exploring simply is trying random things
+ *   - but the better explorer is the one who has more sophisticated things to try
+ */
+
 #ifndef SCOPE_H
 #define SCOPE_H
 

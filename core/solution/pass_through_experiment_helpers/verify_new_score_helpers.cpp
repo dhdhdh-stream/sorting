@@ -87,16 +87,20 @@ void PassThroughExperiment::verify_new_score_backprop(
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
 				this->state_iter = 0;
-			} else {
-				if (this->best_step_types.size() > 0) {
-					// reserve at least solution->curr_num_datapoints
-					this->i_misguess_histories.reserve(solution->curr_num_datapoints);
+			#if defined(MDEBUG) && MDEBUG
+			} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+			#else
+			} else if (this->best_step_types.size() > 0 && this->new_average_score >= this->existing_average_score) {
+			#endif /* MDEBUG */
+				this->new_is_better = false;
 
-					this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
-					this->state_iter = 0;
-				} else {
-					this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
-				}
+				this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
+				this->state_iter = 0;
+			} else {
+				cout << "PassThrough verify score 1st fail" << endl;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -119,55 +123,64 @@ void PassThroughExperiment::verify_new_score_backprop(
 			#else
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */
-				cout << "PassThrough" << endl;
-				cout << "this->scope_context:" << endl;
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					cout << c_index << ": " << this->scope_context[c_index] << endl;
-				}
-				cout << "this->node_context:" << endl;
-				for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-					cout << c_index << ": " << this->node_context[c_index] << endl;
-				}
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index]->action.move;
-					} else {
-						cout << " S";
+				if (this->new_is_better) {
+					cout << "PassThrough" << endl;
+					cout << "this->scope_context:" << endl;
+					for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+						cout << c_index << ": " << this->scope_context[c_index] << endl;
 					}
-				}
-				cout << endl;
+					cout << "this->node_context:" << endl;
+					for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+						cout << c_index << ": " << this->node_context[c_index] << endl;
+					}
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->best_actions[s_index]->action.move;
+						} else {
+							cout << " S";
+						}
+					}
+					cout << endl;
 
-				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				if (this->best_exit_node == NULL) {
-					cout << "this->best_exit_node_id: " << -1 << endl;
+					cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+					if (this->best_exit_node == NULL) {
+						cout << "this->best_exit_node_id: " << -1 << endl;
+					} else {
+						cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+					}
+
+					cout << "this->existing_average_score: " << this->existing_average_score << endl;
+					cout << "this->new_average_score: " << this->new_average_score << endl;
+					cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
+
+					#if defined(MDEBUG) && MDEBUG
+					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+					this->state = PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+					this->state_iter = 0;
+					#else
+					score_finalize();
+					#endif /* MDEBUG */
 				} else {
-					cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-				}
-
-				cout << "this->existing_average_score: " << this->existing_average_score << endl;
-				cout << "this->new_average_score: " << this->new_average_score << endl;
-				cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
-
-				#if defined(MDEBUG) && MDEBUG
-				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-				this->state_iter = 0;
-				#else
-				score_finalize();
-				#endif /* MDEBUG */
-			} else {
-				if (this->best_step_types.size() > 0) {
-					// reserve at least solution->curr_num_datapoints
 					this->i_misguess_histories.reserve(solution->curr_num_datapoints);
 
 					this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
 					this->state_iter = 0;
-				} else {
-					this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 				}
+			#if defined(MDEBUG) && MDEBUG
+			} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+			#else
+			} else if (this->best_step_types.size() > 0 && this->new_average_score >= this->existing_average_score) {
+			#endif /* MDEBUG */
+				this->i_misguess_histories.reserve(solution->curr_num_datapoints);
+
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
+				this->state_iter = 0;
+			} else {
+				cout << "PassThrough verify score 2nd fail" << endl;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}
 	}

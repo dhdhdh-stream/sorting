@@ -935,7 +935,8 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 1.645) {	// >95%
+	// if (improvement_t_score > 1.645) {	// >95%
+	if (improvement_t_score > 1.282) {	// >95%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;
 
@@ -1150,7 +1151,8 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 1.645) {	// >95%
+	// if (improvement_t_score > 1.645) {	// >95%
+	if (improvement_t_score > 1.282) {	// >90%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;
 
@@ -1361,7 +1363,8 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	if (improvement_t_score > 1.645) {	// >95%
+	// if (improvement_t_score > 1.645) {	// >95%
+	if (improvement_t_score > 1.282) {	// >90%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;
 

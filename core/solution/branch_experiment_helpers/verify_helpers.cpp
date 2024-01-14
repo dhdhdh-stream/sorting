@@ -192,6 +192,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
+			cout << "Branch verify 1st fail" << endl;
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -369,6 +370,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			this->state = BRANCH_EXPERIMENT_STATE_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
+			cout << "Branch verify 2nd fail" << endl;
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

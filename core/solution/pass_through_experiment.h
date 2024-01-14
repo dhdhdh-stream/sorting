@@ -66,6 +66,8 @@ public:
 	int best_exit_depth;
 	AbstractNode* best_exit_node;
 
+	bool new_is_better;
+
 	double new_average_score;
 
 	std::map<int, double> existing_input_state_weights;
