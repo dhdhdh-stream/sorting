@@ -48,18 +48,23 @@ void PassThroughExperiment::verify_new_score_activate(
 		}
 	}
 
-	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_node;
+	if (this->best_is_exit) {
+		run_helper.has_exited = true;
 	} else {
-		curr_node = NULL;
+		if (this->best_exit_depth == 0) {
+			curr_node = this->best_exit_node;
+		} else {
+			curr_node = NULL;
 
-		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_node;
+			exit_depth = this->best_exit_depth-1;
+			exit_node = this->best_exit_node;
+		}
 	}
 }
 
 void PassThroughExperiment::verify_new_score_backprop(
-		double target_val) {
+		double target_val,
+		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE
@@ -74,7 +79,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 			this->o_target_val_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (!run_helper.exceeded_limit && rand()%2 == 0) {
 			#else
 			double score_improvement = this->new_average_score - this->existing_average_score;
 			double score_standard_deviation = sqrt(this->existing_score_variance);
@@ -88,9 +93,9 @@ void PassThroughExperiment::verify_new_score_backprop(
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
 				this->state_iter = 0;
 			#if defined(MDEBUG) && MDEBUG
-			} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+			} else if (!run_helper.exceeded_limit && rand()%2 == 0) {
 			#else
-			} else if (this->best_step_types.size() > 0 && this->new_average_score >= this->existing_average_score) {
+			} else if (this->new_average_score >= this->existing_average_score) {
 			#endif /* MDEBUG */
 				this->new_is_better = false;
 
@@ -119,7 +124,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 				/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (!run_helper.exceeded_limit && rand()%2 == 0) {
 			#else
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */
@@ -143,6 +148,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 					}
 					cout << endl;
 
+					cout << "this->best_is_exit: " << this->best_is_exit << endl;
 					cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 					if (this->best_exit_node == NULL) {
 						cout << "this->best_exit_node_id: " << -1 << endl;
@@ -170,9 +176,9 @@ void PassThroughExperiment::verify_new_score_backprop(
 					this->state_iter = 0;
 				}
 			#if defined(MDEBUG) && MDEBUG
-			} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+			} else if (!run_helper.exceeded_limit && rand()%2 == 0) {
 			#else
-			} else if (this->best_step_types.size() > 0 && this->new_average_score >= this->existing_average_score) {
+			} else if (this->new_average_score >= this->existing_average_score) {
 			#endif /* MDEBUG */
 				this->i_misguess_histories.reserve(solution->curr_num_datapoints);
 

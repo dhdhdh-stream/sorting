@@ -139,81 +139,83 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 									   inner_exit_node,
 									   run_helper);
 
-	vector<double> output_input_state_vals;
-	vector<double> output_local_state_vals;
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		if (this->output_inner_is_local[o_index]) {
-			map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().local_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					output_local_state_vals.push_back(inner_it->second.val);
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
+	if (!run_helper.has_exited) {
+		vector<double> output_input_state_vals;
+		vector<double> output_local_state_vals;
+		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+			if (this->output_inner_is_local[o_index]) {
+				map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().local_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 						output_local_state_vals.push_back(inner_it->second.val);
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+							output_local_state_vals.push_back(inner_it->second.val);
+						}
 					}
 				}
-			}
-		} else {
-			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().input_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					output_input_state_vals.push_back(inner_it->second.val);
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
+			} else {
+				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().input_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 						output_input_state_vals.push_back(inner_it->second.val);
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+							output_input_state_vals.push_back(inner_it->second.val);
+						}
 					}
 				}
 			}
 		}
-	}
 
-	if (this->verify_key == run_helper.verify_key) {
-		// problem->print();
+		if (this->verify_key == run_helper.verify_key) {
+			// problem->print();
 
-		// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
-		// cout << "this->id: " << this->id << endl;
+			// cout << "this->id: " << this->id << endl;
 
-		sort(output_input_state_vals.begin(), output_input_state_vals.end());
-		sort(this->verify_output_input_state_vals[0].begin(), this->verify_output_input_state_vals[0].end());
-		sort(output_local_state_vals.begin(), output_local_state_vals.end());
-		sort(this->verify_output_local_state_vals[0].begin(), this->verify_output_local_state_vals[0].end());
+			sort(output_input_state_vals.begin(), output_input_state_vals.end());
+			sort(this->verify_output_input_state_vals[0].begin(), this->verify_output_input_state_vals[0].end());
+			sort(output_local_state_vals.begin(), output_local_state_vals.end());
+			sort(this->verify_output_local_state_vals[0].begin(), this->verify_output_local_state_vals[0].end());
 
-		if (this->verify_output_input_state_vals[0] != output_input_state_vals
-				|| this->verify_output_local_state_vals[0] != output_local_state_vals) {
-			cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
+			if (this->verify_output_input_state_vals[0] != output_input_state_vals
+					|| this->verify_output_local_state_vals[0] != output_local_state_vals) {
+				cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
 
-			cout << "this->verify_output_input_state_vals[0]" << endl;
-			for (int v_index = 0; v_index < (int)this->verify_output_input_state_vals[0].size(); v_index++) {
-				cout << v_index << ": " << this->verify_output_input_state_vals[0][v_index] << endl;
+				cout << "this->verify_output_input_state_vals[0]" << endl;
+				for (int v_index = 0; v_index < (int)this->verify_output_input_state_vals[0].size(); v_index++) {
+					cout << v_index << ": " << this->verify_output_input_state_vals[0][v_index] << endl;
+				}
+
+				cout << "output_input_state_vals" << endl;
+				for (int v_index = 0; v_index < (int)output_input_state_vals.size(); v_index++) {
+					cout << v_index << ": " << output_input_state_vals[v_index] << endl;
+				}
+
+				cout << "this->verify_output_local_state_vals[0]" << endl;
+				for (int v_index = 0; v_index < (int)this->verify_output_local_state_vals[0].size(); v_index++) {
+					cout << v_index << ": " << this->verify_output_local_state_vals[0][v_index] << endl;
+				}
+
+				cout << "output_local_state_vals" << endl;
+				for (int v_index = 0; v_index < (int)output_local_state_vals.size(); v_index++) {
+					cout << v_index << ": " << output_local_state_vals[v_index] << endl;
+				}
+
+				throw invalid_argument("scope node verify fail");
 			}
 
-			cout << "output_input_state_vals" << endl;
-			for (int v_index = 0; v_index < (int)output_input_state_vals.size(); v_index++) {
-				cout << v_index << ": " << output_input_state_vals[v_index] << endl;
-			}
-
-			cout << "this->verify_output_local_state_vals[0]" << endl;
-			for (int v_index = 0; v_index < (int)this->verify_output_local_state_vals[0].size(); v_index++) {
-				cout << v_index << ": " << this->verify_output_local_state_vals[0][v_index] << endl;
-			}
-
-			cout << "output_local_state_vals" << endl;
-			for (int v_index = 0; v_index < (int)output_local_state_vals.size(); v_index++) {
-				cout << v_index << ": " << output_local_state_vals[v_index] << endl;
-			}
-
-			throw invalid_argument("scope node verify fail");
+			this->verify_output_input_state_vals.erase(this->verify_output_input_state_vals.begin());
+			this->verify_output_local_state_vals.erase(this->verify_output_local_state_vals.begin());
 		}
-
-		this->verify_output_input_state_vals.erase(this->verify_output_input_state_vals.begin());
-		this->verify_output_local_state_vals.erase(this->verify_output_local_state_vals.begin());
 	}
 
 	context.pop_back();

@@ -63,11 +63,23 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 									 scope_node_history);
 			delete scope_node_history;
 		} else {
-			PotentialScopeNode* new_potential_scope_node = create_scope(
-				context,
-				1,
-				solution->root,
-				NULL);
+			PotentialScopeNode* new_potential_scope_node;
+			uniform_int_distribution<int> random_scope_distribution(0, 1);
+			if (random_scope_distribution(generator) == 0) {
+				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
+				Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
+				new_potential_scope_node = create_scope(
+					context,
+					1,
+					scope,
+					NULL);
+			} else {
+				new_potential_scope_node = create_scope(
+					context,
+					1,
+					solution->root,
+					NULL);
+			}
 
 			if (new_potential_scope_node == NULL) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);

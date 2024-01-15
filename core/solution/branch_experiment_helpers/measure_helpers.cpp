@@ -153,18 +153,23 @@ void BranchExperiment::measure_activate(
 			}
 		}
 
-		if (this->best_exit_depth == 0) {
-			curr_node = this->best_exit_node;
+		if (this->best_is_exit) {
+			run_helper.has_exited = true;
 		} else {
-			curr_node = NULL;
+			if (this->best_exit_depth == 0) {
+				curr_node = this->best_exit_node;
+			} else {
+				curr_node = NULL;
 
-			exit_depth = this->best_exit_depth-1;
-			exit_node = this->best_exit_node;
+				exit_depth = this->best_exit_depth-1;
+				exit_node = this->best_exit_node;
+			}
 		}
 	}
 }
 
-void BranchExperiment::measure_backprop(double target_val) {
+void BranchExperiment::measure_backprop(double target_val,
+										RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
@@ -199,7 +204,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 		// }
 
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (!run_helper.exceeded_limit && rand()%2 == 0) {
 		#else
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;

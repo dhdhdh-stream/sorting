@@ -51,18 +51,23 @@ void PassThroughExperiment::measure_new_score_activate(
 		}
 	}
 
-	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_node;
+	if (this->best_is_exit) {
+		run_helper.has_exited = true;
 	} else {
-		curr_node = NULL;
+		if (this->best_exit_depth == 0) {
+			curr_node = this->best_exit_node;
+		} else {
+			curr_node = NULL;
 
-		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_node;
+			exit_depth = this->best_exit_depth-1;
+			exit_node = this->best_exit_node;
+		}
 	}
 }
 
 void PassThroughExperiment::measure_new_score_backprop(
 		double target_val,
+		RunHelper& run_helper,
 		PassThroughExperimentOverallHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
@@ -76,7 +81,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 		this->o_target_val_histories.clear();
 
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 == 0) {
+		if (!run_helper.exceeded_limit && rand()%4 == 0) {
 		#else
 		double score_improvement = this->new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
@@ -130,9 +135,9 @@ void PassThroughExperiment::measure_new_score_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (this->best_step_types.size() > 0 && rand()%2 == 0) {
+		} else if (rand()%2 == 0) {
 		#else
-		} else if (this->best_step_types.size() > 0 && this->new_average_score >= this->existing_average_score) {
+		} else if (this->new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 

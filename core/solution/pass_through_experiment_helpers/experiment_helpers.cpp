@@ -68,73 +68,8 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
-		if (this->best_exit_depth == 0) {
-			curr_node = this->best_exit_node;
-		} else {
-			curr_node = NULL;
-
-			exit_depth = this->best_exit_depth-1;
-			exit_node = this->best_exit_node;
-		}
-	} else {
-		if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
-			curr_node = this->best_actions[this->branch_experiment_step_index+1];
-		} else {
-			curr_node = this->best_potential_scopes[this->branch_experiment_step_index+1]->scope_node_placeholder;
-		}
-	}
-
-	this->branch_experiment->activate(curr_node,
-									  problem,
-									  context,
-									  exit_depth,
-									  exit_node,
-									  run_helper,
-									  instance_history->branch_experiment_history);
-
-	if (exit_depth == -1) {
-		map<AbstractNode*, int>::iterator it = this->node_to_step_index.find(curr_node);
-		if (it != this->node_to_step_index.end()) {
-			for (int s_index = it->second; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-					instance_history->post_step_histories.push_back(action_node_history);
-					this->best_actions[s_index]->activate(
-						curr_node,
-						problem,
-						context,
-						exit_depth,
-						exit_node,
-						run_helper,
-						action_node_history);
-				} else {
-					#if defined(MDEBUG) && MDEBUG
-					if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
-						instance_history->post_step_histories.push_back(NULL);
-						this->best_potential_scopes[s_index]->capture_verify_activate(
-							problem,
-							context,
-							run_helper);
-					} else {
-						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-						instance_history->post_step_histories.push_back(potential_scope_node_history);
-						this->best_potential_scopes[s_index]->activate(problem,
-																	   context,
-																	   run_helper,
-																	   potential_scope_node_history);
-					}
-					#else
-					PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
-					instance_history->post_step_histories.push_back(potential_scope_node_history);
-					this->best_potential_scopes[s_index]->activate(problem,
-																   context,
-																   run_helper,
-																   potential_scope_node_history);
-					#endif /* MDEBUG */
-				}
-			}
-
+	if (!run_helper.has_exited) {
+		if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
 			if (this->best_exit_depth == 0) {
 				curr_node = this->best_exit_node;
 			} else {
@@ -143,6 +78,77 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				exit_depth = this->best_exit_depth-1;
 				exit_node = this->best_exit_node;
 			}
+		} else {
+			if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[this->branch_experiment_step_index+1];
+			} else {
+				curr_node = this->best_potential_scopes[this->branch_experiment_step_index+1]->scope_node_placeholder;
+			}
+		}
+
+		this->branch_experiment->activate(curr_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  instance_history->branch_experiment_history);
+
+		if (!run_helper.has_exited && exit_depth == -1) {
+			map<AbstractNode*, int>::iterator it = this->node_to_step_index.find(curr_node);
+			if (it != this->node_to_step_index.end()) {
+				for (int s_index = it->second; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+						instance_history->post_step_histories.push_back(action_node_history);
+						this->best_actions[s_index]->activate(
+							curr_node,
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper,
+							action_node_history);
+					} else {
+						#if defined(MDEBUG) && MDEBUG
+						if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+							instance_history->post_step_histories.push_back(NULL);
+							this->best_potential_scopes[s_index]->capture_verify_activate(
+								problem,
+								context,
+								run_helper);
+						} else {
+							PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+							instance_history->post_step_histories.push_back(potential_scope_node_history);
+							this->best_potential_scopes[s_index]->activate(problem,
+																		   context,
+																		   run_helper,
+																		   potential_scope_node_history);
+						}
+						#else
+						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
+						instance_history->post_step_histories.push_back(potential_scope_node_history);
+						this->best_potential_scopes[s_index]->activate(problem,
+																	   context,
+																	   run_helper,
+																	   potential_scope_node_history);
+						#endif /* MDEBUG */
+					}
+				}
+
+				if (this->best_exit_depth == 0) {
+					curr_node = this->best_exit_node;
+				} else {
+					curr_node = NULL;
+
+					exit_depth = this->best_exit_depth-1;
+					exit_node = this->best_exit_node;
+				}
+			}
+		}
+
+		if (this->best_is_exit) {
+			run_helper.has_exited = true;
 		}
 	}
 }
@@ -184,6 +190,7 @@ void PassThroughExperiment::experiment_backprop(
 			}
 			cout << endl;
 
+			cout << "this->best_is_exit: " << this->best_is_exit << endl;
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			if (this->best_exit_node == NULL) {
 				cout << "this->best_exit_node_id: " << -1 << endl;
@@ -283,6 +290,7 @@ void PassThroughExperiment::experiment_backprop(
 			this->best_actions.clear();
 			this->best_potential_scopes.clear();
 
+			new_exit_node->is_exit = this->best_is_exit;
 			new_exit_node->exit_depth = this->best_exit_depth;
 			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 			if (this->best_exit_node == NULL) {

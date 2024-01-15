@@ -234,7 +234,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 			case NODE_TYPE_EXIT:
 				{
 					ExitNode* exit_node = (ExitNode*)curr_node;
-					if (exit_node->exit_depth > 0) {
+					if (exit_node->is_exit || exit_node->exit_depth > 0) {
 						/**
 						 * - if curr_node is ExitNode and not already added, then it's off path
 						 */
@@ -504,7 +504,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 				{
 					ExitNode* exit_node = (ExitNode*)curr_node;
 
-					if (exit_node->exit_depth > curr_depth - starting_depth) {
+					if (exit_node->is_exit || exit_node->exit_depth > curr_depth - starting_depth) {
 						mapping = {false, NULL};
 					} else if (scope_context[curr_depth - exit_node->exit_depth]->id != exit_node->exit_node_parent_id) {
 						mapping = {false, NULL};
@@ -609,11 +609,13 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 	vector<AbstractNode*> node_context{NULL};
 
 	// unused
+	bool has_exited = false;
 	int exit_depth = -1;
 	AbstractNode* exit_node = NULL;
 
 	parent_scope->random_activate(scope_context,
 								  node_context,
+								  has_exited,
 								  exit_depth,
 								  exit_node,
 								  possible_nodes,

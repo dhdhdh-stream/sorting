@@ -69,6 +69,13 @@ void BranchExperiment::train_existing_backprop(double target_val,
 	}
 
 	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+		if (this->parent_pass_through_experiment != NULL
+				&& this->i_scope_histories.size() == 0) {
+			cout << "Branch not reachable" << endl;
+			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
+			return;
+		}
+
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];

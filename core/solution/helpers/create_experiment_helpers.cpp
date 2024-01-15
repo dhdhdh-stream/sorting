@@ -123,12 +123,15 @@ void create_experiment(ScopeHistory* root_history) {
 			 * - try to minimize context to generalize/maximize impact
 			 */
 
-			uniform_int_distribution<int> clean_distribution(0, 7);
+			uniform_int_distribution<int> clean_distribution(0, 9);
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (clean_distribution(generator) == 0) {
+				// CleanExperiment* clean_experiment = new CleanExperiment(
+				// 	vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+				// 	vector<int>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()));
 				CleanExperiment* clean_experiment = new CleanExperiment(
-					vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-					vector<int>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()));
+					vector<int>{possible_scope_contexts[rand_index].back()},
+					vector<int>{possible_node_contexts[rand_index].back()});
 
 				ActionNode* action_node = (ActionNode*)possible_nodes[rand_index];
 				action_node->experiment = clean_experiment;
@@ -160,12 +163,15 @@ void create_experiment(ScopeHistory* root_history) {
 				}
 			}
 
-			uniform_int_distribution<int> clean_distribution(0, 7);
+			uniform_int_distribution<int> clean_distribution(0, 9);
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (clean_distribution(generator) == 0) {
+				// CleanExperiment* clean_experiment = new CleanExperiment(
+				// 	vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+				// 	vector<int>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()));
 				CleanExperiment* clean_experiment = new CleanExperiment(
-					vector<int>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-					vector<int>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()));
+					vector<int>{possible_scope_contexts[rand_index].back()},
+					vector<int>{possible_node_contexts[rand_index].back()});
 
 				ScopeNode* scope_node = (ScopeNode*)possible_nodes[rand_index];
 				scope_node->experiment = clean_experiment;

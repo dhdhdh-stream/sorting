@@ -237,7 +237,8 @@ void BranchExperiment::backprop(double target_val,
 						   history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val);
+		measure_backprop(target_val,
+						 run_helper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
 	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
@@ -246,7 +247,8 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
 	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
-		verify_backprop(target_val);
+		verify_backprop(target_val,
+						run_helper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:

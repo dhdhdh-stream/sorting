@@ -194,17 +194,17 @@ Problem* Minesweeper::copy_and_reset() {
 void Minesweeper::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {
-			if (this->flagged[x_index][y_index]) {
-				if (this->world[x_index][y_index] == -1) {
-					cout << "F ";
-				} else {
-					cout << "M ";
-				}
-			} else if (this->revealed[x_index][y_index]) {
+			if (this->revealed[x_index][y_index]) {
 				if (this->world[x_index][y_index] == -1) {
 					cout << "X ";
 				} else {
 					cout << this->world[x_index][y_index] << " ";
+				}
+			} else if (this->flagged[x_index][y_index]) {
+				if (this->world[x_index][y_index] == -1) {
+					cout << "F ";
+				} else {
+					cout << "M ";
 				}
 			} else {
 				cout << "- ";

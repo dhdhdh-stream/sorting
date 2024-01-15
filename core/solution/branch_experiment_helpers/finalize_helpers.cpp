@@ -161,6 +161,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	this->best_actions.clear();
 	this->best_potential_scopes.clear();
 
+	new_exit_node->is_exit = this->best_is_exit;
 	new_exit_node->exit_depth = this->best_exit_depth;
 	new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 	if (this->best_exit_node == NULL) {
@@ -285,6 +286,7 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	this->best_actions.clear();
 	this->best_potential_scopes.clear();
 
+	new_exit_node->is_exit = this->best_is_exit;
 	new_exit_node->exit_depth = this->best_exit_depth;
 	new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 	if (this->best_exit_node == NULL) {

@@ -12,6 +12,7 @@ using namespace std;
 void node_random_activate_helper(AbstractNode*& curr_node,
 								 vector<Scope*>& scope_context,
 								 vector<AbstractNode*>& node_context,
+								 bool& has_exited,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
 								 vector<AbstractNode*>& possible_nodes,
@@ -32,24 +33,30 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* node = (ScopeNode*)curr_node;
 
+		bool inner_has_exited = false;
 		int inner_exit_depth = -1;
 		AbstractNode* inner_exit_node = NULL;
 
 		node->random_activate(scope_context,
 							  node_context,
+							  inner_has_exited,
 							  inner_exit_depth,
 							  inner_exit_node,
 							  possible_nodes,
 							  possible_scope_contexts,
 							  possible_node_contexts);
 
-		if (inner_exit_depth == -1) {
-			curr_node = node->next_node;
-		} else if (inner_exit_depth == 0) {
-			curr_node = inner_exit_node;
+		if (inner_has_exited) {
+			has_exited = true;
 		} else {
-			exit_depth = inner_exit_depth-1;
-			exit_node = inner_exit_node;
+			if (inner_exit_depth == -1) {
+				curr_node = node->next_node;
+			} else if (inner_exit_depth == 0) {
+				curr_node = inner_exit_node;
+			} else {
+				exit_depth = inner_exit_depth-1;
+				exit_node = inner_exit_node;
+			}
 		}
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
 		BranchNode* node = (BranchNode*)curr_node;
@@ -78,17 +85,22 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 
 		node_context.back() = NULL;
 
-		if (node->exit_depth == 0) {
-			curr_node = node->exit_node;
+		if (node->is_exit) {
+			has_exited = true;
 		} else {
-			exit_depth = node->exit_depth-1;
-			exit_node = node->exit_node;
+			if (node->exit_depth == 0) {
+				curr_node = node->exit_node;
+			} else {
+				exit_depth = node->exit_depth-1;
+				exit_node = node->exit_node;
+			}
 		}
 	}
 }
 
 void Scope::random_activate(vector<Scope*>& scope_context,
 							vector<AbstractNode*>& node_context,
+							bool& has_exited,
 							int& exit_depth,
 							AbstractNode*& exit_node,
 							vector<AbstractNode*>& possible_nodes,
@@ -96,7 +108,8 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 							vector<vector<AbstractNode*>>& possible_node_contexts) {
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
-		if (exit_depth != -1
+		if (has_exited
+				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
 		}
@@ -104,6 +117,7 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 		node_random_activate_helper(curr_node,
 									scope_context,
 									node_context,
+									has_exited,
 									exit_depth,
 									exit_node,
 									possible_nodes,
@@ -111,7 +125,7 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 									possible_node_contexts);
 	}
 
-	if (exit_depth == -1) {
+	if (exit_depth == -1 && !has_exited) {
 		possible_nodes.push_back(NULL);
 		possible_scope_contexts.push_back(scope_context);
 		possible_node_contexts.push_back(node_context);
@@ -121,6 +135,7 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 void node_random_exit_activate_helper(AbstractNode*& curr_node,
 									  vector<int>& scope_context,
 									  vector<int>& node_context,
+									  bool& has_exited,
 									  int& exit_depth,
 									  AbstractNode*& exit_node,
 									  int curr_depth,
@@ -159,11 +174,15 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 			possible_exits.push_back({curr_depth, curr_node});
 		}
 
-		if (node->exit_depth == 0) {
-			curr_node = node->exit_node;
+		if (node->is_exit) {
+			has_exited = true;
 		} else {
-			exit_depth = node->exit_depth-1;
-			exit_node = node->exit_node;
+			if (node->exit_depth == 0) {
+				curr_node = node->exit_node;
+			} else {
+				exit_depth = node->exit_depth-1;
+				exit_node = node->exit_node;
+			}
 		}
 	}
 }
@@ -171,26 +190,30 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 void Scope::random_exit_activate(AbstractNode* starting_node,
 								 vector<int>& scope_context,
 								 vector<int>& node_context,
+								 bool& has_exited,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
 								 int curr_depth,
 								 vector<pair<int,AbstractNode*>>& possible_exits) {
 	AbstractNode* curr_node = starting_node;
 	while (true) {
-		if (exit_depth != -1 || curr_node == NULL) {
+		if (has_exited
+				|| exit_depth != -1
+				|| curr_node == NULL) {
 			break;
 		}
 
 		node_random_exit_activate_helper(curr_node,
 										 scope_context,
 										 node_context,
+										 has_exited,
 										 exit_depth,
 										 exit_node,
 										 curr_depth,
 										 possible_exits);
 	}
 
-	if (exit_depth == -1) {
+	if (exit_depth == -1 && !has_exited) {
 		possible_exits.push_back({curr_depth, NULL});
 	}
 }

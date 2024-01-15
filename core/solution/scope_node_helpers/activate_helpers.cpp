@@ -84,67 +84,71 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 								run_helper,
 								inner_scope_history);
 
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		if (this->output_inner_is_local[o_index]) {
-			map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().local_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+	if (!run_helper.has_exited) {
+		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+			if (this->output_inner_is_local[o_index]) {
+				map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().local_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
-					if (this->is_potential) {
-						map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
-							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
-						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
-							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
-								.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
-						} else {
-							scope_it->second.insert(this->output_outer_indexes[o_index]);
+						if (this->is_potential) {
+							map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
+								.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
+							if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
+								context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+									.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
+							} else {
+								scope_it->second.insert(this->output_outer_indexes[o_index]);
+							}
 						}
-					}
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+						}
 					}
 				}
-			}
-		} else {
-			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().input_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+			} else {
+				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().input_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
-					if (this->is_potential) {
-						map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
-							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
-						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
-							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
-								.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
-						} else {
-							scope_it->second.insert(this->output_outer_indexes[o_index]);
+						if (this->is_potential) {
+							map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
+								.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
+							if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
+								context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+									.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
+							} else {
+								scope_it->second.insert(this->output_outer_indexes[o_index]);
+							}
 						}
-					}
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+						}
 					}
 				}
 			}
 		}
+		/**
+		 * - intuitively, pass by reference out
+		 *   - so keep even if early exit
+		 * 
+		 * - also will be how inner branches affect outer scopes on early exit
+		 */
 	}
-	/**
-	 * - intuitively, pass by reference out
-	 *   - so keep even if early exit
-	 * 
-	 * - also will be how inner branches affect outer scopes on early exit
-	 */
 
 	context.pop_back();
 
 	context.back().node = NULL;
 
-	if (inner_exit_depth == -1 && !run_helper.exceeded_limit) {
+	if (inner_exit_depth == -1
+			&& !run_helper.exceeded_limit
+			&& !run_helper.has_exited) {
 		curr_node = this->next_node;
 
 		if (this->experiment != NULL) {

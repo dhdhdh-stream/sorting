@@ -7,6 +7,7 @@ using namespace std;
 
 void ScopeNode::random_activate(vector<Scope*>& scope_context,
 								vector<AbstractNode*>& node_context,
+								bool& inner_has_exited,
 								int& inner_exit_depth,
 								AbstractNode*& inner_exit_node,
 								vector<AbstractNode*>& possible_nodes,
@@ -25,6 +26,7 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 
 		this->inner_scope->random_activate(scope_context,
 										   node_context,
+										   inner_has_exited,
 										   inner_exit_depth,
 										   inner_exit_node,
 										   possible_nodes,

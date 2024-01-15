@@ -134,6 +134,7 @@ void CleanExperiment::verify_new_backprop(double target_val) {
 			new_branch_node->branch_next_node_id = new_exit_node->id;
 			new_branch_node->branch_next_node = new_exit_node;
 
+			new_exit_node->is_exit = false;
 			new_exit_node->exit_depth = this->clean_exit_depth;
 			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->clean_exit_depth];
 			if (this->clean_exit_node == NULL) {

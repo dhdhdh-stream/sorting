@@ -71,6 +71,7 @@ public:
 
 	void random_activate(std::vector<Scope*>& scope_context,
 						 std::vector<AbstractNode*>& node_context,
+						 bool& has_exited,
 						 int& inner_exit_depth,
 						 AbstractNode*& inner_exit_node,
 						 std::vector<AbstractNode*>& possible_nodes,

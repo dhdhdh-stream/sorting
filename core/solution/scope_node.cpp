@@ -52,6 +52,11 @@ void ScopeNode::clear_verify() {
 			|| this->verify_input_local_state_vals.size() > 0
 			|| this->verify_output_input_state_vals.size() > 0
 			|| this->verify_output_local_state_vals.size() > 0) {
+		cout << "this->verify_input_input_state_vals.size(): " << this->verify_input_input_state_vals.size() << endl;
+		cout << "this->verify_input_local_state_vals.size(): " << this->verify_input_local_state_vals.size() << endl;
+		cout << "this->verify_output_input_state_vals.size(): " << this->verify_output_input_state_vals.size() << endl;
+		cout << "this->verify_output_local_state_vals.size(): " << this->verify_output_local_state_vals.size() << endl;
+
 		throw invalid_argument("scope node remaining verify");
 	}
 }

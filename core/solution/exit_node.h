@@ -7,6 +7,7 @@
 
 class ExitNode : public AbstractNode {
 public:
+	bool is_exit;
 	int exit_depth;
 
 	int exit_node_parent_id;

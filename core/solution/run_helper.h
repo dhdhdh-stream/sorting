@@ -21,6 +21,8 @@ public:
 	 *     - (and don't have to rely on recursion with OuterExperiment)
 	 */
 
+	bool has_exited;
+
 	std::set<AbstractExperiment*> experiments_seen;
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
@@ -39,6 +41,8 @@ public:
 		this->max_depth = 0;
 
 		this->exceeded_limit = false;
+
+		this->has_exited = false;
 
 		this->experiment_history = NULL;
 	}

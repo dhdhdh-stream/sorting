@@ -133,6 +133,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	uniform_int_distribution<int> loop_distribution(0, 1);
 	if (this->parent_pass_through_experiment == NULL && loop_distribution(generator)) {
+		this->curr_is_exit = false;
 		this->curr_exit_depth = 0;
 		this->curr_exit_node = curr_node;
 
@@ -160,13 +161,15 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 									  this->scope_context,
 									  this->node_context);
 			} else {
-				parent_pass_through_gather_possible_exits(
-					possible_exits,
-					context,
-					this->parent_pass_through_experiment->scope_context,
-					this->parent_pass_through_experiment->node_context,
-					this->parent_pass_through_experiment->best_exit_depth,
-					this->parent_pass_through_experiment->best_exit_node);
+				if (!this->parent_pass_through_experiment->best_is_exit) {
+					parent_pass_through_gather_possible_exits(
+						possible_exits,
+						context,
+						this->parent_pass_through_experiment->scope_context,
+						this->parent_pass_through_experiment->node_context,
+						this->parent_pass_through_experiment->best_exit_depth,
+						this->parent_pass_through_experiment->best_exit_node);
+				}
 
 				for (int s_index = this->parent_pass_through_experiment->branch_experiment_step_index+1;
 						s_index < (int)this->parent_pass_through_experiment->best_step_types.size(); s_index++) {
@@ -178,10 +181,18 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				}
 			}
 
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
-			this->curr_exit_depth = possible_exits[random_index].first;
-			this->curr_exit_node = possible_exits[random_index].second;
+			if (possible_exits.size() == 0) {
+				this->curr_is_exit = true;
+				this->curr_exit_depth = 0;
+				this->curr_exit_node = NULL;
+			} else {
+				uniform_int_distribution<int> exit_distribution(0, 3);
+				this->curr_is_exit = (exit_distribution(generator) == 0);
+				uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+				int random_index = distribution(generator);
+				this->curr_exit_depth = possible_exits[random_index].first;
+				this->curr_exit_node = possible_exits[random_index].second;
+			}
 		}
 
 		{
@@ -189,8 +200,9 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 			int new_num_steps;
 			uniform_int_distribution<int> uniform_distribution(0, 2);
 			geometric_distribution<int> geometric_distribution(0.5);
-			if (this->curr_exit_depth == 0
-					&& this->curr_exit_node == curr_node) {
+			if (this->curr_is_exit
+					|| (this->curr_exit_depth == 0
+						&& this->curr_exit_node == curr_node)) {
 				new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 			} else {
 				new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -200,11 +212,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				PotentialScopeNode* new_potential_scope_node;
 				uniform_int_distribution<int> random_scope_distribution(0, 1);
 				if (random_scope_distribution(generator) == 0) {
-					/**
-					 * - random from context as they are guaranteed to still be relevant
-					 */
-					uniform_int_distribution<int> distribution(0, context.size()-1);
-					Scope* scope = context[distribution(generator)].scope;
+					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
+					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
 					new_potential_scope_node = create_scope(
 						context,
 						(int)this->scope_context.size(),
@@ -253,13 +262,17 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		}
 
 		{
-			if (this->curr_exit_depth == 0) {
-				curr_node = this->curr_exit_node;
+			if (this->curr_is_exit) {
+				run_helper.has_exited = true;
 			} else {
-				curr_node = NULL;
+				if (this->curr_exit_depth == 0) {
+					curr_node = this->curr_exit_node;
+				} else {
+					curr_node = NULL;
 
-				exit_depth = this->curr_exit_depth-1;
-				exit_node = this->curr_exit_node;
+					exit_depth = this->curr_exit_depth-1;
+					exit_node = this->curr_exit_node;
+				}
 			}
 		}
 	}
@@ -286,6 +299,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_potential_scopes = this->curr_potential_scopes;
+			this->best_is_exit = this->curr_is_exit;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_node = this->curr_exit_node;
 

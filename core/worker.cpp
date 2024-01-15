@@ -8,9 +8,8 @@
  * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
 
-// TODO: add full exits
-// TODO: add back loops again alongside full exits
-// - may enable reorienting itself
+// TODO: try limiting number of scopes
+// - so can focus more strongly on ones that already exist
 
 #include <chrono>
 #include <iostream>

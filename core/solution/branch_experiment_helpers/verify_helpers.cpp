@@ -152,18 +152,23 @@ void BranchExperiment::verify_activate(
 			}
 		}
 
-		if (this->best_exit_depth == 0) {
-			curr_node = this->best_exit_node;
+		if (this->best_is_exit) {
+			run_helper.has_exited = true;
 		} else {
-			curr_node = NULL;
+			if (this->best_exit_depth == 0) {
+				curr_node = this->best_exit_node;
+			} else {
+				curr_node = NULL;
 
-			exit_depth = this->best_exit_depth-1;
-			exit_node = this->best_exit_node;
+				exit_depth = this->best_exit_depth-1;
+				exit_node = this->best_exit_node;
+			}
 		}
 	}
 }
 
-void BranchExperiment::verify_backprop(double target_val) {
+void BranchExperiment::verify_backprop(double target_val,
+									   RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
@@ -172,7 +177,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (!run_helper.exceeded_limit && rand()%2 == 0) {
 		#else
 		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
@@ -206,7 +211,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (!run_helper.exceeded_limit && rand()%2 == 0) {
 		#else
 		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
@@ -230,6 +235,7 @@ void BranchExperiment::verify_backprop(double target_val) {
 			}
 			cout << endl;
 
+			cout << "this->best_is_exit: " << this->best_is_exit << endl;
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			if (this->best_exit_node == NULL) {
 				cout << "this->best_exit_node_id: " << -1 << endl;

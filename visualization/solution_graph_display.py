@@ -63,6 +63,8 @@ for s_index in range(num_scopes):
 			# node_type == NODE_TYPE_EXIT
 			exit_depth = int(file.readline())
 
+			exit_is_exit = bool(file.readline())
+
 			exit_node_parent_id = int(file.readline())
 			exit_node_id = int(file.readline())
 

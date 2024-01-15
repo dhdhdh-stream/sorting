@@ -44,7 +44,7 @@ void CleanExperiment::measure_new_initial_activate(
 		// }
 		// cout << endl;
 
-		if (possible_exits.size() == 1) {
+		if (possible_exits.size() <= 1) {
 			cout << "Clean no possible fail" << endl;
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;
 			return;

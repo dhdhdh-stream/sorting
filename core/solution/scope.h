@@ -68,6 +68,7 @@ public:
 
 	void random_activate(std::vector<Scope*>& scope_context,
 						 std::vector<AbstractNode*>& node_context,
+						 bool& has_exited,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 std::vector<AbstractNode*>& possible_nodes,
@@ -76,6 +77,7 @@ public:
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<int>& scope_context,
 							  std::vector<int>& node_context,
+							  bool& has_exited,
 							  int& exit_depth,
 							  AbstractNode*& exit_node,
 							  int curr_depth,

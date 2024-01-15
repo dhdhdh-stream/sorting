@@ -380,6 +380,7 @@ void PassThroughExperiment::backprop(double target_val,
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
 		measure_new_score_backprop(target_val,
+								   run_helper,
 								   history);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE:
@@ -389,7 +390,8 @@ void PassThroughExperiment::backprop(double target_val,
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-		verify_new_score_backprop(target_val);
+		verify_new_score_backprop(target_val,
+								  run_helper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
@@ -407,6 +409,7 @@ void PassThroughExperiment::backprop(double target_val,
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS:
 		measure_new_misguess_backprop(target_val,
+									  run_helper,
 									  history);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:

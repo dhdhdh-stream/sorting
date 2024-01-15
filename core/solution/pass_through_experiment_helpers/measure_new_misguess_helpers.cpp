@@ -44,13 +44,17 @@ void PassThroughExperiment::measure_new_misguess_activate(
 		}
 	}
 
-	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_node;
+	if (this->best_is_exit) {
+		run_helper.has_exited = true;
 	} else {
-		curr_node = NULL;
+		if (this->best_exit_depth == 0) {
+			curr_node = this->best_exit_node;
+		} else {
+			curr_node = NULL;
 
-		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_node;
+			exit_depth = this->best_exit_depth-1;
+			exit_node = this->best_exit_node;
+		}
 	}
 
 	double predicted_score = this->new_average_score;
@@ -112,6 +116,7 @@ void PassThroughExperiment::measure_new_misguess_activate(
 
 void PassThroughExperiment::measure_new_misguess_backprop(
 		double target_val,
+		RunHelper& run_helper,
 		PassThroughExperimentOverallHistory* history) {
 	for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 		this->i_misguess_histories.push_back((history->predicted_scores[i_index] - target_val) * (history->predicted_scores[i_index] - target_val));
@@ -130,7 +135,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 		this->i_misguess_histories.clear();
 
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (!run_helper.exceeded_limit && rand()%2 == 0) {
 		#else
 		double misguess_improvement = this->existing_average_misguess - this->new_average_misguess;
 		double misguess_standard_deviation = sqrt(this->existing_misguess_variance);

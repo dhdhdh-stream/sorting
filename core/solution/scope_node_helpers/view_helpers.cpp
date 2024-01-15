@@ -77,32 +77,34 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 									 inner_exit_node,
 									 run_helper);
 
-	for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-		if (this->output_inner_is_local[o_index]) {
-			map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().local_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
-						cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+	if (!run_helper.has_exited) {
+		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
+			if (this->output_inner_is_local[o_index]) {
+				map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().local_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+						cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+							cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+						}
 					}
 				}
-			}
-		} else {
-			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-			if (inner_it != context.back().input_state_vals.end()) {
-				if (this->output_outer_is_local[o_index]) {
-					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
-					cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
-				} else {
-					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-					if (outer_it != context[context.size()-2].input_state_vals.end()) {
-						outer_it->second = inner_it->second;
-						cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+			} else {
+				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+				if (inner_it != context.back().input_state_vals.end()) {
+					if (this->output_outer_is_local[o_index]) {
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+						cout << "o local #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+					} else {
+						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+						if (outer_it != context[context.size()-2].input_state_vals.end()) {
+							outer_it->second = inner_it->second;
+							cout << "o input #" << this->output_outer_indexes[o_index] << ": " << inner_it->second.val << endl;
+						}
 					}
 				}
 			}

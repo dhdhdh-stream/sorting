@@ -59,11 +59,15 @@ void node_activate_helper(AbstractNode*& curr_node,
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
 
-		if (node->exit_depth == 0) {
-			curr_node = node->exit_node;
+		if (node->is_exit) {
+			run_helper.has_exited = true;
 		} else {
-			exit_depth = node->exit_depth-1;
-			exit_node = node->exit_node;
+			if (node->exit_depth == 0) {
+				curr_node = node->exit_node;
+			} else {
+				exit_depth = node->exit_depth-1;
+				exit_node = node->exit_node;
+			}
 		}
 	}
 }
@@ -85,7 +89,8 @@ void Scope::activate(Problem* problem,
 
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
-		if (exit_depth != -1
+		if (run_helper.has_exited
+				|| exit_depth != -1
 				|| curr_node == NULL
 				|| run_helper.exceeded_limit) {
 			break;

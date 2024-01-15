@@ -50,13 +50,17 @@ void PassThroughExperiment::capture_verify_activate(
 		}
 	}
 
-	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_node;
+	if (this->best_is_exit) {
+		run_helper.has_exited = true;
 	} else {
-		curr_node = NULL;
+		if (this->best_exit_depth == 0) {
+			curr_node = this->best_exit_node;
+		} else {
+			curr_node = NULL;
 
-		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_node;
+			exit_depth = this->best_exit_depth-1;
+			exit_node = this->best_exit_node;
+		}
 	}
 }
 
