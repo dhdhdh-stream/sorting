@@ -71,14 +71,12 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				new_potential_scope_node = create_scope(
 					context,
 					1,
-					scope,
-					NULL);
+					scope);
 			} else {
 				new_potential_scope_node = create_scope(
 					context,
 					1,
-					solution->root,
-					NULL);
+					solution->root);
 			}
 
 			if (new_potential_scope_node == NULL) {

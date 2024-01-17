@@ -15,7 +15,7 @@ class PotentialScopeNode {
 public:
 	std::vector<int> input_types;
 	/**
-	 * - inner always local
+	 * - inner always input
 	 */
 	std::vector<int> input_inner_indexes;
 	/**
@@ -27,7 +27,7 @@ public:
 	std::vector<double> input_init_vals;
 
 	/**
-	 * - inner always locale
+	 * - inner always input
 	 */
 	std::vector<int> output_inner_indexes;
 	std::vector<int> output_scope_depths;

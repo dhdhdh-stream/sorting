@@ -217,14 +217,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					new_potential_scope_node = create_scope(
 						context,
 						(int)this->scope_context.size(),
-						scope,
-						this->parent_pass_through_experiment);
+						scope);
 				} else {
 					new_potential_scope_node = create_scope(
 						context,
 						(int)this->scope_context.size(),
-						context[context.size() - this->scope_context.size()].scope,
-						this->parent_pass_through_experiment);
+						context[context.size() - this->scope_context.size()].scope);
 				}
 
 				if (new_potential_scope_node == NULL) {

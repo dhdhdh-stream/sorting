@@ -25,7 +25,9 @@ public:
 	Scope* inner_scope;
 
 	std::vector<int> input_types;
-	std::vector<bool> input_inner_is_local;
+	/**
+	 * - inner always input
+	 */
 	std::vector<int> input_inner_indexes;
 	std::vector<bool> input_outer_is_local;
 	std::vector<int> input_outer_indexes;
@@ -38,7 +40,9 @@ public:
 	 *     - otherwise, can align state polarity when constructing
 	 */
 
-	std::vector<bool> output_inner_is_local;
+	/**
+	 * - inner always input
+	 */
 	std::vector<int> output_inner_indexes;
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
@@ -52,10 +56,8 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	std::vector<std::vector<double>> verify_input_input_state_vals;
-	std::vector<std::vector<double>> verify_input_local_state_vals;
-	std::vector<std::vector<double>> verify_output_input_state_vals;
-	std::vector<std::vector<double>> verify_output_local_state_vals;
+	std::vector<std::vector<double>> verify_input_state_vals;
+	std::vector<std::vector<double>> verify_output_state_vals;
 	#endif /* MDEBUG */
 
 	ScopeNode();

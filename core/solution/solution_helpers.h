@@ -22,8 +22,7 @@ void create_experiment(ScopeHistory* root_history);
 
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
-								 Scope* parent_scope,
-								 PassThroughExperiment* parent_pass_through_experiment);
+								 Scope* parent_scope);
 PotentialScopeNode* create_repeat(std::vector<ContextLayer>& context,
 								  int explore_context_depth);
 

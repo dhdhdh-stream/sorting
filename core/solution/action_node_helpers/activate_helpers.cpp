@@ -31,7 +31,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	history->obs_snapshot = problem->get_observation();
 
 	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);
-	vector<map<Scope*, set<int>>> obs_impacted_potential_scopes(this->state_is_local.size());
+	vector<map<Scope*, pair<set<int>,set<int>>>> obs_impacted_potential_scopes(this->state_is_local.size());
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
@@ -39,7 +39,10 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 
 				if (this->is_potential) {
-					it->second.impacted_potential_scopes[this->parent] = set<int>({this->state_indexes[n_index]});
+					it->second.impacted_potential_scopes[this->parent] = {
+						set<int>(),
+						set<int>({this->state_indexes[n_index]})
+					};
 				}
 			}
 			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];

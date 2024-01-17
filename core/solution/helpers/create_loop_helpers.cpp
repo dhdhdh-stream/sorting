@@ -129,16 +129,16 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 				map<pair<bool,int>, int>::iterator it = potential_state_mappings[c_index-1]
 					.find({previous_scope_node->input_outer_is_local[i_index], previous_scope_node->input_outer_indexes[i_index]});
 				if (it != potential_state_mappings[c_index-1].end()) {
-					potential_state_mappings[c_index][{previous_scope_node->input_inner_is_local[i_index], previous_scope_node->input_inner_indexes[i_index]}] = it->second;
-					potential_to_outer_mapping[it->second] = {scope_depth, {previous_scope_node->input_inner_is_local[i_index], previous_scope_node->input_inner_indexes[i_index]}};
-					if (previous_scope_node->input_inner_is_local[i_index]) {
-						potential_innermost_state_ids[it->second] = scope->original_local_state_ids[previous_scope_node->input_inner_indexes[i_index]];
-					} else {
-						potential_innermost_state_ids[it->second] = scope->original_input_state_ids[previous_scope_node->input_inner_indexes[i_index]];
-					}
+					potential_state_mappings[c_index][{false, previous_scope_node->input_inner_indexes[i_index]}] = it->second;
+					potential_to_outer_mapping[it->second] = {scope_depth, {false, previous_scope_node->input_inner_indexes[i_index]}};
+					potential_innermost_state_ids[it->second] = scope->original_input_state_ids[previous_scope_node->input_inner_indexes[i_index]];
 				}
+			} else {
+				potential_state_mappings[c_index][{false, previous_scope_node->input_inner_indexes[i_index]}] = potential_new_state_counter;
+				potential_new_state_counter++;
+				potential_to_outer_mapping.push_back({scope_depth, {false, previous_scope_node->input_inner_indexes[i_index]}});
+				potential_innermost_state_ids.push_back(scope->original_input_state_ids[previous_scope_node->input_inner_indexes[i_index]]);
 			}
-			// else inner_is_local, and let inner handle
 		}
 
 		for (int s_index = 0; s_index < scope->num_local_states; s_index++) {
@@ -180,7 +180,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 							if (final_it->second != -1) {
 								obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
 
-								new_action_node->state_is_local.push_back(true);
+								new_action_node->state_is_local.push_back(false);
 								new_action_node->state_indexes.push_back(final_it->second);
 								new_action_node->state_obs_indexes.push_back(-1);
 								new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
@@ -190,9 +190,9 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 							if (include_state_distribution(generator) == 0) {
 								potential_to_final_mapping[potential_it->second] = -1;
 							} else {
-								int new_state_index = new_scope->num_local_states;
-								new_scope->num_local_states++;
-								new_scope->original_local_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
+								int new_state_index = new_scope->num_input_states;
+								new_scope->num_input_states++;
+								new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
 
 								potential_to_final_mapping[potential_it->second] = new_state_index;
 
@@ -216,7 +216,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 
 								obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
 
-								new_action_node->state_is_local.push_back(true);
+								new_action_node->state_is_local.push_back(false);
 								new_action_node->state_indexes.push_back(new_state_index);
 								new_action_node->state_obs_indexes.push_back(-1);
 								new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
@@ -234,7 +234,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 								if (final_it->second != -1) {
 									obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
 
-									new_action_node->state_is_local.push_back(true);
+									new_action_node->state_is_local.push_back(false);
 									new_action_node->state_indexes.push_back(final_it->second);
 									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[s_index]]);
 									new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
@@ -244,9 +244,9 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 								if (include_state_distribution(generator) == 0) {
 									potential_to_final_mapping[potential_it->second] = -1;
 								} else {
-									int new_state_index = new_scope->num_local_states;
-									new_scope->num_local_states++;
-									new_scope->original_local_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
+									int new_state_index = new_scope->num_input_states;
+									new_scope->num_input_states++;
+									new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
 
 									potential_to_final_mapping[potential_it->second] = new_state_index;
 
@@ -270,7 +270,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 
 									obs_index_mapping[s_index] = (int)new_action_node->state_is_local.size();
 
-									new_action_node->state_is_local.push_back(true);
+									new_action_node->state_is_local.push_back(false);
 									new_action_node->state_indexes.push_back(new_state_index);
 									new_action_node->state_obs_indexes.push_back(obs_index_mapping[original_action_node->state_obs_indexes[s_index]]);
 									new_action_node->state_defs.push_back(original_action_node->state_defs[s_index]);
@@ -299,9 +299,8 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 						if (final_it != potential_to_final_mapping.end()) {
 							if (final_it->second != -1) {
 								new_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-								new_scope_node->input_inner_is_local.push_back(original_scope_node->input_inner_is_local[i_index]);
 								new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
-								new_scope_node->input_outer_is_local.push_back(true);
+								new_scope_node->input_outer_is_local.push_back(false);
 								new_scope_node->input_outer_indexes.push_back(final_it->second);
 								new_scope_node->input_init_vals.push_back(0.0);
 							}
@@ -309,9 +308,9 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 							if (include_state_distribution(generator) == 0) {
 								potential_to_final_mapping[potential_it->second] = -1;
 							} else {
-								int new_state_index = new_scope->num_local_states;
-								new_scope->num_local_states++;
-								new_scope->original_local_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
+								int new_state_index = new_scope->num_input_states;
+								new_scope->num_input_states++;
+								new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
 
 								potential_to_final_mapping[potential_it->second] = new_state_index;
 
@@ -334,9 +333,8 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 								}
 
 								new_scope_node->input_types.push_back(INPUT_TYPE_STATE);
-								new_scope_node->input_inner_is_local.push_back(original_scope_node->input_inner_is_local[i_index]);
 								new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
-								new_scope_node->input_outer_is_local.push_back(true);
+								new_scope_node->input_outer_is_local.push_back(false);
 								new_scope_node->input_outer_indexes.push_back(new_state_index);
 								new_scope_node->input_init_vals.push_back(0.0);
 							}
@@ -344,7 +342,6 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 					}
 				} else {
 					new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
-					new_scope_node->input_inner_is_local.push_back(original_scope_node->input_inner_is_local[i_index]);
 					new_scope_node->input_inner_indexes.push_back(original_scope_node->input_inner_indexes[i_index]);
 					new_scope_node->input_outer_is_local.push_back(false);
 					new_scope_node->input_outer_indexes.push_back(-1);
@@ -359,18 +356,17 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 					map<int, int>::iterator final_it = potential_to_final_mapping.find(potential_it->second);
 					if (final_it != potential_to_final_mapping.end()) {
 						if (final_it->second != -1) {
-							new_scope_node->output_inner_is_local.push_back(original_scope_node->output_inner_is_local[o_index]);
 							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
-							new_scope_node->output_outer_is_local.push_back(true);
+							new_scope_node->output_outer_is_local.push_back(false);
 							new_scope_node->output_outer_indexes.push_back(final_it->second);
 						}
 					} else {
 						if (include_state_distribution(generator) == 0) {
 							potential_to_final_mapping[potential_it->second] = -1;
 						} else {
-							int new_state_index = new_scope->num_local_states;
-							new_scope->num_local_states++;
-							new_scope->original_local_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
+							int new_state_index = new_scope->num_input_states;
+							new_scope->num_input_states++;
+							new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_it->second]);
 
 							potential_to_final_mapping[potential_it->second] = new_state_index;
 
@@ -392,9 +388,8 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 									potential_to_outer_mapping[potential_it->second].second.second);
 							}
 
-							new_scope_node->output_inner_is_local.push_back(original_scope_node->output_inner_is_local[o_index]);
 							new_scope_node->output_inner_indexes.push_back(original_scope_node->output_inner_indexes[o_index]);
-							new_scope_node->output_outer_is_local.push_back(true);
+							new_scope_node->output_outer_is_local.push_back(false);
 							new_scope_node->output_outer_indexes.push_back(new_state_index);
 						}
 					}
@@ -435,7 +430,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 	new_scope->starting_node_id = 0;
 	new_scope->starting_node = new_nodes[0];
 
-	new_scope->used_states = vector<bool>(new_scope->num_local_states, false);
+	new_scope->used_input_states = vector<bool>(new_scope->num_input_states, false);
 
 	return new_potential_scope_node;
 }

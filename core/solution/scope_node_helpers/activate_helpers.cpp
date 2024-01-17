@@ -23,7 +23,6 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
 	map<int, StateStatus> input_state_vals;
-	map<int, StateStatus> local_state_vals;
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		if (this->input_types[i_index] == INPUT_TYPE_STATE) {
 			if (this->input_outer_is_local[i_index]) {
@@ -33,30 +32,21 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 					state_status = it->second;
 
 					if (this->is_potential) {
-						it->second.impacted_potential_scopes[this->parent] = set<int>({this->input_outer_indexes[i_index]});
+						it->second.impacted_potential_scopes[this->parent] = {
+							set<int>(),
+							set<int>({this->input_outer_indexes[i_index]})
+						};
 					}
 				}
-				if (this->input_inner_is_local[i_index]) {
-					local_state_vals[this->input_inner_indexes[i_index]] = state_status;
-				} else {
-					input_state_vals[this->input_inner_indexes[i_index]] = state_status;
-				}
+				input_state_vals[this->input_inner_indexes[i_index]] = state_status;
 			} else {
 				map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->input_outer_indexes[i_index]);
 				if (it != context.back().input_state_vals.end()) {
-					if (this->input_inner_is_local[i_index]) {
-						local_state_vals[this->input_inner_indexes[i_index]] = it->second;
-					} else {
-						input_state_vals[this->input_inner_indexes[i_index]] = it->second;
-					}
+					input_state_vals[this->input_inner_indexes[i_index]] = it->second;
 				}
 			}
 		} else {
-			if (this->input_inner_is_local[i_index]) {
-				local_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
-			} else {
-				input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
-			}
+			input_state_vals[this->input_inner_indexes[i_index]] = StateStatus(this->input_init_vals[i_index]);
 		}
 	}
 
@@ -68,7 +58,6 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	context.back().node = NULL;
 
 	context.back().input_state_vals = input_state_vals;
-	context.back().local_state_vals = local_state_vals;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->inner_scope);
 	history->inner_scope_history = inner_scope_history;
@@ -86,49 +75,39 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 
 	if (!run_helper.has_exited) {
 		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
-			if (this->output_inner_is_local[o_index]) {
-				map<int, StateStatus>::iterator inner_it = context.back().local_state_vals.find(this->output_inner_indexes[o_index]);
-				if (inner_it != context.back().local_state_vals.end()) {
-					if (this->output_outer_is_local[o_index]) {
-						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
+			if (inner_it != context.back().input_state_vals.end()) {
+				if (this->output_outer_is_local[o_index]) {
+					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
-						if (this->is_potential) {
-							map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
-								.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
-							if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
-								context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
-									.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
-							} else {
-								scope_it->second.insert(this->output_outer_indexes[o_index]);
-							}
-						}
-					} else {
-						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-						if (outer_it != context[context.size()-2].input_state_vals.end()) {
-							outer_it->second = inner_it->second;
+					if (this->is_potential) {
+						map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = context[context.size()-2]
+							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
+						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
+							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+								.impacted_potential_scopes[this->parent] = {
+									set<int>({this->output_outer_indexes[o_index]}),
+									set<int>()
+								};
+						} else {
+							scope_it->second.first.insert(this->output_outer_indexes[o_index]);
 						}
 					}
-				}
-			} else {
-				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
-				if (inner_it != context.back().input_state_vals.end()) {
-					if (this->output_outer_is_local[o_index]) {
-						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+				} else {
+					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
+					if (outer_it != context[context.size()-2].input_state_vals.end()) {
+						outer_it->second = inner_it->second;
 
 						if (this->is_potential) {
-							map<Scope*, set<int>>::iterator scope_it = context[context.size()-2]
-								.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
-							if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
-								context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
-									.impacted_potential_scopes[this->parent] = set<int>({this->output_outer_indexes[o_index]});
+							map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = outer_it->second.impacted_potential_scopes.find(this->parent);
+							if (scope_it == outer_it->second.impacted_potential_scopes.end()) {
+								outer_it->second.impacted_potential_scopes[this->parent] = {
+									set<int>(),
+									set<int>({this->output_outer_indexes[o_index]})
+								};
 							} else {
-								scope_it->second.insert(this->output_outer_indexes[o_index]);
+								scope_it->second.second.insert(this->output_outer_indexes[o_index]);
 							}
-						}
-					} else {
-						map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
-						if (outer_it != context[context.size()-2].input_state_vals.end()) {
-							outer_it->second = inner_it->second;
 						}
 					}
 				}

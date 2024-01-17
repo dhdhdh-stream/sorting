@@ -71,14 +71,12 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 				new_potential_scope_node = create_scope(
 					context,
 					(int)this->scope_context.size(),
-					scope,
-					NULL);
+					scope);
 			} else {
 				new_potential_scope_node = create_scope(
 					context,
 					(int)this->scope_context.size(),
-					context[context.size() - this->scope_context.size()].scope,
-					NULL);
+					context[context.size() - this->scope_context.size()].scope);
 			}
 
 			if (new_potential_scope_node == NULL) {
