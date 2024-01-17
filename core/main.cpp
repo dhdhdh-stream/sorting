@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
 	solution->init();
 	// solution->load("", "main");
 
+	solution->save("", "main");
+
 	int num_fails = 0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -52,8 +54,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

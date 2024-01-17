@@ -13,12 +13,12 @@ using namespace std;
 /**
  * - special case last node outside
  */
-void create_loop_experiment_helper(int target_depth,
-								   vector<Scope*>& scope_context,
-								   vector<AbstractNode*>& node_context,
-								   vector<vector<Scope*>>& possible_scope_contexts,
-								   vector<vector<AbstractNode*>>& possible_node_contexts,
-								   ScopeHistory* scope_history) {
+void create_repeat_experiment_helper(int target_depth,
+									 vector<Scope*>& scope_context,
+									 vector<AbstractNode*>& node_context,
+									 vector<vector<Scope*>>& possible_scope_contexts,
+									 vector<vector<AbstractNode*>>& possible_node_contexts,
+									 ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
@@ -42,12 +42,12 @@ void create_loop_experiment_helper(int target_depth,
 
 			if (h_index == (int)scope_history->node_histories.size()-1
 					&& (int)scope_context.size()+1 <= target_depth) {
-				create_loop_experiment_helper(target_depth,
-											  scope_context,
-											  node_context,
-											  possible_scope_contexts,
-											  possible_node_contexts,
-											  scope_node_history->inner_scope_history);
+				create_repeat_experiment_helper(target_depth,
+												scope_context,
+												node_context,
+												possible_scope_contexts,
+												possible_node_contexts,
+												scope_node_history->inner_scope_history);
 			} else {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
@@ -69,19 +69,19 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	create_loop_experiment_helper(explore_context_depth,
-								  scope_context,
-								  node_context,
-								  possible_scope_contexts,
-								  possible_node_contexts,
-								  scope_history);
+	create_repeat_experiment_helper(explore_context_depth,
+									scope_context,
+									node_context,
+									possible_scope_contexts,
+									possible_node_contexts,
+									scope_history);
 
 	geometric_distribution<int> length_distribution(0.2);
-	int loop_length = 1 + length_distribution(generator);
-	if (loop_length > (int)possible_scope_contexts.size()) {
-		loop_length = (int)possible_scope_contexts.size();
+	int repeat_length = 1 + length_distribution(generator);
+	if (repeat_length > (int)possible_scope_contexts.size()) {
+		repeat_length = (int)possible_scope_contexts.size();
 	}
-	int start_index = (int)possible_scope_contexts.size() - loop_length;
+	int start_index = (int)possible_scope_contexts.size() - repeat_length;
 
 	Scope* new_scope = new Scope();
 	// don't set id/increment scope_counter until train

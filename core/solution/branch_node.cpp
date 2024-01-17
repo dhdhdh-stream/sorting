@@ -18,6 +18,8 @@ BranchNode::BranchNode() {
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
+
+	this->is_potential = false;
 }
 
 BranchNode::~BranchNode() {

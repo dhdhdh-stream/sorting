@@ -1,5 +1,3 @@
-// TODO: "worker: /usr/include/eigen3/Eigen/src/Core/DenseCoeffsBase.h:180: Eigen::DenseCoeffsBase<Derived, 0>::CoeffReturnType Eigen::DenseCoeffsBase<Derived, 0>::operator()(Eigen::Index) const [with Derived = Eigen::Ref<Eigen::Array<long int, 1, -1> >; Eigen::DenseCoeffsBase<Derived, 0>::CoeffReturnType = const long int&; Eigen::Index = long int]: Assertion `index >= 0 && index < size()' failed.\n"
-
 /**
  * - TODO: to parallelize further:
  *   - have new instances that don't sync, but draw from existing
@@ -73,8 +71,8 @@ int main(int argc, char* argv[]) {
 	int iter_index = 0;
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	while (true) {
-		Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

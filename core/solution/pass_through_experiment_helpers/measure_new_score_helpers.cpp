@@ -71,6 +71,12 @@ void PassThroughExperiment::measure_new_score_backprop(
 		PassThroughExperimentOverallHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.exceeded_limit) {
+		this->new_exceeded_limit = true;
+	}
+	#endif /* MDEBUG */
+
 	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -81,7 +87,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 		this->o_target_val_histories.clear();
 
 		#if defined(MDEBUG) && MDEBUG
-		if (!run_helper.exceeded_limit && rand()%4 == 0) {
+		if (!this->new_exceeded_limit && rand()%4 == 0) {
 		#else
 		double score_improvement = this->new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
@@ -135,7 +141,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (rand()%2 == 0) {
+		} else if (!this->new_exceeded_limit && rand()%2 == 0) {
 		#else
 		} else if (this->new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */

@@ -171,13 +171,19 @@ void BranchExperiment::verify_backprop(double target_val,
 									   RunHelper& run_helper) {
 	this->combined_score += target_val;
 
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.exceeded_limit) {
+		this->new_exceeded_limit = true;
+	}
+	#endif /* MDEBUG */
+
 	this->state_iter++;
 	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
 			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		#if defined(MDEBUG) && MDEBUG
-		if (!run_helper.exceeded_limit && rand()%2 == 0) {
+		if (!this->new_exceeded_limit && rand()%2 == 0) {
 		#else
 		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
@@ -211,7 +217,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		double branch_weight = (double)this->branch_count / (double)this->branch_possible;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (!run_helper.exceeded_limit && rand()%2 == 0) {
+		if (!this->new_exceeded_limit && rand()%2 == 0) {
 		#else
 		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */

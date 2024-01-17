@@ -42,6 +42,10 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->combined_score = 0.0;
 	this->branch_count = 0;
 	this->branch_possible = 0;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->new_exceeded_limit = false;
+	#endif /* MDEBUG */
 }
 
 BranchExperiment::~BranchExperiment() {

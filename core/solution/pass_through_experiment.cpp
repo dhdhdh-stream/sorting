@@ -38,6 +38,10 @@ PassThroughExperiment::PassThroughExperiment(
 	this->best_score = 0.0;
 
 	this->branch_experiment = NULL;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->new_exceeded_limit = false;
+	#endif /* MDEBUG */
 }
 
 PassThroughExperiment::~PassThroughExperiment() {

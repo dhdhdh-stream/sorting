@@ -47,6 +47,8 @@ public:
 	std::vector<std::vector<double>> verify_factors;
 	#endif /* MDEBUG */
 
+	bool is_potential;
+
 	BranchNode();
 	~BranchNode();
 

@@ -86,11 +86,11 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
 							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
 								.impacted_potential_scopes[this->parent] = {
-									set<int>({this->output_outer_indexes[o_index]}),
-									set<int>()
+									set<int>(),
+									set<int>({this->output_outer_indexes[o_index]})
 								};
 						} else {
-							scope_it->second.first.insert(this->output_outer_indexes[o_index]);
+							scope_it->second.second.insert(this->output_outer_indexes[o_index]);
 						}
 					}
 				} else {
@@ -102,11 +102,11 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 							map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = outer_it->second.impacted_potential_scopes.find(this->parent);
 							if (scope_it == outer_it->second.impacted_potential_scopes.end()) {
 								outer_it->second.impacted_potential_scopes[this->parent] = {
-									set<int>(),
-									set<int>({this->output_outer_indexes[o_index]})
+									set<int>({this->output_outer_indexes[o_index]}),
+									set<int>()
 								};
 							} else {
-								scope_it->second.second.insert(this->output_outer_indexes[o_index]);
+								scope_it->second.first.insert(this->output_outer_indexes[o_index]);
 							}
 						}
 					}

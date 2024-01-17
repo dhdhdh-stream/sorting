@@ -172,6 +172,12 @@ void BranchExperiment::measure_backprop(double target_val,
 										RunHelper& run_helper) {
 	this->combined_score += target_val;
 
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.exceeded_limit) {
+		this->new_exceeded_limit = true;
+	}
+	#endif /* MDEBUG */
+
 	this->state_iter++;
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
@@ -204,7 +210,7 @@ void BranchExperiment::measure_backprop(double target_val,
 		// }
 
 		#if defined(MDEBUG) && MDEBUG
-		if (!run_helper.exceeded_limit && rand()%2 == 0) {
+		if (!this->new_exceeded_limit && rand()%2 == 0) {
 		#else
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;

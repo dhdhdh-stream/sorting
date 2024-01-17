@@ -124,6 +124,8 @@ public:
 	BranchExperiment* branch_experiment;
 
 	#if defined(MDEBUG) && MDEBUG
+	bool new_exceeded_limit;
+
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */

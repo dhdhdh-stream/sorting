@@ -1,5 +1,7 @@
 #include "state_status.h"
 
+#include "scope.h"
+
 using namespace std;
 
 StateStatus::StateStatus() {
@@ -26,6 +28,11 @@ void StateStatus::update_impacted_potential_scopes(
 		}
 		for (set<int>::iterator index_it = new_it->second.second.begin();
 				index_it != new_it->second.second.end(); index_it++) {
+			// temp
+			if (*index_it >= curr_it->first->num_local_states) {
+				throw invalid_argument("*index_it >= curr_it->first->num_local_states");
+			}
+
 			curr_it->second.second.insert(*index_it);
 		}
 	}

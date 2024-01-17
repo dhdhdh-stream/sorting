@@ -1,3 +1,6 @@
+// TODO: try bigger problem
+// - may force to generalize more
+
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 

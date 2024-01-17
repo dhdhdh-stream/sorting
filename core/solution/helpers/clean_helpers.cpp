@@ -1,4 +1,10 @@
+/**
+ * - TODO: verify clean
+ */
+
 #include "solution_helpers.h"
+
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -172,17 +178,23 @@ void clean_state(PotentialScopeNode* potential_scope_node) {
 					new_state_index = input_mappings[branch_node->decision_state_indexes[s_index]];
 				}
 
-				// new_state_index != -1
-				new_decision_state_is_local.push_back(branch_node->decision_state_is_local[s_index]);
-				new_decision_state_indexes.push_back(new_state_index);
-				new_decision_original_weights.push_back(branch_node->decision_original_weights[s_index]);
-				new_decision_branch_weights.push_back(branch_node->decision_branch_weights[s_index]);
+				/**
+				 * - new_state_index can be -1 if state was not initialized before branch
+				 */
+				if (new_state_index != -1) {
+					new_decision_state_is_local.push_back(branch_node->decision_state_is_local[s_index]);
+					new_decision_state_indexes.push_back(new_state_index);
+					new_decision_original_weights.push_back(branch_node->decision_original_weights[s_index]);
+					new_decision_branch_weights.push_back(branch_node->decision_branch_weights[s_index]);
+				}
 			}
 
 			branch_node->decision_state_is_local = new_decision_state_is_local;
 			branch_node->decision_state_indexes = new_decision_state_indexes;
 			branch_node->decision_original_weights = new_decision_original_weights;
 			branch_node->decision_branch_weights = new_decision_branch_weights;
+
+			branch_node->is_potential = false;
 		}
 	}
 

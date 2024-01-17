@@ -67,6 +67,12 @@ void PassThroughExperiment::verify_new_score_backprop(
 		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.exceeded_limit) {
+		this->new_exceeded_limit = true;
+	}
+	#endif /* MDEBUG */
+
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE
 			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
 		if ((int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
@@ -79,7 +85,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 			this->o_target_val_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit && rand()%2 == 0) {
+			if (!this->new_exceeded_limit && rand()%2 == 0) {
 			#else
 			double score_improvement = this->new_average_score - this->existing_average_score;
 			double score_standard_deviation = sqrt(this->existing_score_variance);
@@ -93,7 +99,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
 				this->state_iter = 0;
 			#if defined(MDEBUG) && MDEBUG
-			} else if (!run_helper.exceeded_limit && rand()%2 == 0) {
+			} else if (!this->new_exceeded_limit && rand()%2 == 0) {
 			#else
 			} else if (this->new_average_score >= this->existing_average_score) {
 			#endif /* MDEBUG */
@@ -124,7 +130,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 				/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit && rand()%2 == 0) {
+			if (!this->new_exceeded_limit && rand()%2 == 0) {
 			#else
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */
@@ -176,7 +182,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 					this->state_iter = 0;
 				}
 			#if defined(MDEBUG) && MDEBUG
-			} else if (!run_helper.exceeded_limit && rand()%2 == 0) {
+			} else if (!this->new_exceeded_limit && rand()%2 == 0) {
 			#else
 			} else if (this->new_average_score >= this->existing_average_score) {
 			#endif /* MDEBUG */

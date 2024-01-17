@@ -358,6 +358,7 @@ void BranchExperiment::explore_backprop(double target_val,
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->branch_scope_context = vector<int>{new_scope_id};
 								branch_node->branch_node_context = vector<int>{branch_node->id};
+								branch_node->is_potential = true;
 							}
 						}
 

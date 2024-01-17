@@ -114,6 +114,8 @@ public:
 	std::vector<double> i_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
+	bool new_exceeded_limit;
+
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	std::vector<double> verify_original_scores;

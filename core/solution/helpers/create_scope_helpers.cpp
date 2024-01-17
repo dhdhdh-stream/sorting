@@ -1418,7 +1418,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						int new_state_index = new_scope->num_input_states;
 						new_scope->num_input_states++;
 						new_scope->original_input_state_ids.push_back(
-							scope->original_local_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
+							scope->original_input_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
 
 						new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
@@ -1431,7 +1431,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						potential_new_state_counter++;
 						potential_is_local.push_back(true);
 						potential_innermost_state_ids.push_back(
-							scope->original_local_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
+							scope->original_input_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
 						used_potential_states.push_back(true);
 						potential_to_final_states.push_back(new_state_index);
 					}
@@ -1448,7 +1448,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						int new_state_index = new_scope->num_input_states;
 						new_scope->num_input_states++;
 						new_scope->original_input_state_ids.push_back(
-							scope->original_local_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
+							scope->original_input_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
 
 						new_potential_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 						new_potential_scope_node->input_inner_indexes.push_back(new_state_index);
@@ -1461,7 +1461,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 						potential_new_state_counter++;
 						potential_is_local.push_back(true);
 						potential_innermost_state_ids.push_back(
-							scope->original_local_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
+							scope->original_input_state_ids[outer_scope_node->input_inner_indexes[i_index]]);
 						used_potential_states.push_back(true);
 						potential_to_final_states.push_back(new_state_index);
 					}
@@ -1531,6 +1531,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 							end_input_potential_mapping[l_index][{true, original_branch_node->decision_state_indexes[s_index]}] = potential_new_state_counter;
 							potential_new_state_counter++;
 							potential_is_local.push_back(true);
+
 							potential_innermost_state_ids.push_back(
 								scope->original_local_state_ids[original_branch_node->decision_state_indexes[s_index]]);
 							used_potential_states.push_back(true);
