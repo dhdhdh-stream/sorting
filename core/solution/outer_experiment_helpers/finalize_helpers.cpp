@@ -35,6 +35,9 @@ void OuterExperiment::finalize() {
 	} else if (this->best_step_types[0] == STEP_TYPE_POTENTIAL_SCOPE) {
 		starting_noop_node->next_node_id = 1;
 		starting_noop_node->next_node = this->best_potential_scopes[0]->scope_node_placeholder;
+	} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+		starting_noop_node->next_node_id = 1;
+		starting_noop_node->next_node = this->best_existing_scopes[0]->scope_node_placeholder;
 	} else {
 		starting_noop_node->next_node_id = 1;
 		starting_noop_node->next_node = this->best_root_scope_nodes[0];
@@ -53,6 +56,9 @@ void OuterExperiment::finalize() {
 			} else if (this->best_step_types[s_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
 				next_node_id = this->best_potential_scopes[s_index+1]->scope_node_placeholder->id;
 				next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
+			} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
+				next_node_id = this->best_existing_scopes[s_index+1]->scope_node_placeholder->id;
+				next_node = this->best_existing_scopes[s_index+1]->scope_node_placeholder;
 			} else {
 				next_node_id = this->best_root_scope_nodes[s_index+1]->id;
 				next_node = this->best_root_scope_nodes[s_index+1];
@@ -87,6 +93,28 @@ void OuterExperiment::finalize() {
 			new_scope_node->next_node = next_node;
 
 			delete this->best_potential_scopes[s_index];
+		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNode* new_scope_node = this->best_existing_scopes[s_index]->scope_node_placeholder;
+			this->best_existing_scopes[s_index]->scope_node_placeholder = NULL;
+			new_scope_node->parent = new_root_scope;
+			new_root_scope->nodes[new_scope_node->id] = new_scope_node;
+
+			solution->scopes[this->best_existing_scopes[s_index]->scope->id] = this->best_existing_scopes[s_index]->scope;
+			new_scope_node->inner_scope = this->best_existing_scopes[s_index]->scope;
+			this->best_existing_scopes[s_index]->scope = NULL;
+
+			for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
+				new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
+				new_scope_node->input_inner_indexes.push_back(this->best_existing_scopes[s_index]->input_inner_indexes[i_index]);
+				new_scope_node->input_outer_is_local.push_back(false);
+				new_scope_node->input_outer_indexes.push_back(-1);
+				new_scope_node->input_init_vals.push_back(this->best_existing_scopes[s_index]->input_init_vals[i_index]);
+			}
+
+			new_scope_node->next_node_id = next_node_id;
+			new_scope_node->next_node = next_node;
+
+			delete this->best_existing_scopes[s_index];
 		} else {
 			this->best_root_scope_nodes[s_index]->parent = new_root_scope;
 			new_root_scope->nodes[this->best_root_scope_nodes[s_index]->id] = this->best_root_scope_nodes[s_index];
@@ -97,6 +125,7 @@ void OuterExperiment::finalize() {
 	}
 	this->best_actions.clear();
 	this->best_potential_scopes.clear();
+	this->best_existing_scopes.clear();
 	this->best_root_scope_nodes.clear();
 
 	new_root_scope->node_counter = 1 + (int)this->best_step_types.size();

@@ -70,6 +70,7 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<PotentialScopeNode*> curr_potential_scopes;
+	std::vector<PotentialScopeNode*> curr_existing_scopes;
 	bool curr_is_exit;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_node;
@@ -78,6 +79,7 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<PotentialScopeNode*> best_potential_scopes;
+	std::vector<PotentialScopeNode*> best_existing_scopes;
 	bool best_is_exit;
 	int best_exit_depth;
 	AbstractNode* best_exit_node;

@@ -47,6 +47,13 @@ void OuterExperiment::measure_new_score_activate(
 														   run_helper,
 														   potential_scope_node_history);
 			delete potential_scope_node_history;
+		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+			this->best_existing_scopes[s_index]->activate(problem,
+														  context,
+														  run_helper,
+														  potential_scope_node_history);
+			delete potential_scope_node_history;
 		} else {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_root_scope_nodes[s_index]);
 			this->best_root_scope_nodes[s_index]->activate(

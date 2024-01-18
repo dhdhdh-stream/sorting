@@ -41,7 +41,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 				exit_node,
 				run_helper,
 				action_node_history);
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			#if defined(MDEBUG) && MDEBUG
 			if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
 				instance_history->pre_step_histories.push_back(NULL);
@@ -65,6 +65,30 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 														   run_helper,
 														   potential_scope_node_history);
 			#endif /* MDEBUG */
+		} else {
+			#if defined(MDEBUG) && MDEBUG
+			if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+				instance_history->pre_step_histories.push_back(NULL);
+				this->best_existing_scopes[s_index]->capture_verify_activate(
+					problem,
+					context,
+					run_helper);
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+				instance_history->pre_step_histories.push_back(potential_scope_node_history);
+				this->best_existing_scopes[s_index]->activate(problem,
+															  context,
+															  run_helper,
+															  potential_scope_node_history);
+			}
+			#else
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+			instance_history->pre_step_histories.push_back(potential_scope_node_history);
+			this->best_existing_scopes[s_index]->activate(problem,
+														  context,
+														  run_helper,
+														  potential_scope_node_history);
+			#endif /* MDEBUG */
 		}
 	}
 
@@ -81,8 +105,10 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		} else {
 			if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[this->branch_experiment_step_index+1];
-			} else {
+			} else if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
 				curr_node = this->best_potential_scopes[this->branch_experiment_step_index+1]->scope_node_placeholder;
+			} else {
+				curr_node = this->best_existing_scopes[this->branch_experiment_step_index+1]->scope_node_placeholder;
 			}
 		}
 
@@ -109,7 +135,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 							exit_node,
 							run_helper,
 							action_node_history);
-					} else {
+					} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 						#if defined(MDEBUG) && MDEBUG
 						if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
 							instance_history->post_step_histories.push_back(NULL);
@@ -132,6 +158,30 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 																	   context,
 																	   run_helper,
 																	   potential_scope_node_history);
+						#endif /* MDEBUG */
+					} else {
+						#if defined(MDEBUG) && MDEBUG
+						if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+							instance_history->post_step_histories.push_back(NULL);
+							this->best_existing_scopes[s_index]->capture_verify_activate(
+								problem,
+								context,
+								run_helper);
+						} else {
+							PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+							instance_history->post_step_histories.push_back(potential_scope_node_history);
+							this->best_existing_scopes[s_index]->activate(problem,
+																		  context,
+																		  run_helper,
+																		  potential_scope_node_history);
+						}
+						#else
+						PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+						instance_history->post_step_histories.push_back(potential_scope_node_history);
+						this->best_existing_scopes[s_index]->activate(problem,
+																	  context,
+																	  run_helper,
+																	  potential_scope_node_history);
 						#endif /* MDEBUG */
 					}
 				}
@@ -167,6 +217,8 @@ void PassThroughExperiment::experiment_backprop(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this->branch_experiment;
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					this->best_existing_scopes[s_index]->scope_node_placeholder->verify_key = this->branch_experiment;
 				}
 			}
 			#endif /* MDEBUG */
@@ -247,9 +299,12 @@ void PassThroughExperiment::experiment_backprop(
 			} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				new_branch_node->branch_next_node_id = this->best_actions[0]->id;
 				new_branch_node->branch_next_node = this->best_actions[0];
-			} else {
+			} else if (this->best_step_types[0] == STEP_TYPE_POTENTIAL_SCOPE) {
 				new_branch_node->branch_next_node_id = this->best_potential_scopes[0]->scope_node_placeholder->id;
 				new_branch_node->branch_next_node = this->best_potential_scopes[0]->scope_node_placeholder;
+			} else {
+				new_branch_node->branch_next_node_id = this->best_existing_scopes[0]->scope_node_placeholder->id;
+				new_branch_node->branch_next_node = this->best_existing_scopes[0]->scope_node_placeholder;
 			}
 
 			map<pair<int, pair<bool,int>>, int> input_scope_depths_mappings;
@@ -261,8 +316,10 @@ void PassThroughExperiment::experiment_backprop(
 				} else {
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node = this->best_actions[s_index+1];
-					} else {
+					} else if (this->best_step_types[s_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
 						next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
+					} else {
+						next_node = this->best_existing_scopes[s_index+1]->scope_node_placeholder;
 					}
 				}
 
@@ -271,7 +328,7 @@ void PassThroughExperiment::experiment_backprop(
 
 					this->best_actions[s_index]->next_node_id = next_node->id;
 					this->best_actions[s_index]->next_node = next_node;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					finalize_potential_scope(this->scope_context,
 											 this->node_context,
 											 this->best_potential_scopes[s_index],
@@ -285,10 +342,25 @@ void PassThroughExperiment::experiment_backprop(
 					new_scope_node->next_node = next_node;
 
 					delete this->best_potential_scopes[s_index];
+				} else {
+					finalize_potential_scope(this->scope_context,
+											 this->node_context,
+											 this->best_existing_scopes[s_index],
+											 input_scope_depths_mappings,
+											 output_scope_depths_mappings);
+					ScopeNode* new_scope_node = this->best_existing_scopes[s_index]->scope_node_placeholder;
+					this->best_existing_scopes[s_index]->scope_node_placeholder = NULL;
+					containing_scope->nodes[new_scope_node->id] = new_scope_node;
+
+					new_scope_node->next_node_id = next_node->id;
+					new_scope_node->next_node = next_node;
+
+					delete this->best_existing_scopes[s_index];
 				}
 			}
 			this->best_actions.clear();
 			this->best_potential_scopes.clear();
+			this->best_existing_scopes.clear();
 
 			new_exit_node->is_exit = this->best_is_exit;
 			new_exit_node->exit_depth = this->best_exit_depth;
@@ -340,8 +412,10 @@ void PassThroughExperiment::experiment_backprop(
 					this->node_context);
 				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
 					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index]->id;
-				} else {
+				} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					this->branch_experiment->node_context.back() = this->best_potential_scopes[this->branch_experiment_step_index]->scope_node_placeholder->id;
+				} else {
+					this->branch_experiment->node_context.back() = this->best_existing_scopes[this->branch_experiment_step_index]->scope_node_placeholder->id;
 				}
 				this->branch_experiment->parent_pass_through_experiment = this;
 			}

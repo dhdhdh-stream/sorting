@@ -34,12 +34,19 @@ void PassThroughExperiment::measure_new_misguess_activate(
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
 			this->best_potential_scopes[s_index]->activate(problem,
 														   context,
 														   run_helper,
 														   potential_scope_node_history);
+			delete potential_scope_node_history;
+		} else {
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+			this->best_existing_scopes[s_index]->activate(problem,
+														  context,
+														  run_helper,
+														  potential_scope_node_history);
 			delete potential_scope_node_history;
 		}
 	}
@@ -158,8 +165,10 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->node_to_step_index[this->best_actions[s_index]] = s_index;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					this->node_to_step_index[this->best_potential_scopes[s_index]->scope_node_placeholder] = s_index;
+				} else {
+					this->node_to_step_index[this->best_existing_scopes[s_index]->scope_node_placeholder] = s_index;
 				}
 			}
 
@@ -171,8 +180,10 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 				this->node_context);
 			if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
 				this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index]->id;
-			} else {
+			} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				this->branch_experiment->node_context.back() = this->best_potential_scopes[this->branch_experiment_step_index]->scope_node_placeholder->id;
+			} else {
+				this->branch_experiment->node_context.back() = this->best_existing_scopes[this->branch_experiment_step_index]->scope_node_placeholder->id;
 			}
 			this->branch_experiment->parent_pass_through_experiment = this;
 

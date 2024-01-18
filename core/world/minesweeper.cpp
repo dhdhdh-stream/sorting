@@ -100,6 +100,10 @@ Minesweeper::Minesweeper() {
 	this->ended = false;
 }
 
+int Minesweeper::num_actions() {
+	return 6;
+}
+
 Action Minesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 5);
 	return Action(action_distribution(generator));

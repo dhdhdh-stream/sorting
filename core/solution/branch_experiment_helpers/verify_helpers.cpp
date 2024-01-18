@@ -142,12 +142,19 @@ void BranchExperiment::verify_activate(
 					run_helper,
 					action_node_history);
 				delete action_node_history;
-			} else {
+			} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
 				this->best_potential_scopes[s_index]->activate(problem,
 															   context,
 															   run_helper,
 															   potential_scope_node_history);
+				delete potential_scope_node_history;
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+				this->best_existing_scopes[s_index]->activate(problem,
+															  context,
+															  run_helper,
+															  potential_scope_node_history);
 				delete potential_scope_node_history;
 			}
 		}
@@ -326,6 +333,12 @@ void BranchExperiment::verify_backprop(double target_val,
 										potential_scope_node = this->parent_pass_through_experiment->best_potential_scopes[s_index];
 										break;
 									}
+								} else if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+									if (this->parent_pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id
+											== this->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
+										potential_scope_node = this->parent_pass_through_experiment->best_existing_scopes[s_index];
+										break;
+									}
 								}
 							}
 
@@ -363,6 +376,12 @@ void BranchExperiment::verify_backprop(double target_val,
 									if (this->parent_pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id
 											== this->parent_pass_through_experiment->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
 										potential_scope_node = this->parent_pass_through_experiment->best_potential_scopes[s_index];
+										break;
+									}
+								} else if (this->parent_pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+									if (this->parent_pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id
+											== this->parent_pass_through_experiment->new_state_node_contexts[*it][n_index][this->scope_context.size()-1]) {
+										potential_scope_node = this->parent_pass_through_experiment->best_existing_scopes[s_index];
 										break;
 									}
 								}

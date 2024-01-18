@@ -47,6 +47,8 @@ public:
 	int starting_node_id;
 	AbstractNode* starting_node;
 
+	std::vector<ScopeNode*> parent_scope_nodes;
+
 	std::vector<bool> used_input_states;
 	std::vector<bool> used_local_states;
 

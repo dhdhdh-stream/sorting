@@ -12,6 +12,7 @@ public:
 
 	virtual ~Problem() {};
 
+	virtual int num_actions() = 0;
 	virtual Action random_action() = 0;
 
 	virtual double get_observation() = 0;

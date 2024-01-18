@@ -120,9 +120,12 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 		new_branch_node->branch_next_node_id = this->best_actions[0]->id;
 		new_branch_node->branch_next_node = this->best_actions[0];
-	} else {
+	} else if (this->best_step_types[0] == STEP_TYPE_POTENTIAL_SCOPE) {
 		new_branch_node->branch_next_node_id = this->best_potential_scopes[0]->scope_node_placeholder->id;
 		new_branch_node->branch_next_node = this->best_potential_scopes[0]->scope_node_placeholder;
+	} else {
+		new_branch_node->branch_next_node_id = this->best_existing_scopes[0]->scope_node_placeholder->id;
+		new_branch_node->branch_next_node = this->best_existing_scopes[0]->scope_node_placeholder;
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -132,8 +135,10 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 		} else {
 			if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 				next_node = this->best_actions[s_index+1];
-			} else {
+			} else if (this->best_step_types[s_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
 				next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
+			} else {
+				next_node = this->best_existing_scopes[s_index+1]->scope_node_placeholder;
 			}
 		}
 
@@ -142,7 +147,7 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 
 			this->best_actions[s_index]->next_node_id = next_node->id;
 			this->best_actions[s_index]->next_node = next_node;
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			finalize_potential_scope(this->scope_context,
 									 this->node_context,
 									 this->best_potential_scopes[s_index],
@@ -156,10 +161,25 @@ void BranchExperiment::new_branch(map<pair<int, pair<bool,int>>, int>& input_sco
 			new_scope_node->next_node = next_node;
 
 			delete this->best_potential_scopes[s_index];
+		} else {
+			finalize_potential_scope(this->scope_context,
+									 this->node_context,
+									 this->best_existing_scopes[s_index],
+									 input_scope_depths_mappings,
+									 output_scope_depths_mappings);
+			ScopeNode* new_scope_node = this->best_existing_scopes[s_index]->scope_node_placeholder;
+			this->best_existing_scopes[s_index]->scope_node_placeholder = NULL;
+			containing_scope->nodes[new_scope_node->id] = new_scope_node;
+
+			new_scope_node->next_node_id = next_node->id;
+			new_scope_node->next_node = next_node;
+
+			delete this->best_existing_scopes[s_index];
 		}
 	}
 	this->best_actions.clear();
 	this->best_potential_scopes.clear();
+	this->best_existing_scopes.clear();
 
 	new_exit_node->is_exit = this->best_is_exit;
 	new_exit_node->exit_depth = this->best_exit_depth;
@@ -245,9 +265,12 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 	} else if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 		new_branch_node->branch_next_node_id = this->best_actions[0]->id;
 		new_branch_node->branch_next_node = this->best_actions[0];
-	} else {
+	} else if (this->best_step_types[0] == STEP_TYPE_POTENTIAL_SCOPE) {
 		new_branch_node->branch_next_node_id = this->best_potential_scopes[0]->scope_node_placeholder->id;
 		new_branch_node->branch_next_node = this->best_potential_scopes[0]->scope_node_placeholder;
+	} else {
+		new_branch_node->branch_next_node_id = this->best_existing_scopes[0]->scope_node_placeholder->id;
+		new_branch_node->branch_next_node = this->best_existing_scopes[0]->scope_node_placeholder;
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -257,8 +280,10 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 		} else {
 			if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 				next_node = this->best_actions[s_index+1];
-			} else {
+			} else if (this->best_step_types[s_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
 				next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
+			} else {
+				next_node = this->best_existing_scopes[s_index+1]->scope_node_placeholder;
 			}
 		}
 
@@ -267,7 +292,7 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 
 			this->best_actions[s_index]->next_node_id = next_node->id;
 			this->best_actions[s_index]->next_node = next_node;
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			finalize_potential_scope(this->scope_context,
 									 this->node_context,
 									 this->best_potential_scopes[s_index],
@@ -281,10 +306,25 @@ void BranchExperiment::new_pass_through(map<pair<int, pair<bool,int>>, int>& inp
 			new_scope_node->next_node = next_node;
 
 			delete this->best_potential_scopes[s_index];
+		} else {
+			finalize_potential_scope(this->scope_context,
+									 this->node_context,
+									 this->best_existing_scopes[s_index],
+									 input_scope_depths_mappings,
+									 output_scope_depths_mappings);
+			ScopeNode* new_scope_node = this->best_existing_scopes[s_index]->scope_node_placeholder;
+			this->best_existing_scopes[s_index]->scope_node_placeholder = NULL;
+			containing_scope->nodes[new_scope_node->id] = new_scope_node;
+
+			new_scope_node->next_node_id = next_node->id;
+			new_scope_node->next_node = next_node;
+
+			delete this->best_existing_scopes[s_index];
 		}
 	}
 	this->best_actions.clear();
 	this->best_potential_scopes.clear();
+	this->best_existing_scopes.clear();
 
 	new_exit_node->is_exit = this->best_is_exit;
 	new_exit_node->exit_depth = this->best_exit_depth;

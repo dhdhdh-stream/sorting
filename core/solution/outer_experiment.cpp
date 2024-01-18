@@ -32,6 +32,13 @@ OuterExperiment::~OuterExperiment() {
 		}
 	}
 
+	for (int s_index = 0; s_index < (int)this->curr_existing_scopes.size(); s_index++) {
+		if (this->curr_existing_scopes[s_index] != NULL) {
+			this->curr_existing_scopes[s_index]->scope = NULL;
+			delete this->curr_existing_scopes[s_index];
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->curr_root_scope_nodes.size(); s_index++) {
 		if (this->curr_root_scope_nodes[s_index] != NULL) {
 			delete this->curr_root_scope_nodes[s_index];
@@ -47,6 +54,13 @@ OuterExperiment::~OuterExperiment() {
 	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
 		if (this->best_potential_scopes[s_index] != NULL) {
 			delete this->best_potential_scopes[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
+		if (this->best_existing_scopes[s_index] != NULL) {
+			this->best_existing_scopes[s_index]->scope = NULL;
+			delete this->best_existing_scopes[s_index];
 		}
 	}
 

@@ -1629,41 +1629,41 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 	uniform_int_distribution<int> state_mismatch_distribution(0, 5);
 	for (int p_index = 0; p_index < (int)possible_output_scope_depths.size(); p_index++) {
-		vector<int> possible_potential_ids;
+		vector<int> possible_potential_indexes;
 		if (state_mismatch_distribution(generator) == 0) {
 			for (int s_index = 0; s_index < potential_new_state_counter; s_index++) {
 				if (used_potential_states[s_index]) {
-					possible_potential_ids.push_back(s_index);
+					possible_potential_indexes.push_back(s_index);
 				}
 			}
 		} else {
 			for (int s_index = 0; s_index < potential_new_state_counter; s_index++) {
 				if (used_potential_states[s_index]) {
 					if (potential_innermost_state_ids[s_index] == possible_output_types[p_index]) {
-						possible_potential_ids.push_back(s_index);
+						possible_potential_indexes.push_back(s_index);
 					}
 				}
 			}
 		}
-		if (possible_potential_ids.size() > 0) {
-			uniform_int_distribution<int> distribution(0, possible_potential_ids.size()-1);
-			int potential_id = possible_potential_ids[distribution(generator)];
-			if (potential_to_final_states[potential_id] != -1) {
-				new_potential_scope_node->output_inner_indexes.push_back(potential_to_final_states[potential_id]);
+		if (possible_potential_indexes.size() > 0) {
+			uniform_int_distribution<int> distribution(0, possible_potential_indexes.size()-1);
+			int potential_index = possible_potential_indexes[distribution(generator)];
+			if (potential_to_final_states[potential_index] != -1) {
+				new_potential_scope_node->output_inner_indexes.push_back(potential_to_final_states[potential_index]);
 				new_potential_scope_node->output_scope_depths.push_back(possible_output_scope_depths[p_index]);
 				new_potential_scope_node->output_outer_is_local.push_back(possible_output_outer_is_local[p_index]);
 				new_potential_scope_node->output_outer_indexes.push_back(possible_output_outer_indexes[p_index]);
 			} else {
 				int new_state_index = new_scope->num_input_states;
 				new_scope->num_input_states++;
-				new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_id]);
+				new_scope->original_input_state_ids.push_back(potential_innermost_state_ids[potential_index]);
 
 				new_potential_scope_node->output_inner_indexes.push_back(new_state_index);
 				new_potential_scope_node->output_scope_depths.push_back(possible_output_scope_depths[p_index]);
 				new_potential_scope_node->output_outer_is_local.push_back(possible_output_outer_is_local[p_index]);
 				new_potential_scope_node->output_outer_indexes.push_back(possible_output_outer_indexes[p_index]);
 
-				potential_to_final_states[potential_id] = new_state_index;
+				potential_to_final_states[potential_index] = new_state_index;
 			}
 		}
 	}

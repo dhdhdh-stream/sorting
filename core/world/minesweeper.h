@@ -29,6 +29,7 @@ public:
 
 	Minesweeper();
 
+	int num_actions();
 	Action random_action();
 
 	double get_observation();

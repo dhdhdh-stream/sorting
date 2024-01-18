@@ -380,6 +380,8 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 	new_scope_node->inner_scope = potential_scope_node->scope;
 	potential_scope_node->scope = NULL;
 
+	new_scope_node->inner_scope->parent_scope_nodes.push_back(new_scope_node);
+
 	for (int i_index = 0; i_index < (int)potential_scope_node->input_types.size(); i_index++) {
 		if (potential_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
 			bool outer_is_local = potential_scope_node->input_outer_is_local[i_index];

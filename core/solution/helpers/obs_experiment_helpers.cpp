@@ -73,10 +73,25 @@ void create_obs_experiment_experiment_helper(
 				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
-			} else {
+			} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					create_obs_experiment_helper(scope_context,
+												 node_context,
+												 possible_nodes,
+												 possible_scope_contexts,
+												 possible_node_contexts,
+												 possible_obs_indexes,
+												 potential_scope_node_history->scope_history);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = branch_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					create_obs_experiment_helper(scope_context,
 												 node_context,
@@ -104,10 +119,25 @@ void create_obs_experiment_experiment_helper(
 				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					create_obs_experiment_helper(scope_context,
+												 node_context,
+												 possible_nodes,
+												 possible_scope_contexts,
+												 possible_node_contexts,
+												 possible_obs_indexes,
+												 potential_scope_node_history->scope_history);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					create_obs_experiment_helper(scope_context,
 												 node_context,
@@ -143,11 +173,25 @@ void create_obs_experiment_experiment_helper(
 				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = -1;
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
-
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					create_obs_experiment_helper(scope_context,
+												 node_context,
+												 possible_nodes,
+												 possible_scope_contexts,
+												 possible_node_contexts,
+												 possible_obs_indexes,
+												 potential_scope_node_history->scope_history);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					create_obs_experiment_helper(scope_context,
 												 node_context,
@@ -291,10 +335,23 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 sum_vals,
 													 counts,
 													 action_node_history);
-			} else {
+			} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					flat_vals_helper(scope_context,
+									 node_context,
+									 potential_scope_node_history->scope_history,
+									 sum_vals,
+									 counts);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = branch_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					flat_vals_helper(scope_context,
 									 node_context,
@@ -319,10 +376,23 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 sum_vals,
 													 counts,
 													 action_node_history);
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					flat_vals_helper(scope_context,
+									 node_context,
+									 potential_scope_node_history->scope_history,
+									 sum_vals,
+									 counts);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					flat_vals_helper(scope_context,
 									 node_context,
@@ -353,10 +423,23 @@ void flat_vals_experiment_helper(vector<int>& scope_context,
 													 sum_vals,
 													 counts,
 													 action_node_history);
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					flat_vals_helper(scope_context,
+									 node_context,
+									 potential_scope_node_history->scope_history,
+									 sum_vals,
+									 counts);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					flat_vals_helper(scope_context,
 									 node_context,
@@ -450,10 +533,23 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_obs_experiment_indexes,
 													rnn_vals,
 													action_node_history);
-			} else {
+			} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = branch_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					rnn_vals_helper(scope_context,
+									node_context,
+									potential_scope_node_history->scope_history,
+									rnn_obs_experiment_indexes,
+									rnn_vals);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)branch_experiment_history->step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = branch_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					rnn_vals_helper(scope_context,
 									node_context,
@@ -478,10 +574,23 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_obs_experiment_indexes,
 													rnn_vals,
 													action_node_history);
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					rnn_vals_helper(scope_context,
+									node_context,
+									potential_scope_node_history->scope_history,
+									rnn_obs_experiment_indexes,
+									rnn_vals);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->pre_step_histories[s_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					rnn_vals_helper(scope_context,
 									node_context,
@@ -512,10 +621,23 @@ void rnn_vals_experiment_helper(vector<int>& scope_context,
 													rnn_obs_experiment_indexes,
 													rnn_vals,
 													action_node_history);
-			} else {
+			} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
 				if (potential_scope_node_history->scope_history != NULL) {
 					node_context.back() = pass_through_experiment->best_potential_scopes[s_index]->scope_node_placeholder->id;
+
+					rnn_vals_helper(scope_context,
+									node_context,
+									potential_scope_node_history->scope_history,
+									rnn_obs_experiment_indexes,
+									rnn_vals);
+
+					node_context.back() = -1;
+				}
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)pass_through_experiment_history->post_step_histories[h_index];
+				if (potential_scope_node_history->scope_history != NULL) {
+					node_context.back() = pass_through_experiment->best_existing_scopes[s_index]->scope_node_placeholder->id;
 
 					rnn_vals_helper(scope_context,
 									node_context,

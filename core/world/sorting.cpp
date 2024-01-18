@@ -22,6 +22,10 @@ Sorting::Sorting() {
 	this->current_world = this->initial_world;
 }
 
+int Sorting::num_actions() {
+	return 3;
+}
+
 Action Sorting::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 2);
 	return Action(action_distribution(generator));

@@ -3,7 +3,8 @@
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_POTENTIAL_SCOPE = 1;
-const int STEP_TYPE_ROOT = 2;
+const int STEP_TYPE_EXISTING_SCOPE = 2;
+const int STEP_TYPE_ROOT = 3;
 
 const double WEIGHT_MIN_SCORE_IMPACT = 0.2;
 

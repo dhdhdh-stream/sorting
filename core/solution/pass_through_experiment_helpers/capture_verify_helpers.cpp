@@ -42,8 +42,13 @@ void PassThroughExperiment::capture_verify_activate(
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			this->best_potential_scopes[s_index]->capture_verify_activate(
+				problem,
+				context,
+				run_helper);
+		} else {
+			this->best_existing_scopes[s_index]->capture_verify_activate(
 				problem,
 				context,
 				run_helper);
@@ -70,6 +75,8 @@ void PassThroughExperiment::capture_verify_backprop() {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				this->best_potential_scopes[s_index]->scope_node_placeholder->verify_key = this;
+			} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+				this->best_existing_scopes[s_index]->scope_node_placeholder->verify_key = this;
 			}
 		}
 		solution->verify_key = this;

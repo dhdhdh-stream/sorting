@@ -105,12 +105,19 @@ void BranchExperiment::train_new_target_activate(
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
 			this->best_potential_scopes[s_index]->activate(problem,
 														   context,
 														   run_helper,
 														   potential_scope_node_history);
+			delete potential_scope_node_history;
+		} else {
+			PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+			this->best_existing_scopes[s_index]->activate(problem,
+														  context,
+														  run_helper,
+														  potential_scope_node_history);
 			delete potential_scope_node_history;
 		}
 	}
@@ -252,13 +259,20 @@ void BranchExperiment::train_new_non_target_activate(
 					exit_node,
 					run_helper,
 					action_node_history);
-			} else {
+			} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_potential_scopes[s_index]);
 				branch_experiment_history->step_histories.push_back(potential_scope_node_history);
 				this->best_potential_scopes[s_index]->activate(problem,
 															   context,
 															   run_helper,
 															   potential_scope_node_history);
+			} else {
+				PotentialScopeNodeHistory* potential_scope_node_history = new PotentialScopeNodeHistory(this->best_existing_scopes[s_index]);
+				branch_experiment_history->step_histories.push_back(potential_scope_node_history);
+				this->best_existing_scopes[s_index]->activate(problem,
+															  context,
+															  run_helper,
+															  potential_scope_node_history);
 			}
 		}
 
