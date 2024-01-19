@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
 	double sum_actions = 0.0;
 
 	for (int i_index = 0; i_index < 2000; i_index++) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 		run_helper.experiment_history = (AbstractExperimentHistory*)-1;

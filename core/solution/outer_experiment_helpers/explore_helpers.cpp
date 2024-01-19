@@ -99,17 +99,13 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				delete potential_scope_node_history;
 			} else {
 				PotentialScopeNode* new_existing_potential_scope_node = NULL;
-				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1 + problem->num_actions());
-				int existing_scope_index = distribution(generator);
-				if (existing_scope_index < (int)solution->scopes.size()) {
-					Scope* existing_scope = next(solution->scopes.begin(), existing_scope_index)->second;
-					if (existing_scope->parent_scope_nodes.size() > 0) {
-						uniform_int_distribution<int> parent_scope_node_distribution(0, existing_scope->parent_scope_nodes.size()-1);
-						new_existing_potential_scope_node = reuse_existing(
-							context,
-							1,
-							existing_scope->parent_scope_nodes[parent_scope_node_distribution(generator)]);
-					}
+				uniform_int_distribution<int> distribution(0, solution->scope_nodes.size()-1 + problem->num_actions());
+				int scope_node_index = distribution(generator);
+				if (scope_node_index < (int)solution->scope_nodes.size()) {
+					new_existing_potential_scope_node = reuse_existing(
+						context,
+						1,
+						solution->scope_nodes[scope_node_index]);
 				}
 				if (new_existing_potential_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
@@ -222,7 +218,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 					delete this->best_actions[s_index];
 				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					delete this->best_potential_scopes[s_index];
-				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 					this->best_existing_scopes[s_index]->scope = NULL;
 					delete this->best_existing_scopes[s_index];
 				} else {

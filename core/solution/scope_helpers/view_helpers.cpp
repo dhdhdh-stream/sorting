@@ -90,9 +90,9 @@ void Scope::view_activate(Problem* problem,
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (run_helper.has_exited
+				|| run_helper.exceeded_limit
 				|| exit_depth != -1
-				|| curr_node == NULL
-				|| run_helper.exceeded_limit) {
+				|| curr_node == NULL) {
 			break;
 		}
 

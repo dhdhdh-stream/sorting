@@ -26,6 +26,18 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												AbstractNode*& exit_node,
 												RunHelper& run_helper,
 												AbstractExperimentHistory*& history) {
+	#if defined(MDEBUG) && MDEBUG
+	/**
+	 * - set outside as well in case of exit
+	 */
+	if (this->branch_experiment->state == BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+		if (this->branch_experiment->verify_problems[this->branch_experiment->state_iter] == NULL) {
+			this->branch_experiment->verify_problems[this->branch_experiment->state_iter] = problem->copy_and_reset();
+		}
+		this->branch_experiment->verify_seeds[this->branch_experiment->state_iter] = run_helper.starting_run_seed;
+	}
+	#endif /* MDEBUG */
+
 	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
 	history = instance_history;
 
@@ -92,7 +104,7 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
 			if (this->best_exit_depth == 0) {
 				curr_node = this->best_exit_node;
@@ -120,7 +132,9 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 										  run_helper,
 										  instance_history->branch_experiment_history);
 
-		if (!run_helper.has_exited && exit_depth == -1) {
+		if (!run_helper.has_exited
+				&& !run_helper.exceeded_limit
+				&& exit_depth == -1) {
 			map<AbstractNode*, int>::iterator it = this->node_to_step_index.find(curr_node);
 			if (it != this->node_to_step_index.end()) {
 				for (int s_index = it->second; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -236,8 +250,10 @@ void PassThroughExperiment::experiment_backprop(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->best_actions[s_index]->action.move;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					cout << " S";
+				} else {
+					cout << " E";
 				}
 			}
 			cout << endl;
@@ -329,6 +345,14 @@ void PassThroughExperiment::experiment_backprop(
 					this->best_actions[s_index]->next_node_id = next_node->id;
 					this->best_actions[s_index]->next_node = next_node;
 				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+							it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_SCOPE) {
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							solution->scope_nodes.push_back(scope_node);
+						}
+					}
+
 					finalize_potential_scope(this->scope_context,
 											 this->node_context,
 											 this->best_potential_scopes[s_index],

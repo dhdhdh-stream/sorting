@@ -12,6 +12,7 @@ class AbstractExperiment;
 class AbstractNode;
 class OuterExperiment;
 class Scope;
+class ScopeNode;
 class State;
 
 #if defined(MDEBUG) && MDEBUG
@@ -42,6 +43,8 @@ public:
 
 	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
 	int depth_limit;
+
+	std::vector<ScopeNode*> scope_nodes;
 
 	int curr_num_datapoints;
 

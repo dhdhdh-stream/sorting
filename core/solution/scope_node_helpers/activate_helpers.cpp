@@ -73,7 +73,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 								run_helper,
 								inner_scope_history);
 
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 			if (inner_it != context.back().input_state_vals.end()) {
@@ -125,9 +125,9 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 
 	context.back().node = NULL;
 
-	if (inner_exit_depth == -1
+	if (!run_helper.has_exited
 			&& !run_helper.exceeded_limit
-			&& !run_helper.has_exited) {
+			&& inner_exit_depth == -1) {
 		curr_node = this->next_node;
 
 		if (this->experiment != NULL) {

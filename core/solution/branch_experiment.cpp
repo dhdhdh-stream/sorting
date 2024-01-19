@@ -63,6 +63,7 @@ BranchExperiment::~BranchExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
 		if (this->best_existing_scopes[s_index] != NULL) {
+			this->best_existing_scopes[s_index]->scope = NULL;
 			delete this->best_existing_scopes[s_index];
 		}
 	}

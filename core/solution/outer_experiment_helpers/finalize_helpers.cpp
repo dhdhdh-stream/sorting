@@ -72,6 +72,14 @@ void OuterExperiment::finalize() {
 			this->best_actions[s_index]->next_node_id = next_node_id;
 			this->best_actions[s_index]->next_node = next_node;
 		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+			for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+					it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_SCOPE) {
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					solution->scope_nodes.push_back(scope_node);
+				}
+			}
+
 			ScopeNode* new_scope_node = this->best_potential_scopes[s_index]->scope_node_placeholder;
 			this->best_potential_scopes[s_index]->scope_node_placeholder = NULL;
 			new_scope_node->parent = new_root_scope;
@@ -80,6 +88,8 @@ void OuterExperiment::finalize() {
 			solution->scopes[this->best_potential_scopes[s_index]->scope->id] = this->best_potential_scopes[s_index]->scope;
 			new_scope_node->inner_scope = this->best_potential_scopes[s_index]->scope;
 			this->best_potential_scopes[s_index]->scope = NULL;
+
+			solution->scope_nodes.push_back(new_scope_node);
 
 			for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
 				new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
@@ -103,7 +113,9 @@ void OuterExperiment::finalize() {
 			new_scope_node->inner_scope = this->best_existing_scopes[s_index]->scope;
 			this->best_existing_scopes[s_index]->scope = NULL;
 
-			for (int i_index = 0; i_index < (int)this->best_potential_scopes[s_index]->input_types.size(); i_index++) {
+			solution->scope_nodes.push_back(new_scope_node);
+
+			for (int i_index = 0; i_index < (int)this->best_existing_scopes[s_index]->input_types.size(); i_index++) {
 				new_scope_node->input_types.push_back(INPUT_TYPE_CONSTANT);
 				new_scope_node->input_inner_indexes.push_back(this->best_existing_scopes[s_index]->input_inner_indexes[i_index]);
 				new_scope_node->input_outer_is_local.push_back(false);
@@ -118,6 +130,8 @@ void OuterExperiment::finalize() {
 		} else {
 			this->best_root_scope_nodes[s_index]->parent = new_root_scope;
 			new_root_scope->nodes[this->best_root_scope_nodes[s_index]->id] = this->best_root_scope_nodes[s_index];
+
+			solution->scope_nodes.push_back(this->best_root_scope_nodes[s_index]);
 
 			this->best_root_scope_nodes[s_index]->next_node_id = next_node_id;
 			this->best_root_scope_nodes[s_index]->next_node = next_node;

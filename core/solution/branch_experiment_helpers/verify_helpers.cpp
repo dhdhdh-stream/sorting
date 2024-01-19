@@ -110,10 +110,17 @@ void BranchExperiment::verify_activate(
 
 	#if defined(MDEBUG) && MDEBUG
 	bool decision_is_branch;
-	if (run_helper.curr_run_seed%2 == 0) {
+	if (this->state_iter == 0) {
+		/**
+		 * - guard against is_pass_through infinite
+		 */
 		decision_is_branch = true;
 	} else {
-		decision_is_branch = false;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 	#else
@@ -242,8 +249,10 @@ void BranchExperiment::verify_backprop(double target_val,
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->best_actions[s_index]->action.move;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					cout << " S";
+				} else {
+					cout << " E";
 				}
 			}
 			cout << endl;

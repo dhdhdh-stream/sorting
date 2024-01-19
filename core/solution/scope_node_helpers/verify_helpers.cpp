@@ -107,7 +107,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 									   inner_exit_node,
 									   run_helper);
 
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		vector<double> output_state_vals;
 		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
@@ -126,11 +126,38 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		}
 
 		if (this->verify_key == run_helper.verify_key) {
+			if (inner_exit_depth != -1 || inner_exit_node != NULL) {
+				cout << "inner_exit_depth: " << inner_exit_depth << endl;
+				if (inner_exit_node != NULL) {
+					cout << "inner_exit_node->id: " << inner_exit_node->id << endl;
+				}
+
+				cout << "context scope" << endl;
+				for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+					cout << c_index << ": " << context[c_index].scope->id << endl;
+				}
+				cout << "context node" << endl;
+				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+					cout << c_index << ": " << context[c_index].node->id << endl;
+				}
+
+				throw invalid_argument("inner_exit_depth != -1 || inner_exit_node != NULL");
+			}
+
 			// problem->print();
 
 			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
 			// cout << "this->id: " << this->id << endl;
+
+			// cout << "context scope" << endl;
+			// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+			// }
+			// cout << "context node" << endl;
+			// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+			// 	cout << c_index << ": " << context[c_index].node->id << endl;
+			// }
 
 			sort(output_state_vals.begin(), output_state_vals.end());
 			sort(this->verify_output_state_vals[0].begin(), this->verify_output_state_vals[0].end());

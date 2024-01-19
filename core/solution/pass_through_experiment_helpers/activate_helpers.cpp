@@ -301,24 +301,28 @@ void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 }
 
 void PassThroughExperiment::back_activate(vector<ContextLayer>& context) {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		context[context.size() - this->scope_context.size()].temp_state_vals
-			.erase(this->new_states[s_index]);
-	}
-
-	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
+	if (this->new_states.size() > 0
+			|| (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT
+				&& this->branch_experiment->new_states.size() > 0)) {
+		for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
 			context[context.size() - this->scope_context.size()].temp_state_vals
-				.erase(this->branch_experiment->new_states[s_index]);
+				.erase(this->new_states[s_index]);
 		}
-	}
 
-	vector<int> scope_context;
-	vector<int> node_context;
-	back_activate_helper(scope_context,
-						 node_context,
-						 context[context.size() - this->scope_context.size()].temp_state_vals,
-						 context[context.size() - this->scope_context.size()].scope_history);
+		if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
+			for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
+				context[context.size() - this->scope_context.size()].temp_state_vals
+					.erase(this->branch_experiment->new_states[s_index]);
+			}
+		}
+
+		vector<int> scope_context;
+		vector<int> node_context;
+		back_activate_helper(scope_context,
+							 node_context,
+							 context[context.size() - this->scope_context.size()].temp_state_vals,
+							 context[context.size() - this->scope_context.size()].scope_history);
+	}
 }
 
 void PassThroughExperiment::unhook() {

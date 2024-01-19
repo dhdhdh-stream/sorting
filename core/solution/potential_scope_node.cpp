@@ -30,7 +30,7 @@ void PotentialScopeNode::activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
 								  PotentialScopeNodeHistory* history) {
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		map<int, StateStatus> input_state_vals;
 		for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 			if (this->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -89,7 +89,7 @@ void PotentialScopeNode::activate(Problem* problem,
 
 		ScopeHistory* scope_history = new ScopeHistory(this->scope);
 		history->scope_history = scope_history;
-		// no need to set context.back().scope_history
+		context.back().scope_history = scope_history;
 
 		// unused
 		int inner_exit_depth = -1;
@@ -102,7 +102,7 @@ void PotentialScopeNode::activate(Problem* problem,
 							  run_helper,
 							  scope_history);
 
-		if (!run_helper.has_exited) {
+		if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 			for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 				if (inner_it != context.back().input_state_vals.end()) {
@@ -129,7 +129,7 @@ void PotentialScopeNode::activate(Problem* problem,
 void PotentialScopeNode::capture_verify_activate(Problem* problem,
 												 vector<ContextLayer>& context,
 												 RunHelper& run_helper) {
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		// cout << "this->scope_node_placeholder->id: " << this->scope_node_placeholder->id << endl;
 
 		// problem->print();
@@ -186,11 +186,13 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 
 		context.back().input_state_vals = input_state_vals;
 
+		ScopeHistory* scope_history = new ScopeHistory(this->scope);
+		context.back().scope_history = scope_history;
+
 		// unused
 		int inner_exit_depth = -1;
 		AbstractNode* inner_exit_node = NULL;
 
-		ScopeHistory* scope_history = new ScopeHistory(this->scope);
 		this->scope->activate(problem,
 							  context,
 							  inner_exit_depth,
@@ -200,7 +202,7 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 		delete scope_history;
 
 		vector<double> output_state_vals;
-		if (!run_helper.has_exited) {
+		if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 			for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 				if (inner_it != context.back().input_state_vals.end()) {
@@ -223,7 +225,7 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 
 		context.back().node = NULL;
 
-		if (!run_helper.has_exited) {
+		if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 			// cout << "this->scope_node_placeholder->id: " << this->scope_node_placeholder->id << endl;
 
 			// problem->print();
@@ -231,6 +233,17 @@ void PotentialScopeNode::capture_verify_activate(Problem* problem,
 			// cout << "solution->max_depth: " << solution->max_depth << endl;
 
 			// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
+			// cout << "context scope" << endl;
+			// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+			// 	if (context[c_index].scope != NULL) {
+			// 		cout << c_index << ": " << context[c_index].scope->id << endl;
+			// 	}
+			// }
+			// cout << "context node" << endl;
+			// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+			// 	cout << c_index << ": " << context[c_index].node->id << endl;
+			// }
 
 			for (set<State*>::iterator it = this->used_experiment_states.begin();
 					it != this->used_experiment_states.end(); it++) {

@@ -60,7 +60,7 @@ void ScopeNode::view_activate(AbstractNode*& curr_node,
 									 inner_exit_node,
 									 run_helper);
 
-	if (!run_helper.has_exited) {
+	if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 		for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 			map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 			if (inner_it != context.back().input_state_vals.end()) {

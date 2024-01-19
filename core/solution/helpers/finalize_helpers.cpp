@@ -380,7 +380,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 	new_scope_node->inner_scope = potential_scope_node->scope;
 	potential_scope_node->scope = NULL;
 
-	new_scope_node->inner_scope->parent_scope_nodes.push_back(new_scope_node);
+	solution->scope_nodes.push_back(new_scope_node);
 
 	for (int i_index = 0; i_index < (int)potential_scope_node->input_types.size(); i_index++) {
 		if (potential_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
@@ -400,7 +400,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 				if (input_it != input_scope_depths_mappings.end()) {
 					new_state_index = input_it->second;
 				} else {
-					int state_id = new_scope_node->inner_scope->original_local_state_ids[
+					int state_id = new_scope_node->inner_scope->original_input_state_ids[
 						potential_scope_node->input_inner_indexes[i_index]];
 
 					add_new_input(experiment_scope_context,
@@ -458,7 +458,7 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 
 					new_state_index = input_it->second;
 				} else {
-					int state_id = new_scope_node->inner_scope->original_local_state_ids[
+					int state_id = new_scope_node->inner_scope->original_input_state_ids[
 						potential_scope_node->output_inner_indexes[o_index]];
 
 					add_new_output(experiment_scope_context,

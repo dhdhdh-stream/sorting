@@ -17,6 +17,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int MIN_SAMPLES_NEEDED = 5;
+#else
+const int MIN_SAMPLES_NEEDED = 100;
+#endif /* MDEBUG */
+
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
@@ -70,7 +76,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
 		if (this->parent_pass_through_experiment != NULL
-				&& this->i_scope_histories.size() == 0) {
+				&& this->i_scope_histories.size() < MIN_SAMPLES_NEEDED) {
 			cout << "Branch not reachable" << endl;
 			this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 			return;

@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

@@ -6,9 +6,6 @@
  * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
 
-// TODO: try limiting number of scopes
-// - so can focus more strongly on ones that already exist
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -71,8 +68,8 @@ int main(int argc, char* argv[]) {
 	int iter_index = 0;
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

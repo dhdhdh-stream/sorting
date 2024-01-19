@@ -128,6 +128,8 @@ void OuterExperiment::verify_new_score_backprop(double target_val) {
 					cout << " " << this->best_actions[s_index]->action.move;
 				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 					cout << " S";
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					cout << " E";
 				} else {
 					cout << " R";
 				}

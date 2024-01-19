@@ -155,8 +155,10 @@ void PassThroughExperiment::verify_new_score_backprop(
 					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 							cout << " " << this->best_actions[s_index]->action.move;
-						} else {
+						} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
 							cout << " S";
+						} else {
+							cout << " E";
 						}
 					}
 					cout << endl;

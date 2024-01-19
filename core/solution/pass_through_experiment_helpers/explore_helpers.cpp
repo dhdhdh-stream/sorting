@@ -97,17 +97,13 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 				delete potential_scope_node_history;
 			} else {
 				PotentialScopeNode* new_existing_potential_scope_node = NULL;
-				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1 + problem->num_actions());
-				int existing_scope_index = distribution(generator);
-				if (existing_scope_index < (int)solution->scopes.size()) {
-					Scope* existing_scope = next(solution->scopes.begin(), existing_scope_index)->second;
-					if (existing_scope->parent_scope_nodes.size() > 0) {
-						uniform_int_distribution<int> parent_scope_node_distribution(0, existing_scope->parent_scope_nodes.size()-1);
-						new_existing_potential_scope_node = reuse_existing(
-							context,
-							(int)this->scope_context.size(),
-							existing_scope->parent_scope_nodes[parent_scope_node_distribution(generator)]);
-					}
+				uniform_int_distribution<int> distribution(0, solution->scope_nodes.size()-1 + problem->num_actions());
+				int scope_node_index = distribution(generator);
+				if (scope_node_index < (int)solution->scope_nodes.size()) {
+					new_existing_potential_scope_node = reuse_existing(
+						context,
+						(int)this->scope_context.size(),
+						solution->scope_nodes[scope_node_index]);
 				}
 				if (new_existing_potential_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);

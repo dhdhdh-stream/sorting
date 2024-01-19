@@ -191,17 +191,19 @@ void BranchExperiment::back_activate_helper(vector<int>& scope_context,
 }
 
 void BranchExperiment::back_activate(vector<ContextLayer>& context) {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		context[context.size() - this->scope_context.size()].temp_state_vals
-			.erase(this->new_states[s_index]);
-	}
+	if (this->new_states.size() > 0) {
+		for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
+			context[context.size() - this->scope_context.size()].temp_state_vals
+				.erase(this->new_states[s_index]);
+		}
 
-	vector<int> scope_context;
-	vector<int> node_context;
-	back_activate_helper(scope_context,
-						 node_context,
-						 context[context.size() - this->scope_context.size()].temp_state_vals,
-						 context[context.size() - this->scope_context.size()].scope_history);
+		vector<int> scope_context;
+		vector<int> node_context;
+		back_activate_helper(scope_context,
+							 node_context,
+							 context[context.size() - this->scope_context.size()].temp_state_vals,
+							 context[context.size() - this->scope_context.size()].scope_history);
+	}
 }
 
 void BranchExperiment::unhook() {
