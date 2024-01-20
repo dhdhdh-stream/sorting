@@ -98,13 +98,15 @@ void PassThroughExperiment::score_finalize() {
 			this->best_actions[s_index]->next_node_id = next_node->id;
 			this->best_actions[s_index]->next_node = next_node;
 		} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
-					it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_SCOPE) {
-					ScopeNode* scope_node = (ScopeNode*)it->second;
-					solution->scope_nodes.push_back(scope_node);
-				}
-			}
+			// for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+			// 		it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+			// 	if (it->second->type == NODE_TYPE_SCOPE) {
+			// 		ScopeNode* scope_node = (ScopeNode*)it->second;
+			// 		scope_node->inner_scope->parent_scope_node_parent_ids.push_back(scope_node->parent->id);
+			// 		scope_node->inner_scope->parent_scope_node_ids.push_back(scope_node->id);
+			// 		scope_node->inner_scope->parent_scope_nodes.push_back(scope_node);
+			// 	}
+			// }
 
 			finalize_potential_scope(this->scope_context,
 									 this->node_context,

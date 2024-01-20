@@ -4,13 +4,42 @@
 #include "potential_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
-PotentialScopeNode* reuse_existing(vector<ContextLayer>& context,
-								   int explore_context_depth,
-								   ScopeNode* existing_scope_node) {
-	Scope* existing_scope = existing_scope_node->inner_scope;
+PotentialScopeNode* reuse_existing(Problem* problem,
+								   vector<ContextLayer>& context,
+								   int explore_context_depth) {
+	double sum_probabilities = problem->num_actions();
+	for (map<int, Scope*>::iterator it = solution->scopes.begin();
+			it != solution->scopes.end(); it++) {
+		if (it->second->parent_scope_nodes.size() > 0) {
+			sum_probabilities += sqrt(it->second->parent_scope_nodes.size());
+		}
+	}
+
+	uniform_real_distribution<double> scope_distribution(0.0, sum_probabilities);
+	double random_probability = scope_distribution(generator);
+	if (random_probability < problem->num_actions()) {
+		return NULL;
+	}
+	random_probability -= problem->num_actions();
+
+	Scope* existing_scope;
+	for (map<int, Scope*>::iterator it = solution->scopes.begin();
+			it != solution->scopes.end(); it++) {
+		if (it->second->parent_scope_nodes.size() > 0) {
+			random_probability -= sqrt(it->second->parent_scope_nodes.size());
+			if (random_probability <= 0.0) {
+				existing_scope = it->second;
+				break;
+			}
+		}
+	}
+
+	uniform_int_distribution<int> parent_scope_node_distribution(0, existing_scope->parent_scope_nodes.size()-1);
+	ScopeNode* existing_scope_node = existing_scope->parent_scope_nodes[parent_scope_node_distribution(generator)];
 
 	PotentialScopeNode* new_potential_scope_node = new PotentialScopeNode();
 	new_potential_scope_node->scope = existing_scope;

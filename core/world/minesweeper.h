@@ -1,6 +1,3 @@
-// TODO: try bigger problem
-// - may force to generalize more
-
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 
@@ -17,13 +14,13 @@ const int MINESWEEPER_ACTION_FLAG = 5;
 
 class Minesweeper : public Problem {
 public:
+	int world_size;
+
 	std::vector<std::vector<int>> world;
 	std::vector<std::vector<bool>> revealed;
 	std::vector<std::vector<bool>> flagged;
 	int current_x;
 	int current_y;
-
-	int num_correct;
 
 	bool ended;
 
@@ -39,6 +36,9 @@ public:
 	Problem* copy_and_reset();
 
 	void print();
+
+private:
+	void reveal_helper(int x, int y);
 };
 
 #endif /* MINESWEEPER_H */

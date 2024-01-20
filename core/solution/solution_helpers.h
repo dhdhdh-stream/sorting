@@ -13,6 +13,7 @@ class BranchExperiment;
 class BranchNode;
 class PassThroughExperiment;
 class PotentialScopeNode;
+class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
@@ -20,9 +21,9 @@ class State;
 
 void create_experiment(ScopeHistory* root_history);
 
-PotentialScopeNode* reuse_existing(std::vector<ContextLayer>& context,
-								   int explore_context_depth,
-								   ScopeNode* existing_scope_node);
+PotentialScopeNode* reuse_existing(Problem* problem,
+								   std::vector<ContextLayer>& context,
+								   int explore_context_depth);
 PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
 								 int explore_context_depth,
 								 Scope* parent_scope);

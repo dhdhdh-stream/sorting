@@ -246,15 +246,10 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 													   potential_scope_node_history);
 					delete potential_scope_node_history;
 				} else {
-					PotentialScopeNode* new_existing_potential_scope_node = NULL;
-					uniform_int_distribution<int> distribution(0, solution->scope_nodes.size()-1 + problem->num_actions());
-					int scope_node_index = distribution(generator);
-					if (scope_node_index < (int)solution->scope_nodes.size()) {
-						new_existing_potential_scope_node = reuse_existing(
-							context,
-							(int)this->scope_context.size(),
-							solution->scope_nodes[scope_node_index]);
-					}
+					PotentialScopeNode* new_existing_potential_scope_node = reuse_existing(
+						problem,
+						context,
+						(int)this->scope_context.size());
 					if (new_existing_potential_scope_node != NULL) {
 						this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 						this->curr_actions.push_back(NULL);

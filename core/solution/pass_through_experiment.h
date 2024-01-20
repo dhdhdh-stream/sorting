@@ -1,3 +1,13 @@
+/**
+ * - what's needed isn't even just sequences, but instead:
+ *   - perform sequence, then:
+ *     - if A, do X
+ *     - if B, do Y
+ *     - etc.
+ * 
+ * TODO: multiple branch experiments off one passthrough
+ */
+
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 

@@ -138,8 +138,6 @@ void ScopeNode::link() {
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
 	}
-
-	solution->scope_nodes.push_back(this);
 }
 
 void ScopeNode::save_for_display(ofstream& output_file) {

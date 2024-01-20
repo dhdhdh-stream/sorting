@@ -128,6 +128,12 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->starting_node_id << endl;
+
+	output_file << this->parent_scope_nodes.size() << endl;
+	for (int p_index = 0; p_index < (int)this->parent_scope_nodes.size(); p_index++) {
+		output_file << this->parent_scope_node_parent_ids[p_index] << endl;
+		output_file << this->parent_scope_node_ids[p_index] << endl;
+	}
 }
 
 void Scope::load(ifstream& input_file) {
@@ -194,6 +200,19 @@ void Scope::load(ifstream& input_file) {
 	string starting_node_id_line;
 	getline(input_file, starting_node_id_line);
 	this->starting_node_id = stoi(starting_node_id_line);
+
+	string parent_scope_nodes_size_line;
+	getline(input_file, parent_scope_nodes_size_line);
+	int parent_scope_nodes_size = stoi(parent_scope_nodes_size_line);
+	for (int p_index = 0; p_index < parent_scope_nodes_size; p_index++) {
+		string parent_id_line;
+		getline(input_file, parent_id_line);
+		this->parent_scope_node_parent_ids.push_back(stoi(parent_id_line));
+
+		string id_line;
+		getline(input_file, id_line);
+		this->parent_scope_node_ids.push_back(stoi(id_line));
+	}
 }
 
 void Scope::link() {
@@ -203,6 +222,12 @@ void Scope::link() {
 	}
 
 	this->starting_node = this->nodes[this->starting_node_id];
+
+	for (int p_index = 0; p_index < (int)this->parent_scope_node_parent_ids.size(); p_index++) {
+		Scope* scope = solution->scopes[this->parent_scope_node_parent_ids[p_index]];
+		ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->parent_scope_node_ids[p_index]];
+		this->parent_scope_nodes.push_back(scope_node);
+	}
 }
 
 void Scope::save_for_display(ofstream& output_file) {
