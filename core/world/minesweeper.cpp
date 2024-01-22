@@ -237,7 +237,7 @@ double Minesweeper::score_result(int num_actions) {
 		}
 	}
 
-	return num_correct/10.0;
+	return (num_correct - 0.01*num_actions) / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
 }
 
 Problem* Minesweeper::copy_and_reset() {

@@ -15,7 +15,8 @@ PotentialScopeNode* reuse_existing(Problem* problem,
 	for (map<int, Scope*>::iterator it = solution->scopes.begin();
 			it != solution->scopes.end(); it++) {
 		if (it->second->parent_scope_nodes.size() > 0) {
-			sum_probabilities += sqrt(it->second->parent_scope_nodes.size());
+			// sum_probabilities += sqrt(it->second->parent_scope_nodes.size());
+			sum_probabilities += 1.0;
 		}
 	}
 
@@ -30,7 +31,8 @@ PotentialScopeNode* reuse_existing(Problem* problem,
 	for (map<int, Scope*>::iterator it = solution->scopes.begin();
 			it != solution->scopes.end(); it++) {
 		if (it->second->parent_scope_nodes.size() > 0) {
-			random_probability -= sqrt(it->second->parent_scope_nodes.size());
+			// random_probability -= sqrt(it->second->parent_scope_nodes.size());
+			random_probability -= 1.0;
 			if (random_probability <= 0.0) {
 				existing_scope = it->second;
 				break;

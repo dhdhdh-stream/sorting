@@ -37,14 +37,14 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 							  this->scope_context,
 							  this->node_context);
 
-		
 		if (possible_exits.size() == 0) {
 			this->curr_is_exit = true;
 			this->curr_exit_depth = 0;
 			this->curr_exit_node = NULL;
 		} else {
 			uniform_int_distribution<int> exit_distribution(0, 3);
-			this->curr_is_exit = (exit_distribution(generator) == 0);
+			// this->curr_is_exit = (exit_distribution(generator) == 0);
+			this->curr_is_exit = false;
 			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 			int random_index = distribution(generator);
 			this->curr_exit_depth = possible_exits[random_index].first;

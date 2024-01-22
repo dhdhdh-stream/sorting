@@ -1,3 +1,10 @@
+// TODO: need recursion to explore deep enough
+// - and need world modeling to avoid bad tries
+
+// - when world modeling, need to classify contexts
+//   - then actions take in state + context, and return state + context
+//     - yeah, divide state into state + context
+
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
