@@ -140,8 +140,10 @@ public:
 	void back_activate_helper(std::vector<int>& scope_context,
 							  std::vector<int>& node_context,
 							  std::map<State*, StateStatus>& temp_state_vals,
-							  ScopeHistory* scope_history);
-	void back_activate(std::vector<ContextLayer>& context);
+							  ScopeHistory* scope_history,
+							  RunHelper& run_helper);
+	void back_activate(std::vector<ContextLayer>& context,
+					   RunHelper& run_helper);
 	void unhook();
 	void backprop(double target_val,
 				  RunHelper& run_helper,

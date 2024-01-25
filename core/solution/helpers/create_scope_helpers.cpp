@@ -811,6 +811,16 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 		new_starting_node = start_node_mappings.back()[start_node_context.back()].second;
 	}
 
+	/**
+	 * - edge case where inner scope exits to a node that's no longer reachable outside
+	 */
+	if (new_starting_node == NULL) {
+		delete new_scope;
+		delete new_potential_scope_node;
+
+		return NULL;
+	}
+
 	// TODO: if starting is already NOOP, don't need to add another
 	ActionNode* new_noop_action_node = new ActionNode();
 	new_noop_action_node->parent = new_scope;

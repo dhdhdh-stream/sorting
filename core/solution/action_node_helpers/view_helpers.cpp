@@ -19,9 +19,6 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 							   AbstractNode*& exit_node,
 							   RunHelper& run_helper) {
 	problem->perform_action(this->action);
-	if (this->action.move != ACTION_NOOP) {
-		run_helper.num_actions++;
-	}
 	double obs_snapshot = problem->get_observation();
 
 	cout << "action node #" << this->id << endl;
@@ -43,6 +40,7 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 				state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 										it->second);
 			}
+			run_helper.num_process++;
 			state_snapshots[n_index] = it->second.val;
 			cout << "local state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 		} else {
@@ -56,6 +54,7 @@ void ActionNode::view_activate(AbstractNode*& curr_node,
 					state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 											it->second);
 				}
+				run_helper.num_process++;
 				state_snapshots[n_index] = it->second.val;
 				cout << "input state #" << this->state_indexes[n_index] << ": " << it->second.val << endl;
 			}

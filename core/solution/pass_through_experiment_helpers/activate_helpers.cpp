@@ -51,7 +51,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				PassThroughExperimentOverallHistory* overall_history = new PassThroughExperimentOverallHistory(this);
 				run_helper.experiment_history = overall_history;
 
-				back_activate(context);
+				back_activate(context,
+							  run_helper);
 
 				switch (this->state) {
 				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
@@ -157,7 +158,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 		}
 
 		if (matches_context) {
-			back_activate(context);
+			back_activate(context,
+						  run_helper);
 
 			switch (this->state) {
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
@@ -266,7 +268,8 @@ void PassThroughExperiment::hook() {
 void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 												 vector<int>& node_context,
 												 map<State*, StateStatus>& temp_state_vals,
-												 ScopeHistory* scope_history) {
+												 ScopeHistory* scope_history,
+												 RunHelper& run_helper) {
 	int scope_id = scope_history->scope->id;
 
 	scope_context.push_back(scope_id);
@@ -280,6 +283,7 @@ void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 			action_node->experiment_back_activate(scope_context,
 												  node_context,
 												  temp_state_vals,
+												  run_helper,
 												  action_node_history);
 		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
@@ -290,7 +294,8 @@ void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 			back_activate_helper(scope_context,
 								 node_context,
 								 temp_state_vals,
-								 scope_node_history->inner_scope_history);
+								 scope_node_history->inner_scope_history,
+								 run_helper);
 
 			node_context.back() = -1;
 		}
@@ -300,7 +305,8 @@ void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
 	node_context.pop_back();
 }
 
-void PassThroughExperiment::back_activate(vector<ContextLayer>& context) {
+void PassThroughExperiment::back_activate(vector<ContextLayer>& context,
+										  RunHelper& run_helper) {
 	if (this->new_states.size() > 0
 			|| (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT
 				&& this->branch_experiment->new_states.size() > 0)) {
@@ -321,7 +327,8 @@ void PassThroughExperiment::back_activate(vector<ContextLayer>& context) {
 		back_activate_helper(scope_context,
 							 node_context,
 							 context[context.size() - this->scope_context.size()].temp_state_vals,
-							 context[context.size() - this->scope_context.size()].scope_history);
+							 context[context.size() - this->scope_context.size()].scope_history,
+							 run_helper);
 	}
 }
 

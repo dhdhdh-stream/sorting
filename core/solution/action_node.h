@@ -84,6 +84,7 @@ public:
 	void experiment_back_activate(std::vector<int>& scope_context,
 								  std::vector<int>& node_context,
 								  std::map<State*, StateStatus>& temp_state_vals,
+								  RunHelper& run_helper,
 								  ActionNodeHistory* history);
 
 	void view_activate(AbstractNode*& curr_node,

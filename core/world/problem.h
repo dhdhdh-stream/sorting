@@ -17,7 +17,7 @@ public:
 
 	virtual double get_observation() = 0;
 	virtual void perform_action(Action action) = 0;
-	virtual double score_result(int num_actions) = 0;
+	virtual double score_result(int num_process) = 0;
 
 	virtual Problem* copy_and_reset() = 0;
 

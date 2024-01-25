@@ -11,33 +11,18 @@ using namespace std;
 PotentialScopeNode* reuse_existing(Problem* problem,
 								   vector<ContextLayer>& context,
 								   int explore_context_depth) {
-	double sum_probabilities = problem->num_actions();
-	for (map<int, Scope*>::iterator it = solution->scopes.begin();
-			it != solution->scopes.end(); it++) {
-		if (it->second->parent_scope_nodes.size() > 0) {
-			// sum_probabilities += sqrt(it->second->parent_scope_nodes.size());
-			sum_probabilities += 1.0;
-		}
-	}
-
-	uniform_real_distribution<double> scope_distribution(0.0, sum_probabilities);
-	double random_probability = scope_distribution(generator);
-	if (random_probability < problem->num_actions()) {
+	/**
+	 * - even distribution
+	 */
+	uniform_int_distribution<int> scope_distribution(0, (int)solution->scopes.size() + problem->num_actions() - 1);
+	int scope_index = scope_distribution(generator);
+	if (scope_index > (int)solution->scopes.size()-1) {
 		return NULL;
 	}
-	random_probability -= problem->num_actions();
 
-	Scope* existing_scope;
-	for (map<int, Scope*>::iterator it = solution->scopes.begin();
-			it != solution->scopes.end(); it++) {
-		if (it->second->parent_scope_nodes.size() > 0) {
-			// random_probability -= sqrt(it->second->parent_scope_nodes.size());
-			random_probability -= 1.0;
-			if (random_probability <= 0.0) {
-				existing_scope = it->second;
-				break;
-			}
-		}
+	Scope* existing_scope = next(solution->scopes.begin(), scope_index)->second;
+	if (existing_scope->parent_scope_nodes.size() == 0) {
+		return NULL;
 	}
 
 	uniform_int_distribution<int> parent_scope_node_distribution(0, existing_scope->parent_scope_nodes.size()-1);

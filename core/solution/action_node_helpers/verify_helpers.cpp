@@ -24,9 +24,6 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 								 AbstractNode*& exit_node,
 								 RunHelper& run_helper) {
 	problem->perform_action(this->action);
-	if (this->action.move != ACTION_NOOP) {
-		run_helper.num_actions++;
-	}
 	double obs_snapshot = problem->get_observation();
 
 	vector<double> state_snapshots(this->state_is_local.size(), 0.0);
@@ -44,6 +41,7 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 				state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 										it->second);
 			}
+			run_helper.num_process++;
 			state_snapshots[n_index] = it->second.val;
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
@@ -56,6 +54,7 @@ void ActionNode::verify_activate(AbstractNode*& curr_node,
 					state_network->activate(state_snapshots[this->state_obs_indexes[n_index]],
 											it->second);
 				}
+				run_helper.num_process++;
 				state_snapshots[n_index] = it->second.val;
 			}
 		}

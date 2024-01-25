@@ -221,7 +221,7 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result(int num_actions) {
+double Minesweeper::score_result(int num_process) {
 	int num_correct = 0;
 	for (int x_index = 0; x_index < WORLD_SIZES[this->world_size][WIDTH]; x_index++) {
 		for (int y_index = 0; y_index < WORLD_SIZES[this->world_size][HEIGHT]; y_index++) {
@@ -237,7 +237,7 @@ double Minesweeper::score_result(int num_actions) {
 		}
 	}
 
-	return (num_correct - 0.01*num_actions) / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
+	return (num_correct - 0.01*num_process) / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
 }
 
 Problem* Minesweeper::copy_and_reset() {

@@ -9,7 +9,7 @@ class AbstractExperimentHistory;
 
 class RunHelper {
 public:
-	int num_actions;
+	int num_process;
 
 	int curr_depth;
 	int max_depth;
@@ -35,7 +35,7 @@ public:
 	#endif /* MDEBUG */
 
 	RunHelper() {
-		this->num_actions = 0;
+		this->num_process = 0;
 
 		this->curr_depth = 0;
 		this->max_depth = 0;

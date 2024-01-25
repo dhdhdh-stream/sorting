@@ -71,6 +71,7 @@ void ActionNode::rnn_vals_back_activate(vector<int>& scope_context,
 void ActionNode::experiment_back_activate(vector<int>& scope_context,
 										  vector<int>& node_context,
 										  map<State*, StateStatus>& temp_state_vals,
+										  RunHelper& run_helper,
 										  ActionNodeHistory* history) {
 	for (int n_index = 0; n_index < (int)this->experiment_state_defs.size(); n_index++) {
 		bool matches_context = true;
@@ -103,6 +104,7 @@ void ActionNode::experiment_back_activate(vector<int>& scope_context,
 				state_network->activate(history->state_snapshots[this->experiment_state_obs_indexes[n_index]],
 										it->second);
 			}
+			run_helper.num_process++;
 		}
 	}
 }

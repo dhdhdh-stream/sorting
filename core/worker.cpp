@@ -2,8 +2,6 @@
  * - TODO: to parallelize further:
  *   - have new instances that don't sync, but draw from existing
  *     - initially, they may be much worse, but if they ever become better, swap to
- * 
- * - though as solution becomes more mature and more difficult to make progress, simple parallelization works
  */
 
 #include <chrono>
@@ -113,7 +111,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_actions);
+			target_val = problem->score_result(run_helper.num_process);
 		} else {
 			target_val = -1.0;
 		}

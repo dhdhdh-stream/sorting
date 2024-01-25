@@ -62,12 +62,12 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_actions);
+			target_val = problem->score_result(run_helper.num_process);
 		} else {
 			target_val = -1.0;
 		}
 		sum_vals += target_val;
-		sum_actions += run_helper.num_actions;
+		sum_actions += run_helper.num_process;
 
 		delete root_history;
 
