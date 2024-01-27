@@ -325,7 +325,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 				this->state = OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
-				cout << "Outer explore fail" << endl;
+				// cout << "Outer explore fail" << endl;
 				this->state = OUTER_EXPERIMENT_STATE_FAIL;
 			}
 

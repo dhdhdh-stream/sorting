@@ -40,7 +40,7 @@ const int RNN_ITERS = 300000;
  */
 const int OBS_LIMIT = 4;
 
-const double MIN_IMPACT_SCALE = 0.3;
+const double MIN_IMPACT_SCALE = 0.1;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
@@ -1067,8 +1067,7 @@ void existing_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	// if (improvement_t_score > 1.645) {	// >95%
-	if (improvement_t_score > 1.282) {	// >95%
+	if (improvement_t_score > 1.282) {	// >90%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;
 
@@ -1283,7 +1282,6 @@ void new_obs_experiment(AbstractExperiment* experiment,
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	// if (improvement_t_score > 1.645) {	// >95%
 	if (improvement_t_score > 1.282) {	// >90%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;
@@ -1495,7 +1493,6 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
 	// cout << "improvement_t_score: " << improvement_t_score << endl;
 
-	// if (improvement_t_score > 1.645) {	// >95%
 	if (improvement_t_score > 1.282) {	// >90%
 	#endif /* MDEBUG */
 		// cout << "obs success" << endl;

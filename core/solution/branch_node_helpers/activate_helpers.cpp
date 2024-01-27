@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "state_network.h"
 #include "globals.h"
+#include "potential_scope_node.h"
 #include "retrain_branch_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -80,26 +81,22 @@ void BranchNode::activate(AbstractNode*& curr_node,
 						}
 
 						if (this->is_potential) {
-							map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = it->second.impacted_potential_scopes.find(this->parent);
-							if (scope_it == it->second.impacted_potential_scopes.end()) {
-								it->second.impacted_potential_scopes[this->parent] = {
-									set<int>(),
-									set<int>({this->decision_state_indexes[s_index]})
-								};
-							} else {
-								scope_it->second.second.insert(this->decision_state_indexes[s_index]);
-							}
+							it->second.involved_local.insert(this->decision_state_indexes[s_index]);
 						}
 
-						for (map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
-								scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
-							for (set<int>::iterator index_it = scope_it->second.first.begin();
-									index_it != scope_it->second.first.end(); index_it++) {
-								scope_it->first->used_input_states[*index_it] = true;
-							}
-							for (set<int>::iterator index_it = scope_it->second.second.begin();
-									index_it != scope_it->second.second.end(); index_it++) {
-								scope_it->first->used_local_states[*index_it] = true;
+						for (set<int>::iterator index_it = it->second.involved_input.begin();
+								index_it != it->second.involved_input.end(); index_it++) {
+							run_helper.curr_potential_scope->used_input_states[*index_it] = true;
+						}
+						for (set<int>::iterator index_it = it->second.involved_local.begin();
+								index_it != it->second.involved_local.end(); index_it++) {
+							run_helper.curr_potential_scope->used_local_states[*index_it] = true;
+						}
+						for (map<PotentialScopeNode*, set<int>>::iterator potential_it = it->second.involved_output.begin();
+								potential_it != it->second.involved_output.end(); potential_it++) {
+							for (set<int>::iterator index_it = potential_it->second.begin();
+									index_it != potential_it->second.end(); index_it++) {
+								potential_it->first->used_outputs[*index_it] = true;
 							}
 						}
 					}
@@ -114,26 +111,22 @@ void BranchNode::activate(AbstractNode*& curr_node,
 							branch_score += this->decision_branch_weights[s_index] * normalized;
 
 							if (this->is_potential) {
-								map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = it->second.impacted_potential_scopes.find(this->parent);
-								if (scope_it == it->second.impacted_potential_scopes.end()) {
-									it->second.impacted_potential_scopes[this->parent] = {
-										set<int>({this->decision_state_indexes[s_index]}),
-										set<int>()
-									};
-								} else {
-									scope_it->second.first.insert(this->decision_state_indexes[s_index]);
-								}
+								it->second.involved_input.insert(this->decision_state_indexes[s_index]);
 							}
 
-							for (map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = it->second.impacted_potential_scopes.begin();
-									scope_it != it->second.impacted_potential_scopes.end(); scope_it++) {
-								for (set<int>::iterator index_it = scope_it->second.first.begin();
-										index_it != scope_it->second.first.end(); index_it++) {
-									scope_it->first->used_input_states[*index_it] = true;
-								}
-								for (set<int>::iterator index_it = scope_it->second.second.begin();
-										index_it != scope_it->second.second.end(); index_it++) {
-									scope_it->first->used_local_states[*index_it] = true;
+							for (set<int>::iterator index_it = it->second.involved_input.begin();
+									index_it != it->second.involved_input.end(); index_it++) {
+								run_helper.curr_potential_scope->used_input_states[*index_it] = true;
+							}
+							for (set<int>::iterator index_it = it->second.involved_local.begin();
+									index_it != it->second.involved_local.end(); index_it++) {
+								run_helper.curr_potential_scope->used_local_states[*index_it] = true;
+							}
+							for (map<PotentialScopeNode*, set<int>>::iterator potential_it = it->second.involved_output.begin();
+									potential_it != it->second.involved_output.end(); potential_it++) {
+								for (set<int>::iterator index_it = potential_it->second.begin();
+										index_it != potential_it->second.end(); index_it++) {
+									potential_it->first->used_outputs[*index_it] = true;
 								}
 							}
 						} else {

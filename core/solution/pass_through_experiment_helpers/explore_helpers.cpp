@@ -339,7 +339,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE;
 				this->state_iter = 0;
 			} else {
-				cout << "PassThrough explore fail" << endl;
+				// cout << "PassThrough explore fail" << endl;
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}

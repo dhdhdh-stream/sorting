@@ -17,6 +17,12 @@ using namespace std;
 void clean_state(PotentialScopeNode* potential_scope_node) {
 	Scope* scope = potential_scope_node->scope;
 
+	for (int o_index = 0; o_index < (int)potential_scope_node->output_inner_indexes.size(); o_index++) {
+		if (potential_scope_node->used_outputs[o_index]) {
+			scope->used_input_states[potential_scope_node->output_inner_indexes[o_index]] = true;
+		}
+	}
+
 	int new_num_input_states = 0;
 	vector<int> new_original_input_state_ids;
 	int new_num_local_states = 0;
@@ -224,13 +230,10 @@ void clean_state(PotentialScopeNode* potential_scope_node) {
 			}
 		}
 
-		/**
-		 * - TODO: potentially track output impact separately to remove separately
-		 */
 		for (int o_index = 0; o_index < (int)potential_scope_node->output_inner_indexes.size(); o_index++) {
 			int new_state_index = input_mappings[potential_scope_node->output_inner_indexes[o_index]];
 
-			if (new_state_index != -1) {
+			if (potential_scope_node->used_outputs[o_index]) {
 				new_output_inner_indexes.push_back(new_state_index);
 				new_output_scope_depths.push_back(potential_scope_node->output_scope_depths[o_index]);
 				new_output_outer_is_local.push_back(potential_scope_node->output_outer_is_local[o_index]);
@@ -255,4 +258,5 @@ void clean_state(PotentialScopeNode* potential_scope_node) {
 
 	scope->used_input_states.clear();
 	scope->used_local_states.clear();
+	potential_scope_node->used_outputs.clear();
 }

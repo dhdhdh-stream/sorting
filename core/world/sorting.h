@@ -7,10 +7,14 @@
 
 const int SORTING_ACTION_LEFT = 0;
 const int SORTING_ACTION_RIGHT = 1;
-const int SORTING_ACTION_SWAP = 2;
+const int SORTING_ACTION_SWAP_RISING = 2;
+const int SORTING_ACTION_SWAP_FALLING = 3;
 
 class Sorting : public Problem {
 public:
+	bool is_rising;
+	bool past_starting;
+
 	std::vector<double> initial_world;
 	
 	std::vector<double> current_world;

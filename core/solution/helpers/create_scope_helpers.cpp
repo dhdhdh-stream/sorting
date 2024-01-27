@@ -1953,6 +1953,7 @@ PotentialScopeNode* create_scope(vector<ContextLayer>& context,
 
 	new_scope->used_input_states = vector<bool>(new_scope->num_input_states, false);
 	new_scope->used_local_states = vector<bool>(new_scope->num_local_states, false);
+	new_potential_scope_node->used_outputs = vector<bool>(new_potential_scope_node->output_inner_indexes.size(), false);
 
 	return new_potential_scope_node;
 }

@@ -32,10 +32,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 					state_status = it->second;
 
 					if (this->is_potential) {
-						it->second.impacted_potential_scopes[this->parent] = {
-							set<int>(),
-							set<int>({this->input_outer_indexes[i_index]})
-						};
+						it->second.involved_local.insert(this->input_outer_indexes[i_index]);
 					}
 				}
 				input_state_vals[this->input_inner_indexes[i_index]] = state_status;
@@ -81,17 +78,8 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 					context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
 
 					if (this->is_potential) {
-						map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = context[context.size()-2]
-							.local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.find(this->parent);
-						if (scope_it == context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]].impacted_potential_scopes.end()) {
-							context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
-								.impacted_potential_scopes[this->parent] = {
-									set<int>(),
-									set<int>({this->output_outer_indexes[o_index]})
-								};
-						} else {
-							scope_it->second.second.insert(this->output_outer_indexes[o_index]);
-						}
+						context[context.size()-2].local_state_vals[this->output_outer_indexes[o_index]]
+							.involved_local.insert(this->output_outer_indexes[o_index]);
 					}
 				} else {
 					map<int, StateStatus>::iterator outer_it = context[context.size()-2].input_state_vals.find(this->output_outer_indexes[o_index]);
@@ -99,15 +87,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						outer_it->second = inner_it->second;
 
 						if (this->is_potential) {
-							map<Scope*, pair<set<int>,set<int>>>::iterator scope_it = outer_it->second.impacted_potential_scopes.find(this->parent);
-							if (scope_it == outer_it->second.impacted_potential_scopes.end()) {
-								outer_it->second.impacted_potential_scopes[this->parent] = {
-									set<int>({this->output_outer_indexes[o_index]}),
-									set<int>()
-								};
-							} else {
-								scope_it->second.first.insert(this->output_outer_indexes[o_index]);
-							}
+							outer_it->second.involved_input.insert(this->output_outer_indexes[o_index]);
 						}
 					}
 				}

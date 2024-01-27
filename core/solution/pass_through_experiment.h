@@ -2,7 +2,16 @@
  * TODO:
  * - recursive PassThroughExperiment
  *   - single branch may not be enough of an improvement
+ * 
+ * - cluster, e.g., filter based on state, predicted score, etc.
+ *   - look for sub-problems that are easier to solve
+ *     - select filters based on seed
+ * 
+ * - for misguess, elevate state from PotentialScopeNode to top level
  */
+
+// TODO: should be possible to get big enough improvement
+// - verify that input/output works
 
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H

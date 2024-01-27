@@ -14,26 +14,26 @@ StateStatus::StateStatus(double val) {
 	this->last_network = NULL;
 }
 
-void StateStatus::update_impacted_potential_scopes(
-		map<Scope*, pair<set<int>,set<int>>>& new_impacted_potential_scopes) {
-	for (map<Scope*, pair<set<int>,set<int>>>::iterator new_it = new_impacted_potential_scopes.begin();
-			new_it != new_impacted_potential_scopes.end(); new_it++) {
-		map<Scope*, pair<set<int>,set<int>>>::iterator curr_it = this->impacted_potential_scopes.find(new_it->first);
-		if (curr_it == this->impacted_potential_scopes.end()) {
-			curr_it = this->impacted_potential_scopes.insert({new_it->first, {set<int>(),set<int>()}}).first;
+void StateStatus::update_involved(set<int>& obs_involved_input,
+								  set<int>& obs_involved_local,
+								  map<PotentialScopeNode*, set<int>>& obs_involved_output) {
+	for (set<int>::iterator it = obs_involved_input.begin();
+			it != obs_involved_input.end(); it++) {
+		this->involved_input.insert(*it);
+	}
+	for (set<int>::iterator it = obs_involved_local.begin();
+			it != obs_involved_local.end(); it++) {
+		this->involved_local.insert(*it);
+	}
+	for (map<PotentialScopeNode*, set<int>>::iterator obs_it = obs_involved_output.begin();
+			obs_it != obs_involved_output.end(); obs_it++) {
+		map<PotentialScopeNode*, set<int>>::iterator local_it = this->involved_output.find(obs_it->first);
+		if (local_it == this->involved_output.end()) {
+			local_it = this->involved_output.insert({obs_it->first, set<int>()}).first;
 		}
-		for (set<int>::iterator index_it = new_it->second.first.begin();
-				index_it != new_it->second.first.end(); index_it++) {
-			curr_it->second.first.insert(*index_it);
-		}
-		for (set<int>::iterator index_it = new_it->second.second.begin();
-				index_it != new_it->second.second.end(); index_it++) {
-			// temp
-			if (*index_it >= curr_it->first->num_local_states) {
-				throw invalid_argument("*index_it >= curr_it->first->num_local_states");
-			}
-
-			curr_it->second.second.insert(*index_it);
+		for (set<int>::iterator index_it = obs_it->second.begin();
+				index_it != obs_it->second.end(); index_it++) {
+			local_it->second.insert(*index_it);
 		}
 	}
 }

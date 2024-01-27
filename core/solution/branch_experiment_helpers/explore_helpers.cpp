@@ -446,7 +446,7 @@ void BranchExperiment::explore_backprop(double target_val,
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE;
 				this->state_iter = 0;
 			} else {
-				cout << "Branch explore fail" << endl;
+				// cout << "Branch explore fail" << endl;
 				this->state = BRANCH_EXPERIMENT_STATE_FAIL;
 			}
 		}

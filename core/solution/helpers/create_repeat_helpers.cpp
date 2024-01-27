@@ -431,6 +431,7 @@ PotentialScopeNode* create_repeat(vector<ContextLayer>& context,
 	new_scope->starting_node = new_nodes[0];
 
 	new_scope->used_input_states = vector<bool>(new_scope->num_input_states, false);
+	new_potential_scope_node->used_outputs = vector<bool>(new_potential_scope_node->output_inner_indexes.size(), false);
 
 	return new_potential_scope_node;
 }

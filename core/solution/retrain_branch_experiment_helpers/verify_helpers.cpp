@@ -149,7 +149,7 @@ void RetrainBranchExperiment::verify_backprop(double target_val) {
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
-			cout << "Retrain Branch verify 1st fail" << endl;
+			// cout << "Retrain Branch verify 1st fail" << endl;
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -186,7 +186,7 @@ void RetrainBranchExperiment::verify_backprop(double target_val) {
 			finalize();
 			#endif /* MDEBUG */
 		} else {
-			cout << "Retrain Branch verify 2nd fail" << endl;
+			// cout << "Retrain Branch verify 2nd fail" << endl;
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

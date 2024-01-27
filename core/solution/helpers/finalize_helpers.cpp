@@ -374,6 +374,13 @@ void finalize_potential_scope(vector<int>& experiment_scope_context,
 							  PotentialScopeNode* potential_scope_node,
 							  map<pair<int, pair<bool,int>>, int>& input_scope_depths_mappings,
 							  map<pair<int, pair<bool,int>>, int>& output_scope_depths_mappings) {
+	for (int i_index = 0; i_index < (int)potential_scope_node->input_types.size(); i_index++) {
+		if (potential_scope_node->input_types[i_index] == INPUT_TYPE_STATE) {
+			cout << "potential_scope_node->input_types[i_index] == INPUT_TYPE_STATE" << endl;
+		}
+	}
+	cout << "potential_scope_node->output_inner_indexes.size(): " << potential_scope_node->output_inner_indexes.size() << endl;
+
 	ScopeNode* new_scope_node = potential_scope_node->scope_node_placeholder;
 
 	solution->scopes[potential_scope_node->scope->id] = potential_scope_node->scope;

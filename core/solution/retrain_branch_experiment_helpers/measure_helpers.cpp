@@ -148,7 +148,7 @@ void RetrainBranchExperiment::measure_backprop(double target_val) {
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
-			cout << "Retrain Branch measure fail" << endl;
+			// cout << "Retrain Branch measure fail" << endl;
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_FAIL;
 		}
 	}

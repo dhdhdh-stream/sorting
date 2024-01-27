@@ -28,7 +28,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	history->obs_snapshot = problem->get_observation();
 
 	history->state_snapshots = vector<double>(this->state_is_local.size(), 0.0);
-	vector<map<Scope*, pair<set<int>,set<int>>>> obs_impacted_potential_scopes(this->state_is_local.size());
+	vector<set<int>> obs_involved_inputs(this->state_is_local.size());
+	vector<set<int>> obs_involved_locals(this->state_is_local.size());
+	vector<map<PotentialScopeNode*, set<int>>> obs_involved_outputs(this->state_is_local.size());
 	for (int n_index = 0; n_index < (int)this->state_is_local.size(); n_index++) {
 		if (this->state_is_local[n_index]) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->state_indexes[n_index]);
@@ -36,10 +38,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				it = context.back().local_state_vals.insert({this->state_indexes[n_index], StateStatus()}).first;
 
 				if (this->is_potential) {
-					it->second.impacted_potential_scopes[this->parent] = {
-						set<int>(),
-						set<int>({this->state_indexes[n_index]})
-					};
+					it->second.involved_local.insert(this->state_indexes[n_index]);
 				}
 			}
 			StateNetwork* state_network = this->state_defs[n_index]->networks[this->state_network_indexes[n_index]];
@@ -50,12 +49,15 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				state_network->activate(history->state_snapshots[this->state_obs_indexes[n_index]],
 										it->second);
 
-				it->second.update_impacted_potential_scopes(
-					obs_impacted_potential_scopes[this->state_obs_indexes[n_index]]);
+				it->second.update_involved(obs_involved_inputs[this->state_obs_indexes[n_index]],
+										   obs_involved_locals[this->state_obs_indexes[n_index]],
+										   obs_involved_outputs[this->state_obs_indexes[n_index]]);
 			}
 			run_helper.num_process++;
 			history->state_snapshots[n_index] = it->second.val;
-			obs_impacted_potential_scopes[n_index] = it->second.impacted_potential_scopes;
+			obs_involved_inputs[n_index] = it->second.involved_input;
+			obs_involved_locals[n_index] = it->second.involved_local;
+			obs_involved_outputs[n_index] = it->second.involved_output;
 		} else {
 			map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->state_indexes[n_index]);
 			if (it != context.back().input_state_vals.end()) {
@@ -67,12 +69,15 @@ void ActionNode::activate(AbstractNode*& curr_node,
 					state_network->activate(history->state_snapshots[this->state_obs_indexes[n_index]],
 											it->second);
 
-					it->second.update_impacted_potential_scopes(
-						obs_impacted_potential_scopes[this->state_obs_indexes[n_index]]);
+					it->second.update_involved(obs_involved_inputs[this->state_obs_indexes[n_index]],
+											   obs_involved_locals[this->state_obs_indexes[n_index]],
+											   obs_involved_outputs[this->state_obs_indexes[n_index]]);
 				}
 				run_helper.num_process++;
 				history->state_snapshots[n_index] = it->second.val;
-				obs_impacted_potential_scopes[n_index] = it->second.impacted_potential_scopes;
+				obs_involved_inputs[n_index] = it->second.involved_input;
+				obs_involved_locals[n_index] = it->second.involved_local;
+				obs_involved_outputs[n_index] = it->second.involved_output;
 			}
 		}
 	}
@@ -108,8 +113,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				state_network->activate(history->state_snapshots[this->temp_state_obs_indexes[n_index]],
 										it->second);
 
-				it->second.update_impacted_potential_scopes(
-					obs_impacted_potential_scopes[this->temp_state_obs_indexes[n_index]]);
+				it->second.update_involved(obs_involved_inputs[this->temp_state_obs_indexes[n_index]],
+										   obs_involved_locals[this->temp_state_obs_indexes[n_index]],
+										   obs_involved_outputs[this->temp_state_obs_indexes[n_index]]);
 			}
 			run_helper.num_process++;
 		}
@@ -146,8 +152,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 				state_network->activate(history->state_snapshots[this->experiment_state_obs_indexes[n_index]],
 										it->second);
 
-				it->second.update_impacted_potential_scopes(
-					obs_impacted_potential_scopes[this->experiment_state_obs_indexes[n_index]]);
+				it->second.update_involved(obs_involved_inputs[this->experiment_state_obs_indexes[n_index]],
+										   obs_involved_locals[this->experiment_state_obs_indexes[n_index]],
+										   obs_involved_outputs[this->experiment_state_obs_indexes[n_index]]);
 			}
 			run_helper.num_process++;
 		}

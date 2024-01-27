@@ -165,7 +165,7 @@ void PassThroughExperiment::measure_new_score_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE;
 			this->state_iter = 0;
 		} else {
-			cout << "PassThrough measure score fail" << endl;
+			// cout << "PassThrough measure score fail" << endl;
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 	}

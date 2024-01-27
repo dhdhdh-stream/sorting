@@ -32,7 +32,8 @@ class State;
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
-const int STARTING_NUM_DATAPOINTS = 200;
+// const int STARTING_NUM_DATAPOINTS = 200;
+const int STARTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 class Solution {

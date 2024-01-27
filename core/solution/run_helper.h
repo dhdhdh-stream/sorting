@@ -28,6 +28,8 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
+	Scope* curr_potential_scope;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	unsigned long starting_run_seed;

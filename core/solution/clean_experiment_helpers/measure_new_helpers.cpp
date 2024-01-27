@@ -45,7 +45,7 @@ void CleanExperiment::measure_new_initial_activate(
 		// cout << endl;
 
 		if (possible_exits.size() <= 1) {
-			cout << "Clean no possible fail" << endl;
+			// cout << "Clean no possible fail" << endl;
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;
 			return;
 		}
@@ -102,7 +102,7 @@ void CleanExperiment::measure_new_backprop(double target_val) {
 			this->state = CLEAN_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
-			cout << "Clean measure fail" << endl;
+			// cout << "Clean measure fail" << endl;
 			this->state = CLEAN_EXPERIMENT_STATE_FAIL;
 		}
 	}

@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 
+class PotentialScopeNode;
 class Scope;
 class StateNetwork;
 
@@ -12,16 +13,16 @@ public:
 	double val;
 	StateNetwork* last_network;
 
-	/**
-	 * - {input_indexes, local_indexes}
-	 */
-	std::map<Scope*, std::pair<std::set<int>,std::set<int>>> impacted_potential_scopes;
+	std::set<int> involved_input;
+	std::set<int> involved_local;
+	std::map<PotentialScopeNode*, std::set<int>> involved_output;
 
 	StateStatus();
 	StateStatus(double val);
 
-	void update_impacted_potential_scopes(
-		std::map<Scope*, std::pair<std::set<int>,std::set<int>>>& new_impacted_potential_scopes);
+	void update_involved(std::set<int>& obs_involved_input,
+						 std::set<int>& obs_involved_local,
+						 std::map<PotentialScopeNode*, std::set<int>>& obs_involved_output);
 };
 
 #endif /* STATE_STATUS_H */

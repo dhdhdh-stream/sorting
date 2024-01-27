@@ -117,7 +117,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE;
 				this->state_iter = 0;
 			} else {
-				cout << "PassThrough verify score 1st fail" << endl;
+				// cout << "PassThrough verify score 1st fail" << endl;
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}
@@ -200,7 +200,7 @@ void PassThroughExperiment::verify_new_score_backprop(
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS;
 				this->state_iter = 0;
 			} else {
-				cout << "PassThrough verify score 2nd fail" << endl;
+				// cout << "PassThrough verify score 2nd fail" << endl;
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 			}
 		}

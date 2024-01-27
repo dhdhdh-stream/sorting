@@ -45,10 +45,7 @@ void PotentialScopeNode::activate(Problem* problem,
 
 					if (!this->is_cleaned) {
 						input_state_vals[this->input_inner_indexes[i_index]]
-							.impacted_potential_scopes[this->scope] = {
-								set<int>({this->input_inner_indexes[i_index]}),
-								set<int>()
-							};
+							.involved_input.insert(this->input_inner_indexes[i_index]);
 					}
 				} else {
 					map<int, StateStatus>::iterator it = context[context.size()-1
@@ -58,10 +55,7 @@ void PotentialScopeNode::activate(Problem* problem,
 
 						if (!this->is_cleaned) {
 							input_state_vals[this->input_inner_indexes[i_index]]
-								.impacted_potential_scopes[this->scope] = {
-									set<int>({this->input_inner_indexes[i_index]}),
-									set<int>()
-								};
+								.involved_input.insert(this->input_inner_indexes[i_index]);
 						}
 					}
 				}
@@ -70,10 +64,7 @@ void PotentialScopeNode::activate(Problem* problem,
 
 				if (!this->is_cleaned) {
 					input_state_vals[this->input_inner_indexes[i_index]]
-						.impacted_potential_scopes[this->scope] = {
-							set<int>({this->input_inner_indexes[i_index]}),
-							set<int>()
-						};
+						.involved_input.insert(this->input_inner_indexes[i_index]);
 				}
 			}
 		}
@@ -95,6 +86,8 @@ void PotentialScopeNode::activate(Problem* problem,
 		int inner_exit_depth = -1;
 		AbstractNode* inner_exit_node = NULL;
 
+		run_helper.curr_potential_scope = this->scope;
+
 		this->scope->activate(problem,
 							  context,
 							  inner_exit_depth,
@@ -102,17 +95,31 @@ void PotentialScopeNode::activate(Problem* problem,
 							  run_helper,
 							  scope_history);
 
+		run_helper.curr_potential_scope = NULL;
+
 		if (!run_helper.has_exited && !run_helper.exceeded_limit) {
 			for (int o_index = 0; o_index < (int)this->output_inner_indexes.size(); o_index++) {
 				map<int, StateStatus>::iterator inner_it = context.back().input_state_vals.find(this->output_inner_indexes[o_index]);
 				if (inner_it != context.back().input_state_vals.end()) {
+					inner_it->second.involved_input.clear();
+					inner_it->second.involved_local.clear();
+
 					if (this->output_outer_is_local[o_index]) {
 						context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[this->output_outer_indexes[o_index]] = inner_it->second;
+
+						if (!this->is_cleaned) {
+							context[context.size()-2 - this->output_scope_depths[o_index]].local_state_vals[this->output_outer_indexes[o_index]]
+								.involved_output[this] = set<int>({o_index});
+						}
 					} else {
 						map<int, StateStatus>::iterator outer_it  = context[context.size()-2
 							- this->output_scope_depths[o_index]].input_state_vals.find(this->output_outer_indexes[o_index]);
 						if (outer_it != context[context.size()-2 - this->output_scope_depths[o_index]].input_state_vals.end()) {
 							outer_it->second = inner_it->second;
+
+							if (!this->is_cleaned) {
+								outer_it->second.involved_output[this] = set<int>({o_index});
+							}
 						}
 					}
 				}

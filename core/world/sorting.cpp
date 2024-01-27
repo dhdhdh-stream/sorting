@@ -10,10 +10,16 @@ using namespace std;
 Sorting::Sorting() {
 	this->type = PROBLEM_TYPE_SORTING;
 
-	geometric_distribution<int> length_distribution(0.2);
+	uniform_int_distribution<int> is_rising_distribution(0, 1);
+	this->is_rising = is_rising_distribution(generator) == 0;
+	this->past_starting = false;
+
+	// geometric_distribution<int> length_distribution(0.2);
+	geometric_distribution<int> length_distribution(0.3);
 	int random_length = 1 + length_distribution(generator);
 
-	uniform_int_distribution<int> value_distribution(0, 3);
+	// uniform_int_distribution<int> value_distribution(0, 3);
+	uniform_int_distribution<int> value_distribution(0, 2);
 	for (int i = 0; i < random_length; i++) {
 		this->initial_world.push_back(value_distribution(generator));
 	}
@@ -23,15 +29,23 @@ Sorting::Sorting() {
 }
 
 int Sorting::num_actions() {
-	return 3;
+	return 4;
 }
 
 Action Sorting::random_action() {
-	uniform_int_distribution<int> action_distribution(0, 2);
+	uniform_int_distribution<int> action_distribution(0, 3);
 	return Action(action_distribution(generator));
 }
 
 double Sorting::get_observation() {
+	if (!this->past_starting) {
+		if (this->is_rising) {
+			return 1.0;
+		} else {
+			return -1.0;
+		}
+	}
+
 	if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
 		return this->current_world[this->current_pointer];
 	} else {
@@ -40,29 +54,46 @@ double Sorting::get_observation() {
 }
 
 void Sorting::perform_action(Action action) {
-	if (action.move == SORTING_ACTION_LEFT) {
-		if (this->current_pointer >= 0) {
-			this->current_pointer--;
-		}
-	} else if (action.move == SORTING_ACTION_RIGHT) {
-		if (this->current_pointer < (int)this->current_world.size()) {
-			this->current_pointer++;
-		}
-	} else if (action.move == SORTING_ACTION_SWAP) {
-		if (this->current_pointer == 0) {
-			this->current_world[this->current_pointer] += 1.0;
-		} else if (this->current_pointer > 0 && this->current_pointer < (int)this->current_world.size()) {
-			this->current_world[this->current_pointer] += 1.0;
-			this->current_world[this->current_pointer-1] += -1.0;
-		} else if (this->current_pointer == (int)this->current_world.size()) {
-			this->current_world[this->current_pointer-1] += -1.0;
+	if (action.move != ACTION_NOOP && !this->past_starting) {
+		this->past_starting = true;
+	} else {
+		if (action.move == SORTING_ACTION_LEFT) {
+			if (this->current_pointer >= 0) {
+				this->current_pointer--;
+			}
+		} else if (action.move == SORTING_ACTION_RIGHT) {
+			if (this->current_pointer < (int)this->current_world.size()) {
+				this->current_pointer++;
+			}
+		} else if (action.move == SORTING_ACTION_SWAP_RISING) {
+			if (this->current_pointer == 0) {
+				this->current_world[this->current_pointer] += 1.0;
+			} else if (this->current_pointer > 0 && this->current_pointer < (int)this->current_world.size()) {
+				this->current_world[this->current_pointer] += 1.0;
+				this->current_world[this->current_pointer-1] += -1.0;
+			} else if (this->current_pointer == (int)this->current_world.size()) {
+				this->current_world[this->current_pointer-1] += -1.0;
+			}
+		} else if (action.move == SORTING_ACTION_SWAP_FALLING) {
+			if (this->current_pointer == 0) {
+				this->current_world[this->current_pointer] += -1.0;
+			} else if (this->current_pointer > 0 && this->current_pointer < (int)this->current_world.size()) {
+				this->current_world[this->current_pointer] += -1.0;
+				this->current_world[this->current_pointer-1] += 1.0;
+			} else if (this->current_pointer == (int)this->current_world.size()) {
+				this->current_world[this->current_pointer-1] += 1.0;
+			}
 		}
 	}
 }
 
 double Sorting::score_result(int num_process) {
 	vector<double> sorted_world = initial_world;
-	sort(sorted_world.begin(), sorted_world.end());
+	if (this->is_rising) {
+		sort(sorted_world.begin(), sorted_world.end());
+	} else {
+		sort(sorted_world.begin(), sorted_world.end(), greater<double>());
+	}
 
 	bool correct = true;
 	for (int i = 0; i < (int)this->current_world.size(); i++) {
@@ -81,6 +112,9 @@ double Sorting::score_result(int num_process) {
 
 Problem* Sorting::copy_and_reset() {
 	Sorting* new_problem = new Sorting();
+
+	new_problem->is_rising = this->is_rising;
+	new_problem->past_starting = false;
 
 	new_problem->initial_world = this->initial_world;
 

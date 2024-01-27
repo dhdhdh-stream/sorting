@@ -190,7 +190,7 @@ void PassThroughExperiment::measure_new_misguess_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;
 		} else {
-			cout << "PassThrough measure misguess fail" << endl;
+			// cout << "PassThrough measure misguess fail" << endl;
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_FAIL;
 		}
 

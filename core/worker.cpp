@@ -66,8 +66,8 @@ int main(int argc, char* argv[]) {
 	int iter_index = 0;
 	uniform_int_distribution<int> outer_distribution(0, 7);
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

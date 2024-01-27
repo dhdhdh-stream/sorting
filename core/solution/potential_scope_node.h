@@ -34,6 +34,8 @@ public:
 	std::vector<bool> output_outer_is_local;
 	std::vector<int> output_outer_indexes;
 
+	std::vector<bool> used_outputs;
+
 	bool is_cleaned;
 
 	int experiment_scope_depth;
