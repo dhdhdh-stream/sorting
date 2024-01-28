@@ -170,18 +170,21 @@ void Minesweeper::reveal_helper(int x, int y) {
 
 		if (this->world[x][y] == -1) {
 			this->ended = true;
-		} else {
-			if (this->world[x][y] == 0) {
-				reveal_helper(x-1, y-1);
-				reveal_helper(x-1, y);
-				reveal_helper(x-1, y+1);
-				reveal_helper(x, y+1);
-				reveal_helper(x+1, y+1);
-				reveal_helper(x+1, y);
-				reveal_helper(x+1, y-1);
-				reveal_helper(x, y-1);
-			}
 		}
+		// if (this->world[x][y] == -1) {
+		// 	this->ended = true;
+		// } else {
+		// 	if (this->world[x][y] == 0) {
+		// 		reveal_helper(x-1, y-1);
+		// 		reveal_helper(x-1, y);
+		// 		reveal_helper(x-1, y+1);
+		// 		reveal_helper(x, y+1);
+		// 		reveal_helper(x+1, y+1);
+		// 		reveal_helper(x+1, y);
+		// 		reveal_helper(x+1, y-1);
+		// 		reveal_helper(x, y-1);
+		// 	}
+		// }
 	}
 }
 

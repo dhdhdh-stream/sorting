@@ -1,3 +1,9 @@
+/**
+ * - include local state from PotentialScopeNode outside
+ *   - so impact is carried outwards as root changes
+ *     - and in general, may help state be useful
+ */
+
 #ifndef POTENTIAL_SCOPE_NODE_H
 #define POTENTIAL_SCOPE_NODE_H
 

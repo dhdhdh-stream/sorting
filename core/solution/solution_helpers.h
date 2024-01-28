@@ -9,6 +9,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class ActionNode;
 class BranchExperiment;
 class BranchNode;
 class PassThroughExperiment;
@@ -18,6 +19,7 @@ class Scope;
 class ScopeHistory;
 class ScopeNode;
 class State;
+class StateScenarioExperiment;
 
 void create_experiment(ScopeHistory* root_history);
 
@@ -53,6 +55,9 @@ void existing_pass_through_branch_obs_experiment(
 		BranchExperiment* experiment,
 		std::vector<ScopeHistory*>& scope_histories,
 		std::vector<double>& target_vals);
+void scenario_obs_experiment(StateScenarioExperiment* experiment,
+							 std::vector<ScopeHistory*>& scope_histories,
+							 std::vector<double>& target_vals);
 
 void clean_state(PotentialScopeNode* potential_scope_node);
 
@@ -70,5 +75,11 @@ void finalize_branch_node_states(BranchNode* branch_node,
 								 std::vector<std::map<State*, double>>& new_temp_state_weights,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
 								 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
+void scenario_add_state(State* new_state,
+						std::vector<ActionNode*>& nodes,
+						std::vector<std::vector<int>>& scope_contexts,
+						std::vector<std::vector<int>>& node_contexts,
+						std::vector<int>& obs_indexes,
+						Scope* parent_scope);
 
 #endif /* SOLUTION_HELPERS_H */

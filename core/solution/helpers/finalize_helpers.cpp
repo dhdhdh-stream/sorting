@@ -779,3 +779,77 @@ void finalize_branch_node_states(BranchNode* new_branch_node,
 		}
 	}
 }
+
+void scenario_add_state(State* new_state,
+						vector<ActionNode*>& nodes,
+						vector<vector<int>>& scope_contexts,
+						vector<vector<int>>& node_contexts,
+						vector<int>& obs_indexes,
+						Scope* parent_scope) {
+	int new_local_index = parent_scope->num_local_states;
+	parent_scope->num_local_states++;
+	parent_scope->original_local_state_ids.push_back(new_state->id);
+
+	set<int> updated_local_scope_nodes;
+	set<pair<vector<int>,vector<int>>> updated_input_scope_nodes;
+	map<pair<vector<int>,vector<int>>, int> updated_scopes;
+	updated_scopes[{vector<int>{parent_scope->id}, vector<int>{}}] = new_local_index;
+
+	for (int n_index = 0; n_index < (int)nodes.size(); n_index++) {
+		if (scope_contexts[n_index].size() == 1) {
+			nodes[n_index]->state_is_local.push_back(true);
+			nodes[n_index]->state_indexes.push_back(new_local_index);
+			nodes[n_index]->state_obs_indexes.push_back(obs_indexes[n_index]);
+			nodes[n_index]->state_defs.push_back(new_state);
+			nodes[n_index]->state_network_indexes.push_back(n_index);
+		} else {
+			{
+				ScopeNode* local_scope_node = (ScopeNode*)parent_scope->nodes[node_contexts[n_index][0]];
+
+				int inner_index = add_state_scope_helper(new_state,
+														 1,
+														 scope_contexts[n_index],
+														 node_contexts[n_index],
+														 updated_scopes);
+
+				add_state_local_scope_node_helper(local_scope_node,
+												  new_local_index,
+												  inner_index,
+												  updated_local_scope_nodes);
+			}
+			for (int c_index = 1; c_index < (int)scope_contexts[n_index].size()-1; c_index++) {
+				int outer_index = add_state_scope_helper(new_state,
+														 c_index,
+														 scope_contexts[n_index],
+														 node_contexts[n_index],
+														 updated_scopes);
+
+				int inner_index = add_state_scope_helper(new_state,
+														 c_index+1,
+														 scope_contexts[n_index],
+														 node_contexts[n_index],
+														 updated_scopes);
+
+				add_state_input_scope_node_helper(c_index,
+												  scope_contexts[n_index],
+												  node_contexts[n_index],
+												  outer_index,
+												  inner_index,
+												  updated_input_scope_nodes);
+			}
+			{
+				int outer_index = add_state_scope_helper(new_state,
+														 scope_contexts[n_index].size()-1,
+														 scope_contexts[n_index],
+														 node_contexts[n_index],
+														 updated_scopes);
+
+				nodes[n_index]->state_is_local.push_back(false);
+				nodes[n_index]->state_indexes.push_back(outer_index);
+				nodes[n_index]->state_obs_indexes.push_back(obs_indexes[n_index]);
+				nodes[n_index]->state_defs.push_back(new_state);
+				nodes[n_index]->state_network_indexes.push_back(n_index);
+			}
+		}
+	}
+}

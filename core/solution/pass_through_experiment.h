@@ -10,9 +10,6 @@
  * - for misguess, elevate state from PotentialScopeNode to top level
  */
 
-// TODO: should be possible to get big enough improvement
-// - verify that input/output works
-
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 

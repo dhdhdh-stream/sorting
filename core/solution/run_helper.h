@@ -6,6 +6,7 @@
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
+class Scope;
 
 class RunHelper {
 public:
