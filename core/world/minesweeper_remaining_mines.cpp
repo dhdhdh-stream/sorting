@@ -108,6 +108,21 @@ MinesweeperRemainingMines::MinesweeperRemainingMines() {
 	minesweeper->current_y = 2;
 
 	this->problem = minesweeper;
+
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_DOWN));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_RIGHT));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_UP));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_UP));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_LEFT));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_LEFT));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_DOWN));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_DOWN));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_RIGHT));
+	this->sequence.push_back(Action(MINESWEEPER_ACTION_UP));
+}
+
+MinesweeperRemainingMines::~MinesweeperRemainingMines() {
+	delete this->problem;
 }
 
 double MinesweeperRemainingMines::get_target_state() {

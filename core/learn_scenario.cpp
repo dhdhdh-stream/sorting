@@ -25,8 +25,8 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
 	solution->save("", "main");
 

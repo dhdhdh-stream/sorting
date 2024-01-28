@@ -8,6 +8,7 @@
 class MinesweeperRemainingMines : public StateScenario {
 public:
 	MinesweeperRemainingMines();
+	~MinesweeperRemainingMines();
 
 	double get_target_state();
 };

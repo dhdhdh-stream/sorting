@@ -1,5 +1,7 @@
 #include "state_scenario_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "globals.h"
 #include "scope.h"
@@ -131,6 +133,13 @@ void StateScenarioExperiment::backprop(double target_state) {
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
+			cout << "this->sub_state_iter: " << this->sub_state_iter << endl;
+			double sum_misguess = 0.0;
+			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+				sum_misguess += abs(this->target_state_histories[i_index] - this->predicted_state_histories[i_index]);
+			}
+			cout << "sum_misguess: " << sum_misguess << endl;
+
 			vector<double> obs_experiment_target_vals(solution->curr_num_datapoints);
 			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
 				obs_experiment_target_vals[i_index] = this->target_state_histories[i_index] - this->predicted_state_histories[i_index];
@@ -148,7 +157,7 @@ void StateScenarioExperiment::backprop(double target_state) {
 			this->target_state_histories.clear();
 
 			this->sub_state_iter++;
-			if (this->sub_state_iter >= LEARN_ITERS) {
+			if (this->sub_state_iter > LEARN_ITERS) {
 				solution->scopes[this->scope->id] = this->scope;
 
 				this->state = STATE_SCENARIO_EXPERIMENT_STATE_DONE;
