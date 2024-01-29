@@ -19,7 +19,7 @@ class Scope;
 class ScopeHistory;
 class ScopeNode;
 class State;
-class StateScenarioExperiment;
+class ScenarioExperiment;
 
 void create_experiment(ScopeHistory* root_history);
 
@@ -55,7 +55,7 @@ void existing_pass_through_branch_obs_experiment(
 		BranchExperiment* experiment,
 		std::vector<ScopeHistory*>& scope_histories,
 		std::vector<double>& target_vals);
-void scenario_obs_experiment(StateScenarioExperiment* experiment,
+void scenario_obs_experiment(ScenarioExperiment* experiment,
 							 std::vector<ScopeHistory*>& scope_histories,
 							 std::vector<double>& target_vals);
 

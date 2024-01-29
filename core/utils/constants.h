@@ -6,7 +6,7 @@ const int STEP_TYPE_POTENTIAL_SCOPE = 1;
 const int STEP_TYPE_EXISTING_SCOPE = 2;
 const int STEP_TYPE_ROOT = 3;
 
-const double WEIGHT_MIN_SCORE_IMPACT = 0.2;
+const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
 
 const double DECISION_MIN_SCORE_IMPACT = 0.03;
 

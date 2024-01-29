@@ -35,6 +35,7 @@ class ScopeHistory;
 class Scope {
 public:
 	int id;
+	std::string name;
 
 	int num_input_states;
 	std::vector<int> original_input_state_ids;

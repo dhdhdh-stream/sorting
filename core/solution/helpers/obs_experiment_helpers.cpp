@@ -16,7 +16,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "state.h"
-#include "state_scenario_experiment.h"
+#include "scenario_experiment.h"
 
 using namespace std;
 
@@ -1531,7 +1531,7 @@ void existing_pass_through_branch_obs_experiment(
 	// cout << endl;
 }
 
-void scenario_obs_experiment(StateScenarioExperiment* experiment,
+void scenario_obs_experiment(ScenarioExperiment* experiment,
 							 vector<ScopeHistory*>& scope_histories,
 							 vector<double>& target_vals) {
 	vector<ActionNode*> nodes;

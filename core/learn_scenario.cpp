@@ -7,8 +7,8 @@
 #include "globals.h"
 #include "run_helper.h"
 #include "solution.h"
-#include "minesweeper_remaining_mines.h"
-#include "state_scenario_experiment.h"
+#include "minesweeper_open.h"
+#include "scenario_experiment.h"
 
 using namespace std;
 
@@ -30,25 +30,25 @@ int main(int argc, char* argv[]) {
 
 	solution->save("", "main");
 
-	StateScenario* scenario = new MinesweeperRemainingMines();
-	StateScenarioExperiment* experiment = new StateScenarioExperiment(scenario);
+	Scenario* scenario = new MinesweeperOpen();
+	ScenarioExperiment* experiment = new ScenarioExperiment(scenario);
 	delete scenario;
 
 	while (true) {
-		StateScenario* scenario = new MinesweeperRemainingMines();
+		Scenario* scenario = new MinesweeperOpen();
 
 		RunHelper run_helper;
 
 		experiment->activate(scenario,
 							 run_helper);
 
-		double target_state = scenario->get_target_state();
+		bool is_sequence = scenario->should_perform_sequence();
 
-		experiment->backprop(target_state);
+		experiment->backprop(is_sequence);
 
 		delete scenario;
 
-		if (experiment->state == STATE_SCENARIO_EXPERIMENT_STATE_DONE) {
+		if (experiment->state == SCENARIO_EXPERIMENT_STATE_DONE) {
 			break;
 		}
 	}

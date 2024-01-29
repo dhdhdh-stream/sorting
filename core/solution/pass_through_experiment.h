@@ -10,6 +10,10 @@
  * - for misguess, elevate state from PotentialScopeNode to top level
  */
 
+// TODO: don't worry about measuring misguess before preceding to experiment step
+// - state within may only be meaningful/findable with the correct follow-up
+// - not being worse is a good enough reason to continue
+
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
