@@ -1700,9 +1700,15 @@ void scenario_obs_experiment(ScenarioExperiment* experiment,
 		State* new_state = new State();
 
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
-			state_networks[n_index]->starting_standard_deviation = sqrt(state_networks[n_index]->starting_variance);
+			/**
+			 * - set mean to 0.0 and standard_deviation to 1.0
+			 */
 
-			state_networks[n_index]->ending_standard_deviation = sqrt(state_networks[n_index]->ending_variance);
+			state_networks[n_index]->starting_mean = 0.0;
+			state_networks[n_index]->starting_standard_deviation = 1.0;
+
+			state_networks[n_index]->ending_mean = 0.0;
+			state_networks[n_index]->ending_standard_deviation = 1.0;
 
 			state_networks[n_index]->parent_state = new_state;
 		}

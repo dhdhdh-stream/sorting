@@ -138,6 +138,18 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
+			// cout << "this->sub_state_iter: " << this->sub_state_iter << endl;
+			// double sum_misguess = 0.0;
+			// for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+			// 	if (this->is_sequence_histories[i_index]) {
+			// 		sum_misguess += abs(1.0 - this->predicted_is_sequence_histories[i_index]);
+			// 	} else {
+			// 		sum_misguess += abs(-1.0 - this->predicted_is_sequence_histories[i_index]);
+			// 	}
+				
+			// }
+			// cout << "sum_misguess: " << sum_misguess << endl;
+
 			vector<double> obs_experiment_target_vals(solution->curr_num_datapoints);
 			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
 				if (this->is_sequence_histories[i_index]) {
