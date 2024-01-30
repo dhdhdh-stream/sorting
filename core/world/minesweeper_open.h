@@ -8,8 +8,6 @@
 
 class MinesweeperOpen : public Scenario {
 public:
-	bool start_is_revealed;
-
 	MinesweeperOpen();
 	~MinesweeperOpen();
 

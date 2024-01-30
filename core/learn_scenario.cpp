@@ -8,6 +8,7 @@
 #include "run_helper.h"
 #include "solution.h"
 #include "minesweeper_open.h"
+#include "minesweeper_open_remaining.h"
 #include "scenario_experiment.h"
 #include "scope.h"
 
@@ -31,28 +32,30 @@ int main(int argc, char* argv[]) {
 
 	solution->save("", "main");
 
-	ScenarioExperiment* experiment = new ScenarioExperiment(new MinesweeperOpen());
+	{
+		ScenarioExperiment* experiment = new ScenarioExperiment(new MinesweeperOpen());
 
-	while (true) {
-		Scenario* scenario = new MinesweeperOpen();
+		while (true) {
+			Scenario* scenario = new MinesweeperOpen();
 
-		RunHelper run_helper;
+			RunHelper run_helper;
 
-		experiment->activate(scenario,
-							 run_helper);
+			experiment->activate(scenario,
+								 run_helper);
 
-		bool is_sequence = scenario->should_perform_sequence();
+			bool is_sequence = scenario->should_perform_sequence();
 
-		experiment->backprop(is_sequence);
+			experiment->backprop(is_sequence);
 
-		delete scenario;
+			delete scenario;
 
-		if (experiment->state == SCENARIO_EXPERIMENT_STATE_DONE) {
-			break;
+			if (experiment->state == SCENARIO_EXPERIMENT_STATE_DONE) {
+				break;
+			}
 		}
-	}
 
-	delete experiment;
+		delete experiment;
+	}
 
 	// Scope* new_scope;
 	// for (map<int, Scope*>::iterator it = solution->scopes.begin();
@@ -95,6 +98,31 @@ int main(int argc, char* argv[]) {
 
 	// 	delete scenario;
 	// }
+
+	{
+		ScenarioExperiment* experiment = new ScenarioExperiment(new MinesweeperOpenRemaining());
+
+		while (true) {
+			Scenario* scenario = new MinesweeperOpenRemaining();
+
+			RunHelper run_helper;
+
+			experiment->activate(scenario,
+								 run_helper);
+
+			bool is_sequence = scenario->should_perform_sequence();
+
+			experiment->backprop(is_sequence);
+
+			delete scenario;
+
+			if (experiment->state == SCENARIO_EXPERIMENT_STATE_DONE) {
+				break;
+			}
+		}
+
+		delete experiment;
+	}
 
 	delete solution;
 

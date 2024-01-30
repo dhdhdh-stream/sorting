@@ -1,3 +1,9 @@
+/**
+ * TODO:
+ * - try not worrying about input/output besides maybe constants
+ *   - if difference of behavior is needed, hope that branching plus constants is all that's needed
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>

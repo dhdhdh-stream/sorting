@@ -4,11 +4,13 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "scenario.h"
 #include "scope.h"
+#include "scope_node.h"
 
 using namespace std;
 
@@ -45,15 +47,33 @@ ScenarioExperiment::ScenarioExperiment(Scenario* scenario_type) {
 									   actions,
 									   scopes);
 
-	for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
-		ActionNode* new_action_node = new ActionNode();
+	for (int a_index = 0; a_index < (int)types.size(); a_index++) {
+		if (types[a_index] == STEP_TYPE_ACTION) {
+			ActionNode* new_action_node = new ActionNode();
 
-		new_action_node->parent = this->scope;
-		new_action_node->id = this->scope->node_counter;
-		this->scope->node_counter++;
-		this->scope->nodes[new_action_node->id] = new_action_node;
+			new_action_node->parent = this->scope;
+			new_action_node->id = this->scope->node_counter;
+			this->scope->node_counter++;
+			this->scope->nodes[new_action_node->id] = new_action_node;
 
-		new_action_node->action = actions[a_index];
+			new_action_node->action = actions[a_index];
+		} else {
+			ScopeNode* new_scope_node = new ScopeNode();
+
+			new_scope_node->parent = this->scope;
+			new_scope_node->id = this->scope->node_counter;
+			this->scope->node_counter++;
+			this->scope->nodes[new_scope_node->id] = new_scope_node;
+
+			Scope* scope;
+			for (map<int, Scope*>::iterator it = solution->scopes.begin();
+					it != solution->scopes.end(); it++) {
+				if (it->second->name == scopes[a_index]) {
+					scope = it->second;
+				}
+			}
+			new_scope_node->inner_scope = scope;
+		}
 	}
 
 	for (int n_index = 0; n_index < (int)this->scope->nodes.size(); n_index++) {
@@ -67,9 +87,15 @@ ScenarioExperiment::ScenarioExperiment(Scenario* scenario_type) {
 			next_node = this->scope->nodes[n_index+1];
 		}
 
-		ActionNode* action_node = (ActionNode*)this->scope->nodes[n_index];
-		action_node->next_node_id = next_node_id;
-		action_node->next_node = next_node;
+		if (this->scope->nodes[n_index]->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->scope->nodes[n_index];
+			action_node->next_node_id = next_node_id;
+			action_node->next_node = next_node;
+		} else {
+			ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[n_index];
+			scope_node->next_node_id = next_node_id;
+			scope_node->next_node = next_node;
+		}
 	}
 
 	this->state = SCENARIO_EXPERIMENT_STATE_LEARN_AVERAGE;
@@ -210,15 +236,33 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 												  actions,
 												  scopes);
 
-				for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
-					ActionNode* new_action_node = new ActionNode();
+				for (int a_index = 0; a_index < (int)types.size(); a_index++) {
+					if (types[a_index] == STEP_TYPE_ACTION) {
+						ActionNode* new_action_node = new ActionNode();
 
-					new_action_node->parent = this->scope;
-					new_action_node->id = this->scope->node_counter;
-					this->scope->node_counter++;
-					this->scope->nodes[new_action_node->id] = new_action_node;
+						new_action_node->parent = this->scope;
+						new_action_node->id = this->scope->node_counter;
+						this->scope->node_counter++;
+						this->scope->nodes[new_action_node->id] = new_action_node;
 
-					new_action_node->action = actions[a_index];
+						new_action_node->action = actions[a_index];
+					} else {
+						ScopeNode* new_scope_node = new ScopeNode();
+
+						new_scope_node->parent = this->scope;
+						new_scope_node->id = this->scope->node_counter;
+						this->scope->node_counter++;
+						this->scope->nodes[new_scope_node->id] = new_scope_node;
+
+						Scope* scope;
+						for (map<int, Scope*>::iterator it = solution->scopes.begin();
+								it != solution->scopes.end(); it++) {
+							if (it->second->name == scopes[a_index]) {
+								scope = it->second;
+							}
+						}
+						new_scope_node->inner_scope = scope;
+					}
 				}
 
 				new_branch_node->original_next_node_id = -1;
@@ -227,7 +271,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 				new_branch_node->branch_next_node_id = new_branch_node->id + 1;
 				new_branch_node->branch_next_node = this->scope->nodes[new_branch_node->id + 1];
 
-				for (int a_index = 0; a_index < (int)actions.size(); a_index++) {
+				for (int a_index = 0; a_index < (int)types.size(); a_index++) {
 					int next_node_id;
 					AbstractNode* next_node;
 					if (a_index == (int)actions.size()-1) {
@@ -238,9 +282,15 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 						next_node = this->scope->nodes[new_branch_node->id + 1 + a_index + 1];
 					}
 
-					ActionNode* action_node = (ActionNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
-					action_node->next_node_id = next_node_id;
-					action_node->next_node = next_node;
+					if (this->scope->nodes[new_branch_node->id + 1 + a_index]->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
+						action_node->next_node_id = next_node_id;
+						action_node->next_node = next_node;
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
+						scope_node->next_node_id = next_node_id;
+						scope_node->next_node = next_node;
+					}
 				}
 
 				solution->scopes[this->scope->id] = this->scope;

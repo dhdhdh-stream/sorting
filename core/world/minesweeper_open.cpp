@@ -35,10 +35,6 @@ MinesweeperOpen::MinesweeperOpen() {
 		} else {
 			minesweeper->revealed[1][1] = true;
 		}
-
-		this->start_is_revealed = true;
-	} else {
-		this->start_is_revealed = false;
 	}
 
 	minesweeper->current_x = 1;
@@ -66,7 +62,13 @@ void MinesweeperOpen::get_sequence(std::vector<int>& types,
 }
 
 bool MinesweeperOpen::should_perform_sequence() {
-	return !this->start_is_revealed;
+	Minesweeper* minesweeper = (Minesweeper*)this->problem;
+	if (minesweeper->flagged[1][1]
+			|| minesweeper->revealed[1][1]) {
+		return false;
+	} else {
+		return true;
+	}
 }
 
 string MinesweeperOpen::get_name() {
