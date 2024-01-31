@@ -1,5 +1,7 @@
 /**
  * - provide both sequence to learn state, i.e., attention, as well as payoff, i.e., sequence
+ * 
+ * - easy to capture and share as actions fixed
  */
 
 #ifndef SCENARIO_H

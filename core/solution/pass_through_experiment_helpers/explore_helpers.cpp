@@ -53,6 +53,12 @@ void PassThroughExperiment::explore_initial_activate(AbstractNode*& curr_node,
 	}
 
 	{
+		/**
+		 * TODO:
+		 * - instead of/in addition to sequence, create recursively
+		 *   - gather graph, but then cut out sub-graph and replace with something new
+		 */
+
 		// new path
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);

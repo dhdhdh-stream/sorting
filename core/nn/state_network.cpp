@@ -13,7 +13,8 @@ using namespace std;
  */
 const int HIDDEN_SIZE = 20;
 
-const double TARGET_MAX_UPDATE = 0.05;
+// const double TARGET_MAX_UPDATE = 0.05;
+const double TARGET_MAX_UPDATE = 0.01;
 
 void StateNetwork::construct() {
 	this->obs_input = new Layer(LINEAR_LAYER, 1);

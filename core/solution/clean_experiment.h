@@ -1,3 +1,12 @@
+/**
+ * TODO:
+ * - remove CleanExperiment
+ *   - too easy to destroy progress
+ *     - instead rely on score to restrict solution size
+ *   - also make PassThroughExperiment recursive to prevent it from destroying progress
+ *     - i.e., from destroy progress misguess success + branch success
+ */
+
 #ifndef CLEAN_EXPERIMENT_H
 #define CLEAN_EXPERIMENT_H
 

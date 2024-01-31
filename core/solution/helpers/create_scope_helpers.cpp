@@ -2,6 +2,9 @@
  * TODO:
  * - try not worrying about input/output besides maybe constants
  *   - if difference of behavior is needed, hope that branching plus constants is all that's needed
+ *   - perhaps "pay attention to ..." is not about state
+ *     - but instead about the actions that lead to finding the state
+ *       - an object is the actions needed to verify the object is the object
  */
 
 #include "solution_helpers.h"
