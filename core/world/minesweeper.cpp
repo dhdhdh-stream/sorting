@@ -138,18 +138,10 @@ double Minesweeper::get_observation() {
 			|| this->current_y > WORLD_SIZES[this->world_size][HEIGHT]-1) {
 		return -10.0;
 	} else {
-		if (this->current_x >= (int)this->flagged.size()
-				|| this->current_y >= (int)this->flagged[this->current_x].size()) {
-			cout << "this->world_size: " << this->world_size << endl;
-			cout << "this->current_x: " << this->current_x << endl;
-			cout << "this->flagged.size(): " << this->flagged.size() << endl;
-			cout << "this->current_y: " << this->current_y << endl;
-			cout << "this->flagged[this->current_x].size(): " << this->flagged[this->current_x].size() << endl;
-		}
-		if (this->flagged[this->current_x][this->current_y]) {
-			return 10.0;
-		} else if (this->revealed[this->current_x][this->current_y]) {
+		if (this->revealed[this->current_x][this->current_y]) {
 			return this->world[this->current_x][this->current_y];
+		} else if (this->flagged[this->current_x][this->current_y]) {
+			return 10.0;
 		} else {
 			return -5.0;
 		}

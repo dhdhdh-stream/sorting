@@ -1695,7 +1695,7 @@ void scenario_obs_experiment(ScenarioExperiment* experiment,
 
 	if (improvement_t_score > 1.645) {	// >95%
 	#endif /* MDEBUG */
-		// cout << "obs success" << endl;
+		cout << "obs success" << endl;
 
 		State* new_state = new State();
 
@@ -1724,6 +1724,8 @@ void scenario_obs_experiment(ScenarioExperiment* experiment,
 						   node_contexts,
 						   obs_indexes,
 						   experiment->scope);
+
+		experiment->state_weights.push_back(1.0);
 	} else {
 		for (int n_index = 0; n_index < (int)state_networks.size(); n_index++) {
 			delete state_networks[n_index];

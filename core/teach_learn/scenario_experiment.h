@@ -1,6 +1,7 @@
 #ifndef SCENARIO_EXPERIMENT_H
 #define SCENARIO_EXPERIMENT_H
 
+#include <map>
 #include <vector>
 
 #include "run_helper.h"
@@ -8,15 +9,12 @@
 class Scenario;
 class Scope;
 class ScopeHistory;
+class StateStatus;
 
-/**
- * - simply always set ratio to 50/50
- * 
- * - pay more attention to mistakes
- */
-const int SCENARIO_EXPERIMENT_STATE_LEARN = 0;
+const int SCENARIO_EXPERIMENT_STATE_LEARN_AVERAGE = 0;
+const int SCENARIO_EXPERIMENT_STATE_LEARN = 1;
 
-const int SCENARIO_EXPERIMENT_STATE_DONE = 1;
+const int SCENARIO_EXPERIMENT_STATE_DONE = 2;
 
 class ScenarioExperiment {
 public:
@@ -28,7 +26,11 @@ public:
 
 	Scope* scope;
 
+	double is_sequence_average;
+	std::vector<double> state_weights;
+
 	std::vector<ScopeHistory*> scope_histories;
+	std::vector<std::map<int, StateStatus>> state_histories;
 	std::vector<double> predicted_is_sequence_histories;
 	std::vector<bool> is_sequence_histories;
 

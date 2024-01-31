@@ -286,6 +286,8 @@ int main(int argc, char* argv[]) {
 
 			cout << "num_open: " << num_open << endl;
 			cout << "num_remaining: " << num_remaining << endl;
+
+			minesweeper->print();
 		}
 
 		RunHelper run_helper;

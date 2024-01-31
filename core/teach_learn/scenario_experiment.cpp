@@ -1,6 +1,7 @@
 #include "scenario_experiment.h"
 
 #include <iostream>
+#include <Eigen/Dense>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -13,9 +14,6 @@
 #include "scope_node.h"
 
 using namespace std;
-
-const int GATHER_NUM_DATAPOINTS = 4000;
-const int LEARN_NUM_DATAPOINTS = 1000;
 
 const int LEARN_ITERS = 40;
 
@@ -101,7 +99,7 @@ ScenarioExperiment::ScenarioExperiment(Scenario* scenario_type) {
 		}
 	}
 
-	this->state = SCENARIO_EXPERIMENT_STATE_LEARN;
+	this->state = SCENARIO_EXPERIMENT_STATE_LEARN_AVERAGE;
 	this->state_iter = 0;
 	this->sub_state_iter = 0;
 }
@@ -132,14 +130,15 @@ void ScenarioExperiment::activate(Scenario* scenario,
 						  run_helper,
 						  root_history);
 
-	if (this->sub_state_iter > 0) {
+	if (this->state == SCENARIO_EXPERIMENT_STATE_LEARN) {
 		this->scope_histories.push_back(new ScopeHistory(root_history));
+		this->state_histories.push_back(context.back().local_state_vals);
 
-		double predicted_is_sequence = 0.0;
+		double predicted_is_sequence = this->is_sequence_average;
 		for (int s_index = 0; s_index < this->scope->num_local_states; s_index++) {
 			map<int, StateStatus>::iterator it = context.back().local_state_vals.find(s_index);
 			if (it != context.back().local_state_vals.end()) {
-				predicted_is_sequence += it->second.val;
+				predicted_is_sequence += it->second.val * this->state_weights[s_index];
 			}
 		}
 		this->predicted_is_sequence_histories.push_back(predicted_is_sequence);
@@ -152,10 +151,24 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 	this->is_sequence_histories.push_back(is_sequence);
 
 	if ((int)this->is_sequence_histories.size() >= solution->curr_num_datapoints) {
-		if (this->sub_state_iter > 0) {
+		if (this->state == SCENARIO_EXPERIMENT_STATE_LEARN_AVERAGE) {
+			int is_sequence_count = 0;
+			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+				if (this->is_sequence_histories[i_index]) {
+					is_sequence_count++;
+				}
+			}
+			this->is_sequence_average = 2.0 * (double)is_sequence_count / (double)solution->curr_num_datapoints - 1.0;
+
+			this->is_sequence_histories.clear();
+
+			this->state = SCENARIO_EXPERIMENT_STATE_LEARN;
+			this->state_iter = 0;
+			this->sub_state_iter = 0;
+		} else {
 			cout << "this->sub_state_iter: " << this->sub_state_iter << endl;
 			double sum_misguess = 0.0;
-			for (int i_index = 0; i_index < GATHER_NUM_DATAPOINTS; i_index++) {
+			for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
 				if (this->is_sequence_histories[i_index]) {
 					sum_misguess += abs(1.0 - this->predicted_is_sequence_histories[i_index]);
 				} else {
@@ -164,177 +177,164 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 				
 			}
 			cout << "sum_misguess: " << sum_misguess << endl;
-		}
 
-		vector<int> is_sequence_indexes;
-		vector<int> not_is_sequence_indexes;
-		vector<int> false_is_sequence_indexes;
-		vector<int> false_not_is_sequence_indexes;
-		for (int i_index = 0; i_index < GATHER_NUM_DATAPOINTS; i_index++) {
-			if (this->is_sequence_histories[i_index]) {
-				is_sequence_indexes.push_back(i_index);
-
-				if (this->sub_state_iter > 0) {
-					if (this->predicted_is_sequence_histories[i_index] < 0.0) {
-						false_not_is_sequence_indexes.push_back(i_index);
-					}
-				}
-			} else {
-				not_is_sequence_indexes.push_back(i_index);
-
-				if (this->sub_state_iter > 0) {
-					if (this->predicted_is_sequence_histories[i_index] > 0.0) {
-						false_is_sequence_indexes.push_back(i_index);
-					}
-				}
-			}
-		}
-
-		uniform_int_distribution<int> is_sequence_distribution(0, is_sequence_indexes.size()-1);
-		uniform_int_distribution<int> not_is_sequence_distribution(0, not_is_sequence_indexes.size()-1);
-		uniform_int_distribution<int> false_is_sequence_distribution(0, false_is_sequence_indexes.size()-1);
-		uniform_int_distribution<int> false_not_is_sequence_distribution(0, false_not_is_sequence_indexes.size()-1);
-
-		vector<ScopeHistory*> obs_experiment_scope_histories(LEARN_NUM_DATAPOINTS);
-		vector<double> obs_experiment_target_vals(LEARN_NUM_DATAPOINTS);
-		uniform_int_distribution<int> target_distribution(0, 1);
-		uniform_int_distribution<int> false_distribution(0, 2);
-		for (int i_index = 0; i_index < LEARN_NUM_DATAPOINTS; i_index++) {
-			if (target_distribution(generator) == 0) {
-				if (false_not_is_sequence_indexes.size() > 0 && false_distribution(generator) == 0) {
-					int random_index = false_not_is_sequence_indexes[false_not_is_sequence_distribution(generator)];
-					obs_experiment_scope_histories[i_index] = this->scope_histories[random_index];
-					obs_experiment_target_vals[i_index] = 1.0 - this->predicted_is_sequence_histories[random_index];
-				} else {
-					int random_index = is_sequence_indexes[is_sequence_distribution(generator)];
-					obs_experiment_scope_histories[i_index] = this->scope_histories[random_index];
-					obs_experiment_target_vals[i_index] = 1.0 - this->predicted_is_sequence_histories[random_index];
-				}
-			} else {
-				if (false_is_sequence_indexes.size() > 0 && false_distribution(generator) == 0) {
-					int random_index = false_is_sequence_indexes[false_is_sequence_distribution(generator)];
-					obs_experiment_scope_histories[i_index] = this->scope_histories[random_index];
-					obs_experiment_target_vals[i_index] = -1.0 - this->predicted_is_sequence_histories[random_index];
-				} else {
-					int random_index = not_is_sequence_indexes[not_is_sequence_distribution(generator)];
-					obs_experiment_scope_histories[i_index] = this->scope_histories[random_index];
-					obs_experiment_target_vals[i_index] = -1.0 - this->predicted_is_sequence_histories[i_index];
-				}
-			}
-		}
-
-		scenario_obs_experiment(this,
-								obs_experiment_scope_histories,
-								obs_experiment_target_vals);
-
-		for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
-			delete this->scope_histories[i_index];
-		}
-		this->scope_histories.clear();
-		this->predicted_is_sequence_histories.clear();
-		this->is_sequence_histories.clear();
-
-		this->sub_state_iter++;
-		if (this->sub_state_iter > LEARN_ITERS) {
-			ActionNode* attention_last_node = (ActionNode*)this->scope->nodes[this->scope->nodes.size()-1];
-
-			BranchNode* new_branch_node = new BranchNode();
-			new_branch_node->parent = this->scope;
-			new_branch_node->id = this->scope->node_counter;
-			this->scope->node_counter++;
-			this->scope->nodes[new_branch_node->id] = new_branch_node;
-
-			new_branch_node->branch_scope_context = vector<int>{this->scope->id};
-			new_branch_node->branch_node_context = vector<int>{new_branch_node->id};
-
-			new_branch_node->branch_is_pass_through = false;
-
-			new_branch_node->original_score_mod = 0.0;
-			new_branch_node->branch_score_mod = 0.0;
-
-			for (int s_index = 0; s_index < this->scope->num_local_states; s_index++) {
-				new_branch_node->decision_state_is_local.push_back(true);
-				new_branch_node->decision_state_indexes.push_back(s_index);
-				new_branch_node->decision_original_weights.push_back(0.0);
-				new_branch_node->decision_branch_weights.push_back(1.0);
-			}
-
-			/**
-			 * - simply set to 0.5
-			 */
-			new_branch_node->decision_standard_deviation = 0.5;
-
-			attention_last_node->next_node_id = new_branch_node->id;
-			attention_last_node->next_node = new_branch_node;
-
-			vector<int> types;
-			vector<Action> actions;
-			vector<string> scopes;
-			this->scenario_type->get_sequence(types,
-											  actions,
-											  scopes);
-
-			for (int a_index = 0; a_index < (int)types.size(); a_index++) {
-				if (types[a_index] == STEP_TYPE_ACTION) {
-					ActionNode* new_action_node = new ActionNode();
-
-					new_action_node->parent = this->scope;
-					new_action_node->id = this->scope->node_counter;
-					this->scope->node_counter++;
-					this->scope->nodes[new_action_node->id] = new_action_node;
-
-					new_action_node->action = actions[a_index];
-				} else {
-					ScopeNode* new_scope_node = new ScopeNode();
-
-					new_scope_node->parent = this->scope;
-					new_scope_node->id = this->scope->node_counter;
-					this->scope->node_counter++;
-					this->scope->nodes[new_scope_node->id] = new_scope_node;
-
-					Scope* scope;
-					for (map<int, Scope*>::iterator it = solution->scopes.begin();
-							it != solution->scopes.end(); it++) {
-						if (it->second->name == scopes[a_index]) {
-							scope = it->second;
+			vector<double> obs_experiment_target_vals(solution->curr_num_datapoints);
+			if (this->state_weights.size() > 0) {
+				Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->state_weights.size());
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					for (int s_index = 0; s_index < (int)this->state_weights.size(); s_index++) {
+						map<int, StateStatus>::iterator it = this->state_histories[i_index].find(s_index);
+						if (it != this->state_histories[i_index].end()) {
+							inputs(i_index, s_index) = it->second.val;
+						} else {
+							inputs(i_index, s_index) = 0.0;
 						}
 					}
-					new_scope_node->inner_scope = scope;
+				}
+
+				Eigen::VectorXd outputs(solution->curr_num_datapoints);
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					if (this->is_sequence_histories[i_index]) {
+						outputs(i_index) = 1.0;
+					} else {
+						outputs(i_index) = -1.0;
+					}
+				}
+
+				Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+				for (int s_index = 0; s_index < (int)this->state_weights.size(); s_index++) {
+					this->state_weights[s_index] = weights(s_index);
+				}
+
+				Eigen::VectorXd predicted_scores = inputs * weights;
+				Eigen::VectorXd diffs = outputs - predicted_scores;
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					obs_experiment_target_vals[i_index] = diffs(i_index);
+				}
+			} else {
+				for (int i_index = 0; i_index < solution->curr_num_datapoints; i_index++) {
+					if (this->is_sequence_histories[i_index]) {
+						obs_experiment_target_vals[i_index] = 1.0 - this->predicted_is_sequence_histories[i_index];
+					} else {
+						obs_experiment_target_vals[i_index] = -1.0 - this->predicted_is_sequence_histories[i_index];
+					}
 				}
 			}
 
-			new_branch_node->original_next_node_id = -1;
-			new_branch_node->original_next_node = NULL;
+			scenario_obs_experiment(this,
+									this->scope_histories,
+									obs_experiment_target_vals);
 
-			new_branch_node->branch_next_node_id = new_branch_node->id + 1;
-			new_branch_node->branch_next_node = this->scope->nodes[new_branch_node->id + 1];
-
-			for (int a_index = 0; a_index < (int)types.size(); a_index++) {
-				int next_node_id;
-				AbstractNode* next_node;
-				if (a_index == (int)actions.size()-1) {
-					next_node_id = -1;
-					next_node = NULL;
-				} else {
-					next_node_id = new_branch_node->id + 1 + a_index + 1;
-					next_node = this->scope->nodes[new_branch_node->id + 1 + a_index + 1];
-				}
-
-				if (this->scope->nodes[new_branch_node->id + 1 + a_index]->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
-					action_node->next_node_id = next_node_id;
-					action_node->next_node = next_node;
-				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
-					scope_node->next_node_id = next_node_id;
-					scope_node->next_node = next_node;
-				}
+			for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
+				delete this->scope_histories[i_index];
 			}
+			this->scope_histories.clear();
+			this->state_histories.clear();
+			this->predicted_is_sequence_histories.clear();
+			this->is_sequence_histories.clear();
 
-			solution->scopes[this->scope->id] = this->scope;
+			this->sub_state_iter++;
+			if (this->sub_state_iter > LEARN_ITERS) {
+				ActionNode* attention_last_node = (ActionNode*)this->scope->nodes[this->scope->nodes.size()-1];
 
-			this->state = SCENARIO_EXPERIMENT_STATE_DONE;
+				BranchNode* new_branch_node = new BranchNode();
+				new_branch_node->parent = this->scope;
+				new_branch_node->id = this->scope->node_counter;
+				this->scope->node_counter++;
+				this->scope->nodes[new_branch_node->id] = new_branch_node;
+
+				new_branch_node->branch_scope_context = vector<int>{this->scope->id};
+				new_branch_node->branch_node_context = vector<int>{new_branch_node->id};
+
+				new_branch_node->branch_is_pass_through = false;
+
+				new_branch_node->original_score_mod = 0.0;
+				new_branch_node->branch_score_mod = this->is_sequence_average;
+
+				for (int s_index = 0; s_index < this->scope->num_local_states; s_index++) {
+					new_branch_node->decision_state_is_local.push_back(true);
+					new_branch_node->decision_state_indexes.push_back(s_index);
+					new_branch_node->decision_original_weights.push_back(0.0);
+					new_branch_node->decision_branch_weights.push_back(1.0);
+				}
+
+				/**
+				 * - simply set to 0.5
+				 */
+				new_branch_node->decision_standard_deviation = 0.5;
+
+				attention_last_node->next_node_id = new_branch_node->id;
+				attention_last_node->next_node = new_branch_node;
+
+				vector<int> types;
+				vector<Action> actions;
+				vector<string> scopes;
+				this->scenario_type->get_sequence(types,
+												  actions,
+												  scopes);
+
+				for (int a_index = 0; a_index < (int)types.size(); a_index++) {
+					if (types[a_index] == STEP_TYPE_ACTION) {
+						ActionNode* new_action_node = new ActionNode();
+
+						new_action_node->parent = this->scope;
+						new_action_node->id = this->scope->node_counter;
+						this->scope->node_counter++;
+						this->scope->nodes[new_action_node->id] = new_action_node;
+
+						new_action_node->action = actions[a_index];
+					} else {
+						ScopeNode* new_scope_node = new ScopeNode();
+
+						new_scope_node->parent = this->scope;
+						new_scope_node->id = this->scope->node_counter;
+						this->scope->node_counter++;
+						this->scope->nodes[new_scope_node->id] = new_scope_node;
+
+						Scope* scope;
+						for (map<int, Scope*>::iterator it = solution->scopes.begin();
+								it != solution->scopes.end(); it++) {
+							if (it->second->name == scopes[a_index]) {
+								scope = it->second;
+							}
+						}
+						new_scope_node->inner_scope = scope;
+					}
+				}
+
+				new_branch_node->original_next_node_id = -1;
+				new_branch_node->original_next_node = NULL;
+
+				new_branch_node->branch_next_node_id = new_branch_node->id + 1;
+				new_branch_node->branch_next_node = this->scope->nodes[new_branch_node->id + 1];
+
+				for (int a_index = 0; a_index < (int)types.size(); a_index++) {
+					int next_node_id;
+					AbstractNode* next_node;
+					if (a_index == (int)actions.size()-1) {
+						next_node_id = -1;
+						next_node = NULL;
+					} else {
+						next_node_id = new_branch_node->id + 1 + a_index + 1;
+						next_node = this->scope->nodes[new_branch_node->id + 1 + a_index + 1];
+					}
+
+					if (this->scope->nodes[new_branch_node->id + 1 + a_index]->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
+						action_node->next_node_id = next_node_id;
+						action_node->next_node = next_node;
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[new_branch_node->id + 1 + a_index];
+						scope_node->next_node_id = next_node_id;
+						scope_node->next_node = next_node;
+					}
+				}
+
+				solution->scopes[this->scope->id] = this->scope;
+
+				this->state = SCENARIO_EXPERIMENT_STATE_DONE;
+			}
+			// else continue
 		}
-		// else continue
 	}
 }
