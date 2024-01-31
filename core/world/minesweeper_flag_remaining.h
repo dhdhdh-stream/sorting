@@ -8,6 +8,15 @@
 // learn state and state transformations
 // compare states, transformation of states, etc., to make decisions
 
+// regardless of new sequence, can always try to learn indirect
+// - new indirect may apply only to that sequence -- or it may apply generally
+
+// but, e.g., flag remaining requires paying attention to the surrounding eight squares and comparing it to the center
+// - why would it be worth it to try to pay attention to something like this without a payoff?
+
+// maybe just improve learning
+// - focus on mistakes
+
 #ifndef MINESWEEPER_FLAG_REMAINING_H
 #define MINESWEEPER_FLAG_REMAINING_H
 
