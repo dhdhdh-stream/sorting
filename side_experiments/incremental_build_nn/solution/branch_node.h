@@ -1,0 +1,65 @@
+#ifndef BRANCH_NODE_H
+#define BRANCH_NODE_H
+
+class BranchNodeHistory;
+class BranchNode : public AbstractNode {
+public:
+	std::vector<int> scope_context;
+	std::vector<int> node_context;
+
+	bool is_pass_through;
+
+	double original_score_mod;
+	double branch_score_mod;
+
+	std::vector<std::vector<int>> input_scope_context_ids;
+	std::vector<std::vector<Scope*>> input_scope_contexts;
+	std::vector<std::vector<int>> input_node_context_ids;
+	std::vector<std::vector<AbstractNode*>> input_node_contexts;
+
+	std::vector<int> linear_input_indexes;
+	std::vector<double> linear_original_weights;
+	std::vector<double> linear_branch_weights;
+
+	std::vector<std::vector<int>> original_network_input_indexes;
+	Network* original_network;
+	std::vector<std::vector<int>> branch_network_input_indexes;
+	Network* branch_network;
+
+	/**
+	 * TODO: track decision_standard_deviation and randomly select if below threshold
+	 */
+
+	int original_next_node_id;
+	AbstractNode* original_next_node;
+	int branch_next_node_id;
+	AbstractNode* branch_next_node;
+
+	int hook_index;
+	std::vector<Scope*> hook_scope_context;
+	std::vector<AbstractNode*> hook_node_context;
+
+	AbstractExperiment* experiment;
+	bool experiment_is_branch;
+
+	#if defined(MDEBUG) && MDEBUG
+	void* verify_key;
+	std::vector<double> verify_original_scores;
+	std::vector<double> verify_branch_scores;
+	#endif /* MDEBUG */
+
+
+};
+
+class BranchNodeHistory : public AbstractNodeHistory {
+public:
+	bool is_branch;
+
+	AbstractExperimentHistory* experiment_history;
+
+	BranchNodeHistory(BranchNode* node);
+	BranchNodeHistory(BranchNodeHistory* original);
+	~BranchNodeHistory();
+};
+
+#endif /* BRANCH_NODE_H */

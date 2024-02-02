@@ -16,10 +16,7 @@ class BranchNode : public AbstractNode {
 public:
 	std::vector<int> branch_scope_context;
 	std::vector<int> branch_node_context;
-	/**
-	 * - last layer of context doesn't matter
-	 *   - scope id will always match, and node id meaningless
-	 */
+
 	bool branch_is_pass_through;
 
 	double original_score_mod;

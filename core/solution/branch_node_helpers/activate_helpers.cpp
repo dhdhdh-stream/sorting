@@ -27,6 +27,10 @@ void BranchNode::activate(AbstractNode*& curr_node,
 	if (this->branch_scope_context.size() > context.size()) {
 		matches_context = false;
 	} else {
+		/**
+		 * - last layer of context doesn't matter
+		 *   - scope id will always match, and node id meaningless
+		 */
 		for (int c_index = 0; c_index < (int)this->branch_scope_context.size()-1; c_index++) {
 			if (context[context.size()-this->branch_scope_context.size()+c_index].scope	== NULL			// OuterExperiment edge case
 					|| this->branch_scope_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].scope->id
