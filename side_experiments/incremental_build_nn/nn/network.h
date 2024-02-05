@@ -7,11 +7,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-const int NETWORK_INCREMENT_TYPE_SIDE = 0;
-/**
- * - hidden for existing already trained, so hopefully, learning on it will still be fast
- */
-const int NETWORK_INCREMENT_TYPE_ABOVE = 1;
+#include <vector>
+#include <utility>
+
+#include "layer.h"
 
 class Network {
 public:
@@ -27,7 +26,10 @@ public:
 	std::vector<std::vector<std::pair<bool,int>>> hidden_inputs;
 
 	Layer* output;
-	std::vector<std::pair<bool,int>> output_inputs;
+	/**
+	 * - from hiddens
+	 */
+	std::vector<int> output_inputs;
 
 	int epoch_iter;
 	std::vector<double> hidden_average_max_updates;
@@ -43,7 +45,6 @@ public:
 
 	void increment_side(int input_size);
 	void increment_above(int input_size);
-	void finalize();
 
 	void save(std::ofstream& output_file);
 };

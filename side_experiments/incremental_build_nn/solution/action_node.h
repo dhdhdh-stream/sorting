@@ -9,9 +9,9 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	int hook_index;
-	std::vector<Scope*> hook_scope_context;
-	std::vector<AbstractNode*> hook_node_context;
+	std::vector<int> hook_indexes;
+	std::vector<std::vector<Scope*>> hook_scope_contexts;
+	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
 	AbstractExperiment* experiment;
 

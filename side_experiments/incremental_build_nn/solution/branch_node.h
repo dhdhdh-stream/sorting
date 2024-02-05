@@ -27,7 +27,8 @@ public:
 	Network* branch_network;
 
 	/**
-	 * TODO: track decision_standard_deviation and randomly select if below threshold
+	 * - don't randomize decisions
+	 *   - small variations in obs may lead to random-like behavior anyways
 	 */
 
 	int original_next_node_id;
@@ -35,9 +36,9 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	int hook_index;
-	std::vector<Scope*> hook_scope_context;
-	std::vector<AbstractNode*> hook_node_context;
+	std::vector<int> hook_indexes;
+	std::vector<std::vector<Scope*>> hook_scope_contexts;
+	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
 	AbstractExperiment* experiment;
 	bool experiment_is_branch;
