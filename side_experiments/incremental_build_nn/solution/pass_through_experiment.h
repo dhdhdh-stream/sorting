@@ -1,3 +1,8 @@
+/**
+ * TODO:
+ * - look for RetrainBranchExperiments using new path
+ */
+
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
@@ -21,8 +26,8 @@ const int PASS_THROUGH_EXPERIMENT_STATE_SUCCESS = 9;
 class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
+	std::vector<Scope*> scope_context;
+	std::vector<AbstractNode*> node_context;
 
 	int state;
 	int state_iter;

@@ -9,16 +9,21 @@ public:
 
 	bool is_pass_through;
 
-	double original_score_mod;
-	double branch_score_mod;
+	double original_average_score;
+	double branch_average_score;
 
+	/**
+	 * - empty if input no longer accessible after create_scope()
+	 *   - TODO: clean instead
+	 */
 	std::vector<std::vector<int>> input_scope_context_ids;
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 
-	std::vector<int> linear_input_indexes;
+	std::vector<int> linear_original_input_indexes;
 	std::vector<double> linear_original_weights;
+	std::vector<int> linear_branch_input_indexes;
 	std::vector<double> linear_branch_weights;
 
 	std::vector<std::vector<int>> original_network_input_indexes;

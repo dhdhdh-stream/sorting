@@ -18,58 +18,6 @@ void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 	overall_history->instance_count++;
 }
 
-void select_linear_helper(vector<Scope*>& scope_context,
-						  vector<AbstractNode*>& node_context,
-						  vector<vector<Scope*>>& possible_scope_contexts,
-						  vector<vector<AbstractNode*>>& possible_node_contexts,
-						  ScopeHistory* scope_history) {
-	scope_context.push_back(scope_history->scope);
-	node_context.push_back(NULL);
-
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			ActionNode* action_node = (ActionNode*)action_node_history->node;
-			if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
-				node_context.back() = action_node;
-
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-
-				/**
-				 * - don't need to worry about experiment here
-				 */
-
-				node_context.back() = NULL;
-			}
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-			node_context.back() = scope_node;
-
-			select_linear_helper(scope_context,
-								 node_context,
-								 possible_scope_contexts,
-								 possible_node_contexts,
-								 scope_node_history->inner_scope_history);
-
-			node_context.back() = NULL;
-		} else {
-			node_context.back() = node_history->node;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-
-			node_context.back() = NULL;
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
 void BranchExperiment::train_existing_backprop(double target_val,
 											   RunHelper& run_helper,
 											   BranchExperimentOverallHistory* history) {
@@ -97,11 +45,11 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 		vector<Scope*> scope_context;
 		vector<AbstractNode*> node_context;
-		select_linear_helper(scope_context,
-							 node_context,
-							 possible_scope_contexts,
-							 possible_node_contexts,
-							 this->i_scope_histories.back());
+		gather_possible_helper(scope_context,
+							   node_context,
+							   possible_scope_contexts,
+							   possible_node_contexts,
+							   this->i_scope_histories.back());
 		/**
 		 * - simply always use last ScopeHistory
 		 */
@@ -187,7 +135,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
 			this->existing_linear_weights = vector<double>(num_obs);
+			double existing_standard_deviation = sqrt(this->existing_score_variance);
 			for (int o_index = 0; o_index < num_obs; o_index++) {
+				/**
+				 * - don't worry about comparing against new weights
+				 *   - may not remove inputs that could be removed
+				 *     - but provides more accurate score initially for training networks
+				 */
+				double sum_impact_size = 0.0;
+				for (int d_index = 0; d_index < num_instances; d_index++) {
+					sum_impact_size += abs(inputs(d_index, o_index));
+				}
+				double average_impact = sum_impact_size / num_instances;
+				if (abs(weights(o_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
+					weights(o_index) = 0.0;
+				}
 				this->existing_linear_weights[o_index] = weights(o_index);
 			}
 
@@ -409,7 +371,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		if (this->sub_state_iter >= TRAIN_EXISTING_ITERS) {
 			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
+		} else {
+			this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+			this->i_scope_histories.reserve(solution->curr_num_datapoints);
+			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 		}
-		// else continue
 	}
 }

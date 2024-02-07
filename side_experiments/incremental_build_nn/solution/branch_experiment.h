@@ -3,30 +3,30 @@
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE = 2;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 /**
  * - if has parent_pass_through_experiment, skip and verify in parent
  */
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 8;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 5;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 7;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 #endif /* MDEBUG */
 
-const int BRANCH_EXPERIMENT_STATE_FAIL = 10;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 11;
+const int BRANCH_EXPERIMENT_STATE_FAIL = 9;
+const int BRANCH_EXPERIMENT_STATE_SUCCESS = 10;
 
 const int LINEAR_NUM_OBS = 50;
 const int NETWORK_INCREMENT_NUM_NEW = 10;
 
-class BranchExperiment {
+class BranchExperimentOverallHistory;
+class BranchExperiment : public AbstractExperiment {
 public:
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
+	std::vector<Scope*> scope_context;
+	std::vector<AbstractNode*> node_context;
 
 	PassThroughExperiment* parent_pass_through_experiment;
 
@@ -99,6 +99,25 @@ public:
 	#endif /* MDEBUG */
 
 
+};
+
+class BranchExperimentInstanceHistory : public AbstractExperimentHistory {
+public:
+	std::vector<void*> step_histories;
+
+	BranchExperimentInstanceHistory(BranchExperiment* experiment);
+	BranchExperimentInstanceHistory(BranchExperimentInstanceHistory* original);
+	~BranchExperimentInstanceHistory();
+};
+
+class BranchExperimentOverallHistory : public AbstractExperimentHistory {
+public:
+	int instance_count;
+
+	bool has_target;
+	double existing_predicted_score;
+
+	BranchExperimentOverallHistory(BranchExperiment* experiment);
 };
 
 #endif /* BRANCH_EXPERIMENT_H */
