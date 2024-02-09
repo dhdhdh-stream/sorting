@@ -313,14 +313,12 @@ void BranchExperiment::explore_backprop(double target_val,
 						this->best_actions[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-						this->best_existing_scopes[s_index]->scope_node_placeholder = new ScopeNode();
-						this->best_existing_scopes[s_index]->scope_node_placeholder->parent = containing_scope;
-						this->best_existing_scopes[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
+						this->best_existing_scopes[s_index]->parent = containing_scope;
+						this->best_existing_scopes[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 					} else {
-						this->best_potential_scopes[s_index]->scope_node_placeholder = new ScopeNode();
-						this->best_potential_scopes[s_index]->scope_node_placeholder->parent = containing_scope;
-						this->best_potential_scopes[s_index]->scope_node_placeholder->id = containing_scope->node_counter;
+						this->best_potential_scopes[s_index]->parent = containing_scope;
+						this->best_potential_scopes[s_index]->id = containing_scope->node_counter;
 						containing_scope->node_counter++;
 
 						int new_scope_id = solution->scope_counter;
@@ -331,8 +329,10 @@ void BranchExperiment::explore_backprop(double target_val,
 								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
 							if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
-								branch_node->scope_context = vector<int>{new_scope_id};
-								branch_node->node_context = vector<int>{branch_node->id};
+								branch_node->scope_context_ids = vector<int>{new_scope_id};
+								branch_node->scope_context = vector<int>{this->best_potential_scopes[s_index]->scope};
+								branch_node->node_context_ids = vector<int>{branch_node->id};
+								branch_node->node_context = vector<int>{branch_node};
 								for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
 									if (branch_node->input_scope_context_ids[i_index].size() > 0) {
 										branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
@@ -350,7 +350,7 @@ void BranchExperiment::explore_backprop(double target_val,
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 			} else {
-				this->state = BRANCH_EXPERIMENT_STATE_FAIL;
+				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
 	}

@@ -25,7 +25,7 @@ void gather_possible_exits_helper(int l_index,
 		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
 		
 		AbstractNode* starting_node;
-		AbstractNode* experiment_node = scope->nodes[node_context[l_index]];
+		AbstractNode* experiment_node = node_context[l_index];
 		if (experiment_node->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)experiment_node;
 			starting_node = action_node->next_node;
@@ -112,7 +112,7 @@ void parent_pass_through_gather_possible_exits_helper(
 		if (l_index == (int)scope_context.size()-1 - parent_exit_depth) {
 			starting_node = parent_exit_node;
 		} else {
-			ScopeNode* scope_node = (ScopeNode*)scope->nodes[node_context[l_index]];
+			ScopeNode* scope_node = (ScopeNode*)node_context[l_index];
 			starting_node = scope_node->next_node;
 		}
 

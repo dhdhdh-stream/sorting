@@ -4,8 +4,10 @@
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<int> scope_context;
-	std::vector<int> node_context;
+	std::vector<int> scope_context_ids;
+	std::vector<Scope*> scope_context;
+	std::vector<int> node_context_ids;
+	std::vector<AbstractNode*> node_context;
 
 	bool is_pass_through;
 

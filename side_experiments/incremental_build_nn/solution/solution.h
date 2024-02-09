@@ -18,7 +18,7 @@
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
-const int STARTING_NUM_DATAPOINTS = 1000;
+const int STARTING_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 class Solution {

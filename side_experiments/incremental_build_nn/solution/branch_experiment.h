@@ -16,9 +16,6 @@ const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 7;
 const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 #endif /* MDEBUG */
 
-const int BRANCH_EXPERIMENT_STATE_FAIL = 9;
-const int BRANCH_EXPERIMENT_STATE_SUCCESS = 10;
-
 const int LINEAR_NUM_OBS = 50;
 const int NETWORK_INCREMENT_NUM_NEW = 10;
 
@@ -82,10 +79,17 @@ public:
 
 	double combined_score;
 	/**
-	 * - if original count is 0, then is_pass_through
+	 * - if original_count is 0, then is_pass_through
+	 *   - simply use latest original_count
 	 */
 	int original_count;
 	int branch_count;
+
+	/**
+	 * - don't reuse previous to not affect decision making
+	 */
+	double verify_existing_average_score;
+	double verify_existing_score_variance;
 
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;

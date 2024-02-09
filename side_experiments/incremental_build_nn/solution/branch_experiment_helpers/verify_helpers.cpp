@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void BranchExperiment::measure_activate(
+void BranchExperiment::verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -132,90 +132,104 @@ void BranchExperiment::measure_activate(
 	}
 }
 
-void BranchExperiment::measure_backprop(double target_val,
-										RunHelper& run_helper) {
+void BranchExperiment::verify_backprop(double target_val,
+									   RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= solution->curr_num_datapoints) {
-		this->combined_score /= solution->curr_num_datapoints;
+	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
+			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-		// cout << "Branch" << endl;
-		// cout << "measure" << endl;
-		// cout << "this->scope_context:" << endl;
-		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
-		// }
-		// cout << "this->node_context:" << endl;
-		// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-		// 	if (this->node_context[c_index] == NULL) {
-		// 		cout << c_index << ": -1" << endl;
-		// 	} else {
-		// 		cout << c_index << ": " << this->node_context[c_index] << endl;
-		// 	}
-		// }
-		// cout << "new explore path:";
-		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-		// 		cout << " " << this->best_actions[s_index]->action.move;
-		// 	} else {
-		// 		cout << " S";
-		// 	}
-		// }
-		// cout << endl;
+		#if defined(MDEBUG) && MDEBUG
+		if (!this->new_exceeded_limit && rand()%2 == 0) {
+		#else
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-		// if (this->best_exit_node == NULL) {
-		// 	cout << "this->best_exit_node_id: " << -1 << endl;
-		// } else {
-		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-		// }
+		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
+
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
+			this->combined_score = 0.0;
+			this->original_count = 0;
+			this->branch_count = 0;
+
+			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
+			this->state_iter = 0;
+		} else {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+
+		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
+		double combined_improvement = this->combined_score - this->verify_existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+
+		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		double score_standard_deviation = sqrt(this->existing_score_variance);
-		double combined_improvement = this->combined_score - this->existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
-
-		// cout << "this->combined_score: " << this->combined_score << endl;
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		// cout << "score_standard_deviation: " << score_standard_deviation << endl;
-		// cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-
-		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
-
-		// cout << "branch_weight: " << branch_weight << endl;
-
-		// cout << endl;
-
 		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
-			if (this->parent_pass_through_experiment != NULL) {
-				#if defined(MDEBUG) && MDEBUG
-				if (this->original_count == 0) {
-					this->result = EXPERIMENT_RESULT_SUCCESS;
+			cout << "Branch" << endl;
+			cout << "verify" << endl;
+			cout << "this->scope_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				cout << c_index << ": " << this->scope_context[c_index] << endl;
+			}
+			cout << "this->node_context:" << endl;
+			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				cout << c_index << ": " << this->node_context[c_index] << endl;
+			}
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index]->action.move;
+				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+					cout << " S";
 				} else {
-					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-					this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-					this->state_iter = 0;
+					cout << " E";
 				}
-				#else
-				this->result = EXPERIMENT_RESULT_SUCCESS;
-				#endif /* MDEBUG */
+			}
+			cout << endl;
+
+			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+			if (this->best_exit_node == NULL) {
+				cout << "this->best_exit_node_id: " << -1 << endl;
 			} else {
-				this->combined_score = 0.0;
-				this->original_count = 0;
-				this->branch_count = 0;
+				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+			}
 
-				this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			cout << "this->combined_score: " << this->combined_score << endl;
+			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
+			cout << "score_standard_deviation: " << score_standard_deviation << endl;
+			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
-				this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+			cout << "branch_weight: " << branch_weight << endl;
+
+			cout << endl;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (this->original_count == 0) {
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			} else {
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 				this->state_iter = 0;
 			}
+			#else
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+			#endif /* MDEBUG */
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

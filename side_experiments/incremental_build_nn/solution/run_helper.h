@@ -18,6 +18,19 @@ public:
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
+	RunHelper() {
+		this->curr_depth = 0;
+		this->max_depth = 0;
+
+		this->exceeded_limit = false;
+
+		this->experiment_history = NULL;
+	}
+	~RunHelper() {
+		if (this->experiment_history != NULL) {
+			delete this->experiment_history;
+		}
+	}
 };
 
 #endif /* RUN_HELPER_H */

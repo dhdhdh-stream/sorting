@@ -92,7 +92,27 @@ int main(int argc, char* argv[]) {
 		bool is_success = false;
 		bool is_fail = false;
 		if (run_helper.experiment_history != NULL) {
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+				experiment->average_remaining_experiments_from_start =
+					0.9 * experiment->average_remaining_experiments_from_start
+					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+						+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
+			}
 
+			run_helper.experiment_history->experiment->backprop(
+				target_val,
+				run_helper,
+				run_helper.experiment_history);
+			if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
+				is_fail = true;
+				run_helper.experiment_history->experiment->finalize();
+				delete run_helper.experiment_history->experiment;
+			} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				is_success = true;
+				run_helper.experiment_history->experiment->finalize();
+				delete run_helper.experiment_history->experiment;
+			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
@@ -124,6 +144,9 @@ int main(int argc, char* argv[]) {
 				context.back().scope = solution->root;
 				context.back().node = NULL;
 
+				ScopeHistory* root_history = new ScopeHistory(solution->root);
+				context.back().scope_history = root_history;
+
 				// unused
 				int exit_depth = -1;
 				AbstractNode* exit_node = NULL;
@@ -132,7 +155,10 @@ int main(int argc, char* argv[]) {
 												context,
 												exit_depth,
 												exit_node,
-												run_helper);
+												run_helper,
+												root_history);
+
+				delete root_history;
 
 				delete solution->verify_problems[0];
 				solution->verify_problems.erase(solution->verify_problems.begin());

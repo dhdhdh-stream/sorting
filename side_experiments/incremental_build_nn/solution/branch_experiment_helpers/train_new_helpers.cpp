@@ -42,7 +42,8 @@ void BranchExperiment::train_new_activate(
 								  context,
 								  exit_depth,
 								  exit_node,
-								  run_helper);
+								  run_helper,
+								  history);
 	} else {
 		if (this->sub_state_iter != 0) {
 			train_new_non_target_activate(curr_node,
@@ -62,12 +63,17 @@ void BranchExperiment::train_new_target_activate(
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
-		RunHelper& run_helper) {
+		RunHelper& run_helper,
+		AbstractExperimentHistory*& history) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
+
+	BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
+	history = instance_history;
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+			instance_history->step_histories.push_back(action_node_history);
 			this->best_actions[s_index]->activate(
 				curr_node,
 				problem,
@@ -76,23 +82,22 @@ void BranchExperiment::train_new_target_activate(
 				exit_node,
 				run_helper,
 				action_node_history);
-			delete action_node_history;
 		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
+			instance_history->step_histories.push_back(scope_node_history);
 			this->best_existing_scopes[s_index]->potential_activate(
 				problem,
 				context,
 				run_helper,
 				scope_node_history);
-			delete scope_node_history;
 		} else {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
+			instance_history->step_histories.push_back(scope_node_history);
 			this->best_potential_scopes[s_index]->potential_activate(
 				problem,
 				context,
 				run_helper,
 				scope_node_history);
-			delete scope_node_history;
 		}
 	}
 
@@ -187,13 +192,13 @@ void BranchExperiment::train_new_non_target_activate(
 	#endif /* MDEBUG */
 
 	if (decision_is_branch) {
-		BranchExperimentInstanceHistory* branch_experiment_history = new BranchExperimentInstanceHistory(this);
-		history = branch_experiment_history;
+		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
+		history = instance_history;
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-				branch_experiment_history->step_histories.push_back(action_node_history);
+				instance_history->step_histories.push_back(action_node_history);
 				this->best_actions[s_index]->activate(
 					curr_node,
 					problem,
@@ -204,7 +209,7 @@ void BranchExperiment::train_new_non_target_activate(
 					action_node_history);
 			} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-				branch_experiment_history->step_histories.push_back(scope_node_history);
+				instance_history->step_histories.push_back(scope_node_history);
 				this->best_existing_scopes[s_index]->potential_activate(
 					problem,
 					context,
@@ -212,7 +217,7 @@ void BranchExperiment::train_new_non_target_activate(
 					scope_node_history);
 			} else {
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-				branch_experiment_history->step_histories.push_back(scope_node_history);
+				instance_history->step_histories.push_back(scope_node_history);
 				this->best_potential_scopes[s_index]->potential_activate(
 					problem,
 					context,
