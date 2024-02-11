@@ -71,27 +71,31 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			for (int i_index = 0; i_index < (int)this->linear_original_input_indexes.size(); i_index++) {
 				original_score += input_vals[this->linear_original_input_indexes[i_index]] * this->linear_original_weights[i_index];
 			}
-			vector<vector<double>> original_network_input_vals(this->original_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->original_network_input_indexes.size(); i_index++) {
-				for (int v_index = 0; v_index < (int)this->original_network_input_indexes[i_index].size(); v_index++) {
-					original_network_input_vals[i_index][v_index] = input_vals[this->original_network_input_indexes[i_index][v_index]];
+			if (this->original_network != NULL) {
+				vector<vector<double>> original_network_input_vals(this->original_network_input_indexes.size());
+				for (int i_index = 0; i_index < (int)this->original_network_input_indexes.size(); i_index++) {
+					for (int v_index = 0; v_index < (int)this->original_network_input_indexes[i_index].size(); v_index++) {
+						original_network_input_vals[i_index][v_index] = input_vals[this->original_network_input_indexes[i_index][v_index]];
+					}
 				}
+				this->original_network->activate(original_network_input_vals);
+				original_score += this->original_network->output->acti_vals[0];
 			}
-			this->original_network->activate(original_network_input_vals);
-			original_score += this->original_network->output->acti_vals[0];
 
 			double branch_score = this->branch_average_score;
 			for (int i_index = 0; i_index < (int)this->linear_branch_input_indexes.size(); i_index++) {
 				branch_score += input_vals[this->linear_branch_input_indexes[i_index]] * this->linear_branch_weights[i_index];
 			}
-			vector<vector<double>> branch_network_input_vals(this->branch_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->branch_network_input_indexes.size(); i_index++) {
-				for (int v_index = 0; v_index < (int)this->branch_network_input_indexes[i_index].size(); v_index++) {
-					branch_network_input_vals[i_index][v_index] = input_vals[this->branch_network_input_indexes[i_index][v_index]];
+			if (this->branch_network != NULL) {
+				vector<vector<double>> branch_network_input_vals(this->branch_network_input_indexes.size());
+				for (int i_index = 0; i_index < (int)this->branch_network_input_indexes.size(); i_index++) {
+					for (int v_index = 0; v_index < (int)this->branch_network_input_indexes[i_index].size(); v_index++) {
+						branch_network_input_vals[i_index][v_index] = input_vals[this->branch_network_input_indexes[i_index][v_index]];
+					}
 				}
+				this->branch_network->activate(branch_network_input_vals);
+				branch_score += this->branch_network->output->acti_vals[0];
 			}
-			this->branch_network->activate(branch_network_input_vals);
-			branch_score += this->branch_network->output->acti_vals[0];
 
 			if (this->verify_key == run_helper.verify_key) {
 				if (this->verify_original_scores[0] != original_score

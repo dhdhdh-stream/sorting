@@ -3,8 +3,8 @@
  * 
  * - easy to capture and share as actions fixed
  * 
- * - to capture externally through learning, copy full sequence plus remember branch off point
- *   - full sequence will always contain necessary information to make good decision
+ * - scenarios need to be learned hierarchically
+ *   - otherwise, payoff may not be good enough, so learned scenario will not be meaningful
  */
 
 #ifndef SCENARIO_H

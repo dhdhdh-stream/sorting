@@ -206,10 +206,10 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->best_actions[s_index]->action.move;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-					cout << " S";
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 					cout << " E";
+				} else {
+					cout << " P";
 				}
 			}
 			cout << endl;

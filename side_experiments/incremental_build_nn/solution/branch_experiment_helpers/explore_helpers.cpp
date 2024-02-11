@@ -92,15 +92,17 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
-	vector<vector<double>> network_input_vals(this->existing_network_input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-		network_input_vals[i_index] = vector<double>(this->existing_network_input_indexes[i_index].size());
-		for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
-			network_input_vals[i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
+	if (this->existing_network != NULL) {
+		vector<vector<double>> network_input_vals(this->existing_network_input_indexes.size());
+		for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
+			network_input_vals[i_index] = vector<double>(this->existing_network_input_indexes[i_index].size());
+			for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
+				network_input_vals[i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
+			}
 		}
+		this->existing_network->activate(network_input_vals);
+		predicted_score += this->existing_network->output->acti_vals[0];
 	}
-	this->existing_network->activate(network_input_vals);
-	predicted_score += this->existing_network->output->acti_vals[0];
 
 	BranchExperimentOverallHistory* overall_history;
 	if (this->parent_pass_through_experiment != NULL) {

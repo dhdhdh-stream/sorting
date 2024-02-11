@@ -2,8 +2,6 @@
 
 using namespace std;
 
-const int TRAIN_EXISTING_ITERS = 3;
-
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
@@ -38,6 +36,18 @@ void BranchExperiment::train_existing_backprop(double target_val,
 	}
 
 	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			sum_scores += this->o_target_val_histories[d_index];
+		}
+		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+
+		double sum_score_variance = 0.0;
+		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
+		}
+		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+
 		int num_instances = (int)this->i_target_val_histories.size();
 
 		vector<vector<Scope*>> possible_scope_contexts;
@@ -54,179 +64,113 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		 * - simply always use last ScopeHistory
 		 */
 
-		vector<vector<vector<int>>> network_inputs(num_instances);
-		vector<double> network_target_vals(num_instances);
-		if (this->sub_state_iter == 0) {
-			double sum_scores = 0.0;
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-				sum_scores += this->o_target_val_histories[d_index];
-			}
-			this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+		int num_obs = min(LINEAR_NUM_OBS, possible_scope_contexts.size());
 
-			double sum_score_variance = 0.0;
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-				sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
-			}
-			this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+		vector<int> remaining_indexes(possible_scope_contexts.size());
+		for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
+			remaining_indexes[p_index] = p_index;
+		}
+		for (int o_index = 0; o_index < num_obs; o_index++) {
+			uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+			int rand_index = distribution(generator);
 
-			int num_obs = min(LINEAR_NUM_OBS, possible_scope_contexts.size());
+			this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+			this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 
-			vector<int> remaining_indexes(possible_scope_contexts.size());
-			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-				remaining_indexes[p_index] = p_index;
-			}
-			for (int o_index = 0; o_index < num_obs; o_index++) {
-				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-				int rand_index = distribution(generator);
+			remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+		}
 
-				this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-				this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+		Eigen::MatrixXd inputs(num_instances, this->input_scope_contexts.size());
 
-				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
-			}
-
-			Eigen::MatrixXd inputs(num_instances, num_obs);
-
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-					action_node->hook_indexes.push_back(i_index);
-					action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-					action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-				} else {
-					BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-					branch_node->hook_indexes.push_back(i_index);
-					branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-					branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-				}
-			}
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				vector<double> input_vals(num_obs, 0.0);
-
-				vector<Scope*> scope_context;
-				vector<AbstractNode*> node_context;
-				input_vals_helper(scope_context,
-								  node_context,
-								  input_vals,
-								  this->i_scope_histories[d_index]);
-
-				for (int o_index = 0; o_index < num_obs; o_index++) {
-					inputs(d_index, o_index) = input_vals[o_index];
-				}
-			}
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-					action_node->hook_indexes.clear();
-					action_node->hook_scope_contexts.clear();
-					action_node->hook_node_contexts.clear();
-				} else {
-					BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-					branch_node->hook_indexes.clear();
-					branch_node->hook_scope_contexts.clear();
-					branch_node->hook_node_contexts.clear();
-				}
-			}
-
-			Eigen::VectorXd outputs(num_instances);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				outputs(d_index) = this->i_target_val_histories[d_index] - this->existing_average_score;
-			}
-
-			Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-			this->existing_linear_weights = vector<double>(num_obs);
-			double existing_standard_deviation = sqrt(this->existing_score_variance);
-			for (int o_index = 0; o_index < num_obs; o_index++) {
-				/**
-				 * - don't worry about comparing against new weights
-				 *   - may not remove inputs that could be removed
-				 *     - but provides more accurate score initially for training networks
-				 */
-				double sum_impact_size = 0.0;
-				for (int d_index = 0; d_index < num_instances; d_index++) {
-					sum_impact_size += abs(inputs(d_index, o_index));
-				}
-				double average_impact = sum_impact_size / num_instances;
-				if (abs(weights(o_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
-					weights(o_index) = 0.0;
-				}
-				this->existing_linear_weights[o_index] = weights(o_index);
-			}
-
-			Eigen::VectorXd predicted_scores = inputs * weights;
-			Eigen::VectorXd diffs = outputs - predicted_scores;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				network_target_vals[d_index] = diffs(d_index);
-			}
-
-			vector<double> misguesses(num_instances);
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				misguesses[d_index] = diffs(d_index) * diffs(d_index);
-			}
-
-			double sum_misguesses = 0.0;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				sum_misguesses += misguesses[d_index];
-			}
-			this->existing_average_misguess = sum_misguesses / num_instances;
-
-			double sum_misguess_variances = 0.0;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				sum_misguess_variances += (misguesses[d_index] - this->existing_average_misguess) * (misguesses[d_index] - this->existing_average_misguess);
-			}
-			this->existing_misguess_variance = sum_misguess_variances / num_instances;
-		} else {
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-					action_node->hook_indexes.push_back(i_index);
-					action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-					action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-				} else {
-					BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-					branch_node->hook_indexes.push_back(i_index);
-					branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-					branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-				}
-			}
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-
-				vector<Scope*> scope_context;
-				vector<AbstractNode*> node_context;
-				input_vals_helper(scope_context,
-								  node_context,
-								  input_vals,
-								  this->i_scope_histories[d_index]);
-
-				double linear_impact = 0.0;
-				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-					linear_impact += input_vals[i_index] * this->existing_linear_weights[i_index];
-				}
-				network_target_vals[d_index] = this->i_target_val_histories[d_index] - this->existing_average_score - linear_impact;
-
-				network_inputs[d_index] = vector<vector<double>>((int)this->existing_network_input_indexes.size());
-				for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-					network_inputs[d_index][i_index] = vector<double>((int)this->existing_network_input_indexes[i_index].size());
-					for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
-						network_inputs[d_index][i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
-					}
-				}
-			}
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-					action_node->hook_indexes.clear();
-					action_node->hook_scope_contexts.clear();
-					action_node->hook_node_contexts.clear();
-				} else {
-					BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-					branch_node->hook_indexes.clear();
-					branch_node->hook_scope_contexts.clear();
-					branch_node->hook_node_contexts.clear();
-				}
+		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+			if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+				action_node->hook_indexes.push_back(i_index);
+				action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+				action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+				branch_node->hook_indexes.push_back(i_index);
+				branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+				branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
 			}
 		}
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
+
+			vector<Scope*> scope_context;
+			vector<AbstractNode*> node_context;
+			input_vals_helper(scope_context,
+							  node_context,
+							  input_vals,
+							  this->i_scope_histories[d_index]);
+
+			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+				inputs(d_index, i_index) = input_vals[i_index];
+			}
+		}
+		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+			if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+				action_node->hook_indexes.clear();
+				action_node->hook_scope_contexts.clear();
+				action_node->hook_node_contexts.clear();
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+				branch_node->hook_indexes.clear();
+				branch_node->hook_scope_contexts.clear();
+				branch_node->hook_node_contexts.clear();
+			}
+		}
+
+		Eigen::VectorXd outputs(num_instances);
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			outputs(d_index) = this->i_target_val_histories[d_index] - this->existing_average_score;
+		}
+
+		Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+		this->existing_linear_weights = vector<double>(this->input_scope_contexts.size());
+		double existing_standard_deviation = sqrt(this->existing_score_variance);
+		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+			/**
+			 * - don't worry about comparing against new weights
+			 *   - may not remove inputs that could be removed
+			 *     - but provides more accurate score initially for training networks
+			 */
+			double sum_impact_size = 0.0;
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				sum_impact_size += abs(inputs(d_index, i_index));
+			}
+			double average_impact = sum_impact_size / num_instances;
+			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
+				weights(i_index) = 0.0;
+			}
+			this->existing_linear_weights[i_index] = weights(i_index);
+		}
+
+		Eigen::VectorXd predicted_scores = inputs * weights;
+		Eigen::VectorXd diffs = outputs - predicted_scores;
+		vector<double> network_target_vals(num_instances);
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			network_target_vals[d_index] = diffs(d_index);
+		}
+
+		vector<double> misguesses(num_instances);
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			misguesses[d_index] = diffs(d_index) * diffs(d_index);
+		}
+
+		double sum_misguesses = 0.0;
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			sum_misguesses += misguesses[d_index];
+		}
+		this->existing_average_misguess = sum_misguesses / num_instances;
+
+		double sum_misguess_variances = 0.0;
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			sum_misguess_variances += (misguesses[d_index] - this->existing_average_misguess) * (misguesses[d_index] - this->existing_average_misguess);
+		}
+		this->existing_misguess_variance = sum_misguess_variances / num_instances;
 
 		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
 		vector<vector<Scope*>> test_network_input_scope_contexts;
@@ -246,19 +190,9 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			remaining_indexes.erase(remaining_indexes.begin() + rand_index);
 		}
 
-		Network* test_network;
-		if (this->existing_network == NULL) {
-			test_network = new Network(num_new_input_indexes);
-		} else {
-			test_network = new Network(this->existing_network);
+		Network* test_network = new Network(num_new_input_indexes);
 
-			uniform_int_distribution<int> increment_above_distribution(0, 3);
-			if (increment_above_distribution(generator) == 0) {
-				test_network->increment_above(num_new_input_indexes);
-			} else {
-				test_network->increment_side(num_new_input_indexes);
-			}
-		}
+		vector<vector<vector<int>>> network_inputs(num_instances);
 
 		for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 			if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
@@ -351,7 +285,9 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			}
 			this->existing_network_input_indexes.push_back(new_input_indexes);
 
-			delete this->existing_network;
+			if (this->existing_network != NULL) {
+				delete this->existing_network;
+			}
 			this->existing_network = test_network;
 
 			this->existing_average_misguess = final_average_misguess;

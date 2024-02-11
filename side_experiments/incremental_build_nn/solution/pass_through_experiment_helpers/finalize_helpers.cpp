@@ -174,6 +174,8 @@ void PassThroughExperiment::finalize() {
 			} else {
 				containing_scope->nodes[this->best_potential_scopes[s_index]->id] = this->best_potential_scopes[s_index];
 
+				solution->scopes[this->best_potential_scopes[s_index]->scope->id] = this->best_potential_scopes[s_index]->scope;
+
 				this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 				this->best_potential_scopes[s_index]->next_node = next_node;
 			}

@@ -3,21 +3,27 @@
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+/**
+ * - go to TRAIN_NEW from EXPLORE 
+ *   - i.e., skip 1st RETRAIN_EXISTING
+ * 
+ * - share sub_state_iter
+ */
+const int BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING = 2;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
 /**
  * - if has parent_pass_through_experiment, skip and verify in parent
  */
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 5;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 7;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
 #endif /* MDEBUG */
 
-const int LINEAR_NUM_OBS = 50;
-const int NETWORK_INCREMENT_NUM_NEW = 10;
+const int BRANCH_EXPERIMENT_TRAIN_ITERS = 3;
 
 class BranchExperimentOverallHistory;
 class BranchExperiment : public AbstractExperiment {

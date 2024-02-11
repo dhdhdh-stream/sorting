@@ -48,29 +48,33 @@ void BranchExperiment::parent_verify_activate(
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
-	vector<vector<double>> existing_network_input_vals(this->existing_network_input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-		existing_network_input_vals[i_index] = vector<double>(this->existing_network_input_indexes[i_index].size());
-		for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
-			existing_network_input_vals[i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
+	if (this->existing_network != NULL) {
+		vector<vector<double>> existing_network_input_vals(this->existing_network_input_indexes.size());
+		for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
+			existing_network_input_vals[i_index] = vector<double>(this->existing_network_input_indexes[i_index].size());
+			for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
+				existing_network_input_vals[i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
+			}
 		}
+		this->existing_network->activate(existing_network_input_vals);
+		existing_predicted_score += this->existing_network->output->acti_vals[0];
 	}
-	this->existing_network->activate(existing_network_input_vals);
-	existing_predicted_score += this->existing_network->output->acti_vals[0];
 
 	double new_predicted_score = this->new_average_score;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		new_predicted_score += input_vals[i_index] * this->new_linear_weights[i_index];
 	}
-	vector<vector<double>> new_network_input_vals(this->new_network_input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->new_network_input_indexes.size(); i_index++) {
-		new_network_input_vals[i_index] = vector<double>(this->new_network_input_indexes[i_index].size());
-		for (int s_index = 0; s_index < (int)this->new_network_input_indexes[i_index].size(); s_index++) {
-			new_network_input_vals[i_index][s_index] = input_vals[this->new_network_input_indexes[i_index][s_index]];
+	if (this->new_network != NULL) {
+		vector<vector<double>> new_network_input_vals(this->new_network_input_indexes.size());
+		for (int i_index = 0; i_index < (int)this->new_network_input_indexes.size(); i_index++) {
+			new_network_input_vals[i_index] = vector<double>(this->new_network_input_indexes[i_index].size());
+			for (int s_index = 0; s_index < (int)this->new_network_input_indexes[i_index].size(); s_index++) {
+				new_network_input_vals[i_index][s_index] = input_vals[this->new_network_input_indexes[i_index][s_index]];
+			}
 		}
+		this->new_network->activate(new_network_input_vals);
+		new_predicted_score += this->new_network->output->acti_vals[0];
 	}
-	this->new_network->activate(new_network_input_vals);
-	new_predicted_score += this->new_network->output->acti_vals[0];
 
 	#if defined(MDEBUG) && MDEBUG
 	bool decision_is_branch;

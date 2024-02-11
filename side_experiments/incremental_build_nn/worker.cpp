@@ -1,3 +1,9 @@
+/**
+ * - TODO: to parallelize further:
+ *   - have new instances that don't sync, but draw from existing
+ *     - initially, they may be much worse, but if they ever become better, swap to
+ */
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -6,13 +12,24 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 50;
+const int NUM_FAILS_BEFORE_INCREASE = 30;
 
 default_random_engine generator;
 
 Solution* solution;
 
 int main(int argc, char* argv[]) {
+	if (argc != 3) {
+		cout << "Usage: ./worker [path] [name]" << endl;
+		exit(1);
+	}
+	string path = argv[1];
+	string name = argv[2];
+
+	/**
+	 * - worker directories need to have already been created
+	 */
+
 	cout << "Starting..." << endl;
 
 	int seed = (unsigned)time(NULL);
@@ -21,28 +38,16 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
-
-	solution->save("", "main");
+	solution->load(path, "main");
 
 	int num_fails = 0;
 
-	#if defined(MDEBUG) && MDEBUG
-	int run_index = 0;
-	#endif /* MDEBUG */
-
+	int iter_index = 0;
 	while (true) {
 		Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
-
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.starting_run_seed = run_index;
-		run_helper.curr_run_seed = run_index;
-		run_index++;
-		#endif /* MDEBUG */
 
 		bool outer_is_selected = false;
 		if (solution->outer_experiment != NULL) {
@@ -127,60 +132,36 @@ int main(int argc, char* argv[]) {
 		if (is_success) {
 			solution->success_reset();
 
-			#if defined(MDEBUG) && MDEBUG
-			while (solution->verify_problems.size() > 0) {
-				Problem* problem = solution->verify_problems[0];
+			ifstream solution_save_file;
+			solution_save_file.open(path + "saves/main.txt");
+			string timestamp_line;
+			getline(solution_save_file, timestamp_line);
+			int curr_timestamp = stoi(timestamp_line);
+			solution_save_file.close();
 
-				RunHelper run_helper;
-				run_helper.verify_key = solution->verify_key;
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
 
-				run_helper.starting_run_seed = solution->verify_seeds[0];
-				run_helper.curr_run_seed = solution->verify_seeds[0];
-				solution->verify_seeds.erase(solution->verify_seeds.begin());
+				solution = new Solution();
+				solution->load(path, "main");
 
-				vector<ContextLayer> context;
-				context.push_back(ContextLayer());
+				cout << "updated from main" << endl;
+			} else {
+				/**
+				 * - possible race condition
+				 *   - but just means that previous update from another worker dropped
+				 */
+				solution->timestamp = (unsigned)time(NULL);
+				solution->save(path, name);
 
-				context.back().scope = solution->root;
-				context.back().node = NULL;
-
-				ScopeHistory* root_history = new ScopeHistory(solution->root);
-				context.back().scope_history = root_history;
-
-				// unused
-				int exit_depth = -1;
-				AbstractNode* exit_node = NULL;
-
-				solution->root->verify_activate(problem,
-												context,
-												exit_depth,
-												exit_node,
-												run_helper,
-												root_history);
-
-				delete root_history;
-
-				delete solution->verify_problems[0];
-				solution->verify_problems.erase(solution->verify_problems.begin());
+				if (solution->max_depth < 50) {
+					solution->depth_limit = solution->max_depth + 10;
+				} else {
+					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+				}
 			}
-			solution->clear_verify();
-			#endif /* MDEBUG */
 
 			num_fails = 0;
-
-			solution->id = (unsigned)time(NULL);
-			solution->save("", "main");
-
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
-
-			if (solution->max_depth < 50) {
-				solution->depth_limit = solution->max_depth + 10;
-			} else {
-				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-			}
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 		} else if (is_fail) {
@@ -194,15 +175,28 @@ int main(int argc, char* argv[]) {
 
 				solution->curr_num_datapoints *= 2;
 			}
-		}
+		} else {
+			iter_index++;
+			if (iter_index%10000 == 0) {
+				ifstream solution_save_file;
+				solution_save_file.open(path + "saves/main.txt");
+				string timestamp_line;
+				getline(solution_save_file, timestamp_line);
+				int curr_timestamp = stoi(timestamp_line);
+				solution_save_file.close();
 
-		#if defined(MDEBUG) && MDEBUG
-		if (run_index%1000 == 0) {
-			delete solution;
-			solution = new Solution();
-			solution->load("", "main");
+				if (curr_timestamp > solution->timestamp) {
+					delete solution;
+
+					solution = new Solution();
+					solution->load(path, "main");
+
+					cout << "updated from main" << endl;
+
+					num_fails = 0;
+				}
+			}
 		}
-		#endif /* MDEBUG */
 	}
 
 	delete solution;

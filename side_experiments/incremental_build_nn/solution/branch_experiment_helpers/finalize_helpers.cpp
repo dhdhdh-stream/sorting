@@ -293,6 +293,8 @@ void BranchExperiment::new_branch() {
 		} else {
 			containing_scope->nodes[this->best_potential_scopes[s_index]->id] = this->best_potential_scopes[s_index];
 
+			solution->scopes[this->best_potential_scopes[s_index]->scope->id] = this->best_potential_scopes[s_index]->scope;
+
 			this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 			this->best_potential_scopes[s_index]->next_node = next_node;
 		}
@@ -472,6 +474,8 @@ void BranchExperiment::new_pass_through() {
 			this->best_existing_scopes[s_index]->next_node = next_node;
 		} else {
 			containing_scope->nodes[this->best_potential_scopes[s_index]->id] = this->best_potential_scopes[s_index];
+
+			solution->scopes[this->best_potential_scopes[s_index]->scope->id] = this->best_potential_scopes[s_index]->scope;
 
 			this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 			this->best_potential_scopes[s_index]->next_node = next_node;
