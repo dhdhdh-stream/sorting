@@ -2,6 +2,14 @@
 
 #include "retrain_branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "network.h"
+#include "problem.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::capture_verify_activate(

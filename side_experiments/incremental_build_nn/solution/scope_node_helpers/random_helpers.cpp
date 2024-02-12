@@ -1,5 +1,8 @@
 #include "scope_node.h"
 
+#include "globals.h"
+#include "scope.h"
+
 using namespace std;
 
 void ScopeNode::random_activate(vector<Scope*>& scope_context,

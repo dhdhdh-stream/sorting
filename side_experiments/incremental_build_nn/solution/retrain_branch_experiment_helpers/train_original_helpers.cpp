@@ -1,5 +1,19 @@
 #include "retrain_branch_experiment.h"
 
+#include <cmath>
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::train_original_activate(
@@ -239,7 +253,7 @@ void RetrainBranchExperiment::train_original_backprop(
 				}
 				this->original_average_score = sum_scores / solution->curr_num_datapoints;
 
-				int num_obs = min(LINEAR_NUM_OBS, possible_scope_contexts.size());
+				int num_obs = min(LINEAR_NUM_OBS, (int)possible_scope_contexts.size());
 
 				vector<int> remaining_indexes(possible_scope_contexts.size());
 				for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
@@ -266,7 +280,7 @@ void RetrainBranchExperiment::train_original_backprop(
 				}
 
 				Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->input_scope_contexts.size());
-				vector<vector<vector<int>>> network_inputs(solution->curr_num_datapoints);
+				vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -375,7 +389,7 @@ void RetrainBranchExperiment::train_original_backprop(
 					this->original_misguess_variance = final_misguess_variance;
 				}
 			} else {
-				vector<vector<vector<int>>> network_inputs(solution->curr_num_datapoints);
+				vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 				vector<double> network_target_vals(solution->curr_num_datapoints);
 
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -429,7 +443,7 @@ void RetrainBranchExperiment::train_original_backprop(
 					}
 				}
 
-				int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
+				int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 				vector<vector<Scope*>> test_network_input_scope_contexts;
 				vector<vector<AbstractNode*>> test_network_input_node_contexts;
 
@@ -569,7 +583,7 @@ void RetrainBranchExperiment::train_original_backprop(
 			this->i_scope_histories.clear();
 			this->i_target_val_histories.clear();
 
-			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH
+			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH;
 			/**
 			 * - leave this->sub_state_iter unchanged
 			 */

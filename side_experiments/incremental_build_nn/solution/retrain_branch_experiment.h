@@ -1,6 +1,17 @@
 #ifndef RETRAIN_BRANCH_EXPERIMENT_H
 #define RETRAIN_BRANCH_EXPERIMENT_H
 
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class BranchNode;
+class Network;
+class Problem;
+class ScopeHistory;
+
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL = 1;
 const int RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH = 2;
@@ -50,8 +61,10 @@ public:
 	double branch_misguess_variance;
 
 	double combined_score;
-	int original_count;
-	int branch_count;
+	/**
+	 * TODO:
+	 * - track original_count vs. branch_count and switch to pass_through if able
+	 */
 
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;
@@ -64,6 +77,71 @@ public:
 	std::vector<double> verify_branch_scores;
 	#endif /* MDEBUG */
 
+	RetrainBranchExperiment(BranchNode* branch_node);
+	~RetrainBranchExperiment();
+
+	bool activate(bool& is_branch,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper);
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory* history);
+
+	void measure_existing_activate(bool& is_branch,
+								   std::vector<ContextLayer>& context,
+								   RunHelper& run_helper);
+	void measure_existing_backprop(double target_val,
+								   RunHelper& run_helper,
+								   RetrainBranchExperimentOverallHistory* history);
+
+	void train_original_activate(bool& is_branch,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void train_original_target_activate(bool& is_branch,
+										std::vector<ContextLayer>& context);
+	void train_original_non_target_activate(bool& is_branch,
+											std::vector<ContextLayer>& context,
+											RunHelper& run_helper);
+	void train_original_backprop(double target_val,
+								 RetrainBranchExperimentOverallHistory* history);
+
+	void train_branch_activate(bool& is_branch,
+							   std::vector<ContextLayer>& context,
+							   RunHelper& run_helper);
+	void train_branch_target_activate(bool& is_branch,
+									  std::vector<ContextLayer>& context);
+	void train_branch_non_target_activate(bool& is_branch,
+										  std::vector<ContextLayer>& context,
+										  RunHelper& run_helper);
+	void train_branch_backprop(double target_val,
+							   RetrainBranchExperimentOverallHistory* history);
+
+	void measure_activate(bool& is_branch,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
+	void measure_backprop(double target_val);
+
+	void verify_existing_activate(bool& is_branch,
+								  std::vector<ContextLayer>& context,
+								  RunHelper& run_helper);
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper);
+
+	void verify_activate(bool& is_branch,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
+	void verify_backprop(double target_val);
+
+	#if defined(MDEBUG) && MDEBUG
+	void capture_verify_activate(bool& is_branch,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
+
+	void finalize();
 };
 
 class RetrainBranchExperimentOverallHistory : public AbstractExperimentHistory {

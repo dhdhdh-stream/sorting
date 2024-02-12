@@ -1,5 +1,19 @@
 #include "scenario_experiment.h"
 
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scenario.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 const int LEARN_NUM_DATAPOINTS = 1000;
@@ -143,7 +157,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 		 * - simply always use last ScopeHistory
 		 */
 
-		if (this->state == SCENARIO_EXPERIMENT_STATE_LEARN_AVERAGE) {
+		if (this->state == SCENARIO_EXPERIMENT_STATE_LEARN_LINEAR) {
 			int is_sequence_count = 0;
 			for (int d_index = 0; d_index < LEARN_NUM_DATAPOINTS; d_index++) {
 				if (this->is_sequence_histories[d_index]) {
@@ -162,7 +176,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 			}
 			double is_sequence_variance = sum_variance / LEARN_NUM_DATAPOINTS;
 
-			int num_obs = min(LINEAR_NUM_OBS, possible_scope_contexts.size());
+			int num_obs = min(LINEAR_NUM_OBS, (int)possible_scope_contexts.size());
 
 			vector<int> remaining_indexes(possible_scope_contexts.size());
 			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
@@ -282,7 +296,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
-			vector<vector<vector<int>>> network_inputs(LEARN_NUM_DATAPOINTS);
+			vector<vector<vector<double>>> network_inputs(LEARN_NUM_DATAPOINTS);
 			vector<double> network_target_vals(LEARN_NUM_DATAPOINTS);
 
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -306,7 +320,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 				input_vals_helper(scope_context,
 								  node_context,
 								  input_vals,
-								  this->i_scope_histories[d_index]);
+								  this->scope_histories[d_index]);
 
 				double linear_impact = 0.0;
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -340,7 +354,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 				}
 			}
 
-			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
+			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
 
@@ -555,7 +569,7 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 					for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
 						input_indexes.push_back(input_mapping[this->network_input_indexes[i_index][v_index]]);
 					}
-					new_branch_node->new_network_input_indexes.push_back(input_indexes);
+					new_branch_node->branch_network_input_indexes.push_back(input_indexes);
 				}
 				new_branch_node->branch_network = this->network;
 				this->network = NULL;

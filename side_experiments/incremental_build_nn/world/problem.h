@@ -10,6 +10,11 @@ class Problem {
 public:
 	int type;
 
+	/**
+	 * TODO:
+	 * - if want to keep track of runtime, track locally and increment on perform_action()
+	 */
+
 	virtual ~Problem() {};
 
 	virtual int num_actions() = 0;
@@ -17,7 +22,7 @@ public:
 
 	virtual double get_observation() = 0;
 	virtual void perform_action(Action action) = 0;
-	virtual double score_result(int num_process) = 0;
+	virtual double score_result() = 0;
 
 	virtual Problem* copy_and_reset() = 0;
 

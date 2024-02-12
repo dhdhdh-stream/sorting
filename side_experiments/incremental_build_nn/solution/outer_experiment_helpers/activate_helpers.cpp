@@ -1,5 +1,7 @@
 #include "outer_experiment.h"
 
+#include "globals.h"
+
 using namespace std;
 
 bool OuterExperiment::activate(Problem* problem,

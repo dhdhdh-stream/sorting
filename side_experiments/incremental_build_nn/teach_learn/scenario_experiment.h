@@ -1,6 +1,16 @@
 #ifndef SCENARIO_EXPERIMENT_H
 #define SCENARIO_EXPERIMENT_H
 
+#include <vector>
+
+#include "run_helper.h"
+
+class AbstractNode;
+class Network;
+class Scenario;
+class Scope;
+class ScopeHistory;
+
 const int SCENARIO_EXPERIMENT_STATE_LEARN_LINEAR = 0;
 const int SCENARIO_EXPERIMENT_STATE_LEARN_NETWORK = 1;
 
@@ -30,6 +40,12 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<bool> is_sequence_histories;
 
-}
+	ScenarioExperiment(Scenario* scenario_type);
+	~ScenarioExperiment();
+
+	void activate(Scenario* scenario,
+				  RunHelper& run_helper);
+	void backprop(bool is_sequence);
+};
 
 #endif /* SCENARIO_EXPERIMENT_H */

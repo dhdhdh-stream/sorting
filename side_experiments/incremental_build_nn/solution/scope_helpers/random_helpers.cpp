@@ -1,5 +1,10 @@
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "exit_node.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void node_random_activate_helper(AbstractNode*& curr_node,

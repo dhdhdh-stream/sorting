@@ -47,7 +47,7 @@ public:
 
 	double get_observation();
 	void perform_action(Action action);
-	double score_result(int num_process);
+	double score_result();
 
 	Problem* copy_and_reset();
 

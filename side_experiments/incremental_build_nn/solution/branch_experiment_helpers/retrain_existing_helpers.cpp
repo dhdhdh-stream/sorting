@@ -1,5 +1,20 @@
 #include "branch_experiment.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchExperiment::retrain_existing_activate(
@@ -205,7 +220,7 @@ void BranchExperiment::retrain_existing_backprop(
 		this->i_target_val_histories.push_back(target_val);
 
 		if ((int)this->i_target_val_histories.size() >= solution->curr_num_datapoints) {
-			vector<vector<vector<int>>> network_inputs(solution->curr_num_datapoints);
+			vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 			vector<double> network_target_vals(solution->curr_num_datapoints);
 
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -273,7 +288,7 @@ void BranchExperiment::retrain_existing_backprop(
 			 * - simply always use last ScopeHistory
 			 */
 
-			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
+			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
 
@@ -292,10 +307,10 @@ void BranchExperiment::retrain_existing_backprop(
 			}
 
 			Network* test_network;
-			if (this->original_network == NULL) {
+			if (this->existing_network == NULL) {
 				test_network = new Network(num_new_input_indexes);
 			} else {
-				test_network = new Network(this->original_network);
+				test_network = new Network(this->existing_network);
 
 				uniform_int_distribution<int> increment_above_distribution(0, 3);
 				if (increment_above_distribution(generator) == 0) {

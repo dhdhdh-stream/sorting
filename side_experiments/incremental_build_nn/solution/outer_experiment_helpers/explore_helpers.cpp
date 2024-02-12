@@ -1,5 +1,15 @@
 #include "outer_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -56,9 +66,9 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					scope_node = create_scope(scope);
+					new_scope_node = create_scope(scope);
 				} else {
-					scope_node = create_scope(solution->root);
+					new_scope_node = create_scope(solution->root);
 				}
 			}
 			if (new_scope_node != NULL) {
@@ -224,20 +234,13 @@ void OuterExperiment::explore_backprop(double target_val) {
 
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */
-				Scope* containing_scope = solution->scopes[this->scope_context.back()];
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						this->best_actions[s_index]->parent = containing_scope;
-						this->best_actions[s_index]->id = containing_scope->node_counter;
-						containing_scope->node_counter++;
+						this->best_actions[s_index]->id = 1 + s_index;
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-						this->best_existing_scopes[s_index]->parent = containing_scope;
-						this->best_existing_scopes[s_index]->id = containing_scope->node_counter;
-						containing_scope->node_counter++;
+						this->best_existing_scopes[s_index]->id = 1 + s_index;
 					} else {
-						this->best_potential_scopes[s_index]->parent = containing_scope;
-						this->best_potential_scopes[s_index]->id = containing_scope->node_counter;
-						containing_scope->node_counter++;
+						this->best_potential_scopes[s_index]->id = 1 + s_index;
 
 						int new_scope_id = solution->scope_counter;
 						solution->scope_counter++;
@@ -250,7 +253,7 @@ void OuterExperiment::explore_backprop(double target_val) {
 								branch_node->scope_context_ids = vector<int>{new_scope_id};
 								branch_node->scope_context = vector<Scope*>{this->best_potential_scopes[s_index]->scope};
 								branch_node->node_context_ids = vector<int>{branch_node->id};
-								branch_node->node_context = vector<AbstractNode*>{branch_node}
+								branch_node->node_context = vector<AbstractNode*>{branch_node};
 								for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
 									if (branch_node->input_scope_context_ids[i_index].size() > 0) {
 										branch_node->input_scope_context_ids[i_index][0] = new_scope_id;

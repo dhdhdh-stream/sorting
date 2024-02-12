@@ -1,5 +1,18 @@
 #include "branch_experiment.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchExperiment::verify_activate(
@@ -146,7 +159,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		#if defined(MDEBUG) && MDEBUG
-		if (!this->new_exceeded_limit && rand()%2 == 0) {
+		if (rand()%2 == 0) {
 		#else
 		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;

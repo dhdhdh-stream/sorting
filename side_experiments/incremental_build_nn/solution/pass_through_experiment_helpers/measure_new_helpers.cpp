@@ -1,5 +1,13 @@
 #include "pass_through_experiment.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_new_activate(
@@ -54,18 +62,20 @@ void PassThroughExperiment::measure_new_backprop(
 	this->o_target_val_histories.push_back(target_val);
 
 	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->o_target_val_histories.clear();
+
+		if (rand()%4 == 0) {
+		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / solution->curr_num_datapoints;
+		double new_average_score = sum_scores / solution->curr_num_datapoints;
 
 		this->o_target_val_histories.clear();
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 == 0) {
-		#else
-		double score_improvement = this->new_average_score - this->existing_average_score;
+		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
@@ -79,7 +89,7 @@ void PassThroughExperiment::measure_new_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		} else if (rand()%2 == 0) {
 		#else
-		} else if (this->new_average_score >= this->existing_average_score) {
+		} else if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 

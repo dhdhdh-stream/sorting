@@ -1,5 +1,14 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void PassThroughExperiment::verify_new_activate(
@@ -55,18 +64,20 @@ void PassThroughExperiment::verify_new_backprop(
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW
 			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->o_target_val_histories.clear();
+
+		if (rand()%2 == 0) {
+		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		double score_improvement = this->new_average_score - this->existing_average_score;
+		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
@@ -80,7 +91,7 @@ void PassThroughExperiment::verify_new_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		} else if (rand()%2 == 0) {
 		#else
-		} else if (this->new_average_score >= this->existing_average_score) {
+		} else if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 
@@ -96,11 +107,11 @@ void PassThroughExperiment::verify_new_backprop(
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		double score_improvement = this->new_average_score - this->existing_average_score;
+		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
@@ -143,14 +154,14 @@ void PassThroughExperiment::verify_new_backprop(
 			}
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
-			cout << "this->new_average_score: " << this->new_average_score << endl;
+			cout << "new_average_score: " << new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		#if defined(MDEBUG) && MDEBUG
 		} else if (rand()%2 == 0) {
 		#else
-		} else if (this->new_average_score >= this->existing_average_score) {
+		} else if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

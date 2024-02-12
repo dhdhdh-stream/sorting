@@ -15,6 +15,13 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
+#include <map>
+#include <vector>
+
+class OuterExperiment;
+class Problem;
+class Scope;
+
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
@@ -49,6 +56,23 @@ public:
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
 
+	Solution();
+	~Solution();
+
+	void init();
+	void load(std::string path,
+			  std::string name);
+
+	void success_reset();
+	void fail_reset();
+
+	#if defined(MDEBUG) && MDEBUG
+	void clear_verify();
+	#endif /* MDEBUG */
+
+	void save(std::string path,
+			  std::string name);
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* SOLUTION_H */

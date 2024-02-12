@@ -1,5 +1,9 @@
 #include "retrain_branch_experiment.h"
 
+#include "globals.h"
+
+using namespace std;
+
 bool RetrainBranchExperiment::activate(bool& is_branch,
 									   Problem* problem,
 									   vector<ContextLayer>& context,
@@ -96,7 +100,8 @@ void RetrainBranchExperiment::backprop(double target_val,
 		break;
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
 		measure_existing_backprop(target_val,
-								  run_helper);
+								  run_helper,
+								  (RetrainBranchExperimentOverallHistory*)history);
 		break;
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val);

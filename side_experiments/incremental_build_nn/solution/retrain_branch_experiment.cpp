@@ -1,5 +1,12 @@
 #include "retrain_branch_experiment.h"
 
+#include "branch_node.h"
+#include "globals.h"
+#include "network.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 RetrainBranchExperiment::RetrainBranchExperiment(BranchNode* branch_node) {
@@ -35,4 +42,25 @@ RetrainBranchExperiment::RetrainBranchExperiment(BranchNode* branch_node) {
 	this->state_iter = 0;
 
 	this->combined_score = 0.0;
+}
+
+RetrainBranchExperiment::~RetrainBranchExperiment() {
+	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
+		delete this->i_scope_histories[h_index];
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
+}
+
+RetrainBranchExperimentOverallHistory::RetrainBranchExperimentOverallHistory(
+		RetrainBranchExperiment* experiment) {
+	this->experiment = experiment;
+
+	this->instance_count = 0;
+
+	this->has_target = false;
 }

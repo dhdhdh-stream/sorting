@@ -1,5 +1,18 @@
 #include "branch_experiment.h"
 
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
@@ -64,20 +77,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		 * - simply always use last ScopeHistory
 		 */
 
-		int num_obs = min(LINEAR_NUM_OBS, possible_scope_contexts.size());
+		int num_obs = min(LINEAR_NUM_OBS, (int)possible_scope_contexts.size());
+		{
+			vector<int> remaining_indexes(possible_scope_contexts.size());
+			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
+				remaining_indexes[p_index] = p_index;
+			}
+			for (int o_index = 0; o_index < num_obs; o_index++) {
+				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+				int rand_index = distribution(generator);
 
-		vector<int> remaining_indexes(possible_scope_contexts.size());
-		for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-			remaining_indexes[p_index] = p_index;
-		}
-		for (int o_index = 0; o_index < num_obs; o_index++) {
-			uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-			int rand_index = distribution(generator);
+				this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+				this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 
-			this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-			this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-
-			remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+			}
 		}
 
 		Eigen::MatrixXd inputs(num_instances, this->input_scope_contexts.size());
@@ -172,27 +186,28 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		}
 		this->existing_misguess_variance = sum_misguess_variances / num_instances;
 
-		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
+		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 		vector<vector<Scope*>> test_network_input_scope_contexts;
 		vector<vector<AbstractNode*>> test_network_input_node_contexts;
+		{
+			vector<int> remaining_indexes(possible_scope_contexts.size());
+			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
+				remaining_indexes[p_index] = p_index;
+			}
+			for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
+				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+				int rand_index = distribution(generator);
 
-		vector<int> remaining_indexes(possible_scope_contexts.size());
-		for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-			remaining_indexes[p_index] = p_index;
-		}
-		for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
-			uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-			int rand_index = distribution(generator);
+				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 
-			test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-			test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-
-			remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+			}
 		}
 
 		Network* test_network = new Network(num_new_input_indexes);
 
-		vector<vector<vector<int>>> network_inputs(num_instances);
+		vector<vector<vector<double>>> network_inputs(num_instances);
 
 		for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 			if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
@@ -304,7 +319,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->i_target_val_histories.clear();
 
 		this->sub_state_iter++;
-		if (this->sub_state_iter >= TRAIN_EXISTING_ITERS) {
+		if (this->sub_state_iter >= BRANCH_EXPERIMENT_TRAIN_ITERS) {
 			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 		} else {

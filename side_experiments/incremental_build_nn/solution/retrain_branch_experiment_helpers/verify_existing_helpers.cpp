@@ -1,5 +1,14 @@
 #include "retrain_branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::verify_existing_activate(

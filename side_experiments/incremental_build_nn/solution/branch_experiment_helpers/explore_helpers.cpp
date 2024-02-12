@@ -1,5 +1,17 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "pass_through_experiment.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -185,9 +197,9 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					scope_node = create_scope(scope);
+					new_scope_node = create_scope(scope);
 				} else {
-					scope_node = create_scope(context[context.size() - this->scope_context.size()].scope);
+					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope);
 				}
 			}
 			if (new_scope_node != NULL) {
@@ -308,7 +320,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
-				Scope* containing_scope = solution->scopes[this->scope_context.back()];
+				Scope* containing_scope = this->scope_context.back();
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->parent = containing_scope;
@@ -332,9 +344,9 @@ void BranchExperiment::explore_backprop(double target_val,
 							if (it->second->type == NODE_TYPE_BRANCH) {
 								BranchNode* branch_node = (BranchNode*)it->second;
 								branch_node->scope_context_ids = vector<int>{new_scope_id};
-								branch_node->scope_context = vector<int>{this->best_potential_scopes[s_index]->scope};
+								branch_node->scope_context = vector<Scope*>{this->best_potential_scopes[s_index]->scope};
 								branch_node->node_context_ids = vector<int>{branch_node->id};
-								branch_node->node_context = vector<int>{branch_node};
+								branch_node->node_context = vector<AbstractNode*>{branch_node};
 								for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
 									if (branch_node->input_scope_context_ids[i_index].size() > 0) {
 										branch_node->input_scope_context_ids[i_index][0] = new_scope_id;

@@ -1,5 +1,9 @@
 #include "outer_experiment.h"
 
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 void OuterExperiment::measure_existing_activate(

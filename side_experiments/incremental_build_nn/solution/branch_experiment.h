@@ -1,6 +1,21 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class ActionNode;
+class Network;
+class PassThroughExperiment;
+class Problem;
+class Scope;
+class ScopeHistory;
+class ScopeNode;
+
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 /**
@@ -47,6 +62,7 @@ public:
 
 	int state;
 	int state_iter;
+	int sub_state_iter;
 
 	double existing_average_score;
 	double existing_score_variance;
@@ -108,7 +124,135 @@ public:
 	std::vector<double> verify_branch_scores;
 	#endif /* MDEBUG */
 
+	BranchExperiment(std::vector<Scope*> scope_context,
+					 std::vector<AbstractNode*> node_context);
+	~BranchExperiment();
 
+	void activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory* history);
+
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void train_existing_backprop(double target_val,
+								 RunHelper& run_helper,
+								 BranchExperimentOverallHistory* history);
+
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_target_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 RunHelper& run_helper);
+	void explore_backprop(double target_val,
+						  BranchExperimentOverallHistory* history);
+
+	void retrain_existing_activate(AbstractNode*& curr_node,
+								   Problem* problem,
+								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
+								   RunHelper& run_helper,
+								   AbstractExperimentHistory*& history);
+	void retrain_existing_target_activate(AbstractNode*& curr_node,
+										  Problem* problem,
+										  std::vector<ContextLayer>& context,
+										  int& exit_depth,
+										  AbstractNode*& exit_node,
+										  RunHelper& run_helper,
+										  AbstractExperimentHistory*& history);
+	void retrain_existing_non_target_activate(AbstractNode*& curr_node,
+											  Problem* problem,
+											  std::vector<ContextLayer>& context,
+											  int& exit_depth,
+											  AbstractNode*& exit_node,
+											  RunHelper& run_helper,
+											  AbstractExperimentHistory*& history);
+	void retrain_existing_backprop(double target_val,
+								   BranchExperimentOverallHistory* history);
+
+	void train_new_activate(AbstractNode*& curr_node,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
+							int& exit_depth,
+							AbstractNode*& exit_node,
+							RunHelper& run_helper,
+							AbstractExperimentHistory*& history);
+	void train_new_target_activate(AbstractNode*& curr_node,
+								   Problem* problem,
+								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
+								   RunHelper& run_helper,
+								   AbstractExperimentHistory*& history);
+	void train_new_non_target_activate(AbstractNode*& curr_node,
+									   Problem* problem,
+									   std::vector<ContextLayer>& context,
+									   int& exit_depth,
+									   AbstractNode*& exit_node,
+									   RunHelper& run_helper,
+									   AbstractExperimentHistory*& history);
+	void train_new_backprop(double target_val,
+							BranchExperimentOverallHistory* history);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper,
+						  AbstractExperimentHistory*& history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
+
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper);
+
+	void verify_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 AbstractNode*& exit_node,
+						 RunHelper& run_helper,
+						 AbstractExperimentHistory*& history);
+	void verify_backprop(double target_val,
+						 RunHelper& run_helper);
+
+	#if defined(MDEBUG) && MDEBUG
+	void capture_verify_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 RunHelper& run_helper,
+								 AbstractExperimentHistory*& history);
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
+
+	void parent_verify_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								std::vector<ContextLayer>& context,
+								int& exit_depth,
+								AbstractNode*& exit_node,
+								RunHelper& run_helper,
+								AbstractExperimentHistory*& history);
+
+	void finalize();
+	void new_branch();
+	void new_pass_through();
 };
 
 class BranchExperimentInstanceHistory : public AbstractExperimentHistory {

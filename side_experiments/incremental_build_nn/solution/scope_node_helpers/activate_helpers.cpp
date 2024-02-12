@@ -1,5 +1,9 @@
 #include "scope_node.h"
 
+#include "branch_experiment.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+
 using namespace std;
 
 void ScopeNode::activate(AbstractNode*& curr_node,
@@ -8,10 +12,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 RunHelper& run_helper,
-						 vector<AbstractNodeHistory*>& node_histories) {
-	ScopeNodeHistory* history = new ScopeNodeHistory(this);
-	node_histories.push_back(history);
-
+						 ScopeNodeHistory* history) {
 	context.back().node = this;
 
 	context.push_back(ContextLayer());

@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include "globals.h"
+
 using namespace std;
 
 void BranchExperiment::activate(AbstractNode*& curr_node,
@@ -83,6 +85,15 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							 exit_node,
 							 run_helper);
 			break;
+		case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
+			retrain_existing_activate(curr_node,
+									  problem,
+									  context,
+									  exit_depth,
+									  exit_node,
+									  run_helper,
+									  history);
+			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
 							   problem,
@@ -135,16 +146,19 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								run_helper,
-								history);
+								overall_history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 overall_history);
 		break;
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE:
+	case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
+		retrain_existing_backprop(target_val,
+								  overall_history);
+		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   overall_history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,

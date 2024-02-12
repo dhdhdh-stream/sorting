@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include "scope.h"
+
 using namespace std;
 
 void ScopeNode::potential_activate(Problem* problem,

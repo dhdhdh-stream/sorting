@@ -1,5 +1,12 @@
 #include "outer_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void OuterExperiment::finalize() {
@@ -35,15 +42,12 @@ void OuterExperiment::finalize() {
 			if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 				next_node_id = this->best_actions[s_index+1]->id;
 				next_node = this->best_actions[s_index+1];
-			} else if (this->best_step_types[s_index+1] == STEP_TYPE_POTENTIAL_SCOPE) {
-				next_node_id = this->best_potential_scopes[s_index+1]->scope_node_placeholder->id;
-				next_node = this->best_potential_scopes[s_index+1]->scope_node_placeholder;
 			} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-				next_node_id = this->best_existing_scopes[s_index+1]->scope_node_placeholder->id;
-				next_node = this->best_existing_scopes[s_index+1]->scope_node_placeholder;
+				next_node_id = this->best_existing_scopes[s_index+1]->id;
+				next_node = this->best_existing_scopes[s_index+1];
 			} else {
-				next_node_id = this->best_root_scope_nodes[s_index+1]->id;
-				next_node = this->best_root_scope_nodes[s_index+1];
+				next_node_id = this->best_potential_scopes[s_index+1]->id;
+				next_node = this->best_potential_scopes[s_index+1];
 			}
 		}
 

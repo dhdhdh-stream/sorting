@@ -2,6 +2,13 @@
 
 #include "branch_node.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "network.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::verify_activate(AbstractNode*& curr_node,

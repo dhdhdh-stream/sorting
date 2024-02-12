@@ -1,5 +1,10 @@
 #include "solution_helpers.h"
 
+#include "action_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void create_repeat_helper(int target_depth,
@@ -36,7 +41,7 @@ void create_repeat_helper(int target_depth,
 									 node_context,
 									 possible_scope_contexts,
 									 possible_node_contexts,
-									 scope_node_history->inner_scope_history);
+									 scope_node_history->scope_history);
 			} else {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);

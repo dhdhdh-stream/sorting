@@ -1,5 +1,8 @@
 #include "pass_through_experiment.h"
 
+#include "branch_experiment.h"
+#include "globals.h"
+
 using namespace std;
 
 void PassThroughExperiment::activate(AbstractNode*& curr_node,
@@ -98,7 +101,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 												   context,
 												   exit_depth,
 												   exit_node,
-												   run_helper);
+												   run_helper,
+												   history);
 					break;
 				}
 			}
@@ -145,8 +149,10 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 									run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
-				PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-				overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
+				{
+					PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
+				}
 
 				experiment_activate(curr_node,
 									problem,
@@ -163,7 +169,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 											   context,
 											   exit_depth,
 											   exit_node,
-											   run_helper);
+											   run_helper,
+											   history);
 				break;
 			}
 		}

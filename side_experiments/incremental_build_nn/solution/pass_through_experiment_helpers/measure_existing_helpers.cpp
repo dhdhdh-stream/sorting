@@ -1,5 +1,8 @@
 #include "pass_through_experiment.h"
 
+#include "globals.h"
+#include "solution.h"
+
 using namespace std;
 
 void PassThroughExperiment::measure_existing_backprop(

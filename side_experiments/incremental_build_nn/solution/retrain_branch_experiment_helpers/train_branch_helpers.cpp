@@ -1,5 +1,19 @@
 #include "retrain_branch_experiment.h"
 
+#include <cmath>
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::train_branch_activate(
@@ -225,8 +239,8 @@ void RetrainBranchExperiment::train_branch_backprop(
 				}
 				this->branch_average_score = sum_scores / solution->curr_num_datapoints;
 
-				Eigen::MatrixXd inputs(solution->curr_num_datapoints, num_obs);
-				vector<vector<vector<int>>> network_inputs(solution->curr_num_datapoints);
+				Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->input_scope_contexts.size());
+				vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -242,7 +256,7 @@ void RetrainBranchExperiment::train_branch_backprop(
 					}
 				}
 				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-					vector<double> input_vals(num_obs, 0.0);
+					vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 
 					vector<Scope*> scope_context;
 					vector<AbstractNode*> node_context;
@@ -251,8 +265,8 @@ void RetrainBranchExperiment::train_branch_backprop(
 									  input_vals,
 									  this->i_scope_histories[d_index]);
 
-					for (int o_index = 0; o_index < num_obs; o_index++) {
-						inputs(d_index, o_index) = input_vals[o_index];
+					for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+						inputs(d_index, i_index) = input_vals[i_index];
 					}
 
 					network_inputs[d_index] = vector<vector<double>>((int)this->branch_network_input_indexes.size());
@@ -283,18 +297,18 @@ void RetrainBranchExperiment::train_branch_backprop(
 				}
 
 				Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-				this->branch_linear_weights = vector<double>(num_obs);
+				this->branch_linear_weights = vector<double>(this->input_scope_contexts.size());
 				double existing_standard_deviation = sqrt(this->existing_score_variance);
-				for (int o_index = 0; o_index < num_obs; o_index++) {
+				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 					double sum_impact_size = 0.0;
 					for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
-						sum_impact_size += abs(inputs(d_index, o_index));
+						sum_impact_size += abs(inputs(d_index, i_index));
 					}
 					double average_impact = sum_impact_size / solution->curr_num_datapoints;
-					if (abs(weights(o_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
-						weights(o_index) = 0.0;
+					if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
+						weights(i_index) = 0.0;
 					}
-					this->branch_linear_weights[o_index] = weights(o_index);
+					this->branch_linear_weights[i_index] = weights(i_index);
 				}
 
 				Eigen::VectorXd predicted_scores = inputs * weights;
@@ -335,7 +349,7 @@ void RetrainBranchExperiment::train_branch_backprop(
 					this->branch_misguess_variance = final_misguess_variance;
 				}
 			} else {
-				vector<vector<vector<int>>> network_inputs(solution->curr_num_datapoints);
+				vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 				vector<double> network_target_vals(solution->curr_num_datapoints);
 
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -403,7 +417,7 @@ void RetrainBranchExperiment::train_branch_backprop(
 				 * - simply always use last ScopeHistory
 				 */
 
-				int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, possible_scope_contexts.size());
+				int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 				vector<vector<Scope*>> test_network_input_scope_contexts;
 				vector<vector<AbstractNode*>> test_network_input_node_contexts;
 

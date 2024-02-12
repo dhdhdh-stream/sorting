@@ -1,10 +1,16 @@
 #ifndef NN_HELPERS_H
 #define NN_HELPERS_H
 
+#include <vector>
+
+class AbstractNode;
+class Network;
+class Scope;
+
 void train_network(std::vector<std::vector<std::vector<double>>>& inputs,
 				   std::vector<double>& target_vals,
-				   std::vector<Scope*>& test_input_scope_contexts,
-				   std::vector<AbstractNode*>& test_input_node_contexts,
+				   std::vector<std::vector<Scope*>>& test_input_scope_contexts,
+				   std::vector<std::vector<AbstractNode*>>& test_input_node_contexts,
 				   Network* network);
 
 void measure_network(std::vector<std::vector<std::vector<double>>>& inputs,

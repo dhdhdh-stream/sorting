@@ -1,5 +1,14 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void BranchExperiment::finalize() {
@@ -26,7 +35,7 @@ void BranchExperiment::finalize() {
 }
 
 void BranchExperiment::new_branch() {
-	Scope* containing_scope = solution->scopes[this->scope_context.back()];
+	Scope* containing_scope = this->scope_context.back();
 
 	int exit_node_id;
 	AbstractNode* exit_node;
@@ -38,7 +47,7 @@ void BranchExperiment::new_branch() {
 		containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
+		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
 		if (this->best_exit_node == NULL) {
 			new_exit_node->exit_node_id = -1;
 		} else {
@@ -185,7 +194,7 @@ void BranchExperiment::new_branch() {
 		for (int v_index = 0; v_index < (int)this->new_network_input_indexes[i_index].size(); v_index++) {
 			input_indexes.push_back(input_mapping[this->new_network_input_indexes[i_index][v_index]]);
 		}
-		new_branch_node->new_network_input_indexes.push_back(input_indexes);
+		new_branch_node->branch_network_input_indexes.push_back(input_indexes);
 	}
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
@@ -305,7 +314,7 @@ void BranchExperiment::new_branch() {
 }
 
 void BranchExperiment::new_pass_through() {
-	Scope* containing_scope = solution->scopes[this->scope_context.back()];
+	Scope* containing_scope = this->scope_context.back();
 
 	int exit_node_id;
 	AbstractNode* exit_node;
@@ -317,7 +326,7 @@ void BranchExperiment::new_pass_through() {
 		containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
+		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
 		if (this->best_exit_node == NULL) {
 			new_exit_node->exit_node_id = -1;
 		} else {

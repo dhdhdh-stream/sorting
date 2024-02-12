@@ -1,5 +1,17 @@
 #include "branch_experiment.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchExperiment::measure_activate(

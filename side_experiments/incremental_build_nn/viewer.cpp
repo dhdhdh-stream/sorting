@@ -4,6 +4,12 @@
 #include <thread>
 #include <random>
 
+#include "globals.h"
+#include "minesweeper.h"
+#include "scope.h"
+#include "solution.h"
+#include "sorting.h"
+
 using namespace std;
 
 default_random_engine generator;

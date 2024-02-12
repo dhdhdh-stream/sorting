@@ -52,7 +52,7 @@ void Layer::setup_weights_full() {
 void Layer::add_input(Layer* layer) {
 	this->input_layers.push_back(layer);
 
-	int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+	int layer_size = (int)layer->acti_vals.size();
 	uniform_real_distribution<double> distribution(-0.01, 0.01);
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		vector<double> layer_weights;

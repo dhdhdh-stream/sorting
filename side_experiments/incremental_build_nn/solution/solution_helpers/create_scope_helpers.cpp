@@ -1,5 +1,15 @@
 #include "solution_helpers.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
@@ -83,7 +93,7 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 
 						new_node_reverse_mappings[new_scope_node] = scope_node;
 
-						new_scope_node->inner_scope = scope_node->inner_scope;
+						new_scope_node->scope = scope_node->scope;
 
 						if (next_mapping.second == NULL) {
 							new_scope_node->next_node_id = -1;
@@ -698,7 +708,7 @@ ScopeNode* create_scope(Scope* parent_scope) {
 					int matching_depth = 0;
 					while (true) {
 						if (context_starting_depth + matching_depth >= (int)start_scope_context.size()
-								|| matching_depth >= original_branch_node->input_scope_contexts[i_index].size()) {
+								|| matching_depth >= (int)original_branch_node->input_scope_contexts[i_index].size()) {
 							break;
 						}
 
@@ -789,7 +799,7 @@ ScopeNode* create_scope(Scope* parent_scope) {
 					int start_matching_depth = 0;
 					while (true) {
 						if (context_starting_depth + start_matching_depth >= (int)start_scope_context.size()
-								|| start_matching_depth >= original_branch_node->input_scope_contexts[i_index].size()) {
+								|| start_matching_depth >= (int)original_branch_node->input_scope_contexts[i_index].size()) {
 							break;
 						}
 
@@ -804,7 +814,7 @@ ScopeNode* create_scope(Scope* parent_scope) {
 					int end_matching_depth = 0;
 					while (true) {
 						if (context_starting_depth + end_matching_depth >= (int)end_scope_context.size()
-								|| end_matching_depth >= original_branch_node->input_scope_contexts[i_index].size()) {
+								|| end_matching_depth >= (int)original_branch_node->input_scope_contexts[i_index].size()) {
 							break;
 						}
 

@@ -6,6 +6,22 @@
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 
+#include <map>
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class ActionNode;
+class BranchExperiment;
+class BranchExperimentInstanceHistory;
+class BranchExperimentOverallHistory;
+class Problem;
+class Scope;
+class ScopeNode;
+
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW = 2;
@@ -26,6 +42,8 @@ const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW = 11;
 /**
  * - share state_iter during experiment verify
  */
+
+const int PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS = 10;
 
 class PassThroughExperimentOverallHistory;
 class PassThroughExperiment : public AbstractExperiment {
@@ -65,16 +83,91 @@ public:
 	int branch_experiment_step_index;
 	BranchExperiment* branch_experiment;
 
+	PassThroughExperiment(std::vector<Scope*> scope_context,
+						  std::vector<AbstractNode*> node_context);
+	~PassThroughExperiment();
 
+	void activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory* history);
 
+	void measure_existing_backprop(double target_val,
+								   RunHelper& run_helper);
 
+	void explore_initial_activate(AbstractNode*& curr_node,
+								  Problem* problem,
+								  std::vector<ContextLayer>& context,
+								  int& exit_depth,
+								  AbstractNode*& exit_node,
+								  RunHelper& run_helper);
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_backprop(double target_val);
+
+	void measure_new_activate(AbstractNode*& curr_node,
+							  Problem* problem,
+							  std::vector<ContextLayer>& context,
+							  int& exit_depth,
+							  AbstractNode*& exit_node,
+							  RunHelper& run_helper);
+	void measure_new_backprop(double target_val,
+							  RunHelper& run_helper);
+
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper);
+
+	void verify_new_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 int& exit_depth,
+							 AbstractNode*& exit_node,
+							 RunHelper& run_helper);
+	void verify_new_backprop(double target_val,
+							 RunHelper& run_helper);
+
+	void experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 int& exit_depth,
+							 AbstractNode*& exit_node,
+							 RunHelper& run_helper,
+							 AbstractExperimentHistory*& history);
+	void experiment_backprop(double target_val,
+							 RunHelper& run_helper,
+							 PassThroughExperimentOverallHistory* history);
+
+	void experiment_verify_existing_backprop(double target_val,
+											 RunHelper& run_helper);
+
+	void experiment_verify_new_activate(AbstractNode*& curr_node,
+										Problem* problem,
+										std::vector<ContextLayer>& context,
+										int& exit_depth,
+										AbstractNode*& exit_node,
+										RunHelper& run_helper,
+										AbstractExperimentHistory*& history);
+	void experiment_verify_new_backprop(double target_val,
+										RunHelper& run_helper);
+
+	void finalize();
 };
 
 class PassThroughExperimentInstanceHistory : public AbstractExperimentHistory {
 public:
 	std::vector<void*> pre_step_histories;
 
-	BranchExperimentInstanceHistory* branch_experiment_history;
+	AbstractExperimentHistory* branch_experiment_history;
 
 	std::vector<void*> post_step_histories;
 

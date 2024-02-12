@@ -4,6 +4,14 @@
 #include <thread>
 #include <random>
 
+#include "globals.h"
+#include "minesweeper.h"
+#include "scope.h"
+#include "solution.h"
+#include "sorting.h"
+
+using namespace std;
+
 default_random_engine generator;
 
 Solution* solution;
@@ -50,7 +58,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_process);
+			target_val = problem->score_result();
 		} else {
 			target_val = -1.0;
 		}

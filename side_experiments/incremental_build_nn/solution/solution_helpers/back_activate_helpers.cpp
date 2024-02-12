@@ -1,5 +1,13 @@
 #include "solution_helpers.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "pass_through_experiment.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void gather_possible_experiment_helper(vector<Scope*>& scope_context,

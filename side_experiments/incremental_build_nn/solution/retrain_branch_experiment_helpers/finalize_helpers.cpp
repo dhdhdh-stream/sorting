@@ -1,5 +1,9 @@
 #include "retrain_branch_experiment.h"
 
+#include "branch_node.h"
+#include "network.h"
+#include "scope.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::finalize() {

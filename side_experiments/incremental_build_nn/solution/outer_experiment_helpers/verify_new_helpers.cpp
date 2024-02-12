@@ -1,5 +1,14 @@
 #include "outer_experiment.h"
 
+#include <cmath>
+#include <iostream>
+
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void OuterExperiment::verify_new_activate(Problem* problem,

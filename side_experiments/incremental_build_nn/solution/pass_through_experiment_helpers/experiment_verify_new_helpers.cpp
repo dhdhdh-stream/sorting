@@ -1,5 +1,14 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void PassThroughExperiment::experiment_verify_new_activate(
@@ -124,18 +133,20 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW
 			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->o_target_val_histories.clear();
+
+		if (rand()%2 == 0) {
+		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		double score_improvement = this->new_average_score - this->existing_average_score;
+		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
@@ -153,7 +164,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			this->branch_experiment = NULL;
 
 			this->state_iter++;
-			if (this->state_iter >= NUM_EXPERIMENTS) {
+			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
 				uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);
@@ -175,22 +186,24 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 		}
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+		#if defined(MDEBUG) && MDEBUG
+		this->o_target_val_histories.clear();
+
+		if (rand()%2 == 0) {
+		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		this->o_target_val_histories.clear();
 
-		double score_improvement = this->new_average_score - this->existing_average_score;
+		double score_improvement = new_average_score - this->existing_average_score;
 		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		if (score_improvement_t_score > 1.645 && this->new_is_better) {	// >95%
 		#endif /* MDEBUG */
 			cout << "PassThrough experiment success" << endl;
@@ -227,7 +240,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			this->branch_experiment = NULL;
 
 			this->state_iter++;
-			if (this->state_iter >= NUM_EXPERIMENTS) {
+			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
 				uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);

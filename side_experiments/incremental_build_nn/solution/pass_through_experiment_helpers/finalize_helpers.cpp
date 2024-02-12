@@ -1,10 +1,20 @@
 #include "pass_through_experiment.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "exit_node.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void PassThroughExperiment::finalize() {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		Scope* containing_scope = solution->scopes[this->scope_context.back()];
+		Scope* containing_scope = this->scope_context.back();
 
 		int exit_node_id;
 		AbstractNode* exit_node;
@@ -16,7 +26,7 @@ void PassThroughExperiment::finalize() {
 			containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 			new_exit_node->exit_depth = this->best_exit_depth;
-			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
+			new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
 			if (this->best_exit_node == NULL) {
 				new_exit_node->exit_node_id = -1;
 			} else {

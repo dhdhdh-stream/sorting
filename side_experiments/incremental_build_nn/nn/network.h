@@ -12,6 +12,8 @@
 
 #include "layer.h"
 
+const int NETWORK_INCREMENT_HIDDEN_SIZE = 5;
+
 class Network {
 public:
 	/**

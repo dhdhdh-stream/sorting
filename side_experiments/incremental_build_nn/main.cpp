@@ -4,6 +4,14 @@
 #include <thread>
 #include <random>
 
+#include "globals.h"
+#include "minesweeper.h"
+#include "outer_experiment.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "sorting.h"
+
 using namespace std;
 
 const int NUM_FAILS_BEFORE_INCREASE = 50;
@@ -168,7 +176,7 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->id = (unsigned)time(NULL);
+			solution->timestamp = (unsigned)time(NULL);
 			solution->save("", "main");
 
 			ofstream display_file;

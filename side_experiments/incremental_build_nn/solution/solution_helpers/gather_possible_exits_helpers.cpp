@@ -1,5 +1,10 @@
 #include "solution_helpers.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void gather_possible_exits_helper(int l_index,

@@ -67,7 +67,7 @@ void Simple::perform_action(Action action) {
 	}
 }
 
-double Simple::score_result(int num_process) {
+double Simple::score_result() {
 	vector<double> sorted_world = initial_world;
 	sort(sorted_world.begin(), sorted_world.end());
 

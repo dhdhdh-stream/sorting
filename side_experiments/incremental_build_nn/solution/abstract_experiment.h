@@ -1,6 +1,8 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include "run_helper.h"
+
 const int EXPERIMENT_TYPE_OUTER = 0;
 const int EXPERIMENT_TYPE_BRANCH = 1;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 2;

@@ -2,6 +2,15 @@
 
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "network.h"
+#include "problem.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchExperiment::capture_verify_activate(

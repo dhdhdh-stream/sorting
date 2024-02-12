@@ -2,6 +2,13 @@
 
 #include "scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void node_verify_activate_helper(AbstractNode*& curr_node,
@@ -13,29 +20,31 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 								 ScopeHistory* history) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
 		ActionNode* node = (ActionNode*)curr_node;
+		ActionNodeHistory* node_history = new ActionNodeHistory(node);
+		history->node_histories.push_back(node_history);
 		node->activate(curr_node,
 					   problem,
 					   context,
 					   exit_depth,
 					   exit_node,
 					   run_helper,
-					   history->node_histories);
+					   node_history);
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* node = (ScopeNode*)curr_node;
+		ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
+		history->node_histories.push_back(node_history);
 		node->verify_activate(curr_node,
 							  problem,
 							  context,
 							  exit_depth,
 							  exit_node,
 							  run_helper,
-							  history->node_histories);
+							  node_history);
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
 		BranchNode* node = (BranchNode*)curr_node;
 		node->verify_activate(curr_node,
 							  problem,
 							  context,
-							  exit_depth,
-							  exit_node,
 							  run_helper,
 							  history->node_histories);
 	} else {

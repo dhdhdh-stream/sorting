@@ -1,5 +1,13 @@
 #include "branch_node.h"
 
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "network.h"
+#include "pass_through_experiment.h"
+#include "retrain_branch_experiment.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::activate(AbstractNode*& curr_node,

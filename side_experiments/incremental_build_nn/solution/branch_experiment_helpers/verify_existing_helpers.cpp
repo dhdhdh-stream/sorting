@@ -1,5 +1,9 @@
 #include "branch_experiment.h"
 
+#include "constants.h"
+#include "globals.h"
+#include "solution.h"
+
 using namespace std;
 
 void BranchExperiment::verify_existing_backprop(double target_val,

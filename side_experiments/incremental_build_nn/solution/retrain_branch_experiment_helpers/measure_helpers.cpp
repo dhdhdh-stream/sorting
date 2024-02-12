@@ -1,5 +1,16 @@
 #include "retrain_branch_experiment.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void RetrainBranchExperiment::measure_activate(bool& is_branch,

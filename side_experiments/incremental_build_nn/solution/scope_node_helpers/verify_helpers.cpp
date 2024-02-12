@@ -2,6 +2,8 @@
 
 #include "scope_node.h"
 
+#include "scope.h"
+
 using namespace std;
 
 void ScopeNode::verify_activate(AbstractNode*& curr_node,
@@ -10,10 +12,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 								int& exit_depth,
 								AbstractNode*& exit_node,
 								RunHelper& run_helper,
-								vector<AbstractNodeHistory*>& node_histories) {
-	ScopeNodeHistory* history = new ScopeNodeHistory(this);
-	node_histories.push_back(history);
-
+								ScopeNodeHistory* history) {
 	context.back().node = this;
 
 	context.push_back(ContextLayer());

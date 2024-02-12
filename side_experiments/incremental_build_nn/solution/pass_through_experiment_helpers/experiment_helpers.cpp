@@ -1,8 +1,13 @@
 #include "pass_through_experiment.h"
 
-using namespace std;
+#include "action_node.h"
+#include "branch_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+#include "solution.h"
 
-const int NUM_EXPERIMENTS = 10;
+using namespace std;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												Problem* problem,
@@ -130,7 +135,7 @@ void PassThroughExperiment::experiment_backprop(
 		this->branch_experiment = NULL;
 
 		this->state_iter++;
-		if (this->state_iter >= NUM_EXPERIMENTS) {
+		if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		} else {
 			uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);
