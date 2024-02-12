@@ -28,6 +28,7 @@ public:
 	~Layer();
 	
 	void setup_weights_full();
+	void add_input(Layer* layer);
 
 	void copy_weights_from(Layer* original);
 	void load_weights_from(std::ifstream& input_file);
@@ -36,9 +37,6 @@ public:
 	void backprop();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
-
-	void backprop_errors_with_no_weight_change();
-	void backprop_weights_with_no_error_signal();
 
 	void save_weights(std::ofstream& output_file);
 };

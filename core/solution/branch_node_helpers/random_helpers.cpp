@@ -1,25 +1,21 @@
 #include "branch_node.h"
 
-#include <iostream>
-
 #include "globals.h"
-#include "scope.h"
 
 using namespace std;
 
 void BranchNode::random_activate(bool& is_branch,
 								 vector<Scope*>& scope_context,
 								 vector<AbstractNode*>& node_context,
-								 vector<AbstractNode*>& possible_nodes,
 								 vector<vector<Scope*>>& possible_scope_contexts,
 								 vector<vector<AbstractNode*>>& possible_node_contexts) {
 	bool matches_context = true;
-	if (this->branch_scope_context.size() > scope_context.size()) {
+	if (this->scope_context.size() > scope_context.size()) {
 		matches_context = false;
 	} else {
-		for (int c_index = 0; c_index < (int)this->branch_scope_context.size()-1; c_index++) {
-			if (this->branch_scope_context[c_index] != scope_context[scope_context.size()-this->branch_scope_context.size()+c_index]->id
-					|| this->branch_node_context[c_index] != node_context[scope_context.size()-this->branch_scope_context.size()+c_index]->id) {
+		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+			if (this->scope_context[c_index] != scope_context[scope_context.size()-this->scope_context.size()+c_index]
+					|| this->node_context[c_index] != node_context[scope_context.size()-this->scope_context.size()+c_index]) {
 				matches_context = false;
 				break;
 			}
@@ -27,14 +23,13 @@ void BranchNode::random_activate(bool& is_branch,
 	}
 
 	if (matches_context) {
-		if (this->branch_is_pass_through) {
+		if (this->is_pass_through) {
 			is_branch = true;
 
 			// don't include
 		} else {
 			node_context.back() = this;
 
-			possible_nodes.push_back(this);
 			possible_scope_contexts.push_back(scope_context);
 			possible_node_contexts.push_back(node_context);
 
@@ -55,17 +50,17 @@ void BranchNode::random_activate(bool& is_branch,
 }
 
 void BranchNode::random_exit_activate(bool& is_branch,
-									  vector<int>& scope_context,
-									  vector<int>& node_context,
+									  vector<Scope*>& scope_context,
+									  vector<AbstractNode*>& node_context,
 									  int curr_depth,
 									  vector<pair<int,AbstractNode*>>& possible_exits) {
 	bool matches_context = true;
-	if ((int)this->branch_scope_context.size() > curr_depth+1) {
+	if ((int)this->scope_context.size() > curr_depth+1) {
 		matches_context = false;
 	} else {
-		for (int c_index = 0; c_index < (int)this->branch_scope_context.size()-1; c_index++) {
-			if (this->branch_scope_context[c_index] != scope_context[curr_depth+1-this->branch_scope_context.size()+c_index]
-					|| this->branch_node_context[c_index] != node_context[curr_depth+1-this->branch_scope_context.size()+c_index]) {
+		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+			if (this->scope_context[c_index] != scope_context[curr_depth+1-this->scope_context.size()+c_index]
+					|| this->node_context[c_index] != node_context[curr_depth+1-this->scope_context.size()+c_index]) {
 				matches_context = false;
 				break;
 			}
@@ -73,7 +68,7 @@ void BranchNode::random_exit_activate(bool& is_branch,
 	}
 
 	if (matches_context) {
-		if (this->branch_is_pass_through) {
+		if (this->is_pass_through) {
 			is_branch = true;
 
 			// don't include

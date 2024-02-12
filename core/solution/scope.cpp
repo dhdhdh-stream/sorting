@@ -1,15 +1,9 @@
 #include "scope.h"
 
-#include <iostream>
-
-#include "abstract_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
-#include "globals.h"
 #include "scope_node.h"
-#include "solution.h"
-#include "state.h"
 
 using namespace std;
 
@@ -21,20 +15,13 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
-
-	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
-		delete this->temp_states[s_index];
-	}
 }
 
 #if defined(MDEBUG) && MDEBUG
 void Scope::clear_verify() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)it->second;
-			scope_node->clear_verify();
-		} else if (it->second->type == NODE_TYPE_BRANCH) {
+		if (it->second->type == NODE_TYPE_BRANCH) {
 			BranchNode* branch_node = (BranchNode*)it->second;
 			branch_node->clear_verify();
 		}
@@ -66,18 +53,6 @@ void Scope::success_reset() {
 			break;
 		}
 	}
-
-	for (int s_index = 0; s_index < (int)this->temp_states.size(); s_index++) {
-		if (this->temp_state_new_local_indexes[s_index] == -1) {
-			delete this->temp_states[s_index];
-		}
-	}
-	this->temp_states.clear();
-	this->temp_state_nodes.clear();
-	this->temp_state_scope_contexts.clear();
-	this->temp_state_node_contexts.clear();
-	this->temp_state_obs_indexes.clear();
-	this->temp_state_new_local_indexes.clear();
 }
 
 void Scope::fail_reset() {
@@ -107,15 +82,7 @@ void Scope::fail_reset() {
 }
 
 void Scope::save(ofstream& output_file) {
-	output_file << this->num_input_states << endl;
-	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		output_file << this->original_input_state_ids[s_index] << endl;
-	}
-
-	output_file << this->num_local_states << endl;
-	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		output_file << this->original_local_state_ids[s_index] << endl;
-	}
+	output_file << this->name << endl;
 
 	output_file << this->node_counter << endl;
 
@@ -128,32 +95,10 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->starting_node_id << endl;
-
-	output_file << this->parent_scope_nodes.size() << endl;
-	for (int p_index = 0; p_index < (int)this->parent_scope_nodes.size(); p_index++) {
-		output_file << this->parent_scope_node_parent_ids[p_index] << endl;
-		output_file << this->parent_scope_node_ids[p_index] << endl;
-	}
 }
 
 void Scope::load(ifstream& input_file) {
-	string num_input_states_line;
-	getline(input_file, num_input_states_line);
-	this->num_input_states = stoi(num_input_states_line);
-	for (int s_index = 0; s_index < this->num_input_states; s_index++) {
-		string state_id_line;
-		getline(input_file, state_id_line);
-		this->original_input_state_ids.push_back(stoi(state_id_line));
-	}
-
-	string num_local_states_line;
-	getline(input_file, num_local_states_line);
-	this->num_local_states = stoi(num_local_states_line);
-	for (int s_index = 0; s_index < this->num_local_states; s_index++) {
-		string state_id_line;
-		getline(input_file, state_id_line);
-		this->original_local_state_ids.push_back(stoi(state_id_line));
-	}
+	getline(input_file, this->name);
 
 	string node_counter_line;
 	getline(input_file, node_counter_line);
@@ -200,19 +145,6 @@ void Scope::load(ifstream& input_file) {
 	string starting_node_id_line;
 	getline(input_file, starting_node_id_line);
 	this->starting_node_id = stoi(starting_node_id_line);
-
-	string parent_scope_nodes_size_line;
-	getline(input_file, parent_scope_nodes_size_line);
-	int parent_scope_nodes_size = stoi(parent_scope_nodes_size_line);
-	for (int p_index = 0; p_index < parent_scope_nodes_size; p_index++) {
-		string parent_id_line;
-		getline(input_file, parent_id_line);
-		this->parent_scope_node_parent_ids.push_back(stoi(parent_id_line));
-
-		string id_line;
-		getline(input_file, id_line);
-		this->parent_scope_node_ids.push_back(stoi(id_line));
-	}
 }
 
 void Scope::link() {
@@ -222,12 +154,6 @@ void Scope::link() {
 	}
 
 	this->starting_node = this->nodes[this->starting_node_id];
-
-	for (int p_index = 0; p_index < (int)this->parent_scope_node_parent_ids.size(); p_index++) {
-		Scope* scope = solution->scopes[this->parent_scope_node_parent_ids[p_index]];
-		ScopeNode* scope_node = (ScopeNode*)scope->nodes[this->parent_scope_node_ids[p_index]];
-		this->parent_scope_nodes.push_back(scope_node);
-	}
 }
 
 void Scope::save_for_display(ofstream& output_file) {
@@ -242,10 +168,6 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
-
-	this->inner_pass_through_experiment = NULL;
-
-	this->experiment_index = -1;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -264,10 +186,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
 		}
 	}
-
-	this->inner_pass_through_experiment = NULL;
-
-	this->experiment_index = original->experiment_index;
 }
 
 ScopeHistory::~ScopeHistory() {

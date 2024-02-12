@@ -4,15 +4,11 @@
 #include <thread>
 #include <random>
 
-#include "context_layer.h"
 #include "globals.h"
-#include "solution_helpers.h"
 #include "minesweeper.h"
-#include "run_helper.h"
 #include "scope.h"
 #include "solution.h"
 #include "sorting.h"
-#include "state_status.h"
 
 using namespace std;
 
@@ -31,8 +27,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	cout << "solution->states.size(): " << solution->states.size() << endl;
-
 	{
 		Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
@@ -45,19 +39,25 @@ int main(int argc, char* argv[]) {
 		context.back().scope = solution->root;
 		context.back().node = NULL;
 
+		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		context.back().scope_history = root_history;
+
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->view_activate(problem,
-									  context,
-									  exit_depth,
-									  exit_node,
-									  run_helper);
+		solution->root->activate(problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper,
+								 root_history);
+
+		delete root_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_process);
+			target_val = problem->score_result();
 		} else {
 			target_val = -1.0;
 		}

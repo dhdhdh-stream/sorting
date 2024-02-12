@@ -4,16 +4,15 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
-#include "potential_scope_node.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
-#include "state.h"
 
 using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(
-		vector<int> scope_context,
-		vector<int> node_context) {
+		vector<Scope*> scope_context,
+		vector<AbstractNode*> node_context) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
 
 	this->scope_context = scope_context;
@@ -22,16 +21,9 @@ PassThroughExperiment::PassThroughExperiment(
 	this->average_remaining_experiments_from_start = 1.0;
 
 	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
-	this->i_scope_histories.reserve(solution->curr_num_datapoints);
-	this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE;
+	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;
-
-	this->new_is_better = true;
 
 	this->curr_score = 0.0;
 
@@ -39,9 +31,9 @@ PassThroughExperiment::PassThroughExperiment(
 
 	this->branch_experiment = NULL;
 
-	#if defined(MDEBUG) && MDEBUG
-	this->new_exceeded_limit = false;
-	#endif /* MDEBUG */
+	this->new_is_better = true;
+
+	this->result = EXPERIMENT_RESULT_NA;
 }
 
 PassThroughExperiment::~PassThroughExperiment() {
@@ -51,16 +43,16 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->curr_potential_scopes.size(); s_index++) {
-		if (this->curr_potential_scopes[s_index] != NULL) {
-			delete this->curr_potential_scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_existing_scopes.size(); s_index++) {
+		if (this->curr_existing_scopes[s_index] != NULL) {
+			delete this->curr_existing_scopes[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->curr_existing_scopes.size(); s_index++) {
-		if (this->curr_existing_scopes[s_index] != NULL) {
-			this->curr_existing_scopes[s_index]->scope = NULL;
-			delete this->curr_existing_scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_potential_scopes.size(); s_index++) {
+		if (this->curr_potential_scopes[s_index] != NULL) {
+			delete this->curr_potential_scopes[s_index]->scope;
+			delete this->curr_potential_scopes[s_index];
 		}
 	}
 
@@ -70,36 +62,22 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
-		if (this->best_potential_scopes[s_index] != NULL) {
-			delete this->best_potential_scopes[s_index];
-		}
-	}
-
 	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
 		if (this->best_existing_scopes[s_index] != NULL) {
-			this->best_existing_scopes[s_index]->scope = NULL;
 			delete this->best_existing_scopes[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		delete this->new_states[s_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
-		delete this->i_scope_histories[h_index];
+	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
+		if (this->best_potential_scopes[s_index] != NULL) {
+			delete this->best_potential_scopes[s_index]->scope;
+			delete this->best_potential_scopes[s_index];
+		}
 	}
 
 	if (this->branch_experiment != NULL) {
 		delete this->branch_experiment;
 	}
-
-	#if defined(MDEBUG) && MDEBUG
-	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
-		delete this->verify_problems[p_index];
-	}
-	#endif /* MDEBUG */
 }
 
 PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
@@ -119,12 +97,12 @@ PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
 		if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->pre_step_histories[s_index];
 			this->pre_step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
-		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->pre_step_histories[s_index];
-			this->pre_step_histories[s_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->pre_step_histories[s_index];
+			this->pre_step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
 		} else {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->pre_step_histories[s_index];
-			this->pre_step_histories[s_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->pre_step_histories[s_index];
+			this->pre_step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
 		}
 	}
 
@@ -141,12 +119,12 @@ PassThroughExperimentInstanceHistory::PassThroughExperimentInstanceHistory(
 		if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->post_step_histories[h_index];
 			this->post_step_histories[h_index] = new ActionNodeHistory(original_action_node_history);
-		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->post_step_histories[h_index];
-			this->post_step_histories[h_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->post_step_histories[h_index];
+			this->post_step_histories[h_index] = new ScopeNodeHistory(original_scope_node_history);
 		} else {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->post_step_histories[h_index];
-			this->post_step_histories[h_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->post_step_histories[h_index];
+			this->post_step_histories[h_index] = new ScopeNodeHistory(original_scope_node_history);
 		}
 	}
 }
@@ -158,12 +136,12 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 		if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->pre_step_histories[s_index];
 			delete action_node_history;
-		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->pre_step_histories[s_index];
-			delete potential_scope_node_history;
+		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->pre_step_histories[s_index];
+			delete scope_node_history;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->pre_step_histories[s_index];
-			delete potential_scope_node_history;
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->pre_step_histories[s_index];
+			delete scope_node_history;
 		}
 	}
 
@@ -176,12 +154,12 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 		if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->post_step_histories[h_index];
 			delete action_node_history;
-		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->post_step_histories[h_index];
-			delete potential_scope_node_history;
+		} else if (pass_through_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->post_step_histories[h_index];
+			delete scope_node_history;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->post_step_histories[h_index];
-			delete potential_scope_node_history;
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->post_step_histories[h_index];
+			delete scope_node_history;
 		}
 	}
 }
@@ -189,6 +167,4 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 PassThroughExperimentOverallHistory::PassThroughExperimentOverallHistory(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->instance_count = 0;
 }

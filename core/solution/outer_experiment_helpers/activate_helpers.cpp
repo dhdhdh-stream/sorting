@@ -7,7 +7,6 @@ using namespace std;
 bool OuterExperiment::activate(Problem* problem,
 							   RunHelper& run_helper) {
 	run_helper.experiments_seen_order.push_back(this);
-	run_helper.experiments_seen.insert(this);
 
 	double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 	uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -15,9 +14,9 @@ bool OuterExperiment::activate(Problem* problem,
 		run_helper.experiment_history = new OuterExperimentOverallHistory(this);
 
 		switch (this->state) {
-		case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-			measure_existing_score_activate(problem,
-											run_helper);
+		case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING:
+			measure_existing_activate(problem,
+									  run_helper);
 			break;
 		case OUTER_EXPERIMENT_STATE_EXPLORE:
 			if (this->sub_state_iter == 0) {
@@ -28,26 +27,20 @@ bool OuterExperiment::activate(Problem* problem,
 								 run_helper);
 			}
 			break;
-		case OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
-			measure_new_score_activate(problem,
-									   run_helper);
+		case OUTER_EXPERIMENT_STATE_MEASURE_NEW:
+			measure_new_activate(problem,
+								 run_helper);
 			break;
-		case OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE:
-		case OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE:
-			verify_existing_score_activate(problem,
-										   run_helper);
+		case OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+		case OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+			verify_existing_activate(problem,
+									 run_helper);
 			break;
-		case OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
-		case OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-			verify_new_score_activate(problem,
-									  run_helper);
+		case OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW:
+		case OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW:
+			verify_new_activate(problem,
+								run_helper);
 			break;
-		#if defined(MDEBUG) && MDEBUG
-		case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			capture_verify_activate(problem,
-									run_helper);
-			break;
-		#endif /* MDEBUG */
 		}
 
 		return true;
@@ -58,33 +51,26 @@ bool OuterExperiment::activate(Problem* problem,
 
 void OuterExperiment::backprop(double target_val,
 							   RunHelper& run_helper,
-							   OuterExperimentOverallHistory* history) {
+							   AbstractExperimentHistory* history) {
 	switch (this->state) {
-	case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-		measure_existing_score_backprop(target_val,
-										run_helper);
+	case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING:
+		measure_existing_backprop(target_val,
+								  run_helper);
 		break;
 	case OUTER_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val);
 		break;
-	case OUTER_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
-		measure_new_score_backprop(target_val);
+	case OUTER_EXPERIMENT_STATE_MEASURE_NEW:
+		measure_new_backprop(target_val);
 		break;
-	case OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE:
-	case OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE:
-		verify_existing_score_backprop(target_val,
-									   run_helper);
+	case OUTER_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+		verify_existing_backprop(target_val,
+								 run_helper);
 		break;
-	case OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
-	case OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-		verify_new_score_backprop(target_val);
+	case OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW:
+	case OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW:
+		verify_new_backprop(target_val);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case OUTER_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop();
-		break;
-	#endif /* MDEBUG */
 	}
-
-	delete history;
 }

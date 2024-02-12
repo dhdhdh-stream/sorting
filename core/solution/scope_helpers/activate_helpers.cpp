@@ -1,18 +1,11 @@
 #include "scope.h"
 
-#include <iostream>
-#include <stdexcept>
-
 #include "action_node.h"
 #include "branch_node.h"
-#include "constants.h"
 #include "exit_node.h"
-#include "state_network.h"
 #include "globals.h"
-#include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -47,28 +40,17 @@ void node_activate_helper(AbstractNode*& curr_node,
 					   node_history);
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
 		BranchNode* node = (BranchNode*)curr_node;
-
-		BranchNodeHistory* node_history = new BranchNodeHistory(node);
-		history->node_histories.push_back(node_history);
 		node->activate(curr_node,
 					   problem,
 					   context,
 					   exit_depth,
 					   exit_node,
-					   run_helper);
+					   run_helper,
+					   history->node_histories);
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
-
-		if (node->is_exit) {
-			run_helper.has_exited = true;
-		} else {
-			if (node->exit_depth == 0) {
-				curr_node = node->exit_node;
-			} else {
-				exit_depth = node->exit_depth-1;
-				exit_node = node->exit_node;
-			}
-		}
+		exit_depth = node->exit_depth-1;
+		exit_node = node->exit_node;
 	}
 }
 
@@ -89,8 +71,7 @@ void Scope::activate(Problem* problem,
 
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
-		if (run_helper.has_exited
-				|| run_helper.exceeded_limit
+		if (run_helper.exceeded_limit
 				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
@@ -103,13 +84,6 @@ void Scope::activate(Problem* problem,
 							 exit_node,
 							 run_helper,
 							 history);
-	}
-
-	if (history->inner_pass_through_experiment != NULL) {
-		history->inner_pass_through_experiment->parent_scope_end_activate(
-			context,
-			run_helper,
-			history);
 	}
 
 	run_helper.curr_depth--;

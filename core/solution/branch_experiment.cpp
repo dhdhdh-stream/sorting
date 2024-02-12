@@ -1,19 +1,18 @@
 #include "branch_experiment.h"
 
-#include <iostream>
-
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "potential_scope_node.h"
+#include "network.h"
+#include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
-#include "state.h"
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(vector<int> scope_context,
-								   vector<int> node_context) {
+BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
+								   vector<AbstractNode*> node_context) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
@@ -27,11 +26,11 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	 */
 	this->average_instances_per_run = 1.0;
 
+	this->existing_network = NULL;
+	this->new_network = NULL;
+
 	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 	this->i_scope_histories.reserve(solution->curr_num_datapoints);
-	this->i_input_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_local_state_vals_histories.reserve(solution->curr_num_datapoints);
-	this->i_temp_state_vals_histories.reserve(solution->curr_num_datapoints);
 	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
@@ -40,36 +39,37 @@ BranchExperiment::BranchExperiment(vector<int> scope_context,
 	this->best_surprise = 0.0;
 
 	this->combined_score = 0.0;
+	this->original_count = 0;
 	this->branch_count = 0;
-	this->branch_possible = 0;
 
-	#if defined(MDEBUG) && MDEBUG
-	this->new_exceeded_limit = false;
-	#endif /* MDEBUG */
+	this->result = EXPERIMENT_RESULT_NA;
 }
 
 BranchExperiment::~BranchExperiment() {
+	if (this->existing_network != NULL) {
+		delete this->existing_network;
+	}
+	if (this->new_network != NULL) {
+		delete this->new_network;
+	}
+
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
 		if (this->best_actions[s_index] != NULL) {
 			delete this->best_actions[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
-		if (this->best_potential_scopes[s_index] != NULL) {
-			delete this->best_potential_scopes[s_index];
-		}
-	}
-
 	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
 		if (this->best_existing_scopes[s_index] != NULL) {
-			this->best_existing_scopes[s_index]->scope = NULL;
 			delete this->best_existing_scopes[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		delete this->new_states[s_index];
+	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
+		if (this->best_potential_scopes[s_index] != NULL) {
+			delete this->best_potential_scopes[s_index]->scope;
+			delete this->best_potential_scopes[s_index];
+		}
 	}
 
 	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
@@ -96,12 +96,12 @@ BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimen
 		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->step_histories[s_index];
 			this->step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
-		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->step_histories[s_index];
+			this->step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
 		} else {
-			PotentialScopeNodeHistory* original_potential_scope_node_history = (PotentialScopeNodeHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new PotentialScopeNodeHistory(original_potential_scope_node_history);
+			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->step_histories[s_index];
+			this->step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
 		}
 	}
 }
@@ -112,12 +112,12 @@ BranchExperimentInstanceHistory::~BranchExperimentInstanceHistory() {
 		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->step_histories[s_index];
 			delete action_node_history;
-		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->step_histories[s_index];
-			delete potential_scope_node_history;
+		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->step_histories[s_index];
+			delete scope_node_history;
 		} else {
-			PotentialScopeNodeHistory* potential_scope_node_history = (PotentialScopeNodeHistory*)this->step_histories[s_index];
-			delete potential_scope_node_history;
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->step_histories[s_index];
+			delete scope_node_history;
 		}
 	}
 }

@@ -1,85 +1,49 @@
 #ifndef SOLUTION_HELPERS_H
 #define SOLUTION_HELPERS_H
 
-#include <map>
 #include <utility>
 #include <vector>
 
 #include "context_layer.h"
-#include "run_helper.h"
 
 class AbstractNode;
-class ActionNode;
-class BranchExperiment;
-class BranchNode;
-class PassThroughExperiment;
-class PotentialScopeNode;
 class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
-class State;
-class ScenarioExperiment;
 
 void create_experiment(ScopeHistory* root_history);
 
-PotentialScopeNode* reuse_existing(Problem* problem,
-								   std::vector<ContextLayer>& context,
-								   int explore_context_depth);
-PotentialScopeNode* create_scope(std::vector<ContextLayer>& context,
-								 int explore_context_depth,
-								 Scope* parent_scope);
-PotentialScopeNode* create_repeat(std::vector<ContextLayer>& context,
-								  int explore_context_depth);
+ScopeNode* reuse_existing(Problem* problem);
+ScopeNode* create_scope(Scope* parent_scope);
+ScopeNode* create_repeat(std::vector<ContextLayer>& context,
+						 int explore_context_depth);
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<ContextLayer>& context,
-						   std::vector<int>& scope_context,
-						   std::vector<int>& node_context);
+						   std::vector<Scope*>& scope_context,
+						   std::vector<AbstractNode*>& node_context);
 void parent_pass_through_gather_possible_exits(
 	std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 	std::vector<ContextLayer>& context,
-	std::vector<int>& scope_context,
-	std::vector<int>& node_context,
+	std::vector<Scope*>& scope_context,
+	std::vector<AbstractNode*>& node_context,
 	int parent_exit_depth,
 	AbstractNode* parent_exit_node);
 
-void existing_obs_experiment(AbstractExperiment* experiment,
-							 Scope* parent_scope,
-							 std::vector<ScopeHistory*>& scope_histories,
-							 std::vector<double>& target_vals);
-void new_obs_experiment(AbstractExperiment* experiment,
-						std::vector<ScopeHistory*>& scope_histories,
-						std::vector<double>& target_vals);
-void existing_pass_through_branch_obs_experiment(
-		BranchExperiment* experiment,
-		std::vector<ScopeHistory*>& scope_histories,
-		std::vector<double>& target_vals);
-void scenario_obs_experiment(ScenarioExperiment* experiment,
-							 std::vector<ScopeHistory*>& scope_histories,
-							 std::vector<double>& target_vals);
+void gather_possible_helper(std::vector<Scope*>& scope_context,
+							std::vector<AbstractNode*>& node_context,
+							std::vector<std::vector<Scope*>>& possible_scope_contexts,
+							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
+							ScopeHistory* scope_history);
 
-void clean_state(PotentialScopeNode* potential_scope_node);
-
-void finalize_potential_scope(std::vector<int>& experiment_scope_context,
-							  std::vector<int>& experiment_node_context,
-							  PotentialScopeNode* potential_scope_node,
-							  std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-							  std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
-void finalize_branch_node_states(BranchNode* branch_node,
-								 std::vector<std::map<int, double>>& existing_input_state_weights,
-								 std::vector<std::map<int, double>>& existing_local_state_weights,
-								 std::vector<std::map<State*, double>>& existing_temp_state_weights,
-								 std::vector<std::map<int, double>>& new_input_state_weights,
-								 std::vector<std::map<int, double>>& new_local_state_weights,
-								 std::vector<std::map<State*, double>>& new_temp_state_weights,
-								 std::map<std::pair<int, std::pair<bool,int>>, int>& input_scope_depths_mappings,
-								 std::map<std::pair<int, std::pair<bool,int>>, int>& output_scope_depths_mappings);
-void scenario_add_state(State* new_state,
-						std::vector<ActionNode*>& nodes,
-						std::vector<std::vector<int>>& scope_contexts,
-						std::vector<std::vector<int>>& node_contexts,
-						std::vector<int>& obs_indexes,
-						Scope* parent_scope);
+/**
+ * TODO:
+ * - instead of always backtracking, add caching?
+ */
+void input_vals_helper(std::vector<Scope*>& scope_context,
+					   std::vector<AbstractNode*>& node_context,
+					   std::vector<double>& input_vals,
+					   ScopeHistory* scope_history);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 
+#include "globals.h"
 #include "solution.h"
 
 using namespace std;

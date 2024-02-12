@@ -1,7 +1,5 @@
 #include "retrain_branch_experiment.h"
 
-#include <iostream>
-
 #include "globals.h"
 
 using namespace std;
@@ -13,8 +11,14 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 	bool is_selected = false;
 	if (run_helper.experiment_history == NULL) {
 		bool select = false;
-		set<AbstractExperiment*>::iterator it = run_helper.experiments_seen.find(this);
-		if (it == run_helper.experiments_seen.end()) {
+		bool has_seen = false;
+		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+			if (run_helper.experiments_seen_order[e_index] == this) {
+				has_seen = true;
+				break;
+			}
+		}
+		if (!has_seen) {
 			double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 			uniform_real_distribution<double> distribution(0.0, 1.0);
 			if (distribution(generator) < selected_probability) {
@@ -22,7 +26,6 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 			}
 
 			run_helper.experiments_seen_order.push_back(this);
-			run_helper.experiments_seen.insert(this);
 		}
 		if (select) {
 			run_helper.experiment_history = new RetrainBranchExperimentOverallHistory(this);
@@ -35,6 +38,11 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 
 	if (is_selected) {
 		switch (this->state) {
+		case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
+			measure_existing_activate(is_branch,
+									  context,
+									  run_helper);
+			break;
 		case RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL:
 			train_original_activate(is_branch,
 									context,
@@ -44,11 +52,6 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 			train_branch_activate(is_branch,
 								  context,
 								  run_helper);
-			break;
-		case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
-			measure_existing_activate(is_branch,
-									  context,
-									  run_helper);
 			break;
 		case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE:
 			measure_activate(is_branch,
@@ -85,19 +88,20 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 
 void RetrainBranchExperiment::backprop(double target_val,
 									   RunHelper& run_helper,
-									   RetrainBranchExperimentOverallHistory* history) {
+									   AbstractExperimentHistory* history) {
 	switch (this->state) {
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_ORIGINAL:
 		train_original_backprop(target_val,
-								history);
+								(RetrainBranchExperimentOverallHistory*)history);
 		break;
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_TRAIN_BRANCH:
 		train_branch_backprop(target_val,
-							  history);
+							  (RetrainBranchExperimentOverallHistory*)history);
 		break;
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE_EXISTING:
 		measure_existing_backprop(target_val,
-								  run_helper);
+								  run_helper,
+								  (RetrainBranchExperimentOverallHistory*)history);
 		break;
 	case RETRAIN_BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val);
@@ -117,6 +121,4 @@ void RetrainBranchExperiment::backprop(double target_val,
 		break;
 	#endif /* MDEBUG */
 	}
-
-	delete history;
 }

@@ -25,7 +25,6 @@ Layer::~Layer() {
 
 void Layer::setup_weights_full() {
 	uniform_real_distribution<double> distribution(-0.01, 0.01);
-
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		vector<vector<double>> node_weights;
 		vector<vector<double>> node_weight_updates;
@@ -47,6 +46,23 @@ void Layer::setup_weights_full() {
 		this->constants.push_back(distribution(generator));
 		this->weight_updates.push_back(node_weight_updates);
 		this->constant_updates.push_back(0.0);
+	}
+}
+
+void Layer::add_input(Layer* layer) {
+	this->input_layers.push_back(layer);
+
+	int layer_size = (int)layer->acti_vals.size();
+	uniform_real_distribution<double> distribution(-0.01, 0.01);
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		vector<double> layer_weights;
+		vector<double> layer_weight_updates;
+		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+			layer_weights.push_back(distribution(generator));
+			layer_weight_updates.push_back(0.0);
+		}
+		this->weights[n_index].push_back(layer_weights);
+		this->weight_updates[n_index].push_back(layer_weight_updates);
 	}
 }
 

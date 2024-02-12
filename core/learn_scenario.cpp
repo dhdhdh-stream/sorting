@@ -32,8 +32,6 @@ int main(int argc, char* argv[]) {
 	solution->init();
 	// solution->load("", "main");
 
-	solution->save("", "main");
-
 	// {
 	// 	ScenarioExperiment* experiment = new ScenarioExperiment(new MinesweeperOpen());
 

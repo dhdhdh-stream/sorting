@@ -15,52 +15,36 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
-#include <fstream>
 #include <map>
-#include <set>
 #include <vector>
 
-#include "problem.h"
-
-class AbstractExperiment;
-class AbstractNode;
 class OuterExperiment;
+class Problem;
 class Scope;
-class ScopeNode;
-class State;
 
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
-// const int STARTING_NUM_DATAPOINTS = 200;
-const int STARTING_NUM_DATAPOINTS = 4000;
+const int STARTING_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 class Solution {
 public:
-	int id;
-
-	int state_counter;
-	std::map<int, State*> states;
-	/**
-	 * - use map to track states as may be sparse
-	 */
-	/**
-	 * TODO: track relations among states, e.g.:
-	 *   - which states are used together
-	 *   - which states depend on which states
-	 */
+	int timestamp;
 
 	int scope_counter;
 	std::map<int, Scope*> scopes;
 
 	Scope* root;
 
-	int max_depth;	// max depth for run that concluded -> set limit to max_depth+10/1.2*max_depth
+	/**
+	 * - max depth for run that concluded
+	 *   - set limit to max_depth+10/1.2*max_depth
+	 * 
+	 * - update on success for verify
+	 */
+	int max_depth;
 	int depth_limit;
-
-	// TODO: track successful action counts
-	// TODO: track recent updates, and add explore weight
 
 	int curr_num_datapoints;
 
@@ -68,7 +52,6 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	// TODO: potentially check for exceed max_depth
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */

@@ -8,10 +8,15 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_ITERS_FRONT = 20;
+const int TRAIN_ITERS_BACK = 10;
+const int OPTIMIZE_ITERS = 30;
+#else
 const int TRAIN_ITERS_FRONT = 200000;
 const int TRAIN_ITERS_BACK = 100000;
-
 const int OPTIMIZE_ITERS = 300000;
+#endif /* MDEBUG */
 
 const double NETWORK_INPUT_MIN_IMPACT = 0.2;
 
@@ -47,7 +52,7 @@ void train_network(vector<vector<vector<double>>>& inputs,
 	vector<double> input_impacts(num_new_inputs);
 	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
 		double sum_impact = 0.0;
-		for (int n_index = 0; n_index < (int)test_input_scope_contexts.size(); n_index++) {
+		for (int n_index = 0; n_index < NETWORK_INCREMENT_HIDDEN_SIZE; n_index++) {
 			/**
 			 * - if NETWORK_INCREMENT_TYPE_SIDE, then only 1 layer
 			 * - if NETWORK_INCREMENT_TYPE_ABOVE, then last input layer is new

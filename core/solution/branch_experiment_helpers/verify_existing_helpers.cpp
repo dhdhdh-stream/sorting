@@ -1,7 +1,5 @@
 #include "branch_experiment.h"
 
-#include <iostream>
-
 #include "constants.h"
 #include "globals.h"
 #include "solution.h"
@@ -16,12 +14,6 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 		if (!run_helper.exceeded_limit) {
 			if (run_helper.max_depth > solution->max_depth) {
 				solution->max_depth = run_helper.max_depth;
-
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
 			}
 		}
 	}
@@ -33,10 +25,6 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 			sum_scores += this->o_target_val_histories[d_index];
 		}
 		this->verify_existing_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
-
-		// cout << "Branch" << endl;
-		// cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
-		// cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
@@ -54,10 +42,6 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 			sum_scores += this->o_target_val_histories[d_index];
 		}
 		this->verify_existing_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
-
-		// cout << "Branch" << endl;
-		// cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
-		// cout << endl;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {

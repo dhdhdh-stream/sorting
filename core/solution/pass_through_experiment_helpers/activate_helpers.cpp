@@ -1,13 +1,7 @@
 #include "pass_through_experiment.h"
 
-#include <iostream>
-
-#include "action_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
-#include "scope.h"
-#include "scope_node.h"
-#include "state.h"
 
 using namespace std;
 
@@ -24,8 +18,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
 					matches_context = false;
 					break;
 				}
@@ -34,8 +28,14 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 		if (matches_context) {
 			bool select = false;
-			set<AbstractExperiment*>::iterator it = run_helper.experiments_seen.find(this);
-			if (it == run_helper.experiments_seen.end()) {
+			bool has_seen = false;
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				if (run_helper.experiments_seen_order[e_index] == this) {
+					has_seen = true;
+					break;
+				}
+			}
+			if (!has_seen) {
 				double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 				uniform_real_distribution<double> distribution(0.0, 1.0);
 				if (distribution(generator) < selected_probability) {
@@ -43,33 +43,20 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				}
 
 				run_helper.experiments_seen_order.push_back(this);
-				run_helper.experiments_seen.insert(this);
 			}
 			if (select) {
-				hook();
-
 				PassThroughExperimentOverallHistory* overall_history = new PassThroughExperimentOverallHistory(this);
 				run_helper.experiment_history = overall_history;
 
-				back_activate(context,
-							  run_helper);
-
 				switch (this->state) {
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-					measure_existing_score_activate(context);
-					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 					if (this->sub_state_iter == 0) {
-						this->sub_state_iter = -1;
-
 						explore_initial_activate(curr_node,
 												 problem,
 												 context,
 												 exit_depth,
 												 exit_node,
 												 run_helper);
-
-						this->sub_state_iter = 0;
 					} else {
 						explore_activate(curr_node,
 										 problem,
@@ -79,53 +66,22 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										 run_helper);
 					}
 					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
-					measure_new_score_activate(curr_node,
-											   problem,
-											   context,
-											   exit_depth,
-											   exit_node,
-											   run_helper,
-											   history);
+				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
+					measure_new_activate(curr_node,
+										 problem,
+										 context,
+										 exit_depth,
+										 exit_node,
+										 run_helper);
 					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
-				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-					verify_new_score_activate(curr_node,
-											  problem,
-											  context,
-											  exit_depth,
-											  exit_node,
-											  run_helper);
-					break;
-				#if defined(MDEBUG) && MDEBUG
-				case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-					capture_verify_activate(curr_node,
-											problem,
-											context,
-											exit_depth,
-											exit_node,
-											run_helper);
-					break;
-				#endif /* MDEBUG */
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
-					measure_existing_misguess_activate(context);
-					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS:
-					train_new_misguess_activate(curr_node,
-												problem,
-												context,
-												exit_depth,
-												exit_node,
-												run_helper,
-												history);
-					break;
-				case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS:
-					measure_new_misguess_activate(curr_node,
-												  problem,
-												  context,
-												  exit_depth,
-												  exit_node,
-												  run_helper);
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW:
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW:
+					verify_new_activate(curr_node,
+										problem,
+										context,
+										exit_depth,
+										exit_node,
+										run_helper);
 					break;
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
@@ -137,7 +93,16 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 										exit_node,
 										run_helper,
 										history);
-
+					break;
+				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW:
+				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW:
+					experiment_verify_new_activate(curr_node,
+												   problem,
+												   context,
+												   exit_depth,
+												   exit_node,
+												   run_helper,
+												   history);
 					break;
 				}
 			}
@@ -148,9 +113,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
-						|| context[context.size()-this->scope_context.size()+c_index].node == NULL	// within explore edge case
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
 					matches_context = false;
 					break;
 				}
@@ -158,76 +122,38 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 		}
 
 		if (matches_context) {
-			back_activate(context,
-						  run_helper);
-
 			switch (this->state) {
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-				measure_existing_score_activate(context);
-				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
-				if (this->sub_state_iter != -1) {
-					/**
-					 * - handle edge case where hit in create_sequence()
-					 */
-					explore_activate(curr_node,
+				explore_activate(curr_node,
+								 problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper);
+				break;
+			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
+				measure_new_activate(curr_node,
 									 problem,
 									 context,
 									 exit_depth,
 									 exit_node,
 									 run_helper);
-				}
-
 				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
-				measure_new_score_activate(curr_node,
-										   problem,
-										   context,
-										   exit_depth,
-										   exit_node,
-										   run_helper,
-										   history);
-				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
-			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-				verify_new_score_activate(curr_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper);
-				break;
-			#if defined(MDEBUG) && MDEBUG
-			case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-				capture_verify_activate(curr_node,
-										problem,
-										context,
-										exit_depth,
-										exit_node,
-										run_helper);
-				break;
-			#endif /* MDEBUG */
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
-				measure_existing_misguess_activate(context);
-				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS:
-				train_new_misguess_activate(curr_node,
-											problem,
-											context,
-											exit_depth,
-											exit_node,
-											run_helper,
-											history);
-				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS:
-				measure_new_misguess_activate(curr_node,
-											  problem,
-											  context,
-											  exit_depth,
-											  exit_node,
-											  run_helper);
+			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW:
+			case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW:
+				verify_new_activate(curr_node,
+									problem,
+									context,
+									exit_depth,
+									exit_node,
+									run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
+				{
+					PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
+					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
+				}
+
 				experiment_activate(curr_node,
 									problem,
 									context,
@@ -236,199 +162,60 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 									run_helper,
 									history);
 				break;
+			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW:
+			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW:
+				experiment_verify_new_activate(curr_node,
+											   problem,
+											   context,
+											   exit_depth,
+											   exit_node,
+											   run_helper,
+											   history);
+				break;
 			}
 		}
-	}
-}
-
-void PassThroughExperiment::hook() {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
-		}
-	}
-
-	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
-			for (int n_index = 0; n_index < (int)this->branch_experiment->new_state_nodes[s_index].size(); n_index++) {
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->branch_experiment->new_state_scope_contexts[s_index][n_index]);
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->branch_experiment->new_state_node_contexts[s_index][n_index]);
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->branch_experiment->new_state_obs_indexes[s_index][n_index]);
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->branch_experiment->new_states[s_index]);
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
-			}
-		}
-	}
-}
-
-void PassThroughExperiment::back_activate_helper(vector<int>& scope_context,
-												 vector<int>& node_context,
-												 map<State*, StateStatus>& temp_state_vals,
-												 ScopeHistory* scope_history,
-												 RunHelper& run_helper) {
-	int scope_id = scope_history->scope->id;
-
-	scope_context.push_back(scope_id);
-	node_context.push_back(-1);
-
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			ActionNode* action_node = (ActionNode*)action_node_history->node;
-			action_node->experiment_back_activate(scope_context,
-												  node_context,
-												  temp_state_vals,
-												  run_helper,
-												  action_node_history);
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-			node_context.back() = scope_node->id;
-
-			back_activate_helper(scope_context,
-								 node_context,
-								 temp_state_vals,
-								 scope_node_history->inner_scope_history,
-								 run_helper);
-
-			node_context.back() = -1;
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
-void PassThroughExperiment::back_activate(vector<ContextLayer>& context,
-										  RunHelper& run_helper) {
-	if (this->new_states.size() > 0
-			|| (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT
-				&& this->branch_experiment->new_states.size() > 0)) {
-		for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-			context[context.size() - this->scope_context.size()].temp_state_vals
-				.erase(this->new_states[s_index]);
-		}
-
-		if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-			for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
-				context[context.size() - this->scope_context.size()].temp_state_vals
-					.erase(this->branch_experiment->new_states[s_index]);
-			}
-		}
-
-		vector<int> scope_context;
-		vector<int> node_context;
-		back_activate_helper(scope_context,
-							 node_context,
-							 context[context.size() - this->scope_context.size()].temp_state_vals,
-							 context[context.size() - this->scope_context.size()].scope_history,
-							 run_helper);
-	}
-}
-
-void PassThroughExperiment::unhook() {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
-		}
-	}
-
-	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-		for (int s_index = 0; s_index < (int)this->branch_experiment->new_states.size(); s_index++) {
-			for (int n_index = 0; n_index < (int)this->branch_experiment->new_state_nodes[s_index].size(); n_index++) {
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
-				this->branch_experiment->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
-			}
-		}
-	}
-}
-
-void PassThroughExperiment::parent_scope_end_activate(
-		vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		ScopeHistory* parent_scope_history) {
-	switch (this->state) {
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-		measure_existing_score_parent_scope_end_activate(
-			context,
-			run_helper,
-			parent_scope_history);
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
-		measure_existing_misguess_parent_scope_end_activate(
-			context,
-			run_helper);
-		break;
 	}
 }
 
 void PassThroughExperiment::backprop(double target_val,
 									 RunHelper& run_helper,
-									 PassThroughExperimentOverallHistory* history) {
-	unhook();
-
+									 AbstractExperimentHistory* history) {
 	switch (this->state) {
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
-		measure_existing_score_backprop(target_val,
-										run_helper,
-										history);
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
+		measure_existing_backprop(target_val,
+								  run_helper);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_SCORE:
-		measure_new_score_backprop(target_val,
-								   run_helper,
-								   history);
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
+		measure_new_backprop(target_val,
+							 run_helper);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING_SCORE:
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING_SCORE:
-		verify_existing_score_backprop(target_val,
-									   run_helper);
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+		verify_existing_backprop(target_val,
+								 run_helper);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW_SCORE:
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW_SCORE:
-		verify_new_score_backprop(target_val,
-								  run_helper);
-		break;
-	#if defined(MDEBUG) && MDEBUG
-	case PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop();
-		break;
-	#endif /* MDEBUG */
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_MISGUESS:
-		measure_existing_misguess_backprop(target_val,
-										   run_helper,
-										   history);
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW_MISGUESS:
-		train_new_misguess_backprop(target_val,
-									history);
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW_MISGUESS:
-		measure_new_misguess_backprop(target_val,
-									  run_helper,
-									  history);
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW:
+		verify_new_backprop(target_val,
+							run_helper);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 		experiment_backprop(target_val,
 							run_helper,
-							history);
+							(PassThroughExperimentOverallHistory*)history);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING:
+	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING:
+		experiment_verify_existing_backprop(target_val,
+											run_helper);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW:
+	case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW:
+		experiment_verify_new_backprop(target_val,
+									   run_helper);
 		break;
 	}
-
-	delete history;
 }

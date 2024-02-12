@@ -1,13 +1,8 @@
 #include "solution.h"
 
-#include <iostream>
-#include <stdio.h>
-
 #include "action_node.h"
-#include "globals.h"
 #include "outer_experiment.h"
 #include "scope.h"
-#include "state.h"
 
 using namespace std;
 
@@ -16,11 +11,6 @@ Solution::Solution() {
 }
 
 Solution::~Solution() {
-	for (map<int, State*>::iterator it = this->states.begin();
-			it != this->states.end(); it++) {
-		delete it->second;
-	}
-
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		delete it->second;
@@ -32,9 +22,7 @@ Solution::~Solution() {
 }
 
 void Solution::init() {
-	this->id = (unsigned)time(NULL);
-
-	this->state_counter = 0;
+	this->timestamp = (unsigned)time(NULL);
 
 	this->scope_counter = 0;
 
@@ -42,9 +30,6 @@ void Solution::init() {
 	starting_scope->id = this->scope_counter;
 	this->scope_counter++;
 	this->scopes[starting_scope->id] = starting_scope;
-	
-	starting_scope->num_input_states = 0;
-	starting_scope->num_local_states = 0;
 
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
@@ -70,27 +55,9 @@ void Solution::load(string path,
 	ifstream input_file;
 	input_file.open(path + "saves/" + name + ".txt");
 
-	string id_line;
-	getline(input_file, id_line);
-	this->id = stoi(id_line);
-
-	string state_counter_line;
-	getline(input_file, state_counter_line);
-	this->state_counter = stoi(state_counter_line);
-
-	string num_states_line;
-	getline(input_file, num_states_line);
-	int num_states = stoi(num_states_line);
-	for (int s_index = 0; s_index < num_states; s_index++) {
-		string state_id_line;
-		getline(input_file, state_id_line);
-		int state_id = stoi(state_id_line);
-
-		State* state = new State(input_file,
-								 state_id);
-
-		this->states[state_id] = state;
-	}
+	string timestamp_line;
+	getline(input_file, timestamp_line);
+	this->timestamp = stoi(timestamp_line);
 
 	string scope_counter_line;
 	getline(input_file, scope_counter_line);
@@ -179,16 +146,7 @@ void Solution::save(string path,
 	ofstream output_file;
 	output_file.open(path + "saves/" + name + "_temp.txt");
 
-	output_file << this->id << endl;
-
-	output_file << this->state_counter << endl;
-
-	output_file << this->states.size() << endl;
-	for (map<int, State*>::iterator it = this->states.begin();
-			it != this->states.end(); it++) {
-		output_file << it->first << endl;
-		it->second->save(output_file);
-	}
+	output_file << this->timestamp << endl;
 
 	output_file << this->scope_counter << endl;
 

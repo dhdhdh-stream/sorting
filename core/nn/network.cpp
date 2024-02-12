@@ -105,16 +105,32 @@ Network::Network(ifstream& input_file) {
 		}
 		this->hidden_inputs.push_back(curr_hidden_inputs);
 	}
+	for (int h_index = 0; h_index < num_hiddens; h_index++) {
+		for (int i_index = 0; i_index < (int)this->hidden_inputs[h_index].size(); i_index++) {
+			if (this->hidden_inputs[h_index][i_index].first) {
+				this->hiddens[h_index]->input_layers.push_back(
+					this->inputs[this->hidden_inputs[h_index][i_index].second]);
+			} else {
+				this->hiddens[h_index]->input_layers.push_back(
+					this->hiddens[this->hidden_inputs[h_index][i_index].second]);
+			}
+		}
+		this->hiddens[h_index]->setup_weights_full();
+	}
 
 	string output_inputs_size_line;
 	getline(input_file, output_inputs_size_line);
 	int output_inputs_size = stoi(output_inputs_size_line);
-
 	for (int i_index = 0; i_index < output_inputs_size; i_index++) {
 		string index_line;
 		getline(input_file, index_line);
 		this->output_inputs.push_back(stoi(index_line));
 	}
+	this->output = new Layer(LINEAR_LAYER, 1);
+	for (int i_index = 0; i_index < (int)this->output_inputs.size(); i_index++) {
+		this->output->input_layers.push_back(this->hiddens[this->output_inputs[i_index]]);
+	}
+	this->output->setup_weights_full();
 
 	for (int h_index = 0; h_index < (int)this->hiddens.size(); h_index++) {
 		this->hiddens[h_index]->load_weights_from(input_file);

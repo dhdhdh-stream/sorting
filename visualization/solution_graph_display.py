@@ -4,7 +4,7 @@ ACTION_NOOP = -1
 ACTION_LEFT = 0
 ACTION_RIGHT = 1
 ACTION_SWAP_R = 2
-ACTION_SWAP_F = 2
+ACTION_SWAP_F = 3
 # ACTION_NOOP = -1
 # ACTION_UP = 0
 # ACTION_RIGHT = 1
@@ -75,13 +75,12 @@ for s_index in range(num_scopes):
 							  exit_node_parent_id,
 							  exit_node_id]
 
+	print(scope_id)
 	print(nodes)
 
 	scopes[scope_id] = nodes
 
 file.close()
-
-print(scopes)
 
 def pretty_print_action(action):
 	result = ''

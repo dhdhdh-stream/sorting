@@ -348,14 +348,14 @@ void BranchExperiment::retrain_existing_backprop(
 			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 				if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
 					ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
-					action_node->hook_indexes.push_back(t_index);
-					action_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-					action_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+					action_node->hook_indexes.clear();
+					action_node->hook_scope_contexts.clear();
+					action_node->hook_node_contexts.clear();
 				} else {
 					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
-					branch_node->hook_indexes.push_back(t_index);
-					branch_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-					branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+					branch_node->hook_indexes.clear();
+					branch_node->hook_scope_contexts.clear();
+					branch_node->hook_node_contexts.clear();
 				}
 			}
 

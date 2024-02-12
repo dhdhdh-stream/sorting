@@ -1,16 +1,6 @@
 #include "branch_experiment.h"
 
-#include <iostream>
-
-#include "action_node.h"
-#include "branch_node.h"
-#include "constants.h"
 #include "globals.h"
-#include "pass_through_experiment.h"
-#include "scope.h"
-#include "scope_node.h"
-#include "solution.h"
-#include "state.h"
 
 using namespace std;
 
@@ -30,8 +20,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
 					matches_context = false;
 					break;
 				}
@@ -40,8 +30,14 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 
 		if (matches_context) {
 			bool select = false;
-			set<AbstractExperiment*>::iterator it = run_helper.experiments_seen.find(this);
-			if (it == run_helper.experiments_seen.end()) {
+			bool has_seen = false;
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				if (run_helper.experiments_seen_order[e_index] == this) {
+					has_seen = true;
+					break;
+				}
+			}
+			if (!has_seen) {
 				double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 				uniform_real_distribution<double> distribution(0.0, 1.0);
 				if (distribution(generator) < selected_probability) {
@@ -49,11 +45,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 				}
 
 				run_helper.experiments_seen_order.push_back(this);
-				run_helper.experiments_seen.insert(this);
 			}
 			if (select) {
-				hook();
-
 				run_helper.experiment_history = new BranchExperimentOverallHistory(this);
 
 				is_selected = true;
@@ -65,9 +58,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			matches_context = false;
 		} else {
 			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope->id
-						|| context[context.size()-this->scope_context.size()+c_index].node == NULL	// within explore edge case
-						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node->id) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
 					matches_context = false;
 					break;
 				}
@@ -80,14 +72,6 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 	}
 
 	if (is_selected) {
-		if (this->parent_pass_through_experiment == NULL) {
-			/**
-			 * - always back_activate as may have been hooked inner, but earlier node needed for current
-			 */
-			back_activate(context,
-						  run_helper);
-		}
-
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(context,
@@ -101,7 +85,15 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							 exit_node,
 							 run_helper);
 			break;
-		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE:
+		case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
+			retrain_existing_activate(curr_node,
+									  problem,
+									  context,
+									  exit_depth,
+									  exit_node,
+									  run_helper,
+									  history);
+			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
 							   problem,
@@ -117,7 +109,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							 context,
 							 exit_depth,
 							 exit_node,
-							 run_helper);
+							 run_helper,
+							 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
 		case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
@@ -126,7 +119,8 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 							context,
 							exit_depth,
 							exit_node,
-							run_helper);
+							run_helper,
+							history);
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
@@ -135,114 +129,36 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 									context,
 									exit_depth,
 									exit_node,
-									run_helper);
+									run_helper,
+									history);
 			break;
 		#endif /* MDEBUG */
 		}
 	}
 }
 
-void BranchExperiment::hook() {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.push_back(this->new_state_scope_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.push_back(this->new_state_node_contexts[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.push_back(this->new_state_obs_indexes[s_index][n_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_defs.push_back(this->new_states[s_index]);
-			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.push_back(n_index);
-		}
-	}
-}
-
-void BranchExperiment::back_activate_helper(vector<int>& scope_context,
-											vector<int>& node_context,
-											map<State*, StateStatus>& temp_state_vals,
-											ScopeHistory* scope_history,
-											RunHelper& run_helper) {
-	int scope_id = scope_history->scope->id;
-
-	scope_context.push_back(scope_id);
-	node_context.push_back(-1);
-
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			ActionNode* action_node = (ActionNode*)action_node_history->node;
-			action_node->experiment_back_activate(scope_context,
-												  node_context,
-												  temp_state_vals,
-												  run_helper,
-												  action_node_history);
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-			node_context.back() = scope_node->id;
-
-			back_activate_helper(scope_context,
-								 node_context,
-								 temp_state_vals,
-								 scope_node_history->inner_scope_history,
-								 run_helper);
-
-			node_context.back() = -1;
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
-void BranchExperiment::back_activate(vector<ContextLayer>& context,
-									 RunHelper& run_helper) {
-	if (this->new_states.size() > 0) {
-		for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-			context[context.size() - this->scope_context.size()].temp_state_vals
-				.erase(this->new_states[s_index]);
-		}
-
-		vector<int> scope_context;
-		vector<int> node_context;
-		back_activate_helper(scope_context,
-							 node_context,
-							 context[context.size() - this->scope_context.size()].temp_state_vals,
-							 context[context.size() - this->scope_context.size()].scope_history,
-							 run_helper);
-	}
-}
-
-void BranchExperiment::unhook() {
-	for (int s_index = 0; s_index < (int)this->new_states.size(); s_index++) {
-		for (int n_index = 0; n_index < (int)this->new_state_nodes[s_index].size(); n_index++) {
-			this->new_state_nodes[s_index][n_index]->experiment_state_scope_contexts.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_node_contexts.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_obs_indexes.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_defs.clear();
-			this->new_state_nodes[s_index][n_index]->experiment_state_network_indexes.clear();
-		}
-	}
-}
-
 void BranchExperiment::backprop(double target_val,
 								RunHelper& run_helper,
-								BranchExperimentOverallHistory* history) {
-	unhook();
+								AbstractExperimentHistory* history) {
+	BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)history;
 
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								run_helper,
-								history);
+								overall_history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 overall_history);
 		break;
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW_PRE:
+	case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
+		retrain_existing_backprop(target_val,
+								  overall_history);
+		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   overall_history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
@@ -264,6 +180,4 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	#endif /* MDEBUG */
 	}
-
-	delete history;
 }

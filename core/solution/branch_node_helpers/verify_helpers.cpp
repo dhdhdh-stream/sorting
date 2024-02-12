@@ -2,34 +2,27 @@
 
 #include "branch_node.h"
 
-#include <algorithm>
-#include <cmath>
 #include <iostream>
 
-#include "constants.h"
-#include "state_network.h"
-#include "globals.h"
-#include "scope.h"
-#include "scope_node.h"
-#include "solution.h"
-#include "state.h"
+#include "action_node.h"
+#include "network.h"
+#include "solution_helpers.h"
 #include "utilities.h"
 
 using namespace std;
 
-void BranchNode::verify_activate(Problem* problem,
-								 bool& is_branch,
+void BranchNode::verify_activate(AbstractNode*& curr_node,
+								 Problem* problem,
 								 vector<ContextLayer>& context,
-								 RunHelper& run_helper) {
+								 RunHelper& run_helper,
+								 vector<AbstractNodeHistory*>& node_histories) {
 	bool matches_context = true;
-	if (this->branch_scope_context.size() > context.size()) {
+	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
 	} else {
-		for (int c_index = 0; c_index < (int)this->branch_scope_context.size()-1; c_index++) {
-			if (context[context.size()-this->branch_scope_context.size()+c_index].scope	== NULL			// OuterExperiment edge case
-					|| this->branch_scope_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].scope->id
-					|| context[context.size()-this->branch_scope_context.size()+c_index].node == NULL	// explore edge case
-					|| this->branch_node_context[c_index] != context[context.size()-this->branch_scope_context.size()+c_index].node->id) {
+		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+			if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+					|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
 				matches_context = false;
 				break;
 			}
@@ -37,136 +30,113 @@ void BranchNode::verify_activate(Problem* problem,
 	}
 
 	if (matches_context) {
-		if (this->branch_is_pass_through) {
-			is_branch = true;
+		if (this->is_pass_through) {
+			curr_node = this->branch_next_node;
 		} else {
-			double original_score = this->original_score_mod;
-			double branch_score = this->branch_score_mod;
+			BranchNodeHistory* history = new BranchNodeHistory(this);
+			node_histories.push_back(history);
 
-			vector<double> factors;
-
-			for (int s_index = 0; s_index < (int)this->decision_state_is_local.size(); s_index++) {
-				if (this->decision_state_is_local[s_index]) {
-					map<int, StateStatus>::iterator it = context.back().local_state_vals.find(this->decision_state_indexes[s_index]);
-					if (it != context.back().local_state_vals.end()) {
-						StateNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							original_score += this->decision_original_weights[s_index] * normalized;
-							branch_score += this->decision_branch_weights[s_index] * normalized;
-
-							factors.push_back(normalized);
-						} else {
-							original_score += this->decision_original_weights[s_index] * it->second.val;
-							branch_score += this->decision_branch_weights[s_index] * it->second.val;
-
-							if (it->second.val != 0.0) {
-								factors.push_back(it->second.val);
-							}
-						}
+			vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
+			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+				if (this->input_scope_contexts[i_index].size() > 0) {
+					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+						action_node->hook_indexes.push_back(i_index);
+						action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+						action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+					} else {
+						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+						branch_node->hook_indexes.push_back(i_index);
+						branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+						branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
 					}
-				} else {
-					map<int, StateStatus>::iterator it = context.back().input_state_vals.find(this->decision_state_indexes[s_index]);
-					if (it != context.back().input_state_vals.end()) {
-						StateNetwork* last_network = it->second.last_network;
-						if (last_network != NULL) {
-							double normalized = (it->second.val - last_network->ending_mean)
-								/ last_network->ending_standard_deviation;
-							original_score += this->decision_original_weights[s_index] * normalized;
-							branch_score += this->decision_branch_weights[s_index] * normalized;
-
-							factors.push_back(normalized);
-						} else {
-							original_score += this->decision_original_weights[s_index] * it->second.val;
-							branch_score += this->decision_branch_weights[s_index] * it->second.val;
-
-							if (it->second.val != 0.0) {
-								factors.push_back(it->second.val);
-							}
-						}
+				}
+			}
+			vector<Scope*> scope_context;
+			vector<AbstractNode*> node_context;
+			input_vals_helper(scope_context,
+							  node_context,
+							  input_vals,
+							  context[context.size() - this->scope_context.size()].scope_history);
+			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+				if (this->input_scope_contexts[i_index].size() > 0) {
+					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+						action_node->hook_indexes.clear();
+						action_node->hook_scope_contexts.clear();
+						action_node->hook_node_contexts.clear();
+					} else {
+						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+						branch_node->hook_indexes.clear();
+						branch_node->hook_scope_contexts.clear();
+						branch_node->hook_node_contexts.clear();
 					}
 				}
 			}
 
+			double original_score = this->original_average_score;
+			for (int i_index = 0; i_index < (int)this->linear_original_input_indexes.size(); i_index++) {
+				original_score += input_vals[this->linear_original_input_indexes[i_index]] * this->linear_original_weights[i_index];
+			}
+			if (this->original_network != NULL) {
+				vector<vector<double>> original_network_input_vals(this->original_network_input_indexes.size());
+				for (int i_index = 0; i_index < (int)this->original_network_input_indexes.size(); i_index++) {
+					original_network_input_vals[i_index] = vector<double>(this->original_network_input_indexes[i_index].size());
+					for (int v_index = 0; v_index < (int)this->original_network_input_indexes[i_index].size(); v_index++) {
+						original_network_input_vals[i_index][v_index] = input_vals[this->original_network_input_indexes[i_index][v_index]];
+					}
+				}
+				this->original_network->activate(original_network_input_vals);
+				original_score += this->original_network->output->acti_vals[0];
+			}
+
+			double branch_score = this->branch_average_score;
+			for (int i_index = 0; i_index < (int)this->linear_branch_input_indexes.size(); i_index++) {
+				branch_score += input_vals[this->linear_branch_input_indexes[i_index]] * this->linear_branch_weights[i_index];
+			}
+			if (this->branch_network != NULL) {
+				vector<vector<double>> branch_network_input_vals(this->branch_network_input_indexes.size());
+				for (int i_index = 0; i_index < (int)this->branch_network_input_indexes.size(); i_index++) {
+					branch_network_input_vals[i_index] = vector<double>(this->branch_network_input_indexes[i_index].size());
+					for (int v_index = 0; v_index < (int)this->branch_network_input_indexes[i_index].size(); v_index++) {
+						branch_network_input_vals[i_index][v_index] = input_vals[this->branch_network_input_indexes[i_index][v_index]];
+					}
+				}
+				this->branch_network->activate(branch_network_input_vals);
+				branch_score += this->branch_network->output->acti_vals[0];
+			}
+
 			if (this->verify_key == run_helper.verify_key) {
-				// problem->print();
-
-				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-
-				// cout << "context scope" << endl;
-				// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-				// 	cout << c_index << ": " << context[c_index].scope->id << endl;
-				// }
-				// cout << "context node" << endl;
-				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-				// 	cout << c_index << ": " << context[c_index].node->id << endl;
-				// }
-
-				// cout << "input_state_vals" << endl;
-				// for (map<int, StateStatus>::iterator it = context.back().input_state_vals.begin();
-				// 		it != context.back().input_state_vals.end(); it++) {
-				// 	int state_id;
-				// 	if (it->second.last_network != NULL) {
-				// 		state_id = it->second.last_network->parent_state->id;
-				// 	} else {
-				// 		state_id = -1;
-				// 	}
-				// 	cout << it->second.val << " " << state_id << endl;
-				// }
-				// cout << "local_state_vals" << endl;
-				// for (map<int, StateStatus>::iterator it = context.back().local_state_vals.begin();
-				// 		it != context.back().local_state_vals.end(); it++) {
-				// 	cout << it->second.val << endl;
-				// }
-
-				sort(factors.begin(), factors.end());
-				sort(this->verify_factors[0].begin(), this->verify_factors[0].end());
-
 				if (this->verify_original_scores[0] != original_score
-						|| this->verify_branch_scores[0] != branch_score
-						|| this->verify_factors[0] != factors) {
-					cout << "problem index: " << NUM_VERIFY_SAMPLES - solution->verify_problems.size() << endl;
-
+						|| this->verify_branch_scores[0] != branch_score) {
 					cout << "this->verify_original_scores[0]: " << this->verify_original_scores[0] << endl;
 					cout << "original_score: " << original_score << endl;
 
 					cout << "this->verify_branch_scores[0]: " << this->verify_branch_scores[0] << endl;
 					cout << "branch_score: " << branch_score << endl;
 
-					cout << "this->verify_factors[0]" << endl;
-					for (int f_index = 0; f_index < (int)this->verify_factors[0].size(); f_index++) {
-						cout << f_index << ": " << this->verify_factors[0][f_index] << endl;
-					}
-					cout << "factors" << endl;
-					for (int f_index = 0; f_index < (int)factors.size(); f_index++) {
-						cout << f_index << ": " << factors[f_index] << endl;
-					}
-
 					throw invalid_argument("branch node verify fail");
 				}
 
 				this->verify_original_scores.erase(this->verify_original_scores.begin());
 				this->verify_branch_scores.erase(this->verify_branch_scores.begin());
-				this->verify_factors.erase(this->verify_factors.begin());
 			}
 
-			bool decision_is_branch;
 			if (run_helper.curr_run_seed%2 == 0) {
-				decision_is_branch = true;
+				history->is_branch = true;
 			} else {
-				decision_is_branch = false;
+				history->is_branch = false;
 			}
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
-			if (decision_is_branch) {
-				is_branch = true;
+			if (history->is_branch) {
+				curr_node = this->branch_next_node;
 			} else {
-				is_branch = false;
+				curr_node = this->original_next_node;
 			}
 		}
 	} else {
-		is_branch = false;
+		curr_node = this->original_next_node;
 	}
 }
 
