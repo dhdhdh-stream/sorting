@@ -167,4 +167,12 @@ PassThroughExperimentInstanceHistory::~PassThroughExperimentInstanceHistory() {
 PassThroughExperimentOverallHistory::PassThroughExperimentOverallHistory(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->branch_experiment_history = NULL;
+}
+
+PassThroughExperimentOverallHistory::~PassThroughExperimentOverallHistory() {
+	if (this->branch_experiment_history != NULL) {
+		delete this->branch_experiment_history;
+	}
 }

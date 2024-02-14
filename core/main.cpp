@@ -4,9 +4,12 @@
 #include <thread>
 #include <random>
 
+#include "action_node.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "outer_experiment.h"
+#include "pass_through_experiment.h"
+#include "simple.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -29,10 +32,10 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -41,8 +44,9 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
+		Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
@@ -81,9 +85,16 @@ int main(int argc, char* argv[]) {
 
 			if (run_helper.experiment_history == NULL) {
 				if (run_helper.experiments_seen_order.size() == 0) {
+					#if defined(MDEBUG) && MDEBUG
+					/**
+					 * - allow exceeded_limit during debug to help test recursion
+					 */
+					create_experiment(root_history);
+					#else
 					if (!run_helper.exceeded_limit) {
 						create_experiment(root_history);
 					}
+					#endif /* MDEBUG */
 				}
 			}
 
@@ -176,19 +187,23 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
+			#if defined(MDEBUG) && MDEBUG
+			solution->depth_limit = solution->max_depth + 1;
+			#else
 			if (solution->max_depth < 50) {
 				solution->depth_limit = solution->max_depth + 10;
 			} else {
 				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 			}
+			#endif /* MDEBUG */
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 		} else if (is_fail) {

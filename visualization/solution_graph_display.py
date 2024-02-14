@@ -62,15 +62,12 @@ for s_index in range(num_scopes):
 							  branch_next_node_id]
 		else:
 			# node_type == NODE_TYPE_EXIT
-			exit_is_exit = int(file.readline())
-
 			exit_depth = int(file.readline())
 
 			exit_node_parent_id = int(file.readline())
 			exit_node_id = int(file.readline())
 
 			nodes[node_id] = [node_type,
-							  exit_is_exit,
 							  exit_depth,
 							  exit_node_parent_id,
 							  exit_node_id]
@@ -130,10 +127,7 @@ for scope_id in scopes:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'C ' + str(scopes[scope_id][key][1])))
 		else:
 			# scopes[scope_id][key][0] == NODE_TYPE_EXIT
-			if scopes[scope_id][key][1] != 0:
-				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'EXIT'))
-			else:
-				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'E ' + str(scopes[scope_id][key][2]) + ' ' + str(scopes[scope_id][key][4])))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'E ' + str(scopes[scope_id][key][1]) + ' ' + str(scopes[scope_id][key][3])))
 		node_mappings[key] = node_index
 
 	for key in scopes[scope_id]:

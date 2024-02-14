@@ -181,6 +181,7 @@ public:
 	BranchExperimentOverallHistory* branch_experiment_history;
 
 	PassThroughExperimentOverallHistory(PassThroughExperiment* experiment);
+	~PassThroughExperimentOverallHistory();
 };
 
 #endif /* PASS_THROUGH_EXPERIMENT_H */

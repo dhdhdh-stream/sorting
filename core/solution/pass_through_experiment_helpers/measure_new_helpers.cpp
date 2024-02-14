@@ -1,8 +1,10 @@
 #include "pass_through_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
+#include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope_node.h"
@@ -87,9 +89,11 @@ void PassThroughExperiment::measure_new_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (rand()%2 == 0) {
+		} else if (this->best_step_types.size() > 0
+				&& rand()%2 == 0) {
 		#else
-		} else if (new_average_score >= this->existing_average_score) {
+		} else if (this->best_step_types.size() > 0
+				&& new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 

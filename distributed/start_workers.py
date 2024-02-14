@@ -68,4 +68,4 @@ while True:
 			print(workers[w_index][0])
 			print(channels[w_index].recv(1024))
 
-	time.sleep(10)
+	time.sleep(15)

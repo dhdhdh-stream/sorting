@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -89,9 +90,11 @@ void PassThroughExperiment::verify_new_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (rand()%2 == 0) {
+		} else if (this->best_step_types.size() > 0
+				&& rand()%2 == 0) {
 		#else
-		} else if (new_average_score >= this->existing_average_score) {
+		} else if (this->best_step_types.size() > 0
+				&& new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 
@@ -124,14 +127,14 @@ void PassThroughExperiment::verify_new_backprop(
 			cout << "PassThrough" << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
+				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
 			}
 			cout << "this->node_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
 				if (this->node_context[c_index] == NULL) {
 					cout << c_index << ": -1" << endl;
 				} else {
-					cout << c_index << ": " << this->node_context[c_index] << endl;
+					cout << c_index << ": " << this->node_context[c_index]->id << endl;
 				}
 			}
 			cout << "new explore path:";
@@ -159,9 +162,11 @@ void PassThroughExperiment::verify_new_backprop(
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (rand()%2 == 0) {
+		} else if (this->best_step_types.size() > 0
+				&& rand()%2 == 0) {
 		#else
-		} else if (new_average_score >= this->existing_average_score) {
+		} else if (this->best_step_types.size() > 0
+				&& new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

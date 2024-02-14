@@ -1,5 +1,7 @@
 #include "outer_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -25,17 +27,6 @@ const int NUM_SAMPLES_PER_ITER = 50;
 
 void OuterExperiment::explore_initial_activate(Problem* problem,
 											   RunHelper& run_helper) {
-	vector<ContextLayer> context;
-	context.push_back(ContextLayer());
-
-	context.back().scope = NULL;
-	context.back().node = NULL;
-
-	// unused
-	AbstractNode* curr_node = NULL;
-	int exit_depth = -1;
-	AbstractNode* exit_node = NULL;
-
 	uniform_int_distribution<int> uniform_distribution(0, 2);
 	geometric_distribution<int> geometric_distribution(0.5);
 	int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
@@ -53,22 +44,17 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 			this->curr_existing_scopes.push_back(new_scope_node);
 
 			this->curr_potential_scopes.push_back(NULL);
-
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-			new_scope_node->potential_activate(problem,
-											   context,
-											   run_helper,
-											   scope_node_history);
-			delete scope_node_history;
 		} else {
 			ScopeNode* new_scope_node = NULL;
 			if (new_scope_distribution(generator) == 0) {
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope);
+					new_scope_node = create_scope(scope,
+												  run_helper);
 				} else {
-					new_scope_node = create_scope(solution->root);
+					new_scope_node = create_scope(solution->root,
+												  run_helper);
 				}
 			}
 			if (new_scope_node != NULL) {
@@ -77,13 +63,6 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 				this->curr_existing_scopes.push_back(NULL);
 
 				this->curr_potential_scopes.push_back(new_scope_node);
-
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-				new_scope_node->potential_activate(problem,
-												   context,
-												   run_helper,
-												   scope_node_history);
-				delete scope_node_history;
 			} else {
 				ScopeNode* new_existing_scope_node = reuse_existing(problem);
 				if (new_existing_scope_node != NULL) {
@@ -93,13 +72,6 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 					this->curr_existing_scopes.push_back(new_existing_scope_node);
 
 					this->curr_potential_scopes.push_back(NULL);
-
-					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_existing_scope_node);
-					new_existing_scope_node->potential_activate(problem,
-																context,
-																run_helper,
-																scope_node_history);
-					delete scope_node_history;
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
@@ -109,18 +81,50 @@ void OuterExperiment::explore_initial_activate(Problem* problem,
 
 					this->curr_existing_scopes.push_back(NULL);
 					this->curr_potential_scopes.push_back(NULL);
-
-					ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-					new_action_node->activate(curr_node,
-											  problem,
-											  context,
-											  exit_depth,
-											  exit_node,
-											  run_helper,
-											  action_node_history);
-					delete action_node_history;
 				}
 			}
+		}
+	}
+
+	vector<ContextLayer> context;
+	context.push_back(ContextLayer());
+
+	context.back().scope = NULL;
+	context.back().node = NULL;
+
+	// unused
+	AbstractNode* curr_node = NULL;
+	int exit_depth = -1;
+	AbstractNode* exit_node = NULL;
+
+	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
+			this->curr_actions[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				action_node_history);
+			delete action_node_history;
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_existing_scopes[s_index]);
+			this->curr_existing_scopes[s_index]->potential_activate(
+				problem,
+				context,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
+		} else {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			this->curr_potential_scopes[s_index]->potential_activate(
+				problem,
+				context,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
 		}
 	}
 }

@@ -93,11 +93,13 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
 
-			ActionNode* new_action_node = new ActionNode();
+			if (original_action_node->action.move != ACTION_NOOP) {
+				ActionNode* new_action_node = new ActionNode();
 
-			new_action_node->action = original_action_node->action;
+				new_action_node->action = original_action_node->action;
 
-			new_nodes.push_back(new_action_node);
+				new_nodes.push_back(new_action_node);
+			}
 		} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
 			ScopeNode* original_scope_node = (ScopeNode*)possible_node_contexts[n_index].back();
 

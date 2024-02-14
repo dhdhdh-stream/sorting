@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
 #include "sorting.h"
 
@@ -30,11 +31,11 @@ int main(int argc, char* argv[]) {
 	double sum_vals = 0.0;
 
 	for (int i_index = 0; i_index < 2000; i_index++) {
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
+		Problem* problem = new Simple();
 
 		RunHelper run_helper;
-		run_helper.experiment_history = (AbstractExperimentHistory*)-1;
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());

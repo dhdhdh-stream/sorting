@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -204,16 +205,16 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.645 && this->new_is_better) {	// >95%
+		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			cout << "PassThrough experiment success" << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
+				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
 			}
 			cout << "this->node_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index] << endl;
+				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -233,6 +234,10 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			} else {
 				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
 			}
+
+			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			cout << "new_average_score: " << new_average_score << endl;
+			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {

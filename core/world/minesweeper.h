@@ -38,6 +38,7 @@ public:
 	int current_x;
 	int current_y;
 
+	int actions_performed;
 	bool ended;
 
 	Minesweeper();

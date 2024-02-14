@@ -1,9 +1,13 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
+#include "globals.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -12,6 +16,8 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 								 vector<AbstractNode*>& node_context,
 								 int& exit_depth,
 								 AbstractNode*& exit_node,
+								 int& random_curr_depth,
+								 bool& random_exceeded_limit,
 								 vector<vector<Scope*>>& possible_scope_contexts,
 								 vector<vector<AbstractNode*>>& possible_node_contexts) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
@@ -35,6 +41,8 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 							  node_context,
 							  inner_exit_depth,
 							  inner_exit_node,
+							  random_curr_depth,
+							  random_exceeded_limit,
 							  possible_scope_contexts,
 							  possible_node_contexts);
 
@@ -80,11 +88,20 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 							vector<AbstractNode*>& node_context,
 							int& exit_depth,
 							AbstractNode*& exit_node,
+							int& random_curr_depth,
+							bool& random_exceeded_limit,
 							vector<vector<Scope*>>& possible_scope_contexts,
 							vector<vector<AbstractNode*>>& possible_node_contexts) {
+	if (random_curr_depth > solution->depth_limit) {
+		random_exceeded_limit = true;
+		return;
+	}
+	random_curr_depth++;
+
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
-		if (exit_depth != -1
+		if (random_exceeded_limit
+				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
 		}
@@ -94,6 +111,8 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 									node_context,
 									exit_depth,
 									exit_node,
+									random_curr_depth,
+									random_exceeded_limit,
 									possible_scope_contexts,
 									possible_node_contexts);
 	}
@@ -102,6 +121,8 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 		possible_scope_contexts.push_back(scope_context);
 		possible_node_contexts.push_back(node_context);
 	}
+
+	random_curr_depth--;
 }
 
 void node_random_exit_activate_helper(AbstractNode*& curr_node,

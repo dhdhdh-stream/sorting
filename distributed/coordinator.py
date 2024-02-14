@@ -76,7 +76,7 @@ while True:
 			client.close()
 
 		# extra sleep to give workers time to update to help avoid a race condition
-		time.sleep(40)
+		time.sleep(20)
 
 	time.sleep(20)
 

@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -374,21 +375,9 @@ void BranchExperiment::retrain_existing_backprop(
 							misguess_variance);
 
 			double improvement = this->new_average_misguess - average_misguess;
-			double standard_deviation = (sqrt(this->new_misguess_variance) + sqrt(misguess_variance)) / 2.0;
+			double standard_deviation = min(sqrt(this->new_misguess_variance), sqrt(misguess_variance));
 			double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 			if (t_score > 2.326) {
-				optimize_network(network_inputs,
-								 network_target_vals,
-								 test_network);
-
-				double final_average_misguess;
-				double final_misguess_variance;
-				measure_network(network_inputs,
-								network_target_vals,
-								test_network,
-								final_average_misguess,
-								final_misguess_variance);
-
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 					int index = -1;
@@ -417,8 +406,8 @@ void BranchExperiment::retrain_existing_backprop(
 				}
 				this->existing_network = test_network;
 
-				this->existing_average_misguess = final_average_misguess;
-				this->existing_misguess_variance = final_misguess_variance;
+				this->existing_average_misguess = average_misguess;
+				this->existing_misguess_variance = misguess_variance;
 			} else {
 				delete test_network;
 			}

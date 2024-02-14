@@ -47,7 +47,7 @@ void PassThroughExperiment::finalize() {
 
 		int start_node_id;
 		AbstractNode* start_node;
-		if (this->best_exit_depth > 0) {
+		if (this->scope_context.size() > 0) {
 			BranchNode* new_branch_node = new BranchNode();
 			new_branch_node->parent = containing_scope;
 			new_branch_node->id = containing_scope->node_counter;

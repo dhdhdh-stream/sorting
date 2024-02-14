@@ -1,12 +1,15 @@
 #include "branch_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "problem.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -156,37 +159,6 @@ void BranchExperiment::measure_backprop(double target_val,
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
 
-		// cout << "Branch" << endl;
-		// cout << "measure" << endl;
-		// cout << "this->scope_context:" << endl;
-		// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		// 	cout << c_index << ": " << this->scope_context[c_index] << endl;
-		// }
-		// cout << "this->node_context:" << endl;
-		// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-		// 	if (this->node_context[c_index] == NULL) {
-		// 		cout << c_index << ": -1" << endl;
-		// 	} else {
-		// 		cout << c_index << ": " << this->node_context[c_index] << endl;
-		// 	}
-		// }
-		// cout << "new explore path:";
-		// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-		// 		cout << " " << this->best_actions[s_index]->action.move;
-		// 	} else {
-		// 		cout << " S";
-		// 	}
-		// }
-		// cout << endl;
-
-		// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-		// if (this->best_exit_node == NULL) {
-		// 	cout << "this->best_exit_node_id: " << -1 << endl;
-		// } else {
-		// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
-		// }
-
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
@@ -195,16 +167,7 @@ void BranchExperiment::measure_backprop(double target_val,
 		double combined_improvement_t_score = combined_improvement
 			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		// cout << "this->combined_score: " << this->combined_score << endl;
-		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
-		// cout << "score_standard_deviation: " << score_standard_deviation << endl;
-		// cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
-
-		// cout << "branch_weight: " << branch_weight << endl;
-
-		// cout << endl;
 
 		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
@@ -220,6 +183,46 @@ void BranchExperiment::measure_backprop(double target_val,
 					this->state_iter = 0;
 				}
 				#else
+				cout << "Branch" << endl;
+				cout << "measure" << endl;
+				cout << "this->scope_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					cout << c_index << ": " << this->scope_context[c_index]->id << endl;
+				}
+				cout << "this->node_context:" << endl;
+				for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+					if (this->node_context[c_index] == NULL) {
+						cout << c_index << ": -1" << endl;
+					} else {
+						cout << c_index << ": " << this->node_context[c_index]->id << endl;
+					}
+				}
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index]->action.move;
+					} else {
+						cout << " S";
+					}
+				}
+				cout << endl;
+
+				cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				if (this->best_exit_node == NULL) {
+					cout << "this->best_exit_node_id: " << -1 << endl;
+				} else {
+					cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				}
+
+				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "score_standard_deviation: " << score_standard_deviation << endl;
+				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+
+				cout << "branch_weight: " << branch_weight << endl;
+
+				cout << endl;
+
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {

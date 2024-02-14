@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -96,13 +98,13 @@ void create_experiment(ScopeHistory* root_history) {
 		if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_ACTION) {
 			uniform_int_distribution<int> next_distribution(0, 1);
 			int context_size = 1;
-			while (true) {
-				if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
-					context_size++;
-				} else {
-					break;
-				}
-			}
+			// while (true) {
+			// 	if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+			// 		context_size++;
+			// 	} else {
+			// 		break;
+			// 	}
+			// }
 			/**
 			 * - minimize context to generalize/maximize impact
 			 */
@@ -126,13 +128,13 @@ void create_experiment(ScopeHistory* root_history) {
 		} else if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_SCOPE) {
 			uniform_int_distribution<int> next_distribution(0, 1);
 			int context_size = 1;
-			while (true) {
-				if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
-					context_size++;
-				} else {
-					break;
-				}
-			}
+			// while (true) {
+			// 	if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+			// 		context_size++;
+			// 	} else {
+			// 		break;
+			// 	}
+			// }
 
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (pass_through_distribution(generator) == 0) {
@@ -159,13 +161,13 @@ void create_experiment(ScopeHistory* root_history) {
 			} else {
 				uniform_int_distribution<int> next_distribution(0, 1);
 				int context_size = 1;
-				while (true) {
-					if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
-						context_size++;
-					} else {
-						break;
-					}
-				}
+				// while (true) {
+				// 	if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+				// 		context_size++;
+				// 	} else {
+				// 		break;
+				// 	}
+				// }
 
 				uniform_int_distribution<int> pass_through_distribution(0, 1);
 				uniform_int_distribution<int> is_branch_distribution(0, 1);

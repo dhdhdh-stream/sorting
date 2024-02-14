@@ -1,5 +1,7 @@
 #include "outer_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"

@@ -49,6 +49,8 @@ public:
 						 std::vector<AbstractNode*>& node_context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
+						 int& random_curr_depth,
+						 bool& random_exceeded_limit,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 	void random_exit_activate(AbstractNode* starting_node,

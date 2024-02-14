@@ -1,5 +1,6 @@
 #include "scenario_experiment.h"
 
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "action_node.h"
@@ -16,9 +17,13 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int LEARN_NUM_DATAPOINTS = 10;
+const int LEARN_ITERS = 4;
+#else
 const int LEARN_NUM_DATAPOINTS = 1000;
-
 const int LEARN_ITERS = 40;
+#endif /* MDEBUG */
 
 ScenarioExperiment::ScenarioExperiment(Scenario* scenario_type) {
 	this->scenario_type = scenario_type;
@@ -283,6 +288,9 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 			}
 			this->misguess_variance = sum_misguess_variances / LEARN_NUM_DATAPOINTS;
 
+			cout << "this->average_misguess: " << this->average_misguess << endl;
+			cout << "this->misguess_variance: " << this->misguess_variance << endl;
+
 			for (int d_index = 0; d_index < (int)this->scope_histories.size(); d_index++) {
 				delete this->scope_histories[d_index];
 			}
@@ -439,21 +447,14 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 							average_misguess,
 							misguess_variance);
 
-			double improvement = this->average_misguess - average_misguess;
-			double standard_deviation = (sqrt(this->misguess_variance) + sqrt(misguess_variance)) / 2.0;
-			double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
-			if (t_score > 2.326) {
-				optimize_network(network_inputs,
-								 network_target_vals,
-								 test_network);
+			cout << "average_misguess: " << average_misguess << endl;
+			cout << "misguess_variance: " << misguess_variance << endl;
 
-				double final_average_misguess;
-				double final_misguess_variance;
-				measure_network(network_inputs,
-								network_target_vals,
-								test_network,
-								final_average_misguess,
-								final_misguess_variance);
+			double improvement = this->average_misguess - average_misguess;
+			double standard_deviation = min(sqrt(this->misguess_variance), sqrt(misguess_variance));
+			double t_score = improvement / (standard_deviation / sqrt(LEARN_NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
+			if (t_score > 2.326) {
+				cout << "updated" << endl;
 
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
@@ -483,8 +484,8 @@ void ScenarioExperiment::backprop(bool is_sequence) {
 				}
 				this->network = test_network;
 
-				this->average_misguess = final_average_misguess;
-				this->misguess_variance = final_misguess_variance;
+				this->average_misguess = average_misguess;
+				this->misguess_variance = misguess_variance;
 			} else {
 				delete test_network;
 			}

@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -197,9 +199,11 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope);
+					new_scope_node = create_scope(scope,
+												  run_helper);
 				} else {
-					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope);
+					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
+												  run_helper);
 				}
 			}
 			if (new_scope_node != NULL) {
@@ -320,6 +324,58 @@ void BranchExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
+				// cout << "this->best_surprise: " << this->best_surprise << endl;
+
+				// cout << "this->scope_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->scope_context[c_index]->id << endl;
+				// }
+				// cout << "this->node_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->node_context[c_index]->id << endl;
+				// }
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_actions[s_index]->action.move;
+				// 	} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+				// 		cout << " E" << this->best_existing_scopes[s_index]->scope->id;
+				// 	} else {
+				// 		cout << " P";
+				// 	}
+				// }
+				// cout << endl;
+
+				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				// if (this->best_exit_node == NULL) {
+				// 	cout << "this->best_exit_node_id: " << -1 << endl;
+				// } else {
+				// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				// }
+				// cout << endl;
+
+				// if (this->parent_pass_through_experiment != NULL) {
+				// 	cout << "this->parent_pass_through_experiment->scope_context:" << endl;
+				// 	for (int c_index = 0; c_index < (int)this->parent_pass_through_experiment->scope_context.size(); c_index++) {
+				// 		cout << c_index << ": " << this->parent_pass_through_experiment->scope_context[c_index]->id << endl;
+				// 	}
+				// 	cout << "this->parent_pass_through_experiment->node_context:" << endl;
+				// 	for (int c_index = 0; c_index < (int)this->parent_pass_through_experiment->node_context.size(); c_index++) {
+				// 		cout << c_index << ": " << this->parent_pass_through_experiment->node_context[c_index]->id << endl;
+				// 	}
+				// 	cout << "this->parent_pass_through_experiment->branch_experiment_step_index: " << this->parent_pass_through_experiment->branch_experiment_step_index << endl;
+				// 	for (int a_index = 0; a_index < (int)this->parent_pass_through_experiment->best_step_types.size(); a_index++) {
+				// 		if (this->parent_pass_through_experiment->best_step_types[a_index] == STEP_TYPE_ACTION) {
+				// 			cout << "this->parent_pass_through_experiment->best_actions[a_index]->id: " << this->parent_pass_through_experiment->best_actions[a_index]->id << endl;
+				// 		} else if (this->parent_pass_through_experiment->best_step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
+				// 			cout << "this->parent_pass_through_experiment->best_existing_scopes[a_index]->id: " << this->parent_pass_through_experiment->best_existing_scopes[a_index]->id << endl;
+				// 			cout << "this->parent_pass_through_experiment->best_existing_scopes[a_index]->scope->id: " << this->parent_pass_through_experiment->best_existing_scopes[a_index]->scope->id << endl;
+				// 		} else {
+				// 			cout << "this->parent_pass_through_experiment->best_potential_scopes[a_index]->id: " << this->parent_pass_through_experiment->best_potential_scopes[a_index]->id << endl;
+				// 		}
+				// 	}
+				// }
+
 				Scope* containing_scope = this->scope_context.back();
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

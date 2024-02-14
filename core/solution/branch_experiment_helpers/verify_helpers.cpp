@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -200,11 +201,11 @@ void BranchExperiment::verify_backprop(double target_val,
 			cout << "verify" << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index] << endl;
+				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
 			}
 			cout << "this->node_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index] << endl;
+				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

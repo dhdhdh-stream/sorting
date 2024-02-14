@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
 #include "sorting.h"
 
@@ -28,8 +29,9 @@ int main(int argc, char* argv[]) {
 	solution->load("", "main");
 
 	{
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
+		Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
@@ -64,6 +66,8 @@ int main(int argc, char* argv[]) {
 		cout << "target_val: " << target_val << endl;
 
 		problem->print();
+
+		cout << "solution->root->id: " << solution->root->id << endl;
 
 		delete problem;
 	}

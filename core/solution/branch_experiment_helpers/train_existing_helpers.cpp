@@ -1,5 +1,6 @@
 #include "branch_experiment.h"
 
+#include <iostream>
 #include <Eigen/Dense>
 
 #include "action_node.h"
@@ -62,6 +63,15 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
 
 		int num_instances = (int)this->i_target_val_histories.size();
+
+		/**
+		 * - parent_pass_through_experiment exceeded_limit edge case
+		 *   - 1 for train, 1 for test
+		 */
+		if (num_instances < 2) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			return;
+		}
 
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
@@ -263,21 +273,9 @@ void BranchExperiment::train_existing_backprop(double target_val,
 						misguess_variance);
 
 		double improvement = this->existing_average_misguess - average_misguess;
-		double standard_deviation = (sqrt(this->existing_misguess_variance) + sqrt(misguess_variance)) / 2.0;
+		double standard_deviation = min(sqrt(this->existing_misguess_variance), sqrt(misguess_variance));
 		double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 		if (t_score > 2.326) {
-			optimize_network(network_inputs,
-							 network_target_vals,
-							 test_network);
-
-			double final_average_misguess;
-			double final_misguess_variance;
-			measure_network(network_inputs,
-							network_target_vals,
-							test_network,
-							final_average_misguess,
-							final_misguess_variance);
-
 			vector<int> new_input_indexes;
 			for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 				int index = -1;
@@ -305,8 +303,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			}
 			this->existing_network = test_network;
 
-			this->existing_average_misguess = final_average_misguess;
-			this->existing_misguess_variance = final_misguess_variance;
+			this->existing_average_misguess = average_misguess;
+			this->existing_misguess_variance = misguess_variance;
 		} else {
 			delete test_network;
 		}

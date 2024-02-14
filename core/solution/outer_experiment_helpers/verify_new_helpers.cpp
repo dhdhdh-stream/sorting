@@ -24,10 +24,10 @@ void OuterExperiment::verify_new_activate(Problem* problem,
 	int exit_depth = -1;
 	AbstractNode* exit_node = NULL;
 
-	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
-			this->curr_actions[s_index]->activate(
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
+			this->best_actions[s_index]->activate(
 				curr_node,
 				problem,
 				context,
@@ -36,17 +36,17 @@ void OuterExperiment::verify_new_activate(Problem* problem,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else if (this->curr_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_existing_scopes[s_index]);
-			this->curr_existing_scopes[s_index]->potential_activate(
+		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
+			this->best_existing_scopes[s_index]->potential_activate(
 				problem,
 				context,
 				run_helper,
 				scope_node_history);
 			delete scope_node_history;
 		} else {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_potential_scopes[s_index]);
-			this->curr_potential_scopes[s_index]->potential_activate(
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
+			this->best_potential_scopes[s_index]->potential_activate(
 				problem,
 				context,
 				run_helper,

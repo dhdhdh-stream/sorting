@@ -2,6 +2,8 @@
 
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"

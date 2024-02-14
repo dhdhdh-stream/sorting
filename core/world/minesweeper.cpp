@@ -119,6 +119,7 @@ Minesweeper::Minesweeper() {
 	this->current_x = WORLD_SIZES[this->world_size][STARTING_X];
 	this->current_y = WORLD_SIZES[this->world_size][STARTING_Y];
 
+	this->actions_performed = 0;
 	this->ended = false;
 }
 
@@ -163,24 +164,26 @@ void Minesweeper::reveal_helper(int x, int y) {
 		if (this->world[x][y] == -1) {
 			this->ended = true;
 		}
-		// if (this->world[x][y] == -1) {
-		// 	this->ended = true;
-		// } else {
-		// 	if (this->world[x][y] == 0) {
-		// 		reveal_helper(x-1, y-1);
-		// 		reveal_helper(x-1, y);
-		// 		reveal_helper(x-1, y+1);
-		// 		reveal_helper(x, y+1);
-		// 		reveal_helper(x+1, y+1);
-		// 		reveal_helper(x+1, y);
-		// 		reveal_helper(x+1, y-1);
-		// 		reveal_helper(x, y-1);
-		// 	}
-		// }
+		if (this->world[x][y] == -1) {
+			this->ended = true;
+		} else {
+			if (this->world[x][y] == 0) {
+				reveal_helper(x-1, y-1);
+				reveal_helper(x-1, y);
+				reveal_helper(x-1, y+1);
+				reveal_helper(x, y+1);
+				reveal_helper(x+1, y+1);
+				reveal_helper(x+1, y);
+				reveal_helper(x+1, y-1);
+				reveal_helper(x, y-1);
+			}
+		}
 	}
 }
 
 void Minesweeper::perform_action(Action action) {
+	this->actions_performed++;
+
 	if (this->ended) {
 		return;
 	}
@@ -225,14 +228,20 @@ double Minesweeper::score_result() {
 					num_correct++;
 				}
 			} else {
-				if (this->revealed[x_index][y_index]) {
+				if (this->flagged[x_index][y_index]) {
+					num_correct--;
+				} else if (this->revealed[x_index][y_index]) {
 					num_correct++;
 				}
 			}
 		}
 	}
 
-	return num_correct / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
+	double score = (num_correct - 0.001*this->actions_performed) / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
+	if (score < 0.0) {
+		score = 0.0;
+	}
+	return score;
 }
 
 Problem* Minesweeper::copy_and_reset() {

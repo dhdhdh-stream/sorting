@@ -149,11 +149,6 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 									run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
-				{
-					PassThroughExperimentOverallHistory* overall_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-					overall_history->branch_experiment_history = new BranchExperimentOverallHistory(this->branch_experiment);
-				}
-
 				experiment_activate(curr_node,
 									problem,
 									context,

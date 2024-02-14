@@ -517,21 +517,9 @@ void RetrainBranchExperiment::train_branch_backprop(
 								misguess_variance);
 
 				double improvement = this->original_average_misguess - average_misguess;
-				double standard_deviation = (sqrt(this->original_misguess_variance) + sqrt(misguess_variance)) / 2.0;
+				double standard_deviation = min(sqrt(this->original_misguess_variance), sqrt(misguess_variance));
 				double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 				if (t_score > 2.326) {
-					optimize_network(network_inputs,
-									 network_target_vals,
-									 test_network);
-
-					double final_average_misguess;
-					double final_misguess_variance;
-					measure_network(network_inputs,
-									network_target_vals,
-									test_network,
-									final_average_misguess,
-									final_misguess_variance);
-
 					vector<int> new_input_indexes;
 					for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 						int index = -1;
@@ -558,8 +546,8 @@ void RetrainBranchExperiment::train_branch_backprop(
 					delete this->branch_network;
 					this->branch_network = test_network;
 
-					this->branch_average_misguess = final_average_misguess;
-					this->branch_misguess_variance = final_misguess_variance;
+					this->branch_average_misguess = average_misguess;
+					this->branch_misguess_variance = misguess_variance;
 				} else {
 					delete test_network;
 				}

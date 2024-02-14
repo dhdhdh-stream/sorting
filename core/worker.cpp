@@ -14,6 +14,7 @@
 #include "minesweeper.h"
 #include "outer_experiment.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
@@ -50,10 +51,11 @@ int main(int argc, char* argv[]) {
 
 	int num_fails = 0;
 
-	int iter_index = 0;
+	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		Problem* problem = new Sorting();
+		// Problem* problem = new Sorting();
 		// Problem* problem = new Minesweeper();
+		Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
@@ -184,8 +186,11 @@ int main(int argc, char* argv[]) {
 				solution->curr_num_datapoints *= 2;
 			}
 		} else {
-			iter_index++;
-			if (iter_index%10000 == 0) {
+			auto curr_time = chrono::high_resolution_clock::now();
+			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+			if (time_diff.count() >= 10) {
+				cout << "alive" << endl;
+
 				ifstream solution_save_file;
 				solution_save_file.open(path + "saves/main.txt");
 				string timestamp_line;
@@ -203,6 +208,8 @@ int main(int argc, char* argv[]) {
 
 					num_fails = 0;
 				}
+
+				start_time = curr_time;
 			}
 		}
 	}

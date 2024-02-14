@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "context_layer.h"
+#include "run_helper.h"
 
 class AbstractNode;
 class Problem;
@@ -15,7 +16,8 @@ class ScopeNode;
 void create_experiment(ScopeHistory* root_history);
 
 ScopeNode* reuse_existing(Problem* problem);
-ScopeNode* create_scope(Scope* parent_scope);
+ScopeNode* create_scope(Scope* parent_scope,
+						RunHelper& run_helper);
 ScopeNode* create_repeat(std::vector<ContextLayer>& context,
 						 int explore_context_depth);
 

@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 
@@ -9,6 +11,8 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 								vector<AbstractNode*>& node_context,
 								int& inner_exit_depth,
 								AbstractNode*& inner_exit_node,
+								int& random_curr_depth,
+								bool& random_exceeded_limit,
 								vector<vector<Scope*>>& possible_scope_contexts,
 								vector<vector<AbstractNode*>>& possible_node_contexts) {
 	node_context.back() = this;
@@ -25,6 +29,8 @@ void ScopeNode::random_activate(vector<Scope*>& scope_context,
 									 node_context,
 									 inner_exit_depth,
 									 inner_exit_node,
+									 random_curr_depth,
+									 random_exceeded_limit,
 									 possible_scope_contexts,
 									 possible_node_contexts);
 

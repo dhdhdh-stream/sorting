@@ -476,7 +476,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 	}
 }
 
-ScopeNode* create_scope(Scope* parent_scope) {
+ScopeNode* create_scope(Scope* parent_scope,
+						RunHelper& run_helper) {
 	// determine start and end
 	vector<vector<Scope*>> possible_scope_contexts;
 	vector<vector<AbstractNode*>> possible_node_contexts;
@@ -488,12 +489,21 @@ ScopeNode* create_scope(Scope* parent_scope) {
 	int exit_depth = -1;
 	AbstractNode* exit_node = NULL;
 
+	int random_curr_depth = run_helper.curr_depth;
+	bool random_exceeded_limit = false;
+
 	parent_scope->random_activate(scope_context,
 								  node_context,
 								  exit_depth,
 								  exit_node,
+								  random_curr_depth,
+								  random_exceeded_limit,
 								  possible_scope_contexts,
 								  possible_node_contexts);
+
+	if (random_exceeded_limit) {
+		return NULL;
+	}
 
 	bool has_meaningful_actions = false;
 	for (int n_index = 0; n_index < (int)possible_scope_contexts.size()-1; n_index++) {
@@ -732,8 +742,12 @@ ScopeNode* create_scope(Scope* parent_scope) {
 						map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it =
 							start_node_mappings[context_starting_depth + matching_depth]
 								.find(original_branch_node->input_node_contexts[i_index][matching_depth]);
+							/**
+							 * - match type as BranchNode might have been removed
+							 */
 						if (it == start_node_mappings[context_starting_depth + matching_depth].end()
-								|| !it->second.first) {
+								|| !it->second.first
+								|| it->first->type != it->second.second->type) {
 							new_branch_node->input_scope_context_ids.push_back(vector<int>());
 							new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 							new_branch_node->input_node_context_ids.push_back(vector<int>());
@@ -852,7 +866,8 @@ ScopeNode* create_scope(Scope* parent_scope) {
 								end_node_mappings[context_starting_depth + end_matching_depth]
 									.find(original_branch_node->input_node_contexts[i_index][end_matching_depth]);
 							if (it == end_node_mappings[context_starting_depth + end_matching_depth].end()
-									|| !it->second.first) {
+									|| !it->second.first
+									|| it->first->type != it->second.second->type) {
 								new_branch_node->input_scope_context_ids.push_back(vector<int>());
 								new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 								new_branch_node->input_node_context_ids.push_back(vector<int>());
@@ -883,6 +898,16 @@ ScopeNode* create_scope(Scope* parent_scope) {
 								new_input_node_contexts.insert(new_input_node_contexts.end(),
 									original_branch_node->input_node_contexts[i_index].begin() + end_matching_depth+1,
 									original_branch_node->input_node_contexts[i_index].end());
+
+								// temp
+								if (new_input_node_contexts.back()->type == NODE_TYPE_SCOPE) {
+									for (int c_index = 0; c_index < (int)original_branch_node->input_scope_contexts[i_index].size(); c_index++) {
+										cout << c_index << endl;
+										cout << "original_branch_node->input_scope_context_ids[i_index][c_index]: " << original_branch_node->input_scope_context_ids[i_index][c_index] << endl;
+										cout << "original_branch_node->input_node_context_ids[i_index][c_index]: " << original_branch_node->input_node_context_ids[i_index][c_index] << endl;
+									}
+									throw invalid_argument("new_input_node_contexts.back()->type == NODE_TYPE_SCOPE");
+								}
 
 								new_branch_node->input_scope_context_ids.push_back(new_input_scope_context_ids);
 								new_branch_node->input_scope_contexts.push_back(new_input_scope_contexts);

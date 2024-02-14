@@ -55,15 +55,6 @@ void Simple::perform_action(Action action) {
 		} else if (this->current_pointer == (int)this->current_world.size()) {
 			this->current_world[this->current_pointer-1] += -1.0;
 		}
-	} else if (action.move == SIMPLE_ACTION_SWAP) {
-		if (this->current_pointer == 0) {
-			this->current_world[this->current_pointer] += -1.0;
-		} else if (this->current_pointer > 0 && this->current_pointer < (int)this->current_world.size()) {
-			this->current_world[this->current_pointer] += -1.0;
-			this->current_world[this->current_pointer-1] += 1.0;
-		} else if (this->current_pointer == (int)this->current_world.size()) {
-			this->current_world[this->current_pointer-1] += 1.0;
-		}
 	}
 }
 

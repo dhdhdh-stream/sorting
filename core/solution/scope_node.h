@@ -38,6 +38,8 @@ public:
 						 std::vector<AbstractNode*>& node_context,
 						 int& inner_exit_depth,
 						 AbstractNode*& inner_exit_node,
+						 int& random_curr_depth,
+						 bool& random_exceeded_limit,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 
