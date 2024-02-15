@@ -1,6 +1,7 @@
 /**
  * TODO:
  * - look for RetrainBranchExperiments using new path
+ *   - or allow child BranchExperiments to be disconnected
  */
 
 #ifndef PASS_THROUGH_EXPERIMENT_H

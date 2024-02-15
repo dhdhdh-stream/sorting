@@ -163,9 +163,6 @@ void Minesweeper::reveal_helper(int x, int y) {
 
 		if (this->world[x][y] == -1) {
 			this->ended = true;
-		}
-		if (this->world[x][y] == -1) {
-			this->ended = true;
 		} else {
 			if (this->world[x][y] == 0) {
 				reveal_helper(x-1, y-1);
@@ -221,6 +218,7 @@ void Minesweeper::perform_action(Action action) {
 
 double Minesweeper::score_result() {
 	int num_correct = 0;
+	bool has_incorrect_flag = false;
 	for (int x_index = 0; x_index < WORLD_SIZES[this->world_size][WIDTH]; x_index++) {
 		for (int y_index = 0; y_index < WORLD_SIZES[this->world_size][HEIGHT]; y_index++) {
 			if (this->world[x_index][y_index] == -1) {
@@ -229,7 +227,7 @@ double Minesweeper::score_result() {
 				}
 			} else {
 				if (this->flagged[x_index][y_index]) {
-					num_correct--;
+					has_incorrect_flag = true;
 				} else if (this->revealed[x_index][y_index]) {
 					num_correct++;
 				}
@@ -238,6 +236,9 @@ double Minesweeper::score_result() {
 	}
 
 	double score = (num_correct - 0.001*this->actions_performed) / (WORLD_SIZES[this->world_size][WIDTH]*WORLD_SIZES[this->world_size][HEIGHT]);
+	if (this->ended || has_incorrect_flag) {
+		score /= 2.0;
+	}
 	if (score < 0.0) {
 		score = 0.0;
 	}

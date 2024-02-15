@@ -11,7 +11,7 @@
 #include <random>
 
 #include "globals.h"
-#include "minesweeper.h"
+#include "increment_minesweeper.h"
 #include "outer_experiment.h"
 #include "scope.h"
 #include "simple.h"
@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		// Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
-		Problem* problem = new Simple();
+		Problem* problem = new IncrementMinesweeper();
+		// Problem* problem = new Simple();
 
 		RunHelper run_helper;
 

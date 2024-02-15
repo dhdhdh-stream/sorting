@@ -6,7 +6,7 @@
 
 #include "action_node.h"
 #include "globals.h"
-#include "minesweeper.h"
+#include "increment_minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "simple.h"
@@ -45,8 +45,8 @@ int main(int argc, char* argv[]) {
 
 	while (true) {
 		// Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
-		Problem* problem = new Simple();
+		Problem* problem = new IncrementMinesweeper();
+		// Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
