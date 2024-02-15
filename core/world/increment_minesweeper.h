@@ -38,6 +38,7 @@ public:
 	void print();
 
 private:
+	void check_if_progress();
 	void reveal_helper(int x, int y);
 };
 

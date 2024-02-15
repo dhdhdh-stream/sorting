@@ -1,6 +1,9 @@
 #include "retrain_branch_experiment.h"
 
 #include <cmath>
+#include <iostream>
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
 #include "action_node.h"
@@ -346,7 +349,16 @@ void RetrainBranchExperiment::train_original_backprop(
 					outputs(d_index) = this->i_target_val_histories[d_index] - this->original_average_score;
 				}
 
-				Eigen::VectorXd weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+				Eigen::VectorXd weights;
+				try {
+					weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+				} catch (std::invalid_argument &e) {
+					cout << "Eigen error" << endl;
+					weights = Eigen::VectorXd(this->input_scope_contexts.size());
+					for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+						weights(i_index) = 0.0;
+					}
+				}
 				this->original_linear_weights = vector<double>(this->input_scope_contexts.size());
 				double existing_standard_deviation = sqrt(this->existing_score_variance);
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {

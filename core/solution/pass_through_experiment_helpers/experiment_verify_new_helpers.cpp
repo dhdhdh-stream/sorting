@@ -187,11 +187,6 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 		}
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
-		#if defined(MDEBUG) && MDEBUG
-		this->o_target_val_histories.clear();
-
-		if (rand()%2 == 0) {
-		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
@@ -205,6 +200,9 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			cout << "PassThrough experiment success" << endl;

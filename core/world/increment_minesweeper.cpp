@@ -134,6 +134,70 @@ double IncrementMinesweeper::get_observation() {
 	}
 }
 
+void IncrementMinesweeper::check_if_progress() {
+	if (this->current_x >= 0
+			&& this->current_x <= WIDTH-1
+			&& this->current_y >= 0
+			&& this->current_y <= HEIGHT-1
+			&& !this->revealed[this->current_x][this->current_y]
+			&& this->world[this->current_x][this->current_y] != -1) {
+		bool neighboring_revealed = false;
+
+		if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+			if (this->world[this->current_x-1][this->current_y+1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_y < HEIGHT-1) {
+			if (this->world[this->current_x][this->current_y+1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+			if (this->world[this->current_x+1][this->current_y+1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_x < WIDTH-1) {
+			if (this->world[this->current_x+1][this->current_y] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_x < WIDTH-1 && this->current_y > 0) {
+			if (this->world[this->current_x+1][this->current_y-1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_y > 0) {
+			if (this->world[this->current_x][this->current_y-1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_x > 0 && this->current_y > 0) {
+			if (this->world[this->current_x-1][this->current_y-1] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (this->current_x > 0) {
+			if (this->world[this->current_x-1][this->current_y] == -1) {
+				neighboring_revealed = true;
+			}
+		}
+
+		if (neighboring_revealed) {
+			this->num_correct++;
+		}
+	}
+	
+}
+
 void IncrementMinesweeper::reveal_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
@@ -185,14 +249,7 @@ void IncrementMinesweeper::perform_action(Action action) {
 			this->current_x--;
 		}
 	} else if (action.move == INCREMENT_MINESWEEPER_ACTION_CLICK) {
-		if (this->current_x >= 0
-				&& this->current_x <= WIDTH-1
-				&& this->current_y >= 0
-				&& this->current_y <= HEIGHT-1
-				&& !this->revealed[this->current_x][this->current_y]
-				&& this->world[this->current_x][this->current_y] != -1) {
-			this->num_correct++;
-		}
+		check_if_progress();
 
 		reveal_helper(this->current_x, this->current_y);
 	} else if (action.move == INCREMENT_MINESWEEPER_ACTION_FLAG) {
@@ -209,23 +266,24 @@ void IncrementMinesweeper::perform_action(Action action) {
 }
 
 double IncrementMinesweeper::score_result() {
-	int num_correct_flags = 0;
-	bool has_incorrect_flag = false;
+	double score = 1.0 + 0.1 * this->num_correct;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
 		for (int y_index = 0; y_index < HEIGHT; y_index++) {
 			if (this->flagged[x_index][y_index]) {
 				if (this->world[x_index][y_index] != -1) {
-					has_incorrect_flag = true;
+					score -= 0.5;
 				} else {
-					num_correct_flags++;
+					score += 0.1;
 				}
 			}
 		}
 	}
 
-	double score = this->num_correct + num_correct_flags;
-	if (this->hit_mine || has_incorrect_flag) {
-		score /= 2.0;
+	if (this->hit_mine) {
+		score -= 0.5;
+	}
+	if (score < 0.0) {
+		score = 0.0;
 	}
 	return score;
 }
@@ -240,6 +298,8 @@ Problem* IncrementMinesweeper::copy_and_reset() {
 
 	new_problem->current_x = STARTING_X;
 	new_problem->current_y = STARTING_Y;
+
+	reveal_helper(STARTING_X, STARTING_Y);
 
 	return new_problem;
 }
