@@ -60,8 +60,8 @@ public:
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
-	AbstractExperiment* experiment;
-	bool experiment_is_branch;
+	std::vector<AbstractExperiment*> experiments;
+	std::vector<bool> experiment_is_branch;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

@@ -51,6 +51,7 @@ class PassThroughExperiment : public AbstractExperiment {
 public:
 	std::vector<Scope*> scope_context;
 	std::vector<AbstractNode*> node_context;
+	bool is_branch;
 
 	int state;
 	int state_iter;
@@ -85,7 +86,8 @@ public:
 	BranchExperiment* branch_experiment;
 
 	PassThroughExperiment(std::vector<Scope*> scope_context,
-						  std::vector<AbstractNode*> node_context);
+						  std::vector<AbstractNode*> node_context,
+						  bool is_branch);
 	~PassThroughExperiment();
 
 	void activate(AbstractNode*& curr_node,

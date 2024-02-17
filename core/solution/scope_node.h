@@ -21,7 +21,7 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	AbstractExperiment* experiment;
+	std::vector<AbstractExperiment*> experiments;
 
 	ScopeNode();
 	~ScopeNode();

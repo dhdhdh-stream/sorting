@@ -45,6 +45,7 @@ class BranchExperiment : public AbstractExperiment {
 public:
 	std::vector<Scope*> scope_context;
 	std::vector<AbstractNode*> node_context;
+	bool is_branch;
 
 	PassThroughExperiment* parent_pass_through_experiment;
 
@@ -125,7 +126,8 @@ public:
 	#endif /* MDEBUG */
 
 	BranchExperiment(std::vector<Scope*> scope_context,
-					 std::vector<AbstractNode*> node_context);
+					 std::vector<AbstractNode*> node_context,
+					 bool is_branch);
 	~BranchExperiment();
 
 	void activate(AbstractNode*& curr_node,

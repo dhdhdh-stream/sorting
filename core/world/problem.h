@@ -1,3 +1,9 @@
+/**
+ * TODO:
+ * - have secondary scores
+ *   - so if primary score is only equal, not better, can still make progress on secondary
+ */
+
 #ifndef PROBLEM_H
 #define PROBLEM_H
 
