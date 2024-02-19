@@ -3,41 +3,45 @@
 
 const int SEED_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int SEED_EXPERIMENT_STATE_EXPLORE = 1;
-/**
- * - after explore, simply start with MEASURE
- */
+const int SEED_EXPERIMENT_STATE_MEASURE_SEED = 2;
 /**
  * - 1st time at FIND_FILTER, simply use explore node
  */
-const int SEED_EXPERIMENT_STATE_FIND_FILTER = 2;
+const int SEED_EXPERIMENT_STATE_FIND_FILTER = 3;
 /**
  * - 1st time at FIND_GATHER, instead go directly to TRAIN_FILTER
  */
-const int SEED_EXPERIMENT_STATE_VERIFY_FILTER = 3;
-const int SEED_EXPERIMENT_STATE_FIND_GATHER = 4;
-const int SEED_EXPERIMENT_STATE_VERIFY_GATHER = 5;
+const int SEED_EXPERIMENT_STATE_VERIFY_FILTER = 4;
+/**
+ * - a valid gather needs to:
+ *   - when taking seed path, still hits high scores
+ *   - at curr_filter, filtering still maintains original score
+ *   - all previous gathers/filters still valid
+ *     - i.e., if filtered before curr_filter, still maintains original score
+ * 
+ * - simply 50/50 seed path vs. non-seed path
+ *   - if this->sub_state_iter%2 == 0, seed path
+ */
+const int SEED_EXPERIMENT_STATE_FIND_GATHER = 5;
+const int SEED_EXPERIMENT_STATE_VERIFY_GATHER = 6;
 /**
  * - train on whether better than standard deviation away
  *   - allow overshoot
  * 
  * - remove spots that are >80% not going to be better
- *   - succeed if over 10% removed
+ *   - succeed if over 10% not better removed and non-significant better removed
  */
-const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 6;
-const int SEED_EXPERIMENT_STATE_MEASURE = 7;
-const int SEED_EXPERIMENT_STATE_VERIFY_EXISTING = 8;
-const int SEED_EXPERIMENT_STATE_VERIFY = 9;
-/**
- * - share state_iter, sub_state_iter
- *   - state_iter for filter
- *   - sub_state_iter for gather
- */
+const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 7;
+const int SEED_EXPERIMENT_STATE_MEASURE_FILTER = 8;
+const int SEED_EXPERIMENT_STATE_MEASURE = 9;
+const int SEED_EXPERIMENT_STATE_VERIFY_EXISTING = 10;
+const int SEED_EXPERIMENT_STATE_VERIFY = 11;
 #if defined(MDEBUG) && MDEBUG
-const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 10;
+const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 12;
 #endif /* MDEBUG */
 
-const int FILTER_ITER_LIMIT = 20;
-const int GATHER_ITER_LIMIT = 20;
+const int EXPLORE_SEED_PATH_NUM_ITERS = 20;
+const int EXPLORE_NON_SEED_PATH_NUM_ITERS = 20;
 
 const double FILTER_CONFIDENCE_THRESHOLD = 0.2;
 
@@ -46,6 +50,7 @@ class SeedExperiment : public AbstractExperiment {
 public:
 	std::vector<Scope*> scope_context;
 	std::vector<AbstractNode*> node_context;
+	bool is_branch;
 
 	/**
 	 * - simply assume multiple instances in one run are independent
@@ -60,8 +65,11 @@ public:
 	int state_iter;
 	int sub_state_iter;
 
+	int filter_iter;
+	int gather_iter;
+
 	double existing_average_score;
-	double existing_score_variance;
+	double existing_score_standard_deviation;
 
 	std::vector<std::vector<Scope*>> existing_input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> existing_input_node_contexts;
@@ -77,7 +85,7 @@ public:
 	std::vector<ScopeNode*> curr_existing_scopes;
 	std::vector<ScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
-	AbstractNode* curr_exit_node;
+	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
@@ -85,63 +93,14 @@ public:
 	std::vector<ScopeNode*> best_existing_scopes;
 	std::vector<ScopeNode*> best_potential_scopes;
 	int best_exit_depth;
-	AbstractNode* best_exit_node;
+	AbstractNode* best_exit_next_node;
+	ExitNode* best_exit_node;
 
-	std::vector<Scope*> curr_filter_scope_context;
-	std::vector<AbstractNode*> curr_filter_node_context;
-	bool curr_filter_is_branch;
-	std::vector<int> curr_filter_step_types;
-	std::vector<ActionNode*> curr_filter_actions;
-	std::vector<ScopeNode*> curr_filter_existing_scopes;
-	std::vector<ScopeNode*> curr_filter_potential_scopes;
-	int curr_filter_exit_depth;
-	AbstractNode* curr_filter_next_node;
+	double curr_higher_ratio;
 
-	std::vector<Scope*> best_filter_scope_context;
-	std::vector<AbstractNode*> best_filter_node_context;
-	bool best_filter_is_branch;
-	std::vector<int> best_filter_step_types;
-	std::vector<ActionNode*> best_filter_actions;
-	std::vector<ScopeNode*> best_filter_existing_scopes;
-	std::vector<ScopeNode*> best_filter_potential_scopes;
-	int best_filter_exit_depth;
-	AbstractNode* best_filter_next_node;
-
-	std::vector<std::vector<Scope*>> curr_input_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> curr_input_node_contexts;
-
-	double curr_average_confidence;
-	/**
-	 * - clean immediately after linear regression
-	 */
-	std::vector<double> curr_linear_weights;
-	std::vector<std::vector<int>> curr_network_input_indexes;
-	Network* curr_network;
-	double curr_average_misguess;
-	double curr_misguess_variance;
-
-	std::vector<Scope*> curr_gather_scope_context;
-	std::vector<AbstractNode*> curr_gather_node_context;
-	bool curr_gather_is_branch;
-	std::vector<int> curr_gather_step_types;
-	std::vector<ActionNode*> curr_gather_actions;
-	std::vector<ScopeNode*> curr_gather_existing_scopes;
-	std::vector<ScopeNode*> curr_gather_potential_scopes;
-	int curr_gather_exit_depth;
-	AbstractNode* curr_gather_exit_node;
-
-	std::vector<Scope*> best_gather_scope_context;
-	std::vector<AbstractNode*> best_gather_node_context;
-	bool best_gather_is_branch;
-	std::vector<int> best_gather_step_types;
-	std::vector<ActionNode*> best_gather_actions;
-	std::vector<ScopeNode*> best_gather_existing_scopes;
-	std::vector<ScopeNode*> best_gather_potential_scopes;
-	int best_gather_exit_depth;
-	AbstractNode* best_gather_exit_node;
+	SeedExperimentFilter* curr_filter;
 
 	SeedExperimentGather* curr_gather;
-	std::vector<SeedExperimentGather*> curr_gathers;
 
 	std::vector<SeedExperimentFilter*> filters;
 	std::vector<SeedExperimentGather*> gathers;
@@ -151,6 +110,8 @@ public:
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;
+	std::vector<bool> i_is_seed_histories;
+	std::vector<bool> i_is_higher_histories;
 
 };
 

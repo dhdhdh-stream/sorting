@@ -11,7 +11,7 @@ SeedExperimentGather::SeedExperimentGather(SeedExperiment* parent,
 										   vector<ScopeNode*> existing_scopes,
 										   vector<ScopeNode*> potential_scopes,
 										   int exit_depth,
-										   AbstractNode* exit_node) {
+										   AbstractNode* exit_next_node) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -22,6 +22,42 @@ SeedExperimentGather::SeedExperimentGather(SeedExperiment* parent,
 	this->actions = actions;
 	this->existing_scopes = existing_scopes;
 	this->potential_scopes = potential_scopes;
+
+	// TODO: split into helpers/state
+	// TODO: add into scopes after success
+
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			this->actions[s_index]->parent = this->scope_context.back();
+			this->actions[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			this->existing_scopes[s_index]->parent = this->scope_context.back();
+			this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+		} else {
+			this->potential_scopes[s_index]->parent = this->scope_context.back();
+			this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+
+			int new_scope_id = solution->scope_counter;
+			solution->scope_counter++;
+			this->potential_scopes[s_index]->scope->id = new_scope_id;
+
+			for (map<int, AbstractNode*>::iterator it = this->potential_scopes[s_index]->scope->nodes.begin();
+					it != this->potential_scopes[s_index]->scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_BRANCH) {
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->scope_context_ids[0] = new_scope_id;
+					for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+						if (branch_node->input_scope_context_ids[i_index].size() > 0) {
+							branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	int end_node_id;
 	AbstractNode* end_node;

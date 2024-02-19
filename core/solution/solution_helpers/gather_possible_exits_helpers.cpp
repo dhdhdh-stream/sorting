@@ -9,7 +9,6 @@ using namespace std;
 
 void gather_possible_exits_helper(int l_index,
 								  vector<pair<int,AbstractNode*>>& possible_exits,
-								  vector<ContextLayer>& context,
 								  vector<Scope*>& scope_context,
 								  vector<AbstractNode*>& node_context,
 								  int& exit_depth,
@@ -19,7 +18,6 @@ void gather_possible_exits_helper(int l_index,
 	if (l_index < (int)scope_context.size()-1) {
 		gather_possible_exits_helper(l_index+1,
 									 possible_exits,
-									 context,
 									 scope_context,
 									 node_context,
 									 inner_exit_depth,
@@ -27,8 +25,6 @@ void gather_possible_exits_helper(int l_index,
 	}
 
 	if (inner_exit_depth == -1) {
-		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
-		
 		AbstractNode* starting_node;
 		AbstractNode* experiment_node = node_context[l_index];
 		if (experiment_node->type == NODE_TYPE_ACTION) {
@@ -46,22 +42,23 @@ void gather_possible_exits_helper(int l_index,
 			}
 		}
 
-		scope->random_exit_activate(starting_node,
-									scope_context,
-									node_context,
-									exit_depth,
-									exit_node,
-									scope_context.size()-1 - l_index,
-									possible_exits);
+		scope_context[l_index]->random_exit_activate(
+			starting_node,
+			scope_context,
+			node_context,
+			exit_depth,
+			exit_node,
+			scope_context.size()-1 - l_index,
+			possible_exits);
 	} else if (inner_exit_depth == 0) {
-		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
-		scope->random_exit_activate(inner_exit_node,
-									scope_context,
-									node_context,
-									exit_depth,
-									exit_node,
-									scope_context.size()-1 - l_index,
-									possible_exits);
+		scope_context[l_index]->random_exit_activate(
+			inner_exit_node,
+			scope_context,
+			node_context,
+			exit_depth,
+			exit_node,
+			scope_context.size()-1 - l_index,
+			possible_exits);
 	} else {
 		exit_depth = inner_exit_depth-1;
 		exit_node = inner_exit_node;
@@ -69,7 +66,6 @@ void gather_possible_exits_helper(int l_index,
 }
 
 void gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
-						   vector<ContextLayer>& context,
 						   vector<Scope*>& scope_context,
 						   vector<AbstractNode*>& node_context) {
 	// unused
@@ -78,7 +74,6 @@ void gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
 
 	gather_possible_exits_helper(0,
 								 possible_exits,
-								 context,
 								 scope_context,
 								 node_context,
 								 exit_depth,
@@ -88,7 +83,6 @@ void gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
 void parent_pass_through_gather_possible_exits_helper(
 		int l_index,
 		vector<pair<int,AbstractNode*>>& possible_exits,
-		vector<ContextLayer>& context,
 		vector<Scope*>& scope_context,
 		vector<AbstractNode*>& node_context,
 		int parent_exit_depth,
@@ -101,7 +95,6 @@ void parent_pass_through_gather_possible_exits_helper(
 		parent_pass_through_gather_possible_exits_helper(
 			l_index+1,
 			possible_exits,
-			context,
 			scope_context,
 			node_context,
 			parent_exit_depth,
@@ -111,8 +104,6 @@ void parent_pass_through_gather_possible_exits_helper(
 	}
 
 	if (inner_exit_depth == -1) {
-		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
-
 		AbstractNode* starting_node;
 		if (l_index == (int)scope_context.size()-1 - parent_exit_depth) {
 			starting_node = parent_exit_node;
@@ -121,22 +112,23 @@ void parent_pass_through_gather_possible_exits_helper(
 			starting_node = scope_node->next_node;
 		}
 
-		scope->random_exit_activate(starting_node,
-									scope_context,
-									node_context,
-									exit_depth,
-									exit_node,
-									scope_context.size()-1 - l_index,
-									possible_exits);
+		scope_context[l_index]->random_exit_activate(
+			starting_node,
+			scope_context,
+			node_context,
+			exit_depth,
+			exit_node,
+			scope_context.size()-1 - l_index,
+			possible_exits);
 	} else if (inner_exit_depth == 0) {
-		Scope* scope = context[context.size() - scope_context.size() + l_index].scope;
-		scope->random_exit_activate(inner_exit_node,
-									scope_context,
-									node_context,
-									exit_depth,
-									exit_node,
-									scope_context.size()-1 - l_index,
-									possible_exits);
+		scope_context[l_index]->random_exit_activate(
+			inner_exit_node,
+			scope_context,
+			node_context,
+			exit_depth,
+			exit_node,
+			scope_context.size()-1 - l_index,
+			possible_exits);
 	} else {
 		exit_depth = inner_exit_depth-1;
 		exit_node = inner_exit_node;
@@ -144,7 +136,6 @@ void parent_pass_through_gather_possible_exits_helper(
 }
 
 void parent_pass_through_gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
-											   vector<ContextLayer>& context,
 											   vector<Scope*>& scope_context,
 											   vector<AbstractNode*>& node_context,
 											   int parent_exit_depth,
@@ -155,7 +146,6 @@ void parent_pass_through_gather_possible_exits(vector<pair<int,AbstractNode*>>& 
 
 	parent_pass_through_gather_possible_exits_helper(0,
 													 possible_exits,
-													 context,
 													 scope_context,
 													 node_context,
 													 parent_exit_depth,

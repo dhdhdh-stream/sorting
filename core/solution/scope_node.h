@@ -43,11 +43,6 @@ public:
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
 
-	void potential_activate(Problem* problem,
-							std::vector<ContextLayer>& context,
-							RunHelper& run_helper,
-							ScopeNodeHistory* history);
-
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,

@@ -15,9 +15,6 @@ const int TRAIN_EXISTING_ITERS = 3;
 void SeedExperiment::train_existing_activate(vector<ContextLayer>& context,
 											 RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
-
-	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
-	overall_history->instance_count++;
 }
 
 void SeedExperiment::train_existing_backprop(double target_val,
@@ -66,7 +63,7 @@ void SeedExperiment::train_existing_backprop(double target_val,
 			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 				sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 			}
-			this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+			this->existing_score_standard_deviation = sqrt(sum_score_variance / solution->curr_num_datapoints);
 
 			int num_obs = min(LINEAR_NUM_OBS, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> potential_scope_contexts;
@@ -145,7 +142,6 @@ void SeedExperiment::train_existing_backprop(double target_val,
 					weights(i_index) = 0.0;
 				}
 			}
-			double existing_standard_deviation = sqrt(this->existing_score_variance);
 			for (int i_index = 0; i_index < (int)potential_scope_contexts.size(); i_index++) {
 				/**
 				 * - don't worry about comparing against new weights
@@ -157,7 +153,7 @@ void SeedExperiment::train_existing_backprop(double target_val,
 					sum_impact_size += abs(inputs(d_index, i_index));
 				}
 				double average_impact = sum_impact_size / num_instances;
-				if (abs(weights(i_index)) * average_impact >= WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
+				if (abs(weights(i_index)) * average_impact >= WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation) {
 					this->existing_input_scope_contexts.push_back(potential_scope_contexts[i_index]);
 					this->existing_input_node_contexts.push_back(potential_node_contexts[i_index]);
 					this->existing_linear_weights.push_back(weights(i_index));

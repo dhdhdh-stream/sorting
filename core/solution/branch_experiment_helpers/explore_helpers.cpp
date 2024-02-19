@@ -151,13 +151,11 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		vector<pair<int,AbstractNode*>> possible_exits;
 		if (this->parent_pass_through_experiment == NULL) {
 			gather_possible_exits(possible_exits,
-								  context,
 								  this->scope_context,
 								  this->node_context);
 		} else {
 			parent_pass_through_gather_possible_exits(
 				possible_exits,
-				context,
 				this->parent_pass_through_experiment->scope_context,
 				this->parent_pass_through_experiment->node_context,
 				this->parent_pass_through_experiment->best_exit_depth,

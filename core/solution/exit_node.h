@@ -13,9 +13,9 @@ public:
 	 */
 	int exit_depth;
 
-	int exit_node_parent_id;
-	int exit_node_id;
-	AbstractNode* exit_node;
+	int next_node_parent_id;
+	int next_node_id;
+	AbstractNode* next_node;
 
 	ExitNode();
 	~ExitNode();
