@@ -16,7 +16,11 @@ public:
 	std::vector<ActionNode*> actions;
 	std::vector<ScopeNode*> existing_scopes;
 	std::vector<ScopeNode*> potential_scopes;
+	int exit_depth;
+	AbstractNode* exit_next_node;
 	ExitNode* exit_node;
+
+	bool is_candidate;
 
 	SeedExperimentGather(SeedExperiment* parent,
 						 std::vector<Scope*> scope_context,
@@ -33,6 +37,8 @@ public:
 	void activate(AbstractNode*& curr_node,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
+
+	void add_to_scope();
 
 	void finalize_success();
 	void clean_fail();

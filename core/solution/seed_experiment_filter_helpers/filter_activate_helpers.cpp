@@ -2,12 +2,12 @@
 
 using namespace std;
 
-void SeedExperimentFilter::find_activate(AbstractNode*& curr_node,
-										 Problem* problem,
-										 vector<ContextLayer>& context,
-										 int& exit_depth,
-										 AbstractNode*& exit_node,
-										 RunHelper& run_helper) {
+void SeedExperimentFilter::filter_activate(AbstractNode*& curr_node,
+										   Problem* problem,
+										   vector<ContextLayer>& context,
+										   int& exit_depth,
+										   AbstractNode*& exit_node,
+										   RunHelper& run_helper) {
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->actions[s_index]);

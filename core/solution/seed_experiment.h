@@ -3,15 +3,19 @@
 
 const int SEED_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int SEED_EXPERIMENT_STATE_EXPLORE = 1;
-const int SEED_EXPERIMENT_STATE_MEASURE_SEED = 2;
 /**
+ * - simply search on path
+ *   - search ascending and prioritize closer to current
+ *     - continue until end or fail
+ * 
  * - 1st time at FIND_FILTER, simply use explore node
  */
-const int SEED_EXPERIMENT_STATE_FIND_FILTER = 3;
+const int SEED_EXPERIMENT_STATE_FIND_FILTER = 2;
 /**
  * - 1st time at FIND_GATHER, instead go directly to TRAIN_FILTER
  */
-const int SEED_EXPERIMENT_STATE_VERIFY_FILTER = 4;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER = 3;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER = 4;
 /**
  * - a valid gather needs to:
  *   - when taking seed path, still hits high scores
@@ -23,27 +27,43 @@ const int SEED_EXPERIMENT_STATE_VERIFY_FILTER = 4;
  *   - if this->sub_state_iter%2 == 0, seed path
  */
 const int SEED_EXPERIMENT_STATE_FIND_GATHER = 5;
-const int SEED_EXPERIMENT_STATE_VERIFY_GATHER = 6;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER = 6;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER = 7;
 /**
  * - train on whether better than standard deviation away
  *   - allow overshoot
  * 
- * - remove spots that are >80% not going to be better
- *   - succeed if over 10% not better removed and non-significant better removed
+ * - remove spots that are >90% not going to be better
+ *   - succeed if seed path higher ratio increases significantly
+ * 
+ * - for non-target, previous gathers/filters still activate as usual
+ *   - but curr_filter will never take seed path
  */
-const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 7;
-const int SEED_EXPERIMENT_STATE_MEASURE_FILTER = 8;
-const int SEED_EXPERIMENT_STATE_MEASURE = 9;
-const int SEED_EXPERIMENT_STATE_VERIFY_EXISTING = 10;
-const int SEED_EXPERIMENT_STATE_VERIFY = 11;
+const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 8;
+const int SEED_EXPERIMENT_STATE_MEASURE_FILTER = 9;
+const int SEED_EXPERIMENT_STATE_MEASURE = 10;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 11;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST = 12;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 13;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 14;
 #if defined(MDEBUG) && MDEBUG
-const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 12;
+const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 15;
 #endif /* MDEBUG */
 
-const int EXPLORE_SEED_PATH_NUM_ITERS = 20;
-const int EXPLORE_NON_SEED_PATH_NUM_ITERS = 20;
+#if defined(MDEBUG) && MDEBUG
+const int FIND_FILTER_ITER_LIMIT = 2;
+const int FIND_GATHER_ITER_LIMIT = 2;
+const int TRAIN_GATHER_ITER_LIMIT = 2;
+#else
+const int FIND_FILTER_ITER_LIMIT = 200;
+const int FIND_GATHER_ITER_LIMIT = 200;
+const int TRAIN_GATHER_ITER_LIMIT = 20;
+#endif /* MDEBUG */
 
-const double FILTER_CONFIDENCE_THRESHOLD = 0.2;
+/**
+ * - filter only when extremely confident in case initially biased against seed
+ */
+const double FILTER_CONFIDENCE_THRESHOLD = 0.1;
 
 class SeedExperimentOverallHistory;
 class SeedExperiment : public AbstractExperiment {
@@ -58,6 +78,8 @@ public:
 	 * 
 	 * - but during experiment, only trigger once per run
 	 *   - as assume sequence will only be correct rarely
+	 * 
+	 * - update based on latest filter
 	 */
 	double average_instances_per_run;
 
@@ -65,8 +87,7 @@ public:
 	int state_iter;
 	int sub_state_iter;
 
-	int filter_iter;
-	int gather_iter;
+	int train_gather_iter;
 
 	double existing_average_score;
 	double existing_score_standard_deviation;
@@ -98,11 +119,25 @@ public:
 
 	double curr_higher_ratio;
 
+	double curr_filter_score;
+	int curr_filter_step_index;
 	SeedExperimentFilter* curr_filter;
+	bool curr_filter_is_success;
 
+	/**
+	 * - add to front of experiments, so can override previous gathers
+	 *   - if override filter, then higher_ratio will likely decrease and fail
+	 */
+	int curr_gather_is_higher;
+	double curr_gather_score;
 	SeedExperimentGather* curr_gather;
 
 	std::vector<SeedExperimentFilter*> filters;
+	/**
+	 * - 0 is original explore node
+	 * - 1 is start of sequence
+	 */
+	int filter_step_index;
 	std::vector<SeedExperimentGather*> gathers;
 
 	double combined_score;

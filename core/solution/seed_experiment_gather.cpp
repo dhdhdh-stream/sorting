@@ -22,116 +22,39 @@ SeedExperimentGather::SeedExperimentGather(SeedExperiment* parent,
 	this->actions = actions;
 	this->existing_scopes = existing_scopes;
 	this->potential_scopes = potential_scopes;
+	this->exit_depth = exit_depth;
+	this->exit_next_node = exit_next_node;
 
-	// TODO: split into helpers/state
-	// TODO: add into scopes after success
+	this->exit_node = NULL;
 
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			this->actions[s_index]->parent = this->scope_context.back();
-			this->actions[s_index]->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			this->existing_scopes[s_index]->parent = this->scope_context.back();
-			this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-		} else {
-			this->potential_scopes[s_index]->parent = this->scope_context.back();
-			this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-
-			int new_scope_id = solution->scope_counter;
-			solution->scope_counter++;
-			this->potential_scopes[s_index]->scope->id = new_scope_id;
-
-			for (map<int, AbstractNode*>::iterator it = this->potential_scopes[s_index]->scope->nodes.begin();
-					it != this->potential_scopes[s_index]->scope->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_BRANCH) {
-					BranchNode* branch_node = (BranchNode*)it->second;
-					branch_node->scope_context_ids[0] = new_scope_id;
-					for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
-						if (branch_node->input_scope_context_ids[i_index].size() > 0) {
-							branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	int end_node_id;
-	AbstractNode* end_node;
-	if (exit_depth > 0) {
-		ExitNode* new_exit_node = new ExitNode();
-		new_exit_node->parent = this->scope_context.back();
-		new_exit_node->id = this->scope_context.back()->node_counter;
-		this->scope_context.back()->node_counter++;
-		this->scope_context.back()->nodes[new_exit_node->id] = new_exit_node;
-
-		new_exit_node->exit_depth = exit_depth;
-		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - exit_depth]->id;
-		if (exit_node == NULL) {
-			new_exit_node->exit_node_id = -1;
-		} else {
-			new_exit_node->exit_node_id = exit_node->id;
-		}
-		new_exit_node->exit_node = exit_node;
-
-		this->exit_node = new_exit_node;
-
-		end_node_id = new_exit_node->id;
-		end_node = new_exit_node;
-	} else {
-		this->exit_node = NULL;
-
-		if (exit_node == NULL) {
-			end_node_id = -1;
-		} else {
-			end_node_id = exit_node->id;
-		}
-		end_node = exit_node;
-	}
-
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		int next_node_id;
-		AbstractNode* next_node;
-		if (s_index == (int)this->step_types.size()-1) {
-			next_node_id = end_node_id;
-			new_exit_node = end_node;
-		} else {
-			if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
-				next_node_id = this->actions[s_index+1]->id;
-				next_node = this->actions[s_index+1];
-			} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-				next_node_id = this->existing_scopes[s_index+1]->id;
-				next_node = this->existing_scopes[s_index+1];
-			} else {
-				next_node_id = this->potential_scopes[s_index+1]->id;
-				next_node = this->potential_scopes[s_index+1];
-			}
-		}
-
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
-
-			this->actions[s_index]->next_node_id = next_node_id;
-			this->actions[s_index]->next_node = next_node;
-		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			this->scope_context.back()->nodes[this->existing_scopes[s_index]->id] = this->existing_scopes[s_index];
-
-			this->existing_scopes[s_index]->next_node_id = next_node_id;
-			this->existing_scopes[s_index]->next_node = next_node;
-		} else {
-			this->scope_context.back()->nodes[this->potential_scopes[s_index]->id] = this->potential_scopes[s_index];
-
-			this->potential_scopes[s_index]->next_node_id = next_node_id;
-			this->potential_scopes[s_index]->next_node = next_node;
-		}
-	}
+	this->is_candidate = true;
 }
 
 SeedExperimentGather::~SeedExperimentGather() {
-	// do nothing
+	if (this->is_candidate) {
+		for (int s_index = 0; s_index < (int)this->actions.size(); s_index++) {
+			if (this->actions[s_index] != NULL) {
+				delete this->actions[s_index];
+			}
+		}
+	}
+
+	if (this->is_candidate) {
+		for (int s_index = 0; s_index < (int)this->existing_scopes.size(); s_index++) {
+			if (this->existing_scopes[s_index] != NULL) {
+				delete this->existing_scopes[s_index];
+			}
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->potential_scopes.size(); s_index++) {
+		if (this->potential_scopes[s_index] != NULL) {
+			delete this->potential_scopes[s_index]->scope;
+			if (this->is_candidate) {
+				delete this->potential_scopes[s_index];
+			}
+		}
+	}
 }
 
 void SeedExperimentGather::activate(AbstractNode*& curr_node,
@@ -191,14 +114,162 @@ void SeedExperimentGather::activate(AbstractNode*& curr_node,
 	}
 
 	if (is_selected) {
-		if (this->step_types[0] == STEP_TYPE_ACTION) {
-			curr_node = this->actions[0];
-		} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-			curr_node = this->existing_scopes[0];
+		if (this->is_candidate) {
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->actions[s_index]);
+					this->actions[s_index]->activate(curr_node,
+													 problem,
+													 context,
+													 exit_depth,
+													 exit_node,
+													 run_helper,
+													 action_node_history);
+					delete action_node_history;
+				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->existing_scopes[s_index]);
+					this->existing_scopes[s_index]->activate(curr_node,
+															 problem,
+															 context,
+															 exit_depth,
+															 exit_node,
+															 run_helper,
+															 scope_node_history);
+					delete scope_node_history;
+				} else {
+					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->potential_scopes[s_index]);
+					this->potential_scopes[s_index]->activate(curr_node,
+															  problem,
+															  context,
+															  exit_depth,
+															  exit_node,
+															  run_helper,
+															  scope_node_history);
+					delete scope_node_history;
+				}
+			}
+
+			if (this->exit_depth == 0) {
+				curr_node = this->exit_next_node;
+			} else {
+				exit_depth = this->exit_depth-1;
+				exit_node = this->exit_next_node;
+			}
 		} else {
-			curr_node = this->potential_scopes[0];
+			if (this->step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->actions[0];
+			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+				curr_node = this->existing_scopes[0];
+			} else {
+				curr_node = this->potential_scopes[0];
+			}
 		}
 	}
+}
+
+void SeedExperimentGather::add_to_scope() {
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			this->actions[s_index]->parent = this->scope_context.back();
+			this->actions[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			this->existing_scopes[s_index]->parent = this->scope_context.back();
+			this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+		} else {
+			this->potential_scopes[s_index]->parent = this->scope_context.back();
+			this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+
+			int new_scope_id = solution->scope_counter;
+			solution->scope_counter++;
+			this->potential_scopes[s_index]->scope->id = new_scope_id;
+
+			for (map<int, AbstractNode*>::iterator it = this->potential_scopes[s_index]->scope->nodes.begin();
+					it != this->potential_scopes[s_index]->scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_BRANCH) {
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->scope_context_ids[0] = new_scope_id;
+					for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+						if (branch_node->input_scope_context_ids[i_index].size() > 0) {
+							branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	int end_node_id;
+	AbstractNode* end_node;
+	if (this->exit_depth > 0) {
+		ExitNode* new_exit_node = new ExitNode();
+		new_exit_node->parent = this->scope_context.back();
+		new_exit_node->id = this->scope_context.back()->node_counter;
+		this->scope_context.back()->node_counter++;
+		this->scope_context.back()->nodes[new_exit_node->id] = new_exit_node;
+
+		new_exit_node->exit_depth = this->exit_depth;
+		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - exit_depth]->id;
+		if (this->exit_next_node == NULL) {
+			new_exit_node->exit_node_id = -1;
+		} else {
+			new_exit_node->exit_node_id = this->exit_next_node->id;
+		}
+		new_exit_node->exit_node = this->exit_next_node;
+
+		this->exit_node = new_exit_node;
+
+		end_node_id = new_exit_node->id;
+		end_node = new_exit_node;
+	} else {
+		if (this->exit_next_node == NULL) {
+			end_node_id = -1;
+		} else {
+			end_node_id = this->exit_next_node->id;
+		}
+		end_node = this->exit_next_node;
+	}
+
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		int next_node_id;
+		AbstractNode* next_node;
+		if (s_index == (int)this->step_types.size()-1) {
+			next_node_id = end_node_id;
+			new_exit_node = end_node;
+		} else {
+			if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
+				next_node_id = this->actions[s_index+1]->id;
+				next_node = this->actions[s_index+1];
+			} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
+				next_node_id = this->existing_scopes[s_index+1]->id;
+				next_node = this->existing_scopes[s_index+1];
+			} else {
+				next_node_id = this->potential_scopes[s_index+1]->id;
+				next_node = this->potential_scopes[s_index+1];
+			}
+		}
+
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
+
+			this->actions[s_index]->next_node_id = next_node_id;
+			this->actions[s_index]->next_node = next_node;
+		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			this->scope_context.back()->nodes[this->existing_scopes[s_index]->id] = this->existing_scopes[s_index];
+
+			this->existing_scopes[s_index]->next_node_id = next_node_id;
+			this->existing_scopes[s_index]->next_node = next_node;
+		} else {
+			this->scope_context.back()->nodes[this->potential_scopes[s_index]->id] = this->potential_scopes[s_index];
+
+			this->potential_scopes[s_index]->next_node_id = next_node_id;
+			this->potential_scopes[s_index]->next_node = next_node;
+		}
+	}
+
+	this->is_candidate = false;
 }
 
 void SeedExperimentGather::finalize_success() {
@@ -305,23 +376,36 @@ void SeedExperimentGather::finalize_success() {
 		}
 	}
 
+	this->filter_actions.clear();
+	this->filter_existing_scopes.clear();
+	this->filter_potential_scopes.clear();
+
 	// let success_reset() clean
 }
 
 void SeedExperimentGather::clean_fail() {
 	for (int a_index = 0; a_index < (int)this->step_types.size(); a_index++) {
 		if (this->step_types[a_index] == STEP_TYPE_ACTION) {
-			this->scope_context.back()->nodes.remove(this->actions[a_index]->id);
+			if (!this->is_candidate) {
+				this->scope_context.back()->nodes.remove(this->actions[a_index]->id);
+			}
 			delete this->actions[a_index];
 		} else if (this->step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
-			this->scope_context.back()->nodes.remove(this->existing_scopes[a_index]->id);
+			if (!this->is_candidate) {
+				this->scope_context.back()->nodes.remove(this->existing_scopes[a_index]->id);
+			}
 			delete this->existing_scopes[a_index];
 		} else {
-			this->scope_context.back()->nodes.remove(this->potential_scopes[a_index]->id);
+			if (!this->is_candidate) {
+				this->scope_context.back()->nodes.remove(this->potential_scopes[a_index]->id);
+			}
 			delete this->potential_scopes[a_index]->scope;
 			delete this->potential_scopes[a_index];
 		}
 	}
+	this->actions.clear();
+	this->existing_scopes.clear();
+	this->potential_scopes.clear();
 
 	if (this->exit_node != NULL) {
 		this->scope_context.back()->nodes.remove(this->exit_node->id);

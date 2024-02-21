@@ -79,5 +79,17 @@ void SeedExperimentFilter::find_gather_activate(vector<ContextLayer>& context,
 		curr_gather_potential_scopes,
 		curr_gather_exit_depth,
 		curr_gather_exit_node);
-	curr_gather_node_context.back()->experiments.push_back(this->parent->curr_gather);
+	if (curr_gather_node_context.back()->type == NODE_TYPE_ACTION) {
+		ActionNode* action_node = (ActionNode*)curr_gather_node_context.back();
+		action_node->experiments.insert(action_node->experiments.begin(), this->parent->curr_gather);
+	} else if (curr_gather_node_context.back()->type == NODE_TYPE_SCOPE) {
+		ScopeNode* scope_node = (ScopeNode*)curr_gather_node_context.back();
+		scope_node->experiments.insert(scope_node->experiments.begin(), this->parent->curr_gather);
+	} else {
+		BranchNode* branch_node = (BranchNode*)curr_gather_node_context.back();
+		branch_node->experiments.insert(branch_node->experiments.begin(), this->parent->curr_gather);
+		branch_node->experiment_is_branch.insert(branch_node->experiment_is_branch.begin(), curr_gather_is_branch);
+	}
+
+	// irrelevant what curr_node set to
 }

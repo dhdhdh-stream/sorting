@@ -15,37 +15,37 @@ public:
 	double average_misguess;
 	double misguess_variance;
 
-	/**
-	 * - for filter
-	 */
-	std::vector<int> step_types;
-	std::vector<ActionNode*> actions;
-	std::vector<ScopeNode*> existing_scopes;
-	std::vector<ScopeNode*> potential_scopes;
-	int exit_depth;
-	AbstractNode* exit_next_node;
-	ExitNode* exit_node;
+	AbstractNode* seed_next_node;
+	std::vector<int> filter_step_types;
+	std::vector<ActionNode*> filter_actions;
+	std::vector<ScopeNode*> filter_existing_scopes;
+	std::vector<ScopeNode*> filter_potential_scopes;
+	int filter_exit_depth;
+	AbstractNode* filter_exit_next_node;
 
-	/**
-	 * - set to true by this->parent
-	 */
+	BranchNode* branch_node;
+	ExitNode* filter_exit_node;
+
 	bool is_candidate;
 
 	SeedExperimentFilter(SeedExperiment* parent,
 						 std::vector<Scope*> scope_context,
 						 std::vector<AbstractNode*> node_context,
 						 bool is_branch,
-						 std::vector<int> step_types,
-						 std::vector<ActionNode*> actions,
-						 std::vector<ScopeNode*> existing_scopes,
-						 std::vector<ScopeNode*> potential_scopes,
-						 int exit_depth,
-						 AbstractNode* exit_next_node);
+						 AbstractNode* seed_next_node,
+						 std::vector<int> filter_step_types,
+						 std::vector<ActionNode*> filter_actions,
+						 std::vector<ScopeNode*> filter_existing_scopes,
+						 std::vector<ScopeNode*> filter_potential_scopes,
+						 int filter_exit_depth,
+						 AbstractNode* filter_exit_next_node);
 	~SeedExperimentFilter();
 
 	void activate();
 
 	void find_activate();
+
+
 
 	void add_to_scope();
 

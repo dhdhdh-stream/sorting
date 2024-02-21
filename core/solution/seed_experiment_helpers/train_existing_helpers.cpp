@@ -14,6 +14,9 @@ const int TRAIN_EXISTING_ITERS = 3;
 
 void SeedExperiment::train_existing_activate(vector<ContextLayer>& context,
 											 RunHelper& run_helper) {
+	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
+	overall_history->instance_count++;
+
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 }
 

@@ -1,7 +1,6 @@
 /**
  * TODO:
- * - look for RetrainBranchExperiments using new path
- *   - or allow child BranchExperiments to be disconnected
+ * - add back misguess and keep alongside SeedExperiment
  */
 
 #ifndef PASS_THROUGH_EXPERIMENT_H

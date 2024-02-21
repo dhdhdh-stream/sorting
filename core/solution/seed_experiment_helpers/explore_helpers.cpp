@@ -355,7 +355,64 @@ void SeedExperiment::explore_backprop(double target_val,
 					}
 				}
 
-				this->state = SEED_EXPERIMENT_STATE_MEASURE_SEED;
+				this->curr_higher_ratio = 0.0;
+
+				AbstractNode* seed_next_node;
+				if (this->best_step_types.size() == 0) {
+					seed_next_node = best_exit_next_node;
+				} else {
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						seed_next_node = this->best_actions[0];
+					} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+						seed_next_node = this->best_existing_scopes[0];
+					} else {
+						seed_next_node = this->best_potential_scopes[0];
+					}
+				}
+				AbstractNode* filter_next_node;
+				if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)this->node_context.back();
+					filter_next_node = action_node->next_node;
+				} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+					ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+					filter_next_node = scope_node->next_node;
+				} else {
+					BranchNode* branch_node = (BranchNode*)this->node_context.back();
+					if (this->is_branch) {
+						filter_next_node = branch_node->branch_next_node;
+					} else {
+						filter_next_node = branch_node->original_next_node;
+					}
+				}
+				this->curr_filter = new SeedExperimentFilter(this,
+															 this->scope_context,
+															 this->node_context,
+															 this->is_branch,
+															 seed_next_node,
+															 vector<int>(),
+															 vector<ActionNode*>(),
+															 vector<ScopeNode*>(),
+															 vector<ScopeNode*>(),
+															 0,
+															 filter_next_node);
+				if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)this->node_context.back();
+					action_node->experiments.push_back(this->curr_filter);
+				} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+					ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+					scope_node->experiments.push_back(this->curr_filter);
+				} else {
+					BranchNode* branch_node = (BranchNode*)this->node_context.back();
+					branch_node->experiments.push_back(this->curr_filter);
+					branch_node->experiment_is_branch.push_back(this->is_branch);
+				}
+
+				this->i_scope_histories.reserve(solution->curr_num_datapoints);
+				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
+
+				this->state = SEED_EXPERIMENT_STATE_TRAIN_FILTER;
+				this->state_iter = 0;
+				this->sub_state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}

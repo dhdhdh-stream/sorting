@@ -59,9 +59,6 @@ void SeedExperiment::activate() {
 	}
 
 	if (is_selected) {
-		SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
-		overall_history->instance_count++;
-
 		switch (this->state) {
 		case SEED_EXPERIMENT_STATE_TRAIN_EXISTING:
 
@@ -69,7 +66,27 @@ void SeedExperiment::activate() {
 		case SEED_EXPERIMENT_STATE_EXPLORE:
 
 			break;
-		case SEED_EXPERIMENT_STATE_MEASURE_SEED:
+		default:
+			/**
+			 * - safe to always take seed path
+			 *   - in non-target cases, will be filtered by curr_filter
+			 *   - likely overridden by starting filter anyways
+			 */
+			if (this->best_step_types.size() == 0) {
+				if (this->best_exit_depth == 0) {
+					curr_node = 
+				} else {
+
+				}
+			} else {
+				if (this->best_step_types[0]->type == STEP_TYPE_ACTION) {
+
+				} else if () {
+
+				} else {
+
+				}
+			}
 
 			break;
 		}
@@ -77,5 +94,6 @@ void SeedExperiment::activate() {
 }
 
 void SeedExperiment::backprop() {
+	
 
 }

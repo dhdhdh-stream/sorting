@@ -63,9 +63,9 @@ void SeedExperimentFilter::activate(AbstractNode*& curr_node,
 
 	if (is_selected) {
 		if (this->is_candidate) {
-			/**
-			 * - instance_count already updated in parent
-			 */
+			SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
+			overall_history->instance_count++;
+
 			bool is_target = false;
 			SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
 			if (!overall_history->has_target) {
@@ -86,29 +86,39 @@ void SeedExperimentFilter::activate(AbstractNode*& curr_node,
 
 				switch (this->parent->state) {
 				case SEED_EXPERIMENT_STATE_FIND_FILTER:
-				case SEED_EXPERIMENT_STATE_VERIFY_FILTER:
-					find_activate(curr_node,
-								  problem,
-								  context,
-								  exit_depth,
-								  exit_node,
-								  run_helper);
+				case SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER:
+				case SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER:
+					filter_activate(curr_node,
+									problem,
+									context,
+									exit_depth,
+									exit_node,
+									run_helper);
 					break;
 				case SEED_EXPERIMENT_STATE_FIND_GATHER:
-				case SEED_EXPERIMENT_STATE_VERIFY_GATHER:
+				case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER:
+				case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER:
 					if (this->parent->sub_state_iter == -1) {
 						find_gather_activate(context,
 											 run_helper);
 					} else {
 						if (this->parent->sub_state_iter%2 == 0) {
-							// do nothing
+							curr_node = this->seed_next_node;
 						} else {
-							non_seed_path_activate(curr_node);
+							filter_activate(curr_node,
+											problem,
+											context,
+											exit_depth,
+											exit_node,
+											run_helper);
 						}
 					}
 					break;
 				case SEED_EXPERIMENT_STATE_TRAIN_FILTER:
-					train_filter_activate(context);
+					this->parent->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
+
+					curr_node = this->seed_next_node;
+
 					break;
 				case SEED_EXPERIMENT_STATE_MEASURE_FILTER:
 					measure_filter_activate(curr_node,
@@ -119,10 +129,16 @@ void SeedExperimentFilter::activate(AbstractNode*& curr_node,
 											run_helper);
 					break;
 				}
+			} else {
+				filter_activate(curr_node,
+								problem,
+								context,
+								exit_depth,
+								exit_node,
+								run_helper);
 			}
 		} else {
-			non_candidate_activate(curr_node,
-								   context);
+			curr_node = this->branch_node;
 		}
 	}
 }

@@ -4,7 +4,8 @@ using namespace std;
 
 const int TRAIN_FILTER_ITERS = 3;
 
-void SeedExperimentFilter::train_filter_backprop() {
+void SeedExperiment::train_filter_backprop(double target_val,
+										   SeedExperimentOverallHistory* history) {
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
 	if (history->has_target) {
@@ -170,6 +171,9 @@ void SeedExperimentFilter::train_filter_backprop() {
 
 			this->state_iter++;
 			if (this->state_iter >= TRAIN_FILTER_ITERS) {
+				this->i_is_seed_histories.reserve(solution->curr_num_datapoints);
+				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
+
 				this->state = SEED_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {

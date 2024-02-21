@@ -25,6 +25,7 @@ public:
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
+	// TODO: don't change curr_node to signal to go to next experiment
 	std::vector<AbstractExperiment*> experiments;
 
 	ActionNode();
