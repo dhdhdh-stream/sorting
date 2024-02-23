@@ -18,6 +18,7 @@ using namespace std;
 
 default_random_engine generator;
 
+Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {

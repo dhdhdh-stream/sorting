@@ -153,5 +153,12 @@ void RetrainBranchExperiment::finalize() {
 		#endif /* MDEBUG */
 	}
 
-	this->branch_node->experiment = NULL;
+	int experiment_index;
+	for (int e_index = 0; e_index < (int)this->branch_node->experiments.size(); e_index++) {
+		if (this->branch_node->experiments[e_index] == this) {
+			experiment_index = e_index;
+		}
+	}
+	this->branch_node->experiments.erase(this->branch_node->experiments.begin() + experiment_index);
+	this->branch_node->experiment_types.erase(this->branch_node->experiment_types.begin() + experiment_index);
 }

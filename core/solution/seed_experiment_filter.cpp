@@ -1,5 +1,16 @@
 #include "seed_experiment_filter.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "seed_experiment.h"
+#include "solution.h"
+
 using namespace std;
 
 SeedExperimentFilter::SeedExperimentFilter(SeedExperiment* parent,
@@ -27,42 +38,50 @@ SeedExperimentFilter::SeedExperimentFilter(SeedExperiment* parent,
 	this->filter_exit_depth = filter_exit_depth;
 	this->filter_exit_next_node = filter_exit_next_node;
 
+	this->branch_node = new BranchNode();
+	this->branch_node->experiments.push_back(this);
+	this->branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_SEED);
+
 	this->network = NULL;
 
-	this->branch_node = NULL;
 	this->filter_exit_node = NULL;
 
 	this->is_candidate = true;
 }
 
 SeedExperimentFilter::~SeedExperimentFilter() {
+	if (this->branch_node != NULL) {
+		if (this->is_candidate) {
+			this->branch_node->experiments.clear();
+		}
+		delete this->branch_node;
+	}
+
 	if (this->network != NULL) {
 		delete this->network;
 	}
 
-	if (this->is_candidate) {
-		for (int s_index = 0; s_index < (int)this->filter_actions.size(); s_index++) {
-			if (this->filter_actions[s_index] != NULL) {
-				delete this->filter_actions[s_index];
-			}
+	for (int s_index = 0; s_index < (int)this->filter_actions.size(); s_index++) {
+		if (this->filter_actions[s_index] != NULL) {
+			delete this->filter_actions[s_index];
 		}
 	}
 
-	if (this->is_candidate) {
-		for (int s_index = 0; s_index < (int)this->filter_existing_scopes.size(); s_index++) {
-			if (this->filter_existing_scopes[s_index] != NULL) {
-				delete this->filter_existing_scopes[s_index];
-			}
+	for (int s_index = 0; s_index < (int)this->filter_existing_scopes.size(); s_index++) {
+		if (this->filter_existing_scopes[s_index] != NULL) {
+			delete this->filter_existing_scopes[s_index];
 		}
 	}
 
 	for (int s_index = 0; s_index < (int)this->filter_potential_scopes.size(); s_index++) {
 		if (this->filter_potential_scopes[s_index] != NULL) {
 			delete this->filter_potential_scopes[s_index]->scope;
-			if (this->is_candidate) {
-				delete this->filter_potential_scopes[s_index];
-			}
+			delete this->filter_potential_scopes[s_index];
 		}
+	}
+
+	if (this->filter_exit_node != NULL) {
+		delete this->filter_exit_node;
 	}
 }
 
@@ -107,7 +126,6 @@ void SeedExperimentFilter::add_to_scope() {
 		new_exit_node->parent = this->scope_context.back();
 		new_exit_node->id = this->scope_context.back()->node_counter;
 		this->scope_context.back()->node_counter++;
-		this->scope_context.back()->nodes[new_exit_node->id] = new_exit_node;
 
 		new_exit_node->exit_depth = this->filter_exit_depth;
 		new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->filter_exit_depth]->id;
@@ -131,15 +149,16 @@ void SeedExperimentFilter::add_to_scope() {
 		end_node = this->filter_exit_next_node;
 	}
 
-	this->branch_node = new BranchNode();
+	this->branch_node->experiments.clear();
+	this->branch_node->experiment_types.clear();
+
 	this->branch_node->parent = this->scope_context.back();
 	this->branch_node->id = this->scope_context.back()->node_counter;
 	this->scope_context.back()->node_counter++;
-	this->scope_context.back()->nodes[this->branch_node->id] = this->branch_node;
 
 	this->branch_node->scope_context = this->scope_context;
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		this->branch_node->scope_context_ids.push_back(new_branch_node->scope_context[c_index]->id);
+		this->branch_node->scope_context_ids.push_back(this->branch_node->scope_context[c_index]->id);
 	}
 	this->branch_node->node_context = this->node_context;
 	this->branch_node->node_context.back() = this->branch_node;
@@ -213,18 +232,12 @@ void SeedExperimentFilter::add_to_scope() {
 		}
 
 		if (this->filter_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->scope_context.back()->nodes[this->filter_actions[s_index]->id] = this->filter_actions[s_index];
-
 			this->filter_actions[s_index]->next_node_id = next_node_id;
 			this->filter_actions[s_index]->next_node = next_node;
 		} else if (this->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			this->scope_context.back()->nodes[this->filter_existing_scopes[s_index]->id] = this->filter_existing_scopes[s_index];
-
 			this->filter_existing_scopes[s_index]->next_node_id = next_node_id;
 			this->filter_existing_scopes[s_index]->next_node = next_node;
 		} else {
-			this->scope_context.back()->nodes[this->filter_potential_scopes[s_index]->id] = this->filter_potential_scopes[s_index];
-
 			this->filter_potential_scopes[s_index]->next_node_id = next_node_id;
 			this->filter_potential_scopes[s_index]->next_node = next_node;
 		}
@@ -233,7 +246,7 @@ void SeedExperimentFilter::add_to_scope() {
 	this->is_candidate = false;
 }
 
-void SeedExperimentFilter::finalize_success() {
+void SeedExperimentFilter::finalize() {
 	if (this->node_context.back()->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->node_context.back();
 
@@ -256,81 +269,34 @@ void SeedExperimentFilter::finalize_success() {
 		}
 	}
 
+	this->scope_context.back()->nodes[this->branch_node->id] = this->branch_node;
+	this->branch_node = NULL;
+
 	for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {
-		if (this->filter_step_types[s_index] == STEP_TYPE_POTENTIAL_SCOPE) {
+		if (this->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->scope_context.back()->nodes[this->filter_actions[s_index]->id] = this->filter_actions[s_index];
+		} else if (this->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			this->scope_context.back()->nodes[this->filter_existing_scopes[s_index]->id] = this->filter_existing_scopes[s_index];
+		} else {
+			this->scope_context.back()->nodes[this->filter_potential_scopes[s_index]->id] = this->filter_potential_scopes[s_index];
+
 			solution->scopes[this->filter_potential_scopes[s_index]->scope->id] = this->filter_potential_scopes[s_index]->scope;
 		}
 	}
-
 	this->filter_actions.clear();
 	this->filter_existing_scopes.clear();
 	this->filter_potential_scopes.clear();
 
+	if (this->filter_exit_node != NULL) {
+		this->scope_context.back()->nodes[this->filter_exit_node->id] = this->filter_exit_node;
+	}
+	this->filter_exit_node = NULL;
+
 	// let success_reset() clean
 }
 
-void SeedExperimentFilter::clean_fail() {
-	for (int a_index = 0; a_index < (int)this->step_types.size(); a_index++) {
-		if (this->step_types[a_index] == STEP_TYPE_ACTION) {
-			if (!this->is_candidate) {
-				this->scope_context.back()->nodes.remove(this->actions[a_index]->id);
-			}
-			delete this->actions[a_index];
-		} else if (this->step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
-			if (!this->is_candidate) {
-				this->scope_context.back()->nodes.remove(this->existing_scopes[a_index]->id);
-			}
-			delete this->existing_scopes[a_index];
-		} else {
-			if (!this->is_candidate) {
-				this->scope_context.back()->nodes.remove(this->potential_scopes[a_index]->id);
-			}
-			delete this->potential_scopes[a_index]->scope;
-			delete this->potential_scopes[a_index];
-		}
-	}
-	this->actions.clear();
-	this->existing_scopes.clear();
-	this->potential_scopes.clear();
-
-	if (this->branch_node != NULL) {
-		this->scope_context.back()->nodes.remove(this->branch_node->id);
-		delete this->branch_node;
-	}
-
-	if (this->filter_exit_node != NULL) {
-		this->scope_context.back()->nodes.remove(this->filter_exit_node->id);
-		delete this->filter_exit_node;
-	}
-
-	if (this->node_context.back()->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
-			if (action_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
-		}
-		action_node->experiments.erase(action_node->experiments.begin() + e_index);
-	} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
-			if (scope_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
-		}
-		scope_node->experiments.erase(scope_node->experiments.begin() + e_index);
-	} else {
-		BranchNode* branch_node = (BranchNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)branch_node->experiments.size(); e_index++) {
-			if (branch_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
-		}
-		branch_node->experiments.erase(branch_node->experiments.begin() + e_index);
-		branch_node->experiment_is_branch.erase(branch_node->experiment_is_branch.begin() + e_index);
-	}
-	// delete in this->parent
+void SeedExperimentFilter::backprop(double target_val,
+									RunHelper& run_helper,
+									AbstractExperimentHistory* history) {
+	// do nothing
 }

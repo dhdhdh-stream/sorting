@@ -23,13 +23,32 @@ void BranchExperiment::finalize() {
 	if (this->parent_pass_through_experiment == NULL) {
 		if (this->node_context.back()->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->node_context.back();
-			action_node->experiment = NULL;
+			int experiment_index;
+			for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
+				if (action_node->experiments[e_index] == this) {
+					experiment_index = e_index;
+				}
+			}
+			action_node->experiments.erase(action_node->experiments.begin() + experiment_index);
 		} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 			ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-			scope_node->experiment = NULL;
+			int experiment_index;
+			for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
+				if (scope_node->experiments[e_index] == this) {
+					experiment_index = e_index;
+				}
+			}
+			scope_node->experiments.erase(scope_node->experiments.begin() + experiment_index);
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->node_context.back();
-			branch_node->experiment = NULL;
+			int experiment_index;
+			for (int e_index = 0; e_index < (int)branch_node->experiments.size(); e_index++) {
+				if (branch_node->experiments[e_index] == this) {
+					experiment_index = e_index;
+				}
+			}
+			branch_node->experiments.erase(branch_node->experiments.begin() + experiment_index);
+			branch_node->experiment_types.erase(branch_node->experiment_types.begin() + experiment_index);
 		}
 	}
 }
@@ -47,13 +66,13 @@ void BranchExperiment::new_branch() {
 		containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
+		new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
 		if (this->best_exit_node == NULL) {
-			new_exit_node->exit_node_id = -1;
+			new_exit_node->next_node_id = -1;
 		} else {
-			new_exit_node->exit_node_id = this->best_exit_node->id;
+			new_exit_node->next_node_id = this->best_exit_node->id;
 		}
-		new_exit_node->exit_node = this->best_exit_node;
+		new_exit_node->next_node = this->best_exit_node;
 
 		exit_node_id = new_exit_node->id;
 		exit_node = new_exit_node;
@@ -212,7 +231,7 @@ void BranchExperiment::new_branch() {
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
-		if (branch_node->experiment_is_branch) {
+		if (this->is_branch) {
 			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
 			new_branch_node->original_next_node = branch_node->branch_next_node;
 		} else {
@@ -261,7 +280,7 @@ void BranchExperiment::new_branch() {
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
-		if (branch_node->experiment_is_branch) {
+		if (this->is_branch) {
 			branch_node->branch_next_node_id = new_branch_node->id;
 			branch_node->branch_next_node = new_branch_node;
 		} else {
@@ -326,13 +345,13 @@ void BranchExperiment::new_pass_through() {
 		containing_scope->nodes[new_exit_node->id] = new_exit_node;
 
 		new_exit_node->exit_depth = this->best_exit_depth;
-		new_exit_node->exit_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
+		new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
 		if (this->best_exit_node == NULL) {
-			new_exit_node->exit_node_id = -1;
+			new_exit_node->next_node_id = -1;
 		} else {
-			new_exit_node->exit_node_id = this->best_exit_node->id;
+			new_exit_node->next_node_id = this->best_exit_node->id;
 		}
-		new_exit_node->exit_node = this->best_exit_node;
+		new_exit_node->next_node = this->best_exit_node;
 
 		exit_node_id = new_exit_node->id;
 		exit_node = new_exit_node;
@@ -385,7 +404,7 @@ void BranchExperiment::new_pass_through() {
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
-			if (branch_node->experiment_is_branch) {
+			if (this->is_branch) {
 				new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
 				new_branch_node->original_next_node = branch_node->branch_next_node;
 			} else {
@@ -443,7 +462,7 @@ void BranchExperiment::new_pass_through() {
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
-		if (branch_node->experiment_is_branch) {
+		if (this->is_branch) {
 			branch_node->branch_next_node_id = start_node_id;
 			branch_node->branch_next_node = start_node;
 		} else {

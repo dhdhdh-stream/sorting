@@ -1,6 +1,22 @@
 #ifndef SEED_EXPERIMENT_H
 #define SEED_EXPERIMENT_H
 
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class ActionNode;
+class ExitNode;
+class Network;
+class Scope;
+class ScopeHistory;
+class ScopeNode;
+class SeedExperimentFilter;
+class SeedExperimentGather;
+
 const int SEED_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int SEED_EXPERIMENT_STATE_EXPLORE = 1;
 /**
@@ -46,9 +62,6 @@ const int SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 11;
 const int SEED_EXPERIMENT_STATE_VERIFY_1ST = 12;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 13;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 14;
-#if defined(MDEBUG) && MDEBUG
-const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 15;
-#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int FIND_FILTER_ITER_LIMIT = 2;
@@ -127,6 +140,8 @@ public:
 	/**
 	 * - add to front of experiments, so can override previous gathers
 	 *   - if override filter, then higher_ratio will likely decrease and fail
+	 * 
+	 * - when finalizing, add filters first, then add gathers front-to-back
 	 */
 	int curr_gather_is_higher;
 	double curr_gather_score;
@@ -148,6 +163,73 @@ public:
 	std::vector<bool> i_is_seed_histories;
 	std::vector<bool> i_is_higher_histories;
 
+	SeedExperiment(std::vector<Scope*> scope_context,
+				   std::vector<AbstractNode*> node_context,
+				   bool is_branch);
+	~SeedExperiment();
+
+	bool activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper);
+	void backprop(double target_val,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory* history);
+
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 RunHelper& run_helper);
+	void train_existing_backprop(double target_val,
+								 RunHelper& run_helper,
+								 SeedExperimentOverallHistory* history);
+
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_target_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
+								 RunHelper& run_helper);
+	void explore_backprop(double target_val,
+						  SeedExperimentOverallHistory* history);
+
+	void create_filter();
+
+	void find_filter_backprop(double target_val,
+							  SeedExperimentOverallHistory* history);
+
+	void verify_filter_backprop(double target_val,
+								SeedExperimentOverallHistory* history);
+
+	void find_gather_backprop(double target_val,
+							  SeedExperimentOverallHistory* history);
+
+	void verify_gather_backprop(double target_val,
+								SeedExperimentOverallHistory* history);
+
+	void train_filter_backprop(double target_val,
+							   SeedExperimentOverallHistory* history);
+
+	void measure_filter_backprop(double target_val,
+								 SeedExperimentOverallHistory* history);
+
+	void measure_backprop(double target_val);
+
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper,
+								  SeedExperimentOverallHistory* history);
+
+	void verify_backprop(double target_val);
+
+	void finalize();
+	void finalize_success();
+	void clean_fail();
 };
 
 class SeedExperimentOverallHistory : public AbstractExperimentHistory {

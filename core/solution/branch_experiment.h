@@ -130,7 +130,7 @@ public:
 					 bool is_branch);
 	~BranchExperiment();
 
-	void activate(AbstractNode*& curr_node,
+	bool activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,

@@ -141,10 +141,13 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		this->curr_potential_scopes.push_back(new_scope_node);
 
 		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-		new_scope_node->potential_activate(problem,
-										   context,
-										   run_helper,
-										   scope_node_history);
+		new_scope_node->activate(curr_node,
+								 problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper,
+								 scope_node_history);
 		delete scope_node_history;
 	} else {
 		// exit
@@ -152,7 +155,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		if (this->parent_pass_through_experiment == NULL) {
 			gather_possible_exits(possible_exits,
 								  this->scope_context,
-								  this->node_context);
+								  this->node_context,
+								  this->is_branch);
 		} else {
 			parent_pass_through_gather_possible_exits(
 				possible_exits,
@@ -212,13 +216,16 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				this->curr_potential_scopes.push_back(new_scope_node);
 
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-				new_scope_node->potential_activate(problem,
-												   context,
-												   run_helper,
-												   scope_node_history);
+				new_scope_node->activate(curr_node,
+										 problem,
+										 context,
+										 exit_depth,
+										 exit_node,
+										 run_helper,
+										 scope_node_history);
 				delete scope_node_history;
 			} else {
-				ScopeNode* new_existing_scope_node = reuse_existing(problem);
+				ScopeNode* new_existing_scope_node = reuse_existing();
 				if (new_existing_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 					this->curr_actions.push_back(NULL);
@@ -228,10 +235,13 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					this->curr_potential_scopes.push_back(NULL);
 
 					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_existing_scope_node);
-					new_existing_scope_node->potential_activate(problem,
-																context,
-																run_helper,
-																scope_node_history);
+					new_existing_scope_node->activate(curr_node,
+													  problem,
+													  context,
+													  exit_depth,
+													  exit_node,
+													  run_helper,
+													  scope_node_history);
 					delete scope_node_history;
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);

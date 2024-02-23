@@ -19,6 +19,21 @@ void BranchNode::activate(AbstractNode*& curr_node,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  vector<AbstractNodeHistory*>& node_histories) {
+	if (this->experiments.size() == 1
+			&& this->experiment_types[0] == BRANCH_NODE_EXPERIMENT_TYPE_SEED) {
+		// unused
+		AbstractExperimentHistory* instance_history;
+
+		this->experiments[0]->activate(curr_node,
+									   problem,
+									   context,
+									   exit_depth,
+									   exit_node,
+									   run_helper,
+									   instance_history);
+		return;
+	}
+
 	bool matches_context = true;
 	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
@@ -42,26 +57,27 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		} else {
 			BranchNodeHistory* history = new BranchNodeHistory(this);
 
-			if (this->experiment != NULL
-					&& this->experiment->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
-				RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)this->experiment;
-				bool is_selected = retrain_branch_experiment->activate(
-					history->is_branch,
-					problem,
-					context,
-					run_helper);
+			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+				if (this->experiments[e_index]->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
+					RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)this->experiments[e_index];
+					bool is_selected = retrain_branch_experiment->activate(
+						history->is_branch,
+						problem,
+						context,
+						run_helper);
 
-				if (is_selected) {
-					if (history->is_branch) {
-						curr_node = this->branch_next_node;
-					} else {
-						curr_node = this->original_next_node;
+					if (is_selected) {
+						if (history->is_branch) {
+							curr_node = this->branch_next_node;
+						} else {
+							curr_node = this->original_next_node;
+						}
+						/**
+						 * - add to node_histories after experiment due to inner activate
+						 */
+						node_histories.push_back(history);
+						return;
 					}
-					/**
-					 * - add to node_histories after experiment due to inner activate
-					 */
-					node_histories.push_back(history);
-					return;
 				}
 			}
 
@@ -155,56 +171,36 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			if (history->is_branch) {
 				curr_node = this->branch_next_node;
 
-				if (this->experiment != NULL) {
-					if (this->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-						if (this->experiment_is_branch) {
-							BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
-							branch_experiment->activate(curr_node,
-														problem,
-														context,
-														exit_depth,
-														exit_node,
-														run_helper,
-														history->experiment_history);
-						}
-					} else if (this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-						if (this->experiment_is_branch) {
-							PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
-							pass_through_experiment->activate(curr_node,
-															  problem,
-															  context,
-															  exit_depth,
-															  exit_node,
-															  run_helper,
-															  history->experiment_history);
+				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+					if (this->experiment_types[e_index] == BRANCH_NODE_EXPERIMENT_TYPE_BRANCH) {
+						bool is_selected = this->experiments[e_index]->activate(
+							curr_node,
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper,
+							history->experiment_history);
+						if (is_selected) {
+							return;
 						}
 					}
 				}
 			} else {
 				curr_node = this->original_next_node;
 
-				if (this->experiment != NULL) {
-					if (this->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-						if (!this->experiment_is_branch) {
-							BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
-							branch_experiment->activate(curr_node,
-														problem,
-														context,
-														exit_depth,
-														exit_node,
-														run_helper,
-														history->experiment_history);
-						}
-					} else if (this->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-						if (!this->experiment_is_branch) {
-							PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
-							pass_through_experiment->activate(curr_node,
-															  problem,
-															  context,
-															  exit_depth,
-															  exit_node,
-															  run_helper,
-															  history->experiment_history);
+				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+					if (this->experiment_types[e_index] == BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL) {
+						bool is_selected = this->experiments[e_index]->activate(
+							curr_node,
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper,
+							history->experiment_history);
+						if (is_selected) {
+							return;
 						}
 					}
 				}

@@ -1,12 +1,21 @@
 #include "seed_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
-void SeedExperiment::activate() {
+bool SeedExperiment::activate(AbstractNode*& curr_node,
+							  Problem* problem,
+							  vector<ContextLayer>& context,
+							  int& exit_depth,
+							  AbstractNode*& exit_node,
+							  RunHelper& run_helper) {
 	bool is_selected = false;
-	if (this->parent_pass_through_experiment != NULL) {
-		is_selected = true;
-	} else if (run_helper.experiment_history == NULL) {
+	if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
 			matches_context = false;
@@ -61,10 +70,20 @@ void SeedExperiment::activate() {
 	if (is_selected) {
 		switch (this->state) {
 		case SEED_EXPERIMENT_STATE_TRAIN_EXISTING:
-
+			train_existing_activate(context,
+									run_helper);
 			break;
 		case SEED_EXPERIMENT_STATE_EXPLORE:
-
+			explore_activate(curr_node,
+							 problem,
+							 context,
+							 exit_depth,
+							 exit_node,
+							 run_helper);
+			break;
+		case SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+			// do nothing
 			break;
 		default:
 			/**
@@ -74,26 +93,82 @@ void SeedExperiment::activate() {
 			 */
 			if (this->best_step_types.size() == 0) {
 				if (this->best_exit_depth == 0) {
-					curr_node = 
+					curr_node = this->best_exit_next_node;
 				} else {
-
+					curr_node = this->best_exit_node;
 				}
 			} else {
-				if (this->best_step_types[0]->type == STEP_TYPE_ACTION) {
-
-				} else if () {
-
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
+				} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+					curr_node = this->best_existing_scopes[0];
 				} else {
-
+					curr_node = this->best_potential_scopes[0];
 				}
 			}
 
 			break;
 		}
+
+		return true;
+	} else {
+		return false;
 	}
 }
 
-void SeedExperiment::backprop() {
-	
+void SeedExperiment::backprop(double target_val,
+							  RunHelper& run_helper,
+							  AbstractExperimentHistory* history) {
+	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)history;
 
+	switch (this->state) {
+	case SEED_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_backprop(target_val,
+								run_helper,
+								overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_EXPLORE:
+		explore_backprop(target_val,
+						 overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_FIND_FILTER:
+		find_filter_backprop(target_val,
+							 overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER:
+		verify_filter_backprop(target_val,
+							   overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_FIND_GATHER:
+		find_gather_backprop(target_val,
+							 overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER:
+		verify_gather_backprop(target_val,
+							   overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_TRAIN_FILTER:
+		train_filter_backprop(target_val,
+							  overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_MEASURE_FILTER:
+		measure_filter_backprop(target_val,
+								overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+		verify_existing_backprop(target_val,
+								 run_helper,
+								 overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND:
+		verify_backprop(target_val);
+		break;
+	}
 }

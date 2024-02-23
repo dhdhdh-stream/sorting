@@ -80,7 +80,7 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 		node_context.back() = NULL;
 
 		exit_depth = node->exit_depth-1;
-		exit_node = node->exit_node;
+		exit_node = node->next_node;
 	}
 }
 
@@ -165,7 +165,7 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 		possible_exits.push_back({curr_depth, curr_node});
 
 		exit_depth = node->exit_depth-1;
-		exit_node = node->exit_node;
+		exit_node = node->next_node;
 	}
 }
 

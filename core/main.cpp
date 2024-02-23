@@ -21,6 +21,7 @@ const int NUM_FAILS_BEFORE_INCREASE = 50;
 
 default_random_engine generator;
 
+Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
@@ -30,6 +31,8 @@ int main(int argc, char* argv[]) {
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
+
+	problem_type = new IncrementMinesweeper();
 
 	solution = new Solution();
 	// solution->init();
@@ -228,6 +231,7 @@ int main(int argc, char* argv[]) {
 		#endif /* MDEBUG */
 	}
 
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

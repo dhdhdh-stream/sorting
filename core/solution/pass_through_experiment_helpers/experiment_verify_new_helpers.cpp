@@ -38,17 +38,23 @@ void PassThroughExperiment::experiment_verify_new_activate(
 		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
 			instance_history->pre_step_histories.push_back(scope_node_history);
-			this->best_existing_scopes[s_index]->potential_activate(
+			this->best_existing_scopes[s_index]->activate(
+				curr_node,
 				problem,
 				context,
+				exit_depth,
+				exit_node,
 				run_helper,
 				scope_node_history);
 		} else {
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
 			instance_history->pre_step_histories.push_back(scope_node_history);
-			this->best_potential_scopes[s_index]->potential_activate(
+			this->best_potential_scopes[s_index]->activate(
+				curr_node,
 				problem,
 				context,
+				exit_depth,
+				exit_node,
 				run_helper,
 				scope_node_history);
 		}
@@ -100,17 +106,23 @@ void PassThroughExperiment::experiment_verify_new_activate(
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
 						instance_history->post_step_histories.push_back(scope_node_history);
-						this->best_existing_scopes[s_index]->potential_activate(
+						this->best_existing_scopes[s_index]->activate(
+							curr_node,
 							problem,
 							context,
+							exit_depth,
+							exit_node,
 							run_helper,
 							scope_node_history);
 					} else {
 						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
 						instance_history->post_step_histories.push_back(scope_node_history);
-						this->best_potential_scopes[s_index]->potential_activate(
+						this->best_potential_scopes[s_index]->activate(
+							curr_node,
 							problem,
 							context,
+							exit_depth,
+							exit_node,
 							run_helper,
 							scope_node_history);
 					}
@@ -173,7 +185,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 				this->branch_experiment = new BranchExperiment(
 					this->scope_context,
-					this->node_context);
+					this->node_context,
+					this->is_branch);
 				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
 					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index];
 				} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_EXISTING_SCOPE) {
@@ -251,7 +264,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 				this->branch_experiment = new BranchExperiment(
 					this->scope_context,
-					this->node_context);
+					this->node_context,
+					this->is_branch);
 				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
 					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index];
 				} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_EXISTING_SCOPE) {

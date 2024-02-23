@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void BranchExperiment::activate(AbstractNode*& curr_node,
+bool BranchExperiment::activate(AbstractNode*& curr_node,
 								Problem* problem,
 								vector<ContextLayer>& context,
 								int& exit_depth,
@@ -129,6 +129,10 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 			break;
 		#endif /* MDEBUG */
 		}
+
+		return true;
+	} else {
+		return false;
 	}
 }
 

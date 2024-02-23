@@ -10,7 +10,6 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 									   RunHelper& run_helper) {
 	bool is_selected = false;
 	if (run_helper.experiment_history == NULL) {
-		bool select = false;
 		bool has_seen = false;
 		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 			if (run_helper.experiments_seen_order[e_index] == this) {
@@ -22,15 +21,11 @@ bool RetrainBranchExperiment::activate(bool& is_branch,
 			double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 			uniform_real_distribution<double> distribution(0.0, 1.0);
 			if (distribution(generator) < selected_probability) {
-				select = true;
+				run_helper.experiment_history = new RetrainBranchExperimentOverallHistory(this);
+				is_selected = true;
 			}
 
 			run_helper.experiments_seen_order.push_back(this);
-		}
-		if (select) {
-			run_helper.experiment_history = new RetrainBranchExperimentOverallHistory(this);
-
-			is_selected = true;
 		}
 	} else if (run_helper.experiment_history->experiment == this) {
 		is_selected = true;

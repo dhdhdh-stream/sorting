@@ -61,6 +61,16 @@ OuterExperiment::~OuterExperiment() {
 	}
 }
 
+bool OuterExperiment::activate(AbstractNode*& curr_node,
+							   Problem* problem,
+							   std::vector<ContextLayer>& context,
+							   int& exit_depth,
+							   AbstractNode*& exit_node,
+							   RunHelper& run_helper,
+							   AbstractExperimentHistory*& history) {
+	return false;
+}
+
 OuterExperimentOverallHistory::OuterExperimentOverallHistory(
 		OuterExperiment* experiment) {
 	this->experiment = experiment;

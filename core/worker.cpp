@@ -25,6 +25,7 @@ const int NUM_FAILS_BEFORE_INCREASE = 30;
 
 default_random_engine generator;
 
+Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
@@ -45,6 +46,8 @@ int main(int argc, char* argv[]) {
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
+
+	problem_type = new IncrementMinesweeper();
 
 	solution = new Solution();
 	solution->load(path, "main");
@@ -214,6 +217,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

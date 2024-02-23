@@ -10,30 +10,26 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
-
-	this->id = -1;
-
-	this->experiment = NULL;
 }
 
 ScopeNode::~ScopeNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
 }
 
 void ScopeNode::success_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void ScopeNode::fail_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void ScopeNode::save(ofstream& output_file) {

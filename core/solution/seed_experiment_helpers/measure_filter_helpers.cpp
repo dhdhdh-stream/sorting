@@ -1,5 +1,10 @@
 #include "seed_experiment.h"
 
+#include "globals.h"
+#include "seed_experiment_filter.h"
+#include "seed_experiment_gather.h"
+#include "solution.h"
+
 using namespace std;
 
 void SeedExperiment::measure_filter_backprop(double target_val,
@@ -48,18 +53,16 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->state_iter = 0;
 			} else {
 				if (this->curr_gather != NULL) {
-					this->curr_gather->clean_fail();
 					delete this->curr_gather;
 					this->curr_gather = NULL;
 				}
 
 				this->train_gather_iter++;
-				if (this->gather_iter >= TRAIN_GATHER_ITER_LIMIT) {
+				if (this->train_gather_iter >= TRAIN_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);
 					} else {
-						this->curr_filter->clean_fail();
 						delete this->curr_filter;
 					}
 					this->curr_filter = NULL;

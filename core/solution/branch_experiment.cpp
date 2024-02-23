@@ -12,11 +12,13 @@
 using namespace std;
 
 BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
-								   vector<AbstractNode*> node_context) {
+								   vector<AbstractNode*> node_context,
+								   bool is_branch) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
+	this->is_branch = is_branch;
 
 	this->parent_pass_through_experiment = NULL;
 

@@ -142,6 +142,15 @@ public:
 	#endif /* MDEBUG */
 
 	void finalize();
+
+	// unused
+	bool activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
 };
 
 class RetrainBranchExperimentOverallHistory : public AbstractExperimentHistory {

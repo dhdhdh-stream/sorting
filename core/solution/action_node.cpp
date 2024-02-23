@@ -8,28 +8,26 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
-
-	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
 }
 
 void ActionNode::success_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void ActionNode::fail_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void ActionNode::save(ofstream& output_file) {

@@ -14,8 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->experiment = NULL;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -30,8 +28,8 @@ BranchNode::~BranchNode() {
 		delete this->branch_network;
 	}
 
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
 }
 
@@ -46,17 +44,17 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::success_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void BranchNode::fail_reset() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		delete this->experiments[e_index];
 	}
+	this->experiments.clear();
 }
 
 void BranchNode::save(ofstream& output_file) {

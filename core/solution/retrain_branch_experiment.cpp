@@ -46,6 +46,16 @@ RetrainBranchExperiment::RetrainBranchExperiment(BranchNode* branch_node) {
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
+bool RetrainBranchExperiment::activate(AbstractNode*& curr_node,
+									   Problem* problem,
+									   vector<ContextLayer>& context,
+									   int& exit_depth,
+									   AbstractNode*& exit_node,
+									   RunHelper& run_helper,
+									   AbstractExperimentHistory*& history) {
+	return false;
+}
+
 RetrainBranchExperiment::~RetrainBranchExperiment() {
 	if (this->original_network != NULL) {
 		delete this->original_network;

@@ -459,7 +459,7 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 							node_context,
 							curr_depth - exit_node->exit_depth,
 							starting_depth,
-							exit_node->exit_node,
+							exit_node->next_node,
 							node_mappings,
 							new_node_reverse_mappings,
 							new_scope);

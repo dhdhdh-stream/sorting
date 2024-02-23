@@ -8,6 +8,16 @@
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 const int TRAIN_EXISTING_ITERS = 3;

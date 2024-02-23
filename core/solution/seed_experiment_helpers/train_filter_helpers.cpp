@@ -1,5 +1,18 @@
 #include "seed_experiment.h"
 
+#include <cmath>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "overshoot_nn_helpers.h"
+#include "scope.h"
+#include "seed_experiment_filter.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 const int TRAIN_FILTER_ITERS = 3;
@@ -62,6 +75,7 @@ void SeedExperiment::train_filter_backprop(double target_val,
 				}
 			}
 
+			vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 				if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
 					ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
@@ -75,7 +89,7 @@ void SeedExperiment::train_filter_backprop(double target_val,
 					branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
 				}
 			}
-			for (int d_index = 0; d_index < num_instances; d_index++) {
+			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 				vector<double> test_input_vals(num_new_input_indexes, 0.0);
 
 				vector<Scope*> scope_context;
@@ -109,15 +123,15 @@ void SeedExperiment::train_filter_backprop(double target_val,
 
 			double average_misguess;
 			double misguess_variance;
-			measure_network(network_inputs,
-							this->i_is_higher_histories,
-							test_network,
-							average_misguess,
-							misguess_variance);
+			overshoot_measure_network(network_inputs,
+									  this->i_is_higher_histories,
+									  test_network,
+									  average_misguess,
+									  misguess_variance);
 
 			if (this->curr_filter->network == NULL) {
-				this->curr_filter->input_scope_contexts.push_back(test_network_input_scope_contexts);
-				this->curr_filter->input_node_contexts.push_back(test_network_input_node_contexts);
+				this->curr_filter->input_scope_contexts = test_network_input_scope_contexts;
+				this->curr_filter->input_node_contexts = test_network_input_node_contexts;
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 					new_input_indexes.push_back(t_index);

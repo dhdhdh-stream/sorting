@@ -1,5 +1,9 @@
 #include "seed_experiment.h"
 
+#include <cmath>
+
+#include "seed_experiment_filter.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -36,7 +40,6 @@ void SeedExperiment::find_filter_backprop(double target_val,
 			 */
 			this->sub_state_iter = 0;
 		} else {
-			this->curr_filter->clean_fail();
 			delete this->curr_filter;
 			this->curr_filter = NULL;
 

@@ -14,6 +14,11 @@ class Network;
 class Problem;
 class Scope;
 
+const int BRANCH_NODE_EXPERIMENT_TYPE_NA = 0;
+const int BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL = 1;
+const int BRANCH_NODE_EXPERIMENT_TYPE_BRANCH = 2;
+const int BRANCH_NODE_EXPERIMENT_TYPE_SEED = 3;
+
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
@@ -61,7 +66,7 @@ public:
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
 	std::vector<AbstractExperiment*> experiments;
-	std::vector<bool> experiment_is_branch;
+	std::vector<int> experiment_types;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

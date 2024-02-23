@@ -1,5 +1,14 @@
 #include "seed_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 SeedExperiment::SeedExperiment(vector<Scope*> scope_context,
@@ -46,27 +55,29 @@ SeedExperiment::~SeedExperiment() {
 		delete this->existing_network;
 	}
 
-	for (int a_index = 0; a_index < (int)this->step_types.size(); a_index++) {
-		if (this->step_types[a_index] == STEP_TYPE_ACTION) {
-			if (this->state == SEED_EXPERIMENT_STATE_EXPLORE) {
-				delete this->actions[a_index];
-			}
-		} else if (this->step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
-			if (this->state == SEED_EXPERIMENT_STATE_EXPLORE) {
-				delete this->existing_scopes[a_index];
-			}
+	for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
+		if (this->best_step_types[a_index] == STEP_TYPE_ACTION) {
+			delete this->best_actions[a_index];
+		} else if (this->best_step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
+			delete this->best_existing_scopes[a_index];
 		} else {
-			delete this->potential_scopes[a_index]->scope;
-			/**
-			 * - should be safe due to the order in which nodes are being deleted in local scope
-			 */
-			if (this->state == SEED_EXPERIMENT_STATE_EXPLORE) {
-				delete this->potential_scopes[a_index];
-			}
+			delete this->best_potential_scopes[a_index]->scope;
+			delete this->best_potential_scopes[a_index];
 		}
 	}
 
-	/**
-	 * - let nodes delete filters/gathers
-	 */
+	if (this->best_exit_node != NULL) {
+		delete this->best_exit_node;
+	}
+
+	// let nodes delete filters/gathers
+}
+
+SeedExperimentOverallHistory::SeedExperimentOverallHistory(
+		SeedExperiment* experiment) {
+	this->experiment = experiment;
+
+	this->instance_count = 0;
+
+	this->has_target = false;
 }

@@ -1,5 +1,18 @@
 #include "seed_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "problem.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "seed_experiment_filter.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -15,6 +28,8 @@ void SeedExperiment::explore_activate(AbstractNode*& curr_node,
 									  AbstractNode*& exit_node,
 									  RunHelper& run_helper) {
 	bool is_target = false;
+	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
+	overall_history->instance_count++;
 	if (!overall_history->has_target) {
 		double target_probability;
 		if (overall_history->instance_count > this->average_instances_per_run) {
@@ -102,9 +117,9 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 	// exit
 	vector<pair<int,AbstractNode*>> possible_exits;
 	gather_possible_exits(possible_exits,
-						  context,
 						  this->scope_context,
-						  this->node_context);
+						  this->node_context,
+						  this->is_branch);
 
 	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 	int random_index = distribution(generator);
@@ -145,13 +160,16 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 			this->curr_potential_scopes.push_back(new_scope_node);
 
 			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-			new_scope_node->potential_activate(problem,
-											   context,
-											   run_helper,
-											   scope_node_history);
+			new_scope_node->activate(curr_node,
+									 problem,
+									 context,
+									 exit_depth,
+									 exit_node,
+									 run_helper,
+									 scope_node_history);
 			delete scope_node_history;
 		} else {
-			ScopeNode* new_existing_scope_node = reuse_existing(problem);
+			ScopeNode* new_existing_scope_node = reuse_existing();
 			if (new_existing_scope_node != NULL) {
 				this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 				this->curr_actions.push_back(NULL);
@@ -161,10 +179,13 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 				this->curr_potential_scopes.push_back(NULL);
 
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_existing_scope_node);
-				new_existing_scope_node->potential_activate(problem,
-															context,
-															run_helper,
-															scope_node_history);
+				new_existing_scope_node->activate(curr_node,
+												  problem,
+												  context,
+												  exit_depth,
+												  exit_node,
+												  run_helper,
+												  scope_node_history);
 				delete scope_node_history;
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
@@ -294,7 +315,6 @@ void SeedExperiment::explore_backprop(double target_val,
 					new_exit_node->parent = this->scope_context.back();
 					new_exit_node->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-					this->scope_context.back()->nodes[new_exit_node->id] = new_exit_node;
 
 					new_exit_node->exit_depth = this->best_exit_depth;
 					new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
@@ -323,7 +343,7 @@ void SeedExperiment::explore_backprop(double target_val,
 					AbstractNode* next_node;
 					if (s_index == (int)this->best_step_types.size()-1) {
 						next_node_id = end_node_id;
-						new_exit_node = end_node;
+						next_node = end_node;
 					} else {
 						if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 							next_node_id = this->best_actions[s_index+1]->id;
@@ -338,18 +358,12 @@ void SeedExperiment::explore_backprop(double target_val,
 					}
 
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						this->scope_context.back()->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
-
 						this->best_actions[s_index]->next_node_id = next_node_id;
 						this->best_actions[s_index]->next_node = next_node;
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-						this->scope_context.back()->nodes[this->best_existing_scopes[s_index]->id] = this->best_existing_scopes[s_index];
-
 						this->best_existing_scopes[s_index]->next_node_id = next_node_id;
 						this->best_existing_scopes[s_index]->next_node = next_node;
 					} else {
-						this->scope_context.back()->nodes[this->best_potential_scopes[s_index]->id] = this->best_potential_scopes[s_index];
-
 						this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 						this->best_potential_scopes[s_index]->next_node = next_node;
 					}
@@ -404,7 +418,7 @@ void SeedExperiment::explore_backprop(double target_val,
 				} else {
 					BranchNode* branch_node = (BranchNode*)this->node_context.back();
 					branch_node->experiments.push_back(this->curr_filter);
-					branch_node->experiment_is_branch.push_back(this->is_branch);
+					branch_node->experiment_types.push_back(this->is_branch);
 				}
 
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);

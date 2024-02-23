@@ -1,5 +1,12 @@
 #include "seed_experiment.h"
 
+#include <cmath>
+
+#include "constants.h"
+#include "globals.h"
+#include "seed_experiment_filter.h"
+#include "solution.h"
+
 using namespace std;
 
 void SeedExperiment::verify_filter_backprop(double target_val,
@@ -34,7 +41,6 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			 */
 			this->sub_state_iter = 0;
 		} else {
-			this->curr_filter->clean_fail();
 			delete this->curr_filter;
 			this->curr_filter = NULL;
 
@@ -66,7 +72,6 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
-			this->curr_filter->clean_fail();
 			delete this->curr_filter;
 			this->curr_filter = NULL;
 

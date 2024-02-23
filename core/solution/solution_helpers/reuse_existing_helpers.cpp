@@ -8,11 +8,11 @@
 
 using namespace std;
 
-ScopeNode* reuse_existing(Problem* problem) {
+ScopeNode* reuse_existing() {
 	/**
 	 * - even distribution
 	 */
-	uniform_int_distribution<int> scope_distribution(0, (int)solution->scopes.size() + problem->num_actions() - 1);
+	uniform_int_distribution<int> scope_distribution(0, (int)solution->scopes.size() + problem_type->num_actions() - 1);
 	int scope_index = scope_distribution(generator);
 	if (scope_index > (int)solution->scopes.size()-1) {
 		return NULL;

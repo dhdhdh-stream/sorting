@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void PassThroughExperiment::activate(AbstractNode*& curr_node,
+bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 Problem* problem,
 									 vector<ContextLayer>& context,
 									 int& exit_depth,
@@ -106,6 +106,8 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 					break;
 				}
 			}
+
+			return true;
 		}
 	} else if (run_helper.experiment_history->experiment == this) {
 		bool matches_context = true;
@@ -169,7 +171,11 @@ void PassThroughExperiment::activate(AbstractNode*& curr_node,
 				break;
 			}
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void PassThroughExperiment::backprop(double target_val,

@@ -1,5 +1,15 @@
 #include "seed_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "exit_node.h"
+#include "globals.h"
+#include "problem.h"
+#include "scope_node.h"
+#include "seed_experiment_filter.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void SeedExperiment::create_filter() {
@@ -38,14 +48,14 @@ void SeedExperiment::create_filter() {
 
 	vector<pair<int,AbstractNode*>> possible_exits;
 	gather_possible_exits(possible_exits,
-						  context,
 						  this->scope_context,
-						  this->node_context);
+						  this->node_context,
+						  this->is_branch);
 
 	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 	int random_index = distribution(generator);
 	double filter_exit_depth = possible_exits[random_index].first;
-	double filter_exit_next_node = possible_exits[random_index].second;
+	AbstractNode* filter_exit_next_node = possible_exits[random_index].second;
 
 	uniform_int_distribution<int> uniform_distribution(0, 2);
 	geometric_distribution<int> geometric_distribution(0.5);
@@ -64,10 +74,12 @@ void SeedExperiment::create_filter() {
 			if (random_scope_distribution(generator) == 0) {
 				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 				Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
+				RunHelper run_helper;
 				new_scope_node = create_scope(scope,
 											  run_helper);
 			} else {
-				new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
+				RunHelper run_helper;
+				new_scope_node = create_scope(this->scope_context[0],
 											  run_helper);
 			}
 		}
@@ -78,7 +90,7 @@ void SeedExperiment::create_filter() {
 
 			filter_potential_scopes.push_back(new_scope_node);
 		} else {
-			ScopeNode* new_existing_scope_node = reuse_existing(problem);
+			ScopeNode* new_existing_scope_node = reuse_existing();
 			if (new_existing_scope_node != NULL) {
 				filter_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 				filter_actions.push_back(NULL);
@@ -90,7 +102,7 @@ void SeedExperiment::create_filter() {
 				filter_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = problem->random_action();
+				new_action_node->action = problem_type->random_action();
 				filter_actions.push_back(new_action_node);
 
 				filter_existing_scopes.push_back(NULL);

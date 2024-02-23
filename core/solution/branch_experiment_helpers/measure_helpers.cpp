@@ -124,17 +124,23 @@ void BranchExperiment::measure_activate(
 			} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
 				instance_history->step_histories.push_back(scope_node_history);
-				this->best_existing_scopes[s_index]->potential_activate(
+				this->best_existing_scopes[s_index]->activate(
+					curr_node,
 					problem,
 					context,
+					exit_depth,
+					exit_node,
 					run_helper,
 					scope_node_history);
 			} else {
 				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
 				instance_history->step_histories.push_back(scope_node_history);
-				this->best_potential_scopes[s_index]->potential_activate(
+				this->best_potential_scopes[s_index]->activate(
+					curr_node,
 					problem,
 					context,
+					exit_depth,
+					exit_node,
 					run_helper,
 					scope_node_history);
 			}

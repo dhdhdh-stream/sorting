@@ -76,6 +76,15 @@ public:
 	void verify_new_backprop(double target_val);
 
 	void finalize();
+
+	// unused
+	bool activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  int& exit_depth,
+				  AbstractNode*& exit_node,
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
 };
 
 class OuterExperimentOverallHistory : public AbstractExperimentHistory {
