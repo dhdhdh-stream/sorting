@@ -333,10 +333,14 @@ void SeedExperiment::train_existing_backprop(double target_val,
 						average_misguess,
 						misguess_variance);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double improvement = this->existing_average_misguess - average_misguess;
 		double standard_deviation = min(sqrt(this->existing_misguess_variance), sqrt(misguess_variance));
 		double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 		if (t_score > 2.326) {
+		#endif /* MDEBUG */
 			vector<int> new_input_indexes;
 			for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 				int index = -1;
@@ -377,6 +381,7 @@ void SeedExperiment::train_existing_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_ITERS) {
+			cout << "SEED_EXPERIMENT_STATE_EXPLORE" << endl;
 			this->state = SEED_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 		} else {

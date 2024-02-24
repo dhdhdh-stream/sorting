@@ -1,5 +1,7 @@
 #include "network.h"
 
+#include <iostream>
+
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;

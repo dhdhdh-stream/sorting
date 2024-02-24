@@ -1,6 +1,7 @@
 #include "seed_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -28,7 +29,54 @@ void SeedExperiment::train_filter_backprop(double target_val,
 			this->i_is_higher_histories.push_back(false);
 		}
 
-		if ((int)this->i_target_val_histories.size() >= solution->curr_num_datapoints) {
+		if ((int)this->i_is_higher_histories.size() >= solution->curr_num_datapoints) {
+			vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
+
+			for (int i_index = 0; i_index < (int)this->curr_filter->input_scope_contexts.size(); i_index++) {
+				if (this->curr_filter->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)this->curr_filter->input_node_contexts[i_index].back();
+					action_node->hook_indexes.push_back(i_index);
+					action_node->hook_scope_contexts.push_back(this->curr_filter->input_scope_contexts[i_index]);
+					action_node->hook_node_contexts.push_back(this->curr_filter->input_node_contexts[i_index]);
+				} else {
+					BranchNode* branch_node = (BranchNode*)this->curr_filter->input_node_contexts[i_index].back();
+					branch_node->hook_indexes.push_back(i_index);
+					branch_node->hook_scope_contexts.push_back(this->curr_filter->input_scope_contexts[i_index]);
+					branch_node->hook_node_contexts.push_back(this->curr_filter->input_node_contexts[i_index]);
+				}
+			}
+			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+				vector<double> input_vals(this->curr_filter->input_scope_contexts.size(), 0.0);
+
+				vector<Scope*> scope_context;
+				vector<AbstractNode*> node_context;
+				input_vals_helper(scope_context,
+								  node_context,
+								  input_vals,
+								  this->i_scope_histories[d_index]);
+
+				network_inputs[d_index] = vector<vector<double>>((int)this->curr_filter->network_input_indexes.size());
+				for (int i_index = 0; i_index < (int)this->curr_filter->network_input_indexes.size(); i_index++) {
+					network_inputs[d_index][i_index] = vector<double>((int)this->curr_filter->network_input_indexes[i_index].size());
+					for (int s_index = 0; s_index < (int)this->curr_filter->network_input_indexes[i_index].size(); s_index++) {
+						network_inputs[d_index][i_index][s_index] = input_vals[this->curr_filter->network_input_indexes[i_index][s_index]];
+					}
+				}
+			}
+			for (int i_index = 0; i_index < (int)this->curr_filter->input_scope_contexts.size(); i_index++) {
+				if (this->curr_filter->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)this->curr_filter->input_node_contexts[i_index].back();
+					action_node->hook_indexes.clear();
+					action_node->hook_scope_contexts.clear();
+					action_node->hook_node_contexts.clear();
+				} else {
+					BranchNode* branch_node = (BranchNode*)this->curr_filter->input_node_contexts[i_index].back();
+					branch_node->hook_indexes.clear();
+					branch_node->hook_scope_contexts.clear();
+					branch_node->hook_node_contexts.clear();
+				}
+			}
+
 			vector<vector<Scope*>> possible_scope_contexts;
 			vector<vector<AbstractNode*>> possible_node_contexts;
 
@@ -75,7 +123,6 @@ void SeedExperiment::train_filter_backprop(double target_val,
 				}
 			}
 
-			vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
 			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 				if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
 					ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
@@ -143,10 +190,14 @@ void SeedExperiment::train_filter_backprop(double target_val,
 				this->curr_filter->average_misguess = average_misguess;
 				this->curr_filter->misguess_variance = misguess_variance;
 			} else {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
 				double improvement = this->curr_filter->average_misguess - average_misguess;
 				double standard_deviation = min(sqrt(this->curr_filter->misguess_variance), sqrt(misguess_variance));
 				double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 				if (t_score > 2.326) {
+				#endif /* MDEBUG */
 					vector<int> new_input_indexes;
 					for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 						int index = -1;
@@ -188,6 +239,7 @@ void SeedExperiment::train_filter_backprop(double target_val,
 				this->i_is_seed_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
+				cout << "SEED_EXPERIMENT_STATE_MEASURE" << endl;
 				this->state = SEED_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {

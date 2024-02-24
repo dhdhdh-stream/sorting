@@ -34,6 +34,8 @@ SeedExperiment::SeedExperiment(vector<Scope*> scope_context,
 
 	this->curr_gather = NULL;
 
+	this->filter_step_index = 0;
+
 	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
 	this->i_scope_histories.reserve(solution->curr_num_datapoints);
 	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
@@ -55,14 +57,22 @@ SeedExperiment::~SeedExperiment() {
 		delete this->existing_network;
 	}
 
-	for (int a_index = 0; a_index < (int)this->best_step_types.size(); a_index++) {
-		if (this->best_step_types[a_index] == STEP_TYPE_ACTION) {
-			delete this->best_actions[a_index];
-		} else if (this->best_step_types[a_index] == STEP_TYPE_EXISTING_SCOPE) {
-			delete this->best_existing_scopes[a_index];
-		} else {
-			delete this->best_potential_scopes[a_index]->scope;
-			delete this->best_potential_scopes[a_index];
+	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
+		if (this->best_actions[s_index] != NULL) {
+			delete this->best_actions[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
+		if (this->best_existing_scopes[s_index] != NULL) {
+			delete this->best_existing_scopes[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
+		if (this->best_potential_scopes[s_index] != NULL) {
+			delete this->best_potential_scopes[s_index]->scope;
+			delete this->best_potential_scopes[s_index];
 		}
 	}
 
@@ -71,6 +81,10 @@ SeedExperiment::~SeedExperiment() {
 	}
 
 	// let nodes delete filters/gathers
+
+	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
+		delete this->i_scope_histories[h_index];
+	}
 }
 
 SeedExperimentOverallHistory::SeedExperimentOverallHistory(

@@ -1,5 +1,7 @@
 #include "seed_experiment_filter.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -88,6 +90,8 @@ void SeedExperimentFilter::find_gather_activate(AbstractNode*& curr_node,
 				}
 			}
 		}
+	} else {
+		curr_node = this->seed_next_node;
 	}
 }
 
@@ -105,7 +109,7 @@ void SeedExperimentFilter::create_gather_activate(Problem* problem,
 				  curr_gather_exit_depth,
 				  curr_gather_exit_node,
 				  context[context.size() - this->scope_context.size()].scope_history,
-				  this->branch_node);
+				  this);
 
 	vector<int> curr_gather_step_types;
 	vector<ActionNode*> curr_gather_actions;
@@ -185,6 +189,10 @@ void SeedExperimentFilter::create_gather_activate(Problem* problem,
 			branch_node->experiment_types.insert(branch_node->experiment_types.begin(), BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
 		}
 	}
+
+	this->parent->curr_gather_exceeded_limit_count = 0;
+	this->parent->curr_gather_is_higher = 0;
+	this->parent->curr_gather_score = 0.0;
 
 	// irrelevant what curr_node set to
 }

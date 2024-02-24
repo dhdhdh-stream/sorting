@@ -21,21 +21,24 @@ void SeedExperiment::verify_backprop(double target_val) {
 			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
 		if (combined_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
+			cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING" << endl;
 			this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
-			this->curr_gather_is_higher = 0;
-			this->curr_gather_score = 0.0;
-
+			cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
 			this->sub_state_iter = -1;
@@ -47,7 +50,11 @@ void SeedExperiment::verify_backprop(double target_val) {
 		double combined_improvement_t_score = combined_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (combined_improvement_t_score > 1.645) {	// >95%
+		#endif /* MDEBUG */
 			cout << "Seed" << endl;
 			cout << "verify" << endl;
 			cout << "this->scope_context:" << endl;
@@ -90,9 +97,7 @@ void SeedExperiment::verify_backprop(double target_val) {
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			this->curr_gather_is_higher = 0;
-			this->curr_gather_score = 0.0;
-
+			cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
 			this->sub_state_iter = -1;

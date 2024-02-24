@@ -131,4 +131,6 @@ void SeedExperiment::create_filter() {
 	}
 
 	this->curr_filter_score = 0.0;
+
+	this->curr_filter_is_success = false;
 }

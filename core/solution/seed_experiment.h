@@ -143,6 +143,7 @@ public:
 	 * 
 	 * - when finalizing, add filters first, then add gathers front-to-back
 	 */
+	int curr_gather_exceeded_limit_count;
 	int curr_gather_is_higher;
 	double curr_gather_score;
 	SeedExperimentGather* curr_gather;
@@ -173,7 +174,8 @@ public:
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
-				  RunHelper& run_helper);
+				  RunHelper& run_helper,
+				  AbstractExperimentHistory*& history);
 	void backprop(double target_val,
 				  RunHelper& run_helper,
 				  AbstractExperimentHistory* history);
@@ -208,6 +210,7 @@ public:
 								SeedExperimentOverallHistory* history);
 
 	void find_gather_backprop(double target_val,
+							  RunHelper& run_helper,
 							  SeedExperimentOverallHistory* history);
 
 	void verify_gather_backprop(double target_val,

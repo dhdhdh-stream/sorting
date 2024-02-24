@@ -682,6 +682,9 @@ ScopeNode* create_scope(Scope* parent_scope,
 	 * - edge case where inner scope exits to a node that's no longer reachable outside
 	 */
 	if (new_starting_node == NULL) {
+		/**
+		 * - may have added nodes that need to be deleted
+		 */
 		delete new_scope;
 		delete new_scope_node;
 
@@ -742,12 +745,9 @@ ScopeNode* create_scope(Scope* parent_scope,
 						map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it =
 							start_node_mappings[context_starting_depth + matching_depth]
 								.find(original_branch_node->input_node_contexts[i_index][matching_depth]);
-							/**
-							 * - match type as BranchNode might have been removed
-							 */
 						if (it == start_node_mappings[context_starting_depth + matching_depth].end()
 								|| !it->second.first
-								|| it->first->type != it->second.second->type) {
+								|| start_new_node_reverse_mappings[context_starting_depth + matching_depth][it->second.second] != it->first) {
 							new_branch_node->input_scope_context_ids.push_back(vector<int>());
 							new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 							new_branch_node->input_node_context_ids.push_back(vector<int>());
@@ -867,7 +867,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 									.find(original_branch_node->input_node_contexts[i_index][end_matching_depth]);
 							if (it == end_node_mappings[context_starting_depth + end_matching_depth].end()
 									|| !it->second.first
-									|| it->first->type != it->second.second->type) {
+									|| end_new_node_reverse_mappings[context_starting_depth + end_matching_depth][it->second.second] != it->first) {
 								new_branch_node->input_scope_context_ids.push_back(vector<int>());
 								new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 								new_branch_node->input_node_context_ids.push_back(vector<int>());
@@ -899,16 +899,6 @@ ScopeNode* create_scope(Scope* parent_scope,
 									original_branch_node->input_node_contexts[i_index].begin() + end_matching_depth+1,
 									original_branch_node->input_node_contexts[i_index].end());
 
-								// temp
-								if (new_input_node_contexts.back()->type == NODE_TYPE_SCOPE) {
-									for (int c_index = 0; c_index < (int)original_branch_node->input_scope_contexts[i_index].size(); c_index++) {
-										cout << c_index << endl;
-										cout << "original_branch_node->input_scope_context_ids[i_index][c_index]: " << original_branch_node->input_scope_context_ids[i_index][c_index] << endl;
-										cout << "original_branch_node->input_node_context_ids[i_index][c_index]: " << original_branch_node->input_node_context_ids[i_index][c_index] << endl;
-									}
-									throw invalid_argument("new_input_node_contexts.back()->type == NODE_TYPE_SCOPE");
-								}
-
 								new_branch_node->input_scope_context_ids.push_back(new_input_scope_context_ids);
 								new_branch_node->input_scope_contexts.push_back(new_input_scope_contexts);
 								new_branch_node->input_node_context_ids.push_back(new_input_node_context_ids);
@@ -919,7 +909,8 @@ ScopeNode* create_scope(Scope* parent_scope,
 								start_node_mappings[context_starting_depth + start_matching_depth]
 									.find(original_branch_node->input_node_contexts[i_index][start_matching_depth]);
 							if (it == start_node_mappings[context_starting_depth + start_matching_depth].end()
-									|| !it->second.first) {
+									|| !it->second.first
+									|| start_new_node_reverse_mappings[context_starting_depth + start_matching_depth][it->second.second] != it->first) {
 								new_branch_node->input_scope_context_ids.push_back(vector<int>());
 								new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 								new_branch_node->input_node_context_ids.push_back(vector<int>());

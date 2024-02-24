@@ -299,7 +299,7 @@ Problem* IncrementMinesweeper::copy_and_reset() {
 	new_problem->current_x = STARTING_X;
 	new_problem->current_y = STARTING_Y;
 
-	reveal_helper(STARTING_X, STARTING_Y);
+	new_problem->reveal_helper(STARTING_X, STARTING_Y);
 
 	return new_problem;
 }

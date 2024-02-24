@@ -8,10 +8,10 @@
 #include "run_helper.h"
 
 class AbstractNode;
-class BranchNode;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
+class SeedExperimentFilter;
 
 void create_experiment(ScopeHistory* root_history);
 
@@ -44,7 +44,7 @@ void create_gather(std::vector<Scope*>& new_gather_scope_context,
 				   int& new_gather_exit_depth,
 				   AbstractNode*& new_gather_exit_node,
 				   ScopeHistory* scope_history,
-				   BranchNode* filter_branch_node);
+				   SeedExperimentFilter* seed_experiment_filter);
 
 /**
  * TODO:

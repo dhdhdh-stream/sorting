@@ -35,10 +35,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new IncrementMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -190,13 +190,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+			solution->timestamp = (unsigned)time(NULL);
+			solution->save("", "main");
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;

@@ -24,6 +24,8 @@ SeedExperimentFilter::SeedExperimentFilter(SeedExperiment* parent,
 										   vector<ScopeNode*> filter_potential_scopes,
 										   int filter_exit_depth,
 										   AbstractNode* filter_exit_next_node) {
+	this->type = EXPERIMENT_TYPE_SEED_FILTER;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -193,7 +195,11 @@ void SeedExperimentFilter::add_to_scope() {
 	this->branch_node->branch_network = this->network;
 	this->network = NULL;
 
-	this->branch_node->original_next_node_id = this->seed_next_node->id;
+	if (this->seed_next_node == NULL) {
+		this->branch_node->original_next_node_id = -1;
+	} else {
+		this->branch_node->original_next_node_id = this->seed_next_node->id;
+	}
 	this->branch_node->original_next_node = this->seed_next_node;
 
 	if (this->filter_step_types.size() == 0) {

@@ -50,7 +50,7 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
 		exit_depth = node->exit_depth-1;
-		exit_node = node->exit_node;
+		exit_node = node->next_node;
 	}
 }
 

@@ -11,6 +11,7 @@
 #include "retrain_branch_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "seed_experiment.h"
 #include "solution.h"
 
 using namespace std;
@@ -93,6 +94,7 @@ void create_experiment(ScopeHistory* root_history) {
 	uniform_int_distribution<int> outer_distribution(0, max(9, (int)possible_scope_contexts[rand_index].size()));
 	if (outer_distribution(generator) == 0) {
 		solution->outer_experiment = new OuterExperiment();
+		cout << "OuterExperiment" << endl;
 	} else {
 		if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_ACTION) {
 			uniform_int_distribution<int> next_distribution(0, 1);
@@ -117,14 +119,25 @@ void create_experiment(ScopeHistory* root_history) {
 
 				ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
 				action_node->experiments.push_back(new_pass_through_experiment);
+				cout << "PassThroughExperiment" << endl;
 			} else {
-				BranchExperiment* new_branch_experiment = new BranchExperiment(
+				// BranchExperiment* new_branch_experiment = new BranchExperiment(
+				// 	vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+				// 	vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+				// 	false);
+
+				// ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
+				// action_node->experiments.push_back(new_branch_experiment);
+				// cout << "BranchExperiment" << endl;
+
+				SeedExperiment* new_seed_experiment = new SeedExperiment(
 					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
 					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
 					false);
 
 				ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
-				action_node->experiments.push_back(new_branch_experiment);
+				action_node->experiments.push_back(new_seed_experiment);
+				cout << "SeedExperiment" << endl;
 			}
 		} else if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_SCOPE) {
 			uniform_int_distribution<int> next_distribution(0, 1);
@@ -146,14 +159,25 @@ void create_experiment(ScopeHistory* root_history) {
 
 				ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
 				scope_node->experiments.push_back(new_pass_through_experiment);
+				cout << "PassThroughExperiment" << endl;
 			} else {
-				BranchExperiment* new_branch_experiment = new BranchExperiment(
+				// BranchExperiment* new_branch_experiment = new BranchExperiment(
+				// 	vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+				// 	vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+				// 	false);
+
+				// ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
+				// scope_node->experiments.push_back(new_branch_experiment);
+				// cout << "BranchExperiment" << endl;
+
+				SeedExperiment* new_seed_experiment = new SeedExperiment(
 					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
 					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
 					false);
 
 				ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
-				scope_node->experiments.push_back(new_branch_experiment);
+				scope_node->experiments.push_back(new_seed_experiment);
+				cout << "SeedExperiment" << endl;
 			}
 		} else {
 			uniform_int_distribution<int> retrain_distribution(0, 1);
@@ -162,6 +186,7 @@ void create_experiment(ScopeHistory* root_history) {
 				RetrainBranchExperiment* new_retrain_branch_experiment = new RetrainBranchExperiment(branch_node);
 				branch_node->experiments.push_back(new_retrain_branch_experiment);
 				branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_NA);
+				cout << "RetrainBranchExperiment" << endl;
 			} else {
 				uniform_int_distribution<int> next_distribution(0, 1);
 				int context_size = 1;
@@ -188,19 +213,35 @@ void create_experiment(ScopeHistory* root_history) {
 					} else {
 						branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
 					}
+					cout << "PassThroughExperiment" << endl;
 				} else {
-					BranchExperiment* new_branch_experiment = new BranchExperiment(
+					// BranchExperiment* new_branch_experiment = new BranchExperiment(
+					// 	vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					// 	vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					// 	possible_is_branch[rand_index]);
+
+					// BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
+					// branch_node->experiments.push_back(new_branch_experiment);
+					// if (possible_is_branch[rand_index]) {
+					// 	branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
+					// } else {
+					// 	branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
+					// }
+					// cout << "BranchExperiment" << endl;
+
+					SeedExperiment* new_seed_experiment = new SeedExperiment(
 						vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
 						vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
 						possible_is_branch[rand_index]);
 
 					BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
-					branch_node->experiments.push_back(new_branch_experiment);
+					branch_node->experiments.push_back(new_seed_experiment);
 					if (possible_is_branch[rand_index]) {
 						branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
 					} else {
 						branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
 					}
+					cout << "SeedExperiment" << endl;
 				}
 			}
 		}

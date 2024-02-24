@@ -2,6 +2,8 @@
 
 #include "retrain_branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -59,6 +61,13 @@ void RetrainBranchExperiment::capture_verify_activate(
 			}
 		}
 	}
+
+	cout << "input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+		cout << i_index << ": " << input_vals[i_index] << endl;
+	}
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
 
 	double original_predicted_score = this->original_average_score;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {

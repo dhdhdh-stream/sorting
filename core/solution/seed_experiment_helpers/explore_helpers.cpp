@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -411,23 +413,29 @@ void SeedExperiment::explore_backprop(double target_val,
 															 filter_next_node);
 				if (this->node_context.back()->type == NODE_TYPE_ACTION) {
 					ActionNode* action_node = (ActionNode*)this->node_context.back();
-					action_node->experiments.push_back(this->curr_filter);
+					action_node->experiments.insert(action_node->experiments.begin(), this->curr_filter);
 				} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 					ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-					scope_node->experiments.push_back(this->curr_filter);
+					scope_node->experiments.insert(scope_node->experiments.begin(), this->curr_filter);
 				} else {
 					BranchNode* branch_node = (BranchNode*)this->node_context.back();
-					branch_node->experiments.push_back(this->curr_filter);
-					branch_node->experiment_types.push_back(this->is_branch);
+					branch_node->experiments.insert(branch_node->experiments.begin(), this->curr_filter);
+					branch_node->experiment_types.insert(branch_node->experiment_types.begin(), this->is_branch);
 				}
+
+				this->curr_filter_score = 0.0;
+				this->curr_filter_step_index = 0;
+				this->curr_filter_is_success = false;
 
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
+				cout << "SEED_EXPERIMENT_STATE_TRAIN_FILTER" << endl;
 				this->state = SEED_EXPERIMENT_STATE_TRAIN_FILTER;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 			} else {
+				cout << "EXPERIMENT_RESULT_FAIL" << endl;
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

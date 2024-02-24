@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -104,7 +106,11 @@ void SeedExperiment::finalize_success() {
 
 		if (this->best_step_types.size() == 0) {
 			if (this->best_exit_depth == 0) {
-				new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
+				if (this->best_exit_next_node == NULL) {
+					new_branch_node->branch_next_node_id = -1;
+				} else {
+					new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
+				}
 				new_branch_node->branch_next_node = this->best_exit_next_node;
 			} else {
 				new_branch_node->branch_next_node_id = this->best_exit_node->id;
@@ -127,7 +133,11 @@ void SeedExperiment::finalize_success() {
 		start_node = new_branch_node;
 	} else {
 		if (this->best_step_types.size() == 0) {
-			start_node_id = this->best_exit_next_node->id;
+			if (this->best_exit_next_node == NULL) {
+				start_node_id = -1;
+			} else {
+				start_node_id = this->best_exit_next_node->id;
+			}
 			start_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {

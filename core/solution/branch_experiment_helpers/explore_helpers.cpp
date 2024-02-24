@@ -265,13 +265,13 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				}
 			}
 		}
+	}
 
-		if (this->curr_exit_depth == 0) {
-			curr_node = this->curr_exit_node;
-		} else {
-			exit_depth = this->curr_exit_depth-1;
-			exit_node = this->curr_exit_node;
-		}
+	if (this->curr_exit_depth == 0) {
+		curr_node = this->curr_exit_node;
+	} else {
+		exit_depth = this->curr_exit_depth-1;
+		exit_node = this->curr_exit_node;
 	}
 }
 

@@ -1,5 +1,7 @@
 #include "seed_experiment_gather.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -22,6 +24,8 @@ SeedExperimentGather::SeedExperimentGather(SeedExperiment* parent,
 										   vector<ScopeNode*> potential_scopes,
 										   int exit_depth,
 										   AbstractNode* exit_next_node) {
+	this->type = EXPERIMENT_TYPE_SEED_GATHER;
+
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;

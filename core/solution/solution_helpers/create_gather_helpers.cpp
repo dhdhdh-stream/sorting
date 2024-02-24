@@ -5,10 +5,12 @@
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "seed_experiment_filter.h"
 
 using namespace std;
 
-void create_gather_helper(vector<Scope*>& scope_context,
+void create_gather_helper(bool on_path,
+						  vector<Scope*>& scope_context,
 						  vector<AbstractNode*>& node_context,
 						  vector<vector<Scope*>>& possible_scope_contexts,
 						  vector<vector<AbstractNode*>>& possible_node_contexts,
@@ -37,19 +39,30 @@ void create_gather_helper(vector<Scope*>& scope_context,
 
 			node_context.back() = scope_node;
 
-			uniform_int_distribution<int> inner_distribution(0, 2);
-			if (inner_distribution(generator) == 0) {
-				create_gather_helper(scope_context,
+			if (on_path && h_index == (int)scope_history->node_histories.size()-1) {
+				create_gather_helper(true,
+									 scope_context,
 									 node_context,
 									 possible_scope_contexts,
 									 possible_node_contexts,
 									 possible_is_branch,
 									 scope_node_history->scope_history);
-			}
+			} else {
+				uniform_int_distribution<int> inner_distribution(0, 2);
+				if (inner_distribution(generator) == 0) {
+					create_gather_helper(false,
+										 scope_context,
+										 node_context,
+										 possible_scope_contexts,
+										 possible_node_contexts,
+										 possible_is_branch,
+										 scope_node_history->scope_history);
+				}
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+			}
 
 			node_context.back() = NULL;
 		} else {
@@ -75,14 +88,15 @@ void create_gather(vector<Scope*>& new_gather_scope_context,
 				   int& new_gather_exit_depth,
 				   AbstractNode*& new_gather_exit_node,
 				   ScopeHistory* scope_history,
-				   BranchNode* filter_branch_node) {
+				   SeedExperimentFilter* seed_experiment_filter) {
 	vector<vector<Scope*>> possible_scope_contexts;
 	vector<vector<AbstractNode*>> possible_node_contexts;
 	vector<bool> possible_is_branch;
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	create_gather_helper(scope_context,
+	create_gather_helper(true,
+						 scope_context,
 						 node_context,
 						 possible_scope_contexts,
 						 possible_node_contexts,
@@ -116,8 +130,81 @@ void create_gather(vector<Scope*>& new_gather_scope_context,
 			possible_end_node_contexts.push_back(possible_node_contexts[p_index]);
 		}
 	}
-	possible_end_scope_contexts.push_back(vector<Scope*>{scope_history->scope});
-	possible_end_node_contexts.push_back(vector<AbstractNode*>{filter_branch_node});
+	/**
+	 * - add scope ends
+	 */
+	if (possible_end_scope_contexts.size() > 1) {
+		int e_index = 0;
+		while (true) {
+			if (possible_end_scope_contexts[e_index].size() < possible_end_scope_contexts[e_index+1].size()) {
+				vector<Scope*> end_scope_context = possible_end_scope_contexts[e_index];
+				vector<AbstractNode*> end_node_context = possible_end_node_contexts[e_index];
+				end_node_context.back() = NULL;
+				possible_end_scope_contexts.insert(possible_end_scope_contexts.begin() + e_index+1, end_scope_context);
+				possible_end_node_contexts.insert(possible_end_node_contexts.begin() + e_index+1, end_node_context);
+			}
+
+			e_index++;
+			if (e_index >= (int)possible_end_scope_contexts.size()-1) {
+				break;
+			}
+		}
+	}
+	{
+		bool on_path = true;
+		if (possible_scope_contexts[start_index].size() >= seed_experiment_filter->scope_context.size()) {
+			on_path = false;
+		} else {
+			for (int c_index = 0; c_index < (int)possible_scope_contexts[start_index].size()-1; c_index++) {
+				if (possible_scope_contexts[start_index][c_index] != seed_experiment_filter->scope_context[c_index]
+						|| possible_node_contexts[start_index][c_index] != seed_experiment_filter->node_context[c_index]) {
+					on_path = false;
+					break;
+				}
+			}
+		}
+
+		if (on_path) {
+			vector<Scope*> scope_node_scope_context = seed_experiment_filter->scope_context;
+			scope_node_scope_context.erase(scope_node_scope_context.begin() + possible_scope_contexts[start_index].size(),
+				scope_node_scope_context.end());
+			vector<AbstractNode*> scope_node_node_context = seed_experiment_filter->node_context;
+			scope_node_node_context.erase(scope_node_node_context.begin() + possible_scope_contexts[start_index].size(),
+				scope_node_node_context.end());
+			possible_end_scope_contexts.push_back(scope_node_scope_context);
+			possible_end_node_contexts.push_back(scope_node_node_context);
+		} else {
+			bool matches_rise = true;
+			if (seed_experiment_filter->scope_context.size() > possible_scope_contexts[start_index].size()) {
+				matches_rise = false;
+			} else {
+				for (int c_index = 0; c_index < (int)seed_experiment_filter->scope_context.size()-1; c_index++) {
+					if (seed_experiment_filter->scope_context[c_index] != possible_scope_contexts[start_index][c_index]
+							|| seed_experiment_filter->node_context[c_index] != possible_node_contexts[start_index][c_index]) {
+						matches_rise = false;
+						break;
+					}
+				}
+			}
+
+			if (matches_rise) {
+				vector<Scope*> filter_scope_context = seed_experiment_filter->scope_context;
+				vector<AbstractNode*> filter_node_context = seed_experiment_filter->node_context;
+				filter_node_context.back() = seed_experiment_filter->branch_node;
+				possible_end_scope_contexts.push_back(filter_scope_context);
+				possible_end_node_contexts.push_back(filter_node_context);
+			} else {
+				/**
+				 * - add final scope end
+				 */
+				vector<Scope*> end_scope_context = possible_end_scope_contexts.back();
+				vector<AbstractNode*> end_node_context = possible_end_node_contexts.back();
+				end_node_context.back() = NULL;
+				possible_end_scope_contexts.push_back(end_scope_context);
+				possible_end_node_contexts.push_back(end_node_context);
+			}
+		}
+	}
 
 	geometric_distribution<int> end_distribution(0.2);
 	int end_index = end_distribution(generator);

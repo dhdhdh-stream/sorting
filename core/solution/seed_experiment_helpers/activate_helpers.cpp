@@ -13,7 +13,8 @@ bool SeedExperiment::activate(AbstractNode*& curr_node,
 							  vector<ContextLayer>& context,
 							  int& exit_depth,
 							  AbstractNode*& exit_node,
-							  RunHelper& run_helper) {
+							  RunHelper& run_helper,
+							  AbstractExperimentHistory*& history) {
 	bool is_selected = false;
 	if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;
@@ -142,6 +143,7 @@ void SeedExperiment::backprop(double target_val,
 		break;
 	case SEED_EXPERIMENT_STATE_FIND_GATHER:
 		find_gather_backprop(target_val,
+							 run_helper,
 							 overall_history);
 		break;
 	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER:
