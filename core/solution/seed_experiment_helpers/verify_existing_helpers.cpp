@@ -36,6 +36,8 @@ void SeedExperiment::verify_existing_backprop(double target_val,
 
 		this->o_target_val_histories.clear();
 
+		this->combined_score = 0.0;
+
 		cout << "SEED_EXPERIMENT_STATE_VERIFY_1ST" << endl;
 		this->state = SEED_EXPERIMENT_STATE_VERIFY_1ST;
 		this->state_iter = 0;
@@ -53,6 +55,8 @@ void SeedExperiment::verify_existing_backprop(double target_val,
 		this->existing_score_standard_deviation = sqrt(sum_score_variance / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		this->o_target_val_histories.clear();
+
+		this->combined_score = 0.0;
 
 		cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND" << endl;
 		this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND;

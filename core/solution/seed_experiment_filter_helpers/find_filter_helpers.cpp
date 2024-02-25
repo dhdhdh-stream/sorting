@@ -15,6 +15,7 @@ void SeedExperimentFilter::find_filter_activate(AbstractNode*& curr_node,
 												RunHelper& run_helper) {
 	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
 	overall_history->instance_count++;
+	overall_history->has_target = true;
 
 	for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {
 		if (this->filter_step_types[s_index] == STEP_TYPE_ACTION) {

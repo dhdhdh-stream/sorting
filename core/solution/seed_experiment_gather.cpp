@@ -224,7 +224,6 @@ void SeedExperimentGather::add_to_scope() {
 		}
 	}
 
-	int end_node_id;
 	AbstractNode* end_node;
 	if (this->exit_depth > 0) {
 		ExitNode* new_exit_node = new ExitNode();
@@ -234,53 +233,37 @@ void SeedExperimentGather::add_to_scope() {
 
 		new_exit_node->exit_depth = this->exit_depth;
 		new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - exit_depth]->id;
-		if (this->exit_next_node == NULL) {
-			new_exit_node->next_node_id = -1;
-		} else {
-			new_exit_node->next_node_id = this->exit_next_node->id;
-		}
 		new_exit_node->next_node = this->exit_next_node;
 
 		this->exit_node = new_exit_node;
 
-		end_node_id = new_exit_node->id;
 		end_node = new_exit_node;
 	} else {
-		if (this->exit_next_node == NULL) {
-			end_node_id = -1;
-		} else {
-			end_node_id = this->exit_next_node->id;
-		}
 		end_node = this->exit_next_node;
 	}
 
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		int next_node_id;
 		AbstractNode* next_node;
 		if (s_index == (int)this->step_types.size()-1) {
-			next_node_id = end_node_id;
+			/**
+			 * - end_node_id may not be initialized if from filter branch_node
+			 */
 			next_node = end_node;
 		} else {
 			if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
-				next_node_id = this->actions[s_index+1]->id;
 				next_node = this->actions[s_index+1];
 			} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-				next_node_id = this->existing_scopes[s_index+1]->id;
 				next_node = this->existing_scopes[s_index+1];
 			} else {
-				next_node_id = this->potential_scopes[s_index+1]->id;
 				next_node = this->potential_scopes[s_index+1];
 			}
 		}
 
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			this->actions[s_index]->next_node_id = next_node_id;
 			this->actions[s_index]->next_node = next_node;
 		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			this->existing_scopes[s_index]->next_node_id = next_node_id;
 			this->existing_scopes[s_index]->next_node = next_node;
 		} else {
-			this->potential_scopes[s_index]->next_node_id = next_node_id;
 			this->potential_scopes[s_index]->next_node = next_node;
 		}
 	}
@@ -387,15 +370,41 @@ void SeedExperimentGather::finalize() {
 		}
 	}
 
+	if (this->exit_node != NULL) {
+		if (this->exit_node->next_node == NULL) {
+			this->exit_node->next_node_id = -1;
+		} else {
+			this->exit_node->next_node_id = this->exit_node->next_node->id;
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
+
+			if (this->actions[s_index]->next_node == NULL) {
+				this->actions[s_index]->next_node_id = -1;
+			} else {
+				this->actions[s_index]->next_node_id = this->actions[s_index]->next_node->id;
+			}
 		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 			this->scope_context.back()->nodes[this->existing_scopes[s_index]->id] = this->existing_scopes[s_index];
+
+			if (this->existing_scopes[s_index]->next_node == NULL) {
+				this->existing_scopes[s_index]->next_node_id = -1;
+			} else {
+				this->existing_scopes[s_index]->next_node_id = this->existing_scopes[s_index]->next_node->id;
+			}
 		} else {
 			this->scope_context.back()->nodes[this->potential_scopes[s_index]->id] = this->potential_scopes[s_index];
 
 			solution->scopes[this->potential_scopes[s_index]->scope->id] = this->potential_scopes[s_index]->scope;
+
+			if (this->potential_scopes[s_index]->next_node == NULL) {
+				this->potential_scopes[s_index]->next_node_id = -1;
+			} else {
+				this->potential_scopes[s_index]->next_node_id = this->potential_scopes[s_index]->next_node->id;
+			}
 		}
 	}
 	this->actions.clear();

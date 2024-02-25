@@ -244,9 +244,8 @@ void OuterExperiment::explore_backprop(double target_val) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			double score_standard_deviation = sqrt(this->existing_score_variance);
 			double score_improvement_t_score = this->best_score
-				/ (score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
+				/ (this->existing_score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
 
 			if (score_improvement_t_score > 1.645) {	// >95%
 			#endif /* MDEBUG */

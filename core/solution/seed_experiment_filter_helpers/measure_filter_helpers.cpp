@@ -1,10 +1,13 @@
 #include "seed_experiment_filter.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "problem.h"
 #include "scope_node.h"
 #include "seed_experiment.h"
 #include "solution_helpers.h"
@@ -60,19 +63,19 @@ void SeedExperimentFilter::measure_filter_target_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		if (this->input_scope_contexts[i_index].size() > 0) {
-			if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+	vector<double> input_vals(this->test_input_scope_contexts.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->test_input_scope_contexts.size(); i_index++) {
+		if (this->test_input_scope_contexts[i_index].size() > 0) {
+			if (this->test_input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->test_input_node_contexts[i_index].back();
 				action_node->hook_indexes.push_back(i_index);
-				action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-				action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+				action_node->hook_scope_contexts.push_back(this->test_input_scope_contexts[i_index]);
+				action_node->hook_node_contexts.push_back(this->test_input_node_contexts[i_index]);
 			} else {
-				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+				BranchNode* branch_node = (BranchNode*)this->test_input_node_contexts[i_index].back();
 				branch_node->hook_indexes.push_back(i_index);
-				branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-				branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+				branch_node->hook_scope_contexts.push_back(this->test_input_scope_contexts[i_index]);
+				branch_node->hook_node_contexts.push_back(this->test_input_node_contexts[i_index]);
 			}
 		}
 	}
@@ -82,15 +85,15 @@ void SeedExperimentFilter::measure_filter_target_activate(
 					  node_context,
 					  input_vals,
 					  context[context.size() - this->scope_context.size()].scope_history);
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		if (this->input_scope_contexts[i_index].size() > 0) {
-			if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+	for (int i_index = 0; i_index < (int)this->test_input_scope_contexts.size(); i_index++) {
+		if (this->test_input_scope_contexts[i_index].size() > 0) {
+			if (this->test_input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->test_input_node_contexts[i_index].back();
 				action_node->hook_indexes.clear();
 				action_node->hook_scope_contexts.clear();
 				action_node->hook_node_contexts.clear();
 			} else {
-				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+				BranchNode* branch_node = (BranchNode*)this->test_input_node_contexts[i_index].back();
 				branch_node->hook_indexes.clear();
 				branch_node->hook_scope_contexts.clear();
 				branch_node->hook_node_contexts.clear();
@@ -98,16 +101,16 @@ void SeedExperimentFilter::measure_filter_target_activate(
 		}
 	}
 
-	vector<vector<double>> network_input_vals(this->network_input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
-		network_input_vals[i_index] = vector<double>(this->network_input_indexes[i_index].size());
-		for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
-			network_input_vals[i_index][v_index] = input_vals[this->network_input_indexes[i_index][v_index]];
+	vector<vector<double>> network_input_vals(this->test_network_input_indexes.size());
+	for (int i_index = 0; i_index < (int)this->test_network_input_indexes.size(); i_index++) {
+		network_input_vals[i_index] = vector<double>(this->test_network_input_indexes[i_index].size());
+		for (int v_index = 0; v_index < (int)this->test_network_input_indexes[i_index].size(); v_index++) {
+			network_input_vals[i_index][v_index] = input_vals[this->test_network_input_indexes[i_index][v_index]];
 		}
 	}
-	this->network->activate(network_input_vals);
+	this->test_network->activate(network_input_vals);
 
-	if (0.5 + this->network->output->acti_vals[0] < FILTER_CONFIDENCE_THRESHOLD) {
+	if (0.5 + this->test_network->output->acti_vals[0] < FILTER_CONFIDENCE_THRESHOLD) {
 		this->parent->i_is_seed_histories.push_back(false);
 
 		for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {

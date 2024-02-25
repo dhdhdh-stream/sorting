@@ -32,7 +32,7 @@ public:
 	std::vector<std::vector<int>> network_input_indexes;
 	Network* network;
 	double average_misguess;
-	double misguess_variance;
+	double misguess_standard_deviation;
 
 	AbstractNode* seed_next_node;
 	std::vector<int> filter_step_types;
@@ -44,6 +44,13 @@ public:
 	ExitNode* filter_exit_node;
 
 	bool is_candidate;
+
+	std::vector<std::vector<Scope*>> test_input_scope_contexts;
+	std::vector<std::vector<AbstractNode*>> test_input_node_contexts;
+	std::vector<std::vector<int>> test_network_input_indexes;
+	Network* test_network;
+	double test_average_misguess;
+	double test_misguess_standard_deviation;
 
 	SeedExperimentFilter(SeedExperiment* parent,
 						 std::vector<Scope*> scope_context,

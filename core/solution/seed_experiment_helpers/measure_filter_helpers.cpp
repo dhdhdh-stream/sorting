@@ -4,7 +4,9 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "scope_node.h"
 #include "seed_experiment_filter.h"
 #include "seed_experiment_gather.h"
@@ -32,7 +34,14 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 					num_seed++;
 				}
 			}
+			double seed_ratio = (double)num_seed / (double)solution->curr_num_datapoints;
 			double higher_ratio = (double)num_higher / (double)num_seed;
+
+			cout << "seed_ratio: " << seed_ratio << endl;
+			cout << "higher_ratio: " << higher_ratio << endl;
+
+			this->i_is_seed_histories.clear();
+			this->i_is_higher_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
@@ -44,12 +53,38 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				improve_threshold = 0.1 * this->curr_higher_ratio;
 			}
 
-			if (higher_ratio > this->curr_higher_ratio + improve_threshold) {
+			if (seed_ratio > 0.0 && higher_ratio > this->curr_higher_ratio + improve_threshold) {
 			#endif /* MDEBUG */
+				this->curr_filter->input_scope_contexts = this->curr_filter->test_input_scope_contexts;
+				this->curr_filter->test_input_scope_contexts.clear();
+				this->curr_filter->input_node_contexts = this->curr_filter->test_input_node_contexts;
+				this->curr_filter->test_input_node_contexts.clear();
+				this->curr_filter->network_input_indexes = this->curr_filter->test_network_input_indexes;
+				this->curr_filter->test_network_input_indexes.clear();
+				if (this->curr_filter->network != NULL) {
+					delete this->curr_filter->network;
+				}
+				this->curr_filter->network = this->curr_filter->test_network;
+				this->curr_filter->test_network = NULL;
+				this->curr_filter->average_misguess = this->curr_filter->test_average_misguess;
+				this->curr_filter->misguess_standard_deviation = this->curr_filter->test_misguess_standard_deviation;
+
 				this->curr_higher_ratio = higher_ratio;
 
 				if (this->curr_gather != NULL) {
-					this->curr_gather->add_to_scope();
+					cout << "add gather" << endl;
+					cout << "gather_path:" << endl;
+					for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
+						if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->curr_gather->actions[s_index]->action.move;
+						} else if (this->curr_gather->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+							cout << " E";
+						} else {
+							cout << " P";
+						}
+					}
+					cout << endl;
+
 					this->gathers.push_back(this->curr_gather);
 					this->curr_gather = NULL;
 
@@ -58,10 +93,20 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 
 				this->curr_filter_is_success = true;
 
+				this->combined_score = 0.0;
+
 				cout << "SEED_EXPERIMENT_STATE_MEASURE" << endl;
 				this->state = SEED_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
+				this->curr_filter->test_input_scope_contexts.clear();
+				this->curr_filter->test_input_node_contexts.clear();
+				this->curr_filter->test_network_input_indexes.clear();
+				if (this->curr_filter->test_network != NULL) {
+					delete this->curr_filter->test_network;
+					this->curr_filter->test_network = NULL;
+				}
+
 				if (this->curr_gather != NULL) {
 					AbstractNode* gather_node = this->curr_gather->node_context.back();
 					if (gather_node->type == NODE_TYPE_ACTION) {
@@ -100,6 +145,19 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->train_gather_iter++;
 				if (this->train_gather_iter >= TRAIN_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
+						cout << "add filter" << endl;
+						cout << "filter_path:" << endl;
+						for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
+							if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+								cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
+							} else if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+								cout << " E";
+							} else {
+								cout << " P";
+							}
+						}
+						cout << endl;
+
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);
 						this->filter_step_index = this->curr_filter_step_index;

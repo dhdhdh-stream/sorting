@@ -160,16 +160,6 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 			this->curr_existing_scopes.push_back(NULL);
 
 			this->curr_potential_scopes.push_back(new_scope_node);
-
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-			new_scope_node->activate(curr_node,
-									 problem,
-									 context,
-									 exit_depth,
-									 exit_node,
-									 run_helper,
-									 scope_node_history);
-			delete scope_node_history;
 		} else {
 			ScopeNode* new_existing_scope_node = reuse_existing();
 			if (new_existing_scope_node != NULL) {
@@ -179,16 +169,6 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 				this->curr_existing_scopes.push_back(new_existing_scope_node);
 
 				this->curr_potential_scopes.push_back(NULL);
-
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_existing_scope_node);
-				new_existing_scope_node->activate(curr_node,
-												  problem,
-												  context,
-												  exit_depth,
-												  exit_node,
-												  run_helper,
-												  scope_node_history);
-				delete scope_node_history;
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
@@ -198,17 +178,89 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 				this->curr_existing_scopes.push_back(NULL);
 				this->curr_potential_scopes.push_back(NULL);
-
-				ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-				new_action_node->activate(curr_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper,
-										  action_node_history);
-				delete action_node_history;
 			}
+		}
+	}
+
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// LEFT
+	// 	new_action_node->action = Action(3);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// LEFT
+	// 	new_action_node->action = Action(3);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// UP
+	// 	new_action_node->action = Action(0);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// FLAG
+	// 	new_action_node->action = Action(5);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+
+	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
+			this->curr_actions[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				action_node_history);
+			delete action_node_history;
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_existing_scopes[s_index]);
+			this->curr_existing_scopes[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
+		} else {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			this->curr_potential_scopes[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
 		}
 	}
 

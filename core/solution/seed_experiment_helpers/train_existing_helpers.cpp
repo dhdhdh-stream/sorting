@@ -77,6 +77,9 @@ void SeedExperiment::train_existing_backprop(double target_val,
 				sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 			}
 			this->existing_score_standard_deviation = sqrt(sum_score_variance / solution->curr_num_datapoints);
+			if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
+				this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
 
 			int num_obs = min(LINEAR_NUM_OBS, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> potential_scope_contexts;
@@ -194,7 +197,10 @@ void SeedExperiment::train_existing_backprop(double target_val,
 			for (int d_index = 0; d_index < num_instances; d_index++) {
 				sum_misguess_variances += (misguesses[d_index] - this->existing_average_misguess) * (misguesses[d_index] - this->existing_average_misguess);
 			}
-			this->existing_misguess_variance = sum_misguess_variances / num_instances;
+			this->existing_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+			if (this->existing_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+				this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
 		} else {
 			for (int i_index = 0; i_index < (int)this->existing_input_scope_contexts.size(); i_index++) {
 				if (this->existing_input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -326,18 +332,18 @@ void SeedExperiment::train_existing_backprop(double target_val,
 					  test_network);
 
 		double average_misguess;
-		double misguess_variance;
+		double misguess_standard_deviation;
 		measure_network(network_inputs,
 						network_target_vals,
 						test_network,
 						average_misguess,
-						misguess_variance);
+						misguess_standard_deviation);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
 		double improvement = this->existing_average_misguess - average_misguess;
-		double standard_deviation = min(sqrt(this->existing_misguess_variance), sqrt(misguess_variance));
+		double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
 		double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 		if (t_score > 2.326) {
 		#endif /* MDEBUG */
@@ -367,7 +373,9 @@ void SeedExperiment::train_existing_backprop(double target_val,
 			this->existing_network = test_network;
 
 			this->existing_average_misguess = average_misguess;
-			this->existing_misguess_variance = misguess_variance;
+			this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+			this->state_iter = 0;
 		} else {
 			delete test_network;
 		}

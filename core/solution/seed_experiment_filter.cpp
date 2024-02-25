@@ -49,6 +49,8 @@ SeedExperimentFilter::SeedExperimentFilter(SeedExperiment* parent,
 	this->filter_exit_node = NULL;
 
 	this->is_candidate = true;
+
+	this->test_network = NULL;
 }
 
 SeedExperimentFilter::~SeedExperimentFilter() {
@@ -84,6 +86,10 @@ SeedExperimentFilter::~SeedExperimentFilter() {
 
 	if (this->filter_exit_node != NULL) {
 		delete this->filter_exit_node;
+	}
+
+	if (this->test_network != NULL) {
+		delete this->test_network;
 	}
 }
 
@@ -170,8 +176,8 @@ void SeedExperimentFilter::add_to_scope() {
 
 	this->branch_node->is_pass_through = false;
 
-	this->branch_node->original_average_score = FILTER_CONFIDENCE_THRESHOLD;
-	this->branch_node->branch_average_score = 0.5;
+	this->branch_node->original_average_score = 0.5;
+	this->branch_node->branch_average_score = FILTER_CONFIDENCE_THRESHOLD;
 
 	this->branch_node->input_scope_contexts = this->input_scope_contexts;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -190,10 +196,10 @@ void SeedExperimentFilter::add_to_scope() {
 		this->branch_node->input_node_context_ids.push_back(node_ids);
 	}
 
-	this->branch_node->original_network = NULL;
-	this->branch_node->branch_network_input_indexes = this->network_input_indexes;
-	this->branch_node->branch_network = this->network;
+	this->branch_node->original_network_input_indexes = this->network_input_indexes;
+	this->branch_node->original_network = this->network;
 	this->network = NULL;
+	this->branch_node->branch_network = NULL;
 
 	if (this->seed_next_node == NULL) {
 		this->branch_node->original_next_node_id = -1;

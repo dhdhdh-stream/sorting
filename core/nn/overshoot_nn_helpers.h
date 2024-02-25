@@ -17,6 +17,6 @@ void overshoot_measure_network(std::vector<std::vector<std::vector<double>>>& in
 							   std::vector<bool>& target_vals,
 							   Network* network,
 							   double& average_misguess,
-							   double& misguess_variance);
+							   double& misguess_standard_deviation);
 
 #endif /* OVERSHOOT_NN_HELPERS_H */

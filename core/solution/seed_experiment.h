@@ -112,7 +112,7 @@ public:
 	std::vector<std::vector<int>> existing_network_input_indexes;
 	Network* existing_network;
 	double existing_average_misguess;
-	double existing_misguess_variance;
+	double existing_misguess_standard_deviation;
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
@@ -143,9 +143,10 @@ public:
 	 * 
 	 * - when finalizing, add filters first, then add gathers front-to-back
 	 */
-	int curr_gather_exceeded_limit_count;
+	int curr_gather_miss_count;
+	double curr_gather_seed_score;
 	int curr_gather_is_higher;
-	double curr_gather_score;
+	double curr_gather_non_seed_score;
 	SeedExperimentGather* curr_gather;
 
 	std::vector<SeedExperimentFilter*> filters;

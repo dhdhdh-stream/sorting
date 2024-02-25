@@ -65,7 +65,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+		this->existing_score_standard_deviation = sqrt(sum_score_variance / solution->curr_num_datapoints);
+		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		int num_instances = (int)this->i_target_val_histories.size();
 
@@ -168,7 +171,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			}
 		}
 		this->existing_linear_weights = vector<double>(this->input_scope_contexts.size());
-		double existing_standard_deviation = sqrt(this->existing_score_variance);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			/**
 			 * - don't worry about comparing against new weights
@@ -180,7 +182,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				sum_impact_size += abs(inputs(d_index, i_index));
 			}
 			double average_impact = sum_impact_size / num_instances;
-			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * existing_standard_deviation) {
+			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation) {
 				weights(i_index) = 0.0;
 			}
 			this->existing_linear_weights[i_index] = weights(i_index);
@@ -208,7 +210,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_misguess_variances += (misguesses[d_index] - this->existing_average_misguess) * (misguesses[d_index] - this->existing_average_misguess);
 		}
-		this->existing_misguess_variance = sum_misguess_variances / num_instances;
+		this->existing_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+		if (this->existing_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 		vector<vector<Scope*>> test_network_input_scope_contexts;
@@ -279,15 +284,15 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					  test_network);
 
 		double average_misguess;
-		double misguess_variance;
+		double misguess_standard_deviation;
 		measure_network(network_inputs,
 						network_target_vals,
 						test_network,
 						average_misguess,
-						misguess_variance);
+						misguess_standard_deviation);
 
 		double improvement = this->existing_average_misguess - average_misguess;
-		double standard_deviation = min(sqrt(this->existing_misguess_variance), sqrt(misguess_variance));
+		double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
 		double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 		if (t_score > 2.326) {
 			vector<int> new_input_indexes;
@@ -318,7 +323,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			this->existing_network = test_network;
 
 			this->existing_average_misguess = average_misguess;
-			this->existing_misguess_variance = misguess_variance;
+			this->existing_misguess_standard_deviation = misguess_standard_deviation;
 		} else {
 			delete test_network;
 		}

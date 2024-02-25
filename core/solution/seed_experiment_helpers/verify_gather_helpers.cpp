@@ -18,11 +18,12 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 											SeedExperimentOverallHistory* history) {
 	if (history->has_target) {
 		if (this->sub_state_iter%2 == 0) {
+			this->curr_gather_seed_score += target_val;
 			if (target_val > this->existing_average_score + this->existing_score_standard_deviation) {
 				this->curr_gather_is_higher++;
 			}
 		} else {
-			this->curr_gather_score += target_val;
+			this->curr_gather_non_seed_score += target_val;
 		}
 
 		this->sub_state_iter++;
@@ -31,20 +32,28 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
+			this->curr_gather_seed_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2);
 			double new_higher_ratio = (double)this->curr_gather_is_higher / (double)(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2);
-			this->curr_gather_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2);
+			this->curr_gather_non_seed_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2);
+
+			double seed_score_diff = this->curr_gather_seed_score - this->curr_filter_score;
+			double seed_t_score = seed_score_diff
+				/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2));
 
 			double ratio_standard_deviation = sqrt(this->curr_higher_ratio * (1 - this->curr_higher_ratio));
 			double ratio_t_score = (new_higher_ratio - this->curr_higher_ratio)
 				/ (ratio_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			double score_diff = this->curr_gather_score - this->existing_average_score;
-			double t_score = score_diff
+			double non_seed_score_diff = this->curr_gather_non_seed_score - this->existing_average_score;
+			double non_seed_t_score = non_seed_score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			if (ratio_t_score > -0.2 && t_score > -0.2) {
+			if (seed_t_score > -0.2 && ratio_t_score > -0.2 && non_seed_t_score > -0.2) {
 			#endif /* MDEBUG */
-				cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER" << endl;
+				this->curr_gather_seed_score = 0.0;
+				this->curr_gather_is_higher = 0;
+				this->curr_gather_non_seed_score = 0.0;
+
 				this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER;
 				/**
 				 * - leave this->state_iter unchanged
@@ -89,6 +98,19 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 				this->state_iter++;
 				if (this->state_iter >= FIND_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
+						cout << "add filter" << endl;
+						cout << "filter_path:" << endl;
+						for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
+							if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+								cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
+							} else if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+								cout << " E";
+							} else {
+								cout << " P";
+							}
+						}
+						cout << endl;
+
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);
 						this->filter_step_index = this->curr_filter_step_index;
@@ -138,7 +160,6 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 						this->sub_state_iter = 0;
 					}
 				} else {
-					cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 					this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 					this->sub_state_iter = -1;
 				}
@@ -147,19 +168,26 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
+			this->curr_gather_seed_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
 			double new_higher_ratio = (double)this->curr_gather_is_higher / (double)(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
-			this->curr_gather_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
+			this->curr_gather_non_seed_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
+
+			double seed_score_diff = this->curr_gather_seed_score - this->curr_filter_score;
+			double seed_t_score = seed_score_diff
+				/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2));
 
 			double ratio_standard_deviation = sqrt(this->curr_higher_ratio * (1 - this->curr_higher_ratio));
 			double ratio_t_score = (new_higher_ratio - this->curr_higher_ratio)
 				/ (ratio_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			double score_diff = this->curr_gather_score - this->existing_average_score;
-			double t_score = score_diff
+			double non_seed_score_diff = this->curr_gather_non_seed_score - this->existing_average_score;
+			double non_seed_t_score = non_seed_score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			if (ratio_t_score > -0.2 && t_score > -0.2) {
+			if (seed_t_score > -0.2 && ratio_t_score > -0.2 && non_seed_t_score > -0.2) {
 			#endif /* MDEBUG */
+				this->curr_gather->add_to_scope();
+
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
@@ -206,6 +234,19 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 				this->state_iter++;
 				if (this->state_iter >= FIND_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
+						cout << "add filter" << endl;
+						cout << "filter_path:" << endl;
+						for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
+							if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+								cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
+							} else if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+								cout << " E";
+							} else {
+								cout << " P";
+							}
+						}
+						cout << endl;
+
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);
 						this->filter_step_index = this->curr_filter_step_index;
@@ -255,7 +296,6 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 						this->sub_state_iter = 0;
 					}
 				} else {
-					cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 					this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 					this->sub_state_iter = -1;
 				}

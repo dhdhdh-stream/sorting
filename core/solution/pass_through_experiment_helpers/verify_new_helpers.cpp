@@ -85,9 +85,8 @@ void PassThroughExperiment::verify_new_backprop(
 		this->o_target_val_histories.clear();
 
 		double score_improvement = new_average_score - this->existing_average_score;
-		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
-			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
 		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
@@ -121,9 +120,8 @@ void PassThroughExperiment::verify_new_backprop(
 		this->o_target_val_histories.clear();
 
 		double score_improvement = new_average_score - this->existing_average_score;
-		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double score_improvement_t_score = score_improvement
-			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+			/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {

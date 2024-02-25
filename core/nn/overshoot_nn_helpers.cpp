@@ -79,7 +79,11 @@ void overshoot_train_network(vector<vector<vector<double>>>& inputs,
 	}
 
 	for (int i_index = num_new_inputs-1; i_index >= 0; i_index--) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (input_impacts[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
+		#endif /* MDEBUG */
 			test_input_scope_contexts.erase(test_input_scope_contexts.begin() + i_index);
 			test_input_node_contexts.erase(test_input_node_contexts.begin() + i_index);
 
@@ -125,7 +129,7 @@ void overshoot_measure_network(vector<vector<vector<double>>>& inputs,
 							   vector<bool>& target_vals,
 							   Network* network,
 							   double& average_misguess,
-							   double& misguess_variance) {
+							   double& misguess_standard_deviation) {
 	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
 	int test_instances = inputs.size() - train_instances;
 
@@ -169,5 +173,8 @@ void overshoot_measure_network(vector<vector<vector<double>>>& inputs,
 		}
 		sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
 	}
-	misguess_variance = sum_misguess_variance / test_instances;
+	misguess_standard_deviation = sqrt(sum_misguess_variance / test_instances);
+	if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+		misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
 }

@@ -57,7 +57,7 @@ public:
 	int sub_state_iter;
 
 	double existing_average_score;
-	double existing_score_variance;
+	double existing_score_standard_deviation;
 
 	double curr_score;
 	std::vector<int> curr_step_types;

@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+const double MIN_STANDARD_DEVIATION = 0.0001;
+
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_EXISTING_SCOPE = 1;
 const int STEP_TYPE_POTENTIAL_SCOPE = 2;

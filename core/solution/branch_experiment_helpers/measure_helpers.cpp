@@ -168,10 +168,9 @@ void BranchExperiment::measure_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		double score_standard_deviation = sqrt(this->existing_score_variance);
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(solution->curr_num_datapoints));
+			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
@@ -222,7 +221,7 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				cout << "this->combined_score: " << this->combined_score << endl;
 				cout << "this->existing_average_score: " << this->existing_average_score << endl;
-				cout << "score_standard_deviation: " << score_standard_deviation << endl;
+				cout << "this->existing_score_standard_deviation: " << this->existing_score_standard_deviation << endl;
 				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 				cout << "branch_weight: " << branch_weight << endl;

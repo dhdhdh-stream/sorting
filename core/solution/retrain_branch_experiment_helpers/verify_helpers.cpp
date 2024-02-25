@@ -117,8 +117,6 @@ void RetrainBranchExperiment::verify_backprop(double target_val) {
 
 		if (combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
-			this->combined_score = 0.0;
-
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 			this->state = RETRAIN_BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;

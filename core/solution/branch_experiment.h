@@ -66,7 +66,7 @@ public:
 	int sub_state_iter;
 
 	double existing_average_score;
-	double existing_score_variance;
+	double existing_score_standard_deviation;
 
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
@@ -75,7 +75,7 @@ public:
 	std::vector<std::vector<int>> existing_network_input_indexes;
 	Network* existing_network;
 	double existing_average_misguess;
-	double existing_misguess_variance;
+	double existing_misguess_standard_deviation;
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
@@ -98,7 +98,7 @@ public:
 	std::vector<std::vector<int>> new_network_input_indexes;
 	Network* new_network;
 	double new_average_misguess;
-	double new_misguess_variance;
+	double new_misguess_standard_deviation;
 
 	double combined_score;
 	/**
@@ -112,7 +112,7 @@ public:
 	 * - don't reuse previous to not affect decision making
 	 */
 	double verify_existing_average_score;
-	double verify_existing_score_variance;
+	double verify_existing_score_standard_deviation;
 
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;

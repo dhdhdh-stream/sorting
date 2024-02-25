@@ -168,10 +168,9 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
@@ -191,10 +190,9 @@ void BranchExperiment::verify_backprop(double target_val,
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
-		double score_standard_deviation = sqrt(this->verify_existing_score_variance);
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
@@ -234,7 +232,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
-			cout << "score_standard_deviation: " << score_standard_deviation << endl;
+			cout << "this->verify_existing_score_standard_deviation: " << this->verify_existing_score_standard_deviation << endl;
 			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 			cout << "branch_weight: " << branch_weight << endl;

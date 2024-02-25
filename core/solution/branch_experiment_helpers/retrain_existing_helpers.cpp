@@ -373,15 +373,15 @@ void BranchExperiment::retrain_existing_backprop(
 						  test_network);
 
 			double average_misguess;
-			double misguess_variance;
+			double misguess_standard_deviation;
 			measure_network(network_inputs,
 							network_target_vals,
 							test_network,
 							average_misguess,
-							misguess_variance);
+							misguess_standard_deviation);
 
 			double improvement = this->new_average_misguess - average_misguess;
-			double standard_deviation = min(sqrt(this->new_misguess_variance), sqrt(misguess_variance));
+			double standard_deviation = min(this->new_misguess_standard_deviation, misguess_standard_deviation);
 			double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 			if (t_score > 2.326) {
 				vector<int> new_input_indexes;
@@ -413,7 +413,7 @@ void BranchExperiment::retrain_existing_backprop(
 				this->existing_network = test_network;
 
 				this->existing_average_misguess = average_misguess;
-				this->existing_misguess_variance = misguess_variance;
+				this->existing_misguess_standard_deviation = misguess_standard_deviation;
 			} else {
 				delete test_network;
 			}

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"
@@ -56,7 +57,10 @@ void OuterExperiment::measure_existing_backprop(
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->target_val_histories[d_index] - this->existing_average_score) * (this->target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_variance = sum_score_variance / solution->curr_num_datapoints;
+		this->existing_score_standard_deviation = sqrt(sum_score_variance / solution->curr_num_datapoints);
+		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		this->target_val_histories.clear();
 

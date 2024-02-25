@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -57,11 +59,11 @@ void create_gather_helper(bool on_path,
 										 possible_node_contexts,
 										 possible_is_branch,
 										 scope_node_history->scope_history);
+				} else {
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_is_branch.push_back(false);
 				}
-
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(false);
 			}
 
 			node_context.back() = NULL;
@@ -197,11 +199,19 @@ void create_gather(vector<Scope*>& new_gather_scope_context,
 				/**
 				 * - add final scope end
 				 */
-				vector<Scope*> end_scope_context = possible_end_scope_contexts.back();
-				vector<AbstractNode*> end_node_context = possible_end_node_contexts.back();
-				end_node_context.back() = NULL;
-				possible_end_scope_contexts.push_back(end_scope_context);
-				possible_end_node_contexts.push_back(end_node_context);
+				if (possible_end_scope_contexts.size() == 0) {
+					vector<Scope*> end_scope_context = possible_scope_contexts[start_index];
+					vector<AbstractNode*> end_node_context = possible_node_contexts[start_index];
+					end_node_context.back() = NULL;
+					possible_end_scope_contexts.push_back(end_scope_context);
+					possible_end_node_contexts.push_back(end_node_context);
+				} else {
+					vector<Scope*> end_scope_context = possible_end_scope_contexts.back();
+					vector<AbstractNode*> end_node_context = possible_end_node_contexts.back();
+					end_node_context.back() = NULL;
+					possible_end_scope_contexts.push_back(end_scope_context);
+					possible_end_node_contexts.push_back(end_node_context);
+				}
 			}
 		}
 	}

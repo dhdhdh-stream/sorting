@@ -30,7 +30,10 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->verify_existing_average_score) * (this->o_target_val_histories[d_index] - this->verify_existing_average_score);
 		}
-		this->verify_existing_score_variance = sum_score_variance / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		this->verify_existing_score_standard_deviation = sqrt(sum_score_variance / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+		if (this->verify_existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->verify_existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		this->o_target_val_histories.clear();
 
@@ -47,7 +50,10 @@ void BranchExperiment::verify_existing_backprop(double target_val,
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->verify_existing_average_score) * (this->o_target_val_histories[d_index] - this->verify_existing_average_score);
 		}
-		this->verify_existing_score_variance = sum_score_variance / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		this->verify_existing_score_standard_deviation = sqrt(sum_score_variance / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+		if (this->verify_existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->verify_existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		this->o_target_val_histories.clear();
 
