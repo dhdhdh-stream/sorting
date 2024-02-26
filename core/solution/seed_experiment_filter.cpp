@@ -1,5 +1,7 @@
 #include "seed_experiment_filter.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -177,7 +179,11 @@ void SeedExperimentFilter::add_to_scope() {
 	this->branch_node->is_pass_through = false;
 
 	this->branch_node->original_average_score = 0.5;
-	this->branch_node->branch_average_score = FILTER_CONFIDENCE_THRESHOLD;
+	if (this->parent->result == EXPERIMENT_RESULT_SUCCESS) {
+		this->branch_node->branch_average_score = FILTER_FINAL_CONFIDENCE_THRESHOLD;
+	} else {
+		this->branch_node->branch_average_score = FILTER_CONFIDENCE_THRESHOLD;
+	}
 
 	this->branch_node->input_scope_contexts = this->input_scope_contexts;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {

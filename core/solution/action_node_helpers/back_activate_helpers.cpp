@@ -26,10 +26,6 @@ void ActionNode::back_activate(vector<Scope*>& scope_context,
 		}
 
 		if (matches_context) {
-			if (this->hook_indexes[h_index] >= (int)input_vals.size()) {
-				cout << "this->hook_indexes[h_index]: " << this->hook_indexes[h_index] << endl;
-				cout << "input_vals.size(): " << input_vals.size() << endl;
-			}
 			input_vals[this->hook_indexes[h_index]] = history->obs_snapshot;
 		}
 	}

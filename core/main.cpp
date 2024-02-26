@@ -28,8 +28,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1708891373;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -41,13 +40,6 @@ int main(int argc, char* argv[]) {
 	// solution->load("", "main");
 
 	solution->save("", "main");
-
-	// SeedExperiment* new_seed_experiment = new SeedExperiment(
-	// 	vector<Scope*>{solution->root},
-	// 	vector<AbstractNode*>{solution->root->nodes[0]},
-	// 	false);
-	// ActionNode* explore_node = (ActionNode*)solution->root->nodes[0];
-	// explore_node->experiments.push_back(new_seed_experiment);
 
 	int num_fails = 0;
 

@@ -35,10 +35,6 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			double t_score = score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-			cout << "this->curr_filter_score: " << this->curr_filter_score << endl;
-			cout << "this->existing_average_score: " << this->existing_average_score << endl;
-			cout << "t_score: " << t_score << endl;
-
 			if (t_score > -0.2) {
 			#endif /* MDEBUG */
 				this->curr_filter_score = 0.0;
@@ -103,10 +99,6 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			double score_diff = this->curr_filter_score - this->existing_average_score;
 			double t_score = score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
-
-			cout << "this->curr_filter_score: " << this->curr_filter_score << endl;
-			cout << "this->existing_average_score: " << this->existing_average_score << endl;
-			cout << "t_score: " << t_score << endl;
 
 			if (t_score > -0.2) {
 			#endif /* MDEBUG */

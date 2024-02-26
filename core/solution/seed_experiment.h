@@ -75,8 +75,10 @@ const int TRAIN_GATHER_ITER_LIMIT = 20;
 
 /**
  * - filter only when extremely confident in case initially biased against seed
+ *   - but take seed path only if extremely confident for final filter
  */
 const double FILTER_CONFIDENCE_THRESHOLD = 0.1;
+const double FILTER_FINAL_CONFIDENCE_THRESHOLD = 0.8;
 
 class SeedExperimentOverallHistory;
 class SeedExperiment : public AbstractExperiment {

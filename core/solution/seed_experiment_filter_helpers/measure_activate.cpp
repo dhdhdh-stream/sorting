@@ -63,7 +63,7 @@ void SeedExperimentFilter::measure_activate(AbstractNode*& curr_node,
 	}
 	this->network->activate(network_input_vals);
 
-	if (0.5 + this->network->output->acti_vals[0] < FILTER_CONFIDENCE_THRESHOLD) {
+	if (0.5 + this->network->output->acti_vals[0] < FILTER_FINAL_CONFIDENCE_THRESHOLD) {
 		for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {
 			if (this->filter_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->filter_actions[s_index]);

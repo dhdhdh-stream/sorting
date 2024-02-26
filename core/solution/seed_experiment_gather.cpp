@@ -370,14 +370,6 @@ void SeedExperimentGather::finalize() {
 		}
 	}
 
-	if (this->exit_node != NULL) {
-		if (this->exit_node->next_node == NULL) {
-			this->exit_node->next_node_id = -1;
-		} else {
-			this->exit_node->next_node_id = this->exit_node->next_node->id;
-		}
-	}
-
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
@@ -413,6 +405,12 @@ void SeedExperimentGather::finalize() {
 
 	if (this->exit_node != NULL) {
 		this->scope_context.back()->nodes[this->exit_node->id] = this->exit_node;
+
+		if (this->exit_node->next_node == NULL) {
+			this->exit_node->next_node_id = -1;
+		} else {
+			this->exit_node->next_node_id = this->exit_node->next_node->id;
+		}
 	}
 	this->exit_node = NULL;
 

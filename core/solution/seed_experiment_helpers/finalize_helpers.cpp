@@ -195,6 +195,9 @@ void SeedExperiment::finalize_success() {
 	}
 	this->best_exit_node = NULL;
 
+	this->curr_filter->add_to_scope();
+	this->curr_filter->finalize();
+
 	for (int f_index = 0; f_index < (int)this->filters.size(); f_index++) {
 		this->filters[f_index]->finalize();
 	}

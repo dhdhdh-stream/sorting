@@ -37,14 +37,11 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 			double seed_ratio = (double)num_seed / (double)solution->curr_num_datapoints;
 			double higher_ratio = (double)num_higher / (double)num_seed;
 
-			cout << "seed_ratio: " << seed_ratio << endl;
-			cout << "higher_ratio: " << higher_ratio << endl;
-
 			this->i_is_seed_histories.clear();
 			this->i_is_higher_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (seed_ratio > 0.0 && rand()%2 == 0) {
 			#else
 			double improve_threshold;
 			if (this->curr_higher_ratio > 0.5) {

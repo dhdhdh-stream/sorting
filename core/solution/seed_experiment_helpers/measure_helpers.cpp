@@ -23,9 +23,6 @@ void SeedExperiment::measure_backprop(double target_val) {
 		double combined_improvement_t_score = combined_improvement
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		cout << "this->combined_score: " << this->combined_score << endl;
-		cout << "this->existing_average_score: " << this->existing_average_score << endl;
-
 		if (combined_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;

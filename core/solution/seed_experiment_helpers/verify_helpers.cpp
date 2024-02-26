@@ -91,10 +91,6 @@ void SeedExperiment::verify_backprop(double target_val) {
 
 			cout << endl;
 
-			this->curr_filter->add_to_scope();
-			this->filters.push_back(this->curr_filter);
-			this->curr_filter = NULL;
-
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
 			cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
