@@ -15,6 +15,7 @@
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
+#include "seed_experiment_filter.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -389,7 +390,6 @@ void SeedExperiment::train_existing_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_ITERS) {
-			cout << "SEED_EXPERIMENT_STATE_EXPLORE" << endl;
 			this->state = SEED_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 		} else {

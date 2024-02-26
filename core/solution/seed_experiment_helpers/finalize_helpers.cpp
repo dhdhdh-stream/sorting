@@ -210,7 +210,10 @@ void SeedExperiment::finalize_success() {
 }
 
 void SeedExperiment::clean_fail() {
-	for (int g_index = 0; g_index < (int)this->gathers.size(); g_index++) {
+	/**
+	 * - clean gathers first and back-to-front
+	 */
+	for (int g_index = (int)this->gathers.size()-1; g_index >= 0; g_index--) {
 		AbstractNode* gather_node = this->gathers[g_index]->node_context.back();
 		if (gather_node->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)gather_node;

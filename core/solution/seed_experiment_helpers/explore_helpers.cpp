@@ -284,6 +284,36 @@ void SeedExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
+				// cout << "SeedExperiment" << endl;
+				// cout << "explore" << endl;
+
+				// cout << "this->scope_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->scope_context[c_index]->id << endl;
+				// }
+				// cout << "this->node_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->node_context[c_index]->id << endl;
+				// }
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_actions[s_index]->action.move;
+				// 	} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+				// 		cout << " E";
+				// 	} else {
+				// 		cout << " P";
+				// 	}
+				// }
+				// cout << endl;
+
+				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				// if (this->best_exit_node == NULL) {
+				// 	cout << "this->best_exit_node_id: " << -1 << endl;
+				// } else {
+				// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				// }
+
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->parent = this->scope_context.back();
@@ -427,7 +457,11 @@ void SeedExperiment::explore_backprop(double target_val,
 				} else {
 					BranchNode* branch_node = (BranchNode*)this->node_context.back();
 					branch_node->experiments.insert(branch_node->experiments.begin(), this->curr_filter);
-					branch_node->experiment_types.insert(branch_node->experiment_types.begin(), this->is_branch);
+					if (this->is_branch) {
+						branch_node->experiment_types.insert(branch_node->experiment_types.begin(), BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
+					} else {
+						branch_node->experiment_types.insert(branch_node->experiment_types.begin(), BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
+					}
 				}
 
 				this->curr_filter_score = 0.0;
@@ -437,12 +471,10 @@ void SeedExperiment::explore_backprop(double target_val,
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
-				cout << "SEED_EXPERIMENT_STATE_TRAIN_FILTER" << endl;
 				this->state = SEED_EXPERIMENT_STATE_TRAIN_FILTER;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
 			} else {
-				cout << "EXPERIMENT_RESULT_FAIL" << endl;
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

@@ -21,7 +21,10 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 	if (history->has_target) {
 		this->curr_filter_score += target_val;
 
-		this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+		/**
+		 * - don't update this->average_instances_per_run
+		 *   - may lead to bias towards early if recursion, but if causes issue, will be caught by measure
+		 */
 
 		this->sub_state_iter++;
 		if (this->state == SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER
@@ -39,7 +42,6 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			#endif /* MDEBUG */
 				this->curr_filter_score = 0.0;
 
-				cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER" << endl;
 				this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER;
 				/**
 				 * - leave this->state_iter unchanged
@@ -81,10 +83,8 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 
 				this->state_iter++;
 				if (this->state_iter >= FIND_FILTER_ITER_LIMIT) {
-					cout << "EXPERIMENT_RESULT_FAIL" << endl;
 					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
-					cout << "SEED_EXPERIMENT_STATE_FIND_FILTER" << endl;
 					this->state = SEED_EXPERIMENT_STATE_FIND_FILTER;
 					create_filter();
 					this->sub_state_iter = 0;
@@ -102,10 +102,11 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 
 			if (t_score > -0.2) {
 			#endif /* MDEBUG */
+				this->filter_step_index = this->curr_filter_step_index;
+
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
-				cout << "SEED_EXPERIMENT_STATE_TRAIN_FILTER" << endl;
 				this->state = SEED_EXPERIMENT_STATE_TRAIN_FILTER;
 				this->state_iter = 0;
 				this->sub_state_iter = 0;
@@ -145,10 +146,8 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 
 				this->state_iter++;
 				if (this->state_iter >= FIND_FILTER_ITER_LIMIT) {
-					cout << "EXPERIMENT_RESULT_FAIL" << endl;
 					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
-					cout << "SEED_EXPERIMENT_STATE_FIND_FILTER" << endl;
 					this->state = SEED_EXPERIMENT_STATE_FIND_FILTER;
 					create_filter();
 					this->sub_state_iter = 0;

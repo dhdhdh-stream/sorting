@@ -34,11 +34,9 @@ void SeedExperiment::verify_backprop(double target_val) {
 
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
-			cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING" << endl;
 			this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
-			cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
 			this->sub_state_iter = -1;
@@ -78,10 +76,10 @@ void SeedExperiment::verify_backprop(double target_val) {
 			cout << endl;
 
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_node == NULL) {
-				cout << "this->best_exit_node_id: " << -1 << endl;
+			if (this->best_exit_next_node == NULL) {
+				cout << "this->best_exit_next_node_id: " << -1 << endl;
 			} else {
-				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				cout << "this->best_exit_next_node_id: " << this->best_exit_next_node->id << endl;
 			}
 
 			cout << "this->combined_score: " << this->combined_score << endl;
@@ -93,7 +91,6 @@ void SeedExperiment::verify_backprop(double target_val) {
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
 			this->sub_state_iter = -1;

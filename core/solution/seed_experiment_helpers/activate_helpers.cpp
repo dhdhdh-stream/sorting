@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "exit_node.h"
@@ -134,6 +136,7 @@ void SeedExperiment::backprop(double target_val,
 		break;
 	case SEED_EXPERIMENT_STATE_FIND_FILTER:
 		find_filter_backprop(target_val,
+							 run_helper,
 							 overall_history);
 		break;
 	case SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER:

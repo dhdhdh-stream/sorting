@@ -113,6 +113,28 @@ void SeedExperiment::create_filter() {
 		}
 	}
 
+	// cout << "this->curr_filter_step_index: " << this->curr_filter_step_index << endl;
+	// cout << "filter_node_context.back()->id: " << filter_node_context.back()->id << endl;
+
+	// cout << "new explore path:";
+	// for (int s_index = 0; s_index < (int)filter_step_types.size(); s_index++) {
+	// 	if (filter_step_types[s_index] == STEP_TYPE_ACTION) {
+	// 		cout << " " << filter_actions[s_index]->action.move;
+	// 	} else if (filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+	// 		cout << " E";
+	// 	} else {
+	// 		cout << " P";
+	// 	}
+	// }
+	// cout << endl;
+
+	// cout << "filter_exit_depth: " << filter_exit_depth << endl;
+	// if (filter_exit_next_node == NULL) {
+	// 	cout << "filter_exit_next_node_id: " << -1 << endl;
+	// } else {
+	// 	cout << "filter_exit_next_node_id: " << filter_exit_next_node->id << endl;
+	// }
+
 	this->curr_filter = new SeedExperimentFilter(this,
 												 filter_scope_context,
 												 filter_node_context,

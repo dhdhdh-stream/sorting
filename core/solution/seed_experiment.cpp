@@ -43,6 +43,7 @@ SeedExperiment::SeedExperiment(vector<Scope*> scope_context,
 	this->state = SEED_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
+	this->train_filter_iter = 0;
 	this->train_gather_iter = 0;
 
 	this->best_surprise = 0.0;

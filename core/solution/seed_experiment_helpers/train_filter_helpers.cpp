@@ -20,7 +20,10 @@ const int TRAIN_FILTER_ITERS = 3;
 
 void SeedExperiment::train_filter_backprop(double target_val,
 										   SeedExperimentOverallHistory* history) {
-	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+	/**
+	 * - don't update this->average_instances_per_run
+	 *   - may lead to bias towards early if recursion, but if causes issue, will be caught by measure
+	 */
 
 	if (history->has_target) {
 		if (target_val > this->existing_average_score + this->existing_score_standard_deviation) {
@@ -252,7 +255,6 @@ void SeedExperiment::train_filter_backprop(double target_val,
 				this->i_is_seed_histories.reserve(solution->curr_num_datapoints);
 				this->i_is_higher_histories.reserve(solution->curr_num_datapoints);
 
-				cout << "SEED_EXPERIMENT_STATE_MEASURE_FILTER" << endl;
 				this->state = SEED_EXPERIMENT_STATE_MEASURE_FILTER;
 				this->state_iter = 0;
 			} else {

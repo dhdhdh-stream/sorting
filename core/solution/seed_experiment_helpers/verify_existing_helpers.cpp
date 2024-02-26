@@ -38,7 +38,6 @@ void SeedExperiment::verify_existing_backprop(double target_val,
 
 		this->combined_score = 0.0;
 
-		cout << "SEED_EXPERIMENT_STATE_VERIFY_1ST" << endl;
 		this->state = SEED_EXPERIMENT_STATE_VERIFY_1ST;
 		this->state_iter = 0;
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -58,7 +57,6 @@ void SeedExperiment::verify_existing_backprop(double target_val,
 
 		this->combined_score = 0.0;
 
-		cout << "SEED_EXPERIMENT_STATE_VERIFY_2ND" << endl;
 		this->state = SEED_EXPERIMENT_STATE_VERIFY_2ND;
 		this->state_iter = 0;
 	}

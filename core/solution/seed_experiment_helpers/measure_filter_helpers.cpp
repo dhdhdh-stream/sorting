@@ -69,8 +69,7 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->curr_higher_ratio = higher_ratio;
 
 				if (this->curr_gather != NULL) {
-					cout << "add gather" << endl;
-					cout << "gather_path:" << endl;
+					cout << "add gather:";
 					for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
 						if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
 							cout << " " << this->curr_gather->actions[s_index]->action.move;
@@ -92,7 +91,6 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 
 				this->combined_score = 0.0;
 
-				cout << "SEED_EXPERIMENT_STATE_MEASURE" << endl;
 				this->state = SEED_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
@@ -142,8 +140,7 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->train_gather_iter++;
 				if (this->train_gather_iter >= TRAIN_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
-						cout << "add filter" << endl;
-						cout << "filter_path:" << endl;
+						cout << "add filter:";
 						for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
 							if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
 								cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
@@ -157,7 +154,8 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);
-						this->filter_step_index = this->curr_filter_step_index;
+
+						this->train_filter_iter = 0;
 					} else {
 						AbstractNode* filter_node = this->curr_filter->node_context.back();
 						if (filter_node->type == NODE_TYPE_ACTION) {
@@ -190,21 +188,21 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 							branch_node->experiment_types.erase(branch_node->experiment_types.begin() + experiment_index);
 						}
 						delete this->curr_filter;
+
+						this->train_filter_iter++;
 					}
 					this->curr_filter = NULL;
 
-					if (this->filter_step_index == (int)this->best_step_types.size()) {
-						cout << "EXPERIMENT_RESULT_FAIL" << endl;
+					if (this->train_filter_iter >= TRAIN_FILTER_ITER_LIMIT
+							|| this->filter_step_index == (int)this->best_step_types.size()) {
 						this->result = EXPERIMENT_RESULT_FAIL;
 					} else {
-						cout << "SEED_EXPERIMENT_STATE_FIND_FILTER" << endl;
 						this->state = SEED_EXPERIMENT_STATE_FIND_FILTER;
 						this->state_iter = 0;
 						create_filter();
 						this->sub_state_iter = 0;
 					}
 				} else {
-					cout << "SEED_EXPERIMENT_STATE_FIND_GATHER" << endl;
 					this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 					this->state_iter = 0;
 					this->sub_state_iter = -1;

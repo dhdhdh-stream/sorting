@@ -66,10 +66,12 @@ const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 14;
 #if defined(MDEBUG) && MDEBUG
 const int FIND_FILTER_ITER_LIMIT = 2;
 const int FIND_GATHER_ITER_LIMIT = 2;
+const int TRAIN_FILTER_ITER_LIMIT = 2;
 const int TRAIN_GATHER_ITER_LIMIT = 2;
 #else
 const int FIND_FILTER_ITER_LIMIT = 200;
 const int FIND_GATHER_ITER_LIMIT = 200;
+const int TRAIN_FILTER_ITER_LIMIT = 20;
 const int TRAIN_GATHER_ITER_LIMIT = 20;
 #endif /* MDEBUG */
 
@@ -102,6 +104,7 @@ public:
 	int state_iter;
 	int sub_state_iter;
 
+	int train_filter_iter;
 	int train_gather_iter;
 
 	double existing_average_score;
@@ -134,6 +137,7 @@ public:
 
 	double curr_higher_ratio;
 
+	int curr_filter_exceeded_limit_count;
 	double curr_filter_score;
 	int curr_filter_step_index;
 	SeedExperimentFilter* curr_filter;
@@ -207,6 +211,7 @@ public:
 	void create_filter();
 
 	void find_filter_backprop(double target_val,
+							  RunHelper& run_helper,
 							  SeedExperimentOverallHistory* history);
 
 	void verify_filter_backprop(double target_val,

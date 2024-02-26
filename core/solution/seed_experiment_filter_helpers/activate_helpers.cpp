@@ -4,6 +4,7 @@
 
 #include "branch_node.h"
 #include "globals.h"
+#include "scope.h"
 #include "seed_experiment.h"
 
 using namespace std;
