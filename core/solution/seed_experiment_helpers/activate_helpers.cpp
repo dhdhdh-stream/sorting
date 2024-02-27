@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope_node.h"
 
 using namespace std;
@@ -89,6 +90,15 @@ bool SeedExperiment::activate(AbstractNode*& curr_node,
 			// do nothing
 			break;
 		default:
+			#if defined(MDEBUG) && MDEBUG
+			if (this->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+				if (this->verify_problems[this->state_iter] == NULL) {
+					this->verify_problems[this->state_iter] = problem->copy_and_reset();
+				}
+				this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+			}
+			#endif /* MDEBUG */
+
 			/**
 			 * - safe to always take seed path
 			 *   - in non-target cases, will be filtered by curr_filter
@@ -175,5 +185,10 @@ void SeedExperiment::backprop(double target_val,
 	case SEED_EXPERIMENT_STATE_VERIFY_2ND:
 		verify_backprop(target_val);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case SEED_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
+		break;
+	#endif /* MDEBUG */
 	}
 }

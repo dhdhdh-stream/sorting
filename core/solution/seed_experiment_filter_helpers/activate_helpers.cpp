@@ -121,9 +121,34 @@ bool SeedExperimentFilter::activate(AbstractNode*& curr_node,
 								 exit_node,
 								 run_helper);
 				break;
+			#if defined(MDEBUG) && MDEBUG
+			case SEED_EXPERIMENT_STATE_CAPTURE_VERIFY:
+				candidate_capture_verify_activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+				break;
+			#endif /* MDEBUG */
 			}
 		} else {
+			#if defined(MDEBUG) && MDEBUG
+			if (this->parent->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+				non_candidate_capture_verify_activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+			} else {
+				curr_node = this->branch_node;
+			}
+			#else
 			curr_node = this->branch_node;
+			#endif /* MDEBUG */
 		}
 
 		return true;

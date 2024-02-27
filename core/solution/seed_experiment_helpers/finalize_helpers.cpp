@@ -206,6 +206,13 @@ void SeedExperiment::finalize_success() {
 		this->gathers[g_index]->finalize();
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	solution->verify_key = this;
+	solution->verify_problems = this->verify_problems;
+	this->verify_problems.clear();
+	solution->verify_seeds = this->verify_seeds;
+	#endif /* MDEBUG */
+
 	// let success_reset() clean
 }
 

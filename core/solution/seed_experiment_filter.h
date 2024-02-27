@@ -123,6 +123,22 @@ public:
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper);
 
+	#if defined(MDEBUG) && MDEBUG
+	void candidate_capture_verify_activate(AbstractNode*& curr_node,
+										   Problem* problem,
+										   std::vector<ContextLayer>& context,
+										   int& exit_depth,
+										   AbstractNode*& exit_node,
+										   RunHelper& run_helper);
+
+	void non_candidate_capture_verify_activate(AbstractNode*& curr_node,
+											   Problem* problem,
+											   std::vector<ContextLayer>& context,
+											   int& exit_depth,
+											   AbstractNode*& exit_node,
+											   RunHelper& run_helper);
+	#endif /* MDEBUG */
+
 	void add_to_scope();
 
 	void finalize();

@@ -11,6 +11,7 @@
 #include "scope_node.h"
 #include "seed_experiment.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -110,7 +111,19 @@ void SeedExperimentFilter::measure_filter_target_activate(
 	}
 	this->test_network->activate(network_input_vals);
 
-	if (0.5 + this->test_network->output->acti_vals[0] < FILTER_CONFIDENCE_THRESHOLD) {
+	#if defined(MDEBUG) && MDEBUG
+	bool decision_is_branch;
+	if (run_helper.curr_run_seed%2 == 0) {
+		decision_is_branch = true;
+	} else {
+		decision_is_branch = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+	#else
+	bool decision_is_branch = 0.5 + this->network->output->acti_vals[0] < FILTER_FINAL_CONFIDENCE_THRESHOLD;
+	#endif /* MDEBUG */
+
+	if (decision_is_branch) {
 		this->parent->i_is_seed_histories.push_back(false);
 
 		for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {

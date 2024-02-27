@@ -287,6 +287,10 @@ void SeedExperimentFilter::finalize() {
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	this->branch_node->verify_key = this->parent;
+	#endif /* MDEBUG */
+
 	this->scope_context.back()->nodes[this->branch_node->id] = this->branch_node;
 	this->branch_node = NULL;
 

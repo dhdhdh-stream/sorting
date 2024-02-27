@@ -154,16 +154,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 				branch_score += this->branch_network->output->acti_vals[0];
 			}
 
-			// // temp
-			// if (this->id == 72) {
-			// 	cout << "branch_score: " << branch_score << endl;
-			// 	cout << "original_score: " << original_score << endl;
-			// 	cout << "this->branch_next_node->id: " << this->branch_next_node->id << endl;
-			// 	cout << "this->original_next_node->id: " << this->original_next_node->id << endl;
-			// }
-			// TODO: by always going seed path, can lead to recursion that wasn't visible before
-			// - preventing new filter from being hit
-
 			#if defined(MDEBUG) && MDEBUG
 			if (run_helper.curr_run_seed%2 == 0) {
 				history->is_branch = true;

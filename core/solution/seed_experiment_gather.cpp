@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "seed_experiment.h"
@@ -133,6 +134,15 @@ bool SeedExperimentGather::activate(AbstractNode*& curr_node,
 	}
 
 	if (is_selected) {
+		#if defined(MDEBUG) && MDEBUG
+		if (this->parent->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+			if (this->parent->verify_problems[this->parent->state_iter] == NULL) {
+				this->parent->verify_problems[this->parent->state_iter] = problem->copy_and_reset();
+			}
+			this->parent->verify_seeds[this->parent->state_iter] = run_helper.starting_run_seed;
+		}
+		#endif /* MDEBUG */
+
 		if (this->is_candidate) {
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {

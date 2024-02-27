@@ -62,6 +62,9 @@ const int SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 11;
 const int SEED_EXPERIMENT_STATE_VERIFY_1ST = 12;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 13;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 14;
+#if defined(MDEBUG) && MDEBUG
+const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 15;
+#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int FIND_FILTER_ITER_LIMIT = 2;
@@ -171,6 +174,11 @@ public:
 	std::vector<bool> i_is_seed_histories;
 	std::vector<bool> i_is_higher_histories;
 
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_seeds;
+	#endif /* MDEBUG */
+
 	SeedExperiment(std::vector<Scope*> scope_context,
 				   std::vector<AbstractNode*> node_context,
 				   bool is_branch);
@@ -237,6 +245,10 @@ public:
 								  SeedExperimentOverallHistory* history);
 
 	void verify_backprop(double target_val);
+
+	#if defined(MDEBUG) && MDEBUG
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
 
 	void finalize();
 	void finalize_success();
