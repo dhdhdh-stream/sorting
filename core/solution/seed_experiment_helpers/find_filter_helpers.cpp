@@ -82,7 +82,7 @@ void SeedExperiment::find_filter_backprop(double target_val,
 				double t_score = score_diff
 					/ (this->existing_score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER));
 
-				if (t_score > -0.2) {
+				if (t_score > -0.1) {
 				#endif /* MDEBUG */
 					this->curr_filter_score = 0.0;
 

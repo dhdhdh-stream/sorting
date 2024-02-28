@@ -7,11 +7,11 @@
 
 using namespace std;
 
-const int WIDTH = 30;
-const int HEIGHT = 16;
-const int NUM_MINES = 99;
-const int STARTING_X = 15;
-const int STARTING_Y = 8;
+const int WIDTH = 9;
+const int HEIGHT = 9;
+const int NUM_MINES = 10;
+const int STARTING_X = 4;
+const int STARTING_Y = 4;
 
 IncrementMinesweeper::IncrementMinesweeper() {
 	while (true) {

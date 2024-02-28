@@ -77,126 +77,123 @@ bool SeedExperimentGather::activate(AbstractNode*& curr_node,
 									AbstractNode*& exit_node,
 									RunHelper& run_helper,
 									AbstractExperimentHistory*& history) {
-	if (context.back().scope_history->node_histories.size() > 1000) {
-		cout << "SeedExperimentGather" << endl;
-		cout << "this->parent->state: " << this->parent->state << endl;
-		throw invalid_argument("context.back().scope_history->node_histories.size() > 1000");
-	}
-
 	bool is_selected = false;
-	if (this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
-			&& this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING) {
-		if (run_helper.experiment_history == NULL) {
-			bool matches_context = true;
-			if (this->scope_context.size() > context.size()) {
-				matches_context = false;
-			} else {
-				for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-					if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-							|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-						matches_context = false;
-						break;
-					}
+	if (run_helper.experiment_history == NULL) {
+		bool matches_context = true;
+		if (this->scope_context.size() > context.size()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
+					matches_context = false;
+					break;
 				}
 			}
+		}
 
-			if (matches_context) {
-				bool has_seen = false;
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					if (run_helper.experiments_seen_order[e_index] == this->parent) {
-						has_seen = true;
-						break;
-					}
+		if (matches_context) {
+			bool has_seen = false;
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				if (run_helper.experiments_seen_order[e_index] == this->parent) {
+					has_seen = true;
+					break;
 				}
-				if (!has_seen) {
-					double selected_probability = 1.0 / (1.0 + this->parent->average_remaining_experiments_from_start);
-					uniform_real_distribution<double> distribution(0.0, 1.0);
-					if (distribution(generator) < selected_probability) {
-						run_helper.experiment_history = new SeedExperimentOverallHistory(this->parent);
-						is_selected = true;
-					}
+			}
+			if (!has_seen) {
+				double selected_probability = 1.0 / (1.0 + this->parent->average_remaining_experiments_from_start);
+				uniform_real_distribution<double> distribution(0.0, 1.0);
+				if (distribution(generator) < selected_probability) {
+					run_helper.experiment_history = new SeedExperimentOverallHistory(this->parent);
+					is_selected = true;
+				}
 
-					run_helper.experiments_seen_order.push_back(this->parent);
+				run_helper.experiments_seen_order.push_back(this->parent);
+			}
+		}
+	} else if (run_helper.experiment_history->experiment == this->parent) {
+		bool matches_context = true;
+		if (this->scope_context.size() > context.size()) {
+			matches_context = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+				if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+						|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
+					matches_context = false;
+					break;
 				}
 			}
-		} else if (run_helper.experiment_history->experiment == this->parent) {
-			bool matches_context = true;
-			if (this->scope_context.size() > context.size()) {
-				matches_context = false;
-			} else {
-				for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-					if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-							|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-						matches_context = false;
-						break;
-					}
-				}
-			}
+		}
 
-			if (matches_context) {
-				is_selected = true;
-			}
+		if (matches_context) {
+			is_selected = true;
 		}
 	}
 
 	if (is_selected) {
-		#if defined(MDEBUG) && MDEBUG
-		if (this->parent->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
-			if (this->parent->verify_problems[this->parent->state_iter] == NULL) {
-				this->parent->verify_problems[this->parent->state_iter] = problem->copy_and_reset();
-			}
-			this->parent->verify_seeds[this->parent->state_iter] = run_helper.starting_run_seed;
-		}
-		#endif /* MDEBUG */
-
-		if (this->is_candidate) {
-			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-					ActionNodeHistory* action_node_history = new ActionNodeHistory(this->actions[s_index]);
-					this->actions[s_index]->activate(curr_node,
-													 problem,
-													 context,
-													 exit_depth,
-													 exit_node,
-													 run_helper,
-													 action_node_history);
-					delete action_node_history;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->existing_scopes[s_index]);
-					this->existing_scopes[s_index]->activate(curr_node,
-															 problem,
-															 context,
-															 exit_depth,
-															 exit_node,
-															 run_helper,
-															 scope_node_history);
-					delete scope_node_history;
-				} else {
-					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->potential_scopes[s_index]);
-					this->potential_scopes[s_index]->activate(curr_node,
-															  problem,
-															  context,
-															  exit_depth,
-															  exit_node,
-															  run_helper,
-															  scope_node_history);
-					delete scope_node_history;
+		/**
+		 * - if existing, need to begin measure early, but don't take gather
+		 */
+		if (this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
+				&& this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING) {
+			#if defined(MDEBUG) && MDEBUG
+			if (this->parent->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
+				if (this->parent->verify_problems[this->parent->state_iter] == NULL) {
+					this->parent->verify_problems[this->parent->state_iter] = problem->copy_and_reset();
 				}
+				this->parent->verify_seeds[this->parent->state_iter] = run_helper.starting_run_seed;
 			}
+			#endif /* MDEBUG */
 
-			if (this->exit_depth == 0) {
-				curr_node = this->exit_next_node;
+			if (this->is_candidate) {
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						ActionNodeHistory* action_node_history = new ActionNodeHistory(this->actions[s_index]);
+						this->actions[s_index]->activate(curr_node,
+														 problem,
+														 context,
+														 exit_depth,
+														 exit_node,
+														 run_helper,
+														 action_node_history);
+						delete action_node_history;
+					} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->existing_scopes[s_index]);
+						this->existing_scopes[s_index]->activate(curr_node,
+																 problem,
+																 context,
+																 exit_depth,
+																 exit_node,
+																 run_helper,
+																 scope_node_history);
+						delete scope_node_history;
+					} else {
+						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->potential_scopes[s_index]);
+						this->potential_scopes[s_index]->activate(curr_node,
+																  problem,
+																  context,
+																  exit_depth,
+																  exit_node,
+																  run_helper,
+																  scope_node_history);
+						delete scope_node_history;
+					}
+				}
+
+				if (this->exit_depth == 0) {
+					curr_node = this->exit_next_node;
+				} else {
+					exit_depth = this->exit_depth-1;
+					exit_node = this->exit_next_node;
+				}
 			} else {
-				exit_depth = this->exit_depth-1;
-				exit_node = this->exit_next_node;
-			}
-		} else {
-			if (this->step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->actions[0];
-			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->existing_scopes[0];
-			} else {
-				curr_node = this->potential_scopes[0];
+				if (this->step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->actions[0];
+				} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+					curr_node = this->existing_scopes[0];
+				} else {
+					curr_node = this->potential_scopes[0];
+				}
 			}
 		}
 
@@ -288,6 +285,34 @@ void SeedExperimentGather::add_to_scope() {
 }
 
 void SeedExperimentGather::finalize() {
+	cout << "SeedExperimentGather" << endl;
+	cout << "new gather path:";
+	cout << "this->scope_context:" << endl;
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		cout << c_index << ": " << this->scope_context[c_index]->id << endl;
+	}
+	cout << "this->node_context:" << endl;
+	for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+		cout << c_index << ": " << this->node_context[c_index]->id << endl;
+	}
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			cout << " " << this->actions[s_index]->action.move;
+		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			cout << " E";
+		} else {
+			cout << " P";
+		}
+	}
+	cout << endl;
+
+	cout << "this->exit_depth: " << this->exit_depth << endl;
+	if (this->exit_next_node == NULL) {
+		cout << "this->exit_next_node_id: " << -1 << endl;
+	} else {
+		cout << "this->exit_next_node_id: " << this->exit_next_node->id << endl;
+	}
+
 	int start_node_id;
 	AbstractNode* start_node;
 	if (this->scope_context.size() > 1) {

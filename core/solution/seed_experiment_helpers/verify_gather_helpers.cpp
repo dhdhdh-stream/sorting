@@ -52,7 +52,7 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 			double non_seed_t_score = non_seed_score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			if (seed_t_score > -0.2 && ratio_t_score > -0.2 && non_seed_t_score > -0.2) {
+			if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
 			#endif /* MDEBUG */
 				this->curr_gather_seed_score = 0.0;
 				this->curr_gather_is_higher = 0;
@@ -171,8 +171,7 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 			}
 		} else if (this->sub_state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 			#if defined(MDEBUG) && MDEBUG
-			// if (rand()%2 == 0) {
-			if (true) {
+			if (rand()%2 == 0) {
 			#else
 			this->curr_gather_seed_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
 			double new_higher_ratio = (double)this->curr_gather_is_higher / (double)(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2);
@@ -190,7 +189,7 @@ void SeedExperiment::verify_gather_backprop(double target_val,
 			double non_seed_t_score = non_seed_score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints / 2));
 
-			if (seed_t_score > -0.2 && ratio_t_score > -0.2 && non_seed_t_score > -0.2) {
+			if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
 			#endif /* MDEBUG */
 				this->curr_gather->add_to_scope();
 

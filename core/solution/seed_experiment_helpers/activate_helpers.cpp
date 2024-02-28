@@ -19,12 +19,6 @@ bool SeedExperiment::activate(AbstractNode*& curr_node,
 							  AbstractNode*& exit_node,
 							  RunHelper& run_helper,
 							  AbstractExperimentHistory*& history) {
-	if (context.back().scope_history->node_histories.size() > 1000) {
-		cout << "SeedExperiment" << endl;
-		cout << "this->state: " << this->state << endl;
-		throw invalid_argument("context.back().scope_history->node_histories.size() > 1000");
-	}
-
 	bool is_selected = false;
 	if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;

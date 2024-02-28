@@ -265,6 +265,26 @@ void SeedExperimentFilter::add_to_scope() {
 }
 
 void SeedExperimentFilter::finalize() {
+	cout << "SeedExperimentFilter" << endl;
+	cout << "new filter path:";
+	for (int s_index = 0; s_index < (int)this->filter_step_types.size(); s_index++) {
+		if (this->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+			cout << " " << this->filter_actions[s_index]->action.move;
+		} else if (this->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			cout << " E";
+		} else {
+			cout << " P";
+		}
+	}
+	cout << endl;
+
+	cout << "this->filter_exit_depth: " << this->filter_exit_depth << endl;
+	if (this->filter_exit_next_node == NULL) {
+		cout << "this->filter_exit_next_node_id: " << -1 << endl;
+	} else {
+		cout << "this->filter_exit_next_node_id: " << this->filter_exit_next_node->id << endl;
+	}
+
 	if (this->node_context.back()->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)this->node_context.back();
 

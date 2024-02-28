@@ -42,6 +42,10 @@ const int SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER = 4;
  * - simply 50/50 seed path vs. non-seed path
  *   - if this->sub_state_iter%2 == 0, seed path
  */
+/**
+ * TODO:
+ * - remeasure existing for gather
+ */
 const int SEED_EXPERIMENT_STATE_FIND_GATHER = 5;
 const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER = 6;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER = 7;

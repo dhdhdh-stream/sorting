@@ -38,7 +38,7 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			double t_score = score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-			if (t_score > -0.2) {
+			if (t_score > -0.1) {
 			#endif /* MDEBUG */
 				this->curr_filter_score = 0.0;
 
@@ -100,7 +100,7 @@ void SeedExperiment::verify_filter_backprop(double target_val,
 			double t_score = score_diff
 				/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
-			if (t_score > -0.2) {
+			if (t_score > -0.1) {
 			#endif /* MDEBUG */
 				this->filter_step_index = this->curr_filter_step_index;
 

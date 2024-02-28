@@ -171,7 +171,7 @@ void SeedExperiment::find_gather_backprop(double target_val,
 				double non_seed_t_score = non_seed_score_diff
 					/ (this->existing_score_standard_deviation / sqrt(NUM_SAMPLES_PER_ITER / 2));
 
-				if (seed_t_score > -0.2 && ratio_t_score > -0.2 && non_seed_t_score > -0.2) {
+				if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
 				#endif /* MDEBUG */
 					this->curr_gather_miss_count = 0;
 					this->curr_gather_seed_score = 0.0;
