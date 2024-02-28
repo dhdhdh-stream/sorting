@@ -2,6 +2,8 @@
 
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "scope.h"
 
 using namespace std;

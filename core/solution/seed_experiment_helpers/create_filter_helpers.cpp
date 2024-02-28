@@ -154,6 +154,7 @@ void SeedExperiment::create_filter() {
 		scope_node->experiments.push_back(this->curr_filter);
 	}
 
+	this->curr_filter_exceeded_limit_count = 0;
 	this->curr_filter_score = 0.0;
 	this->curr_filter_is_success = false;
 }

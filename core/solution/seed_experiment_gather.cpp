@@ -77,6 +77,12 @@ bool SeedExperimentGather::activate(AbstractNode*& curr_node,
 									AbstractNode*& exit_node,
 									RunHelper& run_helper,
 									AbstractExperimentHistory*& history) {
+	if (context.back().scope_history->node_histories.size() > 1000) {
+		cout << "SeedExperimentGather" << endl;
+		cout << "this->parent->state: " << this->parent->state << endl;
+		throw invalid_argument("context.back().scope_history->node_histories.size() > 1000");
+	}
+
 	bool is_selected = false;
 	if (this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
 			&& this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING) {
@@ -284,7 +290,7 @@ void SeedExperimentGather::add_to_scope() {
 void SeedExperimentGather::finalize() {
 	int start_node_id;
 	AbstractNode* start_node;
-	if (this->scope_context.size() > 0) {
+	if (this->scope_context.size() > 1) {
 		BranchNode* new_branch_node = new BranchNode();
 		new_branch_node->parent = this->scope_context.back();
 		new_branch_node->id = this->scope_context.back()->node_counter;

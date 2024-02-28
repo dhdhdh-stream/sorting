@@ -1,7 +1,10 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "globals.h"
+#include "scope.h"
 
 using namespace std;
 
@@ -12,6 +15,12 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 AbstractNode*& exit_node,
 									 RunHelper& run_helper,
 									 AbstractExperimentHistory*& history) {
+	if (context.back().scope_history->node_histories.size() > 1000) {
+		cout << "PassThroughExperiment" << endl;
+		cout << "this->state: " << this->state << endl;
+		throw invalid_argument("context.back().scope_history->node_histories.size() > 1000");
+	}
+
 	if (run_helper.experiment_history == NULL) {
 		bool matches_context = true;
 		if (this->scope_context.size() > context.size()) {
@@ -169,6 +178,10 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 											   run_helper,
 											   history);
 				break;
+			/**
+			 * TODO:
+			 * - add capture_verify to prevent BranchExperiment not reachable edge case
+			 */
 			}
 		}
 

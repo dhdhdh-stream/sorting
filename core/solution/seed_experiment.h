@@ -67,8 +67,8 @@ const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 15;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int FIND_FILTER_ITER_LIMIT = 2;
-const int FIND_GATHER_ITER_LIMIT = 2;
+const int FIND_FILTER_ITER_LIMIT = 20;
+const int FIND_GATHER_ITER_LIMIT = 20;
 const int TRAIN_FILTER_ITER_LIMIT = 2;
 const int TRAIN_GATHER_ITER_LIMIT = 2;
 #else
@@ -83,7 +83,7 @@ const int TRAIN_GATHER_ITER_LIMIT = 20;
  *   - but take seed path only if extremely confident for final filter
  */
 const double FILTER_CONFIDENCE_THRESHOLD = 0.1;
-const double FILTER_FINAL_CONFIDENCE_THRESHOLD = 0.8;
+const double FILTER_FINAL_CONFIDENCE_THRESHOLD = 0.9;
 
 class SeedExperimentOverallHistory;
 class SeedExperiment : public AbstractExperiment {

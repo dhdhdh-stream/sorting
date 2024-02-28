@@ -182,6 +182,62 @@ void SeedExperiment::explore_target_activate(AbstractNode*& curr_node,
 		}
 	}
 
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// LEFT
+	// 	new_action_node->action = Action(3);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// LEFT
+	// 	new_action_node->action = Action(3);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// UP
+	// 	new_action_node->action = Action(0);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// UP
+	// 	new_action_node->action = Action(0);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+	// {
+	// 	this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+	// 	ActionNode* new_action_node = new ActionNode();
+	// 	// CLICK
+	// 	new_action_node->action = Action(4);
+	// 	this->curr_actions.push_back(new_action_node);
+
+	// 	this->curr_existing_scopes.push_back(NULL);
+	// 	this->curr_potential_scopes.push_back(NULL);
+	// }
+
 	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
@@ -464,6 +520,7 @@ void SeedExperiment::explore_backprop(double target_val,
 					}
 				}
 
+				this->curr_filter_exceeded_limit_count = 0;
 				this->curr_filter_score = 0.0;
 				this->curr_filter_step_index = 0;
 				this->curr_filter_is_success = false;

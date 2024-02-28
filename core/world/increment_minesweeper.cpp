@@ -141,61 +141,8 @@ void IncrementMinesweeper::check_if_progress() {
 			&& this->current_y <= HEIGHT-1
 			&& !this->revealed[this->current_x][this->current_y]
 			&& this->world[this->current_x][this->current_y] != -1) {
-		bool neighboring_revealed = false;
-
-		if (this->current_x > 0 && this->current_y < HEIGHT-1) {
-			if (this->world[this->current_x-1][this->current_y+1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_y < HEIGHT-1) {
-			if (this->world[this->current_x][this->current_y+1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
-			if (this->world[this->current_x+1][this->current_y+1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_x < WIDTH-1) {
-			if (this->world[this->current_x+1][this->current_y] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_x < WIDTH-1 && this->current_y > 0) {
-			if (this->world[this->current_x+1][this->current_y-1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_y > 0) {
-			if (this->world[this->current_x][this->current_y-1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_x > 0 && this->current_y > 0) {
-			if (this->world[this->current_x-1][this->current_y-1] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (this->current_x > 0) {
-			if (this->world[this->current_x-1][this->current_y] == -1) {
-				neighboring_revealed = true;
-			}
-		}
-
-		if (neighboring_revealed) {
-			this->num_correct++;
-		}
+		this->num_correct++;
 	}
-	
 }
 
 void IncrementMinesweeper::reveal_helper(int x, int y) {
@@ -285,6 +232,7 @@ double IncrementMinesweeper::score_result() {
 	if (score < 0.0) {
 		score = 0.0;
 	}
+
 	return score;
 }
 

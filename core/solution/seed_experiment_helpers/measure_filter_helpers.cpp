@@ -17,7 +17,11 @@ using namespace std;
 void SeedExperiment::measure_filter_backprop(double target_val,
 											 SeedExperimentOverallHistory* history) {
 	if (history->has_target) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (target_val > this->existing_average_score + this->existing_score_standard_deviation) {
+		#endif /* MDEBUG */
 			this->i_is_higher_histories.push_back(true);
 		} else {
 			this->i_is_higher_histories.push_back(false);
@@ -69,17 +73,17 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->curr_higher_ratio = higher_ratio;
 
 				if (this->curr_gather != NULL) {
-					cout << "add gather:";
-					for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
-						if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
-							cout << " " << this->curr_gather->actions[s_index]->action.move;
-						} else if (this->curr_gather->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-							cout << " E";
-						} else {
-							cout << " P";
-						}
-					}
-					cout << endl;
+					// cout << "add gather:";
+					// for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
+					// 	if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
+					// 		cout << " " << this->curr_gather->actions[s_index]->action.move;
+					// 	} else if (this->curr_gather->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					// 		cout << " E";
+					// 	} else {
+					// 		cout << " P";
+					// 	}
+					// }
+					// cout << endl;
 
 					this->gathers.push_back(this->curr_gather);
 					this->curr_gather = NULL;
@@ -140,17 +144,17 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				this->train_gather_iter++;
 				if (this->train_gather_iter >= TRAIN_GATHER_ITER_LIMIT) {
 					if (this->curr_filter_is_success) {
-						cout << "add filter:";
-						for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
-							if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
-								cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
-							} else if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-								cout << " E";
-							} else {
-								cout << " P";
-							}
-						}
-						cout << endl;
+						// cout << "add filter:";
+						// for (int s_index = 0; s_index < (int)this->curr_filter->filter_step_types.size(); s_index++) {
+						// 	if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_ACTION) {
+						// 		cout << " " << this->curr_filter->filter_actions[s_index]->action.move;
+						// 	} else if (this->curr_filter->filter_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+						// 		cout << " E";
+						// 	} else {
+						// 		cout << " P";
+						// 	}
+						// }
+						// cout << endl;
 
 						this->curr_filter->add_to_scope();
 						this->filters.push_back(this->curr_filter);

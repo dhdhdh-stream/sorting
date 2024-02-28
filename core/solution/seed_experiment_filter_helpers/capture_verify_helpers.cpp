@@ -2,6 +2,8 @@
 
 #include "seed_experiment_filter.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -76,6 +78,25 @@ void SeedExperimentFilter::candidate_capture_verify_activate(
 
 	this->branch_node->verify_original_scores.push_back(0.5 + this->network->output->acti_vals[0]);
 	this->branch_node->verify_branch_scores.push_back(FILTER_FINAL_CONFIDENCE_THRESHOLD);
+
+	// cout << "context scope" << endl;
+	// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+	// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+	// }
+	// cout << "context node" << endl;
+	// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+	// 	if (context[c_index].node == NULL) {
+	// 		cout << c_index << ": -1" << endl;
+	// 	} else {
+	// 		cout << c_index << ": " << context[c_index].node->id << endl;
+	// 	}
+	// }
+	cout << "input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+		cout << input_vals[i_index] << endl;
+	}
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
 
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
@@ -202,6 +223,25 @@ void SeedExperimentFilter::non_candidate_capture_verify_activate(
 
 	this->branch_node->verify_original_scores.push_back(original_score);
 	this->branch_node->verify_branch_scores.push_back(FILTER_CONFIDENCE_THRESHOLD);
+
+	// cout << "context scope" << endl;
+	// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+	// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+	// }
+	// cout << "context node" << endl;
+	// for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+	// 	if (context[c_index].node == NULL) {
+	// 		cout << c_index << ": -1" << endl;
+	// 	} else {
+	// 		cout << c_index << ": " << context[c_index].node->id << endl;
+	// 	}
+	// }
+	cout << "input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)this->branch_node->input_scope_contexts.size(); i_index++) {
+		cout << input_vals[i_index] << endl;
+	}
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
 
 	if (run_helper.curr_run_seed%2 == 0) {
 		history->is_branch = true;

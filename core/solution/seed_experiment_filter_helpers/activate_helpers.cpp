@@ -16,6 +16,12 @@ bool SeedExperimentFilter::activate(AbstractNode*& curr_node,
 									AbstractNode*& exit_node,
 									RunHelper& run_helper,
 									AbstractExperimentHistory*& history) {
+	if (context.back().scope_history->node_histories.size() > 1000) {
+		cout << "SeedExperimentFilter" << endl;
+		cout << "this->parent->state: " << this->parent->state << endl;
+		throw invalid_argument("context.back().scope_history->node_histories.size() > 1000");
+	}
+
 	bool is_selected = false;
 	if (this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
 			&& this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING) {

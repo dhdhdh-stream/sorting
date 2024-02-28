@@ -120,7 +120,7 @@ void SeedExperimentFilter::measure_filter_target_activate(
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 	#else
-	bool decision_is_branch = 0.5 + this->network->output->acti_vals[0] < FILTER_FINAL_CONFIDENCE_THRESHOLD;
+	bool decision_is_branch = 0.5 + this->test_network->output->acti_vals[0] < FILTER_CONFIDENCE_THRESHOLD;
 	#endif /* MDEBUG */
 
 	if (decision_is_branch) {

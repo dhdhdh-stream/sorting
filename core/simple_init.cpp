@@ -1,4 +1,5 @@
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <thread>
@@ -26,6 +27,11 @@ int main(int argc, char* argv[]) {
 	solution->init();
 
 	solution->save("", "main");
+
+	ofstream display_file;
+	display_file.open("../display.txt");
+	solution->save_for_display(display_file);
+	display_file.close();
 
 	delete solution;
 

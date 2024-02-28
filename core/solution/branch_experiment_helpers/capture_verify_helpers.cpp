@@ -97,11 +97,12 @@ void BranchExperiment::capture_verify_activate(
 	this->verify_original_scores.push_back(existing_predicted_score);
 	this->verify_branch_scores.push_back(new_predicted_score);
 
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		cout << input_vals[i_index] << endl;
-	}
-	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-	problem->print();
+	// cout << "input_vals:" << endl;
+	// for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	// 	cout << input_vals[i_index] << endl;
+	// }
+	// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	// problem->print();
 
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {

@@ -26,7 +26,11 @@ void SeedExperiment::train_filter_backprop(double target_val,
 	 */
 
 	if (history->has_target) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (target_val > this->existing_average_score + this->existing_score_standard_deviation) {
+		#endif /* MDEBUG */
 			this->i_is_higher_histories.push_back(true);
 		} else {
 			this->i_is_higher_histories.push_back(false);

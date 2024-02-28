@@ -36,10 +36,17 @@ int main(int argc, char* argv[]) {
 	problem_type = new IncrementMinesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
+
+	// SeedExperiment* seed_experiment = new SeedExperiment(
+	// 	vector<Scope*>{solution->root},
+	// 	vector<AbstractNode*>{solution->root->nodes[0]},
+	// 	false);
+	// ActionNode* explore_node = (ActionNode*)solution->root->nodes[0];
+	// explore_node->experiments.push_back(seed_experiment);
 
 	int num_fails = 0;
 
@@ -191,13 +198,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;
@@ -224,7 +231,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		#if defined(MDEBUG) && MDEBUG
-		if (run_index%1000 == 0) {
+		if (run_index%5000 == 0) {
 			delete solution;
 			solution = new Solution();
 			solution->load("", "main");

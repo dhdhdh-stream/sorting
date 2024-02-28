@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "network.h"
 #include "problem.h"
+#include "scope.h"
 #include "solution_helpers.h"
 #include "utilities.h"
 
@@ -111,10 +112,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 				cout << "input_vals:" << endl;
 				for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 					cout << i_index << ": " << input_vals[i_index] << endl;
-				}
-
-				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-					cout << input_vals[i_index] << endl;
 				}
 				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 				problem->print();
