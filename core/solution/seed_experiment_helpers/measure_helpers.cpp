@@ -34,7 +34,6 @@ void SeedExperiment::measure_backprop(double target_val) {
 		} else {
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
-			this->sub_state_iter = -1;
 		}
 	}
 }

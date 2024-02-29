@@ -34,21 +34,21 @@ const int SEED_EXPERIMENT_STATE_VERIFY_1ST_FILTER = 3;
 const int SEED_EXPERIMENT_STATE_VERIFY_2ND_FILTER = 4;
 /**
  * - a valid gather needs to:
- *   - when taking seed path, still hits high scores
- *   - at curr_filter, filtering still maintains original score
+ *   - at curr_filter, taking seed path still hits high scores
  *   - all previous gathers/filters still valid
  *     - i.e., if filtered before curr_filter, still maintains original score
- * 
- * - simply 50/50 seed path vs. non-seed path
- *   - if this->sub_state_iter%2 == 0, seed path
- */
-/**
- * TODO:
- * - remeasure existing for gather
+ *       - relative to new gather starting point
  */
 const int SEED_EXPERIMENT_STATE_FIND_GATHER = 5;
-const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER = 6;
-const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER = 7;
+const int SEED_EXPERIMENT_STATE_FIND_GATHER_SEED = 6;
+const int SEED_EXPERIMENT_STATE_FIND_GATHER_FILTER = 7;
+const int SEED_EXPERIMENT_STATE_FIND_GATHER_EXISTING = 8;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_SEED = 9;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_FILTER = 10;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_EXISTING = 11;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_SEED = 12;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_FILTER = 13;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_EXISTING = 14;
 /**
  * - train on whether better than standard deviation away
  *   - allow overshoot
@@ -59,25 +59,27 @@ const int SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER = 7;
  * - for non-target, previous gathers/filters still activate as usual
  *   - but curr_filter will never take seed path
  */
-const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 8;
-const int SEED_EXPERIMENT_STATE_MEASURE_FILTER = 9;
-const int SEED_EXPERIMENT_STATE_MEASURE = 10;
-const int SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 11;
-const int SEED_EXPERIMENT_STATE_VERIFY_1ST = 12;
-const int SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 13;
-const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 14;
+const int SEED_EXPERIMENT_STATE_TRAIN_FILTER = 15;
+const int SEED_EXPERIMENT_STATE_MEASURE_FILTER = 16;
+const int SEED_EXPERIMENT_STATE_MEASURE = 17;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 18;
+const int SEED_EXPERIMENT_STATE_VERIFY_1ST = 19;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 20;
+const int SEED_EXPERIMENT_STATE_VERIFY_2ND = 21;
 #if defined(MDEBUG) && MDEBUG
-const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 15;
+const int SEED_EXPERIMENT_STATE_CAPTURE_VERIFY = 22;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int FIND_FILTER_ITER_LIMIT = 20;
 const int FIND_GATHER_ITER_LIMIT = 20;
+const int FIND_GATHER_NUM_SAMPLES_PER_ITER = 2;
 const int TRAIN_FILTER_ITER_LIMIT = 2;
 const int TRAIN_GATHER_ITER_LIMIT = 2;
 #else
 const int FIND_FILTER_ITER_LIMIT = 200;
 const int FIND_GATHER_ITER_LIMIT = 200;
+const int FIND_GATHER_NUM_SAMPLES_PER_ITER = 20;
 const int TRAIN_FILTER_ITER_LIMIT = 20;
 const int TRAIN_GATHER_ITER_LIMIT = 20;
 #endif /* MDEBUG */
@@ -153,9 +155,9 @@ public:
 	/**
 	 * - add to front of experiments, so can override previous gathers
 	 *   - if override filter, then higher_ratio will likely decrease and fail
-	 * 
-	 * - when finalizing, add filters first, then add gathers front-to-back
 	 */
+	double curr_gather_existing_average_score;
+	double curr_gather_existing_score_standard_deviation;
 	int curr_gather_miss_count;
 	double curr_gather_seed_score;
 	int curr_gather_is_higher;
@@ -229,12 +231,27 @@ public:
 	void verify_filter_backprop(double target_val,
 								SeedExperimentOverallHistory* history);
 
-	void find_gather_backprop(double target_val,
-							  RunHelper& run_helper,
-							  SeedExperimentOverallHistory* history);
+	void find_gather_backprop(SeedExperimentOverallHistory* history);
 
-	void verify_gather_backprop(double target_val,
-								SeedExperimentOverallHistory* history);
+	void find_gather_seed_backprop(double target_val,
+								   SeedExperimentOverallHistory* history);
+
+	void find_gather_filter_backprop(double target_val,
+									 SeedExperimentOverallHistory* history);
+
+	void find_gather_existing_backprop(double target_val,
+									   RunHelper& run_helper,
+									   SeedExperimentOverallHistory* history);
+
+	void verify_gather_seed_backprop(double target_val,
+									 SeedExperimentOverallHistory* history);
+
+	void verify_gather_filter_backprop(double target_val,
+									   SeedExperimentOverallHistory* history);
+
+	void verify_gather_existing_backprop(double target_val,
+										 RunHelper& run_helper,
+										 SeedExperimentOverallHistory* history);
 
 	void train_filter_backprop(double target_val,
 							   SeedExperimentOverallHistory* history);

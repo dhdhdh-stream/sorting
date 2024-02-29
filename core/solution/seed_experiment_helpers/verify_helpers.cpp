@@ -39,7 +39,6 @@ void SeedExperiment::verify_backprop(double target_val) {
 		} else {
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
-			this->sub_state_iter = -1;
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
@@ -101,7 +100,6 @@ void SeedExperiment::verify_backprop(double target_val) {
 		} else {
 			this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 			this->state_iter = 0;
-			this->sub_state_iter = -1;
 		}
 	}
 }

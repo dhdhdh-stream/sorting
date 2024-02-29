@@ -85,6 +85,9 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 					// }
 					// cout << endl;
 
+					this->existing_average_score = this->curr_gather_existing_average_score;
+					this->existing_score_standard_deviation = this->curr_gather_existing_score_standard_deviation;
+
 					this->gathers.push_back(this->curr_gather);
 					this->curr_gather = NULL;
 
@@ -209,7 +212,6 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				} else {
 					this->state = SEED_EXPERIMENT_STATE_FIND_GATHER;
 					this->state_iter = 0;
-					this->sub_state_iter = -1;
 				}
 			}
 		}

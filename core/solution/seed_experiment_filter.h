@@ -80,15 +80,15 @@ public:
 							  AbstractNode*& exit_node,
 							  RunHelper& run_helper);
 
-	void find_gather_activate(AbstractNode*& curr_node,
-							  Problem* problem,
-							  std::vector<ContextLayer>& context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
+	void find_gather_activate(std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
-	void create_gather_activate(Problem* problem,
-								std::vector<ContextLayer>& context,
-								RunHelper& run_helper);
+
+	void find_gather_filter_activate(AbstractNode*& curr_node,
+									 Problem* problem,
+									 std::vector<ContextLayer>& context,
+									 int& exit_depth,
+									 AbstractNode*& exit_node,
+									 RunHelper& run_helper);
 
 	void train_filter_activate(AbstractNode*& curr_node,
 							   Problem* problem,

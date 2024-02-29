@@ -131,11 +131,17 @@ bool SeedExperimentGather::activate(AbstractNode*& curr_node,
 	}
 
 	if (is_selected) {
-		/**
-		 * - if existing, need to begin measure early, but don't take gather
-		 */
-		if (this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
-				&& this->parent->state != SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING) {
+		switch (this->parent->state) {
+		case SEED_EXPERIMENT_STATE_FIND_GATHER_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+			/**
+			 * - if existing, need to begin measure early, but don't take gather
+			 */
+			break;
+		default:
 			#if defined(MDEBUG) && MDEBUG
 			if (this->parent->state == SEED_EXPERIMENT_STATE_CAPTURE_VERIFY) {
 				if (this->parent->verify_problems[this->parent->state_iter] == NULL) {

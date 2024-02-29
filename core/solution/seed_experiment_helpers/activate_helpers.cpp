@@ -86,6 +86,9 @@ bool SeedExperiment::activate(AbstractNode*& curr_node,
 							 exit_node,
 							 run_helper);
 			break;
+		case SEED_EXPERIMENT_STATE_FIND_GATHER_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_EXISTING:
+		case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_EXISTING:
 		case SEED_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
 		case SEED_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 			// do nothing
@@ -156,14 +159,36 @@ void SeedExperiment::backprop(double target_val,
 							   overall_history);
 		break;
 	case SEED_EXPERIMENT_STATE_FIND_GATHER:
-		find_gather_backprop(target_val,
-							 run_helper,
-							 overall_history);
+		find_gather_backprop(overall_history);
 		break;
-	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER:
-	case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER:
-		verify_gather_backprop(target_val,
-							   overall_history);
+	case SEED_EXPERIMENT_STATE_FIND_GATHER_SEED:
+		find_gather_seed_backprop(target_val,
+								  overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_FIND_GATHER_FILTER:
+		find_gather_filter_backprop(target_val,
+									overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_FIND_GATHER_EXISTING:
+		find_gather_existing_backprop(target_val,
+									  run_helper,
+									  overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_SEED:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_SEED:
+		verify_gather_seed_backprop(target_val,
+									overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_FILTER:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_FILTER:
+		verify_gather_filter_backprop(target_val,
+									  overall_history);
+		break;
+	case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_EXISTING:
+	case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_EXISTING:
+		verify_gather_existing_backprop(target_val,
+										run_helper,
+										overall_history);
 		break;
 	case SEED_EXPERIMENT_STATE_TRAIN_FILTER:
 		train_filter_backprop(target_val,
