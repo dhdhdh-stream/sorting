@@ -1,6 +1,7 @@
 #include "seed_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -63,7 +64,26 @@ void SeedExperiment::verify_gather_existing_backprop(
 		double non_seed_t_score = non_seed_score_diff
 			/ (this->curr_gather_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
+		// cout << "SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_EXISTING" << endl;
+
+		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		// cout << "this->existing_score_standard_deviation: " << this->existing_score_standard_deviation << endl;
+
+		// cout << "this->curr_gather_existing_average_score: " << this->curr_gather_existing_average_score << endl;
+		// cout << "this->curr_gather_existing_score_standard_deviation: " << this->curr_gather_existing_score_standard_deviation << endl;
+
+		// cout << "this->curr_gather_seed_score: " << this->curr_gather_seed_score << endl;
+		// cout << "new_higher_ratio: " << new_higher_ratio << endl;
+		// cout << "this->curr_gather_non_seed_score: " << this->curr_gather_non_seed_score << endl;
+
+		// cout << "this->curr_filter_score: " << this->curr_filter_score << endl;
+		// cout << "this->curr_higher_ratio: " << this->curr_higher_ratio << endl;
+
+		// cout << "seed_t_score: " << seed_t_score << endl;
+		// cout << "ratio_t_score: " << ratio_t_score << endl;
+		// cout << "non_seed_t_score: " << non_seed_t_score << endl;
+
+		if (seed_t_score > -0.674 && ratio_t_score > -0.674 && non_seed_t_score > -0.674) {
 		#endif /* MDEBUG */
 			this->curr_gather_seed_score = 0.0;
 			this->curr_gather_is_higher = 0;
@@ -219,8 +239,20 @@ void SeedExperiment::verify_gather_existing_backprop(
 		double non_seed_t_score = non_seed_score_diff
 			/ (this->curr_gather_existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
+		if (seed_t_score > -0.674 && ratio_t_score > -0.674 && non_seed_t_score > -0.674) {
 		#endif /* MDEBUG */
+			cout << "verify gather:";
+			for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
+				if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->curr_gather->actions[s_index]->action.move;
+				} else if (this->curr_gather->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					cout << " E";
+				} else {
+					cout << " P";
+				}
+			}
+			cout << endl;
+
 			this->curr_gather->add_to_scope();
 
 			this->i_scope_histories.reserve(solution->curr_num_datapoints);

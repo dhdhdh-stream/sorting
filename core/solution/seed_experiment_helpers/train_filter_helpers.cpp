@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int TRAIN_FILTER_ITERS = 3;
+const int TRAIN_FILTER_ITERS = 5;
 
 void SeedExperiment::train_filter_backprop(double target_val,
 										   SeedExperimentOverallHistory* history) {

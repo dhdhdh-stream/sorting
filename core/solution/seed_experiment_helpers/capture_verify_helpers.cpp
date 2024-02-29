@@ -2,6 +2,8 @@
 
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 
 using namespace std;

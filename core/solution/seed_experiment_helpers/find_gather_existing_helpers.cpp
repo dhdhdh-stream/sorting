@@ -1,6 +1,7 @@
 #include "seed_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -62,7 +63,19 @@ void SeedExperiment::find_gather_existing_backprop(
 		double non_seed_t_score = non_seed_score_diff
 			/ (this->curr_gather_existing_score_standard_deviation / sqrt(FIND_GATHER_NUM_SAMPLES_PER_ITER));
 
-		if (seed_t_score > -0.1 && ratio_t_score > -0.1 && non_seed_t_score > -0.1) {
+		// cout << "SEED_EXPERIMENT_STATE_FIND_GATHER_EXISTING" << endl;
+
+		// cout << "this->existing_average_score: " << this->existing_average_score << endl;
+		// cout << "this->existing_score_standard_deviation: " << this->existing_score_standard_deviation << endl;
+
+		// cout << "this->curr_gather_existing_average_score: " << this->curr_gather_existing_average_score << endl;
+		// cout << "this->curr_gather_existing_score_standard_deviation: " << this->curr_gather_existing_score_standard_deviation << endl;
+
+		// cout << "seed_t_score: " << seed_t_score << endl;
+		// cout << "ratio_t_score: " << ratio_t_score << endl;
+		// cout << "non_seed_t_score: " << non_seed_t_score << endl;
+
+		if (seed_t_score > -0.674 && ratio_t_score > -0.674 && non_seed_t_score > -0.674) {
 		#endif /* MDEBUG */
 			this->curr_gather_miss_count = 0;
 			this->curr_gather_seed_score = 0.0;

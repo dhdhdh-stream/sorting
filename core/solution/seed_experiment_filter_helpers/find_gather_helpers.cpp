@@ -15,7 +15,8 @@
 
 using namespace std;
 
-void SeedExperimentFilter::find_gather_activate(vector<ContextLayer>& context,
+void SeedExperimentFilter::find_gather_activate(AbstractNode*& curr_node,
+												vector<ContextLayer>& context,
 												RunHelper& run_helper) {
 	bool is_target = false;
 	SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
@@ -132,7 +133,10 @@ void SeedExperimentFilter::find_gather_activate(vector<ContextLayer>& context,
 		this->parent->curr_gather_seed_score = 0.0;
 		this->parent->curr_gather_is_higher = 0;
 		this->parent->curr_gather_non_seed_score = 0.0;
-
-		// simply leave curr_node as is
 	}
+
+	/**
+	 * - simply this->seed_next_node because fewer lines of code
+	 */
+	curr_node = this->seed_next_node;
 }

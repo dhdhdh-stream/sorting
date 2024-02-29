@@ -213,7 +213,8 @@ void IncrementMinesweeper::perform_action(Action action) {
 }
 
 double IncrementMinesweeper::score_result() {
-	double score = 1.0 + 0.1 * this->num_correct;
+	// double score = 1.0 + 0.1 * this->num_correct;
+	double score = 1.0 + 0.01 * this->num_correct;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
 		for (int y_index = 0; y_index < HEIGHT; y_index++) {
 			if (this->flagged[x_index][y_index]) {

@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 using namespace std;
 
 void SeedExperiment::find_gather_filter_backprop(double target_val,

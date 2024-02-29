@@ -80,7 +80,8 @@ public:
 							  AbstractNode*& exit_node,
 							  RunHelper& run_helper);
 
-	void find_gather_activate(std::vector<ContextLayer>& context,
+	void find_gather_activate(AbstractNode*& curr_node,
+							  std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
 
 	void find_gather_filter_activate(AbstractNode*& curr_node,

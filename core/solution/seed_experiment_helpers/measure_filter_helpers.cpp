@@ -54,6 +54,12 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 				improve_threshold = 0.1 * this->curr_higher_ratio;
 			}
 
+			// temp
+			if (this->curr_gather != NULL) {
+				cout << "seed_ratio: " << seed_ratio << endl;
+				cout << "higher_ratio: " << higher_ratio << endl;
+			}
+
 			if (seed_ratio > 0.0 && higher_ratio > this->curr_higher_ratio + improve_threshold) {
 			#endif /* MDEBUG */
 				this->curr_filter->input_scope_contexts = this->curr_filter->test_input_scope_contexts;
@@ -92,6 +98,8 @@ void SeedExperiment::measure_filter_backprop(double target_val,
 					this->curr_gather = NULL;
 
 					this->train_gather_iter = 0;
+
+					cout << "SEED_EXPERIMENT_STATE_MEASURE" << endl;
 				}
 
 				this->curr_filter_is_success = true;

@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "solution.h"

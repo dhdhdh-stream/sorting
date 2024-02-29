@@ -83,13 +83,19 @@ bool SeedExperimentFilter::activate(AbstractNode*& curr_node,
 									 run_helper);
 				break;
 			case SEED_EXPERIMENT_STATE_FIND_GATHER:
-				find_gather_activate(context,
+				find_gather_activate(curr_node,
+									 context,
 									 run_helper);
 				break;
 			case SEED_EXPERIMENT_STATE_FIND_GATHER_SEED:
 			case SEED_EXPERIMENT_STATE_VERIFY_1ST_GATHER_SEED:
 			case SEED_EXPERIMENT_STATE_VERIFY_2ND_GATHER_SEED:
-				curr_node = this->seed_next_node;
+				{
+					SeedExperimentOverallHistory* overall_history = (SeedExperimentOverallHistory*)run_helper.experiment_history;
+					overall_history->has_target = true;
+
+					curr_node = this->seed_next_node;
+				}
 
 				break;
 			case SEED_EXPERIMENT_STATE_FIND_GATHER_FILTER:

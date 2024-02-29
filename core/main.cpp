@@ -1,3 +1,6 @@
+// TODO: add reset to start (and maybe exit)
+// - reset to start to try to improve generalization
+
 #include <chrono>
 #include <iostream>
 #include <map>
