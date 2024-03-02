@@ -1,3 +1,40 @@
+// need to redo to always take into account existing network
+
+// but gathers may invalidate existing, so it's weird
+
+// only gather at explore node
+// - so can evaluate if existing still valid
+//   - and don't have to consider other branches
+
+// filters need to relearn their own existing vs. seed?
+
+// find filters back-to-front instead?
+// - and just learn scores directly
+//   - find gathers back-to-front too
+//     - filters learn filter first, then seed
+//       - gather compare against filter?
+//       - actually, filter score is just filter score, and seed score is just seed score
+//         - so can tell if gather harmful
+//         - but both filter/existing, and seed need to re-learn
+
+// why exactly was branch not good enough?
+// - needed additional information
+//   - need full gathers
+// - actually don't need to commit
+//   - already addressed by PassThroughExperiment
+
+// - so focus should be on gathers
+
+// - no need to have multiple filters
+//   - only the last filter matters
+//     - again going back to PassThroughExperiments just being good enough
+
+// - so just need gathers
+//   - gathers for long range
+
+// - or good passthrough into good branch can be difficult
+//   - whereas simply branch into good passthrough is easier
+
 #ifndef SEED_EXPERIMENT_H
 #define SEED_EXPERIMENT_H
 

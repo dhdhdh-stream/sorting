@@ -241,18 +241,6 @@ void SeedExperiment::verify_gather_existing_backprop(
 
 		if (seed_t_score > -0.674 && ratio_t_score > -0.674 && non_seed_t_score > -0.674) {
 		#endif /* MDEBUG */
-			cout << "verify gather:";
-			for (int s_index = 0; s_index < (int)this->curr_gather->step_types.size(); s_index++) {
-				if (this->curr_gather->step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->curr_gather->actions[s_index]->action.move;
-				} else if (this->curr_gather->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					cout << " E";
-				} else {
-					cout << " P";
-				}
-			}
-			cout << endl;
-
 			this->curr_gather->add_to_scope();
 
 			this->i_scope_histories.reserve(solution->curr_num_datapoints);

@@ -250,7 +250,7 @@ void PassThroughExperiment::explore_backprop(double target_val) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->best_score > 0.0) {
+			if (this->best_score >= 0.0) {
 			#endif /* MDEBUG */
 				Scope* containing_scope = this->scope_context.back();
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

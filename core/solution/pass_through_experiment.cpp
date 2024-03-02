@@ -29,7 +29,7 @@ PassThroughExperiment::PassThroughExperiment(
 
 	this->curr_score = 0.0;
 
-	this->best_score = 0.0;
+	this->best_score = numeric_limits<double>::lowest();
 
 	this->branch_experiment = NULL;
 

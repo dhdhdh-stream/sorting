@@ -3,6 +3,9 @@
  * - add back misguess and keep alongside SeedExperiment
  */
 
+// TODO: PassThrough into disjoint BranchExperiment
+// - and actually, just chain PassThroughExperiments/experiments
+
 #ifndef PASS_THROUGH_EXPERIMENT_H
 #define PASS_THROUGH_EXPERIMENT_H
 

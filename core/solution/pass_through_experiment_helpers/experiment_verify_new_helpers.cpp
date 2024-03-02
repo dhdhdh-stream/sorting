@@ -216,6 +216,24 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		#else
 		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
+			cout << "Branch" << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->branch_experiment->best_step_types.size(); s_index++) {
+				if (this->branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->branch_experiment->best_actions[s_index]->action.move;
+				} else {
+					cout << " S";
+				}
+			}
+			cout << endl;
+
+			cout << "this->branch_experiment->best_exit_depth: " << this->branch_experiment->best_exit_depth << endl;
+			if (this->branch_experiment->best_exit_node == NULL) {
+				cout << "this->branch_experiment->best_exit_node_id: " << -1 << endl;
+			} else {
+				cout << "this->branch_experiment->best_exit_node_id: " << this->branch_experiment->best_exit_node->id << endl;
+			}
+
 			cout << "PassThrough experiment success" << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
