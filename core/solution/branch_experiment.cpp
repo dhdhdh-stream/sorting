@@ -2,8 +2,10 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
+#include "pass_through_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -13,14 +15,29 @@ using namespace std;
 
 BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 								   vector<AbstractNode*> node_context,
-								   bool is_branch) {
+								   bool is_branch,
+								   int throw_id,
+								   PassThroughExperiment* parent_experiment) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+	this->throw_id = throw_id;
 
-	this->parent_pass_through_experiment = NULL;
+	this->parent_experiment = parent_experiment;
+	if (this->parent_experiment != NULL) {
+		this->parent_experiment->child_experiments.push_back(this);
+
+		PassThroughExperiment* curr_experiment = this->parent_experiment;
+		while (true) {
+			if (curr_experiment->parent_experiment == NULL) {
+				break;
+			} else {
+				curr_experiment = curr_experiment->parent_experiment;
+			}
+		}
+	}
 
 	this->average_remaining_experiments_from_start = 1.0;
 	/**
@@ -74,6 +91,10 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
+	if (this->exit_node != NULL) {
+		delete this->exit_node;
+	}
+
 	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
 		delete this->i_scope_histories[h_index];
 	}
@@ -85,46 +106,7 @@ BranchExperiment::~BranchExperiment() {
 	#endif /* MDEBUG */
 }
 
-BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperiment* experiment) {
-	this->experiment = experiment;
-}
-
-BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperimentInstanceHistory* original) {
-	this->experiment = original->experiment;
-
-	BranchExperiment* branch_experiment = (BranchExperiment*)original->experiment;
-	this->step_histories = vector<void*>(branch_experiment->best_step_types.size());
-	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* original_action_node_history = (ActionNodeHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new ActionNodeHistory(original_action_node_history);
-		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
-		} else {
-			ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)original->step_histories[s_index];
-			this->step_histories[s_index] = new ScopeNodeHistory(original_scope_node_history);
-		}
-	}
-}
-
-BranchExperimentInstanceHistory::~BranchExperimentInstanceHistory() {
-	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
-	for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-		if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)this->step_histories[s_index];
-			delete action_node_history;
-		} else if (branch_experiment->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->step_histories[s_index];
-			delete scope_node_history;
-		} else {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)this->step_histories[s_index];
-			delete scope_node_history;
-		}
-	}
-}
-
-BranchExperimentOverallHistory::BranchExperimentOverallHistory(BranchExperiment* experiment) {
+BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->instance_count = 0;

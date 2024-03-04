@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -13,128 +14,20 @@
 using namespace std;
 
 void PassThroughExperiment::experiment_verify_new_activate(
-		AbstractNode*& curr_node,
-		Problem* problem,
-		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
-	PassThroughExperimentInstanceHistory* instance_history = new PassThroughExperimentInstanceHistory(this);
-	history = instance_history;
-
-	for (int s_index = 0; s_index < this->branch_experiment_step_index+1; s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-			instance_history->pre_step_histories.push_back(action_node_history);
-			this->best_actions[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				action_node_history);
-		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-			instance_history->pre_step_histories.push_back(scope_node_history);
-			this->best_existing_scopes[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
+		AbstractNode*& curr_node) {
+	if (this->best_step_types.size() == 0) {
+		if (this->best_exit_depth > 0) {
+			curr_node = this->exit_node;
 		} else {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-			instance_history->pre_step_histories.push_back(scope_node_history);
-			this->best_potential_scopes[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
+			curr_node = this->best_exit_next_node;
 		}
-	}
-
-	if (!run_helper.exceeded_limit) {
-		if (this->branch_experiment_step_index == (int)this->best_step_types.size()-1) {
-			if (this->best_exit_depth == 0) {
-				curr_node = this->best_exit_node;
-			} else {
-				exit_depth = this->best_exit_depth-1;
-				exit_node = this->best_exit_node;
-			}
+	} else {
+		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+			curr_node = this->best_actions[0];
+		} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+			curr_node = this->best_existing_scopes[0];
 		} else {
-			if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[this->branch_experiment_step_index+1];
-			} else if (this->best_step_types[this->branch_experiment_step_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->best_existing_scopes[this->branch_experiment_step_index+1];
-			} else {
-				curr_node = this->best_potential_scopes[this->branch_experiment_step_index+1];
-			}
-		}
-
-		this->branch_experiment->parent_verify_activate(
-			curr_node,
-			problem,
-			context,
-			exit_depth,
-			exit_node,
-			run_helper,
-			instance_history->branch_experiment_history);
-
-		if (!run_helper.exceeded_limit
-				&& exit_depth == -1) {
-			map<AbstractNode*, int>::iterator it = this->node_to_step_index.find(curr_node);
-			if (it != this->node_to_step_index.end()) {
-				for (int s_index = it->second; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-						instance_history->post_step_histories.push_back(action_node_history);
-						this->best_actions[s_index]->activate(
-							curr_node,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper,
-							action_node_history);
-					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-						instance_history->post_step_histories.push_back(scope_node_history);
-						this->best_existing_scopes[s_index]->activate(
-							curr_node,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper,
-							scope_node_history);
-					} else {
-						ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-						instance_history->post_step_histories.push_back(scope_node_history);
-						this->best_potential_scopes[s_index]->activate(
-							curr_node,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper,
-							scope_node_history);
-					}
-				}
-
-				if (this->best_exit_depth == 0) {
-					curr_node = this->best_exit_node;
-				} else {
-					exit_depth = this->best_exit_depth-1;
-					exit_node = this->best_exit_node;
-				}
-			}
+			curr_node = this->best_potential_scopes[0];
 		}
 	}
 }
@@ -172,31 +65,66 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			 * - leave this->state_iter unchanged
 			 */
 		} else {
-			delete this->branch_experiment;
-			this->branch_experiment = NULL;
+			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
+				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				pass_through_experiment->state_iter = 0;
+			} else {
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
+				branch_experiment->parent_experiment->state_iter++;
+				int matching_index;
+				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
+					if (branch_experiment->parent_experiment->child_experiments[c_index] == branch_experiment) {
+						matching_index = c_index;
+						break;
+					}
+				}
+				branch_experiment->parent_experiment->child_experiments.erase(
+					branch_experiment->parent_experiment->child_experiments.begin() + matching_index);
+				branch_experiment->result = EXPERIMENT_RESULT_FAIL;
+				branch_experiment->finalize();
+				delete branch_experiment;
 
-			this->state_iter++;
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+				while (true) {
+					if (curr_experiment->parent_experiment == NULL) {
+						break;
+					}
+
+					if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+						PassThroughExperiment* parent = curr_experiment->parent_experiment;
+
+						parent->state_iter++;
+						int matching_index;
+						for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+							if (parent->child_experiments[c_index] == curr_experiment) {
+								matching_index = c_index;
+								break;
+							}
+						}
+						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
+
+						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
+						curr_experiment->finalize();
+						delete curr_experiment;
+
+						curr_experiment = parent;
+					} else {
+						break;
+					}
+				}
+			}
+
+			this->verify_experiments.clear();
+
 			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);
-				this->branch_experiment_step_index = distribution(generator);
-
-				this->branch_experiment = new BranchExperiment(
-					this->scope_context,
-					this->node_context,
-					this->is_branch);
-				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
-					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index];
-				} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->branch_experiment->node_context.back() = this->best_existing_scopes[this->branch_experiment_step_index];
-				} else {
-					this->branch_experiment->node_context.back() = this->best_potential_scopes[this->branch_experiment_step_index];
-				}
-				this->branch_experiment->parent_pass_through_experiment = this;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				/**
+				 * - leave this->state_iter unchanged
+				 */
 			}
-
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 		}
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
@@ -216,24 +144,6 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		#else
 		if (score_improvement_t_score > 1.645) {	// >95%
 		#endif /* MDEBUG */
-			cout << "Branch" << endl;
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->branch_experiment->best_step_types.size(); s_index++) {
-				if (this->branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->branch_experiment->best_actions[s_index]->action.move;
-				} else {
-					cout << " S";
-				}
-			}
-			cout << endl;
-
-			cout << "this->branch_experiment->best_exit_depth: " << this->branch_experiment->best_exit_depth << endl;
-			if (this->branch_experiment->best_exit_node == NULL) {
-				cout << "this->branch_experiment->best_exit_node_id: " << -1 << endl;
-			} else {
-				cout << "this->branch_experiment->best_exit_node_id: " << this->branch_experiment->best_exit_node->id << endl;
-			}
-
 			cout << "PassThrough experiment success" << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
@@ -256,43 +166,82 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			cout << endl;
 
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_node == NULL) {
-				cout << "this->best_exit_node_id: " << -1 << endl;
+			if (this->best_exit_next_node == NULL) {
+				cout << "this->best_exit_next_node->id: " << -1 << endl;
 			} else {
-				cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
 			cout << "new_average_score: " << new_average_score << endl;
 			cout << "score_improvement_t_score: " << score_improvement_t_score << endl;
 
+			/**
+			 * - also finalize this->verify_experiments in finalize()
+			 */
+
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			delete this->branch_experiment;
-			this->branch_experiment = NULL;
+			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
+				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				pass_through_experiment->state_iter = 0;
+			} else {
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
+				branch_experiment->parent_experiment->state_iter++;
+				int matching_index;
+				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
+					if (branch_experiment->parent_experiment->child_experiments[c_index] == branch_experiment) {
+						matching_index = c_index;
+						break;
+					}
+				}
+				branch_experiment->parent_experiment->child_experiments.erase(
+					branch_experiment->parent_experiment->child_experiments.begin() + matching_index);
+				branch_experiment->result = EXPERIMENT_RESULT_FAIL;
+				branch_experiment->finalize();
+				delete branch_experiment;
 
-			this->state_iter++;
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+				while (true) {
+					if (curr_experiment->parent_experiment == NULL) {
+						break;
+					}
+
+					if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+						PassThroughExperiment* parent = curr_experiment->parent_experiment;
+
+						parent->state_iter++;
+						int matching_index;
+						for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+							if (parent->child_experiments[c_index] == curr_experiment) {
+								matching_index = c_index;
+								break;
+							}
+						}
+						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
+
+						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
+						curr_experiment->finalize();
+						delete curr_experiment;
+
+						curr_experiment = parent;
+					} else {
+						break;
+					}
+				}
+			}
+
+			this->verify_experiments.clear();
+
 			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				uniform_int_distribution<int> distribution(0, (int)this->best_step_types.size()-1);
-				this->branch_experiment_step_index = distribution(generator);
-
-				this->branch_experiment = new BranchExperiment(
-					this->scope_context,
-					this->node_context,
-					this->is_branch);
-				if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_ACTION) {
-					this->branch_experiment->node_context.back() = this->best_actions[this->branch_experiment_step_index];
-				} else if (this->best_step_types[this->branch_experiment_step_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->branch_experiment->node_context.back() = this->best_existing_scopes[this->branch_experiment_step_index];
-				} else {
-					this->branch_experiment->node_context.back() = this->best_potential_scopes[this->branch_experiment_step_index];
-				}
-				this->branch_experiment->parent_pass_through_experiment = this;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				/**
+				 * - leave this->state_iter unchanged
+				 */
 			}
-
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 		}
 	}
 }

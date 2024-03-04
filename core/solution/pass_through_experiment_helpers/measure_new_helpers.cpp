@@ -57,10 +57,10 @@ void PassThroughExperiment::measure_new_activate(
 	}
 
 	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_node;
+		curr_node = this->best_exit_next_node;
 	} else {
 		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_node;
+		exit_node = this->best_exit_next_node;
 	}
 }
 
@@ -98,7 +98,7 @@ void PassThroughExperiment::measure_new_backprop(
 				&& rand()%2 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& new_average_score > this->existing_average_score) {
+				&& score_improvement_t_score > -0.2) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 

@@ -3,6 +3,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "network.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
@@ -10,14 +11,13 @@
 
 using namespace std;
 
-void BranchExperiment::parent_verify_activate(
+void BranchExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
+		RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -97,51 +97,20 @@ void BranchExperiment::parent_verify_activate(
 	#endif /* MDEBUG */
 
 	if (decision_is_branch) {
-		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
-		history = instance_history;
-
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-				instance_history->step_histories.push_back(action_node_history);
-				this->best_actions[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					action_node_history);
-			} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-				instance_history->step_histories.push_back(scope_node_history);
-				this->best_existing_scopes[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					scope_node_history);
+		if (this->best_step_types.size() == 0) {
+			if (this->best_exit_depth > 0) {
+				curr_node = this->exit_node;
 			} else {
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-				instance_history->step_histories.push_back(scope_node_history);
-				this->best_potential_scopes[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					scope_node_history);
+				curr_node = this->best_exit_next_node;
 			}
-		}
-
-		if (this->best_exit_depth == 0) {
-			curr_node = this->best_exit_node;
 		} else {
-			exit_depth = this->best_exit_depth-1;
-			exit_node = this->best_exit_node;
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
+			} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+				curr_node = this->best_existing_scopes[0];
+			} else {
+				curr_node = this->best_potential_scopes[0];
+			}
 		}
 	}
 }

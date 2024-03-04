@@ -18,7 +18,7 @@ const int OUTER_EXPERIMENT_STATE_VERIFY_1ST_NEW = 4;
 const int OUTER_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 5;
 const int OUTER_EXPERIMENT_STATE_VERIFY_2ND_NEW = 6;
 
-class OuterExperimentOverallHistory;
+class OuterExperimentHistory;
 class OuterExperiment : public AbstractExperiment {
 public:
 	int state;
@@ -48,8 +48,7 @@ public:
 	bool activate(Problem* problem,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
-				  RunHelper& run_helper,
-				  AbstractExperimentHistory* history);
+				  RunHelper& run_helper);
 
 	void measure_existing_activate(Problem* problem,
 								   RunHelper& run_helper);
@@ -83,13 +82,12 @@ public:
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
-				  RunHelper& run_helper,
-				  AbstractExperimentHistory*& history);
+				  RunHelper& run_helper);
 };
 
-class OuterExperimentOverallHistory : public AbstractExperimentHistory {
+class OuterExperimentHistory : public AbstractExperimentHistory {
 public:
-	OuterExperimentOverallHistory(OuterExperiment* experiment);
+	OuterExperimentHistory(OuterExperiment* experiment);
 };
 
 #endif /* OUTER_EXPERIMENT_H */

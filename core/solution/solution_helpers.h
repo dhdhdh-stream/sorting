@@ -24,13 +24,8 @@ ScopeNode* create_repeat(std::vector<ContextLayer>& context,
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<Scope*>& experiment_scope_context,
 						   std::vector<AbstractNode*>& experiment_node_context,
-						   bool experiment_is_branch);
-void parent_pass_through_gather_possible_exits(
-	std::vector<std::pair<int,AbstractNode*>>& possible_exits,
-	std::vector<Scope*>& scope_context,
-	std::vector<AbstractNode*>& node_context,
-	int parent_exit_depth,
-	AbstractNode* parent_exit_node);
+						   bool experiment_is_branch,
+						   RunHelper& run_helper);
 
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,

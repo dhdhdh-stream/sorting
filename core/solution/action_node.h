@@ -56,11 +56,8 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	double obs_snapshot;
 
-	AbstractExperimentHistory* experiment_history;
-
 	ActionNodeHistory(ActionNode* node);
 	ActionNodeHistory(ActionNodeHistory* original);
-	~ActionNodeHistory();
 };
 
 #endif /* ACTION_NODE_H */

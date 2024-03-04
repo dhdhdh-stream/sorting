@@ -49,8 +49,13 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 							  history->node_histories);
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
-		exit_depth = node->exit_depth-1;
-		exit_node = node->next_node;
+		if (node->is_throw) {
+			run_helper.throw_id = node->throw_id;
+			curr_node = NULL;
+		} else {
+			exit_depth = node->exit_depth-1;
+			exit_node = node->next_node;
+		}
 	}
 }
 

@@ -11,6 +11,9 @@ void PassThroughExperiment::experiment_verify_existing_backprop(
 		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
+	/**
+	 * - has to be root, so this->parent_experiment == NULL
+	 */
 	if (!run_helper.exceeded_limit) {
 		if (run_helper.max_depth > solution->max_depth) {
 			solution->max_depth = run_helper.max_depth;

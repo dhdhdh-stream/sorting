@@ -6,14 +6,24 @@
 
 using namespace std;
 
+void PassThroughExperiment::measure_existing_activate(
+		PassThroughExperimentHistory* history) {
+	history->instance_count++;
+}
+
 void PassThroughExperiment::measure_existing_backprop(
 		double target_val,
-		RunHelper& run_helper) {
+		RunHelper& run_helper,
+		PassThroughExperimentHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
-	if (!run_helper.exceeded_limit) {
-		if (run_helper.max_depth > solution->max_depth) {
-			solution->max_depth = run_helper.max_depth;
+	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+
+	if (this->parent_experiment == NULL) {
+		if (!run_helper.exceeded_limit) {
+			if (run_helper.max_depth > solution->max_depth) {
+				solution->max_depth = run_helper.max_depth;
+			}
 		}
 	}
 
@@ -35,8 +45,7 @@ void PassThroughExperiment::measure_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPLORE;
+		this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_CREATE;
 		this->state_iter = 0;
-		this->sub_state_iter = 0;
 	}
 }

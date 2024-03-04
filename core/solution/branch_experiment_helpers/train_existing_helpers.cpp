@@ -22,22 +22,16 @@
 using namespace std;
 
 void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
-											   RunHelper& run_helper) {
+											   RunHelper& run_helper,
+											   BranchExperimentHistory* history) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
-	BranchExperimentOverallHistory* overall_history;
-	if (this->parent_pass_through_experiment != NULL) {
-		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-		overall_history = parent_history->branch_experiment_history;
-	} else {
-		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
-	}
-	overall_history->instance_count++;
+	history->instance_count++;
 }
 
 void BranchExperiment::train_existing_backprop(double target_val,
 											   RunHelper& run_helper,
-											   BranchExperimentOverallHistory* history) {
+											   BranchExperimentHistory* history) {
 	this->o_target_val_histories.push_back(target_val);
 
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
@@ -46,7 +40,7 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
-	if (this->parent_pass_through_experiment == NULL) {
+	if (this->parent_experiment == NULL) {
 		if (!run_helper.exceeded_limit) {
 			if (run_helper.max_depth > solution->max_depth) {
 				solution->max_depth = run_helper.max_depth;

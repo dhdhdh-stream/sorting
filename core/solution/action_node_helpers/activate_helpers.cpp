@@ -27,8 +27,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			context,
 			exit_depth,
 			exit_node,
-			run_helper,
-			history->experiment_history);
+			run_helper);
 		if (is_selected) {
 			return;
 		}

@@ -40,7 +40,17 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 
 	context.back().node = NULL;
 
-	if (inner_exit_depth == -1) {
+	if (run_helper.exceeded_limit) {
+		return;
+	} else if (run_helper.throw_id != -1) {
+		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
+		if (it != this->catches.end()) {
+			curr_node = it->second;
+			run_helper.throw_id = -1;
+		} else {
+			curr_node = NULL;
+		}
+	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
 		curr_node = inner_exit_node;

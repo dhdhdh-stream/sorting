@@ -1,6 +1,3 @@
-// TODO: add reset to start (and maybe exit)
-// - reset to start to try to improve generalization
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -8,13 +5,13 @@
 #include <random>
 
 #include "action_node.h"
+#include "branch_experiment.h"
 #include "globals.h"
 #include "increment_minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "simple.h"
 #include "scope.h"
-#include "seed_experiment.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
@@ -39,17 +36,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new IncrementMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
-
-	// SeedExperiment* seed_experiment = new SeedExperiment(
-	// 	vector<Scope*>{solution->root},
-	// 	vector<AbstractNode*>{solution->root->nodes[0]},
-	// 	false);
-	// ActionNode* explore_node = (ActionNode*)solution->root->nodes[0];
-	// explore_node->experiments.push_back(seed_experiment);
+	solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -59,8 +49,8 @@ int main(int argc, char* argv[]) {
 
 	while (true) {
 		// Problem* problem = new Sorting();
-		Problem* problem = new IncrementMinesweeper();
-		// Problem* problem = new Simple();
+		// Problem* problem = new IncrementMinesweeper();
+		Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
@@ -97,18 +87,9 @@ int main(int argc, char* argv[]) {
 									 run_helper,
 									 root_history);
 
-			if (run_helper.experiment_history == NULL) {
-				if (run_helper.experiments_seen_order.size() == 0) {
-					#if defined(MDEBUG) && MDEBUG
-					/**
-					 * - allow exceeded_limit during debug to help test recursion
-					 */
+			if (run_helper.experiments_seen_order.size() == 0) {
+				if (!run_helper.exceeded_limit) {
 					create_experiment(root_history);
-					#else
-					if (!run_helper.exceeded_limit) {
-						create_experiment(root_history);
-					}
-					#endif /* MDEBUG */
 				}
 			}
 
@@ -124,27 +105,95 @@ int main(int argc, char* argv[]) {
 
 		bool is_success = false;
 		bool is_fail = false;
-		if (run_helper.experiment_history != NULL) {
+		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
 					0.9 * experiment->average_remaining_experiments_from_start
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-						+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
+						+ run_helper.experiment_histories[0]->experiment->average_remaining_experiments_from_start);
+			}
+			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size()-1; h_index++) {
+				PassThroughExperimentHistory* pass_through_experiment_history = (PassThroughExperimentHistory*)run_helper.experiment_histories[h_index];
+				for (int e_index = 0; e_index < (int)pass_through_experiment_history->experiments_seen_order.size(); e_index++) {
+					AbstractExperiment* experiment = pass_through_experiment_history->experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
+				}
 			}
 
-			run_helper.experiment_history->experiment->backprop(
+			run_helper.experiment_histories.back()->experiment->backprop(
 				target_val,
-				run_helper,
-				run_helper.experiment_history);
-			if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-				is_fail = true;
-				run_helper.experiment_history->experiment->finalize();
-				delete run_helper.experiment_history->experiment;
-			} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				run_helper);
+			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
+				if (run_helper.experiment_histories.size() == 1) {
+					is_fail = true;
+					run_helper.experiment_histories.back()->experiment->finalize();
+					delete run_helper.experiment_histories.back()->experiment;
+				} else {
+					PassThroughExperiment* curr_experiment;
+					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
+						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_histories.back()->experiment;
+						curr_experiment = pass_through_experiment->parent_experiment;
+					} else {
+						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment_histories.back()->experiment;
+						curr_experiment = branch_experiment->parent_experiment;
+					}
+
+					curr_experiment->state_iter++;
+					int matching_index;
+					for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
+						if (curr_experiment->child_experiments[c_index] == run_helper.experiment_histories.back()->experiment) {
+							matching_index = c_index;
+							break;
+						}
+					}
+					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
+
+					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
+					run_helper.experiment_histories.back()->experiment->finalize();
+					delete run_helper.experiment_histories.back()->experiment;
+
+					while (true) {
+						if (curr_experiment->parent_experiment == NULL) {
+							is_fail = true;
+							curr_experiment->finalize();
+							delete curr_experiment;
+							break;
+						}
+
+						if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+							PassThroughExperiment* parent = curr_experiment->parent_experiment;
+
+							parent->state_iter++;
+							int matching_index;
+							for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+								if (parent->child_experiments[c_index] == curr_experiment) {
+									matching_index = c_index;
+									break;
+								}
+							}
+							parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
+
+							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
+							curr_experiment->finalize();
+							delete curr_experiment;
+
+							curr_experiment = parent;
+						} else {
+							break;
+						}
+					}
+				}
+			} else if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				/**
+				 * - run_helper.experiment_histories.size() == 1
+				 */
 				is_success = true;
-				run_helper.experiment_history->experiment->finalize();
-				delete run_helper.experiment_history->experiment;
+				run_helper.experiment_histories.back()->experiment->finalize();
+				delete run_helper.experiment_histories.back();
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -201,13 +250,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+			solution->timestamp = (unsigned)time(NULL);
+			solution->save("", "main");
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;

@@ -11,7 +11,7 @@ bool OuterExperiment::activate(Problem* problem,
 	double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 	if (distribution(generator) < selected_probability) {
-		run_helper.experiment_history = new OuterExperimentOverallHistory(this);
+		run_helper.experiment_histories.push_back(new OuterExperimentHistory(this));
 
 		switch (this->state) {
 		case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING:
@@ -50,8 +50,7 @@ bool OuterExperiment::activate(Problem* problem,
 }
 
 void OuterExperiment::backprop(double target_val,
-							   RunHelper& run_helper,
-							   AbstractExperimentHistory* history) {
+							   RunHelper& run_helper) {
 	switch (this->state) {
 	case OUTER_EXPERIMENT_STATE_MEASURE_EXISTING:
 		measure_existing_backprop(target_val,

@@ -17,7 +17,6 @@ class Scope;
 const int BRANCH_NODE_EXPERIMENT_TYPE_NA = 0;
 const int BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL = 1;
 const int BRANCH_NODE_EXPERIMENT_TYPE_BRANCH = 2;
-const int BRANCH_NODE_EXPERIMENT_TYPE_SEED = 3;
 
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
@@ -90,16 +89,19 @@ public:
 					   std::vector<double>& input_vals,
 					   BranchNodeHistory* history);
 
-	void random_activate(bool& is_branch,
+	void random_activate(AbstractNode*& curr_node,
 						 std::vector<Scope*>& scope_context,
 						 std::vector<AbstractNode*>& node_context,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
-	void random_exit_activate(bool& is_branch,
+	void random_exit_activate(AbstractNode*& curr_node,
 							  std::vector<Scope*>& scope_context,
 							  std::vector<AbstractNode*>& node_context,
 							  int curr_depth,
 							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
+	void inner_random_exit_activate(AbstractNode*& curr_node,
+									std::vector<Scope*>& scope_context,
+									std::vector<AbstractNode*>& node_context);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
@@ -123,11 +125,8 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
 
-	AbstractExperimentHistory* experiment_history;
-
 	BranchNodeHistory(BranchNode* node);
 	BranchNodeHistory(BranchNodeHistory* original);
-	~BranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

@@ -1,8 +1,7 @@
 #include "scope_node.h"
 
-#include "branch_experiment.h"
+#include "abstract_experiment.h"
 #include "globals.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -64,8 +63,6 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
-
-	this->experiment_history = NULL;
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
@@ -73,24 +70,9 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 
 	this->scope_history = new ScopeHistory(original->scope_history);
 
-	if (original->experiment_history != NULL) {
-		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-			BranchExperimentInstanceHistory* branch_experiment_history = (BranchExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new BranchExperimentInstanceHistory(branch_experiment_history);
-		} else {
-			// original->experiment_history->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH
-			PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new PassThroughExperimentInstanceHistory(pass_through_experiment_history);
-		}
-	} else {
-		this->experiment_history = NULL;
-	}
+	this->throw_id = original->throw_id;
 }
 
 ScopeNodeHistory::~ScopeNodeHistory() {
 	delete this->scope_history;
-
-	if (this->experiment_history != NULL) {
-		delete this->experiment_history;
-	}
 }

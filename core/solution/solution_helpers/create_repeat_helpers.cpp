@@ -22,12 +22,17 @@ void create_repeat_helper(int target_depth,
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 			ActionNode* action_node = (ActionNode*)action_node_history->node;
 
-			node_context.back() = action_node;
+			/**
+			 * - decision making tied to original nodes will break anyways, so don't include NOOPs
+			 */
+			if (action_node->action.move != ACTION_NOOP) {
+				node_context.back() = action_node;
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
 
-			node_context.back() = NULL;
+				node_context.back() = NULL;
+			}
 		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;

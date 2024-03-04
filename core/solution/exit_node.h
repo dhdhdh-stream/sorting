@@ -7,6 +7,8 @@
 
 class ExitNode : public AbstractNode {
 public:
+	bool is_throw;
+
 	/**
 	 * - always > 0
 	 *   - if want to exit within scope, connect directly
@@ -16,6 +18,8 @@ public:
 	int next_node_parent_id;
 	int next_node_id;
 	AbstractNode* next_node;
+
+	int throw_id;
 
 	ExitNode();
 	~ExitNode();

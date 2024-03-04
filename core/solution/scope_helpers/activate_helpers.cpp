@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -51,8 +52,13 @@ void node_activate_helper(AbstractNode*& curr_node,
 					   history->node_histories);
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
-		exit_depth = node->exit_depth-1;
-		exit_node = node->next_node;
+		if (node->is_throw) {
+			run_helper.throw_id = node->throw_id;
+			curr_node = NULL;
+		} else {
+			exit_depth = node->exit_depth-1;
+			exit_node = node->next_node;
+		}
 	}
 }
 
@@ -86,6 +92,10 @@ void Scope::activate(Problem* problem,
 							 exit_node,
 							 run_helper,
 							 history);
+	}
+
+	if (history->pass_through_experiment_history != NULL) {
+		history->pass_through_experiment_history->scope_history = new ScopeHistory(history);
 	}
 
 	run_helper.curr_depth--;

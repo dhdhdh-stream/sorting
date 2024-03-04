@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -25,22 +26,16 @@ void BranchExperiment::retrain_existing_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
+		BranchExperimentHistory* history) {
+	history->instance_count++;
+
 	bool is_target = false;
-	BranchExperimentOverallHistory* overall_history;
-	if (this->parent_pass_through_experiment != NULL) {
-		PassThroughExperimentOverallHistory* parent_history = (PassThroughExperimentOverallHistory*)run_helper.experiment_history;
-		overall_history = parent_history->branch_experiment_history;
-	} else {
-		overall_history = (BranchExperimentOverallHistory*)run_helper.experiment_history;
-	}
-	overall_history->instance_count++;
-	if (!overall_history->has_target) {
+	if (!history->has_target) {
 		double target_probability;
-		if (overall_history->instance_count > this->average_instances_per_run) {
+		if (history->instance_count > this->average_instances_per_run) {
 			target_probability = 0.5;
 		} else {
-			target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - overall_history->instance_count));
+			target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
 		}
 		uniform_real_distribution<double> distribution(0.0, 1.0);
 		if (distribution(generator) < target_probability) {
@@ -49,7 +44,7 @@ void BranchExperiment::retrain_existing_activate(
 	}
 
 	if (is_target) {
-		overall_history->has_target = true;
+		history->has_target = true;
 
 		retrain_existing_target_activate(
 			curr_node,
@@ -57,8 +52,7 @@ void BranchExperiment::retrain_existing_activate(
 			context,
 			exit_depth,
 			exit_node,
-			run_helper,
-			history);
+			run_helper);
 	} else {
 		retrain_existing_non_target_activate(
 			curr_node,
@@ -66,8 +60,7 @@ void BranchExperiment::retrain_existing_activate(
 			context,
 			exit_depth,
 			exit_node,
-			run_helper,
-			history);
+			run_helper);
 	}
 }
 
@@ -77,8 +70,7 @@ void BranchExperiment::retrain_existing_target_activate(
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
+		RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 }
 
@@ -88,8 +80,7 @@ void BranchExperiment::retrain_existing_non_target_activate(
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		AbstractExperimentHistory*& history) {
+		RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -169,58 +160,27 @@ void BranchExperiment::retrain_existing_non_target_activate(
 	#endif /* MDEBUG */
 
 	if (decision_is_branch) {
-		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
-		history = instance_history;
-
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-				instance_history->step_histories.push_back(action_node_history);
-				this->best_actions[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					action_node_history);
-			} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-				instance_history->step_histories.push_back(scope_node_history);
-				this->best_existing_scopes[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					scope_node_history);
+		if (this->best_step_types.size() == 0) {
+			if (this->best_exit_depth > 0) {
+				curr_node = this->exit_node;
 			} else {
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-				instance_history->step_histories.push_back(scope_node_history);
-				this->best_potential_scopes[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					scope_node_history);
+				curr_node = this->best_exit_next_node;
 			}
-		}
-
-		if (this->best_exit_depth == 0) {
-			curr_node = this->best_exit_node;
 		} else {
-			exit_depth = this->best_exit_depth-1;
-			exit_node = this->best_exit_node;
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
+			} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+				curr_node = this->best_existing_scopes[0];
+			} else {
+				curr_node = this->best_potential_scopes[0];
+			}
 		}
 	}
 }
 
 void BranchExperiment::retrain_existing_backprop(
 		double target_val,
-		BranchExperimentOverallHistory* history) {
+		BranchExperimentHistory* history) {
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
 	if (history->has_target) {
@@ -414,6 +374,8 @@ void BranchExperiment::retrain_existing_backprop(
 
 				this->existing_average_misguess = average_misguess;
 				this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+				this->sub_state_iter = 1;
 			} else {
 				delete test_network;
 			}

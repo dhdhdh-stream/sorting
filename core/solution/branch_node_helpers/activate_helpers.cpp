@@ -6,7 +6,6 @@
 #include "branch_experiment.h"
 #include "network.h"
 #include "pass_through_experiment.h"
-#include "retrain_branch_experiment.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -20,21 +19,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  vector<AbstractNodeHistory*>& node_histories) {
-	if (this->experiments.size() == 1
-			&& this->experiment_types[0] == BRANCH_NODE_EXPERIMENT_TYPE_SEED) {
-		// unused
-		AbstractExperimentHistory* instance_history;
-
-		this->experiments[0]->activate(curr_node,
-									   problem,
-									   context,
-									   exit_depth,
-									   exit_node,
-									   run_helper,
-									   instance_history);
-		return;
-	}
-
 	bool matches_context = true;
 	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
@@ -57,31 +41,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			curr_node = this->branch_next_node;
 		} else {
 			BranchNodeHistory* history = new BranchNodeHistory(this);
-
-			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-				if (this->experiments[e_index]->type == EXPERIMENT_TYPE_RETRAIN_BRANCH) {
-					RetrainBranchExperiment* retrain_branch_experiment = (RetrainBranchExperiment*)this->experiments[e_index];
-					bool is_selected = retrain_branch_experiment->activate(
-						history->is_branch,
-						problem,
-						context,
-						run_helper);
-
-					if (is_selected) {
-						if (history->is_branch) {
-							curr_node = this->branch_next_node;
-						} else {
-							curr_node = this->original_next_node;
-						}
-						/**
-						 * - add to node_histories after experiment due to inner activate
-						 */
-						node_histories.push_back(history);
-						return;
-					}
-				}
-			}
-
 			node_histories.push_back(history);
 
 			vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
@@ -180,8 +139,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 							context,
 							exit_depth,
 							exit_node,
-							run_helper,
-							history->experiment_history);
+							run_helper);
 						if (is_selected) {
 							return;
 						}
@@ -198,8 +156,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 							context,
 							exit_depth,
 							exit_node,
-							run_helper,
-							history->experiment_history);
+							run_helper);
 						if (is_selected) {
 							return;
 						}

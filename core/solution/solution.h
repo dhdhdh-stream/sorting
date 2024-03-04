@@ -35,6 +35,8 @@ public:
 	int scope_counter;
 	std::map<int, Scope*> scopes;
 
+	int throw_counter;
+
 	Scope* root;
 
 	/**

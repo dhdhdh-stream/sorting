@@ -1,7 +1,6 @@
 #include "action_node.h"
 
-#include "branch_experiment.h"
-#include "pass_through_experiment.h"
+#include "abstract_experiment.h"
 #include "scope.h"
 
 using namespace std;
@@ -60,31 +59,10 @@ void ActionNode::save_for_display(ofstream& output_file) {
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
-
-	this->experiment_history = NULL;
 }
 
 ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
 	this->node = original->node;
 
 	this->obs_snapshot = original->obs_snapshot;
-
-	if (original->experiment_history != NULL) {
-		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-			BranchExperimentInstanceHistory* branch_experiment_history = (BranchExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new BranchExperimentInstanceHistory(branch_experiment_history);
-		} else {
-			PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new PassThroughExperimentInstanceHistory(pass_through_experiment_history);
-		}
-	} else {
-		this->experiment_history = NULL;
-	}
 }
-
-ActionNodeHistory::~ActionNodeHistory() {
-	if (this->experiment_history != NULL) {
-		delete this->experiment_history;
-	}
-}
-

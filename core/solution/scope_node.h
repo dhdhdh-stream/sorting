@@ -2,6 +2,8 @@
 #define SCOPE_NODE_H
 
 #include <fstream>
+#include <map>
+#include <utility>
 #include <vector>
 
 #include "abstract_node.h"
@@ -21,6 +23,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	std::map<int, AbstractNode*> catches;
+
 	std::vector<AbstractExperiment*> experiments;
 
 	ScopeNode();
@@ -34,14 +38,34 @@ public:
 				  RunHelper& run_helper,
 				  ScopeNodeHistory* history);
 
-	void random_activate(std::vector<Scope*>& scope_context,
+	void random_activate(AbstractNode*& curr_node,
+						 std::vector<Scope*>& scope_context,
 						 std::vector<AbstractNode*>& node_context,
 						 int& inner_exit_depth,
 						 AbstractNode*& inner_exit_node,
 						 int& random_curr_depth,
+						 int& random_throw_id,
 						 bool& random_exceeded_limit,
 						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
 						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+	void random_exit_activate(AbstractNode*& curr_node,
+							  std::vector<Scope*>& scope_context,
+							  std::vector<AbstractNode*>& node_context,
+							  int& inner_exit_depth,
+							  AbstractNode*& inner_exit_node,
+							  int& random_curr_depth,
+							  int& random_throw_id,
+							  bool& random_exceeded_limit,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
+	void inner_random_exit_activate(AbstractNode*& curr_node,
+									std::vector<Scope*>& scope_context,
+									std::vector<AbstractNode*>& node_context,
+									int& inner_exit_depth,
+									AbstractNode*& inner_exit_node,
+									int& random_curr_depth,
+									int& random_throw_id,
+									bool& random_exceeded_limit);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
@@ -66,7 +90,7 @@ class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* scope_history;
 
-	AbstractExperimentHistory* experiment_history;
+	int throw_id;
 
 	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);

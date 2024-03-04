@@ -490,6 +490,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 	AbstractNode* exit_node = NULL;
 
 	int random_curr_depth = run_helper.curr_depth;
+	int random_throw_id = -1;
 	bool random_exceeded_limit = false;
 
 	parent_scope->random_activate(scope_context,
@@ -497,6 +498,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 								  exit_depth,
 								  exit_node,
 								  random_curr_depth,
+								  random_throw_id,
 								  random_exceeded_limit,
 								  possible_scope_contexts,
 								  possible_node_contexts);

@@ -2,10 +2,9 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
+#include "abstract_experiment.h"
 #include "globals.h"
 #include "network.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -287,30 +286,10 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
-
-	this->experiment_history = NULL;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
 	this->node = original->node;
 
 	this->is_branch = original->is_branch;
-
-	if (original->experiment_history != NULL) {
-		if (original->experiment_history->experiment->type == EXPERIMENT_TYPE_BRANCH) {
-			BranchExperimentInstanceHistory* branch_experiment_history = (BranchExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new BranchExperimentInstanceHistory(branch_experiment_history);
-		} else {
-			PassThroughExperimentInstanceHistory* pass_through_experiment_history = (PassThroughExperimentInstanceHistory*)original->experiment_history;
-			this->experiment_history = new PassThroughExperimentInstanceHistory(pass_through_experiment_history);
-		}
-	} else {
-		this->experiment_history = NULL;
-	}
-}
-
-BranchNodeHistory::~BranchNodeHistory() {
-	if (this->experiment_history != NULL) {
-		delete this->experiment_history;
-	}
 }
