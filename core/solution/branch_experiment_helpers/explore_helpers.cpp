@@ -118,10 +118,15 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	history->existing_predicted_score = predicted_score;
 
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
 	uniform_int_distribution<int> repeat_distribution(0, 3);
 	if (this->parent_experiment == NULL && repeat_distribution(generator)) {
 		this->curr_exit_depth = 0;
 		this->curr_exit_next_node = curr_node;
+		this->curr_exit_throw_id = -1;
 
 		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
 		this->curr_actions.push_back(NULL);
@@ -147,12 +152,42 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 							  this->scope_context,
 							  this->node_context,
 							  this->is_branch,
+							  this->throw_id,
 							  run_helper);
 
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 		int random_index = distribution(generator);
 		this->curr_exit_depth = possible_exits[random_index].first;
 		this->curr_exit_next_node = possible_exits[random_index].second;
+
+		uniform_int_distribution<int> throw_distribution(0, 3);
+		if (throw_distribution(generator) == 0) {
+			uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
+			if (reuse_existing_throw_distribution(generator) == 0) {
+				/**
+				 * - simply allow duplicates
+				 */
+				vector<int> possible_throw_ids;
+				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+					ScopeNode* scope_node = (ScopeNode*)context[c_index].node;
+					for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+							it != scope_node->catches.end(); it++) {
+						possible_throw_ids.push_back(it->first);
+					}
+				}
+
+				if (possible_throw_ids.size() > 0) {
+					uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
+					this->curr_exit_throw_id = possible_throw_ids[possible_distribution(generator)];
+				} else {
+					this->curr_exit_throw_id = TEMP_THROW_ID;
+				}
+			} else {
+				this->curr_exit_throw_id = TEMP_THROW_ID;
+			}
+		} else {
+			this->curr_exit_throw_id = -1;
+		}
 
 		// new path
 		int new_num_steps;
@@ -239,11 +274,15 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->curr_exit_depth == 0) {
-		curr_node = this->curr_exit_next_node;
+	if (this->curr_exit_throw_id != -1) {
+		run_helper.throw_id = this->curr_exit_throw_id;
 	} else {
-		exit_depth = this->curr_exit_depth-1;
-		exit_node = this->curr_exit_next_node;
+		if (this->curr_exit_depth == 0) {
+			curr_node = this->curr_exit_next_node;
+		} else {
+			exit_depth = this->curr_exit_depth-1;
+			exit_node = this->curr_exit_next_node;
+		}
 	}
 }
 
@@ -274,6 +313,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_next_node = this->curr_exit_next_node;
+			this->best_exit_throw_id = this->curr_exit_throw_id;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
@@ -391,7 +431,8 @@ void BranchExperiment::explore_backprop(double target_val,
 
 				int exit_node_id;
 				AbstractNode* exit_node;
-				if (this->best_exit_depth > 0) {
+				if (this->best_exit_depth > 0
+						|| this->best_exit_throw_id != -1) {
 					ExitNode* new_exit_node = new ExitNode();
 					new_exit_node->parent = this->scope_context.back();
 					new_exit_node->id = this->scope_context.back()->node_counter;
@@ -405,6 +446,12 @@ void BranchExperiment::explore_backprop(double target_val,
 						new_exit_node->next_node_id = this->best_exit_next_node->id;
 					}
 					new_exit_node->next_node = this->best_exit_next_node;
+					if (this->best_exit_throw_id == TEMP_THROW_ID) {
+						new_exit_node->throw_id = solution->throw_counter;
+						solution->throw_counter++;
+					} else {
+						new_exit_node->throw_id = -1;
+					}
 
 					this->exit_node = new_exit_node;
 
@@ -418,6 +465,14 @@ void BranchExperiment::explore_backprop(double target_val,
 					}
 					exit_node = this->best_exit_next_node;
 				}
+
+				/**
+				 * - just need a placeholder for now
+				 */
+				this->branch_node = new BranchNode();
+				this->branch_node->parent = this->scope_context.back();
+				this->branch_node->id = this->scope_context.back()->node_counter;
+				this->scope_context.back()->node_counter++;
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					int next_node_id;

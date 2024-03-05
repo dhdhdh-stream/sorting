@@ -3,6 +3,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -23,6 +24,10 @@ void PassThroughExperiment::explore_measure_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
 	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
@@ -60,11 +65,15 @@ void PassThroughExperiment::explore_measure_activate(
 		}
 	}
 
-	if (this->curr_exit_depth == 0) {
-		curr_node = this->curr_exit_next_node;
+	if (this->curr_exit_throw_id != -1) {
+		run_helper.throw_id = this->curr_exit_throw_id;
 	} else {
-		exit_depth = this->curr_exit_depth-1;
-		exit_node = this->curr_exit_next_node;
+		if (this->curr_exit_depth == 0) {
+			curr_node = this->curr_exit_next_node;
+		} else {
+			exit_depth = this->curr_exit_depth-1;
+			exit_node = this->curr_exit_next_node;
+		}
 	}
 }
 
@@ -98,6 +107,7 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_next_node = this->curr_exit_next_node;
+			this->best_exit_throw_id = this->curr_exit_throw_id;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
@@ -160,6 +170,74 @@ void PassThroughExperiment::explore_measure_backprop(
 								}
 							}
 						}
+					}
+				}
+
+				int exit_node_id;
+				AbstractNode* exit_node;
+				if (this->best_exit_depth > 0
+						|| this->best_exit_throw_id != -1) {
+					ExitNode* new_exit_node = new ExitNode();
+					new_exit_node->parent = this->scope_context.back();
+					new_exit_node->id = this->scope_context.back()->node_counter;
+					this->scope_context.back()->node_counter++;
+
+					new_exit_node->exit_depth = this->best_exit_depth;
+					new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
+					if (this->best_exit_next_node == NULL) {
+						new_exit_node->next_node_id = -1;
+					} else {
+						new_exit_node->next_node_id = this->best_exit_next_node->id;
+					}
+					new_exit_node->next_node = this->best_exit_next_node;
+					if (this->best_exit_throw_id == TEMP_THROW_ID) {
+						new_exit_node->throw_id = solution->throw_counter;
+						solution->throw_counter++;
+					} else {
+						new_exit_node->throw_id = -1;
+					}
+
+					this->exit_node = new_exit_node;
+
+					exit_node_id = new_exit_node->id;
+					exit_node = new_exit_node;
+				} else {
+					if (this->best_exit_next_node == NULL) {
+						exit_node_id = -1;
+					} else {
+						exit_node_id = this->best_exit_next_node->id;
+					}
+					exit_node = this->best_exit_next_node;
+				}
+
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					int next_node_id;
+					AbstractNode* next_node;
+					if (s_index == (int)this->best_step_types.size()-1) {
+						next_node_id = exit_node_id;
+						next_node = exit_node;
+					} else {
+						if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+							next_node_id = this->best_actions[s_index+1]->id;
+							next_node = this->best_actions[s_index+1];
+						} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
+							next_node_id = this->best_existing_scopes[s_index+1]->id;
+							next_node = this->best_existing_scopes[s_index+1];
+						} else {
+							next_node_id = this->best_potential_scopes[s_index+1]->id;
+							next_node = this->best_potential_scopes[s_index+1];
+						}
+					}
+
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						this->best_actions[s_index]->next_node_id = next_node_id;
+						this->best_actions[s_index]->next_node = next_node;
+					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+						this->best_existing_scopes[s_index]->next_node_id = next_node_id;
+						this->best_existing_scopes[s_index]->next_node = next_node;
+					} else {
+						this->best_potential_scopes[s_index]->next_node_id = next_node_id;
+						this->best_potential_scopes[s_index]->next_node = next_node;
 					}
 				}
 

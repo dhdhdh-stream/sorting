@@ -7,8 +7,6 @@
 
 class ExitNode : public AbstractNode {
 public:
-	bool is_throw;
-
 	/**
 	 * - always > 0
 	 *   - if want to exit within scope, connect directly

@@ -28,6 +28,8 @@ const int STARTING_NUM_DATAPOINTS = 10;
 const int STARTING_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
+const int TEMP_THROW_ID = -2;
+
 class Solution {
 public:
 	int timestamp;
@@ -35,9 +37,9 @@ public:
 	int scope_counter;
 	std::map<int, Scope*> scopes;
 
-	int throw_counter;
-
 	Scope* root;
+
+	int throw_counter;
 
 	/**
 	 * - max depth for run that concluded

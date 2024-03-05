@@ -25,6 +25,7 @@ void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_e
 						   std::vector<Scope*>& experiment_scope_context,
 						   std::vector<AbstractNode*>& experiment_node_context,
 						   bool experiment_is_branch,
+						   int experiment_throw_id,
 						   RunHelper& run_helper);
 
 void gather_possible_helper(std::vector<Scope*>& scope_context,

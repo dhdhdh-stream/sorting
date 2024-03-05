@@ -20,6 +20,10 @@ void PassThroughExperiment::verify_new_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
@@ -173,7 +177,7 @@ void PassThroughExperiment::verify_new_backprop(
 				while (true) {
 					if (curr_experiment->parent_experiment == NULL) {
 						/**
-						 * - don't need to include root
+						 * - don't include root
 						 */
 						break;
 					} else {
@@ -197,67 +201,6 @@ void PassThroughExperiment::verify_new_backprop(
 		} else if (this->best_step_types.size() > 0
 				&& score_improvement_t_score > -0.2) {
 		#endif /* MDEBUG */
-			int exit_node_id;
-			AbstractNode* exit_node;
-			if (this->best_exit_depth > 0) {
-				ExitNode* new_exit_node = new ExitNode();
-				new_exit_node->parent = this->scope_context.back();
-				new_exit_node->id = this->scope_context.back()->node_counter;
-				this->scope_context.back()->node_counter++;
-
-				new_exit_node->exit_depth = this->best_exit_depth;
-				new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
-				if (this->best_exit_next_node == NULL) {
-					new_exit_node->next_node_id = -1;
-				} else {
-					new_exit_node->next_node_id = this->best_exit_next_node->id;
-				}
-				new_exit_node->next_node = this->best_exit_next_node;
-
-				this->exit_node = new_exit_node;
-
-				exit_node_id = new_exit_node->id;
-				exit_node = new_exit_node;
-			} else {
-				if (this->best_exit_next_node == NULL) {
-					exit_node_id = -1;
-				} else {
-					exit_node_id = this->best_exit_next_node->id;
-				}
-				exit_node = this->best_exit_next_node;
-			}
-
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				int next_node_id;
-				AbstractNode* next_node;
-				if (s_index == (int)this->best_step_types.size()-1) {
-					next_node_id = exit_node_id;
-					next_node = exit_node;
-				} else {
-					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
-						next_node_id = this->best_actions[s_index+1]->id;
-						next_node = this->best_actions[s_index+1];
-					} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-						next_node_id = this->best_existing_scopes[s_index+1]->id;
-						next_node = this->best_existing_scopes[s_index+1];
-					} else {
-						next_node_id = this->best_potential_scopes[s_index+1]->id;
-						next_node = this->best_potential_scopes[s_index+1];
-					}
-				}
-
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->next_node_id = next_node_id;
-					this->best_actions[s_index]->next_node = next_node;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->best_existing_scopes[s_index]->next_node_id = next_node_id;
-					this->best_existing_scopes[s_index]->next_node = next_node;
-				} else {
-					this->best_potential_scopes[s_index]->next_node_id = next_node_id;
-					this->best_potential_scopes[s_index]->next_node = next_node;
-				}
-			}
-
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;
 		} else {

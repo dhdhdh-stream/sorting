@@ -44,6 +44,8 @@ void Solution::init() {
 
 	this->root = starting_scope;
 
+	this->throw_counter = 0;
+
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
@@ -89,6 +91,10 @@ void Solution::load(string path,
 	string root_id_line;
 	getline(input_file, root_id_line);
 	this->root = this->scopes[stoi(root_id_line)];
+
+	string throw_counter_line;
+	getline(input_file, throw_counter_line);
+	this->throw_counter = stoi(throw_counter_line);
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -161,6 +167,8 @@ void Solution::save(string path,
 	}
 
 	output_file << this->root->id << endl;
+
+	output_file << this->throw_counter << endl;
 
 	output_file << this->max_depth << endl;
 

@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -38,12 +39,42 @@ void PassThroughExperiment::explore_create_activate(
 							  this->scope_context,
 							  this->node_context,
 							  this->is_branch,
+							  this->throw_id,
 							  run_helper);
 
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 		int random_index = distribution(generator);
 		this->curr_exit_depth = possible_exits[random_index].first;
 		this->curr_exit_next_node = possible_exits[random_index].second;
+
+		uniform_int_distribution<int> throw_distribution(0, 3);
+		if (throw_distribution(generator) == 0) {
+			uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
+			if (reuse_existing_throw_distribution(generator) == 0) {
+				/**
+				 * - simply allow duplicates
+				 */
+				vector<int> possible_throw_ids;
+				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+					ScopeNode* scope_node = (ScopeNode*)context[c_index].node;
+					for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+							it != scope_node->catches.end(); it++) {
+						possible_throw_ids.push_back(it->first);
+					}
+				}
+
+				if (possible_throw_ids.size() > 0) {
+					uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
+					this->curr_exit_throw_id = possible_throw_ids[possible_distribution(generator)];
+				} else {
+					this->curr_exit_throw_id = TEMP_THROW_ID;
+				}
+			} else {
+				this->curr_exit_throw_id = TEMP_THROW_ID;
+			}
+		} else {
+			this->curr_exit_throw_id = -1;
+		}
 
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 2);

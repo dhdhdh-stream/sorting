@@ -57,15 +57,14 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 	node_context.back() = NULL;
 
 	if (random_exceeded_limit) {
-		return;
+		// do nothing
 	} else if (random_throw_id != -1) {
 		map<int, AbstractNode*>::iterator it = this->catches.find(random_throw_id);
 		if (it != this->catches.end()) {
-			curr_node = it->second;
 			random_throw_id = -1;
-		} else {
-			curr_node = NULL;
+			curr_node = it->second;
 		}
+		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
@@ -110,15 +109,14 @@ void ScopeNode::random_exit_activate(AbstractNode*& curr_node,
 	node_context.back() = NULL;
 
 	if (random_exceeded_limit) {
-		return;
+		// do nothing
 	} else if (random_throw_id != -1) {
 		map<int, AbstractNode*>::iterator it = this->catches.find(random_throw_id);
 		if (it != this->catches.end()) {
-			curr_node = it->second;
 			random_throw_id = -1;
-		} else {
-			curr_node = NULL;
+			curr_node = it->second;
 		}
+		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
@@ -159,15 +157,14 @@ void ScopeNode::inner_random_exit_activate(AbstractNode*& curr_node,
 	node_context.back() = NULL;
 
 	if (random_exceeded_limit) {
-		return;
+		// do nothing
 	} else if (random_throw_id != -1) {
 		map<int, AbstractNode*>::iterator it = this->catches.find(random_throw_id);
 		if (it != this->catches.end()) {
-			curr_node = it->second;
 			random_throw_id = -1;
-		} else {
-			curr_node = NULL;
+			curr_node = it->second;
 		}
+		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {

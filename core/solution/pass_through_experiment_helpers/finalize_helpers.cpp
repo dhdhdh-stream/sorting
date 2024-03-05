@@ -16,7 +16,7 @@ void PassThroughExperiment::finalize() {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
 		int start_node_id;
 		AbstractNode* start_node;
-		if (this->scope_context.size() > 0) {
+		if (this->scope_context.size() > 1) {
 			BranchNode* new_branch_node = new BranchNode();
 			new_branch_node->parent = this->scope_context.back();
 			new_branch_node->id = this->scope_context.back()->node_counter;
@@ -49,8 +49,32 @@ void PassThroughExperiment::finalize() {
 			} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
 
-				new_branch_node->original_next_node_id = scope_node->next_node_id;
-				new_branch_node->original_next_node = scope_node->next_node;
+				if (this->throw_id == -1) {
+					new_branch_node->original_next_node_id = scope_node->next_node_id;
+					new_branch_node->original_next_node = scope_node->next_node;
+				} else {
+					map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
+					if (it == scope_node->catches.end()) {
+						ExitNode* new_throw_node = new ExitNode();
+						new_throw_node->parent = this->scope_context.back();
+						new_throw_node->id = this->scope_context.back()->node_counter;
+						this->scope_context.back()->node_counter++;
+
+						this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
+
+						new_throw_node->exit_depth = -1;
+						new_throw_node->next_node_parent_id = -1;
+						new_throw_node->next_node_id = -1;
+						new_throw_node->next_node = NULL;
+						new_throw_node->throw_id = this->throw_id;
+
+						new_branch_node->original_next_node_id = new_throw_node->id;
+						new_branch_node->original_next_node = new_throw_node;
+					} else {
+						new_branch_node->original_next_node_id = it->second->id;
+						new_branch_node->original_next_node = it->second;
+					}
+				}
 			} else {
 				BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
@@ -64,7 +88,7 @@ void PassThroughExperiment::finalize() {
 			}
 
 			if (this->best_step_types.size() == 0) {
-				if (this->best_exit_depth > 0) {
+				if (this->exit_node != NULL) {
 					new_branch_node->branch_next_node_id = this->exit_node->id;
 					new_branch_node->branch_next_node = this->exit_node;
 				} else {
@@ -92,7 +116,7 @@ void PassThroughExperiment::finalize() {
 			start_node = new_branch_node;
 		} else {
 			if (this->best_step_types.size() == 0) {
-				if (this->best_exit_depth > 0) {
+				if (this->exit_node != NULL) {
 					start_node_id = this->exit_node->id;
 					start_node = this->exit_node;
 				} else {
@@ -125,8 +149,13 @@ void PassThroughExperiment::finalize() {
 		} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 			ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
 
-			scope_node->next_node_id = start_node_id;
-			scope_node->next_node = start_node;
+			if (this->throw_id == -1) {
+				scope_node->next_node_id = start_node_id;
+				scope_node->next_node = start_node;
+			} else {
+				scope_node->catch_ids[this->throw_id] = start_node_id;
+				scope_node->catches[this->throw_id] = start_node;
+			}
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
@@ -154,13 +183,35 @@ void PassThroughExperiment::finalize() {
 				solution->scopes[this->best_potential_scopes[s_index]->scope->id] = this->best_potential_scopes[s_index]->scope;
 			}
 		}
+
 		this->best_actions.clear();
 		this->best_existing_scopes.clear();
 		this->best_potential_scopes.clear();
+		this->exit_node = NULL;
 
-		// if (this->branch_experiment != NULL) {
-		// 	this->branch_experiment->finalize();
-		// }
+		for (int v_index = 0; v_index < (int)this->verify_experiments.size(); v_index++) {
+			PassThroughExperiment* parent;
+			if (this->verify_experiments[v_index]->type == EXPERIMENT_TYPE_BRANCH) {
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments[v_index];
+				parent = pass_through_experiment->parent_experiment;
+			} else {
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments[v_index];
+				parent = branch_experiment->parent_experiment;
+			}
+
+			int matching_index;
+			for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+				if (parent->child_experiments[c_index] == this->verify_experiments[v_index]) {
+					matching_index = c_index;
+					break;
+				}
+			}
+			parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
+
+			this->verify_experiments[v_index]->result = EXPERIMENT_RESULT_SUCCESS;
+			this->verify_experiments[v_index]->finalize();
+			delete this->verify_experiments[v_index];
+		}
 	}
 
 	if (this->node_context.back()->type == NODE_TYPE_ACTION) {

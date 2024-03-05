@@ -41,10 +41,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	context.back().node = NULL;
 
 	if (run_helper.exceeded_limit) {
-		return;
+		// do nothing
 	} else if (run_helper.throw_id != -1) {
 		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
 		if (it != this->catches.end()) {
+			run_helper.throw_id = -1;
+
 			curr_node = it->second;
 
 			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
@@ -59,10 +61,8 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 					return;
 				}
 			}
-
-			run_helper.throw_id = -1;
 		} else {
-			curr_node = NULL;
+			// do nothing
 
 			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 				bool is_selected = this->experiments[e_index]->activate(
@@ -73,7 +73,6 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 					exit_node,
 					run_helper);
 				if (is_selected) {
-					run_helper.throw_id = -1;
 					return;
 				}
 			}

@@ -35,6 +35,13 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 
 	output_file << this->next_node_id << endl;
+
+	output_file << this->catches.size() << endl;
+	for (map<int, int>::iterator it = this->catch_ids.begin();
+			it != this->catch_ids.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second << endl;
+	}
 }
 
 void ScopeNode::load(ifstream& input_file) {
@@ -45,6 +52,19 @@ void ScopeNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string num_catches_line;
+	getline(input_file, num_catches_line);
+	int num_catches = stoi(num_catches_line);
+	for (int c_index = 0; c_index < num_catches; c_index++) {
+		string throw_id_line;
+		getline(input_file, throw_id_line);
+
+		string node_id_line;
+		getline(input_file, node_id_line);
+
+		this->catch_ids[stoi(throw_id_line)] = stoi(node_id_line);
+	}
 }
 
 void ScopeNode::link() {
@@ -52,6 +72,15 @@ void ScopeNode::link() {
 		this->next_node = NULL;
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
+	}
+
+	for (map<int, int>::iterator it = this->catch_ids.begin();
+			it != this->catch_ids.end(); it++) {
+		if (it->second == -1) {
+			this->catches[it->first] = NULL;
+		} else {
+			this->catches[it->first] = this->parent->nodes[it->second];
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
@@ -57,6 +58,9 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 
 	this->best_surprise = 0.0;
 
+	this->branch_node = NULL;
+	this->exit_node = NULL;
+
 	this->combined_score = 0.0;
 	this->original_count = 0;
 	this->branch_count = 0;
@@ -89,6 +93,10 @@ BranchExperiment::~BranchExperiment() {
 			delete this->best_potential_scopes[s_index]->scope;
 			delete this->best_potential_scopes[s_index];
 		}
+	}
+
+	if (this->branch_node != NULL) {
+		delete this->branch_node;
 	}
 
 	if (this->exit_node != NULL) {

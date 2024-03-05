@@ -72,6 +72,7 @@ public:
 	std::vector<ScopeNode*> curr_potential_scopes;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
+	int curr_exit_throw_id;
 
 	double best_score;
 	std::vector<int> best_step_types;
@@ -80,6 +81,8 @@ public:
 	std::vector<ScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_next_node;
+	int best_exit_throw_id;
+
 	ExitNode* exit_node;
 
 	bool new_is_better;
@@ -149,10 +152,12 @@ public:
 	void verify_new_backprop(double target_val,
 							 RunHelper& run_helper);
 
-	void root_verify_activate(AbstractNode*& curr_node);
+	void root_verify_activate(AbstractNode*& curr_node,
+							  RunHelper& run_helper);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
 							 PassThroughExperimentHistory* history);
 	void experiment_backprop(double target_val,
 							 RunHelper& run_helper,
@@ -161,7 +166,8 @@ public:
 	void experiment_verify_existing_backprop(double target_val,
 											 RunHelper& run_helper);
 
-	void experiment_verify_new_activate(AbstractNode*& curr_node);
+	void experiment_verify_new_activate(AbstractNode*& curr_node,
+										RunHelper& run_helper);
 	void experiment_verify_new_backprop(double target_val,
 										RunHelper& run_helper);
 

@@ -14,9 +14,14 @@
 using namespace std;
 
 void PassThroughExperiment::experiment_verify_new_activate(
-		AbstractNode*& curr_node) {
+		AbstractNode*& curr_node,
+		RunHelper& run_helper) {
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
 	if (this->best_step_types.size() == 0) {
-		if (this->best_exit_depth > 0) {
+		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;
 		} else {
 			curr_node = this->best_exit_next_node;

@@ -200,16 +200,19 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY:
-			root_verify_activate(curr_node);
+			root_verify_activate(curr_node,
+								 run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 			experiment_activate(curr_node,
 								context,
+								run_helper,
 								history);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW:
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW:
-			experiment_verify_new_activate(curr_node);
+			experiment_verify_new_activate(curr_node,
+										   run_helper);
 			break;
 		}
 

@@ -103,11 +103,19 @@ void BranchExperiment::measure_activate(
 	bool decision_is_branch = new_predicted_score > existing_predicted_score;
 	#endif /* MDEBUG */
 
+	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
+	context.back().scope_history->node_histories.push_back(branch_node_history);
 	if (decision_is_branch) {
 		this->branch_count++;
 
+		branch_node_history->is_branch = true;
+
+		if (this->throw_id != -1) {
+			run_helper.throw_id = -1;
+		}
+
 		if (this->best_step_types.size() == 0) {
-			if (this->best_exit_depth > 0) {
+			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
 			} else {
 				curr_node = this->best_exit_next_node;
@@ -123,6 +131,8 @@ void BranchExperiment::measure_activate(
 		}
 	} else {
 		this->original_count++;
+
+		branch_node_history->is_branch = false;
 	}
 }
 

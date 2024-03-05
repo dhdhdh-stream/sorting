@@ -14,6 +14,7 @@ using namespace std;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												vector<ContextLayer>& context,
+												RunHelper& run_helper,
 												PassThroughExperimentHistory* history) {
 	if (this->root_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
 		history->instance_count++;
@@ -43,8 +44,12 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		}
 	}
 
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
 	if (this->best_step_types.size() == 0) {
-		if (this->best_exit_depth > 0) {
+		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;
 		} else {
 			curr_node = this->best_exit_next_node;

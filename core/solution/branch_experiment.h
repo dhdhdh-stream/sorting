@@ -9,6 +9,7 @@
 
 class AbstractNode;
 class ActionNode;
+class BranchNode;
 class ExitNode;
 class Network;
 class PassThroughExperiment;
@@ -91,6 +92,9 @@ public:
 	std::vector<ScopeNode*> best_potential_scopes;
 	int best_exit_depth;
 	AbstractNode* best_exit_next_node;
+	int best_exit_throw_id;
+
+	BranchNode* branch_node;
 	ExitNode* exit_node;
 
 	double new_average_score;

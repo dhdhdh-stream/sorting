@@ -12,6 +12,7 @@ void gather_possible_exits_helper(int l_index,
 								  vector<Scope*>& experiment_scope_context,
 								  vector<AbstractNode*>& experiment_node_context,
 								  bool experiment_is_branch,
+								  int experiment_throw_id,
 								  int& exit_depth,
 								  AbstractNode*& exit_node,
 								  int& random_curr_depth,
@@ -25,6 +26,7 @@ void gather_possible_exits_helper(int l_index,
 									 experiment_scope_context,
 									 experiment_node_context,
 									 experiment_is_branch,
+									 experiment_throw_id,
 									 inner_exit_depth,
 									 inner_exit_node,
 									 random_curr_depth,
@@ -54,25 +56,41 @@ void gather_possible_exits_helper(int l_index,
 				random_exceeded_limit,
 				experiment_scope_context.size()-1 - l_index,
 				possible_exits);
-		} else {
-			// do nothing
 		}
+		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		AbstractNode* starting_node;
-		AbstractNode* experiment_node = experiment_node_context[l_index];
-		if (experiment_node->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)experiment_node;
-			starting_node = action_node->next_node;
-		} else if (experiment_node->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)experiment_node;
-			starting_node = scope_node->next_node;
-		} else {
-			BranchNode* branch_node = (BranchNode*)experiment_node;
-			if (experiment_is_branch) {
-				starting_node = branch_node->branch_next_node;
+		if (l_index == (int)experiment_scope_context.size()-1) {
+			AbstractNode* experiment_node = experiment_node_context.back();
+			if (experiment_node->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)experiment_node;
+				starting_node = action_node->next_node;
+			} else if (experiment_node->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)experiment_node;
+				if (experiment_throw_id == -1) {
+					starting_node = scope_node->next_node;
+				} else {
+					map<int, AbstractNode*>::iterator it = scope_node->catches.find(experiment_throw_id);
+					if (it == scope_node->catches.end()) {
+						/**
+						 * - simply continue along normal path
+						 */
+						starting_node = scope_node->next_node;
+					} else {
+						starting_node = it->second;
+					}
+				}
 			} else {
-				starting_node = branch_node->original_next_node;
+				BranchNode* branch_node = (BranchNode*)experiment_node;
+				if (experiment_is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
 			}
+		} else {
+			ScopeNode* scope_node = (ScopeNode*)experiment_node_context[l_index];
+			starting_node = scope_node->next_node;
 		}
 
 		vector<Scope*> scope_context(experiment_scope_context.begin(), experiment_scope_context.begin() + l_index+1);
@@ -114,6 +132,7 @@ void gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
 						   vector<Scope*>& experiment_scope_context,
 						   vector<AbstractNode*>& experiment_node_context,
 						   bool experiment_is_branch,
+						   int experiment_throw_id,
 						   RunHelper& run_helper) {
 	// unused
 	int exit_depth = -1;
@@ -128,6 +147,7 @@ void gather_possible_exits(vector<pair<int,AbstractNode*>>& possible_exits,
 								 experiment_scope_context,
 								 experiment_node_context,
 								 experiment_is_branch,
+								 experiment_throw_id,
 								 exit_depth,
 								 exit_node,
 								 random_curr_depth,

@@ -84,7 +84,32 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 						new_node_reverse_mappings,
 						new_scope);
 
+					vector<pair<bool,AbstractNode*>> catch_mappings;
+					for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+							it != scope_node->catches.end(); it++) {
+						catch_mappings.push_back(end_node_helper(
+							scope_context,
+							node_context,
+							curr_depth,
+							it->second,
+							node_mappings,
+							new_node_reverse_mappings,
+							new_scope));
+					}
+
+					bool has_path = false;
 					if (next_mapping.first) {
+						has_path = true;
+					} else {
+						for (int m_index = 0; m_index < (int)catch_mappings.size(); m_index++) {
+							if (catch_mappings[m_index].first) {
+								has_path = true;
+								break;
+							}
+						}
+					}
+
+					if (has_path) {
 						ScopeNode* new_scope_node = new ScopeNode();
 
 						new_scope_node->parent = new_scope;
@@ -96,12 +121,30 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 
 						new_scope_node->scope = scope_node->scope;
 
+						/**
+						 * - simply go to end of scope if next_node has no path
+						 */
 						if (next_mapping.second == NULL) {
 							new_scope_node->next_node_id = -1;
 						} else {
 							new_scope_node->next_node_id = next_mapping.second->id;
 						}
 						new_scope_node->next_node = next_mapping.second;
+
+						int m_index = 0;
+						for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+								it != scope_node->catches.end(); it++) {
+							if (catch_mappings[m_index].first) {
+								if (catch_mappings[m_index].second == NULL) {
+									new_scope_node->catch_ids[it->first] = -1;
+								} else {
+									new_scope_node->catch_ids[it->first] = catch_mappings[m_index].second->id;
+								}
+								new_scope_node->catches[it->first] = catch_mappings[m_index].second;
+							}
+
+							m_index++;
+						}
 
 						mapping = {true, new_scope_node};
 					} else {
@@ -312,7 +355,33 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 						new_node_reverse_mappings,
 						new_scope);
 
+					vector<pair<bool,AbstractNode*>> catch_mappings;
+					for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+							it != scope_node->catches.end(); it++) {
+						catch_mappings.push_back(start_node_helper(
+							scope_context,
+							node_context,
+							curr_depth,
+							starting_depth,
+							it->second,
+							node_mappings,
+							new_node_reverse_mappings,
+							new_scope));
+					}
+
+					bool has_path = false;
 					if (next_mapping.first) {
+						has_path = true;
+					} else {
+						for (int m_index = 0; m_index < (int)catch_mappings.size(); m_index++) {
+							if (catch_mappings[m_index].first) {
+								has_path = true;
+								break;
+							}
+						}
+					}
+
+					if (has_path) {
 						ScopeNode* new_scope_node = new ScopeNode();
 
 						new_scope_node->parent = new_scope;
@@ -324,12 +393,30 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 
 						new_scope_node->scope = scope_node->scope;
 
+						/**
+						 * - simply go to end of scope if next_node has no path
+						 */
 						if (next_mapping.second == NULL) {
 							new_scope_node->next_node_id = -1;
 						} else {
 							new_scope_node->next_node_id = next_mapping.second->id;
 						}
 						new_scope_node->next_node = next_mapping.second;
+
+						int m_index = 0;
+						for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+								it != scope_node->catches.end(); it++) {
+							if (catch_mappings[m_index].first) {
+								if (catch_mappings[m_index].second == NULL) {
+									new_scope_node->catch_ids[it->first] = -1;
+								} else {
+									new_scope_node->catch_ids[it->first] = catch_mappings[m_index].second->id;
+								}
+								new_scope_node->catches[it->first] = catch_mappings[m_index].second;
+							}
+
+							m_index++;
+						}
 
 						mapping = {true, new_scope_node};
 					} else {
@@ -448,22 +535,51 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 				{
 					ExitNode* exit_node = (ExitNode*)curr_node;
 
-					if (exit_node->exit_depth > curr_depth - starting_depth) {
-						mapping = {false, NULL};
+					if (exit_node->throw_id != -1) {
+						int match_depth = -1;
+						AbstractNode* match_node;
+						for (int c_index = curr_depth-1; c_index >= 0; c_index--) {
+							ScopeNode* scope_node = (ScopeNode*)node_context[c_index];
+							map<int, AbstractNode*>::iterator it = scope_node->catches.find(exit_node->throw_id);
+							if (it != scope_node->catches.end()) {
+								match_depth = c_index;
+								match_node = it->second;
+								break;
+							}
+						}
+
+						if (match_depth == -1 || match_depth < starting_depth) {
+							mapping = {false, NULL};
+						} else {
+							pair<bool,AbstractNode*> exit_mapping = start_node_helper(
+								scope_context,
+								node_context,
+								match_depth,
+								starting_depth,
+								match_node,
+								node_mappings,
+								new_node_reverse_mappings,
+								new_scope);
+							mapping = exit_mapping;
+						}
 					} else {
-						/**
-						 * - if reachable, then context must match, and exit must be valid
-						 */
-						pair<bool,AbstractNode*> exit_mapping = start_node_helper(
-							scope_context,
-							node_context,
-							curr_depth - exit_node->exit_depth,
-							starting_depth,
-							exit_node->next_node,
-							node_mappings,
-							new_node_reverse_mappings,
-							new_scope);
-						mapping = exit_mapping;
+						if (exit_node->exit_depth > curr_depth - starting_depth) {
+							mapping = {false, NULL};
+						} else {
+							/**
+							 * - if reachable, then context must match, and exit must be valid
+							 */
+							pair<bool,AbstractNode*> exit_mapping = start_node_helper(
+								scope_context,
+								node_context,
+								curr_depth - exit_node->exit_depth,
+								starting_depth,
+								exit_node->next_node,
+								node_mappings,
+								new_node_reverse_mappings,
+								new_scope);
+							mapping = exit_mapping;
+						}
 					}
 				}
 

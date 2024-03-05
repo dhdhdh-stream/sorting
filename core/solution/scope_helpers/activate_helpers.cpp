@@ -52,9 +52,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 					   history->node_histories);
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
-		if (node->is_throw) {
+		if (node->throw_id != -1) {
 			run_helper.throw_id = node->throw_id;
-			curr_node = NULL;
 		} else {
 			exit_depth = node->exit_depth-1;
 			exit_node = node->next_node;
@@ -80,6 +79,7 @@ void Scope::activate(Problem* problem,
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (run_helper.exceeded_limit
+				|| run_helper.throw_id != -1
 				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;

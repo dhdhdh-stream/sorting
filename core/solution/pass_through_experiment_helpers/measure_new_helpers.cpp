@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -19,48 +20,24 @@ void PassThroughExperiment::measure_new_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->best_actions[s_index]);
-			this->best_actions[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				action_node_history);
-			delete action_node_history;
-		} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_existing_scopes[s_index]);
-			this->best_existing_scopes[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
-			delete scope_node_history;
-		} else {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->best_potential_scopes[s_index]);
-			this->best_potential_scopes[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
-			delete scope_node_history;
-		}
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
 	}
 
-	if (this->best_exit_depth == 0) {
-		curr_node = this->best_exit_next_node;
+	if (this->best_step_types.size() == 0) {
+		if (this->exit_node != NULL) {
+			curr_node = this->exit_node;
+		} else {
+			curr_node = this->best_exit_next_node;
+		}
 	} else {
-		exit_depth = this->best_exit_depth-1;
-		exit_node = this->best_exit_next_node;
+		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+			curr_node = this->best_actions[0];
+		} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+			curr_node = this->best_existing_scopes[0];
+		} else {
+			curr_node = this->best_potential_scopes[0];
+		}
 	}
 }
 
