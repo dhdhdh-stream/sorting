@@ -35,6 +35,9 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 				curr_experiment = curr_experiment->parent_experiment;
 			}
 		}
+		this->root_experiment = curr_experiment;
+	} else {
+		this->root_experiment = NULL;
 	}
 
 	this->average_remaining_experiments_from_start = 1.0;
@@ -107,4 +110,12 @@ PassThroughExperimentHistory::PassThroughExperimentHistory(
 	this->instance_count = 0;
 
 	this->has_target = false;
+
+	this->scope_history = NULL;
+}
+
+PassThroughExperimentHistory::~PassThroughExperimentHistory() {
+	if (this->scope_history != NULL) {
+		delete this->scope_history;
+	}
 }

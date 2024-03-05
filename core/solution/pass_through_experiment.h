@@ -37,7 +37,7 @@ const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_NEW = 11;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING = 12;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_NEW = 13;
 
-const int PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS = 20;
+const int MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS = 20;
 
 #if defined(MDEBUG) && MDEBUG
 const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 2;
@@ -129,7 +129,8 @@ public:
 								  int& exit_depth,
 								  AbstractNode*& exit_node,
 								  RunHelper& run_helper);
-	void explore_measure_backprop(double target_val);
+	void explore_measure_backprop(double target_val,
+								  RunHelper& run_helper);
 
 	void measure_new_activate(AbstractNode*& curr_node,
 							  Problem* problem,
@@ -186,6 +187,7 @@ public:
 	std::vector<int> experiment_index;
 
 	PassThroughExperimentHistory(PassThroughExperiment* experiment);
+	~PassThroughExperimentHistory();
 };
 
 #endif /* PASS_THROUGH_EXPERIMENT_H */

@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -78,14 +80,18 @@ void PassThroughExperiment::explore_measure_activate(
 }
 
 void PassThroughExperiment::explore_measure_backprop(
-		double target_val) {
+		double target_val,
+		RunHelper& run_helper) {
 	this->curr_score += target_val - this->existing_average_score;
 
 	this->sub_state_iter++;
 	if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER) {
 		this->curr_score /= NUM_SAMPLES_PER_ITER;
 		#if defined(MDEBUG) && MDEBUG
-		if (true) {
+		/**
+		 * - at least has a chance to not exceed limit
+		 */
+		if (!run_helper.exceeded_limit) {
 		#else
 		if (this->curr_score > this->best_score) {
 		#endif /* MDEBUG */
@@ -136,10 +142,45 @@ void PassThroughExperiment::explore_measure_backprop(
 		this->state_iter++;
 		if (this->state_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (this->best_score != numeric_limits<double>::lowest()) {
 			#else
 			if (this->best_score >= 0.0) {
 			#endif /* MDEBUG */
+				// cout << "PassThrough" << endl;
+				// cout << "this->scope_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+				// 	cout << c_index << ": " << this->scope_context[c_index]->id << endl;
+				// }
+				// cout << "this->node_context:" << endl;
+				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
+				// 	if (this->node_context[c_index] == NULL) {
+				// 		cout << c_index << ": -1" << endl;
+				// 	} else {
+				// 		cout << c_index << ": " << this->node_context[c_index]->id << endl;
+				// 	}
+				// }
+				// cout << "this->is_branch: " << this->is_branch << endl;
+				// cout << "this->throw_id: " << this->throw_id << endl;
+				// cout << "new explore path:";
+				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				// 		cout << " " << this->best_actions[s_index]->action.move;
+				// 	} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+				// 		cout << " E";
+				// 	} else {
+				// 		cout << " P";
+				// 	}
+				// }
+				// cout << endl;
+
+				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+				// if (this->best_exit_next_node == NULL) {
+				// 	cout << "this->best_exit_next_node->id: " << -1 << endl;
+				// } else {
+				// 	cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				// }
+				// cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
+
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						this->best_actions[s_index]->parent = this->scope_context.back();
@@ -194,7 +235,7 @@ void PassThroughExperiment::explore_measure_backprop(
 						new_exit_node->throw_id = solution->throw_counter;
 						solution->throw_counter++;
 					} else {
-						new_exit_node->throw_id = -1;
+						new_exit_node->throw_id = this->best_exit_throw_id;
 					}
 
 					this->exit_node = new_exit_node;

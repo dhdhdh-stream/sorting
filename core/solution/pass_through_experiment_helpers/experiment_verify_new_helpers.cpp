@@ -61,7 +61,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.645) {	// >95%
+		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
@@ -76,6 +76,9 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				pass_through_experiment->state_iter = 0;
 			} else {
 				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
+
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+
 				branch_experiment->parent_experiment->state_iter++;
 				int matching_index;
 				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
@@ -90,13 +93,14 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				branch_experiment->finalize();
 				delete branch_experiment;
 
-				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+				double target_count = (double)MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS
+					* pow(0.5, this->verify_experiments.size());
 				while (true) {
 					if (curr_experiment->parent_experiment == NULL) {
 						break;
 					}
 
-					if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+					if (curr_experiment->state_iter >= target_count) {
 						PassThroughExperiment* parent = curr_experiment->parent_experiment;
 
 						parent->state_iter++;
@@ -114,6 +118,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						delete curr_experiment;
 
 						curr_experiment = parent;
+						target_count *= 2.0;
 					} else {
 						break;
 					}
@@ -122,7 +127,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 			this->verify_experiments.clear();
 
-			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+			if (this->state_iter >= MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
@@ -147,7 +152,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (score_improvement_t_score > 1.645) {	// >95%
+		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			cout << "PassThrough experiment success" << endl;
 			cout << "this->scope_context:" << endl;
@@ -158,6 +163,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
 				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
+			cout << "this->is_branch: " << this->is_branch << endl;
+			cout << "this->throw_id: " << this->throw_id << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -176,6 +183,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			} else {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
+			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
 			cout << "new_average_score: " << new_average_score << endl;
@@ -193,6 +201,9 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				pass_through_experiment->state_iter = 0;
 			} else {
 				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
+
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+
 				branch_experiment->parent_experiment->state_iter++;
 				int matching_index;
 				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
@@ -207,13 +218,14 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				branch_experiment->finalize();
 				delete branch_experiment;
 
-				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+				double target_count = (double)MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS
+					* pow(0.5, this->verify_experiments.size());
 				while (true) {
 					if (curr_experiment->parent_experiment == NULL) {
 						break;
 					}
 
-					if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+					if (curr_experiment->state_iter >= target_count) {
 						PassThroughExperiment* parent = curr_experiment->parent_experiment;
 
 						parent->state_iter++;
@@ -231,6 +243,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						delete curr_experiment;
 
 						curr_experiment = parent;
+						target_count *= 2.0;
 					} else {
 						break;
 					}
@@ -239,7 +252,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 			this->verify_experiments.clear();
 
-			if (this->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+			if (this->state_iter >= MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;

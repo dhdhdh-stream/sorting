@@ -354,8 +354,8 @@ void BranchExperiment::retrain_existing_backprop(
 							average_misguess,
 							misguess_standard_deviation);
 
-			double improvement = this->new_average_misguess - average_misguess;
-			double standard_deviation = min(this->new_misguess_standard_deviation, misguess_standard_deviation);
+			double improvement = this->existing_average_misguess - average_misguess;
+			double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
 			double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
 			if (t_score > 2.326) {
 				vector<int> new_input_indexes;

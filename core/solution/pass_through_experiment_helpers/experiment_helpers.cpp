@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -16,7 +18,8 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 												vector<ContextLayer>& context,
 												RunHelper& run_helper,
 												PassThroughExperimentHistory* history) {
-	if (this->root_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
+	if (this->parent_experiment == NULL
+			|| this->root_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
 		history->instance_count++;
 
 		bool is_target = false;

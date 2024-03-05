@@ -28,18 +28,20 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1709681310;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	problem_type = new IncrementMinesweeper();
+	// problem_type = new Simple();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -49,8 +51,8 @@ int main(int argc, char* argv[]) {
 
 	while (true) {
 		// Problem* problem = new Sorting();
-		// Problem* problem = new IncrementMinesweeper();
-		Problem* problem = new Simple();
+		Problem* problem = new IncrementMinesweeper();
+		// Problem* problem = new Simple();
 
 		RunHelper run_helper;
 
@@ -156,32 +158,35 @@ int main(int argc, char* argv[]) {
 					run_helper.experiment_histories.back()->experiment->finalize();
 					delete run_helper.experiment_histories.back()->experiment;
 
+					double target_count = (double)MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS
+						* pow(0.5, run_helper.experiment_histories.size()-1);
 					while (true) {
-						if (curr_experiment->parent_experiment == NULL) {
+						if (curr_experiment == NULL) {
 							is_fail = true;
-							curr_experiment->finalize();
-							delete curr_experiment;
 							break;
 						}
 
-						if (curr_experiment->state_iter >= PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS) {
+						if (curr_experiment->state_iter >= target_count) {
 							PassThroughExperiment* parent = curr_experiment->parent_experiment;
 
-							parent->state_iter++;
-							int matching_index;
-							for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
-								if (parent->child_experiments[c_index] == curr_experiment) {
-									matching_index = c_index;
-									break;
+							if (parent != NULL) {
+								parent->state_iter++;
+								int matching_index;
+								for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+									if (parent->child_experiments[c_index] == curr_experiment) {
+										matching_index = c_index;
+										break;
+									}
 								}
+								parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 							}
-							parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
 							curr_experiment->finalize();
 							delete curr_experiment;
 
 							curr_experiment = parent;
+							target_count *= 2.0;
 						} else {
 							break;
 						}
@@ -193,7 +198,7 @@ int main(int argc, char* argv[]) {
 				 */
 				is_success = true;
 				run_helper.experiment_histories.back()->experiment->finalize();
-				delete run_helper.experiment_histories.back();
+				delete run_helper.experiment_histories.back()->experiment;
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -250,13 +255,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;

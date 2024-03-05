@@ -170,6 +170,8 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+
+	this->pass_through_experiment_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -188,6 +190,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
 		}
 	}
+
+	this->pass_through_experiment_history = original->pass_through_experiment_history;
 }
 
 ScopeHistory::~ScopeHistory() {

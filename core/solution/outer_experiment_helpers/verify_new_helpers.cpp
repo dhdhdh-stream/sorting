@@ -84,7 +84,7 @@ void OuterExperiment::verify_new_backprop(double target_val) {
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.645) {	// >95%
+		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
@@ -109,7 +109,7 @@ void OuterExperiment::verify_new_backprop(double target_val) {
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (score_improvement_t_score > 1.645) {	// >95%
+		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			cout << "Outer" << endl;
 			cout << "verify" << endl;

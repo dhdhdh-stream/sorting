@@ -59,8 +59,8 @@ void BranchNode::random_exit_activate(AbstractNode*& curr_node,
 		matches_context = false;
 	} else {
 		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-			if (this->scope_context[c_index] != scope_context[curr_depth+1-this->scope_context.size()+c_index]
-					|| this->node_context[c_index] != node_context[curr_depth+1-this->scope_context.size()+c_index]) {
+			if (this->scope_context[c_index] != scope_context[scope_context.size()-this->scope_context.size()+c_index]
+					|| this->node_context[c_index] != node_context[scope_context.size()-this->scope_context.size()+c_index]) {
 				matches_context = false;
 				break;
 			}

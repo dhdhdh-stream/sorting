@@ -64,7 +64,7 @@ void PassThroughExperiment::measure_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.645) {	// >95%
+		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
@@ -75,7 +75,7 @@ void PassThroughExperiment::measure_new_backprop(
 				&& rand()%2 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& score_improvement_t_score > -0.2) {
+				&& score_improvement_t_score >= 0.0) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 

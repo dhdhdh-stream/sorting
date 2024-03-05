@@ -38,6 +38,9 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 				curr_experiment = curr_experiment->parent_experiment;
 			}
 		}
+		this->root_experiment = curr_experiment;
+	} else {
+		this->root_experiment = NULL;
 	}
 
 	this->average_remaining_experiments_from_start = 1.0;

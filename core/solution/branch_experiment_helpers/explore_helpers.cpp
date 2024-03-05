@@ -123,7 +123,9 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	}
 
 	uniform_int_distribution<int> repeat_distribution(0, 3);
-	if (this->parent_experiment == NULL && repeat_distribution(generator)) {
+	if (this->throw_id == -1
+			&& this->parent_experiment == NULL
+			&& repeat_distribution(generator)) {
 		this->curr_exit_depth = 0;
 		this->curr_exit_next_node = curr_node;
 		this->curr_exit_throw_id = -1;
@@ -287,11 +289,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 }
 
 void BranchExperiment::explore_backprop(double target_val,
+										RunHelper& run_helper,
 										BranchExperimentHistory* history) {
 	if (history->has_target) {
 		double curr_surprise = target_val - history->existing_predicted_score;
 		#if defined(MDEBUG) && MDEBUG
-		if (true) {
+		if (!run_helper.exceeded_limit) {
 		#else
 		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
@@ -340,7 +343,7 @@ void BranchExperiment::explore_backprop(double target_val,
 		this->state_iter++;
 		if (this->state_iter >= EXPLORE_ITERS) {
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (this->best_surprise != 0.0) {
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
@@ -354,6 +357,8 @@ void BranchExperiment::explore_backprop(double target_val,
 				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
 				// 	cout << c_index << ": " << this->node_context[c_index]->id << endl;
 				// }
+				// cout << "this->is_branch: " << this->is_branch << endl;
+				// cout << "this->throw_id: " << this->throw_id << endl;
 				// cout << "new explore path:";
 				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -367,11 +372,12 @@ void BranchExperiment::explore_backprop(double target_val,
 				// cout << endl;
 
 				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				// if (this->best_exit_node == NULL) {
-				// 	cout << "this->best_exit_node_id: " << -1 << endl;
+				// if (this->best_exit_next_node == NULL) {
+				// 	cout << "this->best_exit_next_node->id: " << -1 << endl;
 				// } else {
-				// 	cout << "this->best_exit_node_id: " << this->best_exit_node->id << endl;
+				// 	cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 				// }
+				// cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 				// cout << endl;
 
 				// if (this->parent_pass_through_experiment != NULL) {
@@ -450,7 +456,7 @@ void BranchExperiment::explore_backprop(double target_val,
 						new_exit_node->throw_id = solution->throw_counter;
 						solution->throw_counter++;
 					} else {
-						new_exit_node->throw_id = -1;
+						new_exit_node->throw_id = this->best_exit_throw_id;
 					}
 
 					this->exit_node = new_exit_node;

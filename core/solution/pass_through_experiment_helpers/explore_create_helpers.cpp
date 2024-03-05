@@ -1,9 +1,12 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
+#include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"

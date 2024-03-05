@@ -168,6 +168,7 @@ public:
 								 RunHelper& run_helper,
 								 BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
+						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
 
 	void retrain_existing_activate(AbstractNode*& curr_node,

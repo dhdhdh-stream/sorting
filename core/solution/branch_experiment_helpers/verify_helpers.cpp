@@ -154,7 +154,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 			this->original_count = 0;
@@ -179,10 +179,11 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {	// >95%
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			cout << "Branch" << endl;
 			cout << "verify" << endl;
+			cout << "this->parent_experiment: " << this->parent_experiment << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
@@ -191,6 +192,8 @@ void BranchExperiment::verify_backprop(double target_val,
 			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
 				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
+			cout << "this->is_branch: " << this->is_branch << endl;
+			cout << "this->throw_id: " << this->throw_id << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -209,6 +212,7 @@ void BranchExperiment::verify_backprop(double target_val,
 			} else {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
+			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;

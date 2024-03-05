@@ -190,27 +190,15 @@ void PassThroughExperiment::finalize() {
 		this->exit_node = NULL;
 
 		for (int v_index = 0; v_index < (int)this->verify_experiments.size(); v_index++) {
-			PassThroughExperiment* parent;
-			if (this->verify_experiments[v_index]->type == EXPERIMENT_TYPE_BRANCH) {
-				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments[v_index];
-				parent = pass_through_experiment->parent_experiment;
-			} else {
-				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments[v_index];
-				parent = branch_experiment->parent_experiment;
-			}
-
-			int matching_index;
-			for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
-				if (parent->child_experiments[c_index] == this->verify_experiments[v_index]) {
-					matching_index = c_index;
-					break;
-				}
-			}
-			parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
-
 			this->verify_experiments[v_index]->result = EXPERIMENT_RESULT_SUCCESS;
 			this->verify_experiments[v_index]->finalize();
 			delete this->verify_experiments[v_index];
+		}
+	} else {
+		for (int c_index = 0; c_index < (int)this->child_experiments.size(); c_index++) {
+			this->child_experiments[c_index]->result = EXPERIMENT_RESULT_FAIL;
+			this->child_experiments[c_index]->finalize();
+			delete this->child_experiments[c_index];
 		}
 	}
 
