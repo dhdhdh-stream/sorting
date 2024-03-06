@@ -12,11 +12,10 @@
 
 #include "branch_experiment.h"
 #include "globals.h"
-#include "increment_minesweeper.h"
+#include "minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
-#include "simple.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
@@ -49,8 +48,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new IncrementMinesweeper();
-	// problem_type = new Simple();
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
 
 	solution = new Solution();
 	solution->load(path, "main");
@@ -60,8 +59,7 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		// Problem* problem = new Sorting();
-		Problem* problem = new IncrementMinesweeper();
-		// Problem* problem = new Simple();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

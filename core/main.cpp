@@ -7,10 +7,10 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
-#include "increment_minesweeper.h"
+#include "minesweeper.h"
 #include "outer_experiment.h"
 #include "pass_through_experiment.h"
-#include "simple.h"
+#include "sorting.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new IncrementMinesweeper();
-	// problem_type = new Simple();
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
 
 	solution = new Solution();
 	// solution->init();
@@ -51,8 +51,7 @@ int main(int argc, char* argv[]) {
 
 	while (true) {
 		// Problem* problem = new Sorting();
-		Problem* problem = new IncrementMinesweeper();
-		// Problem* problem = new Simple();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

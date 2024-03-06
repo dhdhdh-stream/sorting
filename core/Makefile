@@ -1,23 +1,21 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
-		   -DMDEBUG=0 \
+		   -DMDEBUG=1 \
 		   `pkg-config --cflags eigen3` \
 		   -Inn \
 		   -Isolution \
-		   -Iteach_learn \
 		   -Iutils \
 		   -Iworld
 LIBS = -pthread
 SOURCES := $(shell find nn -name '*.cpp') \
 		   $(shell find solution -name '*.cpp') \
-		   $(shell find teach_learn -name '*.cpp') \
 		   $(shell find utils -name '*.cpp') \
 		   $(shell find world -name '*.cpp')
 HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure learn_scenario
+all: main viewer worker simple_init measure
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -34,10 +32,7 @@ simple_init: ${OBJECTS} simple_init.o
 measure: ${OBJECTS} measure.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} measure.o -o measure ${LIBS}
 
-learn_scenario: ${OBJECTS} learn_scenario.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} learn_scenario.o -o learn_scenario ${LIBS}
-
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d learn_scenario.d
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -46,4 +41,3 @@ clean:
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
-	learn_scenario.o learn_scenario.d learn_scenario

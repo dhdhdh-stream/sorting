@@ -5,9 +5,8 @@
 #include <random>
 
 #include "globals.h"
-#include "increment_minesweeper.h"
+#include "minesweeper.h"
 #include "scope.h"
-#include "simple.h"
 #include "solution.h"
 #include "sorting.h"
 
@@ -31,8 +30,7 @@ int main(int argc, char* argv[]) {
 
 	{
 		// Problem* problem = new Sorting();
-		Problem* problem = new IncrementMinesweeper();
-		// Problem* problem = new Simple();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 

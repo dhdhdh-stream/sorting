@@ -3,8 +3,7 @@ import pydot
 ACTION_NOOP = -1
 ACTION_LEFT = 0
 ACTION_RIGHT = 1
-ACTION_SWAP_R = 2
-ACTION_SWAP_F = 3
+ACTION_SWAP = 2
 # ACTION_NOOP = -1
 # ACTION_UP = 0
 # ACTION_RIGHT = 1
@@ -88,9 +87,7 @@ def pretty_print_action(action):
 	elif action == 1:
 		result = 'RIGHT'
 	elif action == 2:
-		result = 'SWAP_R'
-	elif action == 3:
-		result = 'SWAP_F'
+		result = 'SWAP'
 	return result
 # def pretty_print_action(action):
 # 	result = ''
