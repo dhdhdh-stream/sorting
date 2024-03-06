@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include "branch_experiment.h"
+#include "globals.h"
 #include "pass_through_experiment.h"
 #include "problem.h"
+#include "scope.h"
 
 using namespace std;
 

@@ -230,12 +230,10 @@ int main(int argc, char* argv[]) {
 				solution = new Solution();
 				solution->load(path, "main");
 
+				solution->save(path, name);
+
 				cout << "updated from main" << endl;
 			} else {
-				/**
-				 * - possible race condition
-				 *   - but just means that previous update from another worker dropped
-				 */
 				solution->timestamp = (unsigned)time(NULL);
 				solution->save(path, name);
 

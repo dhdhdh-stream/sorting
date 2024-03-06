@@ -65,6 +65,11 @@ void PassThroughExperiment::explore_measure_activate(
 				scope_node_history);
 			delete scope_node_history;
 		}
+
+		if (run_helper.throw_id != -1) {
+			this->curr_catch_throw_ids[s_index].insert(run_helper.throw_id);
+			run_helper.throw_id = -1;
+		}
 	}
 
 	if (this->curr_exit_throw_id != -1) {
@@ -114,12 +119,14 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_next_node = this->curr_exit_next_node;
 			this->best_exit_throw_id = this->curr_exit_throw_id;
+			this->best_catch_throw_ids = this->curr_catch_throw_ids;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_existing_scopes.clear();
 			this->curr_potential_scopes.clear();
+			this->curr_catch_throw_ids.clear();
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -137,6 +144,7 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->curr_actions.clear();
 			this->curr_potential_scopes.clear();
 			this->curr_existing_scopes.clear();
+			this->curr_catch_throw_ids.clear();
 		}
 
 		this->state_iter++;
@@ -276,9 +284,21 @@ void PassThroughExperiment::explore_measure_backprop(
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 						this->best_existing_scopes[s_index]->next_node_id = next_node_id;
 						this->best_existing_scopes[s_index]->next_node = next_node;
+
+						for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+								it != this->best_catch_throw_ids[s_index].end(); it++) {
+							this->best_existing_scopes[s_index]->catch_ids[*it] = next_node_id;
+							this->best_existing_scopes[s_index]->catches[*it] = next_node;
+						}
 					} else {
 						this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 						this->best_potential_scopes[s_index]->next_node = next_node;
+
+						for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+								it != this->best_catch_throw_ids[s_index].end(); it++) {
+							this->best_potential_scopes[s_index]->catch_ids[*it] = next_node_id;
+							this->best_potential_scopes[s_index]->catches[*it] = next_node;
+						}
 					}
 				}
 

@@ -118,10 +118,6 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	history->existing_predicted_score = predicted_score;
 
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	uniform_int_distribution<int> repeat_distribution(0, 3);
 	if (this->throw_id == -1
 			&& this->parent_experiment == NULL
@@ -138,15 +134,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 												  (int)this->scope_context.size());
 		this->curr_potential_scopes.push_back(new_scope_node);
 
-		ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-		new_scope_node->activate(curr_node,
-								 problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper,
-								 scope_node_history);
-		delete scope_node_history;
+		this->curr_catch_throw_ids.push_back(set<int>());
 	} else {
 		// exit
 		vector<pair<int,AbstractNode*>> possible_exits;
@@ -224,15 +212,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 				this->curr_potential_scopes.push_back(new_scope_node);
 
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_scope_node);
-				new_scope_node->activate(curr_node,
-										 problem,
-										 context,
-										 exit_depth,
-										 exit_node,
-										 run_helper,
-										 scope_node_history);
-				delete scope_node_history;
+				this->curr_catch_throw_ids.push_back(set<int>());
 			} else {
 				ScopeNode* new_existing_scope_node = reuse_existing();
 				if (new_existing_scope_node != NULL) {
@@ -242,16 +222,7 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 					this->curr_existing_scopes.push_back(new_existing_scope_node);
 
 					this->curr_potential_scopes.push_back(NULL);
-
-					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(new_existing_scope_node);
-					new_existing_scope_node->activate(curr_node,
-													  problem,
-													  context,
-													  exit_depth,
-													  exit_node,
-													  run_helper,
-													  scope_node_history);
-					delete scope_node_history;
+					this->curr_catch_throw_ids.push_back(set<int>());
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
@@ -261,18 +232,55 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 					this->curr_existing_scopes.push_back(NULL);
 					this->curr_potential_scopes.push_back(NULL);
-
-					ActionNodeHistory* action_node_history = new ActionNodeHistory(new_action_node);
-					new_action_node->activate(curr_node,
-											  problem,
-											  context,
-											  exit_depth,
-											  exit_node,
-											  run_helper,
-											  action_node_history);
-					delete action_node_history;
+					this->curr_catch_throw_ids.push_back(set<int>());
 				}
 			}
+		}
+	}
+
+	if (this->throw_id != -1) {
+		run_helper.throw_id = -1;
+	}
+
+	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
+			this->curr_actions[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				action_node_history);
+			delete action_node_history;
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_existing_scopes[s_index]);
+			this->curr_existing_scopes[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
+		} else {
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_potential_scopes[s_index]);
+			this->curr_potential_scopes[s_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				scope_node_history);
+			delete scope_node_history;
+		}
+
+		if (run_helper.throw_id != -1) {
+			this->curr_catch_throw_ids[s_index].insert(run_helper.throw_id);
+			run_helper.throw_id = -1;
 		}
 	}
 
@@ -317,11 +325,13 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_next_node = this->curr_exit_next_node;
 			this->best_exit_throw_id = this->curr_exit_throw_id;
+			this->best_catch_throw_ids = this->curr_catch_throw_ids;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_existing_scopes.clear();
 			this->curr_potential_scopes.clear();
+			this->curr_catch_throw_ids.clear();
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -338,6 +348,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->curr_actions.clear();
 			this->curr_existing_scopes.clear();
 			this->curr_potential_scopes.clear();
+			this->curr_catch_throw_ids.clear();
 		}
 
 		this->state_iter++;
@@ -505,9 +516,21 @@ void BranchExperiment::explore_backprop(double target_val,
 					} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 						this->best_existing_scopes[s_index]->next_node_id = next_node_id;
 						this->best_existing_scopes[s_index]->next_node = next_node;
+
+						for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+								it != this->best_catch_throw_ids[s_index].end(); it++) {
+							this->best_existing_scopes[s_index]->catch_ids[*it] = next_node_id;
+							this->best_existing_scopes[s_index]->catches[*it] = next_node;
+						}
 					} else {
 						this->best_potential_scopes[s_index]->next_node_id = next_node_id;
 						this->best_potential_scopes[s_index]->next_node = next_node;
+
+						for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+								it != this->best_catch_throw_ids[s_index].end(); it++) {
+							this->best_potential_scopes[s_index]->catch_ids[*it] = next_node_id;
+							this->best_potential_scopes[s_index]->catches[*it] = next_node;
+						}
 					}
 				}
 

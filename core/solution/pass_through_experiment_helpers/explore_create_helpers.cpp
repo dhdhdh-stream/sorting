@@ -110,6 +110,8 @@ void PassThroughExperiment::explore_create_activate(
 				this->curr_existing_scopes.push_back(NULL);
 
 				this->curr_potential_scopes.push_back(new_scope_node);
+
+				this->curr_catch_throw_ids.push_back(set<int>());
 			} else {
 				ScopeNode* new_existing_scope_node = reuse_existing();
 				if (new_existing_scope_node != NULL) {
@@ -119,6 +121,7 @@ void PassThroughExperiment::explore_create_activate(
 					this->curr_existing_scopes.push_back(new_existing_scope_node);
 
 					this->curr_potential_scopes.push_back(NULL);
+					this->curr_catch_throw_ids.push_back(set<int>());
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
@@ -128,6 +131,7 @@ void PassThroughExperiment::explore_create_activate(
 
 					this->curr_existing_scopes.push_back(NULL);
 					this->curr_potential_scopes.push_back(NULL);
+					this->curr_catch_throw_ids.push_back(set<int>());
 				}
 			}
 		}

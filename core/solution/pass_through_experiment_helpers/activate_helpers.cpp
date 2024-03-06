@@ -15,8 +15,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 RunHelper& run_helper) {
 	bool is_selected = false;
 	PassThroughExperimentHistory* history = NULL;
-	if (run_helper.throw_id == -1
-			|| run_helper.throw_id == this->throw_id) {
+	if (run_helper.throw_id == this->throw_id) {
 		int match_index = -1;
 		for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
 			if (run_helper.experiment_histories[e_index]->experiment == this) {

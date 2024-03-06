@@ -2,6 +2,7 @@
 #define PASS_THROUGH_EXPERIMENT_H
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "abstract_experiment.h"
@@ -70,6 +71,7 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_existing_scopes;
 	std::vector<ScopeNode*> curr_potential_scopes;
+	std::vector<std::set<int>> curr_catch_throw_ids;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
 	int curr_exit_throw_id;
@@ -79,6 +81,7 @@ public:
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_existing_scopes;
 	std::vector<ScopeNode*> best_potential_scopes;
+	std::vector<std::set<int>> best_catch_throw_ids;
 	int best_exit_depth;
 	AbstractNode* best_exit_next_node;
 	int best_exit_throw_id;

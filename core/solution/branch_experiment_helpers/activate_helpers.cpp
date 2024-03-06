@@ -13,8 +13,7 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 								RunHelper& run_helper) {
 	bool is_selected = false;
 	BranchExperimentHistory* history = NULL;
-	if (run_helper.throw_id == -1
-			|| run_helper.throw_id == this->throw_id) {
+	if (run_helper.throw_id == this->throw_id) {
 		if (run_helper.experiment_histories.size() > 0
 				&& run_helper.experiment_histories.back()->experiment == this) {
 			bool matches_context = true;
