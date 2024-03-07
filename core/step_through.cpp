@@ -50,6 +50,9 @@ int main(int argc, char* argv[]) {
 											  run_helper,
 											  root_history);
 
+		string input_gate;
+		cin >> input_gate;
+
 		problem->print();
 		cout << "Done" << endl;
 		double target_val;
@@ -62,6 +65,8 @@ int main(int argc, char* argv[]) {
 
 		delete root_history;
 	}
+
+	cout << "Seed: " << seed << endl;
 
 	delete solution;
 

@@ -153,8 +153,16 @@ void BranchExperiment::measure_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
 		#endif /* MDEBUG */
+			if (this->skip_explore) {
+				cout << "BRANCH_EXPERIMENT_STATE_MEASURE success" << endl;
+				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+				cout << "branch_weight: " << branch_weight << endl;
+			}
+
 			this->combined_score = 0.0;
 			this->original_count = 0;
 			this->branch_count = 0;

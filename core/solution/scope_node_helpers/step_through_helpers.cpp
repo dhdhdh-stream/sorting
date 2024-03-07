@@ -44,6 +44,9 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 	if (run_helper.exceeded_limit) {
 		// do nothing
 	} else if (run_helper.throw_id != -1) {
+		string input_gate;
+		cin >> input_gate;
+
 		problem->print();
 		cout << "ScopeNode" << endl;
 		cout << "throw: " << run_helper.throw_id << endl;
@@ -62,6 +65,9 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 		}
 		// else do nothing
 	} else if (inner_exit_depth == -1) {
+		string input_gate;
+		cin >> input_gate;
+
 		problem->print();
 		cout << "ScopeNode" << endl;
 		cout << "exit" << endl;

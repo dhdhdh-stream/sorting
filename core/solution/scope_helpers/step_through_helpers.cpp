@@ -64,6 +64,9 @@ void Scope::step_through_activate(Problem* problem,
 								  RunHelper& run_helper,
 								  ScopeHistory* history) {
 	if (run_helper.curr_depth > solution->depth_limit) {
+		string input_gate;
+		cin >> input_gate;
+
 		problem->print();
 		cout << "exceeded_limit" << endl;
 		cout << "context:" << endl;

@@ -64,7 +64,7 @@ void PassThroughExperiment::measure_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.960) {
+		if (score_improvement_t_score > 1.645) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 

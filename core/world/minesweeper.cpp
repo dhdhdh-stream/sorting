@@ -248,23 +248,30 @@ void Minesweeper::print() {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {
 			if (this->revealed[x_index][y_index]) {
 				if (this->world[x_index][y_index] == -1) {
-					cout << "X ";
+					cout << "X";
 				} else {
-					cout << this->world[x_index][y_index] << " ";
+					cout << this->world[x_index][y_index];
 				}
 			} else if (this->flagged[x_index][y_index]) {
 				if (this->world[x_index][y_index] == -1) {
-					cout << "F ";
+					cout << "F";
 				} else {
-					cout << "M ";
+					cout << "M";
 				}
 			} else {
-				cout << "- ";
+				cout << "-";
+			}
+
+			if (x_index == this->current_x
+					&& y_index == this->current_y) {
+				cout << "<";
+			} else {
+				cout << " ";
 			}
 		}
 		cout << endl;
 	}
 
-	cout << "current_x: " << current_x << endl;
-	cout << "current_y: " << current_y << endl;
+	cout << "current_x: " << this->current_x << endl;
+	cout << "current_y: " << this->current_y << endl;
 }

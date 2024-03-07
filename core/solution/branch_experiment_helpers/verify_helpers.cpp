@@ -154,7 +154,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 			this->original_count = 0;
@@ -167,7 +167,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		} else {
 			if (this->skip_explore) {
 				cout << "BRANCH_EXPERIMENT_STATE_VERIFY_1ST fail" << endl;
-				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
 				cout << "this->combined_score: " << this->combined_score << endl;
 				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 				cout << "branch_weight: " << branch_weight << endl;
@@ -187,7 +187,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
 		#endif /* MDEBUG */
 			cout << "Branch" << endl;
 			cout << "verify" << endl;
@@ -297,7 +297,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		} else {
 			if (this->skip_explore) {
 				cout << "BRANCH_EXPERIMENT_STATE_VERIFY_2ND fail" << endl;
-				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
 				cout << "this->combined_score: " << this->combined_score << endl;
 				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 				cout << "branch_weight: " << branch_weight << endl;

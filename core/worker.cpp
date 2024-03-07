@@ -22,7 +22,7 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 30;
+const int NUM_FAILS_BEFORE_INCREASE = 100;
 
 default_random_engine generator;
 

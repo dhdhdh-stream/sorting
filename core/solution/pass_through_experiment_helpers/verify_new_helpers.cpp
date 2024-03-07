@@ -65,7 +65,7 @@ void PassThroughExperiment::verify_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (score_improvement_t_score > 1.960) {
+		if (score_improvement_t_score > 1.645) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
@@ -103,7 +103,7 @@ void PassThroughExperiment::verify_new_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (score_improvement_t_score > 1.960 && this->new_is_better) {
+		if (score_improvement_t_score > 1.645 && this->new_is_better) {
 		#endif /* MDEBUG */
 			cout << "PassThrough" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;

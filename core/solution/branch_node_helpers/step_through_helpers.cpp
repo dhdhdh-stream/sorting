@@ -125,6 +125,9 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 			}
 			#endif /* MDEBUG */
 
+			string input_gate;
+			cin >> input_gate;
+
 			problem->print();
 			cout << "BranchNode" << endl;
 			cout << "is_branch: " << history->is_branch << endl;

@@ -24,38 +24,49 @@ solution_file.close()
 while True:
 	updated = False
 
-	for worker in workers:
-		client = paramiko.SSHClient()
-		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-		client.connect(worker[1],
-					   username=worker[2],
-					   password=worker[3])
+	solution_file = open('saves/main.txt', 'r')
+	main_id = int(solution_file.readline())
+	solution_file.close()
 
-		client_sftp = client.open_sftp()
+	if main_id > curr_id:
+		print('main updated')
 
-		try:
-			worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '.txt', 'r')
-			worker_curr_id = int(worker_solution_file.readline())
-			worker_solution_file.close()
+		curr_id = main_id
 
-			if worker_curr_id > curr_id:
-				print(worker[0] + ' updated')
+		updated = True
+	else:
+		for worker in workers:
+			client = paramiko.SSHClient()
+			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+			client.connect(worker[1],
+						   username=worker[2],
+						   password=worker[3])
 
-				client_sftp.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
-								'saves/main.txt')
+			client_sftp = client.open_sftp()
 
-				curr_id = worker_curr_id
+			try:
+				worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '.txt', 'r')
+				worker_curr_id = int(worker_solution_file.readline())
+				worker_solution_file.close()
 
-				updated = True
+				if worker_curr_id > curr_id:
+					print(worker[0] + ' updated')
 
-		except IOError:
-			pass
+					client_sftp.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
+									'saves/main.txt')
 
-		client_sftp.close()
-		client.close()
+					curr_id = worker_curr_id
 
-		if updated:
-			break
+					updated = True
+
+			except IOError:
+				pass
+
+			client_sftp.close()
+			client.close()
+
+			if updated:
+				break
 
 	if updated:
 		for worker in workers:

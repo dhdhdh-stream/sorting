@@ -37,6 +37,8 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	solution->curr_num_datapoints = 4000;
+
 	ifstream suggestion_input_file;
 	suggestion_input_file.open("suggestion_input.txt");
 	AbstractExperiment* experiment = create_experiment(suggestion_input_file);
