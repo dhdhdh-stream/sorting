@@ -266,7 +266,8 @@ void PassThroughExperiment::experiment_backprop(
 					possible_node_contexts[rand_index],
 					false,
 					-1,
-					this);
+					this,
+					false);
 
 				ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
 				action_node->experiments.push_back(new_branch_experiment);
@@ -289,7 +290,8 @@ void PassThroughExperiment::experiment_backprop(
 					possible_node_contexts[rand_index],
 					false,
 					possible_throw_id[rand_index],
-					this);
+					this,
+					false);
 
 				ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
 				scope_node->experiments.push_back(new_branch_experiment);
@@ -317,7 +319,8 @@ void PassThroughExperiment::experiment_backprop(
 					possible_node_contexts[rand_index],
 					possible_is_branch[rand_index],
 					-1,
-					this);
+					this,
+					false);
 
 				BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
 				branch_node->experiments.push_back(new_branch_experiment);

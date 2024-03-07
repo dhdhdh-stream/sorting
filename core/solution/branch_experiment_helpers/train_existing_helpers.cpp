@@ -11,11 +11,13 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -329,7 +331,137 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->i_scope_histories.clear();
 		this->i_target_val_histories.clear();
 
-		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-		this->state_iter = 0;
+		if (this->skip_explore) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					this->best_actions[s_index]->parent = this->scope_context.back();
+					this->best_actions[s_index]->id = this->scope_context.back()->node_counter;
+					this->scope_context.back()->node_counter++;
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					this->best_existing_scopes[s_index]->parent = this->scope_context.back();
+					this->best_existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->scope_context.back()->node_counter++;
+				} else {
+					this->best_potential_scopes[s_index]->parent = this->scope_context.back();
+					this->best_potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->scope_context.back()->node_counter++;
+
+					int new_scope_id = solution->scope_counter;
+					solution->scope_counter++;
+					this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+
+					for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+							it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_BRANCH) {
+							BranchNode* branch_node = (BranchNode*)it->second;
+							branch_node->scope_context_ids[0] = new_scope_id;
+							for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+								if (branch_node->input_scope_context_ids[i_index].size() > 0) {
+									branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			int exit_node_id;
+			AbstractNode* exit_node;
+			if (this->best_exit_depth > 0
+					|| this->best_exit_throw_id != -1) {
+				ExitNode* new_exit_node = new ExitNode();
+				new_exit_node->parent = this->scope_context.back();
+				new_exit_node->id = this->scope_context.back()->node_counter;
+				this->scope_context.back()->node_counter++;
+
+				new_exit_node->exit_depth = this->best_exit_depth;
+				new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
+				if (this->best_exit_next_node == NULL) {
+					new_exit_node->next_node_id = -1;
+				} else {
+					new_exit_node->next_node_id = this->best_exit_next_node->id;
+				}
+				new_exit_node->next_node = this->best_exit_next_node;
+				if (this->best_exit_throw_id == TEMP_THROW_ID) {
+					new_exit_node->throw_id = solution->throw_counter;
+					solution->throw_counter++;
+				} else {
+					new_exit_node->throw_id = this->best_exit_throw_id;
+				}
+
+				this->exit_node = new_exit_node;
+
+				exit_node_id = new_exit_node->id;
+				exit_node = new_exit_node;
+			} else {
+				if (this->best_exit_next_node == NULL) {
+					exit_node_id = -1;
+				} else {
+					exit_node_id = this->best_exit_next_node->id;
+				}
+				exit_node = this->best_exit_next_node;
+			}
+
+			/**
+			 * - just need a placeholder for now
+			 */
+			this->branch_node = new BranchNode();
+			this->branch_node->parent = this->scope_context.back();
+			this->branch_node->id = this->scope_context.back()->node_counter;
+			this->scope_context.back()->node_counter++;
+
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				int next_node_id;
+				AbstractNode* next_node;
+				if (s_index == (int)this->best_step_types.size()-1) {
+					next_node_id = exit_node_id;
+					next_node = exit_node;
+				} else {
+					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+						next_node_id = this->best_actions[s_index+1]->id;
+						next_node = this->best_actions[s_index+1];
+					} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
+						next_node_id = this->best_existing_scopes[s_index+1]->id;
+						next_node = this->best_existing_scopes[s_index+1];
+					} else {
+						next_node_id = this->best_potential_scopes[s_index+1]->id;
+						next_node = this->best_potential_scopes[s_index+1];
+					}
+				}
+
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					this->best_actions[s_index]->next_node_id = next_node_id;
+					this->best_actions[s_index]->next_node = next_node;
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					this->best_existing_scopes[s_index]->next_node_id = next_node_id;
+					this->best_existing_scopes[s_index]->next_node = next_node;
+
+					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+							it != this->best_catch_throw_ids[s_index].end(); it++) {
+						this->best_existing_scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->best_existing_scopes[s_index]->catches[*it] = next_node;
+					}
+				} else {
+					this->best_potential_scopes[s_index]->next_node_id = next_node_id;
+					this->best_potential_scopes[s_index]->next_node = next_node;
+
+					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
+							it != this->best_catch_throw_ids[s_index].end(); it++) {
+						this->best_potential_scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->best_potential_scopes[s_index]->catches[*it] = next_node;
+					}
+				}
+			}
+
+			this->i_scope_histories.reserve(solution->curr_num_datapoints);
+			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+
+			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+			this->state_iter = 0;
+			this->sub_state_iter = 0;
+		} else {
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+			this->state_iter = 0;
+		}
 	}
 }

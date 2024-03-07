@@ -1,14 +1,10 @@
-#include <chrono>
 #include <iostream>
-#include <map>
-#include <thread>
-#include <random>
 
 #include "globals.h"
 #include "minesweeper.h"
+#include "problem.h"
 #include "scope.h"
 #include "solution.h"
-#include "sorting.h"
 
 using namespace std;
 
@@ -47,15 +43,15 @@ int main(int argc, char* argv[]) {
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->activate(problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper,
-								 root_history);
+		solution->root->step_through_activate(problem,
+											  context,
+											  exit_depth,
+											  exit_node,
+											  run_helper,
+											  root_history);
 
-		delete root_history;
-
+		problem->print();
+		cout << "Done" << endl;
 		double target_val;
 		if (!run_helper.exceeded_limit) {
 			target_val = problem->score_result();
@@ -64,15 +60,8 @@ int main(int argc, char* argv[]) {
 		}
 		cout << "target_val: " << target_val << endl;
 
-		problem->print();
-
-		delete problem;
+		delete root_history;
 	}
-
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
 
 	delete solution;
 

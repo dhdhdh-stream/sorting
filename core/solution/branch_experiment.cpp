@@ -18,7 +18,8 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 								   vector<AbstractNode*> node_context,
 								   bool is_branch,
 								   int throw_id,
-								   PassThroughExperiment* parent_experiment) {
+								   PassThroughExperiment* parent_experiment,
+								   bool skip_explore) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
@@ -43,7 +44,13 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 		this->root_experiment = NULL;
 	}
 
-	this->average_remaining_experiments_from_start = 1.0;
+	this->skip_explore = skip_explore;
+
+	if (this->skip_explore) {
+		this->average_remaining_experiments_from_start = 0.0;
+	} else {
+		this->average_remaining_experiments_from_start = 1.0;
+	}
 	/**
 	 * - start with a 50% chance to bypass
 	 */

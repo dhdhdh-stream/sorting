@@ -4,10 +4,16 @@
 #include <thread>
 #include <random>
 
+#include "action_node.h"
+#include "branch_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "outer_experiment.h"
+#include "pass_through_experiment.h"
+#include "sorting.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "sorting.h"
 
 using namespace std;
@@ -25,10 +31,18 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
+
 	solution = new Solution();
 	solution->load("", "main");
 
-	{
+	ifstream suggestion_input_file;
+	suggestion_input_file.open("suggestion_input.txt");
+	AbstractExperiment* experiment = create_experiment(suggestion_input_file);
+	suggestion_input_file.close();
+
+	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
 
@@ -62,18 +76,35 @@ int main(int argc, char* argv[]) {
 		} else {
 			target_val = -1.0;
 		}
-		cout << "target_val: " << target_val << endl;
 
-		problem->print();
+		if (run_helper.experiment_histories.size() > 0) {
+			run_helper.experiment_histories.back()->experiment->backprop(
+				target_val,
+				run_helper);
+			if (experiment->result == EXPERIMENT_RESULT_FAIL) {
+				experiment->finalize();
+				delete experiment;
+				break;
+			} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				experiment->finalize();
+				delete experiment;
+
+				solution->timestamp = (unsigned)time(NULL);
+				solution->save("", "main");
+
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
+
+				break;
+			}
+		}
 
 		delete problem;
 	}
 
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
-
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

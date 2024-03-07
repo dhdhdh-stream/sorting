@@ -43,6 +43,12 @@ public:
 					   std::vector<double>& input_vals,
 					   ActionNodeHistory* history);
 
+	void step_through_activate(AbstractNode*& curr_node,
+							   Problem* problem,
+							   std::vector<ContextLayer>& context,
+							   RunHelper& run_helper,
+							   ActionNodeHistory* history);
+
 	void success_reset();
 	void fail_reset();
 

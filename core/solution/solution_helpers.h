@@ -1,6 +1,7 @@
 #ifndef SOLUTION_HELPERS_H
 #define SOLUTION_HELPERS_H
 
+#include <fstream>
 #include <utility>
 #include <vector>
 
@@ -14,6 +15,7 @@ class ScopeNode;
 class SeedExperimentFilter;
 
 void create_experiment(ScopeHistory* root_history);
+AbstractExperiment* create_experiment(std::ifstream& input_file);
 
 ScopeNode* reuse_existing();
 ScopeNode* create_scope(Scope* parent_scope,

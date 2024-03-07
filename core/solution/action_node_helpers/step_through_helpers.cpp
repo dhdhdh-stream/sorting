@@ -1,0 +1,32 @@
+#include "action_node.h"
+
+#include <iostream>
+
+#include "problem.h"
+#include "scope.h"
+
+using namespace std;
+
+void ActionNode::step_through_activate(AbstractNode*& curr_node,
+									   Problem* problem,
+									   vector<ContextLayer>& context,
+									   RunHelper& run_helper,
+									   ActionNodeHistory* history) {
+	problem->perform_action(this->action);
+	history->obs_snapshot = problem->get_observation();
+
+	string input_gate;
+	cin >> input_gate;
+
+	problem->print();
+	cout << "ActionNode" << endl;
+	cout << "this->action.move: " << this->action.move << endl;
+	cout << "context:" << endl;
+	context.back().node = this;
+	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+		cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
+	}
+	context.back().node = NULL;
+
+	curr_node = this->next_node;
+}

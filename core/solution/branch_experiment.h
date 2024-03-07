@@ -55,6 +55,8 @@ public:
 	PassThroughExperiment* parent_experiment;
 	PassThroughExperiment* root_experiment;
 
+	bool skip_explore;
+
 	double average_instances_per_run;
 
 	int state;
@@ -78,7 +80,6 @@ public:
 	std::vector<ScopeNode*> curr_existing_scopes;
 	std::vector<ScopeNode*> curr_potential_scopes;
 	std::vector<std::set<int>> curr_catch_throw_ids;
-	bool curr_exit_is_throw;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
 	/**
@@ -137,7 +138,8 @@ public:
 					 std::vector<AbstractNode*> node_context,
 					 bool is_branch,
 					 int throw_id,
-					 PassThroughExperiment* parent_experiment);
+					 PassThroughExperiment* parent_experiment,
+					 bool skip_explore);
 	~BranchExperiment();
 
 	bool activate(AbstractNode*& curr_node,

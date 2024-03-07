@@ -103,6 +103,12 @@ public:
 									std::vector<Scope*>& scope_context,
 									std::vector<AbstractNode*>& node_context);
 
+	void step_through_activate(AbstractNode*& curr_node,
+							   Problem* problem,
+							   std::vector<ContextLayer>& context,
+							   RunHelper& run_helper,
+							   std::vector<AbstractNodeHistory*>& node_histories);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,

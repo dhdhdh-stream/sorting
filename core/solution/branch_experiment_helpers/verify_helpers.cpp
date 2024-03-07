@@ -145,15 +145,15 @@ void BranchExperiment::verify_backprop(double target_val,
 			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
 		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
@@ -165,6 +165,14 @@ void BranchExperiment::verify_backprop(double target_val,
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
+			if (this->skip_explore) {
+				cout << "BRANCH_EXPERIMENT_STATE_VERIFY_1ST fail" << endl;
+				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+				cout << "branch_weight: " << branch_weight << endl;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -287,6 +295,14 @@ void BranchExperiment::verify_backprop(double target_val,
 			}
 			#endif /* MDEBUG */
 		} else {
+			if (this->skip_explore) {
+				cout << "BRANCH_EXPERIMENT_STATE_VERIFY_2ND fail" << endl;
+				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+				cout << "branch_weight: " << branch_weight << endl;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

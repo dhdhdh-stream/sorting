@@ -66,10 +66,13 @@ for s_index in range(num_scopes):
 			exit_node_parent_id = int(file.readline())
 			exit_node_id = int(file.readline())
 
+			exit_throw_id = int(file.readline())
+
 			nodes[node_id] = [node_type,
 							  exit_depth,
 							  exit_node_parent_id,
-							  exit_node_id]
+							  exit_node_id,
+							  exit_throw_id]
 
 	print(scope_id)
 	print(nodes)

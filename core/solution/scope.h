@@ -73,6 +73,13 @@ public:
 									int& random_throw_id,
 									bool& random_exceeded_limit);
 
+	void step_through_activate(Problem* problem,
+							   std::vector<ContextLayer>& context,
+							   int& exit_depth,
+							   AbstractNode*& exit_node,
+							   RunHelper& run_helper,
+							   ScopeHistory* history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
