@@ -4,10 +4,12 @@
 #include <thread>
 #include <random>
 
+#include "abstract_node.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "sorting.h"
 
 using namespace std;
@@ -28,6 +30,8 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	RunHelper run_helper;
+
 	{
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -35,9 +39,10 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.should_restart = true;
+		run_helper.can_restart = retry_distribution(generator) == 0;
 
 		vector<ScopeHistory*> root_histories;
+		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
 			run_helper.should_restart = false;
 
@@ -63,6 +68,8 @@ int main(int argc, char* argv[]) {
 
 			root_histories.push_back(root_history);
 		}
+
+		cout << "root_histories.size(): " << root_histories.size() << endl;
 
 		for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
 			delete root_histories[h_index];

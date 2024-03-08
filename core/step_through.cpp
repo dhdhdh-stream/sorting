@@ -5,6 +5,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "sorting.h"
 
 using namespace std;
 
@@ -31,9 +32,12 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.should_restart = true;
+		run_helper.can_restart = retry_distribution(generator) == 0;
+
+		cout << "run_helper.can_restart: " << run_helper.can_restart << endl;
 
 		vector<ScopeHistory*> root_histories;
+		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
 			run_helper.should_restart = false;
 

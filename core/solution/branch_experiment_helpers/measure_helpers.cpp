@@ -153,7 +153,7 @@ void BranchExperiment::measure_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			if (this->skip_explore) {
 				cout << "BRANCH_EXPERIMENT_STATE_MEASURE success" << endl;

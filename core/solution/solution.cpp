@@ -103,11 +103,11 @@ void Solution::load(string path,
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
 
-	input_file.close();
-
 	string average_num_actions_line;
 	getline(input_file, average_num_actions_line);
 	this->average_num_actions = stod(average_num_actions_line);
+
+	input_file.close();
 
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }

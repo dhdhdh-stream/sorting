@@ -154,7 +154,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 			this->original_count = 0;
@@ -187,7 +187,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.645) {
+		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			cout << "Branch" << endl;
 			cout << "verify" << endl;

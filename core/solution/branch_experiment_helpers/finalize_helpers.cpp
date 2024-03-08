@@ -222,6 +222,9 @@ void BranchExperiment::new_branch() {
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
+		// TODO: maybe here?
+		// original needed to modify branch
+
 		if (this->is_branch) {
 			this->branch_node->original_next_node_id = branch_node->branch_next_node_id;
 			this->branch_node->original_next_node = branch_node->branch_next_node;

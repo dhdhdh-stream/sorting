@@ -14,6 +14,7 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -36,10 +37,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -59,10 +60,16 @@ int main(int argc, char* argv[]) {
 		run_index++;
 		#endif /* MDEBUG */
 
+		#if defined(MDEBUG) && MDEBUG
+		run_helper.can_restart = run_helper.curr_run_seed%2 == 0;
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
 		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.should_restart = true;
+		run_helper.can_restart = retry_distribution(generator) == 0;
+		#endif /* MDEBUG */
 
 		vector<ScopeHistory*> root_histories;
+		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
 			run_helper.should_restart = false;
 
@@ -87,6 +94,14 @@ int main(int argc, char* argv[]) {
 									 root_history);
 
 			root_histories.push_back(root_history);
+
+			/**
+			 * - in case of infinite loop during explore
+			 */
+			if (root_histories.size() > 20) {
+				run_helper.exceeded_limit = true;
+				break;
+			}
 		}
 
 		if (run_helper.experiment_histories.size() == 0
@@ -233,27 +248,40 @@ int main(int argc, char* argv[]) {
 				run_helper.curr_run_seed = solution->verify_seeds[0];
 				solution->verify_seeds.erase(solution->verify_seeds.begin());
 
-				vector<ContextLayer> context;
-				context.push_back(ContextLayer());
+				run_helper.can_restart = run_helper.curr_run_seed%2 == 0;
+				run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
-				context.back().scope = solution->root;
-				context.back().node = NULL;
+				vector<ScopeHistory*> root_histories;
+				run_helper.should_restart = true;
+				while (run_helper.should_restart) {
+					run_helper.should_restart = false;
 
-				ScopeHistory* root_history = new ScopeHistory(solution->root);
-				context.back().scope_history = root_history;
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
 
-				// unused
-				int exit_depth = -1;
-				AbstractNode* exit_node = NULL;
+					context.back().scope = solution->root;
+					context.back().node = NULL;
 
-				solution->root->verify_activate(problem,
-												context,
-												exit_depth,
-												exit_node,
-												run_helper,
-												root_history);
+					ScopeHistory* root_history = new ScopeHistory(solution->root);
+					context.back().scope_history = root_history;
 
-				delete root_history;
+					// unused
+					int exit_depth = -1;
+					AbstractNode* exit_node = NULL;
+
+					solution->root->verify_activate(problem,
+													context,
+													exit_depth,
+													exit_node,
+													run_helper,
+													root_history);
+
+					root_histories.push_back(root_history);
+				}
+
+				for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
+					delete root_histories[h_index];
+				}
 
 				delete solution->verify_problems[0];
 				solution->verify_problems.erase(solution->verify_problems.begin());
@@ -263,13 +291,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;

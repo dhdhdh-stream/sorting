@@ -49,9 +49,10 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.should_restart = true;
+		run_helper.can_restart = retry_distribution(generator) == 0;
 
 		vector<ScopeHistory*> root_histories;
+		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
 			run_helper.should_restart = false;
 

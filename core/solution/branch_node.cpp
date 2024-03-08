@@ -50,6 +50,7 @@ void BranchNode::success_reset() {
 		delete this->experiments[e_index];
 	}
 	this->experiments.clear();
+	this->experiment_types.clear();
 }
 
 void BranchNode::fail_reset() {
@@ -57,6 +58,7 @@ void BranchNode::fail_reset() {
 		delete this->experiments[e_index];
 	}
 	this->experiments.clear();
+	this->experiment_types.clear();
 }
 
 void BranchNode::save(ofstream& output_file) {
