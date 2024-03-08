@@ -8,6 +8,9 @@ class AbstractExperimentHistory;
 
 class RunHelper {
 public:
+	bool can_restart;
+	bool should_restart;
+
 	int curr_depth;
 	int max_depth;
 

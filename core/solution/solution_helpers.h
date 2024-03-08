@@ -53,4 +53,6 @@ void input_vals_helper(std::vector<Scope*>& scope_context,
 					   std::vector<double>& input_vals,
 					   ScopeHistory* scope_history);
 
+int count_actions(ScopeHistory* scope_history);
+
 #endif /* SOLUTION_HELPERS_H */

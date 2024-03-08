@@ -40,7 +40,8 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 
 	context.back().node = NULL;
 
-	if (run_helper.exceeded_limit) {
+	if (run_helper.exceeded_limit
+			|| run_helper.should_restart) {
 		// do nothing
 	} else if (run_helper.throw_id != -1) {
 		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);

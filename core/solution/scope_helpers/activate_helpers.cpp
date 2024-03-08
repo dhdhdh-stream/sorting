@@ -79,6 +79,7 @@ void Scope::activate(Problem* problem,
 	AbstractNode* curr_node = this->starting_node;
 	while (true) {
 		if (run_helper.exceeded_limit
+				|| run_helper.should_restart
 				|| run_helper.throw_id != -1
 				|| exit_depth != -1
 				|| curr_node == NULL) {

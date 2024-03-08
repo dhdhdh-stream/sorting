@@ -66,7 +66,10 @@ void PassThroughExperiment::explore_measure_activate(
 			delete scope_node_history;
 		}
 
-		if (run_helper.throw_id != -1) {
+		if (run_helper.exceeded_limit
+				|| run_helper.should_restart) {
+			break;
+		} else if (run_helper.throw_id != -1) {
 			this->curr_catch_throw_ids[s_index].insert(run_helper.throw_id);
 			run_helper.throw_id = -1;
 		}

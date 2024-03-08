@@ -7,9 +7,8 @@
 class AbstractNode;
 class Problem;
 
-const int EXPERIMENT_TYPE_OUTER = 0;
-const int EXPERIMENT_TYPE_BRANCH = 1;
-const int EXPERIMENT_TYPE_PASS_THROUGH = 2;
+const int EXPERIMENT_TYPE_BRANCH = 0;
+const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

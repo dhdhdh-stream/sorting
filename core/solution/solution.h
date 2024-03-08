@@ -18,7 +18,6 @@
 #include <map>
 #include <vector>
 
-class OuterExperiment;
 class Problem;
 class Scope;
 
@@ -50,9 +49,9 @@ public:
 	int max_depth;
 	int depth_limit;
 
-	int curr_num_datapoints;
+	double average_num_actions;
 
-	OuterExperiment* outer_experiment;
+	int curr_num_datapoints;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

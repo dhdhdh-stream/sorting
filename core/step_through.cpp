@@ -30,25 +30,35 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
+		uniform_int_distribution<int> retry_distribution(0, 1);
+		run_helper.should_restart = true;
 
-		context.back().scope = solution->root;
-		context.back().node = NULL;
+		vector<ScopeHistory*> root_histories;
+		while (run_helper.should_restart) {
+			run_helper.should_restart = false;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->root);
-		context.back().scope_history = root_history;
+			vector<ContextLayer> context;
+			context.push_back(ContextLayer());
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
+			context.back().scope = solution->root;
+			context.back().node = NULL;
 
-		solution->root->step_through_activate(problem,
-											  context,
-											  exit_depth,
-											  exit_node,
-											  run_helper,
-											  root_history);
+			ScopeHistory* root_history = new ScopeHistory(solution->root);
+			context.back().scope_history = root_history;
+
+			// unused
+			int exit_depth = -1;
+			AbstractNode* exit_node = NULL;
+
+			solution->root->step_through_activate(problem,
+												  context,
+												  exit_depth,
+												  exit_node,
+												  run_helper,
+												  root_history);
+
+			root_histories.push_back(root_history);
+		}
 
 		string input_gate;
 		cin >> input_gate;
@@ -63,7 +73,11 @@ int main(int argc, char* argv[]) {
 		}
 		cout << "target_val: " << target_val << endl;
 
-		delete root_history;
+		for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
+			delete root_histories[h_index];
+		}
+
+		delete problem;
 	}
 
 	cout << "Seed: " << seed << endl;

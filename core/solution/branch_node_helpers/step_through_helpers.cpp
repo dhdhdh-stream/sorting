@@ -110,20 +110,11 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 				branch_score += this->branch_network->output->acti_vals[0];
 			}
 
-			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.curr_run_seed%2 == 0) {
-				history->is_branch = true;
-			} else {
-				history->is_branch = false;
-			}
-			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
 			if (branch_score > original_score) {
 				history->is_branch = true;
 			} else {
 				history->is_branch = false;
 			}
-			#endif /* MDEBUG */
 
 			string input_gate;
 			cin >> input_gate;

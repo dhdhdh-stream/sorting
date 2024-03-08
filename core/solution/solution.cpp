@@ -1,23 +1,18 @@
 #include "solution.h"
 
 #include "action_node.h"
-#include "outer_experiment.h"
 #include "scope.h"
 
 using namespace std;
 
 Solution::Solution() {
-	this->outer_experiment = NULL;
+	// do nothing
 }
 
 Solution::~Solution() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		delete it->second;
-	}
-
-	if (this->outer_experiment != NULL) {
-		delete this->outer_experiment;
 	}
 }
 
@@ -48,6 +43,8 @@ void Solution::init() {
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
+
+	this->average_num_actions = 1.0;
 
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
@@ -108,6 +105,10 @@ void Solution::load(string path,
 
 	input_file.close();
 
+	string average_num_actions_line;
+	getline(input_file, average_num_actions_line);
+	this->average_num_actions = stod(average_num_actions_line);
+
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
@@ -128,22 +129,12 @@ void Solution::success_reset() {
 			it != this->scopes.end(); it++) {
 		it->second->success_reset();
 	}
-
-	if (this->outer_experiment != NULL) {
-		delete this->outer_experiment;
-		this->outer_experiment = NULL;
-	}
 }
 
 void Solution::fail_reset() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		it->second->fail_reset();
-	}
-
-	if (this->outer_experiment != NULL) {
-		delete this->outer_experiment;
-		this->outer_experiment = NULL;
 	}
 }
 
@@ -171,6 +162,8 @@ void Solution::save(string path,
 	output_file << this->throw_counter << endl;
 
 	output_file << this->max_depth << endl;
+
+	output_file << this->average_num_actions << endl;
 
 	output_file.close();
 

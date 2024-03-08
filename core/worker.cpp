@@ -13,7 +13,6 @@
 #include "branch_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "outer_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution.h"
@@ -63,13 +62,13 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		bool outer_is_selected = false;
-		if (solution->outer_experiment != NULL) {
-			outer_is_selected = solution->outer_experiment->activate(
-				problem,
-				run_helper);
-		}
-		if (!outer_is_selected) {
+		uniform_int_distribution<int> retry_distribution(0, 1);
+		run_helper.should_restart = true;
+
+		vector<ScopeHistory*> root_histories;
+		while (run_helper.should_restart) {
+			run_helper.should_restart = false;
+
 			vector<ContextLayer> context;
 			context.push_back(ContextLayer());
 
@@ -90,13 +89,24 @@ int main(int argc, char* argv[]) {
 									 run_helper,
 									 root_history);
 
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					create_experiment(root_history);
-				}
-			}
+			root_histories.push_back(root_history);
+		};
 
-			delete root_history;
+		if (run_helper.experiment_histories.size() == 0
+				&& root_histories.size() == 1) {
+			int num_actions = count_actions(root_histories[0]);
+			solution->average_num_actions = 0.999*solution->average_num_actions + 0.001*num_actions;
+		}
+
+		if (run_helper.experiments_seen_order.size() == 0) {
+			if (!run_helper.exceeded_limit) {
+				uniform_int_distribution<int> history_distribution(0, root_histories.size()-1);
+				create_experiment(root_histories[history_distribution(generator)]);
+			}
+		}
+
+		for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
+			delete root_histories[h_index];
 		}
 
 		double target_val;
