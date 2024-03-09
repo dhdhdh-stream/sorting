@@ -41,9 +41,13 @@ int main(int argc, char* argv[]) {
 		uniform_int_distribution<int> retry_distribution(0, 1);
 		run_helper.can_restart = retry_distribution(generator) == 0;
 
+		cout << "run_helper.can_restart: " << run_helper.can_restart << endl;
+
 		vector<ScopeHistory*> root_histories;
 		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
+			run_helper.curr_depth = 0;
+			run_helper.throw_id = -1;
 			run_helper.should_restart = false;
 
 			vector<ContextLayer> context;

@@ -1,3 +1,13 @@
+// TODO: instead of always restarting from start, restart from particular scope
+// - somehow decide using experiments?
+// - the starts then become "actions"?
+// - yeah, actually, instead of random restarts, purposefully exit all the way occasionally into a new scope?
+//   - hmm, but that's just worse than recursion
+//     - strictly less information
+
+// - actually, overall structure seems OK
+//   - instead, try to name/add notes for scopes for now
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -28,7 +38,8 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1709938447;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -37,10 +48,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -71,6 +82,8 @@ int main(int argc, char* argv[]) {
 		vector<ScopeHistory*> root_histories;
 		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
+			run_helper.curr_depth = 0;
+			run_helper.throw_id = -1;
 			run_helper.should_restart = false;
 
 			vector<ContextLayer> context;
@@ -254,6 +267,8 @@ int main(int argc, char* argv[]) {
 				vector<ScopeHistory*> root_histories;
 				run_helper.should_restart = true;
 				while (run_helper.should_restart) {
+					run_helper.curr_depth = 0;
+					run_helper.throw_id = -1;
 					run_helper.should_restart = false;
 
 					vector<ContextLayer> context;
@@ -291,13 +306,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+			solution->timestamp = (unsigned)time(NULL);
+			solution->save("", "main");
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;

@@ -61,6 +61,8 @@ for w_index in range(len(workers)):
 	print(command)
 	channel.exec_command(command)
 
+	time.sleep(1)
+
 while True:
 	for w_index in range(len(workers)):
 		rl, wl, xl = select.select([channels[w_index]],[],[],0.0)

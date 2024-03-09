@@ -16,7 +16,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int NUM_SAMPLES_PER_ITER = 2;
 #else
-const int NUM_SAMPLES_PER_ITER = 20;
+const int NUM_SAMPLES_PER_ITER = 40;
 #endif /* MDEBUG */
 
 void PassThroughExperiment::explore_measure_activate(

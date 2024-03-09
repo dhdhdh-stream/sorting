@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
 		vector<ScopeHistory*> root_histories;
 		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
+			run_helper.curr_depth = 0;
+			run_helper.throw_id = -1;
 			run_helper.should_restart = false;
 
 			vector<ContextLayer> context;
@@ -102,13 +104,13 @@ int main(int argc, char* argv[]) {
 				experiment->finalize();
 				delete experiment;
 
-				solution->timestamp = (unsigned)time(NULL);
-				solution->save("", "main");
+				// solution->timestamp = (unsigned)time(NULL);
+				// solution->save("", "main");
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				solution->save_for_display(display_file);
-				display_file.close();
+				// ofstream display_file;
+				// display_file.open("../display.txt");
+				// solution->save_for_display(display_file);
+				// display_file.close();
 
 				break;
 			}

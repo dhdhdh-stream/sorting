@@ -119,7 +119,8 @@ void BranchExperiment::retrain_existing_non_target_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score;
+	double existing_predicted_score = this->existing_average_score
+		+ this->original_bias * this->existing_score_standard_deviation;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
@@ -252,6 +253,51 @@ void BranchExperiment::retrain_existing_backprop(
 					branch_node->hook_indexes.clear();
 					branch_node->hook_scope_contexts.clear();
 					branch_node->hook_node_contexts.clear();
+				}
+			}
+
+			if (this->existing_network != NULL) {
+				optimize_network(network_inputs,
+								 network_target_vals,
+								 this->existing_network);
+
+				double average_misguess;
+				double misguess_standard_deviation;
+				measure_network(network_inputs,
+								network_target_vals,
+								this->existing_network,
+								average_misguess,
+								misguess_standard_deviation);
+
+				this->existing_average_misguess = average_misguess;
+				this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+				if (this->skip_explore) {
+					cout << "optimize" << endl;
+					cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+					cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
+				}
+			} else {
+				double sum_misguess = 0.0;
+				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+					sum_misguess += network_target_vals[d_index] * network_target_vals[d_index];
+				}
+				this->existing_average_misguess = sum_misguess / solution->curr_num_datapoints;
+
+				double sum_misguess_variance = 0.0;
+				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+					double curr_misguess = network_target_vals[d_index] * network_target_vals[d_index];
+					sum_misguess_variance += (curr_misguess - this->existing_average_misguess) * (curr_misguess - this->existing_average_misguess);
+				}
+				this->existing_misguess_standard_deviation = sqrt(sum_misguess_variance / solution->curr_num_datapoints);
+				if (this->existing_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+					this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				if (this->skip_explore) {
+					cout << "linear remeasure" << endl;
+					cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+					cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
 				}
 			}
 
@@ -388,6 +434,11 @@ void BranchExperiment::retrain_existing_backprop(
 
 				this->existing_average_misguess = average_misguess;
 				this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+				if (this->skip_explore) {
+					cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+					cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
+				}
 
 				this->sub_state_iter = 1;
 			} else {

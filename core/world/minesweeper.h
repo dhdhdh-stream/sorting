@@ -20,7 +20,7 @@ public:
 	int current_x;
 	int current_y;
 
-	int num_correct;
+	int starting_revealed;
 
 	bool hit_mine;
 

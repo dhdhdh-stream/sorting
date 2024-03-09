@@ -142,7 +142,8 @@ void BranchExperiment::train_new_non_target_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score;
+	double existing_predicted_score = this->existing_average_score
+		+ this->original_bias * this->existing_score_standard_deviation;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
@@ -232,6 +233,9 @@ void BranchExperiment::train_new_backprop(double target_val,
 				}
 				this->new_average_score = sum_scores / solution->curr_num_datapoints;
 
+				uniform_real_distribution<double> bias_distribution(0.0, 1.0);
+				this->original_bias = bias_distribution(generator);
+
 				Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->input_scope_contexts.size());
 
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -297,8 +301,11 @@ void BranchExperiment::train_new_backprop(double target_val,
 						sum_impact_size += abs(inputs(d_index, i_index));
 					}
 					double average_impact = sum_impact_size / solution->curr_num_datapoints;
-					if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation) {
+					if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
+							|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
 						weights(i_index) = 0.0;
+					} else {
+						weights(i_index) = trunc(1000000 * weights(i_index)) / 1000000;
 					}
 					this->new_linear_weights[i_index] = weights(i_index);
 				}
@@ -327,6 +334,11 @@ void BranchExperiment::train_new_backprop(double target_val,
 				this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / solution->curr_num_datapoints);
 				if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 					this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				if (this->skip_explore) {
+					cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+					cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
 				}
 			} else {
 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -377,6 +389,51 @@ void BranchExperiment::train_new_backprop(double target_val,
 						branch_node->hook_indexes.clear();
 						branch_node->hook_scope_contexts.clear();
 						branch_node->hook_node_contexts.clear();
+					}
+				}
+
+				if (this->new_network != NULL) {
+					optimize_network(network_inputs,
+									 network_target_vals,
+									 this->new_network);
+
+					double average_misguess;
+					double misguess_standard_deviation;
+					measure_network(network_inputs,
+									network_target_vals,
+									this->new_network,
+									average_misguess,
+									misguess_standard_deviation);
+
+					this->new_average_misguess = average_misguess;
+					this->new_misguess_standard_deviation = misguess_standard_deviation;
+
+					if (this->skip_explore) {
+						cout << "optimize" << endl;
+						cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+						cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
+					}
+				} else {
+					double sum_misguess = 0.0;
+					for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+						sum_misguess += network_target_vals[d_index] * network_target_vals[d_index];
+					}
+					this->new_average_misguess = sum_misguess / solution->curr_num_datapoints;
+
+					double sum_misguess_variance = 0.0;
+					for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+						double curr_misguess = network_target_vals[d_index] * network_target_vals[d_index];
+						sum_misguess_variance += (curr_misguess - this->new_average_misguess) * (curr_misguess - this->new_average_misguess);
+					}
+					this->new_misguess_standard_deviation = sqrt(sum_misguess_variance / solution->curr_num_datapoints);
+					if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+						this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+					}
+
+					if (this->skip_explore) {
+						cout << "linear remeasure" << endl;
+						cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+						cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
 					}
 				}
 			}
@@ -514,6 +571,11 @@ void BranchExperiment::train_new_backprop(double target_val,
 
 				this->new_average_misguess = average_misguess;
 				this->new_misguess_standard_deviation = misguess_standard_deviation;
+
+				if (this->skip_explore) {
+					cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
+					cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
+				}
 
 				this->sub_state_iter = 1;
 			} else {

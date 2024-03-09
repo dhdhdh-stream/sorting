@@ -103,6 +103,8 @@ public:
 
 	double new_average_score;
 
+	double original_bias;
+
 	std::vector<double> new_linear_weights;
 	std::vector<std::vector<int>> new_network_input_indexes;
 	Network* new_network;

@@ -101,11 +101,18 @@ Minesweeper::Minesweeper() {
 	this->current_x = STARTING_X;
 	this->current_y = STARTING_Y;
 
-	this->num_correct = 0;
-
 	this->hit_mine = false;
 
 	reveal_helper(STARTING_X, STARTING_Y);
+
+	this->starting_revealed = 0;
+	for (int x_index = 0; x_index < WIDTH; x_index++) {
+		for (int y_index = 0; y_index < HEIGHT; y_index++) {
+			if (this->revealed[x_index][y_index]) {
+				this->starting_revealed++;
+			}
+		}
+	}
 }
 
 int Minesweeper::num_actions() {
@@ -200,12 +207,13 @@ void Minesweeper::perform_action(Action action) {
 }
 
 double Minesweeper::score_result() {
+	int curr_revealed = 0;
 	double score = 1.0;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
 		for (int y_index = 0; y_index < HEIGHT; y_index++) {
 			if (this->revealed[x_index][y_index]) {
 				if (this->world[x_index][y_index] != -1) {
-					score += 0.01;
+					curr_revealed++;
 				}
 			} else if (this->flagged[x_index][y_index]) {
 				if (this->world[x_index][y_index] != -1) {
@@ -216,6 +224,8 @@ double Minesweeper::score_result() {
 			}
 		}
 	}
+
+	score += 0.01*(curr_revealed - this->starting_revealed);
 
 	if (this->hit_mine) {
 		score -= 1.0;
@@ -239,6 +249,8 @@ Problem* Minesweeper::copy_and_reset() {
 	new_problem->current_y = STARTING_Y;
 
 	new_problem->reveal_helper(STARTING_X, STARTING_Y);
+
+	new_problem->starting_revealed = this->starting_revealed;
 
 	return new_problem;
 }

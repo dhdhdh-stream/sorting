@@ -59,7 +59,8 @@ void BranchExperiment::verify_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score;
+	double existing_predicted_score = this->existing_average_score
+		+ this->original_bias * this->existing_score_standard_deviation;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}

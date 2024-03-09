@@ -15,7 +15,7 @@ const int OPTIMIZE_ITERS = 30;
 #else
 const int TRAIN_ITERS_FRONT = 200000;
 const int TRAIN_ITERS_BACK = 100000;
-const int OPTIMIZE_ITERS = 300000;
+const int OPTIMIZE_ITERS = 100000;
 #endif /* MDEBUG */
 
 const double NETWORK_INPUT_MIN_IMPACT = 0.2;

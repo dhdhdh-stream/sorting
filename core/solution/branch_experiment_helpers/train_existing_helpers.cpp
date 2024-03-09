@@ -178,8 +178,11 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				sum_impact_size += abs(inputs(d_index, i_index));
 			}
 			double average_impact = sum_impact_size / num_instances;
-			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation) {
+			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
+					|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
 				weights(i_index) = 0.0;
+			} else {
+				weights(i_index) = trunc(1000000 * weights(i_index)) / 1000000;
 			}
 			this->existing_linear_weights[i_index] = weights(i_index);
 		}
@@ -209,6 +212,11 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->existing_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
 		if (this->existing_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
+
+		if (this->skip_explore) {
+			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+			cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
 		}
 
 		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
@@ -320,6 +328,11 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 			this->existing_average_misguess = average_misguess;
 			this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+			if (this->skip_explore) {
+				cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+				cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
+			}
 		} else {
 			delete test_network;
 		}

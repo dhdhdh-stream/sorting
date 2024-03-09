@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
 		vector<ScopeHistory*> root_histories;
 		run_helper.should_restart = true;
 		while (run_helper.should_restart) {
+			run_helper.curr_depth = 0;
+			run_helper.throw_id = -1;
 			run_helper.should_restart = false;
 
 			vector<ContextLayer> context;
