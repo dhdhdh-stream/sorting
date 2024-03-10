@@ -5,10 +5,10 @@
 using namespace std;
 
 RunHelper::RunHelper() {
-	/**
-	 * - initialize this->curr_depth (and this->throw_id) outside
-	 */
+	this->curr_depth = 0;
 	this->max_depth = 0;
+
+	this->throw_id = -1;
 
 	this->exceeded_limit = false;
 }

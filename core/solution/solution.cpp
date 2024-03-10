@@ -44,8 +44,6 @@ void Solution::init() {
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
-	this->average_num_actions = 1.0;
-
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
@@ -103,10 +101,6 @@ void Solution::load(string path,
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
 
-	string average_num_actions_line;
-	getline(input_file, average_num_actions_line);
-	this->average_num_actions = stod(average_num_actions_line);
-
 	input_file.close();
 
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
@@ -162,8 +156,6 @@ void Solution::save(string path,
 	output_file << this->throw_counter << endl;
 
 	output_file << this->max_depth << endl;
-
-	output_file << this->average_num_actions << endl;
 
 	output_file.close();
 

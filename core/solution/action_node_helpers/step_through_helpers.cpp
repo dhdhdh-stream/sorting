@@ -33,17 +33,4 @@ void ActionNode::step_through_activate(AbstractNode*& curr_node,
 	}
 
 	curr_node = this->next_node;
-
-	if (run_helper.can_restart) {
-		uniform_int_distribution<int> restart_distribution(0, 2*(int)solution->average_num_actions + 10);
-		if (restart_distribution(generator) == 0) {
-			run_helper.should_restart = true;
-
-			string input_gate;
-			cin >> input_gate;
-
-			problem->print();
-			cout << "Restarting" << endl;
-		}
-	}
 }

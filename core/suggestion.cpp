@@ -48,42 +48,27 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.can_restart = retry_distribution(generator) == 0;
+		vector<ContextLayer> context;
+		context.push_back(ContextLayer());
 
-		vector<ScopeHistory*> root_histories;
-		run_helper.should_restart = true;
-		while (run_helper.should_restart) {
-			run_helper.curr_depth = 0;
-			run_helper.throw_id = -1;
-			run_helper.should_restart = false;
+		context.back().scope = solution->root;
+		context.back().node = NULL;
 
-			vector<ContextLayer> context;
-			context.push_back(ContextLayer());
+		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		context.back().scope_history = root_history;
 
-			context.back().scope = solution->root;
-			context.back().node = NULL;
+		// unused
+		int exit_depth = -1;
+		AbstractNode* exit_node = NULL;
 
-			ScopeHistory* root_history = new ScopeHistory(solution->root);
-			context.back().scope_history = root_history;
+		solution->root->activate(problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper,
+								 root_history);
 
-			// unused
-			int exit_depth = -1;
-			AbstractNode* exit_node = NULL;
-
-			solution->root->activate(problem,
-									 context,
-									 exit_depth,
-									 exit_node,
-									 run_helper,
-									 root_history);
-
-			root_histories.push_back(root_history);
-		}
-
-		for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
-			delete root_histories[h_index];
-		}
+		delete root_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -104,13 +89,13 @@ int main(int argc, char* argv[]) {
 				experiment->finalize();
 				delete experiment;
 
-				// solution->timestamp = (unsigned)time(NULL);
-				// solution->save("", "main");
+				solution->timestamp = (unsigned)time(NULL);
+				solution->save("", "main");
 
-				// ofstream display_file;
-				// display_file.open("../display.txt");
-				// solution->save_for_display(display_file);
-				// display_file.close();
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
 
 				break;
 			}

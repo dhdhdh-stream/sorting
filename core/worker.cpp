@@ -62,63 +62,33 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		uniform_int_distribution<int> retry_distribution(0, 1);
-		run_helper.can_restart = retry_distribution(generator) == 0;
+		vector<ContextLayer> context;
+		context.push_back(ContextLayer());
 
-		vector<ScopeHistory*> root_histories;
-		run_helper.should_restart = true;
-		while (run_helper.should_restart) {
-			run_helper.curr_depth = 0;
-			run_helper.throw_id = -1;
-			run_helper.should_restart = false;
+		context.back().scope = solution->root;
+		context.back().node = NULL;
 
-			vector<ContextLayer> context;
-			context.push_back(ContextLayer());
+		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		context.back().scope_history = root_history;
 
-			context.back().scope = solution->root;
-			context.back().node = NULL;
+		// unused
+		int exit_depth = -1;
+		AbstractNode* exit_node = NULL;
 
-			ScopeHistory* root_history = new ScopeHistory(solution->root);
-			context.back().scope_history = root_history;
-
-			// unused
-			int exit_depth = -1;
-			AbstractNode* exit_node = NULL;
-
-			solution->root->activate(problem,
-									 context,
-									 exit_depth,
-									 exit_node,
-									 run_helper,
-									 root_history);
-
-			root_histories.push_back(root_history);
-
-			/**
-			 * - in case of infinite loop during explore
-			 */
-			if (root_histories.size() > 20) {
-				run_helper.exceeded_limit = true;
-				break;
-			}
-		};
-
-		if (run_helper.experiment_histories.size() == 0
-				&& root_histories.size() == 1) {
-			int num_actions = count_actions(root_histories[0]);
-			solution->average_num_actions = 0.999*solution->average_num_actions + 0.001*num_actions;
-		}
+		solution->root->activate(problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper,
+								 root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
-				uniform_int_distribution<int> history_distribution(0, root_histories.size()-1);
-				create_experiment(root_histories[history_distribution(generator)]);
+				create_experiment(root_history);
 			}
 		}
 
-		for (int h_index = 0; h_index < (int)root_histories.size(); h_index++) {
-			delete root_histories[h_index];
-		}
+		delete root_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
