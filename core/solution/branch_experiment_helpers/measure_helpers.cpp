@@ -19,6 +19,7 @@
 using namespace std;
 
 void BranchExperiment::measure_activate(
+		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -32,30 +33,41 @@ void BranchExperiment::measure_activate(
 			action_node->hook_indexes.push_back(i_index);
 			action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+			action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.push_back(i_index);
 			branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+			branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		}
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
 	input_vals_helper(scope_context,
 					  node_context,
+					  true,
+					  0,
+					  context_match_indexes,
 					  input_vals,
-					  context[context.size() - this->scope_context.size()].scope_history);
+					  context[context_match_indexes[0]].scope_history);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
 			action_node->hook_indexes.clear();
 			action_node->hook_scope_contexts.clear();
 			action_node->hook_node_contexts.clear();
+			action_node->hook_is_fuzzy_match.clear();
+			action_node->hook_strict_root_indexes.clear();
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.clear();
 			branch_node->hook_scope_contexts.clear();
 			branch_node->hook_node_contexts.clear();
+			branch_node->hook_is_fuzzy_match.clear();
+			branch_node->hook_strict_root_indexes.clear();
 		}
 	}
 

@@ -179,15 +179,25 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	for (int h_index = 0; h_index < (int)original->node_histories.size(); h_index++) {
 		AbstractNodeHistory* node_history = original->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			this->node_histories.push_back(new ActionNodeHistory(action_node_history));
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			this->node_histories.push_back(new ScopeNodeHistory(scope_node_history));
-		} else {
-			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
-			this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
+		switch (node_history->node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+				this->node_histories.push_back(new ActionNodeHistory(action_node_history));
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+				this->node_histories.push_back(new ScopeNodeHistory(scope_node_history));
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
+				this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
+			}
+			break;
 		}
 	}
 

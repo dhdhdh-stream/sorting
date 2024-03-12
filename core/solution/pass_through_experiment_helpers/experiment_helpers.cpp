@@ -248,12 +248,70 @@ void PassThroughExperiment::experiment_backprop(
 		uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
 		int rand_index = possible_distribution(generator);
 
+		vector<Scope*> new_scope_context;
+		vector<AbstractNode*> new_node_context;
+		bool new_is_fuzzy_match;
+
+		uniform_int_distribution<int> is_fuzzy_distribution(0, 1);
+		if (is_fuzzy_distribution(generator) == 0) {
+			geometric_distribution<int> num_layers_distribution(0.5);
+			int num_layers = num_layers_distribution(generator);
+			if (num_layers > (int)possible_scope_contexts[rand_index].size()-1) {
+				num_layers = possible_scope_contexts[rand_index].size()-1;
+			}
+
+			vector<bool> layer_included(false, possible_scope_contexts[rand_index].size()-1);
+
+			vector<int> remaining_indexes(possible_scope_contexts[rand_index].size()-1);
+			for (int l_index = 0; l_index < (int)possible_scope_contexts[rand_index].size()-1; l_index++) {
+				remaining_indexes[l_index] = l_index;
+			}
+
+			for (int l_index = 0; l_index < num_layers; l_index++) {
+				uniform_int_distribution<int> index_distribution(0, remaining_indexes.size()-1);
+				int index = index_distribution(generator);
+
+				layer_included[remaining_indexes[index]] = true;
+
+				remaining_indexes.erase(remaining_indexes.begin() + index);
+			}
+
+			for (int l_index = 0; l_index < (int)possible_scope_contexts[rand_index].size()-1; l_index++) {
+				if (layer_included[l_index]) {
+					new_scope_context.push_back(possible_scope_contexts[rand_index][l_index]);
+					new_node_context.push_back(possible_node_contexts[rand_index][l_index]);
+				}
+			}
+			new_scope_context.push_back(possible_scope_contexts[rand_index].back());
+			new_node_context.push_back(possible_node_contexts[rand_index].back());
+
+			new_is_fuzzy_match = true;
+		} else {
+			uniform_int_distribution<int> next_distribution(0, 1);
+			int context_size = 1;
+			while (true) {
+				if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+					context_size++;
+				} else {
+					break;
+				}
+			}
+			/**
+			 * - minimize context to generalize/maximize impact
+			 */
+
+			new_scope_context = vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end());
+			new_node_context = vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end());
+			new_is_fuzzy_match = false;
+		}
+
 		if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_ACTION) {
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (pass_through_distribution(generator) == 0) {
 				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					false,
 					-1,
 					this);
@@ -262,8 +320,9 @@ void PassThroughExperiment::experiment_backprop(
 				action_node->experiments.push_back(new_pass_through_experiment);
 			} else {
 				BranchExperiment* new_branch_experiment = new BranchExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					false,
 					-1,
 					this,
@@ -276,8 +335,9 @@ void PassThroughExperiment::experiment_backprop(
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (pass_through_distribution(generator) == 0) {
 				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					false,
 					possible_throw_id[rand_index],
 					this);
@@ -286,8 +346,9 @@ void PassThroughExperiment::experiment_backprop(
 				scope_node->experiments.push_back(new_pass_through_experiment);
 			} else {
 				BranchExperiment* new_branch_experiment = new BranchExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					false,
 					possible_throw_id[rand_index],
 					this,
@@ -300,8 +361,9 @@ void PassThroughExperiment::experiment_backprop(
 			uniform_int_distribution<int> pass_through_distribution(0, 1);
 			if (pass_through_distribution(generator) == 0) {
 				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					possible_is_branch[rand_index],
 					-1,
 					this);
@@ -315,8 +377,9 @@ void PassThroughExperiment::experiment_backprop(
 				}
 			} else {
 				BranchExperiment* new_branch_experiment = new BranchExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
+					new_scope_context,
+					new_node_context,
+					new_is_fuzzy_match,
 					possible_is_branch[rand_index],
 					-1,
 					this,

@@ -1,7 +1,3 @@
-// TODO: shuffle scopes occasionally?
-// - move actions in and out of scopes
-//   - give different distribution of experiments/observations
-
 #include <chrono>
 #include <iostream>
 #include <map>

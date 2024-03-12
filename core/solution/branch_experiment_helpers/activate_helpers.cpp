@@ -12,18 +12,53 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 								AbstractNode*& exit_node,
 								RunHelper& run_helper) {
 	bool is_selected = false;
+	vector<int> context_match_indexes;
 	BranchExperimentHistory* history = NULL;
 	if (run_helper.throw_id == this->throw_id) {
 		if (run_helper.experiment_histories.size() > 0
 				&& run_helper.experiment_histories.back()->experiment == this) {
-			bool matches_context = true;
-			if (this->scope_context.size() > context.size()) {
-				matches_context = false;
+			bool matches_context = false;
+			if (this->is_fuzzy_match) {
+				context_match_indexes.push_back((int)context.size()-1);
+				int c_index = (int)this->scope_context.size()-2;
+				int l_index = (int)context.size()-2;
+				while (true) {
+					if (c_index < 0) {
+						matches_context = true;
+						break;
+					}
+
+					if (l_index < 0) {
+						break;
+					}
+
+					if (this->scope_context[c_index] == context[l_index].scope
+							&& this->node_context[c_index] == context[l_index].node) {
+						context_match_indexes.insert(context_match_indexes.begin(), l_index);
+						c_index--;
+					}
+					l_index--;
+				}
 			} else {
-				for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-					if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-							|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-						matches_context = false;
+				context_match_indexes.push_back((int)context.size()-1);
+				int c_index = (int)this->scope_context.size()-2;
+				int l_index = (int)context.size()-2;
+				while (true) {
+					if (c_index < 0) {
+						matches_context = true;
+						break;
+					}
+
+					if (l_index < 0) {
+						break;
+					}
+
+					if (this->scope_context[c_index] == context[l_index].scope
+							&& this->node_context[c_index] == context[l_index].node) {
+						context_match_indexes.insert(context_match_indexes.begin(), l_index);
+						c_index--;
+						l_index--;
+					} else {
 						break;
 					}
 				}
@@ -36,14 +71,48 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 		} else {
 			if (this->parent_experiment == NULL) {
 				if (run_helper.experiment_histories.size() == 0) {
-					bool matches_context = true;
-					if (this->scope_context.size() > context.size()) {
-						matches_context = false;
+					bool matches_context = false;
+					if (this->is_fuzzy_match) {
+						context_match_indexes.push_back((int)context.size()-1);
+						int c_index = (int)this->scope_context.size()-2;
+						int l_index = (int)context.size()-2;
+						while (true) {
+							if (c_index < 0) {
+								matches_context = true;
+								break;
+							}
+
+							if (l_index < 0) {
+								break;
+							}
+
+							if (this->scope_context[c_index] == context[l_index].scope
+									&& this->node_context[c_index] == context[l_index].node) {
+								context_match_indexes.insert(context_match_indexes.begin(), l_index);
+								c_index--;
+							}
+							l_index--;
+						}
 					} else {
-						for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-							if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-									|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-								matches_context = false;
+						context_match_indexes.push_back((int)context.size()-1);
+						int c_index = (int)this->scope_context.size()-2;
+						int l_index = (int)context.size()-2;
+						while (true) {
+							if (c_index < 0) {
+								matches_context = true;
+								break;
+							}
+
+							if (l_index < 0) {
+								break;
+							}
+
+							if (this->scope_context[c_index] == context[l_index].scope
+									&& this->node_context[c_index] == context[l_index].node) {
+								context_match_indexes.insert(context_match_indexes.begin(), l_index);
+								c_index--;
+								l_index--;
+							} else {
 								break;
 							}
 						}
@@ -75,14 +144,48 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 				case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 					if (run_helper.experiment_histories.size() > 0
 							&& run_helper.experiment_histories.back()->experiment == this->parent_experiment) {
-						bool matches_context = true;
-						if (this->scope_context.size() > context.size()) {
-							matches_context = false;
+						bool matches_context = false;
+						if (this->is_fuzzy_match) {
+							context_match_indexes.push_back((int)context.size()-1);
+							int c_index = (int)this->scope_context.size()-2;
+							int l_index = (int)context.size()-2;
+							while (true) {
+								if (c_index < 0) {
+									matches_context = true;
+									break;
+								}
+
+								if (l_index < 0) {
+									break;
+								}
+
+								if (this->scope_context[c_index] == context[l_index].scope
+										&& this->node_context[c_index] == context[l_index].node) {
+									context_match_indexes.insert(context_match_indexes.begin(), l_index);
+									c_index--;
+								}
+								l_index--;
+							}
 						} else {
-							for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-								if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-										|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-									matches_context = false;
+							context_match_indexes.push_back((int)context.size()-1);
+							int c_index = (int)this->scope_context.size()-2;
+							int l_index = (int)context.size()-2;
+							while (true) {
+								if (c_index < 0) {
+									matches_context = true;
+									break;
+								}
+
+								if (l_index < 0) {
+									break;
+								}
+
+								if (this->scope_context[c_index] == context[l_index].scope
+										&& this->node_context[c_index] == context[l_index].node) {
+									context_match_indexes.insert(context_match_indexes.begin(), l_index);
+									c_index--;
+									l_index--;
+								} else {
 									break;
 								}
 							}
@@ -120,14 +223,48 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 					if (run_helper.experiment_histories.size() == 1
 							&& run_helper.experiment_histories[0]->experiment == this->root_experiment) {
 						if (this->root_experiment->verify_experiments.back() == this) {
-							bool matches_context = true;
-							if (this->scope_context.size() > context.size()) {
-								matches_context = false;
+							bool matches_context = false;
+							if (this->is_fuzzy_match) {
+								context_match_indexes.push_back((int)context.size()-1);
+								int c_index = (int)this->scope_context.size()-2;
+								int l_index = (int)context.size()-2;
+								while (true) {
+									if (c_index < 0) {
+										matches_context = true;
+										break;
+									}
+
+									if (l_index < 0) {
+										break;
+									}
+
+									if (this->scope_context[c_index] == context[l_index].scope
+											&& this->node_context[c_index] == context[l_index].node) {
+										context_match_indexes.insert(context_match_indexes.begin(), l_index);
+										c_index--;
+									}
+									l_index--;
+								}
 							} else {
-								for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-									if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
-											|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
-										matches_context = false;
+								context_match_indexes.push_back((int)context.size()-1);
+								int c_index = (int)this->scope_context.size()-2;
+								int l_index = (int)context.size()-2;
+								while (true) {
+									if (c_index < 0) {
+										matches_context = true;
+										break;
+									}
+
+									if (l_index < 0) {
+										break;
+									}
+
+									if (this->scope_context[c_index] == context[l_index].scope
+											&& this->node_context[c_index] == context[l_index].node) {
+										context_match_indexes.insert(context_match_indexes.begin(), l_index);
+										c_index--;
+										l_index--;
+									} else {
 										break;
 									}
 								}
@@ -151,12 +288,14 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 	if (is_selected) {
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_activate(context,
+			train_existing_activate(context_match_indexes,
+									context,
 									run_helper,
 									history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-			explore_activate(curr_node,
+			explore_activate(context_match_indexes,
+							 curr_node,
 							 problem,
 							 context,
 							 exit_depth,
@@ -165,7 +304,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 							 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
-			retrain_existing_activate(curr_node,
+			retrain_existing_activate(context_match_indexes,
+									  curr_node,
 									  problem,
 									  context,
 									  exit_depth,
@@ -174,7 +314,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 									  history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_activate(curr_node,
+			train_new_activate(context_match_indexes,
+							   curr_node,
 							   problem,
 							   context,
 							   exit_depth,
@@ -183,7 +324,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 							   history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			measure_activate(curr_node,
+			measure_activate(context_match_indexes,
+							 curr_node,
 							 problem,
 							 context,
 							 exit_depth,
@@ -192,7 +334,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
 		case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
-			verify_activate(curr_node,
+			verify_activate(context_match_indexes,
+							curr_node,
 							problem,
 							context,
 							exit_depth,
@@ -201,7 +344,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			capture_verify_activate(curr_node,
+			capture_verify_activate(context_match_indexes,
+									curr_node,
 									problem,
 									context,
 									exit_depth,
@@ -210,7 +354,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			break;
 		#endif /* MDEBUG */
 		case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
-			root_verify_activate(curr_node,
+			root_verify_activate(context_match_indexes,
+								 curr_node,
 								 problem,
 								 context,
 								 exit_depth,

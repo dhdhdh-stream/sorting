@@ -157,15 +157,38 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 				{
 					BranchNode* branch_node = (BranchNode*)curr_node;
 
-					bool matches_context = true;
-					if ((int)branch_node->scope_context.size() > 1+curr_depth) {
+					bool matches_context;
+					if (branch_node->is_fuzzy_match) {
 						matches_context = false;
-					} else {
-						for (int c_index = 0; c_index < (int)branch_node->scope_context.size()-1; c_index++) {
-							if (branch_node->scope_context[c_index] != scope_context[1+curr_depth - branch_node->scope_context.size() + c_index]
-									|| branch_node->node_context[c_index] != node_context[1+curr_depth - branch_node->scope_context.size() + c_index]) {
-								matches_context = false;
+						int c_index = (int)branch_node->scope_context.size()-1;
+						int l_index = (int)scope_context.size()-1;
+						while (true) {
+							if (c_index < 0) {
+								matches_context = true;
 								break;
+							}
+
+							if (l_index < 0) {
+								break;
+							}
+
+							if (branch_node->scope_context[c_index] == scope_context[l_index]
+									&& branch_node->node_context[c_index] == node_context[l_index]) {
+								c_index--;
+							}
+							l_index--;
+						}
+					} else {
+						matches_context = true;
+						if ((int)branch_node->scope_context.size() > 1+curr_depth) {
+							matches_context = false;
+						} else {
+							for (int c_index = 0; c_index < (int)branch_node->scope_context.size()-1; c_index++) {
+								if (branch_node->scope_context[c_index] != scope_context[1+curr_depth - branch_node->scope_context.size() + c_index]
+										|| branch_node->node_context[c_index] != node_context[1+curr_depth - branch_node->scope_context.size() + c_index]) {
+									matches_context = false;
+									break;
+								}
 							}
 						}
 					}
@@ -429,15 +452,38 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 				{
 					BranchNode* branch_node = (BranchNode*)curr_node;
 
-					bool matches_context = true;
-					if ((int)branch_node->scope_context.size() > 1+curr_depth) {
+					bool matches_context;
+					if (branch_node->is_fuzzy_match) {
 						matches_context = false;
-					} else {
-						for (int c_index = 0; c_index < (int)branch_node->scope_context.size()-1; c_index++) {
-							if (branch_node->scope_context[c_index] != scope_context[1+curr_depth - branch_node->scope_context.size() + c_index]
-									|| branch_node->node_context[c_index] != node_context[1+curr_depth - branch_node->scope_context.size() + c_index]) {
-								matches_context = false;
+						int c_index = (int)branch_node->scope_context.size()-1;
+						int l_index = (int)scope_context.size()-1;
+						while (true) {
+							if (c_index < 0) {
+								matches_context = true;
 								break;
+							}
+
+							if (l_index < 0) {
+								break;
+							}
+
+							if (branch_node->scope_context[c_index] == scope_context[l_index]
+									&& branch_node->node_context[c_index] == node_context[l_index]) {
+								c_index--;
+							}
+							l_index--;
+						}
+					} else {
+						matches_context = true;
+						if ((int)branch_node->scope_context.size() > 1+curr_depth) {
+							matches_context = false;
+						} else {
+							for (int c_index = 0; c_index < (int)branch_node->scope_context.size()-1; c_index++) {
+								if (branch_node->scope_context[c_index] != scope_context[1+curr_depth - branch_node->scope_context.size() + c_index]
+										|| branch_node->node_context[c_index] != node_context[1+curr_depth - branch_node->scope_context.size() + c_index]) {
+									matches_context = false;
+									break;
+								}
 							}
 						}
 					}

@@ -7,10 +7,6 @@
 
 class ExitNode : public AbstractNode {
 public:
-	/**
-	 * - always > 0
-	 *   - if want to exit within scope, connect directly
-	 */
 	int exit_depth;
 
 	int next_node_parent_id;

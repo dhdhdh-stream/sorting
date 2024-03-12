@@ -51,6 +51,7 @@ class PassThroughExperiment : public AbstractExperiment {
 public:
 	std::vector<Scope*> scope_context;
 	std::vector<AbstractNode*> node_context;
+	bool is_fuzzy_match;
 	bool is_branch;
 	int throw_id;
 
@@ -101,6 +102,7 @@ public:
 
 	PassThroughExperiment(std::vector<Scope*> scope_context,
 						  std::vector<AbstractNode*> node_context,
+						  bool is_fuzzy_match,
 						  bool is_branch,
 						  int throw_id,
 						  PassThroughExperiment* parent_experiment);

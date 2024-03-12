@@ -23,6 +23,7 @@
 using namespace std;
 
 void BranchExperiment::train_new_activate(
+		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -49,7 +50,8 @@ void BranchExperiment::train_new_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		train_new_target_activate(curr_node,
+		train_new_target_activate(context_match_indexes,
+								  curr_node,
 								  problem,
 								  context,
 								  exit_depth,
@@ -57,7 +59,8 @@ void BranchExperiment::train_new_activate(
 								  run_helper);
 	} else {
 		if (this->sub_state_iter != 0) {
-			train_new_non_target_activate(curr_node,
+			train_new_non_target_activate(context_match_indexes,
+										  curr_node,
 										  problem,
 										  context,
 										  exit_depth,
@@ -68,13 +71,15 @@ void BranchExperiment::train_new_activate(
 }
 
 void BranchExperiment::train_new_target_activate(
+		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
+	this->i_scope_histories.push_back(new ScopeHistory(context[context_match_indexes[0]].scope_history));
+	this->i_context_match_indexes_histories.push_back(context_match_indexes);
 
 	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
 	context.back().scope_history->node_histories.push_back(branch_node_history);
@@ -102,6 +107,7 @@ void BranchExperiment::train_new_target_activate(
 }
 
 void BranchExperiment::train_new_non_target_activate(
+		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -115,30 +121,41 @@ void BranchExperiment::train_new_non_target_activate(
 			action_node->hook_indexes.push_back(i_index);
 			action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+			action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.push_back(i_index);
 			branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+			branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		}
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
 	input_vals_helper(scope_context,
 					  node_context,
+					  true,
+					  0,
+					  context_match_indexes,
 					  input_vals,
-					  context[context.size() - this->scope_context.size()].scope_history);
+					  context[context_match_indexes[0]].scope_history);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
 			action_node->hook_indexes.clear();
 			action_node->hook_scope_contexts.clear();
 			action_node->hook_node_contexts.clear();
+			action_node->hook_is_fuzzy_match.clear();
+			action_node->hook_strict_root_indexes.clear();
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.clear();
 			branch_node->hook_scope_contexts.clear();
 			branch_node->hook_node_contexts.clear();
+			branch_node->hook_is_fuzzy_match.clear();
+			branch_node->hook_strict_root_indexes.clear();
 		}
 	}
 
@@ -244,11 +261,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 						action_node->hook_indexes.push_back(i_index);
 						action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+						action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.push_back(i_index);
 						branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+						branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					}
 				}
 				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -258,6 +279,9 @@ void BranchExperiment::train_new_backprop(double target_val,
 					vector<AbstractNode*> node_context;
 					input_vals_helper(scope_context,
 									  node_context,
+									  true,
+									  0,
+									  this->i_context_match_indexes_histories[d_index],
 									  input_vals,
 									  this->i_scope_histories[d_index]);
 
@@ -271,11 +295,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 						action_node->hook_indexes.clear();
 						action_node->hook_scope_contexts.clear();
 						action_node->hook_node_contexts.clear();
+						action_node->hook_is_fuzzy_match.clear();
+						action_node->hook_strict_root_indexes.clear();
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.clear();
 						branch_node->hook_scope_contexts.clear();
 						branch_node->hook_node_contexts.clear();
+						branch_node->hook_is_fuzzy_match.clear();
+						branch_node->hook_strict_root_indexes.clear();
 					}
 				}
 
@@ -347,11 +375,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 						action_node->hook_indexes.push_back(i_index);
 						action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+						action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.push_back(i_index);
 						branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+						branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					}
 				}
 				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -361,6 +393,9 @@ void BranchExperiment::train_new_backprop(double target_val,
 					vector<AbstractNode*> node_context;
 					input_vals_helper(scope_context,
 									  node_context,
+									  true,
+									  0,
+									  this->i_context_match_indexes_histories[d_index],
 									  input_vals,
 									  this->i_scope_histories[d_index]);
 
@@ -384,11 +419,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 						action_node->hook_indexes.clear();
 						action_node->hook_scope_contexts.clear();
 						action_node->hook_node_contexts.clear();
+						action_node->hook_is_fuzzy_match.clear();
+						action_node->hook_strict_root_indexes.clear();
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.clear();
 						branch_node->hook_scope_contexts.clear();
 						branch_node->hook_node_contexts.clear();
+						branch_node->hook_is_fuzzy_match.clear();
+						branch_node->hook_strict_root_indexes.clear();
 					}
 				}
 
@@ -440,13 +479,18 @@ void BranchExperiment::train_new_backprop(double target_val,
 
 			vector<vector<Scope*>> possible_scope_contexts;
 			vector<vector<AbstractNode*>> possible_node_contexts;
+			vector<int> possible_strict_root_indexes;
 
 			vector<Scope*> scope_context;
 			vector<AbstractNode*> node_context;
 			gather_possible_helper(scope_context,
 								   node_context,
+								   true,
+								   0,
+								   this->i_context_match_indexes_histories.back(),
 								   possible_scope_contexts,
 								   possible_node_contexts,
+								   possible_strict_root_indexes,
 								   this->i_scope_histories.back());
 			/**
 			 * - simply always use last ScopeHistory
@@ -455,6 +499,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
+			vector<bool> test_network_input_is_fuzzy_match;
+			vector<int> test_network_input_strict_root_indexes;
 
 			vector<int> remaining_indexes(possible_scope_contexts.size());
 			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
@@ -464,8 +510,39 @@ void BranchExperiment::train_new_backprop(double target_val,
 				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
 				int rand_index = distribution(generator);
 
-				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+				uniform_int_distribution<int> is_fuzzy_distribution(0, 1);
+				if (is_fuzzy_distribution(generator) == 0) {
+					vector<Scope*> new_scope_context;
+					vector<AbstractNode*> new_node_context;
+
+					uniform_int_distribution<int> exclude_distribution(0, 2);
+					for (int l_index = 0; l_index < (int)possible_scope_contexts[remaining_indexes[rand_index]].size()-1; l_index++) {
+						if (exclude_distribution(generator) != 0) {
+							new_scope_context.push_back(possible_scope_contexts[remaining_indexes[rand_index]][l_index]);
+							new_node_context.push_back(possible_node_contexts[remaining_indexes[rand_index]][l_index]);
+						}
+					}
+					new_scope_context.push_back(possible_scope_contexts[remaining_indexes[rand_index]].back());
+					new_node_context.push_back(possible_node_contexts[remaining_indexes[rand_index]].back());
+
+					test_network_input_scope_contexts.push_back(new_scope_context);
+					test_network_input_node_contexts.push_back(new_node_context);
+					test_network_input_is_fuzzy_match.push_back(true);
+					test_network_input_strict_root_indexes.push_back(-1);
+				} else {
+					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
+						- this->i_context_match_indexes_histories.back()[0];
+
+					vector<Scope*> new_scope_context(possible_scope_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_scope_contexts[remaining_indexes[rand_index]].end());
+					vector<AbstractNode*> new_node_context(possible_node_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_node_contexts[remaining_indexes[rand_index]].end());
+
+					test_network_input_scope_contexts.push_back(new_scope_context);
+					test_network_input_node_contexts.push_back(new_node_context);
+					test_network_input_is_fuzzy_match.push_back(false);
+					test_network_input_strict_root_indexes.push_back(possible_strict_root_indexes[remaining_indexes[rand_index]]);
+				}
 
 				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
 			}
@@ -490,11 +567,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 					action_node->hook_indexes.push_back(t_index);
 					action_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 					action_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+					action_node->hook_is_fuzzy_match.push_back(test_network_input_is_fuzzy_match[t_index]);
+					action_node->hook_strict_root_indexes.push_back(test_network_input_strict_root_indexes[t_index]);
 				} else {
 					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
 					branch_node->hook_indexes.push_back(t_index);
 					branch_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 					branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+					branch_node->hook_is_fuzzy_match.push_back(test_network_input_is_fuzzy_match[t_index]);
+					branch_node->hook_strict_root_indexes.push_back(test_network_input_strict_root_indexes[t_index]);
 				}
 			}
 			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -504,6 +585,9 @@ void BranchExperiment::train_new_backprop(double target_val,
 				vector<AbstractNode*> node_context;
 				input_vals_helper(scope_context,
 								  node_context,
+								  true,
+								  0,
+								  this->i_context_match_indexes_histories[d_index],
 								  test_input_vals,
 								  this->i_scope_histories[d_index]);
 
@@ -515,11 +599,15 @@ void BranchExperiment::train_new_backprop(double target_val,
 					action_node->hook_indexes.clear();
 					action_node->hook_scope_contexts.clear();
 					action_node->hook_node_contexts.clear();
+					action_node->hook_is_fuzzy_match.clear();
+					action_node->hook_strict_root_indexes.clear();
 				} else {
 					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
 					branch_node->hook_indexes.clear();
 					branch_node->hook_scope_contexts.clear();
 					branch_node->hook_node_contexts.clear();
+					branch_node->hook_is_fuzzy_match.clear();
+					branch_node->hook_strict_root_indexes.clear();
 				}
 			}
 
@@ -546,7 +634,9 @@ void BranchExperiment::train_new_backprop(double target_val,
 					int index = -1;
 					for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 						if (test_network_input_scope_contexts[t_index] == this->input_scope_contexts[i_index]
-								&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]) {
+								&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]
+								&& test_network_input_is_fuzzy_match[t_index] == this->input_is_fuzzy_match[i_index]
+								&& test_network_input_strict_root_indexes[t_index] == this->input_strict_root_indexes[i_index]) {
 							index = i_index;
 							break;
 						}
@@ -554,6 +644,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 					if (index == -1) {
 						this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+						this->input_is_fuzzy_match.push_back(test_network_input_is_fuzzy_match[t_index]);
+						this->input_strict_root_indexes.push_back(test_network_input_strict_root_indexes[t_index]);
 
 						this->existing_linear_weights.push_back(0.0);
 						this->new_linear_weights.push_back(0.0);
@@ -586,6 +678,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 				delete this->i_scope_histories[i_index];
 			}
 			this->i_scope_histories.clear();
+			this->i_context_match_indexes_histories.clear();
 			this->i_target_val_histories.clear();
 
 			this->sub_state_iter++;
@@ -594,6 +687,7 @@ void BranchExperiment::train_new_backprop(double target_val,
 				this->state_iter = 0;
 			} else {
 				this->i_scope_histories.reserve(solution->curr_num_datapoints);
+				this->i_context_match_indexes_histories.reserve(solution->curr_num_datapoints);
 				this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
 				this->state = BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING;

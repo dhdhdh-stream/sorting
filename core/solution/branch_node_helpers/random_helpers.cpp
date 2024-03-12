@@ -9,14 +9,44 @@ void BranchNode::random_activate(AbstractNode*& curr_node,
 								 vector<AbstractNode*>& node_context,
 								 vector<vector<Scope*>>& possible_scope_contexts,
 								 vector<vector<AbstractNode*>>& possible_node_contexts) {
-	bool matches_context = true;
-	if (this->scope_context.size() > scope_context.size()) {
-		matches_context = false;
+	bool matches_context = false;
+	if (this->is_fuzzy_match) {
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+			}
+			l_index--;
+		}
 	} else {
-		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-			if (this->scope_context[c_index] != scope_context[scope_context.size()-this->scope_context.size()+c_index]
-					|| this->node_context[c_index] != node_context[scope_context.size()-this->scope_context.size()+c_index]) {
-				matches_context = false;
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+				l_index--;
+			} else {
 				break;
 			}
 		}
@@ -54,14 +84,44 @@ void BranchNode::random_exit_activate(AbstractNode*& curr_node,
 									  vector<AbstractNode*>& node_context,
 									  int curr_depth,
 									  vector<pair<int,AbstractNode*>>& possible_exits) {
-	bool matches_context = true;
-	if (this->scope_context.size() > scope_context.size()) {
-		matches_context = false;
+	bool matches_context = false;
+	if (this->is_fuzzy_match) {
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+			}
+			l_index--;
+		}
 	} else {
-		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-			if (this->scope_context[c_index] != scope_context[scope_context.size()-this->scope_context.size()+c_index]
-					|| this->node_context[c_index] != node_context[scope_context.size()-this->scope_context.size()+c_index]) {
-				matches_context = false;
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+				l_index--;
+			} else {
 				break;
 			}
 		}
@@ -92,14 +152,44 @@ void BranchNode::random_exit_activate(AbstractNode*& curr_node,
 void BranchNode::inner_random_exit_activate(AbstractNode*& curr_node,
 											vector<Scope*>& scope_context,
 											vector<AbstractNode*>& node_context) {
-	bool matches_context = true;
-	if (this->scope_context.size() > scope_context.size()) {
-		matches_context = false;
+	bool matches_context = false;
+	if (this->is_fuzzy_match) {
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+			}
+			l_index--;
+		}
 	} else {
-		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
-			if (this->scope_context[c_index] != scope_context[scope_context.size()-this->scope_context.size()+c_index]
-					|| this->node_context[c_index] != node_context[scope_context.size()-this->scope_context.size()+c_index]) {
-				matches_context = false;
+		int c_index = (int)this->scope_context.size()-2;
+		int l_index = (int)scope_context.size()-2;
+		while (true) {
+			if (c_index < 0) {
+				matches_context = true;
+				break;
+			}
+
+			if (l_index < 0) {
+				break;
+			}
+
+			if (this->scope_context[c_index] == scope_context[l_index]
+					&& this->node_context[c_index] == node_context[l_index]) {
+				c_index--;
+				l_index--;
+			} else {
 				break;
 			}
 		}

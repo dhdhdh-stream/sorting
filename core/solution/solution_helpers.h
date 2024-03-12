@@ -32,8 +32,12 @@ void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_e
 
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,
+							bool on_path,
+							int path_depth,
+							std::vector<int>& context_match_indexes,
 							std::vector<std::vector<Scope*>>& possible_scope_contexts,
 							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
+							std::vector<int>& possible_strict_root_indexes,
 							ScopeHistory* scope_history);
 
 void create_gather(std::vector<Scope*>& new_gather_scope_context,
@@ -50,9 +54,10 @@ void create_gather(std::vector<Scope*>& new_gather_scope_context,
  */
 void input_vals_helper(std::vector<Scope*>& scope_context,
 					   std::vector<AbstractNode*>& node_context,
+					   bool on_path,
+					   int path_depth,
+					   std::vector<int>& context_match_indexes,
 					   std::vector<double>& input_vals,
 					   ScopeHistory* scope_history);
-
-int count_actions(ScopeHistory* scope_history);
 
 #endif /* SOLUTION_HELPERS_H */

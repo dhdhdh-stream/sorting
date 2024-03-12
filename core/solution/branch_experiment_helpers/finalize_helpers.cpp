@@ -91,6 +91,8 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 			}
 		}
 	}
@@ -111,6 +113,8 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[original_index]);
+				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[original_index]);
 			}
 		}
 	}
@@ -130,6 +134,8 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
+				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 			}
 		}
 	}
@@ -150,6 +156,8 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[original_index]);
+				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[original_index]);
 			}
 		}
 	}
@@ -222,9 +230,6 @@ void BranchExperiment::new_branch() {
 		}
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
-
-		// TODO: maybe here?
-		// original needed to modify branch
 
 		if (this->is_branch) {
 			this->branch_node->original_next_node_id = branch_node->branch_next_node_id;
