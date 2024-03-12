@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -67,6 +69,7 @@ void BranchExperiment::new_branch() {
 	for (int c_index = 0; c_index < (int)this->branch_node->node_context.size(); c_index++) {
 		this->branch_node->node_context_ids.push_back(this->branch_node->node_context[c_index]->id);
 	}
+	this->branch_node->is_fuzzy_match = this->is_fuzzy_match;
 
 	this->branch_node->is_pass_through = false;
 
@@ -341,6 +344,7 @@ void BranchExperiment::new_pass_through() {
 	for (int c_index = 0; c_index < (int)this->branch_node->node_context.size(); c_index++) {
 		this->branch_node->node_context_ids.push_back(this->branch_node->node_context[c_index]->id);
 	}
+	this->branch_node->is_fuzzy_match = this->is_fuzzy_match;
 
 	this->branch_node->is_pass_through = true;
 

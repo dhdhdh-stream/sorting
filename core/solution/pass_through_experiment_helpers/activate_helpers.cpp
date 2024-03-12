@@ -14,6 +14,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 AbstractNode*& exit_node,
 									 RunHelper& run_helper) {
 	bool is_selected = false;
+	vector<int> context_match_indexes;
 	PassThroughExperimentHistory* history = NULL;
 	if (run_helper.throw_id == this->throw_id) {
 		int match_index = -1;
@@ -26,6 +27,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 		if (match_index != -1) {
 			bool matches_context = false;
 			if (this->is_fuzzy_match) {
+				context_match_indexes.push_back((int)context.size()-1);
 				int c_index = (int)this->scope_context.size()-2;
 				int l_index = (int)context.size()-2;
 				while (true) {
@@ -40,11 +42,13 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 					if (this->scope_context[c_index] == context[l_index].scope
 							&& this->node_context[c_index] == context[l_index].node) {
+						context_match_indexes.insert(context_match_indexes.begin(), l_index);
 						c_index--;
 					}
 					l_index--;
 				}
 			} else {
+				context_match_indexes.push_back((int)context.size()-1);
 				int c_index = (int)this->scope_context.size()-2;
 				int l_index = (int)context.size()-2;
 				while (true) {
@@ -59,6 +63,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 					if (this->scope_context[c_index] == context[l_index].scope
 							&& this->node_context[c_index] == context[l_index].node) {
+						context_match_indexes.insert(context_match_indexes.begin(), l_index);
 						c_index--;
 						l_index--;
 					} else {
@@ -76,6 +81,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 				if (run_helper.experiment_histories.size() == 0) {
 					bool matches_context = false;
 					if (this->is_fuzzy_match) {
+						context_match_indexes.push_back((int)context.size()-1);
 						int c_index = (int)this->scope_context.size()-2;
 						int l_index = (int)context.size()-2;
 						while (true) {
@@ -90,11 +96,13 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 							if (this->scope_context[c_index] == context[l_index].scope
 									&& this->node_context[c_index] == context[l_index].node) {
+								context_match_indexes.insert(context_match_indexes.begin(), l_index);
 								c_index--;
 							}
 							l_index--;
 						}
 					} else {
+						context_match_indexes.push_back((int)context.size()-1);
 						int c_index = (int)this->scope_context.size()-2;
 						int l_index = (int)context.size()-2;
 						while (true) {
@@ -109,6 +117,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 							if (this->scope_context[c_index] == context[l_index].scope
 									&& this->node_context[c_index] == context[l_index].node) {
+								context_match_indexes.insert(context_match_indexes.begin(), l_index);
 								c_index--;
 								l_index--;
 							} else {
@@ -145,6 +154,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 							&& run_helper.experiment_histories.back()->experiment == this->parent_experiment) {
 						bool matches_context = false;
 						if (this->is_fuzzy_match) {
+							context_match_indexes.push_back((int)context.size()-1);
 							int c_index = (int)this->scope_context.size()-2;
 							int l_index = (int)context.size()-2;
 							while (true) {
@@ -159,11 +169,13 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 								if (this->scope_context[c_index] == context[l_index].scope
 										&& this->node_context[c_index] == context[l_index].node) {
+									context_match_indexes.insert(context_match_indexes.begin(), l_index);
 									c_index--;
 								}
 								l_index--;
 							}
 						} else {
+							context_match_indexes.push_back((int)context.size()-1);
 							int c_index = (int)this->scope_context.size()-2;
 							int l_index = (int)context.size()-2;
 							while (true) {
@@ -178,6 +190,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 								if (this->scope_context[c_index] == context[l_index].scope
 										&& this->node_context[c_index] == context[l_index].node) {
+									context_match_indexes.insert(context_match_indexes.begin(), l_index);
 									c_index--;
 									l_index--;
 								} else {
@@ -227,6 +240,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 						if (is_verify) {
 							bool matches_context = false;
 							if (this->is_fuzzy_match) {
+								context_match_indexes.push_back((int)context.size()-1);
 								int c_index = (int)this->scope_context.size()-2;
 								int l_index = (int)context.size()-2;
 								while (true) {
@@ -241,11 +255,13 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 									if (this->scope_context[c_index] == context[l_index].scope
 											&& this->node_context[c_index] == context[l_index].node) {
+										context_match_indexes.insert(context_match_indexes.begin(), l_index);
 										c_index--;
 									}
 									l_index--;
 								}
 							} else {
+								context_match_indexes.push_back((int)context.size()-1);
 								int c_index = (int)this->scope_context.size()-2;
 								int l_index = (int)context.size()-2;
 								while (true) {
@@ -260,6 +276,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 
 									if (this->scope_context[c_index] == context[l_index].scope
 											&& this->node_context[c_index] == context[l_index].node) {
+										context_match_indexes.insert(context_match_indexes.begin(), l_index);
 										c_index--;
 										l_index--;
 									} else {
@@ -326,7 +343,8 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								 run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
-			experiment_activate(curr_node,
+			experiment_activate(context_match_indexes,
+								curr_node,
 								context,
 								run_helper,
 								history);

@@ -102,8 +102,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				/**
 				 * TODO: check for uniqueness
 				 */
-				uniform_int_distribution<int> is_fuzzy_distribution(0, 1);
-				if (is_fuzzy_distribution(generator) == 0) {
+				uniform_int_distribution<int> is_strict_distribution(0, 2);
+				if (is_strict_distribution(generator) == 0) {
+					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
+						- this->i_context_match_indexes_histories.back()[0];
+
+					vector<Scope*> new_scope_context(possible_scope_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_scope_contexts[remaining_indexes[rand_index]].end());
+					vector<AbstractNode*> new_node_context(possible_node_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_node_contexts[remaining_indexes[rand_index]].end());
+
+					this->input_scope_contexts.push_back(new_scope_context);
+					this->input_node_contexts.push_back(new_node_context);
+					this->input_is_fuzzy_match.push_back(false);
+					this->input_strict_root_indexes.push_back(possible_strict_root_indexes[remaining_indexes[rand_index]]);
+				} else {
 					vector<Scope*> new_scope_context;
 					vector<AbstractNode*> new_node_context;
 
@@ -121,19 +134,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					this->input_node_contexts.push_back(new_node_context);
 					this->input_is_fuzzy_match.push_back(true);
 					this->input_strict_root_indexes.push_back(-1);
-				} else {
-					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
-						- this->i_context_match_indexes_histories.back()[0];
-
-					vector<Scope*> new_scope_context(possible_scope_contexts[remaining_indexes[rand_index]].begin() + start_index,
-						possible_scope_contexts[remaining_indexes[rand_index]].end());
-					vector<AbstractNode*> new_node_context(possible_node_contexts[remaining_indexes[rand_index]].begin() + start_index,
-						possible_node_contexts[remaining_indexes[rand_index]].end());
-
-					this->input_scope_contexts.push_back(new_scope_context);
-					this->input_node_contexts.push_back(new_node_context);
-					this->input_is_fuzzy_match.push_back(false);
-					this->input_strict_root_indexes.push_back(possible_strict_root_indexes[remaining_indexes[rand_index]]);
 				}
 
 				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
@@ -276,8 +276,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
 				int rand_index = distribution(generator);
 
-				uniform_int_distribution<int> is_fuzzy_distribution(0, 1);
-				if (is_fuzzy_distribution(generator) == 0) {
+				uniform_int_distribution<int> is_strict_distribution(0, 2);
+				if (is_strict_distribution(generator) == 0) {
+					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
+						- this->i_context_match_indexes_histories.back()[0];
+
+					vector<Scope*> new_scope_context(possible_scope_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_scope_contexts[remaining_indexes[rand_index]].end());
+					vector<AbstractNode*> new_node_context(possible_node_contexts[remaining_indexes[rand_index]].begin() + start_index,
+						possible_node_contexts[remaining_indexes[rand_index]].end());
+
+					test_network_input_scope_contexts.push_back(new_scope_context);
+					test_network_input_node_contexts.push_back(new_node_context);
+					test_network_input_is_fuzzy_match.push_back(false);
+					test_network_input_strict_root_indexes.push_back(possible_strict_root_indexes[remaining_indexes[rand_index]]);
+				} else {
 					vector<Scope*> new_scope_context;
 					vector<AbstractNode*> new_node_context;
 
@@ -295,19 +308,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					test_network_input_node_contexts.push_back(new_node_context);
 					test_network_input_is_fuzzy_match.push_back(true);
 					test_network_input_strict_root_indexes.push_back(-1);
-				} else {
-					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
-						- this->i_context_match_indexes_histories.back()[0];
-
-					vector<Scope*> new_scope_context(possible_scope_contexts[remaining_indexes[rand_index]].begin() + start_index,
-						possible_scope_contexts[remaining_indexes[rand_index]].end());
-					vector<AbstractNode*> new_node_context(possible_node_contexts[remaining_indexes[rand_index]].begin() + start_index,
-						possible_node_contexts[remaining_indexes[rand_index]].end());
-
-					test_network_input_scope_contexts.push_back(new_scope_context);
-					test_network_input_node_contexts.push_back(new_node_context);
-					test_network_input_is_fuzzy_match.push_back(false);
-					test_network_input_strict_root_indexes.push_back(possible_strict_root_indexes[remaining_indexes[rand_index]]);
 				}
 
 				remaining_indexes.erase(remaining_indexes.begin() + rand_index);

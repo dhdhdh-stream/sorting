@@ -201,7 +201,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 		}
 	}
 
-	this->pass_through_experiment_history = original->pass_through_experiment_history;
+	this->pass_through_experiment_history = NULL;
 }
 
 ScopeHistory::~ScopeHistory() {

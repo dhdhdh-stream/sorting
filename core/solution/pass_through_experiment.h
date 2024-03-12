@@ -161,7 +161,8 @@ public:
 	void root_verify_activate(AbstractNode*& curr_node,
 							  RunHelper& run_helper);
 
-	void experiment_activate(AbstractNode*& curr_node,
+	void experiment_activate(std::vector<int>& context_match_indexes,
+							 AbstractNode*& curr_node,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 PassThroughExperimentHistory* history);

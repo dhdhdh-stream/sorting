@@ -110,15 +110,32 @@ void create_experiment(ScopeHistory* root_history) {
 	vector<AbstractNode*> new_node_context;
 	bool new_is_fuzzy_match;
 
-	uniform_int_distribution<int> is_fuzzy_distribution(0, 1);
-	if (is_fuzzy_distribution(generator) == 0) {
+	uniform_int_distribution<int> is_strict_distribution(0, 2);
+	if (is_strict_distribution(generator) == 0) {
+		uniform_int_distribution<int> next_distribution(0, 1);
+		int context_size = 1;
+		while (true) {
+			if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
+				context_size++;
+			} else {
+				break;
+			}
+		}
+		/**
+		 * - minimize context to generalize/maximize impact
+		 */
+
+		new_scope_context = vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end());
+		new_node_context = vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end());
+		new_is_fuzzy_match = false;
+	} else {
 		geometric_distribution<int> num_layers_distribution(0.5);
 		int num_layers = num_layers_distribution(generator);
 		if (num_layers > (int)possible_scope_contexts[rand_index].size()-1) {
 			num_layers = possible_scope_contexts[rand_index].size()-1;
 		}
 
-		vector<bool> layer_included(false, possible_scope_contexts[rand_index].size()-1);
+		vector<bool> layer_included(possible_scope_contexts[rand_index].size()-1, false);
 
 		vector<int> remaining_indexes(possible_scope_contexts[rand_index].size()-1);
 		for (int l_index = 0; l_index < (int)possible_scope_contexts[rand_index].size()-1; l_index++) {
@@ -144,23 +161,6 @@ void create_experiment(ScopeHistory* root_history) {
 		new_node_context.push_back(possible_node_contexts[rand_index].back());
 
 		new_is_fuzzy_match = true;
-	} else {
-		uniform_int_distribution<int> next_distribution(0, 1);
-		int context_size = 1;
-		while (true) {
-			if (context_size < (int)possible_scope_contexts[rand_index].size() && next_distribution(generator)) {
-				context_size++;
-			} else {
-				break;
-			}
-		}
-		/**
-		 * - minimize context to generalize/maximize impact
-		 */
-
-		new_scope_context = vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end());
-		new_node_context = vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end());
-		new_is_fuzzy_match = false;
 	}
 
 	if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_ACTION) {

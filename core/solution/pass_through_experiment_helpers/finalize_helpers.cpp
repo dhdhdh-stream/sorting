@@ -32,6 +32,7 @@ void PassThroughExperiment::finalize() {
 			for (int c_index = 0; c_index < (int)new_branch_node->node_context.size(); c_index++) {
 				new_branch_node->node_context_ids.push_back(new_branch_node->node_context[c_index]->id);
 			}
+			new_branch_node->is_fuzzy_match = this->is_fuzzy_match;
 
 			new_branch_node->is_pass_through = true;
 

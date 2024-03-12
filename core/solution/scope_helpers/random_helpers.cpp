@@ -106,13 +106,6 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 									possible_node_contexts);
 	}
 
-	if (!random_exceeded_limit
-			&& random_throw_id == -1
-			&& exit_depth == -1) {
-		possible_scope_contexts.push_back(scope_context);
-		possible_node_contexts.push_back(node_context);
-	}
-
 	random_curr_depth--;
 }
 
