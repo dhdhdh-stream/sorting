@@ -21,10 +21,7 @@ using namespace std;
 void BranchExperiment::verify_activate(
 		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -128,11 +125,7 @@ void BranchExperiment::verify_activate(
 		}
 
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->exit_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -228,11 +221,6 @@ void BranchExperiment::verify_backprop(double target_val,
 			cout << endl;
 
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-			}
 			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->combined_score: " << this->combined_score << endl;

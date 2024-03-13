@@ -15,7 +15,6 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 int& exit_depth,
-								 AbstractNode*& exit_node,
 								 RunHelper& run_helper,
 								 ScopeHistory* history) {
 	if (curr_node->type == NODE_TYPE_ACTION) {
@@ -26,7 +25,6 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 					   problem,
 					   context,
 					   exit_depth,
-					   exit_node,
 					   run_helper,
 					   node_history);
 	} else if (curr_node->type == NODE_TYPE_SCOPE) {
@@ -37,7 +35,6 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 							  problem,
 							  context,
 							  exit_depth,
-							  exit_node,
 							  run_helper,
 							  node_history);
 	} else if (curr_node->type == NODE_TYPE_BRANCH) {
@@ -49,19 +46,15 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 							  history->node_histories);
 	} else {
 		ExitNode* node = (ExitNode*)curr_node;
-		if (node->throw_id != -1) {
-			run_helper.throw_id = node->throw_id;
-		} else {
-			exit_depth = node->exit_depth-1;
-			exit_node = node->next_node;
-		}
+		node->activate(context,
+					   exit_depth,
+					   run_helper);
 	}
 }
 
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							int& exit_depth,
-							AbstractNode*& exit_node,
 							RunHelper& run_helper,
 							ScopeHistory* history) {
 	if (run_helper.curr_depth > solution->depth_limit) {
@@ -74,7 +67,7 @@ void Scope::verify_activate(Problem* problem,
 	while (true) {
 		if (run_helper.exceeded_limit
 				|| run_helper.throw_id != -1
-				|| exit_depth != -1
+				|| exit_depth != 0
 				|| curr_node == NULL) {
 			break;
 		}
@@ -83,7 +76,6 @@ void Scope::verify_activate(Problem* problem,
 									problem,
 									context,
 									exit_depth,
-									exit_node,
 									run_helper,
 									history);
 	}

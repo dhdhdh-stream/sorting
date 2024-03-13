@@ -20,11 +20,11 @@ const int NUM_SAMPLES_PER_ITER = 40;
 #endif /* MDEBUG */
 
 void PassThroughExperiment::explore_measure_activate(
+		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	if (this->throw_id != -1) {
 		run_helper.throw_id = -1;
@@ -38,7 +38,6 @@ void PassThroughExperiment::explore_measure_activate(
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
@@ -49,7 +48,6 @@ void PassThroughExperiment::explore_measure_activate(
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				scope_node_history);
 			delete scope_node_history;
@@ -60,7 +58,6 @@ void PassThroughExperiment::explore_measure_activate(
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				scope_node_history);
 			delete scope_node_history;
@@ -76,10 +73,23 @@ void PassThroughExperiment::explore_measure_activate(
 		run_helper.throw_id = this->curr_exit_throw_id;
 	} else {
 		if (this->curr_exit_depth == 0) {
-			curr_node = this->curr_exit_next_node;
+			if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->node_context.back();
+				curr_node = action_node->next_node;
+			} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+				curr_node = scope_node->next_node;
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->node_context.back();
+				if (this->is_branch) {
+					curr_node = branch_node->branch_next_node;
+				} else {
+					curr_node = branch_node->original_next_node;
+				}
+			}
 		} else {
-			exit_depth = this->curr_exit_depth-1;
-			exit_node = this->curr_exit_next_node;
+			int exit_index = context_match_indexes[context_match_indexes.size()-1 - this->curr_exit_depth];
+			exit_depth = context_match_indexes.back() - exit_index;
 		}
 	}
 }
@@ -117,7 +127,6 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->best_existing_scopes = this->curr_existing_scopes;
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
-			this->best_exit_next_node = this->curr_exit_next_node;
 			this->best_exit_throw_id = this->curr_exit_throw_id;
 			this->best_catch_throw_ids = this->curr_catch_throw_ids;
 
@@ -182,11 +191,6 @@ void PassThroughExperiment::explore_measure_backprop(
 				// cout << endl;
 
 				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				// if (this->best_exit_next_node == NULL) {
-				// 	cout << "this->best_exit_next_node->id: " << -1 << endl;
-				// } else {
-				// 	cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-				// }
 				// cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -218,14 +222,17 @@ void PassThroughExperiment::explore_measure_backprop(
 					new_exit_node->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
 
-					new_exit_node->exit_depth = this->best_exit_depth;
-					new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
-					if (this->best_exit_next_node == NULL) {
-						new_exit_node->next_node_id = -1;
-					} else {
-						new_exit_node->next_node_id = this->best_exit_next_node->id;
+					new_exit_node->scope_context = this->scope_context;
+					for (int c_index = 0; c_index < (int)new_exit_node->scope_context.size(); c_index++) {
+						new_exit_node->scope_context_ids.push_back(new_exit_node->scope_context[c_index]->id);
 					}
-					new_exit_node->next_node = this->best_exit_next_node;
+					new_exit_node->node_context = this->node_context;
+					new_exit_node->node_context.back() = new_exit_node;
+					for (int c_index = 0; c_index < (int)new_exit_node->node_context.size(); c_index++) {
+						new_exit_node->node_context_ids.push_back(new_exit_node->node_context[c_index]->id);
+					}
+					new_exit_node->exit_depth = this->best_exit_depth;
+
 					if (this->best_exit_throw_id == TEMP_THROW_ID) {
 						new_exit_node->throw_id = solution->throw_counter;
 						solution->throw_counter++;
@@ -238,12 +245,24 @@ void PassThroughExperiment::explore_measure_backprop(
 					exit_node_id = new_exit_node->id;
 					exit_node = new_exit_node;
 				} else {
-					if (this->best_exit_next_node == NULL) {
-						exit_node_id = -1;
+					if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->node_context.back();
+						exit_node_id = action_node->next_node_id;
+						exit_node = action_node->next_node;
+					} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+						exit_node_id = scope_node->next_node_id;
+						exit_node = scope_node->next_node;
 					} else {
-						exit_node_id = this->best_exit_next_node->id;
+						BranchNode* branch_node = (BranchNode*)this->node_context.back();
+						if (this->is_branch) {
+							exit_node_id = branch_node->branch_next_node_id;
+							exit_node = branch_node->branch_next_node;
+						} else {
+							exit_node_id = branch_node->original_next_node_id;
+							exit_node = branch_node->original_next_node;
+						}
 					}
-					exit_node = this->best_exit_next_node;
 				}
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

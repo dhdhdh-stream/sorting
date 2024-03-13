@@ -49,17 +49,6 @@ const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 40;
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
-	std::vector<Scope*> scope_context;
-	std::vector<AbstractNode*> node_context;
-	bool is_fuzzy_match;
-	bool is_branch;
-	int throw_id;
-
-	PassThroughExperiment* parent_experiment;
-	PassThroughExperiment* root_experiment;
-
-	double average_instances_per_run;
-
 	int state;
 	int state_iter;
 	int sub_state_iter;
@@ -74,7 +63,6 @@ public:
 	std::vector<ScopeNode*> curr_potential_scopes;
 	std::vector<std::set<int>> curr_catch_throw_ids;
 	int curr_exit_depth;
-	AbstractNode* curr_exit_next_node;
 	int curr_exit_throw_id;
 
 	double best_score;
@@ -84,7 +72,6 @@ public:
 	std::vector<ScopeNode*> best_potential_scopes;
 	std::vector<std::set<int>> best_catch_throw_ids;
 	int best_exit_depth;
-	AbstractNode* best_exit_next_node;
 	int best_exit_throw_id;
 
 	ExitNode* exit_node;
@@ -112,7 +99,6 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
@@ -122,26 +108,21 @@ public:
 								   RunHelper& run_helper,
 								   PassThroughExperimentHistory* history);
 
-	void explore_create_activate(AbstractNode*& curr_node,
-								 std::vector<ContextLayer>& context,
+	void explore_create_activate(std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 PassThroughExperimentHistory* history);
 	void explore_create_backprop(PassThroughExperimentHistory* history);
 
-	void explore_measure_activate(AbstractNode*& curr_node,
+	void explore_measure_activate(std::vector<int>& context_match_indexes,
+								  AbstractNode*& curr_node,
 								  Problem* problem,
 								  std::vector<ContextLayer>& context,
 								  int& exit_depth,
-								  AbstractNode*& exit_node,
 								  RunHelper& run_helper);
 	void explore_measure_backprop(double target_val,
 								  RunHelper& run_helper);
 
 	void measure_new_activate(AbstractNode*& curr_node,
-							  Problem* problem,
-							  std::vector<ContextLayer>& context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
 							  RunHelper& run_helper);
 	void measure_new_backprop(double target_val,
 							  RunHelper& run_helper);
@@ -150,10 +131,6 @@ public:
 								  RunHelper& run_helper);
 
 	void verify_new_activate(AbstractNode*& curr_node,
-							 Problem* problem,
-							 std::vector<ContextLayer>& context,
-							 int& exit_depth,
-							 AbstractNode*& exit_node,
 							 RunHelper& run_helper);
 	void verify_new_backprop(double target_val,
 							 RunHelper& run_helper);

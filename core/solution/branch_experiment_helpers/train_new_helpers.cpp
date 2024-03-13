@@ -25,10 +25,7 @@ using namespace std;
 void BranchExperiment::train_new_activate(
 		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
 	history->instance_count++;
@@ -52,19 +49,13 @@ void BranchExperiment::train_new_activate(
 
 		train_new_target_activate(context_match_indexes,
 								  curr_node,
-								  problem,
 								  context,
-								  exit_depth,
-								  exit_node,
 								  run_helper);
 	} else {
 		if (this->sub_state_iter != 0) {
 			train_new_non_target_activate(context_match_indexes,
 										  curr_node,
-										  problem,
 										  context,
-										  exit_depth,
-										  exit_node,
 										  run_helper);
 		}
 	}
@@ -73,10 +64,7 @@ void BranchExperiment::train_new_activate(
 void BranchExperiment::train_new_target_activate(
 		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context_match_indexes[0]].scope_history));
 	this->i_context_match_indexes_histories.push_back(context_match_indexes);
@@ -90,11 +78,7 @@ void BranchExperiment::train_new_target_activate(
 	}
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			curr_node = this->exit_node;
-		} else {
-			curr_node = this->best_exit_next_node;
-		}
+		curr_node = this->exit_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -109,10 +93,7 @@ void BranchExperiment::train_new_target_activate(
 void BranchExperiment::train_new_non_target_activate(
 		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -214,11 +195,7 @@ void BranchExperiment::train_new_non_target_activate(
 		}
 
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->exit_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];

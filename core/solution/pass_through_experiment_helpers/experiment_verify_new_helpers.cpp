@@ -21,11 +21,7 @@ void PassThroughExperiment::experiment_verify_new_activate(
 	}
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			curr_node = this->exit_node;
-		} else {
-			curr_node = this->best_exit_next_node;
-		}
+		curr_node = this->exit_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -76,14 +72,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 				pass_through_experiment->state_iter = 0;
 			} else {
-				PassThroughExperiment* curr_experiment;
-				if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-					PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
-					curr_experiment = pass_through_experiment->parent_experiment;
-				} else {
-					BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
-					curr_experiment = branch_experiment->parent_experiment;
-				}
+				PassThroughExperiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
 
 				curr_experiment->state_iter++;
 				int matching_index;
@@ -184,11 +173,6 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			cout << endl;
 
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-			}
 			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
@@ -207,14 +191,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 				pass_through_experiment->state_iter = 0;
 			} else {
-				PassThroughExperiment* curr_experiment;
-				if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-					PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
-					curr_experiment = pass_through_experiment->parent_experiment;
-				} else {
-					BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
-					curr_experiment = branch_experiment->parent_experiment;
-				}
+				PassThroughExperiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
 
 				curr_experiment->state_iter++;
 				int matching_index;

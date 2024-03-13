@@ -219,9 +219,6 @@ void BranchExperiment::new_branch() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent_id = -1;
-				new_throw_node->next_node_id = -1;
-				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;
 
 				this->branch_node->original_next_node_id = new_throw_node->id;
@@ -244,17 +241,8 @@ void BranchExperiment::new_branch() {
 	}
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			this->branch_node->branch_next_node_id = this->exit_node->id;
-			this->branch_node->branch_next_node = this->exit_node;
-		} else {
-			if (this->best_exit_next_node == NULL) {
-				this->branch_node->branch_next_node_id = -1;
-			} else {
-				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
-			}
-			this->branch_node->branch_next_node = this->best_exit_next_node;
-		}
+		this->branch_node->branch_next_node_id = this->exit_node->id;
+		this->branch_node->branch_next_node = this->exit_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			this->branch_node->branch_next_node_id = this->best_actions[0]->id;
@@ -376,9 +364,6 @@ void BranchExperiment::new_pass_through() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent_id = -1;
-				new_throw_node->next_node_id = -1;
-				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;
 
 				this->branch_node->original_next_node_id = new_throw_node->id;
@@ -401,17 +386,8 @@ void BranchExperiment::new_pass_through() {
 	}
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			this->branch_node->branch_next_node_id = this->exit_node->id;
-			this->branch_node->branch_next_node = this->exit_node;
-		} else {
-			if (this->best_exit_next_node == NULL) {
-				this->branch_node->branch_next_node_id = -1;
-			} else {
-				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
-			}
-			this->branch_node->branch_next_node = this->best_exit_next_node;
-		}
+		this->branch_node->branch_next_node_id = this->exit_node->id;
+		this->branch_node->branch_next_node = this->exit_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			this->branch_node->branch_next_node_id = this->best_actions[0]->id;

@@ -89,7 +89,6 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  std::vector<AbstractNodeHistory*>& node_histories);
 
@@ -99,20 +98,6 @@ public:
 					   std::vector<int>& context_match_indexes,
 					   std::vector<double>& input_vals,
 					   BranchNodeHistory* history);
-
-	void random_activate(AbstractNode*& curr_node,
-						 std::vector<Scope*>& scope_context,
-						 std::vector<AbstractNode*>& node_context,
-						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
-						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
-	void random_exit_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(AbstractNode*& curr_node,
-									std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,

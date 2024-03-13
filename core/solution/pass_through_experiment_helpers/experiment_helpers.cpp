@@ -53,11 +53,7 @@ void PassThroughExperiment::experiment_activate(vector<int>& context_match_index
 	}
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			curr_node = this->exit_node;
-		} else {
-			curr_node = this->best_exit_next_node;
-		}
+		curr_node = this->exit_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -253,7 +249,6 @@ void PassThroughExperiment::experiment_backprop(
 		vector<AbstractNode*> new_node_context;
 		bool new_is_fuzzy_match;
 
-		// TODO: need to tie to this->scope_context
 		uniform_int_distribution<int> is_strict_distribution(0, 2);
 		if (is_strict_distribution(generator) == 0) {
 			uniform_int_distribution<int> next_distribution(0, 1);

@@ -311,15 +311,6 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 	string exit_depth_line = getline_helper(input_file);
 	int exit_depth = stoi(exit_depth_line);
 
-	string exit_next_node_id_line = getline_helper(input_file);
-	int exit_next_node_id = stoi(exit_next_node_id_line);
-	AbstractNode* exit_next_node;
-	if (exit_next_node_id == -1) {
-		exit_next_node = NULL;
-	} else {
-		exit_next_node = scope_context[scope_context.size()-1 - exit_depth]->nodes[exit_next_node_id];
-	}
-
 	string exit_throw_id_line = getline_helper(input_file);
 	int exit_throw_id = stoi(exit_throw_id_line);
 
@@ -338,7 +329,6 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 	new_branch_experiment->best_potential_scopes = best_potential_scopes;
 	new_branch_experiment->best_catch_throw_ids = best_catch_throw_ids;
 	new_branch_experiment->best_exit_depth = exit_depth;
-	new_branch_experiment->best_exit_next_node = exit_next_node;
 	new_branch_experiment->best_exit_throw_id = exit_throw_id;
 
 	if (node_context.back()->type == NODE_TYPE_ACTION) {

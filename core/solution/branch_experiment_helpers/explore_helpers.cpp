@@ -28,7 +28,6 @@ void BranchExperiment::explore_activate(vector<int>& context_match_indexes,
 										Problem* problem,
 										vector<ContextLayer>& context,
 										int& exit_depth,
-										AbstractNode*& exit_node,
 										RunHelper& run_helper,
 										BranchExperimentHistory* history) {
 	history->instance_count++;
@@ -55,7 +54,6 @@ void BranchExperiment::explore_activate(vector<int>& context_match_indexes,
 								problem,
 								context,
 								exit_depth,
-								exit_node,
 								run_helper,
 								history);
 	}
@@ -66,7 +64,6 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 											   Problem* problem,
 											   vector<ContextLayer>& context,
 											   int& exit_depth,
-											   AbstractNode*& exit_node,
 											   RunHelper& run_helper,
 											   BranchExperimentHistory* history) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
@@ -137,7 +134,6 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 			&& this->parent_experiment == NULL
 			&& repeat_distribution(generator)) {
 		this->curr_exit_depth = 0;
-		this->curr_exit_next_node = curr_node;
 		this->curr_exit_throw_id = -1;
 
 		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
@@ -150,19 +146,8 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 
 		this->curr_catch_throw_ids.push_back(set<int>());
 	} else {
-		// exit
-		vector<pair<int,AbstractNode*>> possible_exits;
-		gather_possible_exits(possible_exits,
-							  this->scope_context,
-							  this->node_context,
-							  this->is_branch,
-							  this->throw_id,
-							  run_helper);
-
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_next_node = possible_exits[random_index].second;
+		uniform_int_distribution<int> distribution(0, this->scope_context.size()-1);
+		this->curr_exit_depth = distribution(generator);
 
 		uniform_int_distribution<int> throw_distribution(0, 3);
 		if (throw_distribution(generator) == 0) {
@@ -193,12 +178,10 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 			this->curr_exit_throw_id = -1;
 		}
 
-		// new path
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0
-				&& this->curr_exit_next_node == curr_node) {
+		if (this->curr_exit_depth == 0 && this->curr_exit_throw_id == -1) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -264,7 +247,6 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
@@ -275,7 +257,6 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				scope_node_history);
 			delete scope_node_history;
@@ -286,7 +267,6 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				problem,
 				context,
 				exit_depth,
-				exit_node,
 				run_helper,
 				scope_node_history);
 			delete scope_node_history;
@@ -302,10 +282,23 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 		run_helper.throw_id = this->curr_exit_throw_id;
 	} else {
 		if (this->curr_exit_depth == 0) {
-			curr_node = this->curr_exit_next_node;
+			if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)this->node_context.back();
+				curr_node = action_node->next_node;
+			} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+				curr_node = scope_node->next_node;
+			} else {
+				BranchNode* branch_node = (BranchNode*)this->node_context.back();
+				if (this->is_branch) {
+					curr_node = branch_node->branch_next_node;
+				} else {
+					curr_node = branch_node->original_next_node;
+				}
+			}
 		} else {
-			exit_depth = this->curr_exit_depth-1;
-			exit_node = this->curr_exit_next_node;
+			int exit_index = context_match_indexes[context_match_indexes.size()-1 - this->curr_exit_depth];
+			exit_depth = context_match_indexes.back() - exit_index;
 		}
 	}
 }
@@ -337,7 +330,6 @@ void BranchExperiment::explore_backprop(double target_val,
 			this->best_existing_scopes = this->curr_existing_scopes;
 			this->best_potential_scopes = this->curr_potential_scopes;
 			this->best_exit_depth = this->curr_exit_depth;
-			this->best_exit_next_node = this->curr_exit_next_node;
 			this->best_exit_throw_id = this->curr_exit_throw_id;
 			this->best_catch_throw_ids = this->curr_catch_throw_ids;
 
@@ -397,11 +389,6 @@ void BranchExperiment::explore_backprop(double target_val,
 				// cout << endl;
 
 				// cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-				// if (this->best_exit_next_node == NULL) {
-				// 	cout << "this->best_exit_next_node->id: " << -1 << endl;
-				// } else {
-				// 	cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-				// }
 				// cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 				// cout << endl;
 
@@ -456,14 +443,17 @@ void BranchExperiment::explore_backprop(double target_val,
 					new_exit_node->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
 
-					new_exit_node->exit_depth = this->best_exit_depth;
-					new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
-					if (this->best_exit_next_node == NULL) {
-						new_exit_node->next_node_id = -1;
-					} else {
-						new_exit_node->next_node_id = this->best_exit_next_node->id;
+					new_exit_node->scope_context = this->scope_context;
+					for (int c_index = 0; c_index < (int)new_exit_node->scope_context.size(); c_index++) {
+						new_exit_node->scope_context_ids.push_back(new_exit_node->scope_context[c_index]->id);
 					}
-					new_exit_node->next_node = this->best_exit_next_node;
+					new_exit_node->node_context = this->node_context;
+					new_exit_node->node_context.back() = new_exit_node;
+					for (int c_index = 0; c_index < (int)new_exit_node->node_context.size(); c_index++) {
+						new_exit_node->node_context_ids.push_back(new_exit_node->node_context[c_index]->id);
+					}
+					new_exit_node->exit_depth = this->best_exit_depth;
+
 					if (this->best_exit_throw_id == TEMP_THROW_ID) {
 						new_exit_node->throw_id = solution->throw_counter;
 						solution->throw_counter++;
@@ -476,12 +466,24 @@ void BranchExperiment::explore_backprop(double target_val,
 					exit_node_id = new_exit_node->id;
 					exit_node = new_exit_node;
 				} else {
-					if (this->best_exit_next_node == NULL) {
-						exit_node_id = -1;
+					if (this->node_context.back()->type == NODE_TYPE_ACTION) {
+						ActionNode* action_node = (ActionNode*)this->node_context.back();
+						exit_node_id = action_node->next_node_id;
+						exit_node = action_node->next_node;
+					} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+						exit_node_id = scope_node->next_node_id;
+						exit_node = scope_node->next_node;
 					} else {
-						exit_node_id = this->best_exit_next_node->id;
+						BranchNode* branch_node = (BranchNode*)this->node_context.back();
+						if (this->is_branch) {
+							exit_node_id = branch_node->branch_next_node_id;
+							exit_node = branch_node->branch_next_node;
+						} else {
+							exit_node_id = branch_node->original_next_node_id;
+							exit_node = branch_node->original_next_node;
+						}
 					}
-					exit_node = this->best_exit_next_node;
 				}
 
 				/**

@@ -36,7 +36,6 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 

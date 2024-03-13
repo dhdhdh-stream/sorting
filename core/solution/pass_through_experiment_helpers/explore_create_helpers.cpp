@@ -14,7 +14,6 @@
 using namespace std;
 
 void PassThroughExperiment::explore_create_activate(
-		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
@@ -37,18 +36,8 @@ void PassThroughExperiment::explore_create_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		vector<pair<int,AbstractNode*>> possible_exits;
-		gather_possible_exits(possible_exits,
-							  this->scope_context,
-							  this->node_context,
-							  this->is_branch,
-							  this->throw_id,
-							  run_helper);
-
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_next_node = possible_exits[random_index].second;
+		uniform_int_distribution<int> distribution(0, this->scope_context.size()-1);
+		this->curr_exit_depth = distribution(generator);
 
 		uniform_int_distribution<int> throw_distribution(0, 3);
 		if (throw_distribution(generator) == 0) {
@@ -82,8 +71,7 @@ void PassThroughExperiment::explore_create_activate(
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0
-				&& this->curr_exit_next_node == curr_node) {
+		if (this->curr_exit_depth == 0 && this->curr_exit_throw_id == -1) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);

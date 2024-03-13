@@ -64,9 +64,6 @@ void PassThroughExperiment::finalize() {
 						this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 						new_throw_node->exit_depth = -1;
-						new_throw_node->next_node_parent_id = -1;
-						new_throw_node->next_node_id = -1;
-						new_throw_node->next_node = NULL;
 						new_throw_node->throw_id = this->throw_id;
 
 						new_branch_node->original_next_node_id = new_throw_node->id;
@@ -89,17 +86,8 @@ void PassThroughExperiment::finalize() {
 			}
 
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					new_branch_node->branch_next_node_id = this->exit_node->id;
-					new_branch_node->branch_next_node = this->exit_node;
-				} else {
-					if (this->best_exit_next_node == NULL) {
-						new_branch_node->branch_next_node_id = -1;
-					} else {
-						new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
-					}
-					new_branch_node->branch_next_node = this->best_exit_next_node;
-				}
+				new_branch_node->branch_next_node_id = this->exit_node->id;
+				new_branch_node->branch_next_node = this->exit_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					new_branch_node->branch_next_node_id = this->best_actions[0]->id;
@@ -117,17 +105,8 @@ void PassThroughExperiment::finalize() {
 			start_node = new_branch_node;
 		} else {
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					start_node_id = this->exit_node->id;
-					start_node = this->exit_node;
-				} else {
-					if (this->best_exit_next_node == NULL) {
-						start_node_id = -1;
-					} else {
-						start_node_id = this->best_exit_next_node->id;
-					}
-					start_node = this->best_exit_next_node;
-				}
+				start_node_id = this->exit_node->id;
+				start_node = this->exit_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					start_node_id = this->best_actions[0]->id;

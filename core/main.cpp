@@ -70,13 +70,11 @@ int main(int argc, char* argv[]) {
 		context.back().scope_history = root_history;
 
 		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
+		int exit_depth = 0;
 
 		solution->root->activate(problem,
 								 context,
 								 exit_depth,
-								 exit_node,
 								 run_helper,
 								 root_history);
 
@@ -125,14 +123,7 @@ int main(int argc, char* argv[]) {
 					run_helper.experiment_histories.back()->experiment->finalize();
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
-					PassThroughExperiment* curr_experiment;
-					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = pass_through_experiment->parent_experiment;
-					} else {
-						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = branch_experiment->parent_experiment;
-					}
+					PassThroughExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
 
 					curr_experiment->state_iter++;
 					int matching_index;
@@ -225,13 +216,11 @@ int main(int argc, char* argv[]) {
 				context.back().scope_history = root_history;
 
 				// unused
-				int exit_depth = -1;
-				AbstractNode* exit_node = NULL;
+				int exit_depth = 0;
 
 				solution->root->verify_activate(problem,
 												context,
 												exit_depth,
-												exit_node,
 												run_helper,
 												root_history);
 

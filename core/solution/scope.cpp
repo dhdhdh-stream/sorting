@@ -11,11 +11,17 @@ using namespace std;
 
 Scope::Scope() {
 	this->id = -1;
+
+	this->sample_run = NULL;
 }
 
 Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
+	}
+
+	if (this->sample_run != NULL) {
+		delete this->sample_run;
 	}
 }
 
@@ -54,6 +60,11 @@ void Scope::success_reset() {
 			}
 			break;
 		}
+	}
+
+	if (this->sample_run != NULL) {
+		delete this->sample_run;
+		this->sample_run = NULL;
 	}
 }
 

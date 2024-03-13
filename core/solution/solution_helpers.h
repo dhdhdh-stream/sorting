@@ -12,7 +12,6 @@ class AbstractNode;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
-class SeedExperimentFilter;
 
 void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
@@ -23,13 +22,6 @@ ScopeNode* create_scope(Scope* parent_scope,
 ScopeNode* create_repeat(std::vector<ContextLayer>& context,
 						 int explore_context_depth);
 
-void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
-						   std::vector<Scope*>& experiment_scope_context,
-						   std::vector<AbstractNode*>& experiment_node_context,
-						   bool experiment_is_branch,
-						   int experiment_throw_id,
-						   RunHelper& run_helper);
-
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,
 							bool on_path,
@@ -39,14 +31,6 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
 							std::vector<int>& possible_strict_root_indexes,
 							ScopeHistory* scope_history);
-
-void create_gather(std::vector<Scope*>& new_gather_scope_context,
-				   std::vector<AbstractNode*>& new_gather_node_context,
-				   bool& new_gather_is_branch,
-				   int& new_gather_exit_depth,
-				   AbstractNode*& new_gather_exit_node,
-				   ScopeHistory* scope_history,
-				   SeedExperimentFilter* seed_experiment_filter);
 
 /**
  * TODO:

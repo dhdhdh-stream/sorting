@@ -11,52 +11,80 @@
 
 using namespace std;
 
+void create_scope_helper(vector<Scope*>& scope_context,
+						 vector<AbstractNode*>& node_context,
+						 vector<vector<Scope*>>& possible_scope_contexts,
+						 vector<vector<AbstractNode*>>& possible_node_contexts,
+						 ScopeHistory* scope_history) {
+	scope_context.push_back(scope_history->scope);
+	node_context.push_back(NULL);
+
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		switch (node_history->node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+				ActionNode* action_node = (ActionNode*)action_node_history->node;
+				if (action_node->action.move != ACTION_NOOP) {
+					node_context.back() = action_node;
+
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+
+					node_context.back() = NULL;
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+				ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+				node_context.back() = scope_node;
+
+				create_scope_helper(scope_context,
+									node_context,
+									possible_scope_contexts,
+									possible_node_contexts,
+									scope_node_history->scope_history);
+
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+
+				node_context.back() = NULL;
+			}
+			// TODO: if front lower, and back equal, don't include scope
+			break;
+		}
+	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
+}
+
 ScopeNode* create_scope(Scope* parent_scope,
 						RunHelper& run_helper) {
-	// determine start and end
-	vector<vector<Scope*>> possible_scope_contexts;
-	vector<vector<AbstractNode*>> possible_node_contexts;
-
-	vector<Scope*> scope_context{parent_scope};
-	vector<AbstractNode*> node_context{NULL};
-
-	// unused
-	int exit_depth = -1;
-	AbstractNode* exit_node = NULL;
-
-	int random_curr_depth = run_helper.curr_depth;
-	int random_throw_id = -1;
-	bool random_exceeded_limit = false;
-
-	parent_scope->random_activate(scope_context,
-								  node_context,
-								  exit_depth,
-								  exit_node,
-								  random_curr_depth,
-								  random_throw_id,
-								  random_exceeded_limit,
-								  possible_scope_contexts,
-								  possible_node_contexts);
-
-	if (random_exceeded_limit) {
+	if (parent_scope->sample_run == NULL) {
 		return NULL;
 	}
 
+	vector<vector<Scope*>> possible_scope_contexts;
+	vector<vector<AbstractNode*>> possible_node_contexts;
+
+	vector<Scope*> scope_context;
+	vector<AbstractNode*> node_context;
+	create_scope_helper(scope_context,
+						node_context,
+						possible_scope_contexts,
+						possible_node_contexts,
+						parent_scope->sample_run);
+
 	bool has_meaningful_actions = false;
-	for (int n_index = 0; n_index < (int)possible_scope_contexts.size()-1; n_index++) {
-		if (possible_node_contexts[n_index].back() != NULL) {
-			if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)possible_node_contexts[n_index].back();
-				if (action_node->action.move != ACTION_NOOP) {
-					has_meaningful_actions = true;
-					break;
-				}
-			} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
-				if (possible_scope_contexts[n_index].size() == possible_scope_contexts[n_index+1].size()) {
-					has_meaningful_actions = true;
-					break;
-				}
-			}
+	for (int n_index = 0; n_index < (int)possible_scope_contexts.size(); n_index++) {
+		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
+			has_meaningful_actions = true;
+			break;
 		}
 	}
 	if (!has_meaningful_actions) {
@@ -69,25 +97,12 @@ ScopeNode* create_scope(Scope* parent_scope,
 	while (true) {
 		start_index = distribution(generator);
 		end_index = distribution(generator);
-		if (start_index <= end_index
-				&& possible_node_contexts[start_index].back() != NULL
-				&& possible_node_contexts[start_index].back()->type != NODE_TYPE_EXIT) {
+		if (start_index <= end_index) {
 			bool empty_path = true;
 			for (int n_index = start_index; n_index < end_index+1; n_index++) {
-				if (possible_node_contexts[n_index].back() != NULL) {
-					if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
-						ActionNode* action_node = (ActionNode*)possible_node_contexts[n_index].back();
-						if (action_node->action.move != ACTION_NOOP) {
-							empty_path = false;
-							break;
-						}
-					} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
-						if (possible_scope_contexts[n_index].size() == possible_scope_contexts[n_index+1].size()) {
-							// same depth means that entire scope node included
-							empty_path = false;
-							break;
-						}
-					}
+				if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
+					empty_path = false;
+					break;
 				}
 			}
 			if (!empty_path) {
@@ -124,7 +139,15 @@ ScopeNode* create_scope(Scope* parent_scope,
 			}
 		}
 		if (match_start) {
-			on_path = true;
+			if (n_index != start_index
+					&& possible_scope_contexts[n_index].back() == possible_scope_contexts[start_index][possible_scope_contexts[n_index].size()-1]) {
+				/**
+				 * - remove duplicate scope nodes
+				 */
+				on_path = false;
+			} else {
+				on_path = true;
+			}
 		} else {
 			bool match_end = true;
 			if (possible_scope_contexts[n_index].size() > possible_scope_contexts[end_index].size()) {
@@ -146,13 +169,12 @@ ScopeNode* create_scope(Scope* parent_scope,
 		if (on_path) {
 			if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
 				ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
-				if (original_action_node->action.move != ACTION_NOOP) {
-					ActionNode* new_action_node = new ActionNode();
 
-					new_action_node->action = original_action_node->action;
+				ActionNode* new_action_node = new ActionNode();
 
-					new_nodes.push_back(new_action_node);
-				}
+				new_action_node->action = original_action_node->action;
+
+				new_nodes.push_back(new_action_node);
 			} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
 				ScopeNode* original_scope_node = (ScopeNode*)possible_node_contexts[n_index].back();
 
