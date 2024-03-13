@@ -24,6 +24,8 @@ void train_network(vector<vector<vector<double>>>& inputs,
 				   vector<double>& target_vals,
 				   vector<vector<Scope*>>& test_input_scope_contexts,
 				   vector<vector<AbstractNode*>>& test_input_node_contexts,
+				   vector<bool>& test_input_is_fuzzy_match,
+				   vector<int>& test_input_strict_root_indexes,
 				   Network* network) {
 	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
 
@@ -77,6 +79,8 @@ void train_network(vector<vector<vector<double>>>& inputs,
 		#endif /* MDEBUG */
 			test_input_scope_contexts.erase(test_input_scope_contexts.begin() + i_index);
 			test_input_node_contexts.erase(test_input_node_contexts.begin() + i_index);
+			test_input_is_fuzzy_match.erase(test_input_is_fuzzy_match.begin() + i_index);
+			test_input_strict_root_indexes.erase(test_input_strict_root_indexes.begin() + i_index);
 
 			network->inputs.back()->acti_vals.erase(
 				network->inputs.back()->acti_vals.begin() + i_index);

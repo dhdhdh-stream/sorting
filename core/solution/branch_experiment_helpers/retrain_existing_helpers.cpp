@@ -448,6 +448,8 @@ void BranchExperiment::retrain_existing_backprop(
 						  network_target_vals,
 						  test_network_input_scope_contexts,
 						  test_network_input_node_contexts,
+						  test_network_input_is_fuzzy_match,
+						  test_network_input_strict_root_indexes,
 						  test_network);
 
 			double average_misguess;

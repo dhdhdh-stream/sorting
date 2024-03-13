@@ -4,6 +4,8 @@
 
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "globals.h"
 #include "scope.h"
@@ -54,7 +56,6 @@ void create_scope_helper(vector<Scope*>& scope_context,
 
 				node_context.back() = NULL;
 			}
-			// TODO: if front lower, and back equal, don't include scope
 			break;
 		}
 	}

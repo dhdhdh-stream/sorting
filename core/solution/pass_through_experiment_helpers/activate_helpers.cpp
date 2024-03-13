@@ -104,7 +104,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 						vector<AbstractExperiment*> ancestors;
 						AbstractExperiment* curr_experiment = this;
 						while (true) {
-							ancestors.push_back(curr_experiment);
+							ancestors.insert(ancestors.begin(), curr_experiment);
 
 							if (curr_experiment->parent_experiment == NULL) {
 								break;

@@ -371,6 +371,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					  network_target_vals,
 					  test_network_input_scope_contexts,
 					  test_network_input_node_contexts,
+					  test_network_input_is_fuzzy_match,
+					  test_network_input_strict_root_indexes,
 					  test_network);
 
 		double average_misguess;
@@ -453,19 +455,6 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					int new_scope_id = solution->scope_counter;
 					solution->scope_counter++;
 					this->best_potential_scopes[s_index]->scope->id = new_scope_id;
-
-					for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
-							it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-						if (it->second->type == NODE_TYPE_BRANCH) {
-							BranchNode* branch_node = (BranchNode*)it->second;
-							branch_node->scope_context_ids[0] = new_scope_id;
-							for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
-								if (branch_node->input_scope_context_ids[i_index].size() > 0) {
-									branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
-								}
-							}
-						}
-					}
 				}
 			}
 

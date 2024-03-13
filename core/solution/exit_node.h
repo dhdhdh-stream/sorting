@@ -26,10 +26,6 @@ public:
 	void activate(std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  RunHelper& run_helper);
-	void random_activate(std::vector<Scope*>& scope_context,
-						 std::vector<AbstractNode*>& node_context,
-						 int& exit_depth,
-						 int& random_throw_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

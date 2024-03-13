@@ -85,16 +85,18 @@ void Scope::activate(Problem* problem,
 							 history);
 	}
 
-	if (this->sample_run == NULL) {
-		uniform_int_distribution<int> null_sample_distribution(0, 9);
-		if (null_sample_distribution(generator) == 0) {
-			this->sample_run = new ScopeHistory(history);
-		}
-	} else {
-		uniform_int_distribution<int> non_null_sample_distribution(0, 999);
-		if (non_null_sample_distribution(generator) == 0) {
-			delete this->sample_run;
-			this->sample_run = new ScopeHistory(history);
+	if (run_helper.experiment_histories.size() == 0) {
+		if (this->sample_run == NULL) {
+			uniform_int_distribution<int> null_sample_distribution(0, 9);
+			if (null_sample_distribution(generator) == 0) {
+				this->sample_run = new ScopeHistory(history);
+			}
+		} else {
+			uniform_int_distribution<int> non_null_sample_distribution(0, 999);
+			if (non_null_sample_distribution(generator) == 0) {
+				delete this->sample_run;
+				this->sample_run = new ScopeHistory(history);
+			}
 		}
 	}
 
