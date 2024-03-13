@@ -81,14 +81,16 @@ ScopeNode* create_scope(Scope* parent_scope,
 						possible_node_contexts,
 						parent_scope->sample_run);
 
-	bool has_meaningful_actions = false;
+	int num_actions = 0;
 	for (int n_index = 0; n_index < (int)possible_scope_contexts.size(); n_index++) {
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
-			has_meaningful_actions = true;
-			break;
+			num_actions++;
+			if (num_actions >= 2) {
+				break;
+			}
 		}
 	}
-	if (!has_meaningful_actions) {
+	if (num_actions < 2) {
 		return NULL;
 	}
 
@@ -99,14 +101,16 @@ ScopeNode* create_scope(Scope* parent_scope,
 		start_index = distribution(generator);
 		end_index = distribution(generator);
 		if (start_index <= end_index) {
-			bool empty_path = true;
+			int num_actions = 0;
 			for (int n_index = start_index; n_index < end_index+1; n_index++) {
 				if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
-					empty_path = false;
-					break;
+					num_actions++;
+					if (num_actions >= 2) {
+						break;
+					}
 				}
 			}
-			if (!empty_path) {
+			if (num_actions >= 2) {
 				break;
 			}
 		}

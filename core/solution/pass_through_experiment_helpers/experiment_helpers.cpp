@@ -21,29 +21,31 @@ void PassThroughExperiment::experiment_activate(vector<int>& context_match_index
 												PassThroughExperimentHistory* history) {
 	if (this->parent_experiment == NULL
 			|| this->root_experiment->state == PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT) {
-		history->instance_count++;
+		if (run_helper.experiment_histories.back() == history) {
+			history->instance_count++;
 
-		bool is_target = false;
-		if (!history->has_target) {
-			double target_probability;
-			if (history->instance_count > this->average_instances_per_run) {
-				target_probability = 0.5;
-			} else {
-				target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
+			bool is_target = false;
+			if (!history->has_target) {
+				double target_probability;
+				if (history->instance_count > this->average_instances_per_run) {
+					target_probability = 0.5;
+				} else {
+					target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
+				}
+				uniform_real_distribution<double> distribution(0.0, 1.0);
+				if (distribution(generator) < target_probability) {
+					is_target = true;
+				}
 			}
-			uniform_real_distribution<double> distribution(0.0, 1.0);
-			if (distribution(generator) < target_probability) {
-				is_target = true;
-			}
-		}
 
-		if (is_target) {
-			history->has_target = true;
+			if (is_target) {
+				history->has_target = true;
 
-			context[context_match_indexes[0]].scope_history->pass_through_experiment_history = history;
+				context[context_match_indexes[0]].scope_history->pass_through_experiment_history = history;
 
-			for (int c_index = context_match_indexes[0]; c_index < (int)context.size(); c_index++) {
-				history->experiment_index.push_back(context[c_index].scope_history->node_histories.size());
+				for (int c_index = context_match_indexes[0]; c_index < (int)context.size(); c_index++) {
+					history->experiment_index.push_back(context[c_index].scope_history->node_histories.size());
+				}
 			}
 		}
 	}

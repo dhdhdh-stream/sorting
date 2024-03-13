@@ -287,7 +287,16 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				curr_node = action_node->next_node;
 			} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-				curr_node = scope_node->next_node;
+				if (this->throw_id == -1) {
+					curr_node = scope_node->next_node;
+				} else {
+					map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
+					if (it == scope_node->catches.end()) {
+						curr_node = NULL;
+					} else {
+						curr_node = it->second;
+					}
+				}
 			} else {
 				BranchNode* branch_node = (BranchNode*)this->node_context.back();
 				if (this->is_branch) {
@@ -472,8 +481,23 @@ void BranchExperiment::explore_backprop(double target_val,
 						exit_node = action_node->next_node;
 					} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
 						ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-						exit_node_id = scope_node->next_node_id;
-						exit_node = scope_node->next_node;
+						if (this->throw_id == -1) {
+							exit_node_id = scope_node->next_node_id;
+							exit_node = scope_node->next_node;
+						} else {
+							map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
+							if (it == scope_node->catches.end()) {
+								exit_node_id = -1;
+								exit_node = NULL;
+							} else {
+								if (it->second == NULL) {
+									exit_node_id = -1;
+								} else {
+									exit_node_id = it->second->id;
+								}
+								exit_node = it->second;
+							}
+						}
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->node_context.back();
 						if (this->is_branch) {

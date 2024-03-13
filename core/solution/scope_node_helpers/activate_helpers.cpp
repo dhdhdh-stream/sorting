@@ -31,6 +31,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						  run_helper,
 						  scope_history);
 
+	// temp
+	if (scope_history->pass_through_experiment_history != NULL
+			&& scope_history->pass_through_experiment_history->scope_history == NULL) {
+		throw invalid_argument("weird");
+	}
+
 	history->throw_id = run_helper.throw_id;
 
 	context.pop_back();

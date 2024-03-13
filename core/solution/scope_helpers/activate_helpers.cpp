@@ -85,7 +85,8 @@ void Scope::activate(Problem* problem,
 							 history);
 	}
 
-	if (run_helper.experiment_histories.size() == 0) {
+	if (!run_helper.exceeded_limit
+			&& run_helper.experiment_histories.size() == 0) {
 		if (this->sample_run == NULL) {
 			uniform_int_distribution<int> null_sample_distribution(0, 9);
 			if (null_sample_distribution(generator) == 0) {
