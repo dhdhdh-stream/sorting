@@ -455,6 +455,21 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					int new_scope_id = solution->scope_counter;
 					solution->scope_counter++;
 					this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+
+					for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+							it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_BRANCH) {
+							BranchNode* branch_node = (BranchNode*)it->second;
+							branch_node->scope_context_ids.back() = new_scope_id;
+							for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+								for (int c_index = 0; c_index < (int)branch_node->input_scope_context_ids[i_index].size(); c_index++) {
+									if (branch_node->input_scope_context_ids[i_index][c_index] == -1) {
+										branch_node->input_scope_context_ids[i_index][c_index] = new_scope_id;
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 

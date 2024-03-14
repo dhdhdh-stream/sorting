@@ -1,7 +1,3 @@
-/**
- * - simply exclude branches
- */
-
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -13,11 +9,11 @@
 
 using namespace std;
 
-void create_scope_helper(vector<Scope*>& scope_context,
-						 vector<AbstractNode*>& node_context,
-						 vector<vector<Scope*>>& possible_scope_contexts,
-						 vector<vector<AbstractNode*>>& possible_node_contexts,
-						 ScopeHistory* scope_history) {
+void create_path_helper(vector<Scope*>& scope_context,
+						vector<AbstractNode*>& node_context,
+						vector<vector<Scope*>>& possible_scope_contexts,
+						vector<vector<AbstractNode*>>& possible_node_contexts,
+						ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
@@ -45,11 +41,11 @@ void create_scope_helper(vector<Scope*>& scope_context,
 
 				node_context.back() = scope_node;
 
-				create_scope_helper(scope_context,
-									node_context,
-									possible_scope_contexts,
-									possible_node_contexts,
-									scope_node_history->scope_history);
+				create_path_helper(scope_context,
+								   node_context,
+								   possible_scope_contexts,
+								   possible_node_contexts,
+								   scope_node_history->scope_history);
 
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
@@ -64,8 +60,7 @@ void create_scope_helper(vector<Scope*>& scope_context,
 	node_context.pop_back();
 }
 
-ScopeNode* create_scope(Scope* parent_scope,
-						RunHelper& run_helper) {
+ScopeNode* create_path(Scope* parent_scope) {
 	if (parent_scope->sample_run == NULL) {
 		return NULL;
 	}
@@ -75,11 +70,11 @@ ScopeNode* create_scope(Scope* parent_scope,
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	create_scope_helper(scope_context,
-						node_context,
-						possible_scope_contexts,
-						possible_node_contexts,
-						parent_scope->sample_run);
+	create_path_helper(scope_context,
+					   node_context,
+					   possible_scope_contexts,
+					   possible_node_contexts,
+					   parent_scope->sample_run);
 
 	int num_actions = 0;
 	for (int n_index = 0; n_index < (int)possible_scope_contexts.size(); n_index++) {
@@ -100,7 +95,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 	while (true) {
 		start_index = distribution(generator);
 		end_index = distribution(generator);
-		if (start_index <= end_index) {
+		if (start_index < end_index) {
 			int num_actions = 0;
 			for (int n_index = start_index; n_index < end_index+1; n_index++) {
 				if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
@@ -114,6 +109,58 @@ ScopeNode* create_scope(Scope* parent_scope,
 				break;
 			}
 		}
+	}
+
+	int num_nodes = 0;
+	for (int n_index = start_index; n_index < end_index+1; n_index++) {
+		bool on_path = false;
+
+		bool match_start = true;
+		if (possible_scope_contexts[n_index].size() > possible_scope_contexts[start_index].size()) {
+			match_start = false;
+		} else {
+			for (int c_index = 0; c_index < (int)possible_scope_contexts[n_index].size()-1; c_index++) {
+				if (possible_scope_contexts[start_index][c_index] != possible_scope_contexts[n_index][c_index]
+						|| possible_node_contexts[start_index][c_index] != possible_node_contexts[n_index][c_index]) {
+					match_start = false;
+					break;
+				}
+			}
+		}
+		if (match_start) {
+			if (n_index != start_index
+					&& possible_scope_contexts[n_index].back() == possible_scope_contexts[start_index][possible_scope_contexts[n_index].size()-1]) {
+				/**
+				 * - remove duplicate scope nodes
+				 */
+				on_path = false;
+			} else {
+				on_path = true;
+			}
+		} else {
+			bool match_end = true;
+			if (possible_scope_contexts[n_index].size() > possible_scope_contexts[end_index].size()) {
+				match_end = false;
+			} else {
+				for (int c_index = 0; c_index < (int)possible_scope_contexts[n_index].size()-1; c_index++) {
+					if (possible_scope_contexts[end_index][c_index] != possible_scope_contexts[n_index][c_index]
+							|| possible_node_contexts[end_index][c_index] != possible_node_contexts[n_index][c_index]) {
+						match_end = false;
+						break;
+					}
+				}
+			}
+			if (match_end) {
+				on_path = true;
+			}
+		}
+
+		if (on_path) {
+			num_nodes++;
+		}
+	}
+	if (num_nodes < 2) {
+		return NULL;
 	}
 
 	Scope* new_scope = new Scope();

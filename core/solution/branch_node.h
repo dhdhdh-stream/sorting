@@ -46,6 +46,10 @@ public:
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 	std::vector<bool> input_is_fuzzy_match;
 	std::vector<int> input_strict_root_indexes;
+	/**
+	 * TODO:
+	 * - could also add match early and average?
+	 */
 
 	std::vector<int> linear_original_input_indexes;
 	std::vector<double> linear_original_weights;

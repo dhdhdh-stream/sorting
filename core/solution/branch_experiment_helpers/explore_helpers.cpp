@@ -18,9 +18,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 5;
+const int EXPLORE_ITERS = 2;
 #else
-const int EXPLORE_ITERS = 500;
+const int EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_activate(vector<int>& context_match_indexes,
@@ -188,6 +188,7 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 		}
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
+		uniform_int_distribution<int> sub_scope_distribution(0, 1);
 		uniform_int_distribution<int> random_scope_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			ScopeNode* new_scope_node = NULL;
@@ -195,11 +196,17 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope,
-												  run_helper);
+					if (sub_scope_distribution(generator) == 0) {
+						new_scope_node = create_subscope(scope);
+					} else {
+						new_scope_node = create_path(scope);
+					}
 				} else {
-					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
-												  run_helper);
+					if (sub_scope_distribution(generator) == 0) {
+						new_scope_node = create_subscope(context[context.size() - this->scope_context.size()].scope);
+					} else {
+						new_scope_node = create_path(context[context.size() - this->scope_context.size()].scope);
+					}
 				}
 			}
 			if (new_scope_node != NULL) {
@@ -440,6 +447,21 @@ void BranchExperiment::explore_backprop(double target_val,
 						int new_scope_id = solution->scope_counter;
 						solution->scope_counter++;
 						this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+
+						for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
+								it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
+							if (it->second->type == NODE_TYPE_BRANCH) {
+								BranchNode* branch_node = (BranchNode*)it->second;
+								branch_node->scope_context_ids.back() = new_scope_id;
+								for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+									for (int c_index = 0; c_index < (int)branch_node->input_scope_context_ids[i_index].size(); c_index++) {
+										if (branch_node->input_scope_context_ids[i_index][c_index] == -1) {
+											branch_node->input_scope_context_ids[i_index][c_index] = new_scope_id;
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 

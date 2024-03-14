@@ -17,8 +17,8 @@ void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
 
 ScopeNode* reuse_existing();
-ScopeNode* create_scope(Scope* parent_scope,
-						RunHelper& run_helper);
+ScopeNode* create_path(Scope* parent_scope);
+ScopeNode* create_subscope(Scope* parent_scope);
 ScopeNode* create_repeat(std::vector<ContextLayer>& context,
 						 int explore_context_depth);
 

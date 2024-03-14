@@ -78,6 +78,7 @@ void PassThroughExperiment::explore_create_activate(
 		}
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
+		uniform_int_distribution<int> sub_scope_distribution(0, 1);
 		uniform_int_distribution<int> random_scope_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			ScopeNode* new_scope_node = NULL;
@@ -85,11 +86,17 @@ void PassThroughExperiment::explore_create_activate(
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope,
-												  run_helper);
+					if (sub_scope_distribution(generator) == 0) {
+						new_scope_node = create_subscope(scope);
+					} else {
+						new_scope_node = create_path(scope);
+					}
 				} else {
-					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
-												  run_helper);
+					if (sub_scope_distribution(generator) == 0) {
+						new_scope_node = create_subscope(context[context.size() - this->scope_context.size()].scope);
+					} else {
+						new_scope_node = create_path(context[context.size() - this->scope_context.size()].scope);
+					}
 				}
 			}
 			if (new_scope_node != NULL) {
