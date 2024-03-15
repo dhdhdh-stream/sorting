@@ -93,8 +93,6 @@ public:
 
 	double new_average_score;
 
-	double original_bias;
-
 	std::vector<double> new_linear_weights;
 	std::vector<std::vector<int>> new_network_input_indexes;
 	Network* new_network;
@@ -203,6 +201,7 @@ public:
 
 	void measure_activate(std::vector<int>& context_match_indexes,
 						  AbstractNode*& curr_node,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 	void measure_backprop(double target_val,

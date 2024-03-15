@@ -1,3 +1,5 @@
+// TODO: add back exit nodes
+
 #ifndef EXIT_NODE_H
 #define EXIT_NODE_H
 

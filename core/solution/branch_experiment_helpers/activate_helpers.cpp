@@ -263,6 +263,7 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			case BRANCH_EXPERIMENT_STATE_MEASURE:
 				measure_activate(context_match_indexes,
 								 curr_node,
+								 problem,
 								 context,
 								 run_helper);
 				break;

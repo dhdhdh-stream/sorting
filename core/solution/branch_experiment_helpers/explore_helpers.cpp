@@ -196,13 +196,15 @@ void BranchExperiment::explore_target_activate(vector<int>& context_match_indexe
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					if (sub_scope_distribution(generator) == 0) {
+					// if (sub_scope_distribution(generator) == 0) {
+					if (true) {
 						new_scope_node = create_subscope(scope);
 					} else {
 						new_scope_node = create_path(scope);
 					}
 				} else {
-					if (sub_scope_distribution(generator) == 0) {
+					// if (sub_scope_distribution(generator) == 0) {
+					if (true) {
 						new_scope_node = create_subscope(context[context.size() - this->scope_context.size()].scope);
 					} else {
 						new_scope_node = create_path(context[context.size() - this->scope_context.size()].scope);

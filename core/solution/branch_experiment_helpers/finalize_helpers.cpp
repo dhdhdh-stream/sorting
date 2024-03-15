@@ -73,8 +73,7 @@ void BranchExperiment::new_branch() {
 
 	this->branch_node->is_pass_through = false;
 
-	this->branch_node->original_average_score = this->existing_average_score
-		+ this->original_bias * this->existing_score_standard_deviation;
+	this->branch_node->original_average_score = this->existing_average_score;
 	this->branch_node->branch_average_score = this->new_average_score;
 
 	vector<int> input_mapping(this->input_scope_contexts.size(), -1);

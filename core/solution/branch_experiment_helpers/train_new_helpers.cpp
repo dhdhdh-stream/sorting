@@ -140,8 +140,7 @@ void BranchExperiment::train_new_non_target_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score
-		+ this->original_bias * this->existing_score_standard_deviation;
+	double existing_predicted_score = this->existing_average_score;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
@@ -226,9 +225,6 @@ void BranchExperiment::train_new_backprop(double target_val,
 					sum_scores += this->i_target_val_histories[d_index];
 				}
 				this->new_average_score = sum_scores / solution->curr_num_datapoints;
-
-				uniform_real_distribution<double> bias_distribution(0.0, 1.0);
-				this->original_bias = bias_distribution(generator);
 
 				Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->input_scope_contexts.size());
 
@@ -488,7 +484,8 @@ void BranchExperiment::train_new_backprop(double target_val,
 				int rand_index = distribution(generator);
 
 				uniform_int_distribution<int> is_strict_distribution(0, 2);
-				if (is_strict_distribution(generator) == 0) {
+				// if (is_strict_distribution(generator) == 0) {
+				if (true) {
 					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
 						- this->i_context_match_indexes_histories.back()[0];
 

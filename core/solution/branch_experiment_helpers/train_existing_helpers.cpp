@@ -102,7 +102,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				 * TODO: check for uniqueness
 				 */
 				uniform_int_distribution<int> is_strict_distribution(0, 2);
-				if (is_strict_distribution(generator) == 0) {
+				// if (is_strict_distribution(generator) == 0) {
+				if (true) {
 					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
 						- this->i_context_match_indexes_histories.back()[0];
 
@@ -276,7 +277,8 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				int rand_index = distribution(generator);
 
 				uniform_int_distribution<int> is_strict_distribution(0, 2);
-				if (is_strict_distribution(generator) == 0) {
+				// if (is_strict_distribution(generator) == 0) {
+				if (true) {
 					int start_index = this->i_context_match_indexes_histories.back()[possible_strict_root_indexes[remaining_indexes[rand_index]]]
 						- this->i_context_match_indexes_histories.back()[0];
 

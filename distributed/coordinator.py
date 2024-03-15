@@ -78,10 +78,14 @@ while True:
 
 			client_sftp = client.open_sftp()
 
-			client_sftp.put('saves/main.txt', 'workers/' + worker[0] + '/saves/main_temp.txt')
-			stdin, stdout, stderr = client.exec_command('mv workers/' + worker[0] + '/saves/main_temp.txt workers/' + worker[0] + '/saves/main.txt')
-			for line in iter(lambda:stdout.readline(2048), ''):
-				print(line, end='')
+			try:
+				client_sftp.put('saves/main.txt', 'workers/' + worker[0] + '/saves/main_temp.txt')
+				stdin, stdout, stderr = client.exec_command('mv workers/' + worker[0] + '/saves/main_temp.txt workers/' + worker[0] + '/saves/main.txt')
+				for line in iter(lambda:stdout.readline(2048), ''):
+					print(line, end='')
+
+			except IOError:
+				pass
 
 			client_sftp.close()
 			client.close()

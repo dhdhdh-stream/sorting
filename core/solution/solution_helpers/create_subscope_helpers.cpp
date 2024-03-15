@@ -359,19 +359,38 @@ ScopeNode* create_subscope(Scope* parent_scope) {
 			new_branch_node->input_strict_root_indexes = original_branch_node->input_strict_root_indexes;
 			uniform_int_distribution<int> fuzzy_keep_distribution(0, 1);
 			for (int i_index = 0; i_index < (int)new_branch_node->input_scope_contexts.size(); i_index++) {
-				if (new_branch_node->input_is_fuzzy_match[i_index]) {
-					vector<int> potential_indexes;
-					for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts[i_index].size(); c_index++) {
-						if (new_branch_node->input_scope_contexts[i_index][c_index] == parent_scope) {
-							potential_indexes.push_back(c_index);
+				if (new_branch_node->input_scope_contexts[i_index].size() > 0) {
+					if (new_branch_node->input_is_fuzzy_match[i_index]) {
+						vector<int> potential_indexes;
+						for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts[i_index].size(); c_index++) {
+							if (new_branch_node->input_scope_contexts[i_index][c_index] == parent_scope) {
+								potential_indexes.push_back(c_index);
+							}
 						}
-					}
-					if (potential_indexes.size() > 0) {
-						if (fuzzy_keep_distribution(generator) != 0) {
-							uniform_int_distribution<int> layer_distribution(0, potential_indexes.size()-1);
-							int replace_layer = layer_distribution(generator);
-							map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it = 
-								node_mappings.find(new_branch_node->input_node_contexts[i_index][replace_layer]);
+						if (potential_indexes.size() > 0) {
+							if (fuzzy_keep_distribution(generator) != 0) {
+								uniform_int_distribution<int> layer_distribution(0, potential_indexes.size()-1);
+								int replace_layer = layer_distribution(generator);
+								map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it = 
+									node_mappings.find(new_branch_node->input_node_contexts[i_index][replace_layer]);
+								if (it == node_mappings.end()
+										|| new_node_reverse_mappings[it->second.second] != it->first) {
+									new_branch_node->input_scope_context_ids[i_index].clear();
+									new_branch_node->input_scope_contexts[i_index].clear();
+									new_branch_node->input_node_context_ids[i_index].clear();
+									new_branch_node->input_node_contexts[i_index].clear();
+								} else {
+									new_branch_node->input_scope_context_ids[i_index][replace_layer] = -1;
+									new_branch_node->input_scope_contexts[i_index][replace_layer] = new_scope;
+									new_branch_node->input_node_context_ids[i_index][replace_layer] = it->second.second->id;
+									new_branch_node->input_node_contexts[i_index][replace_layer] = it->second.second;
+								}
+							}
+						}
+					} else {
+						if (new_branch_node->input_strict_root_indexes[i_index] == (int)new_branch_node->scope_context.size()-1) {
+							map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it =
+								node_mappings.find(new_branch_node->input_node_contexts[i_index][0]);
 							if (it == node_mappings.end()
 									|| new_node_reverse_mappings[it->second.second] != it->first) {
 								new_branch_node->input_scope_context_ids[i_index].clear();
@@ -379,28 +398,11 @@ ScopeNode* create_subscope(Scope* parent_scope) {
 								new_branch_node->input_node_context_ids[i_index].clear();
 								new_branch_node->input_node_contexts[i_index].clear();
 							} else {
-								new_branch_node->input_scope_context_ids[i_index][replace_layer] = -1;
-								new_branch_node->input_scope_contexts[i_index][replace_layer] = new_scope;
-								new_branch_node->input_node_context_ids[i_index][replace_layer] = it->second.second->id;
-								new_branch_node->input_node_contexts[i_index][replace_layer] = it->second.second;
+								new_branch_node->input_scope_context_ids[i_index][0] = -1;
+								new_branch_node->input_scope_contexts[i_index][0] = new_scope;
+								new_branch_node->input_node_context_ids[i_index][0] = it->second.second->id;
+								new_branch_node->input_node_contexts[i_index][0] = it->second.second;
 							}
-						}
-					}
-				} else {
-					if (new_branch_node->input_strict_root_indexes[i_index] == (int)new_branch_node->scope_context.size()-1) {
-						map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it =
-							node_mappings.find(new_branch_node->input_node_contexts[i_index][0]);
-						if (it == node_mappings.end()
-								|| new_node_reverse_mappings[it->second.second] != it->first) {
-							new_branch_node->input_scope_context_ids[i_index].clear();
-							new_branch_node->input_scope_contexts[i_index].clear();
-							new_branch_node->input_node_context_ids[i_index].clear();
-							new_branch_node->input_node_contexts[i_index].clear();
-						} else {
-							new_branch_node->input_scope_context_ids[i_index][0] = -1;
-							new_branch_node->input_scope_contexts[i_index][0] = new_scope;
-							new_branch_node->input_node_context_ids[i_index][0] = it->second.second->id;
-							new_branch_node->input_node_contexts[i_index][0] = it->second.second;
 						}
 					}
 				}
