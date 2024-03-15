@@ -10,6 +10,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 Problem* problem,
 						 vector<ContextLayer>& context,
 						 int& exit_depth,
+						 AbstractNode*& exit_node,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history) {
 	context.back().node = this;
@@ -23,11 +24,13 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	history->scope_history = scope_history;
 	context.back().scope_history = scope_history;
 
-	int inner_exit_depth = 0;
+	int inner_exit_depth = -1;
+	AbstractNode* inner_exit_node = NULL;
 
 	this->scope->activate(problem,
 						  context,
 						  inner_exit_depth,
+						  inner_exit_node,
 						  run_helper,
 						  scope_history);
 
@@ -45,22 +48,36 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			run_helper.throw_id = -1;
 
 			curr_node = it->second;
-		}
-		// else do nothing
 
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				run_helper);
-			if (is_selected) {
-				return;
+			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+				bool is_selected = this->experiments[e_index]->activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+				if (is_selected) {
+					return;
+				}
+			}
+		} else {
+			// do nothing
+
+			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+				bool is_selected = this->experiments[e_index]->activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+				if (is_selected) {
+					return;
+				}
 			}
 		}
-	} else if (inner_exit_depth == 0
-			|| inner_exit_depth == 1) {
+	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
@@ -69,12 +86,16 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 				problem,
 				context,
 				exit_depth,
+				exit_node,
 				run_helper);
 			if (is_selected) {
 				return;
 			}
 		}
+	} else if (inner_exit_depth == 0) {
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
+		exit_node = inner_exit_node;
 	}
 }

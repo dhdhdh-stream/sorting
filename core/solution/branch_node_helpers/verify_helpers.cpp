@@ -18,49 +18,14 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 vector<AbstractNodeHistory*>& node_histories) {
-	bool matches_context = false;
-	vector<int> context_match_indexes;
-	if (this->is_fuzzy_match) {
-		context_match_indexes.push_back((int)context.size()-1);
-		int c_index = (int)this->scope_context.size()-2;
-		int l_index = (int)context.size()-2;
-		while (true) {
-			if (c_index < 0) {
-				matches_context = true;
-				break;
-			}
-
-			if (l_index < 0) {
-				break;
-			}
-
-			if (this->scope_context[c_index] == context[l_index].scope
-					&& this->node_context[c_index] == context[l_index].node) {
-				context_match_indexes.insert(context_match_indexes.begin(), l_index);
-				c_index--;
-			}
-			l_index--;
-		}
+	bool matches_context = true;
+	if (this->scope_context.size() > context.size()) {
+		matches_context = false;
 	} else {
-		context_match_indexes.push_back((int)context.size()-1);
-		int c_index = (int)this->scope_context.size()-2;
-		int l_index = (int)context.size()-2;
-		while (true) {
-			if (c_index < 0) {
-				matches_context = true;
-				break;
-			}
-
-			if (l_index < 0) {
-				break;
-			}
-
-			if (this->scope_context[c_index] == context[l_index].scope
-					&& this->node_context[c_index] == context[l_index].node) {
-				context_match_indexes.insert(context_match_indexes.begin(), l_index);
-				c_index--;
-				l_index--;
-			} else {
+		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {
+			if (this->scope_context[c_index] != context[context.size()-this->scope_context.size()+c_index].scope
+					|| this->node_context[c_index] != context[context.size()-this->scope_context.size()+c_index].node) {
+				matches_context = false;
 				break;
 			}
 		}
@@ -81,15 +46,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 						action_node->hook_indexes.push_back(i_index);
 						action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-						action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-						action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.push_back(i_index);
 						branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 						branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-						branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-						branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 					}
 				}
 			}
@@ -97,11 +58,8 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			vector<AbstractNode*> node_context;
 			input_vals_helper(scope_context,
 							  node_context,
-							  true,
-							  0,
-							  context_match_indexes,
 							  input_vals,
-							  context[context_match_indexes[0]].scope_history);
+							  context[context.size() - this->scope_context.size()].scope_history);
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 				if (this->input_scope_contexts[i_index].size() > 0) {
 					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -109,15 +67,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 						action_node->hook_indexes.clear();
 						action_node->hook_scope_contexts.clear();
 						action_node->hook_node_contexts.clear();
-						action_node->hook_is_fuzzy_match.clear();
-						action_node->hook_strict_root_indexes.clear();
 					} else {
 						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 						branch_node->hook_indexes.clear();
 						branch_node->hook_scope_contexts.clear();
 						branch_node->hook_node_contexts.clear();
-						branch_node->hook_is_fuzzy_match.clear();
-						branch_node->hook_strict_root_indexes.clear();
 					}
 				}
 			}
@@ -155,12 +109,12 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				// cout << "input_vals:" << endl;
-				// for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-				// 	cout << i_index << ": " << input_vals[i_index] << endl;
-				// }
-				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-				// problem->print();
+				cout << "input_vals:" << endl;
+				for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+					cout << i_index << ": " << input_vals[i_index] << endl;
+				}
+				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+				problem->print();
 
 				if (this->verify_original_scores[0] != original_score
 						|| this->verify_branch_scores[0] != branch_score) {

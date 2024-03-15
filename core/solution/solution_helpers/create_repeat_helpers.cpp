@@ -1,17 +1,4 @@
-/**
- * - simply copy path, as cannot both:
- *   - maintain original decision making/branching
- *     - including inner
- *   - be distinguishable from original for gathering inputs
- * 
- * - averaging inputs is bad because:
- *   - maybe correlation within an iter that matters
- *   - cannot identify num iters or if path is taken
- * 
- * - not generalizing is OK because:
- *   - maybe particular iters matter more
- *   - can always make progress through individual iters 
- */
+// TODO: limit repeat within scope, but include branching
 
 #include "solution_helpers.h"
 

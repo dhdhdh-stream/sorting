@@ -11,6 +11,7 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 									  Problem* problem,
 									  vector<ContextLayer>& context,
 									  int& exit_depth,
+									  AbstractNode*& exit_node,
 									  RunHelper& run_helper,
 									  ScopeNodeHistory* history) {
 	context.back().node = this;
@@ -24,11 +25,13 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 	history->scope_history = scope_history;
 	context.back().scope_history = scope_history;
 
-	int inner_exit_depth = 0;
+	int inner_exit_depth = -1;
+	AbstractNode* inner_exit_node = NULL;
 
 	this->scope->step_through_activate(problem,
 									   context,
 									   inner_exit_depth,
+									   inner_exit_node,
 									   run_helper,
 									   scope_history);
 
@@ -61,8 +64,7 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 			curr_node = it->second;
 		}
 		// else do nothing
-	} else if (inner_exit_depth == 0
-			|| inner_exit_depth == 1) {
+	} else if (inner_exit_depth == -1) {
 		string input_gate;
 		cin >> input_gate;
 
@@ -77,7 +79,10 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 		context.back().node = NULL;
 
 		curr_node = this->next_node;
+	} else if (inner_exit_depth == 0) {
+		curr_node = inner_exit_node;
 	} else {
 		exit_depth = inner_exit_depth-1;
+		exit_node = inner_exit_node;
 	}
 }

@@ -14,6 +14,7 @@
 using namespace std;
 
 void PassThroughExperiment::explore_create_activate(
+		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
@@ -36,8 +37,18 @@ void PassThroughExperiment::explore_create_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		uniform_int_distribution<int> distribution(0, this->scope_context.size()-1);
-		this->curr_exit_depth = distribution(generator);
+		vector<pair<int,AbstractNode*>> possible_exits;
+		gather_possible_exits(possible_exits,
+							  this->scope_context,
+							  this->node_context,
+							  this->is_branch,
+							  this->throw_id,
+							  run_helper);
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->curr_exit_depth = possible_exits[random_index].first;
+		this->curr_exit_next_node = possible_exits[random_index].second;
 
 		uniform_int_distribution<int> throw_distribution(0, 3);
 		if (throw_distribution(generator) == 0) {
@@ -71,14 +82,14 @@ void PassThroughExperiment::explore_create_activate(
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 2);
 		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0 && this->curr_exit_throw_id == -1) {
+		if (this->curr_exit_depth == 0
+				&& this->curr_exit_next_node == curr_node) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		}
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		uniform_int_distribution<int> sub_scope_distribution(0, 1);
 		uniform_int_distribution<int> random_scope_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			ScopeNode* new_scope_node = NULL;
@@ -86,19 +97,11 @@ void PassThroughExperiment::explore_create_activate(
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					// if (sub_scope_distribution(generator) == 0) {
-					if (true) {
-						new_scope_node = create_subscope(scope);
-					} else {
-						new_scope_node = create_path(scope);
-					}
+					new_scope_node = create_scope(scope,
+												  run_helper);
 				} else {
-					// if (sub_scope_distribution(generator) == 0) {
-					if (true) {
-						new_scope_node = create_subscope(context[context.size() - this->scope_context.size()].scope);
-					} else {
-						new_scope_node = create_path(context[context.size() - this->scope_context.size()].scope);
-					}
+					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
+												  run_helper);
 				}
 			}
 			if (new_scope_node != NULL) {

@@ -21,10 +21,11 @@
 using namespace std;
 
 void BranchExperiment::capture_verify_activate(
-		vector<int>& context_match_indexes,
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
+		int& exit_depth,
+		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
@@ -38,41 +39,30 @@ void BranchExperiment::capture_verify_activate(
 			action_node->hook_indexes.push_back(i_index);
 			action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-			action_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-			action_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.push_back(i_index);
 			branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 			branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-			branch_node->hook_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-			branch_node->hook_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 		}
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
 	input_vals_helper(scope_context,
 					  node_context,
-					  true,
-					  0,
-					  context_match_indexes,
 					  input_vals,
-					  context[context_match_indexes[0]].scope_history);
+					  context[context.size() - this->scope_context.size()].scope_history);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
 			action_node->hook_indexes.clear();
 			action_node->hook_scope_contexts.clear();
 			action_node->hook_node_contexts.clear();
-			action_node->hook_is_fuzzy_match.clear();
-			action_node->hook_strict_root_indexes.clear();
 		} else {
 			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 			branch_node->hook_indexes.clear();
 			branch_node->hook_scope_contexts.clear();
 			branch_node->hook_node_contexts.clear();
-			branch_node->hook_is_fuzzy_match.clear();
-			branch_node->hook_strict_root_indexes.clear();
 		}
 	}
 
@@ -137,7 +127,11 @@ void BranchExperiment::capture_verify_activate(
 		}
 
 		if (this->best_step_types.size() == 0) {
-			curr_node = this->exit_node;
+			if (this->exit_node != NULL) {
+				curr_node = this->exit_node;
+			} else {
+				curr_node = this->best_exit_next_node;
+			}
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];

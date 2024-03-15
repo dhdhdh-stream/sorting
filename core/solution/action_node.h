@@ -24,8 +24,6 @@ public:
 	std::vector<int> hook_indexes;
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
-	std::vector<bool> hook_is_fuzzy_match;
-	std::vector<int> hook_strict_root_indexes;
 
 	std::vector<AbstractExperiment*> experiments;
 
@@ -36,13 +34,12 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ActionNodeHistory* history);
 
 	void back_activate(std::vector<Scope*>& scope_context,
 					   std::vector<AbstractNode*>& node_context,
-					   int path_depth,
-					   std::vector<int>& context_match_indexes,
 					   std::vector<double>& input_vals,
 					   ActionNodeHistory* history);
 

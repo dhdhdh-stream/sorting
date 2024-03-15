@@ -9,8 +9,6 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
-
-	this->id = -1;
 }
 
 ScopeNode::~ScopeNode() {

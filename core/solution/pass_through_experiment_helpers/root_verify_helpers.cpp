@@ -15,7 +15,11 @@ void PassThroughExperiment::root_verify_activate(
 	}
 
 	if (this->best_step_types.size() == 0) {
-		curr_node = this->exit_node;
+		if (this->exit_node != NULL) {
+			curr_node = this->exit_node;
+		} else {
+			curr_node = this->best_exit_next_node;
+		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];

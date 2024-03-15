@@ -68,8 +68,6 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->node_context_ids[c_index] << endl;
 	}
 
-	output_file << this->is_fuzzy_match << endl;
-
 	output_file << this->is_pass_through << endl;
 
 	output_file << this->original_average_score << endl;
@@ -82,8 +80,6 @@ void BranchNode::save(ofstream& output_file) {
 			output_file << this->input_scope_context_ids[i_index][c_index] << endl;
 			output_file << this->input_node_context_ids[i_index][c_index] << endl;
 		}
-		output_file << this->input_is_fuzzy_match[i_index] << endl;
-		output_file << this->input_strict_root_indexes[i_index] << endl;
 	}
 
 	output_file << this->linear_original_input_indexes.size() << endl;
@@ -138,10 +134,6 @@ void BranchNode::load(ifstream& input_file) {
 		this->node_context_ids.push_back(stoi(node_context_id_line));
 	}
 
-	string is_fuzzy_match_line;
-	getline(input_file, is_fuzzy_match_line);
-	this->is_fuzzy_match = stoi(is_fuzzy_match_line);
-
 	string is_pass_through_line;
 	getline(input_file, is_pass_through_line);
 	this->is_pass_through = stoi(is_pass_through_line);
@@ -174,14 +166,6 @@ void BranchNode::load(ifstream& input_file) {
 		}
 		this->input_scope_context_ids.push_back(c_scope_context_ids);
 		this->input_node_context_ids.push_back(c_node_context_ids);
-
-		string is_fuzzy_match_line;
-		getline(input_file, is_fuzzy_match_line);
-		this->input_is_fuzzy_match.push_back(stoi(is_fuzzy_match_line));
-
-		string strict_root_index_line;
-		getline(input_file, strict_root_index_line);
-		this->input_strict_root_indexes.push_back(stoi(strict_root_index_line));
 	}
 
 	string num_linear_original_inputs_line;

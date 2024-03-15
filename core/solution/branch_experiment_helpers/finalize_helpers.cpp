@@ -1,7 +1,5 @@
 #include "branch_experiment.h"
 
-#include <iostream>
-
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -69,11 +67,11 @@ void BranchExperiment::new_branch() {
 	for (int c_index = 0; c_index < (int)this->branch_node->node_context.size(); c_index++) {
 		this->branch_node->node_context_ids.push_back(this->branch_node->node_context[c_index]->id);
 	}
-	this->branch_node->is_fuzzy_match = this->is_fuzzy_match;
 
 	this->branch_node->is_pass_through = false;
 
-	this->branch_node->original_average_score = this->existing_average_score;
+	this->branch_node->original_average_score = this->existing_average_score
+		+ this->original_bias * this->existing_score_standard_deviation;
 	this->branch_node->branch_average_score = this->new_average_score;
 
 	vector<int> input_mapping(this->input_scope_contexts.size(), -1);
@@ -93,8 +91,6 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
-				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 			}
 		}
 	}
@@ -115,8 +111,6 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
-				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[original_index]);
-				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[original_index]);
 			}
 		}
 	}
@@ -136,8 +130,6 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
-				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[i_index]);
-				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[i_index]);
 			}
 		}
 	}
@@ -158,8 +150,6 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
-				this->branch_node->input_is_fuzzy_match.push_back(this->input_is_fuzzy_match[original_index]);
-				this->branch_node->input_strict_root_indexes.push_back(this->input_strict_root_indexes[original_index]);
 			}
 		}
 	}
@@ -218,6 +208,9 @@ void BranchExperiment::new_branch() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
+				new_throw_node->next_node_parent_id = -1;
+				new_throw_node->next_node_id = -1;
+				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;
 
 				this->branch_node->original_next_node_id = new_throw_node->id;
@@ -230,6 +223,9 @@ void BranchExperiment::new_branch() {
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
 
+		// TODO: maybe here?
+		// original needed to modify branch
+
 		if (this->is_branch) {
 			this->branch_node->original_next_node_id = branch_node->branch_next_node_id;
 			this->branch_node->original_next_node = branch_node->branch_next_node;
@@ -240,8 +236,17 @@ void BranchExperiment::new_branch() {
 	}
 
 	if (this->best_step_types.size() == 0) {
-		this->branch_node->branch_next_node_id = this->exit_node->id;
-		this->branch_node->branch_next_node = this->exit_node;
+		if (this->exit_node != NULL) {
+			this->branch_node->branch_next_node_id = this->exit_node->id;
+			this->branch_node->branch_next_node = this->exit_node;
+		} else {
+			if (this->best_exit_next_node == NULL) {
+				this->branch_node->branch_next_node_id = -1;
+			} else {
+				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
+			}
+			this->branch_node->branch_next_node = this->best_exit_next_node;
+		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			this->branch_node->branch_next_node_id = this->best_actions[0]->id;
@@ -331,7 +336,6 @@ void BranchExperiment::new_pass_through() {
 	for (int c_index = 0; c_index < (int)this->branch_node->node_context.size(); c_index++) {
 		this->branch_node->node_context_ids.push_back(this->branch_node->node_context[c_index]->id);
 	}
-	this->branch_node->is_fuzzy_match = this->is_fuzzy_match;
 
 	this->branch_node->is_pass_through = true;
 
@@ -363,6 +367,9 @@ void BranchExperiment::new_pass_through() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
+				new_throw_node->next_node_parent_id = -1;
+				new_throw_node->next_node_id = -1;
+				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;
 
 				this->branch_node->original_next_node_id = new_throw_node->id;
@@ -385,8 +392,17 @@ void BranchExperiment::new_pass_through() {
 	}
 
 	if (this->best_step_types.size() == 0) {
-		this->branch_node->branch_next_node_id = this->exit_node->id;
-		this->branch_node->branch_next_node = this->exit_node;
+		if (this->exit_node != NULL) {
+			this->branch_node->branch_next_node_id = this->exit_node->id;
+			this->branch_node->branch_next_node = this->exit_node;
+		} else {
+			if (this->best_exit_next_node == NULL) {
+				this->branch_node->branch_next_node_id = -1;
+			} else {
+				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
+			}
+			this->branch_node->branch_next_node = this->best_exit_next_node;
+		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			this->branch_node->branch_next_node_id = this->best_actions[0]->id;

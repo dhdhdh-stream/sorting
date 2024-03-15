@@ -25,11 +25,6 @@ public:
 	std::vector<Scope*> scope_context;
 	std::vector<int> node_context_ids;
 	std::vector<AbstractNode*> node_context;
-	/**
-	 * - fuzzy match potentially generalizes for recursion better
-	 *   - strict match better when specifically early inputs are needed
-	 */
-	bool is_fuzzy_match;
 
 	bool is_pass_through;
 
@@ -44,12 +39,6 @@ public:
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
-	std::vector<bool> input_is_fuzzy_match;
-	std::vector<int> input_strict_root_indexes;
-	/**
-	 * TODO:
-	 * - could also add match early and average?
-	 */
 
 	std::vector<int> linear_original_input_indexes;
 	std::vector<double> linear_original_weights;
@@ -74,8 +63,6 @@ public:
 	std::vector<int> hook_indexes;
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
-	std::vector<bool> hook_is_fuzzy_match;
-	std::vector<int> hook_strict_root_indexes;
 
 	std::vector<AbstractExperiment*> experiments;
 	std::vector<int> experiment_types;
@@ -93,15 +80,28 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  std::vector<AbstractNodeHistory*>& node_histories);
 
 	void back_activate(std::vector<Scope*>& scope_context,
 					   std::vector<AbstractNode*>& node_context,
-					   int path_depth,
-					   std::vector<int>& context_match_indexes,
 					   std::vector<double>& input_vals,
 					   BranchNodeHistory* history);
+
+	void random_activate(AbstractNode*& curr_node,
+						 std::vector<Scope*>& scope_context,
+						 std::vector<AbstractNode*>& node_context,
+						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
+						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+	void random_exit_activate(AbstractNode*& curr_node,
+							  std::vector<Scope*>& scope_context,
+							  std::vector<AbstractNode*>& node_context,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
+	void inner_random_exit_activate(AbstractNode*& curr_node,
+									std::vector<Scope*>& scope_context,
+									std::vector<AbstractNode*>& node_context);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,

@@ -47,7 +47,17 @@ const int BRANCH_EXPERIMENT_TRAIN_ITERS = 4;
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
+	std::vector<Scope*> scope_context;
+	std::vector<AbstractNode*> node_context;
+	bool is_branch;
+	int throw_id;
+
+	PassThroughExperiment* parent_experiment;
+	PassThroughExperiment* root_experiment;
+
 	bool skip_explore;
+
+	double average_instances_per_run;
 
 	int state;
 	int state_iter;
@@ -58,8 +68,6 @@ public:
 
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
-	std::vector<bool> input_is_fuzzy_match;
-	std::vector<int> input_strict_root_indexes;
 
 	std::vector<double> existing_linear_weights;
 	std::vector<std::vector<int>> existing_network_input_indexes;
@@ -73,6 +81,7 @@ public:
 	std::vector<ScopeNode*> curr_potential_scopes;
 	std::vector<std::set<int>> curr_catch_throw_ids;
 	int curr_exit_depth;
+	AbstractNode* curr_exit_next_node;
 	/**
 	 * - can reuse existing
 	 *   - search current context for throw_ids
@@ -86,12 +95,15 @@ public:
 	std::vector<ScopeNode*> best_potential_scopes;
 	std::vector<std::set<int>> best_catch_throw_ids;
 	int best_exit_depth;
+	AbstractNode* best_exit_next_node;
 	int best_exit_throw_id;
 
 	BranchNode* branch_node;
 	ExitNode* exit_node;
 
 	double new_average_score;
+
+	double original_bias;
 
 	std::vector<double> new_linear_weights;
 	std::vector<std::vector<int>> new_network_input_indexes;
@@ -115,7 +127,6 @@ public:
 
 	std::vector<double> o_target_val_histories;
 	std::vector<ScopeHistory*> i_scope_histories;
-	std::vector<std::vector<int>> i_context_match_indexes_histories;
 	std::vector<double> i_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -127,7 +138,6 @@ public:
 
 	BranchExperiment(std::vector<Scope*> scope_context,
 					 std::vector<AbstractNode*> node_context,
-					 bool is_fuzzy_match,
 					 bool is_branch,
 					 int throw_id,
 					 PassThroughExperiment* parent_experiment,
@@ -138,71 +148,85 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
+				  AbstractNode*& exit_node,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
-	void train_existing_activate(std::vector<int>& context_match_indexes,
-								 std::vector<ContextLayer>& context,
+	void train_existing_activate(std::vector<ContextLayer>& context,
+								 RunHelper& run_helper,
 								 BranchExperimentHistory* history);
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper,
 								 BranchExperimentHistory* history);
 
-	void explore_activate(std::vector<int>& context_match_indexes,
-						  AbstractNode*& curr_node,
+	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
-	void explore_target_activate(std::vector<int>& context_match_indexes,
-								 AbstractNode*& curr_node,
+	void explore_target_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 int& exit_depth,
+								 AbstractNode*& exit_node,
 								 RunHelper& run_helper,
 								 BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
 
-	void retrain_existing_activate(std::vector<int>& context_match_indexes,
-								   AbstractNode*& curr_node,
+	void retrain_existing_activate(AbstractNode*& curr_node,
+								   Problem* problem,
 								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
 								   RunHelper& run_helper,
 								   BranchExperimentHistory* history);
-	void retrain_existing_target_activate(std::vector<int>& context_match_indexes,
-										  AbstractNode*& curr_node,
+	void retrain_existing_target_activate(AbstractNode*& curr_node,
+										  Problem* problem,
 										  std::vector<ContextLayer>& context,
+										  int& exit_depth,
+										  AbstractNode*& exit_node,
 										  RunHelper& run_helper);
-	void retrain_existing_non_target_activate(std::vector<int>& context_match_indexes,
-											  AbstractNode*& curr_node,
+	void retrain_existing_non_target_activate(AbstractNode*& curr_node,
+											  Problem* problem,
 											  std::vector<ContextLayer>& context,
+											  int& exit_depth,
+											  AbstractNode*& exit_node,
 											  RunHelper& run_helper);
 	void retrain_existing_backprop(double target_val,
 								   BranchExperimentHistory* history);
 
-	void train_new_activate(std::vector<int>& context_match_indexes,
-							AbstractNode*& curr_node,
+	void train_new_activate(AbstractNode*& curr_node,
+							Problem* problem,
 							std::vector<ContextLayer>& context,
+							int& exit_depth,
+							AbstractNode*& exit_node,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
-	void train_new_target_activate(std::vector<int>& context_match_indexes,
-								   AbstractNode*& curr_node,
+	void train_new_target_activate(AbstractNode*& curr_node,
+								   Problem* problem,
 								   std::vector<ContextLayer>& context,
+								   int& exit_depth,
+								   AbstractNode*& exit_node,
 								   RunHelper& run_helper);
-	void train_new_non_target_activate(std::vector<int>& context_match_indexes,
-									   AbstractNode*& curr_node,
+	void train_new_non_target_activate(AbstractNode*& curr_node,
+									   Problem* problem,
 									   std::vector<ContextLayer>& context,
+									   int& exit_depth,
+									   AbstractNode*& exit_node,
 									   RunHelper& run_helper);
 	void train_new_backprop(double target_val,
 							BranchExperimentHistory* history);
 
-	void measure_activate(std::vector<int>& context_match_indexes,
-						  AbstractNode*& curr_node,
+	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper);
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper);
@@ -210,25 +234,30 @@ public:
 	void verify_existing_backprop(double target_val,
 								  RunHelper& run_helper);
 
-	void verify_activate(std::vector<int>& context_match_indexes,
-						 AbstractNode*& curr_node,
+	void verify_activate(AbstractNode*& curr_node,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
+						 int& exit_depth,
+						 AbstractNode*& exit_node,
 						 RunHelper& run_helper);
 	void verify_backprop(double target_val,
 						 RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
-	void capture_verify_activate(std::vector<int>& context_match_indexes,
-								 AbstractNode*& curr_node,
+	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
+								 int& exit_depth,
+								 AbstractNode*& exit_node,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
-	void root_verify_activate(std::vector<int>& context_match_indexes,
-							  AbstractNode*& curr_node,
+	void root_verify_activate(AbstractNode*& curr_node,
+							  Problem* problem,
 							  std::vector<ContextLayer>& context,
+							  int& exit_depth,
+							  AbstractNode*& exit_node,
 							  RunHelper& run_helper);
 
 	void finalize();

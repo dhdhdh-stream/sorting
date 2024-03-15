@@ -41,11 +41,13 @@ int main(int argc, char* argv[]) {
 		context.back().scope_history = root_history;
 
 		// unused
-		int exit_depth = 0;
+		int exit_depth = -1;
+		AbstractNode* exit_node = NULL;
 
 		solution->root->step_through_activate(problem,
 											  context,
 											  exit_depth,
+											  exit_node,
 											  run_helper,
 											  root_history);
 

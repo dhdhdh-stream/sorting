@@ -5,7 +5,6 @@
 #include "context_layer.h"
 
 class AbstractNode;
-class PassThroughExperiment;
 class Problem;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
@@ -20,19 +19,9 @@ class AbstractExperiment {
 public:
 	int type;
 
-	std::vector<Scope*> scope_context;
-	std::vector<AbstractNode*> node_context;
-	bool is_fuzzy_match;
-	bool is_branch;
-	int throw_id;
-
-	PassThroughExperiment* parent_experiment;
-	PassThroughExperiment* root_experiment;
+	int result;
 
 	double average_remaining_experiments_from_start;
-	double average_instances_per_run;
-
-	int result;
 
 	virtual ~AbstractExperiment() {};
 
@@ -40,6 +29,7 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper) = 0;
 
 	virtual void backprop(double target_val,

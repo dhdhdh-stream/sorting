@@ -13,7 +13,6 @@ using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 											 vector<AbstractNode*> node_context,
-											 bool is_fuzzy_match,
 											 bool is_branch,
 											 int throw_id,
 											 PassThroughExperiment* parent_experiment) {
@@ -21,7 +20,6 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
-	this->is_fuzzy_match = is_fuzzy_match;
 	this->is_branch = is_branch;
 	this->throw_id = throw_id;
 

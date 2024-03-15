@@ -21,7 +21,11 @@ void PassThroughExperiment::experiment_verify_new_activate(
 	}
 
 	if (this->best_step_types.size() == 0) {
-		curr_node = this->exit_node;
+		if (this->exit_node != NULL) {
+			curr_node = this->exit_node;
+		} else {
+			curr_node = this->best_exit_next_node;
+		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -66,27 +70,28 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			 * - leave this->state_iter unchanged
 			 */
 		} else {
-			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH
-					&& ((PassThroughExperiment*)this->verify_experiments.back())->best_step_types.size() > 0) {
+			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
 				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 				pass_through_experiment->state_iter = 0;
 			} else {
-				PassThroughExperiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
 
-				curr_experiment->state_iter++;
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+
+				branch_experiment->parent_experiment->state_iter++;
 				int matching_index;
-				for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
-					if (curr_experiment->child_experiments[c_index] == this->verify_experiments.back()) {
+				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
+					if (branch_experiment->parent_experiment->child_experiments[c_index] == branch_experiment) {
 						matching_index = c_index;
 						break;
 					}
 				}
-				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
-
-				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
-				delete this->verify_experiments.back();
+				branch_experiment->parent_experiment->child_experiments.erase(
+					branch_experiment->parent_experiment->child_experiments.begin() + matching_index);
+				branch_experiment->result = EXPERIMENT_RESULT_FAIL;
+				branch_experiment->finalize();
+				delete branch_experiment;
 
 				double target_count = (double)MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS
 					* pow(0.5, this->verify_experiments.size());
@@ -173,6 +178,11 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			cout << endl;
 
 			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
+			if (this->best_exit_next_node == NULL) {
+				cout << "this->best_exit_next_node->id: " << -1 << endl;
+			} else {
+				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+			}
 			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
@@ -185,27 +195,28 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH
-					&& ((PassThroughExperiment*)this->verify_experiments.back())->best_step_types.size() > 0) {
+			if (this->verify_experiments.back()->type == EXPERIMENT_TYPE_PASS_THROUGH) {
 				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
 				pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 				pass_through_experiment->state_iter = 0;
 			} else {
-				PassThroughExperiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->verify_experiments.back();
 
-				curr_experiment->state_iter++;
+				PassThroughExperiment* curr_experiment = branch_experiment->parent_experiment;
+
+				branch_experiment->parent_experiment->state_iter++;
 				int matching_index;
-				for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
-					if (curr_experiment->child_experiments[c_index] == this->verify_experiments.back()) {
+				for (int c_index = 0; c_index < (int)branch_experiment->parent_experiment->child_experiments.size(); c_index++) {
+					if (branch_experiment->parent_experiment->child_experiments[c_index] == branch_experiment) {
 						matching_index = c_index;
 						break;
 					}
 				}
-				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
-
-				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
-				delete this->verify_experiments.back();
+				branch_experiment->parent_experiment->child_experiments.erase(
+					branch_experiment->parent_experiment->child_experiments.begin() + matching_index);
+				branch_experiment->result = EXPERIMENT_RESULT_FAIL;
+				branch_experiment->finalize();
+				delete branch_experiment;
 
 				double target_count = (double)MAX_PASS_THROUGH_EXPERIMENT_NUM_EXPERIMENTS
 					* pow(0.5, this->verify_experiments.size());

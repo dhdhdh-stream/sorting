@@ -16,6 +16,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  int& exit_depth,
+						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	problem->perform_action(this->action);
@@ -29,6 +30,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 			problem,
 			context,
 			exit_depth,
+			exit_node,
 			run_helper);
 		if (is_selected) {
 			return;
