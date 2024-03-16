@@ -67,6 +67,7 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->scope_context_ids[c_index] << endl;
 		output_file << this->node_context_ids[c_index] << endl;
 	}
+	output_file << this->input_max_depth << endl;
 
 	output_file << this->is_pass_through << endl;
 
@@ -133,6 +134,10 @@ void BranchNode::load(ifstream& input_file) {
 		getline(input_file, node_context_id_line);
 		this->node_context_ids.push_back(stoi(node_context_id_line));
 	}
+
+	string input_max_depth_line;
+	getline(input_file, input_max_depth_line);
+	this->input_max_depth = stoi(input_max_depth_line);
 
 	string is_pass_through_line;
 	getline(input_file, is_pass_through_line);

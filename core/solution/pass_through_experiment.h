@@ -49,16 +49,6 @@ const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 40;
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
-	std::vector<Scope*> scope_context;
-	std::vector<AbstractNode*> node_context;
-	bool is_branch;
-	int throw_id;
-
-	PassThroughExperiment* parent_experiment;
-	PassThroughExperiment* root_experiment;
-
-	double average_instances_per_run;
-
 	int state;
 	int state_iter;
 	int sub_state_iter;

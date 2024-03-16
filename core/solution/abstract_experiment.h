@@ -5,6 +5,7 @@
 #include "context_layer.h"
 
 class AbstractNode;
+class PassThroughExperiment;
 class Problem;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
@@ -19,9 +20,18 @@ class AbstractExperiment {
 public:
 	int type;
 
-	int result;
+	std::vector<Scope*> scope_context;
+	std::vector<AbstractNode*> node_context;
+	bool is_branch;
+	int throw_id;
+
+	PassThroughExperiment* parent_experiment;
+	PassThroughExperiment* root_experiment;
 
 	double average_remaining_experiments_from_start;
+	double average_instances_per_run;
+
+	int result;
 
 	virtual ~AbstractExperiment() {};
 

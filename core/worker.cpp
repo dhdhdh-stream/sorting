@@ -47,8 +47,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	problem_type = new Sorting();
+	// problem_type = new Minesweeper();
 
 	solution = new Solution();
 	solution->load(path, "main");
@@ -57,8 +57,8 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -127,14 +127,7 @@ int main(int argc, char* argv[]) {
 					run_helper.experiment_histories.back()->experiment->finalize();
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
-					PassThroughExperiment* curr_experiment;
-					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = pass_through_experiment->parent_experiment;
-					} else {
-						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = branch_experiment->parent_experiment;
-					}
+					PassThroughExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
 
 					curr_experiment->state_iter++;
 					int matching_index;
@@ -231,6 +224,8 @@ int main(int argc, char* argv[]) {
 				} else {
 					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 				}
+
+				solution->num_actions_limit = 20*solution->max_num_actions + 20;
 			}
 
 			num_fails = 0;

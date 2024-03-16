@@ -11,10 +11,10 @@ print('Starting...')
 
 workers = []
 
-workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
+workers_file = open(os.path.expanduser('~/ec2_workers.txt'), 'r')
 for line in workers_file:
 	arr = line.strip().split()
-	workers.append([arr[0], arr[1], arr[2], arr[3]])
+	workers.append([arr[0], arr[1], arr[2]])
 workers_file.close()
 
 solution_file = open('saves/main.txt', 'r')
@@ -40,7 +40,7 @@ while True:
 			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 			client.connect(worker[1],
 						   username=worker[2],
-						   password=worker[3])
+						   key_filename=os.path.expanduser('~/kp1.pem'))
 
 			client_sftp = client.open_sftp()
 
@@ -74,7 +74,7 @@ while True:
 			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 			client.connect(worker[1],
 						   username=worker[2],
-						   password=worker[3])
+						   key_filename=os.path.expanduser('~/kp1.pem'))
 
 			client_sftp = client.open_sftp()
 

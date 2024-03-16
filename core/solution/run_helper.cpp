@@ -10,6 +10,8 @@ RunHelper::RunHelper() {
 
 	this->throw_id = -1;
 
+	this->num_actions = 0;
+
 	this->exceeded_limit = false;
 }
 

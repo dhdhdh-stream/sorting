@@ -36,23 +36,11 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
 							ScopeHistory* scope_history);
 
-void create_gather(std::vector<Scope*>& new_gather_scope_context,
-				   std::vector<AbstractNode*>& new_gather_node_context,
-				   bool& new_gather_is_branch,
-				   int& new_gather_exit_depth,
-				   AbstractNode*& new_gather_exit_node,
-				   ScopeHistory* scope_history,
-				   SeedExperimentFilter* seed_experiment_filter);
-
-/**
- * TODO:
- * - instead of always backtracking, add caching?
- */
-void input_vals_helper(std::vector<Scope*>& scope_context,
+void input_vals_helper(int curr_depth,
+					   int max_depth,
+					   std::vector<Scope*>& scope_context,
 					   std::vector<AbstractNode*>& node_context,
 					   std::vector<double>& input_vals,
 					   ScopeHistory* scope_history);
-
-int count_actions(ScopeHistory* scope_history);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -18,9 +18,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 5;
+const int EXPLORE_ITERS = 2;
 #else
-const int EXPLORE_ITERS = 500;
+const int EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_activate(AbstractNode*& curr_node,
@@ -82,7 +82,9 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	input_vals_helper(scope_context,
+	input_vals_helper(0,
+					  this->input_max_depth,
+					  scope_context,
 					  node_context,
 					  input_vals,
 					  context[context.size() - this->scope_context.size()].scope_history);

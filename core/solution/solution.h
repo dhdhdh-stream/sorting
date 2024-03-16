@@ -49,6 +49,12 @@ public:
 	int max_depth;
 	int depth_limit;
 
+	/**
+	 * - set limit to 20*max_num_actions+20
+	 */
+	int max_num_actions;
+	int num_actions_limit;
+
 	int curr_num_datapoints;
 
 	#if defined(MDEBUG) && MDEBUG

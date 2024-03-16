@@ -48,7 +48,9 @@ void BranchExperiment::capture_verify_activate(
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	input_vals_helper(scope_context,
+	input_vals_helper(0,
+					  this->input_max_depth,
+					  scope_context,
 					  node_context,
 					  input_vals,
 					  context[context.size() - this->scope_context.size()].scope_history);

@@ -13,6 +13,8 @@ public:
 
 	int throw_id;
 
+	int num_actions;
+
 	bool exceeded_limit;
 
 	/**

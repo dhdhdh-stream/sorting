@@ -101,7 +101,9 @@ void BranchExperiment::retrain_existing_non_target_activate(
 	}
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	input_vals_helper(scope_context,
+	input_vals_helper(0,
+					  this->input_max_depth,
+					  scope_context,
 					  node_context,
 					  input_vals,
 					  context[context.size() - this->scope_context.size()].scope_history);
@@ -223,7 +225,9 @@ void BranchExperiment::retrain_existing_backprop(
 
 				vector<Scope*> scope_context;
 				vector<AbstractNode*> node_context;
-				input_vals_helper(scope_context,
+				input_vals_helper(0,
+								  this->input_max_depth,
+								  scope_context,
 								  node_context,
 								  input_vals,
 								  this->i_scope_histories[d_index]);
@@ -318,6 +322,7 @@ void BranchExperiment::retrain_existing_backprop(
 			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
+			int test_network_input_max_depth = 0;
 
 			vector<int> remaining_indexes(possible_scope_contexts.size());
 			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
@@ -329,6 +334,9 @@ void BranchExperiment::retrain_existing_backprop(
 
 				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+				if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > test_network_input_max_depth) {
+					test_network_input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
+				}
 
 				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
 			}
@@ -365,7 +373,9 @@ void BranchExperiment::retrain_existing_backprop(
 
 				vector<Scope*> scope_context;
 				vector<AbstractNode*> node_context;
-				input_vals_helper(scope_context,
+				input_vals_helper(0,
+								  test_network_input_max_depth,
+								  scope_context,
 								  node_context,
 								  test_input_vals,
 								  this->i_scope_histories[d_index]);
@@ -400,10 +410,15 @@ void BranchExperiment::retrain_existing_backprop(
 							average_misguess,
 							misguess_standard_deviation);
 
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%3 == 0) {
+			#else
 			double improvement = this->existing_average_misguess - average_misguess;
 			double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
 			double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
+
 			if (t_score > 2.326) {
+			#endif /* MDEBUG */
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 					int index = -1;
@@ -417,6 +432,9 @@ void BranchExperiment::retrain_existing_backprop(
 					if (index == -1) {
 						this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+						if ((int)test_network_input_scope_contexts[t_index].size() > this->input_max_depth) {
+							this->input_max_depth = (int)test_network_input_scope_contexts[t_index].size();
+						}
 
 						this->existing_linear_weights.push_back(0.0);
 						this->new_linear_weights.push_back(0.0);

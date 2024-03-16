@@ -44,6 +44,9 @@ void Solution::init() {
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
+	this->max_num_actions = 1;
+	this->num_actions_limit = 40;
+
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
@@ -101,6 +104,12 @@ void Solution::load(string path,
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
 
+	string max_num_actions_line;
+	getline(input_file, max_num_actions_line);
+	this->max_num_actions = stoi(max_num_actions_line);
+
+	this->num_actions_limit = 20*this->max_num_actions + 20;
+
 	input_file.close();
 
 	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
@@ -156,6 +165,8 @@ void Solution::save(string path,
 	output_file << this->throw_counter << endl;
 
 	output_file << this->max_depth << endl;
+
+	output_file << this->max_num_actions << endl;
 
 	output_file.close();
 

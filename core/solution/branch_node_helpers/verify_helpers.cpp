@@ -39,39 +39,43 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			node_histories.push_back(history);
 
 			vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_scope_contexts[i_index].size() > 0) {
-					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-						ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-						action_node->hook_indexes.push_back(i_index);
-						action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-						action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-					} else {
-						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-						branch_node->hook_indexes.push_back(i_index);
-						branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-						branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+			if (this->input_max_depth > 0) {
+				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+					if (this->input_scope_contexts[i_index].size() > 0) {
+						if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+							action_node->hook_indexes.push_back(i_index);
+							action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+							action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						} else {
+							BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+							branch_node->hook_indexes.push_back(i_index);
+							branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
+							branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+						}
 					}
 				}
-			}
-			vector<Scope*> scope_context;
-			vector<AbstractNode*> node_context;
-			input_vals_helper(scope_context,
-							  node_context,
-							  input_vals,
-							  context[context.size() - this->scope_context.size()].scope_history);
-			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-				if (this->input_scope_contexts[i_index].size() > 0) {
-					if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-						ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-						action_node->hook_indexes.clear();
-						action_node->hook_scope_contexts.clear();
-						action_node->hook_node_contexts.clear();
-					} else {
-						BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-						branch_node->hook_indexes.clear();
-						branch_node->hook_scope_contexts.clear();
-						branch_node->hook_node_contexts.clear();
+				vector<Scope*> scope_context;
+				vector<AbstractNode*> node_context;
+				input_vals_helper(0,
+								  this->input_max_depth,
+								  scope_context,
+								  node_context,
+								  input_vals,
+								  context[context.size() - this->scope_context.size()].scope_history);
+				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+					if (this->input_scope_contexts[i_index].size() > 0) {
+						if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
+							action_node->hook_indexes.clear();
+							action_node->hook_scope_contexts.clear();
+							action_node->hook_node_contexts.clear();
+						} else {
+							BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
+							branch_node->hook_indexes.clear();
+							branch_node->hook_scope_contexts.clear();
+							branch_node->hook_node_contexts.clear();
+						}
 					}
 				}
 			}

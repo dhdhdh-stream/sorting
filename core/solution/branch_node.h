@@ -39,6 +39,7 @@ public:
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
+	int input_max_depth;
 
 	std::vector<int> linear_original_input_indexes;
 	std::vector<double> linear_original_weights;

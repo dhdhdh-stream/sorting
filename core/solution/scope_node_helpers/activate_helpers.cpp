@@ -1,5 +1,7 @@
 #include "scope_node.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -48,33 +50,19 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			run_helper.throw_id = -1;
 
 			curr_node = it->second;
+		}
+		// else do nothing
 
-			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-				bool is_selected = this->experiments[e_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper);
-				if (is_selected) {
-					return;
-				}
-			}
-		} else {
-			// do nothing
-
-			for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-				bool is_selected = this->experiments[e_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper);
-				if (is_selected) {
-					return;
-				}
+		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+			bool is_selected = this->experiments[e_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper);
+			if (is_selected) {
+				return;
 			}
 		}
 	} else if (inner_exit_depth == -1) {

@@ -1,5 +1,3 @@
-// TODO: limit repeat within scope, but include branching
-
 #include "solution_helpers.h"
 
 #include "action_node.h"

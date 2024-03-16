@@ -38,8 +38,8 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 								 random_curr_depth,
 								 random_throw_id,
 								 random_exceeded_limit,
-								 possible_scope_contexts,
-								 possible_node_contexts);
+								 inner_possible_scope_contexts,
+								 inner_possible_node_contexts);
 
 	scope_context.pop_back();
 	node_context.pop_back();

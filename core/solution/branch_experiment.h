@@ -47,17 +47,7 @@ const int BRANCH_EXPERIMENT_TRAIN_ITERS = 4;
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
-	std::vector<Scope*> scope_context;
-	std::vector<AbstractNode*> node_context;
-	bool is_branch;
-	int throw_id;
-
-	PassThroughExperiment* parent_experiment;
-	PassThroughExperiment* root_experiment;
-
 	bool skip_explore;
-
-	double average_instances_per_run;
 
 	int state;
 	int state_iter;
@@ -68,6 +58,7 @@ public:
 
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
+	int input_max_depth;
 
 	std::vector<double> existing_linear_weights;
 	std::vector<std::vector<int>> existing_network_input_indexes;

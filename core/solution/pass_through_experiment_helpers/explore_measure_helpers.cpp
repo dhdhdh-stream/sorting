@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "exit_node.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -161,11 +162,7 @@ void PassThroughExperiment::explore_measure_backprop(
 				// }
 				// cout << "this->node_context:" << endl;
 				// for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				// 	if (this->node_context[c_index] == NULL) {
-				// 		cout << c_index << ": -1" << endl;
-				// 	} else {
-				// 		cout << c_index << ": " << this->node_context[c_index]->id << endl;
-				// 	}
+				// 	cout << c_index << ": " << this->node_context[c_index]->id << endl;
 				// }
 				// cout << "this->is_branch: " << this->is_branch << endl;
 				// cout << "this->throw_id: " << this->throw_id << endl;

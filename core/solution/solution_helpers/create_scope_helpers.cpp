@@ -837,6 +837,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 				new_branch_node->original_average_score = original_branch_node->original_average_score;
 				new_branch_node->branch_average_score = original_branch_node->branch_average_score;
 
+				new_branch_node->input_max_depth = 0;
 				int context_starting_depth = l_index+1 - (int)original_branch_node->scope_context.size();
 				for (int i_index = 0; i_index < (int)original_branch_node->input_scope_contexts.size(); i_index++) {
 					if (original_branch_node->input_scope_contexts[i_index].size() == 0) {
@@ -901,6 +902,9 @@ ScopeNode* create_scope(Scope* parent_scope,
 							new_branch_node->input_scope_contexts.push_back(new_input_scope_contexts);
 							new_branch_node->input_node_context_ids.push_back(new_input_node_context_ids);
 							new_branch_node->input_node_contexts.push_back(new_input_node_contexts);
+							if ((int)new_input_scope_contexts.size() > new_branch_node->input_max_depth) {
+								new_branch_node->input_max_depth = (int)new_input_scope_contexts.size();
+							}
 						}
 					}
 				}
@@ -936,6 +940,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 				new_branch_node->original_average_score = original_branch_node->original_average_score;
 				new_branch_node->branch_average_score = original_branch_node->branch_average_score;
 
+				new_branch_node->input_max_depth = 0;
 				int context_starting_depth = l_index+1 - (int)original_branch_node->scope_context.size();
 				for (int i_index = 0; i_index < (int)original_branch_node->input_scope_contexts.size(); i_index++) {
 					if (original_branch_node->input_scope_contexts[i_index].size() == 0) {
@@ -1021,6 +1026,9 @@ ScopeNode* create_scope(Scope* parent_scope,
 								new_branch_node->input_scope_contexts.push_back(new_input_scope_contexts);
 								new_branch_node->input_node_context_ids.push_back(new_input_node_context_ids);
 								new_branch_node->input_node_contexts.push_back(new_input_node_contexts);
+								if ((int)new_input_scope_contexts.size() > new_branch_node->input_max_depth) {
+									new_branch_node->input_max_depth = (int)new_input_scope_contexts.size();
+								}
 							}
 						} else {
 							map<AbstractNode*, pair<bool,AbstractNode*>>::iterator it =

@@ -19,41 +19,63 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 									   AbstractNode*& exit_node,
 									   RunHelper& run_helper,
 									   ScopeHistory* history) {
-	if (curr_node->type == NODE_TYPE_ACTION) {
-		ActionNode* node = (ActionNode*)curr_node;
-		ActionNodeHistory* node_history = new ActionNodeHistory(node);
-		history->node_histories.push_back(node_history);
-		node->step_through_activate(curr_node,
-									problem,
-									context,
-									run_helper,
-									node_history);
-	} else if (curr_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* node = (ScopeNode*)curr_node;
-		ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-		history->node_histories.push_back(node_history);
-		node->step_through_activate(curr_node,
-									problem,
-									context,
-									exit_depth,
-									exit_node,
-									run_helper,
-									node_history);
-	} else if (curr_node->type == NODE_TYPE_BRANCH) {
-		BranchNode* node = (BranchNode*)curr_node;
-		node->step_through_activate(curr_node,
-									problem,
-									context,
-									run_helper,
-									history->node_histories);
-	} else {
-		ExitNode* node = (ExitNode*)curr_node;
-		if (node->throw_id != -1) {
-			run_helper.throw_id = node->throw_id;
-		} else {
-			exit_depth = node->exit_depth-1;
-			exit_node = node->next_node;
+	switch (curr_node->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* node = (ActionNode*)curr_node;
+			ActionNodeHistory* node_history = new ActionNodeHistory(node);
+			history->node_histories.push_back(node_history);
+			node->step_through_activate(curr_node,
+										problem,
+										context,
+										run_helper,
+										node_history);
 		}
+
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* node = (ScopeNode*)curr_node;
+			ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
+			history->node_histories.push_back(node_history);
+			node->step_through_activate(curr_node,
+										problem,
+										context,
+										exit_depth,
+										exit_node,
+										run_helper,
+										node_history);
+		}
+
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* node = (BranchNode*)curr_node;
+			node->step_through_activate(curr_node,
+										problem,
+										context,
+										run_helper,
+										history->node_histories);
+		}
+
+		break;
+	case NODE_TYPE_EXIT:
+		{
+			ExitNode* node = (ExitNode*)curr_node;
+			if (node->throw_id != -1) {
+				run_helper.throw_id = node->throw_id;
+			} else {
+				exit_depth = node->exit_depth-1;
+				exit_node = node->next_node;
+			}
+		}
+
+		break;
+	}
+
+	run_helper.num_actions++;
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		run_helper.exceeded_limit = true;
 	}
 }
 

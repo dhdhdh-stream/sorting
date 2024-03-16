@@ -26,6 +26,10 @@ void PassThroughExperiment::measure_existing_backprop(
 			if (run_helper.max_depth > solution->max_depth) {
 				solution->max_depth = run_helper.max_depth;
 			}
+
+			if (run_helper.num_actions > solution->max_num_actions) {
+				solution->max_num_actions = run_helper.num_actions;
+			}
 		}
 	}
 

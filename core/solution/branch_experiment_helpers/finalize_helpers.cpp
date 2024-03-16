@@ -74,6 +74,7 @@ void BranchExperiment::new_branch() {
 		+ this->original_bias * this->existing_score_standard_deviation;
 	this->branch_node->branch_average_score = this->new_average_score;
 
+	this->branch_node->input_max_depth = 0;
 	vector<int> input_mapping(this->input_scope_contexts.size(), -1);
 	for (int i_index = 0; i_index < (int)this->existing_linear_weights.size(); i_index++) {
 		if (this->existing_linear_weights[i_index] != 0.0) {
@@ -91,6 +92,9 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				if ((int)this->input_scope_contexts[i_index].size() > this->branch_node->input_max_depth) {
+					this->branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
+				}
 			}
 		}
 	}
@@ -111,6 +115,9 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				if ((int)this->input_scope_contexts[original_index].size() > this->branch_node->input_max_depth) {
+					this->branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
+				}
 			}
 		}
 	}
@@ -130,6 +137,9 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				if ((int)this->input_scope_contexts[i_index].size() > this->branch_node->input_max_depth) {
+					this->branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
+				}
 			}
 		}
 	}
@@ -150,6 +160,9 @@ void BranchExperiment::new_branch() {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				this->branch_node->input_node_context_ids.push_back(node_context_ids);
+				if ((int)this->input_scope_contexts[original_index].size() > this->branch_node->input_max_depth) {
+					this->branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
+				}
 			}
 		}
 	}
@@ -222,9 +235,6 @@ void BranchExperiment::new_branch() {
 		}
 	} else {
 		BranchNode* branch_node = (BranchNode*)this->node_context.back();
-
-		// TODO: maybe here?
-		// original needed to modify branch
 
 		if (this->is_branch) {
 			this->branch_node->original_next_node_id = branch_node->branch_next_node_id;
@@ -341,6 +351,8 @@ void BranchExperiment::new_pass_through() {
 
 	this->branch_node->original_average_score = 0.0;
 	this->branch_node->branch_average_score = 0.0;
+
+	this->branch_node->input_max_depth = 0;
 
 	this->branch_node->original_network = NULL;
 	this->branch_node->branch_network = NULL;

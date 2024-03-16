@@ -1,7 +1,3 @@
-// TODO: shuffle scopes occasionally?
-// - move actions in and out of scopes
-//   - give different distribution of experiments/observations
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -32,19 +28,20 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1710558550;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	problem_type = new Sorting();
+	// problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -53,8 +50,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -129,14 +126,7 @@ int main(int argc, char* argv[]) {
 					run_helper.experiment_histories.back()->experiment->finalize();
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
-					PassThroughExperiment* curr_experiment;
-					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_PASS_THROUGH) {
-						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = pass_through_experiment->parent_experiment;
-					} else {
-						BranchExperiment* branch_experiment = (BranchExperiment*)run_helper.experiment_histories.back()->experiment;
-						curr_experiment = branch_experiment->parent_experiment;
-					}
+					PassThroughExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
 
 					curr_experiment->state_iter++;
 					int matching_index;
@@ -249,13 +239,13 @@ int main(int argc, char* argv[]) {
 
 			num_fails = 0;
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;
@@ -266,6 +256,8 @@ int main(int argc, char* argv[]) {
 				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 			}
 			#endif /* MDEBUG */
+
+			solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 		} else if (is_fail) {
