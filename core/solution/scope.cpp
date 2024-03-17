@@ -96,7 +96,7 @@ void Scope::save(ofstream& output_file) {
 		it->second->save(output_file);
 	}
 
-	output_file << this->starting_node_id << endl;
+	output_file << this->default_starting_node_id << endl;
 }
 
 void Scope::load(ifstream& input_file) {
@@ -144,9 +144,9 @@ void Scope::load(ifstream& input_file) {
 		}
 	}
 
-	string starting_node_id_line;
-	getline(input_file, starting_node_id_line);
-	this->starting_node_id = stoi(starting_node_id_line);
+	string default_starting_node_id_line;
+	getline(input_file, default_starting_node_id_line);
+	this->default_starting_node_id = stoi(default_starting_node_id_line);
 }
 
 void Scope::link() {
@@ -155,7 +155,7 @@ void Scope::link() {
 		it->second->link();
 	}
 
-	this->starting_node = this->nodes[this->starting_node_id];
+	this->default_starting_node = this->nodes[this->default_starting_node_id];
 }
 
 void Scope::save_for_display(ofstream& output_file) {

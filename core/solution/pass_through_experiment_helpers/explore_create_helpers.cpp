@@ -97,11 +97,15 @@ void PassThroughExperiment::explore_create_activate(
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope,
-												  run_helper);
+					// new_scope_node = create_scope(scope,
+					// 							  run_helper);
+					new_scope_node = existing_new_start(scope,
+														run_helper);
 				} else {
-					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
-												  run_helper);
+					// new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
+					// 							  run_helper);
+					new_scope_node = existing_new_start(context[context.size() - this->scope_context.size()].scope,
+														run_helper);
 				}
 			}
 			if (new_scope_node != NULL) {

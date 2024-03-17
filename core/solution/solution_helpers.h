@@ -22,6 +22,8 @@ ScopeNode* create_scope(Scope* parent_scope,
 						RunHelper& run_helper);
 ScopeNode* create_repeat(std::vector<ContextLayer>& context,
 						 int explore_context_depth);
+ScopeNode* existing_new_start(Scope* parent_scope,
+							  RunHelper& run_helper);
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<Scope*>& experiment_scope_context,

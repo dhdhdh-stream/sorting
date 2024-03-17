@@ -1,5 +1,3 @@
-// TODO: redo inner branches
-
 #include "solution_helpers.h"
 
 #include <cmath>
@@ -121,6 +119,8 @@ pair<bool,AbstractNode*> end_node_helper(vector<Scope*>& scope_context,
 
 						new_node_reverse_mappings[new_scope_node] = scope_node;
 
+						new_scope_node->starting_node_id = scope_node->starting_node_id;
+						new_scope_node->starting_node = scope_node->starting_node;
 						new_scope_node->scope = scope_node->scope;
 
 						/**
@@ -393,6 +393,8 @@ pair<bool,AbstractNode*> start_node_helper(vector<Scope*>& scope_context,
 
 						new_node_reverse_mappings[curr_depth][new_scope_node] = scope_node;
 
+						new_scope_node->starting_node_id = scope_node->starting_node_id;
+						new_scope_node->starting_node = scope_node->starting_node;
 						new_scope_node->scope = scope_node->scope;
 
 						/**
@@ -611,7 +613,8 @@ ScopeNode* create_scope(Scope* parent_scope,
 	int random_throw_id = -1;
 	bool random_exceeded_limit = false;
 
-	parent_scope->random_activate(scope_context,
+	parent_scope->random_activate(parent_scope->default_starting_node,
+								  scope_context,
 								  node_context,
 								  exit_depth,
 								  exit_node,
@@ -707,70 +710,70 @@ ScopeNode* create_scope(Scope* parent_scope,
 		}
 	}
 
-	AbstractNode* new_starting_node;
+	AbstractNode* new_default_starting_node;
 	vector<map<AbstractNode*, pair<bool,AbstractNode*>>> end_node_mappings(end_scope_context.size());
 	vector<map<AbstractNode*, AbstractNode*>> end_new_node_reverse_mappings(end_scope_context.size());
 	if ((int)start_scope_context.size() == starting_depth) {
 		// start empty edge case
 		{
 			end_node_mappings.back()[end_node_context.back()] = {true, NULL};
-			if (end_scope_context.back()->starting_node != end_node_context.back()) {
+			if (end_scope_context.back()->default_starting_node != end_node_context.back()) {
 				end_node_helper(end_scope_context,
 								end_node_context,
 								(int)end_scope_context.size()-1,
-								end_scope_context.back()->starting_node,
+								end_scope_context.back()->default_starting_node,
 								end_node_mappings.back(),
 								end_new_node_reverse_mappings.back(),
 								new_scope);
 
-				new_starting_node = end_node_mappings.back()[end_scope_context.back()->starting_node].second;
+				new_default_starting_node = end_node_mappings.back()[end_scope_context.back()->default_starting_node].second;
 			}
 		}
 		for (int l_index = (int)end_scope_context.size()-2; l_index >= starting_depth; l_index--) {
 			AbstractNode* next_layer_start = end_node_mappings[l_index + 1]
-				[end_scope_context[l_index + 1]->starting_node].second;
+				[end_scope_context[l_index + 1]->default_starting_node].second;
 			end_node_mappings[l_index][end_node_context[l_index]] = {true, next_layer_start};
-			if (end_scope_context[l_index]->starting_node != end_node_context[l_index]) {
+			if (end_scope_context[l_index]->default_starting_node != end_node_context[l_index]) {
 				end_node_helper(end_scope_context,
 								end_node_context,
 								l_index,
-								end_scope_context[l_index]->starting_node,
+								end_scope_context[l_index]->default_starting_node,
 								end_node_mappings[l_index],
 								end_new_node_reverse_mappings[l_index],
 								new_scope);
 
-				new_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->starting_node].second;
+				new_default_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->default_starting_node].second;
 			}
 		}
 	} else if ((int)end_scope_context.size() > starting_depth + 1) {
 		{
 			end_node_mappings.back()[end_node_context.back()] = {true, NULL};
-			if (end_scope_context.back()->starting_node != end_node_context.back()) {
+			if (end_scope_context.back()->default_starting_node != end_node_context.back()) {
 				end_node_helper(end_scope_context,
 								end_node_context,
 								(int)end_scope_context.size()-1,
-								end_scope_context.back()->starting_node,
+								end_scope_context.back()->default_starting_node,
 								end_node_mappings.back(),
 								end_new_node_reverse_mappings.back(),
 								new_scope);
 
-				new_starting_node = end_node_mappings.back()[end_scope_context.back()->starting_node].second;
+				new_default_starting_node = end_node_mappings.back()[end_scope_context.back()->default_starting_node].second;
 			}
 		}
 		for (int l_index = (int)end_scope_context.size()-2; l_index > starting_depth; l_index--) {
 			AbstractNode* next_layer_start = end_node_mappings[l_index + 1]
-				[end_scope_context[l_index + 1]->starting_node].second;
+				[end_scope_context[l_index + 1]->default_starting_node].second;
 			end_node_mappings[l_index][end_node_context[l_index]] = {true, next_layer_start};
-			if (end_scope_context[l_index]->starting_node != end_node_context[l_index]) {
+			if (end_scope_context[l_index]->default_starting_node != end_node_context[l_index]) {
 				end_node_helper(end_scope_context,
 								end_node_context,
 								l_index,
-								end_scope_context[l_index]->starting_node,
+								end_scope_context[l_index]->default_starting_node,
 								end_node_mappings[l_index],
 								end_new_node_reverse_mappings[l_index],
 								new_scope);
 
-				new_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->starting_node].second;
+				new_default_starting_node = end_node_mappings[l_index][end_scope_context[l_index]->default_starting_node].second;
 			}
 		}
 	}
@@ -781,7 +784,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 		AbstractNode* end_node;
 		if ((int)end_node_mappings.size() > starting_depth + 1) {
 			end_node = end_node_mappings[starting_depth + 1]
-				[end_scope_context[starting_depth + 1]->starting_node].second;
+				[end_scope_context[starting_depth + 1]->default_starting_node].second;
 		} else {
 			end_node = NULL;
 		}
@@ -795,7 +798,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 						  start_new_node_reverse_mappings,
 						  new_scope);
 
-		new_starting_node = start_node_mappings.back()[start_node_context.back()].second;
+		new_default_starting_node = start_node_mappings.back()[start_node_context.back()].second;
 	}
 
 	if (new_scope->nodes.size() < 2) {
@@ -808,7 +811,7 @@ ScopeNode* create_scope(Scope* parent_scope,
 	/**
 	 * - edge case where inner scope exits to a node that's no longer reachable outside
 	 */
-	if (new_starting_node == NULL) {
+	if (new_default_starting_node == NULL) {
 		/**
 		 * - may have added nodes that need to be deleted
 		 */
@@ -818,22 +821,26 @@ ScopeNode* create_scope(Scope* parent_scope,
 		return NULL;
 	}
 
-	if (new_starting_node->type == NODE_TYPE_ACTION
-			&& ((ActionNode*)new_starting_node)->action.move == ACTION_NOOP) {
-		new_scope->starting_node_id = new_starting_node->id;
-		new_scope->starting_node = new_starting_node;
+	if (new_default_starting_node->type == NODE_TYPE_ACTION
+			&& ((ActionNode*)new_default_starting_node)->action.move == ACTION_NOOP) {
+		new_scope->default_starting_node_id = new_default_starting_node->id;
+		new_scope->default_starting_node = new_default_starting_node;
+		new_scope_node->starting_node_id = new_default_starting_node->id;
+		new_scope_node->starting_node = new_default_starting_node;
 	} else {
 		ActionNode* new_noop_action_node = new ActionNode();
 		new_noop_action_node->parent = new_scope;
 		new_noop_action_node->id = new_scope->node_counter;
 		new_scope->node_counter++;
 		new_noop_action_node->action = Action(ACTION_NOOP);
-		new_noop_action_node->next_node_id = new_starting_node->id;
-		new_noop_action_node->next_node = new_starting_node;
+		new_noop_action_node->next_node_id = new_default_starting_node->id;
+		new_noop_action_node->next_node = new_default_starting_node;
 		new_scope->nodes[new_noop_action_node->id] = new_noop_action_node;
 
-		new_scope->starting_node_id = new_noop_action_node->id;
-		new_scope->starting_node = new_noop_action_node;
+		new_scope->default_starting_node_id = new_noop_action_node->id;
+		new_scope->default_starting_node = new_noop_action_node;
+		new_scope_node->starting_node_id = new_noop_action_node->id;
+		new_scope_node->starting_node = new_noop_action_node;
 	}
 
 	for (int l_index = (int)start_new_node_reverse_mappings.size()-1; l_index >= starting_depth; l_index--) {

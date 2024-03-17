@@ -29,7 +29,8 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->verify_activate(problem,
+	this->scope->verify_activate(this->starting_node,
+								 problem,
 								 context,
 								 inner_exit_depth,
 								 inner_exit_node,

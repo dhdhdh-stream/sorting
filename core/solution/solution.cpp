@@ -33,8 +33,8 @@ void Solution::init() {
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
 	starting_scope->nodes[0] = starting_noop_node;
-	starting_scope->starting_node_id = 0;
-	starting_scope->starting_node = starting_noop_node;
+	starting_scope->default_starting_node_id = 0;
+	starting_scope->default_starting_node = starting_noop_node;
 	starting_scope->node_counter = 1;
 
 	this->root = starting_scope;

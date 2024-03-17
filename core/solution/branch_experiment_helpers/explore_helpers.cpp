@@ -122,9 +122,10 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	bool is_repeat = false;
 	uniform_int_distribution<int> repeat_distribution(0, 3);
-	if (this->throw_id == -1
-			&& this->parent_experiment == NULL
-			&& repeat_distribution(generator)) {
+	// if (this->throw_id == -1
+	// 		&& this->parent_experiment == NULL
+	// 		&& repeat_distribution(generator)) {
+	if (false) {
 		ScopeNode* new_scope_node = create_repeat(context,
 												  (int)this->scope_context.size());
 		if (new_scope_node != NULL) {
@@ -207,11 +208,15 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				if (random_scope_distribution(generator) == 0) {
 					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					new_scope_node = create_scope(scope,
-												  run_helper);
+					// new_scope_node = create_scope(scope,
+					// 							  run_helper);
+					new_scope_node = existing_new_start(scope,
+														run_helper);
 				} else {
-					new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
-												  run_helper);
+					// new_scope_node = create_scope(context[context.size() - this->scope_context.size()].scope,
+					// 							  run_helper);
+					new_scope_node = existing_new_start(context[context.size() - this->scope_context.size()].scope,
+														run_helper);
 				}
 			}
 			if (new_scope_node != NULL) {

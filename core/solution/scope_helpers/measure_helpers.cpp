@@ -85,7 +85,8 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 	}
 }
 
-void Scope::measure_activate(Problem* problem,
+void Scope::measure_activate(AbstractNode* starting_node,
+							 Problem* problem,
 							 vector<ContextLayer>& context,
 							 int& exit_depth,
 							 AbstractNode*& exit_node,
@@ -108,7 +109,7 @@ void Scope::measure_activate(Problem* problem,
 	}
 	run_helper.curr_depth++;
 
-	AbstractNode* curr_node = this->starting_node;
+	AbstractNode* curr_node = starting_node;
 	while (true) {
 		if (run_helper.exceeded_limit
 				|| run_helper.throw_id != -1

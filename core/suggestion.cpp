@@ -61,7 +61,8 @@ int main(int argc, char* argv[]) {
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->activate(problem,
+		solution->root->activate(solution->root->default_starting_node,
+								 problem,
 								 context,
 								 exit_depth,
 								 exit_node,

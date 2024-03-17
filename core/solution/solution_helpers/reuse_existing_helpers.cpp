@@ -32,6 +32,8 @@ ScopeNode* reuse_existing() {
 	}
 
 	ScopeNode* new_scope_node = new ScopeNode();
+	new_scope_node->starting_node_id = existing_scope->default_starting_node_id;
+	new_scope_node->starting_node = existing_scope->default_starting_node;
 	new_scope_node->scope = existing_scope;
 
 	return new_scope_node;

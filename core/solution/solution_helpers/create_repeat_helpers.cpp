@@ -126,6 +126,8 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 
 			ScopeNode* new_scope_node = new ScopeNode();
 
+			new_scope_node->starting_node_id = original_scope_node->starting_node_id;
+			new_scope_node->starting_node = original_scope_node->starting_node;
 			new_scope_node->scope = original_scope_node->scope;
 
 			new_nodes.push_back(new_scope_node);
@@ -159,8 +161,10 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 		}
 	}
 
-	new_scope->starting_node_id = 0;
-	new_scope->starting_node = new_nodes[0];
+	new_scope->default_starting_node_id = 0;
+	new_scope->default_starting_node = new_nodes[0];
+	new_scope_node->starting_node_id = 0;
+	new_scope_node->starting_node = new_nodes[0];
 
 	return new_scope_node;
 }

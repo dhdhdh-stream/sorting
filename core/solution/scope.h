@@ -34,20 +34,22 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	int starting_node_id;
-	AbstractNode* starting_node;
+	int default_starting_node_id;
+	AbstractNode* default_starting_node;
 
 	Scope();
 	~Scope();
 
-	void activate(Problem* problem,
+	void activate(AbstractNode* starting_node,
+				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void random_activate(std::vector<Scope*>& scope_context,
+	void random_activate(AbstractNode* starting_node,
+						 std::vector<Scope*>& scope_context,
 						 std::vector<AbstractNode*>& node_context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
@@ -66,7 +68,8 @@ public:
 							  bool& random_exceeded_limit,
 							  int curr_depth,
 							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(std::vector<Scope*>& scope_context,
+	void inner_random_exit_activate(AbstractNode* starting_node,
+									std::vector<Scope*>& scope_context,
 									std::vector<AbstractNode*>& node_context,
 									int& exit_depth,
 									AbstractNode*& exit_node,
@@ -74,7 +77,8 @@ public:
 									int& random_throw_id,
 									bool& random_exceeded_limit);
 
-	void step_through_activate(Problem* problem,
+	void step_through_activate(AbstractNode* starting_node,
+							   Problem* problem,
 							   std::vector<ContextLayer>& context,
 							   int& exit_depth,
 							   AbstractNode*& exit_node,
@@ -82,7 +86,8 @@ public:
 							   ScopeHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
-	void verify_activate(Problem* problem,
+	void verify_activate(AbstractNode* starting_node,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
@@ -91,7 +96,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void measure_activate(Problem* problem,
+	void measure_activate(AbstractNode* starting_node,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,

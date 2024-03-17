@@ -34,6 +34,7 @@ void ScopeNode::fail_reset() {
 }
 
 void ScopeNode::save(ofstream& output_file) {
+	output_file << this->starting_node_id << endl;
 	output_file << this->scope->id << endl;
 
 	output_file << this->next_node_id << endl;
@@ -47,6 +48,10 @@ void ScopeNode::save(ofstream& output_file) {
 }
 
 void ScopeNode::load(ifstream& input_file) {
+	string starting_node_id_line;
+	getline(input_file, starting_node_id_line);
+	this->starting_node_id = stoi(starting_node_id_line);
+
 	string scope_id_line;
 	getline(input_file, scope_id_line);
 	this->scope = solution->scopes[stoi(scope_id_line)];
@@ -70,6 +75,8 @@ void ScopeNode::load(ifstream& input_file) {
 }
 
 void ScopeNode::link() {
+	this->starting_node = this->scope->nodes[this->starting_node_id];
+
 	if (this->next_node_id == -1) {
 		this->next_node = NULL;
 	} else {
@@ -87,6 +94,7 @@ void ScopeNode::link() {
 }
 
 void ScopeNode::save_for_display(ofstream& output_file) {
+	output_file << this->starting_node_id << endl;
 	output_file << this->scope->id << endl;
 
 	output_file << this->next_node_id << endl;

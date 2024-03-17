@@ -19,6 +19,8 @@ class Scope;
 class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
+	int starting_node_id;
+	AbstractNode* starting_node;
 	Scope* scope;
 
 	int next_node_id;

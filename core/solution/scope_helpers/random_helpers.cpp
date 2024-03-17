@@ -87,7 +87,8 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 	}
 }
 
-void Scope::random_activate(vector<Scope*>& scope_context,
+void Scope::random_activate(AbstractNode* starting_node,
+							vector<Scope*>& scope_context,
 							vector<AbstractNode*>& node_context,
 							int& exit_depth,
 							AbstractNode*& exit_node,
@@ -102,7 +103,7 @@ void Scope::random_activate(vector<Scope*>& scope_context,
 	}
 	random_curr_depth++;
 
-	AbstractNode* curr_node = this->starting_node;
+	AbstractNode* curr_node = starting_node;
 	while (true) {
 		if (random_exceeded_limit
 				|| random_throw_id != -1
@@ -297,7 +298,8 @@ void node_inner_random_exit_activate_helper(AbstractNode*& curr_node,
 	}
 }
 
-void Scope::inner_random_exit_activate(vector<Scope*>& scope_context,
+void Scope::inner_random_exit_activate(AbstractNode* starting_node,
+									   vector<Scope*>& scope_context,
 									   vector<AbstractNode*>& node_context,
 									   int& exit_depth,
 									   AbstractNode*& exit_node,
@@ -310,7 +312,7 @@ void Scope::inner_random_exit_activate(vector<Scope*>& scope_context,
 	}
 	random_curr_depth++;
 
-	AbstractNode* curr_node = this->starting_node;
+	AbstractNode* curr_node = starting_node;
 	while (true) {
 		if (random_exceeded_limit
 				|| random_throw_id != -1

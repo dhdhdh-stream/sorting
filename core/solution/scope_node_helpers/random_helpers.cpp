@@ -31,7 +31,8 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->random_activate(scope_context,
+	this->scope->random_activate(this->starting_node,
+								 scope_context,
 								 node_context,
 								 inner_exit_depth,
 								 inner_exit_node,
@@ -95,7 +96,8 @@ void ScopeNode::random_exit_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->inner_random_exit_activate(scope_context,
+	this->scope->inner_random_exit_activate(this->starting_node,
+											scope_context,
 											node_context,
 											inner_exit_depth,
 											inner_exit_node,
@@ -143,7 +145,8 @@ void ScopeNode::inner_random_exit_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->inner_random_exit_activate(scope_context,
+	this->scope->inner_random_exit_activate(this->starting_node,
+											scope_context,
 											node_context,
 											inner_exit_depth,
 											inner_exit_node,
