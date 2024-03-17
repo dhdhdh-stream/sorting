@@ -1,16 +1,16 @@
 import pydot
 
-ACTION_NOOP = -1
-ACTION_LEFT = 0
-ACTION_RIGHT = 1
-ACTION_SWAP = 2
 # ACTION_NOOP = -1
-# ACTION_UP = 0
+# ACTION_LEFT = 0
 # ACTION_RIGHT = 1
-# ACTION_DOWN = 2
-# ACTION_LEFT = 3
-# ACTION_CLICK = 4
-# ACTION_FLAG = 5;
+# ACTION_SWAP = 2
+ACTION_NOOP = -1
+ACTION_UP = 0
+ACTION_RIGHT = 1
+ACTION_DOWN = 2
+ACTION_LEFT = 3
+ACTION_CLICK = 4
+ACTION_FLAG = 5;
 
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
@@ -50,13 +50,14 @@ for s_index in range(num_scopes):
 		elif node_type == NODE_TYPE_BRANCH:
 			scope_context = int(file.readline())
 
-			is_pass_through = bool(file.readline())
+			is_pass_through = int(file.readline())
 
 			original_next_node_id = int(file.readline())
 			branch_next_node_id = int(file.readline())
 
 			nodes[node_id] = [node_type,
 							  scope_context,
+							  is_pass_through,
 							  original_next_node_id,
 							  branch_next_node_id]
 		else:
@@ -81,34 +82,34 @@ for s_index in range(num_scopes):
 
 file.close()
 
-def pretty_print_action(action):
-	result = ''
-	if action == -1:
-		result = 'NOOP'
-	elif action == 0:
-		result = 'LEFT'
-	elif action == 1:
-		result = 'RIGHT'
-	elif action == 2:
-		result = 'SWAP'
-	return result
 # def pretty_print_action(action):
 # 	result = ''
 # 	if action == -1:
 # 		result = 'NOOP'
 # 	elif action == 0:
-# 		result = 'UP'
+# 		result = 'LEFT'
 # 	elif action == 1:
 # 		result = 'RIGHT'
 # 	elif action == 2:
-# 		result = 'DOWN'
-# 	elif action == 3:
-# 		result = 'LEFT'
-# 	elif action == 4:
-# 		result = 'CLICK'
-# 	elif action == 5:
-# 		result = 'FLAG'
+# 		result = 'SWAP'
 # 	return result
+def pretty_print_action(action):
+	result = ''
+	if action == -1:
+		result = 'NOOP'
+	elif action == 0:
+		result = 'UP'
+	elif action == 1:
+		result = 'RIGHT'
+	elif action == 2:
+		result = 'DOWN'
+	elif action == 3:
+		result = 'LEFT'
+	elif action == 4:
+		result = 'CLICK'
+	elif action == 5:
+		result = 'FLAG'
+	return result
 
 graph = pydot.Dot(graph_type='digraph', strict=True)
 
@@ -124,7 +125,10 @@ for scope_id in scopes:
 		elif scopes[scope_id][key][0] == NODE_TYPE_SCOPE:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'C ' + str(scopes[scope_id][key][1])))
+			if scopes[scope_id][key][2] == 1:
+				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'P ' + str(scopes[scope_id][key][1])))
+			else:
+				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'C ' + str(scopes[scope_id][key][1])))
 		else:
 			# scopes[scope_id][key][0] == NODE_TYPE_EXIT
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'E ' + str(scopes[scope_id][key][1]) + ' ' + str(scopes[scope_id][key][3])))
@@ -138,10 +142,10 @@ for scope_id in scopes:
 			if scopes[scope_id][key][2] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
-			if scopes[scope_id][key][2] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 			if scopes[scope_id][key][3] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][3]]))
+				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][3]], style="dotted"))
+			if scopes[scope_id][key][4] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][4]]))
 		# else scopes[scope_id][key][0] == NODE_TYPE_EXIT, do nothing
 
 graph.write_png('solution.png')

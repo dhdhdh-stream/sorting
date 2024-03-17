@@ -21,6 +21,7 @@ const int BRANCH_NODE_EXPERIMENT_TYPE_BRANCH = 2;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	// TODO: can implement as a reverse tree?
 	std::vector<int> scope_context_ids;
 	std::vector<Scope*> scope_context;
 	std::vector<int> node_context_ids;

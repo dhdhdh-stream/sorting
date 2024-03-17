@@ -1,3 +1,5 @@
+// TODO: redo inner branches
+
 #include "solution_helpers.h"
 
 #include <cmath>
@@ -794,6 +796,13 @@ ScopeNode* create_scope(Scope* parent_scope,
 						  new_scope);
 
 		new_starting_node = start_node_mappings.back()[start_node_context.back()].second;
+	}
+
+	if (new_scope->nodes.size() < 2) {
+		delete new_scope;
+		delete new_scope_node;
+
+		return NULL;
 	}
 
 	/**

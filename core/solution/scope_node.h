@@ -8,6 +8,7 @@
 
 #include "abstract_node.h"
 #include "context_layer.h"
+#include "metrics.h"
 #include "run_helper.h"
 
 class AbstractExperiment;
@@ -85,6 +86,15 @@ public:
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history);
 	#endif /* MDEBUG */
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper,
+						  Metrics& metrics,
+						  ScopeNodeHistory* history);
 
 	void success_reset();
 	void fail_reset();

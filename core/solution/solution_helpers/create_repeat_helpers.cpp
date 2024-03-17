@@ -82,6 +82,22 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 	}
 	int start_index = (int)possible_scope_contexts.size() - repeat_length;
 
+	int num_nodes = 0;
+	for (int n_index = start_index; n_index < (int)possible_scope_contexts.size(); n_index++) {
+		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
+			ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
+			if (original_action_node->action.move != ACTION_NOOP) {
+				num_nodes++;
+			}
+		} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
+			num_nodes++;
+		}
+	}
+
+	if (num_nodes < 2) {
+		return NULL;
+	}
+
 	Scope* new_scope = new Scope();
 	// don't set id/increment scope_counter until train
 	new_scope->node_counter = 0;

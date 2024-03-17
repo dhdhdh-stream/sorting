@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "context_layer.h"
+#include "metrics.h"
 #include "run_helper.h"
 
 class AbstractNode;
@@ -89,6 +90,14 @@ public:
 						 ScopeHistory* history);
 	void clear_verify();
 	#endif /* MDEBUG */
+
+	void measure_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper,
+						  Metrics& metrics,
+						  ScopeHistory* history);
 
 	void success_reset();
 	void fail_reset();

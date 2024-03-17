@@ -120,24 +120,31 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	history->existing_predicted_score = predicted_score;
 
+	bool is_repeat = false;
 	uniform_int_distribution<int> repeat_distribution(0, 3);
 	if (this->throw_id == -1
 			&& this->parent_experiment == NULL
 			&& repeat_distribution(generator)) {
-		this->curr_exit_depth = 0;
-		this->curr_exit_next_node = curr_node;
-		this->curr_exit_throw_id = -1;
-
-		this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
-		this->curr_actions.push_back(NULL);
-		this->curr_existing_scopes.push_back(NULL);
-
 		ScopeNode* new_scope_node = create_repeat(context,
 												  (int)this->scope_context.size());
-		this->curr_potential_scopes.push_back(new_scope_node);
+		if (new_scope_node != NULL) {
+			this->curr_exit_depth = 0;
+			this->curr_exit_next_node = curr_node;
+			this->curr_exit_throw_id = -1;
 
-		this->curr_catch_throw_ids.push_back(set<int>());
-	} else {
+			this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+			this->curr_actions.push_back(NULL);
+			this->curr_existing_scopes.push_back(NULL);
+
+			this->curr_potential_scopes.push_back(new_scope_node);
+
+			this->curr_catch_throw_ids.push_back(set<int>());
+
+			is_repeat = true;
+		}
+	}
+
+	if (!is_repeat) {
 		// exit
 		vector<pair<int,AbstractNode*>> possible_exits;
 		gather_possible_exits(possible_exits,

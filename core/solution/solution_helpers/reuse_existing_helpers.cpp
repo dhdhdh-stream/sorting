@@ -9,6 +9,11 @@
 using namespace std;
 
 ScopeNode* reuse_existing() {
+	uniform_int_distribution<int> flat_distribution(0, 9);
+	if (flat_distribution(generator) == 0) {
+		return NULL;
+	}
+
 	/**
 	 * - even distribution
 	 */
