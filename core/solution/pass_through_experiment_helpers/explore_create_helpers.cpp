@@ -103,14 +103,16 @@ void PassThroughExperiment::explore_create_activate(
 													 run_helper,
 													 this->curr_step_types,
 													 this->curr_actions,
-													 this->curr_scopes,
+													 this->curr_existing_scopes,
+													 this->curr_potential_scopes,
 													 this->curr_catch_throw_ids);
 				} else {
 					default_to_action = !create_path(context[context.size() - this->scope_context.size()].scope,
 													 run_helper,
 													 this->curr_step_types,
 													 this->curr_actions,
-													 this->curr_scopes,
+													 this->curr_existing_scopes,
+													 this->curr_potential_scopes,
 													 this->curr_catch_throw_ids);
 				}
 			} else if (type == 1) {
@@ -120,11 +122,12 @@ void PassThroughExperiment::explore_create_activate(
 				ScopeNode* new_scope_node = existing_new_start(scope,
 															   run_helper);
 				if (new_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 					this->curr_actions.push_back(NULL);
 
-					this->curr_scopes.push_back(new_scope_node);
+					this->curr_existing_scopes.push_back(new_scope_node);
 
+					this->curr_potential_scopes.push_back(NULL);
 					this->curr_catch_throw_ids.push_back(set<int>());
 
 					default_to_action = false;
@@ -133,11 +136,12 @@ void PassThroughExperiment::explore_create_activate(
 				// existing
 				ScopeNode* new_existing_scope_node = reuse_existing();
 				if (new_existing_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 					this->curr_actions.push_back(NULL);
 
-					this->curr_scopes.push_back(new_existing_scope_node);
+					this->curr_existing_scopes.push_back(new_existing_scope_node);
 
+					this->curr_potential_scopes.push_back(NULL);
 					this->curr_catch_throw_ids.push_back(set<int>());
 
 					default_to_action = false;
@@ -151,7 +155,8 @@ void PassThroughExperiment::explore_create_activate(
 				new_action_node->action = problem_type->random_action();
 				this->curr_actions.push_back(new_action_node);
 
-				this->curr_scopes.push_back(NULL);
+				this->curr_existing_scopes.push_back(NULL);
+				this->curr_potential_scopes.push_back(NULL);
 				this->curr_catch_throw_ids.push_back(set<int>());
 			}
 		}

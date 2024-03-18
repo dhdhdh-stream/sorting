@@ -26,13 +26,15 @@ bool create_path(Scope* parent_scope,
 				 RunHelper& run_helper,
 				 std::vector<int>& step_types,
 				 std::vector<ActionNode*>& actions,
-				 std::vector<ScopeNode*>& scopes,
+				 std::vector<ScopeNode*>& existing_scopes,
+				 std::vector<ScopeNode*>& potential_scopes,
 				 std::vector<std::set<int>>& catch_throw_ids);
 bool create_repeat(std::vector<ContextLayer>& context,
 				   int explore_context_depth,
 				   std::vector<int>& step_types,
 				   std::vector<ActionNode*>& actions,
-				   std::vector<ScopeNode*>& scopes,
+				   std::vector<ScopeNode*>& existing_scopes,
+				   std::vector<ScopeNode*>& potential_scopes,
 				   std::vector<std::set<int>>& catch_throw_ids);
 
 

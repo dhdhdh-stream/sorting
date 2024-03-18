@@ -33,8 +33,10 @@ void PassThroughExperiment::measure_new_activate(
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
+		} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+			curr_node = this->best_existing_scopes[0];
 		} else {
-			curr_node = this->best_scopes[0];
+			curr_node = this->best_potential_scopes[0];
 		}
 	}
 }

@@ -33,8 +33,10 @@ void PassThroughExperiment::verify_new_activate(
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
+		} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+			curr_node = this->best_existing_scopes[0];
 		} else {
-			curr_node = this->best_scopes[0];
+			curr_node = this->best_potential_scopes[0];
 		}
 	}
 }
@@ -119,6 +121,8 @@ void PassThroughExperiment::verify_new_backprop(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->best_actions[s_index]->action.move;
+				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					cout << " E";
 				} else {
 					cout << " P";
 				}

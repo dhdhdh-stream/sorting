@@ -184,10 +184,6 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - run_helper.experiment_histories.size() == 1
 				 */
-				if (run_helper.experiment_histories.back()->experiment->scope_context[0] == solution->root) {
-					solution->root_num_changes++;
-				}
-
 				is_success = true;
 				run_helper.experiment_histories.back()->experiment->finalize();
 				delete run_helper.experiment_histories.back()->experiment;
@@ -223,38 +219,6 @@ int main(int argc, char* argv[]) {
 
 				cout << "updated from main" << endl;
 			} else {
-				if (solution->root_num_changes >= ABSTRACT_ROOT_NUM_CHANGES) {
-					Scope* new_root_scope = new Scope();
-					new_root_scope->id = solution->scope_counter;
-					solution->scope_counter++;
-					solution->scopes[new_root_scope->id] = new_root_scope;
-
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = new_root_scope;
-					new_scope_node->id = 0;
-					new_scope_node->starting_node_id = solution->root->default_starting_node_id;
-					new_scope_node->starting_node = solution->root->default_starting_node;
-					new_scope_node->scope = solution->root;
-					new_scope_node->next_node_id = -1;
-					new_scope_node->next_node = NULL;
-					new_root_scope->nodes[0] = new_scope_node;
-
-					ActionNode* starting_noop_node = new ActionNode();
-					starting_noop_node->parent = new_root_scope;
-					starting_noop_node->id = 1;
-					starting_noop_node->action = Action(ACTION_NOOP);
-					starting_noop_node->next_node_id = 0;
-					starting_noop_node->next_node = new_scope_node;
-					new_root_scope->nodes[1] = starting_noop_node;
-					new_root_scope->default_starting_node_id = 1;
-					new_root_scope->default_starting_node = starting_noop_node;
-
-					new_root_scope->node_counter = 2;
-
-					solution->root = new_root_scope;
-					solution->root_num_changes = 0;
-				}
-
 				if (solution->max_depth < 50) {
 					solution->depth_limit = solution->max_depth + 10;
 				} else {

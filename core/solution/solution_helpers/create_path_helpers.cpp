@@ -12,7 +12,8 @@ bool create_path(Scope* parent_scope,
 				 RunHelper& run_helper,
 				 vector<int>& step_types,
 				 vector<ActionNode*>& actions,
-				 vector<ScopeNode*>& scopes,
+				 vector<ScopeNode*>& existing_scopes,
+				 vector<ScopeNode*>& potential_scopes,
 				 vector<std::set<int>>& catch_throw_ids) {
 	vector<vector<Scope*>> possible_scope_contexts;
 	vector<vector<AbstractNode*>> possible_node_contexts;
@@ -56,18 +57,17 @@ bool create_path(Scope* parent_scope,
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
 
-			if (original_action_node->action.move != ACTION_NOOP) {
-				step_types.push_back(STEP_TYPE_ACTION);
+			step_types.push_back(STEP_TYPE_ACTION);
 
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = original_action_node->action;
-				actions.push_back(new_action_node);
+			ActionNode* new_action_node = new ActionNode();
+			new_action_node->action = original_action_node->action;
+			actions.push_back(new_action_node);
 
-				scopes.push_back(NULL);
-				catch_throw_ids.push_back(set<int>());
-			}
+			existing_scopes.push_back(NULL);
+			potential_scopes.push_back(NULL);
+			catch_throw_ids.push_back(set<int>());
 		} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
-			step_types.push_back(STEP_TYPE_SCOPE);
+			step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 
 			actions.push_back(NULL);
 
@@ -76,8 +76,9 @@ bool create_path(Scope* parent_scope,
 			new_scope_node->starting_node_id = original_scope_node->starting_node_id;
 			new_scope_node->starting_node = original_scope_node->starting_node;
 			new_scope_node->scope = original_scope_node->scope;
-			scopes.push_back(new_scope_node);
+			existing_scopes.push_back(new_scope_node);
 
+			potential_scopes.push_back(NULL);
 			catch_throw_ids.push_back(set<int>());
 		}
 	}
