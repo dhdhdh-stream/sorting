@@ -92,9 +92,7 @@ public:
 
 	void random_activate(AbstractNode*& curr_node,
 						 std::vector<Scope*>& scope_context,
-						 std::vector<AbstractNode*>& node_context,
-						 std::vector<std::vector<Scope*>>& possible_scope_contexts,
-						 std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
+						 std::vector<AbstractNode*>& node_context);
 	void random_exit_activate(AbstractNode*& curr_node,
 							  std::vector<Scope*>& scope_context,
 							  std::vector<AbstractNode*>& node_context,

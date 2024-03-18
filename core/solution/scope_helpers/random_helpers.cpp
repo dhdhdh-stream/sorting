@@ -25,14 +25,14 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
+			if (node->action.move != ACTION_NOOP) {
+				node_context.back() = node;
 
-			node_context.back() = node;
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-
-			node_context.back() = NULL;
-
+				node_context.back() = NULL;
+			}
 			curr_node = node->next_node;
 		}
 
@@ -58,22 +58,13 @@ void node_random_activate_helper(AbstractNode*& curr_node,
 			BranchNode* node = (BranchNode*)curr_node;
 			node->random_activate(curr_node,
 								  scope_context,
-								  node_context,
-								  possible_scope_contexts,
-								  possible_node_contexts);
+								  node_context);
 		}
 
 		break;
 	case NODE_TYPE_EXIT:
 		{
 			ExitNode* node = (ExitNode*)curr_node;
-
-			node_context.back() = node;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-
-			node_context.back() = NULL;
 
 			if (node->throw_id != -1) {
 				random_throw_id = node->throw_id;
@@ -122,13 +113,6 @@ void Scope::random_activate(AbstractNode* starting_node,
 									random_exceeded_limit,
 									possible_scope_contexts,
 									possible_node_contexts);
-	}
-
-	if (!random_exceeded_limit
-			&& random_throw_id == -1
-			&& exit_depth == -1) {
-		possible_scope_contexts.push_back(scope_context);
-		possible_node_contexts.push_back(node_context);
 	}
 
 	random_curr_depth--;

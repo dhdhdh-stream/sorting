@@ -2,6 +2,7 @@
 #define SOLUTION_HELPERS_H
 
 #include <fstream>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -9,6 +10,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class ActionNode;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
@@ -18,12 +20,21 @@ void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
 
 ScopeNode* reuse_existing();
-ScopeNode* create_scope(Scope* parent_scope,
-						RunHelper& run_helper);
-ScopeNode* create_repeat(std::vector<ContextLayer>& context,
-						 int explore_context_depth);
 ScopeNode* existing_new_start(Scope* parent_scope,
 							  RunHelper& run_helper);
+bool create_path(Scope* parent_scope,
+				 RunHelper& run_helper,
+				 std::vector<int>& step_types,
+				 std::vector<ActionNode*>& actions,
+				 std::vector<ScopeNode*>& scopes,
+				 std::vector<std::set<int>>& catch_throw_ids);
+bool create_repeat(std::vector<ContextLayer>& context,
+				   int explore_context_depth,
+				   std::vector<int>& step_types,
+				   std::vector<ActionNode*>& actions,
+				   std::vector<ScopeNode*>& scopes,
+				   std::vector<std::set<int>>& catch_throw_ids);
+
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<Scope*>& experiment_scope_context,

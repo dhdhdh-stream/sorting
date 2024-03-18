@@ -365,31 +365,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					this->best_actions[s_index]->parent = this->scope_context.back();
 					this->best_actions[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->best_existing_scopes[s_index]->parent = this->scope_context.back();
-					this->best_existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
 				} else {
-					this->best_potential_scopes[s_index]->parent = this->scope_context.back();
-					this->best_potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->best_scopes[s_index]->parent = this->scope_context.back();
+					this->best_scopes[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-
-					int new_scope_id = solution->scope_counter;
-					solution->scope_counter++;
-					this->best_potential_scopes[s_index]->scope->id = new_scope_id;
-
-					for (map<int, AbstractNode*>::iterator it = this->best_potential_scopes[s_index]->scope->nodes.begin();
-							it != this->best_potential_scopes[s_index]->scope->nodes.end(); it++) {
-						if (it->second->type == NODE_TYPE_BRANCH) {
-							BranchNode* branch_node = (BranchNode*)it->second;
-							branch_node->scope_context_ids[0] = new_scope_id;
-							for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
-								if (branch_node->input_scope_context_ids[i_index].size() > 0) {
-									branch_node->input_scope_context_ids[i_index][0] = new_scope_id;
-								}
-							}
-						}
-					}
 				}
 			}
 
@@ -448,35 +427,23 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node_id = this->best_actions[s_index+1]->id;
 						next_node = this->best_actions[s_index+1];
-					} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-						next_node_id = this->best_existing_scopes[s_index+1]->id;
-						next_node = this->best_existing_scopes[s_index+1];
 					} else {
-						next_node_id = this->best_potential_scopes[s_index+1]->id;
-						next_node = this->best_potential_scopes[s_index+1];
+						next_node_id = this->best_scopes[s_index+1]->id;
+						next_node = this->best_scopes[s_index+1];
 					}
 				}
 
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->best_actions[s_index]->next_node_id = next_node_id;
 					this->best_actions[s_index]->next_node = next_node;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->best_existing_scopes[s_index]->next_node_id = next_node_id;
-					this->best_existing_scopes[s_index]->next_node = next_node;
-
-					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
-							it != this->best_catch_throw_ids[s_index].end(); it++) {
-						this->best_existing_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->best_existing_scopes[s_index]->catches[*it] = next_node;
-					}
 				} else {
-					this->best_potential_scopes[s_index]->next_node_id = next_node_id;
-					this->best_potential_scopes[s_index]->next_node = next_node;
+					this->best_scopes[s_index]->next_node_id = next_node_id;
+					this->best_scopes[s_index]->next_node = next_node;
 
 					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
 							it != this->best_catch_throw_ids[s_index].end(); it++) {
-						this->best_potential_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->best_potential_scopes[s_index]->catches[*it] = next_node;
+						this->best_scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->best_scopes[s_index]->catches[*it] = next_node;
 					}
 				}
 			}

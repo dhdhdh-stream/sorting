@@ -250,8 +250,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 
 	vector<int> best_step_types;
 	vector<ActionNode*> best_actions;
-	vector<ScopeNode*> best_existing_scopes;
-	vector<ScopeNode*> best_potential_scopes;
+	vector<ScopeNode*> best_scopes;
 	vector<set<int>> best_catch_throw_ids;
 	string num_steps_line = getline_helper(input_file);
 	int num_steps = stoi(num_steps_line);
@@ -263,8 +262,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 		new_action_node->action = Action(stoi(action_line));
 		best_actions.push_back(new_action_node);
 
-		best_existing_scopes.push_back(NULL);
-		best_potential_scopes.push_back(NULL);
+		best_scopes.push_back(NULL);
 		best_catch_throw_ids.push_back(set<int>());
 	}
 
@@ -293,8 +291,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 
 	new_branch_experiment->best_step_types = best_step_types;
 	new_branch_experiment->best_actions = best_actions;
-	new_branch_experiment->best_existing_scopes = best_existing_scopes;
-	new_branch_experiment->best_potential_scopes = best_potential_scopes;
+	new_branch_experiment->best_scopes = best_scopes;
 	new_branch_experiment->best_catch_throw_ids = best_catch_throw_ids;
 	new_branch_experiment->best_exit_depth = exit_depth;
 	new_branch_experiment->best_exit_next_node = exit_next_node;

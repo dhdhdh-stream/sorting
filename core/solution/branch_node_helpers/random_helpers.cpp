@@ -6,9 +6,7 @@ using namespace std;
 
 void BranchNode::random_activate(AbstractNode*& curr_node,
 								 vector<Scope*>& scope_context,
-								 vector<AbstractNode*>& node_context,
-								 vector<vector<Scope*>>& possible_scope_contexts,
-								 vector<vector<AbstractNode*>>& possible_node_contexts) {
+								 vector<AbstractNode*>& node_context) {
 	bool matches_context = true;
 	if (this->scope_context.size() > scope_context.size()) {
 		matches_context = false;
@@ -28,13 +26,6 @@ void BranchNode::random_activate(AbstractNode*& curr_node,
 
 			// don't include
 		} else {
-			node_context.back() = this;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-
-			node_context.back() = NULL;
-
 			uniform_int_distribution<int> distribution(0, 1);
 			if (distribution(generator) == 0) {
 				curr_node = this->branch_next_node;

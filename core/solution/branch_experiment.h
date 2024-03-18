@@ -30,9 +30,6 @@ const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING = 2;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
-/**
- * - if has parent_pass_through_experiment, skip and verify in parent
- */
 const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
@@ -68,22 +65,16 @@ public:
 
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
-	std::vector<ScopeNode*> curr_existing_scopes;
-	std::vector<ScopeNode*> curr_potential_scopes;
+	std::vector<ScopeNode*> curr_scopes;
 	std::vector<std::set<int>> curr_catch_throw_ids;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
-	/**
-	 * - can reuse existing
-	 *   - search current context for throw_ids
-	 */
 	int curr_exit_throw_id;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
-	std::vector<ScopeNode*> best_existing_scopes;
-	std::vector<ScopeNode*> best_potential_scopes;
+	std::vector<ScopeNode*> best_scopes;
 	std::vector<std::set<int>> best_catch_throw_ids;
 	int best_exit_depth;
 	AbstractNode* best_exit_next_node;

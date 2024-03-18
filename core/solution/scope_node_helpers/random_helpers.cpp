@@ -19,18 +19,14 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 								vector<vector<AbstractNode*>>& possible_node_contexts) {
 	node_context.back() = this;
 
-	possible_scope_contexts.push_back(scope_context);
-	possible_node_contexts.push_back(node_context);
-
-	vector<vector<Scope*>> inner_possible_scope_contexts;
-	vector<vector<AbstractNode*>> inner_possible_node_contexts;
-
 	scope_context.push_back(this->scope);
 	node_context.push_back(NULL);
 
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
+	vector<vector<Scope*>> inner_possible_scope_contexts;
+	vector<vector<AbstractNode*>> inner_possible_node_contexts;
 	this->scope->random_activate(this->starting_node,
 								 scope_context,
 								 node_context,
@@ -42,9 +38,6 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 								 inner_possible_scope_contexts,
 								 inner_possible_node_contexts);
 
-	scope_context.pop_back();
-	node_context.pop_back();
-
 	uniform_int_distribution<int> distribution(0, 2);
 	if (distribution(generator) != 0) {
 		possible_scope_contexts.insert(possible_scope_contexts.begin(),
@@ -53,7 +46,13 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 		possible_node_contexts.insert(possible_node_contexts.begin(),
 			inner_possible_node_contexts.begin(),
 			inner_possible_node_contexts.end());
+	} else {
+		possible_scope_contexts.push_back(scope_context);
+		possible_node_contexts.push_back(node_context);
 	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
 
 	node_context.back() = NULL;
 

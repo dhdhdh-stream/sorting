@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include "action_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -59,8 +60,12 @@ void create_repeat_helper(int target_depth,
 	// no need to pop_back context
 }
 
-ScopeNode* create_repeat(vector<ContextLayer>& context,
-						 int explore_context_depth) {
+bool create_repeat(vector<ContextLayer>& context,
+				   int explore_context_depth,
+				   vector<int>& step_types,
+				   vector<ActionNode*>& actions,
+				   vector<ScopeNode*>& scopes,
+				   vector<std::set<int>>& catch_throw_ids) {
 	ScopeHistory* scope_history = context[context.size() - explore_context_depth].scope_history;
 
 	vector<vector<Scope*>> possible_scope_contexts;
@@ -75,7 +80,7 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 						 possible_node_contexts,
 						 scope_history);
 
-	geometric_distribution<int> length_distribution(0.2);
+	geometric_distribution<int> length_distribution(0.3);
 	int repeat_length = 1 + length_distribution(generator);
 	if (repeat_length > (int)possible_scope_contexts.size()) {
 		repeat_length = (int)possible_scope_contexts.size();
@@ -94,77 +99,39 @@ ScopeNode* create_repeat(vector<ContextLayer>& context,
 		}
 	}
 
-	if (num_nodes < 2) {
-		return NULL;
+	if (num_nodes < 1) {
+		return false;
 	}
-
-	Scope* new_scope = new Scope();
-	// don't set id/increment scope_counter until train
-	new_scope->node_counter = 0;
-	ScopeNode* new_scope_node = new ScopeNode();
-	new_scope_node->scope = new_scope;
-
-	vector<AbstractNode*> new_nodes;
-
-	ActionNode* new_noop_action_node = new ActionNode();
-	new_noop_action_node->action = Action(ACTION_NOOP);
-	new_nodes.push_back(new_noop_action_node);
 
 	for (int n_index = start_index; n_index < (int)possible_scope_contexts.size(); n_index++) {
 		if (possible_node_contexts[n_index].back()->type == NODE_TYPE_ACTION) {
 			ActionNode* original_action_node = (ActionNode*)possible_node_contexts[n_index].back();
 
 			if (original_action_node->action.move != ACTION_NOOP) {
+				step_types.push_back(STEP_TYPE_ACTION);
+
 				ActionNode* new_action_node = new ActionNode();
-
 				new_action_node->action = original_action_node->action;
+				actions.push_back(new_action_node);
 
-				new_nodes.push_back(new_action_node);
+				scopes.push_back(NULL);
+				catch_throw_ids.push_back(set<int>());
 			}
 		} else if (possible_node_contexts[n_index].back()->type == NODE_TYPE_SCOPE) {
+			step_types.push_back(STEP_TYPE_SCOPE);
+
+			actions.push_back(NULL);
+
 			ScopeNode* original_scope_node = (ScopeNode*)possible_node_contexts[n_index].back();
-
 			ScopeNode* new_scope_node = new ScopeNode();
-
 			new_scope_node->starting_node_id = original_scope_node->starting_node_id;
 			new_scope_node->starting_node = original_scope_node->starting_node;
 			new_scope_node->scope = original_scope_node->scope;
+			scopes.push_back(new_scope_node);
 
-			new_nodes.push_back(new_scope_node);
+			catch_throw_ids.push_back(set<int>());
 		}
 	}
 
-	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
-		new_nodes[n_index]->parent = new_scope;
-		new_nodes[n_index]->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[new_nodes[n_index]->id] = new_nodes[n_index];
-
-		int next_node_id;
-		AbstractNode* next_node;
-		if (n_index == (int)new_nodes.size()-1) {
-			next_node_id = -1;
-			next_node = NULL;
-		} else {
-			next_node_id = n_index+1;
-			next_node = new_nodes[n_index+1];
-		}
-
-		if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)new_nodes[n_index];
-			action_node->next_node_id = next_node_id;
-			action_node->next_node = next_node;
-		} else {
-			ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
-			scope_node->next_node_id = next_node_id;
-			scope_node->next_node = next_node;
-		}
-	}
-
-	new_scope->default_starting_node_id = 0;
-	new_scope->default_starting_node = new_nodes[0];
-	new_scope_node->starting_node_id = 0;
-	new_scope_node->starting_node = new_nodes[0];
-
-	return new_scope_node;
+	return true;
 }
