@@ -29,6 +29,8 @@ const int STARTING_NUM_DATAPOINTS = 400;
 
 const int TEMP_THROW_ID = -2;
 
+const int ABSTRACT_ROOT_NUM_CHANGES = 8;
+
 class Solution {
 public:
 	int timestamp;
@@ -37,6 +39,7 @@ public:
 	std::map<int, Scope*> scopes;
 
 	Scope* root;
+	int root_num_changes;
 
 	int throw_counter;
 

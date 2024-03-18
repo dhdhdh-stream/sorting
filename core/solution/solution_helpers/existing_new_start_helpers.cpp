@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -43,6 +45,10 @@ ScopeNode* existing_new_start(Scope* parent_scope,
 								  possible_scope_contexts,
 								  possible_node_contexts);
 
+	if (random_exceeded_limit) {
+		return NULL;
+	}
+
 	vector<AbstractNode*> possible_starting_nodes;
 	/**
 	 * - don't include last
@@ -51,6 +57,11 @@ ScopeNode* existing_new_start(Scope* parent_scope,
 		if (possible_scope_contexts[p_index].size() == 1) {
 			possible_starting_nodes.push_back(possible_node_contexts[p_index][0]);
 		}
+	}
+
+	// temp
+	if (possible_starting_nodes.size() == 0) {
+		cout << "HERE" << endl;
 	}
 
 	uniform_int_distribution<int> distribution(0, possible_starting_nodes.size()-1);

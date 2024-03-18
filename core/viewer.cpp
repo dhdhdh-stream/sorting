@@ -30,8 +30,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	RunHelper run_helper;
-
 	{
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();

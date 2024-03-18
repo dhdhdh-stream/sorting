@@ -5,6 +5,7 @@
 #include <random>
 #include <sstream>
 
+#include "constants.h"
 #include "globals.h"
 
 using namespace std;
@@ -307,9 +308,15 @@ void Layer::save_weights(ofstream& output_file) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
 			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				if (abs(this->weights[n_index][l_index][ln_index]) < MIN_WEIGHT) {
+					this->weights[n_index][l_index][ln_index] = 0.0;
+				}
 				output_file << this->weights[n_index][l_index][ln_index] << ",";
 			}
 			output_file << endl;
+		}
+		if (abs(this->constants[n_index]) < MIN_WEIGHT) {
+			this->constants[n_index] = 0.0;
 		}
 		output_file << this->constants[n_index] << endl;
 	}

@@ -38,6 +38,7 @@ void Solution::init() {
 	starting_scope->node_counter = 1;
 
 	this->root = starting_scope;
+	this->root_num_changes = 0;
 
 	this->throw_counter = 0;
 
@@ -89,6 +90,10 @@ void Solution::load(string path,
 	string root_id_line;
 	getline(input_file, root_id_line);
 	this->root = this->scopes[stoi(root_id_line)];
+
+	string root_num_changes_line;
+	getline(input_file, root_num_changes_line);
+	this->root_num_changes = stoi(root_num_changes_line);
 
 	string throw_counter_line;
 	getline(input_file, throw_counter_line);
@@ -161,6 +166,7 @@ void Solution::save(string path,
 	}
 
 	output_file << this->root->id << endl;
+	output_file << this->root_num_changes << endl;
 
 	output_file << this->throw_counter << endl;
 

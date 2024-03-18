@@ -200,7 +200,8 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		}
 
-		uniform_int_distribution<int> new_scope_distribution(0, 3);
+		// uniform_int_distribution<int> new_scope_distribution(0, 3);
+		uniform_int_distribution<int> new_scope_distribution(0, 1);
 		uniform_int_distribution<int> random_scope_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			ScopeNode* new_scope_node = NULL;
@@ -220,12 +221,20 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				}
 			}
 			if (new_scope_node != NULL) {
-				this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+				// this->curr_step_types.push_back(STEP_TYPE_POTENTIAL_SCOPE);
+				// this->curr_actions.push_back(NULL);
+				// this->curr_existing_scopes.push_back(NULL);
+
+				// this->curr_potential_scopes.push_back(new_scope_node);
+
+				// this->curr_catch_throw_ids.push_back(set<int>());
+
+				this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 				this->curr_actions.push_back(NULL);
-				this->curr_existing_scopes.push_back(NULL);
 
-				this->curr_potential_scopes.push_back(new_scope_node);
+				this->curr_existing_scopes.push_back(new_scope_node);
 
+				this->curr_potential_scopes.push_back(NULL);
 				this->curr_catch_throw_ids.push_back(set<int>());
 			} else {
 				ScopeNode* new_existing_scope_node = reuse_existing();

@@ -11,6 +11,7 @@
 #include "pass_through_experiment.h"
 #include "sorting.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
@@ -28,14 +29,13 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// int seed = (unsigned)time(NULL);
-	int seed = 1710558550;
+	int seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new Sorting();
-	// problem_type = new Minesweeper();
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
 
 	solution = new Solution();
 	// solution->init();
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -181,6 +181,10 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - run_helper.experiment_histories.size() == 1
 				 */
+				if (run_helper.experiment_histories.back()->experiment->scope_context[0] == solution->root) {
+					solution->root_num_changes++;
+				}
+
 				is_success = true;
 				run_helper.experiment_histories.back()->experiment->finalize();
 				delete run_helper.experiment_histories.back()->experiment;
@@ -239,15 +243,37 @@ int main(int argc, char* argv[]) {
 			solution->clear_verify();
 			#endif /* MDEBUG */
 
-			num_fails = 0;
+			if (solution->root_num_changes >= ABSTRACT_ROOT_NUM_CHANGES) {
+				Scope* new_root_scope = new Scope();
+				new_root_scope->id = solution->scope_counter;
+				solution->scope_counter++;
+				solution->scopes[new_root_scope->id] = new_root_scope;
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->parent = new_root_scope;
+				new_scope_node->id = 0;
+				new_scope_node->starting_node_id = solution->root->default_starting_node_id;
+				new_scope_node->starting_node = solution->root->default_starting_node;
+				new_scope_node->scope = solution->root;
+				new_scope_node->next_node_id = -1;
+				new_scope_node->next_node = NULL;
+				new_root_scope->nodes[0] = new_scope_node;
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+				ActionNode* starting_noop_node = new ActionNode();
+				starting_noop_node->parent = new_root_scope;
+				starting_noop_node->id = 1;
+				starting_noop_node->action = Action(ACTION_NOOP);
+				starting_noop_node->next_node_id = 0;
+				starting_noop_node->next_node = new_scope_node;
+				new_root_scope->nodes[1] = starting_noop_node;
+				new_root_scope->default_starting_node_id = 1;
+				new_root_scope->default_starting_node = starting_noop_node;
+
+				new_root_scope->node_counter = 2;
+
+				solution->root = new_root_scope;
+				solution->root_num_changes = 0;
+			}
 
 			#if defined(MDEBUG) && MDEBUG
 			solution->depth_limit = solution->max_depth + 1;
@@ -260,6 +286,16 @@ int main(int argc, char* argv[]) {
 			#endif /* MDEBUG */
 
 			solution->num_actions_limit = 20*solution->max_num_actions + 20;
+
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
+
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
+
+			num_fails = 0;
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 		} else if (is_fail) {
