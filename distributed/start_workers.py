@@ -14,6 +14,33 @@ for line in workers_file:
 	workers.append([arr[0], arr[1], arr[2], arr[3]])
 workers_file.close()
 
+# simply use workers[0]
+overall_client = paramiko.SSHClient()
+overall_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+overall_client.connect(workers[0][1],
+					   username=workers[0][2],
+					   password=workers[0][3])
+
+overall_client_sftp = overall_client.open_sftp()
+
+stdin, stdout, stderr = overall_client.exec_command('mkdir workers')
+for line in iter(lambda:stdout.readline(2048), ''):
+	print(line, end='')
+
+stdin, stdout, stderr = overall_client.exec_command('mkdir workers/saves')
+for line in iter(lambda:stdout.readline(2048), ''):
+	print(line, end='')
+
+overall_client_sftp.put('worker', 'workers/worker')
+stdin, stdout, stderr = overall_client.exec_command('chmod +x workers/worker')
+for line in iter(lambda:stdout.readline(2048), ''):
+	print(line, end='')
+
+overall_client_sftp.put('saves/main.txt', 'workers/saves/main.txt')
+
+overall_client_sftp.close()
+overall_client.close()
+
 clients = []
 transports = []
 channels = []
@@ -28,26 +55,13 @@ for w_index in range(len(workers)):
 
 	client_sftp = client.open_sftp()
 
-	stdin, stdout, stderr = client.exec_command('mkdir workers')
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
-
-	# create separate directory, executable, saves for each worker
-
 	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0])
-	for line in iter(lambda:stdout.readline(2048), ''):
-		print(line, end='')
-
-	client_sftp.put('worker', 'workers/' + workers[w_index][0] + '/worker')
-	stdin, stdout, stderr = client.exec_command('chmod +x workers/' + workers[w_index][0] + '/worker')
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
 
 	stdin, stdout, stderr = client.exec_command('mkdir workers/' + workers[w_index][0] + '/saves')
 	for line in iter(lambda:stdout.readline(2048), ''):
 		print(line, end='')
-
-	client_sftp.put('saves/main.txt', 'workers/' + workers[w_index][0] + '/saves/main.txt')
 
 	client_sftp.close()
 
@@ -57,7 +71,7 @@ for w_index in range(len(workers)):
 	channel = transport.open_session()
 	channels.append(channel)
 
-	command = './workers/' + workers[w_index][0] + '/worker ' + 'workers/' + workers[w_index][0] + '/ ' + workers[w_index][0] + ' 2>&1'
+	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ ' + workers[w_index][0] + ' 2>&1'
 	print(command)
 	channel.exec_command(command)
 

@@ -97,7 +97,7 @@ bool create_repeat(vector<ContextLayer>& context,
 	}
 	int start_index = (int)possible_scope_contexts.size() - repeat_length;
 
-	if (possible_scope_contexts.size() == 1) {
+	if (repeat_length == 1) {
 		if (possible_node_contexts.back().back()->type == NODE_TYPE_ACTION) {
 			ActionNode* original_action_node = (ActionNode*)possible_node_contexts.back().back();
 

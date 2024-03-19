@@ -38,6 +38,9 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 								 inner_possible_scope_contexts,
 								 inner_possible_node_contexts);
 
+	scope_context.pop_back();
+	node_context.pop_back();
+
 	uniform_int_distribution<int> distribution(0, 2);
 	if (distribution(generator) != 0) {
 		possible_scope_contexts.insert(possible_scope_contexts.begin(),
@@ -50,9 +53,6 @@ void ScopeNode::random_activate(AbstractNode*& curr_node,
 		possible_scope_contexts.push_back(scope_context);
 		possible_node_contexts.push_back(node_context);
 	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
 
 	node_context.back() = NULL;
 

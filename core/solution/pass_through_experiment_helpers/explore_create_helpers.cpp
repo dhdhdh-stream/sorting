@@ -80,7 +80,7 @@ void PassThroughExperiment::explore_create_activate(
 		}
 
 		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 2);
+		uniform_int_distribution<int> uniform_distribution(0, 1);
 		geometric_distribution<int> geometric_distribution(0.5);
 		if (this->curr_exit_depth == 0
 				&& this->curr_exit_next_node == curr_node) {

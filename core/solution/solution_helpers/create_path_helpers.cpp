@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -47,7 +49,7 @@ bool create_path(Scope* parent_scope,
 
 	uniform_int_distribution<int> start_distribution(0, possible_scope_contexts.size()-1);
 	int start_index = start_distribution(generator);
-	geometric_distribution<int> path_length_distribution(0.3);
+	geometric_distribution<int> path_length_distribution(0.4);
 	int end_index = start_index + path_length_distribution(generator);
 	if (end_index > (int)possible_scope_contexts.size()-1) {
 		end_index = (int)possible_scope_contexts.size()-1;

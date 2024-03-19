@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->load(path, "main");
+	solution->load("workers/", "main");
 
 	int num_fails = 0;
 
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
 			solution->success_reset();
 
 			ifstream solution_save_file;
-			solution_save_file.open(path + "saves/main.txt");
+			solution_save_file.open("workers/saves/main.txt");
 			string timestamp_line;
 			getline(solution_save_file, timestamp_line);
 			int curr_timestamp = stoi(timestamp_line);
@@ -213,7 +213,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 
 				solution = new Solution();
-				solution->load(path, "main");
+				solution->load("workers/", "main");
 
 				solution->save(path, name);
 
@@ -252,7 +252,7 @@ int main(int argc, char* argv[]) {
 				cout << "alive" << endl;
 
 				ifstream solution_save_file;
-				solution_save_file.open(path + "saves/main.txt");
+				solution_save_file.open("workers/saves/main.txt");
 				string timestamp_line;
 				getline(solution_save_file, timestamp_line);
 				int curr_timestamp = stoi(timestamp_line);
@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
 					delete solution;
 
 					solution = new Solution();
-					solution->load(path, "main");
+					solution->load("workers/", "main");
 
 					cout << "updated from main" << endl;
 

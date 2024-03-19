@@ -225,7 +225,7 @@ double Minesweeper::score_result() {
 		}
 	}
 
-	score += 0.02*(curr_revealed - this->starting_revealed);
+	score += 0.01*(curr_revealed - this->starting_revealed);
 
 	if (this->hit_mine) {
 		score -= 1.0;
