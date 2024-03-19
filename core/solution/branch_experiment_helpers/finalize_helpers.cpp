@@ -221,7 +221,7 @@ void BranchExperiment::new_branch() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent_id = -1;
+				new_throw_node->next_node_parent = NULL;
 				new_throw_node->next_node_id = -1;
 				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;
@@ -379,7 +379,7 @@ void BranchExperiment::new_pass_through() {
 				this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
 
 				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent_id = -1;
+				new_throw_node->next_node_parent = NULL;
 				new_throw_node->next_node_id = -1;
 				new_throw_node->next_node = NULL;
 				new_throw_node->throw_id = this->throw_id;

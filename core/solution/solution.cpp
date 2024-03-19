@@ -175,6 +175,13 @@ void Solution::save(string path,
 	rename(oldname.c_str(), newname.c_str());
 }
 
+void Solution::remap() {
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->remap();
+	}
+}
+
 void Solution::save_for_display(ofstream& output_file) {
 	output_file << this->scopes.size() << endl;
 	for (map<int, Scope*>::iterator it = this->scopes.begin();

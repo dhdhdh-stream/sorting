@@ -282,6 +282,18 @@ void BranchNode::link() {
 	}
 }
 
+void BranchNode::remap() {
+	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+		this->scope_context_ids[c_index] = this->scope_context[c_index]->id;
+	}
+
+	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+		for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
+			this->input_scope_context_ids[i_index][c_index] = this->input_scope_contexts[i_index][c_index]->id;
+		}
+	}
+}
+
 void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->scope_context_ids[0] << endl;
 

@@ -450,7 +450,7 @@ void BranchExperiment::explore_backprop(double target_val,
 					this->scope_context.back()->node_counter++;
 
 					new_exit_node->exit_depth = this->best_exit_depth;
-					new_exit_node->next_node_parent_id = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth]->id;
+					new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
 					if (this->best_exit_next_node == NULL) {
 						new_exit_node->next_node_id = -1;
 					} else {

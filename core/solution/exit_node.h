@@ -13,7 +13,7 @@ public:
 	 */
 	int exit_depth;
 
-	int next_node_parent_id;
+	Scope* next_node_parent;
 	int next_node_id;
 	AbstractNode* next_node;
 

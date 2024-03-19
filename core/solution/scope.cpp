@@ -158,6 +158,16 @@ void Scope::link() {
 	this->default_starting_node = this->nodes[this->default_starting_node_id];
 }
 
+void Scope::remap() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)it->second;
+			branch_node->remap();
+		}
+	}
+}
+
 void Scope::save_for_display(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();

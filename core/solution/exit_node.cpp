@@ -19,7 +19,11 @@ ExitNode::~ExitNode() {
 void ExitNode::save(ofstream& output_file) {
 	output_file << this->exit_depth << endl;
 
-	output_file << this->next_node_parent_id << endl;
+	if (this->next_node_parent == NULL) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->next_node_parent->id << endl;
+	}
 	output_file << this->next_node_id << endl;
 
 	output_file << this->throw_id << endl;
@@ -32,7 +36,12 @@ void ExitNode::load(ifstream& input_file) {
 
 	string next_node_parent_id_line;
 	getline(input_file, next_node_parent_id_line);
-	this->next_node_parent_id = stoi(next_node_parent_id_line);
+	int next_node_parent_id = stoi(next_node_parent_id_line);
+	if (next_node_parent_id == -1) {
+		this->next_node_parent = NULL;
+	} else {
+		this->next_node_parent = solution->scopes[next_node_parent_id];
+	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
@@ -48,7 +57,7 @@ void ExitNode::link() {
 		if (this->next_node_id == -1) {
 			this->next_node = NULL;
 		} else {
-			this->next_node = solution->scopes[this->next_node_parent_id]->nodes[this->next_node_id];
+			this->next_node = this->next_node_parent->nodes[this->next_node_id];
 		}
 	}
 }
@@ -56,7 +65,11 @@ void ExitNode::link() {
 void ExitNode::save_for_display(ofstream& output_file) {
 	output_file << this->exit_depth << endl;
 
-	output_file << this->next_node_parent_id << endl;
+	if (this->next_node_parent == NULL) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->next_node_parent->id << endl;
+	}
 	output_file << this->next_node_id << endl;
 
 	output_file << this->throw_id << endl;
